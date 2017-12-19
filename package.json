@@ -1,0 +1,77 @@
+{
+  "name": "assessor-api",
+  "version": "1.0.0",
+  "description": "graphql api server for TowerStone and PLC Assesor Toolsets.",
+  "main": "index.js",
+  "author": "Werner Weber",
+  "license": "MIT",
+  "scripts": {
+    "start": "nodemon ./server.js --exec babel-node --inspect --preset=es2016,stage-2",
+    "build": "babel . -d dist --presets es2015,stage-2 --ignore spec.js,node_modules",
+    "serve": "node dist/server.js",
+    "start_debug": "babel-node ./server.js --inspect --preset=es2016,stage-2",
+    "test": "mocha",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "chai": "^4.1.2",
+    "co": "^4.6.0",
+    "cors": "^2.8.4",
+    "express": "^4.16.2",
+    "express-graphql": "^0.6.11",
+    "graphql": "^0.11.7",
+    "graphql-server-express": "^1.2.0",
+    "graphql-subscriptions": "^0.5.5",
+    "graphql-tools": "2.12.0",
+    "javascript-state-machine": "^3.0.1",
+    "jwt-simple": "^0.5.1",
+    "lodash": "^4.17.4",
+    "moment": "^2.18.1",
+    "mongo-find-by-ids": "^1.0.0",
+    "mongodb": "^2.2.33",
+    "morgan": "^1.9.0",
+    "mysql": "^2.14.1",
+    "object-mapper": "^4.1.0",
+    "schema-inspector": "^1.6.8",
+    "uuid": "^3.1.0",
+    "winston": "^2.4.0",
+    "winston-daily-rotate-file": "^1.7.2"
+  },
+  "devDependencies": {
+    "babel-cli": "6.26.0",
+    "babel-core": "6.26.0",
+    "babel-eslint": "^8.0.1",
+    "babel-plugin-inline-import": "2.0.6",
+    "babel-plugin-transform-async-to-module-method": "6.24.1",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.6.0",
+    "babel-preset-es2016": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "eslint": "^4.8.0",
+    "eslint-config-airbnb": "^16.0.0",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-react": "^7.4.0",
+    "mocha": "^4.0.1",
+    "nodemon": "^1.12.5"
+  },
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "extends": [
+      "airbnb/base",
+      "plugin:import/errors"
+    ],
+    "rules": {
+      "no-use-before-define": 0,
+      "arrow-body-style": 0,
+      "dot-notation": 0,
+      "no-console": 0,
+      "linebreak-style": "windows"      
+    },
+    "env": {
+      "mocha": true
+    }
+  }
+}

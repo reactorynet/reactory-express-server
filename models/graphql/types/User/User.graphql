@@ -1,0 +1,69 @@
+enum Role {
+    SYSADMIN,
+    ADMIN,
+    COMPANYADMIN,
+    FACILITATOR,        
+    USER
+}
+
+enum AuthProvider {
+  GOOGLE
+  FACEBOOK
+  CUSTOM
+}
+
+type UserSession {
+  profileData: String
+  uuid: String
+  expires: String
+  refreshToken: String
+}
+
+type User {
+  id: ObjID!
+  username: String
+  firstName: String
+  lastName: String
+  email: String
+  authProvider: AuthProvider!
+  providerId: String!
+  lastLogin: Date  
+  roles: [Role]
+  sessionInfo: [UserSession]
+  legacyId: Float
+  createdAt: Float!
+  updatedAt: Float!
+}
+
+extend type Query {
+  allUsers: [User],
+  userWithId: User!  
+}
+
+input CreateUserInput {
+  username: String
+  email: String
+  authProvider: AuthProvider!
+  providerId: String!
+  forEmployeeId: ObjID
+}
+
+input UpdateUserInput {
+  username: String
+  email: String
+  authProvider: AuthProvider!
+  providerId: String!
+  forEmployeeId: ObjID
+}
+
+extend type Mutation {
+  createUser(input: CreateUserInput!): User
+  updateUser(id: ObjID!, input: UpdateUserInput!): User
+  removeUser(id: ObjID!): Boolean
+}
+
+extend type Subscription {
+  userCreated: User
+  userUpdated: User
+  userRemoved: ObjID
+}

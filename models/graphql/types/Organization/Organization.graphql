@@ -1,0 +1,55 @@
+type CorsWhiteList {
+  key: String!,
+  host: String!    
+}
+
+type Tennant {
+  id: ObjID!
+  key: String!
+  title: String
+  theme: String
+  whitelist: [CorsWhiteList]
+  createdAt: Float!
+  updatedAt: Float!
+}
+
+input CreateTennantInput {
+  key: String!
+  title: String
+  theme: String
+  
+}
+
+type Organization {
+  id: ObjID!
+  code: String
+  name: String
+  logo: String
+  legacyId: Int      
+  createdAt: Float!
+  updatedAt: Float!
+}
+
+input CreateOrganizationInput {
+  code: String
+  name: String
+  logo: String
+  legacyId: Int
+}
+
+input UpdateOrganizationInput {
+  code: String
+  name: String
+  logo: String
+  legacyId: Int
+}
+
+extend type Query {
+  allTennants: [Tennant]
+  allOrganizations: [Organization]  
+}
+
+extend type Mutation {
+  createOrganization(input: CreateOrganizationInput!): Organization
+  updateOrgnization(id: ObjID!, input: UpdateOrganizationInput!): Organization  
+}

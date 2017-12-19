@@ -1,0 +1,14 @@
+{
+    "passPerPreset": true,
+    "presets": [
+      "react",
+      "es2016",
+      "stage-0",
+      "env"
+    ],
+    "plugins": [
+      "babel-plugin-inline-import",
+      "transform-runtime"
+    ]
+  }
+  
