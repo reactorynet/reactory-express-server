@@ -3,21 +3,31 @@ import mysql from 'mysql';
 import _ from 'lodash';
 import { ObjectId } from 'mongodb';
 
-const pool = mysql.createPool({
-  connectionLimit : 100,
-  host            : 'localhost',
-  user            : process.env.DB_USER,
-  password        : process.end.DATABASE_PASSWORD_LEGACY,
-  database        : process.env.DB_NAME,
-  port            : 3306
-});
+let pool = null;
 
 
+const getPool = (database = 'plc', host = 'localhost', user = 'towerstone', password = process.end.DATABASE_PASSWORD_LEGACY,  port = 3306) => {
+    if(pool === null){
+        pool = mysql.createPool({
+            connectionLimit : 100,
+            host: host,
+            user : user,
+            password : password,
+            database : database,
+            port : port
+          });
+    }
+    return pool;
+};
 
-pool.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
-  if (error) throw error;
-  console.log('The solution is: ', results[0].solution);
-});
+
+export const testConnection = ( tenant = 'plc' ) => {
+    getPool().query('SELECT 1 + 1 AS solution', function (error, results, fields) {
+        if (error) throw error;
+        console.log(results[0].solution.toString() === '2' ? 'Legacy DB Connected' : 'Legacy DB Not Connectioned');
+    });      
+};
+
 
 
 const selectOrganizationWithIdQuery = (orgId) => `
@@ -61,12 +71,17 @@ export class Organization {
                     }                        
                 }
                 
-                pool.query('SELECT id, code, name, report_logo, site_logo', resultCallback);
+                getPool().query('SELECT id, code, name, report_logo, site_logo,  date_created as createdAt, last_update as updateAt from organization ', resultCallback);
             });
             
             const organizationRows = yield requestWrapper;
             console.log(`${organizationRows.length} organizations(s) matching query`);
-            _.map(organizationRows, ( organizationRow ) => organizations.push({...organizationRow, id: ObjectId()}));
+            _.map(organizationRows, ( organizationRow ) => organizations.push({
+                ...organizationRow, 
+                id: ObjectId(),
+                createdAt: moment(organizationRow.createdAt).unix(),
+                updateAt: moment(organizationRow.updatedAt).unix()                
+            }));
 
             return organizations;            
         }catch(e){
@@ -91,11 +106,12 @@ export class Users {
                     }                        
                 }
                 
-                pool.query(`SELECT 
+                getPool().query(`SELECT 
                     id as legacyId, 
                     first_name as firstName, 
                     last_name as lastName, 
-                    username as email, 
+                    username as email,
+                    'plc' as providerId, 
                     username as username from user_account LIMIT ${limit}`, resultCallback);
             });
             
@@ -108,5 +124,41 @@ export class Users {
             console.log('Error performing query', e);        
             return [];
         }                
-    });     
+    });
+    
+    static authenticateLegacy = co.wrap(function* (username, password){
+        try{
+            let user = null;
+            
+            const doAuth = new Promise((resolve, reject) => {                
+                const cb = ( error, results, fields ) => { 
+                    
+                    if(error === null || error === undefined){
+                        resolve(results);
+                    }else{
+                        reject(error);
+                    }                        
+                }
+
+                getPool().query(`SELECT 
+                id as legacyId, 
+                first_name as firstName, 
+                last_name as lastName, 
+                username as email, 
+                username as username from user_account 
+                where username = '${username}'`, cb);
+            });
+
+            const userRow = yield doAuth;
+            if(userRow.length === 1) {
+                return {...userRow[0], id: ObjectID()}
+            }else {
+                return null;
+            }
+
+        }catch(e){
+            console.log('Error performing query', e);        
+            return null;
+        }
+    });
 }

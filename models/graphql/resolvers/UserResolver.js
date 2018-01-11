@@ -14,6 +14,7 @@ const userResolvers = {
     Query: {
         allUsers(obj, args, context, info){ 
             let userList = Users.listAll();
+            console.log(userList)
             let response = userList;            
             return response;
         },

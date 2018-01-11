@@ -4,8 +4,8 @@ import { Kind } from 'graphql/language';
 import { merge } from 'lodash';
 import moment from 'moment';
 
-import  userResolvers from './UserResolver';
-
+import userResolvers from './UserResolver';
+import orgnizationResolvers from './OrganizationResolver';
 
 let resolvers = {
   Query : {
@@ -60,7 +60,7 @@ let resolvers = {
   }),    
 };
 
-merge( resolvers, userResolvers );
+merge( resolvers, userResolvers, orgnizationResolvers );
 
 
 export default resolvers;

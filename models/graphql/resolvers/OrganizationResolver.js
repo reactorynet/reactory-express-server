@@ -9,12 +9,8 @@ const organizationResolver = {
     Organization: {
         id(obj, args, context, info){
             return obj.id;
-        },
-        username(obj, args, context, info){
-            return obj.username;
-        }
+        }        
     },
-
     Query: {
         allOrganizations(obj, args, context, info){ 
             return Organization.listAll();                        
@@ -22,12 +18,17 @@ const organizationResolver = {
     },
     Mutation: {
         createOrganization( obj, arg, context, info ){
-            console.log('Create user mutation called', {obj, arg, context, info});
+            console.log('Create user mutation called', { obj, arg, context, info });
             let created = {id: ObjectId(), ...arg.input, createdAt: moment()}
             
             return created;
+        },
+        migrateOrganizations( obj, arg, context, info ){
+            console.log('Migrating organization data', { obj, arg, context, info });
+            let migrated = [];
+            return Organization.listAll();            
         }
     }
 }
 
-module.exports = userResolvers;
+module.exports = organizationResolver;

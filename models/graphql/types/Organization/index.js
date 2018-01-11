@@ -16,7 +16,9 @@ const organizationResolver = {
     },
 
     Query: {
-        
+        allOrganizations: () => {
+            
+        }
     },
     Mutation: {
         createUser( obj, arg, context, info ){

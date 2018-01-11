@@ -1,0 +1,14 @@
+type Property {
+    title: String!
+    type: String!
+    default: String!
+    items: [ Property ]
+    properties: [ Property ]
+}
+
+type Form {
+    id: ObjID!
+    title: String
+    required: [String!]
+    properties: [Property]
+}
