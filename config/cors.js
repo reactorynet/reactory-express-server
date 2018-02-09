@@ -1,4 +1,12 @@
-const whitelist = ['http://localhost:3000', 'https://localhost:3000', 'http://localhost:4000', 'https://localhost:4000'];
+const whitelist = [
+  'http://localhost:3000', 
+  'https://localhost:3000', 
+  'http://localhost:4000', 
+  'https://localhost:4000',
+  'http://assess-dev.masonwabe.co.za/',
+  'https://assess-dev.masonwabe.co.za/'
+];
+
 const corsOptions = {
     /**
      * Function - set origin to a function implementing some custom logic. 

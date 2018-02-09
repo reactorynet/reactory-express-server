@@ -2,6 +2,7 @@ import co from 'co';
 import mysql from 'mysql';
 import _ from 'lodash';
 import { ObjectId } from 'mongodb';
+import moment from 'moment';
 
 let pool = null;
 
@@ -71,7 +72,7 @@ export class Organization {
                     }                        
                 }
                 
-                getPool().query('SELECT id, code, name, report_logo, site_logo,  date_created as createdAt, last_update as updateAt from organization ', resultCallback);
+                getPool().query('SELECT id, code, name, report_logo, site_logo,  date_created as createdAt, last_updated as updatedAt from organization ', resultCallback);
             });
             
             const organizationRows = yield requestWrapper;

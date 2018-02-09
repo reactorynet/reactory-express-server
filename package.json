@@ -30,7 +30,7 @@
     "jsonwebtoken": "^8.1.0",
     "jwt-simple": "^0.5.1",
     "lodash": "^4.17.4",
-    "moment": "^2.18.1",
+    "moment": "^2.20.1",
     "mongo-find-by-ids": "^1.0.0",
     "mongodb": "^2.2.33",
     "morgan": "^1.9.0",
