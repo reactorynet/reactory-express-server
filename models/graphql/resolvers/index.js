@@ -6,6 +6,7 @@ import moment from 'moment';
 
 import userResolvers from './UserResolver';
 import orgnizationResolvers from './OrganizationResolver';
+import assessmentResolvers from './AssessmentResolver';
 
 let resolvers = {
   Query : {
@@ -60,7 +61,7 @@ let resolvers = {
   }),    
 };
 
-merge( resolvers, userResolvers, orgnizationResolvers );
+merge( resolvers, userResolvers, orgnizationResolvers, assessmentResolvers );
 
 
 export default resolvers;

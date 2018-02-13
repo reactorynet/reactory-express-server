@@ -14,11 +14,14 @@ const corsOptions = {
      */
     origin: function (origin, callback) {
         console.log('checking origin', origin);
+        callback(null, true);
+        /*
         if (whitelist.indexOf(origin) !== -1) {
           callback(null, true)
         } else {
           callback(new Error('Not allowed by CORS'))
         }
+        */
     },
     /**
      * 

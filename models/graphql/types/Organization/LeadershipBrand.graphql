@@ -1,0 +1,29 @@
+type Behaviour {
+    id: ObjID!
+    legacyId: Int
+    description: String!
+    ordinal: Int
+    createdAt: Float!
+    updatedAt: Float!
+}
+
+type Quality {
+    id: ObjID!
+    legacyId: Int
+    title: String!
+    description: String
+    ordinal: Int
+    behaviours: [Behaviour]
+    createdAt: Float!
+    updatedAt: Float!
+}
+
+type LeadershipBrand {
+    id: ObjID!,
+    legacyId: Int
+    description: String!
+    title: String!
+    qualities: [Quality]
+    createdAt: Float!
+    updatedAt: Float!
+}

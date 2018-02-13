@@ -25,19 +25,23 @@ type Mutation {
 `];
 
 let typeImports = [
-    'User',
-    'Organization'
+    'User/User',
+    'Organization/Organization',
+    'Organization/LeadershipBrand',
+    'Survey/Survey',
+    'Survey/Assessment'
 ];
 
 typeImports.forEach(function(name){        
     try{
-        let source = fileAsString(require.resolve(`./${name}/${name}.graphql`));
+        const fileName = `./${name}.graphql`;
+        let source = fileAsString(require.resolve(fileName));
         typeDefs.push(`${source}`);
+        console.log(`Loaded ${fileName}...`);
     }catch(e){
         console.log('Error loading type', e);
     }
     
 });  
 
-console.log('TypeDefs', typeDefs);
 module.exports = typeDefs;

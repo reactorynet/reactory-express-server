@@ -1,0 +1,16 @@
+enum AssessmentType {
+    TOWERSTONE_LEADERSHIP,
+    PLC,
+    CUSTOM
+}
+
+type Assessment {
+    id: ObjID!
+    assessmentType: AssessmentType!,
+    leadershipBrand: LeadershipBrand!,
+    organization: Organization!
+}
+
+extend type Query {
+    assessmentWithId: Assessment
+}

@@ -30,4 +30,4 @@ const organizationResolver = {
     }
 }
 
-module.exports = userResolvers;
+//module.exports = userResolvers;
