@@ -14,7 +14,9 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "apiai": "^4.0.3",
     "body-parser": "^1.18.2",
+    "botbuilder": "^3.14.1",
     "chai": "^4.1.2",
     "co": "^4.6.0",
     "cors": "^2.8.4",
@@ -38,10 +40,12 @@
     "object-mapper": "^4.1.0",
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
+    "restify": "^7.1.0",
     "schema-inspector": "^1.6.8",
     "uuid": "^3.1.0",
     "winston": "^2.4.0",
-    "winston-daily-rotate-file": "^1.7.2"
+    "winston-daily-rotate-file": "^1.7.2",
+    "ws": "^5.0.0"
   },
   "devDependencies": {
     "babel-cli": "6.26.0",
