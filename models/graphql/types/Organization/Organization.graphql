@@ -20,7 +20,7 @@ input CreateTennantInput {
 }
 
 type Organization {
-  id: ObjID!
+  id: ObjID
   code: String
   name: String
   logo: String
@@ -43,13 +43,27 @@ input UpdateOrganizationInput {
   legacyId: Int
 }
 
+input MigrationOrganizationOptions {
+  migrateBrands: Boolean,
+  migrateEmployees: Boolean
+}
+
+type MigrationResult {
+  organization: Organization
+  organizationErrors: [String]
+  brandsMigrated: Int
+  brandErrors: [String]
+  employeesMigrated: Int
+  employeeErrors: [String]
+}
+
 extend type Query {
   allTennants: [Tennant]
-  allOrganizations: [Organization]  
+  allOrganizations(legacy: Boolean): [Organization]  
 }
 
 extend type Mutation {
   createOrganization(input: CreateOrganizationInput!): Organization
   updateOrgnization(id: ObjID!, input: UpdateOrganizationInput!): Organization
-  migrateOrganizations(id: String!): [Organization]   
+  migrateOrganization(id: String!, options: MigrationOrganizationOptions!): MigrationResult
 }

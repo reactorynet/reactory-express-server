@@ -7,33 +7,31 @@ import moment from 'moment';
 import userResolvers from './UserResolver';
 import orgnizationResolvers from './OrganizationResolver';
 import assessmentResolvers from './AssessmentResolver';
+import reactoryClientResolver from './ReactoryClient';
 
-let resolvers = {
-  Query : {
-    apiStatus: () => { 
+const resolvers = {
+  Query: {
+    apiStatus: () => {
       console.log('Checking API status');
       return {
         when: moment(),
-        status: `API OK`
-      }
-    }
+        status: 'API OK',
+      };
+    },
   },
   ObjID: new GraphQLScalarType({
     name: 'ObjID',
     description: 'Id representation, based on Mongo Object Ids',
     parseValue(value) {
-      console.log('Parsing scalar value', value)
-      if(value === null || value === undefined ) return null;
-
-      if(value instanceof String) return ObjectId(value);
-
-      if(value instanceof ObjectId) return value;      
+      if (value === null || value === undefined) return null;
+      if (value instanceof String) return ObjectId(value);
+      if (value instanceof ObjectId) return value;
+      return null;
     },
     serialize(value) {
-      if(value instanceof Object) {
-        if(value.$oid) return value.$oid;         
-      }      
-
+      if (value instanceof Object) {
+        if (value.$oid) return value.$oid;
+      }
       return value.toString();
     },
     parseLiteral(ast) {
@@ -43,11 +41,11 @@ let resolvers = {
       return ast.value;
     },
   }),
-  Date : new GraphQLScalarType({
+  Date: new GraphQLScalarType({
     name: 'Date',
     description: 'Date custom scalar type',
     parseValue(value) {
-      return new moment(value); // value from the client
+      return moment(value); // value from the client
     },
     serialize(value) {
       return value.format(); // value sent to the client
@@ -58,10 +56,16 @@ let resolvers = {
       }
       return null;
     },
-  }),    
+  }),
 };
 
-merge( resolvers, userResolvers, orgnizationResolvers, assessmentResolvers );
+merge(
+  resolvers,
+  userResolvers,
+  orgnizationResolvers,
+  assessmentResolvers,
+  reactoryClientResolver,
+);
 
 
 export default resolvers;

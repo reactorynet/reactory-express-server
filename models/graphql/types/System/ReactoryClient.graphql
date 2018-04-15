@@ -1,0 +1,41 @@
+
+type ClientAuthConfig {
+  provider: String
+  enabled: Boolean
+  successCallbackUrl: String
+  failedCallbackUrl: String
+  apikey: String
+  apipass: String
+  scopes: [String]
+}
+
+type ReactoryClient {
+  id: ObjID
+  name: String
+  clientKey: String
+  username: String
+  email: String
+  salt: String
+  password: String
+  avatar: String
+  auth_config: [ClientAuthConfig]
+  whitelist: [String]
+  createdAt: Date
+  updatedAt: Date
+}
+
+extend type Query {
+  clientWithId(id: String): ReactoryClient
+}
+
+input CreateReactoryClient {
+  name: String
+  clientKey: String
+  username: String
+  email: String
+  password: String 
+}
+
+extend type Mutation {
+  registerNewClient(input: CreateReactoryClient!): ReactoryClient
+}

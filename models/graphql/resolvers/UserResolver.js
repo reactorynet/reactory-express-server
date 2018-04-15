@@ -3,36 +3,38 @@ import moment from 'moment';
 import { Users } from '../../../database/legacy';
 
 const userResolvers = {
-    User: {
-        id(obj, args, context, info){
-            return obj.id;
-        },
-        username(obj, args, context, info){
-            return obj.username;
-        }
+  User: {
+    id(obj, args, context, info) {
+      return obj.id;
     },
-    Query: {
-        allUsers(obj, args, context, info){ 
-            let userList = Users.listAll();
-            console.log(userList)
-            let response = userList;            
-            return response;
-        },
-        userWithId(obj, args, context, info){
-            return {
-                id:ObjectId(),
-                username: 'Werner'
-            }
-        }
+    username(obj, args, context, info) {
+      return obj.username;
     },
-    Mutation: {
-        createUser( obj, arg, context, info ){
-            console.log('Create user mutation called', {obj, arg, context, info});
-            let created = {id: ObjectId(), ...arg.input, createdAt: moment()}
-            data.push(created);
-            return created;
-        }
-    }
-}
+  },
+  Query: {
+    allUsers(obj, args, context, info) {
+      const userList = Users.listAll();
+      console.log(userList);
+      const response = userList;
+      return response;
+    },
+    userWithId(obj, args, context, info) {
+      return {
+        id: ObjectId(),
+        username: 'Werner',
+      };
+    },
+  },
+  Mutation: {
+    createUser(obj, arg, context, info) {
+      console.log('Create user mutation called', {
+ obj, arg, context, info 
+});
+      const created = { id: ObjectId(), ...arg.input, createdAt: moment() };
+      data.push(created);
+      return created;
+    },
+  },
+};
 
 module.exports = userResolvers;

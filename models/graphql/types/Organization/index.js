@@ -3,31 +3,30 @@ import moment from 'moment';
 import { Users } from '../../../../database/legacy';
 
 const organizationResolver = {
-    Tennant: {
+  Tennant: {
+
+  },
+  Organization: {
+    id(obj, args, context, info) {
+      return obj.id;
+    },
+    username(obj, args, context, info) {
+      return obj.username;
+    },
+  },
+  Query: {
+    allOrganizations: () => {
 
     },
-    Organization: {
-        id(obj, args, context, info){
-            return obj.id;
-        },
-        username(obj, args, context, info){
-            return obj.username;
-        }
+  },
+  Mutation: {
+    createUser(obj, arg, context, info) {
+      console.log('Create user mutation called', {obj, arg, context, info});
+      const created = { id: ObjectId(), ...arg.input, createdAt: moment() };
+      data.push(created);
+      return created;
     },
+  },
+};
 
-    Query: {
-        allOrganizations: () => {
-            
-        }
-    },
-    Mutation: {
-        createUser( obj, arg, context, info ){
-            console.log('Create user mutation called', {obj, arg, context, info});
-            let created = {id: ObjectId(), ...arg.input, createdAt: moment()}
-            data.push(created);
-            return created;
-        }
-    }
-}
-
-//module.exports = userResolvers;
+// module.exports = userResolvers;

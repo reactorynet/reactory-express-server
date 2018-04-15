@@ -25,6 +25,7 @@ type Mutation {
 `];
 
 let typeImports = [
+    'System/ReactoryClient',
     'User/User',
     'Organization/Organization',
     'Organization/LeadershipBrand',

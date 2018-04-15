@@ -9,15 +9,19 @@ enum Role {
 enum AuthProvider {
   GOOGLE
   FACEBOOK
-  CUSTOM
+  CUSTOM,
+  LOCAL
 }
 
 type UserSession {
-  profileData: String
-  uuid: String
-  expires: String
-  refreshToken: String
+  id: ObjID
+  host: String
+  client: String  
+  started: Date
+  expires: Date
+  refresh: String
 }
+
 
 type User {
   id: ObjID!
@@ -25,6 +29,9 @@ type User {
   firstName: String
   lastName: String
   email: String
+  salt: String,
+  password: String
+  avatar: String
   authProvider: AuthProvider!
   providerId: String!
   lastLogin: Date  
