@@ -37,7 +37,7 @@ class AuthConfig {
     static jwtMake = (payload) => { return jwt.encode(payload, jwtSecret); };
 
     static BasicAuth = (req, username, password, done) => {
-      User.findOne({ username }).then((userResult) => {
+      User.findOne({ email: username }).then((userResult) => {
         console.log('Finding User', { userResult });
         if (userResult === null) done(null, false, 'username not found');
         if (userResult.validatePassword(password) === true) {

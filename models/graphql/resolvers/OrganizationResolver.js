@@ -25,6 +25,12 @@ const organizationResolver = {
 
       return Organization.find({}).then();
     },
+    organizationWithId(obj, args, context, info) {
+      console.log('listing organizationWithId', {
+        obj, args, context, info,
+      });
+      return Organization.findOne({ _id: args.id }).then();
+    },
   },
   Mutation: {
     createOrganization(obj, arg, context, info) {

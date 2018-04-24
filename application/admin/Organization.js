@@ -8,7 +8,7 @@ import _ from 'lodash';
 import { Organization } from '../../models';
 import * as legacy from '../../database';
 
-class MigrationResult {
+export class MigrationResult {
   constructor() {
     this.organization = null;
     this.organizationErrors = [];
@@ -22,7 +22,7 @@ class MigrationResult {
  * migrates an organization from a legacy version to the new
  * mongo stores.
  */
-const migrateOrganization = co.wrap(function* migrateGenerator(id, options) {
+export const migrateOrganization = co.wrap(function* migrateGenerator(id, options) {
   try {
     const result = new MigrationResult();
     result.organization = yield Organization.findOne({ legacyId: id });
@@ -51,7 +51,7 @@ const migrateOrganization = co.wrap(function* migrateGenerator(id, options) {
       result.employeesMigrated = 1;
       const employees = yield legacy.User.listAllForOrganization(id);
       _.map(employees, (employee)=>{
-        
+        //migrate employee
       });
     }
 
@@ -61,7 +61,3 @@ const migrateOrganization = co.wrap(function* migrateGenerator(id, options) {
     throw migrateError;
   }
 });
-
-module.exports = {
-  migrateOrganization,
-};
