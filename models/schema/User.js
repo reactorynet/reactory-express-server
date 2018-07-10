@@ -2,26 +2,46 @@ import mongoose from 'mongoose';
 import crypto from 'crypto';
 
 const { ObjectId } = mongoose.Schema.Types;
-const MembershipSchema = mongoose.Schema({
-  clientId: ObjectId,
-  organizationId: ObjectId,
-  enabled: Boolean,
-  authProvider: String,
-  providerId: String,
-  lastLogin: Date,
-  roles: [String],
-});
+
 
 const UserSchema = new mongoose.Schema({
   id: ObjectId,
   username: String,
-  firstName: String,
-  lastName: String,
-  email: String,
-  salt: String,
-  password: String,
+  firstName: {
+    type: String,
+    required: true,
+  },
+  lastName: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    index: true,
+    lowercase: true,
+    trim: true,
+  },
+  salt: {
+    type: String,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
   avatar: String,
-  memberships: [MembershipSchema],
+  memberships: [
+    {
+      clientId: ObjectId,
+      organizationId: ObjectId,
+      businessUnit: String,
+      enabled: Boolean,
+      authProvider: String,
+      providerId: String,
+      lastLogin: Date,
+      roles: [String],
+    },
+  ],
   sessionInfo: [
     {
       id: String,
@@ -34,14 +54,22 @@ const UserSchema = new mongoose.Schema({
         aud: [String],
         iat: Date,
         userId: ObjectId,
+        organizationId: ObjectId,
         refresh: String,
         roles: [String],
       },
     },
   ],
   legacyId: Number,
-  createdAt: Date,
-  updatedAt: Date,
+  lastLogin: Date,
+  createdAt: {
+    type: Date,
+    required: true,
+  },
+  updatedAt: {
+    type: Date,
+    required: true,
+  },
 });
 
 UserSchema.methods.setPassword = function setPassword(password) {

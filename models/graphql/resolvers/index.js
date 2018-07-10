@@ -8,11 +8,12 @@ import userResolvers from './UserResolver';
 import orgnizationResolvers from './OrganizationResolver';
 import assessmentResolvers from './AssessmentResolver';
 import reactoryClientResolver from './ReactoryClient';
+import leadershipBrandResolver from './LeadershipBrandResolver';
+import surveyResolver from './SurveyResolver';
 
 const resolvers = {
   Query: {
     apiStatus: () => {
-      console.log('Checking API status');
       return {
         when: moment(),
         status: 'API OK',
@@ -65,6 +66,8 @@ merge(
   orgnizationResolvers,
   assessmentResolvers,
   reactoryClientResolver,
+  leadershipBrandResolver,
+  surveyResolver,
 );
 
 

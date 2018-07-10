@@ -5,10 +5,20 @@ const { ObjectId } = mongoose.Schema.Types;
 
 const ReactoryClientSchema = new mongoose.Schema({
   id: ObjectId,
+  key: {
+    type: String,
+    index: true,
+    unique: true,
+    lowercase: true,
+  },
   name: String,
   username: String,
   email: String,
   salt: String,
+  siteUrl: String,
+  emailSendVia: String,
+  emailApiKey: String,
+  resetEmailRoute: String,
   password: String,
   avatar: String,
   auth_config: [

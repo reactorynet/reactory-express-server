@@ -6,6 +6,7 @@ const OrganizationSchema = mongoose.Schema({
   code: String,
   name: String,
   logo: String,
+  businessUnits: [String],
   legacyId: String,
   createdAt: Date,
   updatedAt: Date,

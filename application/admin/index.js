@@ -1,9 +1,13 @@
-import * as User from './User';
-import * as Organization from './Organization';
+import User from './User';
+import Organization from './Organization';
+import Survey from './Survey';
 import * as System from './System';
 
-module.exports = {
+const Admin = {
   System,
   User,
   Organization,
+  Survey,
 };
+
+export default Admin;

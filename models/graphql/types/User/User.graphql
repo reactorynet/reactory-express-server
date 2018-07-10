@@ -1,7 +1,7 @@
 enum Role {
     SYSADMIN,
     ADMIN,
-    COMPANYADMIN,
+    ORG_ADMIN,
     FACILITATOR,        
     USER
 }
@@ -29,6 +29,7 @@ type User {
   firstName: String
   lastName: String
   email: String
+  businessUnit: String,
   salt: String,
   password: String
   avatar: String
@@ -44,27 +45,30 @@ type User {
 
 extend type Query {
   allUsers: [User],
-  userWithId: User!  
+  userWithId: User!
+  authenticatedUser: User  
 }
 
 input CreateUserInput {
-  username: String
-  email: String
-  authProvider: AuthProvider!
-  providerId: String!
-  forEmployeeId: ObjID
+  email: String!
+  firstName: String!
+  lastName: String!
+  avatar: String
+  businessUnit: String  
+  authProvider: AuthProvider
+  providerId: String
 }
 
 input UpdateUserInput {
-  username: String
   email: String
+  firstName: String
+  lastName: String  
   authProvider: AuthProvider!
   providerId: String!
-  forEmployeeId: ObjID
 }
 
 extend type Mutation {
-  createUser(input: CreateUserInput!): User
+  createUser(input: CreateUserInput!, organizationId: String!): User
   updateUser(id: ObjID!, input: UpdateUserInput!): User
   removeUser(id: ObjID!): Boolean
 }

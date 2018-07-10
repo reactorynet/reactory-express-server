@@ -1,6 +1,6 @@
 import { fileAsString } from '../../../utils/io';
 
-let typeDefs = [`
+const typeDefs = [`
 #Base scalar type ObjID for MongoDB
 scalar ObjID
 scalar Date
@@ -24,16 +24,16 @@ type Mutation {
 
 `];
 
-let typeImports = [
-    'System/ReactoryClient',
-    'User/User',
-    'Organization/Organization',
-    'Organization/LeadershipBrand',
-    'Survey/Survey',
-    'Survey/Assessment'
+const typeImports = [
+  'System/ReactoryClient',
+  'User/User',
+  'Organization/Organization',
+  'Organization/LeadershipBrand',
+  'Survey/Survey',
+  'Survey/Assessment',
 ];
 
-typeImports.forEach(function(name){        
+typeImports.forEach((name) => {        
     try{
         const fileName = `./${name}.graphql`;
         let source = fileAsString(require.resolve(fileName));
@@ -43,6 +43,6 @@ typeImports.forEach(function(name){
         console.log('Error loading type', e);
     }
     
-});  
+});
 
 module.exports = typeDefs;

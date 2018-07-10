@@ -1,6 +1,6 @@
 import uuid from 'uuid';
 import messages from './messages';
-import email from '../../email';
+import email from '../../emails';
 import models from '../../models';
 import { createUserForOrganization } from '../../application/admin/User';
 import iz from '../../utils/validators';

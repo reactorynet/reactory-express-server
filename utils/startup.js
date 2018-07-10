@@ -1,6 +1,10 @@
 import models from '../models';
+import { isNil } from 'lodash';
+import { installDefaultEmailTemplates } from '../emails';
 
-const { Application, User } = models;
+const clients = require('../data/clients.json');
+
+const { Application, User, ReactoryClient } = models;
 const startup = () => {
   console.log('Startup initializing', Application, User);
   const appPromise = new Promise((resolve, reject) => {
@@ -54,11 +58,43 @@ const startup = () => {
     });
   });
 
+  const clientsPromise = new Promise((resolve, reject) => {
+    try {
+      clients.forEach((clientConfig) => {
+        ReactoryClient.findOne({ key: clientConfig.key }).then((findResult) => {
+          if (isNil(findResult) === true) {
+            const newClient = new ReactoryClient(clientConfig);
+            newClient.setPassword(clientConfig.password);
+            const validationResult = newClient.validateSync();
+            if (isNil(validationResult) === true) {
+              newClient.save().catch((saveError) => {
+                console.error('Could not save new client data', saveError);
+              });
+            }
+          }
+        });
+      });
+      resolve(true);
+    } catch (ex) {
+      reject(ex);
+    }
+  });
 
   return new Promise((resolve, reject)=>{
     appPromise.then((appResult) => {
       systemUserPromise.then((userResponse) => {
-        resolve({ application: appResult, system_user: userResponse });
+        clientsPromise.then((done) => {
+          installDefaultEmailTemplates().then((installedTemplates) => {
+            resolve({
+              application: appResult,
+              system_user: userResponse,
+              clientsLoaded: done,
+              installedTemplates,
+            });
+          }).catch((templateInstallError) => {
+            reject(templateInstallError);
+          });
+        }).catch((clientsError) => { reject(clientsError); });
       }).catch((userError) => { reject(userError); });
     }).catch((appError) => { reject(appError); });
   });

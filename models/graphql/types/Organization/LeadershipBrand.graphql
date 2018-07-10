@@ -1,29 +1,80 @@
-type Behaviour {
-    id: ObjID!
-    legacyId: Int
+type ScaleEntry {
+    rating: Int!
     description: String!
-    ordinal: Int
-    createdAt: Float!
-    updatedAt: Float!
+}
+
+type Scale {
+    key: String    
+    title: String!
+    entries: [ScaleEntry]
+}
+
+type Behaviour {
+    description: String!
+    title: String,
+    ordinal: Int!
 }
 
 type Quality {
-    id: ObjID!
-    legacyId: Int
     title: String!
     description: String
-    ordinal: Int
+    ordinal: Int!
     behaviours: [Behaviour]
-    createdAt: Float!
-    updatedAt: Float!
 }
 
 type LeadershipBrand {
     id: ObjID!,
-    legacyId: Int
     description: String!
     title: String!
+    scale: Scale!
+    qualityDisplay: String
+    archived: Boolean
     qualities: [Quality]
     createdAt: Float!
     updatedAt: Float!
+}
+
+input BehaviourInput {
+    description: String!
+    title: String,
+    ordinal: Int!    
+}
+
+input QualityInput {
+    title: String!
+    description: String
+    ordinal: Int!
+    behaviours: [BehaviourInput]    
+}
+
+input ScaleEntryInput {
+    rating: Int!
+    description: String!    
+}
+
+input ScaleInput {
+    key: String
+    title: String!
+    entries: [ScaleEntryInput]    
+}
+
+input BrandInput {
+    id: String
+    organizationId: String
+    scale: ScaleInput
+    description: String!
+    title: String!
+    archived: Boolean
+    qualityDisplay: String
+    qualities: [QualityInput]
+}
+
+extend type Query {
+    brandListForOrganization(organizationId: String!): [LeadershipBrand]
+    brandWithId(brandId: String!): LeadershipBrand
+}
+
+extend type Mutation {
+    createBrandForOrganization(brandInput: BrandInput!, organizationId: String!) : LeadershipBrand
+    updateBrandForOrganization(brandInput: BrandInput!, organizationId: String!) : LeadershipBrand
 }

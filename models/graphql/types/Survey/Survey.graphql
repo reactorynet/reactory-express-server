@@ -1,0 +1,33 @@
+type SurveyCalendarEntry {
+  entryType: String
+  title: String
+  start: Date!
+  end: Date,
+  hasTask: Boolean,
+  taskResult: String
+  taskError: String
+}
+
+type TimelineEntry {
+  when: Date!
+  eventType: String
+  eventDetail: String
+  who: User  
+}
+
+type Survey {
+  id:  ObjID!
+  leadershipBrand: LeadershipBrand
+  organization: Organization
+  title: String!
+  surveyType: String!
+  startDate: Date,
+  endDate: Date,
+  mode: String,  
+  calendar: [SurveyCalendarEntry]
+  timeline: [TimelineEntry]
+}
+
+extend type Query {
+  surveysForOrganization(organizationId: String!): [Survey]
+}

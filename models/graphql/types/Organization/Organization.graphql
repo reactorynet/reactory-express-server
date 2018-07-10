@@ -60,11 +60,12 @@ type MigrationResult {
 extend type Query {
   allTennants: [Tennant]
   allOrganizations(legacy: Boolean): [Organization]
-  organizationWithId(id: String!): Organization  
+  organizationWithId(id: String!): Organization 
+  usersForOrganizationWithId(id: String!): [User] 
 }
 
 extend type Mutation {
   createOrganization(input: CreateOrganizationInput!): Organization
-  updateOrgnization(id: String!, input: UpdateOrganizationInput!): Organization
+  updateOrganization(id: String!, input: UpdateOrganizationInput!): Organization
   migrateOrganization(id: String!, options: MigrationOrganizationOptions!): MigrationResult
 }

@@ -5,8 +5,10 @@
  */
 import co from 'co';
 import _ from 'lodash';
+import { ObjectId } from 'mongodb';
 import { Organization } from '../../models';
 import * as legacy from '../../database';
+import { OrganizationValidationError, OrganizationNotFoundError, OrganizationExistsError } from '../../exceptions';
 
 export class MigrationResult {
   constructor() {
@@ -61,3 +63,55 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
     throw migrateError;
   }
 });
+
+export const createOrganization = (organizationInput) => {
+  return new Promise((resolve, reject) => {
+    Organization.find({ name: organizationInput.name }).then((organizationFindResult) => {
+      if (organizationFindResult.length === 0) {
+        const organization = new Organization(organizationInput);
+        const validationResult = organization.validateSync();
+        if (_.isNil(validationResult) === false) {
+          if (validationResult.errors) reject(new OrganizationValidationError('Invalid organization input', validationResult.errors));
+        } else {
+          organization.save().then((organizationResult) => {
+            resolve(organizationResult);
+          }).catch((e) => {
+            reject(e);
+          });
+        }
+      } else {
+        reject(new OrganizationExistsError('Organization with that name is already registered, if you believe you have rights to the name of the company, please contact our helpdesk.'));
+      }
+    });
+  });
+};
+
+export const findOrCreate = (organizationInput) => {
+  return new Promise((resolve, reject) => {
+    if (_.isNil(organizationInput.id) === false) {
+      Organization.findOne({ _id: ObjectId(organizationInput.id) }).then((organization) => {
+        if (_.isNil(organization)) reject(new OrganizationNotFoundError('Could not load organization with given id', organizationInput.id));
+        resolve(organization);
+      }).catch((findError) => {
+        reject(findError);
+      });
+    } else {
+      createOrganization(organizationInput).then((organization) => {
+        resolve(organization);
+      }).catch((createError) => {
+        reject(createError);
+      });
+    }
+  });
+};
+
+export const findById = (id) => {
+  return Organization.findOne({ _id: ObjectId(id) });
+};
+
+export default {
+  migrateOrganization,
+  createOrganization,
+  findOrCreate,
+  findById,
+};
