@@ -1,4 +1,4 @@
-[
+export default [
   {
     "enabled": true,
     "view": "activation-email",

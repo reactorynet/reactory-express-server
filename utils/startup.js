@@ -1,8 +1,7 @@
 import models from '../models';
 import { isNil } from 'lodash';
 import { installDefaultEmailTemplates } from '../emails';
-
-const clients = require('../data/clients.json');
+import clients from '../data/clients';
 
 const { Application, User, ReactoryClient } = models;
 const startup = () => {

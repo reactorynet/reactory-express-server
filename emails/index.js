@@ -5,7 +5,7 @@ import ejs from 'ejs';
 import { isNil } from 'lodash';
 import { RecordNotFoundError } from '../exceptions';
 import { Template, ReactoryClient } from '../models';
-import defaultEmailTemplates from './defaultEmailTemplates.json';
+import defaultEmailTemplates from './defaultEmailTemplates';
 
 const TemplateViews = {
   ActivationEmail: 'activation-email',
