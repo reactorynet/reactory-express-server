@@ -1,8 +1,9 @@
 image: node:8
 pipelines:
   branches:
-    - develop:
-      - step:
-          script:
-            - yarn
-            - yarn build
+    develop:
+    - step:
+        name: Install and Build
+        script:
+          - yarn
+          - yarn build
