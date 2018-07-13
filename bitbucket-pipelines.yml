@@ -1,7 +1,8 @@
 image: node:8
 pipelines:
-  default:
-    - step:
-        script:
-          - yarn
-          - yarn build
+  branches:
+    - develop:
+      - step:
+          script:
+            - yarn
+            - yarn build
