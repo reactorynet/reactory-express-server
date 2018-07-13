@@ -12,6 +12,6 @@ pipelines:
         deployment: production   # can be test, staging or production
         trigger: manual  # uncomment to make manual deployment
         script:
-          - rsync clvrz -e build/ $PRODUCTION_DEPLOY_URL
+          - rsync clvrz -e dist/ $PRODUCTION_DEPLOY_URL
 
         
