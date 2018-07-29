@@ -10,6 +10,7 @@ import mongoose from 'mongoose';
 import corsOptions from './config/cors';
 import clientAuth from './middleware/clientauth';
 import userAccountRouter from './useraccount';
+import reactory from './reactory';
 import typeDefs from './models/graphql/types';
 import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
@@ -41,6 +42,7 @@ startup().then((startupResult) => {
 
   app.use(graphiql, graphiqlExpress({ endpointURL: queryRoot }));
   app.use(userAccountRouter);
+  app.use('/reactory', reactory);
   app.listen(4000);
   console.log(`Bots server using ${bots.name}`);
   console.log(`Running a GraphQL API server at localhost:4000${queryRoot}`);
