@@ -21,6 +21,10 @@ const defaultForm = {
         type: 'string',
         title: 'Last name',
       },
+      middleName: {
+        type: 'string',
+        title: 'Middle name',
+      },
       age: {
         type: 'integer',
         title: 'Age',
@@ -290,5 +294,5 @@ const complexForm = {
 export default [
   defaultForm,
   arrayForm,
-  complexForm
+  complexForm,
 ];

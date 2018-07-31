@@ -45,7 +45,8 @@ input UpdateOrganizationInput {
 
 input MigrationOrganizationOptions {
   migrateBrands: Boolean,
-  migrateEmployees: Boolean
+  migrateEmployees: Boolean,
+  dataPath: String
 }
 
 type MigrationResult {

@@ -1,11 +1,30 @@
 import { isNil } from 'lodash';
 import { ReactoryClient } from '../models';
 
+
+const bypassUri = [
+  '/cdn/',
+  '/favicon.ico',
+];
+
 const clientauth = (req, res, next) => {
   let clientId = req.headers['x-client-key'];
   const clientPwd = req.headers['x-client-pwd'] || ' ';
   clientId = clientId || req.params.clientId;
   clientId = clientId || req.query.clientId;
+  console.log('req.originalUrl', req.originalUrl);
+
+  let bypass = false;
+  if (req.originalUrl) {
+    for (let i = 0; i < bypassUri.length; i += 1) {
+      if (!bypass) bypass = req.originalUrl.toString().indexOf(bypassUri[i]) >= 0;
+    }
+  }
+
+  if (bypass === true) {
+    next();
+    return;
+  }
 
   if (isNil(clientId) === true || clientId === '') {
     res.status(401).send({ error: 'no-client-id' });

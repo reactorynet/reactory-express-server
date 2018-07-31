@@ -37,6 +37,11 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
         result.organizationErrors.push('legacy organization with that id not found');
         return result;
       }
+      
+      if(options.dataPath && lorg.logo) {
+        
+      }
+
       result.organization = yield new Organization({ ...lorg }).save();
     }
 

@@ -1,9 +1,10 @@
-import models from '../models';
 import { isNil } from 'lodash';
+import { Application, User, ReactoryClient } from '../models';
 import { installDefaultEmailTemplates } from '../emails';
-import clients from '../data/clients';
+import data from '../data';
 
-const { Application, User, ReactoryClient } = models;
+const { clients } = data;
+
 const startup = () => {
   console.log('Startup initializing', Application, User);
   const appPromise = new Promise((resolve, reject) => {
@@ -79,7 +80,7 @@ const startup = () => {
     }
   });
 
-  return new Promise((resolve, reject)=>{
+  return new Promise((resolve, reject) => {
     appPromise.then((appResult) => {
       systemUserPromise.then((userResponse) => {
         clientsPromise.then((done) => {

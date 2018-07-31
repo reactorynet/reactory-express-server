@@ -1,9 +1,9 @@
 import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
 import express from 'express';
 import bodyParser from 'body-parser';
 import passport from 'passport';
-import * as http from 'http';
-import * as WebSocket from 'ws';
 import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
 import { makeExecutableSchema } from 'graphql-tools';
 import mongoose from 'mongoose';
@@ -18,16 +18,26 @@ import { testConnection } from './database/legacy';
 import bots from './bot/server';
 import startup from './utils/startup';
 
+
+dotenv.config();
+
+const {
+  APP_DATA_ROOT,
+  MONGOOSE,
+  API_PORT,
+} = process.env;
+
 const queryRoot = '/api';
 const graphiql = '/q';
-
+const resources = '/cdn';
+const publicFolder = path.join(__dirname, 'public');
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 const app = express();
 app.use('*', cors(corsOptions));
 app.use(clientAuth);
 testConnection('plc');
-mongoose.connect('mongodb://localhost:27017/reactory');
+mongoose.connect(MONGOOSE);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: '10mb' }));
 startup().then((startupResult) => {
@@ -43,7 +53,8 @@ startup().then((startupResult) => {
   app.use(graphiql, graphiqlExpress({ endpointURL: queryRoot }));
   app.use(userAccountRouter);
   app.use('/reactory', reactory);
-  app.listen(4000);
+  app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
+  app.listen(API_PORT);
   console.log(`Bots server using ${bots.name}`);
   console.log(`Running a GraphQL API server at localhost:4000${queryRoot}`);
 }).catch((error) => {
