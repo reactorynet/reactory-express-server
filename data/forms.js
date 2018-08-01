@@ -1,7 +1,17 @@
 
 const defaultForm = {
   id: 'default',
-  interface: 'material',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [
+    {
+      framework: 'bootstrap',
+      uri: 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css',
+      type: 'style',
+      async: true,
+      name: 'main_styles',
+    },
+  ],
   title: 'User Registration',
   tags: ['registration', 'user account'],
   schema: {
@@ -78,9 +88,19 @@ const defaultForm = {
 
 const arrayForm = {
   id: 'array',
-  interface: 'material',
+  uiFramework: 'material',
   title: 'An array testing form',
   tags: ['registration', 'user account'],
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [
+    {
+      framework: 'bootstrap',
+      uri: 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css',
+      type: 'style',
+      async: true,
+      name: 'main_styles',
+    },
+  ],
   schema: {
     definitions: {
       Thing: {
@@ -247,6 +267,16 @@ const arrayForm = {
 
 const complexForm = {
   id: 'complex',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [
+    {
+      framework: 'bootstrap',
+      uri: 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css',
+      type: 'style',
+      async: true,
+      name: 'main_styles',
+    },
+  ],
   schema: {
     title: 'Tell m',
     type: 'object',
