@@ -1,17 +1,98 @@
+const bootstrapMaterialResources = [
+  {
+    framework: 'jquery',
+    uri: 'https://code.jquery.com/jquery-3.3.1.min.js',
+    async: true,
+    name: 'jQuery',
+    // loaded: () => { return jQuery !== null && jQuery !== undefined }, //eslint-disable-line
+  },
+  {
+    framework: 'bootstrap',
+    uri: 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css',
+    type: 'style',
+    async: true,
+    name: 'main_styles',
+  },
+  {
+    framework: 'bootstrap',
+    uri: 'http://localhost:4000/cdn/ui/bootstrap-material-design/css/bootstrap-material-design.css',
+    type: 'style',
+    async: true,
+    name: 'bootstrap_theme',
+  },
+  {
+    framework: 'bootstrap',
+    uri: 'http://localhost:4000/cdn/ui/bootstrap-material-design/js/material.js',
+    type: 'script',
+    async: true,
+    name: 'bootstrap_theme_js0',
+  },
+  {
+    framework: 'bootstrap',
+    uri: 'http://localhost:4000/cdn/ui/bootstrap-material-design/js/ripples.js',
+    type: 'script',
+    async: true,
+    name: 'bootstrap_theme_js1',
+  },
+];
+
+const smartAdminResources = [
+  {
+    framework: 'bootstrap',
+    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/bootstrap.min.css',
+    type: 'style',
+    async: true,
+    name: 'bootstrap_main',
+  },
+  {
+    framework: 'font-awesome',
+    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/font-awesome.min.css',
+    type: 'style',
+    async: true,
+    name: 'font-awesome',
+  },
+  {
+    framework: 'bootstrap-invoice',
+    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/invoice.min.css',
+    type: 'style',
+    async: true,
+    name: 'bootstrap_invoice',
+  },
+  {
+    framework: 'smart-admin-production',
+    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/smartadmin-production.min.css',
+    type: 'style',
+    async: true,
+    name: 'smart_admin_prod',
+  },
+  {
+    framework: 'smart-admin-production-plugins',
+    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/smartadmin-production-plugins.min.css',
+    type: 'style',
+    async: true,
+    name: 'smart_admin_prod_plugins',
+  },
+  {
+    framework: 'smart-admin-react',
+    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/smartadmin-react.css',
+    type: 'style',
+    async: true,
+    name: 'smart_admin_ract',
+  },
+  {
+    framework: 'smart-admin-skins',
+    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/smartadmin-skins.min.css',
+    type: 'style',
+    async: true,
+    name: 'smart_admin_skins',
+  },
+];
 
 const defaultForm = {
   id: 'default',
-  uiFramework: 'material',
+  uiFramework: 'bootstrap',
   uiSupport: ['material', 'bootstrap'],
-  uiResources: [
-    {
-      framework: 'bootstrap',
-      uri: 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css',
-      type: 'style',
-      async: true,
-      name: 'main_styles',
-    },
-  ],
+  uiResources: smartAdminResources,
   title: 'User Registration',
   tags: ['registration', 'user account'],
   schema: {
@@ -92,15 +173,7 @@ const arrayForm = {
   title: 'An array testing form',
   tags: ['registration', 'user account'],
   uiSupport: ['material', 'bootstrap'],
-  uiResources: [
-    {
-      framework: 'bootstrap',
-      uri: 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css',
-      type: 'style',
-      async: true,
-      name: 'main_styles',
-    },
-  ],
+  uiResources: smartAdminResources,
   schema: {
     definitions: {
       Thing: {
@@ -267,16 +340,9 @@ const arrayForm = {
 
 const complexForm = {
   id: 'complex',
+  uiFramework: 'bootstrap',
   uiSupport: ['material', 'bootstrap'],
-  uiResources: [
-    {
-      framework: 'bootstrap',
-      uri: 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css',
-      type: 'style',
-      async: true,
-      name: 'main_styles',
-    },
-  ],
+  uiResources: smartAdminResources,
   schema: {
     title: 'Tell m',
     type: 'object',
@@ -321,7 +387,298 @@ const complexForm = {
   uiSchema: 'complex',
 };
 
+const productIdeas = {
+  id: 'product-ideas',
+  uiFramework: 'bootstrap',
+  uiSupport: ['bootstrap'],
+  uiResources: smartAdminResources,
+  title: 'Product Ideas',
+  tags: ['product ideas'],
+  schema: {
+    title: 'Product Ideas',
+    description: 'Product Ideas Form',
+    type: 'object',
+    required: [
+      'productName',
+      'productDescription',
+      'ideator',
+      'dateCreated',
+    ],
+    properties: {
+      activeForm: {
+        type: 'string',
+        enum: [
+          'new-product-idea',
+          'existing-product-ideas',
+          'approved-product-ideas',
+          'binned-product-ideas',
+        ],
+        enumNames: [
+          'New Product Ideas',
+          'Existing Product Ideas',
+          'Approved Product Ideas',
+          'Rejected Product Ideas',
+        ],
+      },
+    },
+  },
+  uiSchema: {
+
+  },
+  layout: {
+
+  },
+};
+
+const productIdeasForm = {
+  id: 'new-product-idea',
+  uiFramework: 'bootstrap',
+  uiSupport: ['bootstrap'],
+  uiResources: smartAdminResources,
+  title: 'Product Idea',
+  tags: ['product idea'],
+  schema: {
+    title: 'Product Idea',
+    type: 'object',
+    required: [
+      'productName',
+      'productDescription',
+      'ideator',
+      'dateCreated',
+    ],
+    properties: {
+      productName: {
+        type: 'string',
+        title: 'Product Name',
+      },
+      productClassification: {
+        type: 'string',
+        title: 'Product Classification',
+        enum: [
+          'fin',
+          'tech',
+        ],
+        enumNames: [
+          'Financial',
+          'Tech',
+        ],
+      },
+      productDescription: {
+        type: 'string',
+        title: 'Product Description',
+      },
+      version: {
+        type: 'string',
+        title: 'Product Version',
+      },
+      ideator: {
+        type: 'string',
+        title: 'Ideator',
+        readOnly: true,
+      },
+      dateCreated: {
+        type: 'string',
+        format: 'date-time',
+        title: 'Date Created',
+      },
+      productLandscape: {
+        title: 'Product Landscape',
+        type: 'object',
+        properties: {
+          targetAudience: {
+            type: 'string',
+            title: 'Target Audience',
+            enum: ['b2c', 'b2b', 'internal'],
+            enumNames: [
+              'Business to Consumer',
+              'Business to Business',
+              'Internal',
+            ],
+          },
+          problemStatement: {
+            type: 'string',
+            title: 'Problem Statement',
+          },
+          existingSolutions: {
+            type: 'string',
+            title: 'Benefits Of Existing Solutions',
+          },
+          existingSolutionsShortfall: {
+            type: 'string',
+            title: 'Shortfalls Of Existing Solutions',
+          },
+          proposedBenefits: {
+            type: 'string',
+            title: 'Proposed Benefits Of This Idea',
+          },
+          totalAddresableMarket: {
+            type: 'number',
+            title: 'Total Addressable Market Value',
+          },
+          evidence: {
+            type: 'array',
+            title: 'Market Value Evidence',
+            items: {
+              type: 'object',
+              title: 'Market Value Evidence',
+              properties: {
+                conceptType: {
+                  type: 'string',
+                  title: 'Concept Type',
+                  enum: [
+                    'image',
+                    'link',
+                    'file',
+                  ],
+                  enumNames: [
+                    'Image',
+                    'Link',
+                    'File',
+                  ],
+                },
+                fileInput: {
+                  type: 'string',
+                  format: 'data-url',
+                },
+              },
+            },
+          },
+          competitors: {
+            type: 'array',
+            title: 'Competitors',
+            items: {
+              type: 'object',
+              properties: {
+                url: {
+                  type: 'string',
+                  title: 'Company URL',
+                },
+                competitorOverview: {
+                  type: 'string',
+                  title: 'Overview',
+                },
+                competitorBenefits: {
+                  type: 'string',
+                  title: 'Competitor Benefits',
+                },
+                competitorShortfall: {
+                  type: 'string',
+                  title: 'Competitor Shortfalls',
+                },              
+                socialMediaReputation: {
+                  type: 'object',
+                  title: 'Social Media Reputation',
+                  properties: {
+                    facebook: {
+                      type: 'number',
+                      title: 'Facebook Rating',
+                      min: 0,
+                      max: 5,
+                    },
+                    linkedin: {
+                      type: 'number',
+                      title: 'LinkedIn Rating',
+                      min: 0,
+                      max: 5,
+                    },
+                    twitter: {
+                      type: 'number',
+                      title: 'Twitter Rating',
+                      min: 0,
+                      max: 5,
+                    },
+                    instagram: {
+                      type: 'number',
+                      title: 'Instagram Rating',
+                      min: 0,
+                      max: 5,
+                    },
+                    pintrest: {
+                      type: 'number',
+                      title: 'Pintrest Rating',
+                      min: 0,
+                      max: 5,
+                    },
+                  },
+                },
+                marketDominance: {
+                  type: 'string',
+                  title: 'Market Dominance',
+                },
+                channelsSupported: {
+                  type: 'array',
+                  title: 'Channels Supported',
+                  items: {
+                    type: 'string',
+                    enum: [
+                      'SaaS',
+                      'Mobile',
+                      'On-Premise',
+                      'ATM',
+                      'Web',
+                    ],
+                  },
+                  uniqueItems: true,
+                },
+                pricingRange: {
+                  type: 'string',
+                  title: 'Pricing Range',
+                },
+              },
+            },
+          },
+        },
+      },
+      concepts: {
+        type: 'array',
+        title: 'Visual Concepts',
+        items: {
+          type: 'object',
+          title: 'Visual',
+          properties: {
+            conceptType: {
+              type: 'string',
+              title: 'Concept Type',
+              enum: [
+                'image',
+                'link',
+                'file',
+              ],
+              enumNames: [
+                'Image',
+                'Link',
+                'File',
+              ],
+            },
+            fileInput: {
+              type: 'string',
+              format: 'data-url',
+            },
+          },
+        },
+      },
+    },
+  },
+  uiSchema: {
+    productName: {
+      'ui:autofocus': true,
+      'ui:emptyValue': '',
+    },
+    productDescription: {
+      'ui:widget': 'textarea',
+    },
+    channelsSupported: {
+      'ui:widget': 'checkboxes',
+    },
+  },
+  layout: {
+
+  },
+};
+
 export default [
+  productIdeas,
+  productIdeasForm,
   defaultForm,
   arrayForm,
   complexForm,
