@@ -7,10 +7,38 @@ const OrganizationSchema = mongoose.Schema({
   name: String,
   logo: String,
   businessUnits: [String],
+  public: Boolean,
+  clients: {
+    active: [String],
+    denied: [String],
+  },
   legacyId: String,
   createdAt: Date,
   updatedAt: Date,
 });
+
+OrganizationSchema.methods.isPublic = function isPublic() {
+  return this.public === true;
+};
+
+OrganizationSchema.methods.clientActive = function clientActive(clientKey) {
+  if (this.isPublic() === true) return true; // is public organization
+  let keyFound = null;
+  if (this.clients) {
+    // first check denied list
+    keyFound = Array.find(this.clients.denied, (key) => { return key === clientKey; });
+    if (keyFound) return false;
+
+    // then check allowed list
+    keyFound = Array.find(this.clients.active, (key) => { return key === clientKey; });
+    if (keyFound) return true;
+
+    return false;
+  }
+
+  return false;
+};
+
 
 const OrganizationModel = mongoose.model('Organization', OrganizationSchema);
 export default OrganizationModel;

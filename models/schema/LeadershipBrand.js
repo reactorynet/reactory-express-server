@@ -3,29 +3,29 @@ import mongoose from 'mongoose';
 const { ObjectId } = mongoose.Schema.Types;
 
 const LeadershipBrandSchema = mongoose.Schema({
-  organizationId: ObjectId,
+  organization: {
+    type: ObjectId,
+    ref: 'Organization',
+  },
   locked: Boolean,
+  legacyId: String,
   title: String,
   description: String,
   scale: {
-    key: String,
-    title: String,
-    entries: [
-      {
-        rating: Number,
-        description: String,
-      },
-    ],
+    type: ObjectId,
+    ref: 'Scale',
   },
   qualities: [
     {
       title: String,
+      legacyId: String,
       description: String,
       ordinal: Number,
       behaviours: [
         {
           title: String,
           description: String,
+          legacyId: String,
           ordinal: Number,
         },
       ],

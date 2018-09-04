@@ -55,6 +55,10 @@ const userResolvers = {
       }
       throw new Error('Organization Id is required');
     },
+    updateUser(obj, { id, profileData }) {
+      console.log('Update user mutation called', { id, profileData });
+      return Admin.User.updateProfile(id, profileData);
+    },
   },
 };
 

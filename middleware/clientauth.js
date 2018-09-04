@@ -34,7 +34,7 @@ const clientauth = (req, res, next) => {
       // do custom validation
       // validate the login
       // TODO: add regex patterns for claims that allows all routes relative to the API
-      global.client = {
+      global.partner = {
         key: '$reactory_system$',
         sysAdmin: true,
         claims: [

@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import moment from 'moment';
-import { LeadershipBrand } from '../../../models';
+import { LeadershipBrand, Scale } from '../../../models';
 // import { migrateOrganization } from '../../../application/admin/Organization';
 
 const leadershipBrandResolver = {  
@@ -19,7 +19,7 @@ const leadershipBrandResolver = {
       return [];
     },
     scale(brand) {
-      if (brand.scale) return brand.scale;
+      if (brand.scale) return Scale.findById(brand.scale);
       return null;
     },
     createdAt(obj) {
@@ -34,7 +34,7 @@ const leadershipBrandResolver = {
       console.log('listing organizations', {
         obj, args, context, info,
       });
-      return LeadershipBrand.find({ organizationId: ObjectId(args.organizationId) });
+      return LeadershipBrand.find({ organization: ObjectId(args.organizationId) });
     },
     brandWithId(obj, args, context, info) {
       LeadershipBrand.findOne({ _id: ObjectId(args.brandId) }).then((leadershipBrand) => {
@@ -43,6 +43,10 @@ const leadershipBrandResolver = {
         console.error(exc);
         throw exc;
       });
+    },
+    allScales() {
+      console.log('getting all scales');
+      return Scale.find({});
     },
   },
   Mutation: {

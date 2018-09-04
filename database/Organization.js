@@ -27,7 +27,7 @@ FROM organization
 ORDER BY ${orderFields} ${sort}`;
 
 export default class Organization {
-  static listAll = co.wrap(function* listAllGenerator(orderFields = 'name', sort = 'asc') {
+  static listAll = co.wrap(function* listAllGenerator(orderFields = 'name', sort = 'asc', options) {
     try {
       const organizations = [];
       const requestWrapper = new Promise((resolve, reject) => {
@@ -39,7 +39,7 @@ export default class Organization {
           }
         };
 
-        getPool().query(selectAllOrganizationsQuery(orderFields, sort), resultCallback);
+        getPool(typeof options === 'object' ? { ...options } : options).query(selectAllOrganizationsQuery(orderFields, sort), resultCallback);
       });
 
       const organizationRows = yield requestWrapper;
@@ -47,8 +47,8 @@ export default class Organization {
       _.map(organizationRows, organizationRow => organizations.push({
         id: null,
         ...organizationRow,
-        createdAt: moment(organizationRow.createdAt).unix(),
-        updateAt: moment(organizationRow.updatedAt).unix(),
+        createdAt: moment(organizationRow.createdAt).valueOf(),
+        updateAt: moment(organizationRow.updatedAt).valueOf(),
       }));
 
       return organizations;
@@ -58,7 +58,7 @@ export default class Organization {
     }
   });
 
-  static findWithId = co.wrap(function* findWithIdGenerator(id) {
+  static findWithId = co.wrap(function* findWithIdGenerator(id, options) {
     try {
       const organizations = [];
       const requestWrapper = new Promise((resolve, reject) => {
@@ -70,16 +70,16 @@ export default class Organization {
           }
         };
 
-        getPool().query(selectOrganizationWithIdQuery(id), resultCallback);
+        getPool(typeof options === 'object' ? { ...options } : options).query(selectOrganizationWithIdQuery(id), resultCallback);
       });
 
       const organizationRows = yield requestWrapper;
-      console.log(`${organizationRows.length} organizations(s) matching query`);
+      console.log(`${organizationRows.length} organizations matching query`);
       _.map(organizationRows, organizationRow => organizations.push({
         id: null,
         ...organizationRow,
-        createdAt: moment(organizationRow.createdAt).unix(),
-        updatedAt: moment(organizationRow.updatedAt).unix(),
+        createdAt: moment(organizationRow.createdAt).valueOf(),
+        updatedAt: moment(organizationRow.updatedAt).valueOf(),
       }));
       return organizations[0];
     } catch (queryError) {

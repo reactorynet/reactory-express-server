@@ -30,10 +30,6 @@ const AssessmentSchema = mongoose.Schema({
     type: ObjectId,
     ref: 'Survey',
   },
-  leadershipBrandId: {
-    type: ObjectId,
-    ref: 'LeadershipBrand',
-  },
   ratings: [
     {
       qualityId: { type: ObjectId },

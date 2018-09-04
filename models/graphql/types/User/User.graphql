@@ -3,7 +3,8 @@ enum Role {
     ADMIN,
     ORG_ADMIN,
     FACILITATOR,        
-    USER
+    USER,
+    HOD
 }
 
 enum AuthProvider {
@@ -45,7 +46,7 @@ type User {
 
 extend type Query {
   allUsers: [User],
-  userWithId: User!
+  userWithId(id: String!): User!
   authenticatedUser: User  
 }
 
@@ -60,17 +61,21 @@ input CreateUserInput {
 }
 
 input UpdateUserInput {
+  id: String
   email: String
+  avatar: String
   firstName: String
-  lastName: String  
-  authProvider: AuthProvider!
-  providerId: String!
+  lastName: String
+  authProvider: String
+  businessUnit: String
+  providerId: String
+  lastLogin: Date
 }
 
 extend type Mutation {
   createUser(input: CreateUserInput!, organizationId: String!): User
-  updateUser(id: ObjID!, input: UpdateUserInput!): User
-  removeUser(id: ObjID!): Boolean
+  updateUser(id: String!, profileData: UpdateUserInput!): User
+  removeUser(id: String!): Boolean
 }
 
 extend type Subscription {

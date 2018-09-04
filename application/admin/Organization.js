@@ -4,11 +4,41 @@
  * Author: Werner Weber
  */
 import co from 'co';
-import _ from 'lodash';
+import dotenv from 'dotenv';
+import _, { isNil, find, isNaN } from 'lodash';
+import uuid from 'uuid';
+import { existsSync, copyFileSync, mkdirSync } from 'fs';
 import { ObjectId } from 'mongodb';
-import { Organization } from '../../models';
-import * as legacy from '../../database';
+import {
+  Organization,
+  User,
+  LeadershipBrand,
+  ReactoryClient,
+  Survey,
+  Scale,
+} from '../../models';
+import { createUserForOrganization, setPeersForUser } from './User';
+import SurveyService from './Survey';
+import legacy from '../../database';
+import { getScaleForKey } from '../../data/scales';
 import { OrganizationValidationError, OrganizationNotFoundError, OrganizationExistsError } from '../../exceptions';
+import moment, { isMoment } from 'moment';
+
+
+dotenv.config();
+
+
+const {
+  APP_DATA_ROOT,
+  LEGACY_APP_DATA_ROOT,
+} = process.env;
+
+const {
+  getLeadershipBrand,
+  createLeadershipBrand,
+  createSurvey,
+} = SurveyService;
+
 
 export class MigrationResult {
   constructor() {
@@ -18,48 +48,277 @@ export class MigrationResult {
     this.brandErrors = [];
     this.employeesMigrated = 0;
     this.employeeErrors = [];
+    this.surveysMigrated = 0;
+    this.surveyErrors = [];
+    this.communicationsMigrated = 0;
+    this.communicationsErrors = [];
   }
 }
+
+
 /**
  * migrates an organization from a legacy version to the new
  * mongo stores.
  */
-export const migrateOrganization = co.wrap(function* migrateGenerator(id, options) {
+export const migrateOrganization = co.wrap(function* migrateGenerator(id, options = { clientKey: 'plc', dataPath: LEGACY_APP_DATA_ROOT }) {
   try {
+    // lookup legacy org
+    const lorg = yield legacy.Organization.findWithId(id, options);
     const result = new MigrationResult();
-    result.organization = yield Organization.findOne({ legacyId: id });
-    if (result.organization !== null) {
-      result.organizationErrors.push('organization already exists with legacy id - skipping');
-    } else {
-      // lookup legacy org
-      const lorg = yield legacy.Organization.findWithId(id);
-      if (lorg === null) {
-        result.organizationErrors.push('legacy organization with that id not found');
-        return result;
-      }
-      
-      if(options.dataPath && lorg.logo) {
-        
-      }
+    if (isNil(lorg)) {
+      result.organizationErrors.push('legacy organization with that id not found');
+      return result;
+    }
 
-      result.organization = yield new Organization({ ...lorg }).save();
+    result.organization = yield Organization.findOne({ legacyId: id });
+    let isNew = isNil(result.organization) === true;
+    // check by code, company could have been created under different client key
+    if (isNew) result.organization = yield Organization.findOne({ code: lorg.code });
+    isNew = isNil(result.organization) === true;
+
+    if (isNew === true) result.organization = yield new Organization({ ...lorg }).save();
+    if (isNil(lorg.logo) === false) {
+      try {
+        console.log('Organization has logo file, checking if exists');
+        const sourceFile = `${options.dataPath}/organization/${lorg.legacyId}/${lorg.logo}`;
+        if (existsSync(sourceFile) === true) {
+          console.log('Found legacy logo file, copying and renaming to CDN');
+          if (!existsSync(`${APP_DATA_ROOT}/organization/${result.organization.id}/`)) mkdirSync(`${APP_DATA_ROOT}/organization/${result.organization.id}/`);
+          copyFileSync(sourceFile, `${APP_DATA_ROOT}/organization/${result.organization.id}/${lorg.logo}`);
+        } else console.log(`File '${sourceFile}' not found`);
+      } catch (error) {
+        result.organizationErrors.push(`Could not copy the source file for the organization: ${error.message}`);
+      }
     }
 
     if (result.organization === null) {
       result.organizationErrors.push('Could not set/load existing organization');
     }
 
+    const now = new Date().valueOf();
     if (options.migrateBrands === true) {
-      result.brandsMigrated = 1;
-      // const organizationBrands = yield legacy.Survey.listBrandsForOrganization(id);
+      console.log('Migrating Brands, for organization');
+      result.brandsMigrated = 0;
+      const organizationBrands = yield legacy.Survey.listBrandsForOrganization(id, options);
+      for (let lbi = 0; lbi < organizationBrands.length; lbi += 1) {
+        let scaleRef = yield Scale.findOne({ legacyId: organizationBrands[lbi].legacyScaleId }).then();
+        if (isNil(scaleRef) === true) {
+          result.brandErrors.push(`Scale Reference is invalid ${organizationBrands[lbi].legacyScaleId}`);
+          scaleRef = yield Scale.findOne({ key: 'default' }).then();
+        }
+
+        const brandInput = {
+          ...organizationBrands[lbi],
+          scale: scaleRef._id, //eslint-disable-line
+          organization: result.organization._id,
+          createdAt: now,
+          updatedAt: now,
+        };
+        const existing = yield LeadershipBrand.findOne({ legacyId: brandInput.legacyId, organization: result.organization._id }).then()
+        if (isNil(existing) === true) {
+          try {
+            const brand = yield createLeadershipBrand(brandInput);
+            result.brandsMigrated += 1;
+            console.log(`Created new brand ${brand._id}`);
+          } catch (createError) {
+            console.error(createError.message);
+            result.brandErrors.push(createError.message);
+          }
+        } else {
+          console.log('Brand already imported');
+        }
+      }
     }
 
     if (options.migrateEmployees === true) {
-      result.employeesMigrated = 1;
-      const employees = yield legacy.User.listAllForOrganization(id);
-      _.map(employees, (employee)=>{
-        //migrate employee
-      });
+      result.employeesMigrated = 0;
+      const employees = yield legacy.Users.listAllForOrganization(id, options);
+      const employeePeers = {};
+      for (let eidx = 0; eidx < employees.length; eidx += 1) {
+        try {
+          const employee = { ...employees[eidx], createdAt: now, updatedAt: now };
+          const createResult = yield createUserForOrganization(employee, uuid(), result.organization);
+          if (createResult.user) {
+            const peerRows = yield legacy.Users.listPeersForUsers(createResult.user.legacyId, result.organization.legacyId, options);
+            console.log(`Found ${peerRows.length} peer rows`);
+            if (peerRows.length && peerRows.length > 0) {
+              const peers = [];
+              let lastUpdated = null;
+              let allowEdit = null;
+              let confirmDate = null;
+
+              for (let pid = 0; pid < peerRows.length; pid += 1) {
+                lastUpdated = lastUpdated !== null ?
+                  lastUpdated :
+                  moment(peerRows[pid].lastUpdated).valueOf();
+
+                allowEdit = allowEdit !== null ?
+                  allowEdit :
+                  peerRows[pid].allowEdit === true;
+
+                confirmDate = confirmDate !== null ?
+                  confirmDate :
+                  moment(peerRows[pid].confirmDate).valueOf();
+
+                const peer = {
+                  user: peerRows[pid].id || null,
+                  relationship: 'report',
+                  legacyPeerId: peerRows[pid].legacyPeerId,
+                  isInternal: peerRows[pid].isInternal === 1,
+                };
+
+                switch (peerRows[id].relation) {
+                  case 'PEER': peer.relationship = 'peer'; break;
+                  case 'SUPERVISOR': peer.relationship = 'manager'; break;
+                  case 'REPORT':
+                  default: peer.relationship = 'report'; break;
+                }
+                peers.push(peer);
+              }
+              // build employee-peers indexed object
+              // index is based on objectId
+              employeePeers[createResult.user.legacyId] = {
+                user: createResult.user._id || undefined, // eslint-disable-line
+                legacyId: createResult.user.legacyId, // used for lookup
+                lastUpdated,
+                organization: result.organization._id || undefined, // eslint-disable-line
+                allowEdit,
+                confirmDate,
+                peers,
+              };
+            }
+          }
+          result.employeesMigrated += 1;
+        } catch (createError) {
+          result.employeeErrors.push(createError.message);
+          console.error(createError);
+        }
+      }
+
+      if (Object.keys(employeePeers).length > 0) {
+        // we have employee peers and all users
+        // should be created for this organization
+        // debugger; // eslint-disable-line
+        const userKeys = Object.keys(employeePeers);
+        for (let userIdIndex = 0; userIdIndex < userKeys.length; userIdIndex += 1) {
+          try {
+            const userId = userKeys[userIdIndex]; // legacyId for user
+            const peers = [];
+            if (employeePeers[userId].peers.length > 0) {
+              for (let pIndex = 0; pIndex < employeePeers[userId].peers.length; pIndex += 1) {
+                if (employeePeers[userId].peers[pIndex].user === null &&
+                  isNil(employeePeers[userId].peers[pIndex].legacyPeerId) === false) {
+                  const peerFound = yield User.findOne({
+                    legacyId: employeePeers[userId].peers[pIndex].legacyPeerId,
+                  }).then();
+                  if (peerFound) {
+                    peers.push({
+                      ...employeePeers[userId].peers[pIndex],
+                      user: peerFound._id, // eslint-disable-line no-underscore-dangle
+                    });
+                  }
+                } else {
+                  peers.push(employeePeers[userId].peers[pIndex]);
+                }
+              }
+              if (peers.length > 0) {
+                console.log(`Setting ${peers.length} peers for ${userId}`);
+                const organigramEntry = yield setPeersForUser(
+                  { _id: employeePeers[userId].user }, // fake user object, only need the _id,
+                  peers,
+                  result.organization,
+                  employeePeers[userId].allowEdit,
+                  moment(employeePeers[userId].confirmedAt).isMoment ?
+                    moment(employeePeers[userId].confirmedAt).valueOf() :
+                    new Date().valueOf(),
+                );
+                console.log('Created new organigram entry', organigramEntry);
+              } else {
+                console.log(`No Peers for user: ${userId}`);
+              }
+            }
+          } catch (peerSetError) {
+            console.error('PeerSet Error', peerSetError);
+          }
+        }
+      }
+    }
+
+    if (options.migrateSurveys === true) {
+      // migrate survey structure
+      const surveys = yield legacy.Survey.listSurveysForOrganization(id, options);
+      for (let sid = 0; sid < surveys.length; sid += 1) {
+        const existing = yield Survey.findOne({
+          legacyId: surveys[sid].legacyId,
+          organization: result.organization,
+        }).then();
+        if (isNil(existing) === true) {
+          console.log('No survey found matching criteria');
+          surveys[sid].organization = yield Organization.findOne({ legacyId: id }).then();
+          surveys[sid].leadershipBrand = yield LeadershipBrand.findOne({
+            legacyId: surveys[sid].legacyBrandId,
+          }).then();
+          surveys[sid].options = {
+            minAssessmentsCount: surveys[sid].minAssessmentsCount || -1,
+          };
+
+          switch (surveys[sid].surveyType) {
+            case 'fepl': {
+              surveys[sid].surveyType = 'plc';
+              break;
+            }
+            case 'default': {
+              surveys[sid].surveyType = '180';
+              break;
+            }
+            default: {
+              surveys[sid].surveyType = 'default';
+              break;
+            }
+          }
+
+          try {
+            const surveyCreateResult = yield createSurvey(surveys[sid]);
+            console.log(`Created survey with id: ${surveyCreateResult._id} `, surveyCreateResult);
+            result.surveysMigrated += 1;
+          } catch (createSurveyError) {
+            console.error(createSurveyError);
+            result.surveyErrors.push(createSurveyError.message);
+          }
+        } else {
+          console.log(`Already imported surey for organization. Survey Id: ${existing._id}`);
+        }
+      }
+      // migrate survey data
+      /*
+        a.assessor_id as legacyAssessorId,
+        a.employee_id as legacyEmployeeId,
+        a.complete as isComplete,
+        a.valid_from as startDate,
+        a.valid_to as endDate,
+        a.scale_id as legacyScaleId,
+        ab.survey_id as legacySurveyId,
+      */
+      const assessments = yield legacy.Survey.listAssessmentsForOrganization(id, options);
+      for (let aid = 0; aid < assessments.length; aid += 1) {
+        assessments[aid].organization = result.organization._id; //eslint-disable-line
+        assessments[aid].client = (yield ReactoryClient.findOne({ key: options.clientKey }).then())._id; //eslint-disable-line
+        assessments[aid].delegate = (yield User.findOne({ legacyId: assessments[aid].legacyEmployeeId }).then())._id; //eslint-disable-line
+        assessments[aid].assessor = (yield User.findOne({ legacyId: assessments[aid].legacyAssessorId }).then())._id; //eslint-disable-line
+        assessments[aid].survey = (yield Survey.findOne({ legacyId: assessments[aid].legacySurveyId }).then())._id //eslint-disable-line
+        assessments[aid].startDate = moment(assessments[aid].startDate).valueOf();
+        assessments[aid].endDate = moment(assessments[aid].endDate).valueOf();
+
+        delete assessments[aid].legacyEmployeeId;
+        delete assessments[aid].legacyAssessorId;
+        delete assessments[aid].legacySurveyId;
+        delete assessments[aid].legacyScaleId;
+        console.log('Assessment transform', assessments[aid]);
+      }
+    }
+
+    if (options.migrateCommunications === true) {
+      // migrate email content
     }
 
     return result;
@@ -67,6 +326,52 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
     console.error('migrate error', migrateError);
     throw migrateError;
   }
+});
+
+
+export class CoreMigrationResult {
+  constructor() {
+    this.errors = [];
+    this.scalesMigrated = 0;
+    this.organizationMigrateResults = [];
+  }
+}
+
+export const migrateCoreData = co.wrap(function* migrateCoreGenerator(options = { clientKey: 'plc', dataPath: LEGACY_APP_DATA_ROOT }) {
+  const coreMigrateResult = new CoreMigrationResult();
+  try {
+    // migrate scales    
+    const scales = yield legacy.Survey.listScales(options);
+    if (scales.length > 0) {
+      for (let scaleId = 0; scaleId < scales.length; scaleId += 1) {        
+        const scale = yield Scale.findOneAndUpdate({ legacyId: scales[scaleId].legacyId }, scales[scaleId], { upsert: true });
+        console.log('Converting Scale', scale);
+        if (isNil(scale) === true) coreMigrateResult.errors.push(`Could not create scale for ${scales[scaleId].legacyId}`);
+        else coreMigrateResult.scalesMigrated += 1;
+      }
+    }
+  } catch (coreMigrateExcetion) {
+    coreMigrateResult.errors.push(`An error occured during core data migration ${coreMigrateExcetion.message}`);
+  }
+
+  if (options.migrateOrganizations.length > 0) {
+    let ids = options.migrateOrganizations || [];
+    if (ids.length === 1 && ids[0] === -1) {
+      ids = [];
+      const orgs = yield legacy.Organization.listAll('name', 'asc', options);
+      orgs.forEach((org) => { ids.push(org.legacyId); });
+    }
+
+    for (let oi = 0; oi < ids.length; oi += 1) {
+      const orgId = ids[oi];
+      if (isNaN(orgId) === false) {
+        const result = yield migrateOrganization(orgId, options);
+        coreMigrateResult.organizationMigrateResults.push(result);
+      }
+    }
+  }
+
+  return coreMigrateResult;
 });
 
 export const createOrganization = (organizationInput) => {
@@ -115,6 +420,7 @@ export const findById = (id) => {
 };
 
 export default {
+  migrateCoreData,
   migrateOrganization,
   createOrganization,
   findOrCreate,

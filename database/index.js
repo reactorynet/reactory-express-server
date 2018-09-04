@@ -1,9 +1,9 @@
 import Organization from './Organization';
-import User from './User';
+import Users from './Users';
 import Survey from './Survey';
 
 export default {
   Organization,
-  User,
+  Users,
   Survey,
 };

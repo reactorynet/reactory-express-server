@@ -4,6 +4,7 @@ const { ObjectId } = mongoose.Schema.Types;
 
 const SurveySchema = new mongoose.Schema({
   id: ObjectId,
+  legacyId: String,
   organization: {
     type: ObjectId,
     required: true,
@@ -21,8 +22,13 @@ const SurveySchema = new mongoose.Schema({
   surveyType: {
     type: String,
     lowercase: true,
-    enum: ['180', '360', 'plc'],
+    enum: ['180', '360', 'plc', 'custom'],
     required: true,
+  },
+  surveyModule: {
+    type: String,
+    lowercase: true,
+    required: false,
   },
   startDate: {
     type: Date,
@@ -38,6 +44,13 @@ const SurveySchema = new mongoose.Schema({
     trim: true,
     enum: ['live', 'test'],
   },
+  status: {
+    type: String,
+    lowercase: true,
+    trim: true,
+    enum: ['not-ready', 'ready', 'launched', 'paused', 'complete'],
+  },
+  options: { },
   calendar: [
     {
       entryType: {

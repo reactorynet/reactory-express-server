@@ -10,6 +10,7 @@ import assessmentResolvers from './AssessmentResolver';
 import reactoryClientResolver from './ReactoryClient';
 import leadershipBrandResolver from './LeadershipBrandResolver';
 import surveyResolver from './SurveyResolver';
+import scaleResolver from './ScaleResolver';
 
 const resolvers = {
   Query: {
@@ -68,6 +69,7 @@ merge(
   reactoryClientResolver,
   leadershipBrandResolver,
   surveyResolver,
+  scaleResolver,
 );
 
 

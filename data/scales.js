@@ -1,7 +1,9 @@
+import { find } from 'lodash';
+
 export const Scales = [
   {
-    key: 'default',
-    title: 'Default Scale',
+    key: 'towerstone',
+    title: 'TowerStone Leadership Centre',
     entries: [
       { rating: 0, description: 'Not to my knowledge (have not seen this behaviour displayed).' },
       { rating: 1, description: 'Seldom (displays this behaviour every now and then)' },
@@ -26,9 +28,13 @@ export const Scales = [
 ];
 
 export const clientScales = [
-  { clientKey: 'towerstone', scaleKey: 'default' },
+  { clientKey: 'towerstone', scaleKey: 'towerstone' },
   { clientKey: 'plc', scaleKey: 'plc' },
 ];
+
+export const getScaleForKey = (key) => {
+  return find(Scales, { key });
+};
 
 export default {
   Scales,

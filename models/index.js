@@ -7,6 +7,7 @@ import OrganizationModel from './schema/Organization';
 import OrganigramModel from './schema/Organigram';
 import ReactoryClientModel from './schema/ReactoryClient';
 import SurveyModel from './schema/Survey';
+import ScaleModel from './schema/Scale';
 import TemplateModel from './schema/Template';
 import TeamModel from './schema/Team';
 import UserModel from './schema/User';
@@ -22,7 +23,7 @@ export const LeadershipBrand = LeadershipBrandModel;
 export const EmailQueue = EmailQueueModel;
 export const Team = TeamModel;
 export const Survey = SurveyModel;
-
+export const Scale = ScaleModel;
 const models = {
   Application,
   EmailQueue,
@@ -32,6 +33,7 @@ const models = {
   Organigram,
   ReactoryClient,
   Survey,
+  Scale,
   Team,
   Template,
   User,

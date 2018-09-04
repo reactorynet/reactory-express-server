@@ -4,8 +4,9 @@ type ScaleEntry {
 }
 
 type Scale {
+    id: ObjID!
     key: String    
-    title: String!
+    title: String
     entries: [ScaleEntry]
 }
 
@@ -72,6 +73,7 @@ input BrandInput {
 extend type Query {
     brandListForOrganization(organizationId: String!): [LeadershipBrand]
     brandWithId(brandId: String!): LeadershipBrand
+    allScales: [Scale]
 }
 
 extend type Mutation {

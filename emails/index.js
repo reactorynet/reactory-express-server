@@ -157,10 +157,10 @@ export const installDefaultEmailTemplates = () => {
                 const newTemplate = new Template({ ...template, client: client._id, elements: [] });
                 for (let ei = 0; ei <= template.elements.length; ei += 1) {
                   const element = new Template({ ...template.elements[ei], client: client._id, elements:[] });
-                  element.save().then((elementSaved) => {
-                    newTemplate.elements.push(elementSaved._id);
-                    newTemplate.save().then();
-                  });
+                  //element.save().then((elementSaved) => {
+                  //  newTemplate.elements.push(elementSaved._id);
+                  //  newTemplate.save().then();
+                  //});
                 }
                 installed.push(newTemplate);
                 resolve(installed);

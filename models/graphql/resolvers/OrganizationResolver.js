@@ -1,8 +1,8 @@
 import { ObjectId } from 'mongodb';
 import moment from 'moment';
-import { Organization as OrganizationLegacy } from '../../../database';
+import legacy from '../../../database';
 import { Organization } from '../../index';
-import { migrateOrganization } from '../../../application/admin/Organization';
+import { migrateOrganization, migrateCoreData } from '../../../application/admin/Organization';
 import * as UserService from '../../../application/admin/User';
 
 const organizationResolver = {
@@ -23,11 +23,11 @@ const organizationResolver = {
   Query: {
     allOrganizations(obj, args, context, info) {
       console.log('listing organizations', {
-        obj, args, context, info,
+        obj, args, context, info
       });
 
       if (args.legacy === true) {
-        return OrganizationLegacy.listAll();
+        return legacy.Organization.listAll();
       }
 
       return Organization.find({}).then();
@@ -52,9 +52,10 @@ const organizationResolver = {
     },
     migrateOrganization(obj, arg, context, info) {
       console.log('Migrating organization data', {
-        obj, arg, context, info,
+        obj, arg, context, info, partner: global.partner,
       });
       const { id, options } = arg;
+      if (!options.clientKey) options.clientKey = global.partner.key;
       return migrateOrganization(id, options);
     },
     updateOrganization(obj, arg, context, info) {
@@ -71,6 +72,11 @@ const organizationResolver = {
         return err;
       });
     },
+    migrateCore(obj, arg, context, info) {
+      const { options } = arg;
+      if (!options.clientKey) options.clientKey = global.partner.key;
+      return migrateCoreData(options);
+    }
   },
 };
 

@@ -1,5 +1,6 @@
 enum AssessmentType {
-    TOWERSTONE_LEADERSHIP,
+    TOWERSTONE_180,
+    TOWERSTONE_360,
     PLC,
     CUSTOM
 }

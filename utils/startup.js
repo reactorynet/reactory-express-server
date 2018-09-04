@@ -3,7 +3,7 @@ import { Application, User, ReactoryClient } from '../models';
 import { installDefaultEmailTemplates } from '../emails';
 import data from '../data';
 
-const { clients } = data;
+const { clients, users } = data;
 
 const startup = () => {
   console.log('Startup initializing', Application, User);
@@ -52,11 +52,40 @@ const startup = () => {
         });
       } else {
         resolve(result);
-      }      
+      }
     }).catch((error) => {
       reject(error);
     });
   });
+
+  /**
+   * Returns an array of promises
+   */
+  const testUsersPromise = () => {
+    return users.map((user) => {
+      return new Promise((reject, resolve) => {
+        User.findOne({ email: user.email }).then((result) => {
+          if (result === null) {
+            const newUser = new User({
+              ...user,
+              lastLogin: new Date(),
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+            newUser.setPassword(user.password || 'P@ssw0rd_99!');
+            newUser.save(function(err){ //eslint-disable-line
+              if (err) reject(err);
+              resolve(newUser);
+            });
+          } else {
+            resolve(result);
+          }
+        }).catch((error) => {
+          reject(error);
+        });
+      });
+    });
+  };
 
   const clientsPromise = new Promise((resolve, reject) => {
     try {
@@ -85,11 +114,19 @@ const startup = () => {
       systemUserPromise.then((userResponse) => {
         clientsPromise.then((done) => {
           installDefaultEmailTemplates().then((installedTemplates) => {
-            resolve({
-              application: appResult,
-              system_user: userResponse,
-              clientsLoaded: done,
-              installedTemplates,
+            const complete = () => {
+              resolve({
+                application: appResult,
+                system_user: userResponse,
+                clientsLoaded: done,
+                installedTemplates,
+              });
+            };
+            Promise.all(testUsersPromise()).then(() => {
+              complete();
+            }).catch((error) => {
+              console.error(error);
+              complete();
             });
           }).catch((templateInstallError) => {
             reject(templateInstallError);

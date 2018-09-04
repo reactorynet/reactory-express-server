@@ -44,8 +44,10 @@ input UpdateOrganizationInput {
 }
 
 input MigrationOrganizationOptions {
-  migrateBrands: Boolean,
-  migrateEmployees: Boolean,
+  migrateBrands: Boolean
+  migrateEmployees: Boolean
+  migrateSurveys: Boolean
+  migrateCommunications: Boolean
   dataPath: String
 }
 
@@ -56,6 +58,25 @@ type MigrationResult {
   brandErrors: [String]
   employeesMigrated: Int
   employeeErrors: [String]
+  surveysMigrated: Int
+  surveyErrors: [String]
+  communicationsMigrated: Int,
+  communicationsErrors: [String]
+}
+
+input CoreMigrationOptions {
+  migrateOrganizations: [Int],
+  migrateBrands: Boolean
+  migrateEmployees: Boolean
+  migrateSurveys: Boolean
+  migrateCommunications: Boolean
+  dataPath: String
+}
+
+type CoreMigrationResult {
+  errors: [String]
+  scalesMigrated: Int,
+  organizationMigrateResults: [MigrationResult]
 }
 
 extend type Query {
@@ -69,4 +90,5 @@ extend type Mutation {
   createOrganization(input: CreateOrganizationInput!): Organization
   updateOrganization(id: String!, input: UpdateOrganizationInput!): Organization
   migrateOrganization(id: String!, options: MigrationOrganizationOptions!): MigrationResult
+  migrateCore(options: CoreMigrationOptions): CoreMigrationResult
 }

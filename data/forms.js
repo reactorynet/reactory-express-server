@@ -676,10 +676,43 @@ const productIdeasForm = {
   },
 };
 
+const forgotPasswordForm = {
+  id: 'forgot-password',
+  uiFramework: 'bootstrap',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: smartAdminResources,
+  title: 'Forgot Password',
+  tags: ['forgot password', 'user account'],
+  schema: {
+    title: 'Forgot Password',
+    description: 'Trigger Password Reset',
+    type: 'object',
+    required: [
+      'email',
+    ],
+    properties: {
+      email: {
+        type: 'string',
+        title: 'Email Address',
+      },
+    },
+  },
+  uiSchema: {
+    email: {
+      'ui:autofocus': true,
+      'ui:emptyValue': '',
+    },
+  },
+  layout: {
+
+  },
+};
+
 export default [
   productIdeas,
   productIdeasForm,
   defaultForm,
   arrayForm,
   complexForm,
+  forgotPasswordForm,
 ];

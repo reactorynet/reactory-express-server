@@ -21,13 +21,16 @@ type Survey {
   organization: Organization
   title: String!
   surveyType: String!
-  startDate: Date,
-  endDate: Date,
-  mode: String,  
+  startDate: Date
+  endDate: Date
+  mode: String
+  status: String
+  delegates: [User]  
   calendar: [SurveyCalendarEntry]
   timeline: [TimelineEntry]
 }
 
 extend type Query {
   surveysForOrganization(organizationId: String!): [Survey]
+  surveyDetail(surveyId: String!): Survey
 }

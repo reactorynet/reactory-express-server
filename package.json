@@ -49,6 +49,7 @@
     "passport-http": "^0.3.0",
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
+    "png-to-jpeg": "^1.0.1",
     "pug": "^2.0.3",
     "restify": "^7.1.0",
     "schema-inspector": "^1.6.8",
