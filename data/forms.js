@@ -1,3 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config()
+
+const { CDN_ROOT } = process.env;
+
 const bootstrapMaterialResources = [
   {
     framework: 'jquery',
@@ -15,21 +20,21 @@ const bootstrapMaterialResources = [
   },
   {
     framework: 'bootstrap',
-    uri: 'http://localhost:4000/cdn/ui/bootstrap-material-design/css/bootstrap-material-design.css',
+    uri: `${CDN_ROOT}ui/bootstrap-material-design/css/bootstrap-material-design.css`,
     type: 'style',
     async: true,
     name: 'bootstrap_theme',
   },
   {
     framework: 'bootstrap',
-    uri: 'http://localhost:4000/cdn/ui/bootstrap-material-design/js/material.js',
+    uri: `${CDN_ROOT}ui/bootstrap-material-design/js/material.js`,
     type: 'script',
     async: true,
     name: 'bootstrap_theme_js0',
   },
   {
     framework: 'bootstrap',
-    uri: 'http://localhost:4000/cdn/ui/bootstrap-material-design/js/ripples.js',
+    uri: `${CDN_ROOT}ui/bootstrap-material-design/js/ripples.js`,
     type: 'script',
     async: true,
     name: 'bootstrap_theme_js1',
@@ -39,49 +44,49 @@ const bootstrapMaterialResources = [
 const smartAdminResources = [
   {
     framework: 'bootstrap',
-    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/bootstrap.min.css',
+    uri: `${CDN_ROOT}ui/smart-admin/css/bootstrap.min.css`,
     type: 'style',
     async: true,
     name: 'bootstrap_main',
   },
   {
     framework: 'font-awesome',
-    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/font-awesome.min.css',
+    uri: `${CDN_ROOT}ui/smart-admin/css/font-awesome.min.css`,
     type: 'style',
     async: true,
     name: 'font-awesome',
   },
   {
     framework: 'bootstrap-invoice',
-    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/invoice.min.css',
+    uri: `${CDN_ROOT}ui/smart-admin/css/invoice.min.css`,
     type: 'style',
     async: true,
     name: 'bootstrap_invoice',
   },
   {
     framework: 'smart-admin-production',
-    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/smartadmin-production.min.css',
+    uri: `${CDN_ROOT}ui/smart-admin/css/smartadmin-production.min.css`,
     type: 'style',
     async: true,
     name: 'smart_admin_prod',
   },
   {
     framework: 'smart-admin-production-plugins',
-    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/smartadmin-production-plugins.min.css',
+    uri: `${CDN_ROOT}ui/smart-admin/css/smartadmin-production-plugins.min.css`,
     type: 'style',
     async: true,
     name: 'smart_admin_prod_plugins',
   },
   {
     framework: 'smart-admin-react',
-    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/smartadmin-react.css',
+    uri: `${CDN_ROOT}ui/smart-admin/css/smartadmin-react.css`,
     type: 'style',
     async: true,
     name: 'smart_admin_ract',
   },
   {
     framework: 'smart-admin-skins',
-    uri: 'http://localhost:4000/cdn/ui/smart-admin/css/smartadmin-skins.min.css',
+    uri: `${CDN_ROOT}ui/smart-admin/css/smartadmin-skins.min.css`,
     type: 'style',
     async: true,
     name: 'smart_admin_skins',
@@ -564,7 +569,7 @@ const productIdeasForm = {
                 competitorShortfall: {
                   type: 'string',
                   title: 'Competitor Shortfalls',
-                },              
+                },
                 socialMediaReputation: {
                   type: 'object',
                   title: 'Social Media Reputation',
@@ -678,14 +683,14 @@ const productIdeasForm = {
 
 const forgotPasswordForm = {
   id: 'forgot-password',
-  uiFramework: 'bootstrap',
+  uiFramework: 'material',
   uiSupport: ['material', 'bootstrap'],
-  uiResources: smartAdminResources,
+  uiResources: [],
   title: 'Forgot Password',
   tags: ['forgot password', 'user account'],
   schema: {
-    title: 'Forgot Password',
-    description: 'Trigger Password Reset',
+    title: '',
+    description: 'Enter your email address below to start reset',
     type: 'object',
     required: [
       'email',
@@ -708,6 +713,120 @@ const forgotPasswordForm = {
   },
 };
 
+const msTeamsResources = [
+  {
+    framework: 'ms-teams',
+    uri: `${CDN_ROOT}ui/ms-teams/site.css`,
+    type: 'style',
+    async: true,
+    name: 'ms_teams',
+  },
+  {
+    framework: 'ms-teams',
+    uri: `${CDN_ROOT}ui/ms-teams/msteams-16.css`,
+    type: 'style',
+    async: true,
+    name: 'ms_teams',
+  },
+  {
+    framework: 'ms-teams',
+    uri: 'https://statics.teams.microsoft.com/sdk/v1.0/js/MicrosoftTeams.min.js',
+    type: 'script',
+    async: true,
+    name: 'teams_app_script',
+  },
+  {
+    framework: 'ms-teams',
+    uri: `${CDN_ROOT}ui/ms-teams/teamsapp.js`,
+    type: 'script',
+    async: true,
+    name: 'teams_app',
+  },
+];
+
+const msTeamsConfigurationTab = {
+  id: 'ms-teams-config-tab',
+  uiFramework: 'ms-teams',
+  uiSupport: ['material', 'bootstrap', 'ms-teams'],
+  uiResources: msTeamsResources,
+  title: 'Age Of Teams',
+  tags: ['forgot password', 'user account'],
+  schema: {
+    title: 'Age Of Teams - Setup',
+    description: 'Welcome to Age of Teams',
+    type: 'object',
+    required: [
+      'email',
+    ],
+    properties: {
+      email: {
+        type: 'string',
+        title: 'Email Address',
+      },
+    },
+  },
+  uiSchema: {
+    email: {
+      'ui:autofocus': true,
+      'ui:emptyValue': '',
+    },
+  },
+  layout: {
+
+  },
+};
+
+const resetPasswordForm = {
+  id: 'password-reset',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Password Reset',
+  tags: ['forgot password reset', 'user account', 'reset passwords'],
+  schema: {
+    title: '',
+    description: 'Provide a new password and confirm it in order to change your password',
+    type: 'object',
+    required: [
+      'email',
+      'authToken',
+      'password',
+      'confirmPassword',
+    ],
+    properties: {
+      email: {
+        type: 'string',
+        title: 'Email Address',
+        readOnly: true,
+      },
+      authToken: {
+        type: 'string',
+        title: 'Token',
+        readOnly: true,
+      },
+      password: {
+        type: 'string',
+        title: 'Password',
+        format: 'password',
+      },
+      confirmPassword: {
+        type: 'string',
+        title: 'Confirm Password',
+        format: 'password',
+      },
+    },
+  },
+  uiSchema: {
+    email: {
+      'ui:autofocus': true,
+      'ui:emptyValue': '',
+    },
+  },
+  layout: {
+
+  },
+};
+
 export default [
   productIdeas,
   productIdeasForm,
@@ -715,4 +834,6 @@ export default [
   arrayForm,
   complexForm,
   forgotPasswordForm,
+  resetPasswordForm,
+  msTeamsConfigurationTab,
 ];

@@ -1,90 +1,90 @@
 export default [
   {
-    "enabled": true,
-    "view": "activation-email",
-    "kind": "email",    
-    "content": null,
-    "elements": [
+    enabled: true,
+    view: 'activation-email',
+    kind: 'email',
+    content: null,
+    elements: [
       {
-        "enabled": true,
-        "view": "activation-email/subject",
-        "kind": "content",
-        "format": "text",
-        "content": "Welcome to <%= applicationTitle %> <%= user.firstName %>, please confirm your account",
-        "parameters": [ 
+        enabled: true,
+        view: 'activation-email/subject',
+        kind: 'content',
+        format: 'text',
+        content: 'Welcome to <%= applicationTitle %> <%= user.firstName %>, please confirm your account',
+        parameters: [
           {
-            "name": "applicationTitle",
-            "type": "text"
+            name: 'applicationTitle',
+            type: 'text',
           },
           {
-            "name": "user",
-            "type": "User"
-          }
+            name: 'user',
+            type: 'User',
+          },
         ],
-        "elements": []
+        elements: [],
       },
       {
-        "enabled": true,
-        "view": "activation-email/body",
-        "kind": "content",
-        "format": "html",
-        "content": "$ref://defaults/activation/activation-email-body-html.ejs",
-        "parameters": [ 
+        enabled: true,
+        view: 'activation-email/body',
+        kind: 'content',
+        format: 'html',
+        content: '$ref://defaults/activation/activation-email-body-html.ejs',
+        parameters: [
           {
-            "name": "applicationTitle",
-            "propType": "text"
+            name: 'applicationTitle',
+            propType: 'text',
           },
           {
-            "name": "user",
-            "propType": "User"
-          }
+            name: 'user',
+            propType: 'User',
+          },
         ],
-        "elements": []
-      }
-    ]
+        elements: [],
+      },
+    ],
   },
   {
-    "enabled": true,
-    "view": "forgot-password-email",
-    "kind": "email",    
-    "content": null,
-    "elements": [
+    enabled: true,
+    view: 'forgot-password-email',
+    kind: 'email',
+    content: null,
+    elements: [
       {
-        "enabled": true,
-        "view": "forgot-password-email/subject",
-        "kind": "content",
-        "format": "text",
-        "content": "Follow the steps below to reset your password for <%= applicationTitle %>.",
-        "parameters": [ 
+        enabled: true,
+        view: 'forgot-password-email/subject',
+        kind: 'content',
+        format: 'text',
+        content: 'Follow the steps below to reset your password for <%= applicationTitle %>.',
+        parameters: [
           {
-            "name": "applicationTitle",
-            "type": "text"
-          }
+            name: 'applicationTitle',
+            type: 'text',
+          },
         ],
-        "elements": []
+        elements: [],
       },
       {
-        "enabled": true,
-        "view": "forgot-password-email/body",
-        "kind": "content",
-        "format": "html",
-        "content": "$ref://defaults/forgot/forgot-password-body-html.ejs",
-        "parameters": [ 
+        enabled: true,
+        view: 'forgot-password-email/body',
+        kind: 'content',
+        format: 'html',
+        content: '$ref://defaults/forgot/forgot-password-body-html.ejs',
+        parameters: [
           {
-            "name": "applicationTitle",
-            "propType": "text"
+            name: 'applicationTitle',
+            propType: 'text',
           },
           {
-            "name": "user",
-            "propType": "User"
+            name: 'user',
+            propType: 'User',
           },
           {
-            "name": "resetLink",
-            "propType": "text"
-          }
+            name: 'resetLink',
+            propType: 'text',
+          },
         ],
-        "elements": []
-      }
-    ]
-  }
-]
+        elements: [],
+      },
+    ],
+  },
+];

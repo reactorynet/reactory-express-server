@@ -47,7 +47,8 @@ type User {
 extend type Query {
   allUsers: [User],
   userWithId(id: String!): User!
-  authenticatedUser: User  
+  authenticatedUser: User,
+  userInbox(id: String, sort: String): [Email]  
 }
 
 input CreateUserInput {
@@ -72,10 +73,17 @@ input UpdateUserInput {
   lastLogin: Date
 }
 
+input UpdatePasswordInput {  
+  password: String
+  confirmPassword: String
+  authToken: String
+}
+
 extend type Mutation {
   createUser(input: CreateUserInput!, organizationId: String!): User
   updateUser(id: String!, profileData: UpdateUserInput!): User
   removeUser(id: String!): Boolean
+  setPassword(input: UpdatePasswordInput!): User
 }
 
 extend type Subscription {

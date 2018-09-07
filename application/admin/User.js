@@ -181,7 +181,7 @@ export const registerUser = (user) => {
 
 export const sendResetPasswordEmail = (user, partner, options) => {
   console.log('sendResetPasswordEmail', { user, partner, options });
-  return emails.sendForgotPasswordEmail(user);
+  return emails.sendForgotPasswordEmail(user, null);
 };
 
 /**

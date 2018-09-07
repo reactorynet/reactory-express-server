@@ -8,6 +8,11 @@ scalar Date
 type ApiStatus {
     when: Date!
     status: String!
+    firstName: String
+    lastName: String
+    avatar: String
+    email: String
+    id: String
 }
 
 type Query {    
@@ -25,24 +30,24 @@ type Mutation {
 `];
 
 const typeImports = [
-    'System/ReactoryClient',
-    'User/User',
-    'Organization/Organization',
-    'Organization/LeadershipBrand',
-    'Survey/Survey',
-    'Survey/Assessment',
+  'System/ReactoryClient',
+  'User/User',
+  'Organization/Organization',
+  'Organization/LeadershipBrand',
+  'Survey/Survey',
+  'Survey/Assessment',
+  'System/Email',
 ];
 
 typeImports.forEach((name) => {
-    try {
-        const fileName = `./${name}.graphql`;
-        let source = fileAsString(require.resolve(fileName));
-        typeDefs.push(`${source}`);
-        console.log(`Loaded ${fileName}...`);
-    } catch (e) {
-        console.log('Error loading type', e);
-    }
-
+  try {
+    const fileName = `./${name}.graphql`;
+    const source = fileAsString(require.resolve(fileName));
+    typeDefs.push(`${source}`);
+    console.log(`Loaded ${fileName}...`);
+  } catch (e) {
+    console.log('Error loading type', e);
+  }
 });
 
 module.exports = typeDefs;

@@ -32,7 +32,22 @@ class AuthConfig {
 
     static JwtAuth = (payload, done) => {
       console.log('JWT Auth executing', payload);
-      return done(null, true);
+      if (payload.exp) {
+        if (moment(payload.exp).isBefore(moment())) {
+          console.log('token expired');
+          return done(null, false);
+        }
+      } else return done(null, false);
+
+      if (payload.userId) {
+        User.findById(payload.userId).then((userResult) => {
+          if (isNil(userResult)) {
+            return done(null, false);
+          }
+          global.user = userResult;
+          return done(null, true);
+        });
+      } else return done(null, false);      
     }
 
     static jwtMake = (payload) => { return jwt.encode(payload, jwtSecret); };

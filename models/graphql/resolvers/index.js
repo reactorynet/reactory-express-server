@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
-import { merge } from 'lodash';
+import { merge, isNil } from 'lodash';
 import moment from 'moment';
 
 import userResolvers from './UserResolver';
@@ -14,10 +14,16 @@ import scaleResolver from './ScaleResolver';
 
 const resolvers = {
   Query: {
-    apiStatus: () => {
+    apiStatus: (obj, args, context, info) => {
+      const { user } = global;
       return {
         when: moment(),
         status: 'API OK',
+        firstName: isNil(user) === false ? user.firstName : 'An',
+        lastName: isNil(user) === false ? user.lastName : 'Anon',
+        avatar: isNil(user) === false ? user.avatar : null,
+        email: isNil(user) === false ? user.email : null,
+        id: isNil(user) === false ? user._id : null,
       };
     },
   },
@@ -50,7 +56,11 @@ const resolvers = {
       return moment(value); // value from the client
     },
     serialize(value) {
-      return value.format(); // value sent to the client
+      if (isNil(value) === true) return null;
+      if (moment.isMoment(value) === true) return value.format();
+      if (moment.isMoment(moment(value)) === true) return moment(value).format();
+      console.warn('type not supported', value);
+      return null;
     },
     parseLiteral(ast) {
       if (ast.kind === Kind.INT) {

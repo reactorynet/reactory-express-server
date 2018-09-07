@@ -28,6 +28,7 @@ export class RecordNotFoundError extends ApiError {
   constructor(message, recordType = 'General', meta =  { }) {
     super(message, meta);
     this.RecordType = recordType;
+    this.code = `${recordType.toUpperCase()}-404`;
   }
 }
 

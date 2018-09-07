@@ -16,6 +16,10 @@ const EmailQueueSchema = mongoose.Schema({
   archived: Boolean,
   createdAt: Date,
   format: String,
+  client: {
+    type: ObjectId,
+    ref: 'ReactoryClient',
+  },
   user: {
     type: ObjectId,
     ref: 'User',

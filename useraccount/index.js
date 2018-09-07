@@ -52,13 +52,12 @@ router.post('/register', (req, res) => {
 
 router.post('/forgot', (req, res) => {
   const { email } = req.body;
-  Admin.User.User.findOne({ email }).then((user) => {    
+  Admin.User.User.findOne({ email }).then((user) => {
     if (user === null) res.status(404).send(new UserNotFoundException(`Could not find a user with email ${email}`, { email, error: 'No user' }));
-
     Admin.User.sendResetPasswordEmail(user, global.partner, { delivery: moment(), format: 'html' }).then(() => {
       res.status(200).send({ message: `A reset email has been sent to ${email}` });
     }).catch((sendError) => {
-      res.status(500).send(new SystemError('Something went wrong trying to send you a reset email. We are working on it, please try again in a moment', { error: sendError }));
+      res.status(500).send(sendError);
     });
   }).catch((findError) => {
     res.status(404).send(new UserNotFoundException(`Could not find a user with email ${email}`, { email, error: findError.message }));
