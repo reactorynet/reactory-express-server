@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
-dotenv.config()
+
+dotenv.config();
 
 const { CDN_ROOT } = process.env;
 
@@ -689,7 +690,7 @@ const forgotPasswordForm = {
   title: 'Forgot Password',
   tags: ['forgot password', 'user account'],
   schema: {
-    title: '',
+    title: 'Forgot Password',
     description: 'Enter your email address below to start reset',
     type: 'object',
     required: [
@@ -706,6 +707,62 @@ const forgotPasswordForm = {
     email: {
       'ui:autofocus': true,
       'ui:emptyValue': '',
+    },
+  },
+  layout: {
+
+  },
+};
+
+const messageForm = {
+  id: 'message-form',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Message Form',
+  tags: ['Message Form'],
+  schema: {
+    title: 'Message',
+    description: '',
+    type: 'object',
+    required: [
+      'message',
+    ],
+    properties: {
+      title: {
+        type: 'string',
+        title: 'Title',
+      },
+      message: {
+        type: 'string',
+        title: 'Message',
+      },
+      buttons: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            route: {
+              type: 'string',
+            },
+            title: {
+              type: 'string',
+            },
+            icon: {
+              type: 'string',
+            },
+          },
+        },
+      },
+    },
+  },
+  uiSchema: {
+    title: {
+      'ui:autofocus': true,
+      'ui:emptyValue': '',
+    },
+    message: {
+
     },
   },
   layout: {
@@ -751,22 +808,33 @@ const msTeamsConfigurationTab = {
   uiResources: msTeamsResources,
   title: 'Age Of Teams',
   tags: ['forgot password', 'user account'],
+  sidebar: {
+    hide: true,
+  },
+  header: {
+    hide: true,
+  },
+  components: ['ms-teams-config-page'],
   schema: {
     title: 'Age Of Teams - Setup',
     description: 'Welcome to Age of Teams',
     type: 'object',
     required: [
-      'email',
+      'tabChoice',
     ],
     properties: {
-      email: {
+      tabChoice: {
         type: 'string',
-        title: 'Email Address',
+        title: 'Select Tab',
+        enum: [
+          'Tasks',
+          'Kudos',
+        ],
       },
     },
   },
   uiSchema: {
-    email: {
+    tabChoice: {
       'ui:autofocus': true,
       'ui:emptyValue': '',
     },
@@ -817,9 +885,14 @@ const resetPasswordForm = {
     },
   },
   uiSchema: {
-    email: {
+    password: {
       'ui:autofocus': true,
-      'ui:emptyValue': '',
+      'ui:widget': 'password',
+      'ui:help': 'Ensure your password is at least 8 characters.',
+    },
+    confirmPassword: {
+      'ui:widget': 'password',
+      'ui:help': 'Ensure both passwords match',
     },
   },
   layout: {
@@ -832,6 +905,7 @@ export default [
   productIdeasForm,
   defaultForm,
   arrayForm,
+  messageForm,
   complexForm,
   forgotPasswordForm,
   resetPasswordForm,

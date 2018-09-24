@@ -25,6 +25,7 @@ const {
   APP_DATA_ROOT,
   MONGOOSE,
   API_PORT,
+  API_URI_ROOT,
 } = process.env;
 
 const queryRoot = '/api';
@@ -56,7 +57,7 @@ startup().then((startupResult) => {
   app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
   app.listen(API_PORT);
   console.log(`Bots server using ${bots.name}`);
-  console.log(`Running a GraphQL API server at localhost:4000${queryRoot}`);
+  console.log(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
 }).catch((error) => {
   console.error('System Initialized/Ready - failed, exiting app', error);
   process.exit();

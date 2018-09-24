@@ -8,9 +8,9 @@ import AuthConfig from '../../../authentication';
 
 const userResolvers = {
   Email: {
-    id(email){
-      if(email._id) return email._id
-      return 'no-id'
+    id(email) {
+      if (email._id) return email._id;
+      return 'no-id';
     },
     user(obj) {
       try {
@@ -23,7 +23,7 @@ const userResolvers = {
     },
     survey(obj) {
       try {
-        if (obj.survey) return Survey.findById(obj.survey);    
+        if (obj.survey) return Survey.findById(obj.survey);
         return null;
       } catch (surveyError) {
         console.error('Error loading survey');
@@ -40,7 +40,9 @@ const userResolvers = {
     },
     businessUnit(obj, args, context, info) {
       // debugger; //eslint-disable-line
-      console.log('resolving business unit', { args, context, info, obj });      
+      console.log('resolving business unit', {
+        args, context, info, obj,
+      });
       if (obj.memberships) {
         return obj.memberships[0].businessUnit || 'NOT SET';
       }
@@ -58,21 +60,20 @@ const userResolvers = {
       // console.log('Authenticated user query', { obj, args, context, info });
       // return Admin.User.User.findOne({ email: 'werner.weber@gmail.com' }).then();
     },
-    userInbox(obj, { id, sort }, context, info) {      
-      return new Promise((resolve, reject) => {        
+    userInbox(obj, { id, sort }, context, info) {
+      return new Promise((resolve, reject) => {
         const { user } = global;
         if (isNil(user)) reject(new ApiError('Not Authorized'));
-        let userId = isNil(id) ? user._id : ObjectId(id);
+        const userId = isNil(id) ? user._id : ObjectId(id);
         console.log(`Finding emails for userId ${userId}`);
         EmailQueue.find({ user: userId }).then((results) => {
           console.log(`Found ${results.length} emails`, results);
           try {
             resolve(results);
-          } catch ( err ) {
+          } catch (err) {
             console.error('Error resolving', err);
             reject(err);
           }
-          
         }).catch((findError) => {
           console.error(`Could not find emails for this user ${userId}`);
           reject(findError);
@@ -81,7 +82,7 @@ const userResolvers = {
     },
   },
   Mutation: {
-    createUser(obj, arg, context, info) {      
+    createUser(obj, arg, context, info) {
       const { input, organizationId, password } = arg;
       const user = {
         ...input,
@@ -93,7 +94,7 @@ const userResolvers = {
       console.log(`Create user mutation called ${input.email}`);
       if (isNil(organizationId) === false && isNil(input) === false) {
         return new Promise((resolve, reject) => {
-          Admin.Organization.findById(organizationId).then((organization) => {            
+          Admin.Organization.findById(organizationId).then((organization) => {
             const createResult = Admin.User.createUserForOrganization(user, password || 'Password123!', organization);
             resolve(createResult.user);
           }).catch((organizationError) => {
@@ -107,16 +108,17 @@ const userResolvers = {
       console.log('Update user mutation called', { id, profileData });
       return Admin.User.updateProfile(id, profileData);
     },
-    setPassword(obj, { input: { password, confirmPassword, authToken } }) {      
+    setPassword(obj, { input: { password, confirmPassword, authToken } }) {
       return new Promise((resolve, reject) => {
         const { user } = global;
         if (typeof password !== 'string') reject(new ApiError('password expects string input'));
         if (password === confirmPassword && user) {
-          console.log(`Setting user password ${user.email}`);
+          console.log(`Setting user password ${user.email}, ${authToken}`);
           user.setPassword(password);
           user.save().then(updateUser => resolve(updateUser));
+        } else {
+          reject(new ApiError('Passwords do not match'));
         }
-        reject(new ApiError('Passwords do not match'));
       });
     },
   },
