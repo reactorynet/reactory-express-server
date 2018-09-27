@@ -10,6 +10,7 @@ import uuid from 'uuid';
 import { existsSync, copyFileSync, mkdirSync } from 'fs';
 import { ObjectId } from 'mongodb';
 import {
+  Assessment,
   Organization,
   User,
   LeadershipBrand,
@@ -50,6 +51,8 @@ export class MigrationResult {
     this.employeeErrors = [];
     this.surveysMigrated = 0;
     this.surveyErrors = [];
+    this.assessmentMigrated = 0;
+    this.assessmentErrors = [];
     this.communicationsMigrated = 0;
     this.communicationsErrors = [];
   }
@@ -114,7 +117,7 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
           createdAt: now,
           updatedAt: now,
         };
-        const existing = yield LeadershipBrand.findOne({ legacyId: brandInput.legacyId, organization: result.organization._id }).then()
+        const existing = yield LeadershipBrand.findOne({ legacyId: brandInput.legacyId, organization: result.organization._id }).then();
         if (isNil(existing) === true) {
           try {
             const brand = yield createLeadershipBrand(brandInput);
@@ -286,7 +289,7 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
             result.surveyErrors.push(createSurveyError.message);
           }
         } else {
-          console.log(`Already imported surey for organization. Survey Id: ${existing._id}`);
+          console.log(`Already imported survey for organization. Survey Id: ${existing._id}`);
         }
       }
       // migrate survey data
@@ -300,20 +303,75 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
         ab.survey_id as legacySurveyId,
       */
       const assessments = yield legacy.Survey.listAssessmentsForOrganization(id, options);
+      console.log(`Importing ${assessments.length} assessments for organization ${result.organization.name}`);
       for (let aid = 0; aid < assessments.length; aid += 1) {
+        const survey = yield Survey.findOne({ legacyId: assessments[aid].legacySurveyId }).then();
+        const leadershipBrand = yield LeadershipBrand.findById(survey.leadershipBrand).then();
+        const delegate = yield User.findOne({ legacyId: assessments[aid].legacyEmployeeId }).then();
+        const assessor = yield User.findOne({ legacyId: assessments[aid].legacyAssessorId }).then();
+        // we don't use the client on global scope, as it is admin function override
+        const client = yield ReactoryClient.findOne({ key: options.clientKey }).then();
+        console.log(`Resolve assessment info: (${aid + 1}/${assessments.length})
+        Survey: ${survey.title}
+        Delegate: ${delegate.email}
+        Assessor: ${assessor.email}
+        Self Assessment: ${delegate._id === assessor._id}
+        Leadership Brand: ${leadershipBrand._id}
+        ======================================`);
         assessments[aid].organization = result.organization._id; //eslint-disable-line
-        assessments[aid].client = (yield ReactoryClient.findOne({ key: options.clientKey }).then())._id; //eslint-disable-line
-        assessments[aid].delegate = (yield User.findOne({ legacyId: assessments[aid].legacyEmployeeId }).then())._id; //eslint-disable-line
-        assessments[aid].assessor = (yield User.findOne({ legacyId: assessments[aid].legacyAssessorId }).then())._id; //eslint-disable-line
-        assessments[aid].survey = (yield Survey.findOne({ legacyId: assessments[aid].legacySurveyId }).then())._id //eslint-disable-line
+        assessments[aid].client = client._id; //eslint-disable-line
+        assessments[aid].delegate = delegate._id; //eslint-disable-line
+        assessments[aid].assessor = assessor._id; //eslint-disable-line
+        assessments[aid].survey = survey._id; //eslint-disable-line
         assessments[aid].startDate = moment(assessments[aid].startDate).valueOf();
         assessments[aid].endDate = moment(assessments[aid].endDate).valueOf();
+        assessments[aid].complete = true; // auto set to true as it is an import
+
+        for (let ratingId = 0; ratingId < assessments[aid].ratings.length; ratingId += 1) {
+          const ratingObj = assessments[aid].ratings[ratingId];
+          const quality = find(leadershipBrand.qualities, { legacyId: ratingObj.legacyQualityId.toString() });
+          assessments[aid].ratings[ratingId].qualityId = quality._id; //eslint-disable-line
+          assessments[aid].ratings[ratingId].behaviourId = find(quality.behaviours, { legacyId: ratingObj.legacyBehaviourId.toString() })._id; //eslint-disable-line
+
+          delete assessments[aid].ratings[ratingId].legacyBehaviourId;
+          delete assessments[aid].ratings[ratingId].legacyQualityId;
+        }
 
         delete assessments[aid].legacyEmployeeId;
         delete assessments[aid].legacyAssessorId;
         delete assessments[aid].legacySurveyId;
         delete assessments[aid].legacyScaleId;
-        console.log('Assessment transform', assessments[aid]);
+
+
+        try {
+          let assessment = yield Assessment.findOne({ assessor: assessor._id, delegate: delegate._id, survey: survey._id }).then();
+          if (isNil(assessment) === true) {
+            assessment = yield new Assessment({ ...assessments[aid] }).save();
+            if (isNil(assessment) === false) {
+              result.assessmentsMigrated += 1;
+              // add assessment to the collection reference for the delegate,
+              const delegateEntry = find(survey.delegates, { delegate: delegate._id });
+              if (isNil(delegateEntry) === false) {
+                delegateEntry.assessments.push(assessment._id);
+              } else {
+                survey.delegates.push({
+                  delegate: delegate._id,
+                  notifications: [],
+                  launched: true,
+                  assessments: [assessment._id],
+                  complete: true,
+                });
+              }
+              debugger; //eslint-disable-line
+              survey.save();
+            } else result.assessmentErrors.push('Could not create the document');
+          } else {
+            console.log('Assessment already imported', { assessment_id: assessment._id });
+          }
+        } catch (assessmentImportError) {
+          result.assessmentErrors.push(`Could not import assessment due to an error: ${assessmentImportError.message}`);
+          console.error(assessmentImportError);
+        }
       }
     }
 
@@ -340,10 +398,10 @@ export class CoreMigrationResult {
 export const migrateCoreData = co.wrap(function* migrateCoreGenerator(options = { clientKey: 'plc', dataPath: LEGACY_APP_DATA_ROOT }) {
   const coreMigrateResult = new CoreMigrationResult();
   try {
-    // migrate scales    
+    // migrate scales
     const scales = yield legacy.Survey.listScales(options);
     if (scales.length > 0) {
-      for (let scaleId = 0; scaleId < scales.length; scaleId += 1) {        
+      for (let scaleId = 0; scaleId < scales.length; scaleId += 1) {
         const scale = yield Scale.findOneAndUpdate({ legacyId: scales[scaleId].legacyId }, scales[scaleId], { upsert: true });
         console.log('Converting Scale', scale);
         if (isNil(scale) === true) coreMigrateResult.errors.push(`Could not create scale for ${scales[scaleId].legacyId}`);

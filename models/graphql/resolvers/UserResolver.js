@@ -80,6 +80,11 @@ const userResolvers = {
         });
       });
     },
+    userSurveys(obj, { id, sort }, context, info) {
+      const { user } = global;
+      if (isNil(id) === false) Admin.User.userWithId(id);
+      return Admin.User.assessmentsForUser(user, false);
+    },
   },
   Mutation: {
     createUser(obj, arg, context, info) {

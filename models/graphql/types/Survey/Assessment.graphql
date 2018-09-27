@@ -10,8 +10,12 @@ type Assessment {
     assessmentType: AssessmentType!,
     leadershipBrand: LeadershipBrand!,
     organization: Organization!
+    survey: Survey!
+    assessor: User!
+    delegate: User!    
 }
 
 extend type Query {
     assessmentWithId: Assessment
+    userSurveys(id: String, ): [Assessment]
 }

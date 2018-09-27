@@ -5,7 +5,7 @@ import pngToJpeg from 'png-to-jpeg';
 import { ObjectId } from 'mongodb';
 import moment from 'moment';
 import { isNil, isEmpty } from 'lodash';
-import { User, Organization, Organigram } from '../../models';
+import { User, Organization, Organigram, Assessment } from '../../models';
 import ApiError, { UserExistsError, UserValidationError, UserNotFoundException } from '../../exceptions';
 import emails from '../../emails';
 
@@ -30,6 +30,9 @@ export const defaultUserCreateOptions = {
   clientId: null,
 };
 
+export const userWithId = co.wrap(function* userWithIdGenerator(id) {
+  return yield User.findById(ObjectId(id)).then();
+});
 
 export const createUserForOrganization = co.wrap(function* createUserForOrganization(user, password, organization, roles = ['USER'], provider = 'LOCAL') { // eslint-disable-line max-len
   const result = new CreateUserResult();
@@ -141,7 +144,7 @@ export const listAllForOrganization = (organizationId) => {
   });
 };
 
-export const registerUser = (user) => {  
+export const registerUser = (user) => {
   return new Promise((resolve, reject) => {
     User.findOne({ email: user.email }).then((userResult) => {
       if (isNil(userResult) === true) {
@@ -186,8 +189,8 @@ export const sendResetPasswordEmail = (user, partner, options) => {
 
 /**
  * Updates a user's profile image, writing to CDN folder
- * @param {*} user 
- * @param {*} imageData 
+ * @param {*} user
+ * @param {*} imageData
  */
 export const updateUserProfileImage = (user, imageData) => {
   const buffer = Buffer.from(imageData.split(/,\s*/)[1], 'base64');
@@ -247,6 +250,15 @@ export const setPeersForUser = (user, peers, organization, allowEdit = true, con
   });
 };
 
+export const assessmentsForUser = (user, complete = false) => {
+  return new Promise((resolve, reject) => {
+    if (isNil(user)) reject(new ApiError('Not Authorized'));
+    return Assessment.find({ assessor: user._id, complete }).then((assessments) => {
+      resolve(assessments);
+    });
+  });
+};
+
 export default {
   CreateUserResult,
   defaultUserCreateOptions,
@@ -261,4 +273,6 @@ export default {
   listAllForOrganization,
   User,
   sendResetPasswordEmail,
+  assessmentsForUser,
+  userWithId,
 };

@@ -1,4 +1,5 @@
 
+import AssessmentModel from './schema/Assessment';
 import ApplicationModel from './schema/Application';
 import EmailQueueModel from './schema/EmailQueue';
 import LeadershipBrandModel from './schema/LeadershipBrand';
@@ -12,6 +13,7 @@ import TemplateModel from './schema/Template';
 import TeamModel from './schema/Team';
 import UserModel from './schema/User';
 
+export const Assessment = AssessmentModel;
 export const Application = ApplicationModel;
 export const Organization = OrganizationModel;
 export const Organigram = OrganigramModel;
@@ -25,6 +27,7 @@ export const Team = TeamModel;
 export const Survey = SurveyModel;
 export const Scale = ScaleModel;
 const models = {
+  Assessment,
   Application,
   EmailQueue,
   LeadershipBrand,

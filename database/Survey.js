@@ -91,7 +91,7 @@ const assessmentsForOrganization = (organizationId) => {
       a.valid_to as endDate,
       a.scale_id as legacyScaleId,
       ab.survey_id as legacySurveyId,
-      sv.completed,
+      sv.completed as complete,
       sv.title
   FROM
       assessment as a inner join assessment_batch as ab
@@ -164,8 +164,8 @@ const qualitiesForBrand = co.wrap(function* listQualitiesForBrand(id, options) {
 
 /**
  * Returns leadership brands for legacy organization
- * @param {int} id 
- * @param {*} options 
+ * @param {int} id
+ * @param {*} options
  */
 function* listBrandsForOrganization(id, options) {
   const leadershipBrandsForOrganizationRows = yield querySync(leadershipBrandForOrganizationQuery(id, options)); // yield requestWrapper;
@@ -303,7 +303,7 @@ function* listAssessmentsForOrganization(organizationId, options) {
     assessments.push(assessment);
   }
   return assessments;
-};
+}
 
 export default class Survey {
   static getAssessmentData = co.wrap(function* getAssessmentDataGenerator() {

@@ -93,6 +93,7 @@ const SurveySchema = new mongoose.Schema({
         ref: 'Assessment',
       }],
       launched: Boolean,
+      complete: Boolean,
     },
   ],
   timeline: [

@@ -52,6 +52,8 @@ input MigrationOrganizationOptions {
 }
 
 type MigrationResult {
+  assessmentsMigrated: Int
+  assessmentErrors: [String]
   organization: Organization
   organizationErrors: [String]
   brandsMigrated: Int
@@ -60,7 +62,7 @@ type MigrationResult {
   employeeErrors: [String]
   surveysMigrated: Int
   surveyErrors: [String]
-  communicationsMigrated: Int,
+  communicationsMigrated: Int
   communicationsErrors: [String]
 }
 

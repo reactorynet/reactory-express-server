@@ -30,17 +30,27 @@ const AssessmentSchema = mongoose.Schema({
     type: ObjectId,
     ref: 'Survey',
   },
+  complete: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
   ratings: [
     {
-      qualityId: { type: ObjectId },
-      behaviourId: { type: ObjectId },
+      qualityId: {
+        type: ObjectId,
+      },
+      behaviourId: {
+        type: ObjectId,
+      },
       ordinal: Number,
       rating: Number,
+      comment: String,
     },
   ],
   createdAt: Date,
   updatedAt: Date,
 });
 
-const TemplateModel = mongoose.model('Template', AssessmentSchema);
-export default TemplateModel;
+const AssessmentModel = mongoose.model('Assessment', AssessmentSchema);
+export default AssessmentModel;

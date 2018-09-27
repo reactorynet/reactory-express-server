@@ -31,7 +31,7 @@ const sendActivationEmail = (user) => {
   return new Promise((resolve, reject) => {
     try {
       const { partner } = global;
-      loadEmailTemplate(TemplateViews.ActivationEmail, null, partner._id).then((templateResult) => {        
+      loadEmailTemplate(TemplateViews.ActivationEmail, null, partner._id).then((templateResult) => {
         sgMail.setApiKey(partner.emailApiKey);
         const properties = {
           partner,
@@ -205,6 +205,7 @@ const sendForgotPasswordEmail = (user, organization = null) => {
 
         const qops = {
           sent: true,
+          sentAt: moment().valueOf(),
           client: partner,
         };
 
@@ -212,8 +213,9 @@ const sendForgotPasswordEmail = (user, organization = null) => {
           try {
             sgMail.send(msg);
           } catch (sendError) {
-            console.log('::ERROR SENDING MAIL::', msg)
+            console.log('::ERROR SENDING MAIL::', msg);
             qops.sent = false;
+            qops.sentAt = null;
             qops.failures = 1;
             qops.error = sendError.message;
           }
@@ -291,9 +293,9 @@ function* installTemplateGenerator(template, organization, client) {
     }).save().then();
 
     if (template.elements.length > 0) {
-      for (let ei = 0; ei < template.elements.length; ei += 1 ) {
+      for (let ei = 0; ei < template.elements.length; ei += 1) {
         const newElement = yield installTemplate(template.elements[ei], client, organization);
-        newTemplate.elements.push( newElement._id );
+        newTemplate.elements.push(newElement._id);
       }
     }
 
