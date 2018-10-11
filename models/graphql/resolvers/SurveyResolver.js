@@ -1,6 +1,9 @@
 import moment from 'moment';
+import co from 'co';
 import Admin from '../../../application/admin';
-import { LeadershipBrand, Organization, User, Survey } from '../../../models'; 
+import { LeadershipBrand, Organization, User, Survey, Assessment, Notification } from '../../../models';
+import { ObjectId } from 'mongodb';
+import ApiError from '../../../exceptions';
 
 export default {
   SurveyCalendarEntry: {
@@ -20,9 +23,36 @@ export default {
       return null;
     },
   },
+  DelegateEntry: {
+    delegate(entry) {
+      return User.findById(entry.delegate);
+    },
+    notifications(entry) {
+      return new Promise((resolve) => {
+        Promise.all(entry.notifications.map(nid => (Notification.findById(nid))))
+          .then(notifications => resolve(notifications));
+      });
+    },
+    assessments(entry) {
+      console.log('getting assessment for delegateentry', entry);
+      return new Promise((resolve) => {
+        const promises = entry.assessments.map(aid => (Assessment.findById(aid).then()));
+        Promise.all(promises).then(assessments => resolve(assessments));
+      });
+    },
+    launched(entry) {
+      return entry.launched;
+    },
+    complete(entry) {
+      return entry.complete;
+    },
+    removed(entry) {
+      return entry.removed;
+    },
+  },
   Survey: {
     id(obj) {
-      return obj._id;
+      return obj._id.toString();
     },
     leadershipBrand(survey) {
       if (survey.leadershipBrand) return LeadershipBrand.findById(survey.leadershipBrand);
@@ -46,16 +76,101 @@ export default {
     calendar(survey) {
       return survey.calendar;
     },
+    delegates(survey) {
+      return survey.delegates;
+    },
   },
   Query: {
     surveysForOrganization(obj, { organizationId }) {
       return Admin.Survey.getSurveysForOrganization(organizationId);
+    },
+    surveysList(obj, { sort }) {
+      return Admin.Survey.getSurveys();
     },
     surveyDetail(obj, { surveyId }) {
       return Survey.findById(surveyId);
     },
   },
   Mutation: {
-    
+    updateSurvey(obj, { id, surveyData }) {
+      return Survey.findOneAndUpdate({ _id: ObjectId(id) }, { ...surveyData });
+    },
+    createSurvey(obj, { id, surveyData }) {
+      return co.wrap(function* createSurveyGenerator(organization, survey) {
+        const found = yield Organization.findById(organization).then();
+        if (!organization) throw new ApiError('Org not found');
+        const created = yield new Survey({ ...survey, organization: found._id }).save().then();
+        return created;
+      })(id, surveyData);
+    },
+    launchSurvey(obj, { id, options }) {
+
+    },
+    addDelegateToSurvey(surveyId, delegateId) {
+      return co.wrap(function* addDelegateToSurveyGenerator(sid, did) {
+        const survey = Survey.findById(sid).then();
+        const delegate = yield User.findById(did).then();
+
+        if (survey && delegate) {
+          const delegates = [];
+          let found = false;
+          survey.delegates.map((dentry) => {
+            if (dentry.delegate !== ObjectId(did)) {
+              delegates.push(dentry);
+            } else found = true;
+          });
+          if (!found) {
+            delegates.push({
+              delegate: delegate._id,
+              notifications: [],
+              assessments: [],
+              launched: false,
+              complete: false,
+              removed: false,
+            });
+          }
+          survey.delegates = delegates;
+          const saved = yield survey.save().then();
+          return {
+            id: survey._id,
+            user: delegate._id,
+          };
+        } throw new ApiError('Survey not found!');
+      })(surveyId, delegateId);
+    },
+    removeDelegateFromSurvey(obj, { surveyId, delegateId }) {
+      return co.wrap(function* removeDelegateFromSurveyGenerator(sid, did) {
+        const survey = Survey.findById(sid).then();
+        const delegate = yield User.findById(did).then();
+        if (survey && delegate) {
+          const delegates = [];
+          const found = false;
+          survey.delegates.map((dentry) => {
+            if (dentry.delegate !== ObjectId(did)) {
+              delegates.push(dentry);
+            } else {
+              delegates.push({ ...dentry, removed: true });
+            }
+          });
+          if (!found) {
+            delegates.push({
+              delegate: delegate._id,
+              notifications: [],
+              assessments: [],
+              launched: false,
+              complete: false,
+              removed: false,
+            });
+          }
+          survey.delegates = delegates;
+          const saved = yield survey.save().then();
+          return {
+            id: saved._id,
+            user: delegate._id,
+          };
+        } throw new ApiError('Survey not found!');
+      })(surveyId, delegateId);
+    },
+
   },
 };

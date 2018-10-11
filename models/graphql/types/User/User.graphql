@@ -14,6 +14,15 @@ enum AuthProvider {
   LOCAL
 }
 
+enum PeerType {
+  peer
+  manager
+  report
+  vendor
+  client
+  partner
+}
+
 type UserSession {
   id: ObjID
   host: String
@@ -21,6 +30,19 @@ type UserSession {
   started: Date
   expires: Date
   refresh: String
+}
+
+type Peer {
+  user: User
+  relationship: PeerType
+  isInternal: Boolean
+}
+
+type UserPeers {
+  organization: Organization
+  user: User
+  allowEdit: Boolean
+  peers: [Peer]
 }
 
 
@@ -31,6 +53,7 @@ type User {
   lastName: String
   email: String
   businessUnit: String,
+  peers: UserPeers,  
   salt: String,
   password: String
   avatar: String
@@ -44,11 +67,39 @@ type User {
   updatedAt: Float!
 }
 
+type Comment {
+  id: ObjID
+  who: User
+  text: String
+  when: Float
+}
+
+
+type Task {
+  id: ObjID!
+  title: String
+  description: String
+  status: String
+  percentComplete: Float
+  comments: [Comment]
+  user: User!
+  createdAt: Date!
+  updatedAt: Date!
+}
+
+input TaskInput {
+  title: String
+  description: String
+  status: String
+  percentComplete: Float
+}
+
 extend type Query {
   allUsers: [User],
   userWithId(id: String!): User!
   authenticatedUser: User,
-  userInbox(id: String, sort: String): [Email]  
+  userInbox(id: String, sort: String): [Email] 
+  userTasks(id: String, status: String): [Task] 
 }
 
 input CreateUserInput {
@@ -59,6 +110,10 @@ input CreateUserInput {
   businessUnit: String  
   authProvider: AuthProvider
   providerId: String
+}
+
+input InvitePeer {
+  email: String
 }
 
 input UpdateUserInput {
@@ -84,6 +139,8 @@ extend type Mutation {
   updateUser(id: String!, profileData: UpdateUserInput!): User
   removeUser(id: String!): Boolean
   setPassword(input: UpdatePasswordInput!): User
+  createTask(id: String, taskInput: TaskInput): Task
+  updateTask(id: String, taskInput: TaskInput): Task  
 }
 
 extend type Subscription {

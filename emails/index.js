@@ -183,7 +183,7 @@ const sendForgotPasswordEmail = (user, organization = null) => {
         });
 
         const msg = {
-          to: user.email,
+          to: 'werner.weber+devredirect@gmail.com', // user.email,
           from: partner.email,
         };
 

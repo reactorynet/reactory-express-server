@@ -1,9 +1,21 @@
 import { ObjectId } from 'mongodb';
+import co from 'co';
 import moment from 'moment';
+
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import pngToJpeg from 'png-to-jpeg';
+import dotenv from 'dotenv';
 import legacy from '../../../database';
 import { Organization } from '../../index';
-import { migrateOrganization, migrateCoreData } from '../../../application/admin/Organization';
+import { migrateOrganization, migrateCoreData, updateOrganizationLogo } from '../../../application/admin/Organization';
 import * as UserService from '../../../application/admin/User';
+
+dotenv.config();
+
+const {
+  APP_DATA_ROOT,
+} = process.env;
+
 
 const organizationResolver = {
   Tennant: {
@@ -23,7 +35,7 @@ const organizationResolver = {
   Query: {
     allOrganizations(obj, args, context, info) {
       console.log('listing organizations', {
-        obj, args, context, info
+        obj, args, context, info,
       });
 
       if (args.legacy === true) {
@@ -58,25 +70,27 @@ const organizationResolver = {
       if (!options.clientKey) options.clientKey = global.partner.key;
       return migrateOrganization(id, options);
     },
-    updateOrganization(obj, arg, context, info) {
-      Organization.findOne({ _id: ObjectId(arg.id) }).then((organization) => {
-        const { code, name, logo } = arg.input;
-        organization.code = code || organization.code;
-        organization.name = name || organization.name;
-        organization.logo = logo || organization.logo;
-        organization.createdAt = organization.createdAt || moment().valueOf();
-        organization.updatedAt = moment().valueOf();
-        return organization.save().then((updated) => { return updated; });
-      }).catch((err) => {
-        console.error('update failed', err)
-        return err;
-      });
+    updateOrganization(obj, props, context, info) {
+      return co.wrap(function* updateOrganizationGenerator(variables) {
+        const inputData = variables.input;
+        let found = yield Organization.findOne({ _id: ObjectId(variables.id) }).then();
+        if (found && found._id) {
+          found.code = inputData.code;
+          found.name = inputData.name;
+          found.logo = updateOrganizationLogo(found, inputData.logo);
+          found.createdAt = found.createdAt || moment().valueOf();
+          found.updatedAt = moment().valueOf();
+          found = yield found.save().then();
+          return found;
+        }
+        throw new ApiError('Organization not found');
+      })(props);
     },
     migrateCore(obj, arg, context, info) {
       const { options } = arg;
       if (!options.clientKey) options.clientKey = global.partner.key;
       return migrateCoreData(options);
-    }
+    },
   },
 };
 

@@ -13,6 +13,7 @@ const getSurveysForOrganization = (organization) => {
   });
 };
 
+const getSurveys = () => Survey.find();
 
 const createSurvey = (survey) => {
   return new Survey(survey).save();
@@ -44,6 +45,7 @@ const getLeadershipBrand = (id) => {
 
 const SurveyService = {
   getSurveysForOrganization,
+  getSurveys,
   getLeadershipBrand,
   createSurvey,
   createLeadershipBrand,

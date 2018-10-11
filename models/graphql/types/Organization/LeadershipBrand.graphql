@@ -7,16 +7,20 @@ type Scale {
     id: ObjID!
     key: String    
     title: String
+    min: Int!
+    max: Int!
     entries: [ScaleEntry]
 }
 
 type Behaviour {
+    id: ObjID!
     description: String!
     title: String,
     ordinal: Int!
 }
 
 type Quality {
+    id: ObjID!
     title: String!
     description: String
     ordinal: Int!
@@ -36,12 +40,14 @@ type LeadershipBrand {
 }
 
 input BehaviourInput {
+    id: ObjID 
     description: String!
     title: String,
     ordinal: Int!    
 }
 
 input QualityInput {
+    id: ObjID
     title: String!
     description: String
     ordinal: Int!
@@ -54,6 +60,7 @@ input ScaleEntryInput {
 }
 
 input ScaleInput {
+    id: ObjID
     key: String
     title: String!
     entries: [ScaleEntryInput]    
@@ -62,7 +69,7 @@ input ScaleInput {
 input BrandInput {
     id: String
     organizationId: String
-    scale: ScaleInput
+    scale: String
     description: String!
     title: String!
     archived: Boolean

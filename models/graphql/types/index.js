@@ -13,6 +13,7 @@ type ApiStatus {
     avatar: String
     email: String
     id: String
+    roles: [String]
 }
 
 type Query {    

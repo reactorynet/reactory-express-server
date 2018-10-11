@@ -1,21 +1,52 @@
 enum AssessmentType {
-    TOWERSTONE_180,
-    TOWERSTONE_360,
-    PLC,
+    TOWERSTONE_180
+    TOWERSTONE_360
+    PLC
     CUSTOM
+}
+
+type Rating {
+    id: ObjID!
+    quality: Quality
+    behaviour: Behaviour
+    ordinal: Int!
+    rating: Int!
+    comment: String
 }
 
 type Assessment {
     id: ObjID!
-    assessmentType: AssessmentType!,
-    leadershipBrand: LeadershipBrand!,
+    assessmentType: AssessmentType!
     organization: Organization!
     survey: Survey!
     assessor: User!
-    delegate: User!    
+    delegate: User!
+    ratings: [Rating]
+    complete: Boolean
+    selfAssessment: Boolean
+    createdAt: Date
+    updatedAt: Date    
+}
+
+enum ReportStatus {
+    READY
+    PENDING
+    ASSESSMENTS_PENDING
+}
+
+type SurveyReportForUser {
+    user: User
+    overall: Float
+    status: ReportStatus
+    survey: Survey
+    assessments: [Assessment]
+    tasks: [Task]
+    comments: [Comment]
 }
 
 extend type Query {
-    assessmentWithId: Assessment
-    userSurveys(id: String, ): [Assessment]
+    assessmentWithId(id: String): Assessment
+    userSurveys(id: String): [Assessment]
+    userReports(id: String): [SurveyReportForUser]
+    reportDetailForUser(userId: String, surveyId: String): SurveyReportForUser
 }

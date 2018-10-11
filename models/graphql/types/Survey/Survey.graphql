@@ -15,8 +15,17 @@ type TimelineEntry {
   who: User  
 }
 
+type DelegateEntry {
+  delegate: User
+  notifications: [Notification]
+  assessments: [Assessment]
+  launched: Boolean
+  complete: Boolean 
+  removed: Boolean 
+}
+
 type Survey {
-  id:  ObjID!
+  id: ObjID!
   leadershipBrand: LeadershipBrand
   organization: Organization
   title: String!
@@ -25,12 +34,58 @@ type Survey {
   endDate: Date
   mode: String
   status: String
-  delegates: [User]  
+  delegates: [DelegateEntry]  
   calendar: [SurveyCalendarEntry]
   timeline: [TimelineEntry]
 }
 
+input SurveyInput {
+  id: ObjID
+  leadershipBrand: ObjID
+  organization: ObjID
+  title: String!
+  surveyType: String!
+  startDate: Date
+  endDate: Date
+  mode: String
+  status: String  
+}
+
+input SurveyLaunchOptions {
+  live: Boolean
+  sendEmails: Boolean
+  minimumPeers: Int
+  maximumPeers: Int
+  requiresSupervisor: Boolean
+  requiresDirectReport: Boolean
+}
+
+input ReminderOptions {
+  when: Date
+  urgent: Boolean
+}
+
+type DelegateAddResponse {
+  response: UpdateResponse
+  user: User
+}
+
+type DelegateRemoveResponse {
+  response: UpdateResponse
+  user: User
+}
+
 extend type Query {
   surveysForOrganization(organizationId: String!): [Survey]
+  surveysList: [Survey]
   surveyDetail(surveyId: String!): Survey
+}
+
+extend type Mutation {
+  createSurvey(surveyData: SurveyInput): Survey
+  updateSurvey(id: String!, surveyData: SurveyInput!): UpdateResponse
+  launchSurvey(id: String!, options: SurveyLaunchOptions): UpdateResponse
+  addDelegateToSurvey(surveyId: String!, delegateId: String!): DelegateAddResponse
+  removeDelegateFromSurvey(surveyId: String!, delegateId: String!): DelegateRemoveResponse
+  postRemidners(id: String, options: ReminderOptions): UpdateResponse
 }

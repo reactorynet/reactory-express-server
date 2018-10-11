@@ -51,6 +51,12 @@ input MigrationOrganizationOptions {
   dataPath: String
 }
 
+type UpdateResponse {
+  id: ObjID
+  errors: [String]
+  updated: Boolean
+}
+
 type MigrationResult {
   assessmentsMigrated: Int
   assessmentErrors: [String]

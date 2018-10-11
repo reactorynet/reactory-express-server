@@ -6,8 +6,9 @@
 import co from 'co';
 import dotenv from 'dotenv';
 import _, { isNil, find, isNaN } from 'lodash';
+import pngToJpeg from 'png-to-jpeg';
 import uuid from 'uuid';
-import { existsSync, copyFileSync, mkdirSync } from 'fs';
+import { existsSync, copyFileSync, mkdirSync, writeFileSync } from 'fs';
 import { ObjectId } from 'mongodb';
 import {
   Assessment,
@@ -58,6 +59,21 @@ export class MigrationResult {
   }
 }
 
+
+export const updateOrganizationLogo = (organization, imageData) => {
+  const buffer = Buffer.from(imageData.split(/,\s*/)[1], 'base64');
+  if (!existsSync(`${APP_DATA_ROOT}/organization`)) mkdirSync(`${APP_DATA_ROOT}/organization`);
+  const path = `${APP_DATA_ROOT}/organization/${organization._id}/`;
+
+  if (!existsSync(path)) mkdirSync(path);
+  const filename = `${APP_DATA_ROOT}/organization/${organization._id}/logo_${organization._id}_default.jpeg`;
+
+  if (imageData.startsWith('data:image/png')) {
+    pngToJpeg({ quality: 90 })(buffer).then(output => writeFileSync(filename, output));
+  } else writeFileSync(filename, buffer);
+
+  return `logo_${organization._id}_default.jpeg`;
+};
 
 /**
  * migrates an organization from a legacy version to the new

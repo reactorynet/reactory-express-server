@@ -1,12 +1,65 @@
 import { ObjectId } from 'mongodb';
+import co from 'co';
 import moment from 'moment';
-import { isNil } from 'lodash';
+import { isNil, find } from 'lodash';
 import Admin from '../../../application/admin';
-import { EmailQueue, User, Survey } from '../../index';
+import {
+  EmailQueue,
+  User,
+  Survey,
+  Assessment,
+  LeadershipBrand,
+  Organigram,
+  Task,
+} from '../../index';
 import ApiError from '../../../exceptions';
 import AuthConfig from '../../../authentication';
 
+const userAssessments = (id, view = 'assessment') => {
+  return new Promise((resolve, reject) => {
+    const { user } = global;
+    let findUser = user;
+    const getAssessments = () => {
+      Assessment.find({ assessor: findUser._id }).then((assessments) => {
+        resolve(assessments);
+      }).catch(e => reject(e));
+    };
+
+    if (isNil(id) === false) {
+      findUser = Admin.User.userWithId(id).then((usr) => {
+        findUser = usr;
+        getAssessments();
+      }).catch((e) => {
+        getAssessments();
+      });
+    }
+  });
+};
+
 const userResolvers = {
+  Task: {
+    id(task) {
+      return task._id;
+    },
+    title(task) {
+      return task.title || 'not set';
+    },
+    description(task) {
+      return task.description || 'not set';
+    },
+    user(task) {
+      return User.findById(task.user);
+    },
+    comments() {
+      return [];
+    },
+    createdAt(task) {
+      return task.createdAt || moment().valueOf();
+    },
+    updatedAt(task) {
+      return task.updatedAt || moment().valueOf();
+    },
+  },
   Email: {
     id(email) {
       if (email._id) return email._id;
@@ -31,6 +84,108 @@ const userResolvers = {
       }
     },
   },
+  SurveyReportForUser: {
+    overall(sr) {
+      return 0;
+    },
+    status(sr) {
+      return 'READY';
+    },
+    survey(sr) {
+      return sr.survey;
+    },
+    user(sr) {
+      return sr.user;
+    },
+    assessments(sr) {
+      return sr.assessments || [];
+    },
+    tasks(sr) {
+      return sr.tasks || [];
+    },
+    comments(sr) {
+      return sr.comments || [];
+    },
+  },
+  Assessment: {
+    id(o) {
+      return o._id || null;
+    },
+    assessor(o) {
+      return User.findById(o.assessor);
+    },
+    delegate(o) {
+      return User.findById(o.delegate);
+    },
+    survey(o) {
+      return Survey.findById(o.survey);
+    },
+    assessmentType(o) {
+      return o.assessmentType || 'CUSTOM';
+    },
+    complete(o) {
+      return o.complete === true;
+    },
+    selfAssessment(o) {
+      return o.assessor === o.delegate;
+    },
+    ratings(o) {
+      return co.wrap(function* ratingsResolver(assessment) {
+        try {
+          const survey = yield Survey.findById(assessment.survey).then();
+          if (survey && survey.leadershipBrand) {
+            const leadershipBrand = yield LeadershipBrand.findById(survey.leadershipBrand).then();
+            const ratings = [];
+            let ratingIndex = 0;
+            for (ratingIndex; ratingIndex <= assessment.ratings.length - 1; ratingIndex += 1) {
+              const rating = assessment.ratings[ratingIndex];
+              const quality = find(leadershipBrand.qualities, { id: rating.qualityId.toString() });
+              const ratingObj = {
+                id: rating._id, //eslint-disable-line
+                quality,
+                behaviour: find(quality.behaviours, { id: rating.behaviourId.toString() }),
+                ordinal: rating.ordinal,
+                rating: rating.rating,
+                comment: rating.comment,
+              };
+
+              ratingObj.ordinal = ratingObj.behaviour.ordinal;
+
+              ratings.push(ratingObj);
+            }
+            return ratings;
+          }
+        } catch (resolveError) {
+          console.error(resolveError);
+          return [];
+        }
+      })(o);
+    },
+  },
+  UserPeers: {
+    allowEdit(obj) {
+      return obj.allowEdit === true;
+    },
+    peers(obj) {
+      debugger //eslint-disable-line
+      console.log('Getting peers for user', obj);
+      return new Promise((resolve, reject) => {
+        let peers = [];
+        peers = obj.peers.map((peer) => {
+          return {
+            user: Admin.User.userWithId(peer.user),
+            relationship: peer.relationship,
+            isInternal: true,
+          };
+        });
+        resolve(peers);
+      });
+    },
+    organization(obj) {
+      return Admin.Organization.findById(obj.organization);
+    },
+    user(o) { return Admin.User.userWithId(o.user); },
+  },
   User: {
     id(obj) {
       return obj._id;
@@ -47,6 +202,9 @@ const userResolvers = {
         return obj.memberships[0].businessUnit || 'NOT SET';
       }
       return 'NO MEMBERSHIPS';
+    },
+    peers(usr) {
+      return Organigram.findOne({ user: usr._id, organization: usr.memberships[0].organizationId });
     },
   },
   Query: {
@@ -81,9 +239,84 @@ const userResolvers = {
       });
     },
     userSurveys(obj, { id, sort }, context, info) {
-      const { user } = global;
-      if (isNil(id) === false) Admin.User.userWithId(id);
-      return Admin.User.assessmentsForUser(user, false);
+      console.log(`Finding surveys for user ${id}, ${sort}`);
+      return userAssessments(id);
+    },
+    userReports(obj, { id, sort }, context, info) {
+      return new Promise((resolve, reject) => {
+        const { user } = global;
+        Admin.User.surveysForUser(id).then((userSurveys) => {
+          if (userSurveys && userSurveys.length === 0) resolve([]);
+          const surveyReports = [];
+          const promises = userSurveys.map((userSurvey) => {
+            const resolveData = co.wrap(function* resolveDataGenerator(userId, survey) {
+              const assessments = yield Admin.User.assessmentForUserInSurvey(userId, survey._id).then();
+              const tasks = yield Admin.User.tasksForUserRelatedToSurvey(userId, survey._id).then();
+              return {
+                overall: 0,
+                status: 'READY',
+                user,
+                survey: userSurvey,
+                assessments,
+                tasks,
+                comments: [],
+              };
+            });
+            return resolveData(id, userSurvey);
+          });
+
+          Promise.all(promises).then((results) => {
+            resolve(results);
+          }).catch((e) => {
+            reject(e);
+          });
+        });
+      });
+    },
+    reportDetailForUser(object, { userId, surveyId }, context, info) {
+      return new Promise((resolve, reject) => {
+        const { user } = global;
+        Admin.User.surveyForUser(userId || user._id.toString(), surveyId).then((surveyResult) => {
+          console.log('Found surveyResult', surveyResult);
+          if (isNil(surveyResult) === true) return resolve(null);
+
+          co.wrap(function* resolveDataGenerator(uId, survey) {
+            console.log(`Fetching Details For Assessment: ${userId} => Survey: ${survey._id}`);
+            const assessments = yield Admin.User.assessmentForUserInSurvey(uId, survey._id).then();
+            const tasks = yield Admin.User.tasksForUserRelatedToSurvey(uId, survey._id).then();
+            resolve({
+              overall: 0,
+              status: 'READY',
+              user,
+              survey: surveyResult,
+              assessments,
+              tasks,
+              comments: [],
+            });
+          })(userId, surveyResult).then((result) => {
+            resolve(result);
+          }).catch((e) => {
+            reject(e);
+          });
+        }).catch((e) => {
+          console.error('Error resolving report detail', e);
+          reject(e);
+        });
+      });
+    },
+    assessmentWithId(obj, { id }, context, info) {
+      console.log('Finding Assessment with Id', { id });
+      return new Promise((resolve, reject) => {
+        const findWrapper = co.wrap(function* assessmentWithIdGenerator(assessmentId) {
+          const assessment = yield Assessment.findById(assessmentId).then();
+          return assessment;
+        });
+
+        resolve(findWrapper(id));
+      });
+    },
+    userTasks(obj, { id, status }) {
+      return Task.find({ user: ObjectId(id || global.user._id), status }).then();
     },
   },
   Mutation: {
@@ -125,6 +358,18 @@ const userResolvers = {
           reject(new ApiError('Passwords do not match'));
         }
       });
+    },
+    createTask(obj, { id, taskInput }) {
+      const { _id } = global.user;
+      return co.wrap(function* createTaskGenerator(userId, task) {
+        const created = yield new Task({
+          ...task,
+          user: ObjectId(userId),
+          createdAt: new Date().valueOf(),
+          updatedAt: new Date().valueOf(),
+        }).save().then();
+        return created;
+      })(id || _id.toString(), taskInput);
     },
   },
 };

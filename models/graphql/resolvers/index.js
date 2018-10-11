@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
-import { merge, isNil } from 'lodash';
+import { merge, isNil, isArray } from 'lodash';
 import moment from 'moment';
 
 import userResolvers from './UserResolver';
@@ -24,6 +24,7 @@ const resolvers = {
         avatar: isNil(user) === false ? user.avatar : null,
         email: isNil(user) === false ? user.email : null,
         id: isNil(user) === false ? user._id : null,
+        roles: isNil(user) === false && isArray(user.memberships) && user.memberships.length > 0 ? user.memberships[0].roles : ['ANON'],
       };
     },
   },

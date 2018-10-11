@@ -1,13 +1,12 @@
 import { ObjectId } from 'mongodb';
 import moment from 'moment';
-import { Survey } from '../../../database/legacy';
+import { User, Survey } from '../../index';
+
 
 const assessmentResolver = {
-    Query: {
-        assessmentWithId( id ){            
-            return Survey.getAssessmentData(id);
-        }
-    }
+  Query: {
+
+  },
 };
 
 export default assessmentResolver;

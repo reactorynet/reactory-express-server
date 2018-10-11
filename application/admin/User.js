@@ -5,7 +5,7 @@ import pngToJpeg from 'png-to-jpeg';
 import { ObjectId } from 'mongodb';
 import moment from 'moment';
 import { isNil, isEmpty } from 'lodash';
-import { User, Organization, Organigram, Assessment } from '../../models';
+import { User, Organization, Organigram, Assessment, Survey, Task } from '../../models';
 import ApiError, { UserExistsError, UserValidationError, UserNotFoundException } from '../../exceptions';
 import emails from '../../emails';
 
@@ -253,11 +253,58 @@ export const setPeersForUser = (user, peers, organization, allowEdit = true, con
 export const assessmentsForUser = (user, complete = false) => {
   return new Promise((resolve, reject) => {
     if (isNil(user)) reject(new ApiError('Not Authorized'));
-    return Assessment.find({ assessor: user._id, complete }).then((assessments) => {
+    return Assessment.find({ assessor: user._id }).then((assessments) => {
+      console.log('User assessments', { user, assessments });
       resolve(assessments);
+    }).catch((e) => {
+      console.error('User assessments', e);
+      reject(e);
     });
   });
 };
+
+export const surveysForUser = co.wrap(function* surveysForUserGenerator(userId) {
+  try {
+    console.log('Fetching surveys for user', userId);
+    const found = yield Survey.find({ 'delegates.delegate': ObjectId(userId) }).then();
+    console.log(`Found ${found.length || 'NONE'} surveys`, found);
+    return found;
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+});
+
+export const surveyForUser = co.wrap(function* surveysForUserGenerator(userId, surveyId) {
+  try {
+    const found = yield Survey.findOne({ 'delegates.delegate': ObjectId(userId), _id: ObjectId(surveyId) }).then();
+    return found;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+});
+
+export const assessmentForUserInSurvey = co.wrap(function* assessmentForUserInSurveyGenerator(userId, surveyId) {
+  try {
+    const asDelegate = yield Assessment.find({ delegate: ObjectId(userId), survey: surveyId }).then();
+    const self = yield Assessment.find({ assessor: ObjectId(userId), survey: surveyId }).then();
+    return [...asDelegate, self];
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+});
+
+export const tasksForUserRelatedToSurvey = co.wrap(function* tasksForUserRelatedToSurveyGenerator(userId, surveyId) {
+  try {
+    return yield Task.find({ 'links.linkTo': 'survey', 'links.linkId': ObjectId(surveyId) }).then();
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+});
+
 
 export default {
   CreateUserResult,
@@ -275,4 +322,8 @@ export default {
   sendResetPasswordEmail,
   assessmentsForUser,
   userWithId,
+  surveysForUser,
+  surveyForUser,
+  assessmentForUserInSurvey,
+  tasksForUserRelatedToSurvey,
 };

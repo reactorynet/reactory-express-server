@@ -12,6 +12,7 @@ import ScaleModel from './schema/Scale';
 import TemplateModel from './schema/Template';
 import TeamModel from './schema/Team';
 import UserModel from './schema/User';
+import TaskModel from './schema/Task';
 
 export const Assessment = AssessmentModel;
 export const Application = ApplicationModel;
@@ -26,6 +27,7 @@ export const EmailQueue = EmailQueueModel;
 export const Team = TeamModel;
 export const Survey = SurveyModel;
 export const Scale = ScaleModel;
+export const Task = TaskModel;
 const models = {
   Assessment,
   Application,
@@ -40,6 +42,7 @@ const models = {
   Team,
   Template,
   User,
+  Task,
 };
 
 export default models;
