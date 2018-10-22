@@ -1,0 +1,1 @@
+ directive @auth(requires: Role = "ANON") on OBJECT | FIELD_DEFINITION

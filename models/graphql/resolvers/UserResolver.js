@@ -42,7 +42,7 @@ const userResolvers = {
       return task._id;
     },
     title(task) {
-      return task.title || 'not set';
+      return task.title;
     },
     description(task) {
       return task.description || 'not set';
@@ -316,7 +316,7 @@ const userResolvers = {
       });
     },
     userTasks(obj, { id, status }) {
-      return Task.find({ user: ObjectId(id || global.user._id), status }).then();
+      return Task.find({ user: ObjectId(id || global.user._id), status }, { sort: 'percentComplete' });
     },
   },
   Mutation: {

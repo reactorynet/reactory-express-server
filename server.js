@@ -17,9 +17,16 @@ import AuthConfig from './authentication';
 import { testConnection } from './database/legacy';
 import bots from './bot/server';
 import startup from './utils/startup';
+import logger from './logging';
+import ApiError from './exceptions';
 
 
 dotenv.config();
+
+process.on('unhandledRejection', (error) => {
+  // Will print "unhandledRejection err is not defined"
+  logger.error('unhandledRejection', error);
+});
 
 const {
   APP_DATA_ROOT,
@@ -34,15 +41,24 @@ const resources = '/cdn';
 const publicFolder = path.join(__dirname, 'public');
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
+logger.info('Graph Schema Compiled, starting express');
 const app = express();
 app.use('*', cors(corsOptions));
 app.use(clientAuth);
-testConnection('plc');
+
+try {
+  testConnection('plc');
+} catch (err) {
+  logger.warn('Could not connect to MySQL', err);
+}
+
 mongoose.connect(MONGOOSE);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: '10mb' }));
-startup().then((startupResult) => {
-  console.log('System Initialized/Ready, enabling app', startupResult);
+
+try {
+  const startupResult = startup();
+  logger.info('System Initialized/Ready, enabling app', startupResult);
   AuthConfig.Configure(app);
   app.use(
     queryRoot,
@@ -56,9 +72,10 @@ startup().then((startupResult) => {
   app.use('/reactory', reactory);
   app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
   app.listen(API_PORT);
-  console.log(`Bots server using ${bots.name}`);
-  console.log(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
-}).catch((error) => {
-  console.error('System Initialized/Ready - failed, exiting app', error);
+  logger.info(`Bots server using ${bots.name}`);
+  logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
+} catch (startError) {
+  debugger //eslint-disable-line
+  logger.error('System Initialized/Ready - failed, exiting app', { apiError: new ApiError(error) });
   process.exit();
-});
+}

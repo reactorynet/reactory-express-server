@@ -1,54 +1,35 @@
+import logger from '../../../logging';
 import { fileAsString } from '../../../utils/io';
 
-const typeDefs = [`
-#Base scalar type ObjID for MongoDB
-scalar ObjID
-scalar Date
+const typeDefs = [];
 
-type ApiStatus {
-    when: Date!
-    status: String!
-    firstName: String
-    lastName: String
-    avatar: String
-    email: String
-    id: String
-    roles: [String]
-}
-
-type Query {    
-    apiStatus: ApiStatus
-}
-
-type Subscription {
-    apiStatus: String
-}
-
-type Mutation {
-    apiStatus: String
-}
-
-`];
-
-const typeImports = [
+/**
+ * Type imports defined by order of definition
+ */
+[
+  'System/Scalars',
+  'System/Enums',
+  'System/Directives',
+  'System/Menu',
   'System/ReactoryClient',
+  'Forms/Form',
   'User/User',
+  'Project/Project',
+  'Project/Task',
   'Organization/Organization',
   'Organization/LeadershipBrand',
   'Survey/Survey',
   'Survey/Assessment',
   'System/Email',
-];
-
-typeImports.forEach((name) => {
+].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;
+    logger.info(`Adding ${fileName} to graph`);
     const source = fileAsString(require.resolve(fileName));
     typeDefs.push(`${source}`);
-    console.log(`Loaded ${fileName}...`);
   } catch (e) {
-    console.log('Error loading type', e);
+    logger.error(`Error loading type definition, please check file: ${name}`, { error: e });
   }
 });
 
-module.exports = typeDefs;
+export default typeDefs;

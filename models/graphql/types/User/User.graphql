@@ -1,19 +1,3 @@
-enum Role {
-    SYSADMIN,
-    ADMIN,
-    ORG_ADMIN,
-    FACILITATOR,        
-    USER,
-    HOD
-}
-
-enum AuthProvider {
-  GOOGLE
-  FACEBOOK
-  CUSTOM,
-  LOCAL
-}
-
 enum PeerType {
   peer
   manager
@@ -74,32 +58,11 @@ type Comment {
   when: Float
 }
 
-
-type Task {
-  id: ObjID!
-  title: String
-  description: String
-  status: String
-  percentComplete: Float
-  comments: [Comment]
-  user: User!
-  createdAt: Date!
-  updatedAt: Date!
-}
-
-input TaskInput {
-  title: String
-  description: String
-  status: String
-  percentComplete: Float
-}
-
 extend type Query {
   allUsers: [User],
   userWithId(id: String!): User!
   authenticatedUser: User,
-  userInbox(id: String, sort: String): [Email] 
-  userTasks(id: String, status: String): [Task] 
+  userInbox(id: String, sort: String): [Email]   
 }
 
 input CreateUserInput {
@@ -138,9 +101,7 @@ extend type Mutation {
   createUser(input: CreateUserInput!, organizationId: String!): User
   updateUser(id: String!, profileData: UpdateUserInput!): User
   removeUser(id: String!): Boolean
-  setPassword(input: UpdatePasswordInput!): User
-  createTask(id: String, taskInput: TaskInput): Task
-  updateTask(id: String, taskInput: TaskInput): Task  
+  setPassword(input: UpdatePasswordInput!): User  
 }
 
 extend type Subscription {

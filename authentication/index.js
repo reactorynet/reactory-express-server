@@ -8,6 +8,7 @@ import { BasicStrategy } from 'passport-http';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { User } from '../models/index';
 import { UserValidationError } from '../exceptions';
+import logger from '../logging';
 
 const jwtSecret = process.env.SECRET_SAUCE;
 
@@ -31,13 +32,27 @@ class AuthConfig {
     }
 
     static JwtAuth = (payload, done) => {
-      console.log('JWT Auth executing', payload);
-      if (payload.exp) {
+      debugger //eslint-disable-line
+      logger.info('JWT Auth executing', payload);
+      if (payload.userId === '-1') {
+        global.user = {
+          id: -1,
+          firstName: 'Guest',
+          lastName: 'User',
+          roles: ['ANON'],
+          memberships: [],
+          avatar: null,
+          anon: true,
+        };
+        return done(null, true);
+      }
+
+      if (payload.exp !== null) {
         if (moment(payload.exp).isBefore(moment())) {
-          console.log('token expired');
+          logger.info('token expired');
           return done(null, false);
         }
-      } else return done(null, false);
+      } else { return done(null, false); }
 
       if (payload.userId) {
         User.findById(payload.userId).then((userResult) => {
@@ -47,7 +62,7 @@ class AuthConfig {
           global.user = userResult;
           return done(null, true);
         });
-      } else return done(null, false);      
+      } else return done(null, false);
     }
 
     static jwtMake = (payload) => { return jwt.encode(payload, jwtSecret); };
@@ -56,9 +71,9 @@ class AuthConfig {
       if (isNil(user)) throw new UserValidationError('User object cannot be null', { context: 'jwtTokenForUser' });
 
       return {
-        iss: 'id.reactory.com',
+        iss: 'id.reactory.net',
         sub: 'reactory-auth',
-        aud: ['reactory', 'developers', 'api'],
+        aud: 'app.reactory.net',
         exp: moment().add('24', 'h').valueOf(),
         iat: moment().valueOf(),
         userId: user._id.toString(), // eslint-disable-line no-underscore-dangle
@@ -69,7 +84,9 @@ class AuthConfig {
     }
 
     static addSession = (user, token, ip = '-', clientId = 'not-set') => {
-      console.log('adding session', { user, token, ip, clientId });
+      logger.info('adding session', {
+        user, token, ip, clientId,
+      });
       if (isNil(user.sessionInfo) === true) user.sessionInfo = [];
       user.sessionInfo.push({
         id: uuid(),
@@ -82,7 +99,7 @@ class AuthConfig {
     }
 
     static generateLoginToken = (user, ip = 'none') => {
-      console.log('generating Login token');
+      logger.info('generating Login token');
       return new Promise((resolve, reject) => {
         user.lastLogin = moment().valueOf(); // eslint-disable-line 
         const jwtPayload = AuthConfig.jwtTokenForUser(user);
@@ -97,19 +114,19 @@ class AuthConfig {
     };
 
     static BasicAuth = (req, username, password, done) => {
-      console.log('Basic auth starting');
+      logger.info('Basic auth starting');
       User.findOne({ email: username }).then((userResult) => {
         if (userResult === null) done(null, false, 'username not found');
         if (userResult.validatePassword(password) === true) {
           AuthConfig.generateLoginToken(userResult).then((loginToken) => {
-            console.log('User logged in and session added', loginToken);
+            logger.info('User logged in and session added', loginToken);
             done(null, loginToken);
           });
         } else {
           done(null, false, 'Could not authenticate the account');
         }
       }).catch((error) => {
-        console.error('Authentication Error', error);
+        logger.error('Authentication Error', error);
         return done(null, false, 'System is unable to authenticate user due to an error');
       });
     };

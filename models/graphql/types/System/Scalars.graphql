@@ -1,0 +1,16 @@
+#Base scalar type ObjID for MongoDB
+scalar ObjID
+scalar Date
+scalar Any
+
+type Query {    
+    apiStatus: ApiStatus
+}
+
+type Subscription {
+    apiStatus: String
+}
+
+type Mutation {
+    apiStatus: String
+}

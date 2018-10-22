@@ -55,8 +55,8 @@
     "restify": "^7.1.0",
     "schema-inspector": "^1.6.8",
     "uuid": "^3.1.0",
-    "winston": "^2.4.0",
-    "winston-daily-rotate-file": "^1.7.2",
+    "winston": "^3.1.0",
+    "winston-daily-rotate-file": "^3.3.3",
     "ws": "^5.0.0"
   },
   "devDependencies": {

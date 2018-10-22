@@ -1,6 +1,6 @@
 import { isNil } from 'lodash';
 import { ReactoryClient } from '../models';
-
+import logger from '../logging';
 
 const bypassUri = [
   '/cdn/',
@@ -12,7 +12,7 @@ const clientauth = (req, res, next) => {
   const clientPwd = req.headers['x-client-pwd'] || ' ';
   clientId = clientId || req.params.clientId;
   clientId = clientId || req.query.clientId;
-  console.log('req.originalUrl', req.originalUrl);
+  logger.debug('incoming request from req.originalUrl', req.originalUrl);
 
   let bypass = false;
   if (req.originalUrl) {
@@ -29,7 +29,7 @@ const clientauth = (req, res, next) => {
   if (isNil(clientId) === true || clientId === '') {
     res.status(401).send({ error: 'no-client-id' });
   } else {
-    console.log(`client_auth extracted partner key: ${clientId}`);
+    logger.debug(`client_auth extracted partner key: ${clientId}`);
     if (clientId === '$reactory_system$') {
       // do custom validation
       // validate the login

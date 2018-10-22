@@ -4,6 +4,7 @@ import organizations from './organizations';
 import scales from './scales';
 import uiSchema from './uiSchema';
 import users from './users';
+import components from './components';
 
 export default {
   clients,
@@ -12,4 +13,5 @@ export default {
   scales,
   uiSchema,
   users,
+  components,
 };

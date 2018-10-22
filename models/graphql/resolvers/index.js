@@ -1,7 +1,9 @@
+
+import co from 'co';
 import { ObjectId } from 'mongodb';
 import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
-import { merge, isNil, isArray } from 'lodash';
+import { merge, isNil, isArray, sortBy } from 'lodash';
 import moment from 'moment';
 
 import userResolvers from './UserResolver';
@@ -11,11 +13,71 @@ import reactoryClientResolver from './ReactoryClient';
 import leadershipBrandResolver from './LeadershipBrandResolver';
 import surveyResolver from './SurveyResolver';
 import scaleResolver from './ScaleResolver';
+import { MenuItem, Menu, ClientComponent, User } from '../../../models';
+import logger from '../../../logging';
+
+const getComponentWithFqn = (fqn) => {
+  const parts = fqn.split('@');
+  const v = parts[1];
+  const ns = parts[0].split('.')[0];
+  const nm = parts[0].split('.')[1];
+
+  return ClientComponent.find({ nameSpace: ns, name: nm, version: v });
+};
 
 const resolvers = {
+  MenuItem: {
+    id: menuItem => menuItem._id,
+  },
+  Menu: {
+    id: menu => (menu._id.toString() || null),
+    key: menu => (menu.key || 'na'),
+    name: menu => (menu.name || 'na'),
+    target: menu => (menu.target || 'na'),
+    roles: menu => menu.roles || [],
+    entries: menu => sortBy(menu.entries, 'ordinal'),
+  },
+  ComponentArgs: {
+    key: arg => arg.key,
+    value: arg => arg.value,
+  },
+  ClientComponent: {
+    id: component => component._id,
+    name: component => component.name,
+    nameSpace: component => component.nameSpace,
+    version: component => component.version,
+    title: component => component.title,
+    description: component => component.description,
+    args: component => component.args,
+    author: component => User.findById(component.author),
+  },
+  ClientRoute: {
+    id: route => route._id,
+    path: route => route.path,
+    roles: route => route.roles,
+    component: (route) => {
+      debugger //eslint-disable-line
+      if (!route.componentFqn) {
+        return {
+          nameSpace: 'core',
+          name: 'EmptyComponent',
+          version: '1.0.0',
+          title: `Component for Route ${route.path} not defined, check settings`,
+        };
+      }
+      return getComponentWithFqn(route.componentFqn);
+    },
+  },
+  ApiStatus: {
+    menus: (status) => {
+      logger.debug('Getting menus');
+      return Menu.find({ client: ObjectId(status.menus) });
+    },
+  },
   Query: {
     apiStatus: (obj, args, context, info) => {
-      const { user } = global;
+      const { user, partner } = global;
+
       return {
         when: moment(),
         status: 'API OK',
@@ -25,9 +87,36 @@ const resolvers = {
         email: isNil(user) === false ? user.email : null,
         id: isNil(user) === false ? user._id : null,
         roles: isNil(user) === false && isArray(user.memberships) && user.memberships.length > 0 ? user.memberships[0].roles : ['ANON'],
+        routes: partner.routes || [],
+        applicationAvatar: partner.avatar,
+        applicationName: partner.name,
+        menus: partner._id,
+        theme: partner.theme,
+        themeOptions: partner.themeOptions || {},
       };
     },
   },
+  Any: new GraphQLScalarType({
+    name: 'Any',
+    description: 'Arbitrary object',
+    parseValue: (value) => {
+      return typeof value === 'object' ? value
+        : typeof value === 'string' ? JSON.parse(value)
+          : null;
+    },
+    serialize: (value) => {
+      return typeof value === 'object' ? value
+        : typeof value === 'string' ? JSON.parse(value)
+          : null;
+    },
+    parseLiteral: (ast) => {
+      switch (ast.kind) {
+        case Kind.STRING: return JSON.parse(ast.value);
+        case Kind.OBJECT: throw new Error('Not sure what to do with OBJECT for ObjectScalarType');
+        default: return null;
+      }
+    },
+  }),
   ObjID: new GraphQLScalarType({
     name: 'ObjID',
     description: 'Id representation, based on Mongo Object Ids',

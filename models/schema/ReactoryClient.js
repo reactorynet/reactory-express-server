@@ -20,7 +20,40 @@ const ReactoryClientSchema = new mongoose.Schema({
   emailApiKey: String,
   resetEmailRoute: String,
   password: String,
-  avatar: String,
+  avatar: String, // application avatar
+  theme: String, // theme title
+  themeOptions: {},
+  applicationRoles: [String], // roles configured for the app
+  billingType: String,
+  components: [
+    {
+      type: ObjectId,
+      ref: 'ClientComponent',
+    },
+  ],
+  modules: [
+    {
+      key: String,
+      value: String,
+    },
+  ],
+  menus: [
+    {
+      type: ObjectId,
+      ref: 'Menu',
+    },
+  ],
+  routes: [
+    {
+      key: String,
+      title: String,
+      path: String,
+      public: Boolean,
+      roles: [String],
+      exact: Boolean,
+      componentFqn: String,
+    },
+  ],
   auth_config: [
     {
       provider: String,

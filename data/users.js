@@ -1,13 +1,13 @@
 export default [
   {
-    username: 'WernerWeber01',
+    username: 'WernerWeber',
     firstName: 'Werner',
     lastName: 'Weber',
-    email: 'werner.weber+towerstone01@gmail.com',
+    email: 'werner.weber@gmail.com',
     authProvider: 'LOCAL',
     providerId: 'reactory-system',
     password: 'XXXXXXXXXXXXX',
-    roles: ['USER'],
+    roles: ['USER', 'SYS-ADMIN', 'ADMIN', 'DEVELOPER'],
     legacyId: -1,
   },
 ];

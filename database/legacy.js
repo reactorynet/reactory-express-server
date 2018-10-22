@@ -1,5 +1,6 @@
 import mysql from 'mysql';
 import co from 'co';
+import logger from '../logging';
 
 let pool = null;
 
@@ -19,9 +20,10 @@ export const getPool = (database = 'plc', host = 'localhost', user = 'towerstone
 
 
 export const testConnection = (tenant = 'plc') => {
+  logger.info('Testing MySQL database connection');
   getPool(tenant).query('SELECT 1 + 1 AS solution', (error, results) => {
     if (error) throw error;
-    console.log(results[0].solution.toString() === '2' ? 'Legacy DB Connected' : 'Legacy DB Not Connectioned');
+    logger.info(results[0].solution.toString() === '2' ? 'MySQL Connection Available' : 'MySQL Connection NOT Available');
   });
 };
 

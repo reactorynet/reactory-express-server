@@ -1,17 +1,16 @@
 import co from 'co';
 import { readFileSync, existsSync } from 'fs';
-import { ObjectId } from 'mongodb';
+import moment from 'moment';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
 import sgMail from '@sendgrid/mail';
-import Email from 'email-templates';
+// import Email from 'email-templates';
 import ejs from 'ejs';
 import { isNil } from 'lodash';
 import ApiError, { RecordNotFoundError, OrganizationNotFoundError } from '../exceptions';
 import { Template, ReactoryClient, EmailQueue } from '../models';
 import defaultEmailTemplates from './defaultEmailTemplates';
-import moment from 'moment';
 import AuthConfig from '../authentication';
+import logger from '../logging';
 
 const TemplateViews = {
   ActivationEmail: 'activation-email',
@@ -126,7 +125,7 @@ const queueMail = co.wrap(function* queueMail(user, msg, options = DefaultQueueO
   try {
     return yield new EmailQueue(emailQueueInput).save();
   } catch (newError) {
-    console.error('::Error creating new Email Queue::', newError);
+    logger.error('::Error creating new Email Queue::', newError);
     throw newError;
   }
 });
@@ -140,7 +139,7 @@ const renderTemplate = (template, properties) => {
         try {
           return ejs.render(templateString, properties);
         } catch (renderErr) {
-          console.error('::TEMPLATE RENDER ERROR::', { templateString, renderErr });
+          logger.error('::TEMPLATE RENDER ERROR::', { templateString, renderErr });
           throw renderErr;
         }
       }
@@ -163,7 +162,7 @@ const sendForgotPasswordEmail = (user, organization = null) => {
         try {
           sgMail.setApiKey(partner.emailApiKey);
         } catch (sgError) {
-          console.error('Error setting API key', sgError);
+          logger.error('Error setting API key', sgError);
         }
         const properties = {
           partner,
@@ -213,7 +212,7 @@ const sendForgotPasswordEmail = (user, organization = null) => {
           try {
             sgMail.send(msg);
           } catch (sendError) {
-            console.log('::ERROR SENDING MAIL::', msg);
+            logger.log('::ERROR SENDING MAIL::', msg);
             qops.sent = false;
             qops.sentAt = null;
             qops.failures = 1;
@@ -245,7 +244,7 @@ const loadEmailTemplate = (view, organization, client, keys = [], templateFormat
       qry = { ...qry, organization: organization._id };
     }
 
-    console.log('Searching for template', qry);
+    logger.info('Searching for template', qry);
 
     Template.find(qry)
       .populate('client')
@@ -277,14 +276,11 @@ const updateTemplate = (templateInput) => {
 */
 
 function* installTemplateGenerator(template, organization, client) {
-  if (!template || !client) {
-    console.warn('Template or client are null, this will be a globally available template');
-  }
   const qry = { view: template.view, client: client._id }; // eslint-disable-line no-underscore-dangle
-  if (!isNil(organization)) qry.organization = organization._id; // eslint-disable-line no-underscore-dangle
+  if (isNil(organization) === false && organization._id) qry.organization = organization._id; // eslint-disable-line no-underscore-dangle
   const found = yield Template.findOne(qry).then();
   if (isNil(found) === true) {
-    console.log('Template does not exists, creating');
+    logger.info(`Template ${template.view} does not exists, creating`);
     let newTemplate = yield new Template({
       ...template,
       client: client._id,
@@ -294,7 +290,7 @@ function* installTemplateGenerator(template, organization, client) {
 
     if (template.elements.length > 0) {
       for (let ei = 0; ei < template.elements.length; ei += 1) {
-        const newElement = yield installTemplate(template.elements[ei], client, organization);
+        const newElement = yield installTemplate(template.elements[ei], organization, client);
         newTemplate.elements.push(newElement._id);
       }
     }
@@ -302,7 +298,7 @@ function* installTemplateGenerator(template, organization, client) {
     newTemplate = yield newTemplate.save().then();
     return newTemplate;
   }
-  console.log('template already exists');
+  logger.debug('template already exists');
   return found;
 }
 
@@ -315,7 +311,7 @@ export const installDefaultEmailTemplates = () => {
       defaultEmailTemplates.forEach((template) => {
         ReactoryClient.find({}).then((clients) => {
           clients.forEach((client) => {
-            console.log(`Installing ${template.view} template into system for client ${client._id}`);
+            logger.info(`Installing / Updating ${template.view} template into system for client ${client.name}`);
             installed.push(installTemplate(template, undefined, client));
           });
         });

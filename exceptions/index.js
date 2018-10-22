@@ -25,7 +25,7 @@ export default class ApiError extends ExtendableBuiltin(Error) {
 }
 
 export class RecordNotFoundError extends ApiError {
-  constructor(message, recordType = 'General', meta =  { }) {
+  constructor(message, recordType = 'General', meta = { }) {
     super(message, meta);
     this.RecordType = recordType;
     this.code = `${recordType.toUpperCase()}-404`;
@@ -45,6 +45,13 @@ export class UserNotFoundException extends ApiError {
   constructor(message, meta = {}) {
     super(message, meta);
     this.code = 'USER-404';
+  }
+}
+
+export class ReactoryClientValidationError extends ApiError {
+  constructor(message, validationErrors, meta = { }) {
+    super(message, meta);
+    this.validationErrors = validationErrors;
   }
 }
 
