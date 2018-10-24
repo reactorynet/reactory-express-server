@@ -87,7 +87,7 @@ class AuthConfig {
       logger.info('adding session', {
         user, token, ip, clientId,
       });
-      if (isNil(user.sessionInfo) === true) user.sessionInfo = [];
+      user.sessionInfo = [];
       user.sessionInfo.push({
         id: uuid(),
         host: ip,

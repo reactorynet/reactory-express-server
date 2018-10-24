@@ -22,6 +22,7 @@ const ReactoryClientSchema = new mongoose.Schema({
   password: String,
   avatar: String, // application avatar
   theme: String, // theme title
+  mode: String,
   themeOptions: {},
   applicationRoles: [String], // roles configured for the app
   billingType: String,
@@ -52,6 +53,9 @@ const ReactoryClientSchema = new mongoose.Schema({
       roles: [String],
       exact: Boolean,
       componentFqn: String,
+      args: [
+        { },
+      ],
     },
   ],
   auth_config: [
@@ -63,6 +67,12 @@ const ReactoryClientSchema = new mongoose.Schema({
       apikey: String,
       apipass: String,
       scopes: [String],
+    },
+  ],
+  settings: [
+    {
+      name: String,
+      value: String,
     },
   ],
   whitelist: [String],

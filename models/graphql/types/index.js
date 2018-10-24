@@ -21,6 +21,7 @@ const typeDefs = [];
   'Survey/Survey',
   'Survey/Assessment',
   'System/Email',
+  'Custom/FuniSaveGateway',
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;
