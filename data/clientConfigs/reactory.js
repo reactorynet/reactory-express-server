@@ -175,7 +175,7 @@ export default {
   ],
   whitelist: [
     'localhost',
-    'qa-app.reactory.net',
+    'app.reactory.net',
     'reactory-app.ngrok.io',
   ],
 };

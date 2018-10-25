@@ -163,8 +163,7 @@ export default {
   ],
   whitelist: [
     'localhost',
-    'qa-app.reactory.net',
-    'reactory-app.ngrok.io',
+    'aot.reactory.net',
     'app.ageofteams.com',
   ],
 };

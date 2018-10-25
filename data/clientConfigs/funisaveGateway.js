@@ -220,8 +220,7 @@ export default {
   ],
   whitelist: [
     'localhost',
-    'qa-app.reactory.net',
-    'reactory-app.ngrok.io',
+    'funisave-gw.reactory.net',
   ],
 };
 
