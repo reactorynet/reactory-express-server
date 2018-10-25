@@ -215,8 +215,7 @@ export default {
   ],
   whitelist: [
     'localhost',
-    'qa-app.reactory.net',
-    'reactory-app.ngrok.io',
+    'towerstone.reactory.net',
     'leadership.towerstone-global.com',
   ],
 };
