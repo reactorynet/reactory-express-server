@@ -48,8 +48,9 @@ type PaymentSchedule {
   paymentAmount: Float
   productName: String
   productType: String
-  client: PaymentClient
+  proposer: PaymentClient
   paymentBankAccount: PaymentBankAccount
+  debitOrder: Any
 }
 
 type FileCounts {

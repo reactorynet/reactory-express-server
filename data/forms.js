@@ -901,60 +901,42 @@ const resetPasswordForm = {
 };
 
 
+const paymentScheduleAddSchema = require('./formSchemas/new-payment-schedule.json');
+
 const customPaymentSchedule = {
-  id: 'payment-schedule-edit',
+  id: 'payment-schedule-add',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
-  title: 'Submit Payment Schedule',
+  title: 'Submit A Payment Schedule',
   tags: ['forgot password reset', 'user account', 'reset passwords'],
-  schema: {
-    title: '',
-    description: 'Provide a new password and confirm it in order to change your password',
-    type: 'object',
-    required: [
-    ],
-    properties: {
-      header: {
-        type: 'object',
-        title: 'Schedule Header',
-        properties: {
-          accountHolder: {
-            type: 'string',
-          },
-        },
-      },
-      authToken: {
-        type: 'string',
-        title: 'Token',
-        readOnly: true,
-      },
-      password: {
-        type: 'string',
-        title: 'Password',
-        format: 'password',
-      },
-      confirmPassword: {
-        type: 'string',
-        title: 'Confirm Password',
-        format: 'password',
-      },
+  mutation: {
+    query: '',
+    variables: {
+      name: 'data',
+      type: 'string',
     },
   },
-  uiSchema: {
-    password: {
-      'ui:autofocus': true,
-      'ui:widget': 'password',
-      'ui:help': 'Ensure your password is at least 8 characters.',
-    },
-    confirmPassword: {
-      'ui:widget': 'password',
-      'ui:help': 'Ensure both passwords match',
-    },
-  },
-  layout: {
+  schema: paymentScheduleAddSchema,
+};
 
+const newProductPaymentSchema = require('./formSchemas/new-product-payment.json');
+
+const newProductPayment = {
+  id: 'new-product-payment',
+  uiFramework: 'material',
+  uiSupport: ['material'],
+  uiResources: [],
+  title: 'Submit A Manual Payment',
+  tags: [],
+  mutation: {
+    query: '',
+    variables: {
+      name: 'data',
+      type: 'string',
+    },
   },
+  schema: newProductPaymentSchema,
 };
 
 
@@ -968,4 +950,6 @@ export default [
   forgotPasswordForm,
   resetPasswordForm,
   msTeamsConfigurationTab,
+  customPaymentSchedule,
+  newProductPayment,
 ];

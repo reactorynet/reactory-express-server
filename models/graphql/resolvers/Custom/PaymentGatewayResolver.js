@@ -28,7 +28,7 @@ export default {
   },
   Query: {
     gatewayAuditTrail(obj, {
-      from, till, target, paymentMethod = 'NAEDO', debitOrderStatus = ['paid', 'none', 'submit'],
+      from, till, target, paymentMethod = 'NAEDO', debitOrderStatus = ['paid', 'not-set', 'submit'],
     }) {
       // const partnerSettings = global.partner.settings;
       logger.info('Input values', { from, till, target });
@@ -37,7 +37,7 @@ export default {
         const uris = {
           cpsAudit: `${opts.endpoint}cps/audit?from=${opts.start}&till=${opts.end}`,
           transactions: `${opts.endpoint}admin/transactions?from=${opts.start}&till=${opts.end}`,
-          paymentSchedule: `${opts.endpoint}admin/payment-schedule?from=${opts.start}&till=${opts.end}&paymentMethod=${paymentMethod}&debitOrderStatus=${debitOrderStatus}`,
+          paymentSchedule: `${opts.endpoint}cps/schedule?from=${opts.start}&till=${opts.end}`,
           errors: `${opts.endpoint}admin/errors?till=${opts.start}&till=${opts.end}`,
         };
         try {
@@ -54,16 +54,18 @@ export default {
               end: moment(auditEntry.when).endOf('day'),
             };
 
+            logger.info(`Matching records to the date: ${theDate.start.format()}, ps: ${paymentSchedulesAudit}`);
+
             fixedEntry.transactions = filter(transactionAudit.transactions, (transaction) => {
-              return moment(transaction.created).isBetween(theDate.start, theDate.end, 'seconds', '[]');
+              return moment(transaction.created).isBetween(theDate.start, theDate.end, 'day', '[]');
             });
 
             fixedEntry.errors = filter(errorsAudit.errors, (error) => {
-              return moment(error.created).isBetween(theDate.start, theDate.end, 'seconds', '[]');
+              return moment(error.created).isBetween(theDate.start, theDate.end, 'day', '[]');
             });
 
-            fixedEntry.paymentSchedules = filter(paymentSchedulesAudit.paymentSchedules, (schedule) => {
-              return moment().day(schedule.paymentDay).isBetween(theDate.start, theDate.end, 'seconds', '[]');
+            fixedEntry.paymentSchedules = filter(paymentSchedulesAudit, (schedule) => {
+              return moment().date(schedule.paymentDay).isBetween(theDate.start, theDate.end, 'day', '[]');
             });
 
             return fixedEntry;
@@ -72,7 +74,7 @@ export default {
           return cpsAudit;
         } catch (generatorError) {
           logger.error('Error fetching audit trail', generatorError);
-          throw generatorError;
+          return null;
         }
       })({
         endpoint: endpointForTarget(target),
