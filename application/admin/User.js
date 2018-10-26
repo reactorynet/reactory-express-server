@@ -37,20 +37,22 @@ export const userWithId = co.wrap(function* userWithIdGenerator(id) {
 export const createUserForOrganization = co.wrap(function* createUserForOrganization(user, password, organization, roles = [], provider = 'LOCAL', partner, businessUnit) { // eslint-disable-line max-len
   const result = new CreateUserResult();
   try {
-    result.user = yield User.findOne({ email: user.email });
+    let foundUser = yield User.findOne({ email: user.email }, {
+      _id: 1, memberships: 1, firstName: 1, lastName: 1,
+    }).then();
     const partnerToUse = partner || global.partner;
 
-    logger.info('Creating user');
+
     if (isNil(partnerToUse._id) === false) {
-      if (isNil(result.user) === true) {
+      if (isNil(foundUser) === true) {
         logger.info('User not found creating');
-        result.user = new User({
+        foundUser = new User({
           ...user,
           createdAt: new Date(),
           updatedAt: new Date(),
         });
-        result.user.setPassword(password);
-        yield result.user.save();
+        foundUser.setPassword(password);
+        yield foundUser.save().then();
       }
 
       const membership = {
@@ -63,11 +65,13 @@ export const createUserForOrganization = co.wrap(function* createUserForOrganiza
         roles: union(isFunction(partner.getDefaultUserRoles) ? partner.getDefaultUserRoles() : [], roles),
       };
 
-      if (result.user.hasMembership(membership.clientId, membership.organizationId, membership.businessUnitId) === false) {
-        return yield createMembership(result.user, membership);
-      }
+      logger.info('Checking Membership', { user, membership });
 
-      logger.info('User Already Has Membership Definition');
+      if (foundUser.hasMembership(membership.clientId, membership.organizationId, membership.businessUnitId) === false) {
+        logger.debug('User does not have the membership, adding');
+        foundUser.memberships.push(membership);
+        result.user = yield foundUser.save().then();
+      }
 
       return result;
     }

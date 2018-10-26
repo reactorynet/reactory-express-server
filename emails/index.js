@@ -276,9 +276,7 @@ const updateTemplate = (templateInput) => {
 */
 
 function* installTemplateGenerator(template, organization, client) {
-  const qry = { view: template.view, client: client._id }; // eslint-disable-line no-underscore-dangle
-  if (isNil(organization) === false && organization._id) qry.organization = organization._id; // eslint-disable-line no-underscore-dangle
-  const found = yield Template.findOne(qry).then();
+  const found = yield Template.findClientTemplate(template, organization, client);
   if (isNil(found) === true) {
     logger.info(`Template ${template.view} does not exists, creating`);
     let newTemplate = yield new Template({
@@ -286,11 +284,11 @@ function* installTemplateGenerator(template, organization, client) {
       client: client._id,
       organization: isNil(organization) ? null : organization._id,
       elements: [],
-    }).save().then();
+    }).save();
 
     if (template.elements.length > 0) {
       for (let ei = 0; ei < template.elements.length; ei += 1) {
-        const newElement = yield installTemplate(template.elements[ei], organization, client);
+        const newElement = yield installTemplateGenerator(template.elements[ei], organization, client);
         newTemplate.elements.push(newElement._id);
       }
     }
@@ -302,21 +300,16 @@ function* installTemplateGenerator(template, organization, client) {
   return found;
 }
 
-const installTemplate = co.wrap(installTemplateGenerator);
+// const installTemplate = co.wrap(installTemplateGenerator);
 
-export const installDefaultEmailTemplates = () => {
+export const installDefaultEmailTemplates = (client) => {
   return new Promise((resolve, reject) => {
     try {
-      const installed = [];
-      defaultEmailTemplates.forEach((template) => {
-        ReactoryClient.find({}).then((clients) => {
-          clients.forEach((client) => {
-            logger.info(`Installing / Updating ${template.view} template into system for client ${client.name}`);
-            installed.push(installTemplate(template, undefined, client));
-          });
-        });
+      const promises = defaultEmailTemplates.map((template) => {
+        logger.info(`Installing / Updating ${template.view} template into system for client ${client.name}`);
+        return installTemplateGenerator(template, undefined, client);
       });
-      Promise.all(installed).then((results) => { resolve(results); }).catch((e) => { reject(e); });
+      Promise.all(promises).then(templates => resolve(templates));
     } catch (e) {
       reject(e);
     }

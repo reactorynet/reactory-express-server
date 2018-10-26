@@ -138,9 +138,9 @@ const startup = co.wrap(function* startupGenerator() {
         let reactoryClient = yield ReactoryClient.findOneAndUpdate(
           { key },
           { ...clientConfig, menus: [], components: componentIds.map(c => c._id) },
-          { upsert: true, fields: { _id: 1, name: 1, key: 1 } },
+          { upsert: true, new: true, fields: { _id: 1, name: 1, key: 1 } },
         );
-        logger.info(`Upserted ${clientConfig.name}: ${reactoryClient && reactoryClient._id ? reactoryClient._id : 'no-id'}`);
+        logger.info(`Upserted ${reactoryClient.name}: ${reactoryClient && reactoryClient._id ? reactoryClient._id : 'no-id'}`);
         if (reactoryClient) {
           reactoryClient.setPassword(clientConfig.password);
 
@@ -148,8 +148,10 @@ const startup = co.wrap(function* startupGenerator() {
             let defaultUsers = [];
             logger.info('Loading default users', { users: clientConfig.users });
             defaultUsers = yield Promise.all(getUserloadPromises(makeUserArrayFromProps(clientConfig.users || [], reactoryClient)));
-            logger.info('Loaded users', defaultUsers);
+            logger.info(`Loaded users ${defaultUsers.length} for ${reactoryClient.name}`);
           }
+
+          const templateResults = yield installDefaultEmailTemplates(reactoryClient).then();
 
           // has been saved now we can add the details
           const menuDefs = clientConfig.menus || [];
@@ -193,7 +195,6 @@ const startup = co.wrap(function* startupGenerator() {
     const userResponse = yield systemUserPromise.then();
     const componentsResponse = yield componentsPromise(components).then();
     const clientsInstall = yield clientsPromise(clients);
-    const installedTemplates = yield installDefaultEmailTemplates().then();
 
     let testUsersResult = null;
     if (process.env.TEST_USERS === 'load') {
@@ -205,10 +206,9 @@ const startup = co.wrap(function* startupGenerator() {
       system_user: userResponse,
       clientsLoaded: clientsInstall,
       componentsResponse,
-      installedTemplates,
       testUsersResult,
     };
-    logger.info('StartupGenerator Complete', result);
+    logger.info('Startup Complete');
     return result;
   } catch (startupError) {
     logger.error('Could not initialize the system correctly. Fatal errors.', startupError);

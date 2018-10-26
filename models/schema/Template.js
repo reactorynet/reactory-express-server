@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { isNil } from 'lodash';
 
 const { ObjectId } = mongoose.Schema.Types;
 const TemplateSchema = mongoose.Schema({
@@ -59,5 +60,10 @@ const TemplateSchema = mongoose.Schema({
   }],
 });
 
+TemplateSchema.statics.findClientTemplate = function findClientTemplate(template, organization, client ) {
+  const qry = { view: template.view, client: client._id }; // eslint-disable-line no-underscore-dangle
+  if (isNil(organization) === false && organization._id) qry.organization = organization._id; // eslint-disable-line no-underscore-dangle
+  return this.findOne(qry);
+};
 const TemplateModel = mongoose.model('Template', TemplateSchema);
 export default TemplateModel;

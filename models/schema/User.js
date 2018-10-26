@@ -96,21 +96,16 @@ UserSchema.methods.validatePassword = function validatePassword(password) {
 UserSchema.methods.hasMembership = function hasMembership(clientId, organizationId, businessUnitId) {
   if (this.memberships.length === 0) return false;
 
-  const found = filter(this.memberships, (membership) => {
-    const a = JSON.stringify({
-      clientId: membership.clientId ? membership.clientId.toString() : null,
+  const found = find(this.memberships, (membership) => {
+    return JSON.stringify({
+      clientId: membership.clientId.toString(),
       organizationId: membership.organizationId ? membership.organizationId.toString() : null,
       businessUnitId: membership.businessUnitId ? membership.businessUnitId.toString() : null,
-    });
-
-    const b = JSON.stringify({
+    }) === JSON.stringify({
       clientId: clientId.toString(),
       organizationId: organizationId && organizationId.toString ? organizationId.toString() : null,
       businessUnitId: businessUnitId && businessUnitId.toString ? businessUnitId.toString() : null,
     });
-
-    if (a === b) return true;
-    return false;
   });
 
   if (found === null || found === undefined) return false;
