@@ -25,11 +25,10 @@ const woosparksTheme = {
         featureImage: `${process.env.CDN_ROOT}themes/woosparks/images/phoenix.png`,
         logo: `${process.env.CDN_ROOT}themes/woosparks/images/logo.png`,
       },
-    }    
+    },
   },
-},
+};
 
 export default [
-  
   woosparksTheme,
 ];
