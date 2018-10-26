@@ -1,10 +1,12 @@
 
+import './plugins';
 import AssessmentModel from './schema/Assessment';
 import ApplicationModel from './schema/Application';
 import EmailQueueModel from './schema/EmailQueue';
 import LeadershipBrandModel from './schema/LeadershipBrand';
 import NotificationModel from './schema/Notification';
 import OrganizationModel from './schema/Organization';
+import BusinessUnitModel from './schema/BusinessUnit';
 import OrganigramModel from './schema/Organigram';
 import MenuModel, { MenuItemModel } from './schema/Menu';
 import ClientComponentModel from './schema/ClientComponent';
@@ -37,6 +39,7 @@ export const ClientComponent = ClientComponentModel;
 export const Menu = MenuModel;
 export const MenuItem = MenuItemModel;
 export const Theme = ThemeModel;
+export const BusinessUnit = BusinessUnitModel;
 const models = {
   Assessment,
   Application,

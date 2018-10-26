@@ -1,11 +1,4 @@
-const whitelist = [
-  'http://localhost:3000',
-  'https://localhost:3000',
-  'http://localhost:4000',
-  'https://localhost:4000',
-  'http://qa-app.reactory.net/',
-  'https://qa-app.reactory.net/',
-];
+
 
 const corsOptions = {
   /**
@@ -39,7 +32,7 @@ const corsOptions = {
      */
   exposedHeaders: ['X-Client-Key', 'X-Client-Pwd', 'x-client-key', 'x-client-pwd'],
   /*
-   * Configures the Access-Control-Allow-Credentials CORS header. Set to true to pass the header, 
+   * Configures the Access-Control-Allow-Credentials CORS header. Set to true to pass the header,
    * otherwise it is omitted.
    */
   credentials: true,

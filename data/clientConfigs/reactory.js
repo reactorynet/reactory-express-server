@@ -128,7 +128,7 @@ export default {
       componentFqn: 'core.Administration@1.0.0',
     },
   ],
-  theme: 'towerstone',
+  theme: 'reactory',
   themeOptions: {
     type: 'material',
     palette: {

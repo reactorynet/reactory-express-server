@@ -4,11 +4,11 @@ import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import pngToJpeg from 'png-to-jpeg';
 import { ObjectId } from 'mongodb';
 import moment from 'moment';
-import { isNil, isEmpty } from 'lodash';
+import { isNil, isEmpty, union, isFunction } from 'lodash';
 import { User, Organization, Organigram, Assessment, Survey, Task } from '../../models';
 import ApiError, { UserExistsError, UserValidationError, UserNotFoundException } from '../../exceptions';
 import emails from '../../emails';
-
+import logger from '../../logging';
 
 dotenv.config();
 
@@ -34,39 +34,44 @@ export const userWithId = co.wrap(function* userWithIdGenerator(id) {
   return yield User.findById(ObjectId(id)).then();
 });
 
-export const createUserForOrganization = co.wrap(function* createUserForOrganization(user, password, organization, roles = ['USER'], provider = 'LOCAL') { // eslint-disable-line max-len
+export const createUserForOrganization = co.wrap(function* createUserForOrganization(user, password, organization, roles = [], provider = 'LOCAL', partner, businessUnit) { // eslint-disable-line max-len
   const result = new CreateUserResult();
   try {
     result.user = yield User.findOne({ email: user.email });
-    if (isNil(result.user) === true) {
-      console.log('User not found creating');
-      result.user = new User({ ...user });
-      result.user.setPassword(password);
+    const partnerToUse = partner || global.partner;
+
+    logger.info('Creating user');
+    if (isNil(partnerToUse._id) === false) {
+      if (isNil(result.user) === true) {
+        logger.info('User not found creating');
+        result.user = new User({
+          ...user,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        result.user.setPassword(password);
+        yield result.user.save();
+      }
+
       const membership = {
-        // eslint-disable-line
-        clientId: ObjectId(global.partner._id), // eslint-disable-line no-underscore-dangle
-        organizationId: ObjectId(organization._id), // eslint-disable-line no-underscore-dangle
+        // eslint-disable-line      
+        clientId: ObjectId(partnerToUse._id), // eslint-disable-line no-underscore-dangle
+        organizationId: organization && organization._id ? ObjectId(organization._id) : null, // eslint-disable-line no-underscore-dangle
+        businessUnitId: businessUnit && businessUnit._id ? ObjectId(businessUnit._id) : null, // eslint-disable-line no-underscore-dangle
         provider,
-        businessUnit: user.businessUnit || 'DEFAULT',
-        roles,
+        enabled: true,
+        roles: union(isFunction(partner.getDefaultUserRoles) ? partner.getDefaultUserRoles() : [], roles),
       };
 
-      result.user.memberships.push({ ...membership });
-      result.organization = organization;
-      let buExists = false;
-      organization.businessUnits.forEach((businessUnit) => {
-        if (businessUnit.toLowerCase().trim() === (user.businessUnit || '').toLowerCase().trim() && buExists === false) {
-          buExists = true;
-        }
-      });
-
-      if (!buExists && user.business) {
-        result.organization.businessUnits.push(user.businessUnit);
-        result.organization = yield result.organization.save();
+      if (result.user.hasMembership(membership.clientId, membership.organizationId, membership.businessUnitId) === false) {
+        return yield createMembership(result.user, membership);
       }
-      result.user = yield result.user.save();
+
+      logger.info('User Already Has Membership Definition');
+
+      return result;
     }
-    return result;
+    throw new ApiError('Partner Is Required For User Creation');
   } catch (createError) {
     console.error('Created error occured', createError);
     result.errors.push(createError.message);
@@ -74,16 +79,10 @@ export const createUserForOrganization = co.wrap(function* createUserForOrganiza
   }
 });
 
-export const createMembership = (user, partner, organization, roles = ['USER'], provider = 'LOCAL') => {
+export const createMembership = (user, membership) => {
   return new Promise((resolve, reject) => {
     try {
-      user.memberships.push({ // eslint-disable-line
-        clientId: ObjectId(partner._id), // eslint-disable-line no-underscore-dangle
-        organizationId: ObjectId(organization._id), // eslint-disable-line no-underscore-dangle
-        provider,
-        businessUnit: user.businessUnit || 'NOT SET',
-        roles,
-      });
+      user.memberships.push(membership);
       user.save().then((saved) => {
         resolve({ saved });
       });
@@ -95,7 +94,7 @@ export const createMembership = (user, partner, organization, roles = ['USER'], 
 
 export const removeMembership = (user, partner, organization) => {
   // deletes a membership
-  console.log('removeMembership', {
+  logger.info('removeMembership', {
     user, partner, organization,
   });
   return new Promise((resolve, reject) => {
@@ -109,7 +108,7 @@ export const removeMembership = (user, partner, organization) => {
 
 export const updateMembership = (user, partner, organization, roles = []) => {
   // updates a user membership
-  console.log('updateMembership', {
+  logger.info('updateMembership', {
     user, partner, organization, roles,
   });
   return new Promise((resolve, reject) => {
@@ -161,7 +160,7 @@ export const registerUser = (user) => {
           }
 
           const validation = created.validateSync();
-          console.log('validation result', validation);
+          logger.info('validation result', validation);
           if (isNil(validation) === false) {
             reject(new UserValidationError('Validation error', validation.errors));
           }
@@ -183,7 +182,7 @@ export const registerUser = (user) => {
 };
 
 export const sendResetPasswordEmail = (user, partner, options) => {
-  console.log('sendResetPasswordEmail', { user, partner, options });
+  logger.info('sendResetPasswordEmail', { user, partner, options });
   return emails.sendForgotPasswordEmail(user, null);
 };
 
@@ -208,7 +207,7 @@ export const updateUserProfileImage = (user, imageData) => {
 };
 
 function* updateProfileGenerator(id, profileData) {
-  console.log('Updating user profile', { id, profileData });
+  logger.info('Updating user profile', { id, profileData });
   const found = yield User.findById(id);
   if (!found) throw new UserNotFoundException('User not found', { id });
   if (profileData.avatar !== found.avatar) {
@@ -254,7 +253,7 @@ export const assessmentsForUser = (user, complete = false) => {
   return new Promise((resolve, reject) => {
     if (isNil(user)) reject(new ApiError('Not Authorized'));
     return Assessment.find({ assessor: user._id }).then((assessments) => {
-      console.log('User assessments', { user, assessments });
+      logger.info('User assessments', { user, assessments });
       resolve(assessments);
     }).catch((e) => {
       console.error('User assessments', e);
@@ -265,9 +264,9 @@ export const assessmentsForUser = (user, complete = false) => {
 
 export const surveysForUser = co.wrap(function* surveysForUserGenerator(userId) {
   try {
-    console.log('Fetching surveys for user', userId);
+    logger.info('Fetching surveys for user', userId);
     const found = yield Survey.find({ 'delegates.delegate': ObjectId(userId) }).then();
-    console.log(`Found ${found.length || 'NONE'} surveys`, found);
+    logger.info(`Found ${found.length || 'NONE'} surveys`, found);
     return found;
   } catch (e) {
     console.error(e);

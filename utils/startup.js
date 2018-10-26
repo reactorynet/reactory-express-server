@@ -1,7 +1,9 @@
 import co from 'co';
-import { isNil } from 'lodash';
+import { isNil, isArray } from 'lodash';
+import ReactoryApi from '../application';
 import { Application, User, ReactoryClient, Menu, ClientComponent } from '../models';
 import { installDefaultEmailTemplates } from '../emails';
+
 import data from '../data';
 import logger from '../logging';
 import ApiError, { ReactoryClientValidationError } from '../exceptions';
@@ -66,43 +68,37 @@ const startup = co.wrap(function* startupGenerator() {
   /**
    * Returns an array of promises
    */
-  const testUsersPromise = () => {
-    return users.map((user) => {
-      return new Promise((reject, resolve) => {
-        User.findOne({ email: user.email }).then((result) => {
-          if (result === null) {
-            const newUser = new User({
-              ...user,
-              lastLogin: new Date(),
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
-            newUser.setPassword(user.password || 'P@ssw0rd_99!');
-            return newUser.save(function (err) { //eslint-disable-line
-              if (err) reject(err);
-              resolve(newUser);
-            });
-          }
-          resolve(result);
-        });
-      });
+  const getUserloadPromises = (usersToLoad) => {
+    return usersToLoad.map((userOptions) => {
+      return co.wrap(function* userPromiseResolver(opts) {
+        const {
+          user,
+          password,
+          roles,
+          provider,
+          partner,
+          organization,
+          businessUnit,
+        } = opts;
+        return yield ReactoryApi.Admin.User.createUserForOrganization(user, password, organization, roles, provider, partner, businessUnit);
+      })(userOptions);
     });
   };
 
   const componentsPromise = co.wrap(function* loadComponents(componentsArray) {
-    logger.info(`Loading ${componentsArray.length} components into reactory`);
+    logger.debug(`Loading ${componentsArray.length} components into reactory`);
     try {
       const reactoryComponents = [];
       for (let cid = 0; cid < componentsArray.length; cid += 1) {
         const component = componentsArray[cid];
-        logger.info(`Loading component ${component.name} component into reactory`);
         const newComponentDef = { ...component };
-        if (newComponentDef.author) newComponentDef.author = yield User.findOne({ email: component.author }) // eslint-disable-line      
+        if (newComponentDef.author) newComponentDef.author = yield User.findOne({ email: component.author }) // eslint-disable-line              
+        logger.debug(`Loading component ${component.name} component into reactory`, { newComponentDef });
         const { name, version, nameSpace } = component;
         const componentObject = yield ClientComponent.findOneAndUpdate(
           { name, version, nameSpace },
           { ...newComponentDef },
-          { upsert: true },
+          { upsert: true, new: true },
         );
         logger.info(`Loading component ${component.name} done`);
         reactoryComponents.push(componentObject);
@@ -115,6 +111,19 @@ const startup = co.wrap(function* startupGenerator() {
     }
   });
 
+  const makeUserArrayFromProps = (userItems, partner, organization, businessUnit) => {
+    return userItems.map((usr) => {
+      return {
+        partner,
+        organization,
+        businessUnit,
+        user: { firstName: usr.firstName, lastName: usr.lastName, email: usr.email },
+        password: usr.password || 'P@ssword123!',
+        roles: usr.roles,
+      };
+    });
+  };
+
   const clientsPromise = co.wrap(function* clientConfigGenerator(configs) {
     try {
       const clientsLoaded = [];
@@ -122,17 +131,26 @@ const startup = co.wrap(function* startupGenerator() {
       for (let cfgId = 0; cfgId < configs.length; cfgId += 1) {
         const clientConfig = configs[cfgId];
         logger.info(`Configuring client ${clientConfig.name}`);
+
         const componentIds = yield componentsPromise(clientConfig.components).then();
         logger.info(`Loaded (${componentIds.length}) components for client ${clientConfig.name}`);
         const { key } = clientConfig;
         let reactoryClient = yield ReactoryClient.findOneAndUpdate(
           { key },
           { ...clientConfig, menus: [], components: componentIds.map(c => c._id) },
-          { upsert: true },
+          { upsert: true, fields: { _id: 1, name: 1, key: 1 } },
         );
         logger.info(`Upserted ${clientConfig.name}: ${reactoryClient && reactoryClient._id ? reactoryClient._id : 'no-id'}`);
         if (reactoryClient) {
           reactoryClient.setPassword(clientConfig.password);
+
+          if (isArray(clientConfig.users) === true) {
+            let defaultUsers = [];
+            logger.info('Loading default users', { users: clientConfig.users });
+            defaultUsers = yield Promise.all(getUserloadPromises(makeUserArrayFromProps(clientConfig.users || [], reactoryClient)));
+            logger.info('Loaded users', defaultUsers);
+          }
+
           // has been saved now we can add the details
           const menuDefs = clientConfig.menus || [];
           const menuRefs = [];
@@ -179,7 +197,7 @@ const startup = co.wrap(function* startupGenerator() {
 
     let testUsersResult = null;
     if (process.env.TEST_USERS === 'load') {
-      testUsersResult = yield Promise.all(testUsersPromise()).then();
+      testUsersResult = yield Promise.all(getUserloadPromises(users)).then();
     }
 
     const result = {

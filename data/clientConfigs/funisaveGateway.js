@@ -24,6 +24,17 @@ export default {
   applicationRoles: ['USER', 'ADMIN', 'ANON'],
   billingType: 'partner',
   mode: MODE,
+  users: [
+    {
+      email: 'werner.weber@gmail.com', roles: ['ADMIN', 'USER'], firstName: 'Werner', lastName: 'Weber',
+    },
+    {
+      email: 'fred.otten@funisave.com', roles: ['ADMIN', 'USER'], firstName: 'Fred', lastName: 'Otten',
+    },
+    {
+      email: 'guy.platt@gmail.com', roles: ['ADMIN', 'USER'], firstName: 'Guy', lastName: 'Platt',
+    },
+  ],
   components: [
     {
       nameSpace: key,
@@ -157,13 +168,6 @@ export default {
       },
     },
   },
-  defaultUsers: [
-    {
-      email: 'werner.weber@gmail.com', roles: ['ADMIN', 'USER'], firstName: 'Werner', lastName: 'Weber',
-    },
-    // { email: 'fred.otten@funisave.com', roles: ['ADMIN', 'USER'], firstName: 'Fred', lastName: 'Otten' },
-    // { email: 'guy.platt@gmail.com', roles: ['ADMIN', 'USER'], firstName: 'Guy', lastName: 'Platt' },
-  ],
   allowCustomTheme: true,
   auth_config: [
     {

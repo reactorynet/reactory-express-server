@@ -1,5 +1,8 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
+import moment from 'moment';
+import { isArray, find, filter } from 'lodash';
+import logger from '../../logging';
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -32,9 +35,18 @@ const UserSchema = new mongoose.Schema({
   avatar: String,
   memberships: [
     {
-      clientId: ObjectId,
-      organizationId: ObjectId,
-      businessUnit: String,
+      clientId: {
+        type: ObjectId,
+        ref: 'ReactoryClient',
+      },
+      organizationId: {
+        type: ObjectId,
+        ref: 'Organization',
+      },
+      businessUnitId: {
+        type: ObjectId,
+        ref: 'BusinessUnit',
+      },
       enabled: Boolean,
       authProvider: String,
       providerId: String,
@@ -79,6 +91,31 @@ UserSchema.methods.setPassword = function setPassword(password) {
 
 UserSchema.methods.validatePassword = function validatePassword(password) {
   return this.password === crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
+};
+
+UserSchema.methods.hasMembership = function hasMembership(clientId, organizationId, businessUnitId) {
+  if (this.memberships.length === 0) return false;
+
+  const found = filter(this.memberships, (membership) => {
+    const a = JSON.stringify({
+      clientId: membership.clientId ? membership.clientId.toString() : null,
+      organizationId: membership.organizationId ? membership.organizationId.toString() : null,
+      businessUnitId: membership.businessUnitId ? membership.businessUnitId.toString() : null,
+    });
+
+    const b = JSON.stringify({
+      clientId: clientId.toString(),
+      organizationId: organizationId && organizationId.toString ? organizationId.toString() : null,
+      businessUnitId: businessUnitId && businessUnitId.toString ? businessUnitId.toString() : null,
+    });
+
+    if (a === b) return true;
+    return false;
+  });
+
+  if (found === null || found === undefined) return false;
+
+  return true;
 };
 
 const UserModel = mongoose.model('User', UserSchema);

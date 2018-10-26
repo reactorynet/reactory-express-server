@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
+import { find, isArray } from 'lodash';
+import { SETTING_KEYS } from '../../constants';
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -72,7 +74,9 @@ const ReactoryClientSchema = new mongoose.Schema({
   settings: [
     {
       name: String,
-      value: String,
+      componentFqn: String,
+      formSchema: { },
+      data: { },
     },
   ],
   whitelist: [String],
@@ -83,6 +87,16 @@ const ReactoryClientSchema = new mongoose.Schema({
 ReactoryClientSchema.methods.setPassword = function setPassword(password) {
   this.salt = crypto.randomBytes(16).toString('hex');
   this.password = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
+};
+
+ReactoryClientSchema.methods.getDefaultUserRoles = function getDefaultUserRoles() {
+  if (isArray(this.settings) === true && this.settings.length > 0) {
+    const setting = find(this.settings, { names: SETTING_KEYS.NEW_USER_ROLES });
+    if (setting && setting.data && isArray(setting)) return setting.data;
+    return ['USER'];
+  }
+
+  return ['USER'];
 };
 
 ReactoryClientSchema.methods.validatePassword = function validatePassword(password) {

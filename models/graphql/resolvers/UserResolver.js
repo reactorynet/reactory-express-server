@@ -14,6 +14,7 @@ import {
 } from '../../index';
 import ApiError from '../../../exceptions';
 import AuthConfig from '../../../authentication';
+import logger from '../../../logging';
 
 const userAssessments = (id, view = 'assessment') => {
   return new Promise((resolve, reject) => {
@@ -168,7 +169,7 @@ const userResolvers = {
     },
     peers(obj) {
       debugger //eslint-disable-line
-      console.log('Getting peers for user', obj);
+      logger.info('Getting peers for user', obj);
       return new Promise((resolve, reject) => {
         let peers = [];
         peers = obj.peers.map((peer) => {
@@ -195,7 +196,7 @@ const userResolvers = {
     },
     businessUnit(obj, args, context, info) {
       // debugger; //eslint-disable-line
-      console.log('resolving business unit', {
+      logger.info('resolving business unit', {
         args, context, info, obj,
       });
       if (obj.memberships) {
@@ -215,7 +216,7 @@ const userResolvers = {
       return Admin.User.User.findById(args.id).then();
     },
     authenticatedUser(obj, args, context, info) {
-      // console.log('Authenticated user query', { obj, args, context, info });
+      // logger.info('Authenticated user query', { obj, args, context, info });
       // return Admin.User.User.findOne({ email: 'werner.weber@gmail.com' }).then();
     },
     userInbox(obj, { id, sort }, context, info) {
@@ -223,9 +224,9 @@ const userResolvers = {
         const { user } = global;
         if (isNil(user)) reject(new ApiError('Not Authorized'));
         const userId = isNil(id) ? user._id : ObjectId(id);
-        console.log(`Finding emails for userId ${userId}`);
+        logger.info(`Finding emails for userId ${userId}`);
         EmailQueue.find({ user: userId }).then((results) => {
-          console.log(`Found ${results.length} emails`, results);
+          logger.info(`Found ${results.length} emails`, results);
           try {
             resolve(results);
           } catch (err) {
@@ -239,7 +240,7 @@ const userResolvers = {
       });
     },
     userSurveys(obj, { id, sort }, context, info) {
-      console.log(`Finding surveys for user ${id}, ${sort}`);
+      logger.info(`Finding surveys for user ${id}, ${sort}`);
       return userAssessments(id);
     },
     userReports(obj, { id, sort }, context, info) {
@@ -277,11 +278,11 @@ const userResolvers = {
       return new Promise((resolve, reject) => {
         const { user } = global;
         Admin.User.surveyForUser(userId || user._id.toString(), surveyId).then((surveyResult) => {
-          console.log('Found surveyResult', surveyResult);
+          logger.info('Found surveyResult', surveyResult);
           if (isNil(surveyResult) === true) return resolve(null);
 
           co.wrap(function* resolveDataGenerator(uId, survey) {
-            console.log(`Fetching Details For Assessment: ${userId} => Survey: ${survey._id}`);
+            logger.info(`Fetching Details For Assessment: ${userId} => Survey: ${survey._id}`);
             const assessments = yield Admin.User.assessmentForUserInSurvey(uId, survey._id).then();
             const tasks = yield Admin.User.tasksForUserRelatedToSurvey(uId, survey._id).then();
             resolve({
@@ -305,7 +306,7 @@ const userResolvers = {
       });
     },
     assessmentWithId(obj, { id }, context, info) {
-      console.log('Finding Assessment with Id', { id });
+      logger.info('Finding Assessment with Id', { id });
       return new Promise((resolve, reject) => {
         const findWrapper = co.wrap(function* assessmentWithIdGenerator(assessmentId) {
           const assessment = yield Assessment.findById(assessmentId).then();
@@ -329,7 +330,7 @@ const userResolvers = {
         createdAt: moment().valueOf(),
         updatedAt: moment().valueOf(),
       };
-      console.log(`Create user mutation called ${input.email}`);
+      logger.info(`Create user mutation called ${input.email}`);
       if (isNil(organizationId) === false && isNil(input) === false) {
         return new Promise((resolve, reject) => {
           Admin.Organization.findById(organizationId).then((organization) => {
@@ -343,7 +344,7 @@ const userResolvers = {
       throw new Error('Organization Id is required');
     },
     updateUser(obj, { id, profileData }) {
-      console.log('Update user mutation called', { id, profileData });
+      logger.info('Update user mutation called', { id, profileData });
       return Admin.User.updateProfile(id, profileData);
     },
     setPassword(obj, { input: { password, confirmPassword, authToken } }) {
@@ -351,7 +352,7 @@ const userResolvers = {
         const { user } = global;
         if (typeof password !== 'string') reject(new ApiError('password expects string input'));
         if (password === confirmPassword && user) {
-          console.log(`Setting user password ${user.email}, ${authToken}`);
+          logger.info(`Setting user password ${user.email}, ${authToken}`);
           user.setPassword(password);
           user.save().then(updateUser => resolve(updateUser));
         } else {

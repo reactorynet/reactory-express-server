@@ -1,5 +1,17 @@
 export default [
   {
+    title: 'Default Setting Component',
+    nameSpace: 'core',
+    name: 'Setting',
+    version: '1.0.0',
+    author: 'werner.weber+reactory-sysadmin@gmail.com',
+    labels: [],
+    uri: 'embed',
+    roles: ['ADMIN'],
+    arguments: [],
+    resources: [],
+  },
+  {
     title: 'Basic User List',
     nameSpace: 'core',
     name: 'UserList',

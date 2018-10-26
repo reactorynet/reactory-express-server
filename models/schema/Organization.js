@@ -1,12 +1,17 @@
 import mongoose from 'mongoose';
 
-// const { ObjectId } = mongoose.Schema.Types;
+const { ObjectId } = mongoose.Schema.Types;
 
 const OrganizationSchema = mongoose.Schema({
   code: String,
   name: String,
   logo: String,
-  businessUnits: [String],
+  businessUnits: [
+    {
+      type: ObjectId,
+      ref: 'BusinessUnit',
+    },
+  ],
   public: Boolean,
   clients: {
     active: [String],
@@ -15,6 +20,10 @@ const OrganizationSchema = mongoose.Schema({
   legacyId: String,
   createdAt: Date,
   updatedAt: Date,
+  updateBy: {
+    type: ObjectId,
+    ref: 'User',
+  },
 });
 
 OrganizationSchema.methods.isPublic = function isPublic() {

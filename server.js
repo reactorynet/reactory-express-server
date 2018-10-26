@@ -26,6 +26,7 @@ dotenv.config();
 process.on('unhandledRejection', (error) => {
   // Will print "unhandledRejection err is not defined"
   logger.error('unhandledRejection', error);
+  throw error;
 });
 
 const {

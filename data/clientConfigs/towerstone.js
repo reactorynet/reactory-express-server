@@ -24,6 +24,19 @@ export default {
   avatar: `${CDN_ROOT}themes/towerstone/images/avatar.jpg`,
   applicationRoles: ['USER', 'ADMIN', 'ANON'],
   billingType: 'partner',
+  organization: [
+    {
+      name: 'Demo Org', key: 'demo-org',
+    },
+  ],
+  users: [
+    {
+      email: 'werner.weber@gmail.com', firstName: 'Werner', lastName: 'Weber', roles: ['USER', 'ADMIN'],
+    },
+    {
+      email: 'mady.eagar@towerstone-global.com', firstName: 'Mandy', lastName: 'Eagar', roles: ['USER', 'ADMIN'],
+    },
+  ],
   components: [
     {
       nameSpace: 'towerstone',
@@ -198,6 +211,18 @@ export default {
       },
     },
   },
+  settings: [
+    {
+      name: 'new_user_roles',
+      componentFqn: 'core.Setting@1.0.0',
+      formSchema: {
+        type: 'string',
+        title: 'Default User Role',
+        description: 'The default user role to assign to a new user',
+      },
+      data: ['USER'],
+    },
+  ],
   allowCustomTheme: true,
   auth_config: [
     {
