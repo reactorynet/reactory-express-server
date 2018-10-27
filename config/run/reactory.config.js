@@ -1,12 +1,14 @@
 module.exports = {
   apps: [{
     name: 'ReactoryApi',
-    script: './server.js',
+    script: './dist/server.js',
+    cwd: './dist/',
     kill_timeout: 3000,
     listen_timeout: 10000,
     max_memory_restart: '2G',
     interpreter: 'node_modules/.bin/nodemon',
-    node_args: '--exec babel-node --inspect --preset=es2016,stage-2',
+    node_args: '--exec babel-node --preset=es2016,stage-2',
+    watch: true,
     env: {
       NODE_ENV: 'development',
       APP_DATA_ROOT: '/mnt/d/data/reactory',

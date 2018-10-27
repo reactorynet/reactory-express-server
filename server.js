@@ -18,7 +18,6 @@ import { testConnection } from './database/legacy';
 import bots from './bot/server';
 import startup from './utils/startup';
 import logger from './logging';
-import ApiError from './exceptions';
 
 
 dotenv.config();
