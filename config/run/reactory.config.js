@@ -6,7 +6,7 @@ module.exports = {
     kill_timeout: 3000,
     listen_timeout: 10000,
     max_memory_restart: '2G',
-    interpreter: './node_modules/.bin/nodemon',
+    interpreter: 'nodemon',
     node_args: '--exec babel-node --preset=es2016,stage-2',
     watch: true,
     env: {
