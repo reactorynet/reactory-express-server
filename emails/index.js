@@ -182,7 +182,7 @@ const sendForgotPasswordEmail = (user, organization = null) => {
         });
 
         const msg = {
-          to: 'werner.weber+devredirect@gmail.com', // user.email,
+          to: user.email,
           from: partner.email,
         };
 
@@ -276,45 +276,51 @@ const updateTemplate = (templateInput) => {
 */
 
 function* installTemplateGenerator(template, organization, client) {
-  const found = yield Template.findClientTemplate(template, organization, client);
-  if (isNil(found) === true) {
-    logger.info(`Template ${template.view} does not exists, creating`);
-    let newTemplate = yield new Template({
-      ...template,
-      client: client._id,
-      organization: isNil(organization) ? null : organization._id,
-      elements: [],
-    }).save();
+  try {
+    const found = yield Template.findClientTemplate(template, organization, client).then();
+    if (!(found && found._id)) {
+      logger.info(`Template ${template.view} does not exists, creating`);
+      let newTemplate = yield new Template({
+        ...template,
+        client: client._id,
+        organization: isNil(organization) ? null : organization._id,
+        elements: [],
+      }).save();
 
-    if (template.elements.length > 0) {
-      for (let ei = 0; ei < template.elements.length; ei += 1) {
-        const newElement = yield installTemplateGenerator(template.elements[ei], organization, client);
-        newTemplate.elements.push(newElement._id);
+      if (template.elements.length > 0) {
+        for (let ei = 0; ei < template.elements.length; ei += 1) {
+          const newElement = yield installTemplateGenerator(template.elements[ei], organization, client);
+          newTemplate.elements.push(newElement._id);
+        }
       }
+
+      newTemplate = yield newTemplate.save().then();
+      return newTemplate;
     }
 
-    newTemplate = yield newTemplate.save().then();
-    return newTemplate;
+    logger.info(`Template ${template.view} exists for context ${client._id} => [organization: ${organization && organization.name ? organization.name : 'no org'}]`);
+    return found;
+  } catch (installError) {
+    logger.error('An error occured installing default templates');
+    throw installError;
   }
-  logger.debug('template already exists');
-  return found;
 }
 
 // const installTemplate = co.wrap(installTemplateGenerator);
 
-export const installDefaultEmailTemplates = (client) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const promises = defaultEmailTemplates.map((template) => {
-        logger.info(`Installing / Updating ${template.view} template into system for client ${client.name}`);
-        return installTemplateGenerator(template, undefined, client);
-      });
-      Promise.all(promises).then(templates => resolve(templates));
-    } catch (e) {
-      reject(e);
+export const installDefaultEmailTemplates = co.wrap(function* installDefaultEmailTemplatesGenerator(client) {
+  try {
+    const installedTemplates = [];
+    for (let ti = 0; ti < defaultEmailTemplates.length; ti += 1) {
+      const installedItem = yield installTemplateGenerator(defaultEmailTemplates[ti], undefined, client);
+      installedTemplates.push(installedItem);
     }
-  });
-};
+    return installedTemplates;
+  } catch (e) {
+    logger.error('Error installing templates', e);
+    throw e;
+  }
+});
 
 export default {
   sendActivationEmail,

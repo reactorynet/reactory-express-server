@@ -72,24 +72,26 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: '10mb' }));
 
 try {
-  const startupResult = startup();
-  logger.info('System Initialized/Ready, enabling app', startupResult);
-  AuthConfig.Configure(app);
-  app.use(
-    queryRoot,
-    passport.authenticate('jwt', { session: false }), bodyParser.urlencoded({ extended: true }),
-    bodyParser.json({ limit: '10mb' }),
-    graphqlExpress({ schema, debug: true }),
-  );
+  startup().then((startResult) => {
+    logger.debug('Startup Generator Done.');
+    AuthConfig.Configure(app);
+    app.use(
+      queryRoot,
+      passport.authenticate('jwt', { session: false }), bodyParser.urlencoded({ extended: true }),
+      bodyParser.json({ limit: '10mb' }),
+      graphqlExpress({ schema, debug: true }),
+    );
 
-  app.use(graphiql, graphiqlExpress({ endpointURL: queryRoot }));
-  app.use(userAccountRouter);
-  app.use('/reactory', reactory);
-  app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
-  app.listen(API_PORT);
-  logger.info(`Bots server using ${bots.name}`);
-  logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
-  // process.send('ready');
+    app.use(graphiql, graphiqlExpress({ endpointURL: queryRoot }));
+    app.use(userAccountRouter);
+    app.use('/reactory', reactory);
+    app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
+    app.listen(API_PORT);
+    logger.info(`Bots server using ${bots.name}`);
+    logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
+    logger.info('System Initialized/Ready, enabling app');
+    // process.send('ready');
+  }).catch(startErr => logger.error(startErr));
 } catch (startError) {
   logger.error('System Initialized/Ready - failed, exiting app', startError);
   process.exit();

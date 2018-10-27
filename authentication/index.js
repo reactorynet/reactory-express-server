@@ -32,8 +32,7 @@ class AuthConfig {
     }
 
     static JwtAuth = (payload, done) => {
-      debugger //eslint-disable-line
-      logger.info('JWT Auth executing', payload);
+      logger.info('JWT Auth executing');
       if (payload.userId === '-1') {
         global.user = {
           id: -1,
@@ -114,12 +113,12 @@ class AuthConfig {
     };
 
     static BasicAuth = (req, username, password, done) => {
-      logger.info('Basic auth starting');
+      logger.info(`Authenticating User: ${username}`);
       User.findOne({ email: username }).then((userResult) => {
         if (userResult === null) done(null, false, 'username not found');
         if (userResult.validatePassword(password) === true) {
           AuthConfig.generateLoginToken(userResult).then((loginToken) => {
-            logger.info('User logged in and session added', loginToken);
+            logger.info('User logged in and session added');
             done(null, loginToken);
           });
         } else {

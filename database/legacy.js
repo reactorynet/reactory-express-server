@@ -21,9 +21,12 @@ export const getPool = (database = 'plc', host = 'localhost', user = 'towerstone
 
 export const testConnection = (tenant = 'plc') => {
   logger.info('Testing MySQL database connection');
-  getPool(tenant).query('SELECT 1 + 1 AS solution', (error, results) => {
-    if (error) throw error;
-    logger.info(results[0].solution.toString() === '2' ? 'MySQL Connection Available' : 'MySQL Connection NOT Available');
+  return new Promise((resolve, reject) => {
+    getPool(tenant).query('SELECT 1 + 1 AS solution', (error, results) => {
+      if (error) reject(error);
+      logger.info(results[0].solution.toString() === '2' ? 'MySQL Connection Available' : 'MySQL Connection NOT Available');
+      resolve(true);
+    });
   });
 };
 

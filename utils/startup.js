@@ -96,7 +96,7 @@ const startup = co.wrap(function* startupGenerator() {
         const componentObject = yield ClientComponent.findOneAndUpdate(
           { name, version, nameSpace },
           { ...newComponentDef },
-          { upsert: true, new: true },
+          { upsert: true, fields: { _id: 1, name: 1 } },
         );
         logger.info(`Loading component ${component.name} done`);
         reactoryComponents.push(componentObject);
@@ -136,10 +136,10 @@ const startup = co.wrap(function* startupGenerator() {
         let reactoryClient = yield ReactoryClient.findOneAndUpdate(
           { key },
           { ...clientConfig, menus: [], components: componentIds.map(c => c._id) },
-          { upsert: true, new: true, fields: { _id: 1, name: 1, key: 1 } },
+          { upsert: true, fields: { _id: 1, name: 1, key: 1 } },
         );
         logger.info(`Upserted ${reactoryClient.name}: ${reactoryClient && reactoryClient._id ? reactoryClient._id : 'no-id'}`);
-        if (reactoryClient) {
+        if (reactoryClient._id) {
           reactoryClient.setPassword(clientConfig.password);
 
           if (isArray(clientConfig.users) === true) {
@@ -149,7 +149,8 @@ const startup = co.wrap(function* startupGenerator() {
             logger.info(`Loaded users ${defaultUsers.length} for ${reactoryClient.name}`);
           }
 
-          const templateResults = yield installDefaultEmailTemplates(reactoryClient).then();
+          
+          yield installDefaultEmailTemplates(reactoryClient).then();
 
           // has been saved now we can add the details
           const menuDefs = clientConfig.menus || [];
