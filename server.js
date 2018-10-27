@@ -41,6 +41,15 @@ const {
   API_URI_ROOT,
 } = process.env;
 
+const ENV_STRING_DEBUG = `Environment Settings: 
+  API_DATA_ROOT: ${APP_DATA_ROOT},
+  MONGOOSE: ${MONGOOSE},
+  API_PORT: ${API_PORT},
+  API_URI_ROOT: ${API_URI_ROOT},
+`;
+
+logger.info(ENV_STRING_DEBUG);
+
 const queryRoot = '/api';
 const graphiql = '/q';
 const resources = '/cdn';
