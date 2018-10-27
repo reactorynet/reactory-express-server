@@ -1,13 +1,11 @@
 import co from 'co';
-import { isNil, isArray } from 'lodash';
+import { isArray } from 'lodash';
 import ReactoryApi from '../application';
 import { Application, User, ReactoryClient, Menu, ClientComponent } from '../models';
 import { installDefaultEmailTemplates } from '../emails';
 
 import data from '../data';
 import logger from '../logging';
-import ApiError, { ReactoryClientValidationError } from '../exceptions';
-import { react } from 'babel-types';
 
 
 const { clients, users, components } = data;

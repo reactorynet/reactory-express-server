@@ -6,5 +6,4 @@ export const fileAsString = (filename) => {
 
 export default {
   fileAsString,
-}
-;
+};

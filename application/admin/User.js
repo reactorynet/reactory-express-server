@@ -65,10 +65,8 @@ export const createUserForOrganization = co.wrap(function* createUserForOrganiza
         roles: union(isFunction(partner.getDefaultUserRoles) ? partner.getDefaultUserRoles() : [], roles),
       };
 
-      logger.info('Checking Membership', { user, membership });
-
+      logger.debug('Checking Membership', { user, membership });
       if (foundUser.hasMembership(membership.clientId, membership.organizationId, membership.businessUnitId) === false) {
-        logger.debug('User does not have the membership, adding');
         foundUser.memberships.push(membership);
         result.user = yield foundUser.save().then();
       }

@@ -29,6 +29,12 @@ process.on('unhandledRejection', (error) => {
   throw error;
 });
 
+
+process.on('SIGINT', () => {
+  logger.info('Shutting down server');
+  process.exit(0);
+});
+
 const {
   APP_DATA_ROOT,
   MONGOOSE,
@@ -75,8 +81,8 @@ try {
   app.listen(API_PORT);
   logger.info(`Bots server using ${bots.name}`);
   logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
+  // process.send('ready');
 } catch (startError) {
-  debugger //eslint-disable-line
-  logger.error('System Initialized/Ready - failed, exiting app', { apiError: new ApiError(error) });
+  logger.error('System Initialized/Ready - failed, exiting app', startError);
   process.exit();
 }

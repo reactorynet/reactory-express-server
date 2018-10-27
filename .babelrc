@@ -6,7 +6,7 @@
       "stage-0",
       "env"
     ],
-    "plugins": [
+    "plugins": [     
       "babel-plugin-inline-import",
       "transform-runtime"
     ]

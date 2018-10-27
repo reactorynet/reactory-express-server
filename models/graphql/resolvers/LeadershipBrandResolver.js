@@ -3,7 +3,7 @@ import moment from 'moment';
 import { LeadershipBrand, Scale } from '../../../models';
 // import { migrateOrganization } from '../../../application/admin/Organization';
 
-const leadershipBrandResolver = {  
+const leadershipBrandResolver = {
   LeadershipBrand: {
     id(obj) {
       return obj.id;
@@ -54,7 +54,7 @@ const leadershipBrandResolver = {
       console.log('createBrandForOrganization()', {
         obj, args, context, info,
       });
-      
+
       const leadershipBrand = new LeadershipBrand(args.brandInput || null);
       leadershipBrand.createdAt = moment().valueOf();
       leadershipBrand.updatedAt = moment().valueOf();

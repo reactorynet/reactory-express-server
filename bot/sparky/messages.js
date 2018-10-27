@@ -6,7 +6,7 @@ const messages = {
     return 'Would you like to register with WooSpark? (yes / no)';
   },
   knowMore: () => {
-    return 'For more information about our services and offering please go to http://www.woosparks.com/faq'
+    return 'For more information about our services and offering please go to http://www.woosparks.com/faq';
   },
 };
 

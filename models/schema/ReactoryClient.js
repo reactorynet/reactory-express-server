@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 import { find, isArray } from 'lodash';
-import { SETTING_KEYS } from '../../constants';
+import { SETTING_KEYS } from 'constants';
 
 const { ObjectId } = mongoose.Schema.Types;
 

@@ -6,6 +6,7 @@ import { createUserForOrganization } from '../../application/admin/User';
 import iz from '../../utils/validators';
 
 const builder = require('botbuilder');
+
 const { User, Organization } = models;
 
 // Create chat connector for communicating with the Bot Framework Service
@@ -38,7 +39,7 @@ bot.dialog('login', [
   },
   (session, results) => {
     if (iz.email(results.response)) {
-      User.findOne({ email: results.response }).then((user) => {        
+      User.findOne({ email: results.response }).then((user) => {
         if (iz.nil(user) === false) {
           // eslint-disable-next-line
           session.dialogData.userAccount = user;
@@ -87,7 +88,7 @@ bot.dialog('collectPersonal', [
       next(); // Skip if we already have this info.
     }
   },
-  (session, results, next) => {    
+  (session, results, next) => {
     if (results.response) {
       // Save user's name if we asked for it.
       session.dialogData.profile.name = results.response; // eslint-disable-line
@@ -147,12 +148,12 @@ bot.dialog('collectPersonal', [
 
             email.sendActivationEmail(userRegistration);
 
-            session.send(`I've sent you an email to ${session.dialogData.profile.email} with an authorization code to make sure you own the email address, once you activate the link I will be notified and we can start collecting ideas!`);    
+            session.send(`I've sent you an email to ${session.dialogData.profile.email} with an authorization code to make sure you own the email address, once you activate the link I will be notified and we can start collecting ideas!`);
             session.endDialogWithResult({ response: createResults });
           }).catch((createError) => {
             session.send('An error occured while creating your account');
             session.endDialogWithResult({ response: createError });
-          });          
+          });
         });
       }
     });

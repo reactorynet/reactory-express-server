@@ -12,7 +12,7 @@ router.get('/search', (req, res) => {
     if (!isNil(results)) {
       res.send({ id, name: results.name });
     } else {
-      res.status(404).send(new OrganizationNotFoundError(`No organization with id: ${id} exists`))
+      res.status(404).send(new OrganizationNotFoundError(`No organization with id: ${id} exists`));
     }
   });
 });

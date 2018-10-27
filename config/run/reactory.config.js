@@ -2,6 +2,11 @@ module.exports = {
   apps: [{
     name: 'ReactoryApi',
     script: './server.js',
+    kill_timeout: 3000,
+    listen_timeout: 10000,
+    max_memory_restart: '2G',
+    interpreter: 'node_modules/.bin/nodemon',
+    node_args: '--exec babel-node --inspect --preset=es2016,stage-2',
     env: {
       NODE_ENV: 'development',
       APP_DATA_ROOT: '/mnt/d/data/reactory',
@@ -12,9 +17,10 @@ module.exports = {
       API_URI_ROOT: 'http://locahost:4000/',
       CDN_ROOT: 'http://localhost:4000/cdn/',
       MODE: 'DEVELOP',
-      LOG_LEVEL: 'info',
+      LOG_LEVEL: 'debug',
     },
     env_production: {
+      NODE_ENV: 'production',
       APP_DATA_ROOT: '/data/reactory',
       LEGACY_APP_DATA_ROOT: '/data/legacy',
       MONGOOSE: 'mongodb://localhost:27017/reactory',
@@ -25,4 +31,18 @@ module.exports = {
       MODE: 'PRODUCTION',
     },
   }],
+  deploy: {
+    production: {
+      user: 'root',
+      host: ['api.reactory.net'],
+      ref: 'origin/develop',
+      repo: 'git@bitbucket.org:WernerWeber/assessor-api.git',
+      path: '/var/reactory/api',
+      ssh_options: ['IdentityFile=~/.ssh/reactory_bitbucket_key', 'StrictHostKeyChecking=no'],
+      'post-deploy': 'pm2 start config/run/reactory.config.js',
+      env: {
+        NODE_ENV: 'production',
+      },
+    },
+  },
 };

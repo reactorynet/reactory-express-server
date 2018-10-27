@@ -21,7 +21,9 @@ const organizationResolver = {
   },
   Mutation: {
     createUser(obj, arg, context, info) {
-      console.log('Create user mutation called', {obj, arg, context, info});
+      console.log('Create user mutation called', {
+        obj, arg, context, info,
+      });
       const created = { id: ObjectId(), ...arg.input, createdAt: moment() };
       data.push(created);
       return created;
