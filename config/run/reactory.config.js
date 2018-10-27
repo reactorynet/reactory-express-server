@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: 'ReactoryApi',
-    script: './dist/server.js',
+    script: 'server.js',
     cwd: './dist/',
     kill_timeout: 3000,
     listen_timeout: 10000,
