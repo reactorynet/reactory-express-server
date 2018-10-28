@@ -31,6 +31,7 @@ module.exports = {
       API_URI_ROOT: 'https://api.reactory.net/',
       CDN_ROOT: 'https://api.reactory.net/cdn/',
       MODE: 'PRODUCTION',
+      LOG_LEVEL: 'debug',
     },
   }],
   deploy: {
