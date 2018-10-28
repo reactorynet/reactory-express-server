@@ -50,8 +50,8 @@ const organizationResolver = {
       });
       return Organization.findOne({ _id: args.id }).then();
     },
-    usersForOrganizationWithId(obj, args, context, info) {
-      return UserService.listAllForOrganization(args.id);
+    usersForOrganizationWithId(obj, { id, searchString }, context, info) {
+      return UserService.listAllForOrganization(id, searchString);
     },
   },
   Mutation: {

@@ -133,14 +133,31 @@ export const listAll = () => {
   });
 };
 
-export const listAllForOrganization = (organizationId) => {
+export const listAllForOrganization = (organizationId, searchString = '') => {
   return new Promise((resolve, reject) => {
     Organization.findOne({ _id: ObjectId(organizationId) }).then((organization) => {
-      User.find({ 'memberships.organizationId': { $eq: organization.id } }).sort('firstName lastName').then((users) => {
-        resolve(users);
-      }).catch((err) => {
-        reject(err);
-      });
+      if (organization) {
+        const query = { 'memberships.organizationId': { $eq: organization.id } };
+        if (searchString.length > 0) {
+          if (searchString.indexOf('@')) {
+            query.email = `/${searchString}/`;
+          }
+
+          if (searchString.indexOf(' ')) {
+            query.firstName = `/${searchString.split(' ')[0]}/`;
+            query.lastName = `/${searchString.split(' ')[1]}/`;
+          }
+        }
+        debugger; //eslint-disable-line
+        User.find(query).sort('firstName lastName').then((users) => {
+          resolve(users);
+        }).catch((err) => {
+          reject(err);
+        });
+      } else {
+        logger.warn('No Org with id ', organizationId);
+        resolve([]);
+      }
     });
   });
 };

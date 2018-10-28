@@ -39,6 +39,10 @@ type Survey {
   timeline: [TimelineEntry]
 }
 
+type UserDashboard {
+  dashboardData: Any
+}
+
 input SurveyInput {
   id: ObjID
   leadershipBrand: ObjID

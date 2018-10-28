@@ -194,16 +194,6 @@ const userResolvers = {
     username(obj) {
       return obj.username;
     },
-    businessUnit(obj, args, context, info) {
-      // debugger; //eslint-disable-line
-      logger.info('resolving business unit', {
-        args, context, info, obj,
-      });
-      if (obj.memberships) {
-        return obj.memberships[0].businessUnit || 'NOT SET';
-      }
-      return 'NO MEMBERSHIPS';
-    },
     peers(usr) {
       return Organigram.findOne({ user: usr._id, organization: usr.memberships[0].organizationId });
     },

@@ -17,6 +17,7 @@ const typeDefs = [];
   'Project/Project',
   'Project/Task',
   'Organization/Organization',
+  'Organization/BusinessUnit',
   'Organization/LeadershipBrand',
   'Survey/Survey',
   'Survey/Assessment',

@@ -1,7 +1,5 @@
 import dotenv from 'dotenv';
-import {
-  profileSmall,
-} from '../menus';
+import {profileSmall,} from '../menus';
 
 import systemRoutes from './defaultRoutes';
 
@@ -64,7 +62,7 @@ export default {
           ordinal: 1, title: 'Inbox', link: '/inbox', icon: 'email', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 2, title: 'Reactory Clients', link: '/surveys', icon: 'check_circle', roles: ['USER'],
+          ordinal: 2, title: 'Reactory Clients', link: '/reactory-clients/', icon: 'check_circle', roles: ['USER'],
         },
       ],
     },
@@ -76,6 +74,7 @@ export default {
       title: 'Home',
       path: '/',
       public: false,
+      exact: true,
       roles: ['SYS-ADMIN'],
       componentFqn: 'reactory.Dashboard@1.0.0',
     },
@@ -84,24 +83,18 @@ export default {
       title: 'Inbox',
       path: '/inbox',
       public: false,
+      exact: true,
       roles: ['USER'],
       componentFqn: 'core.InboxComponent@1.0.0',
     },
     {
       key: 'clients',
       title: 'Reactory Clients',
-      path: '/reactory-clients',
+      path: '/reactory-clients/*',
       public: false,
+      exact: true,
       roles: ['SYS-ADMIN'],
       componentFqn: 'reactory.Clients@1.0.0',
-    },
-    {
-      key: 'reports',
-      title: 'Reports',
-      path: '/reports',
-      public: false,
-      roles: ['USER'],
-      componentFqn: 'towerstone.Report@1.0.0',
     },
     {
       key: 'tasks',

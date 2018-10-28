@@ -156,7 +156,7 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
       for (let eidx = 0; eidx < employees.length; eidx += 1) {
         try {
           const employee = { ...employees[eidx], createdAt: now, updatedAt: now };
-          const createResult = yield createUserForOrganization(employee, uuid(), result.organization);
+          const createResult = yield createUserForOrganization(employee, uuid(), result.organization, ['USER'], 'id.reactory.net', global.partner, null);
           if (createResult.user) {
             const peerRows = yield legacy.Users.listPeersForUsers(createResult.user.legacyId, result.organization.legacyId, options);
             console.log(`Found ${peerRows.length} peer rows`);

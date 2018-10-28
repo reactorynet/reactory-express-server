@@ -67,10 +67,13 @@ type ApiStatus {
     lastName: String
     avatar: String
     email: String
+    organization: Organization
+    businessUnit: BusinessUnit
     id: String
     roles: [String]
     menus: [Menu]
     routes: [ClientRoute]
+    memberships: [UserMembership]
     applicationAvatar: String
     applicationName: String
     theme: String

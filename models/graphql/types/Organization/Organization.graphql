@@ -91,7 +91,7 @@ extend type Query {
   allTennants: [Tennant]
   allOrganizations(legacy: Boolean): [Organization]
   organizationWithId(id: String!): Organization 
-  usersForOrganizationWithId(id: String!): [User] 
+  usersForOrganizationWithId(id: String!, searchString: String): [User] 
 }
 
 extend type Mutation {

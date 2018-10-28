@@ -940,6 +940,38 @@ const newProductPayment = {
 };
 
 
+const searchUserForm = {
+  id: 'search-user',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Search',
+  tags: ['forgot password', 'user account'],
+  schema: {
+    title: null,
+    description: 'Search by email or first name and last name. i.e. joe.blogs@email.com or Joe Blogs',
+    type: 'object',
+    required: [
+      'searchString',
+    ],
+    properties: {
+      searchString: {
+        type: 'string',
+        title: 'Search',
+      },
+    },
+  },
+  uiSchema: {
+    searchString: {
+      'ui:autofocus': true,
+      'ui:emptyValue': '',
+    },
+  },
+  layout: {
+
+  },
+};
+
 export default [
   productIdeas,
   productIdeasForm,
@@ -952,4 +984,5 @@ export default [
   msTeamsConfigurationTab,
   customPaymentSchedule,
   newProductPayment,
+  searchUserForm,
 ];

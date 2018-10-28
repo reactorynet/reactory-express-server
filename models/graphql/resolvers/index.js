@@ -15,6 +15,7 @@ import surveyResolver from './SurveyResolver';
 import scaleResolver from './ScaleResolver';
 import { MenuItem, Menu, ClientComponent, User } from '../../../models';
 import logger from '../../../logging';
+import { UserValidationError } from '../../../exceptions';
 
 const getComponentWithFqn = (fqn) => {
   const parts = fqn.split('@');
@@ -87,6 +88,7 @@ const resolvers = {
         email: isNil(user) === false ? user.email : null,
         id: isNil(user) === false ? user._id : null,
         roles: isNil(user) === false && isArray(user.memberships) && user.memberships.length > 0 ? user.memberships[0].roles : ['ANON'],
+        memberships: isNil(user) === false && isArray(user.memberships) ? user.memberships : [],
         routes: partner.routes || [],
         applicationAvatar: partner.avatar,
         applicationName: partner.name,

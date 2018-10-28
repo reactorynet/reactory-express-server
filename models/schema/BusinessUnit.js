@@ -18,7 +18,7 @@ const BusinessUnitSchema = mongoose.Schema({
   avatar: String,
   createdAt: Date,
   updatedAt: Date,
-  updatedBy: {
+  owner: {
     type: ObjectId,
     ref: 'User',
   },

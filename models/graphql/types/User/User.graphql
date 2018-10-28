@@ -29,22 +29,31 @@ type UserPeers {
   peers: [Peer]
 }
 
+type UserMembership {  
+  clientId: ReactoryClient
+  organization: Organization
+  businessUnit: BusinessUnit
+  roles: [String]
+  enabled: Boolean
+}
 
 type User {
   id: ObjID!
   username: String
   firstName: String
   lastName: String
-  email: String
-  businessUnit: String,
+  email: String  
   peers: UserPeers,  
   salt: String,
   password: String
   avatar: String
   authProvider: AuthProvider!
   providerId: String!
-  lastLogin: Date  
-  roles: [Role]
+  lastLogin: Date
+  organization: Organization
+  businessUnit: BusinessUnit  
+  roles: [String]  
+  memberships: [UserMembership]
   sessionInfo: [UserSession]
   legacyId: Float
   createdAt: Float!

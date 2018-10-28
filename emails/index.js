@@ -134,6 +134,7 @@ const renderTemplate = (template, properties) => {
   if (template && typeof template.content === 'string') {
     if (template.content.toString().indexOf('$ref://') === 0) {
       const filename = `${APP_DATA_ROOT}/templates/email/${template.content.replace('$ref://', '')}`;
+      logger.info(`Loading template filename: ${filename}`);
       const templateString = readFileSync(filename).toString('utf8');
       if (existsSync(filename)) {
         try {

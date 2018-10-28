@@ -1,0 +1,10 @@
+
+type BusinessUnit {
+  id: ObjID
+  name: String
+  description: String
+  organiztion: Organization
+  owner: User
+  members: [User]
+  avatar: String
+}

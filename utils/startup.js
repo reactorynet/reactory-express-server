@@ -116,7 +116,7 @@ const startup = co.wrap(function* startupGenerator() {
         organization,
         businessUnit,
         user: { firstName: usr.firstName, lastName: usr.lastName, email: usr.email },
-        password: usr.password || 'P@ssword123!',
+        password: usr.password || 'Password123!',
         roles: usr.roles,
       };
     });
@@ -133,25 +133,26 @@ const startup = co.wrap(function* startupGenerator() {
         const componentIds = yield componentsPromise(clientConfig.components).then();
         logger.info(`Loaded (${componentIds.length}) components for client ${clientConfig.name}`);
         const { key } = clientConfig;
-        let reactoryClient = yield ReactoryClient.findOneAndUpdate(
-          { key },
-          { ...clientConfig, menus: [], components: componentIds.map(c => c._id) },
-          { upsert: true, fields: { _id: 1, name: 1, key: 1 } },
-        );
+        let reactoryClient = yield ReactoryClient.findOne({ key }).then();
+        debugger //eslint-disable-line
+        const clientData = { ...clientConfig, menus: [], components: componentIds.map(c => c._id) };
+        delete clientData.password;
+        if (reactoryClient) {
+          reactoryClient = yield ReactoryClient.findOneAndUpdate({ key }, clientData).then();
+        } else {
+          reactoryClient = new ReactoryClient(clientData);
+          reactoryClient = yield reactoryClient.save().then();
+        }
         logger.info(`Upserted ${reactoryClient.name}: ${reactoryClient && reactoryClient._id ? reactoryClient._id : 'no-id'}`);
         if (reactoryClient._id) {
           reactoryClient.setPassword(clientConfig.password);
-
           if (isArray(clientConfig.users) === true) {
             let defaultUsers = [];
             logger.info('Loading default users', { users: clientConfig.users });
             defaultUsers = yield Promise.all(getUserloadPromises(makeUserArrayFromProps(clientConfig.users || [], reactoryClient)));
             logger.info(`Loaded users ${defaultUsers.length} for ${reactoryClient.name}`);
           }
-
-          
           yield installDefaultEmailTemplates(reactoryClient).then();
-
           // has been saved now we can add the details
           const menuDefs = clientConfig.menus || [];
           const menuRefs = [];
@@ -170,7 +171,7 @@ const startup = co.wrap(function* startupGenerator() {
           }
 
           reactoryClient.menus = menuRefs;
-          reactoryClient = yield reactoryClient.save();
+          reactoryClient = yield reactoryClient.save().then();
           clientsLoaded.push(reactoryClient);
         } else {
           logger.error(`${clientConfig.key} Validation failed, check config`, clientConfig);

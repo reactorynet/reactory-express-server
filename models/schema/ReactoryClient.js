@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 import { find, isArray } from 'lodash';
-import { SETTING_KEYS } from 'constants';
+import ReactoryConstants from '../../constants';
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -91,7 +91,7 @@ ReactoryClientSchema.methods.setPassword = function setPassword(password) {
 
 ReactoryClientSchema.methods.getDefaultUserRoles = function getDefaultUserRoles() {
   if (isArray(this.settings) === true && this.settings.length > 0) {
-    const setting = find(this.settings, { names: SETTING_KEYS.NEW_USER_ROLES });
+    const setting = find(this.settings, { names: ReactoryConstants.SETTING_KEYS.NEW_USER_ROLES });
     if (setting && setting.data && isArray(setting)) return setting.data;
     return ['USER'];
   }

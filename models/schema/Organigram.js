@@ -12,6 +12,13 @@ const OrganigramSchema = mongoose.Schema({
     type: ObjectId,
     ref: 'User',
   },
+  businessUnit: {
+    type: ObjectId,
+    ref: 'BusinessUnit',
+  },
+  position: {
+    type: String
+  },
   allowEdit: Boolean,
   peers: [{
     user: {
@@ -21,7 +28,6 @@ const OrganigramSchema = mongoose.Schema({
     legacyPeerId: String,
     relationship: {
       type: String,
-      enum: ['peer', 'manager', 'report', 'vendor', 'client', 'partner'],
       lowercase: true,
       trim: true,
     },
