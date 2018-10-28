@@ -39,13 +39,16 @@ const {
   MONGOOSE,
   API_PORT,
   API_URI_ROOT,
+  CDN_ROOT,
 } = process.env;
 
-const ENV_STRING_DEBUG = `Environment Settings: 
-  API_DATA_ROOT: ${APP_DATA_ROOT},
-  MONGOOSE: ${MONGOOSE},
-  API_PORT: ${API_PORT},
-  API_URI_ROOT: ${API_URI_ROOT},
+const ENV_STRING_DEBUG = `
+Environment Settings: 
+  API_DATA_ROOT: ${APP_DATA_ROOT}
+  MONGOOSE: ${MONGOOSE}
+  API_PORT: ${API_PORT}
+  API_URI_ROOT: ${API_URI_ROOT}
+  CDN_ROOT: ${CDN_ROOT}
 `;
 
 logger.info(ENV_STRING_DEBUG);

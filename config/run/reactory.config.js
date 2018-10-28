@@ -2,12 +2,11 @@ module.exports = {
   apps: [{
     name: 'ReactoryApi',
     script: 'server.js',
-    cwd: './dist/',
     kill_timeout: 3000,
     listen_timeout: 10000,
     max_memory_restart: '2G',
-    interpreter: 'nodemon',
-    node_args: '--exec babel-node --preset=es2016,stage-2',
+    interpreter: 'babel-node',
+    node_args: '--preset=es2016,stage-2',
     watch: true,
     env: {
       NODE_ENV: 'development',
@@ -19,7 +18,7 @@ module.exports = {
       API_URI_ROOT: 'http://locahost:4000/',
       CDN_ROOT: 'http://localhost:4000/cdn/',
       MODE: 'DEVELOP',
-      LOG_LEVEL: 'debug',
+      LOG_LEVEL: 'info',
     },
     env_production: {
       NODE_ENV: 'production',
@@ -31,7 +30,7 @@ module.exports = {
       API_URI_ROOT: 'https://api.reactory.net/',
       CDN_ROOT: 'https://api.reactory.net/cdn/',
       MODE: 'PRODUCTION',
-      LOG_LEVEL: 'debug',
+      LOG_LEVEL: 'info',
     },
   }],
   deploy: {

@@ -9,6 +9,7 @@
   "scripts": {
     "start": "NODE_PATH=. nodemon ./server.js --exec babel-node --inspect --preset=es2016,stage-2",
     "build": "babel . --out-dir dist --presets es2016,stage-2 --ignore spec.js,node_modules,dist --copy-files",
+    "serve-b": "NODE_PATH=. babel-node ./server.js --preset=es2016,stage-2",
     "serve": "pm2 start config/run/$BUILD_TARGET.config.js",
     "start_debug": "babel-node ./server.js --inspect --preset=es2016,stage-2",
     "clean": "rimraf ./dist/",
