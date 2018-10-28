@@ -87,7 +87,7 @@ try {
     app.use('/reactory', reactory);
     app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
     app.listen(API_PORT);
-    logger.info(`Bots server using ${bots.name}`);
+    // logger.info(`Bots server using ${bots.name}`);
     logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
     logger.info('System Initialized/Ready, enabling app');
     // process.send('ready');
