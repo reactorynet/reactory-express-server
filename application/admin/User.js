@@ -139,13 +139,13 @@ export const listAllForOrganization = (organizationId, searchString = '') => {
       if (organization) {
         const query = { 'memberships.organizationId': { $eq: organization.id } };
         if (searchString.length > 0) {
-          if (searchString.indexOf('@')) {
-            query.email = `/${searchString}/`;
-          }
-
-          if (searchString.indexOf(' ')) {
-            query.firstName = `/${searchString.split(' ')[0]}/`;
-            query.lastName = `/${searchString.split(' ')[1]}/`;
+          if (searchString.indexOf('@') > 0) {
+            query.email = new RegExp(`${searchString}`, 'g');
+          } else if (searchString.indexOf(' ') > 0) {
+            query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'g');
+            query.lastName = new RegExp(`${searchString.split(' ')[1]}`, 'g');
+          } else {
+            query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'g');
           }
         }
         debugger; //eslint-disable-line
