@@ -1,5 +1,7 @@
 
 
+const allowedHeadersString = 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,origin,authorization';
+const proxyHeaderString = 'X-Real-IP,X-Forwarded-For,X-Forwarded-Host,X-Forwarded-Proto';
 const corsOptions = {
   /**
    * Function - set origin to a function implementing some custom logic.
@@ -24,7 +26,7 @@ const corsOptions = {
   /**
      *
      */
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Client-Key', 'X-Client-Pwd', 'x-client-key', 'x-client-pwd'],
+  allowedHeaders: [...allowedHeadersString.split(','), ...proxyHeaderString.split(',')],
   /**
      * Configures the Access-Control-Expose-Headers CORS header.
      * Expects a comma-delimited string (ex: 'Content-Range,X-Content-Range') or an array

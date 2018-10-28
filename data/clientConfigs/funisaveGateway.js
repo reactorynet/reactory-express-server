@@ -12,11 +12,11 @@ const key = 'funisave-gw';
 export default {
   key,
   name: 'Funisave Payment Gateway',
-  username: 'reactory',
+  username: 'funisave-gw',
   email: 'developer@reactory.net',
   salt: 'generate',
   password: 'XXXXXXXXXXXXX',
-  siteUrl: MODE === 'DEVELOP' ? 'http://localhost:3000' : 'https://app.reactory.net/',
+  siteUrl: MODE === 'DEVELOP' ? 'http://localhost:3000' : `https://${key}.reactory.net/`,
   emailSendVia: 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/reset-password',
