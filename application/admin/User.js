@@ -137,7 +137,7 @@ export const listAllForOrganization = (organizationId, searchString = '') => {
   return new Promise((resolve, reject) => {
     Organization.findOne({ _id: ObjectId(organizationId) }).then((organization) => {
       if (organization) {
-        const query = { 'memberships.organizationId': { $eq: organization.id } };
+        const query = { 'memberships.organizationId': { $eq: organization._id } };
         if (searchString.length > 0) {
           if (searchString.indexOf('@') > 0) {
             query.email = new RegExp(`${searchString}`, 'g');

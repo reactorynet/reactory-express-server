@@ -3,8 +3,27 @@ type BusinessUnit {
   id: ObjID
   name: String
   description: String
-  organiztion: Organization
+  organization: Organization
   owner: User
   members: [User]
   avatar: String
+}
+
+
+input BusinessUnitInput {
+  name: String
+  description: String
+  organiztion: ObjID
+  owner: ObjID
+  members: [ObjID]
+  avatar: String
+}
+
+extend type Query { 
+  businessUnitsForOrganization(id: ObjID): [BusinessUnit]
+}
+
+extend type Mutation {
+  createBusinessUnit(input: BusinessUnitInput): BusinessUnit,
+  updateBusinessUnit(id: ObjID, input: BusinessUnitInput): BusinessUnit
 }

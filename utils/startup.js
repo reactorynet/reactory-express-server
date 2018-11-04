@@ -6,6 +6,7 @@ import { installDefaultEmailTemplates } from '../emails';
 
 import data from '../data';
 import logger from '../logging';
+import { ReactoryClientValidationError } from '../exceptions';
 
 
 const { clients, users, components } = data;
@@ -134,14 +135,27 @@ const startup = co.wrap(function* startupGenerator() {
         logger.info(`Loaded (${componentIds.length}) components for client ${clientConfig.name}`);
         const { key } = clientConfig;
         let reactoryClient = yield ReactoryClient.findOne({ key }).then();
-        debugger //eslint-disable-line
         const clientData = { ...clientConfig, menus: [], components: componentIds.map(c => c._id) };
         delete clientData.password;
         if (reactoryClient) {
-          reactoryClient = yield ReactoryClient.findOneAndUpdate({ key }, clientData).then();
+          try {
+            reactoryClient = yield ReactoryClient.findOneAndUpdate({ key }, clientData).then();
+          } catch (upsertError) {
+            logger.error('An error occured upserting the record', upsertError);
+          }
         } else {
-          reactoryClient = new ReactoryClient(clientData);
-          reactoryClient = yield reactoryClient.save().then();
+          try {
+            reactoryClient = new ReactoryClient(clientData);
+            const validationResult = reactoryClient.validateSync();
+            if (validationResult && validationResult.errors) {
+              logger.info('Validation Result Has Errors', validationResult.errors);
+              throw new ReactoryClientValidationError('Could not validate the input', validationResult);
+            } else {
+              reactoryClient = yield reactoryClient.save().then();
+            }
+          } catch (saveNewError) {
+            logger.error('Could not save the new client data');
+          }
         }
         logger.info(`Upserted ${reactoryClient.name}: ${reactoryClient && reactoryClient._id ? reactoryClient._id : 'no-id'}`);
         if (reactoryClient._id) {

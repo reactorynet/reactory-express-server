@@ -6,9 +6,11 @@ import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import pngToJpeg from 'png-to-jpeg';
 import dotenv from 'dotenv';
 import legacy from '../../../database';
-import { Organization } from '../../index';
+import { Organization, BusinessUnit } from '../../index';
 import { migrateOrganization, migrateCoreData, updateOrganizationLogo } from '../../../application/admin/Organization';
 import * as UserService from '../../../application/admin/User';
+import ApiError, { OrganizationNotFoundError } from '../../../exceptions';
+import logger from '../../../logging';
 
 dotenv.config();
 
@@ -23,7 +25,10 @@ const organizationResolver = {
   },
   Organization: {
     id(obj) {
-      return obj.id;
+      return obj._id.toString();
+    },
+    avatar() {
+      return null;
     },
     createdAt(obj) {
       return obj.createdAt || moment().unix();
@@ -55,12 +60,29 @@ const organizationResolver = {
     },
   },
   Mutation: {
-    createOrganization(obj, arg, context, info) {
-      console.log('Create organization mutation called', {
-        obj, arg, context, info,
+    createOrganization: async (obj, args, context, info) => {
+      debugger //eslint-disable-line
+      const { input } = args;
+      const inputData = { ...input };
+      const exists = await Organization.count({ code: inputData.code }).then() === 0;
+
+      if (exists === false) throw new ApiError(`Organization with the code ${input.code} is already registered `);
+
+      delete inputData.logo;
+      const organization = new Organization({
+        ...inputData,
+        createdAt: new Date().valueOf(),
+        updatedAt: new Date().valueOf(),
       });
-      const created = { id: ObjectId(), ...arg.input, createdAt: moment() };
-      return created;
+
+      await organization.save().then();
+
+      if (input.logo !== null && input.logo !== undefined) {
+        organization.logo = updateOrganizationLogo(organization, input.logo);
+        await organization.save().then();
+      }
+
+      return organization;
     },
     migrateOrganization(obj, arg, context, info) {
       console.log('Migrating organization data', {
@@ -70,21 +92,26 @@ const organizationResolver = {
       if (!options.clientKey) options.clientKey = global.partner.key;
       return migrateOrganization(id, options);
     },
-    updateOrganization(obj, props, context, info) {
-      return co.wrap(function* updateOrganizationGenerator(variables) {
-        const inputData = variables.input;
-        let found = yield Organization.findOne({ _id: ObjectId(variables.id) }).then();
-        if (found && found._id) {
-          found.code = inputData.code;
-          found.name = inputData.name;
-          found.logo = updateOrganizationLogo(found, inputData.logo);
-          found.createdAt = found.createdAt || moment().valueOf();
-          found.updatedAt = moment().valueOf();
-          found = yield found.save().then();
-          return found;
-        }
-        throw new ApiError('Organization not found');
-      })(props);
+    updateOrganization: async (parent, args) => {
+      const { input, id } = args;
+      const _id = ObjectId(id);
+      const inputData = { ...input };
+      const exists = await Organization.count({ _id }).then() === 1;
+
+      if (exists === false) throw new OrganizationNotFoundError(`Organization with the id ${id} could not be found`);
+      const organization = await Organization.findOne({ _id }).then();
+
+      if (organization && organization._id) {
+        organization.code = inputData.code;
+        organization.name = inputData.name;
+        organization.logo = updateOrganizationLogo(organization, inputData.logo);
+        organization.createdAt = organization.createdAt || moment().valueOf();
+        organization.updatedAt = moment().valueOf();
+        await organization.save().then();
+        return organization;
+      }
+
+      throw new OrganizationNotFoundError(`Organization with the id ${id} could not be found `);
     },
     migrateCore(obj, arg, context, info) {
       const { options } = arg;

@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const { ObjectId } = mongoose.Schema.Types;
 
 const OrganizationSchema = mongoose.Schema({
+  id: ObjectId,
   code: String,
   name: String,
   logo: String,

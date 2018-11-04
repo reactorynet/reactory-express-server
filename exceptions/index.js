@@ -83,6 +83,20 @@ export class OrganizationExistsError extends ApiError {
   }
 }
 
+export class BusinessUnitExistsError extends ApiError {
+  constructor(message, meta = {}) {
+    super(message, meta);
+    this.code = 'BUSINESS-UNIT-409';
+  }
+}
+
+export class ValidationError extends ApiError {
+  constructor(message, meta = {}) {
+    super(message, meta);
+    this.code = 'VALIDTION-403';
+  }
+}
+
 export class SystemError extends ApiError {
   constructor(message, meta = { }) {
     super(message, meta);

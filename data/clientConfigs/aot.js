@@ -39,6 +39,18 @@ export default {
     },
     {
       nameSpace: 'aot',
+      name: 'AnalitcsDashboard',
+      version: '1.0.0',
+      title: 'Dashboard',
+      author: 'werner.weber+reactory-sysadmin@gmail.com',
+      labels: [],
+      uri: 'embed',
+      roles: ['ADMIN'],
+      arguments: [],
+      resources: [],
+    },
+    {
+      nameSpace: 'aot',
       name: 'Administration',
       version: '1.0.0',
       title: 'Administration For Age of Teams',
@@ -52,10 +64,94 @@ export default {
   ],
   menus: [
     profileSmall,
-    towerStoneMenuDef,
+    {
+      name: 'Main',
+      key: 'left-nav',
+      target: 'left-nav',
+      roles: ['USER'],
+      entries: [
+        {
+          ordinal: 0, title: 'Dashboard', link: '/', icon: 'dashboard', roles: ['USER'],
+        },
+        {
+          ordinal: 2, title: 'Surveys', link: '/surveys/', icon: 'check_circle', roles: ['USER'],
+        },
+        {
+          ordinal: 3, title: 'My Analytics', link: '/analytics/user/', icon: 'insert_chart', roles: ['USER'],
+        },
+        {
+          ordinal: 4, title: 'Team Analytics', link: '/analytics/team/', icon: 'insert_chart_outlined', roles: ['LEADER', 'ADMIN'],
+        },
+        {
+          ordinal: 1, title: 'Due Today', link: '/tasks/today/', icon: 'autorenew', roles: ['USER'],
+        },
+        {
+          ordinal: 6, title: 'My Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
+        },
+        {
+          ordinal: 7, title: 'Admin', link: '/admin/', icon: 'supervisor_account', roles: ['ADMIN'],
+        },
+        {
+          ordinal: 99, title: 'Inbox', link: '/inbox/', icon: 'email', roles: ['USER'],
+        },
+      ],
+    },
   ],
   routes: [
-    ...systemRoutes,
+    {
+      id: '0',
+      key: 'login',
+      title: 'Login',
+      path: '/login',
+      public: true,
+      roles: ['ANON'],
+      componentFqn: 'core.Login@1.0.0',
+      args: [
+        {
+          key: 'withRegister',
+          value: {
+            type: 'boolean',
+            withRegister: true,
+          },
+        },
+      ],
+    },
+    {
+      id: '1',
+      key: 'forgot-password',
+      title: 'Forgot',
+      path: '/forgot',
+      public: true,
+      roles: ['ANON'],
+      componentFqn: 'core.ForgotPassword@1.0.0',
+    },
+    {
+      id: '2',
+      key: 'reset-password',
+      title: 'Reset',
+      path: '/reset-password',
+      public: true,
+      roles: ['USER'],
+      componentFqn: 'core.ResetPassword@1.0.0',
+    },
+    {
+      id: '3',
+      key: 'logout',
+      title: 'Logout',
+      path: '/logout',
+      public: true,
+      roles: ['USER'],
+      componentFqn: 'core.Logout@1.0.0',
+    },
+    {
+      id: '3',
+      key: 'logout',
+      title: 'Register',
+      path: '/register',
+      public: true,
+      roles: ['ANON'],
+      componentFqn: 'core.Register@1.0.0',
+    },
     {
       key: 'home',
       title: 'Home',
@@ -76,17 +172,44 @@ export default {
     },
     {
       key: 'reports',
-      title: 'Reports',
-      path: '/reports',
+      title: 'Team Analytics',
+      path: '/analytics',
+      exact: false,
+      public: false,
+      roles: ['LEADER', 'ADMIN'],
+      componentFqn: 'aot.AnalyticsDashboard@1.0.0',
+      args: [
+        {
+          key: 'userMode',
+          value: {
+            type: 'string',
+            userMode: 'team',
+          },
+        },
+      ],
+    },
+    {
+      key: 'reports',
+      title: 'My Analytics',
+      path: '/my-analytics/',
       exact: false,
       public: false,
       roles: ['USER'],
-      componentFqn: 'aot.ReportComponent@1.0.0',
+      componentFqn: 'aot.AnalyticsDashboard@1.0.0',
+      args: [
+        {
+          key: 'userMode',
+          value: {
+            type: 'string',
+            userMode: 'user',
+          },
+        },
+      ],
     },
     {
       key: 'tasks',
       title: 'Tasks',
-      path: '/tasks',
+      path: '/tasks/**',
       exact: false,
       public: false,
       roles: ['USER'],
@@ -94,11 +217,27 @@ export default {
     },
     {
       key: 'profile',
-      title: 'Profile',
+      title: 'My Profile',
       path: '/profile',
       public: false,
       roles: ['USER'],
       componentFqn: 'core.Profile@1.0.0',
+      args: [
+        {
+          key: 'withPeers',
+          value: {
+            type: 'bool',
+            withPeers: false,
+          },
+        },
+        {
+          key: 'profileTitle',
+          value: {
+            type: 'string',
+            profileTitle: 'My Custom Title',
+          },
+        },
+      ],
     },
     {
       key: 'admin',
@@ -159,6 +298,18 @@ export default {
     {
       provider: 'GOOGLE',
       enabled: false,
+    },
+  ],
+  settings: [
+    {
+      name: 'new_user_roles',
+      componentFqn: 'core.Setting@1.0.0',
+      formSchema: {
+        type: 'string',
+        title: 'Default User Role',
+        description: 'The default user role to assign to a new user',
+      },
+      data: ['USER'],
     },
   ],
   whitelist: [

@@ -7,7 +7,7 @@ type PaymentError {
   when: Date
 }
 
-type PaymentTransactioMessage {
+type PaymentTransactionMessage {
   sequence: Int
   direction: String
   payload: Any
@@ -21,7 +21,9 @@ type PaymentTransaction {
   transactionId: String
   policyNumber: String
   product: String
-  messages: [PaymentTransactioMessage]
+  paymentSchedule: PaymentSchedule
+  transactionLogs: Any
+  messages: [PaymentTransactionMessage]
 }
 
 type PaymentClient {
@@ -49,6 +51,7 @@ type PaymentSchedule {
   productName: String
   productType: String
   proposer: PaymentClient
+  client: PaymentClient
   paymentBankAccount: PaymentBankAccount
   debitOrder: Any
 }
@@ -67,7 +70,9 @@ type FileStats {
 }
 
 type AuditTrail {
-  when: Date  
+  when: Date 
+  startDate: Date
+  endDate: Date 
   label: String
   files: FileStats
   paymentSchedules: [PaymentSchedule]

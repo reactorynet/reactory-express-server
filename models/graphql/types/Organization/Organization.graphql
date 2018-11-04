@@ -24,6 +24,8 @@ type Organization {
   code: String
   name: String
   logo: String
+  avatar: String
+  businessUnits: [BusinessUnit]
   legacyId: Int      
   createdAt: Float!
   updatedAt: Float!

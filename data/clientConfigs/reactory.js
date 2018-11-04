@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import {profileSmall,} from '../menus';
+import { profileSmall  } from '../menus';
 
 import systemRoutes from './defaultRoutes';
 
@@ -164,6 +164,18 @@ export default {
     {
       provider: 'GOOGLE',
       enabled: false,
+    },
+  ],
+  settings: [
+    {
+      name: 'new_user_roles',
+      componentFqn: 'core.Setting@1.0.0',
+      formSchema: {
+        type: 'string',
+        title: 'Default User Role',
+        description: 'The default user role to assign to a new user',
+      },
+      data: ['USER'],
     },
   ],
   whitelist: [

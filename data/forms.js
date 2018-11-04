@@ -939,6 +939,17 @@ const newProductPayment = {
   schema: newProductPaymentSchema,
 };
 
+const paymentStatusUpdateSchema = require('./formSchemas/payment-status-update.json');
+
+const paymentStatusUpdateForm = {
+  id: 'payment-status-update',
+  uiFramework: 'material',
+  uiSupport: ['material'],
+  uiResources: [],
+  title: 'Send a payment status',
+  tags: [],
+  schema: paymentStatusUpdateSchema,
+};
 
 const searchUserForm = {
   id: 'search-user',
@@ -972,6 +983,238 @@ const searchUserForm = {
   },
 };
 
+/** *
+ *
+ * {
+  organization: {
+    type: ObjectId,
+    ref: 'Organization',
+  },
+  members: [
+    {
+      type: ObjectId,
+      ref: 'User',
+    },
+  ],
+  name: String,
+  description: String,
+  avatar: String,
+  createdAt: Date,
+  updatedAt: Date,
+  owner: {
+    type: ObjectId,
+    ref: 'User',
+  },
+}
+ *
+ */
+
+const BusinessUnitList = {
+  id: 'business-units',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Search',
+  tags: ['Business Unit'],
+  componentDefs: [
+    'core.OrganizationLabel',
+    'core.DataListItem',
+  ],
+  schema: {
+    title: null,
+    description: '',
+    type: 'object',
+    required: [
+      'organization',
+    ],
+    properties: {
+      organization: {
+        type: 'string',
+        title: 'id',
+      },
+      businessUnits: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              title: 'id',
+            },
+            name: {
+              type: 'string',
+              title: 'Name',
+            },
+            avatar: {
+              type: 'string',
+              title: 'Avatar',
+              format: 'data-url',
+            },
+            owner: {
+              type: 'object',
+              properties: {
+                avatar: {
+                  type: 'string',
+                  title: 'avatar',
+                },
+                firstName: {
+                  type: 'string',
+                  title: 'First Name',
+                },
+                lastName: {
+                  type: 'string',
+                  title: 'Last Name',
+                },
+              },
+            },
+            enabled: {
+              type: 'boolean',
+              title: 'Is Enabled',
+            },
+          },
+        },
+      },
+    },
+  },
+  uiSchema: {
+    organization: {
+      'ui:widget': 'OrganizationLabel',
+    },
+    businessUnits: {
+      'ui:widget': 'ListItem',
+      'ui:options': {
+        primaryText: '${data.name}',
+        secondaryText: '${data.}',
+      },
+    },
+  },
+  graphql: {
+    query: {
+      name: 'businessUnitsForOrganization',
+      variables: {
+        id: '${data.organization}',
+      },
+    },
+  },
+};
+
+const BusinessUnitForm = {
+  id: 'new-business-unit',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Search',
+  tags: ['Business Unit'],
+  schema: {
+    title: null,
+    description: '',
+    type: 'object',
+    required: [
+      'organization',
+      'name',
+    ],
+    properties: {
+      id: {
+        type: 'string',
+        title: 'id',
+      },
+      organization: {
+        type: 'string',
+        title: 'Organization Id',
+      },
+      name: {
+        type: 'string',
+        title: 'Name',
+      },
+      avatar: {
+        type: 'string',
+        title: 'Avatar',
+        format: 'data-url',
+      },
+      owner: {
+        type: 'string',
+        title: 'Business Unit Owner',
+      },
+      enabled: {
+        type: 'boolean',
+        title: 'Is Enabled',
+      },
+      members: {
+        title: 'Business Unit Members',
+        type: 'array',
+        items: {
+          type: 'string',
+          name: 'Member Id',
+        },
+      },
+    },
+  },
+  uiSchema: {
+    id: {
+      'ui:options': {
+        hidden: 'true',
+      },
+    },
+    organization: {
+      'ui:options': {
+        componentFqn: 'core.OrganizationLabelForId',
+        propertyMap: {
+          organization: 'id',
+        },
+      },
+    },
+    owner: {
+      'ui:options': {
+        componentFqn: 'core.EmployeeSelector',
+        organizationId: '${data.organization}',
+        businessUnitId: '${data.id}',
+        multiple: false,
+      },
+    },
+    name: {
+      'ui:autofocus': true,
+      'ui:emptyValue': '',
+    },
+    members: {
+      'ui:options': {
+        componentFqn: 'core.EmployeeSelector',
+        organizationId: '${data.organization}',
+        businessUnitId: '${data.id}',
+        multiple: true,
+      },
+    },
+    avatar: {
+      'ui:options': {
+        componentFqn: 'core.Avatar',
+        context: 'business-unit',
+        title: 'Select Avatar For Business Unit',
+        organizationId: '${data.organization}',
+        businessUnitId: '${data.id}',
+      },
+    },
+  },
+  graphql: {
+    mutations: {
+      create: {
+        name: 'createBusinessUnit',
+        variables: {
+          input: '${data}',
+        },
+      },
+      update: {
+        name: 'updateBusinessUnit',
+        variables: {
+          id: '${data.id}',
+          input: '${data}',
+        },
+      },
+    },
+  },
+  layout: {
+    componentFqn: 'core.SingleColumnLayout',
+  },
+};
+
 export default [
   productIdeas,
   productIdeasForm,
@@ -985,4 +1228,7 @@ export default [
   customPaymentSchedule,
   newProductPayment,
   searchUserForm,
+  paymentStatusUpdateForm,
+  BusinessUnitForm,
+  BusinessUnitList,
 ];

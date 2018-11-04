@@ -1,7 +1,5 @@
 import dotenv from 'dotenv';
-import {
-  profileSmall,
-} from '../menus';
+import { profileSmall } from '../menus';
 
 import systemRoutes from './defaultRoutes';
 
@@ -20,7 +18,7 @@ export default {
   emailSendVia: 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/reset-password',
-  avatar: `${CDN_ROOT}themes/${key}/images/avatar.jpg`,
+  avatar: `${CDN_ROOT}themes/${key}/images/avatar.png`,
   applicationRoles: ['USER', 'ADMIN', 'ANON'],
   billingType: 'partner',
   mode: MODE,
@@ -29,10 +27,22 @@ export default {
       email: 'werner.weber@gmail.com', roles: ['ADMIN', 'USER'], firstName: 'Werner', lastName: 'Weber',
     },
     {
-      email: 'fred.otten@funisave.com', roles: ['ADMIN', 'USER'], firstName: 'Fred', lastName: 'Otten',
+      email: 'fred.otten@funisave.com',
+      roles: ['ADMIN', 'USER'],
+      firstName: 'Fred',
+      lastName: 'Otten',
+      authProvider: 'LOCAL',
+      providerId: 'reactory-system',
+      password: 'Password123',
     },
     {
-      email: 'guy.platt@gmail.com', roles: ['ADMIN', 'USER'], firstName: 'Guy', lastName: 'Platt',
+      email: 'guy.platt@gmail.com',
+      roles: ['ADMIN', 'USER'],
+      firstName: 'Guy',
+      lastName: 'Platt',
+      authProvider: 'LOCAL',
+      providerId: 'reactory-system',
+      password: 'Password123',
     },
   ],
   components: [
@@ -44,7 +54,7 @@ export default {
       author: 'werner.weber+reactory-sysadmin@gmail.com',
       labels: [],
       uri: 'embed',
-      roles: ['USER'],
+      roles: ['ADMIN'],
       arguments: [],
       resources: [],
     },

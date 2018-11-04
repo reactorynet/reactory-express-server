@@ -25,6 +25,7 @@ import legacy from '../../database';
 import { getScaleForKey } from '../../data/scales';
 import { OrganizationValidationError, OrganizationNotFoundError, OrganizationExistsError } from '../../exceptions';
 import moment, { isMoment } from 'moment';
+import logger from '../../logging';
 
 
 dotenv.config();
@@ -61,18 +62,23 @@ export class MigrationResult {
 
 
 export const updateOrganizationLogo = (organization, imageData) => {
-  const buffer = Buffer.from(imageData.split(/,\s*/)[1], 'base64');
-  if (!existsSync(`${APP_DATA_ROOT}/organization`)) mkdirSync(`${APP_DATA_ROOT}/organization`);
-  const path = `${APP_DATA_ROOT}/organization/${organization._id}/`;
+  try {
+    const buffer = Buffer.from(imageData.split(/,\s*/)[1], 'base64');
+    if (!existsSync(`${APP_DATA_ROOT}/organization`)) mkdirSync(`${APP_DATA_ROOT}/organization`);
+    const path = `${APP_DATA_ROOT}/organization/${organization._id}/`;
 
-  if (!existsSync(path)) mkdirSync(path);
-  const filename = `${APP_DATA_ROOT}/organization/${organization._id}/logo_${organization._id}_default.jpeg`;
+    if (!existsSync(path)) mkdirSync(path);
+    const filename = `${APP_DATA_ROOT}/organization/${organization._id}/logo_${organization._id}_default.jpeg`;
 
-  if (imageData.startsWith('data:image/png')) {
-    pngToJpeg({ quality: 90 })(buffer).then(output => writeFileSync(filename, output));
-  } else writeFileSync(filename, buffer);
+    if (imageData.startsWith('data:image/png')) {
+      pngToJpeg({ quality: 90 })(buffer).then(output => writeFileSync(filename, output));
+    } else writeFileSync(filename, buffer);
 
-  return `logo_${organization._id}_default.jpeg`;
+    return `logo_${organization._id}_default.jpeg`;
+  } catch (organizationLogoUpdate) {
+    logger.error('Could not update the company logo', organizationLogoUpdate);
+    return null;
+  }
 };
 
 /**

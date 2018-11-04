@@ -21,7 +21,7 @@ export default {
   emailSendVia: 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/reset-password',
-  avatar: `${CDN_ROOT}themes/towerstone/images/avatar.jpg`,
+  avatar: `${CDN_ROOT}themes/towerstone/images/avatar.png`,
   applicationRoles: ['USER', 'ADMIN', 'ANON'],
   billingType: 'partner',
   organization: [

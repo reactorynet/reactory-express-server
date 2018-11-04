@@ -172,6 +172,7 @@ merge(
   leadershipBrandResolver,
   surveyResolver,
   scaleResolver,
+  require('./BusinessUnitResolver').default,
   require('./Custom/PaymentGatewayResolver').default,
 );
 
