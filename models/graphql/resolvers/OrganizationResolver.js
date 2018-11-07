@@ -61,7 +61,6 @@ const organizationResolver = {
   },
   Mutation: {
     createOrganization: async (obj, args, context, info) => {
-      debugger //eslint-disable-line
       const { input } = args;
       const inputData = { ...input };
       const exists = await Organization.count({ code: inputData.code }).then() === 0;
@@ -78,8 +77,12 @@ const organizationResolver = {
       await organization.save().then();
 
       if (input.logo !== null && input.logo !== undefined) {
-        organization.logo = updateOrganizationLogo(organization, input.logo);
-        await organization.save().then();
+        try {
+          organization.logo = updateOrganizationLogo(organization, input.logo);
+          await organization.save().then();
+        } catch (logoErr) {
+          logger.error('Could not save the organization logo', logoErr);
+        }
       }
 
       return organization;
@@ -104,7 +107,11 @@ const organizationResolver = {
       if (organization && organization._id) {
         organization.code = inputData.code;
         organization.name = inputData.name;
-        organization.logo = updateOrganizationLogo(organization, inputData.logo);
+        try {
+          organization.logo = updateOrganizationLogo(organization, inputData.logo);
+        } catch (logoError) {
+          logger.warn('Could not update the organization logo');
+        }
         organization.createdAt = organization.createdAt || moment().valueOf();
         organization.updatedAt = moment().valueOf();
         await organization.save().then();

@@ -1019,18 +1019,33 @@ const BusinessUnitList = {
   componentDefs: [
     'core.OrganizationLabel',
     'core.DataListItem',
+    'core.Logo',
   ],
   schema: {
-    title: null,
-    description: '',
+    title: 'Business Units',
+    description: 'Listed below are your business units',
     type: 'object',
     required: [
       'organization',
     ],
     properties: {
       organization: {
-        type: 'string',
-        title: 'id',
+        type: 'object',
+        title: 'Organization',
+        properties: {
+          id: {
+            type: 'string',
+            title: 'Organization Id',
+          },
+          name: {
+            type: 'string',
+            title: 'Organization Name',
+          },
+          logo: {
+            type: 'string',
+            title: 'Logo',
+          },
+        },
       },
       businessUnits: {
         type: 'array',
@@ -1053,9 +1068,13 @@ const BusinessUnitList = {
             owner: {
               type: 'object',
               properties: {
+                id: {
+                  type: 'string',
+                  title: 'Id',
+                },
                 avatar: {
                   type: 'string',
-                  title: 'avatar',
+                  title: 'Avatar',
                 },
                 firstName: {
                   type: 'string',
@@ -1078,32 +1097,59 @@ const BusinessUnitList = {
   },
   uiSchema: {
     organization: {
-      'ui:widget': 'OrganizationLabel',
+      'ui:widget': 'LogoWidget',
     },
     businessUnits: {
-      'ui:widget': 'ListItem',
       'ui:options': {
         primaryText: '${data.name}',
-        secondaryText: '${data.}',
       },
     },
   },
   graphql: {
     query: {
       name: 'businessUnitsForOrganization',
+      queryText: `
+        query BusinessUnitsForOrganization($id: String){
+          businessUnitsForOrganization(id: $id) {
+            id
+            name 
+            description
+            organization {
+              id
+              name
+              logo
+              avatar
+            }
+            owner {
+              id
+              firstName
+              lastName
+              email
+              avatar
+            }
+            members {
+              id
+              firstName
+              lastName
+              email
+              avatar
+            }
+          }
+        }
+      `,
       variables: {
-        id: '${data.organization}',
+        id: '${organization.id}',
       },
     },
   },
 };
 
 const BusinessUnitForm = {
-  id: 'new-business-unit',
+  id: 'business-unit',
   uiFramework: 'material',
   uiSupport: ['material', 'bootstrap'],
   uiResources: [],
-  title: 'Search',
+  title: 'Business Unit',
   tags: ['Business Unit'],
   schema: {
     title: null,
@@ -1144,7 +1190,7 @@ const BusinessUnitForm = {
         type: 'array',
         items: {
           type: 'string',
-          name: 'Member Id',
+          title: 'Member Id',
         },
       },
     },
@@ -1156,20 +1202,16 @@ const BusinessUnitForm = {
       },
     },
     organization: {
-      'ui:options': {
-        componentFqn: 'core.OrganizationLabelForId',
-        propertyMap: {
-          organization: 'id',
-        },
-      },
+
     },
     owner: {
       'ui:options': {
-        componentFqn: 'core.EmployeeSelector',
-        organizationId: '${data.organization}',
-        businessUnitId: '${data.id}',
+        componentFqn: 'core.UserListWithSearch',
+        organizationId: '${organization}',
+        businessUnitId: '${id}',
         multiple: false,
       },
+      'ui:widget': 'email',
     },
     name: {
       'ui:autofocus': true,
@@ -1177,10 +1219,12 @@ const BusinessUnitForm = {
     },
     members: {
       'ui:options': {
-        componentFqn: 'core.EmployeeSelector',
-        organizationId: '${data.organization}',
-        businessUnitId: '${data.id}',
-        multiple: true,
+        componentFqn: 'core.UserListWithSearch',
+        componentProps: {
+          organizationId: '${organization}',
+          businessUnitId: '${id}',
+          multiple: true,
+        },
       },
     },
     avatar: {
@@ -1188,30 +1232,21 @@ const BusinessUnitForm = {
         componentFqn: 'core.Avatar',
         context: 'business-unit',
         title: 'Select Avatar For Business Unit',
-        organizationId: '${data.organization}',
-        businessUnitId: '${data.id}',
-      },
-    },
-  },
-  graphql: {
-    mutations: {
-      create: {
-        name: 'createBusinessUnit',
-        variables: {
-          input: '${data}',
-        },
-      },
-      update: {
-        name: 'updateBusinessUnit',
-        variables: {
-          id: '${data.id}',
-          input: '${data}',
-        },
+        organizationId: '${organization}',
+        businessUnitId: '${id}',
       },
     },
   },
   layout: {
     componentFqn: 'core.SingleColumnLayout',
+  },
+  propTypes: {
+    mode: {
+      type: 'string',
+      title: 'Mode',
+      enum: ['new', 'edit', 'read-only'],
+      defaultValue: 'new',
+    },
   },
 };
 

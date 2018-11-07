@@ -17,7 +17,7 @@ const OrganigramSchema = mongoose.Schema({
     ref: 'BusinessUnit',
   },
   position: {
-    type: String
+    type: String,
   },
   allowEdit: Boolean,
   peers: [{

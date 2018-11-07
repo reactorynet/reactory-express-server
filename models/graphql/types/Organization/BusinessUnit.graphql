@@ -11,19 +11,22 @@ type BusinessUnit {
 
 
 input BusinessUnitInput {
-  name: String
+  name: String!
   description: String
-  organiztion: ObjID
-  owner: ObjID
+  organization: String!
+  owner: String!
   members: [ObjID]
   avatar: String
 }
 
 extend type Query { 
-  businessUnitsForOrganization(id: ObjID): [BusinessUnit]
+  businessUnitsForOrganization(id: String!, searchString: String): [BusinessUnit],
+  businessUnitWithId(id: String!): BusinessUnit,
 }
 
 extend type Mutation {
-  createBusinessUnit(input: BusinessUnitInput): BusinessUnit,
-  updateBusinessUnit(id: ObjID, input: BusinessUnitInput): BusinessUnit
+  createBusinessUnit(input: BusinessUnitInput!): BusinessUnit,
+  updateBusinessUnit(id: String!, input: BusinessUnitInput): BusinessUnit,
+  addMemberToBussinessUnit(id: String!, memberId: String!): Boolean,
+  removeMemberFromBusinessUnit(id: String!, memberId: String!): Boolean,
 }

@@ -3,9 +3,10 @@ import {
   BusinessUnit,
   Organization,
   User,
+  Organigram,
 } from '../../';
 
-import { OrganizationNotFoundError, BusinessUnitExistsError, ValidationError } from '../../../exceptions';
+import { OrganizationNotFoundError, BusinessUnitExistsError, ValidationError, RecordNotFoundError } from '../../../exceptions';
 
 const BusinessUnitResolver = {
   BusinessUnit: {
@@ -14,29 +15,37 @@ const BusinessUnitResolver = {
     },
     organization: (bu) => {
       if (bu.organization) {
-        return Organization.find({ _id: ObjectId(bu.organization) }).then((org => org));
+        return Organization.findById(bu.organization).then();
       }
       return null;
     },
     owner: (bu) => {
-      if (bu.owner) return User.find({ _id: ObjectId(bu.owner) }).then((owner => owner));
+      if (bu.owner) return User.findById(bu.owner).then();
       return null;
     },
     members: (bu) => {
       if (bu.members) {
-        return bu.members.map(m => User.findById(m));
+        return bu.members.map(m => User.findById(m).then());
       }
       return [];
     },
   },
   Query: {
     businessUnitsForOrganization: async (parent, args) => {
-      const { id } = args;
+      const { id, searchString } = args;
       const organization = await Organization.findById(id).then();
       if (organization) {
-        return BusinessUnit.find({ organization: organization._id }).then();
+        const query = { organization: organization._id };
+        if (searchString) {
+          query.name = new RegExp(`${searchString}`, 'g');
+        }
+        return BusinessUnit.find(query).then();
       }
       throw new OrganizationNotFoundError('Could not locate the organization with the given id');
+    },
+    businessUnitWithId: async (parent, args) => {
+      const { id } = args;
+      return BusinessUnit.findById(id).then();
     },
   },
   Mutation: {
@@ -61,6 +70,23 @@ const BusinessUnitResolver = {
       }
 
       return null;
+    },
+    addMemberToBussinessUnit: async (parent, { id, memberId }) => {
+      const businessUnit = await businessUnit.findById(id).then();
+      const user = await User.findById(memberId).then();
+      if (businessUnit && user) {
+        const organigram = await Organigram.findOne({ user: user.id, organization: businessUnit.organization.id }).then();
+        if (organigram) {
+          // set the user organigram entry to the correct business unit
+          organigram.businessUnit = businessUnit.id;
+          await organigram.save().then();
+        }
+      } else {
+        throw new RecordNotFoundError('Could not find the member or business unit');
+      }
+    },
+    removeMemberFromBusinessUnit: async (parent, { id, memberId }) => {
+
     },
   },
 };

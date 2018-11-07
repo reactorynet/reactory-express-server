@@ -39,7 +39,7 @@ export default {
         const uris = {
           cpsAudit: `${opts.endpoint}cps/audit?from=${opts.start}&till=${opts.end}`,
           transactions: `${opts.endpoint}admin/transactions?from=${opts.start}&till=${opts.end}`,
-          paymentSchedule: `${opts.endpoint}cps/schedule?from=${opts.start}&till=${opts.end}&status=${debitOrderStatus}`,
+          paymentSchedule: `${opts.endpoint}cps/schedule?from=${opts.start}&till=${opts.end}`,
           errors: `${opts.endpoint}admin/errors?till=${opts.start}&till=${opts.end}`,
         };
         try {
