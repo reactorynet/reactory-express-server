@@ -1,6 +1,7 @@
 import moment from 'moment';
 import co from 'co';
 import Admin from '../../../application/admin';
+import { queueSurveyEmails } from '../../../emails';
 import { LeadershipBrand, Organization, User, Survey, Assessment, Notification } from '../../../models';
 import { ObjectId } from 'mongodb';
 import ApiError from '../../../exceptions';
@@ -93,7 +94,7 @@ export default {
   },
   Mutation: {
     updateSurvey(obj, { id, surveyData }) {
-      return Survey.findOneAndUpdate({ _id: ObjectId(id) }, { ...surveyData });
+      return Survey.findOneAndUpdate({ _id: ObjectId(id) }, { ...surveyData }).then();
     },
     createSurvey(obj, { id, surveyData }) {
       return co.wrap(function* createSurveyGenerator(organization, survey) {
@@ -103,8 +104,12 @@ export default {
         return created;
       })(id, surveyData);
     },
-    launchSurvey(obj, { id, options }) {
-
+    launchSurvey: async (obj, { id, options }) => {
+      const survey = await Survey.findById(id).then();
+      survey.active = true;      
+      await survey.save();
+      queueSurveyEmails(survey, 'launch');
+      createNotifications(survey, 'launch');      
     },
     addDelegateToSurvey(surveyId, delegateId) {
       return co.wrap(function* addDelegateToSurveyGenerator(sid, did) {

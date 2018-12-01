@@ -173,6 +173,49 @@ const defaultForm = {
   },
 };
 
+
+const LoginForm = {
+  id: 'LoginForm',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Login',
+  tags: ['login', 'user account'],
+  schema: {
+    title: 'Login',
+    description: '',
+    type: 'object',
+    required: [
+      'email',
+      'password',
+    ],
+    properties: {
+      baseUrl: {
+        type: 'string',
+        title: 'Site Base',
+        default: 'devsite.ninja',
+      },
+      clientId: {
+        type: 'string',
+        title: 'Client Id',
+        default: 'masonwabe',
+      },
+      email: {
+        type: 'string',
+        format: 'email',
+        title: 'Email',
+      },
+      password: {
+        type: 'string',
+        format: 'password',
+        title: 'Password',
+      },
+    },
+  },
+  uiSchema: {},
+  layout: {},
+};
+
 const arrayForm = {
   id: 'array',
   uiFramework: 'material',
@@ -1009,6 +1052,348 @@ const searchUserForm = {
  *
  */
 
+const ContentPages = {
+  id: 'ContentPages',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Content Pages',
+  tags: ['Business Unit'],
+  componentDefs: [
+    'core.OrganizationLabel',
+    'core.DataListItem',
+    'core.Logo',
+  ],
+  schema: {
+    title: 'Pages',
+    description: 'Available Pages',
+    type: 'array',
+    required: [
+
+    ],
+    items: {
+      type: 'object',
+      title: '${formData.Name} - ${formData.Path}',
+      properties: {
+        WebsitePageId: {
+          type: 'string',
+          title: 'Page Id',
+        },
+        IsDefault: {
+          type: 'boolean',
+          title: 'Is Default',
+        },
+        IsSubMenu: {
+          type: 'boolean',
+          title: 'Submenu',
+        },
+        MenuLocation: {
+          type: 'number',
+          title: 'Menu Location',
+        },
+        Name: {
+          type: 'string',
+          title: 'Name',
+        },
+        Path: {
+          type: 'string',
+          title: 'Path',
+        },
+        Status: {
+          type: 'string',
+          title: 'Is Enabled',
+        },
+        Target: {
+          type: 'string',
+          title: 'Target',
+        },
+      },
+    },
+  },
+  uiSchema: {
+    items: {
+      WebsitePageId: {
+        'ui:widget': 'LinkField',
+        'ui:options': {
+          format: '/editor/${formData}',
+          title: 'Edit Page',
+          icon: 'edit',
+        },
+      },
+    },
+  },
+};
+
+const froala_version = '2.9.1';
+/**
+ * load.css(`https://cdn.jsdelivr.net/npm/froala-editor@${froala_version}/css/froala_style.min.css`),
+            load.js('https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/codemirror.min.js'),
+            load.js('https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/mode/xml/xml.min.js'),
+            load.js(`https://cdn.jsdelivr.net/npm/froala-editor@${froala_version}/js/froala_editor.pkgd.min.js`),
+ */
+const FroalaResources = [
+  /* {
+    framework: 'jquery',
+    uri: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js',
+    async: true,
+    type: 'script',
+    name: 'jQuery',
+    // loaded: () => { return jQuery !== null && jQuery !== undefined }, //eslint-disable-line
+  },
+  {
+    framework: 'froala',
+    uri: 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/codemirror.min.js',
+    type: 'script',
+    async: true,
+    name: 'code_mirror_js',
+  },
+  {
+    framework: 'froala',
+    uri: 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/codemirror.min.css',
+    type: 'style',
+    async: true,
+    name: 'code_mirror_css',
+  },
+  {
+    framework: 'froala',
+    uri: 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/mode/xml/xml.min.js',
+    type: 'script',
+    async: true,
+    name: 'code_mirror_xml',
+    delay: 1500,
+  },
+  */
+  {
+    framework: 'froala',
+    uri: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css',
+    type: 'style',
+    async: true,
+    name: 'froala_font_awesome440',
+  },
+  {
+    framework: 'froala',
+    uri: `https://cdn.jsdelivr.net/npm/froala-editor@${froala_version}/css/froala_editor.pkgd.min.css`,
+    type: 'style',
+    async: true,
+    name: 'froala_style_pkg',
+  },
+  {
+    framework: 'froala',
+    uri: `https://cdn.jsdelivr.net/npm/froala-editor@${froala_version}/css/froala_style.min.css`,
+    type: 'style',
+    async: true,
+    name: 'froala_style',
+  },
+  {
+    framework: 'froala',
+    uri: `https://cdn.jsdelivr.net/npm/froala-editor@${froala_version}/js/froala_editor.pkgd.min.js`,
+    type: 'script',
+    async: true,
+    name: 'editor_package',
+  },
+];
+
+const PageEditorForm = {
+  id: 'PageEditorForm',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [
+    ...FroalaResources,
+  ],
+  title: 'Page Editor',
+  tags: ['Page Editor'],
+  nameSpace: 'forms',
+  name: 'PageEditorForm',
+  version: '1.0.0',
+  registerAsComponent: true,
+  componentDefs: [
+    'core.PageIntegration',
+  ],
+  schema: {
+    title: 'Page Editor',
+    description: 'Page Editor Form',
+    type: 'object',
+    properties: {
+      WebsitePageId: {
+        type: 'string',
+        title: 'Page Id',
+      },
+      Title: {
+        type: 'string',
+        title: 'Page title',
+      },
+      Description: {
+        type: 'string',
+        title: 'Description',
+      },
+      HasDraft: {
+        type: 'boolean',
+        title: 'Has Draft',
+      },
+      HasPrevious: {
+        type: 'boolean',
+        title: 'Has Previous',
+      },
+      PageLayoutTemplate: {
+        type: 'string',
+        title: 'Description',
+      },
+      PageTemplate: {
+        type: 'string',
+        title: 'Page Template Id',
+      },
+      Path: {
+        type: 'string',
+        title: 'Path',
+      },
+      PreviousSavedDate: {
+        type: 'string',
+        title: 'Previous Saved Date',
+      },
+      Status: {
+        type: 'string',
+        title: 'Status',
+        // enum: ['Hidden', 'Visible'],
+      },
+      Content: {
+        type: 'string',
+        title: 'Content',
+      },
+    },
+  },
+  uiSchema: {
+    WebsitePageId: {
+      'ui:options': {
+        readOnly: true,
+      },
+    },
+    Content: {
+      'ui:widget': 'FroalaEditor',
+    },
+  },
+  layout: {
+    TabComponent: {
+      id: 'site-tabs',
+      tabs: [
+        { title: 'General', key: 'general', fields: ['Title', 'Description'] },
+        { title: 'Content', key: 'content', fields: ['Content'] },
+      ],
+    },
+  },
+};
+
+const PageTemplateConfig = {
+  id: 'PageTemplateConfig',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Page Template Configuration',
+  registerAsComponent: true,
+  nameSpace: 'forms',
+  name: 'PageTemplateConfig',
+  version: '1.0.0',
+  preview: null,
+  tags: [],
+  schema: {
+    title: 'Template settings',
+    description: 'Configure the template',
+    type: 'object',
+    properties: {
+      templateType: {
+        type: 'string',
+        title: 'UI Framework',
+        enum: ['bootstrap', 'material', 'custom'],
+        enumTitles: ['Bootstrap 3', 'Material UI', 'Custom'],
+      },
+      hasNavigation: {
+        type: 'boolean',
+        title: 'Has Navigation Element',
+      },
+      navigationSelector: {
+        type: 'string',
+        title: 'Navigation Selector',
+      },
+      navigationComponent: {
+        type: 'string',
+        title: 'Navigation Component',
+      },
+    },
+  },
+  uiSchema: {
+
+  },
+};
+
+const FileLoader = {
+  id: 'FileLoader',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Upload File',
+  tags: ['File Loader'],
+  registerAsComponent: true,
+  nameSpace: 'forms',
+  name: 'FileLoader',
+  version: '1.0.0',
+  schema: {
+    title: 'File Loader',
+    description: 'Select a file',
+    type: 'object',
+    properties: {
+      content: {
+        type: 'string',
+        title: 'File Content',
+      },
+    },
+  },
+  uiSchema: {
+    content: {
+      'ui:widget': 'DropZoneWidget',
+      'ui:options': {
+        readAsString: true,
+        accept: ['text/html', 'text/text', 'application/xml'],
+      },
+    },
+  },
+};
+
+const ExternalLinkList = {
+  id: 'ExternalLinkList',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Linked Resources',
+  tags: ['Links', 'Resource'],
+  schema: {
+    title: 'Resources',
+    description: 'Resource Loader',
+    type: 'array',
+    items: {
+      type: 'object',
+      title: 'External Resource',
+      properties: {
+        uri: {
+          type: 'string',
+          format: 'data-uri',
+          title: 'Resource',
+        },
+        linkType: {
+          type: 'string',
+          enum: ['script', 'style', 'image'],
+        },
+        name: {
+          type: 'string',
+          title: 'Resource Name',
+        },
+      },
+    },
+  },
+  uiSchema: {
+
+  },
+};
+
+
 const BusinessUnitList = {
   id: 'business-units',
   uiFramework: 'material',
@@ -1249,6 +1634,84 @@ const BusinessUnitForm = {
     },
   },
 };
+const defaultFormProps = {
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  uiSchema: {},
+};
+
+const TaskDetailSchema = require('./modelSchema/Task').default;
+const TaskDetailUISchema = require('./viewSchema/TaskDetail').default;
+
+const TaskDetailForm = {
+  id: 'TaskDetail',
+  ...defaultFormProps,
+  name: 'TaskDetailForm',
+  nameSpace: 'forms',
+  version: '1.0.0',
+  componentDefs: ['core.UserSearch', 'material-ui.MaterialCore', 'core.ChipArrayContainer'],
+  registerAsComponent: true,
+  schema: TaskDetailSchema,
+  uiSchema: TaskDetailUISchema,
+  widgetMap: [
+    { widget: 'MaterialCoreTextField', component: 'MaterialCore.TextField' },
+    { widget: 'UserSearch', component: 'UserSearch' },
+  ],
+};
+
+
+const CommentForm = {
+  id: 'CommentForm',
+  ...defaultFormProps,
+  name: 'CommentForm',
+  nameSpace: 'forms',
+  version: '1.0.0',
+  registerAsComponent: true,
+  schema: {
+    title: 'Comment',
+    type: 'object',
+    properties: {
+      newComment: {
+        type: 'string',
+        title: 'Add Comment',
+      },
+    },
+  },
+  uiSchema: {
+
+  },
+};
+
+const ProjectDetailSchema = require('./modelSchema/Project').default;
+
+const ProjectForm = {
+  id: 'PojectForm',
+  ...defaultFormProps,
+  name: 'PojectForm',
+  nameSpace: 'forms',
+  version: '1.0.0',
+  registerAsComponent: true,
+  schema: ProjectDetailSchema,
+  uiSchema: {
+
+  },
+
+};
+
+const TowerStoneSurveyConfigSchema = require('./forms/towerstone/SurveyConfig').default;
+const TowerStoneSurveyConfigUISchema = require('./forms/towerstone/SurveyConfig').uiSchema;
+
+const TowerStoneSurveyConfigForm = {
+  id: 'TowerStoneSurveyConfig',
+  ...defaultFormProps,
+  nameSpace: 'forms',
+  name: 'TowerStoneSurveyConfig',
+  registerAsComponent: true,
+  schema: TowerStoneSurveyConfigSchema,
+  uiSchema: TowerStoneSurveyConfigUISchema,
+};
+
 
 export default [
   productIdeas,
@@ -1266,4 +1729,14 @@ export default [
   paymentStatusUpdateForm,
   BusinessUnitForm,
   BusinessUnitList,
+  PageEditorForm,
+  LoginForm,
+  ContentPages,
+  FileLoader,
+  ExternalLinkList,
+  PageTemplateConfig,
+  TaskDetailForm,
+  CommentForm,
+  ProjectForm,
+  TowerStoneSurveyConfigForm
 ];

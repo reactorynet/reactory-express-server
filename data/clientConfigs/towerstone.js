@@ -163,6 +163,23 @@ export default {
       public: false,
       roles: ['USER'],
       componentFqn: 'core.Task@1.0.0',
+      args: {
+        key: 'lanes',
+        value: [
+          {
+            status: 'new', title: 'New', icon: 'star_border', color: 'inherit',
+          },
+          {
+            status: 'in-progress', title: 'In Progress', icon: 'star_half', color: 'inherit',
+          },
+          {
+            status: 'completed', title: 'Completed', icon: 'star', color: 'inherit',
+          },
+          {
+            status: 'overdue', title: 'Overdue', icon: 'excalmation', color: 'inherit',
+          },
+        ],
+      },
     },
     {
       key: 'profile',
@@ -188,6 +205,9 @@ export default {
   ],
   theme: 'towerstone',
   themeOptions: {
+    typography: {
+      useNextVariants: true,
+    },
     type: 'material',
     palette: {
       primary1Color: '#990033',

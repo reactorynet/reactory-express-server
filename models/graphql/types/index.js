@@ -14,6 +14,7 @@ const typeDefs = [];
   'System/ReactoryClient',
   'Forms/Form',
   'User/User',
+  'User/Team',
   'Project/Project',
   'Project/Task',
   'Organization/Organization',

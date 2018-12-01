@@ -21,6 +21,13 @@ const OrganizationSchema = mongoose.Schema({
   legacyId: String,
   createdAt: Date,
   updatedAt: Date,
+  settings: [
+    {
+      name: String,
+      componentFqn: String,      
+      data: { },
+    },
+  ],
   updateBy: {
     type: ObjectId,
     ref: 'User',

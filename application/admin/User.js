@@ -41,7 +41,7 @@ export const createUserForOrganization = co.wrap(function* createUserForOrganiza
       _id: 1, memberships: 1, firstName: 1, lastName: 1,
     }).then();
     const partnerToUse = partner || global.partner;
-
+    logger.info('Using partner', partnerToUse);
 
     if (isNil(partnerToUse._id) === false) {
       if (isNil(foundUser) === true) {
@@ -62,7 +62,7 @@ export const createUserForOrganization = co.wrap(function* createUserForOrganiza
         businessUnitId: businessUnit && businessUnit._id ? ObjectId(businessUnit._id) : null, // eslint-disable-line no-underscore-dangle
         provider,
         enabled: true,
-        roles: union(isFunction(partner.getDefaultUserRoles) ? partner.getDefaultUserRoles() : [], roles),
+        roles: union(isFunction(partnerToUse.getDefaultUserRoles) ? partnerToUse.getDefaultUserRoles() : [], roles),
       };
 
       logger.debug('Checking Membership', { user, membership });

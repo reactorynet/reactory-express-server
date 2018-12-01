@@ -4,6 +4,7 @@ import moment from 'moment';
 import { isNil, find } from 'lodash';
 import Admin from '../../../application/admin';
 import {
+  Organization,
   EmailQueue,
   User,
   Survey,
@@ -15,6 +16,7 @@ import {
 import ApiError from '../../../exceptions';
 import AuthConfig from '../../../authentication';
 import logger from '../../../logging';
+import TaskModel from '../../schema/Task';
 
 const userAssessments = (id, view = 'assessment') => {
   return new Promise((resolve, reject) => {
@@ -37,13 +39,11 @@ const userAssessments = (id, view = 'assessment') => {
   });
 };
 
+
 const userResolvers = {
   Task: {
     id(task) {
       return task._id;
-    },
-    title(task) {
-      return task.title;
     },
     description(task) {
       return task.description || 'not set';
@@ -307,29 +307,20 @@ const userResolvers = {
       });
     },
     userTasks(obj, { id, status }) {
-      return Task.find({ user: ObjectId(id || global.user._id), status }, { sort: 'percentComplete' });
+      return Task.find({ user: ObjectId(id || global.user._id), status }).then();
+    },
+    taskDetail(parent, { id }) {
+      logger.info(`Finding Task For Id ${id}`);
+      return Task.findById(id).then();
     },
   },
   Mutation: {
-    createUser(obj, arg, context, info) {
-      const { input, organizationId, password } = arg;
-      const user = {
-        ...input,
-        id: ObjectId(),
-        providerId: input.providerId || 'LOCAL',
-        createdAt: moment().valueOf(),
-        updatedAt: moment().valueOf(),
-      };
+    createUser: async (obj, { input, organizationId, password }, context, info) => {
       logger.info(`Create user mutation called ${input.email}`);
       if (isNil(organizationId) === false && isNil(input) === false) {
-        return new Promise((resolve, reject) => {
-          Admin.Organization.findById(organizationId).then((organization) => {
-            const createResult = Admin.User.createUserForOrganization(user, password || 'Password123!', organization);
-            resolve(createResult.user);
-          }).catch((organizationError) => {
-            reject(organizationError);
-          });
-        });
+        const organization = await Organization.findById(organizationId);
+        const createResult = await Admin.User.createUserForOrganization(input, password || 'Password123!', organization).then();
+        return createResult.user;
       }
       throw new Error('Organization Id is required');
     },

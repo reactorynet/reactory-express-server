@@ -5,7 +5,7 @@ import {
   User,
   Organigram,
 } from '../../';
-
+import logger from '../../../logging';
 import { OrganizationNotFoundError, BusinessUnitExistsError, ValidationError, RecordNotFoundError } from '../../../exceptions';
 
 const BusinessUnitResolver = {
@@ -65,11 +65,10 @@ const BusinessUnitResolver = {
     },
     updateBusinessUnit: async (parent, args) => {
       const { id, input } = args;
+      // logger.info('Updating business unit', { id, input });
       if (id && input) {
         return BusinessUnit.findByIdAndUpdate(id, input).then();
-      }
-
-      return null;
+      } return null;
     },
     addMemberToBussinessUnit: async (parent, { id, memberId }) => {
       const businessUnit = await businessUnit.findById(id).then();
@@ -86,7 +85,18 @@ const BusinessUnitResolver = {
       }
     },
     removeMemberFromBusinessUnit: async (parent, { id, memberId }) => {
-
+      const businessUnit = await businessUnit.findById(id).then();
+      const user = await User.findById(memberId).then();
+      if (businessUnit && user) {
+        const organigram = await Organigram.findOne({ user: user.id, organization: businessUnit.organization.id, businessUnit: id }).then();
+        if (organigram) {
+          // set the user organigram entry to the correct business unit
+          organigram.businessUnit = null;
+          await organigram.save().then();
+        }
+      } else {
+        throw new RecordNotFoundError('Could not find the member or business unit');
+      }
     },
   },
 };

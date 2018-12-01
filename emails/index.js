@@ -16,6 +16,9 @@ const TemplateViews = {
   ActivationEmail: 'activation-email',
   ForgotPassword: 'forgot-password-email',
   WelcomeUser: 'welcome-email',
+  InvitePeers: 'towerstone.peer-inite',
+  SurveyLaunch: 'towerstone.survey-launch',
+  SurveyReminder: 'towerstone.survey-launch',
 };
 
 dotenv.config();
@@ -323,8 +326,28 @@ export const installDefaultEmailTemplates = co.wrap(function* installDefaultEmai
   }
 });
 
+const surveyEmails = {
+  launch: (delegate, survey) => {    
+    const template = loadEmailTemplate(TemplateViews.SurveyLaunch, survey.organization, global.partner)
+  },
+  reminder: (delegate, survey) => {
+    
+  },
+  delegateInvites: (delegate, survey) => {
+
+  },
+};
+
+export const queueSurveyEmails = (survey, surveyEmailTask = 'delegateInvites') => {
+  const emails = survey.delegates.map((delegate) => {
+    delegateEmail = surveyEmails[surveyEmailTask](delegate, survey);
+    return delegateEmail;
+  });
+};
+
 export default {
   sendActivationEmail,
   sendForgotPasswordEmail,
   installDefaultEmailTemplates,
+  queueSurveyEmails,
 };

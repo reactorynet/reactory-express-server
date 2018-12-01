@@ -150,6 +150,9 @@ export default {
   ],
   theme: 'funisave',
   themeOptions: {
+    typography: {
+      useNextVariants: true,
+    },
     type: 'material',
     palette: {
       primary1Color: '#00695c',

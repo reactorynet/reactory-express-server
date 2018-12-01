@@ -16,9 +16,21 @@ const ClientComponentSchema = new mongoose.Schema({
   version: String,
   nameSpace: String,
   roles: [String],
+  uiSupport: [String],
+  componentType: {
+    type: String,
+    enum: ['form', 'page', 'widget'],
+  },
   author: {
     type: ObjectId,
     ref: 'User',
+  },
+  dataProvider: {
+    type: String,
+    enum: ['graphql', 'rest', 'static'],
+  },
+  dataSettings: {
+
   },
   labels: [String],
   arguments: [

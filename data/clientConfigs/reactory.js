@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { profileSmall  } from '../menus';
+import { profileSmall } from '../menus';
 
 import systemRoutes from './defaultRoutes';
 
@@ -123,6 +123,9 @@ export default {
   ],
   theme: 'reactory',
   themeOptions: {
+    typography: {
+      useNextVariants: true,
+    },
     type: 'material',
     palette: {
       primary1Color: '#424242',

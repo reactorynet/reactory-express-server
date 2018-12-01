@@ -250,6 +250,9 @@ export default {
     },
   ],
   themeOptions: {
+    typography: {
+      useNextVariants: true,
+    },
     type: 'material',
     palette: {
       primary1Color: '#464775',

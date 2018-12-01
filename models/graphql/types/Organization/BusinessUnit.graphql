@@ -15,7 +15,7 @@ input BusinessUnitInput {
   description: String
   organization: String!
   owner: String!
-  members: [ObjID]
+  members: [String]
   avatar: String
 }
 

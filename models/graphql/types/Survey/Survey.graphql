@@ -44,9 +44,9 @@ type UserDashboard {
 }
 
 input SurveyInput {
-  id: ObjID
-  leadershipBrand: ObjID
-  organization: ObjID
+  id: String
+  leadershipBrand: String
+  organization: String
   title: String!
   surveyType: String!
   startDate: Date
@@ -86,7 +86,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  createSurvey(surveyData: SurveyInput): Survey
+  createSurvey(id: String!, surveyData: SurveyInput): Survey
   updateSurvey(id: String!, surveyData: SurveyInput!): UpdateResponse
   launchSurvey(id: String!, options: SurveyLaunchOptions): UpdateResponse
   addDelegateToSurvey(surveyId: String!, delegateId: String!): DelegateAddResponse

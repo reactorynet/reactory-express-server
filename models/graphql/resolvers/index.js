@@ -174,6 +174,7 @@ merge(
   scaleResolver,
   require('./BusinessUnitResolver').default,
   require('./Custom/PaymentGatewayResolver').default,
+  require('./TeamResolver').default,
 );
 
 

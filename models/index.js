@@ -19,9 +19,11 @@ import UserModel from './schema/User';
 import TaskModel from './schema/Task';
 import ThemeModel from './schema/Theme';
 import ProjectModel from './schema/Project';
+import CommentModel from './schema/Comment';
 
 export const Assessment = AssessmentModel;
 export const Application = ApplicationModel;
+export const Comment = CommentModel;
 export const Organization = OrganizationModel;
 export const Organigram = OrganigramModel;
 export const Notification = NotificationModel;
@@ -43,6 +45,7 @@ export const BusinessUnit = BusinessUnitModel;
 const models = {
   Assessment,
   Application,
+  Comment,
   ClientComponent,
   EmailQueue,
   LeadershipBrand,
