@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb';
 import moment from 'moment';
 import { LeadershipBrand, Scale } from '../../../models';
 // import { migrateOrganization } from '../../../application/admin/Organization';
+import logger from '../../../logging';
 
 const leadershipBrandResolver = {
   LeadershipBrand: {
@@ -31,21 +32,14 @@ const leadershipBrandResolver = {
   },
   Query: {
     brandListForOrganization(obj, args, context, info) {
-      console.log('listing organizations', {
-        obj, args, context, info,
-      });
+      logger.debug('Finding leadership brands for organization');
       return LeadershipBrand.find({ organization: ObjectId(args.organizationId) });
     },
     brandWithId(obj, args, context, info) {
-      LeadershipBrand.findOne({ _id: ObjectId(args.brandId) }).then((leadershipBrand) => {
-        return leadershipBrand;
-      }).catch((exc) => {
-        console.error(exc);
-        throw exc;
-      });
+      logger.debug('Getting leadership brand with id', args.brandId);
+      return LeadershipBrand.findById(args.brandId);
     },
     allScales() {
-      console.log('getting all scales');
       return Scale.find({});
     },
   },

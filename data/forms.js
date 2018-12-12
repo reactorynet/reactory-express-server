@@ -1,4 +1,11 @@
 import dotenv from 'dotenv';
+import { defaultFormProps } from './forms/defs';
+import { FormBuilder } from './forms/core/FormBuilder';
+import { HelpFormEdit } from './forms/core/HelpEditor';
+import { TemplateEditor } from './forms/core/TemplateEditor';
+import { SurveySettingsForm } from './forms/towerstone/SurveySettings';
+import TaskDetailForm from './forms/core/task';
+
 
 dotenv.config();
 
@@ -1058,7 +1065,12 @@ const ContentPages = {
   uiSupport: ['material', 'bootstrap'],
   uiResources: [],
   title: 'Content Pages',
-  tags: ['Business Unit'],
+  registerAsComponent: true,
+  name: 'ContentPagesList',
+  nameSpace: 'forms',
+  version: '1.0.0',
+  tags: ['Content Pages List'],
+  helpTopics: ['Content Pages', 'Page Management'],
   componentDefs: [
     'core.OrganizationLabel',
     'core.DataListItem',
@@ -1067,57 +1079,70 @@ const ContentPages = {
   schema: {
     title: 'Pages',
     description: 'Available Pages',
-    type: 'array',
+    type: 'object',
     required: [
 
     ],
-    items: {
-      type: 'object',
-      title: '${formData.Name} - ${formData.Path}',
-      properties: {
-        WebsitePageId: {
-          type: 'string',
-          title: 'Page Id',
-        },
-        IsDefault: {
-          type: 'boolean',
-          title: 'Is Default',
-        },
-        IsSubMenu: {
-          type: 'boolean',
-          title: 'Submenu',
-        },
-        MenuLocation: {
-          type: 'number',
-          title: 'Menu Location',
-        },
-        Name: {
-          type: 'string',
-          title: 'Name',
-        },
-        Path: {
-          type: 'string',
-          title: 'Path',
-        },
-        Status: {
-          type: 'string',
-          title: 'Is Enabled',
-        },
-        Target: {
-          type: 'string',
-          title: 'Target',
+    properties: {
+      pages: {
+        type: 'array',
+        items: {
+          type: 'object',
+          title: '${formData.Name} - ${formData.Path}',
+          properties: {
+            WebsitePageId: {
+              type: 'string',
+              title: 'Page Id',
+            },
+            IsDefault: {
+              type: 'boolean',
+              title: 'Is Default',
+            },
+            IsSubMenu: {
+              type: 'boolean',
+              title: 'Submenu',
+            },
+            MenuLocation: {
+              type: 'number',
+              title: 'Menu Location',
+            },
+            Name: {
+              type: 'string',
+              title: 'Name',
+            },
+            Path: {
+              type: 'string',
+              title: 'Path',
+            },
+            Status: {
+              type: 'string',
+              title: 'Is Enabled',
+            },
+            Target: {
+              type: 'string',
+              title: 'Target',
+            },
+          },
         },
       },
     },
   },
+  defaultFormValue: {
+    pages: [{
+      Name: 'Default',
+      Path: '/',
+    }],
+  },
   uiSchema: {
-    items: {
-      WebsitePageId: {
-        'ui:widget': 'LinkField',
-        'ui:options': {
-          format: '/editor/${formData}',
-          title: 'Edit Page',
-          icon: 'edit',
+    pages: {
+      items: {
+        WebsitePageId: {
+          'ui:widget': 'LinkField',
+          'ui:options': {
+            format: '/editor/${formData}',
+            title: 'Edit Page',
+            icon: 'edit',
+          },
         },
       },
     },
@@ -1126,10 +1151,11 @@ const ContentPages = {
 
 const froala_version = '2.9.1';
 /**
- * load.css(`https://cdn.jsdelivr.net/npm/froala-editor@${froala_version}/css/froala_style.min.css`),
-            load.js('https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/codemirror.min.js'),
-            load.js('https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/mode/xml/xml.min.js'),
-            load.js(`https://cdn.jsdelivr.net/npm/froala-editor@${froala_version}/js/froala_editor.pkgd.min.js`),
+ *
+  load.css(`https://cdn.jsdelivr.net/npm/froala-editor@${froala_version}/css/froala_style.min.css`),
+  load.js('https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/codemirror.min.js'),
+  load.js('https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/mode/xml/xml.min.js'),
+  load.js(`https://cdn.jsdelivr.net/npm/froala-editor@${froala_version}/js/froala_editor.pkgd.min.js`),
  */
 const FroalaResources = [
   /* {
@@ -1162,7 +1188,7 @@ const FroalaResources = [
     name: 'code_mirror_xml',
     delay: 1500,
   },
-  */
+
   {
     framework: 'froala',
     uri: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css',
@@ -1191,138 +1217,12 @@ const FroalaResources = [
     async: true,
     name: 'editor_package',
   },
+  */
 ];
 
-const PageEditorForm = {
-  id: 'PageEditorForm',
-  uiFramework: 'material',
-  uiSupport: ['material', 'bootstrap'],
-  uiResources: [
-    ...FroalaResources,
-  ],
-  title: 'Page Editor',
-  tags: ['Page Editor'],
-  nameSpace: 'forms',
-  name: 'PageEditorForm',
-  version: '1.0.0',
-  registerAsComponent: true,
-  componentDefs: [
-    'core.PageIntegration',
-  ],
-  schema: {
-    title: 'Page Editor',
-    description: 'Page Editor Form',
-    type: 'object',
-    properties: {
-      WebsitePageId: {
-        type: 'string',
-        title: 'Page Id',
-      },
-      Title: {
-        type: 'string',
-        title: 'Page title',
-      },
-      Description: {
-        type: 'string',
-        title: 'Description',
-      },
-      HasDraft: {
-        type: 'boolean',
-        title: 'Has Draft',
-      },
-      HasPrevious: {
-        type: 'boolean',
-        title: 'Has Previous',
-      },
-      PageLayoutTemplate: {
-        type: 'string',
-        title: 'Description',
-      },
-      PageTemplate: {
-        type: 'string',
-        title: 'Page Template Id',
-      },
-      Path: {
-        type: 'string',
-        title: 'Path',
-      },
-      PreviousSavedDate: {
-        type: 'string',
-        title: 'Previous Saved Date',
-      },
-      Status: {
-        type: 'string',
-        title: 'Status',
-        // enum: ['Hidden', 'Visible'],
-      },
-      Content: {
-        type: 'string',
-        title: 'Content',
-      },
-    },
-  },
-  uiSchema: {
-    WebsitePageId: {
-      'ui:options': {
-        readOnly: true,
-      },
-    },
-    Content: {
-      'ui:widget': 'FroalaEditor',
-    },
-  },
-  layout: {
-    TabComponent: {
-      id: 'site-tabs',
-      tabs: [
-        { title: 'General', key: 'general', fields: ['Title', 'Description'] },
-        { title: 'Content', key: 'content', fields: ['Content'] },
-      ],
-    },
-  },
-};
+const PageEditorForm = require('./forms/boxcommerce/pageEditorForm').default;
+const PageTemplateConfig = require('./forms/boxcommerce/pageTemplateConfig').default;
 
-const PageTemplateConfig = {
-  id: 'PageTemplateConfig',
-  uiFramework: 'material',
-  uiSupport: ['material', 'bootstrap'],
-  uiResources: [],
-  title: 'Page Template Configuration',
-  registerAsComponent: true,
-  nameSpace: 'forms',
-  name: 'PageTemplateConfig',
-  version: '1.0.0',
-  preview: null,
-  tags: [],
-  schema: {
-    title: 'Template settings',
-    description: 'Configure the template',
-    type: 'object',
-    properties: {
-      templateType: {
-        type: 'string',
-        title: 'UI Framework',
-        enum: ['bootstrap', 'material', 'custom'],
-        enumTitles: ['Bootstrap 3', 'Material UI', 'Custom'],
-      },
-      hasNavigation: {
-        type: 'boolean',
-        title: 'Has Navigation Element',
-      },
-      navigationSelector: {
-        type: 'string',
-        title: 'Navigation Selector',
-      },
-      navigationComponent: {
-        type: 'string',
-        title: 'Navigation Component',
-      },
-    },
-  },
-  uiSchema: {
-
-  },
-};
 
 const FileLoader = {
   id: 'FileLoader',
@@ -1634,30 +1534,15 @@ const BusinessUnitForm = {
     },
   },
 };
-const defaultFormProps = {
-  uiFramework: 'material',
-  uiSupport: ['material', 'bootstrap'],
-  uiResources: [],
-  uiSchema: {},
-};
 
-const TaskDetailSchema = require('./modelSchema/Task').default;
-const TaskDetailUISchema = require('./viewSchema/TaskDetail').default;
 
-const TaskDetailForm = {
-  id: 'TaskDetail',
-  ...defaultFormProps,
-  name: 'TaskDetailForm',
-  nameSpace: 'forms',
-  version: '1.0.0',
-  componentDefs: ['core.UserSearch', 'material-ui.MaterialCore', 'core.ChipArrayContainer'],
-  registerAsComponent: true,
-  schema: TaskDetailSchema,
-  uiSchema: TaskDetailUISchema,
-  widgetMap: [
-    { widget: 'MaterialCoreTextField', component: 'MaterialCore.TextField' },
-    { widget: 'UserSearch', component: 'UserSearch' },
-  ],
+const TowerStoneTaskDetailUISchema = require('./forms/towerstone/TowerStoneTask').TowerStoneTaskDetailUISchema;
+
+const TowerStoneTaskDetailForm = {
+  ...TaskDetailForm,
+  id: 'TowerStoneTaskDetailForm',
+  name: 'TowerStoneTaskDetailForm',
+  uiSchema: TowerStoneTaskDetailUISchema,
 };
 
 
@@ -1696,11 +1581,9 @@ const ProjectForm = {
   uiSchema: {
 
   },
-
 };
 
-const TowerStoneSurveyConfigSchema = require('./forms/towerstone/SurveyConfig').default;
-const TowerStoneSurveyConfigUISchema = require('./forms/towerstone/SurveyConfig').uiSchema;
+const TowerStoneSurveyConfig = require('./forms/towerstone/SurveyConfig');
 
 const TowerStoneSurveyConfigForm = {
   id: 'TowerStoneSurveyConfig',
@@ -1708,10 +1591,47 @@ const TowerStoneSurveyConfigForm = {
   nameSpace: 'forms',
   name: 'TowerStoneSurveyConfig',
   registerAsComponent: true,
-  schema: TowerStoneSurveyConfigSchema,
-  uiSchema: TowerStoneSurveyConfigUISchema,
+  schema: TowerStoneSurveyConfig.default,
+  uiSchema: TowerStoneSurveyConfig.uiSchema,
+  defaultFormValue: TowerStoneSurveyConfig.defaultFormValue,
+  graphql: {
+    query: {
+      name: 'surveyDetail',
+      text: TowerStoneSurveyConfig.surveyQuery,
+      variables: TowerStoneSurveyConfig.queryMap,
+      new: false,
+      edit: true,
+    },
+    mutation: {
+      new: {
+        name: 'createSurvey',
+        text: TowerStoneSurveyConfig.createMutation,
+        objectMap: true,
+        variables: TowerStoneSurveyConfig.createMutationMap,
+        options: {
+          refetchQueries: [],
+        },
+        onSuccessMethod: 'route',
+        onSuccessUrl: 'admin/org/${formData.organization}/surveys/${createSurvey.id}',
+        onSuccessRedirectTimeout: 1000,
+      },
+      edit: {
+        name: 'updateSurvey',
+        text: TowerStoneSurveyConfig.updateMutation,
+        objectMap: true,
+        variables: TowerStoneSurveyConfig.updateMutationMap,
+        options: {
+          refetchQueries: [],
+        },
+        onSuccessMethod: 'route',
+        onSuccessUrl: 'admin/org/${formData.organization}/surveys/${updateSurvey.id}?refresh=${new Date().valueOf()}',
+        onSuccessRedirectTimeout: 1000,
+      },
+    },
+  },
 };
 
+const TowerStoneLeadershipBrandConfigForm = require('./forms/towerstone/LeadershipBrands').default;
 
 export default [
   productIdeas,
@@ -1738,5 +1658,10 @@ export default [
   TaskDetailForm,
   CommentForm,
   ProjectForm,
-  TowerStoneSurveyConfigForm
+  TowerStoneSurveyConfigForm,
+  TowerStoneLeadershipBrandConfigForm,
+  FormBuilder,
+  HelpFormEdit,
+  TemplateEditor,
+  TowerStoneTaskDetailForm,
 ];

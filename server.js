@@ -11,6 +11,7 @@ import corsOptions from './config/cors';
 import clientAuth from './middleware/clientauth';
 import userAccountRouter from './useraccount';
 import reactory from './reactory';
+import froala from './froala';
 import typeDefs from './models/graphql/types';
 import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
@@ -88,6 +89,7 @@ try {
     app.use(graphiql, graphiqlExpress({ endpointURL: queryRoot }));
     app.use(userAccountRouter);
     app.use('/reactory', reactory);
+    app.use('/froala', froala);
     app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
     app.listen(API_PORT);
     // logger.info(`Bots server using ${bots.name}`);

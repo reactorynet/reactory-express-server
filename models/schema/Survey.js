@@ -48,7 +48,7 @@ const SurveySchema = new mongoose.Schema({
     type: String,
     lowercase: true,
     trim: true,
-    enum: ['not-ready', 'ready', 'launched', 'paused', 'complete'],
+    enum: ['new', 'not-ready', 'ready', 'launched', 'paused', 'complete'],
   },
   options: { },
   calendar: [

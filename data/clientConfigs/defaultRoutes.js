@@ -35,4 +35,13 @@ export default [
     roles: ['USER'],
     componentFqn: 'core.Logout@1.0.0',
   },
+  {
+    id: '99',
+    key: 'logout',
+    title: 'Logout',
+    path: '/forms',
+    public: true,
+    roles: ['USER'],
+    componentFqn: 'core.ReactoryRouter@1.0.0',
+  },
 ];

@@ -45,8 +45,8 @@ type UserDashboard {
 
 input SurveyInput {
   id: String
-  leadershipBrand: String
-  organization: String
+  leadershipBrand: String!
+  organization: String!
   title: String!
   surveyType: String!
   startDate: Date

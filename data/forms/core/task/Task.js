@@ -4,6 +4,11 @@ export default {
   required: [
     'title',
   ],
+  dependencies: {
+    milestone: [
+      'taskType',
+    ],
+  },
   properties: {
     id: {
       type: 'string',
@@ -12,10 +17,22 @@ export default {
     project: {
       type: 'string',
       title: 'Project',
-    },
+    },    
     board: {
       type: 'string',
       title: 'Board',
+    },
+    startDate: {
+      type: 'string',
+      title: 'Start Date',
+    },
+    endDate: {
+      type: 'string',
+      title: 'End Date',
+    },
+    user: {
+      type: 'string',
+      title: 'Assigned To',
     },
     priority: {
       type: 'string',
@@ -29,9 +46,13 @@ export default {
       type: 'string',
       title: 'Task Type',
     },
+    milestone: {
+      type: 'string',
+      title: 'Linked Milestone',
+    },
     taskCost: {
       type: 'number',
-      title: 'Cost Value',
+      title: 'This is the new cost field',
     },
     effortEstimate: {
       type: 'number',
@@ -40,11 +61,7 @@ export default {
     currency: {
       type: 'string',
       title: 'Currency',
-    },
-    shortCodeId: {
-      type: 'number',
-      title: 'Short Code Number',
-    },
+    },    
     description: {
       type: 'string',
       title: 'Description',
@@ -65,10 +82,6 @@ export default {
       type: 'number',
       title: 'Percentage Complete',
     },
-    category: {
-      type: 'string',
-      title: 'Category',
-    },
     workflowStatus: {
       type: 'string',
       title: 'Workflow-Status',
@@ -83,11 +96,8 @@ export default {
       items: {
         type: 'string',
         title: 'Url',
+        format: 'uri',
       },
-    },
-    user: {
-      type: 'string',
-      title: 'Assigned To',
-    },
+    },    
   },
 };

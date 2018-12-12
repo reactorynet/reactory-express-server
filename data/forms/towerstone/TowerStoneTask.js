@@ -1,11 +1,13 @@
-export default {
+export const TowerStoneTaskDetailUISchema = {
   id: {
     'ui:widget': 'HiddenWidget',
   },
   project: {
-    'ui:widget': 'RecordLookupWidget',
+    'ui:widget': 'HiddenWidget',
+    'ui:emptyValue': 'user-linked'
   },
   percentComplete: {
+    /*
     'ui:widget': 'SliderWidget',
     'ui:options': {
       container: 'core.BasicContainer',
@@ -17,6 +19,7 @@ export default {
         },
       },
     },
+    */
   },
   priority: {
     'ui:widget': 'SelectWidget',
@@ -40,21 +43,30 @@ export default {
   },
   description: {
     'ui:widget': 'FroalaEditor',
-  },
-  labels: {
-    'ui:widget': 'ChipArrayWidget',
     'ui:options': {
-      container: 'core.BasicContainer',
-      containerProps: {
-        title: 'Task Labels',
-        style: {
-          maxWidth: '100%',
-          justifyContent: 'flex-end',
-        },
+      froalaOptions: {
+
       },
     },
   },
+  labels: {
+    //'ui:widget': 'ChipArrayWidget',
+    'ui:options': {
+      //container: 'core.BasicContainer',
+      //containerProps: {
+      //  title: 'Task Labels',
+      //  style: {
+      //    maxWidth: '100%',
+      //    justifyContent: 'flex-end',
+      //  },
+      //},
+    },
+  },
   assignedTo: {
-    'ui:widget': 'UserSearch',
+    //'ui:widget': 'UserSearch',
   },
 };
+
+export default {
+  TowerStoneTaskDetailUISchema,
+}
