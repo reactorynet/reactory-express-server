@@ -3,6 +3,7 @@ export default {
   type: 'object',
   required: [
     'title',
+    'description',
   ],
   dependencies: {
     milestone: [
@@ -17,7 +18,7 @@ export default {
     project: {
       type: 'string',
       title: 'Project',
-    },    
+    },
     board: {
       type: 'string',
       title: 'Board',
@@ -61,7 +62,7 @@ export default {
     currency: {
       type: 'string',
       title: 'Currency',
-    },    
+    },
     description: {
       type: 'string',
       title: 'Description',
@@ -85,6 +86,8 @@ export default {
     workflowStatus: {
       type: 'string',
       title: 'Workflow-Status',
+      // This needs to be a data lookup per project board.
+      // custom list of workflow-status keys
     },
     status: {
       type: 'string',
@@ -98,6 +101,6 @@ export default {
         title: 'Url',
         format: 'uri',
       },
-    },    
+    },
   },
 };

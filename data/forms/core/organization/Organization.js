@@ -5,7 +5,7 @@ import {
 
 export default {
   type: 'object',
-  title: '${name}', // eslint-disable-line
+  title: 'Organization', // eslint-disable-line
   description: 'Manage the organization schema',
   properties: {
     id: {

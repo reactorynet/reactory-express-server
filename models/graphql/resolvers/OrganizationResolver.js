@@ -58,6 +58,19 @@ const organizationResolver = {
     usersForOrganizationWithId(obj, { id, searchString }, context, info) {
       return UserService.listAllForOrganization(id, searchString);
     },
+    organizationsForUser: async (obj, { id }) => {
+      const user = await User.findById(id);
+      const organizations = [];
+      if (user.memberships) {
+        for (let mi = 0; mi <= user.memberships.length; mi += 1) {
+          const membership = user.memberships[mi];
+          if (membership.organization) {
+            organizations.push(await Organization.findById(organization));
+          }
+        }
+      }
+      return organizations;
+    },
   },
   Mutation: {
     createOrganization: async (obj, args, context, info) => {

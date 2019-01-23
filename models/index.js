@@ -19,6 +19,7 @@ import UserModel from './schema/User';
 import TaskModel from './schema/Task';
 import ThemeModel from './schema/Theme';
 import ProjectModel from './schema/Project';
+import BoardModel from './schema/ProjectBoard';
 import CommentModel from './schema/Comment';
 
 export const Assessment = AssessmentModel;
@@ -42,9 +43,12 @@ export const Menu = MenuModel;
 export const MenuItem = MenuItemModel;
 export const Theme = ThemeModel;
 export const BusinessUnit = BusinessUnitModel;
+export const Board = BoardModel;
+
 const models = {
   Assessment,
   Application,
+  Board,
   Comment,
   ClientComponent,
   EmailQueue,

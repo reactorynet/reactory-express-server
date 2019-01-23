@@ -3,7 +3,8 @@ type SurveyCalendarEntry {
   title: String
   start: Date!
   end: Date,
-  hasTask: Boolean,
+  hasTask: Boolean
+  component: String
   taskResult: String
   taskError: String
 }
@@ -16,7 +17,9 @@ type TimelineEntry {
 }
 
 type DelegateEntry {
+  id: String
   delegate: User
+  status: String
   notifications: [Notification]
   assessments: [Assessment]
   launched: Boolean
@@ -34,6 +37,8 @@ type Survey {
   endDate: Date
   mode: String
   status: String
+  statistics: Any
+  options: Any
   delegates: [DelegateEntry]  
   calendar: [SurveyCalendarEntry]
   timeline: [TimelineEntry]
@@ -53,6 +58,15 @@ input SurveyInput {
   endDate: Date
   mode: String
   status: String  
+}
+
+input DelegateInput {
+  id: String
+  delegate: String!
+  status: String
+  launched: Boolean
+  complete: Boolean
+  removed: Boolean
 }
 
 input SurveyLaunchOptions {
@@ -88,8 +102,11 @@ extend type Query {
 extend type Mutation {
   createSurvey(id: String!, surveyData: SurveyInput): Survey
   updateSurvey(id: String!, surveyData: SurveyInput!): UpdateResponse
+  updateSurveyOptions(id: String!, options: Any): Any
   launchSurvey(id: String!, options: SurveyLaunchOptions): UpdateResponse
-  addDelegateToSurvey(surveyId: String!, delegateId: String!): DelegateAddResponse
+  startDelegateSurveyWorkflow(id: String!, delegateEntryId: String!, workflowId: String!): Any
+  addDelegateToSurvey(surveyId: String!, delegateId: String!): DelegateAddResponse  
   removeDelegateFromSurvey(surveyId: String!, delegateId: String!): DelegateRemoveResponse
+  setDelegatesForSurvey(id: String!, delegates: [DelegateInput], replace: Boolean): Survey
   postRemidners(id: String, options: ReminderOptions): UpdateResponse
 }

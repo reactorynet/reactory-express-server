@@ -12,6 +12,7 @@ import assessmentResolvers from './AssessmentResolver';
 import reactoryClientResolver from './ReactoryClient';
 import leadershipBrandResolver from './LeadershipBrandResolver';
 import surveyResolver from './SurveyResolver';
+import projectResolver from './ProjectResolver';
 import scaleResolver from './ScaleResolver';
 import { MenuItem, Menu, ClientComponent, User } from '../../../models';
 import logger from '../../../logging';
@@ -89,6 +90,7 @@ const resolvers = {
         id: isNil(user) === false ? user._id : null,
         roles: isNil(user) === false && isArray(user.memberships) && user.memberships.length > 0 ? user.memberships[0].roles : ['ANON'],
         memberships: isNil(user) === false && isArray(user.memberships) ? user.memberships : [],
+        organization: user.organization,
         routes: partner.routes || [],
         applicationAvatar: partner.avatar,
         applicationName: partner.name,
@@ -172,6 +174,7 @@ merge(
   leadershipBrandResolver,
   surveyResolver,
   scaleResolver,
+  projectResolver,
   require('./BusinessUnitResolver').default,
   require('./Custom/PaymentGatewayResolver').default,
   require('./TeamResolver').default,

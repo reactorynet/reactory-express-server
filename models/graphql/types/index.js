@@ -12,6 +12,7 @@ const typeDefs = [];
   'System/Directives',
   'System/Menu',
   'System/ReactoryClient',
+  'System/Workflow',
   'Forms/Form',
   'User/User',
   'User/Team',
@@ -23,6 +24,7 @@ const typeDefs = [];
   'Survey/Survey',
   'Survey/Assessment',
   'System/Email',
+  'Communications/Notification',
   'Custom/FuniSaveGateway',
 ].forEach((name) => {
   try {

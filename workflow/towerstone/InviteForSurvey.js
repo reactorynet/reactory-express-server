@@ -1,33 +1,33 @@
 import { StepBody, ExecutionResult } from 'workflow-es';
+import { Survey, User } from '../../models/';
 import logger from '../../logging';
 
-class AfterLogin extends StepBody {
+class AttachUsersToSurvey extends StepBody {
   run(context) {
-    console.log('After Loging', { context, date: new Date().valueOf() });
+    console.log('Attach User to Survey', { context });
     return ExecutionResult.next();
   }
 }
 
-class BeforeLogin extends StepBody {
+class CheckSurveyStatus extends StepBody {
   run(context) {
     console.log('Running Before Login', { context, date: new Date().valueOf() });
     return ExecutionResult.next();
   }
 }
 
-class LoginWorkflow {
+class InviteForSurvey {
   constructor() {
-    this.id = 'LoginWorkflow';
+    this.id = 'towerstone.InviteForSurvey';
     this.version = 1;
   }
 
   build(builder) {
     console.log('building', builder);
     builder
-      .startWith(BeforeLogin)
-      .then(AfterLogin);
+      .startWith(CheckSurveyStatus)
+      .then(AttachUsersToSurvey);
   }
 }
 
-export default LoginWorkflow;
-
+export default InviteForSurvey;

@@ -1,7 +1,61 @@
+
+input ProjectInput {
+  id: ObjID
+  title: String
+  description: String
+  percentComplete: Float  
+  slug: String
+  owner: ObjID
+  members: [ObjID]
+  boards: [ObjID]
+}
+
+input BoardInput {
+  id: ObjID
+  title: String
+  description: String
+  slug: String
+  options: Any  
+  owner: ObjID
+  members: [ObjID]
+}
+
+type Board {
+  id: ObjID
+  title: String
+  description: String
+  slug: String
+  options: Any  
+  owner: User
+  members: [User] 
+}
+
+
+
 type Project {
   id: ObjID
   title: String
   description: String
   percentComplete: Float
+  boards: [Board]
   slug: String
+  owner: User
+  members: [User] 
+}
+
+
+
+
+
+extend type Query {
+  projects(userId: String, organizationId: String, filters: Any): [Project]
+  boards(userId: String, projectId: String, filters: Any): [Board]  
+}
+
+extend type Mutation {
+  addProject(input: ProjectInput): Project
+  updateProject(input: ProjectInput): Project
+  addBoard(input: BoardInput): Board
+  updateBoard(input: BoardInput): Board
+
 }

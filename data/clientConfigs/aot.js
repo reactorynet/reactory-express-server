@@ -21,7 +21,7 @@ export default {
   emailSendVia: 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/reset-password',
-  avatar: `${CDN_ROOT}themes/aot/images/avatar.jpg`,
+  avatar: `${CDN_ROOT}themes/aot/images/avatar.png`,
   applicationRoles: ['USER', 'ADMIN', 'ANON', 'LEADER'], // USER => Team Member, ADMIN => Team Leader + Billing, LEADER => Team Leader
   billingType: 'partner',
   components: [
@@ -227,7 +227,7 @@ export default {
           key: 'withPeers',
           value: {
             type: 'bool',
-            withPeers: false,
+            withPeers: true,
           },
         },
         {

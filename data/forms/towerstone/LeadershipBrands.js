@@ -183,6 +183,7 @@ export const queryMap = {
 };
 
 export const uiSchema = {
+
   id: {
     'ui:widget': 'HiddenWidget',
   },
@@ -218,8 +219,8 @@ export const uiSchema = {
       froalaOptions: {
         charCounterMax: 500,
         toolbarInline: false,
-        toolbarButtons: ['undo', 'redo', '|', 'bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript', 'outdent', 'indent', 'clearFormatting', 'insertTable', 'html'],
-        toolbarButtonsXS: ['undo', 'redo', '-', 'bold', 'italic', 'underline'],
+        // toolbarButtons: ['undo', 'redo', '|', 'bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript', 'outdent', 'indent', 'clearFormatting', 'insertTable', 'html'],
+        // toolbarButtonsXS: ['undo', 'redo', '-', 'bold', 'italic', 'underline'],
         fileUploadURL: '${formContext.api.API_ROOT}/froala/upload/file',
         videoUploadURL: '${formContext.api.API_ROOT}/froala/upload/video',
         imageUploadURL: '${formContext.api.API_ROOT}/froala/upload/image',

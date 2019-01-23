@@ -75,8 +75,7 @@ export const createMutationResultMap = {
 export const surveyQuery = `
 query SurveyDetail($surveyId: String!){
   surveyDetail(surveyId: $surveyId){
-    id
-    status
+    id    
     leadershipBrand {
       id
       title
@@ -103,6 +102,8 @@ query SurveyDetail($surveyId: String!){
       name
       logo
     }
+    status
+    surveyType
     title
     startDate
     endDate
@@ -116,15 +117,15 @@ export const queryMap = {
 };
 
 export const queryResultMap = {
-  'surveyDetail.id': 'formData.id',
-  'surveyData.leadershipBrand.id': 'formData.leadershipBrand',
-  'surveyData.organization.id': 'formData.organization',
-  'surveyData.surveyType': 'formData.surveyType',
-  'surveyData.title': 'formData.title',
-  'surveyData.startDate': 'formData.startDate',
-  'surveyData.endDate': 'formData.endDate',
-  'surveyData.mode': 'formData.mode',
-  'surveyData.status': 'formData.status',
+  id: 'id',
+  title: 'title',
+  status: 'status',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  mode: 'mode',
+  surveyType: 'surveyType',
+  'leadershipBrand.id': 'leadershipBrand',
+  'organization.id': 'organization',
 };
 
 export const surveyDelegatesQuery = `
@@ -214,7 +215,8 @@ export const updateMutation = `
   }`;
 
 export const updateMutationMap = {
-  'formData.organization': ['id', 'surveyData.organization'],
+  'formData.id': 'id',
+  'formData.organization': 'surveyData.organization',
   'formData.leadershipBrand': 'surveyData.leadershipBrand',
   'formData.surveyType': 'surveyData.surveyType',
   'formData.title': 'surveyData.title',
@@ -233,7 +235,7 @@ export const uiSchema = {
     },
     {
       surveyType: { md: 6 },
-      surveyTitle: { md: 6 },
+      title: { md: 6 },
     },
     {
       startDate: { md: 6 },

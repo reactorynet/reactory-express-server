@@ -16,13 +16,3 @@ type Email {
   client: ReactoryClient,
   survey: Survey
 }
-
-type Notification {
-  id: ObjID  
-  user: User
-  title: String
-  text: String
-  link: String
-  createdAt: Date
-  read: Boolean
-}

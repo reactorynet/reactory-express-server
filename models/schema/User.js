@@ -33,6 +33,10 @@ const UserSchema = new mongoose.Schema({
     required: true,
   },
   avatar: String,
+  organization: {
+    type: ObjectId,
+    ref: 'Organization',
+  },
   memberships: [
     {
       clientId: {

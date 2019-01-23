@@ -1,12 +1,21 @@
 
 type Task {
   id: ObjID!
+  shortCodeId: Int  
   project: Project
   title: String
   description: String
-  status: String
   percentComplete: Float
-  comments: [Comment]  
+  slug: String
+  label: [String]
+  category: String,
+  workflowStatus: String  
+  status: String
+  externalUrls: [String]
+  startDate: Date
+  dueDate: Date
+  completionDate: Date    
+  comments: [Comment]
   user: User!
   createdAt: Date!
   updatedAt: Date!
@@ -17,6 +26,8 @@ input TaskInput {
   description: String
   status: String
   percentComplete: Float
+  startDate: Date
+  endDate: Date
 }
 
 

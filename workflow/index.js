@@ -1,12 +1,16 @@
 import express from 'express';
-import { configureWorkflow } from 'workflow-es';
+import { configureWorkflow, ConsoleLogger } from 'workflow-es';
 import { MongoDBPersistence } from 'workflow-es-mongodb';
 import LoginWorkflow from './test/LoginWorkflow';
 import logger from '../logging';
 
 const router = express.Router();
 const {
-  WORKFLOW_MONGO,
+  APP_DATA_ROOT,
+  MONGOOSE,
+  API_PORT,
+  API_URI_ROOT,
+  CDN_ROOT,
 } = process.env;
 
 export const DefaultWorkflows = [
@@ -34,7 +38,11 @@ class WorkFlowRunner {
   }
 
   initialize() {
-    this.start().then(host => this.setState({ host }));
+    this.start().then((host) => {
+      this.setState({ host });
+
+      setTimeout(() => { host.startWorkflow('LoginWorkflow', 1, { when: new Date() }); }, 1500);
+    });
   }
 
   setState(state) {
@@ -44,17 +52,22 @@ class WorkFlowRunner {
   async start() {
     const config = configureWorkflow();
     const { workflows } = this.state;
-    config.useLogger(logger);
-    const mongoPersistence = new MongoDBPersistence(WORKFLOW_MONGO || 'mongodb://127.0.0.1:27017/reactory-workflow');
+    config.useLogger(new ConsoleLogger());
+    const mongoPersistence = new MongoDBPersistence(MONGOOSE);
     await mongoPersistence.connect;
-    // config.usePersistence(mongoPersistence);
+    config.usePersistence(mongoPersistence);
     const host = config.getHost();
-
-    workflows.map(workflow => host.registerWorkflow(workflow));
-    await host.start();
-    const id = await host.startWorkflow('LoginWorkflow', 1);
-    console.log('Started workflow: ' + id);
-    return host;
+    try {
+      workflows.forEach((workflow) => {
+        console.log('Registering workflow', { workflow });
+        host.registerWorkflow(workflow.component);
+      });
+      await host.start();
+      return host;
+    } catch (workFlowError) {
+      console.error('Error starting workflow', workFlowError);
+      return null;
+    }
   }
 
   async startWorkflow(id, version, data) {
@@ -64,12 +77,14 @@ class WorkFlowRunner {
   }
 }
 
-const workflowRunner = new WorkFlowRunner({ workflows: DefaultWorkflows });
+export const workflowRunner = new WorkFlowRunner({ workflows: DefaultWorkflows });
 
 router.get('/status', (req, res) => {
-  return res.send(workflowRunner);
+  return res.send({ all: 'good' });
 });
 
 router.post('/start', (req, res) => {
-  return res.send();
+  return res.send({ result: 'started' });
 });
+
+export default router;

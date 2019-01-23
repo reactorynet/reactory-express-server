@@ -14,7 +14,7 @@ export const StringProperty = (
 };
 
 const DefaultObjectProperties = {
-  id: StringProperty('Id', 'Default Id', 0, 50),
+  id: StringProperty('Id', 'System Assigned Id', 0, 50),
 };
 
 export const ObjectProperty = (
@@ -32,7 +32,18 @@ export const DateProperty = (
   title = undefined,
   description = undefined,
 ) => ({
-  type: 'date',
+  type: 'string',
+  format: 'date',
+  title,
+  description,
+});
+
+export const DateTimeProperty = (
+  title = undefined,
+  description = undefined,
+) => ({
+  type: 'string',
+  format: 'date-time',
   title,
   description,
 });

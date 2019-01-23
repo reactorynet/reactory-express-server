@@ -3,11 +3,10 @@ import mongoose from 'mongoose';
 const { ObjectId } = mongoose.Schema.Types;
 
 /**
- * Project / Board
- *
+ * ProjectBoard
  */
 
-const ProjectSchema = new mongoose.Schema({
+const ProjectBoardSchema = new mongoose.Schema({
   id: ObjectId,
   title: String,
   description: String,
@@ -16,6 +15,7 @@ const ProjectSchema = new mongoose.Schema({
   shortCode: String, // AOT-00000001
   label: [String],
   externalUrls: [String],
+  options: {},
   tasks: [
     {
       type: ObjectId,
@@ -44,5 +44,5 @@ const ProjectSchema = new mongoose.Schema({
 });
 
 
-const ProjectModel = mongoose.model('Project', ProjectSchema);
-export default ProjectModel;
+const ProjectBoardModel = mongoose.model('ProjectBoard', ProjectBoardSchema);
+export default ProjectBoardModel;

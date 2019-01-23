@@ -92,6 +92,7 @@ type CoreMigrationResult {
 extend type Query {
   allTennants: [Tennant]
   allOrganizations(legacy: Boolean): [Organization]
+  organizationsForUser(id: String!): [Organization]
   organizationWithId(id: String!): Organization 
   usersForOrganizationWithId(id: String!, searchString: String): [User] 
 }

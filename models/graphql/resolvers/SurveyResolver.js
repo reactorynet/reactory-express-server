@@ -5,6 +5,7 @@ import { queueSurveyEmails } from '../../../emails';
 import { LeadershipBrand, Organization, User, Survey, Assessment, Notification } from '../../../models';
 import { ObjectId } from 'mongodb';
 import ApiError from '../../../exceptions';
+import logger from '../../../logging';
 
 export default {
   SurveyCalendarEntry: {
@@ -40,6 +41,9 @@ export default {
         const promises = entry.assessments.map(aid => (Assessment.findById(aid).then()));
         Promise.all(promises).then(assessments => resolve(assessments));
       });
+    },
+    status(entry) {
+      return entry.status || 'new';
     },
     launched(entry) {
       return entry.launched;
@@ -80,6 +84,16 @@ export default {
     delegates(survey) {
       return survey.delegates;
     },
+    statistics(survey) {
+      const statistics = {
+        launched: 10,
+        peersPending: 23,
+        complete: 50,
+        total: survey.delegates.length,
+      };
+
+      return statistics;
+    },
   },
   Query: {
     surveysForOrganization(obj, { organizationId }) {
@@ -94,7 +108,12 @@ export default {
   },
   Mutation: {
     updateSurvey(obj, { id, surveyData }) {
-      return Survey.findOneAndUpdate({ _id: ObjectId(id) }, { ...surveyData }).then();
+      logger.info('Updating Survey Config', { id, surveyData });
+      return Survey.findByIdAndUpdate(ObjectId(id), { ...surveyData });
+    },
+    updateSurveyOptions(obj, { id, options }) {
+      logger.info('Update Survey Options', { id, options });
+      return Survey.findByIdAndUpdate(ObjectId(id), { options });
     },
     createSurvey(obj, { id, surveyData }) {
       return co.wrap(function* createSurveyGenerator(organization, survey) {
@@ -106,10 +125,19 @@ export default {
     },
     launchSurvey: async (obj, { id, options }) => {
       const survey = await Survey.findById(id).then();
-      survey.active = true;      
+      survey.active = true;
       await survey.save();
       queueSurveyEmails(survey, 'launch');
-      createNotifications(survey, 'launch');      
+      // createNotifications(survey, 'launch');
+    },
+    setDelegatesForSurvey: async (obj, { id, delegates }) => {
+      const survey = await Survey.findById(id).then();
+
+      survey.delegates = delegates;
+      // else survey.delegates.push(delegates);
+
+      await survey.save();
+      return survey;
     },
     addDelegateToSurvey(surveyId, delegateId) {
       return co.wrap(function* addDelegateToSurveyGenerator(sid, did) {

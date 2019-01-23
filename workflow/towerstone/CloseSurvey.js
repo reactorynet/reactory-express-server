@@ -30,4 +30,3 @@ class LoginWorkflow {
 }
 
 export default LoginWorkflow;
-

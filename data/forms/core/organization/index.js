@@ -13,24 +13,18 @@ export const OrganizationLoginForm = {
   registerAsComponent: true,
   schema: OrganizationSchema,
   uiSchema: DefaultUiSchema,
-  uiSchemas: [
-    {
-      id: 'default',
-      title: 'Default View',
-      key: 'default',
-      description: 'Default Task Detail View',
-      icon: '',
-      uiSchema: DefaultUiSchema,
+  graphql: {
+    query: {
+      name: 'userOgranizations',
+      text: `query UserOrganizationMembers {
+        userOrganizations {
+          id
+          name
+          logo
+        }
+      }`,
     },
-    {
-      id: 'detail',
-      title: 'Detail View',
-      key: 'detail',
-      description: 'Detailed Task Detail View',
-      icon: '',
-      uiSchema: DetailedUiSchema,
-    },
-  ],
+  },
 };
 
 export default {

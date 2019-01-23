@@ -13,6 +13,9 @@ export const DetailedUiSchema = {
 
 export const OrganizationLoginFormSchema = {
   ...DefaultUiSchema,
+  id: {
+    'ui:widget': '',
+  },
 };
 
 export default DefaultUiSchema;

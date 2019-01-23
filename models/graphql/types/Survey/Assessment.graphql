@@ -16,7 +16,7 @@ type Rating {
 
 type Assessment {
     id: ObjID!
-    assessmentType: AssessmentType!
+    assessmentType: String
     organization: Organization!
     survey: Survey!
     assessor: User!

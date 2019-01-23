@@ -12,8 +12,10 @@ import {
   LeadershipBrand,
   Organigram,
   Task,
+  ReactoryClient,
+  BusinessUnit,
 } from '../../index';
-import ApiError from '../../../exceptions';
+import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import AuthConfig from '../../../authentication';
 import logger from '../../../logging';
 import TaskModel from '../../schema/Task';
@@ -54,6 +56,8 @@ const userResolvers = {
     comments() {
       return [];
     },
+    dueDate: task => task.dueDate || null,
+    startDate: task => task.startDate || null,
     createdAt(task) {
       return task.createdAt || moment().valueOf();
     },
@@ -198,6 +202,17 @@ const userResolvers = {
       return Organigram.findOne({ user: usr._id, organization: usr.memberships[0].organizationId });
     },
   },
+  UserMembership: {
+    client({ clientId }) {
+      return ReactoryClient.findById(clientId);
+    },
+    organization({ organizationId }) {
+      return Organization.findById(organizationId);
+    },
+    businessUnit({ businessUnitId }) {
+      return BusinessUnit.findById(businessUnitId);
+    },
+  },
   Query: {
     allUsers(obj, args, context, info) {
       return Admin.User.listAll().then();
@@ -205,9 +220,14 @@ const userResolvers = {
     userWithId(obj, args, context, info) {
       return Admin.User.User.findById(args.id).then();
     },
+    async userPeers(obj, { id, organizationId }) {
+      const user = await User.findById(id).then();
+      const organization = await Organization.findById(organizationId).then();
+      const orgId = organization._id ? organization._id : user.memberships[0].organizationId;
+      return Organigram.findOne({ user: user._id, organization: orgId }).then();
+    },
     authenticatedUser(obj, args, context, info) {
-      // logger.info('Authenticated user query', { obj, args, context, info });
-      // return Admin.User.User.findOne({ email: 'werner.weber@gmail.com' }).then();
+      return global.user;
     },
     userInbox(obj, { id, sort }, context, info) {
       return new Promise((resolve, reject) => {
@@ -313,6 +333,9 @@ const userResolvers = {
       logger.info(`Finding Task For Id ${id}`);
       return Task.findById(id).then();
     },
+    async searchUser(parent, { searchString, sort = 'email' }) {
+      return User.find({ email: `/${searchString}/i` }).sort(`-${sort}`).then();
+    },
   },
   Mutation: {
     createUser: async (obj, { input, organizationId, password }, context, info) => {
@@ -323,6 +346,14 @@ const userResolvers = {
         return createResult.user;
       }
       throw new Error('Organization Id is required');
+    },
+    setOrganizationForUser: async (obj, { id, organizationId }) => {
+      const user = await User.findById(id);
+      const organization = await Organization.findById(organizationId);
+      user.organization = organization;
+      await user.save();
+
+      return true;
     },
     updateUser(obj, { id, profileData }) {
       logger.info('Update user mutation called', { id, profileData });
@@ -352,6 +383,74 @@ const userResolvers = {
         }).save().then();
         return created;
       })(id || _id.toString(), taskInput);
+    },
+    async removePeer(obj, { id, peer, organization }) {
+      const userOrganigram = await Organigram.findOne({
+        user: ObjectId(id),
+        organization: ObjectId(organization),
+      }).then();
+
+      if (userOrganigram) {
+        userOrganigram.peers.forEach((peerEntry) => {
+          if (peerEntry.user === ObjectId(peer)) {
+            peerEntry.remove();
+          }
+        });
+
+        await userOrganigram.save().then();
+
+        return userOrganigram;
+      }
+
+      return null;
+    },
+    async setPeerRelationShip(obj, {
+      id, peer, organization, relationship,
+    }) {
+      console.debug('setPeerRelationship', {
+        id, peer, organization, relationship,
+      });
+
+      let userOrganigram = await Organigram.findOne({
+        user: ObjectId(id),
+        organization: ObjectId(organization),
+      }).then();
+
+      if (userOrganigram === null) {
+        logger.info('User Organigram Not Found');
+        userOrganigram = new Organigram({
+          user: ObjectId(id),
+          organization: ObjectId(organization),
+          peers: [],
+          lastConfirm: null,
+        });
+      } else {
+        logger.info('User Organigram Found', userOrganigram);
+      }
+
+      debugger; //eslint-disable-line
+
+      let updated = false;
+      userOrganigram.peers.forEach((p) => {
+        if (p.user === ObjectId(peer)) {
+          p.relationship = relationship;
+          updated = true;
+        }
+      });
+
+      if (updated === false) {
+        userOrganigram.peers.push({
+          user: ObjectId(peer),
+          relationship,
+          isInternal: true,
+          inviteSent: false,
+          confirmed: false,
+        });
+      }
+
+      await userOrganigram.save().then();
+
+      return userOrganigram;
     },
   },
 };

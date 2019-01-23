@@ -16,10 +16,10 @@ import typeDefs from './models/graphql/types';
 import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
 import { testConnection } from './database/legacy';
+import workflow from './workflow';
 import bots from './bot/server';
 import startup from './utils/startup';
 import logger from './logging';
-
 
 dotenv.config();
 
@@ -65,11 +65,13 @@ const app = express();
 app.use('*', cors(corsOptions));
 app.use(clientAuth);
 
+/*
 try {
   testConnection('plc');
 } catch (err) {
   logger.warn('Could not connect to MySQL', err);
 }
+*/
 
 mongoose.connect(MONGOOSE);
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -90,6 +92,7 @@ try {
     app.use(userAccountRouter);
     app.use('/reactory', reactory);
     app.use('/froala', froala);
+    app.use('/workflow', workflow);
     app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
     app.listen(API_PORT);
     // logger.info(`Bots server using ${bots.name}`);

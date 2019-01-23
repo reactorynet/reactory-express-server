@@ -737,6 +737,10 @@ const forgotPasswordForm = {
   uiFramework: 'material',
   uiSupport: ['material', 'bootstrap'],
   uiResources: [],
+  name: 'ForgotPasswordForm',
+  nameSpace: 'forms',
+  version: '1.0.0',
+  registerAsComponent: true,
   title: 'Forgot Password',
   tags: ['forgot password', 'user account'],
   schema: {
@@ -755,12 +759,10 @@ const forgotPasswordForm = {
   },
   uiSchema: {
     email: {
-      'ui:autofocus': true,
-      'ui:emptyValue': '',
     },
   },
-  layout: {
-
+  defaultFormValue: {
+    email: '',
   },
 };
 
@@ -1594,11 +1596,14 @@ const TowerStoneSurveyConfigForm = {
   schema: TowerStoneSurveyConfig.default,
   uiSchema: TowerStoneSurveyConfig.uiSchema,
   defaultFormValue: TowerStoneSurveyConfig.defaultFormValue,
+  backButton: true,
+  helpTopics: ['survey-config-main'],
   graphql: {
     query: {
       name: 'surveyDetail',
       text: TowerStoneSurveyConfig.surveyQuery,
       variables: TowerStoneSurveyConfig.queryMap,
+      resultMap: TowerStoneSurveyConfig.queryResultMap,
       new: false,
       edit: true,
     },
@@ -1611,7 +1616,7 @@ const TowerStoneSurveyConfigForm = {
         options: {
           refetchQueries: [],
         },
-        onSuccessMethod: 'route',
+        onSuccessMethod: 'redirect',
         onSuccessUrl: 'admin/org/${formData.organization}/surveys/${createSurvey.id}',
         onSuccessRedirectTimeout: 1000,
       },
@@ -1623,15 +1628,16 @@ const TowerStoneSurveyConfigForm = {
         options: {
           refetchQueries: [],
         },
-        onSuccessMethod: 'route',
-        onSuccessUrl: 'admin/org/${formData.organization}/surveys/${updateSurvey.id}?refresh=${new Date().valueOf()}',
-        onSuccessRedirectTimeout: 1000,
+        onSuccessMethod: 'refresh',
       },
     },
   },
 };
 
 const TowerStoneLeadershipBrandConfigForm = require('./forms/towerstone/LeadershipBrands').default;
+const TowerStoneSurveyDelegateConfig = require('./forms/towerstone/SurveyDelegates').SurveyDelegatesForm;
+const TowerStoneSurveySettings = require('./forms/towerstone/SurveySettings').SurveySettingsForm;
+const UserPeers = require('./forms/core/user/UserPeers/index').default;
 
 export default [
   productIdeas,
@@ -1660,8 +1666,11 @@ export default [
   ProjectForm,
   TowerStoneSurveyConfigForm,
   TowerStoneLeadershipBrandConfigForm,
+  TowerStoneSurveyDelegateConfig,
+  TowerStoneSurveySettings,
   FormBuilder,
   HelpFormEdit,
   TemplateEditor,
   TowerStoneTaskDetailForm,
+  UserPeers,
 ];

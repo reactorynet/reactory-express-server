@@ -20,6 +20,8 @@ type Peer {
   user: User
   relationship: PeerType
   isInternal: Boolean
+  inviteSent: Boolean
+  confirmed: Boolean
 }
 
 type UserPeers {
@@ -27,10 +29,11 @@ type UserPeers {
   user: User
   allowEdit: Boolean
   peers: [Peer]
+  lastConfirm: Date
 }
 
 type UserMembership {  
-  clientId: ReactoryClient
+  client: ReactoryClient
   organization: Organization
   businessUnit: BusinessUnit
   roles: [String]
@@ -70,8 +73,11 @@ type Comment {
 extend type Query {
   allUsers: [User],
   userWithId(id: String!): User!
+  userPeers(id: String!, organizationId: String): UserPeers
+  
   authenticatedUser: User,
-  userInbox(id: String, sort: String): [Email]   
+  userInbox(id: String, sort: String): [Email]
+  searchUser(searchString: String!, sort: String): [User]   
 }
 
 input CreateUserInput {
@@ -106,9 +112,19 @@ input UpdatePasswordInput {
   authToken: String
 }
 
+input PeerInput {
+  user: String
+  relationship: PeerType
+  isInternal: Boolean 
+}
+
 extend type Mutation {
   createUser(input: CreateUserInput!, organizationId: String!): User
   updateUser(id: String!, profileData: UpdateUserInput!): User
+  setOrganizationForUser(id: String!, organizationId: String) : Boolean
+  setPeersForUser(id: String!, peers: [PeerInput], sendConfirmations: Boolean): UserPeers
+  setPeerRelationShip(id: String!, peer: String!, organization: String!, relationship: PeerType): UserPeers 
+  removePeer(id: String!, peer: String!, organization: String!): UserPeers
   removeUser(id: String!): Boolean
   setPassword(input: UpdatePasswordInput!): User  
 }
