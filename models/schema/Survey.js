@@ -95,6 +95,9 @@ const SurveySchema = new mongoose.Schema({
       launched: Boolean,
       complete: Boolean,
       removed: Boolean,
+      message: String,
+      lastAction: String,
+      updatedAt: Date,
     },
   ],
   timeline: [

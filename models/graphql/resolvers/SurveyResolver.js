@@ -1,5 +1,6 @@
 import moment from 'moment';
 import co from 'co';
+import lodash from 'lodash';
 import Admin from '../../../application/admin';
 import { queueSurveyEmails } from '../../../emails';
 import {
@@ -38,6 +39,11 @@ export default {
     delegate(entry) {
       return User.findById(entry.delegate);
     },
+    peers(entry, context, info) {
+      debugger //eslint-disable-line
+      logger.info('Resolving peers for delegateEntry', { entry, context, info });
+      return Organigram.findOne({ user: entry.delegate }).then();
+    },
     notifications(entry) {
       return new Promise((resolve) => {
         Promise.all(entry.notifications.map(nid => (Notification.findById(nid))))
@@ -62,6 +68,12 @@ export default {
     },
     removed(entry) {
       return entry.removed;
+    },
+    updatedAt() {
+      return entry.updatedAt || null;
+    },
+    lastAction() {
+      return entry.lastAction || 'added';
     },
   },
   Survey: {
@@ -95,11 +107,13 @@ export default {
     },
     statistics(survey) {
       const statistics = {
-        launched: 10,
-        peersPending: 23,
-        complete: 50,
+        launched: 0,
+        peersConfirmed: 0,
+        complete: 0,
         total: survey.delegates.length,
       };
+
+      statistics.launched = lodash.countBy(survey.delegates, 'launched')['true'];
 
       return statistics;
     },
@@ -234,45 +248,63 @@ export default {
 
       if (!organigramModel) throw new ApiError('User does not have an organigram model, please configure peers');
 
-      const response = {
+      const entryData = {
         entry: null,
         entryIdx: -1,
         message: 'Awaiting instruction',
         error: false,
         success: true,
+        patch: false,
       };
 
       surveyModel.delegates.forEach((entry, idx) => {
         if (entry.id.toString() === entryId) {
-          response.entryIdx = idx;
-          response.entry = entry;
+          entryData.entryIdx = idx;
+          entryData.entry = entry;
         }
       });
 
       switch (action) {
         case 'send-invite': {
-          response.message = `Sent participation invite letter to ${userModel.firstName} ${userModel.lastName}`;
+          entryData.entry.message = `Sent participation invite letter to delegate ${userModel.firstName} ${userModel.lastName}`;
+          entryData.patch = true;
           break;
         }
         case 'launch': {
-          response.message = `Launched survey for user ${userModel.firstName} ${userModel.lastName}`;
+          entryData.entry.message = `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
+          entryData.patch = true;
           break;
         }
         case 'send-reminder': {
-          response.message = `Sending reminder for user ${userModel.firstName} ${userModel.lastName}}`;
+          entryData.entry.message = `Sending reminder messages for delegate ${userModel.firstName} ${userModel.lastName}}`;
+          entryData.patch = true;
           break;
         }
         case 'send-closed': {
-          response.message = `Closing survey for user ${userModel.firstName} ${userModel.lastName}}`;
+          entryData.entry.message = `Closing survey for delegate ${userModel.firstName} ${userModel.lastName}}`;
+          entryData.patch = true;
+          break;
+        }
+        case 'remove': {
+          entryData.entry.message = `Removed delegate ${userModel.firstName} ${userModel.lastName}} from Survey`;
+          entryData.entry.removed = true;
+          entryData.patch = true;
           break;
         }
         default: {
-          response.message = 'Default action taken, none';
+          entryData.message = 'Default action taken, none';
         }
       }
 
+      if (entryData.patch === true) {
+        surveyModel.delegates[entryData.entryIdx] = { ...surveyModel.delegates[entryData.entryIdx], ...entryData.entry };
+      }
 
-      return response;
+      surveyModel.delegates[entryData.entryIdx].lastAction = action;
+      surveyModel.delegates[entryData.entryIdx].updatedAt = new Date().valueOf();
+
+      await surveyModel.save().then();
+      return entryData.entry;
     },
   },
 };

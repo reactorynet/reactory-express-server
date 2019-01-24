@@ -19,12 +19,16 @@ type TimelineEntry {
 type DelegateEntry {
   id: String
   delegate: User
+  peers: UserPeers
   status: String
   notifications: [Notification]
   assessments: [Assessment]
   launched: Boolean
   complete: Boolean 
-  removed: Boolean 
+  removed: Boolean
+  message: String
+  updatedAt: Date
+  lastAction: String
 }
 
 type Survey {
@@ -66,7 +70,7 @@ input DelegateInput {
   status: String
   launched: Boolean
   complete: Boolean
-  removed: Boolean
+  removed: Boolean  
 }
 
 input SurveyLaunchOptions {
@@ -109,5 +113,5 @@ extend type Mutation {
   removeDelegateFromSurvey(surveyId: String!, delegateId: String!): DelegateRemoveResponse
   setDelegatesForSurvey(id: String!, delegates: [DelegateInput], replace: Boolean): Survey
   postRemidners(id: String, options: ReminderOptions): UpdateResponse
-  surveyDelegateAction(entryId: String!, survey: String!, delegate: String!, action: String!, inputData: Any): Any
+  surveyDelegateAction(entryId: String!, survey: String!, delegate: String!, action: String!, inputData: Any): DelegateEntry
 }

@@ -97,12 +97,6 @@ export const SurveyDelegatesUISchema = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      launched: { md: 3 },
-      peersPending: { md: 3 },
-      complete: { md: 3 },
-      total: { md: 3 },
-    },
-    {
       delegates: { md: 12 },
     },
   ],
