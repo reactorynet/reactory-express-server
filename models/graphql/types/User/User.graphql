@@ -29,7 +29,9 @@ type UserPeers {
   user: User
   allowEdit: Boolean
   peers: [Peer]
-  lastConfirm: Date
+  confirmedAt: Date
+  createdAt: Date
+  updatedAt: Date
 }
 
 type UserMembership {  
@@ -127,6 +129,7 @@ extend type Mutation {
   removePeer(id: String!, peer: String!, organization: String!): UserPeers
   removeUser(id: String!): Boolean
   setPassword(input: UpdatePasswordInput!): User  
+  confirmPeers(id: String!, organization: String!): UserPeers
 }
 
 extend type Subscription {

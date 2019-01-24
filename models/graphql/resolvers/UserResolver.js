@@ -172,8 +172,6 @@ const userResolvers = {
       return obj.allowEdit === true;
     },
     peers(obj) {
-      debugger //eslint-disable-line
-      logger.info('Getting peers for user', obj);
       return new Promise((resolve, reject) => {
         let peers = [];
         peers = obj.peers.map((peer) => {
@@ -384,20 +382,38 @@ const userResolvers = {
         return created;
       })(id || _id.toString(), taskInput);
     },
+    async confirmPeers(obj, { id, organization }) {
+      const userOrganigram = await Organigram.findOne({
+        user: ObjectId(id),
+        organization: ObjectId(organization),
+      }).then();
+
+      userOrganigram.confirmedAt = new Date().valueOf();
+      userOrganigram.updatedAt = new Date().valueOf();
+      await userOrganigram.save().then();
+      return userOrganigram;
+    },
     async removePeer(obj, { id, peer, organization }) {
       const userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
         organization: ObjectId(organization),
       }).then();
 
+      let modified = false;
       if (userOrganigram) {
         userOrganigram.peers.forEach((peerEntry) => {
-          if (peerEntry.user === ObjectId(peer)) {
+          logger.info(`Checking peer ${peerEntry.user} => ${peer}: match: ${peerEntry.user.toString() === peer}`);
+          if (peerEntry.user.toString() === peer) {
+            logger.info('Matched, deleting peerEntry');
             peerEntry.remove();
+            modified = true;
           }
         });
 
-        await userOrganigram.save().then();
+        if (modified === true) {
+          userOrganigram.confirmedAt = null;
+          await userOrganigram.save().then();
+        }
 
         return userOrganigram;
       }
@@ -407,10 +423,6 @@ const userResolvers = {
     async setPeerRelationShip(obj, {
       id, peer, organization, relationship,
     }) {
-      console.debug('setPeerRelationship', {
-        id, peer, organization, relationship,
-      });
-
       let userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
         organization: ObjectId(organization),
@@ -422,19 +434,22 @@ const userResolvers = {
           user: ObjectId(id),
           organization: ObjectId(organization),
           peers: [],
-          lastConfirm: null,
+          confirmedAt: null,
+          createdAt: new Date().valueOf(),
+          updatedAt: new Date().valueOf(),
         });
       } else {
         logger.info('User Organigram Found', userOrganigram);
+        userOrganigram.updatedAt = new Date().valueOf();
       }
-
-      debugger; //eslint-disable-line
 
       let updated = false;
       userOrganigram.peers.forEach((p) => {
-        if (p.user === ObjectId(peer)) {
+        if (p.user.toString() === peer) {
+          logger.info('Matching peer found, updating relationship status', relationship);
           p.relationship = relationship;
           updated = true;
+          userOrganigram.confirmedAt = null;
         }
       });
 
@@ -446,6 +461,8 @@ const userResolvers = {
           inviteSent: false,
           confirmed: false,
         });
+
+        userOrganigram.confirmedAt = null;
       }
 
       await userOrganigram.save().then();

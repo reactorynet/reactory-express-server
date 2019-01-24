@@ -109,4 +109,5 @@ extend type Mutation {
   removeDelegateFromSurvey(surveyId: String!, delegateId: String!): DelegateRemoveResponse
   setDelegatesForSurvey(id: String!, delegates: [DelegateInput], replace: Boolean): Survey
   postRemidners(id: String, options: ReminderOptions): UpdateResponse
+  surveyDelegateAction(entryId: String!, survey: String!, delegate: String!, action: String!, inputData: Any): Any
 }

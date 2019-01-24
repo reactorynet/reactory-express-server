@@ -2,9 +2,18 @@ import moment from 'moment';
 import co from 'co';
 import Admin from '../../../application/admin';
 import { queueSurveyEmails } from '../../../emails';
-import { LeadershipBrand, Organization, User, Survey, Assessment, Notification } from '../../../models';
+import {
+  LeadershipBrand,
+  Organization,
+  User,
+  Survey,
+  Assessment,
+  Notification,
+  Organigram,
+  Template,
+} from '../../../models';
 import { ObjectId } from 'mongodb';
-import ApiError from '../../../exceptions';
+import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import logger from '../../../logging';
 
 export default {
@@ -204,6 +213,66 @@ export default {
         } throw new ApiError('Survey not found!');
       })(surveyId, delegateId);
     },
+    async surveyDelegateAction(obj, {
+      entryId, survey, delegate, action, inputData,
+    }) {
+      logger.info('Executing action for delegate entry', {
+        entryId, survey, delegate, action, inputData,
+      });
 
+      const surveyModel = await Survey.findById(survey).then();
+
+      if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
+
+      const userModel = await User.findById(delegate).then();
+      if (!userModel) throw new RecordNotFoundError('Could not find the user item', 'User');
+
+      const organigramModel = await Organigram.find({
+        user: userModel.id,
+        organization: surveyModel.organization,
+      }).then();
+
+      if (!organigramModel) throw new ApiError('User does not have an organigram model, please configure peers');
+
+      const response = {
+        entry: null,
+        entryIdx: -1,
+        message: 'Awaiting instruction',
+        error: false,
+        success: true,
+      };
+
+      surveyModel.delegates.forEach((entry, idx) => {
+        if (entry.id.toString() === entryId) {
+          response.entryIdx = idx;
+          response.entry = entry;
+        }
+      });
+
+      switch (action) {
+        case 'send-invite': {
+          response.message = `Sent participation invite letter to ${userModel.firstName} ${userModel.lastName}`;
+          break;
+        }
+        case 'launch': {
+          response.message = `Launched survey for user ${userModel.firstName} ${userModel.lastName}`;
+          break;
+        }
+        case 'send-reminder': {
+          response.message = `Sending reminder for user ${userModel.firstName} ${userModel.lastName}}`;
+          break;
+        }
+        case 'send-closed': {
+          response.message = `Closing survey for user ${userModel.firstName} ${userModel.lastName}}`;
+          break;
+        }
+        default: {
+          response.message = 'Default action taken, none';
+        }
+      }
+
+
+      return response;
+    },
   },
 };
