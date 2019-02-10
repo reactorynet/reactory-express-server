@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import co from 'co';
 import moment from 'moment';
-import { isNil, find } from 'lodash';
+import lodash, { isNil, find } from 'lodash';
 import Admin from '../../../application/admin';
 import {
   Organization,
@@ -18,27 +18,22 @@ import {
 import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import AuthConfig from '../../../authentication';
 import logger from '../../../logging';
+import iz from '../../../utils/validators';
 import TaskModel from '../../schema/Task';
 
-const userAssessments = (id, view = 'assessment') => {
-  return new Promise((resolve, reject) => {
-    const { user } = global;
-    let findUser = user;
-    const getAssessments = () => {
-      Assessment.find({ assessor: findUser._id }).then((assessments) => {
-        resolve(assessments);
-      }).catch(e => reject(e));
-    };
+const uuid = require('uuid');
 
-    if (isNil(id) === false) {
-      findUser = Admin.User.userWithId(id).then((usr) => {
-        findUser = usr;
-        getAssessments();
-      }).catch((e) => {
-        getAssessments();
-      });
-    }
-  });
+const userAssessments = async (id) => {
+  const { user } = global;
+  const findUser = isNil(id) === true ? await User.findById(id).then() : user;
+  if (findUser && findUser._id) {
+    return Assessment.find({ assessor: findUser._id })
+      .populate('assessor')
+      .populate('delegate')
+      .populate('survey')
+      .then();
+  }
+  throw new RecordNotFoundError('No user matching id');
 };
 
 
@@ -112,17 +107,55 @@ const userResolvers = {
       return sr.comments || [];
     },
   },
+  Rating: {
+    id(obj) {
+      return obj._id || null;
+    },
+    async quality(rating) {
+      const lb = await LeadershipBrand.findOne({ 'qualities._id': ObjectId(rating.qualityId) }).then();
+      if (lb) {
+        return lb.qualities.id(rating.qualityId);
+      }
+
+      return null;
+    },
+    async behaviour(rating) {
+      if (rating.custom === true && lodash.isNil(rating.behaviourId)) {
+        return {
+          id: ObjectId(),
+          title: rating.behaviourText,
+          ordinal: 99,
+        };
+      }
+
+      const lb = await LeadershipBrand.findOne({ 'qualities._id': ObjectId(rating.qualityId) }).then();
+      if (lb) {
+        return lb.qualities.id(rating.qualityId).behaviours.id(rating.behaviourId);
+      }
+
+      return null;
+    },
+    rating(rating) {
+      return rating.rating || 0;
+    },
+    comment(rating) {
+      return rating.comment || '';
+    },
+  },
   Assessment: {
     id(o) {
       return o._id || null;
     },
     assessor(o) {
+      if (o.assessor && o.assessor._id) return o.assessor;
       return User.findById(o.assessor);
     },
     delegate(o) {
+      if (o.delegate && o.delegate._id) return o.delegate;
       return User.findById(o.delegate);
     },
     survey(o) {
+      if (o.survey && o.survey._id) return o.survey;
       return Survey.findById(o.survey);
     },
     assessmentType(o) {
@@ -134,40 +167,31 @@ const userResolvers = {
     selfAssessment(o) {
       return o.assessor === o.delegate;
     },
-    ratings(o) {
-      return co.wrap(function* ratingsResolver(assessment) {
-        try {
-          const survey = yield Survey.findById(assessment.survey).then();
-          if (survey && survey.leadershipBrand) {
-            const leadershipBrand = yield LeadershipBrand.findById(survey.leadershipBrand).then();
-            const ratings = [];
-            let ratingIndex = 0;
-            for (ratingIndex; ratingIndex <= assessment.ratings.length - 1; ratingIndex += 1) {
-              const rating = assessment.ratings[ratingIndex];
-              const quality = find(leadershipBrand.qualities, { id: rating.qualityId.toString() });
-              const ratingObj = {
-                id: rating._id, //eslint-disable-line
-                quality,
-                behaviour: find(quality.behaviours, { id: rating.behaviourId.toString() }),
-                ordinal: rating.ordinal,
-                rating: rating.rating,
-                comment: rating.comment,
-              };
-
-              ratingObj.ordinal = ratingObj.behaviour.ordinal;
-
-              ratings.push(ratingObj);
-            }
-            return ratings;
-          }
-        } catch (resolveError) {
-          console.error(resolveError);
-          return [];
-        }
-      })(o);
+    async overdue(obj) {
+      if (obj.complete === true) return false;
+      const { survey } = obj;
+      const now = moment();
+      let end = null;
+      let status = 'open';
+      if (survey._id && survey.endDate && survey.status) {
+        end = moment(survey.endDate);
+        status = survey.status; //eslint-disable-line
+      } else {
+        const loaded = await Survey.findById(obj.survey).select('endDate status').then();
+        end = moment(loaded.endDate);
+        status = loaded.status; //eslint-disable-line
+      }
+      if (status === 'closed') return false;
+      return now.isAfter(end) === true;
+    },
+    ratings(assessment) {
+      return assessment.ratings;
     },
   },
   UserPeers: {
+    id(obj) {
+      return obj.id ? obj.id.toString() : '';
+    },
     allowEdit(obj) {
       return obj.allowEdit === true;
     },
@@ -313,16 +337,13 @@ const userResolvers = {
         });
       });
     },
-    assessmentWithId(obj, { id }, context, info) {
+    async assessmentWithId(obj, { id }, context, info) {
       logger.info('Finding Assessment with Id', { id });
-      return new Promise((resolve, reject) => {
-        const findWrapper = co.wrap(function* assessmentWithIdGenerator(assessmentId) {
-          const assessment = yield Assessment.findById(assessmentId).then();
-          return assessment;
-        });
-
-        resolve(findWrapper(id));
-      });
+      return Assessment.findById(id)
+        .populate('survey')
+        .populate('delegate')
+        .populate('assessor')
+        .then();
     },
     userTasks(obj, { id, status }) {
       return Task.find({ user: ObjectId(id || global.user._id), status }).then();

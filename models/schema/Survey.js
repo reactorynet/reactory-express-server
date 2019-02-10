@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import moment from 'moment';
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -97,6 +98,7 @@ const SurveySchema = new mongoose.Schema({
       removed: Boolean,
       message: String,
       lastAction: String,
+      status: String,
       updatedAt: Date,
     },
   ],
@@ -112,6 +114,36 @@ const SurveySchema = new mongoose.Schema({
     },
   ],
 });
+
+
+SurveySchema.methods.addTimelineEntry = async function addTimelineEntry(
+  eventType,
+  eventDetail,
+  who,
+  save = false,
+) {
+  const entry = {
+    when: moment().valueOf(),
+    eventType,
+    eventDetail,
+    who: !who ? global.user.id : who,
+  };
+
+  if (!this.timeline) this.timeline = [];
+
+  this.timeline.push(entry);
+
+  if (save) this.save().then();
+};
+
+SurveySchema.methods.clearedForLaunchBySurvey = function clearedForLaunchBySurvey() {
+  const statusReady = (this.status === 'ready' || this.status === 'launched');
+  const startDateReady = moment(this.startDate).isSameOrBefore(moment());
+  const endDateReady = moment(this.endDate).isSameOrAfter(moment());
+  console.log('clearedForLaunch', statusReady, startDateReady, endDateReady);
+
+  return statusReady && startDateReady && endDateReady;
+};
 
 const SurveyModel = mongoose.model('Survey', SurveySchema);
 export default SurveyModel;

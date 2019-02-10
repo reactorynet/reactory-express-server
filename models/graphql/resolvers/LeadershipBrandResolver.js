@@ -5,6 +5,11 @@ import { LeadershipBrand, Scale } from '../../../models';
 import logger from '../../../logging';
 
 const leadershipBrandResolver = {
+  Behaviour: {
+    ordinal(obj) {
+      return obj.ordinal || 99;
+    },
+  },
   LeadershipBrand: {
     id(obj) {
       return obj.id;

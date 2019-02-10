@@ -16,6 +16,9 @@ import {
 import { ObjectId } from 'mongodb';
 import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import logger from '../../../logging';
+import { launchSurveyForDelegate, sendSurveyEmail, EmailTypesForSurvey, sendSurveyClosed } from '../../../application/admin/Survey';
+
+const { findIndex } = lodash;
 
 export default {
   SurveyCalendarEntry: {
@@ -36,12 +39,13 @@ export default {
     },
   },
   DelegateEntry: {
+    id(entry) {
+      return entry.id || '';
+    },
     delegate(entry) {
       return User.findById(entry.delegate);
     },
     peers(entry, context, info) {
-      debugger //eslint-disable-line
-      logger.info('Resolving peers for delegateEntry', { entry, context, info });
       return Organigram.findOne({ user: entry.delegate }).then();
     },
     notifications(entry) {
@@ -51,29 +55,31 @@ export default {
       });
     },
     assessments(entry) {
-      console.log('getting assessment for delegateentry', entry);
-      return new Promise((resolve) => {
-        const promises = entry.assessments.map(aid => (Assessment.findById(aid).then()));
-        Promise.all(promises).then(assessments => resolve(assessments));
-      });
+      return Assessment.find({ _id: { $in: entry.assessments } })
+        .populate('assessor')
+        .populate('delegate')
+        .then();
     },
     status(entry) {
-      return entry.status || 'new';
+      return entry.status || 'NEW';
     },
     launched(entry) {
-      return entry.launched;
+      return entry.launched === true;
     },
     complete(entry) {
-      return entry.complete;
+      return entry.complete === true;
     },
     removed(entry) {
-      return entry.removed;
+      return entry.removed === true;
     },
-    updatedAt() {
-      return entry.updatedAt || null;
+    updatedAt(entry) {
+      return moment(entry.updatedAt);
     },
-    lastAction() {
+    lastAction(entry) {
       return entry.lastAction || 'added';
+    },
+    message(entry) {
+      return entry.message;
     },
   },
   Survey: {
@@ -156,10 +162,6 @@ export default {
     setDelegatesForSurvey: async (obj, { id, delegates }) => {
       const survey = await Survey.findById(id).then();
 
-      survey.delegates = delegates;
-      // else survey.delegates.push(delegates);
-
-      await survey.save();
       return survey;
     },
     addDelegateToSurvey(surveyId, delegateId) {
@@ -234,6 +236,8 @@ export default {
         entryId, survey, delegate, action, inputData,
       });
 
+      const { user } = global;
+
       const surveyModel = await Survey.findById(survey).then();
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
@@ -241,12 +245,11 @@ export default {
       const userModel = await User.findById(delegate).then();
       if (!userModel) throw new RecordNotFoundError('Could not find the user item', 'User');
 
-      const organigramModel = await Organigram.find({
-        user: userModel.id,
-        organization: surveyModel.organization,
+      const organigramModel = await Organigram.findOne({
+        user: ObjectId(userModel._id),
+        organization: ObjectId(surveyModel.organization),
       }).then();
 
-      if (!organigramModel) throw new ApiError('User does not have an organigram model, please configure peers');
 
       const entryData = {
         entry: null,
@@ -257,53 +260,126 @@ export default {
         patch: false,
       };
 
-      surveyModel.delegates.forEach((entry, idx) => {
-        if (entry.id.toString() === entryId) {
-          entryData.entryIdx = idx;
-          entryData.entry = entry;
-        }
-      });
+      try {
+        logger.info(`Survey Model has ${surveyModel.delegates.length} delegates, finding ${entryId}`);
+        if (entryId === '' && action === 'add') {
+          entryData.entry = {
+            id: new ObjectId(),
+            delegate: userModel,
+            notifications: [],
+            assessments: [],
+            launched: false,
+            complete: false,
+            removed: false,
+            message: `Added ${userModel.firstName} ${userModel.lastName} to survey ${surveyModel.title}`,
+            lastAction: 'added',
+            satus: 'new',
+            updatedAt: moment().valueOf(),
+          };
+          surveyModel.delegates.push(entryData.entry);
+          surveyModel.addTimelineEntry('Added Delegate', `${user.firstName} added ${userModel.firstName} ${userModel.lastName} to Survey`, user.id, true);
+          entryData.patch = false;
 
-      switch (action) {
-        case 'send-invite': {
-          entryData.entry.message = `Sent participation invite letter to delegate ${userModel.firstName} ${userModel.lastName}`;
-          entryData.patch = true;
-          break;
+          return entryData.entry;
         }
-        case 'launch': {
-          entryData.entry.message = `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
-          entryData.patch = true;
-          break;
+
+        // not a new entry, find it!
+        entryData.entry = surveyModel.delegates.id(entryId);
+        if (entryData.entry === null) {
+          throw new ApiError('Could not find the delegate entry with the entry id', entryId);
         }
-        case 'send-reminder': {
-          entryData.entry.message = `Sending reminder messages for delegate ${userModel.firstName} ${userModel.lastName}}`;
-          entryData.patch = true;
-          break;
+
+        for (let entryIndex = 0; entryIndex < surveyModel.delegates.length; entryIndex += 1) {
+          if (surveyModel.delegates[entryIndex]._id === entryData.entry._id) {
+            entryData.entryIdx = entryIndex;
+          }
         }
-        case 'send-closed': {
-          entryData.entry.message = `Closing survey for delegate ${userModel.firstName} ${userModel.lastName}}`;
-          entryData.patch = true;
-          break;
+
+        logger.info(`Performing ${action} on 
+          organigram model: ${organigramModel ? organigramModel._id.toString() : 'No Organigram'} 
+          and delegateEntry: ${entryData.entry._id} at index ${entryData.entryIdx} for 
+          delegate id: ${entryData.entry.delegate.id.toString()}`);
+
+        switch (action) {
+          case 'send-invite': {
+            const inviteResult = await sendSurveyEmail(survey, entryData.entry, organigramModel, EmailTypesForSurvey.ParticipationInvite);
+            entryData.entry.message = inviteResult.message;
+            entryData.patch = true;
+            entryData.entry.status = 'invite-sent';
+            entryData.entry.lastAction = inviteResult.success ? 'invitation-sent' : 'invite-failed';
+            break;
+          }
+          case 'launch': {
+            if (organigramModel) {
+              const launchResult = await launchSurveyForDelegate(surveyModel, entryData.entry, organigramModel);
+              entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
+              if (launchResult.assessments) {
+                entryData.entry.assessments = launchResult.assessments.map(a => a._id);
+              }
+              entryData.patch = true;
+              entryData.entry.status = launchResult.success ? 'launched' : entryData.entry.status;
+              entryData.entry.lastAction = launchResult.success ? 'launched' : 'launch-fail';
+            } else {
+              // console.log('No Organigram Model', organigramModel);
+              entryData.entry.message = `Please set user organigram / peers. ${userModel.firstName} ${userModel.lastName}`;
+              entryData.patch = true;
+              entryData.entry.status = 'new';
+              entryData.entry.lastAction = 'launch';
+            }
+            break;
+          }
+          case 'send-reminder': {
+            const reminderResult = await sendSurveyEmail(survey, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
+            entryData.entry.message = reminderResult.message;
+            entryData.patch = true;
+            entryData.entry.status = 'reminded';
+            entryData.entry.lastAction = 'reminder';
+            break;
+          }
+          case 'send-closed': {
+            const closeResult = await sendSurveyEmail(survey, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyClose);
+            entryData.entry.message = closeResult.message;
+            entryData.patch = true;
+            entryData.entry.status = 'closed';
+            entryData.entry.lastAction = 'closed';
+            break;
+          }
+          case 'remove': {
+            entryData.entry.message = `Removed delegate ${userModel.firstName} ${userModel.lastName} from Survey`;
+            if (!entryData.entry.removed) {
+              entryData.entry.removed = true;
+              entryData.entry.status = 'removed';
+              entryData.patch = true;
+            } else {
+              surveyModel.delegates[entryData.entryIdx].remove();
+              entryData.entry.status = 'deleted';
+              surveyModel.addTimelineEntry('User Removed', `${user.firstName} removed delegate ${userModel.firstName} ${userModel.lastName} from Survey`, user.id, true);
+              entryData.patch = false;
+            }
+            break;
+          }
+          case 'enable': {
+            entryData.entry.message = `Re-enabled delegate ${userModel.firstName} ${userModel.lastName} from Survey`;
+            entryData.entry.removed = false;
+            entryData.entry.status = 'new';
+            entryData.patch = true;
+            break;
+          }
+          default: {
+            entryData.message = 'Default action taken, none';
+          }
         }
-        case 'remove': {
-          entryData.entry.message = `Removed delegate ${userModel.firstName} ${userModel.lastName}} from Survey`;
-          entryData.entry.removed = true;
-          entryData.patch = true;
-          break;
+
+        if (entryData.patch === true && entryData.entryIdx >= 0) {
+          logger.info(`Updating entry ${entryData.entry.id}`);
+          entryData.entry.lastAction = action;
+          entryData.entry.updatedAt = moment().valueOf();
+          surveyModel.delegates.set(entryData.entryIdx, entryData.entry);
+          await surveyModel.save().then();
         }
-        default: {
-          entryData.message = 'Default action taken, none';
-        }
+      } catch (error) {
+        console.log(error);
       }
-
-      if (entryData.patch === true) {
-        surveyModel.delegates[entryData.entryIdx] = { ...surveyModel.delegates[entryData.entryIdx], ...entryData.entry };
-      }
-
-      surveyModel.delegates[entryData.entryIdx].lastAction = action;
-      surveyModel.delegates[entryData.entryIdx].updatedAt = new Date().valueOf();
-
-      await surveyModel.save().then();
       return entryData.entry;
     },
   },

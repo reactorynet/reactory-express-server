@@ -41,6 +41,28 @@ export const SurveySettingsSchema = {
       type: 'number',
       title: 'Maximum Number of reminders',
     },
+    timeline: {
+      type: 'array',
+      title: 'Timeline Entries',
+      items: {
+        type: 'object',
+        title: 'Entry',
+        properties: {
+          when: {
+            type: 'string',
+            title: 'When',
+          },
+          eventType: {
+            type: 'string',
+            title: 'Event Type',
+          },
+          eventDetail: {
+            type: 'string',
+            title: 'Event Detail',
+          },
+        },
+      },
+    },
   },
 };
 
@@ -65,6 +87,9 @@ export const SurveySetttingsUISchema = {
     },
     {
       spreadReminders: { md: 12 },
+    },
+    {
+      timeline: { md: 12 },
     },
   ],
   minimumPeers: {
@@ -113,6 +138,16 @@ export const SurveySetttingsUISchema = {
       ],
     },
   },
+  timeline: {
+    'ui:widget': 'MaterialTableWidget',
+    'ui:options': {
+      columns: [
+        { title: 'When', field: 'when' },
+        { title: 'Event', field: 'eventType' },
+        { title: 'Detail', field: 'eventDetail' },
+      ],
+    },
+  },
 };
 
 const graphql = {
@@ -122,6 +157,17 @@ const graphql = {
       surveyDetail(surveyId: $surveyId){
         id
         options
+        timeline {
+          when
+          eventType
+          eventDetail
+          who {
+            id
+            firstName
+            lastName
+            avatar
+          }
+        }
       }
     }`,
     variables: {
@@ -137,6 +183,7 @@ const graphql = {
       'options.mustHaveSupervisor': 'mustHaveSupervisor',
       'options.numberOfReminders': 'numberOfReminders',
       'options.spreadReminders': 'spreadReminders',
+      timeline: 'timeline',
     },
     edit: true,
     new: false,

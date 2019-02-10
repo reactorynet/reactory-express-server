@@ -140,7 +140,7 @@ export default {
     {
       key: 'assessment',
       title: 'Surveys',
-      path: '/assessment/**',
+      path: '/assess/**',
       exact: false,
       public: false,
       roles: ['USER'],

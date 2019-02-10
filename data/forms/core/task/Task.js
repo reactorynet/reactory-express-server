@@ -52,11 +52,11 @@ export default {
       title: 'Linked Milestone',
     },
     taskCost: {
-      type: 'number',
+      type: 'string',
       title: 'This is the new cost field',
     },
     effortEstimate: {
-      type: 'number',
+      type: 'string',
       title: 'Effort (hrs)',
     },
     currency: {

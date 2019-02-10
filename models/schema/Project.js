@@ -11,6 +11,8 @@ const ProjectSchema = new mongoose.Schema({
   id: ObjectId,
   title: String,
   description: String,
+  vision: String,
+  goals: [String],
   percentComplete: Number,
   slug: String,
   shortCode: String, // AOT-00000001

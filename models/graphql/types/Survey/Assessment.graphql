@@ -11,7 +11,10 @@ type Rating {
     behaviour: Behaviour
     ordinal: Int!
     rating: Int!
+    custom: Boolean
+    behaviourText: String
     comment: String
+    updatedAt: Date
 }
 
 type Assessment {
@@ -23,6 +26,7 @@ type Assessment {
     delegate: User!
     ratings: [Rating]
     complete: Boolean
+    overdue: Boolean
     selfAssessment: Boolean
     createdAt: Date
     updatedAt: Date    
@@ -48,5 +52,14 @@ extend type Query {
     assessmentWithId(id: String): Assessment
     userSurveys(id: String): [Assessment]
     userReports(id: String): [SurveyReportForUser]
-    reportDetailForUser(userId: String, surveyId: String): SurveyReportForUser
+    reportDetailForUser(userId: String, surveyId: String): SurveyReportForUser    
+}
+
+extend type Mutation {
+    setRatingForAssessment(
+        id: String, ratingId: String, 
+        rating: Int, comment: String, 
+        qualityId: String, behaviourId: String,
+        custom: Boolean, behaviourText: String, deleteRating: Boolean) : Rating
+    setAssessmentComplete(id: String!): Assessment    
 }

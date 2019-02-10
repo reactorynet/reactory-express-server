@@ -25,6 +25,7 @@ type Peer {
 }
 
 type UserPeers {
+  id: ObjID
   organization: Organization
   user: User
   allowEdit: Boolean

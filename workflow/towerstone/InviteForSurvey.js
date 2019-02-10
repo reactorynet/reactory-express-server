@@ -2,12 +2,6 @@ import { StepBody, ExecutionResult } from 'workflow-es';
 import { Survey, User } from '../../models/';
 import logger from '../../logging';
 
-class AttachUsersToSurvey extends StepBody {
-  run(context) {
-    console.log('Attach User to Survey', { context });
-    return ExecutionResult.next();
-  }
-}
 
 class CheckSurveyStatus extends StepBody {
   run(context) {

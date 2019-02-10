@@ -157,6 +157,7 @@ const graphql = {
             avatar
           }
           status
+          message
           launched
           complete
           removed                  
@@ -170,6 +171,7 @@ const graphql = {
               avatar
             }
             complete
+            createdAt
           }
         }        
       }
@@ -193,16 +195,7 @@ const graphql = {
       name: 'setDelegatesForSurvey',
       text: `mutation SetDelegatesForSurvey($id: String!, $delegates: [DelegateInput]){
         setDelegatesForSurvey(id: $id, delegates: $delegates){
-          id
-          delegates {                
-            delegate {
-              id
-              firstName
-              lastName
-              avatar
-              email
-            }
-          }                          
+          id                                    
         }
       }`,
       objectMap: true,
