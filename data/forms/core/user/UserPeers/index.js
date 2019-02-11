@@ -1,5 +1,5 @@
 import { defaultFormProps } from '../../../defs';
-import UserPeerSchema from './schema';
+import UserPeerSchema from './Schema';
 import uiSchema from './uiSchemas';
 
 export default {
