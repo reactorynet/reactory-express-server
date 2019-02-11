@@ -15,6 +15,7 @@ module.exports = {
       LOG_LEVEL: 'info',
     },
     env_production: {
+      NODE_ENV: 'production',
       APP_DATA_ROOT: '/data/reactory',
       LEGACY_APP_DATA_ROOT: '/data/legacy',
       MONGOOSE: 'mongodb://localhost:27017/reactory',
@@ -23,6 +24,7 @@ module.exports = {
       API_URI_ROOT: 'https://api.towerstone-global.com/',
       CDN_ROOT: 'https://api.towerstone-global.com/cdn/',
       MODE: 'PRODUCTION',
+      LOG_LEVEL: 'info',
     },
   }],
 };

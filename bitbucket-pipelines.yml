@@ -5,7 +5,7 @@ pipelines:
     - step:
         name: Install and Build
         script:
-          - npm install
+          - yarn install
           - yarn build --env=production
     - step:
         name: Deploy to QA

@@ -1,10 +1,7 @@
 import {
   DateProperty,
-  DateTimeProperty,
-  StringProperty,
 } from '../../../defs';
 import { UserProperties } from '../Schema';
-import Organization from '../../organization/Organization';
 
 export default {
   title: 'Colleagues',

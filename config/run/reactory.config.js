@@ -32,6 +32,18 @@ module.exports = {
       MODE: 'PRODUCTION',
       LOG_LEVEL: 'info',
     },
+    env_staging: {
+      NODE_ENV: 'staging',
+      APP_DATA_ROOT: '/data/reactory',
+      LEGACY_APP_DATA_ROOT: '/data/legacy',
+      MONGOOSE: 'mongodb://localhost:27017/reactory',
+      API_PORT: 4000,
+      SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
+      API_URI_ROOT: 'https://qa-api.reactory.net/',
+      CDN_ROOT: 'https://qa-api.reactory.net/cdn/',
+      MODE: 'PRODUCTION',
+      LOG_LEVEL: 'info',
+    },
   }],
   deploy: {
     production: {
