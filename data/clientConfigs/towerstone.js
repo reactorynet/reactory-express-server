@@ -10,6 +10,25 @@ dotenv.config();
 
 const { CDN_ROOT, MODE } = process.env;
 
+let siteUrl = '';// 'http://localhost:3000' : 'https://app.towerstone-global.com/';
+
+switch (MODE) {
+  case 'QA': {
+    siteUrl = 'https://towerstone.reactory.net';
+    break;
+  }
+  case 'PRODUCTION': {
+    siteUrl = 'https://app.towerstone-global.com';
+    break;
+  }
+  case 'DEVELOP':
+  default: {
+    siteUrl = 'http://localhost:3000';
+    break;
+  }
+}
+
+
 export default {
   key: 'towerstone',
   name: 'TowerStone Leadership Centre',
@@ -17,7 +36,7 @@ export default {
   email: 'developer@towerstone-global.com',
   salt: 'generate',
   password: 'XXXXXXXXXXXXX',
-  siteUrl: MODE === 'DEVELOP' ? 'http://localhost:3000' : 'https://app.towerstone-global.com/',
+  siteUrl,
   emailSendVia: 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/reset-password',
