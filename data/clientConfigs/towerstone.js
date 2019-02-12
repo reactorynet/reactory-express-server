@@ -18,7 +18,7 @@ switch (MODE) {
     break;
   }
   case 'PRODUCTION': {
-    siteUrl = 'https://app.towerstone-global.com';
+    siteUrl = 'https://towerstone.reactory.net';
     break;
   }
   case 'DEVELOP':
