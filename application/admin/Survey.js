@@ -94,7 +94,10 @@ export const sendParticipationInivitationForDelegate = async (survey, delegateEn
   console.log(`Sending Invitation Survey: ${survey.title}`, delegateEntry, organigram);
 
   const result = (message, success = false) => {
-
+    return {
+      message,
+      success,
+    };
   };
 
   try {
