@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import sgMail from '@sendgrid/mail';
 // import Email from 'email-templates';
 import ejs from 'ejs';
-import { isNil } from 'lodash';
+import lodash, { isNil } from 'lodash';
 import ApiError, { RecordNotFoundError, OrganizationNotFoundError } from '../exceptions';
 import { Template, ReactoryClient, EmailQueue } from '../models';
 import defaultEmailTemplates from './defaultEmailTemplates';
@@ -16,9 +16,10 @@ const TemplateViews = {
   ActivationEmail: 'activation-email',
   ForgotPassword: 'forgot-password-email',
   WelcomeUser: 'welcome-email',
-  InvitePeers: 'towerstone.peer-inite',
-  SurveyLaunch: 'towerstone.survey-launch',
-  SurveyReminder: 'towerstone.survey-launch',
+  SurveyInvite: 'towerstone.survey-invite-email',
+  InvitePeers: 'towerstone.peer-invite-email',
+  SurveyLaunch: 'towerstone.survey-launch-email',
+  SurveyReminder: 'towerstone.survey-launch-email',
 };
 
 dotenv.config();
@@ -26,7 +27,7 @@ dotenv.config();
 
 const {
   APP_DATA_ROOT,
-  LEGACY_APP_DATA_ROOT,
+  //  LEGACY_APP_DATA_ROOT,
 } = process.env;
 
 const sendActivationEmail = (user) => {
@@ -163,6 +164,8 @@ const sendForgotPasswordEmail = (user, organization = null) => {
     try {
       const { partner } = global;
       loadEmailTemplate(TemplateViews.ForgotPassword, organization, partner).then((templateResult) => {
+        if (lodash.isNil(templateResult)) throw new RecordNotFoundError('Could not find a template matching the search criteria', 'Template', { criteria: { view: TemplateViews.ForgotPassword, organization } });
+        logger.info(`Template Found ${templateResult._id}`, templateResult);
         try {
           sgMail.setApiKey(partner.emailApiKey);
         } catch (sgError) {
@@ -264,21 +267,6 @@ const loadEmailTemplate = (view, organization, client, keys = [], templateFormat
   });
 };
 
-/*
-const addTemplate = (templateInput) => {
-  const template = new Template(templateInput);
-  return template;
-};
-
-const deleteTemplate = (templateInput ) => {
-
-};
-
-const updateTemplate = (templateInput) => {
-
-};
-*/
-
 function* installTemplateGenerator(template, organization, client) {
   try {
     const found = yield Template.findClientTemplate(template, organization, client).then();
@@ -326,15 +314,94 @@ export const installDefaultEmailTemplates = co.wrap(function* installDefaultEmai
   }
 });
 
-const surveyEmails = {
-  launch: (delegate, survey) => {    
-    const template = loadEmailTemplate(TemplateViews.SurveyLaunch, survey.organization, global.partner)
+export const surveyEmails = {
+  launch: (delegate, survey) => {
+    const template = loadEmailTemplate(TemplateViews.SurveyLaunch, survey.organization, global.partner);
   },
   reminder: (delegate, survey) => {
-    
+
   },
   delegateInvites: (delegate, survey) => {
 
+  },
+};
+
+export const organigramEmails = {
+  confirmedAsPeer: (peer, user, organization = null) => {
+    return new Promise((resolve, reject) => {
+      try {
+        const { partner } = global;
+        loadEmailTemplate(TemplateViews.SurveyInvite, organization, partner).then((templateResult) => {
+          try {
+            sgMail.setApiKey(partner.emailApiKey);
+          } catch (sgError) {
+            logger.error('Error setting API key', sgError);
+          }
+          const properties = {
+            partner,
+            peer,
+            user,
+            applicationTitle: partner.name,
+            profileLink: `${partner.siteUrl}/profile/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(user))}`,
+          };
+
+          let bodyTemplate = null;
+          let subjectTemplate = null;
+          templateResult.elements.forEach((templateElement) => {
+            switch (templateElement.view) {
+              case `${TemplateViews.SurveyInvite}/subject`: subjectTemplate = templateElement; break;
+              case `${TemplateViews.SurveyInvite}/body`: bodyTemplate = templateElement; break;
+              default: break;
+            }
+          });
+
+          const msg = {
+            to: peer.email,
+            from: partner.email,
+          };
+
+          try {
+            if (isNil(subjectTemplate) === false) {
+              msg.subject = renderTemplate(subjectTemplate, properties);
+            }
+          } catch (renderError) {
+            reject(new ApiError('Error rendering subject', { original: renderError.message }));
+          }
+
+          try {
+            if (isNil(bodyTemplate) === false) {
+              msg.html = renderTemplate(bodyTemplate, properties);
+            }
+          } catch (renderError) {
+            reject(new ApiError('Error rendering html', { original: renderError.message }));
+          }
+
+          const qops = {
+            sent: true,
+            sentAt: moment().valueOf(),
+            client: partner,
+          };
+
+          if (!isNil(msg.subject) && !isNil(msg.html)) {
+            try {
+              sgMail.send(msg);
+            } catch (sendError) {
+              logger.log(`::ERROR SENDING MAIL:: ${msg.subject}`, msg);
+              qops.sent = false;
+              qops.sentAt = null;
+              qops.failures = 1;
+              qops.error = sendError.message;
+            }
+            queueMail(user, msg, qops);
+          }
+          resolve({ sent: qops.sent });
+        }).catch((loadError) => {
+          reject(new RecordNotFoundError(loadError.message));
+        });
+      } catch (mailError) {
+        reject(new ApiError(mailError.message));
+      }
+    });
   },
 };
 
@@ -350,4 +417,5 @@ export default {
   sendForgotPasswordEmail,
   installDefaultEmailTemplates,
   queueSurveyEmails,
+  organigramEmails,
 };

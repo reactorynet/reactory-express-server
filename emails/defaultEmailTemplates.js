@@ -87,4 +87,70 @@ export default [
       },
     ],
   },
+  /**
+    SurveyInvite: 'towerstone.survey-invite-email',
+    InvitePeers: 'towerstone.peer-invite-email',
+    SurveyLaunch: 'towerstone.survey-launch-email',
+    SurveyReminder: 'towerstone.survey-launch-email
+   */
+  {
+    enabled: true,
+    view: 'towerstone.survey-invite-email',
+    kind: 'email',
+    content: null,
+    elements: [
+      {
+        enabled: true,
+        view: 'towerstone.survey-invite-email/subject',
+        kind: 'content',
+        format: 'text',
+        content: 'You have been confirmed as a peer for <%= user.firstName %> on the <%= applicationTitle %> assessment platform.',
+        parameters: [
+          {
+            name: 'applicationTitle',
+            title: 'Application Title',
+            type: 'string',
+          },
+          {
+            name: 'user',
+            type: 'object',
+            properties: {
+              firstName: {
+                title: 'First name',
+                name: 'firstName',
+                type: 'string',
+              },
+            },
+          },
+        ],
+        elements: [],
+      },
+      {
+        enabled: true,
+        view: 'towerstone.survey-invite-email/body',
+        kind: 'content',
+        format: 'html',
+        content: '$ref://towerstone/survey/survey-invite-body-html.ejs',
+        parameters: [
+          {
+            name: 'applicationTitle',
+            propType: 'text',
+          },
+          {
+            name: 'user',
+            propType: 'User',
+          },
+          {
+            name: 'resetLink',
+            propType: 'text',
+          },
+          {
+            name: 'peer',
+            type: 'object',
+          },
+        ],
+        elements: [],
+      },
+    ],
+  },
 ];

@@ -897,12 +897,18 @@ const msTeamsConfigurationTab = {
 };
 
 const resetPasswordForm = {
-  id: 'password-reset',
+  id: 'ResetPasswordForm',
   uiFramework: 'material',
   uiSupport: ['material', 'bootstrap'],
   uiResources: [],
   title: 'Password Reset',
   tags: ['forgot password reset', 'user account', 'reset passwords'],
+  registerAsComponent: true,
+  name: 'ResetPasswordForm',
+  nameSpace: 'forms',
+  version: '1.0.0',
+  backButton: true,
+  helpTopics: ['password-reset'],
   schema: {
     title: '',
     description: 'Provide a new password and confirm it in order to change your password',
@@ -938,17 +944,11 @@ const resetPasswordForm = {
   },
   uiSchema: {
     password: {
-      'ui:autofocus': true,
-      'ui:widget': 'password',
       'ui:help': 'Ensure your password is at least 8 characters.',
     },
     confirmPassword: {
-      'ui:widget': 'password',
       'ui:help': 'Ensure both passwords match',
     },
-  },
-  layout: {
-
   },
 };
 

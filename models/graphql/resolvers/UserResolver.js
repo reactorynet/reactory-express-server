@@ -15,6 +15,7 @@ import {
   ReactoryClient,
   BusinessUnit,
 } from '../../index';
+import { organigramEmails } from '../../../emails';
 import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import AuthConfig from '../../../authentication';
 import logger from '../../../logging';
@@ -407,10 +408,33 @@ const userResolvers = {
       const userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
         organization: ObjectId(organization),
-      }).then();
+      })
+        .populate('user')
+        .populate('organization')
+        .populate('peers.user')
+        .then();
+
+      if (lodash.isNil(userOrganigram) === true) throw new RecordNotFoundError('User Organigram Record Not Found');
 
       userOrganigram.confirmedAt = new Date().valueOf();
       userOrganigram.updatedAt = new Date().valueOf();
+
+      const emailPromises = [];
+      for (let peerIndex = 0; peerIndex < userOrganigram.peers.length; peerIndex += 1) {
+        if (userOrganigram.peers[peerIndex].inviteSent !== true) {
+          const { user } = userOrganigram;
+          emailPromises.push(organigramEmails.confirmedAsPeer(userOrganigram.peers[peerIndex].peer, user, userOrganigram.peers[peerIndex].relationship, userOrganigram.organization));
+        }
+      }
+
+      logger.info(`Created ${emailPromises.length} promises to send invite peer confirmation emails`);
+
+      try {
+        if (emailPromises.length > 0) await Promise.all(emailPromises).then();
+      } catch (emailError) {
+        logger.error('Error processing email promises', emailError);
+      }
+
       await userOrganigram.save().then();
       return userOrganigram;
     },
