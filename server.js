@@ -41,6 +41,7 @@ const {
   API_PORT,
   API_URI_ROOT,
   CDN_ROOT,
+  MODE,
 } = process.env;
 
 const ENV_STRING_DEBUG = `
@@ -50,6 +51,7 @@ Environment Settings:
   API_PORT: ${API_PORT}
   API_URI_ROOT: ${API_URI_ROOT}
   CDN_ROOT: ${CDN_ROOT}
+  MODE: ${MODE}
 `;
 
 logger.info(ENV_STRING_DEBUG);
@@ -58,9 +60,15 @@ const queryRoot = '/api';
 const graphiql = '/q';
 const resources = '/cdn';
 const publicFolder = path.join(__dirname, 'public');
+let schema = null;
 
-const schema = makeExecutableSchema({ typeDefs, resolvers });
-logger.info('Graph Schema Compiled, starting express');
+try {
+  schema = makeExecutableSchema({ typeDefs, resolvers });
+  logger.info('Graph Schema Compiled, starting express');
+} catch (schemaCompilationError) {
+  logger.error(`Error compiling the graphql schema ${schemaCompilationError.message}`);
+}
+
 const app = express();
 app.use('*', cors(corsOptions));
 app.use(clientAuth);

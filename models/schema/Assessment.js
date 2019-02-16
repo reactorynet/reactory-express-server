@@ -30,6 +30,11 @@ const AssessmentSchema = mongoose.Schema({
     type: ObjectId,
     ref: 'Survey',
   },
+  deleted: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
   complete: {
     type: Boolean,
     required: true,

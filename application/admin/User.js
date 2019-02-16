@@ -41,7 +41,7 @@ export const createUserForOrganization = co.wrap(function* createUserForOrganiza
       _id: 1, memberships: 1, firstName: 1, lastName: 1,
     }).then();
     const partnerToUse = partner || global.partner;
-    logger.info('Using partner', partnerToUse);
+    logger.info(`Using partner ${partner.name} to create user`);
 
     if (isNil(partnerToUse._id) === false) {
       if (isNil(foundUser) === true) {

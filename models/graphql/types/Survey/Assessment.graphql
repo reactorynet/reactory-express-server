@@ -28,6 +28,8 @@ type Assessment {
     complete: Boolean
     overdue: Boolean
     selfAssessment: Boolean
+    deleted: Boolean
+    deleteReason: String
     createdAt: Date
     updatedAt: Date    
 }
@@ -61,5 +63,6 @@ extend type Mutation {
         rating: Int, comment: String, 
         qualityId: String, behaviourId: String,
         custom: Boolean, behaviourText: String, deleteRating: Boolean) : Rating
-    setAssessmentComplete(id: String!): Assessment    
+    setAssessmentComplete(id: String!): Assessment
+    deleteAssessment(id: String!, remove: Boolean): Any    
 }

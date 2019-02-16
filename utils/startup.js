@@ -1,9 +1,9 @@
+/* eslint-disable no-await-in-loop */
 import co from 'co';
-import { isArray } from 'lodash';
+import lodash, { isArray } from 'lodash';
 import ReactoryApi from '../application';
 import { Application, User, ReactoryClient, Menu, ClientComponent } from '../models';
 import { installDefaultEmailTemplates } from '../emails';
-
 import data from '../data';
 import logger from '../logging';
 import { ReactoryClientValidationError } from '../exceptions';
@@ -11,105 +11,120 @@ import { ReactoryClientValidationError } from '../exceptions';
 
 const { clients, users, components } = data;
 
-const startup = co.wrap(function* startupGenerator() {
-  const appPromise = new Promise((resolve, reject) => {
-    Application.count({}, function (err, result) { //eslint-disable-line
-      if (result === 0) {
-        logger.info('Adding Reactory Core Definition');
-        const app = new Application({
-          title: 'Reactory',
-          description: 'Core API for reactory applications',
-          version: process.env.VERSION || 'alpha',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }).save(function (err) { //eslint-disable-line
-          if (err) reject(err);
-          resolve(app);
-        });
-      } else {
-        Application.findOne({ title: 'Reactory' }).exec(function (err, result) { //eslint-disable-line
-          if (err) reject(err);
-          resolve(result);
-        });
-      }
-    });
+
+/**
+ * returns an array of user create for organization promises
+ */
+const getUserloadPromises = (usersToLoad) => {
+  return usersToLoad.map((userOptions) => {
+    const {
+      user,
+      password,
+      roles,
+      provider,
+      partner,
+      organization,
+      businessUnit,
+    } = userOptions;
+
+    return ReactoryApi.Admin.User.createUserForOrganization(
+      user, password,
+      organization, roles,
+      provider, partner, businessUnit,
+    );
   });
+};
 
-  const systemUserPromise = new Promise((resolve, reject) => {
-    User.findOne({ username: 'sysadmin' }).then((result) => {
-      if (result === null) {
-        const systemUser = new User({
-          username: 'sysadmin',
-          firstName: 'System',
-          lastName: 'User',
-          email: 'werner.weber+reactory-sysadmin@gmail.com',
-          authProvider: 'LOCAL',
-          providerId: 'reactory-system',
-          lastLogin: new Date(),
-          roles: ['SYSADMIN'],
-          legacyId: -1,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-        systemUser.setPassword('XXXXXXXXXXXXX');
-        systemUser.save(function (err) { //eslint-disable-line
-          if (err) reject(err);
-          resolve(systemUser);
-        });
+/**
+ * Installs and configures the main Reactory Application.
+ */
+const configureApplication = async () => {
+  logger.info(`Configuring Core Application ${process.env.VERSION || 'alpha'}`);
+  const applicationCount = await Application.count().then();
+
+  if (applicationCount === 0) {
+    logger.info('Adding Reactory Core Definition');
+    return new Application({
+      title: 'Reactory',
+      description: 'Core API for reactory applications',
+      version: process.env.VERSION || 'alpha',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).save().then();
+  }
+  return Application.findOne({ title: 'Reactory' }).then();
+};
+
+
+const installSystemUser = async () => {
+  let sysAdminUser = await User.findOne({ email: process.env.SYSADMIN_EMAIL || 'werner.weber+reactory-sysadmin@gmail.com' }).then();
+  if (sysAdminUser === null) {
+    sysAdminUser = new User({
+      username: 'sysadmin',
+      firstName: 'System',
+      lastName: 'User',
+      email: 'werner.weber+reactory-sysadmin@gmail.com',
+      authProvider: 'LOCAL',
+      providerId: 'reactory-system',
+      lastLogin: new Date(),
+      roles: ['SYSADMIN'],
+      legacyId: -1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    sysAdminUser.setPassword('XXXXXXXXXXXXX');
+    await sysAdminUser.save().then();
+  }
+  return sysAdminUser;
+};
+
+const installComponents = async (componentsArray) => {
+  logger.info(`Loading ${componentsArray.length} components into reactory`);
+  try {
+    const reactoryComponents = [];
+    for (let cid = 0; cid < componentsArray.length; cid += 1) {
+      const component = componentsArray[cid];
+      const newComponentDef = { ...component, createdAt: new Date(), updatedAt: new Date() };
+      if (newComponentDef.author) newComponentDef.author = await User.findOne({ email: component.author }) // eslint-disable-line              
+      logger.info(`Loading component ${component.nameSpace}.${component.name}@${component.version}`);
+      const { name, version, nameSpace } = component;
+
+      let componentObject = await ClientComponent.findOne({ name, version, nameSpace }).then();
+
+      if (lodash.isNil(componentObject)) {
+        componentObject = await new ClientComponent({ ...newComponentDef }).save().then();
       } else {
-        resolve(result);
+        /**
+        title: 'Dashboard',
+        author: 'werner.weber+reactory-sysadmin@gmail.com',
+        labels: [],
+        uri: 'embed',
+        roles: ['USER'],
+        arguments: [],
+        resources: [],
+         */
+        ['title', 'author', 'labels', 'uri', 'roles', 'arguments', 'resources'].forEach((p) => {
+          componentObject[p] = newComponentDef[p];
+          return 0;
+        });
+
+        componentObject.updatedAt = new Date();
+
+        await componentObject.save().then();
       }
-    }).catch((error) => {
-      reject(error);
-    });
-  });
-
-  /**
-   * Returns an array of promises
-   */
-  const getUserloadPromises = (usersToLoad) => {
-    return usersToLoad.map((userOptions) => {
-      return co.wrap(function* userPromiseResolver(opts) {
-        const {
-          user,
-          password,
-          roles,
-          provider,
-          partner,
-          organization,
-          businessUnit,
-        } = opts;
-        return yield ReactoryApi.Admin.User.createUserForOrganization(user, password, organization, roles, provider, partner, businessUnit);
-      })(userOptions);
-    });
-  };
-
-  const componentsPromise = co.wrap(function* loadComponents(componentsArray) {
-    logger.debug(`Loading ${componentsArray.length} components into reactory`);
-    try {
-      const reactoryComponents = [];
-      for (let cid = 0; cid < componentsArray.length; cid += 1) {
-        const component = componentsArray[cid];
-        const newComponentDef = { ...component };
-        if (newComponentDef.author) newComponentDef.author = yield User.findOne({ email: component.author }) // eslint-disable-line              
-        logger.debug(`Loading component ${component.name} component into reactory`, { newComponentDef });
-        const { name, version, nameSpace } = component;
-        const componentObject = yield ClientComponent.findOneAndUpdate(
-          { name, version, nameSpace },
-          { ...newComponentDef },
-          { upsert: true, fields: { _id: 1, name: 1 } },
-        );
-        logger.info(`Loading component ${component.name} done`);
-        reactoryComponents.push(componentObject);
-      }
-
-      return reactoryComponents;
-    } catch (e) {
-      logger.error('Error while loading components', { message: e.message });
-      return [];
+      reactoryComponents.push(componentObject);
     }
-  });
 
+    logger.info(`(${reactoryComponents.length}) components created/updated`);
+    return reactoryComponents;
+  } catch (e) {
+    logger.error(`Error while loading components ${e.message}`, e);
+    return [];
+  }
+};
+
+const installClients = async (configs) => {
   const makeUserArrayFromProps = (userItems, partner, organization, businessUnit) => {
     return userItems.map((usr) => {
       return {
@@ -123,110 +138,126 @@ const startup = co.wrap(function* startupGenerator() {
     });
   };
 
-  const clientsPromise = co.wrap(function* clientConfigGenerator(configs) {
-    try {
-      const clientsLoaded = [];
-      const clientsFailed = [];
-      for (let cfgId = 0; cfgId < configs.length; cfgId += 1) {
-        const clientConfig = configs[cfgId];
-        logger.info(`Configuring client ${clientConfig.name}`);
+  try {
+    const clientsLoaded = [];
+    const clientsFailed = [];
+    let componentIds = [];
+    let clientConfig = null;
+    let reactoryClient = null;
 
-        const componentIds = yield componentsPromise(clientConfig.components).then();
-        logger.info(`Loaded (${componentIds.length}) components for client ${clientConfig.name}`);
-        const { key } = clientConfig;
-        let reactoryClient = yield ReactoryClient.findOne({ key }).then();
-        const clientData = { ...clientConfig, menus: [], components: componentIds.map(c => c._id) };
-        delete clientData.password;
-        if (reactoryClient) {
-          try {
-            reactoryClient = yield ReactoryClient.findOneAndUpdate({ key }, clientData).then();
-          } catch (upsertError) {
-            logger.error('An error occured upserting the record', upsertError);
-          }
-        } else {
-          try {
-            reactoryClient = new ReactoryClient(clientData);
-            const validationResult = reactoryClient.validateSync();
-            if (validationResult && validationResult.errors) {
-              logger.info('Validation Result Has Errors', validationResult.errors);
-              throw new ReactoryClientValidationError('Could not validate the input', validationResult);
-            } else {
-              reactoryClient = yield reactoryClient.save().then();
-            }
-          } catch (saveNewError) {
-            logger.error('Could not save the new client data');
-          }
+    for (let cfgId = 0; cfgId < configs.length; cfgId += 1) {
+      clientConfig = configs[cfgId];
+      logger.info(`Configuring client ${clientConfig.name}`);
+      componentIds = await installComponents(clientConfig.components).then();
+      logger.info(`Loaded (${componentIds.length}) components for client ${clientConfig.name}`);
+      const { key } = clientConfig;
+      logger.info(`Finding ReactoryClient with key ${key}`);
+      reactoryClient = await ReactoryClient.findOne({ key }).then();
+      debugger; //eslint-disable-line
+      const clientData = { ...clientConfig, menus: [], components: componentIds.map(c => c._id) };
+      delete clientData.password;
+      if (lodash.isNil(reactoryClient) === false) {
+        try {
+          reactoryClient = await ReactoryClient.findOneAndUpdate({ key }, { ...clientData, updatedAt: new Date() }).then();
+          logger.info(`ReactoryClient ${reactoryClient.name} updated`);
+        } catch (upsertError) {
+          logger.error('An error occured upserting the record', upsertError);
         }
-        logger.info(`Upserted ${reactoryClient.name}: ${reactoryClient && reactoryClient._id ? reactoryClient._id : 'no-id'}`);
-        if (reactoryClient._id) {
-          reactoryClient.setPassword(clientConfig.password);
-          if (isArray(clientConfig.users) === true) {
-            let defaultUsers = [];
-            logger.info('Loading default users', { users: clientConfig.users });
-            defaultUsers = yield Promise.all(getUserloadPromises(makeUserArrayFromProps(clientConfig.users || [], reactoryClient)));
-            logger.info(`Loaded users ${defaultUsers.length} for ${reactoryClient.name}`);
+      } else {
+        try {
+          logger.info(`ReactoryClient ${key} not found, creating`);
+          reactoryClient = new ReactoryClient(clientData);
+          const validationResult = reactoryClient.validateSync();
+          if (validationResult && validationResult.errors) {
+            logger.info('Validation Result Has Errors', validationResult.errors);
+            throw new ReactoryClientValidationError('Could not validate the input', validationResult);
+          } else {
+            reactoryClient = await reactoryClient.save().then();
           }
-          yield installDefaultEmailTemplates(reactoryClient).then();
-          // has been saved now we can add the details
-          const menuDefs = clientConfig.menus || [];
-          const menuRefs = [];
-          logger.info(`Loading menus for ${reactoryClient.name}`);
-          for (let mid = 0; mid < menuDefs.length; mid += 1) {
-            try {
-              const menuFound = yield Menu.findOneAndUpdate(
-                { client: reactoryClient._id, key: menuDefs[mid].key },
-                { ...menuDefs[mid], client: reactoryClient._id },
-                { upsert: true },
-              );
-              if (menuFound) menuRefs.push(menuFound._id);
-            } catch (menuErr) {
-              logger.error('Error loading menu', menuErr);
-            }
-          }
-
-          reactoryClient.menus = menuRefs;
-          reactoryClient = yield reactoryClient.save().then();
-          clientsLoaded.push(reactoryClient);
-        } else {
-          logger.error(`${clientConfig.key} Validation failed, check config`, clientConfig);
-          clientsFailed.push({ clientConfig });
+        } catch (saveNewError) {
+          logger.error('Could not save the new client data', saveNewError);
         }
       }
-      return {
-        clientsLoaded,
-        clientsFailed,
-      };
-    } catch (ex) {
-      logger.error(ex.message, ex);
-      throw ex;
+      logger.info(`Upserted ${reactoryClient.name}: ${reactoryClient && reactoryClient._id ? reactoryClient._id : 'no-id'}`);
+      if (reactoryClient._id) {
+        reactoryClient.setPassword(clientConfig.password);
+        if (isArray(clientConfig.users) === true) {
+          let defaultUsers = [];
+          logger.info(`Loading (${lodash.isArray(clientConfig.users) === true ? clientConfig.users.length : 0}) default users for ${reactoryClient.name}`);
+          defaultUsers = await Promise.all(getUserloadPromises(makeUserArrayFromProps(clientConfig.users || [], reactoryClient))).then();
+          logger.info(`Loading (${defaultUsers.length}) default users for ${reactoryClient.name} - complete`);
+        }
+
+        await installDefaultEmailTemplates(reactoryClient).then();
+        // has been saved now we can add the details
+        const menuDefs = clientConfig.menus || [];
+        const menuRefs = [];
+        logger.info(`Loading menus for ${reactoryClient.name}`);
+        for (let mid = 0; mid < menuDefs.length; mid += 1) {
+          try {
+            const menuFound = await Menu.findOneAndUpdate(
+              { client: reactoryClient._id, key: menuDefs[mid].key },
+              { ...menuDefs[mid], client: reactoryClient._id },
+              { upsert: true },
+            );
+            if (menuFound) menuRefs.push(menuFound._id);
+          } catch (menuErr) {
+            logger.error('Error loading menu', menuErr);
+          }
+        }
+
+        reactoryClient.menus = menuRefs;
+        reactoryClient = await reactoryClient.save().then();
+        clientsLoaded.push(reactoryClient);
+      } else {
+        logger.error(`${clientConfig.key} Validation failed, check config`, clientConfig);
+        clientsFailed.push({ clientConfig });
+      }
     }
-  });
+    return {
+      clientsLoaded,
+      clientsFailed,
+    };
+  } catch (ex) {
+    logger.error(ex.message, ex);
+    throw ex;
+  }
+};
+
+const installTestUsers = async () => {
+  /**
+   * Returns an array of promises
+   */
 
 
+  let testUsersResult = null;
+  if (process.env.TEST_USERS === 'load') {
+    testUsersResult = await Promise.all(getUserloadPromises(users)).then();
+  }
+};
+
+const startup = async () => {
   logger.info('Startup initializing');
   try {
-    const appResult = yield appPromise.then();
-    const userResponse = yield systemUserPromise.then();
-    const componentsResponse = yield componentsPromise(components).then();
-    const clientsInstall = yield clientsPromise(clients);
-
-    let testUsersResult = null;
-    if (process.env.TEST_USERS === 'load') {
-      testUsersResult = yield Promise.all(getUserloadPromises(users)).then();
-    }
+    const applicationResponse = await configureApplication();
+    const userResponse = await installSystemUser();
+    const componentsResponse = await installComponents(components);
+    const clientsInstallResponse = await installClients(clients);
+    const installTestUsersResult = await installTestUsers(users);
 
     const result = {
-      application: appResult,
+      application: applicationResponse,
       system_user: userResponse,
-      clientsLoaded: clientsInstall,
-      componentsResponse,
-      testUsersResult,
+      clientsLoaded: clientsInstallResponse,
+      components: componentsResponse,
+      testUsers: installTestUsersResult,
     };
-    logger.info('Startup Complete');
+
+    logger.info('Startup Complete', JSON.stringify(result, null, 2));
     return result;
   } catch (startupError) {
     logger.error('Could not initialize the system correctly. Fatal errors.', startupError);
     throw startupError;
   }
-});
+};
 export default startup;

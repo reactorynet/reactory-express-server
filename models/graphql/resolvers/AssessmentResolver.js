@@ -101,6 +101,50 @@ const assessmentResolver = {
 
       return assessment;
     },
+    /**
+   * deletes and assessment, when remove is true, it will attempt to clean up all
+   * data relevant to the survey and remove all records relating to the
+   * survey.  This has no undo, so should only be used in extreme cases.
+   * Soft delete should be sufficient
+   */
+    deleteAssessment: async (obj, { id, remove = false }) => {
+      try {
+        const assessmentDoc = await Assessment.findById(id).then();
+        if (lodash.isNil(assessmentDoc)) throw new RecordNotFoundError(`The assessment with the id ${id} was not found, perhaps it was already deleted.`);
+
+        if (remove === false) {
+          assessmentDoc.deleted = true;
+          assessmentDoc.updatedAt = new Date().valueOf();
+          await assessmentDoc.save().then();
+          return {
+            deleted: true,
+            removed: false,
+          };
+        }
+        // clean up from Survey References
+        const surveyDoc = await Survey.findById(assessmentDoc.survey).then();
+        if (lodash.isNil(surveyDoc) === false) {
+          const delegateIndex = lodash.findIndex(surveyDoc.delegates, { delegate: assessmentDoc.delegate });
+          if (delegateIndex >= 0) {
+            if (lodash.isArray(surveyDoc.delegates[delegateIndex].assessments) === true) {
+              surveyDoc.delegates[delegateIndex].assessments.remove(assessmentDoc._id);
+              await surveyDoc.save().then();
+            }
+          }
+        }
+
+        assessmentDoc.remove();
+        await assessmentDoc.save().then();
+
+        return {
+          deleted: true,
+          removed: true,
+        };
+      } catch (unhandledException) {
+        logger.error(`Unhandled error while deleting assessment: ${id}\n${unhandledException.message}`, unhandledException);
+        throw new ApiError(`Could not ${remove ? 'remove' : 'soft-delete'} the record for Assessment Id: ${id}`);
+      }
+    },
   },
 };
 
