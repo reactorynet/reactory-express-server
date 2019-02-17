@@ -196,17 +196,17 @@ const userResolvers = {
     allowEdit(obj) {
       return obj.allowEdit === true;
     },
-    peers(obj) {
-      return new Promise((resolve, reject) => {
-        let peers = [];
-        peers = obj.peers.map((peer) => {
-          return {
-            user: Admin.User.userWithId(peer.user),
-            relationship: peer.relationship,
-            isInternal: true,
-          };
-        });
-        resolve(peers);
+    async peers(obj) {
+      // const peers = [];
+      return obj.peers.map((peer) => {
+        return {
+          user: Admin.User.userWithId(peer.user),
+          relationship: peer.relationship || 'PEER',
+          isInternal: peer.isInternal === true,
+          inviteSent: peer.inviteSent === true,
+          confirmed: peer.confirmed === true,
+          confirmedAt: peer.confirmedAt || null,
+        };
       });
     },
     organization(obj) {
@@ -421,22 +421,26 @@ const userResolvers = {
 
       const emailPromises = [];
       for (let peerIndex = 0; peerIndex < userOrganigram.peers.length; peerIndex += 1) {
+        logger.info(`Sending peer notification to ${userOrganigram.peers[peerIndex].user.firstName}`);
         if (userOrganigram.peers[peerIndex].inviteSent !== true) {
           const { user } = userOrganigram;
-          emailPromises.push(organigramEmails.confirmedAsPeer(userOrganigram.peers[peerIndex].peer, user, userOrganigram.peers[peerIndex].relationship, userOrganigram.organization));
+          emailPromises.push(organigramEmails.confirmedAsPeer(
+            userOrganigram.peers[peerIndex].user,
+            user,
+            userOrganigram.peers[peerIndex].relationship,
+            userOrganigram.organization,
+          ));
         }
       }
 
       logger.info(`Created ${emailPromises.length} promises to send invite peer confirmation emails`);
-
       try {
         if (emailPromises.length > 0) await Promise.all(emailPromises).then();
       } catch (emailError) {
-        logger.error('Error processing email promises', emailError);
+        logger.error(`Error processing email promises ${emailError.message}`, emailError);
       }
-
       await userOrganigram.save().then();
-      return userOrganigram;
+      return Organigram.findById(userOrganigram._id);
     },
     async removePeer(obj, { id, peer, organization }) {
       const userOrganigram = await Organigram.findOne({

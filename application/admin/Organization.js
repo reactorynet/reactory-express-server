@@ -63,18 +63,21 @@ export class MigrationResult {
 
 export const updateOrganizationLogo = (organization, imageData) => {
   try {
+    const isPng = imageData.startsWith('data:image/png');
     const buffer = Buffer.from(imageData.split(/,\s*/)[1], 'base64');
     if (!existsSync(`${APP_DATA_ROOT}/organization`)) mkdirSync(`${APP_DATA_ROOT}/organization`);
     const path = `${APP_DATA_ROOT}/organization/${organization._id}/`;
 
     if (!existsSync(path)) mkdirSync(path);
-    const filename = `${APP_DATA_ROOT}/organization/${organization._id}/logo_${organization._id}_default.jpeg`;
+    const filename = `${APP_DATA_ROOT}/organization/${organization._id}/logo_${organization._id}_default.${isPng === true ? 'png' : 'jpeg'}`;
 
-    if (imageData.startsWith('data:image/png')) {
-      pngToJpeg({ quality: 90 })(buffer).then(output => writeFileSync(filename, output));
-    } else writeFileSync(filename, buffer);
+    // if (isPng === true) {
+    //  logger.info(`Converting logo for ${organization} from png to jpg`);
+    //  pngToJpeg({ quality: 70 })(buffer).then(output => writeFileSync(filename, output));
+    // } else writeFileSync(filename, buffer);
 
-    return `logo_${organization._id}_default.jpeg`;
+    writeFileSync(filename, buffer);
+    return `logo_${organization._id}_default.${isPng === true ? 'png' : 'jpeg'}`;
   } catch (organizationLogoUpdate) {
     logger.error('Could not update the company logo', organizationLogoUpdate);
     return null;
@@ -88,6 +91,7 @@ export const updateOrganizationLogo = (organization, imageData) => {
 export const migrateOrganization = co.wrap(function* migrateGenerator(id, options = { clientKey: 'plc', dataPath: LEGACY_APP_DATA_ROOT }) {
   try {
     // lookup legacy org
+    logger.info(`Starting Legacy Import for organization ${id} options: clientKey = ${options.clientKey}, dataPath: ${LEGACY_APP_DATA_ROOT}`);
     const lorg = yield legacy.Organization.findWithId(id, options);
     const result = new MigrationResult();
     if (isNil(lorg)) {
@@ -104,13 +108,13 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
     if (isNew === true) result.organization = yield new Organization({ ...lorg }).save();
     if (isNil(lorg.logo) === false) {
       try {
-        console.log('Organization has logo file, checking if exists');
+        logger.info('Organization has logo file, checking if exists');
         const sourceFile = `${options.dataPath}/organization/${lorg.legacyId}/${lorg.logo}`;
         if (existsSync(sourceFile) === true) {
-          console.log('Found legacy logo file, copying and renaming to CDN');
+          logger.info('Found legacy logo file, copying and renaming to CDN');
           if (!existsSync(`${APP_DATA_ROOT}/organization/${result.organization.id}/`)) mkdirSync(`${APP_DATA_ROOT}/organization/${result.organization.id}/`);
           copyFileSync(sourceFile, `${APP_DATA_ROOT}/organization/${result.organization.id}/${lorg.logo}`);
-        } else console.log(`File '${sourceFile}' not found`);
+        } else logger.info(`File '${sourceFile}' not found`);
       } catch (error) {
         result.organizationErrors.push(`Could not copy the source file for the organization: ${error.message}`);
       }
@@ -293,11 +297,11 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
               break;
             }
             case 'default': {
-              surveys[sid].surveyType = '180';
+              surveys[sid].surveyType = '360';
               break;
             }
             default: {
-              surveys[sid].surveyType = 'default';
+              surveys[sid].surveyType = '180';
               break;
             }
           }
@@ -382,10 +386,13 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
                   launched: true,
                   assessments: [assessment._id],
                   complete: true,
+                  status: 'complete',
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
                 });
               }
-              debugger; //eslint-disable-line
-              survey.save();
+              // debugger; //eslint-disable-line
+              yield survey.save();
             } else result.assessmentErrors.push('Could not create the document');
           } else {
             console.log('Assessment already imported', { assessment_id: assessment._id });

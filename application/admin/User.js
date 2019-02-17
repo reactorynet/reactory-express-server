@@ -37,11 +37,11 @@ export const userWithId = co.wrap(function* userWithIdGenerator(id) {
 export const createUserForOrganization = co.wrap(function* createUserForOrganization(user, password, organization, roles = [], provider = 'LOCAL', partner, businessUnit) { // eslint-disable-line max-len
   const result = new CreateUserResult();
   try {
+    const partnerToUse = partner || global.partner;
     let foundUser = yield User.findOne({ email: user.email }, {
       _id: 1, memberships: 1, firstName: 1, lastName: 1,
     }).then();
-    const partnerToUse = partner || global.partner;
-    logger.info(`Using partner ${partner.name} to create user`);
+    logger.info(`Using partner ${partnerToUse.name} to create user ${user.email} ${foundUser ? 'EXISTING' : 'NEW'}`);
 
     if (isNil(partnerToUse._id) === false) {
       if (isNil(foundUser) === true) {

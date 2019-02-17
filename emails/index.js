@@ -238,33 +238,25 @@ const sendForgotPasswordEmail = (user, organization = null) => {
 };
 
 
-const loadEmailTemplate = (view, organization, client, keys = [], templateFormat = 'html') => {
-  return new Promise((resolve, reject) => {
-    let qry = {
-      view,
-      client: client._id,
-      kind: 'email',
-      format: templateFormat,
-    };
+const loadEmailTemplate = async (view, organization, client, keys = [], templateFormat = 'html') => {
+  let qry = {
+    view,
+    client: client._id,
+    kind: 'email',
+    format: templateFormat,
+  };
 
-    if (isNil(organization) === false) {
-      qry = { ...qry, organization: organization._id };
-    }
+  if (isNil(organization) === false) {
+    qry = { ...qry, organization: organization._id };
+  }
 
-    logger.info('Searching for template', qry);
+  logger.info('Searching for template', qry);
 
-    Template.find(qry)
-      .populate('client')
-      .populate('organization')
-      .populate('elements')
-      .then((templates) => {
-        if (templates.length >= 1) resolve(templates[0]);
-        else reject(new RecordNotFoundError('Could not locate suitable template', 'Template', { keys, client }));
-      })
-      .catch((templateError) => {
-        reject(templateError);
-      });
-  });
+  await Template.find(qry)
+    .populate('client')
+    .populate('organization')
+    .populate('elements')
+    .then();
 };
 
 function* installTemplateGenerator(template, organization, client) {
@@ -327,81 +319,105 @@ export const surveyEmails = {
 };
 
 export const organigramEmails = {
-  confirmedAsPeer: (peer, user, organization = null) => {
-    return new Promise((resolve, reject) => {
-      try {
-        const { partner } = global;
-        loadEmailTemplate(TemplateViews.SurveyInvite, organization, partner).then((templateResult) => {
-          try {
-            sgMail.setApiKey(partner.emailApiKey);
-          } catch (sgError) {
-            logger.error('Error setting API key', sgError);
-          }
-          const properties = {
-            partner,
-            peer,
-            user,
-            applicationTitle: partner.name,
-            profileLink: `${partner.siteUrl}/profile/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(user))}`,
-          };
+  confirmedAsPeer: async (peer, user, organization = null) => {
+    // final object item to return
+    if (lodash.isNil(peer)) throw new ApiError('peer parameter for confirmedAsPeer cannot be null / undefined');
+    if (lodash.isNil(user)) throw new ApiError('user parameter for confirmedAsPeer cannot be null / undefined');
 
-          let bodyTemplate = null;
-          let subjectTemplate = null;
-          templateResult.elements.forEach((templateElement) => {
-            switch (templateElement.view) {
-              case `${TemplateViews.SurveyInvite}/subject`: subjectTemplate = templateElement; break;
-              case `${TemplateViews.SurveyInvite}/body`: bodyTemplate = templateElement; break;
-              default: break;
-            }
-          });
+    const emailResult = {
+      sent: false,
+      error: null,
+    };
 
-          const msg = {
-            to: peer.email,
-            from: partner.email,
-          };
-
-          try {
-            if (isNil(subjectTemplate) === false) {
-              msg.subject = renderTemplate(subjectTemplate, properties);
-            }
-          } catch (renderError) {
-            reject(new ApiError('Error rendering subject', { original: renderError.message }));
-          }
-
-          try {
-            if (isNil(bodyTemplate) === false) {
-              msg.html = renderTemplate(bodyTemplate, properties);
-            }
-          } catch (renderError) {
-            reject(new ApiError('Error rendering html', { original: renderError.message }));
-          }
-
-          const qops = {
-            sent: true,
-            sentAt: moment().valueOf(),
-            client: partner,
-          };
-
-          if (!isNil(msg.subject) && !isNil(msg.html)) {
-            try {
-              sgMail.send(msg);
-            } catch (sendError) {
-              logger.log(`::ERROR SENDING MAIL:: ${msg.subject}`, msg);
-              qops.sent = false;
-              qops.sentAt = null;
-              qops.failures = 1;
-              qops.error = sendError.message;
-            }
-            queueMail(user, msg, qops);
-          }
-          resolve({ sent: qops.sent });
-        }).catch((loadError) => {
-          reject(new RecordNotFoundError(loadError.message));
-        });
-      } catch (mailError) {
-        reject(new ApiError(mailError.message));
+    try {
+      const { partner } = global;
+      const templateResult = await loadEmailTemplate(TemplateViews.InvitePeers, organization, partner);
+      if (lodash.isNil(templateResult) === true) {
+        logger.info('Template Resulted in NILL record');
+        throw new RecordNotFoundError(`Cannot find a template using the input params ${TemplateViews.InvitePeers} ${organization} ${partner}`);
       }
-    });
+      logger.info('Template loaded, setting up email and client.');
+
+      // setup api key for email being sent
+      try {
+        sgMail.setApiKey(partner.emailApiKey);
+      } catch (sgError) {
+        logger.error('Error setting API key', sgError);
+      }
+      // property bag for template
+      const properties = {
+        partner,
+        peer,
+        user,
+        applicationTitle: partner.name,
+        profileLink: `${partner.siteUrl}/profile/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(user))}`,
+      };
+
+      let bodyTemplate = null;
+      let subjectTemplate = null;
+      templateResult.elements.forEach((templateElement) => {
+        switch (templateElement.view) {
+          case `${TemplateViews.InvitePeers}/subject`: subjectTemplate = templateElement; break;
+          case `${TemplateViews.InvitePeers}/body`: bodyTemplate = templateElement; break;
+          default: break;
+        }
+      });
+
+      const msg = {
+        to: peer.email,
+        from: partner.email,
+      };
+
+      // load and set subject
+      try {
+        if (lodash.isNil(subjectTemplate) === false) {
+          msg.subject = renderTemplate(subjectTemplate, properties);
+        } else {
+          msg.subject = `"${TemplateViews.InvitePeers / subject}" - template segment is not set/empty`;
+        }
+      } catch (renderError) {
+        logger.error(`An error occured rendering the subject ${renderError.message}`, renderError);
+        throw new ApiError('Error rendering subject', { original: renderError.message });
+      }
+
+      // load and set body
+      try {
+        if (lodash.isNil(bodyTemplate) === false) {
+          msg.html = renderTemplate(bodyTemplate, properties);
+        } else {
+          msg.html = `${TemplateViews.InvitePeers}/body template segment is not set/empty`;
+        }
+      } catch (renderError) {
+        logger.error(`An error occured rendering the body ${renderError.message}`, renderError);
+        throw new ApiError('Error rendering html', { original: renderError.message });
+      }
+
+      const queoptions = {
+        sent: true,
+        sentAt: moment().valueOf(),
+        client: partner,
+      };
+
+      logger.info(`Email configured, sending ${msg.subject} to ${msg.to} from ${msg.from}`);
+
+      if (isNil(msg.subject) === false && isNil(msg.html) === false) {
+        try {
+          sgMail.send(msg);
+          emailResult.sent = true;
+        } catch (sendError) {
+          logger.error(`::ERROR SENDING MAIL:: ${msg.subject}`, msg);
+          queoptions.sent = false;
+          queoptions.sentAt = null;
+          queoptions.failures = 1;
+          queoptions.error = sendError.message;
+        }
+        queueMail(user, msg, queoptions);
+      }
+    } catch (loadError) {
+      emailResult.error = loadError.message;
+    }
+
+    return emailResult;
   },
 };
 

@@ -253,6 +253,7 @@ export const uiSchema = {
   organization: {
     'ui:widget': 'CompanyLogoWidget',
     'ui:options': {
+      widget: 'CompanyLogoWidget',
       style: {
         marginRight: 'auto',
         marginLeft: 'auto',
