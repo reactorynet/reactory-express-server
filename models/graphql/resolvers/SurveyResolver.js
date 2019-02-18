@@ -238,7 +238,7 @@ export default {
 
       const { user } = global;
 
-      const surveyModel = await Survey.findById(survey).then();
+      const surveyModel = await Survey.findById(survey).populate('delegates.delegate').then();
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
 
@@ -298,11 +298,11 @@ export default {
         logger.info(`Performing ${action} on 
           organigram model: ${organigramModel ? organigramModel._id.toString() : 'No Organigram'} 
           and delegateEntry: ${entryData.entry._id} at index ${entryData.entryIdx} for 
-          delegate id: ${entryData.entry.delegate.id.toString()}`);
+          delegate: ${entryData.entry.delegate._id.toString()}`, entryData.entry);
 
         switch (action) {
           case 'send-invite': {
-            const inviteResult = await sendSurveyEmail(survey, entryData.entry, organigramModel, EmailTypesForSurvey.ParticipationInvite);
+            const inviteResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.ParticipationInvite);
             entryData.entry.message = inviteResult.message;
             entryData.patch = true;
             entryData.entry.status = 'invite-sent';

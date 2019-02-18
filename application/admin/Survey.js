@@ -5,6 +5,8 @@ import iz from '../../utils/validators';
 import lodash from 'lodash';
 import moment from 'moment';
 import logger from '../../logging';
+import emails from '../../emails';
+import Organization from './Organization';
 
 
 /**
@@ -21,12 +23,12 @@ import logger from '../../logging';
    *
    */
 const defaultLaunchOptions = {
-  defaultMinimumPeers: 7,
+  defaultMinimumPeers: 1,
   maximumDirectReport: 3,
   maximumPeers: 10, // may not be used
-  minimumDirectReports: 1,
-  minimumPeers: 5,
-  mustHaveSupervisor: true,
+  minimumDirectReports: 0,
+  minimumPeers: 1,
+  mustHaveSupervisor: false,
   numberOfReminders: 2,
   maxReminders: 3,
   spreadReminders: 'even', // halfway //custom
@@ -91,8 +93,7 @@ const getLeadershipBrand = (id) => {
  * @param {*} organigram
  */
 export const sendParticipationInivitationForDelegate = async (survey, delegateEntry, organigram) => {
-  console.log(`Sending Invitation Survey: ${survey.title}`, delegateEntry, organigram);
-
+  logger.info(`Sending Invitation Survey: ${survey.title} to ${delegateEntry.delegate.firstName} ${delegateEntry.delegate.email}`);
   const result = (message, success = false) => {
     return {
       message,
@@ -103,10 +104,16 @@ export const sendParticipationInivitationForDelegate = async (survey, delegateEn
   try {
     const options = { ...defaultLaunchOptions, ...survey.options };
     const user = delegateEntry.delegate;
+    let organization = survey.organization;
+    if (lodash.isString(organization)) {
+      organization = await Organization.findById(organization).then();
+    }
 
+    const emailResult = await emails.surveyEmails.delegateInvite(user, survey).then();
+    logger.info('Email Generated', emailResult);
     return result(`Sent invitation to ${user.firstName} ${user.lastName} for ${survey.title}`, true);
   } catch (e) {
-    return result(e.message);
+    return result(`Error during invite: ${e.message}`);
   }
 };
 
@@ -117,7 +124,12 @@ export const sendParticipationInivitationForDelegate = async (survey, delegateEn
  * @param {*} organigram
  */
 export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organigram) => {
-  console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
+  let { delegate } = delegateEntry;
+
+  if (lodash.isString(delegate)) {
+    delegate = await User.findById(delegate).then();
+  }
+  logger.info(`Sending Launched Emails Survey: ${survey.title} ${delegate.firstName} ${delegate.lastName}`);
 
   const result = (message, success = false) => {
     return {
@@ -219,8 +231,6 @@ export const sendReportOverview = async (survey, delegateEntry, organigram) => {
  * @param {*} organigram
  */
 export const sendSurveyEmail = async (survey, delegateEntry, organigram, emailType) => {
-  console.log(`Sending Survey Related Email: ${survey.title}`, delegateEntry, organigram);
-
   const result = (message, success = false) => {
     return {
       message,
@@ -228,29 +238,48 @@ export const sendSurveyEmail = async (survey, delegateEntry, organigram, emailTy
     };
   };
 
+  if (lodash.isNil(delegate)) {
+    return result('delegate on delegateEntry is null, please check in put');
+  }
+
+  let { delegate } = delegateEntry;
+  if (lodash.isString(delegate)) {
+    delegate = await User.findById(delegate).then();
+  }
+
+  const { firstName, lastName } = delegate;
+
+  console.log(`Sending Survey Email[${emailType}]: ${survey.title} for delegate ${firstName} ${lastName}`);
+
+
+  const _delegateEntry = {
+    ...delegateEntry, delegate,
+  };
+
   try {
     // const options = { ...defaultLaunchOptions, ...survey.options };
     switch (emailType) {
       case EmailTypesForSurvey.ParticipationInvite: {
-        return sendParticipationInivitationForDelegate(survey, delegateEntry, organigram);
+        return sendParticipationInivitationForDelegate(survey, _delegateEntry, organigram);
       }
       case EmailTypesForSurvey.SurveyLaunch: {
-        return sendSurveyLaunchedForDelegate(survey, delegateEntry, organigram);
+        return sendSurveyLaunchedForDelegate(survey, _delegateEntry, organigram);
       }
       case EmailTypesForSurvey.SurveyReminder: {
-        return sendSurveyRemindersForDelegate(survey, delegateEntry, organigram);
+        return sendSurveyRemindersForDelegate(survey, _delegateEntry, organigram);
       }
       case EmailTypesForSurvey.SurveyClose: {
-        return sendSurveyClosed(survey, delegateEntry, organigram);
+        return sendSurveyClosed(survey, _delegateEntry, organigram);
       }
       case EmailTypesForSurvey.SurveyReport: {
-        return sendReportOverview(survey, delegateEntry, organigram);
+        return sendReportOverview(survey, _delegateEntry, organigram);
       }
       default: {
         return result(`Invalid Email Type For Survey, ${emailType}`);
       }
     }
   } catch (e) {
+    logger.error('An error occured while processing the survey email command', e);
     return result(e.message);
   }
 };
@@ -285,7 +314,7 @@ export const sendPeerNominationNotifications = async (user, organigram) => {
  */
 export const launchSurveyForDelegate = async (survey, delegateEntry, organigram) => {
   // options for the launch
-  console.log(`Launching Survey: ${survey.title}`, survey, delegateEntry, organigram);
+  logger.info(`Launching Survey: ${survey.title} for delegate ${delegateEntry.delegate.firstName}`);
 
   const result = (message, success = false, assessments) => ({
     launched: success,
@@ -295,13 +324,15 @@ export const launchSurveyForDelegate = async (survey, delegateEntry, organigram)
 
   try {
     const options = { ...defaultLaunchOptions, ...survey.options };
+
     if (iz.nil(survey)) throw new Error('survey parameter cannot be empty');
     if (iz.nil(delegateEntry)) throw new Error('delegate parameter cannot be empty');
     if (iz.nil(organigram)) result(`The user does not have an organigram for ${survey.organization}`);
     if (iz.nil(organigram.confirmedAt)) return result('Peers have not yet been confirmed');
     if (iz.nil(organigram.peers)) return result('User has no peers defined');
+
     if (organigram.peers && organigram.peers.length > 0) {
-      if (organigram.peers < options.minimumPeers) return result(`delegate does not have the minimum of ${options.minimumPeers} peers for this survey (${organigram.peers})`);
+      if (organigram.peers.length < options.minimumPeers) return result(`delegate does not have the minimum of ${options.minimumPeers} peers for this survey (${organigram.peers})`);
 
       const assessmentsPomises = [];
       if (delegateEntry.assessments.length === 0) {
@@ -317,6 +348,7 @@ export const launchSurveyForDelegate = async (survey, delegateEntry, organigram)
       const leadershipBrand = await LeadershipBrand.findById(survey.leadershipBrand);
 
       const templateRatings = [];
+      logger.info(`Building ratings template for LeadershipBrand: ${leadershipBrand.title}`);
       leadershipBrand.qualities.map((quality, qi) => {
         quality.behaviours.map((behaviour, bi) => {
           templateRatings.push({
@@ -346,7 +378,7 @@ export const launchSurveyForDelegate = async (survey, delegateEntry, organigram)
             updatedAt: new Date().valueOf(),
           });
 
-          assessment.save();
+          assessment.save().then();
           assessments.push(assessment);
         }
       });
@@ -360,20 +392,27 @@ export const launchSurveyForDelegate = async (survey, delegateEntry, organigram)
         assessor: ObjectId(delegateEntry.delegate._id),
         survey: ObjectId(survey._id),
         complete: false,
-        ratings: [templateRatings],
+        ratings: [...templateRatings],
         createdAt: new Date().valueOf(),
         updatedAt: new Date().valueOf(),
       });
-      await selfAssessment.save().then();
+      await selfAssessment.save();
       assessments.push(selfAssessment);
       // send emails
-      await sendSurveyEmail(survey, { ...delegateEntry, assessments }, organigram, EmailTypesForSurvey.SurveyLaunch);
+      logger.info('Assessments Created, sending emails');
+      try {
+        await sendSurveyEmail(survey, { ...delegateEntry, assessments }, organigram, EmailTypesForSurvey.SurveyLaunch).then();
+      } catch (ex) {
+        console.error(ex);
+        return result(`Successfully created ${assessments.length} assessments for delegate, failed sending emails`, true, assessments);
+      }
+
       return result(`Successfully created ${assessments.length} assessments for delegate`, true, assessments);
     }
 
     return result('data error, organigram.peers is not a valid array');
   } catch (exception) {
-    logger.error(`Error occured launching survey for delegate ${exception.message}`, exception);
+    logger.error(`Error occured launching survey for delegate ${exception.message}`);
     return result('An error occured launching for delegate.');
   }
 };

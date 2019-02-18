@@ -1,8 +1,12 @@
 export default [
+  /**
+   * Activation email
+   */
   {
     enabled: true,
     view: 'activation-email',
     kind: 'email',
+    format: 'html',
     content: null,
     elements: [
       {
@@ -43,10 +47,14 @@ export default [
       },
     ],
   },
+  /**
+   * Forgot password email
+   */
   {
     enabled: true,
     view: 'forgot-password-email',
     kind: 'email',
+    format: 'html',
     content: null,
     elements: [
       {
@@ -88,15 +96,13 @@ export default [
     ],
   },
   /**
-    SurveyInvite: 'towerstone.survey-invite-email',
-    InvitePeers: 'towerstone.peer-invite-email',
-    SurveyLaunch: 'towerstone.survey-launch-email',
-    SurveyReminder: 'towerstone.survey-reminder-email
+   * SurveyInvite: 'towerstone.survey-invite-email',
    */
   {
     enabled: true,
     view: 'towerstone.survey-invite-email',
     kind: 'email',
+    format: 'html',
     content: null,
     elements: [
       {
@@ -153,11 +159,15 @@ export default [
       },
     ],
   },
+  /**
+   * InvitePeers: 'towerstone.peer-invite-email',
+   */
   {
     enabled: true,
     view: 'towerstone.peer-invite-email',
     kind: 'email',
     content: null,
+    format: 'html',
     elements: [
       {
         enabled: true,
@@ -213,10 +223,14 @@ export default [
       },
     ],
   },
+  /**
+   * SurveyLaunch: 'towerstone.survey-launch-email',
+   */
   {
     enabled: true,
     view: 'towerstone.survey-launch-email',
     kind: 'email',
+    format: 'html',
     content: null,
     elements: [
       {
@@ -273,10 +287,14 @@ export default [
       },
     ],
   },
+  /**
+   * SurveyReminder: 'towerstone.survey-reminder-email
+   */
   {
     enabled: true,
     view: 'towerstone.survey-reminder-email',
     kind: 'email',
+    format: 'html',
     content: null,
     elements: [
       {

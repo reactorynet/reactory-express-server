@@ -1,4 +1,5 @@
 import co from 'co';
+import { ObjectId } from 'mongodb';
 import { readFileSync, existsSync } from 'fs';
 import moment from 'moment';
 import dotenv from 'dotenv';
@@ -189,8 +190,8 @@ const sendForgotPasswordEmail = (user, organization = null) => {
         });
 
         const msg = {
-          to: user.email,
-          from: partner.email,
+          to: `${user.fistName} ${user.lastName}<${user.email}>`,
+          from: `${partner.name}<${partner.email}>`,
         };
 
         try {
@@ -241,7 +242,7 @@ const sendForgotPasswordEmail = (user, organization = null) => {
 const loadEmailTemplate = async (view, organization, client, keys = [], templateFormat = 'html') => {
   let qry = {
     view,
-    client: client._id,
+    client: ObjectId(client._id),
     kind: 'email',
     format: templateFormat,
   };
@@ -252,11 +253,17 @@ const loadEmailTemplate = async (view, organization, client, keys = [], template
 
   logger.info('Searching for template', qry);
 
-  await Template.find(qry)
+  const templateDocument = await Template.findOne(qry)
     .populate('client')
     .populate('organization')
     .populate('elements')
     .then();
+
+  if (lodash.isNil(templateDocument) === true) {
+    logger.info(`No document(s) found using query ${JSON.stringify(qry, null, 2)}`);
+  }
+
+  return templateDocument;
 };
 
 function* installTemplateGenerator(template, organization, client) {
@@ -307,14 +314,349 @@ export const installDefaultEmailTemplates = co.wrap(function* installDefaultEmai
 });
 
 export const surveyEmails = {
-  launch: (delegate, survey) => {
-    const template = loadEmailTemplate(TemplateViews.SurveyLaunch, survey.organization, global.partner);
-  },
-  reminder: (delegate, survey) => {
+  /**
+   * Sends initial email to assessor
+   */
+  launchForDelegate: async (assessor, delegate, survey, organization = null) => {
+    // final object item to return
+    if (lodash.isNil(assessor)) throw new ApiError('assessor parameter for launchForDelegate cannot be null / undefined');
+    if (lodash.isNil(delegate)) throw new ApiError('delegate parameter for launchForDelegate cannot be null / undefined');
+    if (lodash.isNil(survey)) throw new ApiError('survey parameter for launchForDelegate cannot be null / undefined');
 
-  },
-  delegateInvites: (delegate, survey) => {
+    const emailResult = {
+      sent: false,
+      error: null,
+    };
 
+    try {
+      const { partner } = global;
+      const templateResult = await loadEmailTemplate(TemplateViews.SurveyLaunch, organization, partner).then();
+      if (lodash.isNil(templateResult) === true) {
+        logger.info('Template Resulted in NILL record');
+        throw new RecordNotFoundError(`Cannot find a template using the input params ${TemplateViews.InvitePeers} ${organization} ${partner}`);
+      }
+      logger.info('Template loaded, setting up email and client.');
+
+      // setup api key for email being sent
+      try {
+        sgMail.setApiKey(partner.emailApiKey);
+      } catch (sgError) {
+        logger.error('Error setting API key', sgError);
+      }
+
+      logger.info('Api Key Set, configuring property bag for template.');
+      // property bag for template
+      const properties = {
+        partner,
+        assessor,
+        delegate,
+        applicationTitle: partner.name,
+        profileLink: `${partner.siteUrl}/profile/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessor))}`,
+      };
+
+      let bodyTemplate = null;
+      let subjectTemplate = null;
+      logger.info('Setting up subject and body elements');
+      if (lodash.isNil(templateResult.elements) === false &&
+        lodash.isArray(templateResult.elements) === true) {
+        templateResult.elements.forEach((templateElement) => {
+          logger.info(`Checking template element view: ${templateElement.view}`);
+          switch (templateElement.view) {
+            case `${TemplateViews.SurveyLaunch}/subject`: subjectTemplate = templateElement; break;
+            case `${TemplateViews.SurveyLaunch}/body`: bodyTemplate = templateElement; break;
+            default: break;
+          }
+        });
+      } else {
+        logger.info('No elements for template');
+      }
+
+
+      const msg = {
+        to: `${assessor.firstName} ${assessor.lastName}<${assessor.email}>`,
+        from: `${properties.applicationTitle}<${partner.email}>`,
+      };
+
+      // load and set subject
+      try {
+        if (lodash.isNil(subjectTemplate) === false) {
+          logger.info(`Rendering subject ${JSON.stringify(subjectTemplate)}`);
+          msg.subject = renderTemplate(subjectTemplate, properties);
+        } else {
+          msg.subject = `"${TemplateViews.SurveyLaunch}/subject" - template segment is not set/empty`;
+        }
+      } catch (renderError) {
+        logger.error(`An error occured rendering the subject ${renderError.message}`, renderError);
+        msg.subject = 'An error occured getting the subject for this email.';
+        // throw new ApiError('Error rendering subject', { original: renderError.message });
+      }
+
+      // load and set body
+      try {
+        if (lodash.isNil(bodyTemplate) === false) {
+          logger.info('Rendering body');
+          msg.html = renderTemplate(bodyTemplate, properties);
+        } else {
+          msg.html = `"${TemplateViews.SurveyLaunch}/body" template segment is not set/empty`;
+        }
+      } catch (renderError) {
+        logger.error(`An error occured rendering the body ${renderError.message}`, renderError);
+        // throw new ApiError('Error rendering html', { original: renderError.message });
+        msg.body = `The following error occured rendering the body for this email:\n\n${renderError.message}`;
+      }
+
+      const queoptions = {
+        sent: true,
+        sentAt: moment().valueOf(),
+        client: partner,
+      };
+
+      logger.info(`Email configured, sending ${msg.subject} to ${msg.to} from ${msg.from}`);
+
+      if (isNil(msg.subject) === false && isNil(msg.html) === false) {
+        try {
+          sgMail.send(msg);
+          emailResult.sent = true;
+          logger.info(`Email sent to ${msg.to}`);
+        } catch (sendError) {
+          logger.error(`::ERROR SENDING MAIL:: ${msg.subject}`, msg);
+          queoptions.sent = false;
+          queoptions.sentAt = null;
+          queoptions.failures = 1;
+          queoptions.error = sendError.message;
+        }
+        queueMail(assessor, msg, queoptions);
+      }
+    } catch (loadError) {
+      emailResult.error = loadError.message;
+    }
+    return emailResult;
+  },
+  reminder: async (assessor, survey, organization) => {
+    // final object item to return
+    if (lodash.isNil(assessor)) throw new ApiError('assessor parameter for delegateInvite cannot be null / undefined');
+    if (lodash.isNil(survey)) throw new ApiError('survey parameter for delegateInvite cannot be null / undefined');
+
+    const emailResult = {
+      sent: false,
+      error: null,
+    };
+
+    try {
+      const { partner } = global;
+      const templateResult = await loadEmailTemplate(TemplateViews.SurveyReminder, organization, partner).then();
+      if (lodash.isNil(templateResult) === true) {
+        logger.info('Template Resulted in NILL record');
+        throw new RecordNotFoundError(`Cannot find a template using the input params ${TemplateViews.SurveyReminder} ${organization} ${partner}`);
+      }
+      logger.info('Template loaded, setting up email and client.');
+
+      // setup api key for email being sent
+      try {
+        sgMail.setApiKey(partner.emailApiKey);
+      } catch (sgError) {
+        logger.error('Error setting API key', sgError);
+      }
+
+      logger.info('Api Key Set, configuring property bag for template.');
+      // property bag for template
+      const properties = {
+        partner,
+        assessor,
+        survey,
+        applicationTitle: partner.name,
+      };
+
+      let bodyTemplate = null;
+      let subjectTemplate = null;
+      logger.info('Setting up subject and body elements');
+      if (lodash.isNil(templateResult.elements) === false &&
+        lodash.isArray(templateResult.elements) === true) {
+        templateResult.elements.forEach((templateElement) => {
+          logger.info(`Checking template element view: ${templateElement.view}`);
+          switch (templateElement.view) {
+            case `${TemplateViews.SurveyReminder}/subject`: subjectTemplate = templateElement; break;
+            case `${TemplateViews.SurveyReminder}/body`: bodyTemplate = templateElement; break;
+            default: break;
+          }
+        });
+      } else {
+        logger.info('No elements for template');
+      }
+
+
+      const msg = {
+        to: `${assessor.firstName} ${assessor.lastName}<${assessor.email}>`,
+        from: `${properties.applicationTitle}<${partner.email}>`,
+      };
+
+      // load and set subject
+      try {
+        if (lodash.isNil(subjectTemplate) === false) {
+          logger.info(`Rendering subject ${JSON.stringify(subjectTemplate)}`);
+          msg.subject = renderTemplate(subjectTemplate, properties);
+        } else {
+          msg.subject = `"${TemplateViews.SurveyReminder}/subject" - template segment is not set/empty`;
+        }
+      } catch (renderError) {
+        logger.error(`An error occured rendering the subject ${renderError.message}`, renderError);
+        msg.subject = 'An error occured getting the subject for this email.';
+        // throw new ApiError('Error rendering subject', { original: renderError.message });
+      }
+
+      // load and set body
+      try {
+        if (lodash.isNil(bodyTemplate) === false) {
+          logger.info('Rendering body');
+          msg.html = renderTemplate(bodyTemplate, properties);
+        } else {
+          msg.html = `"${TemplateViews.SurveyReminder}/body" template segment is not set/empty`;
+        }
+      } catch (renderError) {
+        logger.error(`An error occured rendering the body ${renderError.message}`, renderError);
+        // throw new ApiError('Error rendering html', { original: renderError.message });
+        msg.body = `The following error occured rendering the body for this email:\n\n${renderError.message}`;
+      }
+
+      const queoptions = {
+        sent: true,
+        sentAt: moment().valueOf(),
+        client: partner,
+      };
+
+      logger.info(`Email configured, sending ${msg.subject} to ${msg.to} from ${msg.from}`);
+
+      if (isNil(msg.subject) === false && isNil(msg.html) === false) {
+        try {
+          sgMail.send(msg);
+          emailResult.sent = true;
+          logger.info(`Email sent to ${msg.to}`);
+        } catch (sendError) {
+          logger.error(`::ERROR SENDING MAIL:: ${msg.subject}`, msg);
+          queoptions.sent = false;
+          queoptions.sentAt = null;
+          queoptions.failures = 1;
+          queoptions.error = sendError.message;
+        }
+        queueMail(assessor, msg, queoptions);
+      }
+    } catch (loadError) {
+      emailResult.error = loadError.message;
+    }
+    return emailResult;
+  },
+  delegateInvite: async (delegate, survey, organization) => {
+    // final object item to return
+    if (lodash.isNil(delegate)) throw new ApiError('delegate parameter for delegateInvite cannot be null / undefined');
+    if (lodash.isNil(survey)) throw new ApiError('survey parameter for delegateInvite cannot be null / undefined');
+
+    const emailResult = {
+      sent: false,
+      error: null,
+    };
+
+    try {
+      const { partner } = global;
+      const templateResult = await loadEmailTemplate(TemplateViews.SurveyInvite, organization, partner).then();
+      if (lodash.isNil(templateResult) === true) {
+        logger.info('Template Resulted in NILL record');
+        throw new RecordNotFoundError(`Cannot find a template using the input params ${TemplateViews.SurveyInvite} ${organization} ${partner}`);
+      }
+      logger.info('Template loaded, setting up email and client.');
+
+      // setup api key for email being sent
+      try {
+        sgMail.setApiKey(partner.emailApiKey);
+      } catch (sgError) {
+        logger.error('Error setting API key', sgError);
+      }
+
+      logger.info('Api Key Set, configuring property bag for template.');
+      // property bag for template
+      const properties = {
+        partner,
+        delegate,
+        survey,
+        applicationTitle: partner.name,
+      };
+
+      let bodyTemplate = null;
+      let subjectTemplate = null;
+      logger.info('Setting up subject and body elements');
+      if (lodash.isNil(templateResult.elements) === false &&
+        lodash.isArray(templateResult.elements) === true) {
+        templateResult.elements.forEach((templateElement) => {
+          logger.info(`Checking template element view: ${templateElement.view}`);
+          switch (templateElement.view) {
+            case `${TemplateViews.SurveyInvite}/subject`: subjectTemplate = templateElement; break;
+            case `${TemplateViews.SurveyInvite}/body`: bodyTemplate = templateElement; break;
+            default: break;
+          }
+        });
+      } else {
+        logger.info('No elements for template');
+      }
+
+
+      const msg = {
+        to: `${delegate.firstName} ${delegate.lastName}<${delegate.email}>`,
+        from: `${properties.applicationTitle}<${partner.email}>`,
+      };
+
+      // load and set subject
+      try {
+        if (lodash.isNil(subjectTemplate) === false) {
+          logger.info(`Rendering subject ${JSON.stringify(subjectTemplate)}`);
+          msg.subject = renderTemplate(subjectTemplate, properties);
+        } else {
+          msg.subject = `"${TemplateViews.SurveyInvite}/subject" - template segment is not set/empty`;
+        }
+      } catch (renderError) {
+        logger.error(`An error occured rendering the subject ${renderError.message}`, renderError);
+        msg.subject = 'An error occured getting the subject for this email.';
+        // throw new ApiError('Error rendering subject', { original: renderError.message });
+      }
+
+      // load and set body
+      try {
+        if (lodash.isNil(bodyTemplate) === false) {
+          logger.info('Rendering body');
+          msg.html = renderTemplate(bodyTemplate, properties);
+        } else {
+          msg.html = `"${TemplateViews.SurveyInvite}/body" template segment is not set/empty`;
+        }
+      } catch (renderError) {
+        logger.error(`An error occured rendering the body ${renderError.message}`, renderError);
+        // throw new ApiError('Error rendering html', { original: renderError.message });
+        msg.body = `The following error occured rendering the body for this email:\n\n${renderError.message}`;
+      }
+
+      const queoptions = {
+        sent: true,
+        sentAt: moment().valueOf(),
+        client: partner,
+      };
+
+      logger.info(`Email configured, sending ${msg.subject} to ${msg.to} from ${msg.from}`);
+
+      if (isNil(msg.subject) === false && isNil(msg.html) === false) {
+        try {
+          sgMail.send(msg);
+          emailResult.sent = true;
+          logger.info(`Email sent to ${msg.to}`);
+        } catch (sendError) {
+          logger.error(`::ERROR SENDING MAIL:: ${msg.subject}`, msg);
+          queoptions.sent = false;
+          queoptions.sentAt = null;
+          queoptions.failures = 1;
+          queoptions.error = sendError.message;
+        }
+        queueMail(delegate, msg, queoptions);
+      }
+    } catch (loadError) {
+      emailResult.error = loadError.message;
+    }
+    return emailResult;
   },
 };
 
@@ -331,7 +673,7 @@ export const organigramEmails = {
 
     try {
       const { partner } = global;
-      const templateResult = await loadEmailTemplate(TemplateViews.InvitePeers, organization, partner);
+      const templateResult = await loadEmailTemplate(TemplateViews.InvitePeers, organization, partner).then();
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');
         throw new RecordNotFoundError(`Cannot find a template using the input params ${TemplateViews.InvitePeers} ${organization} ${partner}`);
@@ -344,6 +686,8 @@ export const organigramEmails = {
       } catch (sgError) {
         logger.error('Error setting API key', sgError);
       }
+
+      logger.info('Api Key Set, configuring property bag for template.');
       // property bag for template
       const properties = {
         partner,
@@ -355,41 +699,53 @@ export const organigramEmails = {
 
       let bodyTemplate = null;
       let subjectTemplate = null;
-      templateResult.elements.forEach((templateElement) => {
-        switch (templateElement.view) {
-          case `${TemplateViews.InvitePeers}/subject`: subjectTemplate = templateElement; break;
-          case `${TemplateViews.InvitePeers}/body`: bodyTemplate = templateElement; break;
-          default: break;
-        }
-      });
+      logger.info('Setting up subject and body elements');
+      if (lodash.isNil(templateResult.elements) === false &&
+        lodash.isArray(templateResult.elements) === true) {
+        templateResult.elements.forEach((templateElement) => {
+          logger.info(`Checking template element view: ${templateElement.view}`);
+          switch (templateElement.view) {
+            case `${TemplateViews.InvitePeers}/subject`: subjectTemplate = templateElement; break;
+            case `${TemplateViews.InvitePeers}/body`: bodyTemplate = templateElement; break;
+            default: break;
+          }
+        });
+      } else {
+        logger.info('No elements for template');
+      }
+
 
       const msg = {
-        to: peer.email,
-        from: partner.email,
+        to: `${user.firstName} ${user.lastName}<${peer.email}>`,
+        from: `${properties.applicationTitle}<${partner.email}>`,
       };
 
       // load and set subject
       try {
         if (lodash.isNil(subjectTemplate) === false) {
+          logger.info(`Rendering subject ${JSON.stringify(subjectTemplate)}`);
           msg.subject = renderTemplate(subjectTemplate, properties);
         } else {
-          msg.subject = `"${TemplateViews.InvitePeers / subject}" - template segment is not set/empty`;
+          msg.subject = `"${TemplateViews.InvitePeers}/subject" - template segment is not set/empty`;
         }
       } catch (renderError) {
         logger.error(`An error occured rendering the subject ${renderError.message}`, renderError);
-        throw new ApiError('Error rendering subject', { original: renderError.message });
+        msg.subject = 'An error occured getting the subject for this email.';
+        // throw new ApiError('Error rendering subject', { original: renderError.message });
       }
 
       // load and set body
       try {
         if (lodash.isNil(bodyTemplate) === false) {
+          logger.info('Rendering body');
           msg.html = renderTemplate(bodyTemplate, properties);
         } else {
-          msg.html = `${TemplateViews.InvitePeers}/body template segment is not set/empty`;
+          msg.html = `"${TemplateViews.InvitePeers}/body" template segment is not set/empty`;
         }
       } catch (renderError) {
         logger.error(`An error occured rendering the body ${renderError.message}`, renderError);
-        throw new ApiError('Error rendering html', { original: renderError.message });
+        // throw new ApiError('Error rendering html', { original: renderError.message });
+        msg.body = `The following error occured rendering the body for this email:\n\n${renderError.message}`;
       }
 
       const queoptions = {
@@ -404,6 +760,7 @@ export const organigramEmails = {
         try {
           sgMail.send(msg);
           emailResult.sent = true;
+          logger.info(`Email sent to ${msg.to}`);
         } catch (sendError) {
           logger.error(`::ERROR SENDING MAIL:: ${msg.subject}`, msg);
           queoptions.sent = false;
@@ -416,7 +773,6 @@ export const organigramEmails = {
     } catch (loadError) {
       emailResult.error = loadError.message;
     }
-
     return emailResult;
   },
 };
@@ -434,4 +790,5 @@ export default {
   installDefaultEmailTemplates,
   queueSurveyEmails,
   organigramEmails,
+  surveyEmails,
 };

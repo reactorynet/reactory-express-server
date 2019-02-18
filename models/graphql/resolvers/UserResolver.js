@@ -259,15 +259,15 @@ const userResolvers = {
         const userId = isNil(id) ? user._id : ObjectId(id);
         logger.info(`Finding emails for userId ${userId}`);
         EmailQueue.find({ user: userId }).then((results) => {
-          logger.info(`Found ${results.length} emails`, results);
+          logger.info(`Found ${results.length} emails`);
           try {
             resolve(results);
           } catch (err) {
-            console.error('Error resolving', err);
+            logger.error('Error resolving', err);
             reject(err);
           }
         }).catch((findError) => {
-          console.error(`Could not find emails for this user ${userId}`);
+          logger.error(`Could not find emails for this user ${userId}`);
           reject(findError);
         });
       });
