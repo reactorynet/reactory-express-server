@@ -253,7 +253,7 @@ const loadEmailTemplate = async (view, organization, client, keys = [], template
 
   logger.info('Searching for template', qry);
 
-  const templateDocument = await Template.findOne(qry)
+  let templateDocument = await Template.findOne(qry)
     .populate('client')
     .populate('organization')
     .populate('elements')
@@ -261,7 +261,24 @@ const loadEmailTemplate = async (view, organization, client, keys = [], template
 
   if (lodash.isNil(templateDocument) === true) {
     logger.info(`No document(s) found using query ${JSON.stringify(qry, null, 2)}`);
+    if (organization) {
+      delete qry.organization;
+
+      templateDocument = await Template.findOne(qry)
+        .populate('client')
+        .populate('elements')
+        .then();
+
+      if (lodash.isNil(templateDocument) === true) {
+        delete qry.client;
+
+        templateDocument = await Template.findOne(qry)
+          .populate('elements')
+          .then();
+      }
+    }
   }
+
 
   return templateDocument;
 };
@@ -317,7 +334,7 @@ export const surveyEmails = {
   /**
    * Sends initial email to assessor
    */
-  launchForDelegate: async (assessor, delegate, survey, organization = null) => {
+  launchForDelegate: async (assessor, delegate, survey, assessment, organization = null) => {
     // final object item to return
     if (lodash.isNil(assessor)) throw new ApiError('assessor parameter for launchForDelegate cannot be null / undefined');
     if (lodash.isNil(delegate)) throw new ApiError('delegate parameter for launchForDelegate cannot be null / undefined');
@@ -331,6 +348,7 @@ export const surveyEmails = {
     try {
       const { partner } = global;
       const templateResult = await loadEmailTemplate(TemplateViews.SurveyLaunch, organization, partner).then();
+
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');
         throw new RecordNotFoundError(`Cannot find a template using the input params ${TemplateViews.InvitePeers} ${organization} ${partner}`);
@@ -350,8 +368,10 @@ export const surveyEmails = {
         partner,
         assessor,
         delegate,
+        assessment,
+        survey,
         applicationTitle: partner.name,
-        profileLink: `${partner.siteUrl}/profile/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessor))}`,
+        dashboardlink: `${partner.siteUrl}/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessor))}`,
       };
 
       let bodyTemplate = null;

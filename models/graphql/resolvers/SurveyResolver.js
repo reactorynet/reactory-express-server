@@ -242,11 +242,11 @@ export default {
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
 
-      const userModel = await User.findById(delegate).then();
-      if (!userModel) throw new RecordNotFoundError('Could not find the user item', 'User');
+      const delegateModel = await User.findById(delegate).then();
+      if (!delegateModel) throw new RecordNotFoundError('Could not find the user item', 'User');
 
       const organigramModel = await Organigram.findOne({
-        user: ObjectId(userModel._id),
+        user: ObjectId(delegateModel._id),
         organization: ObjectId(surveyModel.organization),
       }).then();
 
@@ -265,19 +265,19 @@ export default {
         if (entryId === '' && action === 'add') {
           entryData.entry = {
             id: new ObjectId(),
-            delegate: userModel,
+            delegate: delegateModel,
             notifications: [],
             assessments: [],
             launched: false,
             complete: false,
             removed: false,
-            message: `Added ${userModel.firstName} ${userModel.lastName} to survey ${surveyModel.title}`,
+            message: `Added ${delegateModel.firstName} ${delegateModel.lastName} to survey ${surveyModel.title}`,
             lastAction: 'added',
             satus: 'new',
             updatedAt: moment().valueOf(),
           };
           surveyModel.delegates.push(entryData.entry);
-          surveyModel.addTimelineEntry('Added Delegate', `${user.firstName} added ${userModel.firstName} ${userModel.lastName} to Survey`, user.id, true);
+          surveyModel.addTimelineEntry('Added Delegate', `${user.firstName} added ${delegateModel.firstName} ${delegateModel.lastName} to Survey`, user.id, true);
           entryData.patch = false;
 
           return entryData.entry;
@@ -295,7 +295,7 @@ export default {
           }
         }
 
-        entryData.entry.delegate = userModel;
+        entryData.entry.delegate = delegateModel;
         logger.info(`Performing ${action} on 
           organigram model: ${organigramModel ? organigramModel._id.toString() : 'No Organigram'} 
           and delegateEntry: ${entryData.entry._id} at index ${entryData.entryIdx} for 
@@ -322,7 +322,7 @@ export default {
               entryData.entry.lastAction = launchResult.success ? 'launched' : 'launch-fail';
             } else {
               // console.log('No Organigram Model', organigramModel);
-              entryData.entry.message = `Please set user organigram / peers. ${userModel.firstName} ${userModel.lastName}`;
+              entryData.entry.message = `Please set user organigram / peers. ${delegateModel.firstName} ${delegateModel.lastName}`;
               entryData.patch = true;
               entryData.entry.status = 'new';
               entryData.entry.lastAction = 'launch';
@@ -330,7 +330,7 @@ export default {
             break;
           }
           case 'send-reminder': {
-            const reminderResult = await sendSurveyEmail(survey, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
+            const reminderResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
             entryData.entry.message = reminderResult.message;
             entryData.patch = true;
             entryData.entry.status = 'reminded';
@@ -338,7 +338,7 @@ export default {
             break;
           }
           case 'send-closed': {
-            const closeResult = await sendSurveyEmail(survey, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyClose);
+            const closeResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyClose);
             entryData.entry.message = closeResult.message;
             entryData.patch = true;
             entryData.entry.status = 'closed';
@@ -346,7 +346,7 @@ export default {
             break;
           }
           case 'remove': {
-            entryData.entry.message = `Removed delegate ${userModel.firstName} ${userModel.lastName} from Survey`;
+            entryData.entry.message = `Removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
             if (!entryData.entry.removed) {
               entryData.entry.removed = true;
               entryData.entry.status = 'removed';
@@ -354,13 +354,13 @@ export default {
             } else {
               surveyModel.delegates[entryData.entryIdx].remove();
               entryData.entry.status = 'deleted';
-              surveyModel.addTimelineEntry('User Removed', `${user.firstName} removed delegate ${userModel.firstName} ${userModel.lastName} from Survey`, user.id, true);
+              surveyModel.addTimelineEntry('User Removed', `${user.firstName} removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
               entryData.patch = false;
             }
             break;
           }
           case 'enable': {
-            entryData.entry.message = `Re-enabled delegate ${userModel.firstName} ${userModel.lastName} from Survey`;
+            entryData.entry.message = `Re-enabled delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
             entryData.entry.removed = false;
             entryData.entry.status = 'new';
             entryData.patch = true;
