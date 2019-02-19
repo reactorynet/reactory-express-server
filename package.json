@@ -9,6 +9,7 @@
   "scripts": {
     "start-win": "set NODE_PATH=. && nodemon ./server.js --exec babel-node --preset=es2016,stage-2",
     "start": "NODE_PATH=. nodemon ./server.js --exec babel-node --preset=es2016,stage-2",
+    "start-prod": "NODE_PATH=. APP_DATA_ROOT=/data/reactory LEGACY_APP_DATA_ROOT=/data/legacy API_URI_ROOT=https://api.reactory.net/  CDN_ROOT=https://api.reactory.net/cdn/ nodemon ./server.js --exec babel-node --preset=es2016,stage-2",
     "build": "babel . --out-dir dist --presets es2016,stage-2 --ignore spec.js,node_modules,dist --copy-files",
     "serve-b": "NODE_PATH=. babel-node ./server.js --preset=es2016,stage-2",
     "serve": "pm2 start config/run/$BUILD_TARGET.config.js",
