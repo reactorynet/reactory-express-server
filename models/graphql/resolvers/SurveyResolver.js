@@ -295,6 +295,7 @@ export default {
           }
         }
 
+        entryData.entry.delegate = userModel;
         logger.info(`Performing ${action} on 
           organigram model: ${organigramModel ? organigramModel._id.toString() : 'No Organigram'} 
           and delegateEntry: ${entryData.entry._id} at index ${entryData.entryIdx} for 

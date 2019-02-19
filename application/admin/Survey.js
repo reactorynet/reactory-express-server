@@ -238,11 +238,13 @@ export const sendSurveyEmail = async (survey, delegateEntry, organigram, emailTy
     };
   };
 
-  if (lodash.isNil(delegate)) {
+
+  let { delegate } = delegateEntry;
+
+  if (lodash.isNil(delegate) === true) {
     return result('delegate on delegateEntry is null, please check in put');
   }
 
-  let { delegate } = delegateEntry;
   if (lodash.isString(delegate)) {
     delegate = await User.findById(delegate).then();
   }
