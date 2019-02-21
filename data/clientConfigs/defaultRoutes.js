@@ -23,7 +23,7 @@ export default [
     title: 'Reset',
     path: '/reset-password',
     public: false,
-    exact: false,
+    exact: true,
     roles: ['USER'],
     componentFqn: 'core.ResetPassword@1.0.0',
   },
