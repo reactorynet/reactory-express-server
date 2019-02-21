@@ -369,9 +369,12 @@ export const surveyEmails = {
         assessor,
         delegate,
         assessment,
+        user: assessor,
+        organization: survey.organization,
+        isSelfAssessment: ObjectId(delegate._id).equals(ObjectId(assessor._id)) === true,
         survey,
         applicationTitle: partner.name,
-        dashboardlink: `${partner.siteUrl}/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessor))}`,
+        assessmentLink: `${partner.siteUrl}/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessor))}&redirect=/assessment/${assessment.id}`,
       };
 
       let bodyTemplate = null;
@@ -598,6 +601,7 @@ export const surveyEmails = {
         delegate,
         survey,
         applicationTitle: partner.name,
+        link: `${partner.siteUrl}/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate))}&redirect=/profile`,
       };
 
       let bodyTemplate = null;
@@ -712,7 +716,9 @@ export const organigramEmails = {
       const properties = {
         partner,
         peer,
+        nominee: peer,
         user,
+        employee: user,
         applicationTitle: partner.name,
         profileLink: `${partner.siteUrl}/profile/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(user))}`,
       };

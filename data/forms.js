@@ -943,6 +943,12 @@ const resetPasswordForm = {
     },
   },
   uiSchema: {
+    authToken: {
+      'ui:options': {
+        widget: 'hidden',
+      },
+      'ui:widget': 'hidden',
+    },
     password: {
       'ui:help': 'Ensure your password is at least 8 characters.',
     },

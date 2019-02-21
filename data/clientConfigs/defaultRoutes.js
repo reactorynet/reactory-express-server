@@ -37,9 +37,21 @@ export default [
     componentFqn: 'core.Logout@1.0.0',
   },
   {
+    id: '98',
+    key: 'notauthorized',
+    title: 'No Permission',
+    path: '/not-authorized',
+    public: true,
+    roles: ['USER', 'ANON'],
+    componentFqn: 'core.NotFound@1.0.0',
+    args: {
+      message: 'You do not have permission to view this section',
+    },
+  },
+  {
     id: '99',
-    key: 'logout',
-    title: 'Logout',
+    key: 'forms',
+    title: 'Custom Forms',
     path: '/forms',
     public: true,
     roles: ['USER'],

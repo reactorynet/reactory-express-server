@@ -518,6 +518,61 @@ const userResolvers = {
 
       return userOrganigram;
     },
+    async removeUserRole(obj, {
+      id, organization, role, clientId,
+    }) {
+      const { user, partner } = global;
+      let clientToUse = partner; // use the default partner
+
+      if (ObjectId.isValid(id) === false) throw new ApiError('Invalid id');
+      if (lodash.isNil(organization) === false && ObjectId.isValid(organization) === false) throw new ApiError('Invalid organization id - accepts null or valid id');
+      if (lodash.isNil(clientId) === false && ObjectId.isValid(clientId) === false) throw new ApiError('Invalid clientId id - accepts null or valid id');
+
+      if (ObjectId.isValid(clientId) && ObjectId(clientId).equals(clientToUse._id) === false) {
+        clientToUse = await ReactoryClient.findById(clientId).then();
+      }
+
+      if (user.hasRole(clientToUse._id, 'ADMIN', null, null) === false) {
+        throw new ApiError('Incorrect Permissions, you do not have permission to perform this function');
+      }
+
+      const userToUpdate = await User.findById(id);
+      if (userToUpdate.hasRole(clientToUse._id, role, organization, null) === true) {
+        userToUpdate.removeRole(clientToUse._id, role, organization, null);
+        await userToUpdate.save().then();
+      }
+
+      return userToUpdate.memberships;
+    },
+    async addUserRole(obj, {
+      id, organization, role, clientId,
+    }) {
+      const { user, partner } = global;
+      let clientToUse = partner; // use the default partner
+
+      if (ObjectId.isValid(id) === false) throw new ApiError('Invalid id');
+      if (lodash.isNil(organization) === false && ObjectId.isValid(organization) === false) throw new ApiError('Invalid organization id - accepts null or valid id');
+      if (lodash.isNil(clientId) === false && ObjectId.isValid(clientId) === false) throw new ApiError('Invalid clientId id - accepts null or valid id');
+
+      if (ObjectId.isValid(clientId) && ObjectId(clientId).equals(clientToUse._id) === false) {
+        clientToUse = await ReactoryClient.findById(clientId).then();
+      }
+
+      debugger; //eslint-disable-line
+      if (user.hasRole(clientToUse._id, 'ADMIN', null, null) === false) {
+        logger.info('Logged In User', user);
+        throw new ApiError('Incorrect Permissions, you do not have permission to perform this function');
+      }
+
+      const userToUpdate = await User.findById(id);
+      if (userToUpdate.hasRole(clientToUse._id, role, organization, null) === false) {
+        userToUpdate.addRole(clientToUse._id, role, organization, null);
+        // userToUpdate.removeRole(clientToUse._id, role, organization, null);
+        await userToUpdate.save().then();
+      }
+
+      return userToUpdate.memberships;
+    },
   },
 };
 

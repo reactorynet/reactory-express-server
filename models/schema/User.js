@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
+import { ObjectId as ObjectIdFunc } from 'mongodb';
 import crypto from 'crypto';
 import moment from 'moment';
-import { isArray, find, filter } from 'lodash';
+import lodash, { isArray, find, filter } from 'lodash';
 import logger from '../../logging';
 
 const { ObjectId } = mongoose.Schema.Types;
@@ -95,6 +96,92 @@ UserSchema.methods.setPassword = function setPassword(password) {
 
 UserSchema.methods.validatePassword = function validatePassword(password) {
   return this.password === crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
+};
+
+UserSchema.methods.hasRole = function hasRole(clientId, role = 'USER', organizationId = null, businessUnitId = null) {
+  logger.info(`Checking user membership ${clientId} ${role} ${organizationId} ${businessUnitId}`);
+  if (this.memberships.length === 0) return false;
+
+  let matches = [];
+
+  if (ObjectIdFunc.isValid(clientId) === false) return false;
+  logger.info('Adding memberships with client id');
+
+  matches = filter(this.memberships, (membership) => {
+    return ObjectIdFunc(membership.clientId).equals(ObjectIdFunc(clientId));
+  });
+
+  if (ObjectIdFunc.isValid(organizationId) === true) {
+    logger.info('Filtering by organization');
+    matches = filter(
+      matches,
+      membership => ObjectIdFunc(membership.clientId).equals(ObjectIdFunc(organizationId)),
+    );
+  }
+
+  if (ObjectIdFunc.isValid(businessUnitId)) {
+    logger.info('Filtering by business unit id');
+    matches = filter(
+      matches,
+      membership => ObjectIdFunc(membership.clientId).equals(ObjectIdFunc(organizationId)),
+    );
+  }
+
+  if (isArray(matches) === true && matches.length > 0) {
+    const matched = lodash.filter(
+      matches,
+      membership => isArray(membership.roles) === true
+                    && lodash.intersection(membership.roles, [role]).length > 0,
+    );
+    if (isArray(matched) === true && matched.length >= 1) return true;
+    if (lodash.isObject(matched) === true && isArray(matched.roles) === true) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId) {
+  logger.info(`Adding user membership ${clientId} ${role} ${organizationId} ${businessUnitId}`);
+
+
+  const matches = [];
+
+  if (ObjectIdFunc.isValid(clientId) === false) return false;
+
+  if (this.memberships.length === 0) {
+    logger.info('User has no memberships, adding');
+    this.memberships.push({
+      clientId,
+      organizationId,
+      businessUnitId,
+      roles: [role],
+      enabled: true,
+      authProvider: 'default',
+      lastLogin: null,
+    });
+
+    await this.save().then();
+
+    return this.memberships;
+  }
+
+  if (this.hasRole(clientId, role, organizationId, businessUnitId) === false) {
+    this.memberships.push({
+      clientId,
+      organizationId,
+      businessUnitId,
+      roles: [role],
+      enabled: true,
+      authProvider: 'default',
+      lastLogin: null,
+    });
+
+    await this.save().then();
+
+    return this.memberships;
+  }
 };
 
 UserSchema.methods.hasMembership = function hasMembership(clientId, organizationId, businessUnitId) {

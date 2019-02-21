@@ -131,6 +131,8 @@ extend type Mutation {
   removeUser(id: String!): Boolean
   setPassword(input: UpdatePasswordInput!): User  
   confirmPeers(id: String!, organization: String!): UserPeers
+  addUserRole(id: String!, organization: String, role: String!, clientId: String): [UserMembership]
+  removeUserRole(id: String!, organization: String, role: String!, clientId: String): [UserMembership]
 }
 
 extend type Subscription {
