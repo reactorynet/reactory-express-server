@@ -83,7 +83,10 @@ const resolvers = {
       const roles = [];
       if (isArray(user.memberships)) {
         user.memberships.map((membership) => {
-          roles.push([...membership.roles]);
+          if (isArray(membership.roles)) {
+            membership.roles.forEach((r) => { roles.push(r); });
+          }
+          return membership;
         });
       }
 
