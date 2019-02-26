@@ -33,7 +33,7 @@ export default {
   key: 'towerstone',
   name: 'TowerStone Leadership Centre',
   username: 'towerstone',
-  email: 'server@reactory.net',
+  email: 'assessments@towerstone-global.com',
   salt: 'generate',
   password: 'XXXXXXXXXXXXX',
   siteUrl,
