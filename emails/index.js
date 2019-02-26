@@ -609,7 +609,7 @@ export const surveyEmails = {
         delegate,
         survey,
         applicationTitle: partner.name,
-        link: `${partner.siteUrl}/profile?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate))}&peerconfig=true`,
+        link: `${partner.siteUrl}/profile/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate))}&peerconfig=true`,
       };
 
       let bodyTemplate = null;
