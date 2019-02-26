@@ -1,7 +1,13 @@
 module.exports = {
   apps: [{
     name: 'ReactoryApi',
-    script: './server.js',
+    script: 'server.js',
+    kill_timeout: 3000,
+    listen_timeout: 10000,
+    max_memory_restart: '2G',
+    interpreter: 'babel-node',
+    node_args: '--preset=es2016,stage-2',
+    watch: true,
     env: {
       NODE_ENV: 'development',
       APP_DATA_ROOT: '/mnt/d/data/reactory',
