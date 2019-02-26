@@ -80,6 +80,14 @@ const resolvers = {
     apiStatus: (obj, args, context, info) => {
       const { user, partner } = global;
 
+      const roles = [];
+      if (isArray(user.memberships)) {
+        user.memberships.map((membership) => {
+          roles.push([...membership.roles]);
+        });
+      }
+
+
       return {
         when: moment(),
         status: 'API OK',
@@ -88,7 +96,7 @@ const resolvers = {
         avatar: isNil(user) === false ? user.avatar : null,
         email: isNil(user) === false ? user.email : null,
         id: isNil(user) === false ? user._id : null,
-        roles: isNil(user) === false && isArray(user.memberships) && user.memberships.length > 0 ? user.memberships[0].roles : ['ANON'],
+        roles: isNil(user) === false && isArray(user.memberships) && user.memberships.length > 0 ? roles : ['ANON'],
         memberships: isNil(user) === false && isArray(user.memberships) ? user.memberships : [],
         organization: user.organization,
         routes: partner.routes || [],
