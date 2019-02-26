@@ -28,7 +28,7 @@ const userAssessments = async (id) => {
   const { user } = global;
   const findUser = isNil(id) === true ? await User.findById(id).then() : user;
   if (findUser && findUser._id) {
-    return Assessment.find({ assessor: findUser._id })
+    return Assessment.find({ assessor: findUser._id, deleted: false })
       .populate('assessor')
       .populate('delegate')
       .populate('survey')
@@ -519,56 +519,74 @@ const userResolvers = {
       return userOrganigram;
     },
     async removeUserRole(obj, {
-      id, organization, role, clientId,
+      id, email, organization, role, clientId,
     }) {
       const { user, partner } = global;
       let clientToUse = partner; // use the default partner
+      let userToUpdate = null;
 
-      if (ObjectId.isValid(id) === false) throw new ApiError('Invalid id');
+      if (lodash.isNil(email) === false) {
+        userToUpdate = await User.findOne({ email }).then();
+        if (lodash.isNil(userToUpdate) === true) throw new RecordNotFoundError(`User not found ${email}`);
+      } else {
+        if (ObjectId.isValid(id) === false) throw new ApiError('Invalid id');
+        userToUpdate = await User.findOne({ _id: ObjectId(id) }.then());
+        if (lodash.isNil(userToUpdate) === true) throw new RecordNotFoundError(`User not found ${id}`);
+      }
+
+
       if (lodash.isNil(organization) === false && ObjectId.isValid(organization) === false) throw new ApiError('Invalid organization id - accepts null or valid id');
       if (lodash.isNil(clientId) === false && ObjectId.isValid(clientId) === false) throw new ApiError('Invalid clientId id - accepts null or valid id');
 
+      // Check if we have a valid client
       if (ObjectId.isValid(clientId) && ObjectId(clientId).equals(clientToUse._id) === false) {
         clientToUse = await ReactoryClient.findById(clientId).then();
       }
 
+      // Check if the logged in user has permissions
       if (user.hasRole(clientToUse._id, 'ADMIN', null, null) === false) {
         throw new ApiError('Incorrect Permissions, you do not have permission to perform this function');
       }
 
-      const userToUpdate = await User.findById(id);
       if (userToUpdate.hasRole(clientToUse._id, role, organization, null) === true) {
-        userToUpdate.removeRole(clientToUse._id, role, organization, null);
-        await userToUpdate.save().then();
+        await userToUpdate.removeRole(clientToUse._id, role, organization, null);
       }
 
       return userToUpdate.memberships;
     },
     async addUserRole(obj, {
-      id, organization, role, clientId,
+      id, email, organization, role, clientId,
     }) {
       const { user, partner } = global;
       let clientToUse = partner; // use the default partner
+      let userToUpdate = null;
 
-      if (ObjectId.isValid(id) === false) throw new ApiError('Invalid id');
+      if (lodash.isNil(email) === false) {
+        userToUpdate = await User.findOne({ email }).then();
+        if (lodash.isNil(userToUpdate) === true) throw new RecordNotFoundError(`User not found ${email}`);
+      } else {
+        if (ObjectId.isValid(id) === false) throw new ApiError('Invalid id');
+        userToUpdate = await User.findOne({ _id: ObjectId(id) }.then());
+        if (lodash.isNil(userToUpdate) === true) throw new RecordNotFoundError(`User not found ${id}`);
+      }
+
+
       if (lodash.isNil(organization) === false && ObjectId.isValid(organization) === false) throw new ApiError('Invalid organization id - accepts null or valid id');
       if (lodash.isNil(clientId) === false && ObjectId.isValid(clientId) === false) throw new ApiError('Invalid clientId id - accepts null or valid id');
 
+      // Check if we have a valid client
       if (ObjectId.isValid(clientId) && ObjectId(clientId).equals(clientToUse._id) === false) {
         clientToUse = await ReactoryClient.findById(clientId).then();
       }
 
-      debugger; //eslint-disable-line
+      // Check if the logged in user has permissions
       if (user.hasRole(clientToUse._id, 'ADMIN', null, null) === false) {
-        logger.info('Logged In User', user);
+        logger.info(`Authenticated user is: ${user.fullName()}`, user);
         throw new ApiError('Incorrect Permissions, you do not have permission to perform this function');
       }
 
-      const userToUpdate = await User.findById(id);
       if (userToUpdate.hasRole(clientToUse._id, role, organization, null) === false) {
-        userToUpdate.addRole(clientToUse._id, role, organization, null);
-        // userToUpdate.removeRole(clientToUse._id, role, organization, null);
-        await userToUpdate.save().then();
+        await userToUpdate.addRole(clientToUse._id, role, organization, null);
       }
 
       return userToUpdate.memberships;

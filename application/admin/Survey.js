@@ -141,6 +141,7 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
   if (lodash.isArray(propertyBag.assessments) === true) {
     propertyBag.assessments.forEach((assessment) => {
       const { assessor } = assessment;
+
       emailPromises.push(emails.surveyEmails.launchForDelegate(assessor, delegate, survey, assessment, organization));
     });
   }
@@ -420,15 +421,15 @@ export const launchSurveyForDelegate = async (survey, delegateEntry, organigram)
       let emailResults = null;
       try {
         emailResults = await sendSurveyEmail(survey, delegateEntry, organigram, EmailTypesForSurvey.SurveyLaunch, { assessments });
-        logger.info('Email results from sending Survy Emails', emailResults);
+        logger.info('Email results from sending Survey Emails', emailResults);
         if (emailResults.success === true) {
-          return result(`Successfully created ${assessments.length} assessments for delegate and assessments created`, true, assessments);
+          return result(`Successfully created ${assessments.length} assessments for delegate and emails sent ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
         }
 
-        return result('Assessments created but could not send the mails', true, assessments);
+        return result(`Assessments created but could not send the mails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
       } catch (ex) {
         logger.error(ex);
-        return result(`Successfully created ${assessments.length} assessments for delegate, failed sending emails`, true, assessments);
+        return result(`Successfully created ${assessments.length} assessments for delegate, failed sending emails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
       }
     }
 

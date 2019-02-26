@@ -8,7 +8,7 @@ import sgMail from '@sendgrid/mail';
 import ejs from 'ejs';
 import lodash, { isNil } from 'lodash';
 import ApiError, { RecordNotFoundError, OrganizationNotFoundError } from '../exceptions';
-import { Template, ReactoryClient, EmailQueue } from '../models';
+import { Template, ReactoryClient, EmailQueue, User } from '../models';
 import defaultEmailTemplates from './defaultEmailTemplates';
 import AuthConfig from '../authentication';
 import logger from '../logging';
@@ -336,9 +336,17 @@ export const surveyEmails = {
    */
   launchForDelegate: async (assessor, delegate, survey, assessment, organization = null) => {
     // final object item to return
+    logger.info(`Sending email to assessor ${assessor}`, assessor);
     if (lodash.isNil(assessor)) throw new ApiError('assessor parameter for launchForDelegate cannot be null / undefined');
     if (lodash.isNil(delegate)) throw new ApiError('delegate parameter for launchForDelegate cannot be null / undefined');
     if (lodash.isNil(survey)) throw new ApiError('survey parameter for launchForDelegate cannot be null / undefined');
+
+    let assessorModel = null;
+    if (ObjectId.isValid(assessor)) {
+      assessorModel = await User.findById(assessor).then();
+    } else if (assessor.id || assessor._id) assessorModel = assessor;
+
+    if (lodash.isNil(assessorModel)) throw new ApiError('assessor parameter has to be a valid ObjectId');
 
     const emailResult = {
       sent: false,
@@ -366,15 +374,15 @@ export const surveyEmails = {
       // property bag for template
       const properties = {
         partner,
-        assessor,
+        assessor: assessorModel,
         delegate,
         assessment,
-        user: assessor,
+        user: assessorModel,
         organization: survey.organization,
-        isSelfAssessment: ObjectId(delegate._id).equals(ObjectId(assessor._id)) === true,
+        isSelfAssessment: ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true,
         survey,
         applicationTitle: partner.name,
-        assessmentLink: `${partner.siteUrl}/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessor))}&redirect=/assessment/${assessment.id}`,
+        assessmentLink: `${partner.siteUrl}/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel))}&redirect=/assessment/${assessment.id}`,
       };
 
       let bodyTemplate = null;
@@ -396,7 +404,7 @@ export const surveyEmails = {
 
 
       const msg = {
-        to: `${assessor.firstName} ${assessor.lastName}<${assessor.email}>`,
+        to: `${assessorModel.firstName} ${assessorModel.lastName}<${assessorModel.email}>`,
         from: `${properties.applicationTitle}<${partner.email}>`,
       };
 
@@ -448,7 +456,7 @@ export const surveyEmails = {
           queoptions.failures = 1;
           queoptions.error = sendError.message;
         }
-        queueMail(assessor, msg, queoptions);
+        queueMail(assessorModel, msg, queoptions);
       }
     } catch (loadError) {
       emailResult.error = loadError.message;
@@ -601,7 +609,7 @@ export const surveyEmails = {
         delegate,
         survey,
         applicationTitle: partner.name,
-        link: `${partner.siteUrl}/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate))}&redirect=/profile`,
+        link: `${partner.siteUrl}/profile?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate))}&peerconfig=true`,
       };
 
       let bodyTemplate = null;

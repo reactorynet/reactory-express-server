@@ -92,6 +92,9 @@ export default {
           ordinal: 7, title: 'Admin', link: '/admin/', icon: 'supervisor_account', roles: ['ADMIN'],
         },
         {
+          ordinal: 8, title: 'Projects', link: '/project/', icon: 'work', roles: ['ADMIN'],
+        },
+        {
           ordinal: 99, title: 'Inbox', link: '/inbox/', icon: 'email', roles: ['USER'],
         },
       ],
@@ -241,12 +244,21 @@ export default {
     },
     {
       key: 'admin',
-      title: 'admin',
+      title: 'Admin',
       path: '/admin',
       public: false,
       roles: ['ADMIN', 'LEADER'],
       exact: false,
       componentFqn: 'core.Administration@1.0.0',
+    },
+    {
+      key: 'projects',
+      title: 'Projects',
+      path: '/project/**',
+      exact: false,
+      public: false,
+      roles: ['ADMIN'],
+      componentFqn: 'layout.ProjectAdmin@1.0.0',
     },
   ],
   themeOptions: {

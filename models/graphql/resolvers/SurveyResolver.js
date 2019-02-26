@@ -304,7 +304,7 @@ export default {
         switch (action) {
           case 'send-invite': {
             const inviteResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.ParticipationInvite);
-            entryData.entry.message = inviteResult.message;
+            entryData.entry.message = `${inviteResult.message} @ ${moment().format('YYYY-MM-DD HH:mm:ss')}`;
             entryData.patch = true;
             entryData.entry.status = 'invite-sent';
             entryData.entry.lastAction = inviteResult.success ? 'invitation-sent' : 'invite-failed';

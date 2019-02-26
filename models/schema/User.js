@@ -115,7 +115,12 @@ UserSchema.methods.hasRole = function hasRole(clientId, role = 'USER', organizat
     logger.info('Filtering by organization');
     matches = filter(
       matches,
-      membership => ObjectIdFunc(membership.clientId).equals(ObjectIdFunc(organizationId)),
+      membership => ObjectIdFunc(membership.organizationId).equals(ObjectIdFunc(organizationId)),
+    );
+  } else {
+    matches = filter(
+      matches,
+      membership => lodash.isNil(membership.organizationId) === true,
     );
   }
 
@@ -123,7 +128,12 @@ UserSchema.methods.hasRole = function hasRole(clientId, role = 'USER', organizat
     logger.info('Filtering by business unit id');
     matches = filter(
       matches,
-      membership => ObjectIdFunc(membership.clientId).equals(ObjectIdFunc(organizationId)),
+      membership => ObjectIdFunc(membership.businessUnitId).equals(ObjectIdFunc(businessUnitId)),
+    );
+  } else {
+    matches = filter(
+      matches,
+      membership => lodash.isNil(membership.businessUnitId) === true,
     );
   }
 
@@ -168,20 +178,58 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
   }
 
   if (this.hasRole(clientId, role, organizationId, businessUnitId) === false) {
-    this.memberships.push({
-      clientId,
-      organizationId,
-      businessUnitId,
-      roles: [role],
-      enabled: true,
-      authProvider: 'default',
-      lastLogin: null,
-    });
+    // check if there is an existing membership for the client / org / business unit
+    const mIndex = filter(
+      this.memberships,
+      {
+        clientId: ObjectIdFunc(clientId),
+        organizationId: ObjectIdFunc.isValid(organizationId) ? ObjectIdFunc(organizationId) : null,
+        businessUnitId: ObjectIdFunc.isValid(businessUnitId) ? ObjectIdFunc(businessUnitId) : null,
+      },
+    );
+
+    if (mIndex < 0) {
+      this.memberships.push({
+        clientId,
+        organizationId,
+        businessUnitId,
+        roles: [role],
+        enabled: true,
+        authProvider: 'default',
+        lastLogin: null,
+      });
+    } else if (mIndex >= 0 && this.memberships[mIndex] && lodash.intersection(this.memberships[mIndex].roles, [role]) === 0) {
+      this.memberships[mIndex].roles.push(role);
+    }
 
     await this.save().then();
 
     return this.memberships;
   }
+};
+
+UserSchema.methods.removeRole = async function removeRole(clientId, role, organizationId, businessUnitId) {
+  logger.info(`Removing role (${role}) for user ${this.fullName()}, checking (${this.memberships.length}) memberships`);
+  let removed = 0;
+  this.memberships.map((membership) => {
+    logger.info(`Checking membership ${membership._id}`, membership);
+    if (ObjectIdFunc(membership.clientId).equals(ObjectIdFunc(clientId))) {
+      if (lodash.isNil(organizationId) === false && ObjectId.isValid(organizationId)) {
+        if (ObjectIdFunc(organizationId).equals(ObjectIdFunc(membership.organizationId)) === true) {
+          removed += lodash.remove(membership.roles, r => r === role).length;
+        }
+      } else {
+        // we are not matching against org only client id, so we remove the role should on have one
+        removed += lodash.remove(membership.roles, r => r === role).length;
+      }
+    }
+
+    return membership;
+  });
+  logger.info(`Removed ${removed} Roles`);
+  await this.save().then();
+
+  return this.memberships;
 };
 
 UserSchema.methods.hasMembership = function hasMembership(clientId, organizationId, businessUnitId) {
@@ -203,6 +251,8 @@ UserSchema.methods.hasMembership = function hasMembership(clientId, organization
 
   return true;
 };
+
+UserSchema.methods.fullName = function fullName() { return `${this.firstName} ${this.lastName}`; };
 
 const UserModel = mongoose.model('User', UserSchema);
 export default UserModel;

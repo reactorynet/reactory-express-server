@@ -55,6 +55,18 @@ export default {
     {
       email: 'mady.eagar@towerstone-global.com', firstName: 'Mandy', lastName: 'Eagar', roles: ['USER', 'ADMIN'],
     },
+    {
+      email: 'thea.nel@towerstone-global.com', firstName: 'Thea', lastName: 'Nel', roles: ['USER', 'ADMIN'],
+    },
+    {
+      email: 'yolande.wheatley@towerstone-global.com', firstName: 'Yolande', lastName: 'Wheatley', roles: ['USER', 'ADMIN'],
+    },
+    {
+      email: 'lynne.kleu@towerstone-global.com', firstName: 'Lynne', lastName: 'Kleu', roles: ['USER', 'ADMIN'],
+    },
+    {
+      email: 'michelle.burger@towerstone-global.com', firstName: 'Michelle', lastName: 'Burger', roles: ['USER', 'ADMIN'],
+    },
   ],
   components: [
     {
@@ -251,6 +263,7 @@ export default {
       featureImage: `${CDN_ROOT}themes/towerstone/images/featured.jpg`,
       logo: `${CDN_ROOT}themes/towerstone/images/logo.png`,
       favicon: `${CDN_ROOT}themes/towerstone/images/favicon.png`,
+      avatar: `${CDN_ROOT}themes/towerstone/images/avatar.png`,
     },
     content: {
       appTitle: 'TowerStone Leadership Centre',

@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { defaultFormProps } from './forms/defs';
 import { FormBuilder } from './forms/core/FormBuilder';
-import { HelpFormEdit } from './forms/core/HelpEditor';
+import { HelpFormEdit, HelpListForm } from './forms/core/HelpEditor';
 import { TemplateEditor } from './forms/core/TemplateEditor';
 import { SurveySettingsForm } from './forms/towerstone/SurveySettings';
 import TaskDetailForm from './forms/core/task';
@@ -914,16 +914,34 @@ const resetPasswordForm = {
     description: 'Provide a new password and confirm it in order to change your password',
     type: 'object',
     required: [
-      'email',
+      'user',
       'authToken',
       'password',
       'confirmPassword',
     ],
     properties: {
-      email: {
-        type: 'string',
-        title: 'Email Address',
-        readOnly: true,
+      user: {
+        type: 'object',
+        title: 'User',
+        properties: {
+          firstName: {
+            type: 'string',
+            title: 'First name',
+          },
+          lastName: {
+            type: 'string',
+            title: 'Last name',
+          },
+          email: {
+            type: 'string',
+            title: 'Email Address',
+            readOnly: true,
+          },
+          avatar: {
+            type: 'string',
+            title: 'Avatar',
+          },
+        },
       },
       authToken: {
         type: 'string',
@@ -935,13 +953,26 @@ const resetPasswordForm = {
         title: 'Password',
         format: 'password',
       },
+      confirmPassword: {
+        type: 'string',
+        title: 'Confirm Password',
+        format: 'password',
+      },
     },
   },
   uiSchema: {
-    password: {
-      'ui:help': 'Ensure your password is at least 8 characters.',
+    user: {
+      'ui:widget': 'UserListItemWidget',
     },
-
+    authToken: {
+      'ui:widget': 'HiddenWidget',
+    },
+    password: {
+      'ui:help': 'Ensure your password is at least 8 characters long.',
+    },
+    confirmPassword: {
+      'ui:help': 'Please re-enter your password to ensure they match',
+    },
   },
 };
 
@@ -1631,6 +1662,9 @@ const TowerStoneLeadershipBrandConfigForm = require('./forms/towerstone/Leadersh
 const TowerStoneSurveyDelegateConfig = require('./forms/towerstone/SurveyDelegates').SurveyDelegatesForm;
 const TowerStoneSurveySettings = require('./forms/towerstone/SurveySettings').SurveySettingsForm;
 const UserPeers = require('./forms/core/user/UserPeers/index').default;
+const ProjectLayout = require('./forms/core/project').default;
+const ProjectListWidget = require('./forms/core/project').ProjectListWidget;
+const ProjectDetailForm = require('./forms/core/project').ProjectDetailForm;
 
 export default [
   productIdeas,
@@ -1654,15 +1688,19 @@ export default [
   FileLoader,
   ExternalLinkList,
   PageTemplateConfig,
+  ProjectLayout,
   TaskDetailForm,
   CommentForm,
   ProjectForm,
+  ProjectListWidget,
+  ProjectDetailForm,
   TowerStoneSurveyConfigForm,
   TowerStoneLeadershipBrandConfigForm,
   TowerStoneSurveyDelegateConfig,
   TowerStoneSurveySettings,
   FormBuilder,
   HelpFormEdit,
+  HelpListForm,
   TemplateEditor,
   TowerStoneTaskDetailForm,
   UserPeers,

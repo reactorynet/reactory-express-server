@@ -1,4 +1,5 @@
 // import pf from '../defs';
+import { defaultFormProps } from '../defs';
 
 export const HelpSchema = {
   type: 'object',
@@ -53,6 +54,47 @@ export const HelpFormEdit = {
   uiSchema: HelpFormEditUISchema,
 };
 
+export const HelpListSchema = {
+  type: 'object',
+  title: 'Help List',
+  description: 'List of Help Topics',
+  required: [],
+  properties: {
+    searchInput: {
+      type: 'string',
+      title: 'Filter',
+    },
+  },
+};
+
+export const HelpListUISchema = {
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      searchInput: { sm: 12 },
+    },
+  ],
+};
+
+
+export const HelpListForm = {
+  id: 'HelpListForm',
+  ...defaultFormProps,
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Help Content',
+  tags: ['Help Editor', 'Forms'],
+  schema: HelpListSchema,
+  registerAsComponent: true,
+  name: 'HelpListForm',
+  nameSpace: 'forms',
+  version: '1.0.0',
+  uiSchema: HelpListUISchema,
+};
+
+
 export default {
+  HelpListForm,
   HelpFormEdit,
 };
