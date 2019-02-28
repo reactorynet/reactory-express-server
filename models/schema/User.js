@@ -156,7 +156,7 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
   logger.info(`Adding user membership ${clientId} ${role} ${organizationId} ${businessUnitId}`);
 
 
-  const matches = [];
+  // const matches = [];
 
   if (ObjectIdFunc.isValid(clientId) === false) return false;
 
@@ -179,7 +179,8 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
 
   if (this.hasRole(clientId, role, organizationId, businessUnitId) === false) {
     // check if there is an existing membership for the client / org / business unit
-    const mIndex = filter(
+    logger.info(`User ${this.fullName()} does not have role, adding`);
+    const mIndex = lodash.findIndex(
       this.memberships,
       {
         clientId: ObjectIdFunc(clientId),
@@ -188,7 +189,10 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
       },
     );
 
+    logger.info(`Filtered existing memberships for matching clientId, organizationId and businessUnitId @ ${mIndex}`);
+
     if (mIndex < 0) {
+      logger.info('User does not have matching existing memberships, adding new one');
       this.memberships.push({
         clientId,
         organizationId,
@@ -198,12 +202,14 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
         authProvider: 'default',
         lastLogin: null,
       });
-    } else if (mIndex >= 0 && this.memberships[mIndex] && lodash.intersection(this.memberships[mIndex].roles, [role]) === 0) {
-      this.memberships[mIndex].roles.push(role);
+    } else if (mIndex >= 0 && this.memberships[mIndex]) {
+      logger.info(`User existing membership found @ ${mIndex}`, this.memberships[mIndex]);
+      if (lodash.intersection(this.memberships[mIndex].roles, [role]).length === 0) {
+        this.memberships[mIndex].roles.push(role);
+      }
     }
 
     await this.save().then();
-
     return this.memberships;
   }
 };

@@ -558,6 +558,7 @@ const userResolvers = {
       id, email, organization, role, clientId,
     }) {
       const { user, partner } = global;
+      logger.info(`Adding role => EMAIL: ${email}  ROLE: ${role} ORG: ${organization} CLIENT: ${clientId}`);
       let clientToUse = partner; // use the default partner
       let userToUpdate = null;
 
@@ -580,14 +581,16 @@ const userResolvers = {
       }
 
       // Check if the logged in user has permissions
+      logger.info(`Checking calling user permissions ${user.fullName()}`, { memberships: user.memberships });
       if (user.hasRole(clientToUse._id, 'ADMIN', null, null) === false) {
         logger.info(`Authenticated user is: ${user.fullName()}`, user);
-        throw new ApiError('Incorrect Permissions, you do not have permission to perform this function');
+        throw new ApiError(`Incorrect Permissions, you do not have permission to perform this function ${user.fullName()}`);
       }
 
-      if (userToUpdate.hasRole(clientToUse._id, role, organization, null) === false) {
-        await userToUpdate.addRole(clientToUse._id, role, organization, null);
-      }
+
+      logger.info(`Adding role ${role} to ${userToUpdate.fullName()} does not have role, adding`);
+      await userToUpdate.addRole(clientToUse._id, role, organization, null);
+
 
       return userToUpdate.memberships;
     },
