@@ -6,7 +6,7 @@ import { ObjectId } from 'mongodb';
 import moment from 'moment';
 import { isNil, isEmpty, union, isFunction } from 'lodash';
 import { User, Organization, Organigram, Assessment, Survey, Task } from '../../models';
-import ApiError, { UserExistsError, UserValidationError, UserNotFoundException } from '../../exceptions';
+import ApiError, { UserExistsError, UserValidationError, UserNotFoundException, RecordNotFoundError } from '../../exceptions';
 import emails from '../../emails';
 import logger from '../../logging';
 
@@ -293,26 +293,27 @@ export const surveysForUser = co.wrap(function* surveysForUserGenerator(userId) 
   }
 });
 
-export const surveyForUser = co.wrap(function* surveysForUserGenerator(userId, surveyId) {
+export const surveyForUser = async (userId, surveyId) => {
   try {
-    const found = yield Survey.findOne({ 'delegates.delegate': ObjectId(userId), _id: ObjectId(surveyId) }).then();
+    const found = await Survey.findOne({ 'delegates.delegate': ObjectId(userId), _id: ObjectId(surveyId) }).then();
     return found;
   } catch (e) {
-    console.error(e);
-    return null;
+    throw new ApiError(`Could not find the survey for the user due to an error: ${e.message}`);
   }
-});
+};
 
-export const assessmentForUserInSurvey = co.wrap(function* assessmentForUserInSurveyGenerator(userId, surveyId) {
+export const assessmentForUserInSurvey = async (userId, surveyId) => {
   try {
-    const asDelegate = yield Assessment.find({ delegate: ObjectId(userId), survey: surveyId }).then();
-    const self = yield Assessment.find({ assessor: ObjectId(userId), survey: surveyId }).then();
-    return [...asDelegate, self];
+    return await Assessment.find({ delegate: userId, survey: surveyId })
+      .populate('assessor')
+      .populate('delegate')
+      .populate('survey')
+      .then();
   } catch (e) {
-    console.error(e);
+    logger.error(e);
     return [];
   }
-});
+};
 
 export const tasksForUserRelatedToSurvey = co.wrap(function* tasksForUserRelatedToSurveyGenerator(userId, surveyId) {
   try {

@@ -21,6 +21,7 @@ import AuthConfig from '../../../authentication';
 import logger from '../../../logging';
 import iz from '../../../utils/validators';
 import TaskModel from '../../schema/Task';
+import { isObject } from 'util';
 
 const uuid = require('uuid');
 
@@ -165,8 +166,18 @@ const userResolvers = {
     complete(o) {
       return o.complete === true;
     },
-    selfAssessment(o) {
-      return o.assessor === o.delegate;
+    selfAssessment(assessment) {
+      const { assessor, delegate } = assessment;
+
+      if (ObjectId.isValid(assessor) === true && ObjectId.isValid(delegate) === true) {
+        return ObjectId(assessor).equals(ObjectId(delegate));
+      }
+
+      if (isObject(assessor) === true && assessor._id && isObject(delegate) === true && delegate._id) {
+        return assessor._id.equals(delegate._id);
+      }
+
+      return assessor === delegate;
     },
     async overdue(obj) {
       if (obj.complete === true) return false;
@@ -307,36 +318,41 @@ const userResolvers = {
         });
       });
     },
-    reportDetailForUser(object, { userId, surveyId }, context, info) {
-      return new Promise((resolve, reject) => {
-        const { user } = global;
-        Admin.User.surveyForUser(userId || user._id.toString(), surveyId).then((surveyResult) => {
-          logger.info('Found surveyResult', surveyResult);
-          if (isNil(surveyResult) === true) return resolve(null);
+    async reportDetailForUser(object, { userId, surveyId }, context, info) {
+      const { user } = global;
+      const reportResult = {
+        overall: 0,
+        status: 'BUSY',
+        user,
+        survey: null,
+        assessments: [],
+        tasks: [],
+        comments: [],
+        errors: null,
+      };
 
-          co.wrap(function* resolveDataGenerator(uId, survey) {
-            logger.info(`Fetching Details For Assessment: ${userId} => Survey: ${survey._id}`);
-            const assessments = yield Admin.User.assessmentForUserInSurvey(uId, survey._id).then();
-            const tasks = yield Admin.User.tasksForUserRelatedToSurvey(uId, survey._id).then();
-            resolve({
-              overall: 0,
-              status: 'READY',
-              user,
-              survey: surveyResult,
-              assessments,
-              tasks,
-              comments: [],
-            });
-          })(userId, surveyResult).then((result) => {
-            resolve(result);
-          }).catch((e) => {
-            reject(e);
-          });
-        }).catch((e) => {
-          console.error('Error resolving report detail', e);
-          reject(e);
-        });
-      });
+      let _user = user;
+      if (userId && ObjectId.isValid(userId) === true) _user = await User.findById(userId).then();
+      if (_user === null) {
+        throw new RecordNotFoundError(`The user id ${userId} not found`);
+      }
+
+      try {
+        const survey = await Admin.User.surveyForUser(userId || user._id.toString(), surveyId).then();
+        reportResult.survey = survey;
+
+        logger.info('Found surveyResult', survey);
+        if (isNil(survey) === true) throw new RecordNotFoundError('Could not locate the survey and delegate match');
+
+        logger.info(`Fetching Details For Assessment: ${userId} => Survey: ${survey._id}`);
+
+        reportResult.assessments = await Admin.User.assessmentForUserInSurvey(_user._id, survey._id).then();
+        reportResult.tasks = await Admin.User.tasksForUserRelatedToSurvey(_user._id, survey._id).then();
+      } catch (reportGenerateError) {
+        logger.error(`Could not generate a report due to an error ${reportGenerateError.message}`, reportGenerateError);
+      }
+
+      return reportResult;
     },
     async assessmentWithId(obj, { id }, context, info) {
       logger.info('Finding Assessment with Id', { id });

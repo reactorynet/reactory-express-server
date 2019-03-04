@@ -67,8 +67,12 @@ export const SurveySettingsSchema = {
 };
 
 export const SurveySetttingsUISchema = {
+  'ui:options': {
+    showSubmit: false,
+  },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
+    /*
     {
       defaultMinimumPeers: { md: 6 },
       mustHaveSupervisor: { md: 6 },
@@ -88,9 +92,11 @@ export const SurveySetttingsUISchema = {
     {
       spreadReminders: { md: 12 },
     },
+    */
     {
       timeline: { md: 12 },
     },
+
   ],
   minimumPeers: {
     'ui:widget': 'SliderWidget',
