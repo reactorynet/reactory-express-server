@@ -29,7 +29,7 @@ module.exports = {
       SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
       API_URI_ROOT: 'https://api.reactory.net/',
       CDN_ROOT: 'https://api.reactory.net/cdn/',
-      MODE: 'QA',
+      MODE: 'PRODUCTION',
       LOG_LEVEL: 'info',
     },
     env_staging: {
