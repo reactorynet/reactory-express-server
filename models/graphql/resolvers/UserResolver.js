@@ -235,6 +235,13 @@ const userResolvers = {
     peers(usr) {
       return Organigram.findOne({ user: usr._id, organization: usr.memberships[0].organizationId });
     },
+    memberships(usr) {
+      if (lodash.isArray(usr.memberships)) {
+        return lodash.filter(usr.memberships, { clientId: global.partner._id });
+      }
+
+      return [];
+    },
   },
   UserMembership: {
     client({ clientId }) {
@@ -251,8 +258,10 @@ const userResolvers = {
     allUsers(obj, args, context, info) {
       return Admin.User.listAll().then();
     },
-    userWithId(obj, args, context, info) {
-      return Admin.User.User.findById(args.id).then();
+    async userWithId(obj, { id }, context, info) {
+      const user = await User.findById(id).then();
+
+      return user;
     },
     async userPeers(obj, { id, organizationId }) {
       const user = await User.findById(id).then();
