@@ -157,10 +157,26 @@ const graphql = {
             avatar
           }
           status
+          peers {
+            id
+            organization {
+              id
+              name
+            }
+            user {
+              id
+              firstName
+              lastName
+            } 
+            confirmedAt
+            allowEdit            
+          }
           message
           launched
           complete
-          removed                  
+          removed    
+          lastAction
+          nextAction              
           assessments {
             id
             assessor {

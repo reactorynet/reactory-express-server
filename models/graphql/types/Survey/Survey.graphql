@@ -28,7 +28,8 @@ type DelegateEntry {
   removed: Boolean
   message: String
   updatedAt: Date
-  lastAction: String
+  lastAction: String,
+  nextAction: String
 }
 
 type Survey {

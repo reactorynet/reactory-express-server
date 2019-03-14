@@ -283,6 +283,13 @@ export default {
       },
       data: ['USER'],
     },
+    {
+      name: 'email_redirect/DEVELOP',
+      data: {
+        email: 'werner.weber+twredirect@gmail.com',
+        enabled: false,
+      },
+    },
   ],
   allowCustomTheme: true,
   auth_config: [

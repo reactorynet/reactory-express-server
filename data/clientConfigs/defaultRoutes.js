@@ -7,6 +7,15 @@ export default [
     public: true,
     roles: ['ANON'],
     componentFqn: 'core.Login@1.0.0',
+    args: [
+      {
+        key: 'magicLink',
+        value: {
+          type: 'bool',
+          magicLink: false,
+        },
+      },
+    ],
   },
   {
     id: '1',
@@ -16,6 +25,15 @@ export default [
     public: true,
     roles: ['ANON'],
     componentFqn: 'core.ForgotPassword@1.0.0',
+    args: [
+      {
+        key: 'magicLink',
+        value: {
+          type: 'bool',
+          magicLink: false,
+        },
+      },
+    ],
   },
   {
     id: '2',
@@ -35,6 +53,24 @@ export default [
     public: true,
     roles: ['USER'],
     componentFqn: 'core.Logout@1.0.0',
+  },
+  {
+    id: '4',
+    key: 'send-link',
+    title: 'Send Link',
+    path: '/send-link',
+    public: true,
+    roles: ['ANON'],
+    componentFqn: 'core.ForgotPassword@1.0.0',
+    args: [
+      {
+        key: 'magicLink',
+        value: {
+          type: 'bool',
+          magicLink: true,
+        },
+      },
+    ],
   },
   {
     id: '98',

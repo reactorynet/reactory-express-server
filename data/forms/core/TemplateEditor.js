@@ -49,6 +49,68 @@ export const TemplateEditor = {
   uiSchema: TemplateEditorUISchema,
 };
 
+export const TemplateList = {
+  id: 'TemplateList',
+  uiFramework: 'material',
+  uiSupport: ['material', 'bootstrap'],
+  uiResources: [],
+  title: 'Template List',
+  tags: ['Template Editor', 'Forms'],
+  schema: {
+    type: 'array',
+    items: {
+      type: 'object',
+      title: 'Template',
+      properties: {
+        id: {
+          type: 'string',
+          name: 'Template Id',
+        },
+        view: {
+          type: 'string',
+          name: 'View',
+        },
+        format: {
+          type: 'string',
+          name: 'Template Format',
+        },
+        content: {
+          type: 'string',
+          name: 'Content',
+        },
+      },
+    },
+  },
+  registerAsComponent: true,
+  name: 'TemplateList',
+  nameSpace: 'forms',
+  version: '1.0.0',
+  graphql: {
+    query: {
+      new: false,
+      edit: false,
+      name: 'templates',
+      text: `
+        query Templates(){
+          templates() {
+            id
+            view
+            format
+            content             
+          }
+        }
+      `,
+      resultMap: {
+        id: 'id',
+        view: 'view',
+        format: 'status',
+        content: 'content',
+      },
+    },
+  },
+};
+
 export default {
   TemplateEditor,
+  TemplateList,
 };

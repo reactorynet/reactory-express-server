@@ -45,8 +45,13 @@ export default {
     delegate(entry) {
       return User.findById(entry.delegate);
     },
-    peers(entry, context, info) {
-      return Organigram.findOne({ user: entry.delegate }).then();
+    peers(entry, kwargs, context) {
+      const query = {
+        user: ObjectId(entry.delegate),
+        organization: ObjectId(context.organization),
+      };
+      logger.info(`Looking for Organigram Model with  ${query.user} and ${query.organization}`, query);
+      return Organigram.findOne(query).then();
     },
     notifications(entry) {
       return new Promise((resolve) => {
@@ -77,6 +82,22 @@ export default {
     },
     lastAction(entry) {
       return entry.lastAction || 'added';
+    },
+    nextAction(entry) {
+      switch (entry.lastAction) {
+        case 'added': {
+          return 'send-invite';
+        }
+        case 'invite-sent': {
+          return 'launch';
+        }
+        case 'launched': {
+          return 'remind';
+        }
+        default: {
+          return 'close';
+        }
+      }
     },
     message(entry) {
       return entry.message;
@@ -131,8 +152,10 @@ export default {
     surveysList(obj, { sort }) {
       return Admin.Survey.getSurveys();
     },
-    surveyDetail(obj, { surveyId }) {
-      return Survey.findById(surveyId);
+    async surveyDetail(parent, { surveyId }, context, info) {
+      const survey = await Survey.findById(surveyId).then();
+      context.organization = survey.organization;
+      return survey;
     },
   },
   Mutation: {
@@ -311,7 +334,7 @@ export default {
             break;
           }
           case 'launch': {
-            if (organigramModel) {
+            if (organigramModel && organigramModel.confirmedAt) {
               const launchResult = await launchSurveyForDelegate(surveyModel, entryData.entry, organigramModel);
               entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
               if (launchResult.assessments) {

@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
-import { find, isArray } from 'lodash';
+import { find, isArray, isNil } from 'lodash';
 import ReactoryConstants from '../../constants';
+import logger from '../../logging';
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -91,12 +92,29 @@ ReactoryClientSchema.methods.setPassword = function setPassword(password) {
 
 ReactoryClientSchema.methods.getDefaultUserRoles = function getDefaultUserRoles() {
   if (isArray(this.settings) === true && this.settings.length > 0) {
-    const setting = find(this.settings, { names: ReactoryConstants.SETTING_KEYS.NEW_USER_ROLES });
+    const setting = find(this.settings, { name: ReactoryConstants.SETTING_KEYS.NEW_USER_ROLES });
     if (setting && setting.data && isArray(setting)) return setting.data;
     return ['USER'];
   }
 
   return ['USER'];
+};
+
+ReactoryClientSchema.methods.getSetting = function getSetting(name, defaultValue = null, create = false) {
+  logger.info(`Looking up setting ${name}`, { defaultValue, create });
+  if (isArray(this.settings)) {
+    const found = find(this.settings, { name });
+    if (found) return found;
+
+    if (isNil(defaultValue) === false && create === true) {
+      this.settings.push({
+        name, data: defaultValue, componentFqn: null, formSchema: null,
+      });
+      this.save(); // do not wait for return, assume it was saved
+
+      return defaultValue;
+    }
+  } return null;
 };
 
 ReactoryClientSchema.methods.validatePassword = function validatePassword(password) {

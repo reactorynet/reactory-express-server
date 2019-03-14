@@ -8,7 +8,7 @@ import sgMail from '@sendgrid/mail';
 import ejs from 'ejs';
 import lodash, { isNil } from 'lodash';
 import ApiError, { RecordNotFoundError, OrganizationNotFoundError } from '../exceptions';
-import { Template, ReactoryClient, EmailQueue, User } from '../models';
+import { Template, ReactoryClient, EmailQueue, User, Organization } from '../models';
 import defaultEmailTemplates from './defaultEmailTemplates';
 import AuthConfig from '../authentication';
 import logger from '../logging';
@@ -31,6 +31,39 @@ const {
   //  LEGACY_APP_DATA_ROOT,
 } = process.env;
 
+
+/**
+ * Return the user email address in the following format:
+ * @param {UserModel} user
+ * @param {ReactorClient} partner
+ */
+const resolveUserEmailAddress = (user, reactoryClient = null) => {
+  const { partner } = global;
+  const { MODE } = process.env;
+
+  let partnerToUse = partner;
+
+  if (lodash.isNil(reactoryClient) === true) {
+    partnerToUse = reactoryClient;
+  }
+
+  // check if we have a redirect setting for this mode
+  const redirectSetting = partnerToUse.getSetting(`email_redirect/${MODE}`);
+  let emailAddress = user.email;
+
+  if (isNil(redirectSetting) === false && isNil(redirectSetting.data) === false) {
+    const { email, enabled } = redirectSetting.data;
+    if (isNil(email) === false && enabled === true) emailAddress = email;
+  }
+
+  logger.info(`Email Address has been resolved as, ${emailAddress}`, { emailAddress, redirectSetting });
+
+  return {
+    to: `${user.firstName} ${user.lastName}<${emailAddress}>`,
+    from: `${partnerToUse.name}<${partnerToUse.email}>`,
+  };
+};
+
 const sendActivationEmail = (user) => {
   return new Promise((resolve, reject) => {
     try {
@@ -49,9 +82,9 @@ const sendActivationEmail = (user) => {
 
         templateResult.elements.forEach((templateElement) => {
           switch (templateElement.view) {
-            case `${TemplateViews.ForgotPassword}/subject`: subjectTemplate = templateElement; break;
-            case `${TemplateViews.ForgotPassword}/body`: bodyTemplate = templateElement; break;
-            case `${TemplateViews.ForgotPassword}/text`: textTemplate = templateElement; break;
+            case `${TemplateViews.ActivationEmail}/subject`: subjectTemplate = templateElement; break;
+            case `${TemplateViews.ActivationEmail}/body`: bodyTemplate = templateElement; break;
+            case `${TemplateViews.ActivationEmail}/text`: textTemplate = templateElement; break;
             default: break;
           }
         });
@@ -62,6 +95,7 @@ const sendActivationEmail = (user) => {
           subject: ejs.render(subjectTemplate, properties),
           text: ejs.render(textTemplate, properties),
           html: ejs.render(bodyTemplate, properties),
+          ...resolveUserEmailAddress(user, partner),
         };
 
         sgMail.send(msg);
@@ -192,6 +226,7 @@ const sendForgotPasswordEmail = (user, organization = null) => {
         const msg = {
           to: `${user.fistName} ${user.lastName}<${user.email}>`,
           from: `${partner.name}<${partner.email}>`,
+          ...resolveUserEmailAddress(user, partner),
         };
 
         try {
@@ -382,6 +417,8 @@ export const surveyEmails = {
         isSelfAssessment: ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true,
         survey,
         applicationTitle: partner.name,
+        timeEnd: moment(survey.endDate).format('HH:mm'),
+        dateEnd: moment(survey.endDate).format('YYYY-MM-DD'),
         assessmentLink: `${partner.siteUrl}/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel))}&redirect=/assessment/${assessment.id}`,
       };
 
@@ -406,6 +443,7 @@ export const surveyEmails = {
       const msg = {
         to: `${assessorModel.firstName} ${assessorModel.lastName}<${assessorModel.email}>`,
         from: `${properties.applicationTitle}<${partner.email}>`,
+        ...resolveUserEmailAddress(assessorModel, partner),
       };
 
       // load and set subject
@@ -519,6 +557,7 @@ export const surveyEmails = {
       const msg = {
         to: `${assessor.firstName} ${assessor.lastName}<${assessor.email}>`,
         from: `${properties.applicationTitle}<${partner.email}>`,
+        ...resolveUserEmailAddress(assessor, partner),
       };
 
       // load and set subject
@@ -604,12 +643,15 @@ export const surveyEmails = {
 
       logger.info('Api Key Set, configuring property bag for template.');
       // property bag for template
+      const authToken = AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate));
       const properties = {
         partner,
         delegate,
         survey,
+        organization: await Organization.findById(survey.organization).then(),
         applicationTitle: partner.name,
-        link: `${partner.siteUrl}/profile/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate))}&peerconfig=true`,
+        authToken,
+        link: `${partner.siteUrl}/profile/?auth_token=${authToken}&peerconfig=true`,
       };
 
       let bodyTemplate = null;
@@ -633,6 +675,7 @@ export const surveyEmails = {
       const msg = {
         to: `${delegate.firstName} ${delegate.lastName}<${delegate.email}>`,
         from: `${properties.applicationTitle}<${partner.email}>`,
+        ...resolveUserEmailAddress(delegate, partner),
       };
 
       // load and set subject
@@ -693,7 +736,7 @@ export const surveyEmails = {
 };
 
 export const organigramEmails = {
-  confirmedAsPeer: async (peer, user, organization = null) => {
+  confirmedAsPeer: async (peer, user, relationShip, organization = null) => {
     // final object item to return
     if (lodash.isNil(peer)) throw new ApiError('peer parameter for confirmedAsPeer cannot be null / undefined');
     if (lodash.isNil(user)) throw new ApiError('user parameter for confirmedAsPeer cannot be null / undefined');
@@ -728,6 +771,8 @@ export const organigramEmails = {
         user,
         employee: user,
         applicationTitle: partner.name,
+        relationShip,
+        organization,
         profileLink: `${partner.siteUrl}/profile/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(user))}`,
       };
 
@@ -750,8 +795,9 @@ export const organigramEmails = {
 
 
       const msg = {
-        to: `${user.firstName} ${user.lastName}<${peer.email}>`,
+        to: `${peer.firstName} ${peer.lastName}<${peer.email}>`,
         from: `${properties.applicationTitle}<${partner.email}>`,
+        ...resolveUserEmailAddress(peer, partner),
       };
 
       // load and set subject

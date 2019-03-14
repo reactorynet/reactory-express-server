@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { isNil } from 'lodash';
 import logger from '../../logging';
+import ApiError from '../../exceptions';
 
 const { ObjectId } = mongoose.Schema.Types;
 const TemplateSchema = mongoose.Schema({
@@ -66,5 +67,23 @@ TemplateSchema.statics.findClientTemplate = function findClientTemplate(template
   if (organization && organization._id) qry.organization = organization._id; // eslint-disable-line no-underscore-dangle
   return this.findOne(qry).then();
 };
+
+TemplateSchema.statics.templates = async (client = null, organization = null) => {
+  if (isNil(client) === false && ObjectId.isValid(client)) {
+    if (isNil(organization) === false && ObjectId.isValid(organization) === true) {
+      return this.find({
+        client: ObjectId(client),
+        organization: ObjectId(organization),
+      }).then();
+    }
+
+    return this.find({
+      client: ObjectId(client),
+    }).then();
+  }
+  // use default partner tempaltes
+  return this.find({ client: global.partner._id }).then();
+};
+
 const TemplateModel = mongoose.model('Template', TemplateSchema);
 export default TemplateModel;

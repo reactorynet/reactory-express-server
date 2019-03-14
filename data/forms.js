@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { defaultFormProps } from './forms/defs';
 import { FormBuilder } from './forms/core/FormBuilder';
 import { HelpFormEdit, HelpListForm } from './forms/core/HelpEditor';
-import { TemplateEditor } from './forms/core/TemplateEditor';
+import { TemplateEditor, TemplateList } from './forms/core/TemplateEditor';
 import { SurveySettingsForm } from './forms/towerstone/SurveySettings';
 import TaskDetailForm from './forms/core/task';
 
@@ -1702,6 +1702,7 @@ export default [
   HelpFormEdit,
   HelpListForm,
   TemplateEditor,
+  TemplateList,
   TowerStoneTaskDetailForm,
   UserPeers,
 ];
