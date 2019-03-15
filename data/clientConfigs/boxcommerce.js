@@ -50,28 +50,37 @@ export default {
       roles: ['USER'],
       entries: [
         {
-          ordinal: 0, title: 'Dashboard', link: '/', icon: 'dashboard', roles: ['USER', 'ADMIN'],
+          ordinal: 0, title: 'Home', link: '/', icon: 'dashboard', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 1, title: 'Website', link: '/editor', icon: 'create', roles: ['USER', 'ADMIN'],
+          ordinal: 1, title: 'Edit Site', link: '/editor', icon: 'create', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 2, title: 'Shop', link: '/shop', icon: 'shopping_cart', roles: ['USER', 'ADMIN'],
+          ordinal: 2, title: 'Products', link: '/products', icon: 'shop', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 3, title: 'Marketing', link: '/marketing', icon: 'phone_in_talk', roles: ['USER', 'ADMIN'],
+          ordinal: 3, title: 'Orders', link: '/orders', icon: 'share', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 4, title: 'Analytics', link: '/analytics', icon: 'multiline_chart', roles: ['USER', 'ADMIN'],
+          ordinal: 4, title: 'Shipping', link: '/shipping', icon: 'local_shipping', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 12, title: 'Inbox', link: '/inbox', icon: 'email', roles: ['USER', 'ADMIN'],
+          ordinal: 12, title: 'Customers', link: '/customers', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 13, title: 'Profile', link: '/profile', icon: 'account_circle', roles: ['USER', 'ADMIN'],
+          ordinal: 13, title: 'Marketing', link: '/marketing', icon: 'speaker', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 13, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER', 'ADMIN'],
+          ordinal: 14, title: 'Analytics', link: '/analytics', icon: 'bar_chart', roles: ['USER', 'ADMIN'],
+        },
+        {
+          ordinal: 15, title: 'Domain', link: '/domain', icon: 'public', roles: ['USER', 'ADMIN'],
+        },
+        {
+          ordinal: 15, title: 'Settings', link: '/domain', icon: 'settings', roles: ['USER', 'ADMIN'],
+        },
+        {
+          ordinal: 15, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER', 'ADMIN'],
         },
       ],
     },
@@ -144,18 +153,18 @@ export default {
     },
     type: 'material',
     palette: {
-      primary1Color: '#5F12C2',
+      primary1Color: '#6D7381',
       primary: {
-        light: '#E87BD6',
-        main: '#5F12C2',
-        dark: '#890EC1',
-        contrastText: '#ffffff',
+        light: '#F4F5FA',
+        main: '#6D7381',
+        dark: '#899BF6',
+        contrastText: '#F4F5FA',
       },
       secondary: {
-        light: '#4BC4B5',
-        main: '#2565BF',
-        dark: '#1182AC',
-        contrastText: '#ffffff',
+        light: '#F4F5FA',
+        main: '#6D7381',
+        dark: '#899BF6',
+        contrastText: '#F4F5FA',
       },
     },
     assets: {
@@ -164,9 +173,9 @@ export default {
       favicon: `${CDN_ROOT}/themes/${key}/images/favicon.png`,
     },
     content: {
-      appTitle: 'BoxCommerce - Editor',
+      appTitle: 'BoxCommerce',
       login: {
-        message: 'BoxCommerce - Editor',
+        message: 'BoxCommerce',
       },
     },
   },

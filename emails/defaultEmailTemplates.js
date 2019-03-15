@@ -174,7 +174,7 @@ export default [
         view: 'towerstone.peer-invite-email/subject',
         kind: 'content',
         format: 'text',
-        content: 'You have been confirmed as a peer for <%= user.firstName %> on the <%= applicationTitle %> assessment platform.',
+        content: 'You have been nominated as a peer for <%= delegate.firstName %> on the <%= applicationTitle %> assessment platform.',
         parameters: [
           {
             name: 'applicationTitle',
