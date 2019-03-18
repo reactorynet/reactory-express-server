@@ -238,7 +238,7 @@ export default [
         view: 'towerstone.survey-launch-email/subject',
         kind: 'content',
         format: 'text',
-        content: 'You have been confirmed as a peer for <%= user.firstName %> on the <%= applicationTitle %> assessment platform.',
+        content: 'You have been confirmed as an assessor for <%= delegate.firstName %> on the <%= applicationTitle %> assessment platform.',
         parameters: [
           {
             name: 'applicationTitle',
@@ -302,7 +302,7 @@ export default [
         view: 'towerstone.survey-reminder-email/subject',
         kind: 'content',
         format: 'text',
-        content: 'You have been confirmed as a peer for <%= user.firstName %> on the <%= applicationTitle %> assessment platform.',
+        content: 'Please remember to complete assessments for <%= delegate.firstName %> on the <%= applicationTitle %> assessment platform.',
         parameters: [
           {
             name: 'applicationTitle',
