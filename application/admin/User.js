@@ -137,7 +137,7 @@ export const listAllForOrganization = (organizationId, searchString = '') => {
   return new Promise((resolve, reject) => {
     Organization.findOne({ _id: ObjectId(organizationId) }).then((organization) => {
       if (organization) {
-        const query = { 'memberships.organizationId': { $eq: organization._id } };
+        const query = { 'memberships.organizationId': { $eq: organization._id }, $or: [{ deleted: false }, { deleted: { $exists: false } }] };
         if (searchString.length > 0) {
           if (searchString.indexOf('@') > 0) {
             query.email = new RegExp(`${searchString}`, 'g');
@@ -148,7 +148,7 @@ export const listAllForOrganization = (organizationId, searchString = '') => {
             query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'g');
           }
         }
-        debugger; //eslint-disable-line
+        // debugger; //eslint-disable-line
         User.find(query).sort('firstName lastName').then((users) => {
           resolve(users);
         }).catch((err) => {

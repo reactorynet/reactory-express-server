@@ -79,6 +79,10 @@ const UserSchema = new mongoose.Schema({
   ],
   legacyId: Number,
   lastLogin: Date,
+  deleted: {
+    type: Boolean,
+    required: false,
+  },
   createdAt: {
     type: Date,
     required: true,
@@ -259,6 +263,11 @@ UserSchema.methods.hasMembership = function hasMembership(clientId, organization
 };
 
 UserSchema.methods.fullName = function fullName() { return `${this.firstName} ${this.lastName}`; };
+
+UserSchema.methods.deleteUser = function deleteUser() {
+  this.deleted = true;
+  this.save();
+};
 
 const UserModel = mongoose.model('User', UserSchema);
 export default UserModel;

@@ -49,6 +49,7 @@ type User {
   firstName: String
   lastName: String
   email: String  
+  deleted: Boolean
   peers: UserPeers,  
   salt: String,
   password: String
@@ -124,6 +125,7 @@ input PeerInput {
 extend type Mutation {
   createUser(input: CreateUserInput!, organizationId: String!): User
   updateUser(id: String!, profileData: UpdateUserInput!): User
+  deleteUser(id: String!): Boolean
   setOrganizationForUser(id: String!, organizationId: String) : Boolean
   setPeersForUser(id: String!, peers: [PeerInput], sendConfirmations: Boolean): UserPeers
   setPeerRelationShip(id: String!, peer: String!, organization: String!, relationship: PeerType): UserPeers 
@@ -132,7 +134,7 @@ extend type Mutation {
   setPassword(input: UpdatePasswordInput!): User  
   confirmPeers(id: String!, organization: String!): UserPeers
   addUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]
-  removeUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]
+  removeUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]  
 }
 
 extend type Subscription {

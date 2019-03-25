@@ -21,7 +21,7 @@ import AuthConfig from '../../../authentication';
 import logger from '../../../logging';
 import iz from '../../../utils/validators';
 import TaskModel from '../../schema/Task';
-import { isObject } from 'util';
+import { isObject, isNull } from 'util';
 
 const uuid = require('uuid');
 
@@ -241,6 +241,9 @@ const userResolvers = {
       }
 
       return [];
+    },
+    deleted(user) {
+      return user.deleted || false;
     },
   },
   UserMembership: {
@@ -618,6 +621,13 @@ const userResolvers = {
 
 
       return userToUpdate.memberships;
+    },
+    async deleteUser(parent, { id }) {
+      const user = await User.findById(id).then();
+      if (isNil(user) === true) throw new RecordNotFoundError(`Could not locate the user with the id ${id}`);
+      user.deleted = true;
+      await user.save().then();
+      return true;
     },
   },
 };
