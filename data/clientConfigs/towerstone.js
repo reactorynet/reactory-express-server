@@ -177,7 +177,7 @@ export default {
       roles: ['USER'],
       componentFqn: 'towerstone.Assessment@1.0.0',
     },
-    {
+    /* {
       key: 'reports',
       title: 'Reports',
       path: '/reports/**',
@@ -211,7 +211,7 @@ export default {
           },
         ],
       },
-    },
+    }, */
     {
       key: 'profile',
       title: 'Profile',
