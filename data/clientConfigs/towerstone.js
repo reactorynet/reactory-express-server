@@ -262,6 +262,7 @@ export default {
     assets: {
       featureImage: `${CDN_ROOT}themes/towerstone/images/featured.jpg`,
       logo: `${CDN_ROOT}themes/towerstone/images/logo.png`,
+      emailLogo: `${CDN_ROOT}themes/towerstone/images/logo_small.png`,
       favicon: `${CDN_ROOT}themes/towerstone/images/favicon.png`,
       avatar: `${CDN_ROOT}themes/towerstone/images/avatar.png`,
     },
