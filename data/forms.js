@@ -1342,15 +1342,15 @@ const BusinessUnitList = {
     properties: {
       organization: {
         type: 'object',
-        title: 'Organization',
+        title: 'Organisation',
         properties: {
           id: {
             type: 'string',
-            title: 'Organization Id',
+            title: 'Organisation Id',
           },
           name: {
             type: 'string',
-            title: 'Organization Name',
+            title: 'Organisation Name',
           },
           logo: {
             type: 'string',

@@ -167,6 +167,15 @@ export default {
       public: false,
       roles: ['USER'],
       componentFqn: 'towerstone.Surveys@1.0.0',
+      componentProps: {
+        minimal: false,
+      },
+      args: {
+        key: 'minimal',
+        value: {
+          minimal: false,
+        },
+      },
     },
     {
       key: 'assessment',
