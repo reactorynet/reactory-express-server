@@ -88,7 +88,7 @@ export const TemplateList = {
   graphql: {
     query: {
       new: false,
-      edit: false,
+      edit: true,
       name: 'templates',
       text: `
         query Templates(){
