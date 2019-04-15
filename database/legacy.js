@@ -39,7 +39,7 @@ export const querySync = co.wrap(function* querySync(query, options) {
         reject(error);
       }
     };
-    if (options && options.log) console.log('Executing query: ', query, options);
+    if (options && options.log) //console.log('Executing query: ', query, options);
     getPool(typeof options === 'object' ? { ...options } : options).query(query, resultCallback);
   });
 

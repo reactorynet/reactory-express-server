@@ -56,7 +56,7 @@ bot.dialog('login', [
   (session, results) => {
     if (results.response) {
       const user = new User({ user });
-      console.log('Password received, matching', user);
+      //console.log('Password received, matching', user);
       if (user.validatePassword(results.response) === true) {
         session.send('Login successful');
         session.endDialog();
@@ -162,7 +162,7 @@ bot.dialog('collectPersonal', [
 
 // Every 5 seconds, check for new registered users and start a new dialog
 const greetNewUser = (message) => {
-  console.log('greetIfNewUser()', message);
+  //console.log('greetIfNewUser()', message);
   message.membersAdded.map((member) => {
     if (!isBot(member)) {
       const reply = new builder.Message()
@@ -193,6 +193,6 @@ bot.on('conversationUpdate', (message) => {
   }
 });
 
-console.log('Bot started');
+//console.log('Bot started');
 
 export default botConnector;

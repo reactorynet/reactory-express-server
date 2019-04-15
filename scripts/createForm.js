@@ -46,7 +46,7 @@ rl.question('NameSpace: ', (nameSpace) => {
     rl.question('Name: ', (name) => {
       formInfo.indexJson.name = name;    
       const folder = path.resolve(`${process.cwd()}/../${formInfo.folder}/${formInfo.model}`);
-      console.log(`Resolved Path: ${folder}`);
+      //console.log(`Resolved Path: ${folder}`);
       if (!fs.existsSync(folder)) fs.mkdirSync(folder);
       fs.writeFileSync(`${folder}/${formInfo.indexJson.name}.json`, `${JSON.stringify(formInfo.indexJson)}`);      
       fs.writeFileSync(`${folder}/uiSchema.js`, `${defaultUiSchemaContent}`);

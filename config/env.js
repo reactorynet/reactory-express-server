@@ -37,6 +37,6 @@ dotenvFiles.forEach((dotenvFile) => {
 
 module.exports = {
   config: () => {
-    console.log('Files', dotenvFiles);
+    //console.log('Files', dotenvFiles);
   },
 };

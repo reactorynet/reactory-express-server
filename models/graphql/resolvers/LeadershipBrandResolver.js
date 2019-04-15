@@ -50,7 +50,7 @@ const leadershipBrandResolver = {
   },
   Mutation: {
     createBrandForOrganization(obj, args, context, info) {
-      console.log('createBrandForOrganization()', {
+      //console.log('createBrandForOrganization()', {
         obj, args, context, info,
       });
 
@@ -61,7 +61,7 @@ const leadershipBrandResolver = {
       return leadershipBrand.save();
     },
     updateBrandForOrganization(obj, args, context, info) {
-      console.log('updateBrandForOrganization', {
+      //console.log('updateBrandForOrganization', {
         obj, args, context, info,
       });
       const { brandInput } = args;

@@ -3,14 +3,14 @@ import logger from '../../logging';
 
 class AfterLogin extends StepBody {
   run(context) {
-    console.log('After Loging', { context, date: new Date().valueOf() });
+    //console.log('After Loging', { context, date: new Date().valueOf() });
     return ExecutionResult.next();
   }
 }
 
 class BeforeLogin extends StepBody {
   run(context) {
-    console.log('Running Before Login', { context, date: new Date().valueOf() });
+    //console.log('Running Before Login', { context, date: new Date().valueOf() });
     return ExecutionResult.next();
   }
 }
@@ -22,7 +22,7 @@ class LoginWorkflow {
   }
 
   build(builder) {
-    console.log('building', builder);
+    //console.log('building', builder);
     builder
       .startWith(BeforeLogin)
       .then(AfterLogin);

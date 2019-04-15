@@ -12,19 +12,19 @@ router.options('/register', (req, res) => {
 
 router.post('/register', (req, res) => {
   const { user, organization } = req.body;
-  console.log('processing registration request', { user, organization });
+  //console.log('processing registration request', { user, organization });
   Promise.all([
     Admin.Organization.findOrCreate(organization),
     Admin.User.registerUser(user),
   ]).then((results) => {
-    console.log('All promises resolved', results);
+    //console.log('All promises resolved', results);
     const { partner } = global;
     const addedRoles = [];
     const organizationResult = results[0];
     const userResult = results[1];
     if (isNil(organization.id) === true) addedRoles.push('ORG_ADMIN');
     Admin.User.createMembership(userResult, partner, organizationResult, ['USER', ...addedRoles]).then((membershipResult) => {
-      console.log('Membership Result', membershipResult);
+      //console.log('Membership Result', membershipResult);
       res.send({
         firstName: userResult.firstName,
         lastName: userResult.lastName,

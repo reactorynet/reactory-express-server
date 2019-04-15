@@ -388,6 +388,11 @@ const userResolvers = {
   Mutation: {
     createUser: async (obj, { input, organizationId, password }, context, info) => {
       logger.info(`Create user mutation called ${input.email}`);
+      const existing = await User.findOne({ email: input.email }).then();
+      logger.info(`Checked user with email address ${input.email} result: ${isNil(existing) === false ? `Found [${existing._id.toString()}]` : 'Not Found'}`);
+
+      if (isNil(existing) === false) return existing;
+
       if (isNil(organizationId) === false && isNil(input) === false) {
         const organization = await Organization.findById(organizationId);
         const createResult = await Admin.User.createUserForOrganization(input, password || 'Password123!', organization).then();
@@ -504,6 +509,12 @@ const userResolvers = {
         user: ObjectId(id),
         organization: ObjectId(organization),
       }).then();
+
+      // ignore the operation if the peer and id is the same, we
+      // cannot have a user be their own peer
+      if (ObjectId(id).equals(ObjectId(peer))) {
+        return userOrganigram;
+      }
 
       if (userOrganigram === null) {
         logger.info('User Organigram Not Found');

@@ -9,7 +9,7 @@ const corsOptions = {
    * (which expects the signature err [object], allow [bool]) as the second.
    */
   origin(origin, callback) {
-    console.log('checking origin', origin);
+    //console.log('checking origin', origin);
     callback(null, true);
     /*
     if (whitelist.indexOf(origin) !== -1) {

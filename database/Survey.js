@@ -120,7 +120,7 @@ const ratingsForAssessment = (id) => {
 
 const behavioursForQuality = co.wrap(function* listBehavioursForQualityGenerator(id, options) {
   const behaviourRows = yield querySync(behaviourForQualityQuery(id), options);
-  console.log(`Found ${behaviourRows.length} behaviour rows`);
+  //console.log(`Found ${behaviourRows.length} behaviour rows`);
   if (behaviourRows.length && behaviourRows.length === 0) return [];
   const now = new Date().valueOf();
   const behaviours = [];
@@ -132,13 +132,13 @@ const behavioursForQuality = co.wrap(function* listBehavioursForQualityGenerator
       updateAt: now,
     });
   }
-  console.log(`Returning ${behaviours.length} behaviours`);
+  //console.log(`Returning ${behaviours.length} behaviours`);
   return behaviours;
 });
 
 const qualitiesForBrand = co.wrap(function* listQualitiesForBrand(id, options) {
   const qualitiesRows = yield querySync(qualitiesForBrandQuery(id), options);
-  console.log(`Found ${qualitiesRows.length} in db`);
+  //console.log(`Found ${qualitiesRows.length} in db`);
   if (qualitiesRows.length === 0) return [];
 
   const now = new Date().valueOf();
@@ -158,7 +158,7 @@ const qualitiesForBrand = co.wrap(function* listQualitiesForBrand(id, options) {
       console.error(someErr.message);
     }
   }
-  console.log(`Returning ${qualities.length} qualities`);
+  //console.log(`Returning ${qualities.length} qualities`);
   return qualities;
 });
 
@@ -170,11 +170,11 @@ const qualitiesForBrand = co.wrap(function* listQualitiesForBrand(id, options) {
 function* listBrandsForOrganization(id, options) {
   const leadershipBrandsForOrganizationRows = yield querySync(leadershipBrandForOrganizationQuery(id, options)); // yield requestWrapper;
   if (leadershipBrandsForOrganizationRows && leadershipBrandsForOrganizationRows.length === 0) {
-    console.log('Organization has no leadership brands');
+    //console.log('Organization has no leadership brands');
     return [];
   }
 
-  console.log(`Organization has ${leadershipBrandsForOrganizationRows.length} leadership brands`);
+  //console.log(`Organization has ${leadershipBrandsForOrganizationRows.length} leadership brands`);
   const leadershipBrands = [];
   const now = new Date().valueOf();
   for (let lbi = 0; lbi < leadershipBrandsForOrganizationRows.length; lbi += 1) {
@@ -248,7 +248,7 @@ WHERE
 ORDER BY sv.valid_from
     `, options);
   if (rows && rows.length > 0) {
-    console.log(`Found ${rows.length} surveys for organization`);
+    //console.log(`Found ${rows.length} surveys for organization`);
     return rows.map((surveyRow) => {
       const survey = {
         ...surveyRow,
@@ -335,7 +335,7 @@ export default class Survey {
 
       const assessmentRowResult = yield requestWrapper;
 
-      console.log(`${assessmentRowResult.length} assessment data (s) matching query`);
+      //console.log(`${assessmentRowResult.length} assessment data (s) matching query`);
       _.map(assessmentRowResult, (rowResult) => {
         assessmentData.leadershipBrand.description = rowResult.brandStatement;
         assessmentData.leadershipBrand.id = ObjectId();

@@ -3,7 +3,7 @@
 
 // const restServer = restify.createServer();
 // restServer.listen(process.env.REST_PORT || 3978, () => {
-//  console.log('%s listening to %s', restServer.name, restServer.url);
+//  //console.log('%s listening to %s', restServer.name, restServer.url);
 // });
 
 // Listen for messages from users

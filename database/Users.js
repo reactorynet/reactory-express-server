@@ -75,7 +75,7 @@ export default class Users {
       _.map(userRows, userRow => users.push({ ...userRow }));
       return users;
     } catch (e) {
-      console.log('Error performing query', e);
+      //console.log('Error performing query', e);
       return [];
     }
   });
@@ -101,7 +101,7 @@ export default class Users {
       _.map(userRows, userRow => users.push({ ...userRow }));
       return users;
     } catch (e) {
-      console.log('Error performing query', e);
+      //console.log('Error performing query', e);
       return [];
     }
   });
@@ -110,7 +110,7 @@ export default class Users {
     try {
       return yield querySync(selectPeersForUserQuery(userId, organizationId, options));
     } catch (listError) {
-      console.log('error running query', listError);
+      //console.log('error running query', listError);
       return [];
     }
   });

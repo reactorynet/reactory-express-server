@@ -43,14 +43,14 @@ class AzureBlobStorage {
     const shareURL = ShareURL.fromServiceURL(this.serviceURL, '/');
     const directoryURL = DirectoryURL.fromShareURL(shareURL, path);
     await directoryURL.create(Aborter.none);
-    console.log(`share ${path} created successfully`);
+    //console.log(`share ${path} created successfully`);
     return true;
   }
 
   async writeFile(path, fileName, content) {
     const fileURL = FileURL.fromDirectoryURL(path, fileName);
     await fileURL.create(Aborter.none, content.length);
-    console.log(`Upload block blob ${fileName} successfully`);
+    //console.log(`Upload block blob ${fileName} successfully`);
   }
 
   async ls(path = '/') {
@@ -65,7 +65,7 @@ class AzureBlobStorage {
       marker = listSharesResponse.nextMarker;
       for (let si = 0; si <= listSharesResponse.shareItems.length; si += 1) {
         const share = listSharesResponse.shareItems[si];
-        console.log(`\tShare: ${share.name}`, share);
+        //console.log(`\tShare: ${share.name}`, share);
         folders.push(share.name);
       }
     } while (marker);
@@ -87,7 +87,7 @@ class AzureBlobStorage {
 
       for (let bi = 0; bi <= listBlobsResponse.segment.blobItems.length; bi += 1) {
         const blob = listBlobsResponse.segment.blobItems[bi];
-        console.log(`Blob: ${blob.name}`);
+        //console.log(`Blob: ${blob.name}`);
         files.push(blob);
       }
     } while (marker);

@@ -48,7 +48,7 @@ const getSurveysForOrganization = (organization) => {
   return new Promise((resolve, reject) => {
     if (!organization) reject(new Error('Organization is null'));
     Survey.find({ organization }).then((surveys) => {
-      console.log(`Found ${surveys.length} surveys for organization`);
+      //console.log(`Found ${surveys.length} surveys for organization`);
       resolve(surveys);
     }).catch((findErr) => {
       reject(findErr);
@@ -170,7 +170,7 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
  * @param {*} organigram
  */
 export const sendSurveyRemindersForDelegate = async (survey, delegateEntry, organigram) => {
-  console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
+  //console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
 
   const result = (message, success = false) => {
     return {
@@ -195,7 +195,7 @@ export const sendSurveyRemindersForDelegate = async (survey, delegateEntry, orga
  * @param {*} organigram
  */
 export const sendSurveyClosed = async (survey, delegateEntry, organigram) => {
-  console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
+  //console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
 
   const result = (message, success = false) => {
     return {
@@ -220,7 +220,7 @@ export const sendSurveyClosed = async (survey, delegateEntry, organigram) => {
  * @param {*} organigram
  */
 export const sendReportOverview = async (survey, delegateEntry, organigram) => {
-  console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
+  //console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
 
   const result = (message, success = false) => {
     return {
@@ -267,7 +267,7 @@ export const sendSurveyEmail = async (survey, delegateEntry, organigram, emailTy
 
   const { firstName, lastName } = delegate;
 
-  console.log(`Sending Survey Email[${emailType}]: ${survey.title} for delegate ${firstName} ${lastName}`);
+  //console.log(`Sending Survey Email[${emailType}]: ${survey.title} for delegate ${firstName} ${lastName}`);
 
 
   const _delegateEntry = {
@@ -309,7 +309,7 @@ export const sendSurveyEmail = async (survey, delegateEntry, organigram, emailTy
  * @param {*} organigram
  */
 export const sendPeerNominationNotifications = async (user, organigram) => {
-  console.log('Sending Peer Nominations', user, organigram);
+  //console.log('Sending Peer Nominations', user, organigram);
 
   const result = (message, success = false) => {
 

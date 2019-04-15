@@ -43,7 +43,7 @@ export default class Organization {
       });
 
       const organizationRows = yield requestWrapper;
-      console.log(`${organizationRows.length} organizations(s) matching query`);
+      //console.log(`${organizationRows.length} organizations(s) matching query`);
       _.map(organizationRows, organizationRow => organizations.push({
         id: null,
         ...organizationRow,
@@ -74,7 +74,7 @@ export default class Organization {
       });
 
       const organizationRows = yield requestWrapper;
-      console.log(`${organizationRows.length} organizations matching query`);
+      //console.log(`${organizationRows.length} organizations matching query`);
       _.map(organizationRows, organizationRow => organizations.push({
         id: null,
         ...organizationRow,

@@ -140,7 +140,7 @@ SurveySchema.methods.clearedForLaunchBySurvey = function clearedForLaunchBySurve
   const statusReady = (this.status === 'ready' || this.status === 'launched');
   const startDateReady = moment(this.startDate).isSameOrBefore(moment());
   const endDateReady = moment(this.endDate).isSameOrAfter(moment());
-  console.log('clearedForLaunch', statusReady, startDateReady, endDateReady);
+  //console.log('clearedForLaunch', statusReady, startDateReady, endDateReady);
 
   return statusReady && startDateReady && endDateReady;
 };

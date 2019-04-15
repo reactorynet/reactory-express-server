@@ -39,7 +39,7 @@ const organizationResolver = {
   },
   Query: {
     allOrganizations(obj, args, context, info) {
-      console.log('listing organizations', {
+      //console.log('listing organizations', {
         obj, args, context, info,
       });
 
@@ -50,7 +50,7 @@ const organizationResolver = {
       return Organization.find({}).then();
     },
     organizationWithId(obj, args, context, info) {
-      console.log('listing organizationWithId', {
+      //console.log('listing organizationWithId', {
         obj, args, context, info,
       });
       return Organization.findOne({ _id: args.id }).then();
@@ -101,7 +101,7 @@ const organizationResolver = {
       return organization;
     },
     migrateOrganization(obj, arg, context, info) {
-      console.log('Migrating organization data', {
+      //console.log('Migrating organization data', {
         obj, arg, context, info, partner: global.partner,
       });
       const { id, options } = arg;

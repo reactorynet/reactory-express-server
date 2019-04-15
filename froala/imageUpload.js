@@ -91,7 +91,7 @@ function azureUpload(req, callback) {
     // Generate link.
     const randomName = `${sha1(new Date().getTime())}.${getExtension(filename)}`;
     link = `${azureStorage.storageURL}${fileRoute}${randomName}`;
-    console.log(`link to file is ${link}`);
+    //console.log(`link to file is ${link}`);
     // Generate path where the file will be saved.
     // const appDir = path.dirname(require.main.filename);
     saveToPath = path.join(APP_DATA_ROOT, 'temp', randomName);
@@ -136,9 +136,9 @@ const uploaders = {
 
 function upload(req, callback) {
   // The route on which the image is saved.
-  console.log('Check query', req.query);
+  //console.log('Check query', req.query);
   if (req.query.storage) {
-    console.log(`Params have storage: ${req.query.storage}`);
+    //console.log(`Params have storage: ${req.query.storage}`);
     if (uploaders[req.query.storage]) {
       return uploaders[req.query.storage](req, callback);
     }

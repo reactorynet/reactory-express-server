@@ -59,7 +59,7 @@ class WorkFlowRunner {
     const host = config.getHost();
     try {
       workflows.forEach((workflow) => {
-        console.log('Registering workflow', { workflow });
+        //console.log('Registering workflow', { workflow });
         host.registerWorkflow(workflow.component);
       });
       await host.start();

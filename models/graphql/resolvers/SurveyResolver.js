@@ -344,7 +344,7 @@ export default {
               entryData.entry.status = launchResult.success ? 'launched' : entryData.entry.status;
               entryData.entry.lastAction = launchResult.success ? 'launched' : 'launch-fail';
             } else {
-              // console.log('No Organigram Model', organigramModel);
+              // //console.log('No Organigram Model', organigramModel);
               entryData.entry.message = `Please set user organigram / peers. ${delegateModel.firstName} ${delegateModel.lastName}`;
               entryData.patch = true;
               entryData.entry.status = 'new';
@@ -402,7 +402,7 @@ export default {
           await surveyModel.save().then();
         }
       } catch (error) {
-        console.log(error);
+        //console.log(error);
       }
       return entryData.entry;
     },
