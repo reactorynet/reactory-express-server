@@ -329,7 +329,6 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
         ab.survey_id as legacySurveyId,
       */
       const assessments = yield legacy.Survey.listAssessmentsForOrganization(id, options);
-      //console.log(`Importing ${assessments.length} assessments for organization ${result.organization.name}`);
       for (let aid = 0; aid < assessments.length; aid += 1) {
         const survey = yield Survey.findOne({ legacyId: assessments[aid].legacySurveyId }).then();
         const leadershipBrand = yield LeadershipBrand.findById(survey.leadershipBrand).then();
@@ -337,13 +336,7 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
         const assessor = yield User.findOne({ legacyId: assessments[aid].legacyAssessorId }).then();
         // we don't use the client on global scope, as it is admin function override
         const client = yield ReactoryClient.findOne({ key: options.clientKey }).then();
-        //console.log(`Resolve assessment info: (${aid + 1}/${assessments.length})
-        Survey: ${survey.title}
-        Delegate: ${delegate.email}
-        Assessor: ${assessor.email}
-        Self Assessment: ${delegate._id === assessor._id}
-        Leadership Brand: ${leadershipBrand._id}
-        ======================================`);
+        
         assessments[aid].organization = result.organization._id; //eslint-disable-line
         assessments[aid].client = client._id; //eslint-disable-line
         assessments[aid].delegate = delegate._id; //eslint-disable-line

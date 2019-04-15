@@ -50,9 +50,6 @@ const leadershipBrandResolver = {
   },
   Mutation: {
     createBrandForOrganization(obj, args, context, info) {
-      //console.log('createBrandForOrganization()', {
-        obj, args, context, info,
-      });
 
       const leadershipBrand = new LeadershipBrand(args.brandInput || null);
       leadershipBrand.createdAt = moment().valueOf();
@@ -61,9 +58,6 @@ const leadershipBrandResolver = {
       return leadershipBrand.save();
     },
     updateBrandForOrganization(obj, args, context, info) {
-      //console.log('updateBrandForOrganization', {
-        obj, args, context, info,
-      });
       const { brandInput } = args;
       return LeadershipBrand.findOneAndUpdate({ _id: ObjectId(brandInput.id) }, { ...brandInput });
     },
