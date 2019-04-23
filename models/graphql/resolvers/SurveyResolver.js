@@ -17,6 +17,7 @@ import { ObjectId } from 'mongodb';
 import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import logger from '../../../logging';
 import { launchSurveyForDelegate, sendSurveyEmail, EmailTypesForSurvey, sendSurveyClosed } from '../../../application/admin/Survey';
+import LeadershipBrandModel from '../../schema/LeadershipBrand';
 
 const { findIndex } = lodash;
 
@@ -46,6 +47,9 @@ export default {
       return User.findById(entry.delegate);
     },
     peers(entry, kwargs, context) {
+      logger.info(`Resolving peers for delegate: ${entry.delegate} and organization ${context.organization}`, context);
+      if (!ObjectId.isValid(entry.delegate)) return null;
+      if (!ObjectId.isValid(context.organization)) return null;
       const query = {
         user: ObjectId(entry.delegate),
         organization: ObjectId(context.organization),
@@ -297,10 +301,24 @@ export default {
             message: `Added ${delegateModel.firstName} ${delegateModel.lastName} to survey ${surveyModel.title}`,
             lastAction: 'added',
             satus: 'new',
+            actions: [{
+              action: 'added',
+              when: moment().valueOf(),
+              result: `Added ${delegateModel.firstName} ${delegateModel.lastName} to survey ${surveyModel.title}`,
+              who: user._id,
+            }],
             updatedAt: moment().valueOf(),
+            createdAt: moment().valueOf(),
           };
           surveyModel.delegates.push(entryData.entry);
-          surveyModel.addTimelineEntry('Added Delegate', `${user.firstName} added ${delegateModel.firstName} ${delegateModel.lastName} to Survey`, user.id, true);
+          // TODO: Figure out why this is throwing a mongoose error now
+          // record is inserted, but on return it fails
+          try {
+            // surveyModel.addTimelineEntry('Added Delegate', `${user.firstName} added ${delegateModel.firstName} ${delegateModel.lastName} to Survey`, user.id, true);
+          } catch (e) {
+            logger.error(e.message, e);
+          }
+
           entryData.patch = false;
 
           return entryData.entry;
@@ -331,6 +349,12 @@ export default {
             entryData.patch = true;
             entryData.entry.status = 'invite-sent';
             entryData.entry.lastAction = inviteResult.success ? 'invitation-sent' : 'invite-failed';
+            entryData.entry.actions.push({
+              action: inviteResult.success ? 'invitation-sent' : 'invite-failed',
+              when: new Date(),
+              result: inviteResult.message,
+              who: user._id,
+            });
             break;
           }
           case 'launch': {
@@ -343,12 +367,26 @@ export default {
               entryData.patch = true;
               entryData.entry.status = launchResult.success ? 'launched' : entryData.entry.status;
               entryData.entry.lastAction = launchResult.success ? 'launched' : 'launch-fail';
+              entryData.entry.launched = launchResult.success === true;
+              entryData.entry.actions.push({
+                action: launchResult.success ? 'launched' : 'launch-fail',
+                when: new Date(),
+                result: launchResult.message,
+                who: user._id,
+              });
             } else {
               // //console.log('No Organigram Model', organigramModel);
               entryData.entry.message = `Please set user organigram / peers. ${delegateModel.firstName} ${delegateModel.lastName}`;
               entryData.patch = true;
               entryData.entry.status = 'new';
               entryData.entry.lastAction = 'launch';
+
+              entryData.entry.actions.push({
+                action: 'launch',
+                when: new Date(),
+                result: entryData.entry.message,
+                who: user._id,
+              });
             }
             break;
           }
@@ -356,8 +394,16 @@ export default {
             const reminderResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
             entryData.entry.message = reminderResult.message;
             entryData.patch = true;
-            entryData.entry.status = 'reminded';
+            // entryData.entry.status = 'reminded';
             entryData.entry.lastAction = 'reminder';
+
+            entryData.entry.actions.push({
+              action: 'reminder',
+              when: new Date(),
+              result: reminderResult.message,
+              who: user._id,
+            });
+
             break;
           }
           case 'send-closed': {
@@ -366,6 +412,13 @@ export default {
             entryData.patch = true;
             entryData.entry.status = 'closed';
             entryData.entry.lastAction = 'closed';
+            entryData.complete = true;
+            entryData.entry.actions.push({
+              action: 'closed',
+              when: new Date(),
+              result: closeResult.message,
+              who: user._id,
+            });
             break;
           }
           case 'remove': {
@@ -373,10 +426,25 @@ export default {
             if (!entryData.entry.removed) {
               entryData.entry.removed = true;
               entryData.entry.status = 'removed';
+              entryData.entry.lastAction = 'removed';
               entryData.patch = true;
+
+              entryData.entry.actions.push({
+                action: 'removed',
+                when: new Date(),
+                result: entryData.entry.message,
+                who: user._id,
+              });
             } else {
               surveyModel.delegates[entryData.entryIdx].remove();
               entryData.entry.status = 'deleted';
+              entryData.entry.actions.push({
+                action: 'deleted',
+                when: new Date(),
+                result: 'Deleted from Survey',
+                who: user._id,
+              });
+
               surveyModel.addTimelineEntry('User Removed', `${user.firstName} removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
               entryData.patch = false;
             }
@@ -386,11 +454,21 @@ export default {
             entryData.entry.message = `Re-enabled delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
             entryData.entry.removed = false;
             entryData.entry.status = 'new';
+            entryData.entry.lastAction = 're-added';
             entryData.patch = true;
+
+            entryData.entry.actions.push({
+              action: 'removed',
+              when: new Date(),
+              result: entryData.entry.message,
+              who: user._id,
+            });
+
             break;
           }
           default: {
             entryData.message = 'Default action taken, none';
+            break;
           }
         }
 
@@ -402,7 +480,8 @@ export default {
           await surveyModel.save().then();
         }
       } catch (error) {
-        //console.log(error);
+        // console.log(error);
+        log.error(err.message, error);
       }
       return entryData.entry;
     },

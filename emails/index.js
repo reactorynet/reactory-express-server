@@ -12,6 +12,7 @@ import { Template, ReactoryClient, EmailQueue, User, Organization } from '../mod
 import defaultEmailTemplates from './defaultEmailTemplates';
 import AuthConfig from '../authentication';
 import logger from '../logging';
+import { isArray } from 'util';
 
 const TemplateViews = {
   ActivationEmail: 'activation-email',
@@ -736,7 +737,7 @@ export const surveyEmails = {
 };
 
 export const organigramEmails = {
-  confirmedAsPeer: async (peer, user, relationShip, organization = null) => {
+  confirmedAsPeer: async (peer, user, relationShip, organization = null, organigramModel = null, peerIndex = -1) => {
     // final object item to return
     if (lodash.isNil(peer)) throw new ApiError('peer parameter for confirmedAsPeer cannot be null / undefined');
     if (lodash.isNil(user)) throw new ApiError('user parameter for confirmedAsPeer cannot be null / undefined');
@@ -841,6 +842,12 @@ export const organigramEmails = {
           sgMail.send(msg);
           emailResult.sent = true;
           logger.info(`Email sent to ${msg.to}`);
+          if (organigramModel && isArray(organigramModel.peers) === true && peerIndex >= 0) {
+            organigramModel.peers[peerIndex].inviteSent = true; //eslint-disable-line
+            organigramModel.peers[peerIndex].confirmed = true; //eslint-disable-line
+            organigramModel.peers[peerIndex].confirmedAt = new Date().valueOf(); //eslint-disable-line
+            await organigramModel.save().then();
+          }
         } catch (sendError) {
           logger.error(`::ERROR SENDING MAIL:: ${msg.subject}`, msg);
           queoptions.sent = false;

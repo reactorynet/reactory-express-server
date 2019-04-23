@@ -100,6 +100,18 @@ const SurveySchema = new mongoose.Schema({
       lastAction: String,
       status: String,
       updatedAt: Date,
+      createdAt: Date,
+      actions: [
+        {
+          action: String,
+          when: Date,
+          result: String,
+          who: {
+            type: ObjectId,
+            ref: 'User',
+          },
+        },
+      ],
     },
   ],
   timeline: [
@@ -133,14 +145,14 @@ SurveySchema.methods.addTimelineEntry = async function addTimelineEntry(
 
   this.timeline.push(entry);
 
-  if (save) this.save().then();
+  if (save) await this.save().then();
 };
 
 SurveySchema.methods.clearedForLaunchBySurvey = function clearedForLaunchBySurvey() {
   const statusReady = (this.status === 'ready' || this.status === 'launched');
   const startDateReady = moment(this.startDate).isSameOrBefore(moment());
   const endDateReady = moment(this.endDate).isSameOrAfter(moment());
-  //console.log('clearedForLaunch', statusReady, startDateReady, endDateReady);
+  // console.log('clearedForLaunch', statusReady, startDateReady, endDateReady);
 
   return statusReady && startDateReady && endDateReady;
 };

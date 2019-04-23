@@ -48,7 +48,7 @@ const getSurveysForOrganization = (organization) => {
   return new Promise((resolve, reject) => {
     if (!organization) reject(new Error('Organization is null'));
     Survey.find({ organization }).then((surveys) => {
-      //console.log(`Found ${surveys.length} surveys for organization`);
+      // console.log(`Found ${surveys.length} surveys for organization`);
       resolve(surveys);
     }).catch((findErr) => {
       reject(findErr);
@@ -170,7 +170,7 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
  * @param {*} organigram
  */
 export const sendSurveyRemindersForDelegate = async (survey, delegateEntry, organigram) => {
-  //console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
+  // console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
 
   const result = (message, success = false) => {
     return {
@@ -195,7 +195,7 @@ export const sendSurveyRemindersForDelegate = async (survey, delegateEntry, orga
  * @param {*} organigram
  */
 export const sendSurveyClosed = async (survey, delegateEntry, organigram) => {
-  //console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
+  // console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
 
   const result = (message, success = false) => {
     return {
@@ -220,7 +220,7 @@ export const sendSurveyClosed = async (survey, delegateEntry, organigram) => {
  * @param {*} organigram
  */
 export const sendReportOverview = async (survey, delegateEntry, organigram) => {
-  //console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
+  // console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
 
   const result = (message, success = false) => {
     return {
@@ -244,17 +244,17 @@ export const sendReportOverview = async (survey, delegateEntry, organigram) => {
  * @param {*} survey
  * @param {*} delegateEntry
  * @param {*} organigram
+ * @param {*} emailType
+ * @param {*} propertyBag
  */
 export const sendSurveyEmail = async (survey, delegateEntry, organigram, emailType, propertyBag) => {
-  debugger; // eslint-disable-line
+  // debugger; // eslint-disable-line
   const result = (message, success = false) => {
     return {
       message,
       success,
     };
   };
-
-
   let { delegate } = delegateEntry;
 
   if (lodash.isNil(delegate) === true) {
@@ -265,17 +265,12 @@ export const sendSurveyEmail = async (survey, delegateEntry, organigram, emailTy
     delegate = await User.findById(delegate).then();
   }
 
-  const { firstName, lastName } = delegate;
-
-  //console.log(`Sending Survey Email[${emailType}]: ${survey.title} for delegate ${firstName} ${lastName}`);
-
-
+  // console.log(`Sending Survey Email[${emailType}]: ${survey.title} for delegate ${firstName} ${lastName}`);
   const _delegateEntry = {
     ...delegateEntry, delegate,
   };
 
   try {
-    // const options = { ...defaultLaunchOptions, ...survey.options };
     switch (emailType) {
       case EmailTypesForSurvey.ParticipationInvite: {
         return sendParticipationInivitationForDelegate(survey, _delegateEntry, organigram);
@@ -309,7 +304,7 @@ export const sendSurveyEmail = async (survey, delegateEntry, organigram, emailTy
  * @param {*} organigram
  */
 export const sendPeerNominationNotifications = async (user, organigram) => {
-  //console.log('Sending Peer Nominations', user, organigram);
+  // console.log('Sending Peer Nominations', user, organigram);
 
   const result = (message, success = false) => {
 
@@ -336,6 +331,7 @@ export const launchSurveyForDelegate = async (survey, delegateEntry, organigram)
 
   const result = (message, success = false, assessments) => ({
     launched: success,
+    success,
     message,
     assessments,
   });
@@ -425,14 +421,12 @@ export const launchSurveyForDelegate = async (survey, delegateEntry, organigram)
         if (emailResults.success === true) {
           return result(`Successfully created ${assessments.length} assessments for delegate and emails sent ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
         }
-
         return result(`Assessments created but could not send the mails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
       } catch (ex) {
         logger.error(ex);
         return result(`Successfully created ${assessments.length} assessments for delegate, failed sending emails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
       }
     }
-
     return result('data error, organigram.peers is not a valid array');
   } catch (exception) {
     logger.error(`Error occured launching survey for delegate ${exception.message}`);

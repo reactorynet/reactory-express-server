@@ -455,13 +455,24 @@ const userResolvers = {
       const emailPromises = [];
       for (let peerIndex = 0; peerIndex < userOrganigram.peers.length; peerIndex += 1) {
         logger.info(`Sending peer notification to ${userOrganigram.peers[peerIndex].user.firstName}`);
-        if (userOrganigram.peers[peerIndex].inviteSent !== true) {
+        let mustSend = userOrganigram.peers[peerIndex].inviteSent !== true;
+
+        if (mustSend === false && userOrganigram.peers[peerIndex].confirmed === true) {
+          const whenConfirmed = moment(userOrganigram.peers[peerIndex].confirmedAt);
+          if (moment.isMoment(whenConfirmed) === true) {
+            mustSend = Math.abs(moment().diff(whenConfirmed, 'day', true)) >= 30;
+          }
+        }
+
+        if (mustSend === true) {
           const { user } = userOrganigram;
           emailPromises.push(organigramEmails.confirmedAsPeer(
             userOrganigram.peers[peerIndex].user,
             user,
             userOrganigram.peers[peerIndex].relationship,
             userOrganigram.organization,
+            userOrganigram,
+            peerIndex,
           ));
         }
       }
