@@ -311,6 +311,7 @@ export default {
             createdAt: moment().valueOf(),
           };
           surveyModel.delegates.push(entryData.entry);
+          await surveyModel.save().then();
           // TODO: Figure out why this is throwing a mongoose error now
           // record is inserted, but on return it fails
           try {
@@ -481,7 +482,7 @@ export default {
         }
       } catch (error) {
         // console.log(error);
-        log.error(err.message, error);
+        logger.error(error.message, error);
       }
       return entryData.entry;
     },
