@@ -158,18 +158,34 @@ const graphql = {
           }
           status
           peers {
-            id
-            organization {
-              id
-              name
-            }
             user {
               id
               firstName
               lastName
-            } 
-            confirmedAt
-            allowEdit            
+          }
+          organization {
+              id
+              name
+              avatar                        
+          },
+          peers {
+              user {
+                  id
+                  firstName
+                  lastName
+                  email
+                  avatar
+              }
+              isInternal
+              inviteSent
+              confirmed
+              confirmedAt
+              relationship                        
+          }
+          allowEdit
+          confirmedAt
+          createdAt
+          updatedAt            
           }
           message
           launched

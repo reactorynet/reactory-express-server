@@ -345,6 +345,9 @@ export const launchSurveyForDelegate = async (survey, delegateEntry, organigram)
     if (iz.nil(organigram.confirmedAt)) return result('Peers have not yet been confirmed');
     if (iz.nil(organigram.peers)) return result('User has no peers defined');
 
+    const maximumAssessments = 5;
+    const minimumAssessments = 3;
+
     if (organigram.peers && organigram.peers.length > 0) {
       if (organigram.peers.length < options.minimumPeers) return result(`delegate does not have the minimum of ${options.minimumPeers} peers for this survey (${organigram.peers})`);
 
@@ -374,6 +377,7 @@ export const launchSurveyForDelegate = async (survey, delegateEntry, organigram)
           });
         });
       });
+
 
       organigram.peers.forEach((peer) => {
         const peerhasAssessment = lodash.has(assessments, assessment => assessment.assessor === peer.user);
