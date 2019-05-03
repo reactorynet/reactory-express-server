@@ -420,7 +420,7 @@ export const surveyEmails = {
         applicationTitle: partner.name,
         timeEnd: moment(survey.endDate).format('HH:mm'),
         dateEnd: moment(survey.endDate).format('YYYY-MM-DD'),
-        assessmentLink: `${partner.siteUrl}/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel))}&redirect=/assessment/${assessment.id}`,
+        assessmentLink: `${partner.siteUrl}/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}&redirect=/assessment/${assessment.id}`,
       };
 
       let bodyTemplate = null;
@@ -644,7 +644,8 @@ export const surveyEmails = {
 
       logger.info('Api Key Set, configuring property bag for template.');
       // property bag for template
-      const authToken = AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate));
+      // we generate the auth token and set the expiry
+      const authToken = AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate, { exp: moment(survey.endDate).valueOf() }));
       const properties = {
         partner,
         delegate,
@@ -737,7 +738,7 @@ export const surveyEmails = {
 };
 
 export const organigramEmails = {
-  confirmedAsPeer: async (peer, user, relationShip, organization = null, organigramModel = null, peerIndex = -1) => {
+  confirmedAsPeer: async (peer, user, relationShip, organization = null, organigramModel = null, peerIndex = -1, survey = null) => {
     // final object item to return
     if (lodash.isNil(peer)) throw new ApiError('peer parameter for confirmedAsPeer cannot be null / undefined');
     if (lodash.isNil(user)) throw new ApiError('user parameter for confirmedAsPeer cannot be null / undefined');
@@ -764,6 +765,12 @@ export const organigramEmails = {
       }
 
       logger.info('Api Key Set, configuring property bag for template.');
+      let exp = moment().add(30, 'd').valueOf();
+
+      if (isNil(survey) === false) {
+        exp = isNil(survey.endDate) === false ? moment(survey.endDate).valueOf() : exp;
+      }
+
       // property bag for template
       const properties = {
         partner,
@@ -774,7 +781,7 @@ export const organigramEmails = {
         applicationTitle: partner.name,
         relationShip,
         organization,
-        profileLink: `${partner.siteUrl}/profile/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(user))}`,
+        profileLink: `${partner.siteUrl}/profile/?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(user, { exp }))}`,
       };
 
       let bodyTemplate = null;

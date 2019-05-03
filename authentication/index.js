@@ -66,15 +66,29 @@ class AuthConfig {
 
     static jwtMake = (payload) => { return jwt.encode(payload, jwtSecret); };
 
-    static jwtTokenForUser = (user) => {
+    /**
+     * Generates a JWT token for a user, uses default options
+        iss: 'id.reactory.net', // issuer is id.reactory.net
+        sub: 'reactory-auth',
+        aud: 'app.reactory.net',
+        exp: moment().add('24', 'h').valueOf(),
+        iat: moment().valueOf(),
+     *
+     */
+    static jwtTokenForUser = (user, options = {}) => {
       if (isNil(user)) throw new UserValidationError('User object cannot be null', { context: 'jwtTokenForUser' });
 
-      return {
+      const authOptions = {
         iss: 'id.reactory.net',
         sub: 'reactory-auth',
         aud: 'app.reactory.net',
         exp: moment().add('24', 'h').valueOf(),
         iat: moment().valueOf(),
+        ...options,
+      };
+
+      return {
+        ...authOptions,
         userId: user._id.toString(), // eslint-disable-line no-underscore-dangle
         refresh: uuid(),
         name: `${user.firstName} ${user.lastName}`,
