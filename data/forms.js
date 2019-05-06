@@ -1665,6 +1665,7 @@ const UserPeers = require('./forms/core/user/UserPeers/index').default;
 const ProjectLayout = require('./forms/core/project').default;
 const ProjectListWidget = require('./forms/core/project').ProjectListWidget;
 const ProjectDetailForm = require('./forms/core/project').ProjectDetailForm;
+const LasecCrmDashboardForm = require('./forms/lasec/dashboard/crmdash').CrmDashboardForm;
 
 export default [
   productIdeas,
@@ -1684,6 +1685,7 @@ export default [
   BusinessUnitList,
   PageEditorForm,
   LoginForm,
+  LasecCrmDashboardForm,
   ContentPages,
   FileLoader,
   ExternalLinkList,
