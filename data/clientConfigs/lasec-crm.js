@@ -107,7 +107,7 @@ export default {
           ordinal: 7, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 8, title: 'Profile', link: '/profile', icon: 'user_account', roles: ['USER'],
+          ordinal: 8, title: 'Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
         },
       ],
     },
@@ -136,7 +136,7 @@ export default {
       key: 'profile',
       title: 'Profile',
       path: '/profile/**',
-      exact: true,
+      exact: false,
       public: false,
       roles: ['USER'],
       componentFqn: 'core.Profile@1.0.0',
