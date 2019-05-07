@@ -271,7 +271,8 @@ export default {
     assets: {
       featureImage: `${CDN_ROOT}themes/towerstone/images/featured.jpg`,
       logo: `${CDN_ROOT}themes/towerstone/images/logo.png`,
-      emailLogo: `${CDN_ROOT}themes/towerstone/images/logo_small.png`,
+      // emailLogo: `${CDN_ROOT}themes/towerstone/images/logo_small.png`,
+      emailLogo: 'http://www.towerstone-global.com/cms/wp-content/uploads/2017/07/TowerStone-New-Logo-01_new.png',
       favicon: `${CDN_ROOT}themes/towerstone/images/favicon.png`,
       avatar: `${CDN_ROOT}themes/towerstone/images/avatar.png`,
     },
