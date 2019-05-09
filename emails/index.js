@@ -414,7 +414,7 @@ export const surveyEmails = {
         delegate,
         assessment,
         user: assessorModel,
-        organization: survey.organization,
+        organization: organization || survey.organization,
         isSelfAssessment: ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true,
         survey,
         applicationTitle: partner.name,
