@@ -19,7 +19,7 @@ module.exports = {
       API_URI_ROOT: 'http://locahost:4000/',
       CDN_ROOT: 'http://localhost:4000/cdn/',
       MODE: 'DEVELOP',
-      LOG_LEVEL: 'info',
+      LOG_LEVEL: 'debug',
     },
     env_production: {
       NODE_ENV: 'production',
