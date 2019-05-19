@@ -109,6 +109,7 @@ input UpdateUserInput {
   businessUnit: String
   providerId: String
   lastLogin: Date
+  deleted: Boolean
 }
 
 input UpdatePasswordInput {  

@@ -265,7 +265,7 @@ export default {
 
       const { user } = global;
 
-      const surveyModel = await Survey.findById(survey).populate('delegates.delegate').then();
+      const surveyModel = await Survey.findById(survey).populate('delegates.delegate', 'assessments').then();
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
 
@@ -360,7 +360,8 @@ export default {
           }
           case 'launch': {
             if (organigramModel && organigramModel.confirmedAt) {
-              const launchResult = await launchSurveyForDelegate(surveyModel, entryData.entry, organigramModel);
+              const relaunch = inputData.relaunch === true;
+              const launchResult = await launchSurveyForDelegate(surveyModel, entryData.entry, organigramModel, relaunch);
               entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
               if (launchResult.assessments) {
                 entryData.entry.assessments = launchResult.assessments.map(a => a._id);
