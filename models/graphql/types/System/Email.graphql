@@ -14,5 +14,6 @@ type Email {
   format: String,
   user: User,
   client: ReactoryClient,
-  survey: Survey
+  survey: Survey,
+  isRead: Boolean
 }

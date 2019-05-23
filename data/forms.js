@@ -1666,6 +1666,7 @@ const ProjectLayout = require('./forms/core/project').default;
 const ProjectListWidget = require('./forms/core/project').ProjectListWidget;
 const ProjectDetailForm = require('./forms/core/project').ProjectDetailForm;
 const LasecCrmDashboardForm = require('./forms/lasec/dashboard/crmdash').CrmDashboardForm;
+const MicrosoftOpenIDAuthenticationForm = require('./forms/microsoft/security').MicrosoftOpenIDAuthenticationForm;
 
 export default [
   productIdeas,
@@ -1707,4 +1708,5 @@ export default [
   TemplateList,
   TowerStoneTaskDetailForm,
   UserPeers,
+  MicrosoftOpenIDAuthenticationForm,
 ];

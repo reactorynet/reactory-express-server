@@ -396,7 +396,7 @@ export const surveyEmails = {
 
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');
-        throw new RecordNotFoundError(`Cannot find a template using the input params ${TemplateViews.InvitePeers} ${organization} ${partner}`);
+        throw new RecordNotFoundError(`Cannot find a template using the input params ${TemplateViews.SurveyLaunch} ${organization} ${partner}`);
       }
       logger.info('Template loaded, setting up email and client.');
 

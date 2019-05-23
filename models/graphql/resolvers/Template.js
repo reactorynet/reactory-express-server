@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { indexOf, remove, isNil } from 'lodash';
+import logger from '../../../logging';
 import {
   Organization,
   Template,
@@ -12,7 +13,23 @@ const TemplateResolvers = {
     id: (template) => { return template._id || null; },
   },
   Query: {
-    templates: (obj, { client, organization }) => { return Template.templates(client, organization).then(); },
+    templates: async (obj, { client = null, organization = null }) => {
+      logger.info('Listing templates using search criteria', client, organization);
+      if (isNil(client) === false && ObjectId.isValid(client)) {
+        if (isNil(organization) === false && ObjectId.isValid(organization) === true) {
+          return Template.find({
+            client: ObjectId(client),
+            organization: ObjectId(organization),
+          }).then();
+        }
+
+        return Template.find({
+          client: ObjectId(client),
+        }).then();
+      }
+      // use default partner tempaltes
+      return this.find({ client: global.partner._id }).then();
+    },
     template: (obj, { id }) => { return Template.findById(id).then(); },
   },
   Mutation: {

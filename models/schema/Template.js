@@ -69,6 +69,7 @@ TemplateSchema.statics.findClientTemplate = function findClientTemplate(template
 };
 
 TemplateSchema.statics.templates = async (client = null, organization = null) => {
+  logger.info('Listing templates using search criteria', client, organization);
   if (isNil(client) === false && ObjectId.isValid(client)) {
     if (isNil(organization) === false && ObjectId.isValid(organization) === true) {
       return this.find({

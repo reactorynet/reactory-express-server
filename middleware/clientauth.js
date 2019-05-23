@@ -5,14 +5,21 @@ import logger from '../logging';
 const bypassUri = [
   '/cdn/',
   '/favicon.ico',
+  '/auth/microsoft/openid',
 ];
 
 const clientauth = (req, res, next) => {
   let clientId = req.headers['x-client-key'];
-  const clientPwd = req.headers['x-client-pwd'] || ' ';
+  let clientPwd = req.headers['x-client-pwd'] || '';
   clientId = clientId || req.params.clientId;
   clientId = clientId || req.query.clientId;
-  logger.debug('incoming request from req.originalUrl', req.originalUrl);
+  clientId = req.query['x-client-key'] || clientId;
+
+  clientPwd = clientPwd || req.params.secret;
+  clientPwd = clientPwd || req.query.secret;
+  clientPwd = req.query['x-client-pwd'] || clientPwd;
+
+  logger.info(`Client Id: [${clientId}], Client Key: [${clientPwd}]`, req.originalUrl);
 
   let bypass = false;
   if (req.originalUrl) {

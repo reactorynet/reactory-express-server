@@ -3,11 +3,11 @@ import {
   profileSmall,
 } from '../menus';
 
-import systemRoutes from './defaultRoutes';
+import { presetMicrosoftLoginOnly, logoutroute, notfoundroute } from './defaultRoutes';
 
 dotenv.config();
 
-const { CDN_ROOT, MODE } = process.env;
+const { CDN_ROOT, MODE, API_URI_ROOT } = process.env;
 
 let siteUrl = '';// 'http://localhost:3000' : 'https://app.towerstone-global.com/';
 
@@ -101,19 +101,23 @@ export default {
           ordinal: 5, title: 'Analytics', link: '/analytics', icon: 'bar_chart', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 6, title: 'Settings', link: '/domain', icon: 'settings', roles: ['USER', 'ADMIN'],
+          ordinal: 6, title: 'Settings', link: '/settings', icon: 'settings', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 7, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER', 'ADMIN'],
+          ordinal: 7, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER'],
         },
         {
-          ordinal: 8, title: 'Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
+          ordinal: 9, title: 'Email', link: '/mail/', icon: 'mail', roles: ['USER'],
+        },
+        {
+          ordinal: 10, title: 'Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
         },
       ],
     },
   ],
   routes: [
-    ...systemRoutes,
+    ...presetMicrosoftLoginOnly,
+    logoutroute,
     {
       key: 'home',
       title: 'Home',
@@ -126,11 +130,20 @@ export default {
     {
       key: 'inbox',
       title: 'Inbox',
-      path: '/inbox/**',
+      path: '/mail/**',
       exact: false,
       public: false,
       roles: ['USER'],
       componentFqn: 'core.InboxComponent@1.0.0',
+      args: [
+        {
+          key: 'via',
+          value: {
+            type: 'string',
+            via: 'microsoft',
+          },
+        },
+      ],
     },
     {
       key: 'profile',
@@ -219,10 +232,29 @@ export default {
       enabled: true,
     },
     {
-      provider: 'LASEC',
+      provider: 'microsoft',
       enabled: true,
+      /**
+        OAUTH_APP_ID=ac149de8-0529-48ac-9b4d-a950a73dfbab
+        OAUTH_APP_PASSWORD=<OAUTH PASSWORD>
+        OAUTH_REDIRECT_URI=http://localhost:3000/auth/callback
+        OAUTH_SCOPES='profile offline_access user.read calendars.read'
+        OAUTH_AUTHORITY=https://login.microsoftonline.com/common
+        OAUTH_ID_METADATA=/v2.0/.well-known/openid-configuration
+        OAUTH_AUTHORIZE_ENDPOINT=/oauth2/v2.0/authorize
+        OAUTH_TOKEN_ENDPOINT=/oauth2/v2.0/token
+       */
       options: {
-        url: 'http://endpointforauth/login',
+        identityMetadata: 'https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration',
+        clientID: 'ac149de8-0529-48ac-9b4d-a950a73dfbab',
+        responseType: 'code id_token',
+        responseMode: 'form_post',
+        redirectUrl: `${API_URI_ROOT}/auth/microsoft/done`,
+        allowHttpForRedirectUrl: true,
+        clientSecret: '<OAUTH PASSWORD>',
+        validateIssuer: false,
+        passReqToCallback: false,
+        scope: 'profile offline_access user.read calendars.read'.split(' '),
       },
     },
     {

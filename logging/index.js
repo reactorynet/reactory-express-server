@@ -15,7 +15,7 @@ const dailyRotate = new (winston.transports.DailyRotateFile)({
 });
 
 const logger = winston.createLogger({
-  level: 'info',
+  level: process.env.LOG_LEVEL || 'debug',
   format: winston.format.json(),
   transports: [
     // new winston.transports.File({ filename: 'error.log', level: 'error' }),

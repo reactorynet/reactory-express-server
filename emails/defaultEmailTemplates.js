@@ -174,7 +174,7 @@ export default [
         view: 'towerstone.peer-invite-email/subject',
         kind: 'content',
         format: 'text',
-        content: 'You have been nominated as a peer for <%= delegate.firstName %> on the <%= applicationTitle %> assessment platform.',
+        content: 'You have been nominated as a peer for <%= employee.firstName %> on the <%= applicationTitle %> assessment platform.',
         parameters: [
           {
             name: 'applicationTitle',
@@ -238,7 +238,7 @@ export default [
         view: 'towerstone.survey-launch-email/subject',
         kind: 'content',
         format: 'text',
-        content: '<% if(!isSelfAssessment) { %>You have been confirmed as an assessor for <%= delegate.firstName %> on the <%= applicationTitle %> assessment platform.<% } else { %> Please complete your self-assessment on the <%= applicationTitle %> assessment platform <% } %>',
+        content: '<% if(!isSelfAssessment) { %>You have been confirmed as an assessor for <%= delegate.firstName %> on the <%= applicationTitle %> assessment platform <% } else { %> Please complete your self-assessment on the <%= applicationTitle %> assessment platform <% } %>',
         parameters: [
           {
             name: 'applicationTitle',

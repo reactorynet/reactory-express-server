@@ -1,4 +1,5 @@
 // import pf from '../defs';
+import { BasicToolbar } from './utils';
 
 export const TemplateSchema = {
   type: 'object',
@@ -57,27 +58,44 @@ export const TemplateList = {
   title: 'Template List',
   tags: ['Template Editor', 'Forms'],
   schema: {
-    type: 'array',
-    items: {
-      type: 'object',
-      title: 'Template',
-      properties: {
-        id: {
-          type: 'string',
-          name: 'Template Id',
+    type: 'object',
+    properties: {
+      toolbar: { ...BasicToolbar },
+      results: {
+        type: 'array',
+        items: {
+          type: 'object',
+          title: 'Template',
+          properties: {
+            id: {
+              type: 'string',
+              name: 'Template Id',
+            },
+            view: {
+              type: 'string',
+              name: 'View',
+            },
+            format: {
+              type: 'string',
+              name: 'Template Format',
+            },
+            content: {
+              type: 'string',
+              name: 'Content',
+            },
+          },
         },
-        view: {
-          type: 'string',
-          name: 'View',
-        },
-        format: {
-          type: 'string',
-          name: 'Template Format',
-        },
-        content: {
-          type: 'string',
-          name: 'Content',
-        },
+      },
+    },
+  },
+  uiSchema: {
+    toolbar: {
+      'ui:wrapper': 'Toolbar',
+      'ui:options': {
+
+      },
+      search: {
+
       },
     },
   },
@@ -87,19 +105,22 @@ export const TemplateList = {
   version: '1.0.0',
   graphql: {
     query: {
-      new: false,
+      new: true,
       edit: true,
       name: 'templates',
       text: `
-        query Templates(){
-          templates() {
-            id
-            view
-            format
-            content             
-          }
+      query Templates ( $client: String, $organization: String ) {
+        templates (client: $client, organization: $organization) {
+          id
+          view
+          format
+          content             
         }
+      }
       `,
+      variables: {
+
+      },
       resultMap: {
         id: 'id',
         view: 'view',

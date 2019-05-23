@@ -81,7 +81,7 @@ extend type Query {
   userPeers(id: String!, organizationId: String): UserPeers
   
   authenticatedUser: User,
-  userInbox(id: String, sort: String): [Email]
+  userInbox(id: String, sort: String, via: String): [Email]
   searchUser(searchString: String!, sort: String): [User]   
 }
 

@@ -158,7 +158,9 @@ export default {
     },
     async surveyDetail(parent, { surveyId }, context, info) {
       const survey = await Survey.findById(surveyId).then();
-      context.organization = survey.organization;
+      if (survey != null) {
+        context.organization = survey.organization;
+      }
       return survey;
     },
   },

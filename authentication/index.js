@@ -6,22 +6,175 @@ import { isNil } from 'lodash';
 // import LocalStrategy from 'passport-local';
 import { BasicStrategy } from 'passport-http';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import { User } from '../models/index';
+import { OIDCStrategy } from 'passport-azure-ad';
+import OAuth2 from 'simple-oauth2';
+import { User, ReactoryClient } from '../models/index';
 import { UserValidationError } from '../exceptions';
 import logger from '../logging';
+import graph from '../azure/graph';
+import UserModel from '../models/schema/User';
+import { createUserForOrganization } from '../application/admin/User';
 
 const jwtSecret = process.env.SECRET_SAUCE;
 
 class AuthConfig {
     static Configure = (app) => {
-      passport.initialize();
+      app.use(passport.initialize());
+      // Passport calls serializeUser and deserializeUser to
+      // manage users
+      const users = {};
+      passport.serializeUser((user, done) => {
+      // Use the OID property of the user as a key
+        logger.info('passport.serializeUser((user, done))', user);
+        // users[user.profile.oid] = user;
+        done(null, user.oid);
+      });
+
+      passport.deserializeUser((id, done) => {
+        logger.info('passport.deserializeUser', id);
+        done(null, users[id]);
+      });
+
+
       passport.use(new BasicStrategy({ passReqToCallback: true }, AuthConfig.BasicAuth));
       passport.use(new JwtStrategy(AuthConfig.JwtOptions, AuthConfig.JwtAuth));
+
+      const oauth2 = OAuth2.create({
+        client: {
+          id: process.env.OAUTH_APP_ID,
+          secret: process.env.OAUTH_APP_PASSWORD,
+        },
+        auth: {
+          tokenHost: process.env.OAUTH_AUTHORITY,
+          authorizePath: process.env.OAUTH_AUTHORIZE_ENDPOINT,
+          tokenPath: process.env.OAUTH_TOKEN_ENDPOINT,
+        },
+      });
+
+      // Callback function called once the sign-in is complete
+      // and an access token has been obtained
+      async function signInComplete(req, iss, sub, profile, accessToken, refreshToken, params, done) {
+        logger.info('Sign in Complete', {
+          iss,
+          sub,
+          profile,
+          // accessToken,
+          // refreshToken,
+          params: params || 'no-params',
+          done,
+        });
+
+        if (!profile.oid) {
+          // return done(new Error('No OID found in user profile.'), null);
+          logger.info('There is no oid, bad login, redirect to client with failure');
+        }
+
+        let loggedInUser = null;
+        let _existing = null;
+        try {
+          // this is the user that is returned by the microsft graph api
+          const user = await graph.getUserDetails(accessToken);
+          logger.info(`User retrieved from Microsoft Graph API ${user.email || user.userPrincipalName}`);
+          if (user) {
+            // Add properties to profile
+            profile['email'] = user.mail ? user.mail : user.userPrincipalName; //eslint-disable-line
+            _existing = await User.findOne({ email: profile.email }).then();
+            if (_existing === null) {
+              loggedInUser = { email: user.mail, firstName: user.givenName, lastName: user.surname };
+              logger.info(`Must create new user with email ${user.mail}`, loggedInUser);
+              const createResult = await createUserForOrganization(loggedInUser, profile.oid, null, ['USER'], 'microsoft', global.partner, null);
+              if (createResult.user) {
+                _existing = createResult.user;
+              }
+            }
+          }
+        } catch (err) {
+          done(err, null);
+        }
+
+        // Create a simple-oauth2 token from raw tokens
+        if (isNil(_existing) === true) {
+          logger.error(`Could not create user via ms login ${loggedInUser.email}`);
+          done(null, false);
+        } else {
+          const oauthToken = oauth2.accessToken.create(params);
+          _existing.setAuthentication({
+            provider: 'microsoft',
+            props: { oid: profile, oauthToken, accessToken },
+            lastLogin: new Date().valueOf(),
+          });
+          global.user = _existing;
+          logger.info(`OAuth Token Generated for user: ${_existing.email} - should patch user with 3rd party auth data`, oauthToken);
+          // Save the profile and tokens in user storage
+          // users[profile.oid] = { profile, oauthToken };
+          return done(null, { ..._existing, oid: profile.oid });
+        }
+      }
+
+      // Configure OIDC strategy
+      // Reactory holds an integration as an application
+      // ideally this should be done per request
+      passport.use(new OIDCStrategy(
+        {
+          identityMetadata: `${process.env.OAUTH_AUTHORITY}${process.env.OAUTH_ID_METADATA}`,
+          clientID: process.env.OAUTH_APP_ID,
+          responseType: 'code id_token',
+          responseMode: 'form_post',
+          redirectUrl: `${process.env.OAUTH_REDIRECT_URI}/lasec-crm`,
+          allowHttpForRedirectUrl: true,
+          clientSecret: process.env.OAUTH_APP_PASSWORD,
+          validateIssuer: false,
+          passReqToCallback: true,
+          scope: process.env.OAUTH_SCOPES.split(' '),
+        },
+        signInComplete,
+      ));
+
       app.post(
         '/login',
         passport.authenticate('basic', { session: false }),
         (req, res) => {
           res.json({ user: req.user });
+        },
+      );
+
+      app.get(
+        '/auth/microsoft/openid/:clientKey', (req, res, next) => {
+          logger.debug(`login live get ${req.params.clientKey}`);
+          passport.authenticate(
+            'azuread-openidconnect',
+            {
+              response: res,
+              prompt: 'login',
+              failureRedirect: '/auth/microsoft/openid/failed',
+              failureFlash: true,
+            },
+          )(req, res, next);
+        },
+        (req, res) => {
+          logger.info(`/auth/microsoft/openid/${req.params.clientKey} -> next`, { user: global.user, partner: global.partner });
+
+          res.redirect(`${global.partner.siteUrl}/nologin/?auth_token=${AuthConfig.jwtTokenForUser(global.user)}`);
+        },
+      );
+
+      app.post(
+        '/auth/microsoft/openid/complete/:clientKey',
+        async (req, res, next) => {
+          logger.debug(`Response from login.live received for ${req.params.clientKey}`);
+          global.partner = await ReactoryClient.findOne({ key: req.params.clientKey }).then();
+          passport.authenticate(
+            'azuread-openidconnect',
+            {
+              response: res,
+              failureRedirect: '/auth/microsoft/openid/failed',
+              failureFlash: false,
+            },
+          )(req, res, next);
+        },
+        (req, res) => {
+          const token = AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(global.user));
+          res.redirect(`${global.partner.siteUrl}/?auth_token=${token}`);
         },
       );
     };
