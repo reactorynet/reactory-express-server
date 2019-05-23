@@ -68,6 +68,7 @@ const userResolvers = {
   Email: {
     id(email) {
       if (email._id) return email._id;
+      if (email.id) return email.id;
       return 'no-id';
     },
     user(obj) {
@@ -295,17 +296,21 @@ const userResolvers = {
               const emails = await O365.getEmails(found.props.accessToken);
               logger.debug('Received Email Payload', emails);
               const mailmaps = om(emails, {
-                'value[].body.contentType': '[].format',
-                'value[].body.content': '[].message',
-                'value[].sender.emailAddress.address': '[].from',
-                'value[].sentDateTime': '[].sentAt',
-                'value[].receivedDateTime': '[].receivedAt',
-                'value[].subject': '[].subject',
-                'value[].isRead': '[].isRead',
+                'value[].id': 'emails[].id',
+                'value[].body.contentType': 'emails[].format',
+                'value[].body.content': 'emails[].message',
+                'value[].sender.emailAddress.address': 'emails[].from',
+                'value[].sentDateTime': 'emails[].sentAt',
+                'value[].receivedDateTime': [
+                  'emails[].receivedAt',
+                  'emails[].createdAt',
+                ],
+                'value[].subject': 'emails[].subject',
+                'value[].isRead': 'emails[].isRead',
               });
 
               logger.debug('Found mails', mailmaps);
-              return mailmaps;
+              return mailmaps.emails;
             }
             throw new ApiError('User has not authenticated with microsoft');
           } else {

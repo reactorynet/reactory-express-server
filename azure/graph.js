@@ -31,7 +31,7 @@ module.exports = {
 
     const emails = await client
       .api('/me/messages')
-      .select('id,subject,receivedDateTime,bodyPreview,body,sender,from,toRecipients')
+      .select('id,subject,receivedDateTime,sentDateTime,bodyPreview,body,sender,from,toRecipients')
       .get();
 
     return emails;

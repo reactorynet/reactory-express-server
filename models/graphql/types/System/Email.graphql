@@ -1,7 +1,8 @@
 type Email {
-  id: ObjID,
+  id: String,
   sendAfter: Date,
   sentAt: Date,
+  receivedAt: Date,
   sent: Boolean,
   error: String,
   failures: Int,
