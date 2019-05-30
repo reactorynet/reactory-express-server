@@ -1,7 +1,8 @@
 type Email {
-  id: ObjID,
+  id: String,
   sendAfter: Date,
   sentAt: Date,
+  receivedAt: Date,
   sent: Boolean,
   error: String,
   failures: Int,
@@ -14,5 +15,6 @@ type Email {
   format: String,
   user: User,
   client: ReactoryClient,
-  survey: Survey
+  survey: Survey,
+  isRead: Boolean
 }

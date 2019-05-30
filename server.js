@@ -7,6 +7,7 @@ import passport from 'passport';
 import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
 import { makeExecutableSchema } from 'graphql-tools';
 import mongoose from 'mongoose';
+import session from 'express-session';
 import corsOptions from './config/cors';
 import clientAuth from './middleware/clientauth';
 import userAccountRouter from './useraccount';
@@ -15,7 +16,6 @@ import froala from './froala';
 import typeDefs from './models/graphql/types';
 import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
-import { testConnection } from './database/legacy';
 import workflow from './workflow';
 import bots from './bot/server';
 import startup from './utils/startup';
@@ -73,6 +73,13 @@ const app = express();
 app.use('*', cors(corsOptions));
 app.use(clientAuth);
 
+app.use(session({
+  secret: 'your_secret_value_here',
+  resave: false,
+  saveUninitialized: false,
+  unset: 'destroy',
+}));
+
 /*
 try {
   testConnection('plc');
@@ -85,30 +92,30 @@ mongoose.connect(MONGOOSE);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: '10mb' }));
 
-try {
-  startup().then((startResult) => {
-    logger.debug('Startup Generator Done.');
-    AuthConfig.Configure(app);
-    app.use(
-      queryRoot,
-      passport.authenticate('jwt', { session: false }), bodyParser.urlencoded({ extended: true }),
-      bodyParser.json({ limit: '10mb' }),
-      graphqlExpress({ schema, debug: true }),
-    );
+// try {
+startup().then((startResult) => {
+  logger.debug('Startup Generator Done.');
+  AuthConfig.Configure(app);
+  app.use(
+    queryRoot,
+    passport.authenticate('jwt', { session: false }), bodyParser.urlencoded({ extended: true }),
+    bodyParser.json({ limit: '10mb' }),
+    graphqlExpress({ schema, debug: true }),
+  );
 
-    app.use(graphiql, graphiqlExpress({ endpointURL: queryRoot }));
-    app.use(userAccountRouter);
-    app.use('/reactory', reactory);
-    app.use('/froala', froala);
-    app.use('/workflow', workflow);
-    app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
-    app.listen(API_PORT);
-    // logger.info(`Bots server using ${bots.name}`);
-    logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
-    logger.info('System Initialized/Ready, enabling app');
-    // process.send('ready');
-  }).catch(startErr => logger.error(startErr));
-} catch (startError) {
-  logger.error('System Initialized/Ready - failed, exiting app', startError);
-  process.exit();
-}
+  app.use(graphiql, graphiqlExpress({ endpointURL: queryRoot }));
+  app.use(userAccountRouter);
+  app.use('/reactory', reactory);
+  app.use('/froala', froala);
+  app.use('/workflow', workflow);
+  app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
+  app.listen(API_PORT);
+  // logger.info(`Bots server using ${bots.name}`);
+  logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
+  logger.info('System Initialized/Ready, enabling app');
+  // process.send('ready');
+});// .catch(startErr => logger.error(startErr));
+// } catch (startError) {
+// logger.error('System Initialized/Ready - failed, exiting app', startError);
+// process.exit();
+// }

@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb';
 import co from 'co';
 import moment from 'moment';
 import lodash, { isNil, find } from 'lodash';
+import om from 'object-mapper';
 import Admin from '../../../application/admin';
 import {
   Organization,
@@ -15,6 +16,8 @@ import {
   ReactoryClient,
   BusinessUnit,
 } from '../../index';
+import O365 from '../../../azure/graph';
+
 import { organigramEmails } from '../../../emails';
 import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import AuthConfig from '../../../authentication';
@@ -65,6 +68,7 @@ const userResolvers = {
   Email: {
     id(email) {
       if (email._id) return email._id;
+      if (email.id) return email.id;
       return 'no-id';
     },
     user(obj) {
@@ -275,25 +279,48 @@ const userResolvers = {
     authenticatedUser(obj, args, context, info) {
       return global.user;
     },
-    userInbox(obj, { id, sort }, context, info) {
-      return new Promise((resolve, reject) => {
-        const { user } = global;
-        if (isNil(user)) reject(new ApiError('Not Authorized'));
-        const userId = isNil(id) ? user._id : ObjectId(id);
-        logger.info(`Finding emails for userId ${userId}`);
-        EmailQueue.find({ user: userId }).then((results) => {
-          logger.info(`Found ${results.length} emails`);
-          try {
-            resolve(results);
-          } catch (err) {
-            logger.error('Error resolving', err);
-            reject(err);
+    async userInbox(obj, { id, sort, via = 'local' }, context, info) {
+      const { user } = global;
+      if (isNil(user) === true) throw new ApiError('Not Authorized');
+      const userId = isNil(id) ? user._id : ObjectId(id);
+      logger.info(`Finding emails for userId ${userId} via ${via}`);
+
+      switch (via) {
+        case 'microsoft': {
+          const emailUser = await User.findById(userId).then();
+          if (emailUser.authentications) {
+            const found = find(emailUser.authentications, { provider: via });
+            logger.debug(found);
+            if (found) {
+              logger.debug('Found Authentication Info For MS', { token: found.props.accessToken });
+              const emails = await O365.getEmails(found.props.accessToken);
+              logger.debug('Received Email Payload', emails);
+              const mailmaps = om(emails, {
+                'value[].id': 'emails[].id',
+                'value[].body.contentType': 'emails[].format',
+                'value[].body.content': 'emails[].message',
+                'value[].sender.emailAddress.address': 'emails[].from',
+                'value[].sentDateTime': 'emails[].sentAt',
+                'value[].receivedDateTime': [
+                  'emails[].receivedAt',
+                  'emails[].createdAt',
+                ],
+                'value[].subject': 'emails[].subject',
+                'value[].isRead': 'emails[].isRead',
+              });
+
+              logger.debug('Found mails', mailmaps);
+              return mailmaps.emails;
+            }
+            throw new ApiError('User has not authenticated with microsoft');
+          } else {
+            throw new ApiError('User has not authenticated via microsoft');
           }
-        }).catch((findError) => {
-          logger.error(`Could not find emails for this user ${userId}`);
-          reject(findError);
-        });
-      });
+        }
+        default: {
+          return EmailQueue.find({ user: userId }).then();
+        }
+      }
     },
     userSurveys(obj, { id, sort }, context, info) {
       logger.info(`Finding surveys for user ${id}, ${sort}`);

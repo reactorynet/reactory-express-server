@@ -4,6 +4,8 @@ import crypto from 'crypto';
 import moment from 'moment';
 import lodash, { isArray, find, filter } from 'lodash';
 import logger from '../../logging';
+import User from '../../application/admin/User';
+import { isObject } from 'util';
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -75,6 +77,13 @@ const UserSchema = new mongoose.Schema({
         refresh: String,
         roles: [String],
       },
+    },
+  ],
+  authentications: [
+    {
+      provider: String,
+      props: { },
+      lastLogin: Date,
     },
   ],
   legacyId: Number,
@@ -267,6 +276,24 @@ UserSchema.methods.fullName = function fullName() { return `${this.firstName} ${
 UserSchema.methods.deleteUser = function deleteUser() {
   this.deleted = true;
   this.save();
+};
+
+UserSchema.methods.setAuthentication = async function setAuthentication(authentication = { provider: 'local', props: { }, lastLogin: new Date().valueOf() }) {
+  const instance = this;
+  if (instance.authentications === undefined || instance.authentications === null) {
+    instance.authentication = [authentication];
+  } else {
+    const found = find(instance.authentications, { provider: authentication.provider });
+    if (found === undefined || found === null) {
+      instance.authentications.push(authentication);
+    } else {
+      instance.authentications.forEach((_authentication, index) => {
+        instance.authentications[index].props = { ..._authentication.props, ...authentication.props };
+      });
+    }
+  }
+
+  await instance.save().then();
 };
 
 const UserModel = mongoose.model('User', UserSchema);

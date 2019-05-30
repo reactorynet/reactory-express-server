@@ -158,7 +158,9 @@ export default {
     },
     async surveyDetail(parent, { surveyId }, context, info) {
       const survey = await Survey.findById(surveyId).then();
-      context.organization = survey.organization;
+      if (survey != null) {
+        context.organization = survey.organization;
+      }
       return survey;
     },
   },
@@ -265,7 +267,7 @@ export default {
 
       const { user } = global;
 
-      const surveyModel = await Survey.findById(survey).populate('delegates.delegate', 'assessments').then();
+      const surveyModel = await Survey.findById(survey).populate('delegates.delegate', 'delegates.assessments').then();
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
 
@@ -338,10 +340,11 @@ export default {
         }
 
         entryData.entry.delegate = delegateModel;
-        logger.info(`Performing ${action} on 
-          organigram model: ${organigramModel ? organigramModel._id.toString() : 'No Organigram'} 
-          and delegateEntry: ${entryData.entry._id} at index ${entryData.entryIdx} for 
-          delegate: ${entryData.entry.delegate._id.toString()}`, entryData.entry);
+        logger.info(`Performing "${action}" action:\n 
+          \tOrganigram model: ${organigramModel ? organigramModel._id.toString() : 'No Organigram'}\n 
+          \tDelegateEntry: ${entryData.entry._id} at index ${entryData.entryIdx}\n 
+          \tDelegate: ${entryData.entry.delegate.email}
+          \tAssessments: ${entryData.entry.assessments}`);
 
         switch (action) {
           case 'send-invite': {

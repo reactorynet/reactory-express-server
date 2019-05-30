@@ -169,8 +169,7 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
  * @param {*} organigram
  */
 export const sendSurveyRemindersForDelegate = async (survey, delegateEntry, organigram) => {
-  // console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
-
+  debugger //eslint-disable-line
   const result = (message, success = false) => {
     return {
       message,
@@ -178,10 +177,60 @@ export const sendSurveyRemindersForDelegate = async (survey, delegateEntry, orga
     };
   };
 
+  if (lodash.isNil(survey) === true) return result('Cannot have a nill survey element');
+  if (lodash.isNil(delegateEntry) === true) return result('Cannot have a null delegateEntry element');
+
+  let { delegate } = delegateEntry;
+  let assessments = [];
+  if (delegateEntry._doc && lodash.isArray(delegateEntry._doc.assessments)) {
+    assessments = delegateEntry._doc.assessments; //eslint-disable-line
+  }
+
+  if (lodash.isNil(delegate) === true) return result('Delegate Entry has no delegate model');
+  if (lodash.isNil(assessments) === true) {
+    logger.debug(`Object ${assessments} should be an array`, delegateEntry);
+    return result('Delegate has no assessments, no reminders to send.');
+  }
+
+  if (lodash.isString(delegate) === true) {
+    logger.debug(`Delegate object is string, resolving using User.findById("${delegate}")`);
+    delegate = await User.findById(delegate).then();
+  }
+
+  logger.info(`Sending Reminders to for ${delegate.firstName} ${delegate.lastName} for survey ${survey.title}`);
+
   try {
     const options = { ...defaultLaunchOptions, ...survey.options };
-    const user = delegateEntry.delegate;
-    return result(`Sent survey reminder emails and instructions for ${user.firstName} ${user.lastName} in ${survey.title}`, true);
+    let { organization } = survey;
+    if (lodash.isString(organization)) {
+      logger.debug(`Resolving organization with id (${organization})`);
+      organization = await Organization.findById(organization).then();
+    }
+    const emailPromises = [];
+    const assessmentPromises = [];
+
+    for (let aidx = 0; aidx < assessments.length; aidx += 1) {
+      if (lodash.isNil(assessments[aidx]) === false) {
+        assessmentPromises.push(new Promise((resolve, reject) => {
+          const assessment = assessments[aidx];
+          Assessment.findById(assessment._id)
+            .then(assessmentFindResult => resolve(assessmentFindResult))
+            .catch(err => reject(err));
+        }));
+      }
+    }
+
+    const assessmentResults = await Promise.all(assessmentPromises).then();
+    assessmentResults.forEach((assessment) => {
+      const { assessor } = assessment;
+      if (assessment.complete !== true) {
+        emailPromises.push(emails.surveyEmails.reminder(assessor, delegate, survey, assessment, organization, options));
+      }
+    });
+
+    const promiseResults = await Promise.all(emailPromises).then();
+
+    return result(`Sent (${promiseResults.length}) survey reminder(s) email(s) for ${delegate.firstName} ${delegate.lastName} in ${survey.title}`, true);
   } catch (e) {
     return result(e.message);
   }
@@ -268,6 +317,8 @@ export const sendSurveyEmail = async (survey, delegateEntry, organigram, emailTy
   const _delegateEntry = {
     ...delegateEntry, delegate,
   };
+
+  logger.debug(`application.admin.Survey.js{ sendSurveyEmail( survey, delegateEntry, organigram, emailType, propertyBag ) }, ${{ assessments: _delegateEntry.assessments }}`);
 
   try {
     switch (emailType) {
