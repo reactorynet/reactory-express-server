@@ -21,7 +21,7 @@ const TemplateViews = {
   SurveyInvite: 'towerstone.survey-invite-email',
   InvitePeers: 'towerstone.peer-invite-email',
   SurveyLaunch: 'towerstone.survey-launch-email',
-  SurveyReminder: 'towerstone.survey-launch-email',
+  SurveyReminder: 'towerstone.survey-reminder-email',
 };
 
 dotenv.config();
@@ -503,10 +503,17 @@ export const surveyEmails = {
     }
     return emailResult;
   },
-  reminder: async (assessor, survey, organization) => {
+  reminder: async (assessor, delegate, survey, assessment, organization, surveyoptions = null) => {
     // final object item to return
     if (lodash.isNil(assessor)) throw new ApiError('assessor parameter for delegateInvite cannot be null / undefined');
     if (lodash.isNil(survey)) throw new ApiError('survey parameter for delegateInvite cannot be null / undefined');
+
+    let assessorModel = null;
+    if (ObjectId.isValid(assessor)) {
+      assessorModel = await User.findById(assessor).then();
+    } else if (assessor.id || assessor._id) assessorModel = await User.findById(assessor).then();
+
+    if (lodash.isNil(assessorModel)) throw new ApiError('assessor parameter has to be a valid ObjectId');
 
     const emailResult = {
       sent: false,
@@ -533,9 +540,17 @@ export const surveyEmails = {
       // property bag for template
       const properties = {
         partner,
-        assessor,
+        assessor: assessorModel,
+        delegate,
+        assessment,
+        user: assessorModel,
+        organization: organization || survey.organization,
+        isSelfAssessment: ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true,
         survey,
         applicationTitle: partner.name,
+        timeEnd: moment(survey.endDate).format('HH:mm'),
+        dateEnd: moment(survey.endDate).format('YYYY-MM-DD'),
+        assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
       };
 
       let bodyTemplate = null;
@@ -557,9 +572,9 @@ export const surveyEmails = {
 
 
       const msg = {
-        to: `${assessor.firstName} ${assessor.lastName}<${assessor.email}>`,
+        to: `${assessorModel.firstName} ${assessorModel.lastName}<${assessorModel.email}>`,
         from: `${properties.applicationTitle}<${partner.email}>`,
-        ...resolveUserEmailAddress(assessor, partner),
+        ...resolveUserEmailAddress(assessorModel, partner),
       };
 
       // load and set subject

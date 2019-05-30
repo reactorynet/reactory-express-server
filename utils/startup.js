@@ -153,19 +153,19 @@ const installClients = async (configs) => {
       const { key } = clientConfig;
       logger.info(`Finding ReactoryClient with key ${key}`);
       reactoryClient = await ReactoryClient.findOne({ key }).then();
-      debugger; //eslint-disable-line
+
       const clientData = { ...clientConfig, menus: [], components: componentIds.map(c => c._id) };
       delete clientData.password;
       if (lodash.isNil(reactoryClient) === false) {
         try {
           reactoryClient = await ReactoryClient.findOneAndUpdate({ key }, { ...clientData, updatedAt: new Date() }).then();
-          logger.info(`ReactoryClient ${reactoryClient.name} updated`);
+          logger.debug(`ReactoryClient ${reactoryClient.name} updated`);
         } catch (upsertError) {
           logger.error('An error occured upserting the record', upsertError);
         }
       } else {
         try {
-          logger.info(`ReactoryClient ${key} not found, creating`);
+          logger.debug(`ReactoryClient ${key} not found, creating`);
           reactoryClient = new ReactoryClient(clientData);
           const validationResult = reactoryClient.validateSync();
           if (validationResult && validationResult.errors) {
@@ -178,7 +178,7 @@ const installClients = async (configs) => {
           logger.error('Could not save the new client data', saveNewError);
         }
       }
-      logger.info(`Upserted ${reactoryClient.name}: ${reactoryClient && reactoryClient._id ? reactoryClient._id : 'no-id'}`);
+      logger.debug(`Upserted ${reactoryClient.name}: ${reactoryClient && reactoryClient._id ? reactoryClient._id : 'no-id'}`);
       if (reactoryClient._id) {
         reactoryClient.setPassword(clientConfig.password);
         if (isArray(clientConfig.users) === true) {
