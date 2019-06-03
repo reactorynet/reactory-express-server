@@ -58,7 +58,6 @@ const resolvers = {
     path: route => route.path,
     roles: route => route.roles,
     component: (route) => {
-      debugger //eslint-disable-line
       if (!route.componentFqn) {
         return {
           nameSpace: 'core',
@@ -190,6 +189,7 @@ merge(
   require('./Custom/PaymentGatewayResolver').default,
   require('./TeamResolver').default,
   require('./Template').default,
+  require('../../../modules/lasec/index').default.graphDefinitions.Resolvers,
 );
 
 

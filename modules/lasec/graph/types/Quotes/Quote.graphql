@@ -1,0 +1,62 @@
+
+
+type LasecCompany {
+  id: String
+  tradingName: String
+}
+
+type LasecCustomer {
+  id: String
+  fullName: String    
+}
+
+type Quote { 
+  id: String
+  status: String
+  customer: LasecCustomer
+  company: LasecCompany
+  totalVATExclusive: Int
+  totalVAT: Int
+  totalVATInclusive: Int
+  GP: Int
+  actualGP: Int
+  created: Date
+  modified: Date
+  expirationDate: Date
+  note: String
+}
+
+
+type LasecQuoteDashboardSummary {
+  key: String
+  title: String
+  good: Int
+  naughty: Int
+  category: String
+  quotes: [ Quote ]
+}
+
+type LasecQuoteDashboard {
+  id: String
+  period: String
+  periodStart: Date
+  periodEnd: Date
+  repIds: [String]
+  totalQuotes: Int
+  totalBad: Int
+  statusSummary: [ LasecQuoteDashboardSummary ]
+  quotes: [ Quote ]
+}
+
+input LasecQuoteQueryInput {
+  period: String
+  periodStart: Date
+  periodEnd: Date
+  repIds: [ String ]
+  status: [ String ]
+}
+
+extend type Query {
+  lasec_getQuoteList( search: String ) : [ Quote ],
+  lasec_getDashboard( dashparams: LasecQuoteQueryInput ) : LasecQuoteDashboard
+}

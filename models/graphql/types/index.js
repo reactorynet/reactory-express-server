@@ -1,5 +1,6 @@
 import logger from '../../../logging';
 import { fileAsString } from '../../../utils/io';
+import lasecTypes from '../../../modules/lasec/graph/types';
 
 const typeDefs = [];
 
@@ -38,4 +39,4 @@ const typeDefs = [];
   }
 });
 
-export default typeDefs;
+export default [...typeDefs, ...lasecTypes];

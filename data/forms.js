@@ -1665,7 +1665,9 @@ const UserPeers = require('./forms/core/user/UserPeers/index').default;
 const ProjectLayout = require('./forms/core/project').default;
 const ProjectListWidget = require('./forms/core/project').ProjectListWidget;
 const ProjectDetailForm = require('./forms/core/project').ProjectDetailForm;
-const LasecCrmDashboardForm = require('./forms/lasec/dashboard/crmdash').CrmDashboardForm;
+const LasecCrmDashboardForm = require('./forms/lasec/dashboard/crmdash').default.CrmDashboardForm;
+const LasecQuoteListForm = require('./forms/lasec/dashboard/crmdash').default.QuotesList;
+const LasecQuoteDetailForm = require('./forms/lasec/dashboard/crmdash').default.QuoteDetail;
 const MicrosoftOpenIDAuthenticationForm = require('./forms/microsoft/security').MicrosoftOpenIDAuthenticationForm;
 
 export default [
@@ -1687,6 +1689,8 @@ export default [
   PageEditorForm,
   LoginForm,
   LasecCrmDashboardForm,
+  LasecQuoteListForm,
+  LasecQuoteDetailForm,
   ContentPages,
   FileLoader,
   ExternalLinkList,

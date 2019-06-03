@@ -89,10 +89,10 @@ export default {
           ordinal: 1, title: 'Marketing', link: '/marketing', icon: 'speaker', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 2, title: 'Customers', link: '/customers', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
+          ordinal: 2, title: 'Customers', link: '/360/crm/customer-search', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 3, title: 'Orders', link: '/orders', icon: 'share', roles: ['USER', 'ADMIN'],
+          ordinal: 3, title: 'Quotes', link: '/quotes', icon: 'share', roles: ['USER', 'ADMIN'],
         },
         {
           ordinal: 4, title: 'Shipping', link: '/shipping', icon: 'local_shipping', roles: ['USER', 'ADMIN'],
@@ -126,6 +126,49 @@ export default {
       exact: true,
       roles: ['USER'],
       componentFqn: `${key}.Dashboard@1.0.0`,
+    },
+    {
+      key: 'quote-list',
+      title: 'Quote List',
+      path: '/quotes',
+      public: false,
+      exact: false,
+      roles: ['USER'],
+      componentFqn: `${key}.Quotes@1.0.0`,
+    },
+    {
+      key: 'ProxiedWindow',
+      title: '360 Proxied',
+      path: '/360/crm/customer-search',
+      exact: false,
+      public: false,
+      roles: ['USER'],
+      componentFqn: 'core.FramedWindow@1.0.0',
+      args: [
+        {
+          key: 'proxyRoot',
+          value: {
+            type: 'string',
+            proxyRoot: `$ref://settings/lasec_360_root/${MODE}`,
+          },
+        },
+        {
+          key: 'url',
+          value: {
+            type: 'string',
+            url: 'http://localhost:3001/crm/customer-search',
+          },
+        },
+      ],
+    },
+    {
+      key: 'quote-detail',
+      title: 'Quote Detail',
+      path: '/quote/**/details',
+      public: false,
+      exact: false,
+      roles: ['USER'],
+      componentFqn: `${key}.QuoteDetail@1.0.0`,
     },
     {
       key: 'inbox',
@@ -222,6 +265,18 @@ export default {
       data: {
         email: 'werner.weber+lasecredirect@gmail.com',
         enabled: true,
+      },
+    },
+    {
+      name: 'lasec_360_root/DEVELOP',
+      data: {
+        url: 'http://localhost:3001/',
+      },
+    },
+    {
+      name: 'lasec_360_root/PRODUCTION',
+      data: {
+        url: 'http://localhost:3001/',
       },
     },
   ],
