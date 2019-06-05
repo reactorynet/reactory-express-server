@@ -19,7 +19,7 @@ import logger from '../../../logging';
 import { launchSurveyForDelegate, sendSurveyEmail, EmailTypesForSurvey, sendSurveyClosed } from '../../../application/admin/Survey';
 import LeadershipBrandModel from '../../schema/LeadershipBrand';
 
-const { findIndex } = lodash;
+const { findIndex, pullAt } = lodash;
 
 export default {
   SurveyCalendarEntry: {
@@ -261,9 +261,9 @@ export default {
     async surveyDelegateAction(obj, {
       entryId, survey, delegate, action, inputData,
     }) {
-      logger.info('Executing action for delegate entry', {
+      logger.debug(`Executing action for delegate entry:\n ${JSON.stringify({
         entryId, survey, delegate, action, inputData,
-      });
+      }, null, 1)}`);
 
       const { user } = global;
 
@@ -469,6 +469,36 @@ export default {
               who: user._id,
             });
 
+            break;
+          }
+          case 'remove-assessor': {
+            // used when we remove an assessor from a particular delegate
+            try {
+              const { assessmentId } = inputData;
+              const assessment = await Assessment.findById(assessmentId).populate('assessor').then();
+              if (assessment !== null && assessment !== undefined) {
+                assessment.deleted = true;
+                assessment.completed = true;
+                assessment.updatedAt = new Date();
+                const assessmentCount = entryData.entry.assessments.length;
+                let pullAtIndex = -1;
+
+                for (let aidx = 0; aidx < assessmentCount; aidx += 1) {
+                  const sourceId = entryData.entry.assessments[aidx];
+                  if (ObjectId(sourceId).equals(ObjectId(assessmentId))) {
+                    pullAtIndex = aidx;
+                  }
+                }
+
+                if (pullAtIndex > -1) pullAt(entryData.entry.assessments, [pullAtIndex]);
+
+                entryData.entry.message = `Removed ${assessment.assessor.firstName} ${assessment.assessor.lastName} for ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
+                entryData.entry.lastAction = 'removed-assessor';
+                entryData.patch = true;
+              }
+            } catch (removeError) {
+              logger.error(`Error occured removing the assessment from the delegate ${delegateModel.email}: ${removeError.message}`, removeError);
+            }
             break;
           }
           default: {
