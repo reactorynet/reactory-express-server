@@ -302,7 +302,7 @@ export default [
         view: 'towerstone.survey-reminder-email/subject',
         kind: 'content',
         format: 'text',
-        content: '<% if(!isSelfAssessment) { %>Please remember to complete the assessment for <%= delegate.firstName %> on the <%= applicationTitle %> assessment platform <% } else { %> Please remember to complete your self-assessment on the <%= applicationTitle %> assessment platform <% } %>',
+        content: '<% if(!isSelfAssessment) { %>Reminder to complete the assessment for <%= delegate.firstName %> on the <%=applicationTitle%> Assessment Platform <% } else { %>Reminder to complete your self-assessment on the <%=applicationTitle %> Assessment Platform <% } %>',
         parameters: [
           {
             name: 'applicationTitle',
