@@ -2,6 +2,7 @@ import express from 'express';
 import moment from 'moment';
 import { isNil, isEmpty } from 'lodash';
 import Admin from '../application/admin';
+import { User } from '../models';
 import ApiError, { UserExistsError, UserValidationError, OrganizationExistsError, UserNotFoundException, SystemError } from '../exceptions';
 import AuthConfig from '../authentication';
 
@@ -12,19 +13,19 @@ router.options('/register', (req, res) => {
 
 router.post('/register', (req, res) => {
   const { user, organization } = req.body;
-  //console.log('processing registration request', { user, organization });
+  // console.log('processing registration request', { user, organization });
   Promise.all([
     Admin.Organization.findOrCreate(organization),
     Admin.User.registerUser(user),
   ]).then((results) => {
-    //console.log('All promises resolved', results);
+    // console.log('All promises resolved', results);
     const { partner } = global;
     const addedRoles = [];
     const organizationResult = results[0];
     const userResult = results[1];
     if (isNil(organization.id) === true) addedRoles.push('ORG_ADMIN');
     Admin.User.createMembership(userResult, partner, organizationResult, ['USER', ...addedRoles]).then((membershipResult) => {
-      //console.log('Membership Result', membershipResult);
+      // console.log('Membership Result', membershipResult);
       res.send({
         firstName: userResult.firstName,
         lastName: userResult.lastName,
@@ -52,7 +53,8 @@ router.post('/register', (req, res) => {
 
 router.post('/forgot', (req, res) => {
   const { email } = req.body;
-  Admin.User.User.findOne({ email }).then((user) => {
+  // debugger; //eslint-disable-line
+  User.findOne({ email }).then((user) => {
     if (user === null) res.status(404).send(new UserNotFoundException(`Could not find a user with email ${email}`, { email, error: 'No user' }));
     Admin.User.sendResetPasswordEmail(user, global.partner, { delivery: moment(), format: 'html' }).then(() => {
       res.status(200).send({ message: `A reset email has been sent to ${email}` });

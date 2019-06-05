@@ -25,6 +25,8 @@ export class CreateUserResult {
   }
 }
 
+export const UserModel = User;
+
 export const defaultUserCreateOptions = {
   sendRegistrationEmail: false,
   clientId: null,
@@ -337,7 +339,7 @@ export default {
   updateProfile,
   listAll,
   listAllForOrganization,
-  User,
+  UserModel,
   sendResetPasswordEmail,
   assessmentsForUser,
   userWithId,
