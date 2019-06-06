@@ -111,14 +111,23 @@ UserSchema.methods.validatePassword = function validatePassword(password) {
   return this.password === crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
 };
 
+/**
+ * Extension Method on Model to check for a particular role / claim
+ */
 UserSchema.methods.hasRole = function hasRole(clientId, role = 'USER', organizationId = null, businessUnitId = null) {
-  logger.info(`Checking user membership ${clientId} ${role} ${organizationId} ${businessUnitId}`);
+  logger.info(`Checking user membership 
+    ReactoryClient:[${clientId}] 
+    Role: [${role}]
+    Organization: [${organizationId || '**'}]
+    BusinessUnit: [${businessUnitId || '**'}]`);
   if (this.memberships.length === 0) return false;
 
   let matches = [];
 
-  if (ObjectIdFunc.isValid(clientId) === false) return false;
-  logger.info('Adding memberships with client id');
+  if (ObjectIdFunc.isValid(clientId) === false) {
+    logger.warn('clientId parameter is supposed to be ObjectId');
+    return false;
+  }
 
   matches = filter(this.memberships, (membership) => {
     return ObjectIdFunc(membership.clientId).equals(ObjectIdFunc(clientId));
@@ -151,6 +160,7 @@ UserSchema.methods.hasRole = function hasRole(clientId, role = 'USER', organizat
   }
 
   if (isArray(matches) === true && matches.length > 0) {
+    logger.debug(`Matched ${matches.length} memberships for user ${this.email}`);
     const matched = lodash.filter(
       matches,
       membership => isArray(membership.roles) === true

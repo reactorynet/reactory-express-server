@@ -14,8 +14,9 @@ const TemplateResolvers = {
   },
   Query: {
     templates: async (obj, { client = null, organization = null }) => {
-      logger.info('Listing templates using search criteria', client, organization);
+      logger.info(`Listing templates using search criteria client id: ${client || 'null'} orgnization: ${organization || 'null'}`);
       if (isNil(client) === false && ObjectId.isValid(client)) {
+        logger.debug('Filtering templates by client and organization id');
         if (isNil(organization) === false && ObjectId.isValid(organization) === true) {
           return Template.find({
             client: ObjectId(client),
@@ -23,12 +24,14 @@ const TemplateResolvers = {
           }).then();
         }
 
+        logger.debug('Filtering templates by client id');
         return Template.find({
           client: ObjectId(client),
         }).then();
       }
       // use default partner tempaltes
-      return this.find({ client: global.partner._id }).then();
+      logger.debug(`Returning template list for authenticated partner id ${global.partner._id}`);
+      return Template.find({ client: global.partner._id }).then();
     },
     template: (obj, { id }) => { return Template.findById(id).then(); },
   },
@@ -43,7 +46,3 @@ const TemplateResolvers = {
 };
 
 export default TemplateResolvers;
-
-module.exports = {
-  TemplateResolvers,
-};

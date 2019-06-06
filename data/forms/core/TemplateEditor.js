@@ -60,7 +60,7 @@ export const TemplateList = {
   schema: {
     type: 'object',
     properties: {
-      toolbar: { ...BasicToolbar },
+      // toolbar: { ...BasicToolbar },
       results: {
         type: 'array',
         items: {
@@ -79,16 +79,13 @@ export const TemplateList = {
               type: 'string',
               name: 'Template Format',
             },
-            content: {
-              type: 'string',
-              name: 'Content',
-            },
           },
         },
       },
     },
   },
   uiSchema: {
+    /*
     toolbar: {
       'ui:wrapper': 'Toolbar',
       'ui:options': {
@@ -98,6 +95,7 @@ export const TemplateList = {
 
       },
     },
+    */
   },
   registerAsComponent: true,
   name: 'TemplateList',
@@ -108,13 +106,18 @@ export const TemplateList = {
       new: true,
       edit: true,
       name: 'templates',
+      resultType: 'array',
       text: `
       query Templates ( $client: String, $organization: String ) {
         templates (client: $client, organization: $organization) {
           id
           view
           format
-          content             
+          content
+          locale
+          kind
+          content
+          elements                                 
         }
       }
       `,
@@ -122,10 +125,7 @@ export const TemplateList = {
 
       },
       resultMap: {
-        id: 'id',
-        view: 'view',
-        format: 'status',
-        content: 'content',
+        '[]': 'results',
       },
     },
   },

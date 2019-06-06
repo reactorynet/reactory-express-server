@@ -1665,6 +1665,8 @@ const UserPeers = require('./forms/core/user/UserPeers/index').default;
 const ProjectLayout = require('./forms/core/project').default;
 const ProjectListWidget = require('./forms/core/project').ProjectListWidget;
 const ProjectDetailForm = require('./forms/core/project').ProjectDetailForm;
+const OrganizationForm = require('./forms/core/organization').default;
+const { OrganizationLoginForm } = require('./forms/core/organization');
 const LasecCrmDashboardForm = require('./forms/lasec/dashboard/crmdash').default.CrmDashboardForm;
 const LasecQuoteListForm = require('./forms/lasec/dashboard/crmdash').default.QuotesList;
 const LasecQuoteDetailForm = require('./forms/lasec/dashboard/crmdash').default.QuoteDetail;
@@ -1691,6 +1693,8 @@ export default [
   LasecCrmDashboardForm,
   LasecQuoteListForm,
   LasecQuoteDetailForm,
+  OrganizationForm,
+  OrganizationLoginForm,
   ContentPages,
   FileLoader,
   ExternalLinkList,

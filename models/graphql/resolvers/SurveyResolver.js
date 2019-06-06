@@ -193,37 +193,36 @@ export default {
 
       return survey;
     },
-    addDelegateToSurvey(surveyId, delegateId) {
-      return co.wrap(function* addDelegateToSurveyGenerator(sid, did) {
-        const survey = Survey.findById(sid).then();
-        const delegate = yield User.findById(did).then();
+    async addDelegateToSurvey(surveyId, delegateId) {
+      const delegate = await User.findById(delegateId).then();
+      const survey = await Survey.findById(surveyId).then();
 
-        if (survey && delegate) {
-          const delegates = [];
-          let found = false;
-          survey.delegates.map((dentry) => {
-            if (dentry.delegate !== ObjectId(did)) {
-              delegates.push(dentry);
-            } else found = true;
+      logger.info(`Adding delegate: ${delegate.email} to Survey: [${survey.title}]`);
+
+      if (survey && delegate) {
+        if (lodash.findIndex(survey.delegates, (entry) => { return delegate._id.equals(ObjectId(entry.delegate)); }) === -1) {
+          // force array
+          if (lodash.isArray(survey.delegates) === false) survey.delegates = [];
+
+          survey.delegates.push({
+            delegate: delegate._id,
+            notifications: [],
+            assessments: [],
+            launched: false,
+            complete: false,
+            removed: false,
           });
-          if (!found) {
-            delegates.push({
-              delegate: delegate._id,
-              notifications: [],
-              assessments: [],
-              launched: false,
-              complete: false,
-              removed: false,
-            });
-          }
-          survey.delegates = delegates;
-          const saved = yield survey.save().then();
-          return {
-            id: survey._id,
-            user: delegate._id,
-          };
-        } throw new ApiError('Survey not found!');
-      })(surveyId, delegateId);
+
+          await survey.save().then();
+        }
+
+        return {
+          id: survey._id,
+          user: delegate._id,
+        };
+      }
+
+      throw new ApiError('Survey not found or Delegate Not Found');
     },
     removeDelegateFromSurvey(obj, { surveyId, delegateId }) {
       return co.wrap(function* removeDelegateFromSurveyGenerator(sid, did) {
@@ -265,14 +264,21 @@ export default {
         entryId, survey, delegate, action, inputData,
       }, null, 1)}`);
 
-      const { user } = global;
+      const { user, partner } = global;
 
       const surveyModel = await Survey.findById(survey).populate('delegates.delegate', 'delegates.assessments').then();
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
 
       const delegateModel = await User.findById(delegate).then();
+
       if (!delegateModel) throw new RecordNotFoundError('Could not find the user item', 'User');
+
+      // make sure the delegate has minimum permissions for this flow
+      if (delegateModel.hasRole(partner._id, 'USER', surveyModel.organization) === false) {
+        delegateModel.addRole(partner._id, 'USER', surveyModel.organization);
+      }
+
 
       const organigramModel = await Organigram.findOne({
         user: ObjectId(delegateModel._id),

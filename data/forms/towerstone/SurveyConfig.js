@@ -272,6 +272,7 @@ export const uiSchema = {
     'ui:widget': 'SelectWidget',
     'ui:options': {
       selectOptions: [
+        { key: 'plc', value: 'PLC', label: 'Purposeful Leadership Company' },
         { key: '180', value: '180', label: '180 Team Assessment' },
         { key: '360', value: '360', label: '360 Personal Assessment' },
       ],
