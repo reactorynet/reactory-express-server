@@ -3,7 +3,9 @@ pipeline {
   stages {
     stage('Clean') {
       steps {
-        ws(dir: '/data/builds/reactory-api')
+        dir: ('/data/builds/reactory-api') {
+          // a block
+        }
       }
     }
     stage('Build') {
