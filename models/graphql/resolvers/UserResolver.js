@@ -29,15 +29,33 @@ import { isObject, isNull } from 'util';
 const uuid = require('uuid');
 
 const userAssessments = async (id) => {
-  const { user } = global;
+  const { user, partner } = global;
   const findUser = isNil(id) === true ? await User.findById(id).then() : user;
   if (findUser && findUser._id) {
-    return Assessment.find({ assessor: findUser._id, deleted: false })
+    logger.info(`Fetching assessments for user ${user.firstName} [${user.email}] - for partner key: ${partner.key}`);
+    const assessmentTypes = ['custom'];
+    if (partner.key === 'plc') {
+      assessmentTypes.push('plc');
+    } else {
+      assessmentTypes.push('180');
+      assessmentTypes.push('360');
+    }
+
+    const assessments = await Assessment.find({ assessor: findUser._id, deleted: false })
       .populate('assessor')
       .populate('delegate')
       .populate('survey')
       .then();
+
+    if (lodash.isArray(assessments) === true) {
+      return lodash.filter(assessments, (assessment) => {
+        return lodash.intersection(assessmentTypes, [assessment.survey.surveyType]).length > 0;
+      });
+    }
+
+    return [];
   }
+
   throw new RecordNotFoundError('No user matching id');
 };
 

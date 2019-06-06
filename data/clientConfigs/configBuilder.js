@@ -1,24 +1,53 @@
-import dotenv from 'dotenv';
-import { profileSmall } from '../menus';
 
-import systemRoutes from './defaultRoutes';
+import dotenv from 'dotenv';
+import {
+  profileSmall,
+} from '../menus';
 
 dotenv.config();
 
-const { CDN_ROOT, MODE } = process.env;
+const { CDN_ROOT, MODE, API_URI_ROOT } = process.env;
 
-export default {
-  key: 'reactory',
-  name: 'Reactory Admin Application',
-  username: 'reactory',
-  email: 'developer@reactory.net',
+let siteUrl = '';// 'http://localhost:3000' : 'https://app.towerstone-global.com/';
+
+
+const getSiteUrl = (key) => {
+  switch (MODE) {
+    case 'QA': {
+      siteUrl = `https://${key}-app.reactory.net`;
+      break;
+    }
+    case 'PRODUCTION': {
+      siteUrl = 'https://crm.lasec360.com';
+      break;
+    }
+    case 'DEVELOP':
+    default: {
+      siteUrl = 'http://localhost:3000';
+      break;
+    }
+  }
+};
+
+
+function makeid(length) {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i += 1) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+
+const baseConfig = {
+  name: 'My New Application',
   salt: 'generate',
-  password: 'XXXXXXXXXXXXX',
-  siteUrl: MODE === 'DEVELOP' ? 'http://localhost:3000' : 'https://app.reactory.net/',
+  password: makeid(20),
   emailSendVia: 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/reset-password',
-  avatar: `${CDN_ROOT}themes/reactory/images/avatar.jpg`,
+
   applicationRoles: ['USER', 'ADMIN', 'ANON'],
   billingType: 'partner',
   components: [
@@ -122,38 +151,6 @@ export default {
     },
   ],
   theme: 'reactory',
-  themeOptions: {
-    typography: {
-      useNextVariants: true,
-    },
-    type: 'material',
-    palette: {
-      primary1Color: '#424242',
-      primary: {
-        light: '#6d6d6d',
-        main: '#424242',
-        dark: '#1b1b1b',
-        contrastText: '#ffffff',
-      },
-      secondary: {
-        light: '#ff9e40',
-        main: '#ff6d00',
-        dark: '#c43c00',
-        contrastText: '#fff',
-      },
-    },
-    assets: {
-      featureImage: `${CDN_ROOT}/themes/reactory/images/phoenix.png`,
-      logo: `${CDN_ROOT}/themes/reactory/images/logo.png`,
-      favicon: `${CDN_ROOT}/themes/reactory/images/favicon.png`,
-    },
-    content: {
-      appTitle: 'Reactory - Build Apps. Fast.',
-      login: {
-        message: 'Building Apps. Just. Like. That.',
-      },
-    },
-  },
   allowCustomTheme: true,
   auth_config: [
     {
@@ -188,3 +185,47 @@ export default {
   ],
 };
 
+
+/**
+ * Returns a basic config setup
+ * @param {*} key
+ * @param {*} props
+ */
+const makeConfig = (key, props) => ({
+  key,
+  ...baseConfig,
+  siteUrl: getSiteUrl(key),
+  avatar: `${CDN_ROOT}themes/${key}/images/avatar.jpg`,
+  themeOptions: {
+    type: 'material', // material || bootstrap
+    palette: {
+      primary1Color: '#424242',
+      primary: {
+        light: '#6d6d6d',
+        main: '#424242',
+        dark: '#1b1b1b',
+        contrastText: '#ffffff',
+      },
+      secondary: {
+        light: '#ff9e40',
+        main: '#ff6d00',
+        dark: '#c43c00',
+        contrastText: '#fff',
+      },
+    },
+    assets: {
+      featureImage: `${CDN_ROOT}/themes/${key}/images/feature.png`,
+      logo: `${CDN_ROOT}/themes/${key}/images/logo.png`,
+      favicon: `${CDN_ROOT}/themes/${key}/images/favicon.png`,
+    },
+    content: {
+      appTitle: 'My App Title',
+      login: {
+        message: 'Built With Reactory',
+      },
+    },
+  },
+  ...props,
+});
+
+export default makeConfig;

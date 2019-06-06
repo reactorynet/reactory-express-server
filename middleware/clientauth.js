@@ -19,7 +19,7 @@ const clientauth = (req, res, next) => {
   clientPwd = clientPwd || req.query.secret;
   clientPwd = req.query['x-client-pwd'] || clientPwd;
 
-  logger.info(`Client Id: [${clientId}], Client Key: [${clientPwd}]`, req.originalUrl);
+  logger.info(`Client Id: [${clientId}], Client Key: [${clientPwd}], Original Url: ${req.originalUrl}`);
 
   let bypass = false;
   if (req.originalUrl) {
@@ -59,7 +59,7 @@ const clientauth = (req, res, next) => {
           next();
         }
       }).catch((clientError) => {
-        console.error('client retrieval error', clientError);
+        logger.error('Client retrieval error', clientError);
         res.status(404).send({ error: `client with id ${clientId} found` });
       });
     }

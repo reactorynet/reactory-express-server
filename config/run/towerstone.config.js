@@ -13,7 +13,7 @@ module.exports = {
       APP_DATA_ROOT: '/mnt/d/data/reactory',
       LEGACY_APP_DATA_ROOT: '/mnt/d/data',
       MONGOOSE: 'mongodb://localhost:27017/reactory',
-      WORKFLOW_MONGO: 'mongodb://@localhost:27017/reactory-workflow',
+      WORKFLOW_MONGO: 'mongodb://localhost:27017/reactory-workflow',
       API_PORT: 4000,
       SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
       API_URI_ROOT: 'http://locahost:4000/',
