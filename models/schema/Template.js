@@ -20,6 +20,12 @@ const TemplateSchema = mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  name: {
+    type: String,
+  },
+  description: {
+    type: String,
+  },
   view: {
     type: String,
     trim: true,
@@ -34,20 +40,21 @@ const TemplateSchema = mongoose.Schema({
     type: String,
     lowercase: true,
     trim: true,
-    enum: ['email', 'widget', 'page', 'css', 'layout', 'content'],
+    enum: ['email', 'widget', 'page', 'css', 'layout', 'content', 'pdf'],
     default: 'email',
   },
   format: {
     type: String,
     lowercase: true,
     trim: true,
-    enum: ['html', 'text', 'wrapper'],
+    enum: ['html', 'text', 'wrapper', 'image'],
     default: 'html',
   },
   content: {
     type: String,
     required: false,
   },
+  props: {},
   elements: [{
     type: ObjectId,
     ref: 'Template',

@@ -134,7 +134,33 @@ export default {
       public: false,
       exact: false,
       roles: ['USER'],
-      componentFqn: `${key}.Quotes@1.0.0`,
+      // componentFqn: `${key}.Quotes@1.0.0`,
+      componentFqn: 'core.FramedWindow@1.0.0',
+      args: [
+        {
+          key: 'proxyRoot',
+          value: {
+            type: 'string',
+            proxyRoot: `$ref://settings/lasec_360_root/${MODE}`,
+          },
+        },
+        {
+          key: 'frameProps',
+          value: {
+            type: 'object',
+            frameProps: {
+              url: 'http://localhost:3001/',
+              height: '100%',
+              width: '100%',
+              styles: {
+                border: 'none',
+                height: '100%',
+                width: '100%',
+              },
+            },
+          },
+        },
+      ],
     },
     {
       key: 'ProxiedWindow',
@@ -153,10 +179,19 @@ export default {
           },
         },
         {
-          key: 'url',
+          key: 'frameProps',
           value: {
-            type: 'string',
-            url: 'http://localhost:3001/crm/customer-search',
+            type: 'object',
+            frameProps: {
+              url: 'http://localhost:3001/crm/customer-search',
+              height: '100%',
+              width: '100%',
+              styles: {
+                border: 'none',
+                height: '100%',
+                width: '100%',
+              },
+            },
           },
         },
       ],
@@ -241,6 +276,11 @@ export default {
       emailLogo: `${CDN_ROOT}themes/${key}/images/logo_small.png`,
       favicon: `${CDN_ROOT}themes/${key}/images/favicon.png`,
       avatar: `${CDN_ROOT}themes/${key}/images/avatar.png`,
+      icons: {
+        Icon512: `${CDN_ROOT}themes/${key}/images/icons-512.png`,
+        Icon192: `${CDN_ROOT}themes/${key}/images/icons-192.png`,
+        Icon144: `${CDN_ROOT}themes/${key}/images/icons-144.png`,
+      },
     },
     content: {
       appTitle: 'Lasec CRM',

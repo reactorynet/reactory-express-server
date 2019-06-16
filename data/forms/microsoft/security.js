@@ -17,6 +17,7 @@ export const MicrosoftOpenIDAuthenticationUISchema = {
   submitIcon: 'lock',
   'ui:options': {
     showSubmit: false,
+    showHelp: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -28,7 +29,7 @@ export const MicrosoftOpenIDAuthenticationUISchema = {
     'ui:widget': 'LinkField',
     'ui:options': {
       format: '${formData}/${formContext.api.CLIENT_KEY}?x-client-key=${formContext.api.CLIENT_KEY}&x-client-pwd=${formContext.api.CLIENT_PWD}', //eslint-disable-line
-      title: 'Login With Microsoft',
+      title: 'Login With Microsoft O365',
       icon: 'security',
       userouter: false, // use browser navigator
     },

@@ -130,6 +130,7 @@ class AuthConfig {
         signInComplete,
       ));
 
+
       app.post(
         '/login',
         passport.authenticate('basic', { session: false }),

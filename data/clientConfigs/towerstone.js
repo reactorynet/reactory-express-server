@@ -4,11 +4,15 @@ import {
   towerStoneMenuDef,
 } from '../menus';
 
-import systemRoutes from './defaultRoutes';
+import {
+  loginroute,
+  forgotpasswordroute,
+  logoutroute, formsroute, resetpasswordroute,
+} from './defaultRoutes';
 
 dotenv.config();
 
-const { CDN_ROOT, MODE } = process.env;
+const { CDN_ROOT, MODE, API_URI_ROOT } = process.env;
 
 let siteUrl = '';// 'http://localhost:3000' : 'https://app.towerstone-global.com/';
 
@@ -53,10 +57,10 @@ export default {
       email: 'werner.weber@gmail.com', firstName: 'Werner', lastName: 'Weber', roles: ['USER', 'ADMIN'],
     },
     {
-      email: 'mady.eagar@towerstone-global.com', firstName: 'Mandy', lastName: 'Eagar', roles: ['USER', 'ADMIN'],
+      email: 'mandy.eagar@towerstone-global.com', firstName: 'Mandy', lastName: 'Eagar', roles: ['USER', 'ADMIN'],
     },
     {
-      email: 'thea.nel@towerstone-global.com', firstName: 'Thea', lastName: 'Nel', roles: ['USER', 'ADMIN'],
+      email: 'thea.shaw@towerstone-global.com', firstName: 'Thea', lastName: 'Shaw', roles: ['USER', 'ADMIN'],
     },
     {
       email: 'yolande.wheatley@towerstone-global.com', firstName: 'Yolande', lastName: 'Wheatley', roles: ['USER', 'ADMIN'],
@@ -140,7 +144,32 @@ export default {
     towerStoneMenuDef,
   ],
   routes: [
-    ...systemRoutes,
+    {
+      ...loginroute,
+      args: [
+        {
+          key: 'forgotEnabled',
+          value: {
+            type: 'bool',
+            forgotEnabled: true,
+          },
+        },
+        {
+          key: 'authlist',
+          value: {
+            type: 'bool',
+            authlist: [
+              'local',
+              'microsoft',
+            ],
+          },
+        },
+      ],
+    },
+    logoutroute,
+    forgotpasswordroute,
+    resetpasswordroute,
+    formsroute,
     {
       key: 'home',
       title: 'Home',
@@ -315,6 +344,32 @@ export default {
     {
       provider: 'GOOGLE',
       enabled: false,
+    },
+    {
+      provider: 'microsoft',
+      enabled: true,
+      /**
+        OAUTH_APP_ID=ac149de8-0529-48ac-9b4d-a950a73dfbab
+        OAUTH_APP_PASSWORD=<OAUTH PASSWORD>
+        OAUTH_REDIRECT_URI=http://localhost:3000/auth/callback
+        OAUTH_SCOPES='profile offline_access user.read calendars.read'
+        OAUTH_AUTHORITY=https://login.microsoftonline.com/common
+        OAUTH_ID_METADATA=/v2.0/.well-known/openid-configuration
+        OAUTH_AUTHORIZE_ENDPOINT=/oauth2/v2.0/authorize
+        OAUTH_TOKEN_ENDPOINT=/oauth2/v2.0/token
+       */
+      options: {
+        identityMetadata: 'https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration',
+        clientID: 'ac149de8-0529-48ac-9b4d-a950a73dfbab',
+        responseType: 'code id_token',
+        responseMode: 'form_post',
+        redirectUrl: `${API_URI_ROOT}/auth/microsoft/done`,
+        allowHttpForRedirectUrl: true,
+        clientSecret: '<OAUTH PASSWORD>',
+        validateIssuer: false,
+        passReqToCallback: false,
+        scope: 'profile offline_access user.read calendars.read calendars.write'.split(' '),
+      },
     },
   ],
   whitelist: [

@@ -17,6 +17,7 @@ import typeDefs from './models/graphql/types';
 import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
 import workflow from './workflow';
+import pdf from './pdf';
 import bots from './bot/server';
 import startup from './utils/startup';
 import logger from './logging';
@@ -37,6 +38,7 @@ process.on('SIGINT', () => {
 
 const {
   APP_DATA_ROOT,
+  APP_SYSTEM_FONTS,
   MONGOOSE,
   API_PORT,
   API_URI_ROOT,
@@ -47,6 +49,7 @@ const {
 const ENV_STRING_DEBUG = `
 Environment Settings: 
   API_DATA_ROOT: ${APP_DATA_ROOT}
+  APP_SYSTEM_FONTS: ${APP_SYSTEM_FONTS}
   MONGOOSE: ${MONGOOSE}
   API_PORT: ${API_PORT}
   API_URI_ROOT: ${API_URI_ROOT}
@@ -108,6 +111,7 @@ startup().then((startResult) => {
   app.use('/reactory', reactory);
   app.use('/froala', froala);
   app.use('/workflow', workflow);
+  app.use('/pdf', pdf);
   app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
   app.listen(API_PORT);
   // logger.info(`Bots server using ${bots.name}`);
