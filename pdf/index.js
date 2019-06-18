@@ -27,6 +27,12 @@ function createPdfBinary(pdfDoc, res) {
   logger.debug('createdPdfBinary called');
 
   const fontDescriptors = {
+    Roboto: {
+      normal: `${APP_DATA_ROOT}/fonts/verdana.ttf`,
+      bold: `${APP_DATA_ROOT}/fonts/verdanab.ttf`,
+      italics: `${APP_DATA_ROOT}/fonts/verdanai.ttf`,
+      bolditalics: `${APP_DATA_ROOT}/fonts/verdanaz.ttf`,
+    },
     Verdana: {
       normal: `${APP_DATA_ROOT}/fonts/verdana.ttf`,
       bold: `${APP_DATA_ROOT}/fonts/verdanab.ttf`,
@@ -110,19 +116,8 @@ const generate = (props, res, usepdfkit = false) => {
 
   if (_.isFunction(definition.content) === true && usepdfkit === false) {
     const pdfdef = definition.content(data, partner, user);
-    logger.debug('Generating Report Using PDFMake', pdfdef);
-
-    if (definition.props && definition.props.fonts) {
-      logger.debug('Adding fonts', definition.props.fonts);
-      // pdfmake.setFonts(definition.props.fonts);
-    }
-
-    const { fonts } = definition.props;
-
+    logger.debug('Generating Report Using PDFMake');
     createPdfBinary(pdfdef, res);
-    // const pdf = pdfmake.createPdf(pdfdef, {}, fonts);
-    // pdf.write(res);
-    // doc.end();
   } else {
     logger.debug('Generating Document using PDFkit');
     const doc = new PDFDocument();
