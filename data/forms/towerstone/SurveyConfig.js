@@ -125,7 +125,7 @@ export const queryResultMap = {
   mode: 'mode',
   surveyType: 'surveyType',
   'leadershipBrand.id': 'leadershipBrand',
-  'organization.id': 'organization',
+  organization: 'organization',
 };
 
 export const surveyDelegatesQuery = `
@@ -230,20 +230,22 @@ export const uiSchema = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      organization: { md: 6 },
-      leadershipBrand: { md: 6 },
+      organization: { md: 12 },
     },
     {
+      leadershipBrand: { md: 6 },
       surveyType: { md: 6 },
-      title: { md: 6 },
+    },
+    {
+      title: { md: 12 },
     },
     {
       startDate: { md: 6 },
       endDate: { md: 6 },
     },
     {
-      mode: { md: 3 },
-      status: { md: 3 },
+      mode: { md: 6 },
+      status: { md: 6 },
     },
   ],
   id: {
@@ -254,7 +256,14 @@ export const uiSchema = {
     'ui:widget': 'CompanyLogoWidget',
     'ui:options': {
       widget: 'CompanyLogoWidget',
+      readOnly: true,
+      noLookup: true,
+      mapping: {
+        'formData.id': 'id',
+        'formData.logo': 'logo',
+      },
       style: {
+        width: '512px',
         marginRight: 'auto',
         marginLeft: 'auto',
         marginTop: '8px',

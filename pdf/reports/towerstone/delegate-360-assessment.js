@@ -7,6 +7,7 @@ import {
   User,
   LeadershipBrand,
   Organization,
+  Scale,
 } from '../../../models';
 
 const { APP_SYSTEM_FONTS, APP_DATA_ROOT } = process.env;
@@ -31,8 +32,10 @@ const resolveData = async ({ surveyId, delegateId }) => {
     delegate: {},
     assessments: [],
     survey,
+    score: 78,
     organization: {},
     leadershipBrand: {},
+    scale: { entries: [] },
     qualities: [],
     behaviours: [],
     developmentPlan: [],
@@ -42,74 +45,271 @@ const resolveData = async ({ surveyId, delegateId }) => {
   reportData.delegate = await User.findById(reportData.survey.delegates.id(delegateId).delegate).then();
   reportData.organization = reportData.survey.organization;
   reportData.leadershipBrand = reportData.survey.leadershipBrand;
+  reportData.qualities = reportData.leadershipBrand.qualities;
+  reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
   reportData.assessments = await Assessment.find({ _id: { $in: reportData.survey.delegates.id(delegateId).assesments } }).then();
+
 
   return reportData;
 };
 
 
-export const pdfmakedefinition = (data, partner, user) => ({
-  info: {
-    title: `360° Leadership Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}`,
-    author: partner.name,
-    subject: '360° Leadership Assessment Report',
-    keywords: 'Leadership Training Personal Growth',
-  },
-  content: [
-    { text: '360° Leadership Assessment', style: 'title' },
-    { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned'] },
-    { text: `${data.meta.when.format('YYYY-MM-DD')}`, style: ['header', 'centerAligned'] },
-  ],
-  header: (currentPage, pageCount) => {
-    logger.debug(`Getting header for currentPage: ${currentPage} pageCount: ${pageCount}`);
-    if (currentPage > 0) {
-      return [
-        { text: 'Report', align: 'right' },
-      ];
-    }
-    return [];
-  },
-  footer: (currentPage, pageCount, pageSize) => {
-    logger.debug(`Getting footer for ${currentPage}, ${pageCount} ${pageSize}`);
-    if (currentPage > 0) {
-      return [
-        { text: `${currentPage}/${pageCount}`, align: 'right' },
-      ];
-    }
-    return [];
-  },
-  images: {
-    organizationLogo: `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`,
-    partnerLogo: `${APP_DATA_ROOT}/themes/${partner.key}/images/logo.png`,
-  },
-  styles: {
-    default: {
-      fontSize: 11,
-      font: 'Verdana',
+export const pdfmakedefinition = (data, partner, user) => {
+  const scaleSegments = [];
+  data.scale.entries.forEach((scale) => {
+    scaleSegments.push({ text: `${scale.rating} - ${scale.description}` });
+  });
+
+  const qualitiesSection = [
+    { text: '3. Qualities', style: ['header'], pageBreak: 'before' },
+    { text: 'The ratings for your different leadership behaviours have been combined to achieve an average rating for each Leadership Quality.' },
+    { text: '3.1 Individual Ratings' },
+    { text: 'The chart below indicates the ratings submitted by the individual assessors.' },
+    { image: 'partnerLogo', width: 400 },
+    { text: '3.1 Aggregate Ratings' },
+    { text: 'The chart below indicates the combined ratings for all assessors.' },
+    { image: 'partnerLogo', width: 400 },
+  ];
+
+  const behaviourSection = [
+    { text: '4 Behaviours', style: ['header'], pageBreak: 'before' },
+    { text: 'The charts in this section indicate the ratings given by your assessors for each behaviour' },
+  ];
+
+
+  data.qualities.forEach((quality, qi) => {
+    behaviourSection.push({ text: `4.${qi + 1} ${quality.title}` });
+    quality.behaviours.forEach((behaviour, bi) => {
+      behaviourSection.push({ text: `B${bi + 1} - ${bi.description}` });
+    });
+
+    behaviourSection.push({ text: `BARCHART ${quality.title}` });
+    behaviourSection.push({ text: 'Start Behaviours' });
+
+    behaviourSection.push({ text: 'You received low ratings for the behaviours below - this means the assessors don \'t see you demonstrating these behaviours at all - time to get started on these!' });
+
+    behaviourSection.push({
+      table: {
+        // headers are automatically repeated if the table spans over multiple pages
+        // you can declare how many rows should be treated as headers
+        headerRows: 1,
+        widths: ['*', 'auto', 100, '*'],
+
+        body: [
+          ['First', 'Second', 'Third', 'The last one'],
+          ['Value 1', 'Value 2', 'Value 3', 'Value 4'],
+          [{ text: 'Bold value', bold: true }, 'Val 2', 'Val 3', 'Val 4'],
+        ],
+      },
+    });
+
+    behaviourSection.push({ text: 'Stop Behaviours' });
+
+    behaviourSection.push({ text: 'The assessors have identified some limiting behaviours they would like you to work at stopping - presented below with individual motivations.' });
+
+    behaviourSection.push({
+      table: {
+        // headers are automatically repeated if the table spans over multiple pages
+        // you can declare how many rows should be treated as headers
+        headerRows: 1,
+        widths: ['*', 'auto', 100, '*'],
+
+        body: [
+          ['First', 'Second', 'Third', 'The last one'],
+          ['Value 1', 'Value 2', 'Value 3', 'Value 4'],
+          [{ text: 'Bold value', bold: true }, 'Val 2', 'Val 3', 'Val 4'],
+        ],
+      },
+    });
+  });
+
+
+  const overallSection = [
+    { text: '5 Overall', pageBreak: 'before', style: ['header', 'primary'] },
+    { text: `Your overall score for this assessment is: ${data.score}%` },
+    { text: 'This is the result of averaging the behaviours within all the values, from each assessor, excluding your selfassessment.' },
+  ];
+
+  const developmentPlan = [
+    { text: '6 Development Plan', pageBreak: 'before', style: ['header', 'primary'] },
+    { text: '6.1 Reflection', style: ['subheader', 'primary'] },
+    { text: 'The purpose of this assessment is to assist you in modelling the TowerStone Leadership Brand more effectively as a team. The development plan is designed to guide your reflection on the feedback, and then facilitate identifying actions for improvement.' },
+  ];
+
+  const dottedText = '....................................................................................................................................................................................';
+
+  [
+    '1. How aligned are your expectations to the feedback you received from your assessors, and why?',
+    '2. How intentional are you about leading by example?',
+    '3. How does this feedback help you in your leadership capacity to support the TowerStone strategic objectives?',
+    '4. To what extent do you regard your team as an asset, and why?',
+    '5. What can you do to build trust within your team?',
+  ].forEach((question) => {
+    developmentPlan.push({ text: question });
+    developmentPlan.push({ text: dottedText });
+    developmentPlan.push({ text: dottedText });
+    developmentPlan.push({ text: dottedText });
+  });
+
+  const nextactions = [
+    { text: '6.2 Next Actions' },
+    { text: `Your development as a team requires that you commit to specific actions that will initiate change in your collective behaviour so that your colleagues see you modelling the ${data.organization.name} Leadership Brand.` },
+    { text: 'Start' },
+    { text: 'These are the leadership behaviours your assessors have said you are not currently displaying:' },
+    { text: 'TABLE ENTRIES' },
+    { text: 'Identify actions to start displaying these leadership behaviours:' },
+    { text: 'EMPTY TABLE' },
+  ];
+
+  const acceptance = [
+    { text: '6.2 Next Actions' },
+    { text: 'I accept and commit to addressing the feedback presented in this assessment, by taking the actions listed within the agreed timeframes.' },
+    { text: 'Signed: ......................................................     Date: ...................................................... ' },
+    { text: 'Manager: .....................................................     Date: ...................................................... ' },
+  ];
+
+  const facilitatornotes = [
+
+  ];
+
+  for (let row = 0; row < 10; row += 1) {
+    facilitatornotes.push({ text: dottedText });
+  }
+
+  return {
+    info: {
+      title: `360° Leadership Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}`,
+      author: partner.name,
+      subject: '360° Leadership Assessment Report',
+      keywords: 'Leadership Training Personal Growth',
     },
-    title: {
-      fontSize: 24,
-      bold: true,
-      fillColor: partner.themeOptions.palette.primary1Color,
+    content: [
+      { text: '360° Leadership Assessment', style: ['title', 'centerAligned'], margin: [0, 80, 0, 20] },
+      { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned'], margin: [0, 15] },
+      { text: `${data.meta.when.format('YYYY-MM-DD')}`, style: ['header', 'centerAligned'], margin: [0, 15] },
+      { text: `${data.organization.name}`, style: ['header', 'centerAligned'] },
+      {
+        image: 'partnerLogo', width: 240, style: ['centerAligned'], margin: [0, 30, 0, 50],
+      },
+      {
+        image: data.organization.name.indexOf('TowerStone') > -1 ? 'partnerAvatar' : 'partnerLogo', width: 80, style: ['centerAligned'], margin: [0, 80],
+      },
+      {
+        text: '1. Introduction', newPage: 'before', style: ['header', 'primary'], pageBreak: 'before',
+      },
+      {
+        text: [
+          `${data.delegate.firstName}, this report compares the results of your self-assessment, with those of the colleagues who assessed you.\n`,
+          'These assessors include the person you report to and randomly selected colleagues from the list you submitted.',
+          `You have been assessed against the ${data.organization.name} values and supporting leadership beahviours for all ${data.organization.name} employees.`,
+        ],
+      },
+      {
+        text: `${data.leadershipBrand.description}`,
+        style: ['quote', 'centerAligned'],
+      },
+      {
+        text: `The values form the foundation of your desired culture at ${data.organization.name} and in order to build this culture, you as leaders
+        must intentionally live out the values by displaying the supporting behaviours. In this way, you will align your people to
+        the purpose and strategy of ${data.organization.name}.`,
+      },
+      {
+        text: '"You cannot manage what you cannot measure"',
+        style: ['quote', 'centerAligned'],
+      },
+      {
+        text: `The TowerStone Leadership Assessment is a tool that provides insight to track your behavioural growth as you seek
+        to align yourself with the TowerStone values. It is now your responsibility to use this feedback to improve your ability
+        to (a) model these behaviours and (b) coach the next levels of leadership to align to the ${data.organization.name} values. Please
+        consider the feedback carefully before completing the Personal Development Plan that follows the assessment
+        results.
+        `,
+      },
+      { text: '2. Rating Scale', style: ['header', 'primary'] },
+      { text: 'The feedback you have received is in the context of the following rating scale:' },
+      ...scaleSegments,
+      ...qualitiesSection,
+      ...behaviourSection,
+      ...overallSection,
+      ...developmentPlan,
+      ...nextactions,
+      ...acceptance,
+      ...facilitatornotes,
+    ],
+    header: (currentPage, pageCount) => {
+      logger.debug(`Getting header for currentPage: ${currentPage} pageCount: ${pageCount}`);
+      if (currentPage > 1) {
+        return [
+          {
+            image: 'partnerAvatar', alignment: 'right', width: 36, margin: [0, 5, 15, 0],
+          },
+        ];
+      }
+      return [];
     },
-    header: {
-      fontSize: 18,
-      bold: true,
+    footer: (currentPage, pageCount, pageSize) => {
+      logger.debug(`Getting footer for ${currentPage}, ${pageCount} ${pageSize}`);
+      if (currentPage > 1) {
+        return [
+          { text: '©TowerStone is registered with the Department of Higher Education and Training as a private higher education institution under the Higher Education Act, No. 101 of 1997.Registration Certificate no. 2009/HE07/010.', align: 'justify', fontSize: 8 },
+          { text: `Individual 360° for ${data.delegate.firstName} ${data.delegate.lastName}`, fontSize: 8, align: 'center' },
+          { text: `${data.meta.when.format('DD MMMM YYYY')}`, fontSize: 8, align: 'center' },
+        ];
+      }
+      return [];
     },
-    subheader: {
-      fontSize: 14,
-      bold: true,
+    images: {
+      organizationLogo: `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`,
+      partnerLogo: `${APP_DATA_ROOT}/themes/${partner.key}/images/logo.png`,
+      partnerAvatar: `${APP_DATA_ROOT}/themes/${partner.key}/images/avatar.png`,
     },
-    quote: {
-      fontSize: 11,
-      italics: true,
-      fillColor: partner.themeOptions.palette.primary1Color,
+    styles: {
+      normal: {
+        font: 'Verdana',
+      },
+      default: {
+        fontSize: 9,
+        font: 'Verdana',
+        alignment: 'justify',
+        margin: [5, 0, 10, 5],
+        bold: false,
+        italics: false,
+      },
+      title: {
+        fontSize: 24,
+        bold: true,
+        font: 'Verdana',
+      },
+      primary: {
+        color: partner.themeOptions.palette.primary1Color,
+      },
+      header: {
+        fontSize: 12,
+        bold: true,
+        font: 'Verdana',
+        margin: [0, 15],
+      },
+      subheader: {
+        fontSize: 11,
+        bold: true,
+        font: 'Verdana',
+      },
+      quote: {
+        fontSize: 11,
+        font: 'Verdana',
+        italics: true,
+        margin: [20, 20],
+        color: partner.themeOptions.palette.primary1Color,
+      },
+      centerAligned: {
+        alignment: 'center',
+      },
+      justified: {
+        alignment: 'justify',
+      },
     },
-    centerAligned: {
-      align: 'center',
-    },
-  },
-});
+  };
+};
 
 const reportTemplate = {
   enabled: true,

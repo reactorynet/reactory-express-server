@@ -39,7 +39,6 @@ const organizationResolver = {
   },
   Query: {
     allOrganizations(obj, args, context, info) {
-      
       if (args.legacy === true) {
         return legacy.Organization.listAll();
       }
@@ -47,7 +46,6 @@ const organizationResolver = {
       return Organization.find({}).then();
     },
     organizationWithId(obj, args, context, info) {
-      
       return Organization.findOne({ _id: args.id }).then();
     },
     usersForOrganizationWithId(obj, { id, searchString }, context, info) {
@@ -95,9 +93,9 @@ const organizationResolver = {
 
       return organization;
     },
-    migrateOrganization(obj, arg, context, info) {      
-      const { id, options } = arg;
+    migrateOrganization(obj, { id, options }) {
       if (!options.clientKey) options.clientKey = global.partner.key;
+      logger.debug(`Mutation migrationOrganization ${id}`, options);
       return migrateOrganization(id, options);
     },
     updateOrganization: async (parent, args) => {
@@ -128,6 +126,7 @@ const organizationResolver = {
     migrateCore(obj, arg, context, info) {
       const { options } = arg;
       if (!options.clientKey) options.clientKey = global.partner.key;
+      logger.info('migrateCore mutation called', options);
       return migrateCoreData(options);
     },
   },

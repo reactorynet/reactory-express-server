@@ -58,21 +58,45 @@ export default {
         }    
       }
       `,
+      variables: {
+        'formData.id': 'id',
+      },
       edit: true,
       new: false,
     },
     mutation: {
-      edit: {
-        name: 'updateOrganization',
-        text: `mutation UpdateOrganization($id: String!, $input: UpdateOrganizationInput){
+      new: {
+        name: 'createOrganization',
+        text: `mutation UpdateOrganization($id: String!, $input: UpdateOrganizationInput!){
           updateOrganization(id: $id, input: $input) {
             ${organizationFieldsSnippted}
           }
         }`,
         objectMap: true,
         variables: {
-          'formContext.id': 'id',
-          formData: 'input',
+          'formData.name': 'input.name',
+          'formData.code': 'input.code',
+          'formData.logo': 'input.logo',
+        },
+        options: {
+          refetchQueries: [],
+        },
+        onSuccessMethod: 'refresh',
+      },
+      edit: {
+        name: 'updateOrganization',
+        text: `mutation UpdateOrganization($id: String!, $input: UpdateOrganizationInput!){
+          updateOrganization(id: $id, input: $input) {
+            ${organizationFieldsSnippted}
+          }
+        }`,
+        objectMap: true,
+        variables: {
+          'formData.id': 'id',
+          'formData.name': 'input.name',
+          'formData.code': 'input.code',
+          'formData.logo': 'input.logo',
+          'formData.legacyId': 'input.legacyId',
         },
         options: {
           refetchQueries: [],
@@ -82,13 +106,14 @@ export default {
     },
   },
   uiSchema: DefaultUiSchema,
+  /*
   uiSchemas: [
     {
       id: 'default',
       title: 'Default View',
       key: 'default',
       description: 'Default Organization View',
-      icon: 'search',
+      icon: 'view_quilt',
       uiSchema: DefaultUiSchema,
     },
     {
@@ -96,8 +121,8 @@ export default {
       title: 'Detail View',
       key: 'detail',
       description: 'Detailed Organization View',
-      icon: 'gear',
+      icon: 'view_module',
       uiSchema: DetailedUiSchema,
     },
-  ],
+  ], */
 };

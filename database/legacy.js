@@ -30,7 +30,9 @@ export const testConnection = (tenant = 'plc') => {
   });
 };
 
-export const querySync = co.wrap(function* querySync(query, options) {
+export const querySync = async (query, options) => {
+  logger.debug('querySync', { query, options });
+
   const requestWrapper = new Promise((resolve, reject) => {
     const resultCallback = (error, results) => {
       if (error === null || error === undefined) {
@@ -39,11 +41,9 @@ export const querySync = co.wrap(function* querySync(query, options) {
         reject(error);
       }
     };
-    if (options && options.log) //console.log('Executing query: ', query, options);
+
     getPool(typeof options === 'object' ? { ...options } : options).query(query, resultCallback);
   });
 
-  const result = yield requestWrapper.then();
-
-  return result;
-});
+  return requestWrapper;
+};

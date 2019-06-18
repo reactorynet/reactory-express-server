@@ -126,7 +126,7 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
 
     const now = new Date().valueOf();
     if (options.migrateBrands === true) {
-      //console.log('Migrating Brands, for organization');
+      // console.log('Migrating Brands, for organization');
       result.brandsMigrated = 0;
       const organizationBrands = yield legacy.Survey.listBrandsForOrganization(id, options);
       for (let lbi = 0; lbi < organizationBrands.length; lbi += 1) {
@@ -148,13 +148,13 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
           try {
             const brand = yield createLeadershipBrand(brandInput);
             result.brandsMigrated += 1;
-            //console.log(`Created new brand ${brand._id}`);
+            // console.log(`Created new brand ${brand._id}`);
           } catch (createError) {
             console.error(createError.message);
             result.brandErrors.push(createError.message);
           }
         } else {
-          //console.log('Brand already imported');
+          // console.log('Brand already imported');
         }
       }
     }
@@ -169,7 +169,7 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
           const createResult = yield createUserForOrganization(employee, uuid(), result.organization, ['USER'], 'id.reactory.net', global.partner, null);
           if (createResult.user) {
             const peerRows = yield legacy.Users.listPeersForUsers(createResult.user.legacyId, result.organization.legacyId, options);
-            //console.log(`Found ${peerRows.length} peer rows`);
+            // console.log(`Found ${peerRows.length} peer rows`);
             if (peerRows.length && peerRows.length > 0) {
               const peers = [];
               let lastUpdated = null;
@@ -251,7 +251,7 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
                 }
               }
               if (peers.length > 0) {
-                //console.log(`Setting ${peers.length} peers for ${userId}`);
+                // console.log(`Setting ${peers.length} peers for ${userId}`);
                 const organigramEntry = yield setPeersForUser(
                   { _id: employeePeers[userId].user }, // fake user object, only need the _id,
                   peers,
@@ -261,9 +261,9 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
                     moment(employeePeers[userId].confirmedAt).valueOf() :
                     new Date().valueOf(),
                 );
-                //console.log('Created new organigram entry', organigramEntry);
+                // console.log('Created new organigram entry', organigramEntry);
               } else {
-                //console.log(`No Peers for user: ${userId}`);
+                // console.log(`No Peers for user: ${userId}`);
               }
             }
           } catch (peerSetError) {
@@ -282,7 +282,7 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
           organization: result.organization,
         }).then();
         if (isNil(existing) === true) {
-          //console.log('No survey found matching criteria');
+          // console.log('No survey found matching criteria');
           surveys[sid].organization = yield Organization.findOne({ legacyId: id }).then();
           surveys[sid].leadershipBrand = yield LeadershipBrand.findOne({
             legacyId: surveys[sid].legacyBrandId,
@@ -308,14 +308,14 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
 
           try {
             const surveyCreateResult = yield createSurvey(surveys[sid]);
-            //console.log(`Created survey with id: ${surveyCreateResult._id} `, surveyCreateResult);
+            // console.log(`Created survey with id: ${surveyCreateResult._id} `, surveyCreateResult);
             result.surveysMigrated += 1;
           } catch (createSurveyError) {
             console.error(createSurveyError);
             result.surveyErrors.push(createSurveyError.message);
           }
         } else {
-          //console.log(`Already imported survey for organization. Survey Id: ${existing._id}`);
+          // console.log(`Already imported survey for organization. Survey Id: ${existing._id}`);
         }
       }
       // migrate survey data
@@ -332,15 +332,21 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
       for (let aid = 0; aid < assessments.length; aid += 1) {
         const survey = yield Survey.findOne({ legacyId: assessments[aid].legacySurveyId }).then();
         const leadershipBrand = yield LeadershipBrand.findById(survey.leadershipBrand).then();
-        const delegate = yield User.findOne({ legacyId: assessments[aid].legacyEmployeeId }).then();
-        const assessor = yield User.findOne({ legacyId: assessments[aid].legacyAssessorId }).then();
+        let delegate = yield User.findOne({ legacyId: assessments[aid].legacyEmployeeId }).then();
+        let assessor = yield User.findOne({ legacyId: assessments[aid].legacyAssessorId }).then();
+        if (delegate === null) delegate = global.user;
+        if (assessor === null) assessor = global.user;
         // we don't use the client on global scope, as it is admin function override
         const client = yield ReactoryClient.findOne({ key: options.clientKey }).then();
-        
+
         assessments[aid].organization = result.organization._id; //eslint-disable-line
         assessments[aid].client = client._id; //eslint-disable-line
-        assessments[aid].delegate = delegate._id; //eslint-disable-line
-        assessments[aid].assessor = assessor._id; //eslint-disable-line
+        assessments[aid].delegate = delegate && delegate._id ? delegate._id : global.user._id; //eslint-disable-line
+        if (assessments[aid].delegate._id.equals(global.user._id)) logger.warn(`Could not find the legacy user with id ${assessments[aid].legacyEmployeeId}`);
+
+        assessments[aid].assessor = assessor && assessor._id ? assessor._id : global.user._id; //eslint-disable-line
+        if (assessments[aid].assessor._id.equals(global.user._id)) logger.warn(`Could not find the legacy user with id ${assessments[aid].legacyEmployeeId}`);
+
         assessments[aid].survey = survey._id; //eslint-disable-line
         assessments[aid].startDate = moment(assessments[aid].startDate).valueOf();
         assessments[aid].endDate = moment(assessments[aid].endDate).valueOf();
@@ -388,7 +394,7 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
               yield survey.save();
             } else result.assessmentErrors.push('Could not create the document');
           } else {
-            //console.log('Assessment already imported', { assessment_id: assessment._id });
+            // console.log('Assessment already imported', { assessment_id: assessment._id });
           }
         } catch (assessmentImportError) {
           result.assessmentErrors.push(`Could not import assessment due to an error: ${assessmentImportError.message}`);
@@ -417,42 +423,47 @@ export class CoreMigrationResult {
   }
 }
 
-export const migrateCoreData = co.wrap(function* migrateCoreGenerator(options = { clientKey: 'plc', dataPath: LEGACY_APP_DATA_ROOT }) {
+export const migrateCoreData = async (options = { clientKey: 'plc', dataPath: LEGACY_APP_DATA_ROOT }) => {
+  logger.info(`Migrating Core Data: ${options.clientKey}, ${options.dataPath}`);
   const coreMigrateResult = new CoreMigrationResult();
-  try {
-    // migrate scales
-    const scales = yield legacy.Survey.listScales(options);
-    if (scales.length > 0) {
-      for (let scaleId = 0; scaleId < scales.length; scaleId += 1) {
-        const scale = yield Scale.findOneAndUpdate({ legacyId: scales[scaleId].legacyId }, scales[scaleId], { upsert: true });
-        //console.log('Converting Scale', scale);
-        if (isNil(scale) === true) coreMigrateResult.errors.push(`Could not create scale for ${scales[scaleId].legacyId}`);
-        else coreMigrateResult.scalesMigrated += 1;
-      }
+
+  const scales = await legacy.Survey.listScales(options).then();
+  if (scales.length > 0) {
+    logger.info(`Migrating ${scales.length} Scales `);
+    try {
+      const scalesUpserted = await Promise.all(scales.map((scale) => {
+        return Scale.findOneAndUpdate({ legacyId: scale.legacyId }, scale, { upsert: true });
+      })).then();
+
+      logger.info(`Legacy Scales Import Complete, returned (${scalesUpserted.length}) results`);
+    } catch (scaleMigrationError) {
+      coreMigrateResult.errors.push(`An error occured during migration scales ${scaleMigrationError.message}`);
     }
-  } catch (coreMigrateExcetion) {
-    coreMigrateResult.errors.push(`An error occured during core data migration ${coreMigrateExcetion.message}`);
+  } else {
+    logger.info('No scales found in legacy system');
   }
 
-  if (options.migrateOrganizations.length > 0) {
-    let ids = options.migrateOrganizations || [];
-    if (ids.length === 1 && ids[0] === -1) {
-      ids = [];
-      const orgs = yield legacy.Organization.listAll('name', 'asc', options);
-      orgs.forEach((org) => { ids.push(org.legacyId); });
-    }
 
-    for (let oi = 0; oi < ids.length; oi += 1) {
-      const orgId = ids[oi];
-      if (isNaN(orgId) === false) {
-        const result = yield migrateOrganization(orgId, options);
-        coreMigrateResult.organizationMigrateResults.push(result);
+  try {
+    if (options.migrateOrganizations.length > 0) {
+      let ids = options.migrateOrganizations || [];
+      if (ids.length === 1 && ids[0] === -1) {
+        ids = [];
+        const orgs = await legacy.Organization.listAll('name', 'asc', options).then();
+        orgs.forEach((org) => { ids.push(org.legacyId); });
       }
+      logger.info(`Importing ${ids.length} organizaitons`);
+      const upsertedOrganzations = await Promise.all(ids.map((oid) => {
+        return migrateOrganization(oid, options);
+      })).then();
+      upsertedOrganzations.map(result => coreMigrateResult.organizationMigrateResults.push(result));
     }
+  } catch (organizationImportError) {
+    coreMigrateResult.errors.push(`An error occured during migration scales ${organizationImportError.message}`);
   }
 
   return coreMigrateResult;
-});
+};
 
 export const createOrganization = (organizationInput) => {
   return new Promise((resolve, reject) => {

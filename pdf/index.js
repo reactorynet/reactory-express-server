@@ -24,14 +24,20 @@ const {
 
 
 function createPdfBinary(pdfDoc, res) {
-  logger.debug('createdPdfBinary called', pdfDoc);
+  logger.debug('createdPdfBinary called');
 
   const fontDescriptors = {
-    Roboto: {
-      normal: `${APP_DATA_ROOT}/fonts/Roboto.ttf`,
-      bold: `${APP_DATA_ROOT}/fonts/Roboto_medium.ttf`,
-      italics: `${APP_DATA_ROOT}/fonts/Roboto.ttf`,
-      bolditalics: `${APP_DATA_ROOT}/fonts/Roboto_medium..ttf`,
+    Verdana: {
+      normal: `${APP_DATA_ROOT}/fonts/verdana.ttf`,
+      bold: `${APP_DATA_ROOT}/fonts/verdanab.ttf`,
+      italics: `${APP_DATA_ROOT}/fonts/verdanai.ttf`,
+      bolditalics: `${APP_DATA_ROOT}/fonts/verdanaz.ttf`,
+    },
+    Candara: {
+      normal: `${APP_SYSTEM_FONTS}/Candara.ttf`,
+      bold: `${APP_SYSTEM_FONTS}/Candarab.ttf`,
+      italics: `${APP_SYSTEM_FONTS}/Candarai.ttf`,
+      bolditalics: `${APP_SYSTEM_FONTS}/Candaraz.ttf`,
     },
   };
 

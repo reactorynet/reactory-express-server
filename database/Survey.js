@@ -4,6 +4,7 @@ import co from 'co';
 import _ from 'lodash';
 import moment from 'moment';
 import { getPool, querySync } from './legacy';
+import logger from '../logging';
 
 const { isNil, countBy, find } = _;
 
@@ -120,7 +121,7 @@ const ratingsForAssessment = (id) => {
 
 const behavioursForQuality = co.wrap(function* listBehavioursForQualityGenerator(id, options) {
   const behaviourRows = yield querySync(behaviourForQualityQuery(id), options);
-  //console.log(`Found ${behaviourRows.length} behaviour rows`);
+  // console.log(`Found ${behaviourRows.length} behaviour rows`);
   if (behaviourRows.length && behaviourRows.length === 0) return [];
   const now = new Date().valueOf();
   const behaviours = [];
@@ -132,13 +133,13 @@ const behavioursForQuality = co.wrap(function* listBehavioursForQualityGenerator
       updateAt: now,
     });
   }
-  //console.log(`Returning ${behaviours.length} behaviours`);
+  // console.log(`Returning ${behaviours.length} behaviours`);
   return behaviours;
 });
 
 const qualitiesForBrand = co.wrap(function* listQualitiesForBrand(id, options) {
   const qualitiesRows = yield querySync(qualitiesForBrandQuery(id), options);
-  //console.log(`Found ${qualitiesRows.length} in db`);
+  // console.log(`Found ${qualitiesRows.length} in db`);
   if (qualitiesRows.length === 0) return [];
 
   const now = new Date().valueOf();
@@ -158,7 +159,7 @@ const qualitiesForBrand = co.wrap(function* listQualitiesForBrand(id, options) {
       console.error(someErr.message);
     }
   }
-  //console.log(`Returning ${qualities.length} qualities`);
+  // console.log(`Returning ${qualities.length} qualities`);
   return qualities;
 });
 
@@ -170,11 +171,11 @@ const qualitiesForBrand = co.wrap(function* listQualitiesForBrand(id, options) {
 function* listBrandsForOrganization(id, options) {
   const leadershipBrandsForOrganizationRows = yield querySync(leadershipBrandForOrganizationQuery(id, options)); // yield requestWrapper;
   if (leadershipBrandsForOrganizationRows && leadershipBrandsForOrganizationRows.length === 0) {
-    //console.log('Organization has no leadership brands');
+    // console.log('Organization has no leadership brands');
     return [];
   }
 
-  //console.log(`Organization has ${leadershipBrandsForOrganizationRows.length} leadership brands`);
+  // console.log(`Organization has ${leadershipBrandsForOrganizationRows.length} leadership brands`);
   const leadershipBrands = [];
   const now = new Date().valueOf();
   for (let lbi = 0; lbi < leadershipBrandsForOrganizationRows.length; lbi += 1) {
@@ -189,35 +190,43 @@ function* listBrandsForOrganization(id, options) {
   return leadershipBrands;
 }
 
-function* listScalesGenerator(options) {
-  const rows = yield querySync(scalesQuery(), options);
+async function listScalesGenerator(options) {
   const scales = [];
-  for (let rid = 0; rid < rows.length; rid += 1) {
-    let scale = null;
-    scale = find(scales, { legacyId: rows[rid].legacyScaleId });
-    if (isNil(scale) === true) {
-      scale = {
-        legacyId: rows[rid].legacyScaleId,
-        key: rows[rid].title.toString().toLowerCase().replace(' ', '-'),
-        title: rows[rid].title,
-        isDefault: rows[rid].isDefault === true,
-        entries: [
-          {
-            description: rows[rid].description,
-            rating: rows[rid].rating,
-          },
-        ],
-      };
-      scales.push(scale);
-    }
 
-    if (isNil(find(scale.entries, { rating: rows[rid].rating })) === true) {
-      scale.entries.push({
-        description: rows[rid].description,
-        rating: rows[rid].rating,
-      });
+  try {
+    const rows = await querySync(scalesQuery(), options);
+    logger.info(`found ${rows.length}`);
+
+    for (let rid = 0; rid < rows.length; rid += 1) {
+      let scale = null;
+      scale = find(scales, { legacyId: rows[rid].legacyScaleId });
+      if (isNil(scale) === true) {
+        scale = {
+          legacyId: rows[rid].legacyScaleId,
+          key: rows[rid].title.toString().toLowerCase().replace(' ', '-'),
+          title: rows[rid].title,
+          isDefault: rows[rid].isDefault === true,
+          entries: [
+            {
+              description: rows[rid].description,
+              rating: rows[rid].rating,
+            },
+          ],
+        };
+        scales.push(scale);
+      }
+
+      if (isNil(find(scale.entries, { rating: rows[rid].rating })) === true) {
+        scale.entries.push({
+          description: rows[rid].description,
+          rating: rows[rid].rating,
+        });
+      }
     }
+  } catch (queryError) {
+    logger.error(`Could not fetch scales due to an error ${queryError.message}`);
   }
+
 
   return scales;
 }
@@ -248,7 +257,7 @@ WHERE
 ORDER BY sv.valid_from
     `, options);
   if (rows && rows.length > 0) {
-    //console.log(`Found ${rows.length} surveys for organization`);
+    // console.log(`Found ${rows.length} surveys for organization`);
     return rows.map((surveyRow) => {
       const survey = {
         ...surveyRow,
@@ -335,7 +344,7 @@ export default class Survey {
 
       const assessmentRowResult = yield requestWrapper;
 
-      //console.log(`${assessmentRowResult.length} assessment data (s) matching query`);
+      // console.log(`${assessmentRowResult.length} assessment data (s) matching query`);
       _.map(assessmentRowResult, (rowResult) => {
         assessmentData.leadershipBrand.description = rowResult.brandStatement;
         assessmentData.leadershipBrand.id = ObjectId();

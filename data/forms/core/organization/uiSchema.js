@@ -1,4 +1,33 @@
 export const DefaultUiSchema = {
+  logo: {
+    'ui:widget': 'CompanyLogoWidget',
+    'ui:options': {
+      readOnly: false,
+      noLookup: true,
+      mapping: {
+        'formContext.formData.id': 'id',
+        'formContext.formData.logo': 'logo',
+      },
+      style: {
+        width: '512px',
+        height: '192px',
+        marginRight: 'auto',
+        marginLeft: 'auto',
+        marginTop: '16px',
+        marginBottom: '16px',
+      },
+    },
+  },
+  name: {
+
+  },
+  code: {
+
+  },
+};
+
+export const DetailedUiSchema = {
+  ...DefaultUiSchema,
   id: {
     'ui:widget': 'HiddenWidget',
   },
@@ -15,30 +44,6 @@ export const DefaultUiSchema = {
       widget: 'DateSelectorWidget',
       readOnly: true,
     },
-  },
-  logo: {
-    'ui:widget': 'CompanyLogoWidget',
-    'ui:options': {
-      readOnly: false,
-      noLookup: true,
-      mapping: {
-        'formContext.formData.id': 'id',
-        'formContext.formData.logo': 'logo',
-      },
-      style: {
-        marginRight: 'auto',
-        marginLeft: 'auto',
-        marginTop: '8px',
-        marginBottom: '8px',
-      },
-    },
-  },
-};
-
-export const DetailedUiSchema = {
-  ...DefaultUiSchema,
-  id: {
-    'ui:widget': 'HiddenWidget',
   },
 };
 
