@@ -1,9 +1,13 @@
 import moment from 'moment';
+import fs from 'fs';
+import path from 'path';
 import om from 'object-mapper';
 import logger from '../../../logging';
 import { readFileSync, existsSync } from 'fs';
 import { PNG } from 'pngjs';
 import imageType from 'image-type';
+import { DefaultBarChart } from '../../../charts/barcharts';
+import { DefaultRadarChart } from '../../../charts/radialcharts';
 
 import {
   Assessment,
@@ -67,6 +71,34 @@ const resolveData = async ({ surveyId, delegateId }) => {
   reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
   reportData.assessments = await Assessment.find({ _id: { $in: reportData.survey.delegates.id(delegateId).assesments } }).then();
 
+  // make charts
+  const chartsFolder = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/charts/`;
+  if (fs.existsSync(chartsFolder) === false) {
+    fs.mkdirSync(chartsFolder, { recursive: true });
+  }
+
+  let chartResult = null;
+  if (!fs.existsSync(path.join(chartsFolder, `spider-chart-all-${reportData.survey._id}.png`))) {
+    chartResult = await DefaultRadarChart({ folder: chartsFolder, file: `spider-chart-all-${reportData.survey._id}.png` }).then();
+    logger.debug(`Radar Chart All Created: ${chartResult.file}`, chartResult);
+  }
+
+  if (!fs.existsSync(path.join(chartsFolder, `spider-chart-avg-${reportData.survey._id}.png`))) {
+    chartResult = await DefaultRadarChart({ folder: chartsFolder, file: `spider-chart-avg-${reportData.survey._id}.png` }).then();
+    logger.debug(`Radar Chart Avg Created: ${chartResult.file}`, chartResult);
+  }
+
+
+  const barchartPromises = reportData.qualities.map((quality) => {
+    if (!fs.existsSync(path.join(chartsFolder, `bar-chart-${reportData.survey._id}-${quality._id}.png`))) {
+      return DefaultBarChart({ folder: chartsFolder, file: `bar-chart-${reportData.survey._id}-${quality._id}.png` }).then();
+    }
+
+    return new Promise((resolve) => { resolve(`bar-chart-${reportData.survey._id}-${quality._id}.png exists`); });
+  });
+
+  const barchartResults = await Promise.all(barchartPromises).then();
+  barchartResults.map(result => logger.debug(`Bar Chart ${result.file} created`));
 
   return reportData;
 };
@@ -75,13 +107,13 @@ const resolveData = async ({ surveyId, delegateId }) => {
 export const pdfmakedefinition = (data, partner, user) => {
   const scaleSegments = [];
   data.scale.entries.forEach((scale) => {
-    scaleSegments.push({ text: `${scale.rating} - ${scale.description}` });
+    scaleSegments.push({ text: `${scale.rating} - ${scale.description}`, style: ['default'] });
   });
 
   const qualitiesSection = [
-    { text: '3. Qualities', style: ['header'], pageBreak: 'before' },
+    { text: '3. Qualities', style: ['header', 'primary'], pageBreak: 'before' },
     { text: 'The ratings for your different leadership behaviours have been combined to achieve an average rating for each Leadership Quality.', style: ['default'] },
-    { text: '3.1 Individual Ratings', style: ['header'] },
+    { text: '3.1 Individual Ratings', style: ['header', 'primary'] },
     { text: 'The chart below indicates the ratings submitted by the individual assessors.', style: ['default'] },
     { image: 'spiderChartAll', width: 400, style: ['centerAligned'] },
     { text: '3.1 Aggregate Ratings' },
@@ -90,24 +122,24 @@ export const pdfmakedefinition = (data, partner, user) => {
   ];
 
   const behaviourSection = [
-    { text: '4 Behaviours', style: ['header'], pageBreak: 'before' },
+    { text: '4 Behaviours', style: ['header', 'primary'], pageBreak: 'before' },
     { text: 'The charts in this section indicate the ratings given by your assessors for each behaviour', style: ['default'] },
   ];
 
 
   data.qualities.forEach((quality, qi) => {
-    behaviourSection.push({ text: `4.${qi + 1} ${quality.title}` });
+    behaviourSection.push({ text: `4.${qi + 1} ${quality.title}`, style: ['header', 'primary'] });
     quality.behaviours.forEach((behaviour, bi) => {
-      behaviourSection.push({ text: `B${bi + 1} - ${bi.description}` });
+      behaviourSection.push({ text: `B${bi + 1} - ${bi.description}`, style: ['default'] });
     });
 
     behaviourSection.push({
-      image: existsSync(`${APP_DATA_ROOT}/profile/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) === true ?
-        pdfpng(`${APP_DATA_ROOT}/profile/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) :
+      image: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) === true ?
+        pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) :
         pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/bar_chart.png`),
     });
 
-    behaviourSection.push({ text: 'Start Behaviours' });
+    behaviourSection.push({ text: 'Start Behaviours', style: ['default'] });
 
     behaviourSection.push({ text: 'You received low ratings for the behaviours below - this means the assessors don \'t see you demonstrating these behaviours at all - time to get started on these!' });
 
@@ -125,7 +157,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       },
     });
 
-    behaviourSection.push({ text: 'Stop Behaviours', style: ['header'] });
+    behaviourSection.push({ text: 'Stop Behaviours', style: ['header', 'primary'] });
 
     behaviourSection.push({ text: 'The assessors have identified some limiting behaviours they would like you to work at stopping - presented below with individual motivations.', style: ['default'] });
 
@@ -173,7 +205,7 @@ export const pdfmakedefinition = (data, partner, user) => {
   });
 
   const nextactions = [
-    { text: '6.2 Next Actions', style: ['subheader'] },
+    { text: '6.2 Next Actions', style: ['subheader', 'primary'] },
     { text: `Your development as a team requires that you commit to specific actions that will initiate change in your collective behaviour so that your colleagues see you modelling the ${data.organization.name} Leadership Brand.`, style: ['default'] },
     { text: 'Start', style: ['default', 'primary'] },
     { text: 'These are the leadership behaviours your assessors have said you are not currently displaying:', style: ['default'] },
@@ -243,35 +275,35 @@ export const pdfmakedefinition = (data, partner, user) => {
       },
       {
         text: [
-          `${data.delegate.firstName}, this report compares the results of your self-assessment, with those of the colleagues who assessed you.\n`,
+          `${data.delegate.firstName}, this report compares the results of your self-assessment, with those of the colleagues who assessed you.\n\n`,
           'These assessors include the person you report to and randomly selected colleagues from the list you submitted.',
           `You have been assessed against the ${data.organization.name} values and supporting leadership beahviours for all ${data.organization.name} employees.`,
         ],
         style: ['default'],
       },
       {
-        text: `${data.leadershipBrand.description}`,
+        text: `${data.leadershipBrand.description.replace('\r', ' ')}`,
         style: ['default', 'quote', 'centerAligned'],
-        margin: [20, 20],
+        margin: [5, 5],
       },
       {
-        text: `The values form the foundation of your desired culture at ${data.organization.name} and in order to build this culture, you as leaders
-        must intentionally live out the values by displaying the supporting behaviours. In this way, you will align your people to
-        the purpose and strategy of ${data.organization.name}.`,
+        text: [
+          `The values form the foundation of your desired culture at ${data.organization.name} and in order to build this culture, you as leaders must`,
+          `intentionally live out the values by displaying the supporting behaviours. In this way, you will align your people to the purpose and strategy of ${data.organization.name}.`,
+        ],
         style: ['default'],
       },
       {
         text: '"You cannot manage what you cannot measure"',
         style: ['default', 'quote', 'centerAligned'],
-        margin: [20, 20],
+        margin: [5, 5],
       },
       {
-        text: `The TowerStone Leadership Assessment is a tool that provides insight to track your behavioural growth as you seek
-        to align yourself with the TowerStone values. It is now your responsibility to use this feedback to improve your ability
-        to (a) model these behaviours and (b) coach the next levels of leadership to align to the ${data.organization.name} values. Please
-        consider the feedback carefully before completing the Personal Development Plan that follows the assessment
-        results.
-        `,
+        text: ['The TowerStone Leadership Assessment is a tool that provides insight to track your behavioural growth as you seek',
+          'to align yourself with the TowerStone values. It is now your responsibility to use this feedback to improve your ability',
+          `to (a) model these behaviours and (b) coach the next levels of leadership to align to the ${data.organization.name} values. Please`,
+          'consider the feedback carefully before completing the Personal Development Plan that follows the assessment',
+          'results.'],
         style: ['default'],
       },
       { text: '2. Rating Scale', style: ['header', 'primary'] },
@@ -300,9 +332,27 @@ export const pdfmakedefinition = (data, partner, user) => {
       logger.debug(`Getting footer for ${currentPage}, ${pageCount} ${pageSize}`);
       if (currentPage > 1) {
         return [
-          { text: '©TowerStone is registered with the Department of Higher Education and Training as a private higher education institution under the Higher Education Act, No. 101 of 1997.Registration Certificate no. 2009/HE07/010.', align: 'justify', fontSize: 8 },
-          { text: `Individual 360° for ${data.delegate.firstName} ${data.delegate.lastName}`, fontSize: 8, align: 'center' },
-          { text: `${data.meta.when.format('DD MMMM YYYY')}`, fontSize: 8, align: 'center' },
+          {
+            text: [
+              '©TowerStone is registered with the Department of Higher Education and Training as a private higher education institution under the Higher Education Act, No. 101 of 1997. ',
+              'Registration Certificate no. 2009/HE07/010.',
+            ],
+            alignment: 'justify',
+            fontSize: 8,
+            margin: [5, 5],
+          },
+          {
+            text: `Individual 360° for ${data.delegate.firstName} ${data.delegate.lastName}`,
+            fontSize: 8,
+            alignment: 'center',
+            margin: [5, 5],
+          },
+          {
+            text: `${data.meta.when.format('DD MMMM YYYY')}`,
+            fontSize: 8,
+            alignment: 'center',
+            margin: [5, 5],
+          },
         ];
       }
       return [];
@@ -315,6 +365,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       spiderChartAll: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-all-${data.survey._id}.png`) === true ? pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-all-${data.survey._id}.png`) : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/spider-chart-all.png`),
       spiderChartAvg: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-avg-${data.survey._id}.png`) === true ? pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-avg-${data.survey._id}.png`) : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/spider-chart-avg.png`),
     },
+    pageMargins: [40, 60, 40, 60],
     styles: {
       normal: {
         font: 'Verdana',
@@ -323,7 +374,8 @@ export const pdfmakedefinition = (data, partner, user) => {
         fontSize: 10,
         font: 'Verdana',
         alignment: 'justify',
-        margin: [5, 0, 10, 5],
+        margin: [0, 0, 10, 0],
+        lineHeight: 1.5,
         bold: false,
         italics: false,
       },

@@ -39,10 +39,6 @@ const organizationResolver = {
   },
   Query: {
     allOrganizations(obj, args, context, info) {
-      if (args.legacy === true) {
-        return legacy.Organization.listAll();
-      }
-
       return Organization.find({}).then();
     },
     organizationWithId(obj, args, context, info) {

@@ -9,8 +9,8 @@ type Tennant {
   title: String
   theme: String
   whitelist: [CorsWhiteList]
-  createdAt: Float!
-  updatedAt: Float!
+  createdAt: Date!
+  updatedAt: Date!
 }
 
 input CreateTennantInput {
@@ -27,8 +27,8 @@ type Organization {
   avatar: String
   businessUnits: [BusinessUnit]
   legacyId: Int      
-  createdAt: Float!
-  updatedAt: Float!
+  createdAt: Date
+  updatedAt: Date
 }
 
 input CreateOrganizationInput {

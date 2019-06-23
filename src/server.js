@@ -13,6 +13,7 @@ import clientAuth from './middleware/clientauth';
 import userAccountRouter from './useraccount';
 import reactory from './reactory';
 import froala from './froala';
+import charts from './charts';
 import typeDefs from './models/graphql/types';
 import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
@@ -44,6 +45,14 @@ const {
   API_URI_ROOT,
   CDN_ROOT,
   MODE,
+  OAUTH_APP_ID,
+  OAUTH_APP_PASSWORD,
+  OAUTH_REDIRECT_URI,
+  OAUTH_SCOPES,
+  OAUTH_AUTHORITY,
+  OAUTH_ID_METADATA,
+  OAUTH_AUTHORIZE_ENDPOINT,
+  OAUTH_TOKEN_ENDPOINT,
 } = process.env;
 
 const ENV_STRING_DEBUG = `
@@ -55,6 +64,17 @@ Environment Settings:
   API_URI_ROOT: ${API_URI_ROOT}
   CDN_ROOT: ${CDN_ROOT}
   MODE: ${MODE}
+  =========================================
+         Microsoft OAuth Settings
+  OAUTH_APP_ID: ${OAUTH_APP_ID}
+  OAUTH_APP_PASSWORD: ${OAUTH_APP_PASSWORD}
+  OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI}
+  OAUTH_SCOPES: ${OAUTH_SCOPES}
+  OAUTH_AUTHORITY: ${OAUTH_AUTHORITY}
+  OAUTH_ID_METADATA: ${OAUTH_ID_METADATA}
+  OAUTH_AUTHORIZE_ENDPOINT: ${OAUTH_AUTHORIZE_ENDPOINT}
+  OAUTH_TOKEN_ENDPOINT: ${OAUTH_TOKEN_ENDPOINT}
+  =========================================
 `;
 
 logger.info(ENV_STRING_DEBUG);
@@ -112,6 +132,7 @@ startup().then((startResult) => {
   app.use('/froala', froala);
   app.use('/workflow', workflow);
   app.use('/pdf', pdf);
+  app.use('/charts', charts);
   app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
   app.listen(API_PORT);
   // logger.info(`Bots server using ${bots.name}`);

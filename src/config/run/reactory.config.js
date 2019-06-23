@@ -84,6 +84,14 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
       },
+      // 'pre-setup': "apt-get install git ; ls -la",
+      // Post-setup commands or path to a script on the host machine
+      // eg: placing configurations in the shared dir etc
+      // 'post-setup': "ls -la",
+      // pre-deploy action
+      // 'pre-deploy-local': "echo 'This is a local executed command'",
+      // post-deploy action
+      'post-deploy': "npm install",
     },
   },
 };

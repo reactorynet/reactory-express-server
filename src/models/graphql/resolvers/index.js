@@ -190,6 +190,7 @@ merge(
   require('./TeamResolver').default,
   require('./Template').default,
   require('../../../modules/lasec/index').default.graphDefinitions.Resolvers,
+  require('./System/Statistics').default,
 );
 
 

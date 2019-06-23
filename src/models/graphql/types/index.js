@@ -26,6 +26,7 @@ const typeDefs = [];
   'Survey/Assessment',
   'System/Email',
   'System/Template',
+  'System/Statistics',
   'Communications/Notification',
   'Custom/FuniSaveGateway',
 ].forEach((name) => {

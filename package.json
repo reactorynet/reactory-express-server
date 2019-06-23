@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "start-win": "set NODE_PATH=. && nodemon ./server.js --exec babel-node --preset=es2016,stage-2",
-    "start": "NODE_PATH=./src npx babel-node ./src/server.js --presets @babel/env",
+    "start": "NODE_PATH=./src npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env",
     "start-prod": "NODE_PATH=. APP_DATA_ROOT=/data/reactory LEGACY_APP_DATA_ROOT=/data/legacy API_URI_ROOT=https://api.reactory.net/  CDN_ROOT=https://api.reactory.net/cdn/ nodemon ./server.js --exec babel-node --preset=es2016,stage-2",
     "build": "npx babel src --out-dir dist --presets @babel/env --copy-files",
     "serve-b": "NODE_PATH=. babel-node ./server.js --preset=es2016,stage-2",
@@ -35,6 +35,8 @@
     "botbuilder": "^3.14.1",
     "busboy": "^0.2.14",
     "chai": "^4.1.2",
+    "chart.js": "^2.8.0",
+    "chartjs-node": "^1.7.1",
     "co": "^4.6.0",
     "cors": "^2.8.4",
     "dotenv": "^6.0.0",
@@ -138,6 +140,16 @@
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-commonjs": "^10.0.0",
     "rollup-plugin-node-resolve": "^5.0.4"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "test/*",
+      "docs/*",
+      ".git",
+      "node_modules/**/node_modules"
+    ],
+    "delay": "2500",
+    "verbose": true
   },
   "eslintConfig": {
     "parser": "babel-eslint",
