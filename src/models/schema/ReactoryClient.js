@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import crypto from 'crypto';
 import * as lodash from 'lodash';
 import ReactoryConstants from '../../constants';
+import ColorScheme from 'color-scheme';
 import logger from '../../logging';
 
 const { ObjectId } = mongoose.Schema.Types;
@@ -121,6 +122,32 @@ ReactoryClientSchema.methods.getSetting = function getSetting(name, defaultValue
 
 ReactoryClientSchema.methods.validatePassword = function validatePassword(password) {
   return this.password === crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
+};
+
+ReactoryClientSchema.methods.colorScheme = function colorScheme(colorvalue = null) {
+  let base = colorvalue;
+
+  try {
+    if (this.themeOptions && this.themeOptions.palette) {
+      if (base === 'primary' || base === null) base = this.themeOptions.palette.primary.main;
+      if (base === 'secondary') base = this.themeOptions.palette.secondary.main;
+    }
+  } catch (err) {
+    // do nothing
+    logger.warn('Could not generate colorscheme', err);
+  }
+
+  if (typeof base === 'string' && base.indexOf('#') >= 0) base = base.replace('#', '');
+
+  const scm = new ColorScheme();
+  scm.from_hex(base || 'FF0000')
+    .scheme('triade')
+    .distance(0.1)
+    .add_complement(false)
+    .variation('pastel')
+    .web_safe(true);
+
+  return scm.colors();
 };
 
 const ReactoryClientModel = mongoose.model('ReactoryClient', ReactoryClientSchema);

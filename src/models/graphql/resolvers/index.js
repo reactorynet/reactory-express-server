@@ -107,6 +107,10 @@ const resolvers = {
         menus: partner._id,
         theme: partner.theme,
         themeOptions: partner.themeOptions || {},
+        colorSchemes: {
+          primary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
+          secondary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
+        },
       };
     },
   },

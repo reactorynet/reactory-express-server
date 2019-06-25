@@ -48,10 +48,13 @@ function createPdfBinary(pdfDoc, res) {
   };
 
   logger.debug('Loading font descriptions', fontDescriptors);
-
   const printer = new PdfPrinter(fontDescriptors);
-
-  const doc = printer.createPdfKitDocument(pdfDoc);
+  const tableLayouts = pdfDoc.tableLayouts || { };
+  const doc = printer.createPdfKitDocument(pdfDoc, { tableLayouts });
+  res.set({
+    'Content-Disposition': `attachment; filename="${pdfDoc.filename}"`,
+    'Content-Type': 'application/pdf',
+  });
   doc.pipe(res);
   doc.end();
 }
@@ -107,7 +110,7 @@ const renderTemplate = (template, properties = {}) => {
   throw new ApiError(`Invalid type for template.content, expected string, but got ${typeof template.content}`);
 };
 
-const generate = (props, res, usepdfkit = false) => {
+const generate = async (props, res, usepdfkit = false) => {
   logger.info(`Generating Report ${props.definition.name || 'unnamed report'}`);
   const { data, definition } = props;
   const { partner, user } = global;
@@ -115,9 +118,14 @@ const generate = (props, res, usepdfkit = false) => {
 
 
   if (_.isFunction(definition.content) === true && usepdfkit === false) {
-    const pdfdef = definition.content(data, partner, user);
-    logger.debug('Generating Report Using PDFMake');
-    createPdfBinary(pdfdef, res);
+    try {
+      const pdfdef = await definition.content(data, partner, user);
+      createPdfBinary(pdfdef, res);
+      logger.debug('Generating Report Using PDFMake');
+    } catch (error) {
+      logger.error('Error generating PDF details', error);
+      res.status(503).send(error.message);
+    }
   } else {
     logger.debug('Generating Document using PDFkit');
     const doc = new PDFDocument();
@@ -248,6 +256,7 @@ router.post('/:folder/:report', (req, res) => {
     try {
       generate({ data: { ...req.params, ...req.body }, definition: reportSchema, debug: true }, res);
     } catch (reportError) {
+      console.error(reportError);
       res.status(503).send(new ApiError(reportError.message, reportError));
     }
   } else {
@@ -261,12 +270,13 @@ router.get('/:folder/:report', async (req, res) => {
   if (reportSchema) {
     try {
       if (reportSchema.resolver) {
-        const resolvedData = await reportSchema.resolver(req.query);
+        const resolvedData = await reportSchema.resolver(req.query).then();
         generate({ data: resolvedData, definition: reportSchema }, res);
       } else {
         generate({ data: req.params, definition: reportSchema }, res);
       }
     } catch (reportError) {
+      logger.error(reportError.message, reportError);
       res.status(503).send(new ApiError(reportError.message, reportError));
     }
   } else {

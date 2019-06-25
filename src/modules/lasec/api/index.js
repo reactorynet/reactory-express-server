@@ -106,6 +106,11 @@ export function POST(url, data, auth = true) {
   return FETCH(url, args, auth);
 }
 
+export function DELETE(url, data, auth = true) {
+  const args = { body: data, method: 'DELETE' };
+  return FETCH(url, args, auth);
+}
+
 export function PUT(url, data, auth = true) {
   const args = { body: data, method: 'PUT' };
   return FETCH(url, args, auth);
@@ -188,6 +193,56 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+    createQuoteHeader: async ({ quote_id, quote_item_id, header_text }) => {
+      try {
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_create_section_header, { body: { quote_id, quote_item_id, heading: header_text } });
+        const {
+          status, payload, id,
+        } = apiResponse;
+
+        logger.debug(`CreateQuoteHeader response status: ${status}  payload: ${payload} id: ${id}`);
+        if (status === 'sucess') {
+          return payload;
+        }
+      } catch (lasecApiError) {
+        logger.error('Error setting quote header item');
+        return null;
+      }
+    },
+    removeItemFromHeader: async ({ quote_id, quote_item_id, quote_heading_id }) => {
+      try {
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_section_header, { body: { id: quote_heading_id, quote_id, quote_item_id } });
+        const {
+          status, payload, id,
+        } = apiResponse;
+
+        logger.debug(`CreateQuoteHeader response status: ${status}  payload: ${payload} id: ${id}`);
+
+        if (status === 'sucess') {
+          return payload;
+        }
+      } catch (lasecApiError) {
+        logger.error('Error setting quote header item');
+        return null;
+      }
+    },
+    removeQuoteHeader: async ({ quote_heading_id }) => {
+      try {
+        const apiResponse = await DELETE(SECONDARY_API_URLS.quote_section_header, { body: { id: quote_heading_id } });
+        const {
+          status,
+        } = apiResponse;
+
+        logger.debug(`Deleted quote header: ${status}  payload: ${payload} id: ${id}`);
+
+        if (status === 'sucess') {
+          return null;
+        }
+      } catch (lasecApiError) {
+        logger.error('Error setting quote header item');
+        throw lasecApiError;
+      }
+    },
   },
   Authentication: {
     login: async (username, password) => {
@@ -199,7 +254,6 @@ const Api = {
     TokenExpiredException,
   },
 };
-
 
 export default Api;
 

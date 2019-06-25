@@ -66,7 +66,7 @@ export default {
   quote_move_to_customer: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/move_quote_to_customer/`, allowed_methods: ['post'] },
   quote_copy_to_customer: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/copy_quote_to_customer/`, allowed_methods: ['post'] },
   quote_create_pdf: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/create_quote_pdf/`, allowed_methods: ['post'] },
-  quote_create_section_header: { url: `api/${ENTITY_KEY__QUOTE_ITEM}/create_quote_section_header/`, allowed_methods: ['post'] },
+  quote_section_header: { url: 'api/quote_heading', allowed_methods: ['post', 'put', 'delete', 'get'] },
   product_get: { url: `api/${ENTITY_KEY__PRODUCT}/`, allowed_methods: ['get'] },
   product_costing_get: { url: `api/${ENTITY_KEY__PRODUCT_COSTING}/`, allowed_methods: ['get'] },
   /*

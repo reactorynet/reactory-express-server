@@ -215,7 +215,7 @@ export default {
       roles: ['USER'],
       componentFqn: 'towerstone.Assessment@1.0.0',
     },
-    /* {
+    {
       key: 'reports',
       title: 'Reports',
       path: '/reports/**',
@@ -223,7 +223,7 @@ export default {
       public: false,
       roles: ['USER'],
       componentFqn: 'towerstone.Report@1.0.0',
-    },
+    }, /*
     {
       key: 'tasks',
       title: 'Tasks',

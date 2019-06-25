@@ -37,9 +37,9 @@ export const towerStoneMenuDef = {
     {
       ordinal: 2, title: 'Surveys', link: '/surveys/', icon: 'check_circle', roles: ['USER'],
     },
-    // {
-    //  ordinal: 3, title: 'Reports', link: '/reports/', icon: 'bug_report', roles: ['USER'],
-    // },
+    {
+      ordinal: 3, title: 'Reports', link: '/reports/', icon: 'bug_report', roles: ['USER'],
+    },
     // {
     //  ordinal: 4, title: 'Actions', link: '/tasks/', icon: 'autorenew', roles: ['USER'],
     // },

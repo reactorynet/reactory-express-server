@@ -10,6 +10,50 @@ type LasecCustomer {
   fullName: String    
 }
 
+type LasecQuoteItem {
+  id: ObjID
+  quote_item_id: String
+  code: String  
+  title: String
+  quantity: Int
+  price: Int
+  subtotal: Int
+  totalVATExclusive: Int
+  totalVATInclusive: Int
+  VATRate: Int
+  GP: Int
+  content: Any
+}
+
+type LasecQuoteHeader {
+  id: ObjID
+  header_id: String
+  text: String
+  quote_items: [LasecQuoteItem]  
+}
+
+type Reminder {
+  id: ObjID
+  what: ObjID,
+  whatType: String
+  who: [User]
+  next: Date
+  actioned: Boolean
+  result: Any
+  via: String
+}
+
+type QuoteTimeLine {
+  id: ObjID
+  what: String
+  when: Date
+  who: User
+  notes: String
+  reminder: [ Reminder ]
+  content: String
+  via: String
+}
+
 type Quote { 
   id: String
   status: String
@@ -24,6 +68,7 @@ type Quote {
   modified: Date
   expirationDate: Date
   note: String
+  timeline: [ QuoteTimeLine ]  
 }
 
 
@@ -35,6 +80,7 @@ type LasecQuoteDashboardSummary {
   category: String
   quotes: [ Quote ]
 }
+
 
 type LasecQuoteDashboard {
   id: String
@@ -48,6 +94,14 @@ type LasecQuoteDashboard {
   quotes: [ Quote ]
 }
 
+input LasecQuoteStatusUpdate {
+  status: String
+  nextAction: String
+  reason: String
+  reminder: Date
+  note: String
+}
+
 input LasecQuoteQueryInput {
   period: String
   periodStart: Date
@@ -56,7 +110,30 @@ input LasecQuoteQueryInput {
   status: [ String ]
 }
 
+enum QuoteHeaderAction {
+  NEW,
+  ADD_ITEM,
+  REMOVE_ITEM,
+  REMOVE_HEADER
+}
+
+input LasecQuoteHeaderInput {
+  quote_header_id: String
+  quote_item_id: String
+  header_text: String
+  action: QuoteHeaderAction!
+}
+
+
 extend type Query {
   lasec_getQuoteList( search: String ) : [ Quote ],
   lasec_getDashboard( dashparams: LasecQuoteQueryInput ) : LasecQuoteDashboard
+  QuoteById(id: String): [ Quote ]
+}
+
+
+
+extend type Mutation {
+  LasecSetQuoteHeader( quote_id: String!, input: LasecQuoteHeaderInput ): LasecQuoteHeader
+  LasecUpdateQuoteStatus( quote_id: String!, input: LasecQuoteStatusUpdate ): Quote
 }

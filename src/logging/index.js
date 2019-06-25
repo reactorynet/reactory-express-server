@@ -14,12 +14,18 @@ const dailyRotate = new (winston.transports.DailyRotateFile)({
   maxFiles: '14d',
 });
 
+const consolelogger = new (winston.transports.Console)({
+  level: 'debug',
+  format: winston.format.simple(),
+});
+
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'debug',
   format: winston.format.json(),
   transports: [
     // new winston.transports.File({ filename: 'error.log', level: 'error' }),
     // new winston.transports.File({ filename: 'combined.log' }),
+    consolelogger,
     dailyRotate,
   ],
 });
@@ -29,8 +35,6 @@ const logger = winston.createLogger({
 // `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
 //
 if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple(),
-  }));
+  // logger.add();
 }
 export default logger;

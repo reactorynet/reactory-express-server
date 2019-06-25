@@ -286,6 +286,7 @@ class AuthConfig {
         if (userResult.validatePassword(password) === true) {
           AuthConfig.generateLoginToken(userResult).then((loginToken) => {
             logger.info('User logged in and session added');
+            global.user = userResult;
             done(null, loginToken);
           });
         } else {

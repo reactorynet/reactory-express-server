@@ -77,7 +77,8 @@ type ApiStatus {
     applicationAvatar: String
     applicationName: String
     theme: String
-    themeOptions: Any        
+    themeOptions: Any
+    colorSchemes: Any        
 }
 
 extend type Query {

@@ -3,6 +3,9 @@ import om from 'object-mapper';
 import moment from 'moment';
 import lasecApi from '../api';
 import logger from '../../../logging';
+import lasec from '..';
+import ApiError from '../../../exceptions';
+import { Quote } from '../schema/Quote';
 
 
 const getQuotes = async () => {
@@ -114,13 +117,43 @@ export default {
       };
 
 
-      dashboardResult.totalQuotes = 80; //dashboardResult.quotes.length;
+      dashboardResult.totalQuotes = 80; // dashboardResult.quotes.length;
       dashboardResult.statusSummary = groupQuotesByStatus(dashboardResult.quotes);
 
       return dashboardResult;
     },
   },
   Mutation: {
+    LasecSetQuoteHeader: async (parent, { quote_id, input }) => {
+      switch (input.action) {
+        case 'NEW': {
+          return lasecApi.Quotes.createQuoteHeader({ quote_id, ...input });
+        }
+        case 'ADD_ITEM': {
+          return lasecApi.Quotes.addItemToQuoteHeader({ quote_id, ...input });
+        }
+        case 'REMOVE_ITEM': {
+          return lasecApi.Quotes.removeItemFromHeader({ quote_id, ...input });
+        }
+        case 'REMOVE_HEADER': {
+          return lasecApi.Quotes.removeQuoteHeader({ quote_id, ...input });
+        }
+        default: {
+          throw new ApiError(`The ${input.action} action is not supported`);
+        }
+      }
+    },
+    LasecUpdateQuoteStatus: async (parent, { quote_id, input }) => {
+      const found = await Quote.find({ code: quote_id }).then();
+      if (!found) {
+        const quote = new Quote({
+          code: quote_id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
 
+        await quote.save().then();
+      }
+    },
   },
 };
