@@ -17,7 +17,7 @@ switch (MODE) {
     break;
   }
   case 'PRODUCTION': {
-    siteUrl = 'https://crm.lasec360.com';
+    siteUrl = 'https://lasec-crm.reactory.net';
     break;
   }
   case 'DEVELOP':
@@ -353,7 +353,7 @@ export default {
     {
       name: 'lasec_360_root/PRODUCTION',
       data: {
-        url: 'http://localhost:3001/',
+        url: 'https://lasec360.reactory.net/',
       },
     },
   ],
