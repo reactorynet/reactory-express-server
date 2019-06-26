@@ -9,8 +9,10 @@
   "scripts": {
     "start-win": "set NODE_PATH=. && nodemon ./server.js --exec babel-node --preset=es2016,stage-2",
     "start": "NODE_PATH=./src npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000",
-    "start-prod": "NODE_PATH=. APP_DATA_ROOT=/data/reactory LEGACY_APP_DATA_ROOT=/data/legacy API_URI_ROOT=https://api.reactory.net/  CDN_ROOT=https://api.reactory.net/cdn/ nodemon ./server.js --exec babel-node --preset=es2016,stage-2",
-    "build": "npx babel src --out-dir dist --presets @babel/env --copy-files",
+    "start:prod": "NODE_PATH=./src env-cmd -f ./.env.production npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000",
+    "build": "npx babel ./src --out-dir dist --presets @babel/env --copy-files",
+    "set:env:production": "env-cmd ./.env.production",
+    "build:prod": "npm-run-all set:env:production build",
     "serve-b": "NODE_PATH=. babel-node ./server.js --preset=es2016,stage-2",
     "serve": "pm2 start config/run/$BUILD_TARGET.config.js",
     "debug": "NODE_PATH=./src npx nodemon --exec npx babel-node ./src/server.js --inspect --presets @babel/env --max_old_space_size=2000000",
