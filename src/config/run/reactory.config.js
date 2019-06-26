@@ -33,6 +33,7 @@ module.exports = {
       OAUTH_TOKEN_ENDPOINT: '/oauth2/v2.0/token',
     },
     env_production: {
+      NODE_PATH: './src',
       NODE_ENV: 'production',
       APP_DATA_ROOT: '/data/reactory',
       LEGACY_APP_DATA_ROOT: '/data/legacy',
