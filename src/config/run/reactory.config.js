@@ -1,3 +1,6 @@
+/**
+ * env-cmd -f ./config/.env.production npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000
+ */
 module.exports = {
   apps: [{
     name: 'ReactoryApi',
@@ -6,7 +9,7 @@ module.exports = {
     listen_timeout: 10000,
     max_memory_restart: '2G',
     interpreter: 'babel-node',
-    node_args: '--preset=es2016,stage-2',
+    node_args: '--presets @babel/env',
     watch: true,
     env: {
       NODE_ENV: 'development',
@@ -91,7 +94,7 @@ module.exports = {
       // pre-deploy action
       // 'pre-deploy-local': "echo 'This is a local executed command'",
       // post-deploy action
-      'post-deploy': "npm install",
+      'post-deploy': 'npm install',
     },
   },
 };
