@@ -113,7 +113,7 @@ class AuthConfig {
       // Configure OIDC strategy
       // Reactory holds an integration as an application
       // ideally this should be done per request
-      const redirectUrl = `${process.env.OAUTH_REDIRECT_URI}`;
+      const redirectUrl = `${process.env.OAUTH_REDIRECT_URI}/${global.partner ? global.partner.key : 'lasec-crm'}`;
       logger.debug(`Application is configure to use ${redirectUrl} for OIDC strategy`);
       passport.use(new OIDCStrategy(
         {
