@@ -173,7 +173,7 @@ export default {
           value: {
             type: 'object',
             frameProps: {
-              url: 'http://localhost:3001/',
+              url: process.env.NODE_ENV === 'production' ? 'https://lasec360.reactory.net/' : 'http://localhost:3001/',
               height: '100%',
               width: '100%',
               styles: {
