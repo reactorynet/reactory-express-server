@@ -44,6 +44,7 @@
     "dotenv": "^6.0.0",
     "ejs": "^2.6.1",
     "email-templates": "5.0.2",
+    "env-cmd": "^9.0.3",
     "express": "^4.17.1",
     "express-graphql": "^0.8.0",
     "express-jwt": "^5.3.1",
