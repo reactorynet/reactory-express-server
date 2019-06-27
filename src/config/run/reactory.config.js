@@ -20,7 +20,7 @@ module.exports = {
       WORKFLOW_MONGO: 'mongodb://localhost:27017/reactory-workflow',
       API_PORT: 4000,
       SENDGRID_API_KEY: process.env.SENDGRID_API_KEY,
-      API_URI_ROOT: 'http://locahost:4000/',
+      API_URI_ROOT: 'http://locahost:4000',
       CDN_ROOT: 'http://localhost:4000/cdn/',
       MODE: 'DEVELOP',
       LOG_LEVEL: 'debug',
