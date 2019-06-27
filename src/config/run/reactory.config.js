@@ -4,14 +4,15 @@
 module.exports = {
   apps: [{
     name: 'ReactoryApi',
-    script: 'server.js',
+    script: 'src/server.js',
     kill_timeout: 3000,
     listen_timeout: 10000,
     max_memory_restart: '2G',
-    interpreter: 'babel-node',
+    interpreter: './node_modules/.bin/babel-node',
     node_args: '--presets @babel/env',
     watch: true,
-    env: {
+    env_development: {
+      NODE_PATH: '.',
       NODE_ENV: 'development',
       APP_DATA_ROOT: '/mnt/d/data/reactory',
       LEGACY_APP_DATA_ROOT: '/mnt/d/data',
@@ -33,7 +34,7 @@ module.exports = {
       OAUTH_TOKEN_ENDPOINT: '/oauth2/v2.0/token',
     },
     env_production: {
-      NODE_PATH: './src',
+      NODE_PATH: '.',
       NODE_ENV: 'production',
       APP_DATA_ROOT: '/data/reactory',
       LEGACY_APP_DATA_ROOT: '/data/legacy',
