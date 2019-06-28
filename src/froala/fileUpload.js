@@ -1,7 +1,10 @@
+import logger from '../logging';
+
 const Busboy = require('busboy');
 const path = require('path');
 const fs = require('fs');
 const sha1 = require('sha1');
+
 
 const {
   APP_DATA_ROOT,
@@ -29,12 +32,11 @@ function upload(req, callback) {
   // The route on which the file is saved.
   let fileRoute = 'content';
   let preserveFilename = false;
-  if(req.params.__reactory__upload) {
-    fileRoute = req.params.folder;
+  if (req.query['__reactory__upload'] === 'true') {
+    logger.info('Uploading reactory specific file');
+    fileRoute = req.query.folder || fileRoute;
     preserveFilename = true;
   }
-  
-
   // Server side file path on which the file is saved.
   let saveToPath = null;
 
@@ -55,11 +57,13 @@ function upload(req, callback) {
 
     // Cleanup: delete the saved path.
     if (saveToPath) {
+      // eslint-disable-next-line consistent-return
       return fs.unlink(saveToPath, (err) => {
         return callback(error);
       });
     }
 
+    // eslint-disable-next-line consistent-return
     return callback(error);
   }
 
@@ -73,6 +77,7 @@ function upload(req, callback) {
 
   // Handle file arrival.
   busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    logger.debug(`Received a new file: ${fieldname}, ${filename} - ${mimetype}`);
     // Check fieldname:
     if (fieldname != 'file') {
       // Stop receiving from this stream.
@@ -87,8 +92,12 @@ function upload(req, callback) {
       link = `${CDN_ROOT}${fileRoute}/files/${randomName}`;
       saveToPath = path.join(APP_DATA_ROOT, 'content', 'files', randomName);
     } else {
-      link = `${CDN_ROOT}${fileRoute}/${fieldname}`;
-      saveToPath = path.join(APP_DATA_ROOT, 'content', 'files', filename);
+      link = `${CDN_ROOT}${fileRoute}${filename}`;
+      saveToPath = path.join(APP_DATA_ROOT, fileRoute, filename);
+      if (fs.existsSync(path.join(APP_DATA_ROOT, fileRoute)) === false) {
+        fs.mkdirSync(path.join(APP_DATA_ROOT, fileRoute));
+      }      
+      //if (fs.existsSync(saveToPath) === false) 
     }
     // Generate path where the file will be saved.
     // var appDir = path.dirname(require.main.filename);
@@ -106,10 +115,10 @@ function upload(req, callback) {
       const status = isFileValid(saveToPath, mimetype);
 
       if (!status) {
-        return handleStreamError('File does not meet the validation.');
+        return handleStreamError(`File does not meet the validation. ${status}`);
       }
 
-      return callback(null, { link });
+      return callback(null, { status, link });
     });
 
     // Save file to disk.

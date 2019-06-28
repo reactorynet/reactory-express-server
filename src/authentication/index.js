@@ -296,7 +296,7 @@ class AuthConfig {
         }
       }).catch((error) => {
         logger.error('Authentication Error', error);
-        return done(null, false, 'System is unable to authenticate user due to an error');
+        done(null, false, 'System is unable to authenticate user due to an error');
       });
     };
 }

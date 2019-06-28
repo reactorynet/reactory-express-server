@@ -5,6 +5,8 @@ import moment from 'moment';
 import SECONDARY_API_URLS from './SecondaryApiUrls';
 import logger from '../../../logging';
 import ApiError from '../../../exceptions';
+import AuthenticationSchema from '../schema/Authentication';
+import { jzon } from '../../../utils/validators';
 
 const config = {
   WEBSOCKET_BASE_URL: 'wss://api.lasec.co.za/ws/',
@@ -47,13 +49,16 @@ export function stringifyIds(ids) {
   return x;
 }
 
+const isCredentialsValid = (authentication) => {
+  // return jzon.validate(AuthenticationSchema, authentication);
+
+};
 
 const getStorageItem = async (key) => {
   logger.info(`Lookup Security Storage ${key} on ${global.user.fullName()}`);
   if (global.user._id) {
     const lasecAuth = global.user.getAuthentication('lasec');
     if (lasecAuth && lasecAuth.props) {
-      
       logger.debug(`Found login information for lasec ${lasecAuth}`);
       const {
         payload, username, password,
@@ -163,8 +168,51 @@ export async function FETCH(url, args, auth = true, failed = false) {
 
   return fetch(absoluteUrl, kwargs)
     .then((response) => {
-      logger.debug('Result from API', response);      
-      return response.json();
+      if (response.ok) {
+        logger.debug('Result from API', response);
+        return response.json();
+      }
+
+      switch (response.status) {
+        case 401:
+        case 403: {
+          if (failed === false) {
+            try {
+              // get the current authentication details
+              const currentAuthentication = global.user.getAuthentication('lasec');
+              if (currentAuthentication && currentAuthentication.props) {
+                // clear the login
+                const setResult = global.user.setAuthentication({
+                  provider: 'lasec',
+                  props: {
+                    payload: null,
+                    lastStatus: response.status,
+                  },
+                  lastLogin: new Date().valueOf(),
+                });
+
+                logger.debug(`Cleared login token & payload for ${global.user.firstName} ${global.user.lastName}`, setResult);
+
+                Api.Authentication.login(currentAuthentication.props.username, currentAuthentication.props.password).then((authenticated) => {
+                  if (authenticated.status === 'success') {
+                    return FETCH(url, args, auth, true);
+                  }
+                }).catch((loginError) => {
+                  logger.error('Error Occured Logging in with Lasec', loginError);
+                  throw loginError;
+                });
+              }
+              throw new TokenExpiredException('We have no authentication details.');
+            } catch (err) {
+              throw new TokenExpiredException('Authentication cannot log in.');
+            }
+          }
+          throw new TokenExpiredException('Authentication token has expired or user not allowed to log in.');
+        }
+        default: {
+          throw new ApiError('Could not execute fetch against Lasec API');
+        }
+      }
     })
     .then(async (jsonResult) => {
       logger.debug('JSON Result', jsonResult);
@@ -172,7 +220,6 @@ export async function FETCH(url, args, auth = true, failed = false) {
     })
     .catch((err) => {
       logger.error(`Error making Fetch Call ${err.message}`, err);
-      
       throw err;
     });
 }

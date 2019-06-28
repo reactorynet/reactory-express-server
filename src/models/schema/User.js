@@ -303,12 +303,16 @@ UserSchema.methods.setAuthentication = async function setAuthentication(authenti
     const found = find(instance.authentications, { provider: authentication.provider });
     if (found === undefined || found === null) {
       instance.authentications.push(authentication);
+      dirty = true;
     } else {
       instance.authentications.forEach((_authentication, index) => {
-        instance.authentications[index].props = { ..._authentication.props, ...authentication.props };
+        if (found.provider === authentication.provider) {
+          // patch the properties of the authentication
+          instance.authentications[index].props = { ..._authentication.props, ...authentication.props };
+          dirty = true;
+        }
       });
     }
-    dirty = true;
   }
 
   if (dirty) {

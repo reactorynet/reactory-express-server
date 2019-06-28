@@ -16,6 +16,7 @@ import userAccountRouter from './useraccount';
 import reactory from './reactory';
 import froala from './froala';
 import charts from './charts';
+import resources from './resources';
 import typeDefs from './models/graphql/types';
 import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
@@ -94,7 +95,7 @@ logger.info(ENV_STRING_DEBUG);
 
 const queryRoot = '/api';
 const graphiql = '/q';
-const resources = '/cdn';
+const resourcesPath = '/cdn';
 const publicFolder = path.join(__dirname, 'public');
 let schema = null;
 
@@ -143,10 +144,12 @@ startup().then((startResult) => {
   app.use(userAccountRouter);
   app.use('/reactory', reactory);
   app.use('/froala', froala);
+  app.use('/deliveries', froala);
   app.use('/workflow', workflow);
+  app.use('/resources', resources);
   app.use('/pdf', pdf);
   app.use('/charts', charts);
-  app.use(resources, express.static(APP_DATA_ROOT || publicFolder));
+  app.use(resourcesPath, express.static(APP_DATA_ROOT || publicFolder));
   app.listen(API_PORT);
   // logger.info(`Bots server using ${bots.name}`);
   logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);

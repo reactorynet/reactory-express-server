@@ -1,3 +1,5 @@
+import inspector from 'schema-inspector';
+
 const nil = (o) => {
   if (o === undefined) return true;
   if (o === null) return true;
@@ -15,6 +17,13 @@ const nilStr = (s) => {
   throw new Error('input is of invalid type, string or null expected');
 };
 
+export const jzon = {
+  validate: (data, schema, custom, callback) => {
+    return inspector.validate(data, schema, custom, callback);
+  },
+};
+
+
 const iz = {
   email: (email) => {
     // eslint-disable-next-line
@@ -23,6 +32,8 @@ const iz = {
   },
   nil,
   nilStr,
+  jzon,
 };
+
 
 export default iz;
