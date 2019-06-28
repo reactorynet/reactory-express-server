@@ -53,7 +53,7 @@ const getStorageItem = async (key) => {
   if (global.user._id) {
     const lasecAuth = global.user.getAuthentication('lasec');
     if (lasecAuth && lasecAuth.props) {
-      debugger //eslint-disable-line
+      
       logger.debug(`Found login information for lasec ${lasecAuth}`);
       const {
         payload, username, password,
@@ -163,8 +163,7 @@ export async function FETCH(url, args, auth = true) {
 
   return fetch(absoluteUrl, kwargs)
     .then((response) => {
-      logger.debug('Result from API', response);
-      debugger //eslint-disable-line
+      logger.debug('Result from API', response);      
       return response.json();
     })
     .then(async (jsonResult) => {

@@ -53,7 +53,6 @@ router.post('/register', (req, res) => {
 
 router.post('/forgot', (req, res) => {
   const { email } = req.body;
-  // debugger; //eslint-disable-line
   User.findOne({ email }).then((user) => {
     if (user === null) res.status(404).send(new UserNotFoundException(`Could not find a user with email ${email}`, { email, error: 'No user' }));
     Admin.User.sendResetPasswordEmail(user, global.partner, { delivery: moment(), format: 'html' }).then(() => {

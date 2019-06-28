@@ -150,7 +150,6 @@ export const listAllForOrganization = (organizationId, searchString = '') => {
             query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'g');
           }
         }
-        // debugger; //eslint-disable-line
         User.find(query).sort('firstName lastName').then((users) => {
           resolve(users);
         }).catch((err) => {

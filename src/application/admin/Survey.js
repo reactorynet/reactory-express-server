@@ -169,7 +169,6 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
  * @param {*} organigram
  */
 export const sendSurveyRemindersForDelegate = async (survey, delegateEntry, organigram) => {
-  debugger //eslint-disable-line
   const result = (message, success = false) => {
     return {
       message,
@@ -296,7 +295,6 @@ export const sendReportOverview = async (survey, delegateEntry, organigram) => {
  * @param {*} propertyBag
  */
 export const sendSurveyEmail = async (survey, delegateEntry, organigram, emailType, propertyBag) => {
-  // debugger; // eslint-disable-line
   const result = (message, success = false) => {
     return {
       message,

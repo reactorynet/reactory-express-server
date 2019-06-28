@@ -227,7 +227,6 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
       if (Object.keys(employeePeers).length > 0) {
         // we have employee peers and all users
         // should be created for this organization
-        // debugger; // eslint-disable-line
         const userKeys = Object.keys(employeePeers);
         for (let userIdIndex = 0; userIdIndex < userKeys.length; userIdIndex += 1) {
           try {
@@ -390,7 +389,7 @@ export const migrateOrganization = co.wrap(function* migrateGenerator(id, option
                   updatedAt: new Date(),
                 });
               }
-              // debugger; //eslint-disable-line
+              
               yield survey.save();
             } else result.assessmentErrors.push('Could not create the document');
           } else {
