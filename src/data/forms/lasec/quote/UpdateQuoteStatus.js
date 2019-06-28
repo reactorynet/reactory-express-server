@@ -6,7 +6,7 @@ export const UpdateQuoteStatusSchema = {
   description: 'Please update the quote status',
   properties: {
     id: {
-      type: 'String',
+      type: 'string',
       title: 'Quote Id',
       description: 'Quote Id',
     },
@@ -133,17 +133,17 @@ export const UpdateQuoteStatusForm = {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
-        quoteStatus: { md: 6 },
-        nextAction: { md: 6 },
+        quoteStatus: { md: 6, sm: 12, xs: 12 },
+        nextAction: { md: 6, sm: 12, xs: 12 },
       },
       {
-        reason: { md: 12 },
+        reason: { md: 12, sm: 12, xs: 12 },
       },
       {
-        reminder: { md: 12 },
+        reminder: { md: 12, sm: 12, xs: 12 },
       },
       {
-        note: { md: 12 },
+        note: { md: 12, sm: 12, xs: 12 },
       },
     ],
     quoteStatus: {

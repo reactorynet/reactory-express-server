@@ -66,7 +66,8 @@ const getStorageItem = async (key) => {
         if (lastLogin && now.isBefore(moment(lastLogin).add(24, 'h'))) {
           // we have an authentication token
           // maybe we can test it? check if valid
-          logger.debug('login has token fresher than 24hours, returning');
+          logger.debug('login has token fresher than 24hours, testing');
+          //
           return lasecAuth.props.payload.token;
         }
       }
@@ -163,6 +164,7 @@ export async function FETCH(url, args, auth = true) {
   return fetch(absoluteUrl, kwargs)
     .then((response) => {
       logger.debug('Result from API', response);
+      debugger //eslint-disable-line
       return response.json();
     })
     .then(async (jsonResult) => {

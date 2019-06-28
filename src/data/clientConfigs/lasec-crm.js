@@ -118,6 +118,9 @@ export default {
   routes: [
     {
       ...loginroute,
+      background: {
+        image: 'default',
+      },
       args: [
         {
           key: 'forgotEnabled',
@@ -307,6 +310,69 @@ export default {
         fill: '#ff8c63',
       },
     },
+    provider: {
+      material: {
+        typography: {
+          useNextVariants: true,
+        },
+        type: 'material',
+        palette: {
+          primary1Color: '#369907',
+          primary: {
+            light: '#6dcb43',
+            main: '#6EB84A',
+            dark: '#006a00',
+            contrastText: '#000000',
+          },
+          secondary: {
+            light: '#62b4b8',
+            main: '#2d8488',
+            dark: '#00575b',
+            contrastText: '#000000',
+          },
+          report: {
+            empty: '#89ee8e',
+            fill: '#ff8c63',
+          },
+        },
+      },
+      bootstrap: {
+
+      },
+      blueprint: {
+
+      },
+      mockly: {
+
+      },
+    },
+    core: {
+      images: [
+        {
+          src: `${CDN_ROOT}themes/${key}/images/wallpaper/default/1280x1024.jpg`,
+          aspect: '16:9', // 16:9
+          orientation: 'landscape',
+          size: {
+            width: 1280,
+            height: 1024,
+          },
+        },
+        {
+          src: `${CDN_ROOT}themes/${key}/images/wallpaper/default/1024x1280.jpg`,
+          aspect: '9:16', // 16:9
+          orientation: 'portrait',
+          size: {
+            width: 1024,
+            height: 1280,
+          },
+        },
+      ],
+      background: {
+        color: '',
+        image: '',
+        alpha: 0.4,
+      },
+    },
     assets: {
       featureImage: `${CDN_ROOT}themes/${key}/images/featured.jpg`,
       logo: `${CDN_ROOT}themes/${key}/images/logo.png`,
@@ -322,7 +388,7 @@ export default {
     content: {
       appTitle: 'Lasec CRM',
       login: {
-        message: `${key}@lasec powered by reactory.net`,
+        message: `${key} powered by reactory.net`,
       },
     },
   },

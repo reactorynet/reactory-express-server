@@ -184,6 +184,10 @@ const defaultForm = {
 const LoginForm = {
   id: 'LoginForm',
   uiFramework: 'material',
+  name: 'LoginForm',
+  nameSpace: 'forms',
+  version: '1.0.0',
+  registerAsComponent: true,
   uiSupport: ['material', 'bootstrap'],
   uiResources: [],
   title: 'Login',
@@ -220,7 +224,6 @@ const LoginForm = {
     },
   },
   uiSchema: {},
-  layout: {},
 };
 
 const arrayForm = {
