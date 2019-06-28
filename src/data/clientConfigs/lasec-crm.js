@@ -85,15 +85,19 @@ export default {
         {
           ordinal: 0, title: 'Dashboard', link: '/', icon: 'dashboard', roles: ['USER', 'ADMIN'],
         },
+        /*
         {
           ordinal: 1, title: 'Marketing', link: '/marketing', icon: 'speaker', roles: ['USER', 'ADMIN'],
         },
+
         {
           ordinal: 2, title: 'Customers', link: '/360/crm/customer-search', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
         },
+        */
         {
           ordinal: 3, title: 'Lasec 360', link: '/360', icon: 'share', roles: ['USER', 'ADMIN'],
         },
+        /*
         {
           ordinal: 4, title: 'Shipping', link: '/shipping', icon: 'local_shipping', roles: ['USER', 'ADMIN'],
         },
@@ -106,6 +110,7 @@ export default {
         {
           ordinal: 7, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER'],
         },
+        */
         {
           ordinal: 9, title: 'Email', link: '/mail/', icon: 'mail', roles: ['USER'],
         },
@@ -201,7 +206,7 @@ export default {
           },
         },
       ],
-    },
+    },    
     {
       key: 'ProxiedWindow',
       title: '360 Proxied',
@@ -239,7 +244,7 @@ export default {
     {
       key: 'quote-detail',
       title: 'Quote Detail',
-      path: '/quote/**/details',
+      path: '/quote/**details',
       public: false,
       exact: false,
       roles: ['USER'],
@@ -274,6 +279,15 @@ export default {
       componentProps: {
         withPeers: false,
       },
+      args: [
+        {
+          key: 'withPeers',
+          value: {
+            type: 'boolean',
+            withPeers: false,
+          },
+        },
+      ],
     },
     {
       key: 'administration',

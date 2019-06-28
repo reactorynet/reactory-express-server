@@ -15,8 +15,8 @@ function getExtension(filename) {
 
 // Test if a file is valid based on its extension and mime type.
 function isFileValid(filename, mimetype) {
-  const allowedExts = ['txt', 'pdf', 'doc'];
-  const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf', 'application/pdf'];
+  const allowedExts = ['txt', 'pdf', 'doc', 'zip'];
+  const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf', 'application/pdf', 'application/zip'];
 
   // Get file extension.
   const extension = getExtension(filename);
@@ -27,7 +27,13 @@ function isFileValid(filename, mimetype) {
 
 function upload(req, callback) {
   // The route on which the file is saved.
-  const fileRoute = 'content/';
+  let fileRoute = 'content';
+  let preserveFilename = false;
+  if(req.params.__reactory__upload) {
+    fileRoute = req.params.folder;
+    preserveFilename = true;
+  }
+  
 
   // Server side file path on which the file is saved.
   let saveToPath = null;
@@ -75,13 +81,17 @@ function upload(req, callback) {
       return callback("Fieldname is not correct. It must be 'file'.");
     }
 
-    // Generate link.
-    const randomName = `${sha1(new Date().getTime()) }.${getExtension(filename)}`;
-    link = `${CDN_ROOT}${fileRoute}files/${randomName}`;
-
+    if (preserveFilename === false) {
+      // Generate link.
+      const randomName = `${sha1(new Date().getTime())}.${getExtension(filename)}`;
+      link = `${CDN_ROOT}${fileRoute}/files/${randomName}`;
+      saveToPath = path.join(APP_DATA_ROOT, 'content', 'files', randomName);
+    } else {
+      link = `${CDN_ROOT}${fileRoute}/${fieldname}`;
+      saveToPath = path.join(APP_DATA_ROOT, 'content', 'files', filename);
+    }
     // Generate path where the file will be saved.
     // var appDir = path.dirname(require.main.filename);
-    saveToPath = path.join(APP_DATA_ROOT, 'content', 'files', randomName);
 
     // Pipe reader stream (file from client) into writer stream (file from disk).
     file.on('error', handleStreamError);

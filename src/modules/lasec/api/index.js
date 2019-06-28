@@ -117,7 +117,7 @@ export function PUT(url, data, auth = true) {
   return FETCH(url, args, auth);
 }
 
-export async function FETCH(url, args, auth = true) {
+export async function FETCH(url, args, auth = true, failed = false) {
   // url = `${url}`;
 
   let absoluteUrl = `${config.SECONDARY_API_URL}/${url}`;
@@ -172,6 +172,7 @@ export async function FETCH(url, args, auth = true) {
     })
     .catch((err) => {
       logger.error(`Error making Fetch Call ${err.message}`, err);
+      
       throw err;
     });
 }

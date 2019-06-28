@@ -1,3 +1,5 @@
+import fs from 'fs';
+import moment from 'moment';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
 import path from 'path';
@@ -22,6 +24,8 @@ import pdf from './pdf';
 import bots from './bot/server';
 import startup from './utils/startup';
 import logger from './logging';
+
+const packageJson = require('../package.json');
 
 dotenv.config();
 
@@ -55,7 +59,16 @@ const {
   OAUTH_TOKEN_ENDPOINT,
 } = process.env;
 
+
+let asciilogo = `Reactory Server version : ${packageJson.version} - start ${moment().format('YYYY-MM-dd HH:mm:ss')}`;
+if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/asciilogo.txt`)) {
+  const logo = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/asciilogo.txt`, { enocding: 'utf-8' });
+  asciilogo = `${asciilogo}\n\n${logo}`;
+}
+
+
 const ENV_STRING_DEBUG = `
+${asciilogo}
 Environment Settings: 
   API_DATA_ROOT: ${APP_DATA_ROOT}
   APP_SYSTEM_FONTS: ${APP_SYSTEM_FONTS}
