@@ -13,7 +13,7 @@ export default {
   username: 'reactory',
   email: 'developer@reactory.net',
   salt: 'generate',
-  password: 'XXXXXXXXXXXXX',
+  password: process.env.REACTORY_APPLICATION_PASSWORD,
   siteUrl: MODE === 'DEVELOP' ? 'http://localhost:3000' : 'https://app.reactory.net/',
   emailSendVia: 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,

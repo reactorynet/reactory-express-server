@@ -39,7 +39,7 @@ export default {
   username: 'towerstone',
   email: 'assessments@towerstone-global.com',
   salt: 'generate',
-  password: 'XXXXXXXXXXXXX',
+  password: process.env.REACTORY_APPLICATION_PASSWORD_TOWERSTONE,
   siteUrl,
   emailSendVia: 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,

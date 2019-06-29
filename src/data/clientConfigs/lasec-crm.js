@@ -35,7 +35,7 @@ export default {
   username: 'lasec',
   email: 'werner.weber+lasec-crm-admin@gmail.com',
   salt: 'generate',
-  password: 'XXXXXXXXXXXXX',
+  password: 'i5xJOVXIeZHB1NnAkh6fffHkJcV7HJDI',
   siteUrl,
   emailSendVia: 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,
