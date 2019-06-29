@@ -95,8 +95,8 @@ function upload(req, callback) {
       link = `${CDN_ROOT}${fileRoute}${filename}`;
       saveToPath = path.join(APP_DATA_ROOT, fileRoute, filename);
       if (fs.existsSync(path.join(APP_DATA_ROOT, fileRoute)) === false) {
-        fs.mkdirSync(path.join(APP_DATA_ROOT, fileRoute));
-      }      
+        fs.mkdirSync(path.join(APP_DATA_ROOT, fileRoute), { recursive: true });
+      }
       //if (fs.existsSync(saveToPath) === false) 
     }
     // Generate path where the file will be saved.
