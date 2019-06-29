@@ -1661,6 +1661,7 @@ const TowerStoneSurveyConfigForm = {
   },
 };
 
+const { ReactoryApplicationsForm, ReactoryDashboard, ReactoryClientAdminPage } = require('./forms/core/dashboard');
 const TowerStoneLeadershipBrandConfigForm = require('./forms/towerstone/LeadershipBrands').default;
 const TowerStoneSurveyDelegateConfig = require('./forms/towerstone/SurveyDelegates').SurveyDelegatesForm;
 const TowerStoneSurveySettings = require('./forms/towerstone/SurveySettings').SurveySettingsForm;
@@ -1710,6 +1711,9 @@ export default [
   ProjectForm,
   ProjectListWidget,
   ProjectDetailForm,
+  ReactoryApplicationsForm,
+  ReactoryClientAdminPage,
+  ReactoryDashboard,
   TowerStoneSurveyConfigForm,
   TowerStoneLeadershipBrandConfigForm,
   TowerStoneSurveyDelegateConfig,

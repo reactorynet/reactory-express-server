@@ -18,7 +18,7 @@ export default {
   emailSendVia: 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/reset-password',
-  avatar: `${CDN_ROOT}themes/reactory/images/avatar.jpg`,
+  avatar: `${CDN_ROOT}themes/reactory/images/avatar.png`,
   applicationRoles: ['USER', 'ADMIN', 'ANON'],
   billingType: 'partner',
   components: [
