@@ -1,12 +1,12 @@
 module.exports = {
   apps: [{
     name: 'ReactoryApi-Towerstone',
-    script: 'server.js',
+    script: 'src/server.js',
     kill_timeout: 3000,
     listen_timeout: 10000,
     max_memory_restart: '2G',
-    interpreter: 'babel-node',
-    node_args: '--preset=es2016,stage-2',
+    interpreter: './node_modules/.bin/babel-node',
+    node_args: '--presets @babel/env',
     watch: true,
     env: {
       NODE_ENV: 'development',
