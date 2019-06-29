@@ -77,9 +77,10 @@ router.get('/install/:id', async (req, res) => {
             */
             logger.warn('Decompression - WARNING: System indicates directory is open, but it is not. False positive, but requires further investigation');
             res.status(200).send({ success: true, message: 'Ensure caches are cleared after updating content' });
-          }
-          console.error('This thing got bubble sickness', decompressionError);
-          res.status(501).send('There is mockery afoot...');
+          } else {
+            console.error('This thing got bubble sickness', decompressionError);
+            res.status(501).send('There is mockery afoot...');
+          }          
         });
       } else {
         res.status(403).send('This is not the file you are looking for');
