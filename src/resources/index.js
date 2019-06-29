@@ -53,7 +53,7 @@ router.get('/install/:id', async (req, res) => {
 
   try {
 
-    fs.existsSync(resource.meta.installerprops.path) === false ? fs.mkdirSync(_paths.build, { recursive: true });
+    if (fs.existsSync(resource.meta.installerprops.path) === false) fs.mkdirSync(_paths.build, { recursive: true });
 
     if (resource && resource.resourceType === 'application' && resource.meta.installer === 'nginx') {
       const file = `${_paths.build}/${resource.version}/${resource.meta.clientKey}/${resource.name}`;
