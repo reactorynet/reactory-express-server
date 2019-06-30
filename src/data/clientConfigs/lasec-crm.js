@@ -271,7 +271,7 @@ export default {
     {
       key: 'profile',
       title: 'Profile',
-      path: '/profile/**',
+      path: '/profile**',
       exact: false,
       public: false,
       roles: ['USER'],

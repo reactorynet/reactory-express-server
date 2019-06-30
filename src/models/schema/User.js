@@ -35,6 +35,10 @@ const UserSchema = new mongoose.Schema({
     required: true,
   },
   avatar: String,
+  avatarProvider: {
+    type: String,
+    default: 'reactory',
+  },
   organization: {
     type: ObjectId,
     ref: 'Organization',

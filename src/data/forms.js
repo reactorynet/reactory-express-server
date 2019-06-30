@@ -223,7 +223,9 @@ const LoginForm = {
       },
     },
   },
-  uiSchema: {},
+  uiSchema: {
+    submitIcon: 'lock',
+  },
 };
 
 const arrayForm = {

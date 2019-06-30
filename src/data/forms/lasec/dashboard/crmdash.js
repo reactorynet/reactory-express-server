@@ -159,9 +159,9 @@ export const CrmDashboardUISchema = {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
-        period: { md: 3, sm: 6 },
-        periodStart: { md: 3, sm: 6 },
-        periodEnd: { md: 3, sm: 6 },
+        period: { md: 3, sm: 6, xs: 12 },
+        periodStart: { md: 3, sm: 6, xs: 12 },
+        periodEnd: { md: 3, sm: 6, xs: 12 },
       },
     ],
     period: {
@@ -204,7 +204,7 @@ export const CrmDashboardUISchema = {
     },
   },
   statusSummary: {
-    'ui:widget': 'MaterialTableWidget',
+    'ui:widget': 'HiddenWidget',
     'ui:options': {
       columns: [
         { title: 'Status Group', field: 'title' },
@@ -218,7 +218,7 @@ export const CrmDashboardUISchema = {
     },
   },
   quotes: {
-    'ui:widget': 'MaterialTableWidget',
+    'ui:widget': 'HiddenWidget',
     'ui:options': {
       columns: [
         {

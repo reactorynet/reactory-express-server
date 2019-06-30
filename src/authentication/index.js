@@ -56,9 +56,7 @@ class AuthConfig {
         logger.info('Sign in Complete', {
           iss,
           sub,
-          profile,
-          // accessToken,
-          // refreshToken,
+          profile,          
           params: params || 'no-params',
           done,
         });
@@ -74,12 +72,13 @@ class AuthConfig {
           // this is the user that is returned by the microsft graph api
           const user = await graph.getUserDetails(accessToken);
           logger.info(`User retrieved from Microsoft Graph API ${user.email || user.userPrincipalName}`);
-          if (user) {
+          if (user) {            
             // Add properties to profile
             profile['email'] = user.mail ? user.mail : user.userPrincipalName; //eslint-disable-line
             _existing = await User.findOne({ email: profile.email }).then();
             if (_existing === null) {
-              loggedInUser = { email: user.mail, firstName: user.givenName, lastName: user.surname };
+              
+              loggedInUser = { email: user.mail, firstName: user.givenName, lastName: user.surname, avatar: user.avatar, avatarProvider: 'microsoft' };
               logger.info(`Must create new user with email ${user.mail}`, loggedInUser);
               const createResult = await createUserForOrganization(loggedInUser, profile.oid, null, ['USER'], 'microsoft', global.partner, null);
               if (createResult.user) {

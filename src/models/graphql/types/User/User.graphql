@@ -145,7 +145,7 @@ extend type Mutation {
   confirmPeers(id: String!, organization: String!): UserPeers
   addUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]
   removeUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]  
-  addUserCredentials(provider: String!, username: String, password: String, token: String, props: Any): Boolean
+  addUserCredentials(provider: String!, props: Any): Boolean
   removeUserCredentials(provider: String!): Boolean    
 }
 

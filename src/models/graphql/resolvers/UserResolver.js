@@ -704,13 +704,11 @@ const userResolvers = {
       return true;
     },
     async addUserCredentials(parent, {
-      provider, username, password, token, props = {},
+      provider, props,
     }) {
       return global.user.setAuthentication({
         provider,
-        props: {
-          username, password, token, ...props,
-        },
+        props,
         lastLogin: new Date().valueOf(),
       });
     },
