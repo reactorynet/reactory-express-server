@@ -329,6 +329,13 @@ export default {
         enabled: false,
       },
     },
+    {
+      name: 'email_redirect/PRODUCTION',
+      data: {
+        email: 'werner.weber+twredirect@gmail.com',
+        enabled: false,
+      },
+    },
   ],
   allowCustomTheme: true,
   auth_config: [
