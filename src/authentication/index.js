@@ -13,6 +13,7 @@ import { UserValidationError } from '../exceptions';
 import logger from '../logging';
 import graph from '../azure/graph';
 import { createUserForOrganization } from '../application/admin/User';
+import amq from '../amq';
 
 const jwtSecret = process.env.SECRET_SAUCE;
 
@@ -56,7 +57,7 @@ class AuthConfig {
         logger.info('Sign in Complete', {
           iss,
           sub,
-          profile,          
+          profile,
           params: params || 'no-params',
           done,
         });
@@ -72,13 +73,14 @@ class AuthConfig {
           // this is the user that is returned by the microsft graph api
           const user = await graph.getUserDetails(accessToken);
           logger.info(`User retrieved from Microsoft Graph API ${user.email || user.userPrincipalName}`);
-          if (user) {            
+          if (user) {
             // Add properties to profile
             profile['email'] = user.mail ? user.mail : user.userPrincipalName; //eslint-disable-line
             _existing = await User.findOne({ email: profile.email }).then();
             if (_existing === null) {
-              
-              loggedInUser = { email: user.mail, firstName: user.givenName, lastName: user.surname, avatar: user.avatar, avatarProvider: 'microsoft' };
+              loggedInUser = {
+                email: user.mail, firstName: user.givenName, lastName: user.surname, avatar: user.avatar, avatarProvider: 'microsoft',
+              };
               logger.info(`Must create new user with email ${user.mail}`, loggedInUser);
               const createResult = await createUserForOrganization(loggedInUser, profile.oid, null, ['USER'], 'microsoft', global.partner, null);
               if (createResult.user) {
@@ -213,6 +215,7 @@ class AuthConfig {
             return done(null, false);
           }
           global.user = userResult;
+          amq.raiseWorkFlowEvent('user.authenticated', { user: userResult, payload, method: 'bearer-token' });
           return done(null, true);
         });
       } else return done(null, false);

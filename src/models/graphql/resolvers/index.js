@@ -18,6 +18,8 @@ import { MenuItem, Menu, ClientComponent, User } from '../../../models';
 import logger from '../../../logging';
 import { UserValidationError } from '../../../exceptions';
 
+import modules from '../../../modules';
+
 const getComponentWithFqn = (fqn) => {
   const parts = fqn.split('@');
   const v = parts[1];
@@ -179,6 +181,19 @@ const resolvers = {
   }),
 };
 
+const installedModulesResolvers = [];
+
+modules.enabled.forEach((installedModule) => {
+  logger.debug(`Checking module ${installedModule.name}`, installedModule);
+  if (installedModule.graphDefinitions) {
+    logger.debug(`Extending Reactory Graph with ${installedModule.name}`);
+    if (installedModule.graphDefinitions.Types) {
+      installedModulesResolvers.push(installedModule.graphDefinitions.Resolvers);
+    }
+  }
+});
+
+
 merge(
   resolvers,
   userResolvers,
@@ -193,8 +208,8 @@ merge(
   require('./Custom/PaymentGatewayResolver').default,
   require('./TeamResolver').default,
   require('./Template').default,
-  require('../../../modules/lasec/index').default.graphDefinitions.Resolvers,
   require('./System/Statistics').default,
+  ...installedModulesResolvers,
 );
 
 

@@ -3,7 +3,14 @@ import {
   profileSmall,
 } from '../menus';
 
-import { loginroute, logoutroute, resetpasswordroute, forgotpasswordroute, notfoundroute } from './defaultRoutes';
+import {
+  formsroute,
+  loginroute,
+  logoutroute,
+  resetpasswordroute,
+  forgotpasswordroute,
+  notfoundroute,
+} from './defaultRoutes';
 
 dotenv.config();
 
@@ -150,6 +157,7 @@ export default {
     forgotpasswordroute,
     resetpasswordroute,
     logoutroute,
+    formsroute,
     {
       key: 'home',
       title: 'Home',
@@ -206,7 +214,7 @@ export default {
           },
         },
       ],
-    },    
+    },
     {
       key: 'ProxiedWindow',
       title: '360 Proxied',
@@ -228,7 +236,7 @@ export default {
           value: {
             type: 'object',
             frameProps: {
-              url: 'http://localhost:3001/crm/customer-search',
+              url: MODE === 'PRODUCTION' ? 'https://lasec360.reactory.net/crm/customer-search' : 'http://localhost:3001/crm/customer-search',
               height: '100%',
               width: '100%',
               styles: {
@@ -306,12 +314,12 @@ export default {
     },
     type: 'material',
     palette: {
-      primary1Color: '#369907',
+      primary1Color: '#5fb848',
       primary: {
-        light: '#6dcb43',
-        main: '#6EB84A',
-        dark: '#006a00',
-        contrastText: '#000000',
+        light: '#92eb77',
+        main: '#5fb848',
+        dark: '#298717',
+        contrastText: '#492002',
       },
       secondary: {
         light: '#62b4b8',

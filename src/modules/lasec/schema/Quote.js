@@ -4,8 +4,10 @@ const { ObjectId } = mongoose.Schema.Types;
 
 const QuoteReminderShema = new mongoose.Schema({
   id: ObjectId,
-  what: ObjectId,
-  whatType: String,
+  quote: {
+    type: ObjectId,
+    ref: 'Quote',
+  },
   who: [
     {
       type: ObjectId,
@@ -20,6 +22,10 @@ const QuoteReminderShema = new mongoose.Schema({
   via: String,
 });
 
+QuoteReminderShema.statics.findRemindersForQuote = async (quote) => {
+  return QuoteReminder.find({ quote: quote.id }).then();
+};
+
 export const QuoteReminder = mongoose.model('QuoteReminder', QuoteReminderShema);
 
 const QuoteSchema = new mongoose.Schema({
@@ -29,13 +35,17 @@ const QuoteSchema = new mongoose.Schema({
     ref: 'Organization',
   },
   status: String,
-  code: Number, // https://siteurl/quote/00000001
+  code: String, // https://siteurl/quote/00000001
   note: String,
   meta: {
     owner: String, // indicates what system owns this record
     reference: String,
     sync: String,
     lastSync: Date,
+    mustSync: {
+      type: Boolean,
+      default: true,
+    },
   },
   user: {
     required: true,

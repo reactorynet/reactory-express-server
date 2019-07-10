@@ -7,6 +7,50 @@ import lasec from '..';
 import ApiError from '../../../exceptions';
 import { Quote } from '../schema/Quote';
 
+const mapQuote = (quote) => {
+  logger.debug('Mapping Quote Result', quote);
+  return om(quote, {
+
+  });
+};
+
+const syncQuote = async (quoteId) => {
+  const quote = await lasecApi.Quotes.getQuoteById(quoteId).then();
+
+  return mapQuote(quote);
+};
+
+const invalidateQuoteCache = (quote) => {
+
+};
+
+
+/**
+ * Finds and / or synchronizes a record
+ * @param {String} quote_id
+ */
+const getLasecQuoteById = async (quote_id) => {
+  try {
+    const owner = global.partner.key;
+    const predicate = { 'meta.owner': owner, code: quote_id };
+    const countResult = await Quote.count().then();
+    let quote = null;
+
+    if (countResult === 0) {
+      quote = await syncQuote(quote_id).then();
+    } else {
+      quote = await Quote.findOne(predicate).then();
+    }
+
+    if (quote === null) throw ApiError('Record not found and could not be synced');
+
+    return quote;
+  } catch (quoteFetchError) {
+    logger.error(`Could not fetch Quote with Quote Id ${quote_id}`);
+    return null;
+  }
+};
+
 
 const getQuotes = async () => {
   const quoteResult = await lasecApi.Quotes.list().then();
@@ -122,6 +166,9 @@ export default {
 
       return dashboardResult;
     },
+    LasecGetQuoteById: async (obj, { quote_id }) => {
+      return getLasecQuoteById(quote_id);
+    },
   },
   Mutation: {
     LasecSetQuoteHeader: async (parent, { quote_id, input }) => {
@@ -144,7 +191,7 @@ export default {
       }
     },
     LasecUpdateQuoteStatus: async (parent, { quote_id, input }) => {
-      const found = await Quote.find({ code: quote_id }).then();
+      const found = await Quote.findOne({ code: quote_id }).then();
       if (!found) {
         const quote = new Quote({
           code: quote_id,

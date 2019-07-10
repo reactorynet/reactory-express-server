@@ -68,6 +68,7 @@ type Quote {
   modified: Date
   expirationDate: Date
   note: String
+  
   timeline: [ QuoteTimeLine ]  
 }
 
@@ -128,7 +129,7 @@ input LasecQuoteHeaderInput {
 extend type Query {
   lasec_getQuoteList( search: String ) : [ Quote ],
   lasec_getDashboard( dashparams: LasecQuoteQueryInput ) : LasecQuoteDashboard
-  QuoteById(id: String): [ Quote ]
+  LasecGetQuoteById(quote_id: String): [ Quote ]
 }
 
 

@@ -3,7 +3,7 @@ import lasecTypes from './graph/types';
 
 export default {
   nameSpace: 'lasec',
-  version: '0.0.1',
+  version: '1.0.0',
   name: 'lasec-crm',
   dependencies: [],
   graphDefinitions: {

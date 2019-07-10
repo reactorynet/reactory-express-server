@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 import * as lodash from 'lodash';
-import ReactoryConstants from '../../constants';
 import ColorScheme from 'color-scheme';
+import ReactoryConstants from '../../constants';
+import amq from '../../amq';
 import logger from '../../logging';
 
 const { ObjectId } = mongoose.Schema.Types;

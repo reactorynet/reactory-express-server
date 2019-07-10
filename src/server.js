@@ -22,6 +22,7 @@ import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
 import workflow from './workflow';
 import pdf from './pdf';
+import amq from './amq';
 import bots from './bot/server';
 import startup from './utils/startup';
 import logger from './logging';
@@ -132,6 +133,7 @@ app.use(bodyParser.json({ limit: '10mb' }));
 // try {
 startup().then((startResult) => {
   logger.debug('Startup Generator Done.');
+  amq.raiseSystemEvent('server.startup.begin');
   AuthConfig.Configure(app);
   app.use(
     queryRoot,
@@ -149,14 +151,11 @@ startup().then((startResult) => {
   app.use('/resources', resources);
   app.use('/pdf', pdf);
   app.use('/charts', charts);
+  app.use('/amq', amq.router);
   app.use(resourcesPath, express.static(APP_DATA_ROOT || publicFolder));
   app.listen(API_PORT);
   // logger.info(`Bots server using ${bots.name}`);
   logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
   logger.info('System Initialized/Ready, enabling app');
-  // process.send('ready');
-});// .catch(startErr => logger.error(startErr));
-// } catch (startError) {
-// logger.error('System Initialized/Ready - failed, exiting app', startError);
-// process.exit();
-// }
+  amq.raiseSystemEvent('server.startup.complete');
+});
