@@ -1678,6 +1678,7 @@ const LasecQuoteListForm = require('./forms/lasec/dashboard/crmdash').default.Qu
 const LasecQuoteDetailForm = require('./forms/lasec/dashboard/crmdash').default.QuoteDetail;
 const LasecUpdateQuoteStatusForm = require('./forms/lasec/quote/UpdateQuoteStatus').UpdateQuoteStatusForm;
 const MicrosoftOpenIDAuthenticationForm = require('./forms/microsoft/security').MicrosoftOpenIDAuthenticationForm;
+const ProductCategories = require('./forms/lasec/product').ProductCategories;
 
 export default [
   productIdeas,
@@ -1713,6 +1714,7 @@ export default [
   ProjectForm,
   ProjectListWidget,
   ProjectDetailForm,
+  ProductCategories,
   ReactoryApplicationsForm,
   ReactoryClientAdminPage,
   ReactoryDashboard,

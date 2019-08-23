@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import express from 'express';
+import path from 'path';
 import { readFileSync, existsSync } from 'fs';
 import ejs from 'ejs';
 import PDFDocument from 'pdfkit';
@@ -9,6 +10,7 @@ import { isArray } from 'util';
 import _ from 'lodash';
 import logger from '../logging';
 import ApiError, { RecordNotFoundError } from '../exceptions';
+import { forInStatement } from 'babel-types';
 
 const pdfmake = require('pdfmake/build/pdfmake');
 const PdfPrinter = require('pdfmake/src/printer');
@@ -23,7 +25,7 @@ const {
 } = process.env;
 
 
-function createPdfBinary(pdfDoc, res) {
+function createPdfBinary(pdfDoc, res, req) {
   logger.debug('createdPdfBinary called');
 
   const fontDescriptors = {
@@ -52,7 +54,7 @@ function createPdfBinary(pdfDoc, res) {
   const tableLayouts = pdfDoc.tableLayouts || { };
   const doc = printer.createPdfKitDocument(pdfDoc, { tableLayouts });
   res.set({
-    'Content-Disposition': `attachment; filename="${pdfDoc.filename}"`,
+    'Content-Disposition': `${req.query.view || 'attachment'}; filename="${pdfDoc.filename}"`,
     'Content-Type': 'application/pdf',
   });
   doc.pipe(res);
@@ -110,7 +112,7 @@ const renderTemplate = (template, properties = {}) => {
   throw new ApiError(`Invalid type for template.content, expected string, but got ${typeof template.content}`);
 };
 
-const generate = async (props, res, usepdfkit = false) => {
+const generate = async (props, res, usepdfkit = false, req) => {
   logger.info(`Generating Report ${props.definition.name || 'unnamed report'}`);
   const { data, definition } = props;
   const { partner, user } = global;
@@ -120,7 +122,7 @@ const generate = async (props, res, usepdfkit = false) => {
   if (_.isFunction(definition.content) === true && usepdfkit === false) {
     try {
       const pdfdef = await definition.content(data, partner, user);
-      createPdfBinary(pdfdef, res);
+      createPdfBinary(pdfdef, res, req);
       logger.debug('Generating Report Using PDFMake');
     } catch (error) {
       logger.error('Error generating PDF details', error);
@@ -249,39 +251,50 @@ router.options('/', (req, res) => {
   res.status(203).send('');
 });
 
-router.post('/:folder/:report', (req, res) => {
-  const reportPath = `./reports/${req.params.folder || 'core'}/${req.params.report || 'api-status'}.js`;
-  const reportSchema = require(reportPath).default; // eslint-disable-line;
-  if (reportSchema) {
-    try {
-      generate({ data: { ...req.params, ...req.body }, definition: reportSchema, debug: true }, res);
-    } catch (reportError) {
-      console.error(reportError);
-      res.status(503).send(new ApiError(reportError.message, reportError));
+router.post('/:folder/:report', (req, res) => {  
+  try {
+    const reportPath = `./reports/${req.params.folder || 'core'}/${req.params.report || 'api-status'}.js`;
+    const reportSchema = require(reportPath).default; // eslint-disable-line;
+    if (reportSchema) {
+      try {
+        generate({ data: { ...req.params, ...req.body }, definition: reportSchema, debug: true }, res, false, req);
+      } catch (reportError) {
+        console.error(reportError);
+        res.status(503).send(new ApiError(reportError.message, reportError));
+      }
+    } else {
+      res.status(404).send(new RecordNotFoundError(`The report ${req.params.report}, was not found, please make sure you specified the correct report name`));
     }
-  } else {
-    res.status(404).send(new RecordNotFoundError(`The report ${req.params.report}, was not found, please make sure you specified the correct report name`));
+  } catch (schemaLoadError) {
+    res.status(403).send(new ApiError(schemaLoadError.message));
   }
+  
 });
 
 router.get('/:folder/:report', async (req, res) => {
   const reportPath = `./reports/${req.params.folder || 'core'}/${req.params.report || 'api-status'}.js`;
-  const reportSchema = require(reportPath).default; // eslint-disable-line;
-  if (reportSchema) {
-    try {
-      if (reportSchema.resolver) {
-        const resolvedData = await reportSchema.resolver(req.query).then();
-        generate({ data: resolvedData, definition: reportSchema }, res);
-      } else {
-        generate({ data: req.params, definition: reportSchema }, res);
+    
+  try {
+    const reportSchema = require(reportPath).default; // eslint-disable-line;
+    if (reportSchema) {
+      try {
+        if (reportSchema.resolver) {
+          const resolvedData = await reportSchema.resolver(req.query).then();
+          generate({ data: resolvedData, definition: reportSchema }, res, false, req);
+        } else {
+          generate({ data: req.params, definition: reportSchema }, res, false, req);
+        }
+      } catch (reportError) {
+        logger.error(reportError.message, reportError);
+        res.status(503).send(new ApiError(reportError.message, reportError));
       }
-    } catch (reportError) {
-      logger.error(reportError.message, reportError);
-      res.status(503).send(new ApiError(reportError.message, reportError));
+    } else {
+      res.status(404).send(new RecordNotFoundError(`The report ${reportPath}, has no valid schema, please make sure you specified the correct report name or that the report is correctly configured`));
     }
-  } else {
-    res.status(404).send(new RecordNotFoundError(`The report ${req.params.report}, was not found, please make sure you specified the correct report name`));
-  }
+
+  } catch (schemaLoadError) {
+    res.status(403).send(new ApiError(schemaLoadError.message));
+  }      
 });
 
 router.get('/', (req, res) => {

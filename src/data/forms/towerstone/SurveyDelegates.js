@@ -261,6 +261,17 @@ export const SurveyDelegatesForm = {
   nameSpace: 'forms',
   version: '1.0.0',
   helpTopics: ['survey-delegate-config'],
+  defaultReport: {
+    report: 'survey-status-delegates',
+    folder: 'towerstone',
+    method: 'post',
+    delivery: 'inline',
+    reportTitle: 'Survey Status Report',
+    waitingText: 'Please wait loading status report',
+    dataMap: {
+      'surveyId': 'id',
+    }
+  },
   uiSchema: SurveyDelegatesUISchema,
   defaultFormValue: {
     launched: 0,

@@ -3,9 +3,10 @@ import om from 'object-mapper';
 import moment from 'moment';
 import lasecApi from '../api';
 import logger from '../../../logging';
-import lasec from '..';
 import ApiError from '../../../exceptions';
 import { Quote } from '../schema/Quote';
+import amq from '../../../amq';
+import { Workflows } from '../workflow';
 
 const mapQuote = (quote) => {
   logger.debug('Mapping Quote Result', quote);
@@ -13,17 +14,6 @@ const mapQuote = (quote) => {
 
   });
 };
-
-const syncQuote = async (quoteId) => {
-  const quote = await lasecApi.Quotes.getQuoteById(quoteId).then();
-
-  return mapQuote(quote);
-};
-
-const invalidateQuoteCache = (quote) => {
-
-};
-
 
 /**
  * Finds and / or synchronizes a record
@@ -33,13 +23,20 @@ const getLasecQuoteById = async (quote_id) => {
   try {
     const owner = global.partner.key;
     const predicate = { 'meta.owner': owner, code: quote_id };
-    const countResult = await Quote.count().then();
+    const countResult = await Quote.count(predicate).then();
     let quote = null;
 
     if (countResult === 0) {
-      quote = await syncQuote(quote_id).then();
+      logger.debug(`Quote ${quote_id} is not found - fetching remote`);
+      quote = await lasecApi.Quotes.getQuoteById(quote_id).then();
+      quote = mapQuote(quote);
+
+      amq.raiseWorkflowEvent('startWorkflow', {
+        id: Workflows.QuoteInvalidateWorkflow.meta.name,
+        data: { quote },
+      });
     } else {
-      quote = await Quote.findOne(predicate).then();
+      quote = await Quote.findOne(predicate).populate('').then();
     }
 
     if (quote === null) throw ApiError('Record not found and could not be synced');
@@ -197,6 +194,15 @@ export default {
           code: quote_id,
           createdAt: new Date(),
           updatedAt: new Date(),
+        });
+
+        amq.raiseWorkFlowEvent('startWorkflow', {
+          id: 'LasecQuoteCacheInvalidate',
+          version: 1,
+          src: 'QuoteResolver:LasecQuoteUpdateStatus',
+          data: {
+            quote_id,
+          },
         });
 
         await quote.save().then();

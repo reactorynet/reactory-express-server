@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import mongoose from 'mongoose';
-import * as mongodb  from 'mongodb';
+import * as mongodb from 'mongodb';
 import crypto from 'crypto';
 import * as lodash from 'lodash';
 import logger from '../../logging';
@@ -310,7 +310,7 @@ UserSchema.methods.setAuthentication = async function setAuthentication(authenti
       dirty = true;
     } else {
       instance.authentications.forEach((_authentication, index) => {
-        if (found.provider === authentication.provider) {
+        if (found.provider === _authentication.provider) {
           // patch the properties of the authentication
           instance.authentications[index].props = { ..._authentication.props, ...authentication.props };
           dirty = true;

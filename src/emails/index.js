@@ -51,10 +51,10 @@ const resolveUserEmailAddress = (user, reactoryClient = null) => {
   // check if we have a redirect setting for this mode
   const redirectSetting = partnerToUse.getSetting(`email_redirect/${MODE}`);
   let emailAddress = user.email;
-
-  if (isNil(redirectSetting) === false && isNil(redirectSetting.data) === false) {
+  debugger; //eslint-disable-line
+  if (lodash.isNil(redirectSetting) === false && lodash.isNil(redirectSetting.data) === false) {
     const { email, enabled } = redirectSetting.data;
-    if (isNil(email) === false && enabled === true) emailAddress = email;
+    if (lodash.isNil(email) === false && enabled === true) emailAddress = email;
   }
 
   logger.info(`Email Address has been resolved as, ${emailAddress}`, { emailAddress, redirectSetting });
@@ -198,6 +198,7 @@ const renderTemplate = (template, properties) => {
 const sendForgotPasswordEmail = (user, organization = null) => {
   return new Promise((resolve, reject) => {
     try {
+      debugger; //eslint-disable-line
       const { partner } = global;
       loadEmailTemplate(TemplateViews.ForgotPassword, organization, partner).then((templateResult) => {
         if (lodash.isNil(templateResult)) throw new RecordNotFoundError('Could not find a template matching the search criteria', 'Template', { criteria: { view: TemplateViews.ForgotPassword, organization } });
@@ -231,7 +232,7 @@ const sendForgotPasswordEmail = (user, organization = null) => {
         };
 
         try {
-          if (isNil(subjectTemplate) === false) {
+          if (lodash.isNil(subjectTemplate) === false) {
             msg.subject = renderTemplate(subjectTemplate, properties);
           }
         } catch (renderError) {
@@ -239,7 +240,7 @@ const sendForgotPasswordEmail = (user, organization = null) => {
         }
 
         try {
-          if (isNil(bodyTemplate) === false) {
+          if (lodash.isNil(bodyTemplate) === false) {
             msg.html = renderTemplate(bodyTemplate, properties);
           }
         } catch (renderError) {
@@ -252,7 +253,7 @@ const sendForgotPasswordEmail = (user, organization = null) => {
           client: partner,
         };
 
-        if (!isNil(msg.subject) && !isNil(msg.html)) {
+        if (!lodash.isNil(msg.subject) && !lodash.isNil(msg.html)) {
           try {
             sgMail.send(msg);
           } catch (sendError) {
@@ -266,9 +267,11 @@ const sendForgotPasswordEmail = (user, organization = null) => {
         }
         resolve({ sent: qops.sent });
       }).catch((loadError) => {
+        logger.error(loadError.message, loadError);
         reject(new RecordNotFoundError(loadError.message));
       });
     } catch (mailError) {
+      logger.error(mailError.message, mailError);
       reject(new ApiError(mailError.message));
     }
   });

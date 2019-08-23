@@ -9,7 +9,7 @@ import express from 'express';
 import logger from '../logging';
 
 postal.addWireTap((data, envelope) => {
-  logger.debug(`Postal Wiretap: ${Date.now()}`, { data, envelope });
+  // logger.debug(`Postal Wiretap: ${Date.now()}`, { data, envelope });
 });
 
 const router = express.Router();
@@ -103,6 +103,8 @@ export default {
   onMessageHandlerLoaded: $sub.messageHandlerLoaded,
   onReactoryPluginLoaded: $sub.pluginLoaded,
   onReactoryPluginEvent: $sub.pluginLoaded,
+  onWorkflowEvent: $sub.workFlow,
+  raiseWorkflowEvent: $pub.workFlow,
   raiseTransactionEvent: $pub.transactions,
   raiseFileEvent: $pub.file,
   raiseDataEvent: $pub.data,

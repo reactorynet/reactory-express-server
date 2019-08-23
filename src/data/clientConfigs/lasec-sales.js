@@ -20,11 +20,11 @@ let siteUrl = '';// 'http://localhost:3000' : 'https://app.towerstone-global.com
 
 switch (MODE) {
   case 'QA': {
-    siteUrl = 'https://lasec-crm.reactory.net';
+    siteUrl = 'https://lasec-sales.reactory.net';
     break;
   }
   case 'PRODUCTION': {
-    siteUrl = 'https://lasec-crm.reactory.net';
+    siteUrl = 'https://lasec-sales.reactory.net';
     break;
   }
   case 'DEVELOP':
@@ -92,11 +92,10 @@ export default {
         {
           ordinal: 0, title: 'Dashboard', link: '/', icon: 'dashboard', roles: ['USER', 'ADMIN'],
         },
+        /*
         {
-          ordinal: 1, title: 'Sales', link: '/sales', icon: 'speaker', roles: ['USER', 'ADMIN'],
+          ordinal: 1, title: 'Marketing', link: '/marketing', icon: 'speaker', roles: ['USER', 'ADMIN'],
         },
-        /**
-
 
         {
           ordinal: 2, title: 'Customers', link: '/360/crm/customer-search', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
@@ -306,15 +305,6 @@ export default {
       public: false,
       roles: ['ADMIN'],
       componentFqn: `${key}.Administration@1.0.0`,
-    },
-    {
-      key: 'sales',
-      title: 'Sales',
-      path: '/sales/**',
-      exact: true,
-      public: false,
-      roles: ['ADMIN'],
-      componentFqn: `${key}.Sales@1.0.0`,
     },
   ],
   theme: key,

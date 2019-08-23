@@ -184,10 +184,9 @@ const resolvers = {
 const installedModulesResolvers = [];
 
 modules.enabled.forEach((installedModule) => {
-  logger.debug(`Checking module ${installedModule.name}`, installedModule);
   if (installedModule.graphDefinitions) {
-    logger.debug(`Extending Reactory Graph with ${installedModule.name}`);
-    if (installedModule.graphDefinitions.Types) {
+    logger.debug(`Extending Reactory Graph Resolvers with ${installedModule.name}`);
+    if (installedModule.graphDefinitions.Resolvers) {
       installedModulesResolvers.push(installedModule.graphDefinitions.Resolvers);
     }
   }

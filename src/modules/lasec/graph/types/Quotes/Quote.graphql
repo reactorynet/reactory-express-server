@@ -68,7 +68,7 @@ type Quote {
   modified: Date
   expirationDate: Date
   note: String
-  
+  header: [LasecQuoteHeader ]
   timeline: [ QuoteTimeLine ]  
 }
 

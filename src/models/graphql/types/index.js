@@ -37,7 +37,7 @@ const typeDefs = [];
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;
-    logger.info(`Adding ${fileName} to graph`);
+    logger.debug(`Loading ${fileName} - Graph definitions`);
     const source = fileAsString(require.resolve(fileName));
     typeDefs.push(`${source}`);
   } catch (e) {
@@ -56,9 +56,8 @@ modules.enabled.forEach((installedModule) => {
     "license": "commercial",
     "shop": "https://reactory.net/shop/modules/0c22819f-bca0-4947-b662-9190063c8277/"
  */
-  logger.debug('::INSTALLING MODULE::', installedModule);
   if (installedModule.graphDefinitions) {
-    logger.debug(`Extending Reactory Graph with ${installedModule.name}`);
+    logger.debug(`Extending Reactory Graph Types ${installedModule.name}`);
     if (installedModule.graphDefinitions.Types) {
       installedModule.graphDefinitions.Types.forEach((typeDef) => {
         typeDefs.push(typeDef);

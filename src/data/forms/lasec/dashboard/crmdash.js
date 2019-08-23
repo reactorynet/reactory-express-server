@@ -54,7 +54,7 @@ export const CrmDashboardSchema = {
     totalBad: {
       type: 'number',
       title: 'Total Bad',
-    },
+    },    
     downloads: {
       type: 'array',
       items: {
@@ -188,7 +188,7 @@ export const CrmDashboardUISchema = {
     },
   },
   totalQuotes: {
-    'ui:widget': 'ProgressWidget',
+    'ui:widget': 'PieChartWidget',
     'ui:options': {
       size: 80,
       thickness: 5,
@@ -196,7 +196,7 @@ export const CrmDashboardUISchema = {
     },
   },
   totalBad: {
-    'ui:widget': 'ProgressWidget',
+    'ui:widget': 'PieChartWidget',
     'ui:options': {
       size: 80,
       thickness: 5,
@@ -454,7 +454,10 @@ export const CrmDashboardForm = {
   uiSupport: ['material'],
   uiResources: [
     {
-      id: 'reactory.plugin.lasec360', name: 'reactory.plugin.lasec360', type: 'script', uri: `${CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
+      id: 'reactory.plugin.lasec360', 
+      name: 'reactory.plugin.lasec360', 
+      type: 'script', 
+      uri: `${CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
     },
   ],
   title: 'CRM Dashboard',

@@ -7,10 +7,9 @@ const enabled = require('./enabled.json');
 const resolved = [];
 
 enabled.forEach((moduleDefinition) => {
-  // debugger; //eslint-disable-line
-  logger.debug(`Module Definition ${moduleDefinition.name}`, moduleDefinition);
+  logger.debug(`Module [${moduleDefinition.name}] - Loading`);
   const resolvedItem = require(path.join('modules', `${moduleDefinition.moduleEntry}`)).default;
-  logger.debug(`Module Definition ${moduleDefinition.name}`, resolvedItem);
+
   resolved.push(resolvedItem);
 });
 

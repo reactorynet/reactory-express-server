@@ -11,7 +11,7 @@ export default {
   key: 'reactory',
   name: 'Reactory Admin Application',
   username: 'reactory',
-  email: 'developer@reactory.net',
+  email: 'machine@reactory.net',
   salt: 'generate',
   password: process.env.REACTORY_APPLICATION_PASSWORD,
   siteUrl: MODE === 'DEVELOP' ? 'http://localhost:3000' : 'https://app.reactory.net/',
@@ -27,7 +27,7 @@ export default {
       name: 'Dashboard',
       version: '1.0.0',
       title: 'Dashboard',
-      author: 'werner.weber+reactory-sysadmin@gmail.com',
+      author: 'machine@reactory.net',
       labels: [],
       uri: 'embed',
       roles: ['USER'],
@@ -39,7 +39,7 @@ export default {
       name: 'Clients',
       version: '1.0.0',
       title: 'Clients',
-      author: 'werner.weber+reactory-sysadmin@gmail.com',
+      author: 'machine@reactory.net',
       labels: [],
       uri: 'embed',
       roles: ['ADMIN'],
@@ -56,13 +56,13 @@ export default {
       roles: ['USER'],
       entries: [
         {
-          ordinal: 0, title: 'Dashboard', link: '/', icon: 'dashboard', roles: ['USER', 'ADMIN'],
-        },
-        {
           ordinal: 1, title: 'Inbox', link: '/inbox', icon: 'email', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 2, title: 'Reactory Clients', link: '/reactory-clients/', icon: 'check_circle', roles: ['USER'],
+          ordinal: 1, title: 'My Applications', link: '/applications', icon: 'dashboard', roles: ['USER', 'ADMIN'],
+        },
+        {
+          ordinal: 2, title: 'Reactory Clients', link: '/reactory-clients/', icon: 'check_circle', roles: ['ADMIN'],
         },
       ],
     },
@@ -95,6 +95,15 @@ export default {
       exact: true,
       roles: ['SYS-ADMIN'],
       componentFqn: 'reactory.Clients@1.0.0',
+    },
+    {
+      key: 'clients',
+      title: 'My Applications',
+      path: '/applications/*',
+      public: false,
+      exact: true,
+      roles: ['ADMIN'],
+      componentFqn: 'reactory.Applications@1.0.0',
     },
     {
       key: 'tasks',
