@@ -297,20 +297,20 @@ UserSchema.methods.deleteUser = function deleteUser() {
 
 UserSchema.methods.setAuthentication = async function setAuthentication(authentication = { provider: 'local', props: { }, lastLogin: new Date().valueOf() }) {
   const instance = this;
-  const { props } = authentication;
+  const { props, provider } = authentication;
   let dirty = false;
-  logger.debug(`Adding new authentication details provider: ${props.provider} username: ${props.username} password: ******REDACTED*******`);
+  logger.debug(`Adding new authentication details provider: ${provider} username: ${props.username}`);
   if (instance.authentications === undefined || instance.authentications === null) {
     instance.authentications = [authentication];
     dirty = true;
   } else if (isArray(instance.authentications) === true) {
-    const found = find(instance.authentications, { provider: authentication.provider });
+    const found = find(instance.authentications, { provider });
     if (found === undefined || found === null) {
       instance.authentications.push(authentication);
       dirty = true;
     } else {
       instance.authentications.forEach((_authentication, index) => {
-        if (found.provider === _authentication.provider) {
+        if (provider === _authentication.provider) {
           // patch the properties of the authentication
           instance.authentications[index].props = { ..._authentication.props, ...authentication.props };
           dirty = true;
@@ -319,11 +319,10 @@ UserSchema.methods.setAuthentication = async function setAuthentication(authenti
     }
   }
 
-  if (dirty) {
-    await instance.save().then();
+  if (dirty === true) {
+    await instance.save();
     return true;
   }
-
 
   return false;
 };

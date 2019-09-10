@@ -11,9 +11,9 @@ import { jzon } from '../../../utils/validators';
 
 const config = {
   WEBSOCKET_BASE_URL: 'wss://api.lasec.co.za/ws/',
-  UI_BASE_URL: 'https://b360.lasec.co.za',
-  API_BASE_URL: 'https://pbapi.lasec.co.za',
-  SECONDARY_API_URL: 'https://bapi.lasec.co.za',
+  UI_BASE_URL: 'https://a360.lasec.co.za',
+  API_BASE_URL: 'https://aapi.lasec.co.za',
+  SECONDARY_API_URL: 'https://aapi.lasec.co.za',
   PRIMARY_API_URL_PREFIX_1: 'api',
   PRIMARY_API_URL_PREFIX_2: 'l360',
   SECONDARY_API_URL_PREFIX_1: 'api',
@@ -56,7 +56,7 @@ const isCredentialsValid = (authentication) => {
 };
 
 const getStorageItem = async (key) => {
-  debugger;
+  
   logger.info(`Lookup Security Storage ${key} on ${global.user.fullName()}`);
   if (global.user._id) {
     const lasecAuth = global.user.getAuthentication('lasec');
@@ -73,7 +73,7 @@ const getStorageItem = async (key) => {
         if (lastLogin && now.isBefore(moment(lastLogin).add(24, 'h'))) {
           // we have an authentication token
           // maybe we can test it? check if valid
-          logger.debug('login has token fresher than 24hours, testing');
+          logger.debug('login has token fresher than 24hours');
           //
           return lasecAuth.props.payload.token;
         }
@@ -84,10 +84,10 @@ const getStorageItem = async (key) => {
       if (username && password) {
         try {
           logger.debug('No token available but we have credentials');
-          const loginResult = await Api.Authentication.login(username, password).then();
+          const loginResult = await Api.Authentication.login(username, password);
           logger.debug('Login result after authenticating with lasec360', loginResult);
           if (global.user.setAuthentication && loginResult) {
-            await global.user.setAuthentication({ provider: 'lasec', props: { username, password, ...loginResult }, lastLogin: new Date().valueOf() });
+            const saveresult = await global.user.setAuthentication({ provider: 'lasec', props: { username, password, ...loginResult }, lastLogin: new Date().valueOf() });
             if (loginResult.payload && loginResult.payload.token) {
               return loginResult.payload.token;
             }
@@ -99,7 +99,6 @@ const getStorageItem = async (key) => {
           logger.warn(`Could not log user in with lasec api ${authError.message}`);
         }
       }
-
       throw new LasecNotAuthenticatedException('System does not have authentication details stored. Please login.');
     } else {
       throw new LasecNotAuthenticatedException('Please login with your lasec 360 account');
@@ -124,12 +123,12 @@ export function PUT(url, data, auth = true) {
   return FETCH(url, args, auth);
 }
 
-export async function FETCH(url, args, auth = true, failed = false) {
+export async function FETCH(url, args, auth = true, failed = false, attempt = 0) {
   // url = `${url}`;
 
   let absoluteUrl = `${config.SECONDARY_API_URL}/${url}`;
 
-  logger.debug(`::lasec-api::FETCH(${absoluteUrl}) args: [${args}]`);
+  logger.debug(`::lasec-api::FETCH(${absoluteUrl})`, { args, auth, failed, attempt });
 
   const kwargs = args || {};
   if (!kwargs.headers) {
@@ -138,7 +137,7 @@ export async function FETCH(url, args, auth = true, failed = false) {
   }
 
   if (auth === true) {
-    const token = await getStorageItem('secondary_api_token');
+    const token = await getStorageItem('secondary_api_token').then();
     if (token) {
       kwargs.headers['Authorization'] = `Token ${token}`;
       kwargs.headers['Origin'] = 'http://localhost:3000';
@@ -168,69 +167,59 @@ export async function FETCH(url, args, auth = true, failed = false) {
 
   logger.debug(`Making fetch call with ${absoluteUrl}`, kwargs);
 
-  return fetch(absoluteUrl, kwargs)
-    .then((response) => {
-      if (response.ok && response.status === 200 || response.status === 201 ) {
-        logger.debug('Result from API', response);
-        return response.json();
-      } else {
-        switch (response.status) {
-          case 401:
-          case 403: {
-            debugger;
-            if (failed === false) {
-              try {
-                // get the current authentication details
-                const currentAuthentication = global.user.getAuthentication('lasec');
-                if (currentAuthentication && currentAuthentication.props) {
-                  // clear the login
-                  global.user.setAuthentication({
-                    provider: 'lasec',
-                    props: {
-                      payload: null,
-                      lastStatus: response.status,
-                    },
-                    lastLogin: new Date().valueOf(),
-                  }).then(( setResults ) => {
-                    logger.debug(`Lasec Authentication Cleared ${setResults}`);
-                    throw new TokenExpiredException('We have no authentication details.');
-                  });                                                                  
-                }
-                
-              } catch (err) {
-                throw new TokenExpiredException('Authentication cannot log in.');
-              }
+  const apiResponse = await fetch(absoluteUrl, kwargs).then();
+  if(apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201 ) {
+    logger.debug('Successful API call returning json body', { status: apiResponse.status });
+    return apiResponse.json();
+  } else {
+
+    switch (apiResponse.status) {
+      case 401:
+      case 403: {
+        // debugger;
+        if (failed === false) {
+          try {
+            // get the current authentication details
+            const currentAuthentication = global.user.getAuthentication('lasec');
+            if (currentAuthentication && currentAuthentication.props) {
+              // clear the login
+              await global.user.setAuthentication({
+                provider: 'lasec',
+                props: {
+                  payload: null,
+                  lastStatus: apiResponse.status,
+                },
+                lastLogin: new Date().valueOf(),
+              }).then();
             }
-            throw new TokenExpiredException('Authentication token has expired or user not allowed to log in.');
+            
+          } catch (err) {
+            throw new TokenExpiredException('Authentication cannot log in.');
           }
-          default: {
-            throw new ApiError('Could not execute fetch against Lasec API');
-          }
-        }      
+        }
+        throw new TokenExpiredException('Authentication token has expired or user not allowed to log in.');
       }
-    }).then(async (jsonResult) => {
-      logger.debug('JSON Result', jsonResult);
-      return jsonResult;
-    }).catch((err) => {
-      logger.error(`Error making Fetch Call ${err.message}`, err);
-      throw err;
-    });
+      default: {
+        throw new ApiError('Could not execute fetch against Lasec API');
+      }
+    } 
+
+  }  
 }
 
 const defaultParams = {
-  filter: {}, ordering: {}, pagination: {},
+  filter: {}, ordering: {}, pagination: { enabled: false },
 };
 
 const Api = {
   Quotes: {
-    list: async (params = defaultParams) => {
-      debugger;
+    list: async (params = defaultParams) => {      
       const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } });
       const {
         status, payload,
       } = apiResponse;
 
-      if (status === 'success') {
+      if (status === 'success') {        
         return payload;
       }
 
@@ -329,7 +318,7 @@ const Api = {
   },
   Authentication: {
     login: async (username, password) => {
-      return await POST(SECONDARY_API_URLS.login_lasec_user.url, { username, password }, false);
+      return await POST(SECONDARY_API_URLS.login_lasec_user.url, { username, password }, false).then();
     },
   },
   Exceptions: {

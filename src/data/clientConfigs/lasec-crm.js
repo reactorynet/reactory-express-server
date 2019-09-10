@@ -14,7 +14,7 @@ import {
 
 dotenv.config();
 
-const { CDN_ROOT, MODE, API_URI_ROOT } = process.env;
+const { CDN_ROOT, MODE, API_URI_ROOT, LASEC_360_URL = 'http://localhost:3001' } = process.env;
 
 let siteUrl = '';// 'http://localhost:3000' : 'https://app.towerstone-global.com/';
 
@@ -92,12 +92,10 @@ export default {
         {
           ordinal: 0, title: 'Dashboard', link: '/', icon: 'dashboard', roles: ['USER', 'ADMIN'],
         },
+         /**
         {
           ordinal: 1, title: 'Sales', link: '/sales', icon: 'speaker', roles: ['USER', 'ADMIN'],
-        },
-        /**
-
-
+        },       
         {
           ordinal: 2, title: 'Customers', link: '/360/crm/customer-search', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
         },
@@ -120,7 +118,7 @@ export default {
         },
         */
         {
-          ordinal: 9, title: 'Email', link: '/mail/', icon: 'mail', roles: ['USER'],
+          ordinal: 9, title: 'Discussion', link: '/discuss/', icon: 'chat', roles: ['USER'],
         },
         {
           ordinal: 10, title: 'Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
@@ -190,7 +188,7 @@ export default {
           value: {
             type: 'object',
             frameProps: {
-              url: MODE === 'PRODUCTION' ? 'https://lasec360.reactory.net/' : 'http://localhost:3001/',
+              url: MODE === 'PRODUCTION' ? 'https://l360.lasec.co.za/' : LASEC_360_URL,
               height: '100%',
               width: '100%',
               styles: {
@@ -237,7 +235,7 @@ export default {
           value: {
             type: 'object',
             frameProps: {
-              url: MODE === 'PRODUCTION' ? 'https://lasec360.reactory.net/crm/customer-search' : 'http://localhost:3001/crm/customer-search',
+              url: MODE === 'PRODUCTION' ? 'https://l360.lasec.co.za/crm/customer-search' : LASEC_360_URL + '/crm/customer-search',
               height: '100%',
               width: '100%',
               styles: {
@@ -261,8 +259,8 @@ export default {
     },
     {
       key: 'inbox',
-      title: 'Inbox',
-      path: '/mail/**',
+      title: 'Discuss',
+      path: '/discuss/**',
       exact: false,
       public: false,
       roles: ['USER'],

@@ -11,5 +11,5 @@ const Statistic = mongoose.Schema({
   statistics: {},
 }, { timestamp: true });
 
-const StatisticModel = mongoose.model('Scale', Statistic);
+const StatisticModel = mongoose.model('Statistic', Statistic);
 export default StatisticModel;

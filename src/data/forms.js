@@ -1,13 +1,27 @@
 import * as dotenv from 'dotenv';
+import { isArray } from 'lodash';
+import logger from '../logging';
 import { defaultFormProps } from './forms/defs';
 import { FormBuilder } from './forms/core/FormBuilder';
 import { HelpFormEdit, HelpListForm } from './forms/core/HelpEditor';
 import { TemplateEditor, TemplateList } from './forms/core/TemplateEditor';
 import { SurveySettingsForm } from './forms/towerstone/SurveySettings';
 import TaskDetailForm from './forms/core/task';
-
+import modules from '../modules';
 
 dotenv.config();
+
+let _forms = [];
+
+modules.enabled.forEach( ( module ) => {
+  logger.debug(`Loading Forms for module ${module.name}`);
+  if(isArray(module.forms) === true) {
+    module.forms.forEach((form) => {
+      logger.debug(`Validating and Loading Form ${form.id}`);
+      _forms.push(form);
+    });
+  }
+});
 
 const { CDN_ROOT } = process.env;
 
@@ -1673,10 +1687,6 @@ const ProjectListWidget = require('./forms/core/project').ProjectListWidget;
 const ProjectDetailForm = require('./forms/core/project').ProjectDetailForm;
 const OrganizationForm = require('./forms/core/organization').default;
 const { OrganizationLoginForm } = require('./forms/core/organization');
-const LasecCrmDashboardForm = require('./forms/lasec/dashboard/crmdash').default.CrmDashboardForm;
-const LasecQuoteListForm = require('./forms/lasec/dashboard/crmdash').default.QuotesList;
-const LasecQuoteDetailForm = require('./forms/lasec/dashboard/crmdash').default.QuoteDetail;
-const LasecUpdateQuoteStatusForm = require('./forms/lasec/quote/UpdateQuoteStatus').UpdateQuoteStatusForm;
 const MicrosoftOpenIDAuthenticationForm = require('./forms/microsoft/security').MicrosoftOpenIDAuthenticationForm;
 const ProductCategories = require('./forms/lasec/product').ProductCategories;
 
@@ -1698,10 +1708,6 @@ export default [
   BusinessUnitList,
   PageEditorForm,
   LoginForm,
-  LasecCrmDashboardForm,
-  LasecQuoteListForm,
-  LasecQuoteDetailForm,
-  LasecUpdateQuoteStatusForm,
   OrganizationForm,
   OrganizationLoginForm,
   ContentPages,
@@ -1730,4 +1736,5 @@ export default [
   TowerStoneTaskDetailForm,
   UserPeers,
   MicrosoftOpenIDAuthenticationForm,
+  ..._forms
 ];

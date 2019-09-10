@@ -1,7 +1,7 @@
 import { isNil } from 'lodash';
 import { ReactoryClient } from '../models';
 import logger from '../logging';
-
+import queryString from '../utils/url/query-string';
 const bypassUri = [
   '/cdn/',
   '/favicon.ico',
@@ -10,16 +10,18 @@ const bypassUri = [
 
 const clientauth = (req, res, next) => {
   let clientId = req.headers['x-client-key'];
-  let clientPwd = req.headers['x-client-pwd'] || '';
-  clientId = clientId || req.params.clientId;
-  clientId = clientId || req.query.clientId;
-  clientId = req.query['x-client-key'] || clientId;
+  let clientPwd = req.headers['x-client-pwd'];
+  let query = req.query;
 
-  clientPwd = clientPwd || req.params.secret;
-  clientPwd = clientPwd || req.query.secret;
-  clientPwd = req.query['x-client-pwd'] || clientPwd;
+  if(isNil(clientId) === true) clientId = req.params.clientId;
+  if(isNil(clientId) === true) clientId = query.clientId;  
+  if(isNil(clientId) === true) clientId = query['x-client-key'];
 
-  logger.info(`Client Id: [${clientId}], Client Key: [${clientPwd}], Original Url: ${req.originalUrl}`);
+  if(isNil(clientPwd) === true) clientPwd = req.params.secret;
+  if(isNil(clientPwd) === true) clientPwd = query.secret;  
+  if(isNil(clientPwd) === true) clientPwd = query['x-client-pwd'];
+
+  logger.debug(`Client key: [${clientId}], Client Token: [${clientPwd}], Original Url: ${req.originalUrl}`, {query: req.query, params: req.params});
 
   let bypass = false;
   if (req.originalUrl) {

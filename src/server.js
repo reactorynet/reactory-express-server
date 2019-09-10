@@ -23,7 +23,7 @@ import AuthConfig from './authentication';
 import workflow from './workflow';
 import pdf from './pdf';
 import amq from './amq';
-import bots from './bot/server';
+// import bots from './bot/server';
 import startup from './utils/startup';
 import logger from './logging';
 
@@ -59,6 +59,7 @@ const {
   OAUTH_ID_METADATA,
   OAUTH_AUTHORIZE_ENDPOINT,
   OAUTH_TOKEN_ENDPOINT,
+  SECRET_SAUCE
 } = process.env;
 
 
@@ -111,22 +112,17 @@ const app = express();
 app.use('*', cors(corsOptions));
 app.use(clientAuth);
 
+//TODO: Werner Weber - investigate session and session management for auth.
 app.use(session({
-  secret: 'your_secret_value_here',
+  secret: SECRET_SAUCE,
   resave: false,
   saveUninitialized: false,
   unset: 'destroy',
 }));
 
-/*
-try {
-  testConnection('plc');
-} catch (err) {
-  logger.warn('Could not connect to MySQL', err);
-}
-*/
 
 mongoose.connect(MONGOOSE, { useNewUrlParser: true });
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: '10mb' }));
 

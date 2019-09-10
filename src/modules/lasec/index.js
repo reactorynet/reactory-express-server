@@ -1,6 +1,7 @@
 import lasecResolvers from './resolvers';
 import lasecTypes from './graph/types';
 import lasecWorkflows from './workflow';
+import lasecForms from './forms';
 
 export default {
   nameSpace: 'lasec',
@@ -12,4 +13,5 @@ export default {
     Types: [...lasecTypes],
   },
   workflows: [...lasecWorkflows],
+  forms: [ ...lasecForms ]
 };

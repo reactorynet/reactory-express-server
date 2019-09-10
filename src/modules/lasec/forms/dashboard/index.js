@@ -1,9 +1,27 @@
-import { defaultFormProps } from '../../defs';
+import { defaultFormProps } from '../../../../data/forms/defs';
 import { cloneDeep } from 'lodash';
 
 const {
   CDN_ROOT,
 } = process.env;
+
+const chartSchema = {
+    type: 'object',
+    properties: {
+      data: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+
+          }
+        }
+      },
+      options: {
+        type: 'object'
+      }
+    }
+}
 
 export const CrmDashboardSchema = {
   type: 'object',
@@ -11,7 +29,7 @@ export const CrmDashboardSchema = {
   properties: {
     toolbar: {
       type: 'object',
-      title: '',
+      title: 'Filter',
       properties: {
         period: {
           type: 'string',
@@ -47,26 +65,92 @@ export const CrmDashboardSchema = {
           },          
         },
       },
-    },
-    funnel: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          value: {
-            type: 'number',
-            title: 'value',            
+    },    
+    charts: {
+      type: 'object',
+      title: 'Charts',
+      description: 'Charts Container',
+      properties: {
+        quoteStatusFunnel: {
+          type: 'object',
+          title: 'Quote Status Funnel',
+          properties: {
+            data: {
+              type: 'array',
+              items: {
+                type: 'object',
+                title: 'Data Point',
+                properties: {
+                  value: {
+                    type: 'number',
+                    title: 'value',            
+                  },
+                  name: {
+                    type: 'string',
+                    title: 'name'
+                  },
+                  fill: {
+                    type: 'string',
+                    title: 'fillcolor'
+                  }
+                }
+              }              
+            },                    
           },
-          name: {
-            type: 'string',
-            title: 'name'
-          },
-          fill: {
-            type: 'string',
-            title: 'fillcolor'
-          }
+        },        
+        quoteStatusPie: {
+          type: 'object',
+          title: 'Quote Status Funnel',
+          properties: {
+            data: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  value: {
+                    type: 'number',
+                    title: 'value',            
+                  },
+                  name: {
+                    type: 'string',
+                    title: 'name'
+                  },
+                  fill: {
+                    type: 'string',
+                    title: 'fillcolor'
+                  }
+                }
+              }            
+            }
+          }          
+        },
+        quoteStatusComposed: {
+          type: 'object',
+          title: 'Quote Status Funnel',
+          properties: {
+            data: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  value: {
+                    type: 'number',
+                    title: 'value',            
+                  },
+                  name: {
+                    type: 'string',
+                    title: 'name'
+                  },
+                  fill: {
+                    type: 'string',
+                    title: 'fillcolor'
+                  }
+                }
+              }            
+            }
+          }          
         }
-      },
+      }      
     },
     totalQuotes: {
       type: 'number',
@@ -79,18 +163,7 @@ export const CrmDashboardSchema = {
     combinedData: {
       type: 'string',
       title: 'combined'
-    },    
-    downloads: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          data: {
-            type: 'string',
-          },
-        },
-      },
-    },
+    },        
     statusSummary: {
       title: 'Status Funnel',
       type: 'array',
@@ -119,9 +192,10 @@ export const CrmDashboardSchema = {
           },
         },
       },
-    },
+    },    
     quotes: {
       type: 'array',
+      title: 'Quote Grid',
       items: {
         type: 'object',
         properties: {
@@ -168,12 +242,10 @@ export const CrmDashboardUISchema = {
       toolbar: { md: 12 },
     },
     {
-      funnel: { md: 6, },
-      totalQuotes: { md: 6 },      
-    }, 
-    {
-      combinedData: { md: 12 },
-    },   
+      totalQuotes: { md: 6, sm: 12 },
+      totalBad: { md: 6, sm: 12 },
+      charts: { md: 12 },
+    },       
     {
       statusSummary: { md: 12 },
     },
@@ -187,12 +259,13 @@ export const CrmDashboardUISchema = {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
-        period: { md: 3, sm: 6, xs: 12 },
+        // period: { md: 3, sm: 6, xs: 12 },
         periodStart: { md: 3, sm: 6, xs: 12 },
         periodEnd: { md: 3, sm: 6, xs: 12 },
         agentFilter: { md: 3, sm: 6, xs: 12 }
       },
     ],
+    /*
     period: {
       'ui:widget': 'SelectWidget',
       'ui:options': {
@@ -209,6 +282,7 @@ export const CrmDashboardUISchema = {
         ],
       },
     },
+    */
     periodStart: {
       'ui:widget': 'DateSelectorWidget',
     },
@@ -216,33 +290,66 @@ export const CrmDashboardUISchema = {
       'ui:widget': 'DateSelectorWidget',
     },
     agentFilter: {
-      'ui:widget': 'UserSelectorWidget', 
+      /*
+      The agent should be pulled from AD groups.
+      */
+      'ui:widget': 'HiddenWidget', 
       'ui:options': {
         widget: 'UserSelectorWidget',        
         lookupWidget: 'core.UserSearch',
         lookupOnSelect: 'onSelect',
-      },     
+      },
     }
   },
-  combinedData: {
-    'ui:widget': 'ComposedChartWidget',
-  },
-  totalQuotes: {
-    'ui:widget': 'PieChartWidget',
-    'ui:options': {
-      size: 80,
-      thickness: 5,
-      variant: 'static',
+  charts: {
+    'ui:field': 'GridLayout',
+    'ui:grid-layout': [
+      {        
+        quoteStatusFunnel: { md: 6, sm: 6, xs: 12 },
+        quoteStatusPie: { md: 6, sm: 6, xs: 12 },
+        quoteStatusComposed: { md: 12, sm: 12, xs: 12 }
+      },
+    ],
+    quoteStatusFunnel: {
+      'ui:widget': 'FunnelChartWidget',
+      'ui:options': {
+        
+      }
     },
-  },  
-  funnel: {
-    'ui:widget': 'FunnelChartWidget',
-    'ui:options': {
-
+    quoteStatusPie: {
+      'ui:widget': 'PieChartWidget',
+      'ui:options': {        
+        size: 80,
+        thickness: 5,
+        variant: 'static',
+      },
+    },
+    quoteStatusComposed: {
+      'ui:widget': 'ComposedChartWidget',      
+      'ui:options': {
+      }      
     }
-  },
+  },  
+  totalQuotes: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'h3',
+      title: 'Total Quotes',
+    }
+  },  
+ 
+  totalBad: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'h3',
+      title: 'Total Bad',
+    }    
+  },  
+
   statusSummary: {
-    'ui:widget': 'HiddenWidget',
+    'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
         { title: 'Status Group', field: 'title' },
@@ -255,8 +362,10 @@ export const CrmDashboardUISchema = {
       },
     },
   },
+
   quotes: {
-    'ui:widget': 'HiddenWidget',
+    title: 'Quotes List',
+    'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
         {
@@ -302,13 +411,14 @@ const CrmDashboardUISchemaNoDash = {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
-        period: { md: 3, sm: 6 },
+        // period: { md: 3, sm: 6 },
         periodStart: { md: 3, sm: 6 },
         periodEnd: { md: 3, sm: 6 },
       },
     ],
     'ui:wrapper': 'Toolbar',
     'ui:widget': 'MaterialToolbar',
+    /*
     period: {
       'ui:widget': 'SelectWidget',
       'ui:options': {
@@ -325,13 +435,13 @@ const CrmDashboardUISchemaNoDash = {
         ],
       },
     },
+    */
     periodStart: {
       'ui:widget': 'DateSelectorWidget',
     },
     periodEnd: {
       'ui:widget': 'DateSelectorWidget',
     },
-
   },
   quotes: {
     'ui:widget': 'MaterialTableWidget',
@@ -384,6 +494,20 @@ const graphql = {
           naughty
           category
         }
+        charts {
+          quoteStatusFunnel {
+            data
+            options
+          }
+          quoteStatusPie {
+            data
+            options
+          }
+          quoteStatusComposed {
+            data
+            options
+          }
+        }
         quotes { 
           id
           status
@@ -417,9 +541,10 @@ const graphql = {
       periodEnd: 'toolbar.periodEnd',
       repIds: 'toolbar.repIds',
       statusSummary: 'statusSummary',
-      quotes: 'quotes',
+      quotes: 'quotes',      
       totalQuotes: 'totalQuotes',
       totalBad: 'totalBad',
+      charts: 'charts',      
       'quotes[].customer.fullName': 'quotes[].customerName',
       'quotes[].company.tradingName': 'quotes[].companyTradingName',
     },

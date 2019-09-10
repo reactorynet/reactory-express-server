@@ -1,11 +1,13 @@
 
 import om from 'object-mapper';
 import moment from 'moment';
+import lodash, { isArray } from 'lodash';
 import lasecApi from '../api';
 import logger from '../../../logging';
 import ApiError from '../../../exceptions';
 import { Quote } from '../schema/Quote';
 import amq from '../../../amq';
+import { getCacheItem, setCacheItem } from '../models';
 import { Workflows } from '../workflow';
 
 const mapQuote = (quote) => {
@@ -13,6 +15,14 @@ const mapQuote = (quote) => {
   return om(quote, {
 
   });
+};
+
+const defaultDashboardParams = {
+  period: 'this-week',
+  periodStart: moment().startOf('week'),
+  periodEnd: moment().endOf('week'),
+  repIds: [ ],
+  status: [ ]
 };
 
 /**
@@ -48,22 +58,100 @@ const getLasecQuoteById = async (quote_id) => {
   }
 };
 
+const getQuotes = async (params) => {
 
-const getQuotes = async () => {
-  const quoteResult = await lasecApi.Quotes.list().then();
+  const apiFilter = {
+    start_date: params.periodStart.toISOString(), 
+    end_date: params.periodEnd.toISOString() 
+  };
+
+  let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
+
+  /**
+   * 
+   * {
+  "filter": {},
+  "format": {
+    "ids_only": true
+  },
+  "ordering": {},
+  "pagination": {
+    "current_page": 2,
+    "page_size": 25,
+    "num_items": 61,
+    "has_prev_page": false,
+    "last_item_index": 25,
+    "has_next_page": true,
+    "num_pages": 3,
+    "first_item_index": 1
+  }
+}
+   * 
+   * 
+   */
+
+
+  /**
+   * Paged Result
+   * 
+   *{
+  "status": "success",
+  "payload": {
+    "pagination": {
+      "num_items": 66,
+      "has_prev_page": false,
+      "current_page": 1,
+      "last_item_index": 10,
+      "page_size": 10,
+      "has_next_page": true,
+      "num_pages": 7,
+      "first_item_index": 1
+    },
+    "ids": [
+      "1907-152002",
+      "1907-321002",
+      "1906-337001",
+      "1906-321008",
+      "1906-321007",
+      "1906-152006",
+      "1906-321005",
+      "1906-152005",
+      "1906-321001",
+      "1906-337000"
+    ]
+  }
+}
+   */
   const fetchPromises = [];
-  for (let qidx = 0; qidx <= quoteResult.ids.length; qidx += 1) {
-    fetchPromises.push(lasecApi.Quotes.list({ filter: { ids: [quoteResult.ids[qidx]] } }));
+
+  let ids = [];
+   
+  if(isArray(quoteResult.ids) === true) {
+    ids = [...quoteResult.ids];
   }
 
-  const expanded = await Promise.all(fetchPromises).then();
-  logger.debug(`Fetched Expanded View for (${expanded.length}) Quotes from API`);
-  const quotes = [];
-  expanded.forEach((quoteItem) => {
-    quotes.push({
-      ...quoteItem.items[0],
-    });
+  const pagePromises = [];
+
+  if(quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
+    for(let pageIndex = quoteResult.pagination.current_page + 1; pageIndex <= quoteResult.pagination.num_pages; pageIndex += 1) {
+      pagePromises.push(lasecApi.Quotes.list({ filter: apiFilter, pagination: { ...quoteResult.pagination, current_page: pageIndex } }));
+    }
+  }
+
+  const pagedResults = await Promise.all(pagePromises).then();
+
+  pagedResults.forEach(( pagedResult ) => {
+    ids = [...ids, ...pagedResult.ids]
   });
+
+  logger.debug(`Loading (${ids.length}) quote ids`);
+    
+  const quotesDetails = await lasecApi.Quotes.list({ filter: { ids: ids } });
+  logger.debug(`Fetched Expanded View for (${quotesDetails.items.length}) Quotes from API`);
+  const quotes = [...quotesDetails.items];
+
+  
+  amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
 
   return quotes;
 };
@@ -76,6 +164,10 @@ const groupQuotesByStatus = (quotes) => {
     if (Object.getOwnPropertyNames(groupsByKey).indexOf(quote.status) >= 0) {
       groupsByKey[key].quotes.push(quote);
       groupsByKey[key].good += 1;
+      groupsByKey[key].totalVAT += groupsByKey[key].totalVAT + quote.grand_total_vat_cents;
+      groupsByKey[key].totalVATExclusive += groupsByKey[key].totalVATExclusive + quote.grand_total_excl_vat_cents;
+      groupsByKey[key].totalVATInclusive += groupsByKey[key].totalVATInclusive + quote.grand_total_incl_vat_cents;
+
     } else {
       groupsByKey[key] = {
         quotes: [quote],
@@ -83,6 +175,9 @@ const groupQuotesByStatus = (quotes) => {
         naughty: 0,
         category: '',
         key,
+        totalVAT: quote.grand_total_vat_cents,
+        totalVATExclusive: quote.grand_total_excl_vat_cents,
+        totalVATInclusive: quote.grand_total_incl_vat_cents,        
         title: key.toUpperCase(),
       };
     }
@@ -142,24 +237,172 @@ export default {
     },
   },
   Query: {
-    lasec_getQuoteList: async (obj, { search }) => {
+    LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes();
     },
-    lasec_getDashboard: async (obj, { dashparams }) => {
-      const dashboardResult = {
-        period: 'this-week',
-        periodStart: moment().startOf('week'),
-        periodEnd: moment().endOf('week'),
-        totalQuotes: 80,
-        totalBad: 20,
-        repIds: [],
-        statusSummary: [],
-        quotes: await getQuotes(),
+    LasecGetDashboard: async (obj, { dashparams = defaultDashboardParams }) => {
+
+      const {
+        period = 'this-week',
+        periodStart = moment().startOf('week'),
+        periodEnd = moment().endOf('week'),
+        repIds = [ ],
+        status = [ ]
+      } = dashparams;
+
+      let cacheKey = `quote.dashboard.${dashparams.periodStart.valueOf()}.${dashparams.periodEnd.valueOf()}`;
+
+      let _cached = await getCacheItem(cacheKey);
+
+      if(_cached) {
+        return _cached;        
+      }
+
+      logger.debug(`Fetching Lasec Dashboard Data`, dashparams);
+      let palette = global.partner.colorScheme();
+
+      const quotes = await getQuotes( dashparams );
+            
+      const quoteStatusFunnel = {
+        chartType: 'FUNNEL',
+        data: [                  
+        ],
+        options: {
+
+        },
+        key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/funnel`  
+      };
+      
+      const quoteStatusPie = {
+        chartType: 'PIE',
+        data: [         
+        ],
+        options: {
+          multiple: false,
+          outerRadius: 140,
+          innerRadius: 70,
+          fill: `#${palette[0]}`,
+          dataKey: 'value',
+        },
+        key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`  
       };
 
+      const quoteStatusComposed = {
+        chartType: 'COMPOSED',
+        data: [
+          {
+            "name": "Page A",
+            "uv": 4000,
+            "pv": 2400,
+            "amt": 2400
+          },
+          {
+            "name": "Page B",
+            "uv": 3000,
+            "pv": 1398,
+            "amt": 2210
+          },
+          {
+            "name": "Page C",
+            "uv": 2000,
+            "pv": 9800,
+            "amt": 2290
+          },
+          {
+            "name": "Page D",
+            "uv": 2780,
+            "pv": 3908,
+            "amt": 2000
+          },
+          {
+            "name": "Page E",
+            "uv": 1890,
+            "pv": 4800,
+            "amt": 2181
+          },
+          {
+            "name": "Page F",
+            "uv": 2390,
+            "pv": 3800,
+            "amt": 2500
+          },
+          {
+            "name": "Page G",
+            "uv": 3490,
+            "pv": 4300,
+            "amt": 2100
+          }
+        ],
+        options: {
+          xAxis: {
+            dataKey: 'name',
+          },
+          area: {
+            dataKey: 'vatInclusive',            
+            fill: `${palette[0]}`,
+            stroke: `#8884d8`,
+          }, 
+          bar: { 
+            dataKey: 'totalVat', 
+            fill: `${palette[1]}`,
+          }, 
+          line: {
+            dataKey: 'vatExclusive',
+            stroke: `${palette[2]}`
+          },          
+        },
+        key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`  
+      };
 
-      dashboardResult.totalQuotes = 80; // dashboardResult.quotes.length;
+      const dashboardResult = {
+        period: 'this-week',
+        periodStart,
+        periodEnd,
+        totalQuotes: 0,
+        totalBad: 0,
+        repIds: [],
+        statusSummary: [],
+        quotes,
+        charts: {
+          quoteStatusFunnel,
+          quoteStatusPie,
+          quoteStatusComposed,
+        }             
+      };
+      
+      dashboardResult.totalQuotes = quotes.length;
       dashboardResult.statusSummary = groupQuotesByStatus(dashboardResult.quotes);
+      dashboardResult.charts.quoteStatusFunnel.data = [];
+      dashboardResult.charts.quoteStatusPie.data = [];
+      dashboardResult.charts.quoteStatusComposed.data = [];
+
+      dashboardResult.statusSummary.forEach((entry, index) => {
+
+        dashboardResult.charts.quoteStatusFunnel.data.push({
+          "value": entry.good,
+          "name": entry.key,
+          "fill": `#${palette[index + 1 % palette.length]}`
+        });
+
+        dashboardResult.charts.quoteStatusPie.data.push({
+          "value": entry.good,
+          "name": entry.key,
+          outerRadius: 140,
+          innerRadius: 70,
+          "fill": `#${palette[index + 1 % palette.length]}`
+        });
+
+        dashboardResult.charts.quoteStatusComposed.data.push({
+          "name": entry.key,
+          "vatInclusive": entry.totalVATInclusive,
+          "vatExclusive": entry.totalVATExclusive,
+          "totalVat": entry.totalVAT
+        })
+      });
+      
+      dashboardResult.charts.quoteStatusFunnel.data = lodash.reverse(dashboardResult.charts.quoteStatusFunnel.data);
+
+      setCacheItem(cacheKey, dashboardResult, 60 * 5);
 
       return dashboardResult;
     },

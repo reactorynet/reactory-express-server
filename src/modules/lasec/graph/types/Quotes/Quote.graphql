@@ -82,6 +82,31 @@ type LasecQuoteDashboardSummary {
   quotes: [ Quote ]
 }
 
+enum LasecChartType {
+  FUNNEL
+  PIE
+  AREA
+  LINE
+  RADAR
+  RADIAL
+  SCATTER
+  TREEMAP
+  COMPOSED
+}
+
+
+type LasecChart {
+  chartType: LasecChartType
+  data: Any
+  options: Any
+  key: String  
+}
+
+type LasecQuoteDashboardCharts {
+  quoteStatusFunnel: LasecChart
+  quoteStatusPie: LasecChart
+  quoteStatusComposed: LasecChart
+}
 
 type LasecQuoteDashboard {
   id: String
@@ -93,6 +118,7 @@ type LasecQuoteDashboard {
   totalBad: Int
   statusSummary: [ LasecQuoteDashboardSummary ]
   quotes: [ Quote ]
+  charts: LasecQuoteDashboardCharts 
 }
 
 input LasecQuoteStatusUpdate {
@@ -127,11 +153,10 @@ input LasecQuoteHeaderInput {
 
 
 extend type Query {
-  lasec_getQuoteList( search: String ) : [ Quote ],
-  lasec_getDashboard( dashparams: LasecQuoteQueryInput ) : LasecQuoteDashboard
+  LasecGetQuoteList( search: String ) : [ Quote ],
+  LasecGetDashboard( dashparams: LasecQuoteQueryInput ) : LasecQuoteDashboard
   LasecGetQuoteById(quote_id: String): [ Quote ]
 }
-
 
 
 extend type Mutation {
