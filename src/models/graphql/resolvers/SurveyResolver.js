@@ -128,12 +128,12 @@ export default {
       return null;
     },
     timeline(survey) {
-      return survey.timeline;
+      return lodash.reverse(survey.timeline);
     },
     calendar(survey) {
       return survey.calendar;
     },
-    delegates(survey) {
+    delegates(survey) {            
       return survey.delegates;
     },
     statistics(survey) {

@@ -39,7 +39,7 @@ const organizationResolver = {
   },
   Query: {
     allOrganizations(obj, args, context, info) {
-      return Organization.find({}).then();
+      return Organization.find({}).sort('name').then();
     },
     organizationWithId(obj, args, context, info) {
       return Organization.findOne({ _id: args.id }).then();

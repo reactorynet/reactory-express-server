@@ -1,5 +1,6 @@
 import { defaultFormProps } from '../../../../data/forms/defs';
 import { cloneDeep } from 'lodash';
+import moment from 'moment';
 
 const {
   CDN_ROOT,
@@ -475,64 +476,68 @@ const CrmDashboardUISchemaNoDash = {
   },
 };
 
+const defaultQueryText = `query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
+  LasecGetDashboard(dashparams: $dashparams){
+    id
+    period
+    periodStart
+    periodEnd
+    repIds
+    totalQuotes
+    totalBad
+    statusSummary {
+      key
+      title
+      good
+      naughty
+      category
+    }
+    charts {
+      quoteStatusFunnel {
+        data
+        options
+      }
+      quoteStatusPie {
+        data
+        options
+      }
+      quoteStatusComposed {
+        data
+        options
+      }
+    }
+    quotes { 
+      id
+      status
+      customer {
+        id
+        fullName
+      }         
+      company {
+        id
+        tradingName
+      }
+      totalVATExclusive
+      totalVAT
+      totalVATInclusive
+      GP
+      actualGP
+      created
+      modified
+      expirationDate
+      note
+    }
+  }
+}`;
+
 const graphql = {
   query: {
     name: 'LasecGetDashboard',
-    text: `query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
-      LasecGetDashboard(dashparams: $dashparams){
-        id
-        period
-        periodStart
-        periodEnd
-        repIds
-        totalQuotes
-        totalBad
-        statusSummary {
-          key
-          title
-          good
-          naughty
-          category
-        }
-        charts {
-          quoteStatusFunnel {
-            data
-            options
-          }
-          quoteStatusPie {
-            data
-            options
-          }
-          quoteStatusComposed {
-            data
-            options
-          }
-        }
-        quotes { 
-          id
-          status
-          customer {
-            id
-            fullName
-          }         
-          company {
-            id
-            tradingName
-          }
-          totalVATExclusive
-          totalVAT
-          totalVATInclusive
-          GP
-          actualGP
-          created
-          modified
-          expirationDate
-          note
-        }
-      }
-    }`,
+    text: defaultQueryText,
     variables: {
-
+      'formData.toolbar.period': 'dashparams.period',
+      'formData.toolbar.periodStart': 'dashparams.periodStart',
+      'formData.toolbar.periodEnd': 'dashparams.periodEnd'
     },
     resultMap: {
       id: 'id',
@@ -548,55 +553,22 @@ const graphql = {
       'quotes[].customer.fullName': 'quotes[].customerName',
       'quotes[].company.tradingName': 'quotes[].companyTradingName',
     },
-    edit: true,
+    edit: false,
     new: false,
     onError: {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
   },
-  mutation: {
+  /*mutation: {
     edit: {
-      name: 'LasecSetQuoteList',
-      text: `mutation Lasec_SetQuoteList(){
-        LasecSetQuoteDashboard(){
-          id
-          period
-          periodStart
-          periodEnd
-          repIds
-          statusSummary {
-            key
-            title
-            good
-            naughty
-            category
-          }
-          quotes { 
-            id
-            status
-            customer {
-              id
-              fullName
-            }         
-            company {
-              id
-              tradingName
-            }
-            totalVATExclusive
-            totalVAT
-            totalVATInclusive
-            GP
-            actualGP
-            created
-            modified
-            expirationDate
-            note
-          }
-        }`,
-      objectMap: false,
+      name: 'LasecGetDashboard',
+      text: defaultQueryText,
+      objectMap: true,
       variables: {
-
+        'formData.toolbar.period': 'period',
+        'formData.toolbar.periodStart': 'periodStart',
+        'formData.toolbar.periodEnd': 'periodEnd'
       },
       options: {
         refetchQueries: [],
@@ -608,6 +580,7 @@ const graphql = {
       },
     },
   },
+  */
 };
 
 export const CrmDashboardForm = {
@@ -633,6 +606,13 @@ export const CrmDashboardForm = {
   version: '1.0.0',
   uiSchema: CrmDashboardUISchema,
   graphql,
+  defaultFormValue: {
+    toolbar: {
+      period: 'this-week',
+      periodStart: moment().startOf('week').toISOString(),
+      periodEnd: moment().endOf('week').toISOString()
+    }
+  }
 };
 
 export const QuotesList = {
@@ -658,7 +638,7 @@ export const QuoteDetail = {
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
-  title: 'Quotes List Dashboard',
+  title: 'Quotes Detail',
   tags: ['CRM Dashboard'],
   schema: {
     type: 'object',

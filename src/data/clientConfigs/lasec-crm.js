@@ -36,6 +36,34 @@ switch (MODE) {
 
 const key = 'lasec-crm';
 
+const proxiedRoutes = [
+  {  
+    key: 'CrmClientsRoot',
+    title: 'Clients',
+    path: 'crm/customer-search'
+  },
+  {  
+    key: 'CrmQuotesRoot',
+    title: 'Quotes',
+    path: 'crm/all-quotes',
+  },
+  {
+    key: 'CrmSalesOrders',
+    title: 'Sales Orders',
+    path: 'crm/sales-orders'
+  },
+  {
+    key: 'CrmInvoices',
+    title: 'Invoices',
+    path: 'crm/invoices'
+  },
+  {
+    key: 'CrmSalesHistory',
+    title: 'Sales History',
+    path: 'crm/sales-history'
+  },
+];
+
 export default {
   key,
   name: 'Lasec 360 CRM',
@@ -91,22 +119,17 @@ export default {
       entries: [
         {
           ordinal: 0, title: 'Dashboard', link: '/', icon: 'dashboard', roles: ['USER', 'ADMIN'],
-        },
-         /**
+        },         
         {
-          ordinal: 1, title: 'Sales', link: '/sales', icon: 'speaker', roles: ['USER', 'ADMIN'],
-        },       
+          ordinal: 1, title: 'Sales', link: '/360/crm/sales-orders', icon: 'speaker', roles: ['USER', 'ADMIN'],
+        },
         {
           ordinal: 2, title: 'Customers', link: '/360/crm/customer-search', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
-        },
-        */
+        },               
         {
-          ordinal: 3, title: 'Lasec 360', link: '/360', icon: 'share', roles: ['USER', 'ADMIN'],
+          ordinal: 4, title: 'Quotes', link: '/360/crm/all-quotes', icon: 'shopping_cart', roles: ['USER', 'ADMIN'],
         },
         /*
-        {
-          ordinal: 4, title: 'Shipping', link: '/shipping', icon: 'local_shipping', roles: ['USER', 'ADMIN'],
-        },
         {
           ordinal: 5, title: 'Analytics', link: '/analytics', icon: 'bar_chart', roles: ['USER', 'ADMIN'],
         },
@@ -157,6 +180,7 @@ export default {
     resetpasswordroute,
     logoutroute,
     formsroute,
+    //Dashboard
     {
       key: 'home',
       title: 'Home',
@@ -165,89 +189,66 @@ export default {
       exact: true,
       roles: ['USER'],
       componentFqn: `${key}.Dashboard@1.0.0`,
-    },
-    {
-      key: 'lasec-360',
-      title: 'Lasec 360',
-      path: '/360',
-      public: false,
-      exact: false,
-      roles: ['USER'],
-      // componentFqn: `${key}.Quotes@1.0.0`,
-      componentFqn: 'core.FramedWindow@1.0.0',
       args: [
         {
-          key: 'proxyRoot',
+          key: 'mode',
           value: {
             type: 'string',
-            proxyRoot: `$ref://settings/lasec_360_root/${MODE}`,
+            mode: 'edit'
+          }
+        }
+      ],
+    },
+    ...proxiedRoutes.map((props) => {
+      return {
+        key: props.key,
+        title: props.title,
+        path: '/360/' + props.path,
+        exact: false,
+        public: false,
+        roles: ['USER'],
+        componentFqn: 'core.FramedWindow@1.0.0',
+        args: [
+          {
+            key: 'proxyRoot',
+            value: {
+              type: 'string',
+              proxyRoot: `$ref://settings/lasec_360_root/${MODE}`,
+            },
           },
-        },
-        {
-          key: 'frameProps',
-          value: {
-            type: 'object',
-            frameProps: {
-              url: MODE === 'PRODUCTION' ? 'https://l360.lasec.co.za/' : LASEC_360_URL,
-              height: '100%',
-              width: '100%',
-              styles: {
-                border: 'none',
+          {
+            key: 'frameProps',
+            value: {
+              type: 'object',
+              frameProps: {
+                url: MODE === 'PRODUCTION' ? 'https://l360.lasec.co.za/' + props.path : LASEC_360_URL + '/' + props.path,
                 height: '100%',
                 width: '100%',
+                styles: {
+                  border: 'none',
+                  height: '100%',
+                  width: '100%',
+                },
               },
             },
           },
-        },
-        {
-          key: 'messageHandlers',
-          value: {
-            type: 'array',
-            messageHandlers: [{
-              name: 'lasechandlers',
-              id: 'lasec360messagehandlers',
-              type: 'script',
-              uri: `${CDN_ROOT}plugins/core.framedwindow.messagehandlers/lasec360/lib/lasec360.handler.js`,
-              component: 'lasec-crm.360MessageBroker@1.0.0',
-            }],
-          },
-        },
-      ],
-    },
-    {
-      key: 'ProxiedWindow',
-      title: '360 Proxied',
-      path: '/360/crm/customer-search',
-      exact: false,
-      public: false,
-      roles: ['USER'],
-      componentFqn: 'core.FramedWindow@1.0.0',
-      args: [
-        {
-          key: 'proxyRoot',
-          value: {
-            type: 'string',
-            proxyRoot: `$ref://settings/lasec_360_root/${MODE}`,
-          },
-        },
-        {
-          key: 'frameProps',
-          value: {
-            type: 'object',
-            frameProps: {
-              url: MODE === 'PRODUCTION' ? 'https://l360.lasec.co.za/crm/customer-search' : LASEC_360_URL + '/crm/customer-search',
-              height: '100%',
-              width: '100%',
-              styles: {
-                border: 'none',
-                height: '100%',
-                width: '100%',
-              },
+          {
+            key: 'messageHandlers',
+            value: {
+              type: 'array',
+              messageHandlers: [{
+                name: 'lasechandlers',
+                id: 'lasec360messagehandlers',
+                type: 'script',
+                uri: `${CDN_ROOT}plugins/core.framedwindow.messagehandlers/lasec360/lib/lasec360.handler.js`,
+                component: 'lasec-crm.360MessageBroker@1.0.0',
+              }],
             },
           },
-        },
-      ],
-    },
+        ],
+      }
+    }),
+    //360 Root Application    
     {
       key: 'quote-detail',
       title: 'Quote Detail',

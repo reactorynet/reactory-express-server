@@ -21,6 +21,7 @@ export default class ApiError extends ExtendableBuiltin(Error) {
     super(message);
     this.message = message;
     this.meta = meta;
+    this.extensions = this.meta;
   }
 }
 

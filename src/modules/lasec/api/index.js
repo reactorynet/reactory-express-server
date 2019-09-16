@@ -12,8 +12,8 @@ import { jzon } from '../../../utils/validators';
 const config = {
   WEBSOCKET_BASE_URL: 'wss://api.lasec.co.za/ws/',
   UI_BASE_URL: 'https://a360.lasec.co.za',
-  API_BASE_URL: 'https://aapi.lasec.co.za',
-  SECONDARY_API_URL: 'https://aapi.lasec.co.za',
+  API_BASE_URL: 'https://bapi.lasec.co.za',
+  SECONDARY_API_URL: 'https://bapi.lasec.co.za',
   PRIMARY_API_URL_PREFIX_1: 'api',
   PRIMARY_API_URL_PREFIX_2: 'l360',
   SECONDARY_API_URL_PREFIX_1: 'api',
@@ -23,21 +23,20 @@ const config = {
 
 class LasecNotAuthenticatedException extends ApiError {
   constructor(message) {
-    super(message);
-    this.meta = {
+    super(message, {
       __typename: 'lasec.api.LasecNotAuthenticatedException',
       redirect: '/360',
-    };
+    });        
   }
 }
 
 class TokenExpiredException extends ApiError {
   constructor(message) {
-    super(message);
-    this.meta = {
+    super(message, {
       __typename: 'lasec.api.TokenExpiredException',
       redirect: '/360',
-    };
+    });    
+    this.extensions = this.meta;
   }
 }
 
@@ -239,19 +238,16 @@ const Api = {
     },
     getByQuoteId: async (quote_id, objectMap = {}) => {
       try {
-        const response = await Api.Quotes.get({ filter: { ids: [quote_id] } });
-        const {
-          status,
-          payload,
-        } = response;
+        const payload = await Api.Quotes.get({ filter: { ids: [quote_id] } });        
 
-        if (status === 'success') {
+        if (payload) {
           logger.debug(`Api Response successful fetching quote id ${quote_id}`, payload);
-          const quotes = payload;
-          if (isArray(quotes) === true && quotes.length >= 1) {
-            return om(quotes[0], objectMap);
+          const quotes = payload.items;
+          if (isArray(payload.items) === true && payload.items.length >= 1) {
+            //return om(quotes[0], objectMap);
+            return payload.items[0];
           }
-          if (quotes.length === 0) {
+          if (payload.items.length === 0) {
             logger.debug('No Matching Document found');
             return null;
           }
@@ -263,6 +259,7 @@ const Api = {
         return null;
       } catch (quoteFetchError) {
         logger.error(`An error occured while fetching the quote document ${quote_id}`, quoteFetchError);
+        throw quoteFetchError;
       }
     },
     createQuoteHeader: async ({ quote_id, quote_item_id, header_text }) => {

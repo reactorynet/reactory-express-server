@@ -5,7 +5,7 @@ import lodash, { isArray } from 'lodash';
 import lasecApi from '../api';
 import logger from '../../../logging';
 import ApiError from '../../../exceptions';
-import { Quote } from '../schema/Quote';
+import { Quote, QuoteReminder } from '../schema/Quote';
 import amq from '../../../amq';
 import { getCacheItem, setCacheItem } from '../models';
 import { Workflows } from '../workflow';
@@ -38,13 +38,14 @@ const getLasecQuoteById = async (quote_id) => {
 
     if (countResult === 0) {
       logger.debug(`Quote ${quote_id} is not found - fetching remote`);
-      quote = await lasecApi.Quotes.getQuoteById(quote_id).then();
-      quote = mapQuote(quote);
-
-      amq.raiseWorkflowEvent('startWorkflow', {
-        id: Workflows.QuoteInvalidateWorkflow.meta.name,
-        data: { quote },
-      });
+      quote = await lasecApi.Quotes.getByQuoteId(quote_id).then();
+      // quote = mapQuote(quote);
+      if(quote) {
+        amq.raiseWorkflowEvent('startWorkflow', {
+          id: Workflows.QuoteInvalidateWorkflow.meta.name,
+          data: { quote },
+        });
+      }      
     } else {
       quote = await Quote.findOne(predicate).populate('').then();
     }
@@ -53,17 +54,19 @@ const getLasecQuoteById = async (quote_id) => {
 
     return quote;
   } catch (quoteFetchError) {
-    logger.error(`Could not fetch Quote with Quote Id ${quote_id}`);
+    logger.error(`Could not fetch Quote with Quote Id ${quote_id} - ${quoteFetchError.message}`);
     return null;
   }
 };
 
 const getQuotes = async (params) => {
 
-  const apiFilter = {
+  let apiFilter = {
     start_date: params.periodStart.toISOString(), 
     end_date: params.periodEnd.toISOString() 
   };
+
+
 
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
 
@@ -133,7 +136,9 @@ const getQuotes = async (params) => {
   const pagePromises = [];
 
   if(quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
-    for(let pageIndex = quoteResult.pagination.current_page + 1; pageIndex <= quoteResult.pagination.num_pages; pageIndex += 1) {
+    const max_pages = quoteResult.pagination.num_pages < 10 ?  quoteResult.pagination.num_pages : 10;
+
+    for(let pageIndex = quoteResult.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
       pagePromises.push(lasecApi.Quotes.list({ filter: apiFilter, pagination: { ...quoteResult.pagination, current_page: pageIndex } }));
     }
   }
@@ -164,9 +169,9 @@ const groupQuotesByStatus = (quotes) => {
     if (Object.getOwnPropertyNames(groupsByKey).indexOf(quote.status) >= 0) {
       groupsByKey[key].quotes.push(quote);
       groupsByKey[key].good += 1;
-      groupsByKey[key].totalVAT += groupsByKey[key].totalVAT + quote.grand_total_vat_cents;
-      groupsByKey[key].totalVATExclusive += groupsByKey[key].totalVATExclusive + quote.grand_total_excl_vat_cents;
-      groupsByKey[key].totalVATInclusive += groupsByKey[key].totalVATInclusive + quote.grand_total_incl_vat_cents;
+      groupsByKey[key].totalVAT = Math.floor(groupsByKey[key].totalVAT + (quote.grand_total_vat_cents/100));
+      groupsByKey[key].totalVATExclusive = Math.floor(groupsByKey[key].totalVATExclusive + (quote.grand_total_excl_vat_cents/100));
+      groupsByKey[key].totalVATInclusive = Math.floor(groupsByKey[key].totalVATInclusive + (quote.grand_total_incl_vat_cents/100));
 
     } else {
       groupsByKey[key] = {
@@ -175,9 +180,9 @@ const groupQuotesByStatus = (quotes) => {
         naughty: 0,
         category: '',
         key,
-        totalVAT: quote.grand_total_vat_cents,
-        totalVATExclusive: quote.grand_total_excl_vat_cents,
-        totalVATInclusive: quote.grand_total_incl_vat_cents,        
+        totalVAT: Math.floor(quote.grand_total_vat_cents / 100),
+        totalVATExclusive: Math.floor(quote.grand_total_excl_vat_cents / 100),
+        totalVATInclusive: Math.floor(quote.grand_total_incl_vat_cents / 100),        
         title: key.toUpperCase(),
       };
     }
@@ -190,7 +195,7 @@ const groupQuotesByStatus = (quotes) => {
   return groupedByStatus;
 };
 
-export default {
+export default {  
   Quote: {
     id: (quote) => {
       return quote.id || 'Not Set';
@@ -222,6 +227,7 @@ export default {
     modified: ({ modified }) => { return moment(modified); },
     expirationDate: ({ expirationDate }) => { return moment(expirationDate); },
     note: ({ note }) => (note),
+    timeline: ({ timeline }) => timeline
   },
   LasecCompany: {
     id: ({ id }) => (id),
@@ -235,22 +241,22 @@ export default {
     }) => {
       return `${period}.${moment(periodStart).valueOf()}.${moment(periodEnd).valueOf()}`;
     },
-  },
+  },  
   Query: {
     LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes();
     },
     LasecGetDashboard: async (obj, { dashparams = defaultDashboardParams }) => {
-
-      const {
+      logger.debug('Get Dashboard Queried', dashparams);
+      let {
         period = 'this-week',
-        periodStart = moment().startOf('week'),
-        periodEnd = moment().endOf('week'),
+        periodStart = moment(dashparams.periodStart || moment()).startOf('week'),
+        periodEnd = moment(dashparams.periodEnd || moment()).endOf('week'),
         repIds = [ ],
         status = [ ]
       } = dashparams;
 
-      let cacheKey = `quote.dashboard.${dashparams.periodStart.valueOf()}.${dashparams.periodEnd.valueOf()}`;
+      let cacheKey = `quote.dashboard.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
 
       let _cached = await getCacheItem(cacheKey);
 
@@ -290,52 +296,11 @@ export default {
       const quoteStatusComposed = {
         chartType: 'COMPOSED',
         data: [
-          {
-            "name": "Page A",
-            "uv": 4000,
-            "pv": 2400,
-            "amt": 2400
-          },
-          {
-            "name": "Page B",
-            "uv": 3000,
-            "pv": 1398,
-            "amt": 2210
-          },
-          {
-            "name": "Page C",
-            "uv": 2000,
-            "pv": 9800,
-            "amt": 2290
-          },
-          {
-            "name": "Page D",
-            "uv": 2780,
-            "pv": 3908,
-            "amt": 2000
-          },
-          {
-            "name": "Page E",
-            "uv": 1890,
-            "pv": 4800,
-            "amt": 2181
-          },
-          {
-            "name": "Page F",
-            "uv": 2390,
-            "pv": 3800,
-            "amt": 2500
-          },
-          {
-            "name": "Page G",
-            "uv": 3490,
-            "pv": 4300,
-            "amt": 2100
-          }
+          
         ],
         options: {
           xAxis: {
-            dataKey: 'name',
+            dataKey: 'modified',
           },
           area: {
             dataKey: 'vatInclusive',            
@@ -390,14 +355,17 @@ export default {
           outerRadius: 140,
           innerRadius: 70,
           "fill": `#${palette[index + 1 % palette.length]}`
-        });
+        });       
+      });
 
+      lodash.sortBy(quotes, [q => q.modified]).forEach((quote) => {
         dashboardResult.charts.quoteStatusComposed.data.push({
-          "name": entry.key,
-          "vatInclusive": entry.totalVATInclusive,
-          "vatExclusive": entry.totalVATExclusive,
-          "totalVat": entry.totalVAT
-        })
+          "name": quote.id,
+          "modified": moment(quote.modified).format('YYYY-MM-DD'), 
+          "vatInclusive": quote.grand_total_incl_vat_cents / 100,
+          "vatExclusive": quote.grand_total_excl_vat_cents / 100,
+          "totalVat": quote.grand_total_vat_cents
+        });
       });
       
       dashboardResult.charts.quoteStatusFunnel.data = lodash.reverse(dashboardResult.charts.quoteStatusFunnel.data);
@@ -407,8 +375,12 @@ export default {
       return dashboardResult;
     },
     LasecGetQuoteById: async (obj, { quote_id }) => {
-      return getLasecQuoteById(quote_id);
-    },
+      const result = await getLasecQuoteById(quote_id).then();
+      if(result) {
+        result.timeline = [];
+      }      
+      return result;
+    }    
   },
   Mutation: {
     LasecSetQuoteHeader: async (parent, { quote_id, input }) => {
@@ -431,25 +403,51 @@ export default {
       }
     },
     LasecUpdateQuoteStatus: async (parent, { quote_id, input }) => {
-      const found = await Quote.findOne({ code: quote_id }).then();
-      if (!found) {
-        const quote = new Quote({
-          code: quote_id,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+      logger.debug('Mutation.LasecUpdateQuoteStatus(...)', { quote_id, input });            
+      const quote = getLasecQuoteById(quote_id);
+      const { user } = global;
+      let reminder = null;
 
-        amq.raiseWorkFlowEvent('startWorkflow', {
-          id: 'LasecQuoteCacheInvalidate',
-          version: 1,
-          src: 'QuoteResolver:LasecQuoteUpdateStatus',
-          data: {
-            quote_id,
-          },
+      if(moment.isMoment(moment(input.reminder)) === true) {
+        reminder = new QuoteReminder({
+          quote: quote._id,
+          who: user._id,
+          next: moment(reminder).valueOf(),
+          actioned: false,
+          via: 'microsoft',
+          meta: {
+            message: `Reminder, please ${input.nextAction} with customer regarding Quote ${quote_id}`
+          }
         });
+        await reminder.save().then();
+      } 
 
-        await quote.save().then();
-      }
+      quote.status = input.status,
+      quote.timeline.push({
+        when: new Date().valueOf(),
+        what: `Status updated by ${global.user.firstName} ${global.user.lastName} from quote ${quote.status} to ${input.status}`,
+        who: global.user._id,
+        notes: input.note,
+        reason: input.reason          
+      });
+
+      amq.raiseWorkFlowEvent('startWorkflow', {
+        id: 'LasecQuoteCacheInvalidate',
+        version: 1,
+        src: 'QuoteResolver:LasecQuoteUpdateStatus',
+        data: {
+          quote_id,
+          quote,
+          statusUpdate: input,
+          reason: 'Status.Update'
+        },
+      });
+
+      return {
+        quote,
+        success: true,
+        message: 'Quote status updated'
+      };      
     },
-  },
+  }
 };

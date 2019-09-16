@@ -1,9 +1,8 @@
 import { defaultFormProps } from '../../../../data/forms/defs';
 
 export const UpdateQuoteStatusSchema = {
-  type: 'object',
-  title: 'Update Quote Status',
-  description: 'Please update status of quote: [ ${props.formContext && props.formContext.formData && props.formContext.formData.quote_id ? props.formContext.formData.quote_id : props.formContext.query.quote_id} ]',
+  type: 'object',  
+  description: 'Update Status: [ ${props.formContext && props.formContext.formData && props.formContext.formData.quote_id ? props.formContext.formData.quote_id : props.formContext.query.quote_id} ]',
   required: [
     'customer',
     'quoteStatus',
@@ -24,19 +23,13 @@ export const UpdateQuoteStatusSchema = {
       type: 'string',
       title: 'Status Group',
       description: 'Status Grouping',
-      default: 'draft',
-    },
+      default: '1',
+    },    
     quoteStatus: {
-      type: 'number',
+      type: 'string',
       title: 'Quote Status',
       description: 'Current Quote Status',
-    },
-    nextActionGroup: {
-      type: 'string',
-      title: 'Status Group',
-      description: 'Status Grouping',
-      default: 'draft',
-    },
+    },    
     nextAction: {
       type: 'string',
       title: 'Next Action',
@@ -64,9 +57,42 @@ export const UpdateQuoteStatusSchema = {
       title: 'Note (Internal)',
       description: 'Leave a small note',
     },
-    emails: {
-      type: 'string',
-      title: 'Emails related to Quote',
+    timeline: {
+      type: 'array',      
+      items: {
+        type: 'object',
+        properties: {
+          id : {
+            type: 'string',
+            title: 'id', 
+          },
+          who: {
+            type: 'string',
+            title: 'Who'
+          },
+          what: {
+            type: 'string',
+            title: 'What',            
+          },
+          when: {
+            type: 'string',
+            format: 'date',
+            title: 'when', 
+          },
+          notes: {
+            type: 'string',
+            title: 'Subject', 
+          },
+          content: {
+            type: 'string',
+            title: 'Content'            
+          },
+          via: {
+            type: 'string',
+            title: 'via'
+          }
+        }
+      }
     },
   },
 };
@@ -74,57 +100,64 @@ export const UpdateQuoteStatusSchema = {
 const graphql = {
   query: {
     name: 'QuoteStatusHistory',
-    text: `query LasecQuoteTimeline($id: String!){
-      QuoteById(id: $id){
+    text: `query LasecGetQuoteById($quote_id: String!){
+      LasecGetQuoteById(quote_id: $quote_id){
         id
-        status        
-        notes
-        content
-        via
-        reminder {
+        statusGroup
+        status
+        customer {
+          id
+          fullName
+        }
+        company {
+           id
+           tradingName
+        }                        
+        timeline {
           id
           who {
             id
             firstName
             lastName
           }
-          actioned
-          result
-          via
+          what
+          when
+          notes    
+          via      
         }
       }
     }`,
     variables: {
-      'formContext.quote_id': 'id',
+      'formData.id': 'quote_id',
     },
     resultMap: {
       id: 'id',
 
     },
-    edit: true,
-    new: false,
+    edit: false,
+    new: true,
   },
   mutation: {
     new: {
-      name: 'setDelegatesForSurvey',
-      text: `mutation SetDelegatesForSurvey($id: String!, $delegates: [DelegateInput]){
-        setDelegatesForSurvey(id: $id, delegates: $delegates){
+      name: 'LasecUpdateQuoteStatus',
+      text: `mutation LasecUpdateQuoteStatus($quote_id: String!, $input: LasecQuoteStatusUpdate){
+        LasecUpdateQuoteStatus(quote_id: $quote_id, input: $input){
           id                                    
         }
       }`,
       objectMap: true,
       variables: {
-        'formContext.surveyId': 'id',
-        'formData[].id': 'delegates.id',
-        'formData[].delegate.id': 'delegates[].delegate',
-        'formData[].launched': 'delegates[].launched',
-        'formData[].complete': 'delegates[].complete',
-        'formData[].removed': 'delegates[].removed',
+        'formData.id': 'quote_id',
+        'formData.status' : 'input.status',
+        'formData.nextAction': 'input.nextAction',
+        'formData.reason': 'input.reason',
+        'formData.reminder': 'input.reminder',
+        'formData.note': 'input.note'
       },
       options: {
         refetchQueries: [],
       },
-      onSuccessMethod: 'refresh',
+      onSuccessMethod: 'event:UpdateQuoteStatus_onMutationSuccess',
     },
   },
 };
@@ -151,6 +184,7 @@ export const UpdateQuoteStatusForm = {
   title: 'Update Quote Status',
   tags: ['Quote Status'],
   schema: UpdateQuoteStatusSchema,
+  graphql,
   widgetMap: [
     {
       component: 'core.InboxComponent@1.0.0',
@@ -188,7 +222,15 @@ export const UpdateQuoteStatusForm = {
           lg: 8, md: 12, sm: 12, xs: 12,
         },
       },
+      {
+        timeline: {
+          lg: 8, md: 12, sm: 12, xs: 12,
+        }
+      }
     ],
+    customer: {
+      'ui:widget': 'LabelWidget',
+    },
     reasonCodes: {
       'ui:widget': 'ChipArrayWidget',
       'ui:options': {
@@ -206,66 +248,72 @@ export const UpdateQuoteStatusForm = {
       'ui:widget': 'StepperWidget',
       'ui:options': {
         filter: {
-          predicate: { group: 'draft' },
+          predicate: { group: '1' },
         },
         steps: [
           {
-            group: 'draft', key: 'draft-pending-submission', value: 'draft-pending-submission', label: 'Pending Submission', step: 0,
+            group: '1', groupTitle: 'Draft', key: '1-1', value: '1-1', label: 'Pending Submission', step: 0,
           },
           {
-            group: 'draft', key: 'draft-awaiting-approval', value: 'draft-awaiting-approval', label: 'Awaiting Approval', step: 1,
+            group: '1', groupTitle: 'Draft', key: '1-2', value: '1-2', label: 'Awaiting Approval', step: 1,
           },
           {
-            group: 'draft', key: 'draft-approved', value: 'draft-approved', label: 'Approved', step: 2,
+            group: '1', groupTitle: 'Draft', key: '1-3', value: '1-3', label: 'Approved', step: 2,
           },
           {
-            group: 'draft', key: 'draft-decline', value: 'draft-declined', label: 'Declined', step: 3,
+            group: '1', groupTitle: 'Draft', key: '1-4', value: '1-4', label: 'Declined', step: 3,
           },
           {
-            group: 'open', key: 'open-quote-submitted', value: 'open-quote-submitted', label: 'Quote Submitted', step: 1,
+            group: '2', groupTitle: 'Open', key: '2-1', value: '2-1', label: 'Quote Submitted', step: 1,
           },
           {
-            group: 'open', key: 'under-assessment', value: 'under-assessment', label: 'Under Assessment', step: 2,
+            group: '2', groupTitle: 'Open', key: '2-2', value: '2-2', label: 'Under Assessment', step: 2,
           },
           {
-            group: 'open', key: 'budget-timeline', value: 'budget-timeline', label: 'Budget Timeline', step: 3,
+            group: '2', groupTitle: 'Open', key: '2-3', value: '2-3', label: 'Budget Timeline', step: 3,
           },
           {
-            group: 'open', key: 'pricing-negotiation', value: 'pricing-negotiation', label: 'Pricing Negotiation', step: 4,
+            group: '2', groupTitle: 'Open', key: '2-4', value: '2-4', label: 'Pricing Negotiation', step: 4,
           },
           {
-            group: 'open', key: 'awaiting-po', value: 'awaiting-po', label: 'Awaiting Purchase Order', step: 5,
+            group: '2', groupTitle: 'Open', key: '2-5', value: '2-5', label: 'Awaiting Purchase Order', step: 5,
           },
           {
-            group: 'open', key: 'po-received', value: 'po-received', label: 'Purchase Order Recevied', step: 6,
+            group: '2', groupTitle: 'Open', key: '2-6', value: '2-6', label: 'Purchase Order Received', step: 6,
           },
           {
-            group: 'accepted', key: 'accepted-fully', value: 'accepted-fully', label: 'Accepted Fully', step: 1,
+            group: '3', groupTitle: 'Accepted', key: '3-2', value: '3-2', label: 'Accepted Fully', step: 1,
           },
           {
-            group: 'accepted', key: 'accepted-partially', value: 'accepted-partially', label: 'Partially Accepted', step: 2,
+            group: '3', groupTitle: 'Accepted', key: '3-3', value: '3-3', label: 'Partially Accepted', step: 2,
           },
           {
-            group: 'accepted', key: 'accepted-jobcard', value: 'accepted-jobcard', label: 'Job Card', step: 3,
+            group: '3', groupTitle: 'Accepted', key: '3-4', value: '3-4', label: 'Job Card', step: 3,
           },
           {
-            group: 'lost', key: 'lost-price', value: 'lost-price', label: 'Lost - Price', step: 1,
+            group: '4', groupTitle: 'Draft', key: '4-2', value: '4-2', label: 'Lost - Price', step: 1,
           },
           {
-            group: 'lost', key: 'lost-funds', value: 'lost-funds', label: 'Lost - Funds', step: 2,
+            group: '4', groupTitle: 'Draft', key: '4-3', value: '4-3', label: 'Lost - Funds', step: 2,
           },
           {
-            group: 'lost', key: 'lost-no-stock', value: 'lost-no-stock', label: 'Lost - No Stock', step: 3,
+            group: '4', groupTitle: 'Draft', key: '4-4', value: '4-4', label: 'Lost - No Stock', step: 3,
           },
           {
-            group: 'lost', key: 'lost-no-info', value: 'lost-no-info', label: 'Lost - No Info', step: 4,
+            group: '4', groupTitle: 'Draft', key: '4-5', value: '4-5', label: 'Lost - No Info', step: 4,
           },
           {
-            group: 'lost', key: 'lost-lead-time', value: 'lost-lead-time', label: 'Lost - Lead Time', step: 5,
+            group: '4', groupTitle: 'Draft', key: '4-6', value: '4-6', label: 'Lost - Lead Time', step: 5,
           },
           {
-            group: 'lost', key: 'lost-other', value: 'lost-other', label: 'Other (specify)', step: 6,
+            group: '4', groupTitle: 'Draft', key: '4-7', value: '4-7', label: 'Other (specify)', step: 6,
           },
+          {
+            group: '5', groupTitle: 'Draft', key: '5-2', value: '5-2', label: 'Expired - Awaiting Feedback', step: 1
+          },
+          {
+            group: '5', groupTitle: 'Draft', key: '5-3', value: '5-3', label: 'Expired - Awaiting Budget', step: 2
+          }
         ],
       },
     },
@@ -325,15 +373,21 @@ export const UpdateQuoteStatusForm = {
         froalaOptions,
       },
     },
-    emails: {
-      'ui:widget': 'InboxComponent',
+    timeline: {
+      'ui:widget': 'MaterialTable',
       'ui:options': {
-        props: {
-          via: 'microsoft',
-          display: 'wide',
-          search: 'Quote: ${props.formData}',
+        columns: [
+          { title: 'via', field: 'via' },
+          { title: 'What', field: 'what'},          
+          { title: 'When', field: 'when' },
+          { title: 'Who', field: 'who' },
+          { title: 'Summary', field: 'notes' },          
+        ],
+        options: {
+          grouping: true,
         },
-      },
+        title: 'Quote Timeline',
+      }
     },
   },
 };

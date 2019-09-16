@@ -56,6 +56,7 @@ type QuoteTimeLine {
 
 type Quote { 
   id: String
+  statusGroup: String
   status: String
   customer: LasecCustomer
   company: LasecCompany
@@ -121,6 +122,13 @@ type LasecQuoteDashboard {
   charts: LasecQuoteDashboardCharts 
 }
 
+type LasecQuoteStatus {
+  id: String
+  status: String
+  customer:  LasecCustomer
+  timeline: [ QuoteTimeLine ] 
+}
+
 input LasecQuoteStatusUpdate {
   status: String
   nextAction: String
@@ -155,7 +163,7 @@ input LasecQuoteHeaderInput {
 extend type Query {
   LasecGetQuoteList( search: String ) : [ Quote ],
   LasecGetDashboard( dashparams: LasecQuoteQueryInput ) : LasecQuoteDashboard
-  LasecGetQuoteById(quote_id: String): [ Quote ]
+  LasecGetQuoteById(quote_id: String): Quote
 }
 
 
