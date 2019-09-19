@@ -509,7 +509,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     { text: '3. Qualities', style: ['header', 'primary'], pageBreak: 'before' },
     { text: 'The ratings for your different leadership behaviours have been combined to achieve an average rating for each value.', style: ['default'] },
     { text: '3.1 Individual Ratings', style: ['subheader', 'primary'] },
-    { text: 'The chart below indicates the ratings submitted by the individual assessors.', style: ['default'] },
+    { text: 'The chart below indicates the ratings submitted by the individual assessors. Please pay attention to the graph scale as it is spread according to your average per quality and not scale from 1 to 5.', style: ['default'] },
     {
       image: 'spiderChartAll',
       width: 400,
@@ -518,7 +518,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       margin: [0, 40],
     },
     { text: '3.2 Aggregate Ratings', style: ['subheader', 'primary'], pageBreak: 'before' },
-    { text: 'The chart below indicates the combined ratings from all assessors.', style: ['default'] },
+    { text: 'The chart below indicates the combined ratings from all assessors.  Please pay attention to the graph scale as it is spread according to your average per quality and not scale from 1 to 5.', style: ['default'] },
     {
       image: 'spiderChartAvg',
       width: 400,
@@ -581,8 +581,8 @@ export const pdfmakedefinition = (data, partner, user) => {
 
     const customLowRatingsForQuality = lodash.filter(data.lowratings(quality, 5), rating => rating.custom);
     if(customLowRatingsForQuality.length > 0) {
-      behaviourSection.push({ text: 'Additional Comments', style: ['primary'], margin: [0, 15] });
-      behaviourSection.push({ text: 'The assessors have provided some additional behaviours and how it impacts others (them)', style: ['default'] });
+      behaviourSection.push({ text: 'Additional Comments', style: ['default', 'primary'], margin: [0, 15] });
+      behaviourSection.push({ text: `The assessors have provided some the following additional behaviour${customLowRatingsForQuality.length > 1 ? 's': ''} and how it impacts others (them).`, style: ['default'], margin: [0, 15] });
       const customRowEntries = customLowRatingsForQuality.map(custom => [{ text: custom.behaviourText, style: ['default'] }, { text: custom.rating, style: ['default'] }, { text: custom.comment, style: ['default'] }]);
 
       behaviourSection.push({
@@ -636,6 +636,7 @@ export const pdfmakedefinition = (data, partner, user) => {
 
   const developmentPlan = [
     { text: '6 Development Plan', pageBreak: 'before', style: ['header', 'primary'] },
+    { text: 'Your development plan comprises of a reflection section as well as provision for next actions.  Please give careful thought and consideration in your reflection and how that will impact planning your next actions.', style: ['default'] },
     { text: '6.1 Reflection', style: ['subheader', 'primary'] },
     { text: 'The purpose of this assessment is to assist you in modelling the TowerStone Leadership Brand more effectively. The development plan is designed to guide your reflection on the feedback, and then facilitate identifying actions for improvement.\n\n', style: ['default'] },
   ];
@@ -659,14 +660,14 @@ export const pdfmakedefinition = (data, partner, user) => {
   const nextactions = [
     { text: '6.2 Next Actions', style: ['subheader', 'primary'], pageBreak: 'before' },
     {
-      text: ['Your development as a team requires that you commit to specific actions that will initiate change in your ',
-        `collective behaviour so that your colleagues see you modelling the ${data.organization.name} Leadership Brand.`],
+      text: ['Your development as a brand ambassador requires that you commit to specific actions that will make our values more visible in your ',
+        `behaviour so that your colleagues see you modelling the ${data.organization.name} Leadership Brand.`],
       style: ['default'],
     },
     // { text: 'Start', style: ['subheader', 'primary'] },
     // { text: 'These are the leadership behaviours your assessors have said you are not currently displaying:', style: ['default'] },
 
-    { text: 'Use the table below to plan the actions you will put in place to address the feedback you received:', style: ['default'] },
+    { text: 'Use the table below to plan the actions you will put in place to address the feedback you received:', style: ['default'], margin: [0, 15] },
     {
       table: {
       // headers are automatically repeated if the table spans over multiple pages
@@ -703,13 +704,13 @@ export const pdfmakedefinition = (data, partner, user) => {
 
   const acceptance = [
     { text: '7 Acceptance and Commitment', style: ['subheader', 'primary'], pageBreak: 'before' },
-    { text: 'I accept and commit to addressing the feedback presented in this assessment, by taking the actions listed within the agreed timeframes.', style: ['default'] },
+    { text: 'I accept and commit to addressing the feedback presented in this assessment, by taking the actions listed within the agreed timeframes.', style: ['default'],  margin: [0, 20] },
     { text: 'Signed: ................................     Date: ...................................................... ', margin: [0, 20], style: ['default'] },
     { text: 'Manager: ...............................     Date: ...................................................... ', margin: [0, 20], style: ['default'] },
   ];
 
   const facilitatornotes = [
-    { text: '8. TowerStone facilitator\'s notes', style: ['header', 'primary'], pageBreak: 'before' },
+    { text: '8. TowerStone Facilitator\'s Notes', style: ['header', 'primary'], pageBreak: 'before' },
   ];
 
   for (let row = 0; row < 15; row += 1) {
@@ -731,7 +732,11 @@ export const pdfmakedefinition = (data, partner, user) => {
       keywords: 'Leadership Training Personal Growth',
     },
     content: [
-      { text: '360° Leadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 90, 0, 20] },
+      {
+        image: 'partnerLogo', width: 200, style: ['centerAligned'], margin: [0, 5],
+      },
+      { text: '360° Leadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
+      { text: 'for', style: ['header', 'centerAligned'], margin: [0, 0] },
       { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned'], margin: [0, 15] },
       includeAvatar === true ?
         {
@@ -759,8 +764,8 @@ export const pdfmakedefinition = (data, partner, user) => {
       },
       {
         text: [
-          `The values form the foundation of your desired culture at ${data.organization.name} and in order to build this culture, you as leaders must`,
-          `intentionally live out the values by displaying the supporting behaviours. In this way, you will align your people to the purpose and strategy of ${data.organization.name}.`,
+          `These values form the foundation of our desired culture at ${data.organization.name} and in order to build this culture, we as leaders must`,
+          `intentionally live out the values by displaying the supporting behaviours. In this way, we will align our people to the purpose and strategy of ${data.organization.name}.`,
         ],
         style: ['default'],
       },
@@ -772,7 +777,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       {
         text: ['The TowerStone Leadership Brand 360° Assessment is a tool that provides insight to track your behavioural growth as you seek ',
           'to align yourself with the TowerStone values. It is now your responsibility to use this feedback to improve your ability ',
-          `to (a) model these behaviours and (b) coach the next levels of leadership to align to the ${data.organization.name} values.  Please`,
+          `to (a) model these behaviours and (b) coach the next levels of leadership to align to the ${data.organization.name} values.  Please `,
           'consider the feedback carefully before completing the development plan that follows the assessment',
           ' results.'],
         style: ['default'],
@@ -830,7 +835,7 @@ export const pdfmakedefinition = (data, partner, user) => {
             margin: [20, 0, 20, 0],
           },
           {
-            text: `${data.organization.name} Individual Leadership Brand 360° Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
+            text: `${data.organization.name}: Individual Leadership Brand 360° Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
             fontSize: 8,
             alignment: 'center',
             margin: [5, 5],
@@ -848,7 +853,8 @@ export const pdfmakedefinition = (data, partner, user) => {
       return [];
     },
     images: {
-      organizationLogo: pdfpng(data.organization.name.indexOf('TowerStone') === 0 ? `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}` : `${APP_DATA_ROOT}/organization/${data.organization._id}/greyscale_${data.organization.logo}`),
+      //organizationLogo: pdfpng(data.organization.name.indexOf('TowerStone') === 0 ? `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}` : `${APP_DATA_ROOT}/organization/${data.organization._id}/greyscale_${data.organization.logo}`),
+      organizationLogo: pdfpng(`${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`),
       partnerLogo: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/logo.png`),
       partnerAvatar: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/avatar.png`),
       delegateAvatar: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/profile_${data.delegate._id}_default.jpeg`) === true ? `${APP_DATA_ROOT}/profiles/${data.delegate._id}/profile_${data.delegate._id}_default.jpeg` : pdfpng(`${APP_DATA_ROOT}/profiles/default/default.png`),
