@@ -8,9 +8,12 @@ const resolved = [];
 
 enabled.forEach((moduleDefinition) => {
   logger.debug(`Module [${moduleDefinition.name}] - Loading`);
-  const resolvedItem = require(path.join('modules', `${moduleDefinition.moduleEntry}`)).default;
-
-  resolved.push(resolvedItem);
+  try {
+    const resolvedItem = require(path.resolve(path.join('src', 'modules', `${moduleDefinition.moduleEntry}`))).default;
+    resolved.push(resolvedItem);
+  } catch (pluginLoadError) {
+    logger.error('Could not load pluging', moduleDefinition);
+  }  
 });
 
 
