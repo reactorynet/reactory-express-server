@@ -20,11 +20,11 @@ let siteUrl = '';// 'http://localhost:3000' : 'https://app.towerstone-global.com
 
 switch (MODE) {
   case 'QA': {
-    siteUrl = 'https://lasec-crm.reactory.net';
+    siteUrl = 'https://bapp.lasec.co.za';
     break;
   }
   case 'PRODUCTION': {
-    siteUrl = 'https://lasec-crm.reactory.net';
+    siteUrl = 'https://app.lasec.co.za';
     break;
   }
   case 'DEVELOP':
