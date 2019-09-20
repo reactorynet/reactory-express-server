@@ -450,7 +450,7 @@ export default {
     {
       name: 'lasec_360_root/PRODUCTION',
       data: {
-        url: 'https://lasec360.reactory.net/',
+        url: 'https://l360.lasec.co.za/',
       },
     },
   ],
@@ -497,8 +497,9 @@ export default {
   ],
   whitelist: [
     'localhost',
-    '360crm.reactory.net',
-    '360crm.lasec.co.za',
+    'app.lasec.coza',
+    'bapp.lasec.co.za',
+    'aapp.lasec.co.za'
   ],
 };
 
