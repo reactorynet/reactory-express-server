@@ -1,7 +1,25 @@
+import "node-fetch";
+import { Client, ResponseType } from "@microsoft/microsoft-graph-client";
 import logger from '../logging';
+// import { updateUserProfileImage } from '../application/admin/User';
 import om from 'object-mapper';
 
-const graph = require('@microsoft/microsoft-graph-client');
+
+
+const getAuthenticatedClient = (accessToken) => {
+  // Initialize Graph client
+  const client = Client.init({
+    // Use the provided access token to authenticate
+    // requests
+    defaultVersion: "v1.0",
+	  debugLogging: true,
+    authProvider: (done) => {
+      done(null, accessToken);
+    },
+  });
+
+  return client;
+};
 
 export default {
   async getUserDetails(accessToken) {
@@ -25,12 +43,17 @@ export default {
 
 
     try {
-      debugger;
-      const image = await client.api('/me/photos/120x120/$value').get();
-
-      user = image;
+      const response = await client
+        .api('/me/photos/120x120/$value')
+        .headers({
+          'accept': 'image/jpeg'
+        })
+        .responseType(ResponseType.RAW)        
+        .get();
+      logger.debug('Fetched image result for user', response);
+      // user.avatar = image;
     } catch (getPhotoError) {
-      logger.error('Could not get the user photo from MS Graph');
+      logger.debug(`Could not get the user photo from MS Graph:`, getPhotoError);
     }
 
     return user;
@@ -62,15 +85,3 @@ export default {
 };
 
 
-function getAuthenticatedClient(accessToken) {
-  // Initialize Graph client
-  const client = graph.Client.init({
-    // Use the provided access token to authenticate
-    // requests
-    authProvider: (done) => {
-      done(null, accessToken);
-    },
-  });
-
-  return client;
-}

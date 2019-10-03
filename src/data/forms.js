@@ -1628,57 +1628,14 @@ const ProjectForm = {
   },
 };
 
-const TowerStoneSurveyConfig = require('./forms/towerstone/SurveyConfig');
 
-const TowerStoneSurveyConfigForm = {
-  id: 'TowerStoneSurveyConfig',
-  ...defaultFormProps,
-  nameSpace: 'forms',
-  name: 'TowerStoneSurveyConfig',
-  registerAsComponent: true,
-  schema: TowerStoneSurveyConfig.default,
-  uiSchema: TowerStoneSurveyConfig.uiSchema,
-  defaultFormValue: TowerStoneSurveyConfig.defaultFormValue,
-  backButton: true,
-  helpTopics: ['survey-config-main'],
-  graphql: {
-    query: {
-      name: 'surveyDetail',
-      text: TowerStoneSurveyConfig.surveyQuery,
-      variables: TowerStoneSurveyConfig.queryMap,
-      resultMap: TowerStoneSurveyConfig.queryResultMap,
-      new: false,
-      edit: true,
-    },
-    mutation: {
-      new: {
-        name: 'createSurvey',
-        text: TowerStoneSurveyConfig.createMutation,
-        objectMap: true,
-        variables: TowerStoneSurveyConfig.createMutationMap,
-        options: {
-          refetchQueries: [],
-        },
-        onSuccessMethod: 'redirect',
-        onSuccessUrl: 'admin/org/${formData.organization}/surveys/${createSurvey.id}',
-        onSuccessRedirectTimeout: 1000,
-      },
-      edit: {
-        name: 'updateSurvey',
-        text: TowerStoneSurveyConfig.updateMutation,
-        objectMap: true,
-        variables: TowerStoneSurveyConfig.updateMutationMap,
-        options: {
-          refetchQueries: [],
-        },
-        onSuccessMethod: 'refresh',
-      },
-    },
-  },
-};
+
+
 
 const { ReactoryApplicationsForm, ReactoryDashboard, ReactoryClientAdminPage } = require('./forms/core/dashboard');
+
 const TowerStoneLeadershipBrandConfigForm = require('./forms/towerstone/LeadershipBrands').default;
+const TowerStoneSurveyConfigForm = require('./forms/towerstone/SurveyConfig').TowerStoneSurveyConfigForm;
 const TowerStoneSurveyDelegateConfig = require('./forms/towerstone/SurveyDelegates').SurveyDelegatesForm;
 const TowerStoneSurveySettings = require('./forms/towerstone/SurveySettings').SurveySettingsForm;
 const UserPeers = require('./forms/core/user/UserPeers/index').default;

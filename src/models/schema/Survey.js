@@ -27,6 +27,14 @@ const SurveySchema = new mongoose.Schema({
     enum: ['180', '360', 'plc', 'custom'],
     required: true,
   },
+  delegateTeamName: {
+    type: String,
+    required: false
+  },
+  assessorTeamName: {
+    type: String,
+    required: false
+  },
   surveyModule: {
     type: String,
     lowercase: true,
@@ -98,6 +106,7 @@ const SurveySchema = new mongoose.Schema({
       complete: Boolean,
       removed: Boolean,
       message: String,
+      team: String,
       lastAction: String,
       status: String,
       updatedAt: Date,

@@ -1,17 +1,66 @@
 // model schema
-export default {
+import { defaultFormProps } from '../defs';
+
+export const schema = {
   title: 'Survey Configuration',
   description: 'Use the form below to configure your Survey',
   type: 'object',
-  required: ['organization', 'leadershipBrand', 'title', 'surveyType', 'startDate', 'endDate', 'mode', 'status'],
+  required: [
+    'organization', 
+    'leadershipBrand', 
+    'title', 
+    'surveyType', 
+    'startDate', 
+    'endDate', 
+    'mode', 
+    'status'
+  ],
+  dependencies: {
+    'surveyType': {
+      oneOf: [
+        {
+          properties: {
+            surveyType: {
+              enum: ["180"]
+            },
+            delegateTeamName: {
+              type: 'string',
+              title: 'Delegate Team Name',
+              defaultValue: 'Delegates'                            
+            },
+            assessorTeamName: {
+              type: 'string',
+              title: 'Assessor Team Name',                            
+              defaultValue: 'Assessors'
+            }
+          }           
+        },
+        {
+          properties: {
+            surveyType: {
+              enum: ["plc", "360"]
+            }
+          }           
+        }
+      ]    
+    }
+  },
   properties: {
     id: {
       type: 'string',
       title: 'Id',
     },
     organization: {
-      type: 'string',
+      type: 'object',
       title: 'Organization',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        logo: {
+          type: 'string'
+        }
+      }
     },
     leadershipBrand: {
       type: 'string',
@@ -21,10 +70,16 @@ export default {
       type: 'string',
       title: 'Survey Title',
       description: 'Provide a meaningful description for this survey',
-    },
+    },    
     surveyType: {
       type: 'string',
       title: 'Assessment Type',
+      enum: [
+        'plc',
+        '180',
+        '360'
+      ],
+      default: '360',
     },
     startDate: {
       type: 'string',
@@ -57,10 +112,12 @@ export const createMutation = `
 }`;
 
 export const createMutationMap = {
-  'formData.organization': ['id', 'surveyData.organization'],
+  'formData.organization.id': ['id', 'surveyData.organization'],
   'formData.leadershipBrand': 'surveyData.leadershipBrand',
   'formData.surveyType': 'surveyData.surveyType',
   'formData.title': 'surveyData.title',
+  'formData.delegateTeamName': 'surveyData.delegateTeamName',
+  'formData.assessorTeamName': 'surveyData.assessorTeamName',
   'formData.startDate': 'surveyData.startDate',
   'formData.endDate': 'surveyData.endDate',
   'formData.mode': 'surveyData.mode',
@@ -104,6 +161,8 @@ query SurveyDetail($surveyId: String!){
     }
     status
     surveyType
+    delegateTeamName
+    assessorTeamName
     title
     startDate
     endDate
@@ -123,6 +182,8 @@ export const queryResultMap = {
   startDate: 'startDate',
   endDate: 'endDate',
   mode: 'mode',
+  delegateTeamName: 'delegateTeamName',
+  assessorTeamName: 'assessorTeamName',
   surveyType: 'surveyType',
   'leadershipBrand.id': 'leadershipBrand',
   organization: 'organization',
@@ -216,11 +277,13 @@ export const updateMutation = `
 
 export const updateMutationMap = {
   'formData.id': 'id',
-  'formData.organization': 'surveyData.organization',
+  'formData.organization.id': 'surveyData.organization',
   'formData.leadershipBrand': 'surveyData.leadershipBrand',
   'formData.surveyType': 'surveyData.surveyType',
   'formData.title': 'surveyData.title',
   'formData.startDate': 'surveyData.startDate',
+  'formData.delegateTeamName': 'surveyData.delegateTeamName',
+  'formData.assessorTeamName': 'surveyData.assessorTeamName',
   'formData.endDate': 'surveyData.endDate',
   'formData.mode': 'surveyData.mode',
   'formData.status': 'surveyData.status',
@@ -235,6 +298,8 @@ export const uiSchema = {
     {
       leadershipBrand: { md: 6 },
       surveyType: { md: 6 },
+      delegateTeamName: {md: 6},
+      assessorTeamName: {md: 6},
     },
     {
       title: { md: 12 },
@@ -263,11 +328,13 @@ export const uiSchema = {
         'formData.logo': 'logo',
       },
       style: {
+        maxWidth: '512px',
         width: '512px',
         marginRight: 'auto',
         marginLeft: 'auto',
         marginTop: '8px',
         marginBottom: '8px',
+        display: 'flex',
       },
     },
   },
@@ -324,6 +391,54 @@ export const uiSchema = {
       resultsMap: {
         'brandListForOrganization.[].id': ['[].key', '[].value'],
         'brandListForOrganization.[].title': '[].label',
+      },
+    },
+  },
+};
+
+
+export const TowerStoneSurveyConfigForm = {
+  id: 'TowerStoneSurveyConfig',
+  ...defaultFormProps,
+  nameSpace: 'forms',
+  name: 'TowerStoneSurveyConfig',
+  registerAsComponent: true,
+  schema: schema,
+  uiSchema: uiSchema,
+  defaultFormValue: defaultFormValue,
+  backButton: true,
+  helpTopics: ['survey-config-main'],
+  graphql: {
+    query: {
+      name: 'surveyDetail',
+      text: surveyQuery,
+      variables: queryMap,
+      resultMap: queryResultMap,
+      new: false,
+      edit: true,
+    },
+    mutation: {
+      new: {
+        name: 'createSurvey',
+        text: createMutation,
+        objectMap: true,
+        variables: createMutationMap,
+        options: {
+          refetchQueries: [],
+        },
+        onSuccessMethod: 'redirect',
+        onSuccessUrl: 'admin/org/${formData.organization}/surveys/${createSurvey.id}',
+        onSuccessRedirectTimeout: 1000,
+      },
+      edit: {
+        name: 'updateSurvey',
+        text: updateMutation,
+        objectMap: true,
+        variables: updateMutationMap,
+        options: {
+          refetchQueries: [],
+        },
+        onSuccessMethod: 'refresh',
       },
     },
   },

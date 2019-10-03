@@ -1,4 +1,5 @@
 import { defaultFormProps } from '../../../../data/forms/defs';
+import { triggerAsyncId } from 'async_hooks';
 
 export const UpdateQuoteStatusSchema = {
   type: 'object',  
@@ -9,7 +10,7 @@ export const UpdateQuoteStatusSchema = {
     'nextAction',
   ],
   properties: {
-    id: {
+    quote_id: {
       type: 'string',
       title: 'Quote Id',
       description: 'Quote Id',
@@ -128,7 +129,7 @@ const graphql = {
       }
     }`,
     variables: {
-      'formData.id': 'quote_id',
+      'formContext.query.quote_id': 'quote_id',
     },
     resultMap: {
       id: 'id',
@@ -147,7 +148,7 @@ const graphql = {
       }`,
       objectMap: true,
       variables: {
-        'formData.id': 'quote_id',
+        'formData.quote_id': 'quote_id',
         'formData.status' : 'input.status',
         'formData.nextAction': 'input.nextAction',
         'formData.reason': 'input.reason',
@@ -175,6 +176,234 @@ const froalaOptions = {
   },
 };
 
+const uiSchema = {
+  // 'ui:widget': 'lasec-crm.QuoteStatusWidget@1.0.0',
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      customer: { md: 12, sm: 12, xs: 12 },      
+    },
+    //status row
+    {
+      statusGroup: { md: 6, sm: 12, xs: 12 }, 
+      quoteStatus: { md: 6, sm: 12, xs: 12 },
+    },
+    {
+      nextAction: {
+        lg: 4, md: 6, sm: 12, xs: 12,
+      },
+      reason: {
+        lg: 4, md: 6, sm: 12, xs: 12,
+      },
+      reasonCodes: {
+        lg: 4, md: 6, sm: 12, xs: 12,
+      },
+      reminder: {
+        md: 4, sm: 12, xs: 12,
+      },
+    },
+    {
+      note: {
+        lg: 8, md: 12, sm: 12, xs: 12,
+      },
+    },
+    {
+      timeline: {
+        lg: 8, md: 12, sm: 12, xs: 12,
+      }
+    }
+  ],
+  customer: {
+    'ui:widget': 'LabelWidget',
+  },
+  reasonCodes: {
+    'ui:widget': 'ChipArrayWidget',
+    'ui:options': {
+      container: 'core.BasicContainer',
+      containerProps: {
+        title: 'Reasons',
+        style: {
+          maxWidth: '100%',
+          justifyContent: 'flex-end',
+        },
+      },
+    },
+  },
+  statusGroup: {
+    'ui:widget': 'StepperWidget',
+    'ui:options': {
+      filter: {
+        predicate: { group: '1' },
+      },
+      steps: [
+        { 
+          group: '1', groupTitle: 'Default', key: '1', value: '1', label: 'Draft', step: 1,          
+        },
+        { 
+          group: '1', groupTitle: 'Default', key: '2', value: '2', label: 'Open', step: 2,          
+        },
+        { 
+          group: '1', groupTitle: 'Default', key: '3', value: '3', label: 'Accepted', step: 3,          
+        },
+        { 
+          group: '1', groupTitle: 'Default', key: '4', value: '4', label: 'Lost', step: 4,          
+        },
+        { 
+          group: '1', groupTitle: 'Default', key: '5', value: '5', label: 'Expired', step: 5,          
+        },
+        { 
+          group: '1', groupTitle: 'Default', key: '6', value: '6', label: 'Deleted', step: 6,          
+        },
+      ]
+    },
+  },
+  quoteStatus: {
+    'ui:widget': 'StepperWidget',
+    'ui:options': {
+      filter: {
+        predicate: { group: '${props.formContext.formData.statusGroup || "1"}' },
+      },
+      steps: [
+        {
+          group: '1', groupTitle: 'Draft', key: '1-1', value: '1-1', label: 'Pending Submission', step: 0,
+        },
+        {
+          group: '1', groupTitle: 'Draft', key: '1-2', value: '1-2', label: 'Awaiting Approval', step: 1,
+        },
+        {
+          group: '1', groupTitle: 'Draft', key: '1-3', value: '1-3', label: 'Approved', step: 2,
+        },
+        {
+          group: '1', groupTitle: 'Draft', key: '1-4', value: '1-4', label: 'Declined', step: 3,
+        },
+        {
+          group: '2', groupTitle: 'Open', key: '2-1', value: '2-1', label: 'Quote Submitted', step: 1,
+        },
+        {
+          group: '2', groupTitle: 'Open', key: '2-2', value: '2-2', label: 'Under Assessment', step: 2,
+        },
+        {
+          group: '2', groupTitle: 'Open', key: '2-3', value: '2-3', label: 'Budget Timeline', step: 3,
+        },
+        {
+          group: '2', groupTitle: 'Open', key: '2-4', value: '2-4', label: 'Pricing Negotiation', step: 4,
+        },
+        {
+          group: '2', groupTitle: 'Open', key: '2-5', value: '2-5', label: 'Awaiting Purchase Order', step: 5,
+        },
+        {
+          group: '2', groupTitle: 'Open', key: '2-6', value: '2-6', label: 'Purchase Order Received', step: 6,
+        },
+        {
+          group: '3', groupTitle: 'Accepted', key: '3-2', value: '3-2', label: 'Accepted Fully', step: 1,
+        },
+        {
+          group: '3', groupTitle: 'Accepted', key: '3-3', value: '3-3', label: 'Partially Accepted', step: 2,
+        },
+        {
+          group: '3', groupTitle: 'Accepted', key: '3-4', value: '3-4', label: 'Job Card', step: 3,
+        },
+        {
+          group: '4', groupTitle: 'Draft', key: '4-2', value: '4-2', label: 'Lost - Price', step: 1,
+        },
+        {
+          group: '4', groupTitle: 'Draft', key: '4-3', value: '4-3', label: 'Lost - Funds', step: 2,
+        },
+        {
+          group: '4', groupTitle: 'Draft', key: '4-4', value: '4-4', label: 'Lost - No Stock', step: 3,
+        },
+        {
+          group: '4', groupTitle: 'Draft', key: '4-5', value: '4-5', label: 'Lost - No Info', step: 4,
+        },
+        {
+          group: '4', groupTitle: 'Draft', key: '4-6', value: '4-6', label: 'Lost - Lead Time', step: 5,
+        },
+        {
+          group: '4', groupTitle: 'Draft', key: '4-7', value: '4-7', label: 'Other (specify)', step: 6,
+        },
+        {
+          group: '5', groupTitle: 'Draft', key: '5-2', value: '5-2', label: 'Expired - Awaiting Feedback', step: 1
+        },
+        {
+          group: '5', groupTitle: 'Draft', key: '5-3', value: '5-3', label: 'Expired - Awaiting Budget', step: 2
+        }
+      ],
+    },
+  },
+  reason: {
+    'ui:widget': 'FroalaWidget',
+    'ui:options': {
+      froalaOptions,
+    },
+  },
+  nextAction: {
+    'ui:widget': 'StepperWidget',
+    'ui:options': {
+      filter: {
+        predicate: { group: 'default' },
+      },
+      steps: [
+        {
+          group: 'default', key: 'follow-up-call', value: 'follow-up-call', label: 'Follow-up call', step: 0,
+        },
+        {
+          group: 'default', key: 'send-email', value: 'send-email', label: 'Send email', step: 1,
+        },
+        {
+          group: 'default', key: 'client-visit', value: 'client-visit', label: 'Client visit', step: 2,
+        },
+        {
+          group: 'default', key: 'other', value: 'other', label: 'Other', step: 3,
+        },
+      ],
+    },
+  },
+  reminder: {
+    'ui:widget': 'StepperWidget',
+    'ui:options': {
+      filter: {
+        predicate: { group: 'default' },
+      },
+      steps: [
+        {
+          group: 'default', key: 'one-day', value: 1, label: '24 Hours', step: 1,
+        },
+        {
+          group: 'default', key: 'three-days', value: 3, label: '3 Days', step: 2,
+        },
+        {
+          group: 'default', key: 'seven-days', value: 7, label: '7 Days', step: 3,
+        },
+        {
+          group: 'default', key: 'seven-days', value: 13, label: '13 Days', step: 4,
+        },
+      ],
+    },
+  },
+  note: {
+    'ui:widget': 'FroalaWidget',
+    'ui:options': {
+      froalaOptions,
+    },
+  },
+  timeline: {
+    'ui:widget': 'MaterialTable',
+    'ui:options': {
+      columns: [
+        { title: 'via', field: 'via' },
+        { title: 'What', field: 'what'},          
+        { title: 'When', field: 'when' },
+        { title: 'Who', field: 'who' },
+        { title: 'Summary', field: 'notes' },          
+      ],
+      options: {
+        grouping: true,
+      },
+      title: 'Quote Timeline',
+    }
+  },
+};
+
 export const UpdateQuoteStatusForm = {
   id: 'UpdateQuoteStatus',
   ...defaultFormProps,
@@ -185,209 +414,29 @@ export const UpdateQuoteStatusForm = {
   tags: ['Quote Status'],
   schema: UpdateQuoteStatusSchema,
   graphql,
+  //map components to widget
   widgetMap: [
     {
-      component: 'core.InboxComponent@1.0.0',
+      component: 'InboxComponent',
       widget: 'InboxComponent',
     },
+    {
+      component: 'QuoteStatusWidget',
+      widget: 'QuoteStatusWidget',
+    },      
   ],
-  components: ['core.InboxComponent@1.0.0'],
+  // component imports
+  componentDefs: [
+    'core.InboxComponent@1.0.0',
+    {
+      componentFqn: 'lasec-crm.QuoteStatusWidget@1.0.0',
+      alias: 'QuoteStatusWidget',
+      required: true
+    }    
+  ],
   registerAsComponent: true,
   name: 'UpdateQuoteStatus',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  uiSchema: {
-    'ui:field': 'GridLayout',
-    'ui:grid-layout': [
-      {
-        customer: { md: 6, sm: 12, xs: 12 },
-        quoteStatus: { md: 6, sm: 12, xs: 12 },
-      },
-      {
-        nextAction: {
-          lg: 4, md: 6, sm: 12, xs: 12,
-        },
-        reason: {
-          lg: 4, md: 6, sm: 12, xs: 12,
-        },
-        reasonCodes: {
-          lg: 4, md: 6, sm: 12, xs: 12,
-        },
-        reminder: {
-          md: 4, sm: 12, xs: 12,
-        },
-      },
-      {
-        note: {
-          lg: 8, md: 12, sm: 12, xs: 12,
-        },
-      },
-      {
-        timeline: {
-          lg: 8, md: 12, sm: 12, xs: 12,
-        }
-      }
-    ],
-    customer: {
-      'ui:widget': 'LabelWidget',
-    },
-    reasonCodes: {
-      'ui:widget': 'ChipArrayWidget',
-      'ui:options': {
-        container: 'core.BasicContainer',
-        containerProps: {
-          title: 'Reasons',
-          style: {
-            maxWidth: '100%',
-            justifyContent: 'flex-end',
-          },
-        },
-      },
-    },
-    quoteStatus: {
-      'ui:widget': 'StepperWidget',
-      'ui:options': {
-        filter: {
-          predicate: { group: '1' },
-        },
-        steps: [
-          {
-            group: '1', groupTitle: 'Draft', key: '1-1', value: '1-1', label: 'Pending Submission', step: 0,
-          },
-          {
-            group: '1', groupTitle: 'Draft', key: '1-2', value: '1-2', label: 'Awaiting Approval', step: 1,
-          },
-          {
-            group: '1', groupTitle: 'Draft', key: '1-3', value: '1-3', label: 'Approved', step: 2,
-          },
-          {
-            group: '1', groupTitle: 'Draft', key: '1-4', value: '1-4', label: 'Declined', step: 3,
-          },
-          {
-            group: '2', groupTitle: 'Open', key: '2-1', value: '2-1', label: 'Quote Submitted', step: 1,
-          },
-          {
-            group: '2', groupTitle: 'Open', key: '2-2', value: '2-2', label: 'Under Assessment', step: 2,
-          },
-          {
-            group: '2', groupTitle: 'Open', key: '2-3', value: '2-3', label: 'Budget Timeline', step: 3,
-          },
-          {
-            group: '2', groupTitle: 'Open', key: '2-4', value: '2-4', label: 'Pricing Negotiation', step: 4,
-          },
-          {
-            group: '2', groupTitle: 'Open', key: '2-5', value: '2-5', label: 'Awaiting Purchase Order', step: 5,
-          },
-          {
-            group: '2', groupTitle: 'Open', key: '2-6', value: '2-6', label: 'Purchase Order Received', step: 6,
-          },
-          {
-            group: '3', groupTitle: 'Accepted', key: '3-2', value: '3-2', label: 'Accepted Fully', step: 1,
-          },
-          {
-            group: '3', groupTitle: 'Accepted', key: '3-3', value: '3-3', label: 'Partially Accepted', step: 2,
-          },
-          {
-            group: '3', groupTitle: 'Accepted', key: '3-4', value: '3-4', label: 'Job Card', step: 3,
-          },
-          {
-            group: '4', groupTitle: 'Draft', key: '4-2', value: '4-2', label: 'Lost - Price', step: 1,
-          },
-          {
-            group: '4', groupTitle: 'Draft', key: '4-3', value: '4-3', label: 'Lost - Funds', step: 2,
-          },
-          {
-            group: '4', groupTitle: 'Draft', key: '4-4', value: '4-4', label: 'Lost - No Stock', step: 3,
-          },
-          {
-            group: '4', groupTitle: 'Draft', key: '4-5', value: '4-5', label: 'Lost - No Info', step: 4,
-          },
-          {
-            group: '4', groupTitle: 'Draft', key: '4-6', value: '4-6', label: 'Lost - Lead Time', step: 5,
-          },
-          {
-            group: '4', groupTitle: 'Draft', key: '4-7', value: '4-7', label: 'Other (specify)', step: 6,
-          },
-          {
-            group: '5', groupTitle: 'Draft', key: '5-2', value: '5-2', label: 'Expired - Awaiting Feedback', step: 1
-          },
-          {
-            group: '5', groupTitle: 'Draft', key: '5-3', value: '5-3', label: 'Expired - Awaiting Budget', step: 2
-          }
-        ],
-      },
-    },
-    reason: {
-      'ui:widget': 'FroalaWidget',
-      'ui:options': {
-        froalaOptions,
-      },
-    },
-    nextAction: {
-      'ui:widget': 'StepperWidget',
-      'ui:options': {
-        filter: {
-          predicate: { group: 'default' },
-        },
-        steps: [
-          {
-            group: 'default', key: 'follow-up-call', value: 'follow-up-call', label: 'Follow-up call', step: 0,
-          },
-          {
-            group: 'default', key: 'send-email', value: 'send-email', label: 'Send email', step: 1,
-          },
-          {
-            group: 'default', key: 'client-visit', value: 'client-visit', label: 'Client visit', step: 2,
-          },
-          {
-            group: 'default', key: 'other', value: 'other', label: 'Other', step: 3,
-          },
-        ],
-      },
-    },
-    reminder: {
-      'ui:widget': 'StepperWidget',
-      'ui:options': {
-        filter: {
-          predicate: { group: 'default' },
-        },
-        steps: [
-          {
-            group: 'default', key: 'one-day', value: 1, label: '24 Hours', step: 1,
-          },
-          {
-            group: 'default', key: 'three-days', value: 3, label: '3 Days', step: 2,
-          },
-          {
-            group: 'default', key: 'seven-days', value: 7, label: '7 Days', step: 3,
-          },
-          {
-            group: 'default', key: 'seven-days', value: 13, label: '13 Days', step: 4,
-          },
-        ],
-      },
-    },
-    note: {
-      'ui:widget': 'FroalaWidget',
-      'ui:options': {
-        froalaOptions,
-      },
-    },
-    timeline: {
-      'ui:widget': 'MaterialTable',
-      'ui:options': {
-        columns: [
-          { title: 'via', field: 'via' },
-          { title: 'What', field: 'what'},          
-          { title: 'When', field: 'when' },
-          { title: 'Who', field: 'who' },
-          { title: 'Summary', field: 'notes' },          
-        ],
-        options: {
-          grouping: true,
-        },
-        title: 'Quote Timeline',
-      }
-    },
-  },
+  uiSchema
 };

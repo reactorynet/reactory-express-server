@@ -136,6 +136,9 @@ export default {
     delegates(survey) {            
       return survey.delegates;
     },
+    assessments(survey) {
+      return Assessment.find({ survey: ObjectId(survey.id) }).populate('assessor').then();
+    },
     statistics(survey) {
       const statistics = {
         launched: 0,
@@ -306,13 +309,14 @@ export default {
             launched: false,
             complete: false,
             removed: false,
+            team: surveyModel.surveyType === '180' ? inputData.team || surveyModel.delegateTeamName : 'default',
             message: `Added ${delegateModel.firstName} ${delegateModel.lastName} to survey ${surveyModel.title}`,
             lastAction: 'added',
             satus: 'new',
             actions: [{
               action: 'added',
               when: moment().valueOf(),
-              result: `Added ${delegateModel.firstName} ${delegateModel.lastName} to survey ${surveyModel.title}`,
+              result: `Added ${delegateModel.firstName} ${delegateModel.lastName} to survey ${surveyModel.title} as ${surveyModel.surveyType === '180'? (inputData.team || surveyModel.delegateTeamName) + ' team member' : 'delegate'}`,
               who: user._id,
             }],
             updatedAt: moment().valueOf(),

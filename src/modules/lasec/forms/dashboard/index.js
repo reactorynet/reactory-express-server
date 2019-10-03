@@ -604,6 +604,7 @@ export const CrmDashboardForm = {
   name: 'Dashboard',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
+  roles: ['*'],
   uiSchema: CrmDashboardUISchema,
   graphql,
   defaultFormValue: {

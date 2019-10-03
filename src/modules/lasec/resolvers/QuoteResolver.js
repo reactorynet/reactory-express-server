@@ -206,6 +206,13 @@ export default {
         customer_full_name: 'fullName',
       });
     },
+    status: ({ status_id }) => {
+      return status_id;
+    },
+    statusGroup: ( { substatus_id }) => {
+      return substatus_id;
+    },
+    allowedStatus: ( { allowed_status_ids } ) => allowed_status_ids,
     company: ({ company_id, company_trading_name }) => {
       return {
         id: company_id,
@@ -227,7 +234,12 @@ export default {
     modified: ({ modified }) => { return moment(modified); },
     expirationDate: ({ expirationDate }) => { return moment(expirationDate); },
     note: ({ note }) => (note),
-    timeline: ({ timeline }) => timeline
+    timeline: ({ timeline }) => timeline,
+    meta: ( quote ) => {
+      return {
+        source: quote
+      };
+    }
   },
   LasecCompany: {
     id: ({ id }) => (id),
@@ -344,7 +356,7 @@ export default {
       dashboardResult.statusSummary.forEach((entry, index) => {
 
         dashboardResult.charts.quoteStatusFunnel.data.push({
-          "value": entry.good,
+          "value": entry.totalVATExclusive,
           "name": entry.key,
           "fill": `#${palette[index + 1 % palette.length]}`
         });

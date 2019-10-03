@@ -12,7 +12,7 @@ enabled.forEach((moduleDefinition) => {
     const resolvedItem = require(path.resolve(path.join('src', 'modules', `${moduleDefinition.moduleEntry}`))).default;
     resolved.push(resolvedItem);
   } catch (pluginLoadError) {
-    logger.error('Could not load pluging', moduleDefinition);
+    logger.error('Could not load plugin', { moduleDefinition, pluginLoadError });
   }  
 });
 

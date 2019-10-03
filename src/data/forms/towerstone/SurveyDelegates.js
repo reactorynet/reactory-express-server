@@ -7,6 +7,14 @@ export const SurveyDelegatesSchema = {
   title: 'Survey Delegates',
   required: [],
   properties: {
+    title: {
+      type: 'string',
+      title: 'Survey Title'
+    },
+    surveyType: {
+      type: 'string',
+      title: 'Survey Type'
+    },
     launched: {
       type: 'number',
       title: 'Launched',
@@ -99,6 +107,11 @@ export const SurveyDelegatesUISchema = {
     {
       delegates: { md: 12 },
     },
+    {
+      launched: { md: 3, sm: 6 },
+      complete: { md: 3, sm: 6 },
+      total: { md: 3, sm: 12 }
+    }
   ],
   id: {
     'ui:widget': 'HiddenWidget',
@@ -128,15 +141,10 @@ export const SurveyDelegatesUISchema = {
     },
   },
   total: {
-    'ui:widget': 'ProgressWidget',
-    'ui:options': {
-      size: 80,
-      thickness: 5,
-      variant: 'static',
-    },
+    'ui:widget': 'LabelWidget',    
   },
   delegates: {
-    'ui:widget': 'SurveyDelegatesWidget',
+    'ui:widget': 'SurveyDelegatesWidget',    
   },
 };
 
@@ -146,7 +154,12 @@ const graphql = {
     text: `query SurveyDetail($surveyId: String!){
       surveyDetail(surveyId: $surveyId){
         id
+        title
         statistics
+        delegateTeamName
+        assessorTeamName
+        surveyType
+        status
         delegates {
           id          
           delegate {
@@ -213,11 +226,14 @@ const graphql = {
     },
     resultMap: {
       id: 'id',
+      'surveyType': 'surveyType',
       'statistics.launched': 'launched',
       'statistics.peersPending': 'peersPending',
       'statistics.total': 'total',
       'statistics.complete': 'complete',
       delegates: 'delegates',
+      assessorTeamName: 'assessorTeamName',
+      delegateTeamName: 'delegateTeamName'
     },
     edit: true,
     new: false,

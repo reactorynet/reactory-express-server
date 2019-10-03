@@ -1,4 +1,4 @@
-import { defaultFormProps } from '../../defs';
+import { defaultFormProps } from '../../../../data/forms/defs';
 
 const ProductCategoriesSchema = {
   title: 'Product Categories',

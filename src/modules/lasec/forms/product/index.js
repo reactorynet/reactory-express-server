@@ -1,7 +1,7 @@
-import { defaultFormProps } from '../../defs';
+import { defaultFormProps } from '../../../../data/forms/defs';
 
 export { default as ProductCategories } from './categories';
-
+export { default as ProductEnquiry } from './query';
 
 export const ProductQuestions = {
   type: 'object',

@@ -489,7 +489,9 @@ const resolveData = async ({ surveyId, delegateId }) => {
 
 export const pdfmakedefinition = (data, partner, user) => {
   logger.debug('Generating PDF definition');
-  const scaleSegments = [];
+  
+  const scaleSegments = [   ];
+
   data.scale.entries.forEach((scale) => {
     if(scale.rating > 0) {
       scaleSegments.push({ text: `${scale.rating} - ${scale.description}`, style: ['default'] });
@@ -504,6 +506,51 @@ export const pdfmakedefinition = (data, partner, user) => {
       return (rowIndex === 1) ? palette.primary.main : null;
     },
   };
+
+  const introductionSection = [
+    {
+      text: '1. Introduction', newPage: 'before', style: ['header', 'primary'], pageBreak: 'before',
+    },
+    {
+      text: [
+        `${data.delegate.firstName}, this report compares the results of your self-assessment with those of the colleagues who assessed you.\n\n`,
+        'These assessors include the person you report to and randomly selected colleagues from the list that you submitted. ',
+        `You have been assessed against the ${data.organization.name} values and supporting leadership behaviours for all ${data.organization.name} employees.`,
+      ],
+      style: ['default'],
+    },
+    {
+      text: `${data.leadershipBrand.description.replace('\r', ' ')}`,
+      style: ['default', 'quote', 'centerAligned'],
+      margin: [5, 5],
+    },
+    {
+      text: [
+        `These values form the foundation of our desired culture at ${data.organization.name} and in order to build this culture, we as leaders must`,
+        `intentionally live the values by displaying the supporting behaviours. In this way, we will align our people to the purpose and strategy of ${data.organization.name}.`,
+      ],
+      style: ['default'],
+    },
+    {
+      text: '"You cannot manage what you cannot measure"',
+      style: ['default', 'quote', 'centerAligned'],
+      margin: [5, 5],
+    },
+    {
+      text: ['The TowerStone Leadership Brand 360° Assessment is a tool that provides insight to track your behavioural growth as you seek ',
+        `to align yourself with the ${data.organization.name} values. It is now your responsibility to use this feedback to improve your ability `,
+        `to (a) model these behaviours and (b) coach the next levels of leadership to align to the ${data.organization.name} values.  Please `,
+        'consider the feedback carefully before completing the development plan that follows the assessment',
+        ' results.'],
+      style: ['default'],
+    },
+  ];
+
+  const scaleSection = [
+    { text: '2. Rating Scale', style: ['header', 'primary'] },
+    { text: 'The feedback that you have received is in the context of the following rating scale:', style: ['default'] },
+    ...scaleSegments
+  ];
 
   const qualitiesSection = [
     { text: '3. Qualities', style: ['header', 'primary'], pageBreak: 'before' },
@@ -558,7 +605,7 @@ export const pdfmakedefinition = (data, partner, user) => {
 
       quality.behaviours.forEach((behaviour) => {
         const lowratingsForBehaviour = lodash.filter(lowratingsForQuality, r => r.custom !== true && behaviour._id.equals(r.behaviourId));
-        const lowRatingRowElements = lowratingsForBehaviour.map(r => [{ text: r.comment, style: ['default'] }]);
+        const lowRatingRowElements = lowratingsForBehaviour.map(r => [{ text: r.comment ? r.comment : 'No comment available', style: ['default'] }]);
         if (lowRatingRowElements.length > 0) {
           behaviourSection.push({
             table: {
@@ -636,9 +683,9 @@ export const pdfmakedefinition = (data, partner, user) => {
 
   const developmentPlan = [
     { text: '6 Development Plan', pageBreak: 'before', style: ['header', 'primary'] },
-    { text: 'Your development plan comprises of a reflection section as well as provision for next actions.  Please give careful thought and consideration in your reflection and how that will impact planning your next actions.', style: ['default'] },
+    { text: 'Your development plan comprises a reflection section as well as a section where you can plan next actions.  Please give careful consideration to your reflection and how it will impact planning your next actions.', style: ['default'] },
     { text: '6.1 Reflection', style: ['subheader', 'primary'] },
-    { text: 'The purpose of this assessment is to assist you in modelling the TowerStone Leadership Brand more effectively. The development plan is designed to guide your reflection on the feedback, and then facilitate identifying actions for improvement.\n\n', style: ['default'] },
+    { text: `The purpose of this assessment is to assist you in modelling the ${data.organization.name} Leadership Brand more effectively. The development plan is designed to guide your reflection on the feedback, and then facilitate identifying actions for improvement.\n\n`, style: ['default'] },
   ];
 
 
@@ -647,7 +694,7 @@ export const pdfmakedefinition = (data, partner, user) => {
   [
     '1. How aligned are your expectations to the feedback that you received from your assessors, and why?',
     '2. How intentional are you about leading by example?',
-    '3. How does this feedback help you in your leadership capacity to support the TowerStone strategic objectives?',
+    `3. How does this feedback help you in your leadership capacity to support the ${data.organization.name} strategic objectives?`,
     `4. What is your contribution to ${data.organization.name}?`,
     '5. What can you do to build stronger trust relationships with others?',
   ].forEach((question) => {
@@ -704,7 +751,7 @@ export const pdfmakedefinition = (data, partner, user) => {
 
   const acceptance = [
     { text: '7 Acceptance and Commitment', style: ['subheader', 'primary'], pageBreak: 'before' },
-    { text: 'I accept and commit to addressing the feedback presented in this assessment, by taking the actions listed within the agreed timeframes.', style: ['default'],  margin: [0, 20] },
+    { text: 'I accept and commit to addressing the feedback presented in this assessment by taking the actions listed within the agreed timeframes.', style: ['default'],  margin: [0, 20] },
     { text: 'Signed: ................................     Date: ...................................................... ', margin: [0, 20], style: ['default'] },
     { text: 'Manager: ...............................     Date: ...................................................... ', margin: [0, 20], style: ['default'] },
   ];
@@ -746,45 +793,8 @@ export const pdfmakedefinition = (data, partner, user) => {
       {
         image: 'organizationLogo', width: 240, style: ['centerAligned'], margin: [0, 30, 0, 50],
       },      
-      {
-        text: '1. Introduction', newPage: 'before', style: ['header', 'primary'], pageBreak: 'before',
-      },
-      {
-        text: [
-          `${data.delegate.firstName}, this report compares the results of your self-assessment with those of the colleagues who assessed you.\n\n`,
-          'These assessors include the person you report to and randomly selected colleagues from the list that you submitted. ',
-          `You have been assessed against the ${data.organization.name} values and supporting leadership behaviours for all ${data.organization.name} employees.`,
-        ],
-        style: ['default'],
-      },
-      {
-        text: `${data.leadershipBrand.description.replace('\r', ' ')}`,
-        style: ['default', 'quote', 'centerAligned'],
-        margin: [5, 5],
-      },
-      {
-        text: [
-          `These values form the foundation of our desired culture at ${data.organization.name} and in order to build this culture, we as leaders must`,
-          `intentionally live out the values by displaying the supporting behaviours. In this way, we will align our people to the purpose and strategy of ${data.organization.name}.`,
-        ],
-        style: ['default'],
-      },
-      {
-        text: '"You cannot manage what you cannot measure"',
-        style: ['default', 'quote', 'centerAligned'],
-        margin: [5, 5],
-      },
-      {
-        text: ['The TowerStone Leadership Brand 360° Assessment is a tool that provides insight to track your behavioural growth as you seek ',
-          'to align yourself with the TowerStone values. It is now your responsibility to use this feedback to improve your ability ',
-          `to (a) model these behaviours and (b) coach the next levels of leadership to align to the ${data.organization.name} values.  Please `,
-          'consider the feedback carefully before completing the development plan that follows the assessment',
-          ' results.'],
-        style: ['default'],
-      },
-      { text: '2. Rating Scale', style: ['header', 'primary'] },
-      { text: 'The feedback that you have received is in the context of the following rating scale:', style: ['default'] },
-      ...scaleSegments,
+      ...introductionSection,      
+      ...scaleSection,
       ...qualitiesSection,
       ...behaviourSection,
       ...overallSection,

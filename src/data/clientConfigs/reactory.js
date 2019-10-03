@@ -1,7 +1,14 @@
 import * as dotenv from 'dotenv';
 import { profileSmall } from '../menus';
 
-import systemRoutes from './defaultRoutes';
+import {
+  formsroute,
+  loginroute,
+  logoutroute,
+  resetpasswordroute,
+  forgotpasswordroute,
+  notfoundroute,
+} from './defaultRoutes';
 
 dotenv.config();
 
@@ -68,7 +75,35 @@ export default {
     },
   ],
   routes: [
-    ...systemRoutes,
+    {
+      ...loginroute,
+      background: {
+        image: 'default',
+      },
+      args: [
+        {
+          key: 'forgotEnabled',
+          value: {
+            type: 'bool',
+            forgotEnabled: true,
+          },
+        },
+        {
+          key: 'authlist',
+          value: {
+            type: 'bool',
+            authlist: [
+              'local',
+              'microsoft',
+            ],
+          },
+        },
+      ],
+    },
+    logoutroute,
+    forgotpasswordroute,
+    resetpasswordroute,
+    logoutroute,
     {
       key: 'home',
       title: 'Home',

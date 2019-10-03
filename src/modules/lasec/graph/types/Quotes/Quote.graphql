@@ -58,6 +58,7 @@ type Quote {
   id: String
   statusGroup: String
   status: String
+  allowedStatus: [ String ]
   customer: LasecCustomer
   company: LasecCompany
   totalVATExclusive: Int
@@ -70,7 +71,8 @@ type Quote {
   expirationDate: Date
   note: String
   header: [LasecQuoteHeader ]
-  timeline: [ QuoteTimeLine ]  
+  timeline: [ QuoteTimeLine ]
+  meta: Any  
 }
 
 

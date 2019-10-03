@@ -37,6 +37,8 @@ type Survey {
   leadershipBrand: LeadershipBrand
   organization: Organization
   title: String!
+  delegateTeamName: String,
+  assessorTeamName: String,
   surveyType: String!
   startDate: Date
   endDate: Date
@@ -44,7 +46,8 @@ type Survey {
   status: String
   statistics: Any
   options: Any
-  delegates: [DelegateEntry]  
+  delegates: [DelegateEntry]
+  assessments: [Assessment]  
   calendar: [SurveyCalendarEntry]
   timeline: [TimelineEntry]
 }
@@ -57,8 +60,10 @@ input SurveyInput {
   id: String
   leadershipBrand: String!
   organization: String!
-  title: String!
+  title: String!  
   surveyType: String!
+  delegateTeamName: String,
+  assessorTeamName: String,
   startDate: Date
   endDate: Date
   mode: String

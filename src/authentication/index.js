@@ -22,16 +22,15 @@ class AuthConfig {
       app.use(passport.initialize());
       // Passport calls serializeUser and deserializeUser to
       // manage users
-      const users = {};
       passport.serializeUser((user, done) => {
       // Use the OID property of the user as a key
-        logger.info('passport.serializeUser((user, done))', user);
+        //logger.debug('AuthConfig.passport.serializeUser((user, done))', user);
         // users[user.profile.oid] = user;
         done(null, user.oid);
       });
 
       passport.deserializeUser((id, done) => {
-        logger.info('passport.deserializeUser', id);
+        //logger.debug('AuthConfig.passport.deserializeUser', id);
         done(null, users[id]);
       });
 
@@ -112,9 +111,9 @@ class AuthConfig {
       }
 
       // Configure OIDC strategy
-      // Reactory holds an integration as an application
+      //TODO: Reactory holds an integration as an application
       // ideally this should be done per request
-      const redirectUrl = `${process.env.OAUTH_REDIRECT_URI}/${global.partner ? global.partner.key : 'lasec-crm'}`;
+      const redirectUrl = `${process.env.OAUTH_REDIRECT_URI}`;
       logger.debug(`Application is configure to use ${redirectUrl} for OIDC strategy`);
       passport.use(new OIDCStrategy(
         {
@@ -151,6 +150,7 @@ class AuthConfig {
               prompt: 'login',
               failureRedirect: '/auth/microsoft/openid/failed',
               failureFlash: true,
+              redirectUrl: `${process.env.OAUTH_REDIRECT_URI}/${req.params.clientKey}`
             },
           )(req, res, next);
         },
