@@ -8,7 +8,7 @@ import AuthConfig from '../authentication';
 
 const httpLink = createHttpLink({
   uri: `${process.env.API_URI_ROOT}/api`,
-  fetch 
+  fetch: fetch 
 });
 
 const authLink = setContext((_, { headers }) => {
