@@ -110,7 +110,7 @@ ReactoryClientSchema.methods.getSetting = function getSetting(name, defaultValue
     const found = find(this.settings, { name });
     if (found) return found;
 
-    if (isNil(defaultValue) === false && create === true) {
+    if (lodash.isNil(defaultValue) === false && create === true) {
       this.settings.push({
         name, data: defaultValue, componentFqn: null, formSchema: null,
       });
