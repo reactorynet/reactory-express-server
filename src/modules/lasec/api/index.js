@@ -78,7 +78,7 @@ const getStorageItem = async (key) => {
       if (lastLogin) lastLogin = moment(lastLogin);
 
       if (payload && payload.token) {
-        const timeout = 60;
+        const timeout = 1;
         
         if (lastLogin && moment(lastLogin).add(timeout, 'hour').isAfter(now) === true) {
           // we have an authentication token
