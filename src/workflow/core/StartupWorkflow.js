@@ -5,7 +5,7 @@ import logger from '../../logging';
 
 class BeforeStartup extends StepBody {
   run(context) {
-    logger.debug(`Before Startup ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);
+    logger.debug(`WF: Before Startup ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);
     return ExecutionResult.next();
   }
 }
@@ -13,7 +13,7 @@ class BeforeStartup extends StepBody {
 
 class AfterStartup extends StepBody {
   run(context) {
-    logger.debug(`After Startup ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);
+    logger.debug(`WF: After Startup ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);
     return ExecutionResult.next();
   }
 }

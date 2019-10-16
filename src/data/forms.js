@@ -117,7 +117,7 @@ const smartAdminResources = [
 
 const defaultForm = {
   id: 'default',
-  uiFramework: 'bootstrap',
+  uiFramework: 'material',
   uiSupport: ['material', 'bootstrap'],
   uiResources: smartAdminResources,
   title: 'User Registration',

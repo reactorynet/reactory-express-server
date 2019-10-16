@@ -250,7 +250,17 @@ const userResolvers = {
   User: {
     id(obj) {
       return obj._id;
-    },
+    },    
+    fullName ( user ) {
+      if(!user) return 'null-user';
+      if(typeof user.fullName === 'function') return user.fullName();
+      
+      return `${user.firstName} ${user.lastName}`;      
+    },    
+    fullNameWithEmail (user) {
+      const { firstName, lastName, email } = user;
+      return `${firstName} ${lastName}<${email}>`;
+    },    
     username(obj) {
       return obj.username;
     },

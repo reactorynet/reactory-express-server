@@ -24,11 +24,17 @@ const organizationResolver = {
 
   },
   Organization: {
-    id(obj) {
-      return obj._id.toString();
+    id({ _id }) {
+      
+      return _id ? `${_id.toString()}` : 'organization-no-id';
     },
     avatar() {
       return null;
+    },
+    tradingName(organization) {
+      if(!organization) return 'Null Organization';
+
+      return organization.tradingName || organization.name;
     },
     createdAt(obj) {
       return obj.createdAt || moment().unix();

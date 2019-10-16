@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import lodash from 'lodash';
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -8,6 +9,7 @@ const meta = new mongoose.Schema({
   reference: String, // a lookup string to use for the remote system
   sync: String,
   lastSync: Date,
+  nextSync: Date,
   mustSync: {
     type: Boolean,
     default: true,
@@ -27,12 +29,12 @@ const QuoteReminderShema = new mongoose.Schema({
     },
   ],
   next: Date,
+  actionType: String,
   actioned: Boolean,
-  result: {
-
-  },
-  via: String,
-  meta,
+  result: { },
+  via: [String],
+  text: String,
+  importance: String
 });
 
 QuoteReminderShema.statics.findRemindersForQuote = async (quote) => {
@@ -57,7 +59,40 @@ const QuoteHeaderSchema = new mongoose.Schema({
   meta,
 });
 
+const totals = new mongoose.Schema({
+  totalVATExclusive: {
+    type: Number,
+    required: true,    
+  },
+  totalVAT: {
+    type: Number,
+    required: true,    
+  },
+  totalVATInclusive: {
+    type: Number,
+    required: true,    
+  },
+  totalDiscount: {
+    type: Number,
+    required: true,    
+  },
+  totalDiscountPercent: {
+    type: Number,
+    required: true,    
+  },
+  GP: {
+    type: Number,
+    required: true,    
+  },
+  actualGP: {
+    type: Number,
+    required: true,    
+  }
+});
+
+
 export const QuoteHeader = mongoose.model('QuoteHeader', QuoteHeaderSchema);
+
 
 const QuoteSchema = new mongoose.Schema({
   id: ObjectId,
@@ -65,19 +100,32 @@ const QuoteSchema = new mongoose.Schema({
     type: ObjectId,
     ref: 'Organization',
   },
+  customer: {
+    type: ObjectId,
+    ref: 'User',
+  },
+  statusGroup: String,
+  statusGroupName: String,
   status: String,
+  statusName: String,  
+  allowedStatus: [String],
   code: String, // https://siteurl/quote/00000001
   note: String,
   meta,
   user: {
-    required: true,
+    required: false,
     type: ObjectId,
     ref: 'User',
   }, // assigned user
   salesRep: {
-    required: true,
+    required: false,
     type: ObjectId,
     ref: 'User',
+  },
+  salesTeam: {
+    required: false,
+    type: ObjectId,
+    ref: 'Team'
   },
   headers: [
     {
@@ -91,17 +139,24 @@ const QuoteSchema = new mongoose.Schema({
       ref: 'QuoteItem',
     },
   ],
-  createdAt: {
+  totals,
+  created: {
     type: Date,
     required: true,
   },
-  updatedAt: {
+  modified: {
     type: Date,
     required: true,
   },
+  actions: [
+    {
+
+    }
+  ],
   timeline: [{
     when: Date,
     what: String,
+    actionType: String,
     who: {
       type: ObjectId,
       ref: 'User',
@@ -115,6 +170,15 @@ const QuoteSchema = new mongoose.Schema({
   }],
 });
 
+QuoteSchema.methods.addTimelineEntry = async function addTimelineEntry(entry){
+  if(lodash.isEmpty(this.timeline) === false) {
+    this.timeline = [entry];
+  } else {
+    this.timeline.push(entry);
+  }
+
+  await this.save();
+};
 
 export const Quote = mongoose.model('Quote', QuoteSchema);
 

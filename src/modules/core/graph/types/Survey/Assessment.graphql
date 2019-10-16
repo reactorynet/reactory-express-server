@@ -1,0 +1,68 @@
+enum AssessmentType {
+    TOWERSTONE_180
+    TOWERSTONE_360
+    PLC
+    CUSTOM
+}
+
+type Rating {
+    id: ObjID!
+    quality: Quality
+    behaviour: Behaviour
+    ordinal: Int!
+    rating: Int!
+    custom: Boolean
+    behaviourText: String
+    comment: String
+    updatedAt: Date
+}
+
+type Assessment {
+    id: ObjID!
+    assessmentType: String
+    organization: Organization!
+    survey: Survey!
+    assessor: User!
+    delegate: User!
+    ratings: [Rating]
+    complete: Boolean
+    overdue: Boolean
+    selfAssessment: Boolean
+    deleted: Boolean
+    deleteReason: String
+    createdAt: Date
+    updatedAt: Date    
+}
+
+enum ReportStatus {
+    READY
+    PENDING
+    ASSESSMENTS_PENDING
+}
+
+type SurveyReportForUser {
+    user: User
+    overall: Float
+    status: ReportStatus
+    survey: Survey
+    assessments: [Assessment]
+    tasks: [Task]
+    comments: [Comment]
+}
+
+extend type Query {
+    assessmentWithId(id: String): Assessment
+    userSurveys(id: String): [Assessment]
+    userReports(id: String): [SurveyReportForUser]
+    reportDetailForUser(userId: String, surveyId: String): SurveyReportForUser    
+}
+
+extend type Mutation {
+    setRatingForAssessment(
+        id: String, ratingId: String, 
+        rating: Int, comment: String, 
+        qualityId: String, behaviourId: String,
+        custom: Boolean, behaviourText: String, deleteRating: Boolean) : Rating
+    setAssessmentComplete(id: String!): Assessment
+    deleteAssessment(id: String!, remove: Boolean): Any    
+}

@@ -1,0 +1,54 @@
+query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
+  LasecGetDashboard(dashparams: $dashparams){
+    id
+    period
+    periodStart
+    periodEnd
+    repIds
+    totalQuotes
+    totalBad
+    statusSummary {
+      key
+      title
+      good
+      naughty
+      category
+    }
+    charts {
+      quoteStatusFunnel {
+        data
+        options
+      }
+      quoteStatusPie {
+        data
+        options
+      }
+      quoteStatusComposed {
+        data
+        options
+      }
+    }
+    quotes { 
+      id
+      statusName
+      customer {
+        id
+        fullName
+      }         
+      company {
+        id
+        tradingName
+      }     
+      code
+      totalVATExclusive
+      totalVAT
+      totalVATInclusive
+      GP
+      actualGP
+      created
+      modified
+      expirationDate
+      note
+    }
+  }
+}

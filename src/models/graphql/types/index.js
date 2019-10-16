@@ -13,6 +13,7 @@ const typeDefs = [];
  * Type imports defined by order of definition
  */
 [
+  /*
   'System/Scalars',
   'System/Enums',
   'System/Directives',
@@ -34,6 +35,7 @@ const typeDefs = [];
   'System/Statistics',
   'Communications/Notification',
   'Custom/FuniSaveGateway',
+  */
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;

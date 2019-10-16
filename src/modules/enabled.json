@@ -1,4 +1,13 @@
 [
+  {
+    "id": "f86ed2ac-f06a-4076-a7ce-2cda58482989",
+    "name": "ReactoryServer",
+    "key": "reactory",
+    "fqn": "core.ReactoryServer@1.0.0",
+    "moduleEntry": "core/index.js",
+    "license": "Apache-2.0",
+    "shop": "https://reactory.net/shop/modules/f86ed2ac-f06a-4076-a7ce-2cda58482989/"    
+  },
   { 
     "id": "0c22819f-bca0-4947-b662-9190063c8277", 
     "name": "Lasec",  

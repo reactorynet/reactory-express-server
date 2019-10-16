@@ -1,6 +1,4 @@
-import { CrmDashboardForm,
-  QuotesList as QuotesListForm,
-  QuoteDetail as QuoteDetailForm,
+import { default as CrmDashboardForm, 
 } from './dashboard';
 
 import {
@@ -8,13 +6,17 @@ import {
 } from './product';
 
 import {
-  UpdateQuoteStatusForm 
+  QuoteIdInputForm,
+  UpdateQuoteStatusForm ,
+  QuoteDetailForm,
+  QuoteListForm, 
 } from './quote';
 
 export default [
   CrmDashboardForm,
   ProductEnquiryForm,
-  QuotesListForm,
+  QuoteIdInputForm,
+  QuoteListForm,
   QuoteDetailForm,
   UpdateQuoteStatusForm
 ];

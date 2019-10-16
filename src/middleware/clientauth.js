@@ -11,6 +11,8 @@ const bypassUri = [
 const clientauth = (req, res, next) => {
   let clientId = req.headers['x-client-key'];
   let clientPwd = req.headers['x-client-pwd'];
+  let serverBypass = req.headers['x-reactory-pass'];  
+
   let query = req.query;
 
   if(isNil(clientId) === true) clientId = req.params.clientId;
@@ -20,6 +22,8 @@ const clientauth = (req, res, next) => {
   if(isNil(clientPwd) === true) clientPwd = req.params.secret;
   if(isNil(clientPwd) === true) clientPwd = query.secret;  
   if(isNil(clientPwd) === true) clientPwd = query['x-client-pwd'];
+
+
 
   logger.debug(`Client key: [${clientId}], Client Token: [${clientPwd}], Original Url: ${req.originalUrl}`, {query: req.query, params: req.params});
 
@@ -54,13 +58,29 @@ const clientauth = (req, res, next) => {
       next();
     } else {
       ReactoryClient.findOne({ key: clientId }).then((clientResult) => {
-        if (isNil(clientResult)) res.status(404).send({ error: 'Invalid api client credentials' });
-        else if (clientResult.validatePassword(clientPwd) === false) res.status(401).send({ error: 'Invalid api client credentials' });
-        else {
-          global.partner = clientResult;
-          next();
-        }
+        if (isNil(clientResult)) res.status(404).send({ error: 'Invalid api client credentials' });        
+  
+        if(isNil(serverBypass) === false) {
+          logger.debug('Validating Server Bypass');          
+          //validate  
+          if(serverBypass === `${clientResult.password}+${clientResult.salt}`) {
+            logger.debug('Validating Server Bypass - Passed');          
+            global.partner = clientResult;
+            next();            
+          } else {
+            res.status(401).send({error: 'Your Server ByPass Failed', code: 'ID10TA'});
+          }
+        } else {
+          if (clientResult.validatePassword(clientPwd) === false) { 
+            res.status(401).send({ error: 'Invalid api client credentials' });
+          }
+          else {
+            global.partner = clientResult;
+            next();
+          }
+        }                
       }).catch((clientError) => {
+        
         logger.error('Client retrieval error', clientError);
         res.status(404).send({ error: `client with id ${clientId} found` });
       });

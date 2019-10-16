@@ -1,0 +1,17 @@
+type WorkflowResult {
+  name: String
+  result: Any
+}
+
+input WorkflowInput {
+  name: String
+  input: Any
+}
+
+extend type Query {
+  workflowStatus(name: String!): WorkflowResult
+}
+
+extend type Mutation {
+  startWorkflow(name: String!, data: WorkflowInput): Boolean
+}

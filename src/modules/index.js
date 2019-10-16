@@ -5,15 +5,17 @@ const available = require('./available.json');
 const enabled = require('./enabled.json');
 
 const resolved = [];
+const failed = [];
 
 enabled.forEach((moduleDefinition) => {
   logger.debug(`Module [${moduleDefinition.name}] - Loading`);
-  try {
+  //try {
     const resolvedItem = require(path.resolve(path.join('src', 'modules', `${moduleDefinition.moduleEntry}`))).default;
     resolved.push(resolvedItem);
-  } catch (pluginLoadError) {
-    logger.error('Could not load plugin', { moduleDefinition, pluginLoadError });
-  }  
+  //} catch (pluginLoadError) {
+  //  failed.push({ moduleDefinition, reason: pluginLoadError.message || 'Module Could not resolve, check imports' });
+  //  logger.error(`Could not load module ${moduleDefinition.name}`, { pluginLoadError });
+  //}  
 });
 
 

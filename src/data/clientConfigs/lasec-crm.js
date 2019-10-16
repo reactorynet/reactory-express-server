@@ -47,6 +47,11 @@ const proxiedRoutes = [
     title: 'Quotes',
     path: 'crm/all-quotes',
   },
+  {  
+    key: 'CrmQuotesRoot',
+    title: 'Quotes',
+    path: 'crm/customer/**',
+  },
   {
     key: 'CrmSalesOrders',
     title: 'Sales Orders',
@@ -76,25 +81,23 @@ export default {
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/reset-password',
   avatar: `${CDN_ROOT}themes/${key}/images/avatar.png`,
-  applicationRoles: ['USER', 'ADMIN', 'ANON'],
+  applicationRoles: [
+    'USER', 
+    'ADMIN', 
+    'ANON', 
+    'DEVELOPER', 
+    'CUSTOMER', 
+    'SALES',
+    'WAREHOUSE',
+    'EXEC'
+  ],
   billingType: 'partner',
   organization: [
     {
       name: 'Lasec (Pty) Ltd.', key: 'lasec',
     },
   ],
-  users: [
-    {
-      email: 'werner.weber@gmail.com', firstName: 'Werner', lastName: 'Weber', roles: ['USER', 'ADMIN'],
-    },
-    {
-      email: 'grahambr@awards.co.za', firstName: 'Graham', lastName: 'Bradford', roles: ['USER', 'ADMIN'],
-    },
-    {
-      email: 'kelly.cupido@lasec.com', firstName: 'Kelly', lastName: 'Cupido', roles: ['USER', 'ADMIN'],
-    },
-
-  ],
+  users: [],
   components: [
     {
       nameSpace: key,
@@ -104,7 +107,7 @@ export default {
       author: 'werner.weber+reactory-sysadmin@gmail.com',
       labels: [],
       uri: 'embed',
-      roles: ['ADMIN'],
+      roles: ['ADMIN', 'USER'],
       arguments: [],
       resources: [],
     },
@@ -136,15 +139,21 @@ export default {
         {
           ordinal: 6, title: 'Settings', link: '/settings', icon: 'settings', roles: ['USER', 'ADMIN'],
         },
+        */
         {
           ordinal: 7, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER'],
+        },        
+        {
+          ordinal: 7, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['USER'],
         },
-        */
         {
           ordinal: 9, title: 'Discussion', link: '/discuss/', icon: 'chat', roles: ['USER'],
         },
         {
           ordinal: 10, title: 'Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
+        },
+        {
+          ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
         },
       ],
     },
@@ -296,6 +305,24 @@ export default {
           },
         },
       ],
+    },    
+    {
+      key: 'reactoryrouter',
+      title: 'Reactory Forms',
+      path: '/reactory/**',
+      exact: false, 
+      public: false,
+      roles: ['ADMIN'],
+      componentFqn: 'core.ReactoryRouter',
+      args: [
+        {
+          key: 'routePrefix',
+          value: {
+            type: 'string',
+            routePrefix: '/reactory'
+          },
+        }
+      ]
     },
     {
       key: 'administration',
@@ -315,6 +342,15 @@ export default {
       roles: ['ADMIN'],
       componentFqn: `${key}.Sales@1.0.0`,
     },
+    {
+      key: 'graphiql',
+      title: 'GraphiQL',
+      path: '/graphiql/**',
+      exact: true,
+      public: false,
+      roles: ['ADMIN', 'DEVELOPER'],
+      componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
+    }
   ],
   theme: key,
   themeOptions: {
@@ -453,6 +489,57 @@ export default {
         url: 'https://l360.lasec.co.za/',
       },
     },
+    {
+      name: 'reactory.forms.generation',
+      title: 'Reactory Forms Generation Settings',
+      description: '',
+      data: {
+        enabled: false,
+        generators: [
+          {
+            id: 'generators.MySQLFormGenerator',
+            connectionId: 'mysql.default',
+            props: {
+              database: ['reactory'],              
+              tables: ['*']
+            } 
+          },
+          {
+            id: 'generators.MySQLFormGenerator',
+            connectionId: 'mysql.lasec360.development',
+            props: {
+              database: [
+                {
+                  name: 'lasec360',
+                  tables: ['address'],
+                }
+              ],              
+              
+            }
+          },
+        ]
+      }
+    },
+    {
+      name: 'mysql.default',
+      data: {
+        host: 'localhost',
+        user: 'reactory',
+        password: 'reactory_password',
+        database: 'reactory',
+        port:3306    
+      },       
+    },
+    {
+      name: 'mysql.lasec360.development',
+      data: {
+        host: 'localhost',
+        user: 'reactory',
+        password: 'reactory_password',
+        database: 'lasec360',
+        port:3306
+      },       
+    },   
   ],
   allowCustomTheme: true,
   auth_config: [

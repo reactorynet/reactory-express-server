@@ -58,6 +58,7 @@ export default {
   staff_user_data: { url: `api/${ENTITY_KEY__STAFF_USER_DATA}/`, allowed_methods: ['get'] },
   staff_user_data_put: { url: `api/${ENTITY_KEY__STAFF_USER_DATA}/\\d+/`, allowed_methods: ['put'] },
   quote_get: { url: `api/${ENTITY_KEY__QUOTE}/`, allowed_methods: ['get'] },
+  quote_items: { url: `api/${ENTITY_KEY__QUOTE_ITEM}/`, allowed_methods: ['get', 'post'] },
   quote_status_get: { url: `api/${ENTITY_KEY__QUOTE_STATUS}/`, allowed_methods: ['get'] },
   quote_put_delete: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/`, allowed_methods: ['put', 'delete'] },
   quote_send_email: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/send_quote_email/`, allowed_methods: ['post'] },
@@ -69,6 +70,8 @@ export default {
   quote_section_header: { url: 'api/quote_heading', allowed_methods: ['post', 'put', 'delete', 'get'] },
   product_get: { url: `api/${ENTITY_KEY__PRODUCT}/`, allowed_methods: ['get'] },
   product_costing_get: { url: `api/${ENTITY_KEY__PRODUCT_COSTING}/`, allowed_methods: ['get'] },
+  groups: { url: `api/${ENTITY_KEY__REP_CODE}/`, allowed_methods: ['get'] },
+  
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },
   { url: `api/${ENTITY_KEY__PRODUCT_BUYER}/`, allowed_methods: ['get'] },

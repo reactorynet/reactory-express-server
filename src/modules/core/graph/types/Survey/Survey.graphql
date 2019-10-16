@@ -1,0 +1,123 @@
+type SurveyCalendarEntry {
+  entryType: String
+  title: String
+  start: Date!
+  end: Date,
+  hasTask: Boolean
+  component: String
+  taskResult: String
+  taskError: String
+}
+
+type TimelineEntry {
+  when: Date!
+  eventType: String
+  eventDetail: String
+  who: User  
+}
+
+type DelegateEntry {
+  id: String
+  delegate: User
+  peers: UserPeers
+  status: String
+  notifications: [Notification]
+  assessments: [Assessment]
+  launched: Boolean
+  complete: Boolean 
+  removed: Boolean
+  message: String
+  updatedAt: Date
+  lastAction: String,
+  nextAction: String
+}
+
+type Survey {
+  id: ObjID!
+  leadershipBrand: LeadershipBrand
+  organization: Organization
+  title: String!
+  delegateTeamName: String,
+  assessorTeamName: String,
+  surveyType: String!
+  startDate: Date
+  endDate: Date
+  mode: String
+  status: String
+  statistics: Any
+  options: Any
+  delegates: [DelegateEntry]
+  assessments: [Assessment]  
+  calendar: [SurveyCalendarEntry]
+  timeline: [TimelineEntry]
+}
+
+type UserDashboard {
+  dashboardData: Any
+}
+
+input SurveyInput {
+  id: String
+  leadershipBrand: String!
+  organization: String!
+  title: String!  
+  surveyType: String!
+  delegateTeamName: String,
+  assessorTeamName: String,
+  startDate: Date
+  endDate: Date
+  mode: String
+  status: String  
+}
+
+input DelegateInput {
+  id: String
+  delegate: String!
+  status: String
+  launched: Boolean
+  complete: Boolean
+  removed: Boolean  
+}
+
+input SurveyLaunchOptions {
+  live: Boolean
+  sendEmails: Boolean
+  minimumPeers: Int
+  maximumPeers: Int
+  requiresSupervisor: Boolean
+  requiresDirectReport: Boolean
+}
+
+input ReminderOptions {
+  when: Date
+  urgent: Boolean
+}
+
+type DelegateAddResponse {
+  response: UpdateResponse
+  user: User
+}
+
+type DelegateRemoveResponse {
+  response: UpdateResponse
+  user: User
+}
+
+extend type Query {
+  surveysForOrganization(organizationId: String!): [Survey]
+  surveysList: [Survey]
+  surveyDetail(surveyId: String!): Survey
+}
+
+extend type Mutation {
+  createSurvey(id: String!, surveyData: SurveyInput): Survey
+  updateSurvey(id: String!, surveyData: SurveyInput!): UpdateResponse
+  updateSurveyOptions(id: String!, options: Any): Any
+  launchSurvey(id: String!, options: SurveyLaunchOptions): UpdateResponse
+  startDelegateSurveyWorkflow(id: String!, delegateEntryId: String!, workflowId: String!): Any
+  addDelegateToSurvey(surveyId: String!, delegateId: String!): DelegateAddResponse  
+  removeDelegateFromSurvey(surveyId: String!, delegateId: String!): DelegateRemoveResponse
+  setDelegatesForSurvey(id: String!, delegates: [DelegateInput], replace: Boolean): Survey
+  postRemidners(id: String, options: ReminderOptions): UpdateResponse
+  surveyDelegateAction(entryId: String!, survey: String!, delegate: String!, action: String!, inputData: Any): DelegateEntry
+}

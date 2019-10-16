@@ -1,0 +1,15 @@
+enum Role {
+    REACTORY_ADMIN,
+    ADMIN,
+    ORGANIZATION_ADMIN,
+    FACILITATOR,        
+    USER,
+    HOD
+}
+
+enum AuthProvider {
+  GOOGLE
+  FACEBOOK
+  CUSTOM,
+  LOCAL
+}

@@ -5,6 +5,7 @@ import { fileAsString } from '../../../../utils/io';
 const typeDefs = [];
 
 [
+  'SalesTeams/SalesTeams',
   'Quotes/Quote',
 ].forEach((name) => {
   try {

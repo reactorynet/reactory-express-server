@@ -69,7 +69,7 @@ class WorkFlowRunner {
   }
 
   initialize() {
-    this.start().then((host) => {
+    this.start().then(({ host, autoStart }) => {
       this.setState({ host });
       amq.onWorkflowEvent('startWorkflow', (payload) => {
         logger.debug('Reactory workflow starting via amq');
@@ -82,14 +82,32 @@ class WorkFlowRunner {
         });
       });
       // amq.onWorkflowEvent('reactory.workflow.status', ())
-      setTimeout(() => {
-        amq.raiseWorkFlowEvent('startWorkflow', {
-          id: 'reactory.StartupWorkflow',
-          version: 1,
-          data: { when: moment().valueOf() },
-          src: 'self',
-        });
-      }, 1500);
+      autoStart.forEach((autoStartWorkFlow) => {
+        logger.debug(`Auto Starting Workflow ${autoStartWorkFlow.id}`, { autoStartWorkFlow });
+        if(autoStartWorkFlow.props && autoStartWorkFlow.props.interval) {
+          setInterval(()=>{
+            amq.raiseWorkFlowEvent('startWorkflow', {
+              id: autoStartWorkFlow.id,
+              version: 1,
+              data: {
+                when: moment().valueOf(),
+                props: autoStartWorkFlow.props || {},
+              },
+              src: 'self'
+            });
+          }, autoStartWorkFlow.props.interval);
+        } else {
+          amq.raiseWorkFlowEvent('startWorkflow', {
+            id: autoStartWorkFlow.id,
+            version: 1,
+            data: {
+              when: moment().valueOf(),
+              props: autoStartWorkFlow.props || {},
+            },
+            src: 'self'
+          });
+        }        
+      });      
     });
   }
 
@@ -125,12 +143,16 @@ class WorkFlowRunner {
     config.usePersistence(mongoPersistence);
     const host = config.getHost();
     try {
+      const autoStart = [];
       workflows.forEach((workflow) => {
-        logger.debug(`Registering workflow ${workflow.nameSpace}.${workflow.name}@${workflow.version} in host`, { __type: typeof workflow });
+        logger.debug(`Registering workflow ${workflow.nameSpace}.${workflow.name}@${workflow.version} in host`, { __type: typeof workflow });        
         host.registerWorkflow(workflow.component);
+        if(workflow.autoStart === true) {
+          autoStart.push(workflow);
+        }
       });
       await host.start();
-      return host;
+      return { host, autoStart };
     } catch (workFlowError) {
       logger.error('Error starting workflow', workFlowError);
       return null;

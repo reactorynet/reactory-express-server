@@ -9,6 +9,18 @@ const ObjectIdFunc = mongodb.ObjectID;
 const { ObjectId } = mongoose.Schema.Types;
 const { isArray, find, filter } = lodash;
 
+const meta = new mongoose.Schema({
+  source: { },
+  owner: String, // indicates what system owns this record
+  reference: String, // a lookup string to use for the remote system
+  lastSync: Date,
+  nextSync: Date,
+  mustSync: {
+    type: Boolean,
+    default: true,
+  },
+});
+
 const UserSchema = new mongoose.Schema({
   id: ObjectId,
   username: String,
@@ -102,7 +114,8 @@ const UserSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     required: true,
-  },
+  },  
+  meta
 });
 
 UserSchema.methods.setPassword = function setPassword(password) {
@@ -179,7 +192,7 @@ UserSchema.methods.hasRole = function hasRole(clientId, role = 'USER', organizat
 };
 
 UserSchema.methods.fullName = function fullName(email = false) {
-  return `${this.firstName} ${this.lastName} ${email ? this.email : ''}`.trim();
+  return `${this.firstName} ${this.lastName}${email ? '<'+this.email+'>' : ''}`.trim();
 };
 
 // eslint-disable-next-line max-len
@@ -298,33 +311,40 @@ UserSchema.methods.deleteUser = function deleteUser() {
 UserSchema.methods.setAuthentication = async function setAuthentication(authentication = { provider: 'local', props: { }, lastLogin: new Date().valueOf() }) {
   const instance = this;
   const { props, provider } = authentication;
+
   let dirty = false;
-  logger.debug(`Adding new authentication details provider: ${provider} username: ${props.username}`);
-  if (instance.authentications === undefined || instance.authentications === null) {
-    instance.authentications = [authentication];
-    dirty = true;
-  } else if (isArray(instance.authentications) === true) {
-    const found = find(instance.authentications, { provider });
-    if (found === undefined || found === null) {
-      instance.authentications.push(authentication);
+  if(instance.$patching === true) {
+    return;
+  } else {
+    instance.$patching = true;
+    logger.debug(`Adding new authentication details provider: ${provider} username: ${props ? props.username : 'NO PROPS'}`);
+    if (instance.authentications === undefined || instance.authentications === null) {
+      instance.authentications = [authentication];
       dirty = true;
-    } else {
-      instance.authentications.forEach((_authentication, index) => {
-        if (provider === _authentication.provider) {
-          // patch the properties of the authentication
-          instance.authentications[index].props = { ..._authentication.props, ...authentication.props };
-          dirty = true;
-        }
-      });
+    } else if (isArray(instance.authentications) === true) {
+      const found = find(instance.authentications, { provider });
+      if (found === undefined || found === null) {
+        instance.authentications.push(authentication);
+        dirty = true;
+      } else {
+        instance.authentications.forEach((_authentication, index) => {
+          if (provider === _authentication.provider) {
+            // patch the properties of the authentication
+            instance.authentications[index].props = { ..._authentication.props, ...authentication.props };
+            dirty = true;
+          }
+        });
+      }
     }
-  }
-
-  if (dirty === true) {
-    await instance.save();
-    return true;
-  }
-
-  return false;
+  
+    if (dirty === true) {        
+      await this.save().then();
+      instance.$patching = false;
+      return true;    
+    }
+  
+    return false;
+  }  
 };
 
 UserSchema.methods.removeAuthentication = async function removeAuthentication(provider) {
@@ -346,6 +366,63 @@ UserSchema.methods.getAuthentication = function getAuthentication(provider) {
   }
   return null;
 };
+
+UserSchema.statics.findByForeignId = async function findByForeignId(id, owner){
+  return await this.findOne({ 'meta.reference' : id, 'meta.owner':  owner}).then();
+};
+
+/**
+ * Supports: 
+ *  - Name and lastname: 'James van der Beeck' -> 
+ *  { 
+ *    id: ObjectId()
+ *    firstName: 'james', 
+ *    lastName: 'van der Beeck',
+ *    email: 'james.v+@{global.partner.key}.reactory.net, 
+ *  }   
+ *
+ *  - Name and lastname: 'James van der Beeck<james@mail.com>' -> 
+ *  { 
+ *    id: ObjectId()
+ *    firstName: 'james', 
+ *    lastName: 'van der Beeck',
+ *    email: 'james.v+@{global.partner.key}.reactory.net, 
+ *  }   
+ */
+UserSchema.statics.parse = (inputString) => {  
+  if(typeof inputString === 'string') {
+    let _s = inputString.trim();
+    let _name = _s;
+    let _email = '';
+
+    if(_s.indexOf('<') > 0 && _s.indexOf('>')) {
+      //contains email
+      _name = _s.split('<')[0];
+      _email = _s.split('<')[1].replace('>','');
+    } 
+
+    let parts = _name.split(" ").reverse();
+    
+    const parsed = {
+      firstName: parts.pop(),
+      lastName: '',
+      email: _email,      
+      createdAt: new Date().valueOf(),
+      updatedAt: new Date().valueOf()
+    };    
+
+    while(parts.length > 0) {
+      parsed.lastName = `${parsed.lastName} ${parts.pop()}`;
+    }
+
+    parsed.lastName = parsed.lastName.trim();
+
+    return parsed;
+  } 
+
+  return {};
+};
+
 
 const UserModel = mongoose.model('User', UserSchema);
 export default UserModel;

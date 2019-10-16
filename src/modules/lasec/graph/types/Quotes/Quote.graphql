@@ -22,45 +22,63 @@ type LasecQuoteItem {
   totalVATInclusive: Int
   VATRate: Int
   GP: Int
+  header: LasecQuoteHeader
   content: Any
 }
 
 type LasecQuoteHeader {
   id: ObjID
-  header_id: String
+  headerId: String
   text: String
-  quote_items: [LasecQuoteItem]  
+  quoteItems: [LasecQuoteItem]  
 }
 
-type Reminder {
+type QuoteReminder {
   id: ObjID
-  what: ObjID,
-  whatType: String
+  quote: Quote,  
   who: [User]
   next: Date
+  actionType: String
   actioned: Boolean
   result: Any
-  via: String
+  via: [String]
+  text: String
+  importance: String
 }
 
 type QuoteTimeLine {
   id: ObjID
   what: String
   when: Date
+  actionType: String
   who: User
   notes: String
-  reminder: [ Reminder ]
-  content: String
-  via: String
+  reminder: QuoteReminder
+}
+
+type QuoteTotals {
+  totalVATExclusive: Int
+  totalVAT: Int
+  totalVATInclusive: Int
+  totalDiscount: Int,
+  totalDiscountPercent: Int,
+  GP: Int,
+  actualGP: Int
 }
 
 type Quote { 
   id: String
-  statusGroup: String
+  code: String
+  statusGroup: String 
+  statusGroupName: String 
   status: String
+  statusName: String
+  salesRep: User
+  salesTeam: Team
   allowedStatus: [ String ]
-  customer: LasecCustomer
-  company: LasecCompany
+  customer: User
+  company: Organization
+  totals: QuoteTotals
   totalVATExclusive: Int
   totalVAT: Int
   totalVATInclusive: Int
@@ -70,7 +88,8 @@ type Quote {
   modified: Date
   expirationDate: Date
   note: String
-  header: [LasecQuoteHeader ]
+  headers: [ LasecQuoteHeader ]
+  lineItems: [ LasecQuoteItem ]  
   timeline: [ QuoteTimeLine ]
   meta: Any  
 }
@@ -114,9 +133,12 @@ type LasecQuoteDashboardCharts {
 type LasecQuoteDashboard {
   id: String
   period: String
+  periodLabel: String
   periodStart: Date
   periodEnd: Date
   repIds: [String]
+  target: Float
+  targetPercent: Float  
   totalQuotes: Int
   totalBad: Int
   statusSummary: [ LasecQuoteDashboardSummary ]
@@ -132,11 +154,16 @@ type LasecQuoteStatus {
 }
 
 input LasecQuoteStatusUpdate {
-  status: String
   nextAction: String
   reason: String
-  reminder: Date
+  reminder: Int
   note: String
+}
+
+type LasecQuoteStatusUpdateResult {
+  quote: Quote
+  success: Boolean
+  message: String
 }
 
 input LasecQuoteQueryInput {
@@ -165,11 +192,11 @@ input LasecQuoteHeaderInput {
 extend type Query {
   LasecGetQuoteList( search: String ) : [ Quote ],
   LasecGetDashboard( dashparams: LasecQuoteQueryInput ) : LasecQuoteDashboard
-  LasecGetQuoteById(quote_id: String): Quote
+  LasecGetQuoteById(quote_id: String!): Quote
 }
 
 
 extend type Mutation {
   LasecSetQuoteHeader( quote_id: String!, input: LasecQuoteHeaderInput ): LasecQuoteHeader
-  LasecUpdateQuoteStatus( quote_id: String!, input: LasecQuoteStatusUpdate ): Quote
+  LasecUpdateQuoteStatus( quote_id: String!, input: LasecQuoteStatusUpdate ): LasecQuoteStatusUpdateResult
 }

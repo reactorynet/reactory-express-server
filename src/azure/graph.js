@@ -71,15 +71,33 @@ export default {
     return events;
   },
 
-  async getEmails(accessToken) {
-    logger.debug(`Getting emails for ${accessToken}`);
-    const client = getAuthenticatedClient(accessToken);
+  async getEmails(accessToken, filter) {
+    logger.debug(`Getting emails via MS graph`, filter);
+    const client = getAuthenticatedClient(accessToken);    
+    let emails = [];
+    try {
 
-    const emails = await client
-      .api('/me/messages')
-      .select('id,subject,receivedDateTime,sentDateTime,bodyPreview,body,sender,from,toRecipients')
-      .get();
+      if(filter && filter.search) {
+        emails = await client
+        .api('/me/messages')
+        .select('id,subject,receivedDateTime,sentDateTime,bodyPreview,body,sender,from,toRecipients')      
+        .search(filter.search)
+        .get()
+        .then();
 
+      } else {
+        
+        emails = await client
+        .api('/me/messages')
+        .select('id,subject,receivedDateTime,sentDateTime,bodyPreview,body,sender,from,toRecipients')      
+        .get()
+        .then();
+      }
+  
+    } catch(error) {
+      logger.debug('Error fetching emails from MS', error);
+    }
+              
     return emails;
   },
 };

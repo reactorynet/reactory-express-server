@@ -2,10 +2,23 @@ import mongoose from 'mongoose';
 
 const { ObjectId } = mongoose.Schema.Types;
 
+const meta = new mongoose.Schema({
+  source: { },
+  owner: String, // indicates what system owns this record
+  reference: String, // a lookup string to use for the remote system
+  sync: String,
+  lastSync: Date,
+  mustSync: {
+    type: Boolean,
+    default: true,
+  },
+});
+
 const OrganizationSchema = mongoose.Schema({
   id: ObjectId,
   code: String,
   name: String,
+  tradingName: String,
   logo: String,
   businessUnits: [
     {
@@ -28,6 +41,7 @@ const OrganizationSchema = mongoose.Schema({
       data: { },
     },
   ],
+  meta,
   updateBy: {
     type: ObjectId,
     ref: 'User',
@@ -54,6 +68,10 @@ OrganizationSchema.methods.clientActive = function clientActive(clientKey) {
   }
 
   return false;
+};
+
+OrganizationSchema.statics.findByForeignId = async function findByForeignId(id, owner){
+  return await this.findOne({ 'meta.code' : id, 'meta.owner':  owner}).then();
 };
 
 
