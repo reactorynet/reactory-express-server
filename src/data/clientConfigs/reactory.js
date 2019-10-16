@@ -71,6 +71,9 @@ export default {
         {
           ordinal: 2, title: 'Reactory Clients', link: '/reactory-clients/', icon: 'check_circle', roles: ['ADMIN'],
         },
+        {
+          ordinal: 3, title: 'About Us', link: '/about-us/', icon: 'supervised_user_circle', roles: ['ANON', 'USER'],
+        },
       ],
     },
   ],
@@ -155,6 +158,15 @@ export default {
       public: false,
       roles: ['USER'],
       componentFqn: 'core.Profile@1.0.0',
+    },
+    {
+      key: 'about-us',
+      title: 'About Us',
+      path: '/about-us',
+      public: false,
+      roles: ['USER', 'ANON'],
+      componentFqn: 'static.AboutUs@1.0.0',
+
     },
     {
       key: 'administration',
