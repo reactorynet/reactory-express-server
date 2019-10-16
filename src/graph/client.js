@@ -1,3 +1,4 @@
+import fetch from 'node-fetch';
 import { ApolloClient } from 'apollo-client';
 import { createHttpLink } from 'apollo-link-http';
 import { setContext } from 'apollo-link-context';
@@ -7,6 +8,7 @@ import AuthConfig from '../authentication';
 
 const httpLink = createHttpLink({
   uri: `${process.env.API_URI_ROOT}/api`,
+  fetch 
 });
 
 const authLink = setContext((_, { headers }) => {
