@@ -16,10 +16,13 @@ import {
   BusinessUnit,
 } from '../../../models';
 
-import O365 from '../../../azure/graph';
+import ReactoryContent from './ReactoryContent';
 
-const getLocalMail = async (user, filter) => {
-  return await EmailQueue.find({ user: user._id }).then();          
+import O365 from '../../../azure/graph';
+import ApiError from '../../../exceptions';
+
+const getLocalMail = async (user, filter = {size: 10, page: 0, search: ''}) => {
+  return await EmailQueue.UserEmailsWithTextSearch(user, filter).then();
 };
 
 const getMicrosoftMail = async (user, filter) => {
@@ -56,14 +59,29 @@ const getMicrosoftMail = async (user, filter) => {
 
 export default {
   Query: {
-    userEmails: async (parent, mailFilter)=>{      
-      logger.debug(`Fetching ${user.fullName(true)} Emails with mail filter`, { mailFilter });
-                            
-      const localmail = await getLocalMail(global.user, mailFilter).then();
-      const microsoftmail = await getMicrosoftMail(global.user, mailFilter).then();
-          
-      return lodash.sortBy([...localmail, ...microsoftmail], ['createdAt']);
-    }
+    userEmails: async (parent, { mailFilter })=>{      
+      logger.debug(`Fetching ${user.fullName(true)} Emails with mail filter`, { mailFilter });                                  
+      let localmail = [];
+      let microsoftmail = [];
+
+      if(lodash.isArray(mailFilter.via) === true) {
+        if(lodash.indexOf(mailFilter.via, 'local') >= 0) {
+          localmail = await getLocalMail(global.user, mailFilter).then();          
+        }
+
+        if(lodash.indexOf(mailFilter.via, 'microsoft') >= 0) {
+          microsoftmail = await getMicrosoftMail(global.user, mailFilter).then();          
+        }
+
+        return lodash.sortBy([...localmail, ...microsoftmail], ['createdAt']);
+      }
+
+      throw new ApiError('Please indicate via which search provider you want to search');
+      
+    },
+    ...ReactoryContent.Query
   },
-  Mutation: {}
+  Mutation: {
+    ...ReactoryContent.Mutation
+  }
 };

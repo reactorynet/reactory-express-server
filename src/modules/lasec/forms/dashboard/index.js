@@ -35,6 +35,9 @@ export default {
   helpTopics: ['dashboard'],
   uiSchema: $uiSchema,
   graphql: $graphql,
+  refresh: {
+    onChange: ['period', 'periodStart', 'periodEnd']
+  },
   defaultFormValue: {
     toolbar: {
       period: 'this-week',

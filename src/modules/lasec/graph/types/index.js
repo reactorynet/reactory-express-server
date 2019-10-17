@@ -5,6 +5,7 @@ import { fileAsString } from '../../../../utils/io';
 const typeDefs = [];
 
 [
+  'Lasec360/Authentication',
   'SalesTeams/SalesTeams',
   'Quotes/Quote',
 ].forEach((name) => {

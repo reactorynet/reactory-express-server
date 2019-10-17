@@ -349,7 +349,7 @@ UserSchema.methods.setAuthentication = async function setAuthentication(authenti
 
 UserSchema.methods.removeAuthentication = async function removeAuthentication(provider) {
   if (provider && this.authentications) {
-    const found = find(this.authentcations, { provider });
+    const found = find(this.authentications, { provider });
     if (found) {
       this.authentications.id(found._id).remove();
       await this.save().then();

@@ -74,6 +74,9 @@ export default {
         {
           ordinal: 3, title: 'About Us', link: '/about-us/', icon: 'supervised_user_circle', roles: ['ANON', 'USER'],
         },
+        {
+          ordinal: 4, title: 'Graph', link: '/graphiql/', icon: 'gear', roles: ['ANON', 'USER'],
+        },
       ],
     },
   ],
@@ -167,6 +170,15 @@ export default {
       roles: ['USER', 'ANON'],
       componentFqn: 'static.AboutUs@1.0.0',
 
+    },
+    {
+      key: 'graphiql',
+      title: 'GraphiQL',
+      path: '/graphiql/**',
+      exact: true,
+      public: true,
+      roles: ['ANON'],
+      componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
     },
     {
       key: 'administration',

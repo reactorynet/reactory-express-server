@@ -1,0 +1,12 @@
+
+
+type LasecAuthenticationResult {
+  success: Boolean
+  message: String
+  error: Any
+}
+
+extend type Mutation {
+  Lasec360Authenticate(username: String, password: String): LasecAuthenticationResult
+  Lasec360RemoveAuthentication( email: String ): LasecAuthenticationResult
+}
