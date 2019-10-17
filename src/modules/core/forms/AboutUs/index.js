@@ -33,7 +33,7 @@
         },
         // help topics to enable help button
         helpTopics: [
-          'About us',
+          'About',
         ],        
         // registers the component in the api.componentRegistry
         registerAsComponent: true,

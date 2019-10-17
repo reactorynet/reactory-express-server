@@ -1,0 +1,22 @@
+
+
+
+type ReactoryContent {
+  id: ObjID
+  slug: String!
+  topics: [ String ] 
+  title: String!
+  content: String!
+  createdAt: Date
+  updatedAt: Date
+  createdBy: User!
+  updatedBy: User!
+  published: Boolean
+  comments: [ Comment ]
+}
+
+extend type Query {
+  ReactoryGetContentBySlug(slug: String!): ReactoryContent
+  ReactoryGetContentByTags(tags: [String]!): [ ReactoryContent ]
+  ReactoryGetContentById(id: String!): [ ReactoryContent ]
+}
