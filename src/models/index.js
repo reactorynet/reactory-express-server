@@ -22,6 +22,9 @@ import ProjectModel from './schema/Project';
 import BoardModel from './schema/ProjectBoard';
 import CommentModel from './schema/Comment';
 
+// DREW
+import ContentModel from './schema/Content';
+
 import { Cache } from '../modules/core/models';
 
 export const Assessment = AssessmentModel;
@@ -47,8 +50,11 @@ export const Theme = ThemeModel;
 export const BusinessUnit = BusinessUnitModel;
 export const Board = BoardModel;
 
+// DREW
+export const Content = ContentModel;
+
 const models = {
-  Cache,  
+  Cache,
   Assessment,
   Application,
   Board,
@@ -69,7 +75,8 @@ const models = {
   Theme,
   Template,
   User,
-  Task,  
+  Task,
+  Content
 };
 
 export default models;

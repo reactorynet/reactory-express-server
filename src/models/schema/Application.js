@@ -16,8 +16,7 @@ const ApplicationSchema = new mongoose.Schema({
   updatedBy: {
     ref: 'User',
     type: ObjectId,
-  },
-
+  }
 });
 
 const ApplicationModel = mongoose.model('Application', ApplicationSchema);

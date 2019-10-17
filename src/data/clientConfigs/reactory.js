@@ -75,7 +75,13 @@ export default {
           ordinal: 3, title: 'About Us', link: '/about-us/', icon: 'supervised_user_circle', roles: ['ANON', 'USER'],
         },
         {
-          ordinal: 4, title: 'Graph', link: '/graphiql/', icon: 'gear', roles: ['ANON', 'USER'],
+          ordinal: 4, title: 'Add Content', link: '/content-capture/new', icon: 'create', roles: ['ADMIN', 'USER'],
+        },
+        {
+          ordinal: 4.5, title: 'List Content', link: '/content-capture/', icon: 'list', roles: ['ADMIN', 'USER'],
+        },
+        {
+          ordinal: 5, title: 'Graph', link: '/graphiql/', icon: 'gear', roles: ['ANON', 'USER'],
         },
       ],
     },
@@ -170,6 +176,52 @@ export default {
       roles: ['USER', 'ANON'],
       componentFqn: 'static.AboutUs@1.0.0',
 
+    },
+    {
+      key: 'content-capture',
+      title: 'Content Capture',
+      path: '/content-capture/edit/:slug',
+      public: false,
+      exact: true,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'static.ContentCapture@1.0.0',
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'edit',
+          }
+        }
+      ]
+    },
+    {
+      key: 'content-capture-new',
+      title: 'Content Capture',
+      path: '/content-capture/',
+      public: false,
+      exact: true,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'static.ContentList@1.0.0',
+
+    },
+    {
+      key: 'content-capture-new',
+      title: 'Content Capture',
+      path: '/content-capture/new',
+      public: false,
+      exact: true,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'static.ContentCapture@1.0.0',
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'new',
+          }
+        }
+      ]
     },
     {
       key: 'graphiql',

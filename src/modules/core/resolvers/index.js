@@ -26,13 +26,13 @@ const getLocalMail = async (user, filter = {size: 10, page: 0, search: ''}) => {
 };
 
 const getMicrosoftMail = async (user, filter) => {
-   
+
   if (user.authentications) {
-    const found = lodash.find(user.authentications, { provider: 'microsoft' });        
+    const found = lodash.find(user.authentications, { provider: 'microsoft' });
     if (found) {
       logger.debug('Found Authentication Info For MS, check messages via graph', { token: found.props.accessToken, filter });
       const emails = await O365.getEmails(found.props.accessToken, filter);
-      logger.debug('Received Email Payload',  { emails:  emails.value });      
+      logger.debug('Received Email Payload',  { emails:  emails.value });
       const mailmaps = om(emails, {
         'value[].id': 'emails[].id',
         'value[].body.contentType': 'emails[].format',
@@ -58,26 +58,27 @@ const getMicrosoftMail = async (user, filter) => {
 };
 
 export default {
+  ReactoryContent: { ...ReactoryContent.Content },
   Query: {
-    userEmails: async (parent, { mailFilter })=>{      
-      logger.debug(`Fetching ${user.fullName(true)} Emails with mail filter`, { mailFilter });                                  
+    userEmails: async (parent, { mailFilter })=>{
+      logger.debug(`Fetching ${user.fullName(true)} Emails with mail filter`, { mailFilter });
       let localmail = [];
       let microsoftmail = [];
 
       if(lodash.isArray(mailFilter.via) === true) {
         if(lodash.indexOf(mailFilter.via, 'local') >= 0) {
-          localmail = await getLocalMail(global.user, mailFilter).then();          
+          localmail = await getLocalMail(global.user, mailFilter).then();
         }
 
         if(lodash.indexOf(mailFilter.via, 'microsoft') >= 0) {
-          microsoftmail = await getMicrosoftMail(global.user, mailFilter).then();          
+          microsoftmail = await getMicrosoftMail(global.user, mailFilter).then();
         }
 
         return lodash.sortBy([...localmail, ...microsoftmail], ['createdAt']);
       }
 
       throw new ApiError('Please indicate via which search provider you want to search');
-      
+
     },
     ...ReactoryContent.Query
   },
