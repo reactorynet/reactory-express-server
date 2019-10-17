@@ -10,7 +10,8 @@ import logger from '../../../../logging';
 
 export default {
   Query: {
-    ReactoryGetContentBySlug: async (parent, slug)=>{
+    ReactoryGetContentBySlug: async (parent, params)=>{
+      const { slug } = params;
       logger.debug(`Fetching Content For ${slug}`, parent);
 
       return {
