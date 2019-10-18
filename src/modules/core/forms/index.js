@@ -1,9 +1,11 @@
 import ReactoryFormList from './ReactoryFormList';
 import AboutUsPage from './AboutUs';
-import AboutUs from './AboutUs';
+import ReactoryContentCapture from './ReactoryContentCapture';
+import ReactoryContentList from './ReactoryContentList';
 
 export default [
   AboutUsPage,
   ReactoryFormList,
-  require('./ReactoryContentCapture').default
+  ReactoryContentCapture,
+  ReactoryContentList
 ];

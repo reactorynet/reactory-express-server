@@ -31,6 +31,10 @@ query LasecGetQuote($quote_id: String!) {
         text
       }
       title
+      totalVATExclusive
+      discount
+      GP
+      note
       quantity
       price
     }

@@ -24,6 +24,19 @@ export default {
 
       return result;
     },
+    ReactoryGetContentList: async (parent, params) => {
+      logger.debug(`Fetching All Content`, parent);
+
+      const result = await Content.find({}).then();
+
+      logger.debug(`Fetching Content Result: ${result}`);
+
+      // if (lodash.isArray(result) === true && result.length === 1) {
+      //   return result[0];
+      // }
+
+      return result;
+    },
     ReactoryGetContentByTags(parent, tags) {
       logger.debug('Getting Reactory Content By Tags', tags);
       return [];

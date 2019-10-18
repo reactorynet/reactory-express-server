@@ -155,6 +155,9 @@ export default {
         {
           ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
         },
+        {
+          ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
+        },
       ],
     },
   ],
@@ -284,6 +287,85 @@ export default {
           },
         },
       ],
+    },
+    {
+      key: 'about',
+      title: 'About 360',
+      path: '/about',
+      public: true,
+      exact: true,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'core.StaticContent@1.0.0',
+      args: [
+        {
+          key: 'slug',
+          value: {
+            type: 'string',
+            slug: 'about-us',
+          }
+        }
+      ]
+    },
+    {
+      key: 'content-capture',
+      title: 'Content Capture',
+      path: '/help/edit/:slug',
+      public: false,
+      exact: true,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'static.ContentCapture@1.0.0',
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'edit',
+          }
+        }
+      ]
+    },
+    {
+      key: 'content-capture-new',
+      title: 'Help List',
+      path: '/help/',
+      public: false,
+      exact: true,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'static.ContentList@1.0.0',
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'view',
+          }
+        },
+        {
+          key: 'categories',
+          value: {
+            type: 'string',
+            categories: 'help',
+          }
+        },
+      ]
+    },
+    {
+      key: 'content-capture-new',
+      title: 'Content Capture',
+      path: '/help/new',
+      public: false,
+      exact: true,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'static.ContentCapture@1.0.0',
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'new',
+          }
+        }
+      ]
     },
     {
       key: 'profile',

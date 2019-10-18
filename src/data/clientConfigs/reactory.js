@@ -78,7 +78,7 @@ export default {
           ordinal: 4, title: 'Add Content', link: '/content-capture/new', icon: 'create', roles: ['ADMIN', 'USER'],
         },
         {
-          ordinal: 4.5, title: 'List Content', link: '/content-capture/', icon: 'list', roles: ['ADMIN', 'USER'],
+          ordinal: 4.5, title: 'List Content', link: '/content-list/', icon: 'list', roles: ['ADMIN', 'USER'],
         },
         {
           ordinal: 5, title: 'Graph', link: '/graphiql/', icon: 'gear', roles: ['ANON', 'USER'],
@@ -198,16 +198,6 @@ export default {
     {
       key: 'content-capture-new',
       title: 'Content Capture',
-      path: '/content-capture/',
-      public: false,
-      exact: true,
-      roles: ['USER', 'ADMIN'],
-      componentFqn: 'static.ContentList@1.0.0',
-
-    },
-    {
-      key: 'content-capture-new',
-      title: 'Content Capture',
       path: '/content-capture/new',
       public: false,
       exact: true,
@@ -222,6 +212,16 @@ export default {
           }
         }
       ]
+    },
+    {
+      key: 'content-list',
+      title: 'Content List',
+      path: '/content-list/',
+      public: false,
+      exact: true,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'static.ContentList@1.0.0',
+
     },
     {
       key: 'graphiql',

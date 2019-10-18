@@ -310,7 +310,7 @@ UserSchema.methods.deleteUser = function deleteUser() {
 
 UserSchema.methods.setAuthentication = async function setAuthentication(authentication = { provider: 'local', props: { }, lastLogin: new Date().valueOf() }) {
   const instance = this;
-  const { props, provider } = authentication;
+  const { props, provider, lastLogin } = authentication;
 
   let dirty = false;
   if(instance.$patching === true) {
@@ -331,6 +331,9 @@ UserSchema.methods.setAuthentication = async function setAuthentication(authenti
           if (provider === _authentication.provider) {
             // patch the properties of the authentication
             instance.authentications[index].props = { ..._authentication.props, ...authentication.props };
+            if(lastLogin) {
+              instance.authentications[index].lastLogin = lastLogin;
+            }
             dirty = true;
           }
         });
@@ -338,7 +341,7 @@ UserSchema.methods.setAuthentication = async function setAuthentication(authenti
     }
   
     if (dirty === true) {        
-      await this.save().then();
+      await this.save();
       instance.$patching = false;
       return true;    
     }

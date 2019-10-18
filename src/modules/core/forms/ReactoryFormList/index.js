@@ -1,7 +1,7 @@
 
       import schema from './ReactoryFormList';
       import DefaultUiSchema from './uiSchema';
-      
+
 
       const ReactoryFormList = {
         id: 'ReactoryFormList',
@@ -12,7 +12,7 @@
         tags: ['reactory forms', 'forms'],
         name: 'ReactoryFormList',
         nameSpace: 'core',
-        version: '1.0.0',        
+        version: '1.0.0',
         description: 'Provides a list of forms available to your user account.',
         author: {
           fullName: 'Werner Weber',
@@ -20,11 +20,10 @@
         },
         helpTopics: [
           'ReactoryFormList',
-        ],        
+        ],
         registerAsComponent: true,
-        schema,        
-        uiSchema: DefaultUiSchema,       
+        schema,
+        uiSchema: DefaultUiSchema,
       };
-     
+
       export default ReactoryFormList;
-      

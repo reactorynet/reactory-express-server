@@ -1,7 +1,8 @@
 import "node-fetch";
 import { Client, ResponseType } from "@microsoft/microsoft-graph-client";
 import logger from '../logging';
-// import { updateUserProfileImage } from '../application/admin/User';
+import { PNG } from 'pngjs';
+import { updateUserProfileImage } from '../application/admin/User';
 import om from 'object-mapper';
 
 
@@ -22,7 +23,7 @@ const getAuthenticatedClient = (accessToken) => {
 };
 
 export default {
-  async getUserDetails(accessToken) {
+  async getUserDetails(accessToken, who) {
 
     const client = getAuthenticatedClient(accessToken);
     let user = {
@@ -42,20 +43,27 @@ export default {
     }
 
 
-    try {
-      const response = await client
+    const imageBuff = new Promise(resolve => {
+      
+      client
         .api('/me/photos/120x120/$value')
         .headers({
           'accept': 'image/jpeg'
         })
-        .responseType(ResponseType.RAW)        
-        .get();
-      logger.debug('Fetched image result for user', response);
-      // user.avatar = image;
-    } catch (getPhotoError) {
-      logger.debug(`Could not get the user photo from MS Graph:`, getPhotoError);
-    }
+        .responseType(ResponseType.STREAM)        
+        .get()
+        .then(( response ) => {          
+          const buffer = [];        
+          response.body.on('data', chunk => buffer.push(chunk));
+          response.body.on('close', resolve(Buffer.concat(buffer)));           
+        }).catch(getPhotoError => {
+          logger.debug(`Could not get the user photo from MS Graph: ${getPhotoError.message}`, getPhotoError);    
+          resolve(null); 
+        });                                   
+    });
 
+    user.avatar = await imageBuff.then();
+    
     return user;
   },
 

@@ -135,28 +135,20 @@ export default {
   quoteLineItems: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      columns: [
-        {
-          title: 'Item Id',
-          field: 'id',
-        },
-        { title: 'Header', field: 'Header', defaultGroupOrder: 0 },
-        { title: 'Quantity', field: 'qty' },
+      columns: [        
+        { title: 'Header', field: 'headerText', defaultGroupOrder: 0 },
+        { title: 'Code', field: 'code' },
+        { title: 'Title', field: 'title' },
+        { title: 'GP %', field: 'GP' },        
+        { title: 'Discount %', field: 'discount' },        
+        { title: 'Quantity', field: 'quantity' },
         { title: 'Total (VAT Excl)', 
           field: 'totalVATExclusive',
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {
             totalVATExclusive: 'value',
           }, 
-        },
-        { 
-          title: 'Total (VAT Incl)', 
-          field: 'totalVATInclusive',
-          component: 'core.CurrencyLabel@1.0.0',
-          propsMap: {
-            totalVATExclusive: 'value',
-          },
-        },
+        },        
       ],
       options: {
         grouping: true,

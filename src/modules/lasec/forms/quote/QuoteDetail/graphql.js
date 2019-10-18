@@ -21,7 +21,9 @@ export default {
       'totals.totalDiscount': 'totalDiscount',
       'customer.fullName': 'customerName',
       'company.tradingName': 'companyTradingName',
-      'timeline': 'timeline'
+      'timeline': 'timeline',
+      'lineItems': 'quoteLineItems',
+      'lineItems[].header.text': 'lineItems[].headerText'
     },   
     edit: false,
     new: false,

@@ -101,8 +101,8 @@ const getStorageItem = async (key) => {
           logger.debug('No token / Token expired / Invalid, checking username and password');          
           const loginResult = await Api.Authentication.login(username, password).then();
           logger.debug('Login result after authenticating with lasec360', loginResult);
-          if (global.user.setAuthentication && loginResult) {          
-            await global.user.setAuthentication({ 
+          if (user.setAuthentication && loginResult) {          
+            await user.setAuthentication({ 
               provider: 'lasec', 
               props: { 
                 username, password, ...loginResult,
@@ -271,8 +271,13 @@ const Api = {
       } = apiResponse;
 
       if (status === 'success') {        
-        //collet the ids
-        debugger;
+        //collet the ids        
+        if(payload && payload.ids) {
+          const lineItemsExpanded = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: payload.ids } } })
+          if(lineItemsExpanded.status === 'success') {
+            return lineItemsExpanded.payload;
+          }
+        }
         return [];
       }
 

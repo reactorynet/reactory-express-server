@@ -211,17 +211,22 @@ export const sendResetPasswordEmail = (user, partner, options) => {
  * @param {*} user
  * @param {*} imageData
  */
-export const updateUserProfileImage = (user, imageData) => {
-  const buffer = Buffer.from(imageData.split(/,\s*/)[1], 'base64');
+export const updateUserProfileImage = (user, imageData, isBuffer = false, isPng = false) => {
+  const buffer = isBuffer === true ? imageData : Buffer.from(imageData.split(/,\s*/)[1], 'base64');
   if (!existsSync(`${APP_DATA_ROOT}/profiles`)) mkdirSync(`${APP_DATA_ROOT}/profiles`);
   const path = `${APP_DATA_ROOT}/profiles/${user._id}/`;
 
   if (!existsSync(path)) mkdirSync(path);
   const filename = `${APP_DATA_ROOT}/profiles/${user._id}/profile_${user._id}_default.jpeg`;
 
-  if (imageData.startsWith('data:image/png')) {
-    pngToJpeg({ quality: 90 })(buffer).then(output => writeFileSync(filename, output));
-  } else writeFileSync(filename, buffer);
+  if(isBuffer === false && typeof imageData === 'string') {
+    if (imageData.startsWith('data:image/png' && isPng === true)) {
+      pngToJpeg({ quality: 90 })(buffer).then(output => writeFileSync(filename, output));
+    } else writeFileSync(filename, buffer);
+  } else {
+    writeFileSync(filename, buffer);
+  }
+  
 
   return `profile_${user._id}_default.jpeg`;
 };
