@@ -19,6 +19,7 @@ extend type Query {
   ReactoryGetContentBySlug(slug: String!): ReactoryContent
   ReactoryGetContentByTags(tags: [String]!): [ ReactoryContent ]
   ReactoryGetContentById(id: String!): [ ReactoryContent ]
+  ReactoryGetContentList: [ ReactoryContent ]
 }
 
 input CreateContentInput {
