@@ -1,10 +1,9 @@
-import "node-fetch";
+import fetch from "node-fetch";
 import { Client, ResponseType } from "@microsoft/microsoft-graph-client";
 import logger from '../logging';
 import { PNG } from 'pngjs';
 import { updateUserProfileImage } from '../application/admin/User';
 import om from 'object-mapper';
-import 'node-fetch';
 
 
 const getAuthenticatedClient = (accessToken) => {
