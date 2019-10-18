@@ -4,7 +4,7 @@ import logger from '../logging';
 import { PNG } from 'pngjs';
 import { updateUserProfileImage } from '../application/admin/User';
 import om from 'object-mapper';
-
+import 'node-fetch';
 
 
 const getAuthenticatedClient = (accessToken) => {
@@ -16,7 +16,7 @@ const getAuthenticatedClient = (accessToken) => {
 	  debugLogging: true,
     authProvider: (done) => {
       done(null, accessToken);
-    },
+    },    
   });
 
   return client;
