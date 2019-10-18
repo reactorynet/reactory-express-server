@@ -7,7 +7,7 @@ export default {
     variables: {
       //'formData.code': 'quote_id',
       'formContext.query.quote_id': 'quote_id',
-    },
+    },    
     resultMap: {
       id: 'id',
       'created': 'created',

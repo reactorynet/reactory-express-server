@@ -7,6 +7,8 @@ export default {
       // showAvatar: true,
       // avatarSrc: '${props.api.getAvatar(item.who)}',
       // iconField: 'actionType',
+      primaryText: '${item.primaryText}',
+      secondaryText: '${item.secondaryText}'
     }
   },
 };

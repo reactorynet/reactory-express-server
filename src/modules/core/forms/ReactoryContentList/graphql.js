@@ -5,6 +5,7 @@ export default {
     name: 'ReactoryGetContentList',
     text: fileAsString(require.resolve('./ReactoryGetContentList.graphql')),
     variables: {},
+    resultType: 'array',
     resultMap: {
       '[].id': 'contentList[].id',
       '[].slug': 'contentList[].primaryText',
