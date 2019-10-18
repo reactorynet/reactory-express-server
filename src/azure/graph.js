@@ -1,4 +1,4 @@
-import fetch from "node-fetch";
+import "isomorphic-fetch";
 import { Client, ResponseType } from "@microsoft/microsoft-graph-client";
 import logger from '../logging';
 import { PNG } from 'pngjs';
