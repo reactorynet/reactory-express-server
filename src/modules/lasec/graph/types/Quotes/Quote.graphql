@@ -17,12 +17,14 @@ type LasecQuoteItem {
   title: String
   quantity: Int
   price: Int
+  discount: Int
   subtotal: Int
   totalVATExclusive: Int
   totalVATInclusive: Int
   VATRate: Int
   GP: Int
   header: LasecQuoteHeader
+  note: String
   content: Any
 }
 

@@ -12,7 +12,7 @@ import { User, ReactoryClient } from '../models/index';
 import { UserValidationError } from '../exceptions';
 import logger from '../logging';
 import graph from '../azure/graph';
-import { createUserForOrganization } from '../application/admin/User';
+import { createUserForOrganization, updateUserProfileImage } from '../application/admin/User';
 import amq from '../amq';
 
 const jwtSecret = process.env.SECRET_SAUCE;
@@ -78,7 +78,7 @@ class AuthConfig {
             _existing = await User.findOne({ email: profile.email }).then();
             if (_existing === null) {
               loggedInUser = {
-                email: user.mail, firstName: user.givenName, lastName: user.surname, avatar: user.avatar, avatarProvider: 'microsoft',
+                email: user.mail, firstName: user.givenName, lastName: user.surname, avatarProvider: 'microsoft',
               };
               logger.info(`Must create new user with email ${user.mail}`, loggedInUser);
               const createResult = await createUserForOrganization(loggedInUser, profile.oid, null, ['USER'], 'microsoft', global.partner, null);
@@ -86,6 +86,10 @@ class AuthConfig {
                 _existing = createResult.user;
               }
             }
+
+            if(user.avatar) {              
+              _existing.avatar = updateUserProfileImage(_existing, user.avatar, true, false);              
+            }          
           }
         } catch (err) {
           done(err, null);

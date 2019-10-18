@@ -542,13 +542,35 @@ export default {
       const lineItems = await lasecApi.Quotes.getLineItems(code).then();
 
       logger.debug(`Found line items for quote ${quote.code}`, lineItems);
-      
-      /*return om(lineItems, {
-        'id': ['meta.reference'],        
-      });*/
+      return om(lineItems, {
+        'items.[].id': [
+          '[].quote_item_id',
+          '[].meta.reference', 
+          '[].line_id', 
+          { key: '[].id', transform: ()=>(new ObjectId())
+        }],        
+        'items.[].code': '[].code',
+        'items.[].description': '[].title',
+        'items.[].quantity': '[].quantity',
+        'items.[].total_price_cents': '[].price',
+        'items.[].gp_percent': '[].GP', 
+        'items.[].total_price_before_discount_cents' : [
+          '[].totalVATExclusive', 
+          { 
+            key: '[].totalVATInclusive', 
+            transform: (v) => (Number.parseInt(v) * 1.15)
+          }
+        ],
+        'items.[].note': '[].note',
+        'items.[].quote_heading_id': '[].header.meta.reference',
+        'items.[].header_name': { key: '[].header.text', transform: (v) => {
+          if(lodash.isEmpty(v) === false) return v;
 
-      return []
+          return 'Uncategorised';
+        } },
+        'items.[].total_discount_percent': '[].discount', 
 
+      });
     },
     statusName: (quote) => { 
       const { source } = quote.meta;      

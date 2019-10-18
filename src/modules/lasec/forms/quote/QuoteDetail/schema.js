@@ -75,18 +75,22 @@ export default {
               type: 'string',
               title: 'Product Title'
             },
-            qty: {
+            quantity: {
               type: 'number',
               title: 'Quantity',
+            },
+            GP: {
+              type: 'number',
+              title: 'GP %',
+            },
+            price: {
+              type: 'number',
+              title: 'Price per'
             },
             totalVATExclusive: {
               type: 'number',
               title: 'Total Vat (Excl)',
-            },
-            totalVATInclusive: {
-              type: 'number',
-              title: 'Total Vat (Incl)',
-            },
+            },            
           },
         },
       },
