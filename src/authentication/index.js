@@ -7,6 +7,7 @@ import { isNil } from 'lodash';
 import { BasicStrategy } from 'passport-http';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { OIDCStrategy } from 'passport-azure-ad';
+import refresh from 'passport-oauth2-refresh';
 import OAuth2 from 'simple-oauth2';
 import { User, ReactoryClient } from '../models/index';
 import { UserValidationError } from '../exceptions';
@@ -106,8 +107,12 @@ class AuthConfig {
             props: { oid: profile, oauthToken, accessToken },
             lastLogin: new Date().valueOf(),
           });
+
+          const { expires_in, refresh_token } = oauthToken.token;
+          const expiresWhen = moment().add(expires_in, 'seconds');
           global.user = _existing;
-          logger.info(`OAuth Token Generated for user: ${_existing.email} - should patch user with 3rd party auth data`, oauthToken);
+          logger.info(`OAuth Token Generated for user: ${_existing.email} via MS Authentication, token expires at ${expiresWhen.format('YYYY-MM-DD HH:mm')}`);
+          amq.raiseWorkflowEvent('scheduleWorkflow', { id: 'RefreshMicrosofToken', user: global.user, refresh_token,  when: expiresWhen.subtract(10, 'minute') }, global.partner );
           // Save the profile and tokens in user storage
           // users[profile.oid] = { profile, oauthToken };
           return done(null, { ..._existing, oid: profile.oid });
@@ -119,7 +124,7 @@ class AuthConfig {
       // ideally this should be done per request
       const redirectUrl = `${process.env.OAUTH_REDIRECT_URI}`;
       logger.debug(`Application is configure to use ${redirectUrl} for OIDC strategy`);
-      passport.use(new OIDCStrategy(
+      const azureadStrategy = new OIDCStrategy(
         {
           identityMetadata: `${process.env.OAUTH_AUTHORITY}${process.env.OAUTH_ID_METADATA}`,
           clientID: process.env.OAUTH_APP_ID,
@@ -133,8 +138,9 @@ class AuthConfig {
           scope: process.env.OAUTH_SCOPES.split(' '),
         },
         signInComplete,
-      ));
+      );
 
+      passport.use(azureadStrategy);
 
       app.post(
         '/login',
@@ -159,7 +165,7 @@ class AuthConfig {
           )(req, res, next);
         },
         (req, res) => {
-          logger.info(`/auth/microsoft/openid/${req.params.clientKey} -> next`, { user: global.user, partner: global.partner });
+          logger.info(`/auth/microsoft/openid/${req.params.clientKey} -> next`, { user: global.user.firstName, partner: global.partner.key });
 
           res.redirect(`${global.partner.siteUrl}/nologin/?auth_token=${AuthConfig.jwtTokenForUser(global.user)}`);
         },

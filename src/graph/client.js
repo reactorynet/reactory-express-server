@@ -3,7 +3,7 @@ import { ApolloClient } from 'apollo-client';
 import { createHttpLink } from 'apollo-link-http';
 import { setContext } from 'apollo-link-context';
 import { InMemoryCache } from 'apollo-cache-inmemory';
-import { gql } from 'graphql';
+import gql from 'graphql-tag';
 import AuthConfig from '../authentication';
 
 const httpLink = createHttpLink({
@@ -49,3 +49,15 @@ export const clientFor = (user, partner) => {
 };
 
 export const ql = gql;
+
+export const execql = async (query, variables = {}, options = {}) => {  
+  return await clientFor(global.user, global.partner).query({
+    query: gql(query), 
+    variables
+  }).then();
+
+};
+
+export const execml = async (mutation, variables = {}, options = {}, user = global.user, partner = global.partner) => {
+  return await clientFor(user, partner).mutate({ mutation: gql(mutation), variables, ...options }).then();
+};

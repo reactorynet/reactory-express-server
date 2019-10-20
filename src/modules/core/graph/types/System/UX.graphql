@@ -1,0 +1,11 @@
+ type UXMessage {
+   description: String
+   text: String
+   status: String
+   canDismiss: Boolean
+   modal: Boolean
+   modalType: String
+   componentFqn: String
+   componentProps: Any
+   priority: Int
+ }
