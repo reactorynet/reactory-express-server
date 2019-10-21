@@ -373,9 +373,9 @@ const groupQuotesByStatus = (quotes) => {
       "1": "good",
       "2": "good",
       "3": "good",
-      "4": "bad",
+      "4": "good",
       "5": "bad",
-      "6": "bad",
+      "6": "good",
     };
 
     if (Object.getOwnPropertyNames(groupsByKey).indexOf(quote.statusGroup) >= 0) {

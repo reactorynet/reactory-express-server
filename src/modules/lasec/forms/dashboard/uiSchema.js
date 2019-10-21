@@ -96,9 +96,8 @@ export default {
   charts: {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
-      {        
-        quoteStatusFunnel: { md: 6, sm: 6, xs: 12 },
-        quoteStatusPie: { md: 6, sm: 6, xs: 12 },
+      {                
+        quoteStatusPie: { md: 12, sm: 12, xs: 12 },
         quoteStatusComposed: { md: 12, sm: 12, xs: 12 }
       },
     ],
@@ -125,7 +124,7 @@ export default {
   totalQuotes: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: 'Total: ${formData}',
+      format: 'Total Quotes: ${formData}',
       variant: 'h3',
       title: 'Total Quotes',
     }
@@ -150,7 +149,7 @@ export default {
   totalBad: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: 'Bad Quotes: ${formData}',
+      format: 'Naughty Quotes: ${formData}',
       variant: 'h4',
       title: 'Total Bad',      
     }    
@@ -201,12 +200,8 @@ export default {
           },
         },          
         { 
-          title: 'Total (VAT Incl)', 
-          field: 'totalVATInclusive',
-          component: 'core.CurrencyLabel@1.0.0',
-          propsMap: {
-            'totalVATInclusive': 'value'
-          }, 
+          title: 'GP', 
+          field: 'GP',                    
         },
       ],
       options: {
