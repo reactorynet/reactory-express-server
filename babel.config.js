@@ -12,6 +12,14 @@ module.exports = function (api) {
   ];
 
   const plugins = [
+
+    ["module-resolver", {
+      "root": "./src",
+      "alias": {
+        "@reactory/server-core" : "./src"
+      }      
+    }],
+
     ['@babel/plugin-proposal-class-properties', { loose: false }],
     
     // stage 0
@@ -32,6 +40,8 @@ module.exports = function (api) {
     '@babel/plugin-syntax-import-meta',
     '@babel/plugin-transform-object-set-prototype-of-to-assign',
     '@babel/plugin-transform-arrow-functions',
+   
+
     /*
     'add-module-exports',
     // "babel-plugin-transform-class-properties",

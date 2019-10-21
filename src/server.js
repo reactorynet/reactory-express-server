@@ -10,6 +10,7 @@ import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
 import { makeExecutableSchema } from 'graphql-tools';
 import mongoose from 'mongoose';
 import session from 'express-session';
+import flash from 'connect-flash';
 import corsOptions from './config/cors';
 import clientAuth from './middleware/clientauth';
 import userAccountRouter from './useraccount';
@@ -105,6 +106,10 @@ try {
   schema = makeExecutableSchema({ typeDefs, resolvers });
   logger.info('Graph Schema Compiled, starting express');
 } catch (schemaCompilationError) {
+  if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`)) {
+    const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { enocding: 'utf-8' });    
+    logger.error(`\n\n${error}`);
+  }    
   logger.error(`Error compiling the graphql schema ${schemaCompilationError.message}`);
 }
 
@@ -150,8 +155,10 @@ startup().then((startResult) => {
   app.use('/amq', amq.router);
   app.use(resourcesPath, express.static(APP_DATA_ROOT || publicFolder));
   app.listen(API_PORT);
+  app.use(flash());
   // logger.info(`Bots server using ${bots.name}`);
   logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
   logger.info('System Initialized/Ready, enabling app');
   amq.raiseSystemEvent('server.startup.complete');
+
 });

@@ -312,12 +312,13 @@ UserSchema.methods.setAuthentication = async function setAuthentication(authenti
   const instance = this;
   const { props, provider, lastLogin } = authentication;
 
+  debugger;
   let dirty = false;
   if(instance.$patching === true) {
     return;
   } else {
     instance.$patching = true;
-    logger.debug(`Adding new authentication details provider: ${provider} username: ${props ? props.username : 'NO PROPS'}`);
+    logger.debug(`Adding new authentication details provider: ${provider} username: ${props ? props.username || this.fullName() : 'NO PROPS'}`);
     if (instance.authentications === undefined || instance.authentications === null) {
       instance.authentications = [authentication];
       dirty = true;

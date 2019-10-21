@@ -7,7 +7,7 @@ import { Content } from '../../../../models/index';
 import logger from '../../../../logging';
 
 export default {
-  Content: {
+  ReactoryContent: {
     id: (content) => {
       return content._id.toString();
     }

@@ -82,6 +82,7 @@ type User {
   roles: [String]  
   memberships: [UserMembership]
   sessionInfo: [UserSession]
+  authentications: [ UserAuthentication ]
   legacyId: Float
   createdAt: Float!
   updatedAt: Float!
@@ -95,11 +96,16 @@ type Comment {
   when: Float
 }
 
+type ProfileRefreshResult {
+  user: User,
+  messages: [ UXMessage ]
+}
+
 extend type Query {
   allUsers: [User],
   userWithId(id: String!): User!
   userPeers(id: String!, organizationId: String): UserPeers
-  
+  refreshProfileData(id: String, skipImage: Boolean): ProfileRefreshResult
   authenticatedUser: User,
   userInbox(id: String, sort: String, via: String): [Email]
   searchUser(searchString: String!, sort: String): [User]   

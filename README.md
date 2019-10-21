@@ -1,7 +1,25 @@
 This project is a graphql, express, mongodb implementation that runs using pm2 configuration for production and yarn / npm for development purposes.
 
 Below you will find some information on how to perform common tasks.<br>
+
+## Installing the server on linux (ubuntu 16.04 / 18.04)
+
+* `ssh <user>@yourserver.co`
+
+* `create-react-app` is a global command-line utility that you use to create new projects.
+* `react-scripts` is a development dependency in the generated projects (including this one).
+
+You almost never need to update `create-react-app` itself: it delegates all the setup to `react-scripts`.
+
+
+
 You can find the most recent version of this guide [here](https://github.com/facebookincubator/create-react-app/blob/master/packages/react-scripts/template/README.md).
+
+
+
+
+
+
 
 ## Table of Contents
 
