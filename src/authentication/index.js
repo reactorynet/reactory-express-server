@@ -71,7 +71,7 @@ class AuthConfig {
         let _existing = null;
         try {
           // this is the user that is returned by the microsft graph api
-          const user = await graph.getUserDetails(accessToken);
+          const user = await graph.getUserDetails(accessToken, { profileImage: true, imageSize: '120x120' });
           logger.info(`User retrieved from Microsoft Graph API ${user.email || user.userPrincipalName}`);
           if (user) {
             // Add properties to profile
