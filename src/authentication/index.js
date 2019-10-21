@@ -89,7 +89,7 @@ class AuthConfig {
             }
 
             if(user.avatar) {              
-              _existing.avatar = updateUserProfileImage(_existing, user.avatar, true, false);              
+              _existing.avatar = updateUserProfileImage(_existing, user.avatar, false, false);              
             }          
           }
         } catch (err) {
