@@ -20,6 +20,7 @@
     "start:reactory": "NODE_PATH=./src env-cmd -f ./config/.env.reactory.local npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000",
     "start:reactory:drew": "NODE_PATH=./src env-cmd -f ./config/.env.local.drew npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000",
     "start:lasec-crm": "NODE_PATH=./src env-cmd -f ./config/.env.lasec.local npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000",
+    "start:lasec-crm-drew": "NODE_PATH=./src env-cmd -f ./config/.env.lasec.local.drew npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000",
     "build": "npx babel ./src --out-dir dist --presets @babel/env --copy-files",
     "set:env:production": "env-cmd ./.env.production",
     "build:prod": "npm-run-all set:env:production build",
