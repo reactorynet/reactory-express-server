@@ -35,7 +35,7 @@ const lookups = {
   }
 };
 
-const maps = {  
+const maps = {
   meta: {
     "id": ["code", "meta.reference"],
     "created": "created",
@@ -44,10 +44,10 @@ const maps = {
   },
   customer: {
     //"customer_id": "customer.meta.reference",
-    //"customer_full_name": "customer.fullName",    
+    //"customer_full_name": "customer.fullName",
   },
   staff: {
-    "primary_api_staff_user_id": ["salesRep.meta.reference"],    
+    "primary_api_staff_user_id": ["salesRep.meta.reference"],
     "sales_team_id": "salesTeam.meta.reference",
     "staff_user_full_name": "salesRep.fullName"
   },
@@ -63,10 +63,10 @@ const maps = {
     "status_name": "statusName",
   },
   totals: {
-    "grand_total_excl_vat_cents": ["totalVATExclusive", "totals.totalVATExclusive"],    
+    "grand_total_excl_vat_cents": ["totalVATExclusive", "totals.totalVATExclusive"],
     "grand_total_vat_cents": ["totalVAT", "totals.totalVAT"],
     "grand_total_incl_vat_cents": ["totalVATInclusive", "totals.totalVATInclusive"],
-    "grand_total_discount_cents": ["totalDiscount", "totals.totalDiscount"],    
+    "grand_total_discount_cents": ["totalDiscount", "totals.totalDiscount"],
     "grand_total_discount_percent": ["totalDiscountPercent", "totals.totalDiscountPercent"],
     "gp_percent": ["GP", "totals.GP"],
     "actual_gp_percent": ["actualGP", "totals.actualGP"],
@@ -76,10 +76,10 @@ const maps = {
 
 const totalsFromMeta = (meta) => {
   return om(meta.source, {
-    "grand_total_excl_vat_cents": "totalVATExclusive",    
+    "grand_total_excl_vat_cents": "totalVATExclusive",
     "grand_total_vat_cents": "totalVAT",
     "grand_total_incl_vat_cents": "totalVATInclusive",
-    "grand_total_discount_cents": "totalDiscount",    
+    "grand_total_discount_cents": "totalDiscount",
     "grand_total_discount_percent": "totalDiscountPercent",
     "gp_percent": "GP",
     "actual_gp_percent": "actualGP",
@@ -101,36 +101,36 @@ const quote_sync = async (quote_id, owner, source = null, map = true) => {
   let _source = source;
   let _quoteDoc = {};
   const _predicate = {
-    'meta.reference': quote_id, 
+    'meta.reference': quote_id,
     'meta.owner': owner || global.partner.key,
   }
-  
+
   const now = moment();
-  
+
   const _existing = await Quote.findOne(_predicate).then();
 
   if(_source === null) {
-    _source = await lasecApi.Quotes.getByQuoteId(quote_id).then();        
+    _source = await lasecApi.Quotes.getByQuoteId(quote_id).then();
   }
-  
+
   if(_source === null && _existing !== null){
     _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
-  } 
-  
-  if(map === true && _source) {    
+  }
+
+  if(map === true && _source) {
     const _map = {
       ...maps.meta,
       ...maps.company,
       ...maps.customer,
       ...maps.status,
-      ...maps.totals,    
+      ...maps.totals,
     };
 
-    _quoteDoc = om(_source, _map);    
+    _quoteDoc = om(_source, _map);
   }
 
   if(_source === null) return null;
-      
+
   try {
     if(_existing) {
         _existing.meta = {
@@ -147,7 +147,7 @@ const quote_sync = async (quote_id, owner, source = null, map = true) => {
         return _existing;
     } else {
       const _newQuote = new Quote({
-        ..._quoteDoc,        
+        ..._quoteDoc,
         meta: {
           owner,
           reference: quote_id,
@@ -155,35 +155,35 @@ const quote_sync = async (quote_id, owner, source = null, map = true) => {
           lastSync: now.valueOf(),
           nextSync: moment(now).add(quoteSyncTimeout,'minutes').valueOf(),
           mustSync: true,
-        },      
+        },
         created: moment(_quoteDoc.created || now).valueOf(),
-        modified: moment(_quoteDoc.modified || now).valueOf(),                       
+        modified: moment(_quoteDoc.modified || now).valueOf(),
       });
 
-      await _newQuote.addTimelineEntry({               
+      await _newQuote.addTimelineEntry({
         when: now.valueOf(),
         what: `Initial Sync with reactory trigger by ${global.user.fullName(true)}`,
         who: global.user._id,
-        notes: `Initial import from Lasec360 API.`            
+        notes: `Initial import from Lasec360 API.`
       });
 
       return _newQuote;
-    }            
+    }
   } catch (createError) {
     logger.error('Error while upserting remote document', createError);
     throw createError;
   }
-}; 
+};
 
 /**
  * Finds and / or synchronizes a record
  * @param {String} quote_id
  */
 const getLasecQuoteById = async (quote_id) => {
-  try {    
+  try {
     const owner = global.partner.key;
-    let quote = await quote_sync(quote_id, owner, null, true).then();    
-    return quote;          
+    let quote = await quote_sync(quote_id, owner, null, true).then();
+    return quote;
   } catch (quoteFetchError) {
     logger.error(`Could not fetch Quote with Quote Id ${quote_id} - ${quoteFetchError.message}`);
     return null;
@@ -193,7 +193,7 @@ const getLasecQuoteById = async (quote_id) => {
 const getQuotes = async (params) => {
 
   let _params = params;
-  
+
   if(!_params) {
     _params = {
       periodStart: moment().startOf('year'),
@@ -204,14 +204,14 @@ const getQuotes = async (params) => {
 
 
   let apiFilter = {
-    start_date: _params.periodStart ? _params.periodStart.toISOString() : moment().startOf('year'), 
+    start_date: _params.periodStart ? _params.periodStart.toISOString() : moment().startOf('year'),
     end_date: _params.periodEnd? _params.periodEnd.toISOString() : moment().endOf('day')
   };
 
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
 
   /**
-   * 
+   *
    * {
   "filter": {},
   "format": {
@@ -229,14 +229,14 @@ const getQuotes = async (params) => {
     "first_item_index": 1
   }
 }
-   * 
-   * 
+   *
+   *
    */
 
 
   /**
    * Paged Result
-   * 
+   *
    *{
   "status": "success",
   "payload": {
@@ -268,7 +268,7 @@ const getQuotes = async (params) => {
   const fetchPromises = [];
 
   let ids = [];
-   
+
   if(isArray(quoteResult.ids) === true) {
     ids = [...quoteResult.ids];
   }
@@ -290,7 +290,7 @@ const getQuotes = async (params) => {
   });
 
   logger.debug(`Loading (${ids.length}) quote ids`);
-    
+
   const quotesDetails = await lasecApi.Quotes.list({ filter: { ids: ids } });
   logger.debug(`Fetched Expanded View for (${quotesDetails.items.length}) Quotes from API`);
   let quotes = [...quotesDetails.items];
@@ -301,7 +301,7 @@ const getQuotes = async (params) => {
   })).then();
 
   quotes = quoteSyncResult.map( doc => doc);
-    
+
   amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
 
   return quotes;
@@ -310,18 +310,18 @@ const getQuotes = async (params) => {
 
 /**
  * Fetches emails where content / subject matches the quote
- * @param {*} quote_id 
+ * @param {*} quote_id
  */
 const getQuoteEmails = async (quote_id) => {
 
   return new Promise((resolve, reject) => {
     clientFor(global.user, global.partner).query({
-      query: gql` 
+      query: gql`
         query EmailForQuote($mailFilter: MailFilter) {
           userEmails(mailFilter: $mailFilter) {
             id
             sent
-            from             
+            from
             message
             subject
             to
@@ -331,17 +331,17 @@ const getQuoteEmails = async (quote_id) => {
         }`, variables: {
           mailFilter: {
             search: quote_id,
-            via: ['microsoft'],        
+            via: ['microsoft'],
           }
         }
     }).then((emailResult) => {
       logger.debug('Got emails for user', emailResult);
       if(emailResult.data && emailResult.data.userEmails) {
-        resolve(emailResult.data.userEmails);      
+        resolve(emailResult.data.userEmails);
       } else {
         resolve([]);
       }
-      
+
     }).catch((emailError) => {
       logger.error(`Error fetching mail from user ${emailError.message}`, emailError);
       reject(emailError);
@@ -379,7 +379,7 @@ const groupQuotesByStatus = (quotes) => {
     };
 
     if (Object.getOwnPropertyNames(groupsByKey).indexOf(quote.statusGroup) >= 0) {
-      groupsByKey[key].quotes.push(quote);      
+      groupsByKey[key].quotes.push(quote);
       groupsByKey[key].totalVAT = Math.floor(groupsByKey[key].totalVAT + (totals.totalVAT / 100));
       groupsByKey[key].totalVATExclusive = Math.floor(groupsByKey[key].totalVATExclusive + (totals.totalVATExclusive / 100));
       groupsByKey[key].totalVATInclusive = Math.floor(groupsByKey[key].totalVATInclusive + (totals.totalVATInclusive /100));
@@ -441,7 +441,7 @@ export default {
   },
   LasecQuoteItem: {
     id: ({ id, _id }) => (id || _id)
-  },  
+  },
   Quote: {
     id: ({ _id }) => {
       return `${_id}`;
@@ -460,45 +460,45 @@ export default {
       if(isNil(customer) === false) {
         if(customer && ObjectId.isValid(customer) === true) {
           return await User.findById(quote.customer).then();
-        }         
+        }
       }
 
       if(quote.meta && quote.meta.source) {
         const { customer_full_name, customer_id } = quote.meta.source;
 
         if(customer_full_name && customer_id) {
-          //check if a customer with this reference exists?          
+          //check if a customer with this reference exists?
           let _customer = await User.findByForeignId( customer_id, global.partner.key ).then();
           if (_customer !== null) {
             logger.debug(`Customer ${_customer.fullName()} found via foreign reference`);
             quote.customer = _customer._id;
             if(typeof quote.save === 'function') {
-              try { await quote.save() } catch (parallelSaveError) { 
+              try { await quote.save() } catch (parallelSaveError) {
                 logger.warn(`Could not update quote`, parallelSaveError);
               }
-            }            
+            }
             return _customer;
-          } 
+          }
           else {
             _customer = User.parse(customer_full_name);
             _customer = new User(_customer);
             _customer.setPassword(uuid());
-            
-            _customer.meta = {};            
+
+            _customer.meta = {};
             _customer.meta.owner = global.partner.key;
             _customer.meta.reference = customer_id;
             _customer.meta.lastSync = null;
             _customer.meta.nextSync = new Date().valueOf();
             _customer.meta.mustSync = true;
-            
+
             await _customer.save();
             quote.customer = _customer._id;
-            
+
             if(typeof quote.save === 'function') {
-              try { await quote.save(); } catch (parallelSaveError) { 
+              try { await quote.save(); } catch (parallelSaveError) {
                 logger.warn(`Could not update quote`, parallelSaveError);
               }
-            }            
+            }
             _customer.addRole(global.partner._id, 'CUSTOMER');
               amq.raiseWorkFlowEvent('startWorkFlow', {
                 id: 'LasecSyncCustomer',
@@ -516,7 +516,7 @@ export default {
           }
         }
       }
-                  
+
       return {
         id: new ObjectId(),
         firstName: 'NO',
@@ -527,7 +527,7 @@ export default {
     headers: async () => {
 
       let headers = [
-        { 
+        {
           id: new ObjectId(),
           text: 'No Header',
           headerId: 'default',
@@ -545,19 +545,19 @@ export default {
       return om(lineItems, {
         'items.[].id': [
           '[].quote_item_id',
-          '[].meta.reference', 
-          '[].line_id', 
+          '[].meta.reference',
+          '[].line_id',
           { key: '[].id', transform: ()=>(new ObjectId())
-        }],        
+        }],
         'items.[].code': '[].code',
         'items.[].description': '[].title',
         'items.[].quantity': '[].quantity',
         'items.[].total_price_cents': '[].price',
-        'items.[].gp_percent': '[].GP', 
+        'items.[].gp_percent': '[].GP',
         'items.[].total_price_before_discount_cents' : [
-          '[].totalVATExclusive', 
-          { 
-            key: '[].totalVATInclusive', 
+          '[].totalVATExclusive',
+          {
+            key: '[].totalVATInclusive',
             transform: (v) => (Number.parseInt(v) * 1.15)
           }
         ],
@@ -568,26 +568,26 @@ export default {
 
           return 'Uncategorised';
         } },
-        'items.[].total_discount_percent': '[].discount', 
+        'items.[].total_discount_percent': '[].discount',
 
       });
     },
-    statusName: (quote) => { 
-      const { source } = quote.meta;      
+    statusName: (quote) => {
+      const { source } = quote.meta;
       return quote.statusName || source.status_name;
     },
     status: ({ status, meta }) => {
       return status || meta.source ? meta.source.status_id : 'unset';
     },
     statusGroup: ( { meta }) => {
-      return meta.source && 
+      return meta.source &&
               meta.source.substatus_id ? meta.source.substatus_id : '1';
     },
     statusGroupName: (quote) => {
       const { statusGroupName, meta } = quote;
 
       if(statusGroupName) return statusGroupName;
-      
+
       if(meta && meta.source.substatus_id) {
         quote.statusGroupName = lookups.statusGroupName[`${meta.source.substatus_id}`];
 
@@ -596,7 +596,7 @@ export default {
 
       return null;
     },
-    totals: (quote) => {    
+    totals: (quote) => {
       const { meta, totals } = quote;
 
       if(totals) return totals;
@@ -607,44 +607,44 @@ export default {
         if(quote.save) {
 
           quote.totals = _totals;
-          
+
           try {
             quote.save();
-          } catch (parallelSaveError) { 
+          } catch (parallelSaveError) {
             logger.warn(`Could not update quote`, parallelSaveError);
           }
-          
+
         }
 
         return _totals;
       }
-      
+
       return {
-        totalVATExclusive: 0,    
+        totalVATExclusive: 0,
         totalVAT: 0,
         totalVATInclusive: 0,
-        totalDiscount: 0,    
+        totalDiscount: 0,
         totalDiscountPercent: 0,
       };
     },
-    allowedStatus: ( { meta } ) => { 
+    allowedStatus: ( { meta } ) => {
       return meta && meta.source && meta.source.allowed_status_ids
     },
     company: async (quote) => {
-      
+
       const { meta } = quote;
 
       if(isNil(quote.company) === false) {
         if(ObjectId.isValid(quote.company) === true) {
           return await Organization.findById(quote.company).then();
-        } 
+        }
       }
 
       if(quote.meta && quote.meta.source) {
         const { company_id, company_trading_name } = meta.source;
         if(company_trading_name && company_id) {
           //check if a customer with this reference exists?
-          
+
           let _company = await Organization.findByForeignId( company_id, global.partner.key ).then();
           if(_company !== null) {
             if(typeof quote.save === "function") {
@@ -653,8 +653,8 @@ export default {
             }
 
             return _company;
-          } 
-          else {                    
+          }
+          else {
 
             _company = new Organization({
               meta: {
@@ -674,14 +674,14 @@ export default {
               public: false,
               updatedBy: global.user._id
             });
-            
+
             await _company.save();
 
             if(typeof quote.save === "function") {
               quote.company = _company._id;
               try {
                 await quote.save();
-              } catch (parallelSaveError) { 
+              } catch (parallelSaveError) {
                 logger.warn(`Could not update quote`, parallelSaveError);
               }
             }
@@ -703,12 +703,12 @@ export default {
           }
         }
       }
-      
+
       throw new ApiError('No Company Info')
     },
     totalVATExclusive: (quote) => {
       const { totals, meta } = quote;
-      
+
       if(totals && totals.totalVATExclusive) return totals.totalVATExclusive;
 
       if(meta.source) {
@@ -716,26 +716,26 @@ export default {
         quote.totals = _totals;
         return _totals.totalVATExclusive;
       }
-            
+
       return 0;
     },
     totalVAT: (quote) => {
       const { totals, meta } = quote;
-      
+
       if(totals && totals.totalVAT) return totals.totalVAT;
 
       if(meta.source) {
         const _totals = totalsFromMeta(meta);
-        quote.totals = _totals;          
+        quote.totals = _totals;
 
         return _totals.totalVAT;
       }
-            
+
       return 0;
     },
     totalVATInclusive: (quote) => {
       const { totals, meta } = quote;
-      
+
       if(totals && totals.totalVATInclusive) return totals.totalVATInclusive;
 
       if(meta.source) {
@@ -743,12 +743,12 @@ export default {
         quote.totals = _totals;
         return _totals.totalVATInclusive;
       }
-            
+
       return 0;
     },
     GP: (quote) => {
       const { totals, meta } = quote;
-      
+
       if(totals && totals.GP) return totals.GP;
 
       if(meta.source) {
@@ -756,63 +756,63 @@ export default {
         quote.totals = _totals;
         return _totals.GP;
       }
-            
+
       return 0;
     },
     actualGP: (quote) => {
       const { totals, meta } = quote;
-      
+
       if(totals && totals.actualGP) return totals.actualGP;
 
       if(meta.source) {
         const _totals = totalsFromMeta(meta);
-        quote.totals = _totals;          
+        quote.totals = _totals;
         return _totals.actualGP;
       }
-            
+
       return 0;
     },
     created: ({ created }) => { return moment(created); },
     modified: ({ modified }) => { return moment(modified); },
-    expirationDate: ({ expirationDate, meta }) => { 
-      if(expirationDate) return moment(expirationDate); 
+    expirationDate: ({ expirationDate, meta }) => {
+      if(expirationDate) return moment(expirationDate);
       if(meta && meta.source && meta.source.expiration_date) return  moment(meta.source.expiration_date);
       return null;
     },
     note: ({ note }) => (note),
-    timeline: async (quote) => { 
-      
+    timeline: async (quote) => {
+
       const { timeline, id, meta, code } = quote;
-      const _timeline = []; //create a virtual timeline 
-      
+      const _timeline = []; //create a virtual timeline
+
       if(isArray(timeline) === true && timeline.length > 0) {
         timeline.forEach(tl => _timeline.push(tl));
       }
 
       //create timeline from mails
       const mails = await getQuoteEmails(quote.code).then();
-      
+
       if(mails && isArray(mails)) {
 
         mails.forEach((mail) => {
           logger.debug('Transforming Email to timeline entry', mail);
           const entry = om(mail, {
-            'createdAt': 'when',            
+            'createdAt': 'when',
             'from': {
               key: 'who',
               transform: ( sourceValue ) => {
                 //user lookup
-                return User.find({ email: sourceValue }).then()                
+                return User.find({ email: sourceValue }).then()
               },
             },
-            'message': 'notes'            
+            'message': 'notes'
           });
-          entry.actionType = 'email',      
+          entry.actionType = 'email',
           entry.what = `Email Communication from ${mail.from} to ${mail.to}`,
           logger.debug(`Transformed Email:\n ${mail} \n to timeline entry \n ${entry} \n`);
           _timeline.push(entry);
-        });  
-      }                  
+        });
+      }
       return lodash.sortBy(_timeline, ['when']);
     },
     meta: ( quote ) => {
@@ -832,7 +832,7 @@ export default {
       return `${period}.${moment(periodStart).valueOf()}.${moment(periodEnd).valueOf()}`;
     },
     target: (dashboard) => {
-      
+
       if(dashboard.target) return dashboard.target;
       else return 1000000;
     },
@@ -842,7 +842,7 @@ export default {
       return 50;
     }
 
-  },  
+  },
   Query: {
     LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes();
@@ -869,7 +869,7 @@ export default {
         { key: 'custom', value: 'custom', label: 'Custom' },
       ];
 
-      const now = moment();      
+      const now = moment();
       switch(period) {
         case 'today': {
           periodStart = moment(now).startOf('day');
@@ -933,29 +933,29 @@ export default {
       if(_cached) {
         logger.debug('Found results in cache');
         periodLabel = `${periodLabel} [cache]`;
-        return _cached;        
+        return _cached;
       }
 
       logger.debug(`Fetching Lasec Dashboard Data`, dashparams);
       let palette = global.partner.colorScheme();
 
-      
+
       const quotes = await getQuotes( { periodStart, periodEnd } ).then();
-      
-            
+
+
       const quoteStatusFunnel = {
         chartType: 'FUNNEL',
-        data: [                  
+        data: [
         ],
         options: {
 
         },
-        key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/funnel`  
+        key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/funnel`
       };
-      
+
       const quoteStatusPie = {
         chartType: 'PIE',
-        data: [         
+        data: [
         ],
         options: {
           multiple: false,
@@ -964,33 +964,33 @@ export default {
           fill: `#${palette[0]}`,
           dataKey: 'value',
         },
-        key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`  
+        key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
       };
 
       const quoteStatusComposed = {
         chartType: 'COMPOSED',
         data: [
-          
+
         ],
         options: {
           xAxis: {
             dataKey: 'modified',
           },
           area: {
-            dataKey: 'totalVATInclusive',            
+            dataKey: 'totalVATInclusive',
             fill: `${palette[0]}`,
             stroke: `#8884d8`,
-          }, 
-          bar: { 
-            dataKey: 'totalVAT', 
+          },
+          bar: {
+            dataKey: 'totalVAT',
             fill: `${palette[1]}`,
-          }, 
+          },
           line: {
             dataKey: 'totalVATExclusive',
             stroke: `${palette[2]}`
-          },          
+          },
         },
-        key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`  
+        key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`
       };
 
       const dashboardResult = {
@@ -1009,9 +1009,9 @@ export default {
           quoteStatusFunnel,
           quoteStatusPie,
           quoteStatusComposed,
-        }             
+        }
       };
-      
+
       dashboardResult.totalQuotes = quotes.length;
       dashboardResult.statusSummary = groupQuotesByStatus(dashboardResult.quotes);
       dashboardResult.charts.quoteStatusFunnel.data = [];
@@ -1032,30 +1032,38 @@ export default {
           "outerRadius": 140,
           "innerRadius": 70,
           "fill": `#${palette[index + 1 % palette.length]}`
-        });       
+        });
       });
 
       lodash.sortBy(quotes, [q => q.modified]).forEach((quote) => {
         dashboardResult.charts.quoteStatusComposed.data.push({
           "name": quote.id,
-          "modified": moment(quote.modified).format('YYYY-MM-DD'), 
+          "modified": moment(quote.modified).format('YYYY-MM-DD'),
           "totalVATInclusive": quote.totals.totalVATInclusive / 100,
           "totalVATExclusive": quote.totals.totalVATExclusive / 100,
           "totalVAT": quote.grand_total_vat_cents
         });
       });
-      
+
       dashboardResult.charts.quoteStatusFunnel.data = lodash.reverse(dashboardResult.charts.quoteStatusFunnel.data);
 
       setCacheItem(cacheKey, dashboardResult, 60 * 5);
 
       return dashboardResult;
     },
-    LasecGetQuoteById: async (obj, { quote_id }) => {       
+    LasecGetQuoteById: async (obj, { quote_id }) => {
       if(isNil(quote_id) === true) throw new ApiError('This method requies a quote id to work');
-      const result = await getLasecQuoteById(quote_id).then();            
+      const result = await getLasecQuoteById(quote_id).then();
       return result;
-    }    
+    },
+    LasecGetFilteredQuotes: async(obj, args) => {
+      console.log('GETTING QUOTES--------:: ', args);
+      return [{
+        _id: '1234',
+        code: '5678'
+      }];
+      // return getQuotes();
+    }
   },
   Mutation: {
     LasecSetQuoteHeader: async (parent, { quote_id, input }) => {
@@ -1078,8 +1086,8 @@ export default {
       }
     },
     LasecUpdateQuoteStatus: async (parent, { quote_id, input }) => {
-      logger.debug('Mutation.LasecUpdateQuoteStatus(...)', { quote_id, input });       
-      
+      logger.debug('Mutation.LasecUpdateQuoteStatus(...)', { quote_id, input });
+
       const quote = await getLasecQuoteById(quote_id).then();
 
       if(!quote) {
@@ -1092,17 +1100,17 @@ export default {
       }
 
       const { user } = global;
-      
+
       let reminder = null;
 
       if(lodash.isArray(quote.timeline) === false) quote.timeline = [];
-      
+
       const timelineEntry = {
         when: new Date().valueOf(),
         what: `Next actions updated by ${global.user.firstName} ${global.user.lastName} and a reminder set for ${moment().add(reminder || 3, 'days').format('YYYY-MM-DD HH:mm')}`,
-        who: global.user._id,        
+        who: global.user._id,
         notes: input.note,
-        reason: input.reason          
+        reason: input.reason
       };
 
 
@@ -1124,14 +1132,14 @@ export default {
           version: 1,
           src: 'QuoteResolver:LasecUpdateQuoteStatus',
           data: {
-            reminder: reminder,            
+            reminder: reminder,
             partner: global.partner,
             user: global.user,
             quote: quote
           },
         }, global.partner);
         timelineEntry.reminder = reminder._id;
-      } 
+      }
 
       // quote.status = input.status,
       quote.timeline.push(timelineEntry);
@@ -1154,7 +1162,7 @@ export default {
         quote,
         success: true,
         message: 'Quote status updated'
-      };      
+      };
     },
   }
 };

@@ -1,0 +1,30 @@
+query LasecGetFilteredQuotes($filterparams: LasecFilteredQuoteQueryInput){
+  LasecGetFilteredQuotes(filterparams: $filterparams){
+    id
+    period
+    periodStart
+    periodEnd
+    repIds
+    quotes {
+      id
+      status
+      customer {
+        id
+        fullName
+      }
+      company {
+        id
+        tradingName
+      }
+      totalVATExclusive
+      totalVAT
+      totalVATInclusive
+      GP
+      actualGP
+      created
+      modified
+      expirationDate
+      note
+    }
+  }
+}
