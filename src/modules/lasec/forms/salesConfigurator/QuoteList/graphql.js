@@ -5,8 +5,15 @@ export default {
     name: 'LasecGetFilteredQuotes',
     text: fileAsString(require.resolve('./LasecGetFilteredQuotes.graphql')),
     variables: {
-      // 'formData.code': 'quote_id',
+      'formContext.query.filterType': 'filterparams.filterType',
     },
+    resultMap: {
+      '[].customer.fullName': '[].customerName',
+      '[].company.tradingName': '[].companyTradingName',
+      '[].status': '[].status',
+      '[].created': '[].created'
+    },
+    resultType: 'array',
     edit: false,
     new: false,
     onError: {

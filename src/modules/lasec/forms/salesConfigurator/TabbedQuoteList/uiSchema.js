@@ -1,5 +1,5 @@
 export default {
-  submitIcon: 'refresh',
+  showSubmit: false,
   tabbedQuotes: {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
@@ -8,22 +8,57 @@ export default {
           title: 'Recent',
           componentFqn: 'lasec-crm.QuotesList',
           componentProps: {
-            filterType: 'recent'
-          }
+            query: {
+              filterType: 'Recent'
+            }
+          },
+          additionalComponents: [
+            {
+              componentFqn: 'core.SlideOutLauncher',
+              componentProps: {
+                buttonVariant: 'SpeedDial',
+                actions: [
+                  {
+                    key: 'new-quote',
+                    title: 'New Quote',
+                    clickAction: 'navigate',
+                    icon: 'create'
+
+                  }
+                ]
+              }
+            }
+          ]
         },
         {
           title: 'By Client',
           componentFqn: 'lasec-crm.QuotesList',
           componentProps: {
-            filterType: 'client'
-          }
+            query: {
+              filterType: 'ByClient'
+            }
+          },
+          additionalComponents: [
+            {
+              componentFqn: 'core.SlideOutLauncher',
+              componentProps: {}
+            }
+          ]
         },
         {
           title: 'By Status',
           componentFqn: 'lasec-crm.QuotesList',
           componentProps: {
-            filterType: 'status'
-          }
+            query: {
+              filterType: 'ByStatus'
+            }
+          },
+          additionalComponents: [
+            {
+              componentFqn: 'core.SlideOutLauncher',
+              componentProps: {}
+            }
+          ]
         }
       ]
     }

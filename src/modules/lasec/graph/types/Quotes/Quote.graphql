@@ -176,8 +176,6 @@ input LasecQuoteQueryInput {
   status: [ String ]
 }
 
-# DREW
-
 enum QuoteFilterType {
   Recent,
   ByClient,
@@ -186,11 +184,7 @@ enum QuoteFilterType {
 
 input LasecFilteredQuoteQueryInput {
   filterType: QuoteFilterType
-  # clientId: String
-  # status: [ String ]
 }
-
-#
 
 enum QuoteHeaderAction {
   NEW,

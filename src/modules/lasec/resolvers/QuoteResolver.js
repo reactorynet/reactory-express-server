@@ -1057,11 +1057,14 @@ export default {
       return result;
     },
     LasecGetFilteredQuotes: async(obj, args) => {
-      console.log('GETTING QUOTES--------:: ', args);
-      return [{
-        _id: '1234',
-        code: '5678'
-      }];
+
+      logger.info(`QUOTE RESOLVER - GETTING QUOTES::`, {args});
+
+      const quotes = await getQuotes( {
+        periodStart: moment().subtract(1, 'month'),
+        periodEnd: moment().endOf('month')
+      }).then();
+      return quotes;
       // return getQuotes();
     }
   },

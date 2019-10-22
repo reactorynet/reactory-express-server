@@ -15,11 +15,11 @@ export default {
   version: '1.0.0',
   schema: $schema,
   uiSchema: $uiSchema,
-  // graphql: $graphql,
-  defaultFormData: [
-    {
-      primaryText: 'Loading',
-      secondaryText: 'Some text'
-    }
-  ],
+  graphql: $graphql,
+  // defaultFormData: [
+  //   {
+  //     primaryText: 'Loading',
+  //     secondaryText: 'Some text'
+  //   }
+  // ],
 };
