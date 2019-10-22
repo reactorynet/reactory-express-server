@@ -1,6 +1,6 @@
 
-import logger from '../../../../logging';
-import { fileAsString } from '../../../../utils/io';
+import logger from '@reactory/server-core/logging';
+import { fileAsString } from '@reactory/server-core/utils/io';
 
 const typeDefs = [];
 
@@ -12,6 +12,7 @@ const typeDefs = [];
   'System/ReactoryClient',
   'System/Workflow',
   'Forms/Form',
+  'System/UX',
   'User/User',
   'User/Team',
   'Project/Project',
@@ -24,7 +25,7 @@ const typeDefs = [];
   'System/Email',
   'System/Template',
   'System/Statistics',
-  'System/Content',
+  'System/ReactoryContent',
   'Communications/Notification',
   'Custom/FuniSaveGateway',
 ].forEach((name) => {

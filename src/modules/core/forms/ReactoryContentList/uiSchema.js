@@ -6,9 +6,17 @@ export default {
       id: 'Id',
       // showAvatar: true,
       // avatarSrc: '${props.api.getAvatar(item.who)}',
-      // iconField: 'actionType',
+      // iconField: 'actionType',      
       primaryText: '${item.primaryText}',
-      secondaryText: '${item.secondaryText}'
+      secondaryText: '${props.api.utils.moment(item.secondaryText).format(\'DD MMM YYYY HH:mm\')}',
+      variant: 'button',
+      secondaryAction: {
+        iconKey: 'edit',
+        label: 'Edit',
+        componentFqn: 'core.Link',
+        action: 'event:onRouteChanged',
+        link: '#/content-capture/edit/${item.primaryText}/'
+      }
     }
   },
 };

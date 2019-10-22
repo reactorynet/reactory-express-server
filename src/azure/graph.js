@@ -1,9 +1,12 @@
+'use strict';
 import "isomorphic-fetch";
 import { Client, ResponseType } from "@microsoft/microsoft-graph-client";
 import logger from '../logging';
 import { PNG } from 'pngjs';
 import { updateUserProfileImage } from '../application/admin/User';
 import om from 'object-mapper';
+import { Stream } from "stream";
+import ApiError from "exceptions";
 
 
 const getAuthenticatedClient = (accessToken) => {
@@ -21,15 +24,51 @@ const getAuthenticatedClient = (accessToken) => {
   return client;
 };
 
-export default {
-  async getUserDetails(accessToken, who) {
+const MSGraph = {
+  async getProfileImage(accessToken, size = '120x120') {
+    const client = getAuthenticatedClient(accessToken);
+
+    try {
+      
+      const imageResponse = await client
+        .api(`/me/photos/${size}/$value`)
+        .headers({
+          'accept': 'image/jpeg'
+        })
+        .responseType(ResponseType.RAW)        
+        .get();
+
+      const s2b = async (readStream) => {
+
+        return await new Promise((resolve, reject)=>{
+          const chunks = [];
+
+          readStream.on("data", function (chunk) {
+            chunks.push(chunk);
+          });
+        
+          // Send the buffer or you can put it into a var
+          readStream.on("end", function () {
+            resolve(Buffer.concat(chunks));
+          });      
+
+        }).then();
+      };      
+      const imageBuffer = await s2b(imageResponse.body);
+      return `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
+    } catch (getImageError) {
+      logger.debug(`Could not get image`, getImageError);
+      return null;
+    }
+  },
+  async getUserDetails(accessToken, options = { profileImage: false, imageSize: '120x120' }) {
 
     const client = getAuthenticatedClient(accessToken);
     let user = {
       firstName: '',
       lastName: '',
       email: '',
-      avatar: null
+      avatar: null,      
     };
 
     try {
@@ -38,31 +77,16 @@ export default {
         .select('mail,givenName,surname')
         .get();
     } catch (userGetError) {
-      logger.error('Could not retrieve the user detauls from MS Graph');
+      logger.error(`Could not retrieve the user detauls from MS Graph ${userGetError.message}`);
+      throw new ApiError(`Could not connect with Microsoft Graph API: ${userGetError.message}`, { MicrosoftError: userGetError });
     }
 
+    if(options.profileImage === true) {
+      user.avatar = await MSGraph.getProfileImage(accessToken, options.imageSize);
+    }
 
-    const imageBuff = new Promise(resolve => {
-      
-      client
-        .api('/me/photos/120x120/$value')
-        .headers({
-          'accept': 'image/jpeg'
-        })
-        .responseType(ResponseType.STREAM)        
-        .get()
-        .then(( response ) => {          
-          const buffer = [];        
-          response.body.on('data', chunk => buffer.push(chunk));
-          response.body.on('close', resolve(Buffer.concat(buffer)));           
-        }).catch(getPhotoError => {
-          logger.debug(`Could not get the user photo from MS Graph: ${getPhotoError.message}`, getPhotoError);    
-          resolve(null); 
-        });                                   
-    });
-
-    user.avatar = await imageBuff.then();
-    
+    logger.debug(`MSGraph /me ${options.profileImage ? 'with profile image fetch' : ''} result`, { user })
+                
     return user;
   },
 
@@ -109,4 +133,5 @@ export default {
   },
 };
 
+export default MSGraph;
 

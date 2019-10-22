@@ -78,10 +78,10 @@ export default {
           ordinal: 4, title: 'Add Content', link: '/content-capture/new', icon: 'create', roles: ['ADMIN', 'USER'],
         },
         {
-          ordinal: 4.5, title: 'List Content', link: '/content-list/', icon: 'list', roles: ['ADMIN', 'USER'],
+          ordinal: 4, title: 'List Content', link: '/content-list/', icon: 'list', roles: ['ADMIN', 'USER'],
         },
         {
-          ordinal: 5, title: 'Graph', link: '/graphiql/', icon: 'gear', roles: ['ANON', 'USER'],
+          ordinal: 5, title: 'Graph', link: '/graphiql/', icon: 'search', roles: ['ANON', 'USER'],
         },
       ],
     },
@@ -180,9 +180,9 @@ export default {
     {
       key: 'content-capture',
       title: 'Content Capture',
-      path: '/content-capture/edit/:slug',
+      path: '/content-capture/edit/:slug/',
       public: false,
-      exact: true,
+      exact: false,
       roles: ['USER', 'ADMIN'],
       componentFqn: 'static.ContentCapture@1.0.0',
       args: [

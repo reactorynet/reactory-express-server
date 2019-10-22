@@ -6,6 +6,8 @@ import { Kind } from 'graphql/language';
 import { merge, isNil, isArray, sortBy } from 'lodash';
 import moment from 'moment';
 
+import { execql } from '@reactory/server-core/graph/client';
+
 import userResolvers from './UserResolver';
 import orgnizationResolvers from './OrganizationResolver';
 import assessmentResolvers from './AssessmentResolver';
@@ -78,8 +80,55 @@ const resolvers = {
     },
   },
   Query: {
-    apiStatus: (obj, args, context, info) => {
-      const { user, partner } = global;
+    apiStatus: async (obj, args, context, info) => {
+      const { user, partner } = global;   
+      let skipResfresh = false;
+      let _user = user;
+      let isAnon = false;
+      let uxmessages = [];
+
+      if(user.anon === true) {
+        skipResfresh = true;
+        isAnon = true;
+      }
+
+      
+      if(skipResfresh === false && isAnon === false) {
+        logger.debug(`apiStatus called for ${user.firstName} ${user.lastName}, performing profile refresh`);
+         
+        const refreshResult = await execql(`
+          query RefreshProfile($id:String, $skipImage: Boolean) {
+            refreshProfileData(id: $id, skipImage: $skipImage) {
+              user {
+                id
+                fullNameWithEmail
+                avatar 
+                authentications {
+                  id
+                  provider
+                  props
+                }      
+              }
+              messages {
+                text
+                description
+                status
+                componentFqn
+                modal
+                modalType
+                priority
+              }
+            }
+          }
+        `).then();
+
+        if(refreshResult && refreshResult.data && refreshResult.data.refreshProfileData) {
+          const { user, messages } = refreshResult.data.refreshProfileData;
+          uxmessages = [ ...uxmessages, ...messages ];
+        }
+        
+      }
+      
 
       const roles = [];
       if (isArray(user.memberships)) {
@@ -90,7 +139,6 @@ const resolvers = {
           return membership;
         });
       }
-
 
       return {
         when: moment(),
@@ -113,6 +161,7 @@ const resolvers = {
           primary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
           secondary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
         },
+        messages: uxmessages        
       };
     },
   },
