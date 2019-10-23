@@ -5,3 +5,4 @@ dist/
 scratch.txt
 package-lock.json
 config/*/.env*.local
+config/*/pm2.local*

@@ -58,7 +58,7 @@ CleanCacheWorkflow.meta = {
   category: 'workflow',
   autoStart: true,
   props: {
-    interval: 5000,
+    interval: 3600,
     enabled: true,
   },
   id: 'core.CleanCacheWorkflow',

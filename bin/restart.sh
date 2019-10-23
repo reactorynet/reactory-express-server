@@ -10,4 +10,5 @@
 #$SECONDS - The number of seconds since the script was started.
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
-pm2 stop 0 | pm2 start ../config/run/${1:-reactory}.config.js --env ${2:-production} | pm2 show 0
+pm2 stop ${4:-0} 
+pm2 start ./config/${1:-reactory}/pm2.${2:-local}.config.js --env ${3:-development}
