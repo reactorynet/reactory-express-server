@@ -27,7 +27,7 @@ class LasecNotAuthenticatedException extends ApiError {
       __typename: 'lasec.api.LasecNotAuthenticatedException',
       redirect: '/360',
       componentResolver: 'lasec-crm.Login360'
-    });        
+    });
   }
 }
 
@@ -37,7 +37,7 @@ class TokenExpiredException extends ApiError {
       __typename: 'lasec.api.TokenExpiredException',
       redirect: '/360',
       componentResolver: 'lasec-crm.Login360'
-    });    
+    });
     this.extensions = this.meta;
   }
 }
@@ -67,9 +67,9 @@ const getStorageItem = async (key) => {
     if (lasecAuth.props) {
       logger.debug(`Found login information for lasec ${lasecAuth}`);
       const {
-        payload, 
-        username, 
-        password, 
+        payload,
+        username,
+        password,
         lastStatus,
       } = lasecAuth.props;
 
@@ -79,36 +79,36 @@ const getStorageItem = async (key) => {
 
       if (payload && payload.token) {
         const timeout = 1;
-        
+
         if (lastLogin && moment(lastLogin).add(timeout, 'hour').isAfter(now) === true) {
           // we have an authentication token
           // maybe we can test it? check if valid
           must_login = false;
-          logger.debug(`login has token fresher than ${timeout} hours`);          
+          logger.debug(`login has token fresher than ${timeout} hours`);
           //
           return lasecAuth.props.payload.token;
         } else {
           must_login = true;
-          
+
           logger.debug(`login token is older than ${timeout} hours`);
         }
       }
       // no token or we force the login again after 24 hours to get a refresh.
-      // check for username and password      
+      // check for username and password
       if (username && password && must_login === true && user.is_logging_in !== true) {
         try {
           user.is_logging_in = true;
-          logger.debug('No token / Token expired / Invalid, checking username and password');          
+          logger.debug('No token / Token expired / Invalid, checking username and password');
           const loginResult = await Api.Authentication.login(username, password).then();
           logger.debug('Login result after authenticating with lasec360', loginResult);
-          if (user.setAuthentication && loginResult) {          
-            await user.setAuthentication({ 
-              provider: 'lasec', 
-              props: { 
+          if (user.setAuthentication && loginResult) {
+            await user.setAuthentication({
+              provider: 'lasec',
+              props: {
                 username, password, ...loginResult,
-                lastStatus: 200, 
-              }, 
-              lastLogin: new Date().valueOf() 
+                lastStatus: 200,
+              },
+              lastLogin: new Date().valueOf()
             }).then();
 
             user.is_logging_in = false;
@@ -123,7 +123,7 @@ const getStorageItem = async (key) => {
           logger.warn(`Could not log user in with lasec api ${authError.message}`);
         }
       }
-      
+
       return null;
     }
   }
@@ -147,7 +147,7 @@ export function PUT(url, data, auth = true) {
 }
 
 export async function FETCH(url, args, auth = true, failed = false, attempt = 0) {
-  // url = `${url}`;  
+  // url = `${url}`;
   let absoluteUrl = `${config.SECONDARY_API_URL}/${url}`;
 
   logger.debug(`::lasec-api::FETCH(${absoluteUrl})\n`, { args, auth, failed, attempt });
@@ -203,10 +203,10 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
         const retry =  async function retry(){
           logger.debug('Attempting to refetch', { attempt });
           if(attempt < 3) {
-            return await FETCH(url, args, auth, true, attempt ? attempt + 1 : 1).then();   
-          } else {          
+            return await FETCH(url, args, auth, true, attempt ? attempt + 1 : 1).then();
+          } else {
             throw new TokenExpiredException('Authentication Credentials cannot log in');
-          }          
+          }
         };
 
         if (failed === false) {
@@ -215,30 +215,30 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
             // get the current authentication details
             const currentAuthentication = global.user.getAuthentication('lasec');
             if (currentAuthentication && currentAuthentication.props) {
-              // clear the login              
+              // clear the login
               const authprops = { ...currentAuthentication.props };
               delete authprops.payload;
               await global.user.setAuthentication(authprops).then();
               return await retry();
-            }            
-          } catch (err) {            
+            }
+          } catch (err) {
             logger.error('Cannot log user in,  clearing credentials', err);
             if (currentAuthentication && currentAuthentication.props) {
-              // clear the login                        
-              await global.user.removeAuthentication('lasec').then();                            
+              // clear the login
+              await global.user.removeAuthentication('lasec').then();
               return await retry();
             }
           }
         }
-        
+
         break;
       }
       default: {
         throw new ApiError('Could not execute fetch against Lasec API', apiResponse);
       }
-    } 
+    }
 
-  }  
+  }
 }
 
 const defaultParams = {
@@ -250,28 +250,42 @@ const defaultQuoteObjectMap = {
 };
 
 const Api = {
-  Quotes: {
-    list: async (params = defaultParams) => {      
-      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } });
+  Products: {
+    list: async (params = defaultParams) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } });
       const {
         status, payload,
       } = apiResponse;
 
-      if (status === 'success') {        
+      if (status === 'success') {
         return payload;
       }
 
       return { pagination: {}, ids: [], items: [] };
     },
-    
+  },
+  Quotes: {
+    list: async (params = defaultParams) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = apiResponse;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+
     getLineItems: async (code) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { quote_id: code } } });
       const {
         status, payload,
       } = apiResponse;
 
-      if (status === 'success') {        
-        //collet the ids        
+      if (status === 'success') {
+        //collet the ids
         if(payload && payload.ids) {
           const lineItemsExpanded = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: payload.ids } } })
           if(lineItemsExpanded.status === 'success') {
@@ -297,7 +311,7 @@ const Api = {
     },
     getByQuoteId: async (quote_id, objectMap = defaultQuoteObjectMap) => {
       try {
-        const payload = await Api.Quotes.get({ filter: { ids: [quote_id] } }).then();        
+        const payload = await Api.Quotes.get({ filter: { ids: [quote_id] } }).then();
         /**
          * Sample payload
          * {
@@ -370,7 +384,7 @@ const Api = {
           }
          */
         if (payload) {
-          
+
           logger.debug(`Api Response successful fetching quote id ${quote_id}`, payload);
           const quotes = payload.items || [];
           if (isArray(quotes) === true && quotes.length >= 1) {
@@ -387,8 +401,8 @@ const Api = {
               'staff_user_full_name': 'timeline[0].who.firstName',
               'primary_api_staff_user_id': 'timeline[0].who.id',
               'created': ['created', 'timeline[0].when'],
-              
-            });            
+
+            });
             */
             //mappedQuote = { ...quotes[0], ...mappedQuote }
             return quotes[0];

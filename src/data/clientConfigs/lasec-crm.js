@@ -159,6 +159,12 @@ export default {
           ordinal: 12, title: 'Sales Configurator', link: '/salesconfig/', icon: 'settings_applications', roles: ['USER'],
         },
         {
+          ordinal: 13, title: 'Product List', link: '/productlist/', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 14, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
+        },
+        {
           ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
         },
       ],
@@ -435,6 +441,24 @@ export default {
       public: false,
       roles: ['USER'],
       componentFqn: `${key}.TabbedQuotesList@1.0.0`,
+    },
+    {
+      key: 'productlist',
+      title: 'Product List',
+      path: '/productlist/**',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.ProductList@1.0.0`,
+    },
+    {
+      key: 'newquote',
+      title: 'New Quote',
+      path: '/newquote/**',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.NewQuote@1.0.0`,
     },
     {
       key: 'graphiql',

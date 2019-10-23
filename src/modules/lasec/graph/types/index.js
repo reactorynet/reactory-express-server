@@ -8,6 +8,7 @@ const typeDefs = [];
   'Lasec360/Authentication',
   'SalesTeams/SalesTeams',
   'Quotes/Quote',
+  'Products/Products',
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;

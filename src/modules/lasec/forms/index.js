@@ -15,6 +15,8 @@ import {
 } from './quote';
 
 import QuoteList from './salesConfigurator/QuoteList';
+import ProductList from './salesConfigurator/Products';
+import NewQuote from './salesConfigurator/NewQuote';
 
 export default [
   CrmDashboardForm,
@@ -24,5 +26,7 @@ export default [
   QuoteDetailForm,
   UpdateQuoteStatusForm,
   TabbedQuoteList,
-  QuoteList
+  QuoteList,
+  ProductList,
+  NewQuote
 ];

@@ -1,0 +1,10 @@
+type Product {
+  id: String
+  name: String
+  code: String
+  description: String
+}
+
+extend type Query {
+  LasecGetProductList: [Product]
+}

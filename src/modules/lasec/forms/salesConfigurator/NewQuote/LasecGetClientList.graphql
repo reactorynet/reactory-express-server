@@ -1,0 +1,8 @@
+query LasecGetCientList {
+  LasecGetCientList {
+    id
+    name
+    code
+    description
+  }
+}
