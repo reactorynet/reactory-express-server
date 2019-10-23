@@ -159,10 +159,15 @@ export default {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Status Group', field: 'title' },
-        { title: 'Status Key', field: 'key' },
+        { title: 'Status Group', field: 'title' },        
         { title: 'Good', field: 'good' },
         { title: 'Naughty', field: 'naughty' },
+        { title: 'Total', field: 'totalVATExclusive',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            totalVATExclusive: 'value',
+          },
+      },
       ],
       options: {
         grouping: true,
@@ -188,7 +193,21 @@ export default {
             buttonTitle: '${code}',            
             windowTitle: 'Details view for ${code}',
           },
-        },        
+        },
+        {
+          title: 'Overview',
+          field: 'code',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.UpdateQuoteStatus@1.0.0',
+            componentProps: {
+              'code': ['data.quote_id', 'data.code', 'query.quote_id']              
+            },            
+            slideDirection: 'down',
+            buttonTitle: 'Next Actions',            
+            windowTitle: 'Next Actions ${code}',
+          },
+        },          
         { title: 'Status', field: 'statusName', defaultGroupOrder: 0 },
         { title: 'Company', field: 'companyTradingName', defaultGroupOrder: 1 },
         { title: 'Customer', field: 'customerName' },
@@ -200,8 +219,8 @@ export default {
           },
         },          
         { 
-          title: 'GP', 
-          field: 'GP',                    
+          title: 'GP (%)', 
+          field: 'GP',                              
         },
       ],
       options: {

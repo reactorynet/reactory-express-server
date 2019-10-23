@@ -71,7 +71,7 @@ const proxiedRoutes = [
 
 export default {
   key,
-  name: 'Lasec 360 CRM',
+  name: '360 App',
   username: 'lasec',
   email: 'werner.weber+lasec-crm-admin@gmail.com',
   salt: 'generate',
