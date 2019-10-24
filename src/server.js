@@ -138,7 +138,7 @@ startup().then((startResult) => {
   AuthConfig.Configure(app);
   app.use(
     queryRoot,
-    passport.authenticate('jwt', { session: false }), bodyParser.urlencoded({ extended: true }),
+    passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
     bodyParser.json({ limit: '10mb' }),
     graphqlExpress({ schema, debug: true }),
   );
