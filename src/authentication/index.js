@@ -198,6 +198,7 @@ class AuthConfig {
     }
 
     static JwtAuth = (payload, done) => {
+      debugger;
       logger.info('JWT Auth executing');
       if (payload.userId === '-1') {
         global.user = {

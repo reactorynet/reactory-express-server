@@ -81,6 +81,7 @@ const resolvers = {
   },
   Query: {
     apiStatus: async (obj, args, context, info) => {
+      debugger
       const { user, partner } = global;   
       let skipResfresh = false;
       let _user = user;
