@@ -96,7 +96,8 @@ const resolvers = {
       if(skipResfresh === false && isAnon === false) {
         logger.debug(`apiStatus called for ${user.firstName} ${user.lastName}, performing profile refresh`);
          
-        const refreshResult = await execql(`
+        try {
+          const refreshResult = await execql(`
           query RefreshProfile($id:String, $skipImage: Boolean) {
             refreshProfileData(id: $id, skipImage: $skipImage) {
               user {
@@ -126,7 +127,9 @@ const resolvers = {
           const { user, messages } = refreshResult.data.refreshProfileData;
           uxmessages = [ ...uxmessages, ...messages ];
         }
-        
+        } catch (profileRefreshError) {
+          logger.error(`Error refreshing profile data for user ${user.firstName}`, profileRefreshError);
+        }                        
       }
       
 
