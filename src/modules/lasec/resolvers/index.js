@@ -2,12 +2,14 @@ import QuoteResolver from './QuoteResolver';
 import TeamResolver from './TeamResolver';
 import AuthenticationResolver from './AuthenticationResolver';
 import ProductResolver from './ProductResolver';
+import CompanyResolver from './CompanyResolver';
 
 const toMerge = [
   QuoteResolver,
   TeamResolver,
   AuthenticationResolver,
-  ProductResolver
+  ProductResolver,
+  CompanyResolver
 ];
 
 let resolvers = {

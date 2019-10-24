@@ -1,8 +1,6 @@
-query LasecGetCientList {
-  LasecGetCientList {
+query LasecGetClientList {
+  LasecGetClientList {
     id
-    name
-    code
-    description
+    fullname
   }
 }

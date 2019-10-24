@@ -9,6 +9,7 @@ const typeDefs = [];
   'SalesTeams/SalesTeams',
   'Quotes/Quote',
   'Products/Products',
+  'Clients/Clients',
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;

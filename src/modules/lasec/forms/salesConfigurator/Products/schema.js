@@ -1,15 +1,23 @@
 export default {
-  type: 'array',
-  title: 'Product List',
-  items: {
-    type: 'object',
-    properties: {
-      primaryText: {
-        type: 'string'
-      },
-      secondaryText: {
-        type: 'string'
+  type: 'object',
+  properties: {
+    list: {
+      type: 'array',
+      title: 'Product List',
+      items: {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string'
+          },
+          code: {
+            type: 'string'
+          }
+        }
       }
+    },
+    addMore: {
+      type: 'string'
     }
-  },
+  }
 };

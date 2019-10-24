@@ -1,15 +1,23 @@
+import { fileAsString } from '@reactory/server-core/utils/io';
+
 export default {
-  client: {},
+  submitIcon: '$none',
+  'ui:options': {
+    submitProps: {
+      variant: 'button',
+      text: 'Next'
+    },
+  },
   client: {
-    'ui:widget': 'SelectWidget',
+    'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
-      selectOptions: [
-        { key: 'planned', value: 'planned', label: 'Planned' },
-        { key: 'in-progress', value: 'in-progress', label: 'In Progress' },
-        { key: 'complete', value: 'complete', label: 'Complete' },
-        { key: 'outputs', value: 'outputs', label: 'Outputs' },
-        { key: 'Kudos', value: 'kudos', label: 'Kudos' },
-      ],
+      query: fileAsString(require.resolve('./LasecGetClientList.graphql')),
+      resultItem: 'LasecGetClientList',
+      resultsMap: {
+        'LasecGetClientList.[].id': ['[].key', '[].value'],
+        'LasecGetClientList.[].fullname': '[].label',
+      },
+
     },
   },
   date: {

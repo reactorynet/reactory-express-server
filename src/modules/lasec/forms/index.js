@@ -17,6 +17,7 @@ import {
 import QuoteList from './salesConfigurator/QuoteList';
 import ProductList from './salesConfigurator/Products';
 import NewQuote from './salesConfigurator/NewQuote';
+import CaptureCategory from './salesConfigurator/CaptureCategory';
 
 export default [
   CrmDashboardForm,
@@ -28,5 +29,6 @@ export default [
   TabbedQuoteList,
   QuoteList,
   ProductList,
-  NewQuote
+  NewQuote,
+  CaptureCategory
 ];

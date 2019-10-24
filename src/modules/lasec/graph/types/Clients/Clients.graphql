@@ -1,0 +1,8 @@
+type Client {
+  id: String
+  fullname: String
+}
+
+extend type Query {
+  LasecGetClientList: [Client]
+}

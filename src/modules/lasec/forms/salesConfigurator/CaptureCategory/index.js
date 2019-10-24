@@ -1,16 +1,15 @@
 import $schema from './schema';
 import $uiSchema from './uiSchema';
-// import $graphql from './graphql';
 
 export default {
-  id: 'NewQuote',
+  id: 'CaptureCategory',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
-  title: 'Sales Configurator New Quote',
-  tags: ['CRM Salesconfigurator New Quote'],
+  title: 'Sales Configurator Capture Category',
+  tags: ['CRM Salesconfigurator Capture Category'],
   registerAsComponent: true,
-  name: 'NewQuote',
+  name: 'CaptureCategory',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,

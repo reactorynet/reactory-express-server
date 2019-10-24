@@ -165,6 +165,9 @@ export default {
           ordinal: 14, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
         },
         {
+          ordinal: 14, title: 'Capture Category', link: '/capturecategory/', icon: 'reorder', roles: ['USER'],
+        },
+        {
           ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
         },
       ],
@@ -459,6 +462,15 @@ export default {
       public: false,
       roles: ['USER'],
       componentFqn: `${key}.NewQuote@1.0.0`,
+    },
+    {
+      key: 'capturecategory',
+      title: 'Capture Category',
+      path: '/capturecategory/**',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.CaptureCategory@1.0.0`,
     },
     {
       key: 'graphiql',

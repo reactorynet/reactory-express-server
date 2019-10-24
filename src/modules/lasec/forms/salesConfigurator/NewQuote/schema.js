@@ -4,7 +4,7 @@ export default {
   properties: {
     client: {
       title: 'Client',
-      type: 'string'
+      type: 'string',
     },
     date: {
       title: 'Date',
