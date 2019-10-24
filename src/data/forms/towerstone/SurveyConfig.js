@@ -49,6 +49,7 @@ export const schema = {
     id: {
       type: 'string',
       title: 'Id',
+      name: 'Id'
     },
     organization: {
       type: 'object',
@@ -65,6 +66,7 @@ export const schema = {
     leadershipBrand: {
       type: 'string',
       title: 'Leadership Brand',
+      name: 'Leadership Brand'
     },
     title: {
       type: 'string',
@@ -290,6 +292,15 @@ export const updateMutationMap = {
 };
 
 export const uiSchema = {
+  submitIcon: 'save',
+  'ui:options': {
+    submitProps: {
+      variant: 'button',
+      text: '${props.mode === "edit" ? "Update" : "Create" }',
+      color: 'primary',      
+      iconAlign: 'left'
+    }
+  },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
@@ -348,7 +359,7 @@ export const uiSchema = {
     'ui:widget': 'SelectWidget',
     'ui:options': {
       selectOptions: [
-        { key: 'plc', value: 'PLC', label: 'Purposeful Leadership Company' },
+        { key: 'plc', value: 'plc', label: 'Purposeful Leadership Company' },
         { key: '180', value: '180', label: '180 Team Assessment' },
         { key: '360', value: '360', label: '360 Personal Assessment' },
       ],

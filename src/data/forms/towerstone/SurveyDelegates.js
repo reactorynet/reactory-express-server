@@ -100,7 +100,7 @@ export const SurveyDelegatesSchema = {
 export const SurveyDelegatesUISchema = {
   submitIcon: 'check_circle_outline',
   'ui:options': {
-    showSubmit: false,
+    showSubmit: false,        
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
