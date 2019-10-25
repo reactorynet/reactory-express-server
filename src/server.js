@@ -153,7 +153,13 @@ startup().then((startResult) => {
   app.use('/pdf', pdf);
   app.use('/charts', charts);
   app.use('/amq', amq.router);
-  app.use(resourcesPath, express.static(APP_DATA_ROOT || publicFolder));
+  app.use(resourcesPath, 
+    passport.authenticate(
+      ['jwt', 'anonymous'], 
+      { session: false }), 
+      bodyParser.urlencoded({ extended: true }
+      ), 
+      express.static(APP_DATA_ROOT || publicFolder));
   app.listen(API_PORT);
   app.use(flash());
   // logger.info(`Bots server using ${bots.name}`);
