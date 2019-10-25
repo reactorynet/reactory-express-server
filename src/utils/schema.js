@@ -239,7 +239,9 @@ const _json = simpleBuilder
   .$string("who", "Who", "Who did it")
   .$number("count", "How many", "How many happened")
   .$object("widgets", "Widgets", { description: "All my widget datas" })
-    .$string("user", "The user")    
+    .$string("user", "The user")
+    .$return()
+  
   .getSchema()
 
 logger.debug('simplebuilder result', _json);
