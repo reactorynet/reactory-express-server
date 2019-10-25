@@ -180,7 +180,9 @@
     "ws": "^7.0.1",
     "zip-folder": "^1.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "awesome-typescript-loader": "^5.2.1"
+  },
   "nodemonConfig": {
     "ignore": [
       "test/*",
