@@ -39,7 +39,7 @@ const typeDefs = [];
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;
-    logger.debug(`Loading ${fileName} - Graph definitions`);
+    logger.debug(`Loading ${name} - Graph definitions`);
     const source = fileAsString(require.resolve(fileName));
     typeDefs.push(`${source}`);
   } catch (e) {

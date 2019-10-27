@@ -1,16 +1,23 @@
-import { default as CrmDashboardForm, 
+import { default as CrmDashboardForm,
 } from './dashboard';
 
 import {
   ProductEnquiry as ProductEnquiryForm
 } from './product';
 
+import TabbedQuoteList from './salesConfigurator/TabbedQuoteList'
+
 import {
   QuoteIdInputForm,
   UpdateQuoteStatusForm ,
   QuoteDetailForm,
-  QuoteListForm, 
+  QuoteListForm,
 } from './quote';
+
+import QuoteList from './salesConfigurator/QuoteList';
+import ProductList from './salesConfigurator/Products';
+import NewQuote from './salesConfigurator/NewQuote';
+import CaptureCategory from './salesConfigurator/CaptureCategory';
 
 export default [
   CrmDashboardForm,
@@ -18,5 +25,10 @@ export default [
   QuoteIdInputForm,
   QuoteListForm,
   QuoteDetailForm,
-  UpdateQuoteStatusForm
+  UpdateQuoteStatusForm,
+  TabbedQuoteList,
+  QuoteList,
+  ProductList,
+  NewQuote,
+  CaptureCategory
 ];

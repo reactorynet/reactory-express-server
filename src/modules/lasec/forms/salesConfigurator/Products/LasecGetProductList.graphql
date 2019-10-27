@@ -1,0 +1,8 @@
+query LasecGetProductList {
+  LasecGetProductList {
+    id
+    name
+    code
+    description
+  }
+}

@@ -1,0 +1,6 @@
+query LasecGetClientList {
+  LasecGetClientList {
+    id
+    fullname
+  }
+}

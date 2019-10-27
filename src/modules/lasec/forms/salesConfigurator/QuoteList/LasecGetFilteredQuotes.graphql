@@ -1,0 +1,16 @@
+query LasecGetFilteredQuotes($filterparams: LasecFilteredQuoteQueryInput) {
+  LasecGetFilteredQuotes(filterparams: $filterparams) {
+    id
+    status
+    customer {
+      id
+      fullName
+    }
+    company {
+      id
+      tradingName
+    }
+    created
+    modified
+  }
+}

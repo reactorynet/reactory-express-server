@@ -12,7 +12,7 @@ import mongoose from 'mongoose';
 import session from 'express-session';
 import flash from 'connect-flash';
 import corsOptions from './config/cors';
-import clientAuth from './middleware/clientauth';
+import reactoryClientAuthenticationMiddleware from './middleware/ReactoryClient';
 import userAccountRouter from './useraccount';
 import reactory from './reactory';
 import froala from './froala';
@@ -115,7 +115,7 @@ try {
 
 const app = express();
 app.use('*', cors(corsOptions));
-app.use(clientAuth);
+app.use(reactoryClientAuthenticationMiddleware);
 
 //TODO: Werner Weber - investigate session and session management for auth.
 app.use(session({

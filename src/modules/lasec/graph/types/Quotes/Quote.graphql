@@ -7,13 +7,13 @@ type LasecCompany {
 
 type LasecCustomer {
   id: String
-  fullName: String    
+  fullName: String
 }
 
 type LasecQuoteItem {
   id: ObjID
   quote_item_id: String
-  code: String  
+  code: String
   title: String
   quantity: Int
   price: Int
@@ -32,12 +32,12 @@ type LasecQuoteHeader {
   id: ObjID
   headerId: String
   text: String
-  quoteItems: [LasecQuoteItem]  
+  quoteItems: [LasecQuoteItem]
 }
 
 type QuoteReminder {
   id: ObjID
-  quote: Quote,  
+  quote: Quote,
   who: [User]
   next: Date
   actionType: String
@@ -68,11 +68,11 @@ type QuoteTotals {
   actualGP: Int
 }
 
-type Quote { 
+type Quote {
   id: String
   code: String
-  statusGroup: String 
-  statusGroupName: String 
+  statusGroup: String
+  statusGroupName: String
   status: String
   statusName: String
   salesRep: User
@@ -91,9 +91,9 @@ type Quote {
   expirationDate: Date
   note: String
   headers: [ LasecQuoteHeader ]
-  lineItems: [ LasecQuoteItem ]  
+  lineItems: [ LasecQuoteItem ]
   timeline: [ QuoteTimeLine ]
-  meta: Any  
+  meta: Any
 }
 
 
@@ -123,7 +123,7 @@ type LasecChart {
   chartType: LasecChartType
   data: Any
   options: Any
-  key: String  
+  key: String
 }
 
 type LasecQuoteDashboardCharts {
@@ -140,19 +140,19 @@ type LasecQuoteDashboard {
   periodEnd: Date
   repIds: [String]
   target: Float
-  targetPercent: Float  
+  targetPercent: Float
   totalQuotes: Int
   totalBad: Int
   statusSummary: [ LasecQuoteDashboardSummary ]
   quotes: [ Quote ]
-  charts: LasecQuoteDashboardCharts 
+  charts: LasecQuoteDashboardCharts
 }
 
 type LasecQuoteStatus {
   id: String
   status: String
   customer:  LasecCustomer
-  timeline: [ QuoteTimeLine ] 
+  timeline: [ QuoteTimeLine ]
 }
 
 input LasecQuoteStatusUpdate {
@@ -176,6 +176,16 @@ input LasecQuoteQueryInput {
   status: [ String ]
 }
 
+enum QuoteFilterType {
+  Recent,
+  ByClient,
+  ByStatus
+}
+
+input LasecFilteredQuoteQueryInput {
+  filterType: QuoteFilterType
+}
+
 enum QuoteHeaderAction {
   NEW,
   ADD_ITEM,
@@ -195,6 +205,7 @@ extend type Query {
   LasecGetQuoteList( search: String ) : [ Quote ],
   LasecGetDashboard( dashparams: LasecQuoteQueryInput ) : LasecQuoteDashboard
   LasecGetQuoteById(quote_id: String!): Quote
+  LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [ Quote ]
 }
 
 

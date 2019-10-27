@@ -37,17 +37,17 @@ switch (MODE) {
 const key = 'lasec-crm';
 
 const proxiedRoutes = [
-  {  
+  {
     key: 'CrmClientsRoot',
     title: 'Clients',
     path: 'crm/customer-search'
   },
-  {  
+  {
     key: 'CrmQuotesRoot',
     title: 'Quotes',
     path: 'crm/all-quotes',
   },
-  {  
+  {
     key: 'CrmQuotesRoot',
     title: 'Quotes',
     path: 'crm/customer/**',
@@ -82,11 +82,11 @@ export default {
   resetEmailRoute: '/reset-password',
   avatar: `${CDN_ROOT}themes/${key}/images/avatar.png`,
   applicationRoles: [
-    'USER', 
-    'ADMIN', 
-    'ANON', 
-    'DEVELOPER', 
-    'CUSTOMER', 
+    'USER',
+    'ADMIN',
+    'ANON',
+    'DEVELOPER',
+    'CUSTOMER',
     'SALES',
     'WAREHOUSE',
     'EXEC'
@@ -122,13 +122,13 @@ export default {
       entries: [
         {
           ordinal: 0, title: 'Dashboard', link: '/', icon: 'dashboard', roles: ['USER', 'ADMIN'],
-        },         
+        },
         {
           ordinal: 1, title: 'Sales', link: '/360/crm/sales-orders', icon: 'speaker', roles: ['USER', 'ADMIN'],
         },
         {
           ordinal: 2, title: 'Customers', link: '/360/crm/customer-search', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
-        },               
+        },
         {
           ordinal: 4, title: 'Quotes', link: '/360/crm/all-quotes', icon: 'shopping_cart', roles: ['USER', 'ADMIN'],
         },
@@ -142,7 +142,7 @@ export default {
         */
         {
           ordinal: 7, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER'],
-        },        
+        },
         {
           ordinal: 7, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['USER'],
         },
@@ -154,6 +154,18 @@ export default {
         },
         {
           ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
+        },
+        {
+          ordinal: 12, title: 'Sales Configurator', link: '/salesconfig/', icon: 'settings_applications', roles: ['USER'],
+        },
+        {
+          ordinal: 13, title: 'Product List', link: '/productlist/', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 14, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 14, title: 'Capture Category', link: '/capturecategory/', icon: 'reorder', roles: ['USER'],
         },
         {
           ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
@@ -260,7 +272,7 @@ export default {
         ],
       }
     }),
-    //360 Root Application    
+    //360 Root Application
     {
       key: 'quote-detail',
       title: 'Quote Detail',
@@ -387,12 +399,12 @@ export default {
           },
         },
       ],
-    },    
+    },
     {
       key: 'reactoryrouter',
       title: 'Reactory Forms',
       path: '/reactory/**',
-      exact: false, 
+      exact: false,
       public: false,
       roles: ['ADMIN'],
       componentFqn: 'core.ReactoryRouter',
@@ -423,6 +435,42 @@ export default {
       public: false,
       roles: ['ADMIN'],
       componentFqn: `${key}.Sales@1.0.0`,
+    },
+    {
+      key: 'salesconfig',
+      title: 'Sales Configurator',
+      path: '/salesconfig/**',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.TabbedQuotesList@1.0.0`,
+    },
+    {
+      key: 'productlist',
+      title: 'Product List',
+      path: '/productlist/**',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.ProductList@1.0.0`,
+    },
+    {
+      key: 'newquote',
+      title: 'New Quote',
+      path: '/newquote/**',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.NewQuote@1.0.0`,
+    },
+    {
+      key: 'capturecategory',
+      title: 'Capture Category',
+      path: '/capturecategory/**',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.CaptureCategory@1.0.0`,
     },
     {
       key: 'graphiql',
@@ -582,9 +630,9 @@ export default {
             id: 'generators.MySQLFormGenerator',
             connectionId: 'mysql.default',
             props: {
-              database: ['reactory'],              
+              database: ['reactory'],
               tables: ['*']
-            } 
+            }
           },
           {
             id: 'generators.MySQLFormGenerator',
@@ -595,8 +643,8 @@ export default {
                   name: 'lasec360',
                   tables: ['address'],
                 }
-              ],              
-              
+              ],
+
             }
           },
         ]
@@ -609,8 +657,8 @@ export default {
         user: 'reactory',
         password: 'reactory_password',
         database: 'reactory',
-        port:3306    
-      },       
+        port:3306
+      },
     },
     {
       name: 'mysql.lasec360.development',
@@ -620,8 +668,8 @@ export default {
         password: 'reactory_password',
         database: 'lasec360',
         port:3306
-      },       
-    },   
+      },
+    },
   ],
   allowCustomTheme: true,
   auth_config: [
