@@ -1,5 +1,5 @@
 import $schema from './schema';
-import $uiSchema from './uiSchema';
+import $uiSchema from './uiSchemas';
 import $graphql from './graphql';
 
 export default {
