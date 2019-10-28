@@ -10,6 +10,12 @@ const MenuItemSchema = new mongoose.Schema({
   external: Boolean,
   icon: String,
   roles: [String],
+  items: [ 
+    {
+      type: ObjectId,
+      ref: 'MenuItem'
+    }
+  ]
 });
 
 export const MenuItemModel = mongoose.model('MenuItem', MenuItemSchema);
@@ -32,6 +38,17 @@ const MenuSchema = new mongoose.Schema({
       link: String,
       external: Boolean,
       icon: String,
+      items: [
+        {
+          id: ObjectId,
+          ordinal: Number,
+          title: String,
+          link: String,
+          external: Boolean,
+          icon: String,
+          roles: [String],
+        },
+      ],
       roles: [String],
     },
   ],

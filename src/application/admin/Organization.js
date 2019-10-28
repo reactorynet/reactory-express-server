@@ -20,7 +20,7 @@ import {
   Scale,
 } from '../../models';
 import { createUserForOrganization, setPeersForUser } from './User';
-import SurveyService from './Survey';
+import { createLeadershipBrand, createSurvey } from './Survey';
 import legacy from '../../database';
 import { getScaleForKey } from '../../data/scales';
 import { OrganizationValidationError, OrganizationNotFoundError, OrganizationExistsError } from '../../exceptions';
@@ -35,12 +35,6 @@ const {
   APP_DATA_ROOT,
   LEGACY_APP_DATA_ROOT,
 } = process.env;
-
-const {
-  getLeadershipBrand,
-  createLeadershipBrand,
-  createSurvey,
-} = SurveyService;
 
 
 export class MigrationResult {
