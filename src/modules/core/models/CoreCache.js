@@ -48,7 +48,7 @@ CacheSchema.statics.clean = function Clean() {
       if(err) {
         logger.error(`Could not clean cache - deleteMany({}) fail: ${err ? err.message : 'No Error Message'}`, err);   
       }
-      
+      logger.debug(`Cache Cleared `, now)
     });
   } catch (err) {
     logger.error(`Could not clean cache: ${err ? err.message : 'No Error Message'}`, err);   

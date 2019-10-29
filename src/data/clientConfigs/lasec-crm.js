@@ -14,9 +14,15 @@ import {
 
 dotenv.config();
 
-const { CDN_ROOT, MODE, API_URI_ROOT, LASEC_360_URL = 'http://localhost:3001' } = process.env;
+const { 
+  CDN_ROOT, 
+  MODE = 'DEVELOP', 
+  API_URI_ROOT, 
+  LASEC_360_URL = 'http://localhost:3001', 
+  REACTORY_CLIENT_URL = 'http://localhost:3000' 
+} = process.env;
 
-let siteUrl = '';// 'http://localhost:3000' : 'https://app.towerstone-global.com/';
+let siteUrl = REACTORY_CLIENT_URL; // 'http://localhost:3000' : 'https://app.towerstone-global.com/';
 
 switch (MODE) {
   case 'QA': {
@@ -69,7 +75,24 @@ const proxiedRoutes = [
   },
 ];
 
-export default {
+const Menus = {
+  DEVELOP: [
+    {
+      ordinal: 12, title: 'Sales Configurator', link: '/salesconfig/', icon: 'settings_applications', roles: ['USER'],
+    },
+    {
+      ordinal: 13, title: 'Product List', link: '/productlist/', icon: 'reorder', roles: ['USER'],
+    },
+    {
+      ordinal: 14, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
+    },
+    {
+      ordinal: 14, title: 'Capture Category', link: '/capturecategory/', icon: 'reorder', roles: ['USER'],
+    },
+  ]
+}
+
+const LASEC_CONFIG = {
   key,
   name: '360 App',
   username: 'lasec',
@@ -121,10 +144,34 @@ export default {
       roles: ['USER'],
       entries: [
         {
-          ordinal: 0, title: 'Dashboard', link: '/', icon: 'dashboard', roles: ['USER', 'ADMIN'],
+          ordinal: 0, 
+          title: 'Dashboard', 
+          link: '/', 
+          icon: 'dashboard', 
+          items: [
+            {
+              ordinal: 0, 
+              title: 'Sales Dashboard', 
+              link: '/dashboard/sales', 
+              icon: 'money',               
+              roles: ['USER', 'ADMIN'],
+            },
+            {
+              ordinal: 0, 
+              title: 'Product Dashboard', 
+              link: '/dashboard/product', 
+              icon: 'money',               
+              roles: ['USER', 'ADMIN'],
+            },
+          ],
+          roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 1, title: 'Sales', link: '/360/crm/sales-orders', icon: 'speaker', roles: ['USER', 'ADMIN'],
+          ordinal: 1, 
+          title: 'Sales Orders', 
+          link: '/360/crm/sales-orders', 
+          icon: 'speaker',           
+          roles: ['USER', 'ADMIN'],
         },
         {
           ordinal: 2, title: 'Customers', link: '/360/crm/customer-search', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
@@ -132,19 +179,11 @@ export default {
         {
           ordinal: 4, title: 'Quotes', link: '/360/crm/all-quotes', icon: 'shopping_cart', roles: ['USER', 'ADMIN'],
         },
-        /*
-        {
-          ordinal: 5, title: 'Analytics', link: '/analytics', icon: 'bar_chart', roles: ['USER', 'ADMIN'],
-        },
-        {
-          ordinal: 6, title: 'Settings', link: '/settings', icon: 'settings', roles: ['USER', 'ADMIN'],
-        },
-        */
         {
           ordinal: 7, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER'],
         },
         {
-          ordinal: 7, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['USER'],
+          ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['USER'],
         },
         {
           ordinal: 9, title: 'Discussion', link: '/discuss/', icon: 'chat', roles: ['USER'],
@@ -154,19 +193,7 @@ export default {
         },
         {
           ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
-        },
-        {
-          ordinal: 12, title: 'Sales Configurator', link: '/salesconfig/', icon: 'settings_applications', roles: ['USER'],
-        },
-        {
-          ordinal: 13, title: 'Product List', link: '/productlist/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 14, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 14, title: 'Capture Category', link: '/capturecategory/', icon: 'reorder', roles: ['USER'],
-        },
+        },        
         {
           ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
         },
@@ -720,3 +747,8 @@ export default {
   ],
 };
 
+if( MODE === 'DEVELOP' ) {
+  LASEC_CONFIG.menus = [ ...LASEC_CONFIG.menus, ...Menus.DEVELOP ];
+}
+
+export default LASEC_CONFIG;

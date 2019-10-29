@@ -32,9 +32,9 @@ export default {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
-        period: { md: 3, sm: 6, xs: 12 },
-        periodStart: { md: 3, sm: 6, xs: 12 },
-        periodEnd: { md: 3, sm: 6, xs: 12 },      
+        period: { md: 3, sm: 12, xs: 12 },
+        periodStart: { md: 3, sm: 12, xs: 12 },
+        periodEnd: { md: 3, sm: 12, xs: 12 },      
       }      
     ],
     

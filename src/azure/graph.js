@@ -7,14 +7,15 @@ import { updateUserProfileImage } from '../application/admin/User';
 import om from 'object-mapper';
 import { Stream } from "stream";
 import ApiError from "exceptions";
+import { sendSurveyEmail } from "application/admin/Survey";
 
 
-const getAuthenticatedClient = (accessToken) => {
+const getAuthenticatedClient = (accessToken, apiVersion = 'v1.0') => {
   // Initialize Graph client
   const client = Client.init({
     // Use the provided access token to authenticate
     // requests
-    defaultVersion: "v1.0",
+    defaultVersion: apiVersion,
 	  debugLogging: true,
     authProvider: (done) => {
       done(null, accessToken);
@@ -131,6 +132,24 @@ const MSGraph = {
               
     return emails;
   },
+
+  async getTasks(accesstoken, filter) {
+    const tasks = await getAuthenticatedClient(accesstoken, 'beta')
+      .api('/me/outlook/tasks')
+      .select('id,dueDateTime,assignedTo,subject,body')
+      .get()
+      .then();
+
+    return tasks;
+  },
+
+  async createTask(accessToken, task) {
+
+  },
+
+  async sendEmail(accessToken, message) {
+
+  }
 };
 
 export default MSGraph;

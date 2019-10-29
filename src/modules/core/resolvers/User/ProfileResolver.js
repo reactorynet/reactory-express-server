@@ -62,7 +62,6 @@ const refreshMicrosoftToken = async (msauth) => {
       body: postbody // body data type must match "Content-Type" header
     });
 
-    debugger;
     
     if(response.status === 200 || response.status === 201) {
       const refreshResult = await response.json();
@@ -262,6 +261,8 @@ export default {
         user: userToRefresh,
         messages: uxmessages,
       };      
-    }
+    
+    },
+    
   }
 };
