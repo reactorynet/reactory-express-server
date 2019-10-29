@@ -1,0 +1,14 @@
+mutation LasecCreateNewCategory($input: CreateContentInput!){
+  LasecCreateNewCategory(input: $input){
+    id
+    parentId
+    children
+    items
+    linkType
+    linkTarget
+    foreignResolver
+    key
+    name
+    description
+  }
+}
