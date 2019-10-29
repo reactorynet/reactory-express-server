@@ -1,0 +1,6 @@
+mutation LasecUpdateCategory($id: String, $input: LasecCategoryCaptureInput!) {
+  LasecUpdateCategory(id: $id, input: $input) {
+    name
+    description
+  }
+}

@@ -14,12 +14,12 @@ import {
 
 dotenv.config();
 
-const { 
-  CDN_ROOT, 
-  MODE = 'DEVELOP', 
-  API_URI_ROOT, 
-  LASEC_360_URL = 'http://localhost:3001', 
-  REACTORY_CLIENT_URL = 'http://localhost:3000' 
+const {
+  CDN_ROOT,
+  MODE = 'DEVELOP',
+  API_URI_ROOT,
+  LASEC_360_URL = 'http://localhost:3001',
+  REACTORY_CLIENT_URL = 'http://localhost:3000'
 } = process.env;
 
 let siteUrl = REACTORY_CLIENT_URL; // 'http://localhost:3000' : 'https://app.towerstone-global.com/';
@@ -89,6 +89,9 @@ const Menus = {
     {
       ordinal: 14, title: 'Capture Category', link: '/capturecategory/', icon: 'reorder', roles: ['USER'],
     },
+    {
+      ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
+    },
   ]
 }
 
@@ -144,33 +147,33 @@ const LASEC_CONFIG = {
       roles: ['USER'],
       entries: [
         {
-          ordinal: 0, 
-          title: 'Dashboard', 
-          link: '/', 
-          icon: 'dashboard', 
+          ordinal: 0,
+          title: 'Dashboard',
+          link: '/',
+          icon: 'dashboard',
           items: [
             {
-              ordinal: 0, 
-              title: 'Sales Dashboard', 
-              link: '/dashboard/sales', 
-              icon: 'money',               
+              ordinal: 0,
+              title: 'Sales Dashboard',
+              link: '/dashboard/sales',
+              icon: 'money',
               roles: ['USER', 'ADMIN'],
             },
             {
-              ordinal: 0, 
-              title: 'Product Dashboard', 
-              link: '/dashboard/product', 
-              icon: 'money',               
+              ordinal: 0,
+              title: 'Product Dashboard',
+              link: '/dashboard/product',
+              icon: 'money',
               roles: ['USER', 'ADMIN'],
             },
           ],
           roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 1, 
-          title: 'Sales Orders', 
-          link: '/360/crm/sales-orders', 
-          icon: 'speaker',           
+          ordinal: 1,
+          title: 'Sales Orders',
+          link: '/360/crm/sales-orders',
+          icon: 'speaker',
           roles: ['USER', 'ADMIN'],
         },
         {
@@ -193,7 +196,16 @@ const LASEC_CONFIG = {
         },
         {
           ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
-        },        
+        },
+        {
+          ordinal: 14, title: 'Capture Category', link: '/capturecategory/new', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 16, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
+        },
         {
           ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
         },
@@ -491,13 +503,40 @@ const LASEC_CONFIG = {
       componentFqn: `${key}.NewQuote@1.0.0`,
     },
     {
-      key: 'capturecategory',
-      title: 'Capture Category',
-      path: '/capturecategory/**',
+      key: 'categorylist',
+      title: 'Category List',
+      path: '/categorylist/**',
       exact: true,
       public: false,
       roles: ['USER'],
-      componentFqn: `${key}.CaptureCategory@1.0.0`,
+      componentFqn: `${key}.CategoryList@1.0.0`,
+    },
+    {
+      key: 'capturecategory',
+      title: 'Capture Category',
+      path: '/capturecategory/new',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.LasecCategoryDetail@1.0.0`,
+    },
+    {
+      key: 'capturecategory',
+      title: 'Capture Category',
+      path: '/capturecategory/edit/:id/',
+      public: false,
+      exact: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: `${key}.LasecCategoryDetail@1.0.0`,
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'edit',
+          }
+        }
+      ]
     },
     {
       key: 'graphiql',

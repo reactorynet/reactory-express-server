@@ -25,11 +25,12 @@ input LasecCategoryCaptureInput {
 }
 
 extend type Query {
-  LasecGetCategories: [Category]
+  LasecGetCategoryList: [Category]
   LasecGetCategoryById(id: String): Category
   LasecGetCategoryByKey(key: String): Category
 }
 
 extend type Mutation {
   LasecCreateNewCategory(input: LasecCategoryCaptureInput): Category
+  LasecUpdateCategory(id: String, input: LasecCategoryCaptureInput): Category
 }

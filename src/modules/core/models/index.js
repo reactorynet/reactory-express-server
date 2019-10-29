@@ -1,8 +1,8 @@
 
 import Cache from './CoreCache';
-import Category from './CoreCategory';
+import CoreCategory from './CoreCategory';
 
 export {
   Cache,
-  Category
+  CoreCategory
 };
