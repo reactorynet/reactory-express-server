@@ -75,10 +75,20 @@ const proxiedRoutes = [
   },
 ];
 
+const MainMenu = {
+  name: 'Main',
+  key: 'left-nav',
+  target: 'left-nav',
+  roles: ['USER'],
+  entries: [
+   
+  ],
+};
+
 const Menus = {
   DEVELOP: [
     {
-      ordinal: 12, title: 'Sales Configurator', link: '/salesconfig/', icon: 'settings_applications', roles: ['USER'],
+      ordinal: 12, title: 'Sales Assistant', link: '/sales/', icon: 'settings_applications', roles: ['USER'],
     },
     {
       ordinal: 13, title: 'Product List', link: '/productlist/', icon: 'reorder', roles: ['USER'],
@@ -91,6 +101,72 @@ const Menus = {
     },
     {
       ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
+    },
+  ],
+  
+  PRODUCTION: [
+    {
+      ordinal: 0,
+      title: 'Dashboard',
+      link: '/',
+      icon: 'dashboard',
+      items: [
+        {
+          ordinal: 0,
+          title: 'Sales Dashboard',
+          link: '/dashboard/sales',
+          icon: 'money',
+          roles: ['USER', 'ADMIN'],
+        },
+        {
+          ordinal: 0,
+          title: 'Product Dashboard',
+          link: '/dashboard/product',
+          icon: 'money',
+          roles: ['USER', 'ADMIN'],
+        },
+      ],
+      roles: ['USER', 'ADMIN'],
+    },
+    {
+      ordinal: 1,
+      title: 'Sales Orders',
+      link: '/360/crm/sales-orders',
+      icon: 'speaker',
+      roles: ['USER', 'ADMIN'],
+    },
+    {
+      ordinal: 2, title: 'Customers', link: '/360/crm/customer-search', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
+    },
+    {
+      ordinal: 4, title: 'Quotes', link: '/360/crm/all-quotes', icon: 'shopping_cart', roles: ['USER', 'ADMIN'],
+    },
+    {
+      ordinal: 7, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER'],
+    },
+    {
+      ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['USER'],
+    },
+    {
+      ordinal: 9, title: 'Discussion', link: '/discuss/', icon: 'chat', roles: ['USER'],
+    },
+    {
+      ordinal: 10, title: 'Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
+    },
+    {
+      ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
+    },
+    {
+      ordinal: 14, title: 'Capture Category', link: '/capturecategory/new', icon: 'reorder', roles: ['USER'],
+    },
+    {
+      ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
+    },
+    {
+      ordinal: 16, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
+    },
+    {
+      ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
     },
   ]
 }
@@ -139,81 +215,7 @@ const LASEC_CONFIG = {
     },
   ],
   menus: [
-    profileSmall,
-    {
-      name: 'Main',
-      key: 'left-nav',
-      target: 'left-nav',
-      roles: ['USER'],
-      entries: [
-        {
-          ordinal: 0,
-          title: 'Dashboard',
-          link: '/',
-          icon: 'dashboard',
-          items: [
-            {
-              ordinal: 0,
-              title: 'Sales Dashboard',
-              link: '/dashboard/sales',
-              icon: 'money',
-              roles: ['USER', 'ADMIN'],
-            },
-            {
-              ordinal: 0,
-              title: 'Product Dashboard',
-              link: '/dashboard/product',
-              icon: 'money',
-              roles: ['USER', 'ADMIN'],
-            },
-          ],
-          roles: ['USER', 'ADMIN'],
-        },
-        {
-          ordinal: 1,
-          title: 'Sales Orders',
-          link: '/360/crm/sales-orders',
-          icon: 'speaker',
-          roles: ['USER', 'ADMIN'],
-        },
-        {
-          ordinal: 2, title: 'Customers', link: '/360/crm/customer-search', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
-        },
-        {
-          ordinal: 4, title: 'Quotes', link: '/360/crm/all-quotes', icon: 'shopping_cart', roles: ['USER', 'ADMIN'],
-        },
-        {
-          ordinal: 7, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER'],
-        },
-        {
-          ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['USER'],
-        },
-        {
-          ordinal: 9, title: 'Discussion', link: '/discuss/', icon: 'chat', roles: ['USER'],
-        },
-        {
-          ordinal: 10, title: 'Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
-        },
-        {
-          ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
-        },
-        {
-          ordinal: 14, title: 'Capture Category', link: '/capturecategory/new', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 16, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 17, title: 'Create Category Filter', link: '/create-category-filter/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
-        },
-      ],
-    },
+    profileSmall,    
   ],
   routes: [
     {
@@ -542,15 +544,6 @@ const LASEC_CONFIG = {
       ]
     },
     {
-      key: 'create-category-filter',
-      title: 'Create Category Filter',
-      path: '/create-category-filter/**',
-      exact: true,
-      public: false,
-      roles: ['USER'],
-      componentFqn: `${key}.CreateCategoryFilter@1.0.0`,
-    },
-    {
       key: 'graphiql',
       title: 'GraphiQL',
       path: '/graphiql/**',
@@ -798,8 +791,13 @@ const LASEC_CONFIG = {
   ],
 };
 
+
 if( MODE === 'DEVELOP' ) {
-  LASEC_CONFIG.menus = [ ...LASEC_CONFIG.menus, ...Menus.DEVELOP ];
+  MainMenu.entries = [ ...Menus.PRODUCTION, ...Menus.DEVELOP ];
+} else {
+  MainMenu.entries = [ ...Menus.PRODUCTION ];
 }
+
+LASEC_CONFIG.menus = [profileSmall, MainMenu];
 
 export default LASEC_CONFIG;
