@@ -1,10 +1,8 @@
+import categoryDetailSchema from '../CategoryDetail/schema';
 export default {
   type: 'object',
   title: 'Capture Category',
   properties: {
-    categoryDetail: {
-      title: 'Category Detail',
-      type: 'object',
-    }
+    categoryDetail: categoryDetailSchema
   }
 };

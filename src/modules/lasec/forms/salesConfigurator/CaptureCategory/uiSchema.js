@@ -1,5 +1,9 @@
 export default {
   submitIcon: 'refresh',
+  'ui:options': {
+    isContainer: true,
+    passProperties: ['$route']
+  },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
@@ -8,6 +12,8 @@ export default {
   ],
   categoryDetail: {
     'ui:widget': 'LasecCategoryDetail',
-    'ui:options': {},
+    'ui:options': {
+      skipOnChange: false
+    },
   },
 }

@@ -17,7 +17,7 @@ export default {
   uiSchema: $uiSchema,
   widgetMap: [
     {
-      component: 'lasec-crm.LasecCategoryDetail@1.0.0',
+      componentFqn: 'lasec-crm.LasecCategoryDetail@1.0.0',
       widget: 'LasecCategoryDetail',
     },
   ],

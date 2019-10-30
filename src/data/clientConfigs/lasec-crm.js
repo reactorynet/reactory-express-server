@@ -518,7 +518,7 @@ const LASEC_CONFIG = {
       exact: true,
       public: false,
       roles: ['USER'],
-      componentFqn: `${key}.LasecCategoryDetail@1.0.0`,
+      componentFqn: `${key}.CaptureCategory@1.0.0`,
     },
     {
       key: 'capturecategory',
@@ -527,7 +527,7 @@ const LASEC_CONFIG = {
       public: false,
       exact: false,
       roles: ['USER', 'ADMIN'],
-      componentFqn: `${key}.LasecCategoryDetail@1.0.0`,
+      componentFqn: `${key}.CaptureCategory@1.0.0`,
       args: [
         {
           key: 'mode',

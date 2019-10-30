@@ -5,14 +5,14 @@ export default {
     name: 'LasecGetCategoryById',
     text: fileAsString(require.resolve('./LasecGetCategoryById.graphql')),
     variables: {
-      '$route.params.id': 'id',
+      'formContext.$route.params.id': 'id',
     },
     resultMap: {
       id: 'id',
       'name': 'categoryName',
       'description': 'categoryDescription',
     },
-    edit: false,
+    edit: true,
     new: false,
   },
   mutation: {
