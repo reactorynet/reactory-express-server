@@ -10,9 +10,9 @@ export const getCacheItem = async (cacheKey) => {
       return null;
     } else {
       return cached.item;
-    } 
+    }
   }
-  
+
   return null;
 };
 

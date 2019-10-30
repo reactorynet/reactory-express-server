@@ -1,0 +1,8 @@
+mutation LasecCreateCategoryFilter($input: LasecCategoryFilterCaptureInput){
+  LasecCreateCategoryFilter(input: $input){
+    id
+    title
+    filterOptions
+    key
+  }
+}

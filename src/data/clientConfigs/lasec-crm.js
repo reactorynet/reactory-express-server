@@ -207,6 +207,9 @@ const LASEC_CONFIG = {
           ordinal: 16, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
         },
         {
+          ordinal: 17, title: 'Create Category Filter', link: '/create-category-filter/', icon: 'reorder', roles: ['USER'],
+        },
+        {
           ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
         },
       ],
@@ -537,6 +540,15 @@ const LASEC_CONFIG = {
           }
         }
       ]
+    },
+    {
+      key: 'create-category-filter',
+      title: 'Create Category Filter',
+      path: '/create-category-filter/**',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.CreateCategoryFilter@1.0.0`,
     },
     {
       key: 'graphiql',

@@ -20,6 +20,7 @@ import NewQuote from './salesConfigurator/NewQuote';
 import CategoryDetail from './salesConfigurator/CategoryDetail';
 import CaptureCategory from './salesConfigurator/CaptureCategory';
 import CategoryList from './salesConfigurator/CategoryList';
+import CreateCategoryFilter from './salesConfigurator/CreateCategoryFilter';
 
 export default [
   CrmDashboardForm,
@@ -34,5 +35,6 @@ export default [
   NewQuote,
   CaptureCategory,
   CategoryDetail,
-  CategoryList
+  CategoryList,
+  CreateCategoryFilter
 ];

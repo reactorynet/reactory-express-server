@@ -1,0 +1,39 @@
+type CategoryFilter {
+  id: ObjID
+  title: String
+  filterOptions: [ ListItem ]
+  selectMultiple: Boolean
+  key: String
+}
+
+type ListItem {
+  id: ObjID
+  key: String,
+  text: String,
+  value: String,
+}
+
+input ListItemInput {
+  id: ObjID
+  key: String,
+  text: String,
+  value: String,
+}
+
+input LasecCategoryFilterCaptureInput {
+  id: ObjID
+  title: String
+  filterOptions: [ListItemInput]
+  selectMultiple: Boolean
+  key: String
+}
+
+extend type Query {
+  LasecGetCategoryFilters: [CategoryFilter]
+  # LasecGetCategoryFilterById(id: String): CategoryFilter
+  # LasecGetCategoryFilterByKey(key: String): CategoryFilter
+}
+
+extend type Mutation {
+  LasecCreateCategoryFilter(input: LasecCategoryFilterCaptureInput): CategoryFilter
+}

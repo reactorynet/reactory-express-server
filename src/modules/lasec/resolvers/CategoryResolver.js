@@ -1,4 +1,5 @@
 import { CoreCategory } from '@reactory/server-core/modules/core/models';
+import LasecCategoryFilter from '@reactory/server-core/modules/lasec/models/CategoryFilter';
 import ApiError from '@reactory/server-core/exceptions';
 import { ObjectId } from 'mongodb';
 import logger from '../../../logging';
@@ -18,6 +19,16 @@ const getCategoryByKey = async (key) => {
   return category;
 }
 
+const getCategoryFilters = async () => {
+  logger.debug(`GETTING CATEGORY FILTERS!!!!`);
+
+  const categoryFilters = await LasecCategoryFilter.find({}).then();
+
+  logger.debug(`CATEGORY FILTERS::   ${categoryFilters}`);
+
+  return categoryFilters;
+}
+
 const toSlug = (input) => {
   let regex = /[^\w\s]/g; // Remove @ _ . ! # ? > < = +
   const processed = input.replace(regex, "").replace(/\s/g, "-").trim();
@@ -25,15 +36,11 @@ const toSlug = (input) => {
 }
 
 const createNewCategory = async (input) => {
-
-  logger.debug(`CREATING NEW CATEGORY:: ${JSON.stringify(input)}`);
-
   const slug = toSlug(input.name.toLowerCase());
   const exists = await CoreCategory.findOne({ key: slug }).then();
   if (exists) {
-    throw new ApiError('A category by this name already exists. Please chose a unique name.');
+    throw new ApiError('A category by this name already exists. Please choose a unique name.');
   }
-
   const newCategory = new CoreCategory({ ...input, key: slug }).save();
   return newCategory;
 }
@@ -42,10 +49,40 @@ const updateCategory = async (id, input) => {
   return await CoreCategory.findOneAndUpdate({ _id: ObjectId(id) }, { ...input }).then();
 }
 
+const createNewCategoryFilter = async (input) => {
+
+  const slug = toSlug(input.title.toLowerCase());
+
+  const exists = await LasecCategoryFilter.findOne({ key: slug }).then();
+  if (exists) {
+    throw new ApiError('A category filter by this name already exists. Please choose a unique name.');
+  }
+
+  input.filterOptions.forEach(fo => fo.key = fo.key || toSlug(fo.text));
+
+  logger.debug(`CREATING CATEGORY FILTER:: ${JSON.stringify(input)}`);
+
+  const categoryFilter = await new LasecCategoryFilter({ ...input, key: slug }).save().then();
+
+  logger.debug(`NEW CATEGORY FILTER:: ${JSON.stringify(categoryFilter)}`);
+
+  return categoryFilter;
+}
+
 export default {
   Category: {
     id: (category) => {
       return `${category._id}`
+    }
+  },
+  CategoryFilter: {
+    id: (categoryFilter) => {
+      return `${categoryFilter._id}`
+    }
+  },
+  ListItem: {
+    id: (item) => {
+      return `${item._id}`
     }
   },
   Query: {
@@ -57,6 +94,9 @@ export default {
     },
     LasecGetCategoryByKey: async (obj, { key }) => {
       return getCategoryByKey(key);
+    },
+    LasecGetCategoryFilters: async () => {
+      return getCategoryFilters();
     }
   },
   Mutation: {
@@ -65,6 +105,9 @@ export default {
     },
     LasecUpdateCategory: async (parent, { id, input }) => {
       return updateCategory(id, input);
+    },
+    LasecCreateCategoryFilter: async (parent, { input }) => {
+      return createNewCategoryFilter(input);
     }
   }
 };
