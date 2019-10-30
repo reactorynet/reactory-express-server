@@ -1,7 +1,12 @@
 export default {  
   'ui:options': {
     showSubmit: false,
-    container: "Fragment"
+    container: "div",
+    containerStyles: {
+      marginTop: '-10px',
+      marginLeft: '-8px',
+      marginRight: '-8px'
+    }
   },
   tabbedQuotes: {
     'ui:widget': 'TabbedNavWidget',
