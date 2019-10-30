@@ -312,7 +312,6 @@ UserSchema.methods.setAuthentication = async function setAuthentication(authenti
   const instance = this;
   const { props, provider, lastLogin } = authentication;
 
-  debugger;
   let dirty = false;
   if(instance.$patching === true) {
     return;

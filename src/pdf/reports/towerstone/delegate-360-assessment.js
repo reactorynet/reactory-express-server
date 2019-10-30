@@ -408,7 +408,6 @@ const resolveData = async ({ surveyId, delegateId }) => {
       };
     });
     
-    // debugger; //eslint-disable-line
     const selfQualityratings = lodash.filter(reportData.ratingsSelf, r => r.custom !== true && quality.model._id.equals(r.qualityId));
 
     datasets.push({

@@ -39,7 +39,7 @@ class AuthConfig {
       passport.use(new BasicStrategy({ passReqToCallback: true }, AuthConfig.BasicAuth));
       passport.use(new JwtStrategy(AuthConfig.JwtOptions, AuthConfig.JwtAuth));
       passport.use(new AnonStrategy());
-      
+
       const oauth2 = OAuth2.create({
         client: {
           id: process.env.OAUTH_APP_ID,
@@ -199,7 +199,6 @@ class AuthConfig {
     }
 
     static JwtAuth = (payload, done) => {
-      debugger;
       logger.info('JWT Auth executing');
       if (payload.userId === '-1') {
         global.user = {

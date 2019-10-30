@@ -198,7 +198,6 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
     switch (apiResponse.status) {
       case 401:
       case 403: {
-        // debugger;
 
         const retry =  async function retry(){
           logger.debug('Attempting to refetch', { attempt });
@@ -494,8 +493,37 @@ const Api = {
         filter: {
           "ids":["LAB101","LAB102","LAB103","LAB104","LAB105","LAB106","LAB107","LAB121"]
         }}}, true).then();
-    },
+    },    
   },
+  User: {
+    getLasecUser: async ( staff_user_id ) => {
+      const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data, { filter: {
+        ids: [staff_user_id]
+      }}, true, false, 0).then()
+
+      if(lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {
+        if(isArray(lasecStaffUserResponse.payload) && lasecStaffUserResponse.payload.length === 1) {
+          return lasecStaffUserResponse.payload[0];
+        } else {
+          return lasecStaffUserResponse.payload;
+        }        
+      }
+      
+      return null;
+    },
+
+    getLasecUsers: async ( staff_user_ids = [] ) => {
+      const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data, { filter: {
+        ids: staff_user_ids
+      }}, true, false, 0).then()
+
+      if(lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {
+        return lasecStaffUserResponse.payload;
+      }
+      
+      return null;
+    },
+  }, 
   Authentication: {
     login: async (username, password) => {
       return await POST(SECONDARY_API_URLS.login_lasec_user.url, { username, password }, false).then();

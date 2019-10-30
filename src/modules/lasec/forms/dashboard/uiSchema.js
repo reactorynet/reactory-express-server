@@ -133,7 +133,7 @@ export default {
   target: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: 'Target: COMING SOON',
+      format: 'Target: ${formData}',
       variant: 'h4',      
     }
   },
@@ -141,7 +141,7 @@ export default {
   targetPercent: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: 'Target %: COMING SOON',
+      format: 'Target %: ${formData}',
       variant: 'h4',      
     }
   },

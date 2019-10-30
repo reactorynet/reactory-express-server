@@ -3,13 +3,15 @@ import TeamResolver from './TeamResolver';
 import AuthenticationResolver from './AuthenticationResolver';
 import ProductResolver from './ProductResolver';
 import CompanyResolver from './CompanyResolver';
+import LasecUserResolver from './LasecUserResolver';
 
 const toMerge = [
   QuoteResolver,
   TeamResolver,
   AuthenticationResolver,
   ProductResolver,
-  CompanyResolver
+  CompanyResolver,
+  LasecUserResolver
 ];
 
 let resolvers = {

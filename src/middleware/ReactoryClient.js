@@ -8,7 +8,6 @@ const bypassUri = [
 ];
 
 const ReactoryClientAuthenticationMiddleware = (req, res, next) => {
-  debugger;
   let clientId = req.headers['x-client-key'];
   let clientPwd = req.headers['x-client-pwd'];
   let serverBypass = req.headers['x-reactory-pass'];  

@@ -308,6 +308,16 @@ const getQuotes = async (params) => {
 };
 
 
+const getTargets = async({ agents }) => {
+  debugger;
+  try {
+    return await lasecApi.User.getLasecUsers(agents).then();
+  } catch (targetFetchError) {
+    logger.error(targetFetchError)
+    return [];
+  }  
+};
+
 /**
  * Fetches emails where content / subject matches the quote
  * @param {*} quote_id
@@ -926,7 +936,7 @@ export default {
 
       let periodLabel = `Quotes Dashboard ${periodStart.format('DD MM YY')} till ${periodEnd.format('DD MM YY')} For ${global.user.firstName} ${global.user.lastName}`;
 
-      let cacheKey = `quote.dashboard.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
+      let cacheKey = `quote.dashboard.${user._id}.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
 
       let _cached = await getCacheItem(cacheKey);
 
@@ -942,6 +952,8 @@ export default {
 
       const quotes = await getQuotes( { periodStart, periodEnd } ).then();
 
+      debugger;
+      const targets = await getTargets( { agents: [ user._id ] } ).then();
 
       const quoteStatusFunnel = {
         chartType: 'FUNNEL',
@@ -998,8 +1010,8 @@ export default {
         periodLabel,
         periodStart,
         periodEnd,
-        target: (1500000 * Math.random()),
-        targetPercent: 50,
+        target: 0,
+        targetPercent: 0,
         totalQuotes: 0,
         totalBad: 0,
         repIds: [],

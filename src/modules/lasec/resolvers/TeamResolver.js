@@ -1,10 +1,11 @@
 import om from 'object-mapper';
 import { ObjectId } from 'mongodb';
-import LasecAPI from '../api';
-import logger from '../../../logging';
+import LasecAPI from '@reactory/server-modules/lasec/api';
+import logger from '@reactory/server-core/logging';
 export default {  
   Query: {
     LasecSalesTeams: async () => {
+      logger.debug(`LasecSalesTeams() ${global.user.fullName()}`);
       const teamsPayload = await LasecAPI.Teams.list().then();    
       if(teamsPayload.status === "success") {        
         const { items }  = teamsPayload.payload || [];
