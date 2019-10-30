@@ -1,5 +1,8 @@
-export default {
-  showSubmit: false,
+export default {  
+  'ui:options': {
+    showSubmit: false,
+    container: "Fragment"
+  },
   tabbedQuotes: {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
