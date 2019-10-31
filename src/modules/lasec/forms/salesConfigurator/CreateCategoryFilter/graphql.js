@@ -11,7 +11,6 @@ export default {
       id: 'id',
       'title': 'title',
       'filterOptions': 'filterOptions',
-      'description': 'categoryDescription',
       'selectMultiple': 'selectMultiple'
     },
     edit: true,
@@ -36,6 +35,7 @@ export default {
       objectMap: true,
       updateMessage: 'Updating Category Filter...',
       variables: {
+        'formData.id': 'id',
         'formData.title': 'input.title',
         'formData.filterOptions': 'input.filterOptions',
         'formData.selectMultiple': 'input.selectMultiple',

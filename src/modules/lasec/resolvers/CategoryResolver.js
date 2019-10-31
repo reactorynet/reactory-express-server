@@ -4,7 +4,6 @@ import ApiError from '@reactory/server-core/exceptions';
 import { ObjectId } from 'mongodb';
 import logger from '../../../logging';
 import _ from 'lodash';
-import om from 'object-mapper';
 
 const getCategories = async (params) => {
   const categories = await CoreCategory.find({}).then();
@@ -22,13 +21,10 @@ const getCategoryByKey = async (key) => {
 }
 
 const getCategoryFilters = async () => {
-  return categoryFilters = await LasecCategoryFilter.find({}).then();
+  return await LasecCategoryFilter.find({}).then();
 }
 
 const getCategoryFilterById = async (id) => {
-
-  logger.debug(`GETTING FILTER BY ID:: ${id}`);
-
   return await LasecCategoryFilter.findById(id).then();
 }
 
@@ -54,9 +50,7 @@ const updateCategory = async (id, input) => {
 }
 
 const createNewCategoryFilter = async (input) => {
-
   const slug = toSlug(input.title.toLowerCase());
-
   const exists = await LasecCategoryFilter.findOne({ key: slug }).then();
   if (exists) {
     throw new ApiError('A category filter by this name already exists. Please choose a unique name.');
@@ -67,13 +61,7 @@ const createNewCategoryFilter = async (input) => {
 }
 
 const updateCategoryFilter = async (id, input) => {
-
-  logger.debug(`UPDATING ITEM:: ${id} -- ${input}`);
-
   input.filterOptions.forEach(fo => fo.key = fo.key || toSlug(fo.text));
-
-  logger.debug(`UPDATING ITEM AFTER FO TWEAK:: ${input}`);
-
   return await LasecCategoryFilter.findOneAndUpdate({ _id: ObjectId(id) }, { ...input }).then();
 }
 

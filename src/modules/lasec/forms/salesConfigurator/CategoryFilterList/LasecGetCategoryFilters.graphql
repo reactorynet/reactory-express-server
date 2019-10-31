@@ -1,0 +1,14 @@
+query LasecGetCategoryFilters {
+  LasecGetCategoryFilters {
+    id
+    title
+    filterOptions {
+      id
+      key
+      text
+      value
+    }
+    key
+    selectMultiple
+  }
+}

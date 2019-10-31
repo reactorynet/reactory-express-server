@@ -21,6 +21,7 @@ import CategoryDetail from './salesConfigurator/CategoryDetail';
 import CaptureCategory from './salesConfigurator/CaptureCategory';
 import CategoryList from './salesConfigurator/CategoryList';
 import CreateCategoryFilter from './salesConfigurator/CreateCategoryFilter';
+import CategoryFilterList from './salesConfigurator/CategoryFilterList';
 
 export default [
   CrmDashboardForm,
@@ -36,5 +37,6 @@ export default [
   CaptureCategory,
   CategoryDetail,
   CategoryList,
-  CreateCategoryFilter
+  CreateCategoryFilter,
+  CategoryFilterList
 ];

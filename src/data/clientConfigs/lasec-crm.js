@@ -239,6 +239,9 @@ const Menus = {
         {
           ordinal: 16, title: 'Update Category Filter', link: '/capture-category-filter/edit/5dbab8773fd27904a91a7b61', icon: 'reorder', roles: ['USER'],
         },
+        {
+          ordinal: 17, title: 'Category Filter List', link: '/category-filter-list/', icon: 'reorder', roles: ['USER'],
+        },
       ]
     },
     {
@@ -746,6 +749,15 @@ const LASEC_CONFIG = {
           }
         }
       ]
+    },
+    {
+      key: 'category-filter-list',
+      title: 'Category Filter List',
+      path: '/category-filter-list/**',
+      exact: true,
+      public: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: `${key}.LasecCategoryFilterList@1.0.0`,
     },
     {
       key: 'graphiql',
