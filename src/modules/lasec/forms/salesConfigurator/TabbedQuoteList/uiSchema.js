@@ -30,27 +30,23 @@ export default {
                     key: 'new-quote',
                     title: 'New Quote',
                     clickAction: 'navigate',
+                    link: '/newquote/',
                     icon: 'create',
                     enabled: true,
                     ordinal: 0,
                     eventHandler: 'toBeImplemented'
-                  }, {
-                    key: 'existing-quote',
-                    title: 'Existing Quote',
-                    clickAction: 'navigate',
-                    icon: 'folder',
-                    enabled: true,
-                    ordinal: 1,
-                    eventHandler: 'toBeImplemented'
-                  }, {
+                  },  
+                  {
                     key: 'search-procducts',
                     title: 'Search Products',
                     clickAction: 'navigate',
+                    link: '/productlist/',
                     icon: 'search',
                     enabled: true,
                     ordinal: 2,
                     eventHandler: 'toBeImplemented'
-                  }]
+                  }
+                ]
               }
             }
           ]
