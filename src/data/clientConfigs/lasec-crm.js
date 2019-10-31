@@ -81,7 +81,7 @@ const MainMenu = {
   target: 'left-nav',
   roles: ['USER'],
   entries: [
-   
+
   ],
 };
 
@@ -97,13 +97,14 @@ const Menus = {
       ordinal: 14, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
     },
     {
-      ordinal: 14, title: 'Capture Category', link: '/capturecategory/', icon: 'reorder', roles: ['USER'],
+      ordinal: 15, title: 'Capture Category', link: '/capturecategory/', icon: 'reorder', roles: ['USER'],
     },
     {
-      ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
+      ordinal: 16, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
     },
+
   ],
-  
+
   PRODUCTION: [
     {
       ordinal: 0,
@@ -157,13 +158,7 @@ const Menus = {
       ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
     },
     {
-      ordinal: 14, title: 'Capture Category', link: '/capturecategory/new', icon: 'reorder', roles: ['USER'],
-    },
-    {
-      ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
-    },
-    {
-      ordinal: 16, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
+      ordinal: 17, title: 'Category Filter Capture', link: '/category-filter-capture/new', icon: 'reorder', roles: ['USER'],
     },
     {
       ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
@@ -215,7 +210,7 @@ const LASEC_CONFIG = {
     },
   ],
   menus: [
-    profileSmall,    
+    profileSmall,
   ],
   routes: [
     {
@@ -542,6 +537,15 @@ const LASEC_CONFIG = {
           }
         }
       ]
+    },
+    {
+      key: 'category-filter-capture',
+      title: 'Category Filter Capture',
+      path: '/category-filter-capture/new',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.CreateCategoryFilter@1.0.0`,
     },
     {
       key: 'graphiql',

@@ -69,6 +69,17 @@ const createNewCategoryFilter = async (input) => {
   return categoryFilter;
 }
 
+const updateCategoryFilter = async (id, input) => {
+
+  logger.debug(`UPDATING CAT FILTER INPUTS:: ${id}, ${JSON.stringify(input)}`);
+
+  const result = await LasecCategoryFilter.findOneAndUpdate({ _id: ObjectId(id) }, { ...input }).then();
+
+  logger.debug(`UPDATING CAT FILTER:: ${result}`)
+
+  return result;
+}
+
 export default {
   Category: {
     id: (category) => {
@@ -108,6 +119,9 @@ export default {
     },
     LasecCreateCategoryFilter: async (parent, { input }) => {
       return createNewCategoryFilter(input);
+    },
+    LasecUpdateCategoryFilter: async (parent, {id, input}) => {
+      return updateCategoryFilter(id, input);
     }
   }
 };

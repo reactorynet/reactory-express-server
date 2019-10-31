@@ -1,4 +1,5 @@
 import $schema from './schema';
+import $uiSchema from './uiSchema';
 import $graphql from './graphql';
 
 export default {
@@ -13,6 +14,6 @@ export default {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,
-  uiSchema: {},
+  uiSchema: $uiSchema,
   graphql: $graphql
 };

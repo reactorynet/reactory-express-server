@@ -36,4 +36,5 @@ extend type Query {
 
 extend type Mutation {
   LasecCreateCategoryFilter(input: LasecCategoryFilterCaptureInput): CategoryFilter
+  LasecUpdateCategoryFilter(id: String, input: LasecCategoryFilterCaptureInput): CategoryFilter
 }

@@ -2,7 +2,12 @@ mutation LasecCreateCategoryFilter($input: LasecCategoryFilterCaptureInput){
   LasecCreateCategoryFilter(input: $input){
     id
     title
-    filterOptions
+    filterOptions {
+      id
+      key
+      text
+      value
+    }
     key
   }
 }

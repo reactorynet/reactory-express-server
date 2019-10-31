@@ -14,5 +14,17 @@ export default {
       },
       onSuccessMethod: 'refresh'
     },
+    edit: {
+      name: 'LasecUpdateCategoryFilter',
+      text: fileAsString(require.resolve('./LasecUpdateCategoryFilter.graphql')),
+      objectMap: true,
+      updateMessage: 'Updating Category Filter...',
+      variables: {
+        'formData.title': 'input.title',
+        'formData.filterOptions': 'input.filterOptions',
+        'formData.selectMultiple': 'input.selectMultiple',
+      },
+      onSuccessMethod: 'refresh'
+    }
   }
 };
