@@ -42,6 +42,9 @@ switch (MODE) {
 
 const key = 'lasec-crm';
 
+/**
+ * These routes are routes that are proxied via our framed window component
+ */
 const proxiedRoutes = [
   {
     key: 'CrmClientsRoot',
@@ -64,10 +67,30 @@ const proxiedRoutes = [
     path: 'crm/sales-orders'
   },
   {
-    key: 'CrmInvoices',
+    key: '360-invoices',
     title: 'Invoices',
     path: 'crm/invoices'
   },
+  {
+    key: '360-product-catalogue',
+    title: 'Product Catalogue',
+    path: 'catalogue/search'
+  },
+  {
+    key: '360-user-admin',
+    title: 'User Admin',
+    path: 'admin/users'
+  },
+  {
+    key: '360-admin-groups',
+    title: 'Groups',
+    path: 'admin/groups'
+  },
+  {
+    key: '360-admin-approvals',
+    title: 'Approvals',
+    path: 'approvals/quote-approval'
+  },  
   {
     key: 'CrmSalesHistory',
     title: 'Sales History',
@@ -75,6 +98,9 @@ const proxiedRoutes = [
   },
 ];
 
+/**
+ * The main menu container
+ */
 const MainMenu = {
   name: 'Main',
   key: 'left-nav',
@@ -85,23 +111,11 @@ const MainMenu = {
   ],
 };
 
+/**
+ * A wrapper object for menus, makes it easier for merging during development and production
+ */
 const Menus = {
-  DEVELOP: [
-    {
-      ordinal: 12, title: 'Sales Assistant', link: '/sales/', icon: 'settings_applications', roles: ['USER'],
-    },
-    {
-      ordinal: 13, title: 'Product List', link: '/productlist/', icon: 'reorder', roles: ['USER'],
-    },
-    {
-      ordinal: 14, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
-    },
-    {
-      ordinal: 14, title: 'Capture Category', link: '/capturecategory/', icon: 'reorder', roles: ['USER'],
-    },
-    {
-      ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
-    },
+  DEVELOP: [      
   ],
   
   PRODUCTION: [
@@ -119,57 +133,196 @@ const Menus = {
           roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 0,
+          ordinal: 1,
           title: 'Product Dashboard',
           link: '/dashboard/product',
-          icon: 'money',
+          icon: 'bar_chart',
           roles: ['USER', 'ADMIN'],
+        },
+        {
+          ordinal: 2, 
+          title: 'Discussion', 
+          link: '/discuss/', 
+          icon: 'chat', 
+          roles: ['USER'],
         },
       ],
       roles: ['USER', 'ADMIN'],
-    },
+    },    
     {
       ordinal: 1,
-      title: 'Sales Orders',
-      link: '/360/crm/sales-orders',
-      icon: 'speaker',
-      roles: ['USER', 'ADMIN'],
-    },
-    {
-      ordinal: 2, title: 'Customers', link: '/360/crm/customer-search', icon: 'supervisor_account', roles: ['USER', 'ADMIN'],
-    },
-    {
-      ordinal: 4, title: 'Quotes', link: '/360/crm/all-quotes', icon: 'shopping_cart', roles: ['USER', 'ADMIN'],
-    },
-    {
-      ordinal: 7, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER'],
-    },
-    {
-      ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['USER'],
-    },
-    {
-      ordinal: 9, title: 'Discussion', link: '/discuss/', icon: 'chat', roles: ['USER'],
-    },
+      title: '360',
+      link: '/360/crm/customer-search',
+      icon: '360',
+      roles: ['USER'],
+      items: [
+        {
+          ordinal: 0,
+          title: 'Quotes',
+          link: '/360/crm/all-quotes',
+          icon: 'add_shopping_cart',
+          roles: ['USER'],
+        },
+        {
+          ordinal: 1,
+          title: 'Catalog',
+          link: '/360/catalog/search',
+          icon: 'shopping_cart',
+          roles: ['USER'],
+        },
+        {
+          ordinal: 1,
+          title: 'Approvals',
+          link: '/360/approvals/quote-approval',
+          icon: 'gavel',
+          roles: ['ADMIN', 'QUOTE_APPROVER'],
+        },
+        {
+          ordinal: 1,
+          title: 'User Admin',
+          link: '/360/admin/users',
+          icon: 'account_circle',
+          roles: ['ADMIN'],
+        },
+        {
+          ordinal: 1,
+          title: 'Groups',
+          link: '/360/admin/groups',
+          icon: 'account_tree',
+          roles: ['ADMIN'],
+        },
+        {
+          ordinal: 1,
+          title: 'Sales Assistant',
+          link: '/salesconfig',
+          icon: 'speed',
+          roles: ['USER'],
+        },
+      ]
+    },                                
     {
       ordinal: 10, title: 'Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
+      items: [
+        {
+          ordinal: 0,
+          title: 'Inbox',
+          link: '/profile/inbox',
+          icon: 'mail',
+          roles: ['USER', 'ADMIN'],
+        },
+      ]
     },
     {
-      ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
+      ordinal: 17, title: 'Develop', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN'],
+      items: [
+        {
+          ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['DEVELOPER',  'ADMIN']
+        },
+        {
+          ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
+        },
+        {
+          ordinal: 13, title: 'Product List', link: '/productlist/', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 14, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 14, title: 'Capture Category', link: '/capturecategory/', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
+        },
+      ]
     },
     {
-      ordinal: 14, title: 'Capture Category', link: '/capturecategory/new', icon: 'reorder', roles: ['USER'],
+      orinal: 98, title: 'Admin', link: '/admin/', icon: 'settings_power', roles: ['ADMIN', 'DEVELOPER'],
+      items: [
+        {
+          ordinal: 0,
+          title: 'Static Content',
+          link: '/admin/content/',
+          icon: 'file_copy',
+          roles: ['ADMIN'],
+        },
+        {
+          ordinal: 1,
+          title: 'Customer',
+          link: '/admin/customer/',
+          icon: 'business',
+          roles: ['ADMIN'],
+        },        
+      ]
     },
     {
-      ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
-    },
-    {
-      ordinal: 16, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
-    },
-    {
-      ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
-    },
+      ordinal: 97, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER'],
+      items: [
+        {
+          ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
+        }
+      ]      
+    },        
+    
   ]
-}
+};
+
+const staticContentMappings = [
+  {
+    key: 'about',
+    title: 'About 360',
+    path: '/about',
+    public: true,
+    exact: true,
+    roles: ['USER'],
+    args: [
+      {
+        key: 'slug',
+        value: {
+          type: 'string',
+          slug: 'about-us',
+        }
+      }
+    ]
+  },
+
+  {
+    key: 'sales-dashboard',
+    title: 'Sales Dashboard',
+    path: '/dashboard/sales/*',
+    public: false,
+    exact: false,
+    roles: ['USER'],
+    args: [
+      {
+        key: 'slug',
+        value: {
+          type: 'string',
+          slug: 'sales-dashboard',
+        }
+      }
+    ]
+  },
+
+  {
+    key: 'product-dashboard',
+    title: 'Product Dashboard',
+    path: '/dashboard/product/*',
+    public: false,
+    exact: false,
+    roles: ['USER'],
+    args: [
+      {
+        key: 'slug',
+        value: {
+          type: 'string',
+          slug: 'product-dashboard',
+        }
+      }
+    ]
+  },
+
+
+];
 
 const LASEC_CONFIG = {
   key,
@@ -191,7 +344,8 @@ const LASEC_CONFIG = {
     'CUSTOMER',
     'SALES',
     'WAREHOUSE',
-    'EXEC'
+    'EXEC',
+    'CONTENT_EDITOR'
   ],
   billingType: 'partner',
   organization: [
@@ -344,28 +498,16 @@ const LASEC_CONFIG = {
         },
       ],
     },
-    {
-      key: 'about',
-      title: 'About 360',
-      path: '/about',
-      public: true,
-      exact: true,
-      roles: ['USER', 'ADMIN'],
-      componentFqn: 'core.StaticContent@1.0.0',
-      args: [
-        {
-          key: 'slug',
-          value: {
-            type: 'string',
-            slug: 'about-us',
-          }
-        }
-      ]
-    },
+    staticContentMappings.map((mapping) => {
+      return {
+        ...mapping,
+        componentFqn: 'core.StaticContent@1.0.0'
+      }
+    }),    
     {
       key: 'content-capture',
       title: 'Content Capture',
-      path: '/help/edit/:slug',
+      path: '/admin/content/edit/:slug',
       public: false,
       exact: true,
       roles: ['USER', 'ADMIN'],
@@ -380,8 +522,9 @@ const LASEC_CONFIG = {
         }
       ]
     },
+    //Help Config Section
     {
-      key: 'content-capture-new',
+      key: 'help-index',
       title: 'Help List',
       path: '/help/',
       public: false,
@@ -406,12 +549,40 @@ const LASEC_CONFIG = {
       ]
     },
     {
-      key: 'content-capture-new',
-      title: 'Content Capture',
-      path: '/help/new',
+      key: 'help-index',
+      title: 'Help List',
+      path: '/help/:slug',
       public: false,
       exact: true,
       roles: ['USER', 'ADMIN'],
+      componentFqn: 'static.StaticContent@1.0.0',
+      args: [
+        {
+          key: 'slugSourceProps',
+          value: {
+            type: 'object',
+            slugSourceProps: {
+              paramId: 'slug',
+            },
+          },
+        },
+        {
+          key: 'slugSource',
+          value: {
+            type: 'string',
+            slugSource: 'router'
+          },
+        },        
+      ],
+    },
+    //Content Editor 
+    {
+      key: 'content-capture-new',
+      title: 'Content Capture',
+      path: '/admin/content/new',
+      public: false,
+      exact: true,
+      roles: ['ADMIN', 'CONTENT_EDITOR'],
       componentFqn: 'static.ContentCapture@1.0.0',
       args: [
         {
