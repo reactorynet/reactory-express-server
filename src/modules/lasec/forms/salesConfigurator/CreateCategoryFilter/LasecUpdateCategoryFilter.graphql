@@ -9,5 +9,6 @@ mutation LasecUpdateCategoryFilter($id: String, $input: LasecCategoryFilterCaptu
       value
     }
     key
+    selectMultiple
   }
 }

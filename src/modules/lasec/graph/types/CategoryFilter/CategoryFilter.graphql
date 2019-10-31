@@ -30,7 +30,7 @@ input LasecCategoryFilterCaptureInput {
 
 extend type Query {
   LasecGetCategoryFilters: [CategoryFilter]
-  # LasecGetCategoryFilterById(id: String): CategoryFilter
+  LasecGetCategoryFilterById(id: String): CategoryFilter
   # LasecGetCategoryFilterByKey(key: String): CategoryFilter
 }
 

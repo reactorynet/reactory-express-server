@@ -90,7 +90,7 @@ const proxiedRoutes = [
     key: '360-admin-approvals',
     title: 'Approvals',
     path: 'approvals/quote-approval'
-  },  
+  },
   {
     key: 'CrmSalesHistory',
     title: 'Sales History',
@@ -107,7 +107,7 @@ const MainMenu = {
   target: 'left-nav',
   roles: ['USER'],
   entries: [
-   
+
   ],
 };
 
@@ -115,9 +115,9 @@ const MainMenu = {
  * A wrapper object for menus, makes it easier for merging during development and production
  */
 const Menus = {
-  DEVELOP: [      
+  DEVELOP: [
   ],
-  
+
   PRODUCTION: [
     {
       ordinal: 0,
@@ -140,15 +140,15 @@ const Menus = {
           roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 2, 
-          title: 'Discussion', 
-          link: '/discuss/', 
-          icon: 'chat', 
+          ordinal: 2,
+          title: 'Discussion',
+          link: '/discuss/',
+          icon: 'chat',
           roles: ['USER'],
         },
       ],
       roles: ['USER', 'ADMIN'],
-    },    
+    },
     {
       ordinal: 1,
       title: '360',
@@ -199,7 +199,7 @@ const Menus = {
           roles: ['USER'],
         },
       ]
-    },                                
+    },
     {
       ordinal: 10, title: 'Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
       items: [
@@ -233,6 +233,12 @@ const Menus = {
         {
           ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
         },
+        {
+          ordinal: 16, title: 'Capture Category Filter', link: '/capture-category-filter/new/', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 16, title: 'Update Category Filter', link: '/capture-category-filter/edit/5dbab8773fd27904a91a7b61', icon: 'reorder', roles: ['USER'],
+        },
       ]
     },
     {
@@ -251,7 +257,7 @@ const Menus = {
           link: '/admin/customer/',
           icon: 'business',
           roles: ['ADMIN'],
-        },        
+        },
       ]
     },
     {
@@ -260,9 +266,9 @@ const Menus = {
         {
           ordinal: 99, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
         }
-      ]      
-    },        
-    
+      ]
+    },
+
   ]
 };
 
@@ -369,7 +375,7 @@ const LASEC_CONFIG = {
     },
   ],
   menus: [
-    profileSmall,    
+    profileSmall,
   ],
   routes: [
     {
@@ -503,7 +509,7 @@ const LASEC_CONFIG = {
         ...mapping,
         componentFqn: 'core.StaticContent@1.0.0'
       }
-    }),    
+    }),
     {
       key: 'content-capture',
       title: 'Content Capture',
@@ -572,10 +578,10 @@ const LASEC_CONFIG = {
             type: 'string',
             slugSource: 'router'
           },
-        },        
+        },
       ],
     },
-    //Content Editor 
+    //Content Editor
     {
       key: 'content-capture-new',
       title: 'Content Capture',
@@ -704,6 +710,33 @@ const LASEC_CONFIG = {
       exact: false,
       roles: ['USER', 'ADMIN'],
       componentFqn: `${key}.CaptureCategory@1.0.0`,
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'edit',
+          }
+        }
+      ]
+    },
+    {
+      key: 'capture-category-filter',
+      title: 'Capture Category Filter',
+      path: '/capture-category-filter/new',
+      exact: true,
+      public: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: `${key}.CreateCategoryFilter@1.0.0`,
+    },
+    {
+      key: 'capture-category-filter',
+      title: 'Edit Category Filter',
+      path: '/capture-category-filter/edit/:id/',
+      public: false,
+      exact: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: `${key}.CreateCategoryFilter@1.0.0`,
       args: [
         {
           key: 'mode',

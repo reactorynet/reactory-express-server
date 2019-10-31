@@ -9,5 +9,6 @@ mutation LasecCreateCategoryFilter($input: LasecCategoryFilterCaptureInput){
       value
     }
     key
+    selectMultiple
   }
 }

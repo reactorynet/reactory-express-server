@@ -18,13 +18,19 @@ export default {
         title: 'Filter',
         properties: {
           key: {
-            type: 'string'
+            type: [
+              "string",
+              "null"
+            ]
           },
           text: {
             type: 'string'
           },
           value: {
-            type: 'string'
+            type: [
+              "string",
+              "null"
+            ]
           }
         }
       }

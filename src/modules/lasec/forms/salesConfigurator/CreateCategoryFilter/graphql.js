@@ -1,6 +1,22 @@
 import { fileAsString } from '@reactory/server-core/utils/io';
 
 export default {
+  query: {
+    name: 'LasecGetCategoryFilterById',
+    text: fileAsString(require.resolve('./LasecGetCategoryFilterById.graphql')),
+    variables: {
+      'formContext.$route.params.id': 'id',
+    },
+    resultMap: {
+      id: 'id',
+      'title': 'title',
+      'filterOptions': 'filterOptions',
+      'description': 'categoryDescription',
+      'selectMultiple': 'selectMultiple'
+    },
+    edit: true,
+    new: false,
+  },
   mutation: {
     new: {
       name: 'LasecCreateCategoryFilter',

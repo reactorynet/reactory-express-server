@@ -3,6 +3,8 @@ import LasecCategoryFilter from '@reactory/server-core/modules/lasec/models/Cate
 import ApiError from '@reactory/server-core/exceptions';
 import { ObjectId } from 'mongodb';
 import logger from '../../../logging';
+import _ from 'lodash';
+import om from 'object-mapper';
 
 const getCategories = async (params) => {
   const categories = await CoreCategory.find({}).then();
@@ -20,13 +22,14 @@ const getCategoryByKey = async (key) => {
 }
 
 const getCategoryFilters = async () => {
-  logger.debug(`GETTING CATEGORY FILTERS!!!!`);
+  return categoryFilters = await LasecCategoryFilter.find({}).then();
+}
 
-  const categoryFilters = await LasecCategoryFilter.find({}).then();
+const getCategoryFilterById = async (id) => {
 
-  logger.debug(`CATEGORY FILTERS::   ${categoryFilters}`);
+  logger.debug(`GETTING FILTER BY ID:: ${id}`);
 
-  return categoryFilters;
+  return await LasecCategoryFilter.findById(id).then();
 }
 
 const toSlug = (input) => {
@@ -41,6 +44,7 @@ const createNewCategory = async (input) => {
   if (exists) {
     throw new ApiError('A category by this name already exists. Please choose a unique name.');
   }
+
   const newCategory = new CoreCategory({ ...input, key: slug }).save();
   return newCategory;
 }
@@ -59,25 +63,18 @@ const createNewCategoryFilter = async (input) => {
   }
 
   input.filterOptions.forEach(fo => fo.key = fo.key || toSlug(fo.text));
-
-  logger.debug(`CREATING CATEGORY FILTER:: ${JSON.stringify(input)}`);
-
-  const categoryFilter = await new LasecCategoryFilter({ ...input, key: slug }).save().then();
-
-  logger.debug(`NEW CATEGORY FILTER:: ${JSON.stringify(categoryFilter)}`);
-
-  return categoryFilter;
+  return await new LasecCategoryFilter({ ...input, key: slug }).save().then();
 }
 
 const updateCategoryFilter = async (id, input) => {
 
-  logger.debug(`UPDATING CAT FILTER INPUTS:: ${id}, ${JSON.stringify(input)}`);
+  logger.debug(`UPDATING ITEM:: ${id} -- ${input}`);
 
-  const result = await LasecCategoryFilter.findOneAndUpdate({ _id: ObjectId(id) }, { ...input }).then();
+  input.filterOptions.forEach(fo => fo.key = fo.key || toSlug(fo.text));
 
-  logger.debug(`UPDATING CAT FILTER:: ${result}`)
+  logger.debug(`UPDATING ITEM AFTER FO TWEAK:: ${input}`);
 
-  return result;
+  return await LasecCategoryFilter.findOneAndUpdate({ _id: ObjectId(id) }, { ...input }).then();
 }
 
 export default {
@@ -108,6 +105,9 @@ export default {
     },
     LasecGetCategoryFilters: async () => {
       return getCategoryFilters();
+    },
+    LasecGetCategoryFilterById: async (obj, { id }) => {
+      return getCategoryFilterById(id);
     }
   },
   Mutation: {
@@ -120,7 +120,7 @@ export default {
     LasecCreateCategoryFilter: async (parent, { input }) => {
       return createNewCategoryFilter(input);
     },
-    LasecUpdateCategoryFilter: async (parent, {id, input}) => {
+    LasecUpdateCategoryFilter: async (parent, { id, input }) => {
       return updateCategoryFilter(id, input);
     }
   }
