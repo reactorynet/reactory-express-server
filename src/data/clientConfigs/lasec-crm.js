@@ -171,28 +171,28 @@ const Menus = {
           roles: ['USER'],
         },
         {
-          ordinal: 1,
+          ordinal: 2,
           title: 'Approvals',
           link: '/360/approvals/quote-approval',
           icon: 'gavel',
           roles: ['ADMIN', 'QUOTE_APPROVER'],
         },
         {
-          ordinal: 1,
+          ordinal: 3,
           title: 'User Admin',
           link: '/360/admin/users',
           icon: 'account_circle',
           roles: ['ADMIN'],
         },
         {
-          ordinal: 1,
+          ordinal: 4,
           title: 'Groups',
           link: '/360/admin/groups',
           icon: 'account_tree',
           roles: ['ADMIN'],
         },
         {
-          ordinal: 1,
+          ordinal: 5,
           title: 'Sales Assistant',
           link: '/salesconfig',
           icon: 'speed',
@@ -549,8 +549,8 @@ const LASEC_CONFIG = {
       ]
     },
     {
-      key: 'help-index',
-      title: 'Help List',
+      key: 'help-item',
+      title: 'Help Item',
       path: '/help/:slug',
       public: false,
       exact: true,
@@ -654,10 +654,10 @@ const LASEC_CONFIG = {
     {
       key: 'salesconfig',
       title: 'Sales Configurator',
-      path: '/salesconfig/**',
-      exact: true,
+      path: '/salesconfig',
+      exact: false,
       public: false,
-      roles: ['USER'],
+      roles: ['USER', 'ADMIN'],
       componentFqn: `${key}.TabbedQuotesList@1.0.0`,
     },
     {
