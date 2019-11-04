@@ -1,10 +1,9 @@
 export default {
   type: 'object',
-  title: 'Filters',
   properties: {
     filters: {
       type: 'array',
-      title: 'Filter Grid',
+      title: 'Category Filters',
       items: {
         type: 'object',
         properties: {

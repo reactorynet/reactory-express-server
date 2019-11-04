@@ -2,13 +2,13 @@ query LasecGetCategoryFilters {
   LasecGetCategoryFilters {
     id
     title
+    key
+    selectMultiple
     filterOptions {
       id
       key
       text
       value
     }
-    key
-    selectMultiple
   }
 }

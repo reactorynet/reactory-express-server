@@ -7,6 +7,7 @@ export default {
     variables: {},
     resultMap: {
       id: 'id',
+      '[].id': 'filters[].id',
       '[].title': 'filters[].title',
       '[].key': 'filters[].key',
       '[].selectMultiple': 'filters[].selectMultiple'

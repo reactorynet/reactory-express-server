@@ -5,7 +5,8 @@ export default {
     name: 'LasecGetCategoryFilterById',
     text: fileAsString(require.resolve('./LasecGetCategoryFilterById.graphql')),
     variables: {
-      'formContext.$route.params.id': 'id',
+      'formContext.query.filter_id': 'id',
+      // 'formContext.$route.params.id': 'id',
     },
     resultMap: {
       id: 'id',
