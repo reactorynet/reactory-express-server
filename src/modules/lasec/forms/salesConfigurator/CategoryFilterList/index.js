@@ -15,5 +15,11 @@ export default {
   version: '1.0.0',
   schema: $schema,
   uiSchema: $uiSchema,
-  graphql: $graphql
+  graphql: $graphql,
+  widgetMap: [
+    {
+      component: 'core.Label@1.0.0',
+      widget: 'LabelWidget',
+    },
+  ],
 };

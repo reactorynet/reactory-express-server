@@ -14,15 +14,47 @@ export default {
       columns: [
         { title: 'Title', field: 'title' },
         { title: 'Slug', field: 'key' },
-        // { title: 'Select Multiple', field: 'selectMultiple' },
         {
           title: 'Select Multiple',
           field: 'selectMultiple',
-          'ui:widget': 'core.LabelWidget@1.0.0',
+          'ui:widget': 'LabelWidget',
           'ui:options': {
-            format: 'Naughty Quotes: ${formData.selectMultiple}',
+            format: '${selectMultiple === true ? "YES" : "NO"}',
           }
         },
+        {
+          title: 'Select Multiple',
+          field: 'selectMultiple',
+          component: 'core.Label@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:widget': 'LabelWidget',
+              'ui:options': {
+                format: '${selectMultiple === true ? "YES" : "NO"}',
+              }
+            }
+          }
+        },
+        // {
+        //   title: 'Select Multiple',
+        //   field: 'id',
+        //   'ui:widget': 'core.LabelWidget@1.0.0',
+        //   'ui:options': {
+        //     format: 'Test ${id}',
+        //   }
+        // },
+        // {
+        //   title: 'Select Multiple',
+        //   field: 'id',
+        //   component: 'core.LabelWidget@1.0.0',
+        //   props: {
+        //     uiSchema: {
+        //       'ui:options': {
+        //         format: 'Test ${id}',
+        //       },
+        //     },
+        //   },
+        // },
         {
           title: 'Filter Options',
           field: 'id',
