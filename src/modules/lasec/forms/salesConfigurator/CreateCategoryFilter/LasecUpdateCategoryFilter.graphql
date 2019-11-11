@@ -1,0 +1,14 @@
+mutation LasecUpdateCategoryFilter($id: String, $input: LasecCategoryFilterCaptureInput!) {
+  LasecUpdateCategoryFilter(id: $id, input: $input) {
+     id
+    title
+    filterOptions {
+      id
+      key
+      text
+      value
+    }
+    key
+    selectMultiple
+  }
+}

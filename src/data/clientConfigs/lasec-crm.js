@@ -90,7 +90,7 @@ const proxiedRoutes = [
     key: '360-admin-approvals',
     title: 'Approvals',
     path: 'approvals/quote-approval'
-  },  
+  },
   {
     key: 'CrmSalesHistory',
     title: 'Sales History',
@@ -107,7 +107,7 @@ const MainMenu = {
   target: 'left-nav',
   roles: ['USER'],
   entries: [
-   
+
   ],
 };
 
@@ -115,9 +115,9 @@ const MainMenu = {
  * A wrapper object for menus, makes it easier for merging during development and production
  */
 const Menus = {
-  DEVELOP: [      
+  DEVELOP: [
   ],
-  
+
   PRODUCTION: [
     {
       ordinal: 0,
@@ -140,10 +140,10 @@ const Menus = {
           roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 2, 
-          title: 'Discussion', 
-          link: '/discuss/', 
-          icon: 'chat', 
+          ordinal: 2,
+          title: 'Discussion',
+          link: '/discuss/',
+          icon: 'chat',
           roles: ['USER'],
         },
         {
@@ -155,7 +155,7 @@ const Menus = {
         },
       ],
       roles: ['USER', 'ADMIN'],
-    },    
+    },
     {
       ordinal: 1,
       title: 'Sales',
@@ -213,7 +213,11 @@ const Menus = {
           roles: ['USER'],
         },
       ]
+<<<<<<< HEAD
     }, 
+=======
+    },
+>>>>>>> 27923ceb065618d7b03ee29686e00772f58d33ec
     {
       ordinal: 2,
       title: 'Product',
@@ -258,6 +262,15 @@ const Menus = {
         {
           ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
         },
+        {
+          ordinal: 16, title: 'Capture Category Filter', link: '/capture-category-filter/new/', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 16, title: 'Update Category Filter', link: '/capture-category-filter/edit/5dbab8773fd27904a91a7b61', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 17, title: 'Category Filter List', link: '/category-filter-list/', icon: 'reorder', roles: ['USER'],
+        },
       ]
     },
     {
@@ -277,6 +290,7 @@ const Menus = {
           icon: 'business',
           roles: ['ADMIN'],
         },
+<<<<<<< HEAD
         {
           ordinal: 3,
           title: 'User Admin',
@@ -291,6 +305,8 @@ const Menus = {
           icon: 'account_tree',
           roles: ['ADMIN'],
         },        
+=======
+>>>>>>> 27923ceb065618d7b03ee29686e00772f58d33ec
       ]
     },
     {
@@ -308,10 +324,16 @@ const Menus = {
         {
           ordinal: 93, title: 'Glossary', link: '/glossary/', icon: 'verified_user', roles: ['USER', 'ANON'],
         }
+<<<<<<< HEAD
         
       ]      
     },        
     
+=======
+      ]
+    },
+
+>>>>>>> 27923ceb065618d7b03ee29686e00772f58d33ec
   ]
 };
 
@@ -398,7 +420,7 @@ const LASEC_CONFIG = {
     },
   ],
   menus: [
-    profileSmall,    
+    profileSmall,
   ],
   routes: [
     {
@@ -474,7 +496,17 @@ const LASEC_CONFIG = {
           },
         },
       ],
+<<<<<<< HEAD
     },       
+=======
+    },
+    staticContentMappings.map((mapping) => {
+      return {
+        ...mapping,
+        componentFqn: 'core.StaticContent@1.0.0'
+      }
+    }),
+>>>>>>> 27923ceb065618d7b03ee29686e00772f58d33ec
     {
       key: 'content-capture',
       title: 'Content Capture',
@@ -549,9 +581,14 @@ const LASEC_CONFIG = {
             type: 'string',
             slugSource: 'router'
           },
-        },        
+        },
       ],
+<<<<<<< HEAD
     },    
+=======
+    },
+    //Content Editor
+>>>>>>> 27923ceb065618d7b03ee29686e00772f58d33ec
     {
       key: 'content-capture-new',
       title: 'Content Capture',
@@ -700,6 +737,42 @@ const LASEC_CONFIG = {
           }
         }
       ]
+    },
+    {
+      key: 'capture-category-filter',
+      title: 'Capture Category Filter',
+      path: '/capture-category-filter/new',
+      exact: true,
+      public: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: `${key}.CreateCategoryFilter@1.0.0`,
+    },
+    {
+      key: 'capture-category-filter',
+      title: 'Edit Category Filter',
+      path: '/capture-category-filter/edit/:id/',
+      public: false,
+      exact: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: `${key}.CreateCategoryFilter@1.0.0`,
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'edit',
+          }
+        }
+      ]
+    },
+    {
+      key: 'category-filter-list',
+      title: 'Category Filter List',
+      path: '/category-filter-list/**',
+      exact: true,
+      public: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: `${key}.LasecCategoryFilterList@1.0.0`,
     },
     {
       key: 'graphiql',
