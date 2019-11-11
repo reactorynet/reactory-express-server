@@ -3,12 +3,19 @@ module.exports = function (api) {
   api.cache(true);
 
   const presets = [
-    ['@babel/react', { modules: false }],
+    ['@babel/react', { modules: false }],    
     ['@babel/env', {
       modules: false,
       useBuiltIns: 'false',
       corejs: '3',
     }],
+    ['@babel/preset-typescript',
+      { 
+        isTSX: true,
+        allowNamespaces: true,
+        allExtensions: true,
+      }
+    ],
   ];
 
   const plugins = [
@@ -16,8 +23,15 @@ module.exports = function (api) {
     ["module-resolver", {
       "root": "./src",
       "alias": {
-        "@reactory/server-core" : "./src"
+        "@reactory/server-core" : "./src",
+        "@reactory/server-modules": "./src/modules"
       }      
+    }],
+
+    ["@babel/plugin-transform-typescript", { 
+      isTSX: true,
+      allowNamespaces: true,
+      allExtensions: true,
     }],
 
     ['@babel/plugin-proposal-class-properties', { loose: false }],

@@ -7,6 +7,8 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
     repIds
     totalQuotes
     totalBad
+    target
+    targetPercent
     statusSummary {
       key
       title

@@ -41,10 +41,6 @@ const refreshMicrosoftToken = async (msauth) => {
     postbody.append('scope', process.env.OAUTH_SCOPES);
     //postbody.append('resource', 'https://graph.microsoft.com')
     //postbody.append('redirect_uri', process.env.OAUTH_REDIRECT_URI);
-    debugger;
-
-  
-
 
     const response = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
       method: 'POST', // *GET, POST, PUT, DELETE, etc.
@@ -62,7 +58,6 @@ const refreshMicrosoftToken = async (msauth) => {
       body: postbody // body data type must match "Content-Type" header
     });
 
-    debugger;
     
     if(response.status === 200 || response.status === 201) {
       const refreshResult = await response.json();
@@ -262,6 +257,8 @@ export default {
         user: userToRefresh,
         messages: uxmessages,
       };      
-    }
+    
+    },
+
   }
 };

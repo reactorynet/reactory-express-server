@@ -11,6 +11,7 @@ import refresh from 'passport-oauth2-refresh';
 import OAuth2 from 'simple-oauth2';
 import { User, ReactoryClient } from '../models/index';
 import { UserValidationError } from '../exceptions';
+import AnonStrategy from './AnonStrategy';
 import logger from '../logging';
 import graph from '../azure/graph';
 import { createUserForOrganization, updateUserProfileImage } from '../application/admin/User';
@@ -25,19 +26,19 @@ class AuthConfig {
       // manage users
       passport.serializeUser((user, done) => {
       // Use the OID property of the user as a key
-        //logger.debug('AuthConfig.passport.serializeUser((user, done))', user);
+        logger.debug('AuthConfig.passport.serializeUser((user, done))', user);
         // users[user.profile.oid] = user;
         done(null, user.oid);
       });
 
       passport.deserializeUser((id, done) => {
-        //logger.debug('AuthConfig.passport.deserializeUser', id);
+        logger.debug('AuthConfig.passport.deserializeUser', id);
         done(null, users[id]);
       });
-
-
+      
       passport.use(new BasicStrategy({ passReqToCallback: true }, AuthConfig.BasicAuth));
       passport.use(new JwtStrategy(AuthConfig.JwtOptions, AuthConfig.JwtAuth));
+      passport.use(new AnonStrategy());
 
       const oauth2 = OAuth2.create({
         client: {

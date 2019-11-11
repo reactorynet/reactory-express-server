@@ -10,6 +10,7 @@ export default {
       '[].id': 'contentList[].id',
       '[].slug': 'contentList[].primaryText',
       '[].updatedAt': 'contentList[].secondaryText',
+      '[].title': 'contentList[].title',
     },
     edit: false,
     new: false,

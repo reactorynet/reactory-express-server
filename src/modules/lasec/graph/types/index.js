@@ -1,13 +1,18 @@
 
-import logger from '../../../../logging';
-import { fileAsString } from '../../../../utils/io';
+import logger from '@reactory/server-core/logging';
+import { fileAsString } from '@reactory/server-core/utils/io';
 
 const typeDefs = [];
 
 [
   'Lasec360/Authentication',
+  'System/LasecUser',
   'SalesTeams/SalesTeams',
   'Quotes/Quote',
+  'Products/Products',
+  'Clients/Clients',
+  'Category/Category',
+  'CategoryFilter/CategoryFilter',
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;

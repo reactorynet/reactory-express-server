@@ -51,7 +51,6 @@ const resolveUserEmailAddress = (user, reactoryClient = null) => {
   // check if we have a redirect setting for this mode
   const redirectSetting = partnerToUse.getSetting(`email_redirect/${MODE}`);
   let emailAddress = user.email;
-  debugger; //eslint-disable-line
   if (lodash.isNil(redirectSetting) === false && lodash.isNil(redirectSetting.data) === false) {
     const { email, enabled } = redirectSetting.data;
     if (lodash.isNil(email) === false && enabled === true) emailAddress = email;
@@ -198,7 +197,6 @@ const renderTemplate = (template, properties) => {
 const sendForgotPasswordEmail = (user, organization = null) => {
   return new Promise((resolve, reject) => {
     try {
-      debugger; //eslint-disable-line
       const { partner } = global;
       loadEmailTemplate(TemplateViews.ForgotPassword, organization, partner).then((templateResult) => {
         if (lodash.isNil(templateResult)) throw new RecordNotFoundError('Could not find a template matching the search criteria', 'Template', { criteria: { view: TemplateViews.ForgotPassword, organization } });

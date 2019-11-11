@@ -1,0 +1,14 @@
+query LasecGetCategoryFilterById($id: String!) {
+  LasecGetCategoryFilterById(id: $id) {
+    id
+    title
+    filterOptions {
+      id
+      key
+      text
+      value
+    }
+    key
+    selectMultiple
+  }
+}

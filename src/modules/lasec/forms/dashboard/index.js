@@ -40,9 +40,9 @@ export default {
   },
   defaultFormValue: {
     toolbar: {
-      period: 'this-week',
-      periodStart: moment().startOf('week').toISOString(),
-      periodEnd: moment().endOf('week').toISOString()
+      period: 'this-month',
+      periodStart: moment().startOf('month').toISOString(),
+      periodEnd: moment().endOf('month').toISOString()
     }
   }
 };

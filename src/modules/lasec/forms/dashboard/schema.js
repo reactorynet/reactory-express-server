@@ -225,6 +225,14 @@ export default {
         }
       }      
     },
+    targetPercent: {
+      type: 'number',
+      title: 'Target Percent'
+    },
+    target: {
+      type: 'number',
+      title: 'Target ZAR'
+    },
     totalQuotes: {
       type: 'number',
       title: 'Total Good',

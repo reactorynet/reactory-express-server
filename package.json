@@ -1,6 +1,6 @@
 {
   "name": "@reactory/server-core",
-  "version": "0.7.9",
+  "version": "0.8.0-PREVIEW",
   "displayName": "Reactory Server",
   "description": "Reactory Core Server",
   "main": "server.js",
@@ -23,7 +23,7 @@
     "start:reactory": "NODE_PATH=./src env-cmd -f ./config/.env.reactory.local npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000",
     "start:reactory:drew": "NODE_PATH=./src env-cmd -f ./config/.env.local.drew npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000",
     "start:lasec-crm": "NODE_PATH=./src env-cmd -f ./config/.env.lasec.local npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000",
-    "start:lasec-crm-drew": "NODE_PATH=./src env-cmd -f ./config/.env.lasec.local.drew npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000",
+    "start:lasec-crm:drew": "NODE_PATH=./src env-cmd -f ./config/.env.lasec.local.drew npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000",
     "build": "npx babel ./src --out-dir dist --presets @babel/env --copy-files",
     "set:env:production": "env-cmd ./.env.production",
     "build:prod": "npm-run-all set:env:production build",
@@ -77,8 +77,10 @@
     "@babel/plugin-transform-react-jsx": "7.3.0",
     "@babel/plugin-transform-react-jsx-compat": "^7.2.0",
     "@babel/plugin-transform-runtime": "7.4.4",
+    "@babel/plugin-transform-typescript": "^7.6.3",
     "@babel/preset-env": "7.4.4",
     "@babel/preset-react": "7.0.0",
+    "@babel/preset-typescript": "^7.6.0",
     "@babel/runtime": "7.4.3",
     "@microsoft/microsoft-graph-client": "^2.0.0",
     "@microsoft/microsoft-graph-types": "^1.10.0",
@@ -143,7 +145,7 @@
     "morgan": "^1.9.1",
     "mysql": "^2.14.1",
     "node-fetch": "^2.6.0",
-    "nodemon": "^1.19.1",
+    "nodemon": "^1.19.4",
     "npm-run-all": "4.1.3",
     "object-mapper": "^5.0.0",
     "passport": "^0.4.0",
@@ -180,7 +182,9 @@
     "ws": "^7.0.1",
     "zip-folder": "^1.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "awesome-typescript-loader": "^5.2.1"
+  },
   "nodemonConfig": {
     "ignore": [
       "test/*",

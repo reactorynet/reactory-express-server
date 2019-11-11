@@ -14,6 +14,7 @@ class BeforeCacheClean extends StepBody {
 
 class CleanCache extends StepBody {
   run(context) {
+    Cache.clean();
     logger.debug(`WF: Cleaning Cache ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);      
     return ExecutionResult.next();
   }
@@ -58,7 +59,7 @@ CleanCacheWorkflow.meta = {
   category: 'workflow',
   autoStart: true,
   props: {
-    interval: 5000,
+    interval: 1000 * 30,
     enabled: true,
   },
   id: 'core.CleanCacheWorkflow',

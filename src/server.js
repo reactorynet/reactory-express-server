@@ -12,7 +12,7 @@ import mongoose from 'mongoose';
 import session from 'express-session';
 import flash from 'connect-flash';
 import corsOptions from './config/cors';
-import clientAuth from './middleware/clientauth';
+import reactoryClientAuthenticationMiddleware from './middleware/ReactoryClient';
 import userAccountRouter from './useraccount';
 import reactory from './reactory';
 import froala from './froala';
@@ -115,7 +115,7 @@ try {
 
 const app = express();
 app.use('*', cors(corsOptions));
-app.use(clientAuth);
+app.use(reactoryClientAuthenticationMiddleware);
 
 //TODO: Werner Weber - investigate session and session management for auth.
 app.use(session({
@@ -138,7 +138,7 @@ startup().then((startResult) => {
   AuthConfig.Configure(app);
   app.use(
     queryRoot,
-    passport.authenticate('jwt', { session: false }), bodyParser.urlencoded({ extended: true }),
+    passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
     bodyParser.json({ limit: '10mb' }),
     graphqlExpress({ schema, debug: true }),
   );
@@ -153,7 +153,13 @@ startup().then((startResult) => {
   app.use('/pdf', pdf);
   app.use('/charts', charts);
   app.use('/amq', amq.router);
-  app.use(resourcesPath, express.static(APP_DATA_ROOT || publicFolder));
+  app.use(resourcesPath, 
+    passport.authenticate(
+      ['jwt', 'anonymous'], 
+      { session: false }), 
+      bodyParser.urlencoded({ extended: true }
+      ), 
+      express.static(APP_DATA_ROOT || publicFolder));
   app.listen(API_PORT);
   app.use(flash());
   // logger.info(`Bots server using ${bots.name}`);

@@ -1,0 +1,34 @@
+type Lasec360User {
+  id: String
+  code: String
+  repId: String
+  firstName: String
+  lastName: String
+  email: String
+  roles: [ String ]
+  target: Float
+  targetPercent: Float
+}
+
+input Lasec360UserSearch {
+  repIds: [ String ]
+  emails: [ String ]
+}
+
+type Lasec360UserSyncResult {
+  successes: [ User ],
+  failures: [ Lasec360User ],
+  total: Int
+  sps: Int
+  updated: Int
+  inserted: Int
+}
+
+extend type Query {
+  LasecGetRemoteUsers: [ Lasec360User ]
+  LasecGetRemoteUser(search: Lasec360UserSearch): Lasec360User  
+}
+
+extend type Mutation {
+  LasecSyncRemoteUserData( search: Lasec360UserSearch ) : Lasec360UserSyncResult
+}
