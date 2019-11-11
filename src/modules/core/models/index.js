@@ -1,6 +1,8 @@
 
 import Cache from './CoreCache';
+import CoreCategory from './CoreCategory';
 
-export { 
-  Cache
+export {
+  Cache,
+  CoreCategory
 };

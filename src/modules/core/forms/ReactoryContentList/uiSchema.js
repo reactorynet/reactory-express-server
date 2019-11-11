@@ -15,7 +15,7 @@ export default {
         label: 'Edit',
         componentFqn: 'core.Link',
         action: 'event:onRouteChanged',
-        link: '#/content-capture/edit/${item.primaryText}/'
+        link: '/admin/content/edit/${item.primaryText}/'
       }
     }
   },

@@ -1,0 +1,6 @@
+mutation LasecCreateNewCategory($input: LasecCategoryCaptureInput!){
+  LasecCreateNewCategory(input: $input){
+    name
+    description
+  }
+}

@@ -27,7 +27,7 @@ export default {
       
       return [];      
     },
-    LasecGetRemoteUser: async (obj,  ) => {
+    LasecGetRemoteUser: async (obj, { search: Lasec360UserSearch }) => {
       
       logger.debug(`LasecSalesTeams() ${ search } ${global.user.fullName()}`);
       let userResult: Lasec360User = null;

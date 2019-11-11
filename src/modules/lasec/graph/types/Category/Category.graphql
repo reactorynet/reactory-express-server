@@ -1,0 +1,36 @@
+type Category {
+  id: ObjID
+  name: String
+  description: String
+  parentId: ObjID
+  childrenId: [ ObjID ]
+  items: [ Any ]
+  linkType: String
+  linkTarget: String
+  foreignResolver: String
+  key: String
+}
+
+input LasecCategoryCaptureInput {
+  id: ObjID
+  name: String
+  description: String
+  parentId: ObjID
+  childrenId: [ ObjID ]
+  items: [ Any ]
+  linkType: String
+  linkTarget: String
+  foreignResolver: String
+  key: String
+}
+
+extend type Query {
+  LasecGetCategoryList: [Category]
+  LasecGetCategoryById(id: String): Category
+  LasecGetCategoryByKey(key: String): Category
+}
+
+extend type Mutation {
+  LasecCreateNewCategory(input: LasecCategoryCaptureInput): Category
+  LasecUpdateCategory(id: String, input: LasecCategoryCaptureInput): Category
+}

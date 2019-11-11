@@ -4,6 +4,7 @@ import AuthenticationResolver from './AuthenticationResolver';
 import ProductResolver from './ProductResolver';
 import CompanyResolver from './CompanyResolver';
 import LasecUserResolver from './LasecUserResolver';
+import CategoryResolver from './CategoryResolver';
 
 const toMerge = [
   QuoteResolver,
@@ -11,7 +12,8 @@ const toMerge = [
   AuthenticationResolver,
   ProductResolver,
   CompanyResolver,
-  LasecUserResolver
+  LasecUserResolver,
+  CategoryResolver
 ];
 
 let resolvers = {
