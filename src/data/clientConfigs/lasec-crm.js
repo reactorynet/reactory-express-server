@@ -213,11 +213,7 @@ const Menus = {
           roles: ['USER'],
         },
       ]
-<<<<<<< HEAD
-    }, 
-=======
     },
->>>>>>> 27923ceb065618d7b03ee29686e00772f58d33ec
     {
       ordinal: 2,
       title: 'Product',
@@ -290,23 +286,6 @@ const Menus = {
           icon: 'business',
           roles: ['ADMIN'],
         },
-<<<<<<< HEAD
-        {
-          ordinal: 3,
-          title: 'User Admin',
-          link: '/360/admin/users',
-          icon: 'account_circle',
-          roles: ['ADMIN'],
-        },
-        {
-          ordinal: 4,
-          title: 'Groups',
-          link: '/360/admin/groups',
-          icon: 'account_tree',
-          roles: ['ADMIN'],
-        },        
-=======
->>>>>>> 27923ceb065618d7b03ee29686e00772f58d33ec
       ]
     },
     {
@@ -324,16 +303,9 @@ const Menus = {
         {
           ordinal: 93, title: 'Glossary', link: '/glossary/', icon: 'verified_user', roles: ['USER', 'ANON'],
         }
-<<<<<<< HEAD
-        
-      ]      
-    },        
-    
-=======
       ]
     },
 
->>>>>>> 27923ceb065618d7b03ee29686e00772f58d33ec
   ]
 };
 
@@ -496,17 +468,7 @@ const LASEC_CONFIG = {
           },
         },
       ],
-<<<<<<< HEAD
     },       
-=======
-    },
-    staticContentMappings.map((mapping) => {
-      return {
-        ...mapping,
-        componentFqn: 'core.StaticContent@1.0.0'
-      }
-    }),
->>>>>>> 27923ceb065618d7b03ee29686e00772f58d33ec
     {
       key: 'content-capture',
       title: 'Content Capture',
@@ -583,12 +545,7 @@ const LASEC_CONFIG = {
           },
         },
       ],
-<<<<<<< HEAD
     },    
-=======
-    },
-    //Content Editor
->>>>>>> 27923ceb065618d7b03ee29686e00772f58d33ec
     {
       key: 'content-capture-new',
       title: 'Content Capture',
