@@ -20,40 +20,16 @@ export default {
           component: 'core.Label@1.0.0',
           props: {
             uiSchema: {
-              
+              'ui:options': {
+                format: '${selectMultiple == true ? "YES" : "NO"}',
+              }
             },
-            schema: {
-              type: "string",
-              title: ""
-            },
-            idSchema: {
-              $id: "categoryFilterList_selectmultiple"
-            }
+            variant: 'p'
           },
           propsMap: {
-            "seletMultiple": 'formData',
-          },
-        },        
-        // {
-        //   title: 'Select Multiple',
-        //   field: 'id',
-        //   'ui:widget': 'core.LabelWidget@1.0.0',
-        //   'ui:options': {
-        //     format: 'Test ${id}',
-        //   }
-        // },
-        // {
-        //   title: 'Select Multiple',
-        //   field: 'id',
-        //   component: 'core.LabelWidget@1.0.0',
-        //   props: {
-        //     uiSchema: {
-        //       'ui:options': {
-        //         format: 'Test ${id}',
-        //       },
-        //     },
-        //   },
-        // },
+            seletMultiple: 'value',
+          }
+        },
         {
           title: 'Filter Options',
           field: 'id',
