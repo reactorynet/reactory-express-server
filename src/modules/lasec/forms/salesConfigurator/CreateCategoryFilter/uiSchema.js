@@ -1,8 +1,8 @@
 export default {
-  id: {
-    'ui:widget': 'HiddenWidget',
-  },
-  title: {},
-  filterOptions: {},
-  selectMultiple: {}
+  // id: {
+  //   'ui:widget': 'HiddenWidget',
+  // },
+  // title: {},
+  // filterOptions: {},
+  // selectMultiple: {}
 };
