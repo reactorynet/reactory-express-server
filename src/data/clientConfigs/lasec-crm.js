@@ -215,7 +215,7 @@ const Menus = {
           link: '/360/catalogue/search',
           icon: 'book',
           roles: ['USER'],
-        },                       
+        },
         {
           ordinal: 5,
           title: 'Sales Assistant',
@@ -245,7 +245,7 @@ const Menus = {
           link: '/360/approvals/quote-approval',
           icon: 'gavel',
           roles: ['USER'],
-        },       
+        },
       ]
     },
     {
@@ -277,6 +277,9 @@ const Menus = {
         },
         {
           ordinal: 17, title: 'Category Filter List', link: '/category-filter-list/', icon: 'reorder', roles: ['USER'],
+        },
+        {
+          ordinal: 18, title: 'Tabbed Quote List', link: '/tabbed-quote-list/', icon: 'reorder', roles: ['USER'],
         },
       ]
     },
@@ -467,8 +470,8 @@ const LASEC_CONFIG = {
     },
     logoutroute,
     forgotpasswordroute,
-    resetpasswordroute,    
-    formsroute,    
+    resetpasswordroute,
+    formsroute,
     {
       key: 'home',
       title: 'Home',
@@ -486,7 +489,7 @@ const LASEC_CONFIG = {
           }
         }
       ],
-    },        
+    },
     {
       key: 'quote-detail',
       title: 'Quote Detail',
@@ -513,7 +516,7 @@ const LASEC_CONFIG = {
           },
         },
       ],
-    },       
+    },
     {
       key: 'content-capture',
       title: 'Content Capture',
@@ -531,7 +534,7 @@ const LASEC_CONFIG = {
           }
         }
       ]
-    },    
+    },
     {
       key: 'help-index',
       title: 'Help List',
@@ -590,7 +593,7 @@ const LASEC_CONFIG = {
           },
         },
       ],
-    },    
+    },
     {
       key: 'content-capture-new',
       title: 'Content Capture',
@@ -648,7 +651,7 @@ const LASEC_CONFIG = {
         }
       ]
     },
-    
+
     {
       key: 'administration',
       title: 'Administration',
@@ -664,7 +667,7 @@ const LASEC_CONFIG = {
             type: 'string',
             mode: 'edit',
           }
-        },        
+        },
       ],
     },
 
@@ -775,6 +778,15 @@ const LASEC_CONFIG = {
       public: false,
       roles: ['USER', 'ADMIN'],
       componentFqn: `${key}.LasecCategoryFilterList@1.0.0`,
+    },
+    {
+      key: 'tabbed-quote-list',
+      title: 'Tabbed Quote List',
+      path: '/tabbed-quote-list/**',
+      exact: true,
+      public: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: `${key}.TabbedQuotesList@1.0.0`,
     },
     {
       key: 'graphiql',

@@ -26,5 +26,8 @@ export default {
         },
       },
     },
+    addNew: {
+      type: 'string'
+    }
   },
 };
