@@ -22,4 +22,7 @@ export default {
       widget: 'LabelWidget',
     },
   ],
+  defaultFormValue: {
+    addNew: '0'
+  },
 };

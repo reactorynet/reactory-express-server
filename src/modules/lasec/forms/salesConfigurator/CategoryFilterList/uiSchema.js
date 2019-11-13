@@ -1,12 +1,6 @@
 
 export default {
   submitIcon: 'refresh',
-  'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      filters: { sm: 12, md: 12 },
-    }
-  ],
   filters: {
     title: 'Filter List',
     'ui:widget': 'MaterialTableWidget',
@@ -49,4 +43,26 @@ export default {
       title: 'Category Filters',
     },
   },
+  addNew: {
+    'ui:options': {
+      componentFqn: 'core.SlideOutLauncher',
+      componentProps: {
+        buttonVariant: 'SpeedDial',
+        componentFqn: 'lasec-crm.CreateCategoryFilter@1.0.0',
+        componentProps: {
+          'addNew': ['query.filter_id']
+        },
+        actions: [
+          {
+            key: 'new-filter',
+            title: 'New Filter',
+            clickAction: 'launch-slideout',
+            icon: 'create',
+            enabled: true,
+            ordinal: 0,
+          }
+        ]
+      }
+    }
+  }
 };
