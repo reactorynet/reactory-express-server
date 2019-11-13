@@ -1,4 +1,4 @@
-const MenuItems = {
+export const MenuItems = {
   profile: {
     link: '/profile', title: 'Profile', icon: 'account_circle', roles: ['USER'], ordinal: 0,
   },

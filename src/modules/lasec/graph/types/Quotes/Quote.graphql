@@ -126,9 +126,28 @@ type LasecChart {
   key: String
 }
 
+type DateRange {
+  startDate: Date
+  endDate: Date
+}
+
+type LasecNextActionFilter {
+  dateRange: DateRange
+  actioned: Boolean
+  actionType: String
+}
+
+type LasecUserNextActions {
+  owner: User
+  filter: LasecNextActionFilter
+  actions: [ QuoteReminder ]
+}
+
 type LasecQuoteDashboardCharts {
   quoteStatusFunnel: LasecChart
   quoteStatusPie: LasecChart
+  invoicePie: LasecChart
+  purchaseOrderPie: LasecChart
   quoteStatusComposed: LasecChart
 }
 
@@ -145,6 +164,7 @@ type LasecQuoteDashboard {
   totalBad: Int
   statusSummary: [ LasecQuoteDashboardSummary ]
   quotes: [ Quote ]
+  nextActions: LasecUserNextActions
   charts: LasecQuoteDashboardCharts
 }
 

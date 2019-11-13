@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { default as DashboardSchema } from '../../dashboard/schema';
+import { default as DashboardSchema } from '../../salesDashboard/schema';
 
 const $schema = cloneDeep(DashboardSchema);
 

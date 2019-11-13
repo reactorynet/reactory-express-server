@@ -1,30 +1,42 @@
 import who from './who';
 import nextAction from './nextAction';
 import dateRange from './dateRange';
+import { ISchema, IArraySchema, IObjectSchema } from '@reactory/server-core/schema';
 
-export default {
-  definitions: {
-    who,
-    nextAction,
-    dateRange,
-  },
+const nextActionSimple: ISchema = {
+  type: "string",
+  title: "Next action",
+  description: "Next Action",
+  default: "None",
+};
+
+const nextActions : IArraySchema = {
+    type: 'array',
+    title: "List of items",
+    items: { ...nextAction }
+}
+
+
+const nextActionComplex: IObjectSchema = {
   type: "object",
   title: "Next Actions",
-  description: "List of next actions for ${owner.fullName}",
+  description: "List of next actions for ${owner}",
   properties: {
     filter: {
+      type: "object",
       title: "Next Actions Filter",
       properties: {
-        dateRange: {
-          $ref: "#definitions/dateRange"
-        },
+        dateRange,
         actioned: {
           type: "boolean",
+          title: "Actioned",
+          description: "Is Actioned?",
           default: false, 
         },
         actionType: {
           type: "string",
           title: "Action Type",
+          default: "follow-up-call",
           enum: [
             "follow-up-call",
             "send-email",
@@ -35,16 +47,11 @@ export default {
       }
     },
     owner: {
-      type: 'object',
-      title: "Owner for the next actions list",
-      $ref: '#/definitions/who'
+      ...who,
+      title: "Owner for the next actions list",      
     },
-    nextActions: {
-      type: 'array',
-      title: "List of items",
-      items: {
-        $ref: "#/definitions/nextAction",
-      }
-    }
+    nextActions
   }
-};
+}
+
+export default nextActionComplex;

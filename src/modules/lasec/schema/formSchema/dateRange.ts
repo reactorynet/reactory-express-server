@@ -1,5 +1,6 @@
 export default {
   type: "object",
+  title: "Date Range",
   properties: {
     startDate: {
       type: "string",

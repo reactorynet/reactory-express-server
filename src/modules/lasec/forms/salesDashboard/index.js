@@ -1,4 +1,4 @@
-import { defaultFormProps } from '../../../../data/forms/defs';
+import { defaultFormProps } from '@reactory/server-core/data/forms/defs';
 import moment from 'moment';
 
 import $schema from './schema';

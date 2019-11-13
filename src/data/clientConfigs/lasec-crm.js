@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv';
 import {
-  profileSmall,
+  MenuItems,
 } from '../menus';
 
 import {
@@ -111,6 +111,17 @@ const MainMenu = {
   ],
 };
 
+const TopRightMenu =  {
+  name: 'Profile Small',
+  key: 'profile-small',
+  target: 'top-right',
+  roles: ['ANON', 'USER'],
+  entries: [
+    MenuItems.signin,
+    MenuItems.signout,
+  ],
+};
+
 /**
  * A wrapper object for menus, makes it easier for merging during development and production
  */
@@ -180,21 +191,21 @@ const Menus = {
         {
           ordinal: 3,
           title: 'ISO',
-          link: '/360/catalogue/sales-orders',
+          link: '/360/crm/sales-orders',
           icon: 'shopping_cart',
           roles: ['USER'],
         },
         {
           ordinal: 3,
           title: 'Invoices',
-          link: '/360/catalogue/invoices',
+          link: '/360/crm/invoices',
           icon: 'attach_money',
           roles: ['USER'],
         },
         {
           ordinal: 3,
           title: 'Sales History',
-          link: '/360/catalogue/sales-history',
+          link: '/360/crm/sales-history',
           icon: 'history',
           roles: ['USER'],
         },
@@ -270,38 +281,38 @@ const Menus = {
       ]
     },
     {
-      orinal: 98, title: 'Admin', link: '/admin/', icon: 'settings_power', roles: ['ADMIN', 'DEVELOPER'],
+      orinal: 96, title: 'Admin', link: '/admin/', icon: 'settings_power', roles: ['ADMIN', 'DEVELOPER'],
       items: [
         {
           ordinal: 0,
           title: 'Static Content',
           link: '/admin/content/',
           icon: 'file_copy',
-          roles: ['ADMIN'],
+          roles: ['ADMIN', 'DEVELOPER'],
         },
         {
           ordinal: 1,
           title: 'Customer',
           link: '/admin/customer/',
           icon: 'business',
-          roles: ['ADMIN'],
+          roles: ['ADMIN', 'DEVELOPER'],
         },
       ]
     },
     {
-      ordinal: 97, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER'],
+      ordinal: 97, title: 'Help', link: '/help', icon: 'help_outline', roles: ['USER', 'ANON'],
       items: [
         {
-          ordinal: 90, title: 'What\'s new', link: '/whats-new/', icon: 'verified_user', roles: ['USER', 'ANON'],
+          ordinal: 90, title: 'What\'s new', link: '/whats-new/', icon: 'schedule', roles: ['USER', 'ANON'],
         },
         {
-          ordinal: 91, title: 'About', link: '/about/', icon: 'verified_user', roles: ['USER', 'ANON'],
+          ordinal: 91, title: 'About', link: '/about/', icon: 'info', roles: ['USER', 'ANON'],
         },
         {
-          ordinal: 92, title: 'How to', link: '/how-to/', icon: 'verified_user', roles: ['USER', 'ANON'],
+          ordinal: 92, title: 'How to', link: '/how-to/', icon: 'help_outline', roles: ['USER', 'ANON'],
         },
         {
-          ordinal: 93, title: 'Glossary', link: '/glossary/', icon: 'verified_user', roles: ['USER', 'ANON'],
+          ordinal: 93, title: 'Glossary', link: '/glossary/', icon: 'textsms', roles: ['USER', 'ANON'],
         }
       ]
     },
@@ -313,7 +324,7 @@ const staticContentMappings = [
   {
     key: 'about',
     title: 'About 360',
-    path: '/about',
+    path: '/about/*',
     public: true,
     exact: true,
     roles: ['USER'],
@@ -326,25 +337,58 @@ const staticContentMappings = [
         }
       }
     ]
-  }, 
+  },
   {
-    key: 'product-dashboard',
-    title: 'Product Dashboard',
-    path: '/dashboard/product*',
-    public: false,
-    exact: false,
+    key: 'whats-new',
+    title: 'What\'s new',
+    path: '/whats-new/*',
+    public: true,
+    exact: true,
     roles: ['USER'],
     args: [
       {
         key: 'slug',
         value: {
           type: 'string',
-          slug: 'product-dashboard',
+          slug: 'whats-new',
         }
       }
     ]
-  },
-
+  },   
+  {
+    key: 'how-to',
+    title: 'How to',
+    path: '/how-to/*',
+    public: true,
+    exact: true,
+    roles: ['USER'],
+    args: [
+      {
+        key: 'slug',
+        value: {
+          type: 'string',
+          slug: 'how-to',
+        }
+      }
+    ]
+  },   
+  {
+    key: 'glossary',
+    title: 'Glossary',
+    path: '/glossary/*',
+    public: true,
+    exact: true,
+    roles: ['USER'],
+    args: [
+      {
+        key: 'slug',
+        value: {
+          type: 'string',
+          slug: 'glossary',
+        }
+      }
+    ]
+  },   
 ];
 
 const LASEC_CONFIG = {
@@ -366,6 +410,7 @@ const LASEC_CONFIG = {
     'DEVELOPER',
     'CUSTOMER',
     'SALES',
+    'PRODUCT_MANAGER',
     'WAREHOUSE',
     'EXEC',
     'CONTENT_EDITOR'
@@ -392,7 +437,7 @@ const LASEC_CONFIG = {
     },
   ],
   menus: [
-    profileSmall,
+   
   ],
   routes: [
     {
@@ -1043,6 +1088,6 @@ if( MODE === 'DEVELOP' ) {
   MainMenu.entries = [ ...Menus.PRODUCTION ];
 }
 
-LASEC_CONFIG.menus = [ profileSmall, MainMenu ];
+LASEC_CONFIG.menus = [ TopRightMenu, MainMenu ];
 
 export default LASEC_CONFIG;

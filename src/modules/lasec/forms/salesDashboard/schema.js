@@ -1,20 +1,5 @@
-const chartSchema = {
-  type: 'object',
-  properties: {
-    data: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-
-        }
-      }
-    },
-    options: {
-      type: 'object'
-    }
-  }
-}
+import { PieChart } from '@reactory/server-modules/core/schema/formSchema';
+import { nextActions } from '@reactory/server-modules/lasec/schema/formSchema';
 
 export default {
   type: 'object',
@@ -82,12 +67,12 @@ export default {
                 type: 'string',                
               }
             },
-            //customer filter
+            //custom filter
             {  
               agentSelection: {
                 enum: ['custom']
               },
-              agentFilter: {
+              userFilter: {
                 type: 'array',
                 title: 'Selected Reps',
                 items: {
@@ -130,18 +115,13 @@ export default {
         },
         agentSelection: {
           type: 'string',
-          title: 'Filter Reps / User',
-          enum: [
-            'me',
-            'team',
-            'custom'
-          ]
+          title: 'Filter Reps / User',          
         },                
       },
     },    
     charts: {
       type: 'object',
-      title: 'Charts',
+      title: 'Summary',
       description: 'Charts Container',
       properties: {
         quoteStatusFunnel: {
@@ -171,32 +151,9 @@ export default {
             },                    
           },
         },        
-        quoteStatusPie: {
-          type: 'object',
-          title: 'Quote Status Funnel',
-          properties: {
-            data: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  value: {
-                    type: 'number',
-                    title: 'value',            
-                  },
-                  name: {
-                    type: 'string',
-                    title: 'name'
-                  },
-                  fill: {
-                    type: 'string',
-                    title: 'fillcolor'
-                  }
-                }
-              }            
-            }
-          }          
-        },
+        quoteStatusPie: PieChart("quoteStatusPie"),
+        quoteISOPie: PieChart("quoteISOPie"),
+        quoteINVPie: PieChart("quoteINVPie"),
         quoteStatusComposed: {
           type: 'object',
           title: 'Quote Status Funnel',
@@ -225,26 +182,9 @@ export default {
         }
       }      
     },
-    targetPercent: {
-      type: 'number',
-      title: 'Target Percent'
+    nextActions: {
+      ...nextActions
     },
-    target: {
-      type: 'number',
-      title: 'Target ZAR'
-    },
-    totalQuotes: {
-      type: 'number',
-      title: 'Total Good',
-    },
-    totalBad: {
-      type: 'number',
-      title: 'Total Bad',
-    },
-    combinedData: {
-      type: 'string',
-      title: 'combined'
-    },        
     statusSummary: {
       title: 'Status Funnel',
       type: 'array',
@@ -274,6 +214,26 @@ export default {
         },
       },
     },    
+    targetPercent: {
+      type: 'number',
+      title: 'Target Percent'
+    },
+    target: {
+      type: 'number',
+      title: 'Target ZAR'
+    },
+    totalQuotes: {
+      type: 'number',
+      title: 'Total Good',
+    },
+    totalBad: {
+      type: 'number',
+      title: 'Total Bad',
+    },
+    combinedData: {
+      type: 'string',
+      title: 'combined'
+    },               
     quotes: {
       type: 'array',
       title: 'Quote Grid',

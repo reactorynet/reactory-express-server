@@ -1,7 +1,9 @@
-export default {
+export { ISchema, IObjectSchema, IArraySchema } from '@reactory/server-core/schema';
+
+const whoSchema: IObjectSchema = {
   type: "object",
   title: "Who",
-  propeterties: {
+  properties: {
     id: {
       type: "string",
       title: "Id"
@@ -20,8 +22,10 @@ export default {
     },
     email: {
       type: "string",
-      title: "Fullname",
+      title: "Email",
       format: "email"
     }
   }
 };
+
+export default whoSchema;

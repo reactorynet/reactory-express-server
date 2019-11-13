@@ -1,5 +1,7 @@
-import { default as CrmDashboardForm,
-} from './dashboard';
+import { default as SalesDashboard,
+} from './salesDashboard';
+
+import { default as ProductDashboard } from './productDashboard';
 
 import {
   ProductEnquiry as ProductEnquiryForm
@@ -24,7 +26,8 @@ import CreateCategoryFilter from './salesConfigurator/CreateCategoryFilter';
 import CategoryFilterList from './salesConfigurator/CategoryFilterList';
 
 export default [
-  CrmDashboardForm,
+  SalesDashboard,
+  ProductDashboard,
   ProductEnquiryForm,
   QuoteIdInputForm,
   QuoteListForm,

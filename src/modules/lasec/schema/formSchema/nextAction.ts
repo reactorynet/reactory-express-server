@@ -4,6 +4,10 @@ export default {
   type: "object",
   title: "Next Action",
   properties: {
+    id: {
+      type: "string",
+      title: "Id"
+    },
     itemType: {
       type: "string",
       title: "Item being referenced",

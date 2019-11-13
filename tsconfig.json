@@ -3,5 +3,11 @@
       "noImplicitAny": true,
       "removeComments": true,  
       "target":"es6",
+      "paths": {
+        "*": ["src/*"],
+        "@reactory/server-core/*": ["src/*"],
+        "@reactory/server-modules/*": ["src/modules/*"],
+        "test/*": ["test/*"],
+      }
   },    
 }

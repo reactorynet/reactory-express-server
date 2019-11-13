@@ -309,13 +309,28 @@ const getQuotes = async (params) => {
 
 
 const getTargets = async({ agents }) => {
-  debugger;
+  
   try {
     return await lasecApi.User.getLasecUsers(agents).then();
   } catch (targetFetchError) {
     logger.error(targetFetchError)
     return [];
   }  
+};
+
+//retrieves next actions for a user
+const getNextActionsForUser = async({ user = global.user, actioned = false }) => {
+  
+  try {    
+    if(!user) throw new ApiError("Invalid user data", user);
+    
+    return await QuoteReminder.find({
+    }).then();
+
+  } catch (nextActionError) {
+    logger.error(nextActionError);
+    throw nextActionError;
+  }
 };
 
 /**
@@ -379,6 +394,9 @@ const groupQuotesByStatus = (quotes) => {
       return _m[_k] || "Other";
     };
 
+    /**
+     * The good the bad and the ugly map
+     */
     const good_bad = {
       "1": "good",
       "2": "good",
@@ -949,11 +967,10 @@ export default {
       logger.debug(`Fetching Lasec Dashboard Data`, dashparams);
       let palette = global.partner.colorScheme();
 
-
-      const quotes = await getQuotes( { periodStart, periodEnd } ).then();
-
       debugger;
+      const quotes = await getQuotes( { periodStart, periodEnd } ).then();
       const targets = await getTargets( { agents: [ user._id ] } ).then();
+      const nextActionsForUser = await getNextActionsForUser({ user: global.user }).then()
 
       const quoteStatusFunnel = {
         chartType: 'FUNNEL',
@@ -987,19 +1004,11 @@ export default {
         options: {
           xAxis: {
             dataKey: 'modified',
-          },
-          area: {
-            dataKey: 'totalVATInclusive',
-            fill: `${palette[0]}`,
-            stroke: `#8884d8`,
-          },
-          bar: {
-            dataKey: 'totalVAT',
-            fill: `${palette[1]}`,
-          },
+          },                    
           line: {
             dataKey: 'totalVATExclusive',
-            stroke: `${palette[2]}`
+            stroke: `#${palette[2]}`,
+            title: 'Total'
           },
         },
         key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`
@@ -1011,6 +1020,17 @@ export default {
         periodStart,
         periodEnd,
         target: 0,
+        nextActions: {
+          filter: {
+            dateRange: {
+              startDate: periodStart,
+              endDate: periodEnd
+            },
+            actioned: false,
+          },
+          owner: global.user,
+          nextActions: nextActionsForUser
+        },
         targetPercent: 0,
         totalQuotes: 0,
         totalBad: 0,
@@ -1025,7 +1045,7 @@ export default {
       };
 
       dashboardResult.totalQuotes = quotes.length;
-      dashboardResult.statusSummary = groupQuotesByStatus(dashboardResult.quotes);
+      dashboardResult.statusSummary = groupQuotesByStatus(dashboardResult.quotes);      
       dashboardResult.charts.quoteStatusFunnel.data = [];
       dashboardResult.charts.quoteStatusPie.data = [];
       dashboardResult.charts.quoteStatusComposed.data = [];

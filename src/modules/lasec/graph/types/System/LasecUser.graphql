@@ -15,6 +15,13 @@ input Lasec360UserSearch {
   emails: [ String ]
 }
 
+enum LasecImportance {
+  critical
+  high
+  medium
+  low
+}
+
 type Lasec360UserSyncResult {
   successes: [ User ],
   failures: [ Lasec360User ],
@@ -24,9 +31,22 @@ type Lasec360UserSyncResult {
   inserted: Int
 }
 
+type LasecNextAction {
+  id: ObjID
+  itemType: String
+  itemReference: String
+  next: Date
+  actionType: String
+  actioned: Boolean
+  via: [String]
+  text: String
+  importance: LasecImportance
+}
+
 extend type Query {
   LasecGetRemoteUsers: [ Lasec360User ]
-  LasecGetRemoteUser(search: Lasec360UserSearch): Lasec360User  
+  LasecGetRemoteUser(search: Lasec360UserSearch): Lasec360User
+  LasecGetUserNextActions(id: String): [ LasecNextAction  ]
 }
 
 extend type Mutation {
