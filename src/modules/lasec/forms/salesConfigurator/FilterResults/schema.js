@@ -30,5 +30,9 @@ export default {
         }
       }
     },
+    // testList: {
+    //   title: 'Filter Reult List',
+    //   type: 'string'
+    // }
   }
 };

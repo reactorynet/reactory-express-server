@@ -28,4 +28,7 @@ export default {
       ]
     }
   },
+  testList: {
+    'ui:widget': 'MaterialGridListWidget',
+  }
 };
