@@ -1087,8 +1087,8 @@ export default {
           },
           bar: {
             dataKey: 'isos',
-            dataLabel: 'Total PO',
-            name: 'Purchase Orders',
+            dataLabel: 'Total ISO',
+            name: 'Sales Orders',
             stroke: `${global.partner.themeOptions.palette.primary2Color}`,
           }
         },
