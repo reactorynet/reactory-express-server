@@ -146,8 +146,8 @@ type LasecUserNextActions {
 type LasecQuoteDashboardCharts {
   quoteStatusFunnel: LasecChart
   quoteStatusPie: LasecChart
-  invoicePie: LasecChart
-  purchaseOrderPie: LasecChart
+  quoteINVPie: LasecChart
+  quoteISOPie: LasecChart
   quoteStatusComposed: LasecChart
 }
 
@@ -158,6 +158,8 @@ type LasecQuoteDashboard {
   periodStart: Date
   periodEnd: Date
   repIds: [String]
+  agentSelection: String
+  teamIds: [String]
   target: Float
   targetPercent: Float
   totalQuotes: Int
@@ -192,7 +194,9 @@ input LasecQuoteQueryInput {
   period: String
   periodStart: Date
   periodEnd: Date
+  agentSelection: String
   repIds: [ String ]
+  teamIds: [ String ]
   status: [ String ]
 }
 

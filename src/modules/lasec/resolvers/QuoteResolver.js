@@ -90,6 +90,8 @@ const defaultDashboardParams = {
   period: 'this-week',
   periodStart: moment().startOf('week'),
   periodEnd: moment().endOf('week'),
+  agentSelction: 'me',
+  teamIds: [ ],
   repIds: [ ],
   status: [ ]
 };
@@ -201,72 +203,13 @@ const getQuotes = async (params) => {
     }
   }
 
-
-
   let apiFilter = {
     start_date: _params.periodStart ? _params.periodStart.toISOString() : moment().startOf('year'),
     end_date: _params.periodEnd? _params.periodEnd.toISOString() : moment().endOf('day')
   };
 
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
-
-  /**
-   *
-   * {
-  "filter": {},
-  "format": {
-    "ids_only": true
-  },
-  "ordering": {},
-  "pagination": {
-    "current_page": 2,
-    "page_size": 25,
-    "num_items": 61,
-    "has_prev_page": false,
-    "last_item_index": 25,
-    "has_next_page": true,
-    "num_pages": 3,
-    "first_item_index": 1
-  }
-}
-   *
-   *
-   */
-
-
-  /**
-   * Paged Result
-   *
-   *{
-  "status": "success",
-  "payload": {
-    "pagination": {
-      "num_items": 66,
-      "has_prev_page": false,
-      "current_page": 1,
-      "last_item_index": 10,
-      "page_size": 10,
-      "has_next_page": true,
-      "num_pages": 7,
-      "first_item_index": 1
-    },
-    "ids": [
-      "1907-152002",
-      "1907-321002",
-      "1906-337001",
-      "1906-321008",
-      "1906-321007",
-      "1906-152006",
-      "1906-321005",
-      "1906-152005",
-      "1906-321001",
-      "1906-337000"
-    ]
-  }
-}
-   */
-  const fetchPromises = [];
-
+  
   let ids = [];
 
   if(isArray(quoteResult.ids) === true) {
@@ -308,25 +251,107 @@ const getQuotes = async (params) => {
 };
 
 
-const getTargets = async({ agents }) => {
-  
+const getTargets = async({ periodStart, periodEnd, teamIds, repIds, agentSelection }) => {  
   try {
-    return await lasecApi.User.getLasecUsers(agents).then();
+    let lasecUsersWithTargets = null;
+    switch(agentSelection) {
+      case "team": {
+        lasecUsersWithTargets = await lasecApi.User.getLasecUsers(teamIds).then();
+        break;
+      }      
+      //case "bu": {
+
+      //}
+      case "bu": 
+      case "me": 
+      default: {
+        const lasecCreds = user.getAuthentication("lasec");
+        if(!lasecCreds) {
+          return []; 
+        } else {
+          if(lasecCreds.props && lasecCreds.props.payload) {
+            const staff_user_id = lasecCreds.props.payload.user_id
+            lasecUsersWithTargets = await lasecApi.User.getLasecUsers([staff_user_id]).then();
+          } else {
+            return [];
+          }          
+        }
+        
+      }
+    }
+            
+    const targets = await Promise.all(lasecUsersWithTargets.map((lasecUser) => {
+      logger.debug(`Checking targets for ${lasecUser}`);
+      return new Promise((resolve, reject) => {
+        logger.debug(`Checking user status:`, lasecUser);
+                
+        resolve({ 
+          target: lasecUser.target || 1,          
+        });
+            
+      });
+    })).then();
+    
+    return targets;
+
   } catch (targetFetchError) {
-    logger.error(targetFetchError)
+    logger.error(`Could not retrieve targets`, targetFetchError);
     return [];
   }  
 };
 
+const getInvoices = async ({ periodStart, periodEnd }) => {
+  try {
+
+    const invoiceResult = await lasecApi.Invoices.list({ filter: {  start_date: periodStart, end_date: periodEnd } }).then();
+    if(invoiceResults.ids && isArray(invoiceResult.ids)) {
+      const invoices = await lasecApi.Invoices.list({ filter: {  ids: invoiceResult.ids } }).then();
+      if(invoices && isArray(invoices.payload) === true) return invoices.payload;
+      return []; 
+    } else {
+      logger.warning(`No invoice result with ids`)
+      return [];
+    }
+
+  } catch (invoiceGetError) {
+    logger.error(`Error fetching invoices for period`, invoiceGetError);
+    return [];
+  }
+  
+};
+
+const getISOs = async ({ periodStart, periodEnd }) => {
+  try {
+    const isoIds = await lasecApi.PurchaseOrders.list({ filter: { start_date: periodStart, end_date: periodEnd }}).then();
+    if(isArray(isoIds.ids) === true) {      
+      const isos = await lasecApi.PurchaseOrders.list({ filter: { ids: isoIds.ids }}).then();
+      if(isos && isArray(isos.ids) === true) {
+        return iso.ids;        
+      }
+    }
+  } catch (isoGetError) {
+    logger.error('Error fetching ISOs for the period', isoGetError);
+    return [];
+  }
+  
+};
+
 //retrieves next actions for a user
-const getNextActionsForUser = async({ user = global.user, actioned = false }) => {
+const getNextActionsForUser = async({ periodStart, periodEnd, user = global.user, actioned = false }) => {
   
   try {    
     if(!user) throw new ApiError("Invalid user data", user);
-    
-    return await QuoteReminder.find({
-    }).then();
-
+    logger.debug('Fetching nextActions (Quote Reminders) for user');    
+    const reminders = await QuoteReminder.find({ 
+        owner: user._id, 
+        next: {
+          $gte: moment(periodStart).toDate(),
+          $lte: moment(periodEnd).endOf('day').toDate()      
+        }, 
+        actioned: false 
+    }).then();    
+    logger.debug(`Loaded ${reminders.length} reminder documents for user`);
+    return reminders;
   } catch (nextActionError) {
     logger.error(nextActionError);
     throw nextActionError;
@@ -881,8 +906,9 @@ export default {
         period = 'this-week',
         periodStart = moment(dashparams.periodStart || moment()).startOf('week'),
         periodEnd = moment(dashparams.periodEnd || moment()).endOf('week'),
-        repIds = [ ],
-        status = [ ]
+        agentSelection = 'me',
+        teamIds = [ ],
+        repIds = [ ],                
       } = dashparams;
 
       const date_period_keys = [
@@ -956,6 +982,7 @@ export default {
 
       let cacheKey = `quote.dashboard.${user._id}.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
 
+      /*
       let _cached = await getCacheItem(cacheKey);
 
       if(_cached) {
@@ -963,14 +990,22 @@ export default {
         periodLabel = `${periodLabel} [cache]`;
         return _cached;
       }
+      */
 
       logger.debug(`Fetching Lasec Dashboard Data`, dashparams);
       let palette = global.partner.colorScheme();
+      
+      logger.debug('Fetching Quote Data');
+      const quotes = await getQuotes( { periodStart, periodEnd, teamIds, repIds, agentSelection } ).then();
+      logger.debug('Fetching Target Data');
+      const targets = await getTargets( { periodStart, periodEnd, teamIds, repIds, agentSelection } ).then();
+      logger.debug('Fetching Next Actions for; User')
+      const nextActionsForUser = await getNextActionsForUser({ user: global.user }).then();
+      logger.debug('Fetching invoice data');
+      const invoices = await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+      logger.debug('Fetching isos');
+      const isos = await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
 
-      debugger;
-      const quotes = await getQuotes( { periodStart, periodEnd } ).then();
-      const targets = await getTargets( { agents: [ user._id ] } ).then();
-      const nextActionsForUser = await getNextActionsForUser({ user: global.user }).then()
 
       const quoteStatusFunnel = {
         chartType: 'FUNNEL',
@@ -996,6 +1031,39 @@ export default {
         key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
       };
 
+      const quoteISOPie = {
+        chartType: 'PIE',
+        data: isos.map((iso) => {
+          return iso;
+        }),
+        options: {
+          multiple: false,
+          outerRadius: 140,
+          innerRadius: 70,
+          fill: `#${palette[1]}`,
+          dataKey: 'order_value',
+        },
+        key: `quote-iso/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
+      };
+
+      
+      const quoteINVPie = {
+        chartType: 'PIE',
+        data: invoices.map((invoice) => {
+          return invoice;
+        }),
+        options: {
+          multiple: false,
+          outerRadius: 140,
+          innerRadius: 70,
+          fill: `#${palette[2]}`,
+          dataKey: 'invoice_value',
+        },
+        key: `quote-inv/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
+      };
+
+
+
       const quoteStatusComposed = {
         chartType: 'COMPOSED',
         data: [
@@ -1007,9 +1075,22 @@ export default {
           },                    
           line: {
             dataKey: 'totalVATExclusive',
-            stroke: `#${palette[2]}`,
-            title: 'Total'
+            dataLabel: 'Total Quoted',
+            name: 'Total Quoted',
+            stroke: `#${palette[0]}`,
           },
+          area: {
+            dataKey: 'invoiced',
+            dataLabel: 'Total Invoiced',
+            name: 'Total Invoiced',
+            stroke: `${global.partner.themeOptions.palette.primary1Color}`,
+          },
+          bar: {
+            dataKey: 'isos',
+            dataLabel: 'Total PO',
+            name: 'Purchase Orders',
+            stroke: `${global.partner.themeOptions.palette.primary2Color}`,
+          }
         },
         key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`
       };
@@ -1019,27 +1100,24 @@ export default {
         periodLabel,
         periodStart,
         periodEnd,
+        agentSelection,
+        teamIds,
+        repIds,
         target: 0,
-        nextActions: {
-          filter: {
-            dateRange: {
-              startDate: periodStart,
-              endDate: periodEnd
-            },
-            actioned: false,
-          },
+        targetPercent: 0,
+        nextActions: {          
           owner: global.user,
           nextActions: nextActionsForUser
-        },
-        targetPercent: 0,
+        },        
         totalQuotes: 0,
         totalBad: 0,
-        repIds: [],
         statusSummary: [],
         quotes,
         charts: {
           quoteStatusFunnel,
           quoteStatusPie,
+          quoteISOPie,
+          quoteINVPie,
           quoteStatusComposed,
         }
       };
@@ -1077,9 +1155,19 @@ export default {
         });
       });
 
+      let totalTargetValue = 0;
+      targets.forEach((target) => {
+        dashboardResult.target += target.target;
+        totalTargetValue += (target.target * 100) / (target.targetPercent || 100 );
+      });
+
+      if(isNaN(dashboardResult.target) &&  isNaN(totalTargetValue) === false) {
+        dashboardResult.targetPercent = totalTargetValue * 100 / dashboardResult.target;
+      }
+      
       dashboardResult.charts.quoteStatusFunnel.data = lodash.reverse(dashboardResult.charts.quoteStatusFunnel.data);
 
-      setCacheItem(cacheKey, dashboardResult, 60 * 5);
+      //setCacheItem(cacheKey, dashboardResult, 60 * 5);
 
       return dashboardResult;
     },

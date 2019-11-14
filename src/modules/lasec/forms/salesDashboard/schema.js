@@ -1,6 +1,28 @@
 import { PieChart } from '@reactory/server-modules/core/schema/formSchema';
 import { nextActions } from '@reactory/server-modules/lasec/schema/formSchema';
 
+const userFilter = {
+  type: 'array',
+  title: 'Selected Reps',
+  items: {
+    type: 'object',
+    properties: {
+      id: {
+        title: 'User Id',
+        type: 'string'
+      },
+      firstName: {
+        type: 'string',
+        title: 'Firstname'
+      },
+      lastName: {
+        type: 'string',
+        title: 'Lastname'
+      }
+    }
+  }
+};
+
 export default {
   type: 'object',
   title: '',
@@ -8,13 +30,18 @@ export default {
     toolbar: {
       type: 'object',
       title: 'Filter',
+      required: [
+        "agentSelection", 
+        "period"
+      ],
       dependencies: {
         period: {
           oneOf: [
-            { properties: 
+            {
+              properties:
               {
                 period: {
-                  enum: ["custom"],              
+                  enum: ["custom"],
                 },
                 periodStart: {
                   type: 'string',
@@ -25,14 +52,14 @@ export default {
                   type: 'string',
                   title: 'Period End',
                   description: 'End of the period for which to collate quote data',
-                },        
-              } 
+                },
+              }
             },
-            { 
-              properties: 
+            {
+              properties:
               {
                 period: {
-                  enum: [ 
+                  enum: [
                     'today',
                     'yesterday',
                     'this-week',
@@ -41,59 +68,52 @@ export default {
                     'last-month',
                     'this-year',
                     'last-year',
-                  ]              
-                },                
-              } 
+                  ]
+                },
+              }
             },
           ]
         },
         agentSelection: {
           oneOf: [
-            //me filter
+            //me filter 
             {
               properties: {
                 agentSelection: {
                   enum: ['me']
                 },                
-              }                
-            },
+              },              
+            },          
             //team filter
-            {  
-              agentSelection: {
-                enum: ['team']
+            {
+              properties: {
+                agentSelection: {
+                  enum: ['team']
+                },
+                teamFilter: {
+                  title: 'Team Filter',
+                  type: 'array',
+                  items: {
+                    type: 'string'
+                  }
+                },                
               },
-              teamFilter: {
-                tile: 'Team Filter',
-                type: 'string',                
-              }
+              required: [
+                "teamFilter"
+              ]              
             },
             //custom filter
-            {  
-              agentSelection: {
-                enum: ['custom']
+            {
+              properties: {
+                agentSelection: {
+                  enum: ['custom']
+                },
+                userFilter,                
               },
-              userFilter: {
-                type: 'array',
-                title: 'Selected Reps',
-                items: {
-                  type: 'object',
-                  properties: {
-                    id: {
-                      title: 'User Id',
-                      type: 'string'
-                    },
-                    firstName: {
-                      type: 'String',
-                      title: 'Firstname'
-                    },
-                    lastName: {
-                      type: 'String',
-                      title: 'Lastname'
-                    }
-                  }
-                }
-              }
-            },
+              required: [
+                "userFilter"
+              ]
+            },            
           ]
         }
       },
@@ -101,6 +121,7 @@ export default {
         period: {
           type: 'string',
           title: 'Period',
+          description: 'Select the time period for which you want to generate the dashboard',
           enum: [
             'today',
             'yesterday',
@@ -111,18 +132,24 @@ export default {
             'this-year',
             'last-year',
             'custom',
-          ],
+          ],        
         },
         agentSelection: {
           type: 'string',
-          title: 'Filter Reps / User',          
-        },                
+          title: 'Filter Reps / User',
+          description: 'Select user / teams for which you want to view the dashboard',
+          default: 'me',
+          enum: [
+            'me',
+            'team',
+            'custom'
+          ],
+        },        
       },
-    },    
+    },
     charts: {
       type: 'object',
-      title: 'Summary',
-      description: 'Charts Container',
+      title: 'Overview',      
       properties: {
         quoteStatusFunnel: {
           type: 'object',
@@ -136,7 +163,7 @@ export default {
                 properties: {
                   value: {
                     type: 'number',
-                    title: 'value',            
+                    title: 'value',
                   },
                   name: {
                     type: 'string',
@@ -147,10 +174,10 @@ export default {
                     title: 'fillcolor'
                   }
                 }
-              }              
-            },                    
+              }
+            },
           },
-        },        
+        },
         quoteStatusPie: PieChart("quoteStatusPie"),
         quoteISOPie: PieChart("quoteISOPie"),
         quoteINVPie: PieChart("quoteINVPie"),
@@ -165,7 +192,7 @@ export default {
                 properties: {
                   value: {
                     type: 'number',
-                    title: 'value',            
+                    title: 'value',
                   },
                   name: {
                     type: 'string',
@@ -176,11 +203,11 @@ export default {
                     title: 'fillcolor'
                   }
                 }
-              }            
+              }
             }
-          }          
+          }
         }
-      }      
+      }
     },
     nextActions: {
       ...nextActions
@@ -213,7 +240,7 @@ export default {
           },
         },
       },
-    },    
+    },
     targetPercent: {
       type: 'number',
       title: 'Target Percent'
@@ -233,7 +260,7 @@ export default {
     combinedData: {
       type: 'string',
       title: 'combined'
-    },               
+    },
     quotes: {
       type: 'array',
       title: 'Quote Grid',

@@ -58,7 +58,7 @@ const isCredentialsValid = (authentication) => {
 
 const getStorageItem = async (key) => {
   const { user } = global;
-  logger.info(`Lookup Security Storage ${key} on ${global.user.fullName()}`);
+  logger.info(`Lookup Security Storage ${key} on ${user.firstName} ${user.lastName}`);
   let must_login = true;
   if (user._id) {
     const lasecAuth = user.getAuthentication('lasec');
@@ -276,6 +276,31 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+  },
+  Invoices: {
+    list: async (params = defaultParams) => {
+      const invoiceResult = await FETCH(SECONDARY_API_URLS.invoices.url, { params: { ...defaultParams, ...params } });;
+      if (invoiceResult.status === 'success') {
+        return invoiceResult.payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    } 
+  },
+  PurchaseOrders: {
+    list: async (params = defaultParams) => {
+      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } });;
+      const {
+        status, 
+        payload,
+      } = isoResult;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    }
   },
   Quotes: {
     list: async (params = defaultParams) => {
@@ -515,8 +540,8 @@ const Api = {
     getLasecUsers: async ( staff_user_ids = [] ) => {
       const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data, { filter: {
         ids: staff_user_ids
-      }}, true, false, 0).then()
-
+      }}, true, false, 0).then();
+      
       if(lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {
         return lasecStaffUserResponse.payload;
       }

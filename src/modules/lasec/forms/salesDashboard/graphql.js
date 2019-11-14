@@ -7,7 +7,10 @@ export default {
     variables: {
       'formData.toolbar.period': 'dashparams.period',
       'formData.toolbar.periodStart': 'dashparams.periodStart',
-      'formData.toolbar.periodEnd': 'dashparams.periodEnd'
+      'formData.toolbar.periodEnd': 'dashparams.periodEnd',
+      'formData.toolbar.agentSelection': 'dashparams.agentSelection',
+      'formData.toolbar.repIds': 'dashparams.repIds',
+      'formData.toolbar.teamFilter': 'dashparams.teamIds'
     },
     resultMap: {
       id: 'id',
@@ -15,9 +18,14 @@ export default {
       periodStart: 'toolbar.periodStart',
       periodEnd: 'toolbar.periodEnd',
       repIds: 'toolbar.repIds',
+      teamIds: 'toolbar.teamFilter',
+      agentSelection: 'toolbar.agentSelection',
       statusSummary: 'statusSummary',
-      quotes: 'quotes',      
+      quotes: 'quotes',     
+      //nextActions: 'nextActions', 
       totalQuotes: 'totalQuotes',
+      target: 'target',
+      targetPercent: 'targetPercent',
       totalBad: 'totalBad',
       charts: 'charts',      
       'quotes[].code': ['quotes[].quote_id', 'quotes[].code'],

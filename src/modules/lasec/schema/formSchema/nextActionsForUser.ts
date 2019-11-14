@@ -20,38 +20,45 @@ const nextActions : IArraySchema = {
 const nextActionComplex: IObjectSchema = {
   type: "object",
   title: "Next Actions",
-  description: "List of next actions for ${owner}",
-  properties: {
-    filter: {
-      type: "object",
-      title: "Next Actions Filter",
-      properties: {
-        dateRange,
-        actioned: {
-          type: "boolean",
-          title: "Actioned",
-          description: "Is Actioned?",
-          default: false, 
-        },
-        actionType: {
-          type: "string",
-          title: "Action Type",
-          default: "follow-up-call",
-          enum: [
-            "follow-up-call",
-            "send-email",
-            "client-visit",
-            "other"
-          ]
-        }
-      }
-    },
+  properties: {    
     owner: {
       ...who,
       title: "Owner for the next actions list",      
     },
-    nextActions
+    actions: nextActions
   }
 }
+
+const filter: IObjectSchema = {
+  type: "object",
+  title: "Next Actions Filter",
+  properties: {
+    dateRange,
+    actioned: {
+      type: "boolean",
+      title: "Actioned",
+      description: "Is Actioned?",
+      default: false, 
+    },
+    actionType: {
+      type: "string",
+      title: "Action Type",
+      default: "follow-up-call",
+      enum: [
+        "follow-up-call",
+        "send-email",
+        "client-visit",
+        "other"
+      ]
+    }
+  }
+};
+
+const _nextActionsWithFilter: IObjectSchema = {
+  ...nextActionComplex
+};
+
+_nextActionsWithFilter.properties.filter = filter;
+export const nextActionsWithFilter = {..._nextActionsWithFilter};
 
 export default nextActionComplex;

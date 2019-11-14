@@ -3,6 +3,7 @@
       "noImplicitAny": true,
       "removeComments": true,  
       "target":"es6",
+      "baseUrl": "src",
       "paths": {
         "*": ["src/*"],
         "@reactory/server-core/*": ["src/*"],

@@ -6,6 +6,10 @@ const {
 export default {
   submitIcon: 'refresh',
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    spacing: 4,
+  },
+
   'ui:grid-layout': [        
     {
       toolbar: { xs: 12 },
@@ -21,10 +25,7 @@ export default {
     },
     {
       nextActions: { xs: 12 }
-    },
-    {
-      statusSummary: { xs: 12 },
-    },                  
+    },                      
     {
       quotes: { xs: 12 },
     },
@@ -33,6 +34,9 @@ export default {
     'ui:wrapper': 'Toolbar',
     'ui:widget': 'MaterialToolbar',
     'ui:field': 'GridLayout',
+    'ui:grid-options': {
+      spacing: 4,
+    },
     'ui:grid-layout': [
       {
         period: { md: 3, sm: 12, xs: 12 },
@@ -43,7 +47,7 @@ export default {
         agentSelection: { md: 3,  sm: 12, xs: 12 },
         teamFilter: { md: 3, sm: 12, xs: 12 },
         userFilter: { md: 3, sm: 12, xs: 12 },
-      }      
+      }
     ],
     
     /**
@@ -77,6 +81,7 @@ export default {
     agentSelection: {
       'ui:widget': 'SelectWidget',
       'ui:options': {
+        
         selectOptions: [
           { key: 'me', value: 'me', label: 'My Quotes' },
           { key: 'team', value: 'team', label: 'Team / Reps' },
@@ -88,6 +93,7 @@ export default {
     teamFilter: {
       'ui:widget': 'SelectWithDataWidget',
       'ui:options': {
+        multiSelect: true,
         query: `query LasecSalesTeams {
           LasecSalesTeams {    
             id
@@ -119,16 +125,58 @@ export default {
   },
 
   /**
+   * Totals
+   */
+  totalQuotes: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: 'Total Quotes: ${formData}',
+      variant: 'h4',
+      title: 'Total Quotes',
+    }
+  }, 
+  
+  target: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: 'Target: ${formData}',
+      variant: 'h4',   
+      title: 'Target:'   
+    }
+  },
+
+  targetPercent: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: 'Target %: ${formData}',
+      variant: 'h4',  
+      title: 'Target %:'    
+    }
+  },
+ 
+  totalBad: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: 'Naughty Quotes: ${formData}',
+      variant: 'h4',
+      title: 'Total Bad',      
+    }    
+  },  
+
+  /**
    * Charts / Summary Area
    */
   charts: {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {                
-        quoteStatusPie: { md: 3, sm: 12, xs: 12 }, 
-        purchaseOrderPie: { md: 3, sm: 12, xs: 12 }, 
-        invoicedPie: { md: 3, sm: 12, xs: 12 },
-      },      
+        quoteStatusPie: { md: 4, sm: 12, xs: 12 }, 
+        quoteISOPie: { md: 4, sm: 12, xs: 12 }, 
+        quoteINVPie: { md: 4, sm: 12, xs: 12 },
+      },
+      {
+        quoteStatusComposed: { md: 12, sm: 12, xs: 12 }
+      }      
     ],    
     quoteStatusPie: {
       'ui:widget': 'PieChartWidget',
@@ -138,7 +186,7 @@ export default {
         variant: 'static',
       },
     },
-    purchaseOrderPie: {
+    quoteISOPie: {
       'ui:widget': 'PieChartWidget',
       'ui:options': {        
         size: 80,
@@ -146,13 +194,16 @@ export default {
         variant: 'static',
       },
     },
-    invoicedPie: {
+    quoteINVPie: {
       'ui:widget': 'PieChartWidget',
       'ui:options': {        
         size: 80,
         thickness: 5,
         variant: 'static',
       }, 
+    },
+    quoteStatusComposed: {
+      'ui:widget': 'ComposedChartWidget',        
     }
   },  
 
@@ -163,10 +214,10 @@ export default {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {        
-        nextActions: { sm: 12, xs: 12 },
+        actions: { sm: 12, xs: 12 },
       }
     ],        
-    nextActions: {
+    actions: {
       'ui:widget': 'MaterialListWidget',
       'ui:options': {
         id: 'Id',
@@ -211,39 +262,7 @@ export default {
 
   
 
-  totalQuotes: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: 'Total Quotes: ${formData}',
-      variant: 'h4',
-      title: 'Total Quotes',
-    }
-  }, 
-  
-  target: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: 'Target: ${formData}',
-      variant: 'h4',      
-    }
-  },
-
-  targetPercent: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: 'Target %: ${formData}',
-      variant: 'h4',      
-    }
-  },
  
-  totalBad: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: 'Naughty Quotes: ${formData}',
-      variant: 'h4',
-      title: 'Total Bad',      
-    }    
-  },  
 
   quotes: {
     title: 'Quotes List',

@@ -5,7 +5,7 @@ import logger from '@reactory/server-core/logging';
 export default {  
   Query: {
     LasecSalesTeams: async () => {
-      logger.debug(`LasecSalesTeams() ${global.user.fullName()}`);
+      logger.debug(`LasecSalesTeams() ${global.user}`);
       const teamsPayload = await LasecAPI.Teams.list().then();    
       if(teamsPayload.status === "success") {        
         const { items }  = teamsPayload.payload || [];

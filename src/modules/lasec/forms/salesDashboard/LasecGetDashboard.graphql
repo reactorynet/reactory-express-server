@@ -4,6 +4,8 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
     period
     periodStart
     periodEnd
+    agentSelection
+    teamIds
     repIds
     totalQuotes
     totalBad
@@ -22,15 +24,7 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
         firstName
         lastName
         email
-      }
-      filter {
-        dateRange {
-          startDate
-          endDate
-        }
-        actioned
-        actionType
-      }
+      }    
     	actions {
         id
         quote {
@@ -43,11 +37,11 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
       }
     }
     charts {
-      invoicePie {
+      quoteINVPie {
         data
         options
       }
-      purchaseOrderPie {
+      quoteISOPie {
         data
         options
       }

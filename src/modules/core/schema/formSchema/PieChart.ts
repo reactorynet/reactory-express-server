@@ -1,4 +1,6 @@
-export default (title: string): IFormSchema => ({
+import { IObjectSchema } from "@reactory/server-modules/core/schema/index";
+
+export default (title: string): IObjectSchema => ({
   type: 'object',
   title: title,
   properties: {
