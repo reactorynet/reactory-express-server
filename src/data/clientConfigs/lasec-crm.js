@@ -281,6 +281,9 @@ const Menus = {
         {
           ordinal: 18, title: 'Tabbed Quote List', link: '/tabbed-quote-list/', icon: 'reorder', roles: ['USER'],
         },
+        {
+          ordinal: 19, title: 'Filter Results', link: '/filter-results/', icon: 'reorder', roles: ['USER'],
+        },
       ]
     },
     {
@@ -357,7 +360,7 @@ const staticContentMappings = [
         }
       }
     ]
-  },   
+  },
   {
     key: 'how-to',
     title: 'How to',
@@ -374,7 +377,7 @@ const staticContentMappings = [
         }
       }
     ]
-  },   
+  },
   {
     key: 'glossary',
     title: 'Glossary',
@@ -391,7 +394,7 @@ const staticContentMappings = [
         }
       }
     ]
-  },   
+  },
 ];
 
 const LASEC_CONFIG = {
@@ -440,7 +443,7 @@ const LASEC_CONFIG = {
     },
   ],
   menus: [
-   
+
   ],
   routes: [
     {
@@ -787,6 +790,15 @@ const LASEC_CONFIG = {
       public: false,
       roles: ['USER', 'ADMIN'],
       componentFqn: `${key}.TabbedQuotesList@1.0.0`,
+    },
+    {
+      key: 'filter-results',
+      title: 'Filter Results',
+      path: '/filter-results/**',
+      exact: true,
+      public: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: `${key}.FilterResults@1.0.0`,
     },
     {
       key: 'graphiql',
