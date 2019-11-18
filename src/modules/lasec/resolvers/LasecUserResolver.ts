@@ -1,7 +1,8 @@
 
 import logger from '@reactory/server-core/logging';
+import { isEmpty } from 'lodash';
 import { IObjectSchema } from '@reactory/server/core/schema';
-
+import { User } from "@reactory/server-core/models";
 import { Quote, QuoteReminder } from '../schema/Quote';
 
 interface Lasec360User {
@@ -54,9 +55,23 @@ export default {
     }
   },
   Mutation: {
-    LasecSyncRemoteUserData:async ({ search: Lasec360UserSearch }) => {
+    LasecSyncRemoteUserData: async ({ search: Lasec360UserSearch }) => {
 
       
+    },
+    LasecReset360Credentials: async (object: any, params: any ): Promise<boolean> => {
+      logger.debug(`Resetting credetials`, { params })
+      if(isEmpty(params.email) === true) {
+        //we have no user email, use loged in user
+        return user.removeAuthentication("lasec");
+      } else {
+        const foundUser: Reactory.IUser = await User.findOne({ email: params.email }).then();
+        if(foundUser) {
+          logger.debug(`Found user`, { fullName: foundUser.fullName(false) })
+          return foundUser.removeAuthentication("lasec");          
+        }
+        return false;
+      }
     }
   }
 };

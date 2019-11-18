@@ -356,8 +356,10 @@ UserSchema.methods.removeAuthentication = async function removeAuthentication(pr
     if (found) {
       this.authentications.id(found._id).remove();
       await this.save().then();
+      return true;
     }
   }
+  return false;
 };
 
 UserSchema.methods.getAuthentication = function getAuthentication(provider) {

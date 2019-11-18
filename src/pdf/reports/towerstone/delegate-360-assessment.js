@@ -769,6 +769,16 @@ export const pdfmakedefinition = (data, partner, user) => {
     `${APP_DATA_ROOT}/organization/${data.organization._id}/greyscale_${data.organization.logo}`
     );
 
+
+  const partnerGreyScaleLogoPath = `${APP_DATA_ROOT}/themes/${partner.key}/images/greyscale_logo.png`;
+  
+  if(fs.existsSync(partnerGreyScaleLogoPath) === false) {
+    greyscalePng(
+      `${APP_DATA_ROOT}/themes/${partner.key}/images/logo.png`,
+      partnerGreyScaleLogoPath
+    );  
+  }
+
   return {
     filename: `360° Leadership Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}.pdf`,
     info: {
@@ -779,10 +789,10 @@ export const pdfmakedefinition = (data, partner, user) => {
     },
     content: [
       {
-        image: 'partnerLogo', width: 200, style: ['centerAligned'], margin: [0, 5],
+        image: 'partnerLogoGreyScale', width: 200, style: ['centerAligned'], margin: [0, 5],
       },
-      { text: '360° Leadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
-      { text: 'for', style: ['header', 'centerAligned'], margin: [0, 0] },
+      { text: '360°\nLeadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
+      //{ text: 'for', style: ['header', 'centerAligned'], margin: [0, 0] },
       { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned'], margin: [0, 15] },
       includeAvatar === true ?
         {
@@ -865,6 +875,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       //organizationLogo: pdfpng(data.organization.name.indexOf('TowerStone') === 0 ? `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}` : `${APP_DATA_ROOT}/organization/${data.organization._id}/greyscale_${data.organization.logo}`),
       organizationLogo: pdfpng(`${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`),
       partnerLogo: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/logo.png`),
+      partnerLogoGreyScale: pdfpng(partnerGreyScaleLogoPath),
       partnerAvatar: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/avatar.png`),
       delegateAvatar: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/profile_${data.delegate._id}_default.jpeg`) === true ? `${APP_DATA_ROOT}/profiles/${data.delegate._id}/profile_${data.delegate._id}_default.jpeg` : pdfpng(`${APP_DATA_ROOT}/profiles/default/default.png`),
       spiderChartAll: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-all-${data.survey._id}.png`) === true ? pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-all-${data.survey._id}.png`) : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/spider-chart-all.png`),
@@ -896,7 +907,7 @@ export const pdfmakedefinition = (data, partner, user) => {
         italics: false,
       },
       title: {
-        fontSize: 24,
+        fontSize: 18,
         bold: true,
         font: 'Verdana',
       },
