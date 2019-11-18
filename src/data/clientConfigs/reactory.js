@@ -14,7 +14,62 @@ dotenv.config();
 
 const { CDN_ROOT, MODE } = process.env;
 
-export default {
+const staticContentMappings = [
+  {
+    key: 'about',
+    title: 'About Reactory',
+    path: '/about/*',
+    public: true,
+    exact: true,
+    roles: ['USER'],
+    args: [
+      {
+        key: 'slug',
+        value: {
+          type: 'string',
+          slug: 'about',
+        }
+      }
+    ]
+  },
+  {
+    key: 'whats-new',
+    title: 'What\'s new',
+    path: '/whats-new/*',
+    public: true,
+    exact: true,
+    roles: ['USER'],
+    args: [
+      {
+        key: 'slug',
+        value: {
+          type: 'string',
+          slug: 'whats-new',
+        }
+      }
+    ]
+  },
+  {
+    key: 'how-to',
+    title: 'How to',
+    path: '/news/*',
+    public: true,
+    exact: true,
+    roles: ['USER'],
+    args: [
+      {
+        key: 'slug',
+        value: {
+          type: 'string',
+          slug: 'news',
+        }
+      }
+    ]
+  },  
+];
+
+
+const REACTORY_CONFIG = {
   key: 'reactory',
   name: 'Reactory Admin Application',
   username: 'reactory',
@@ -61,10 +116,7 @@ export default {
       key: 'left-nav',
       target: 'left-nav',
       roles: ['USER'],
-      entries: [
-        {
-          ordinal: 1, title: 'Inbox', link: '/inbox', icon: 'email', roles: ['USER', 'ADMIN'],
-        },
+      entries: [        
         {
           ordinal: 1, title: 'My Applications', link: '/applications', icon: 'dashboard', roles: ['USER', 'ADMIN'],
         },
@@ -79,10 +131,7 @@ export default {
         },
         {
           ordinal: 4, title: 'List Content', link: '/content-list/', icon: 'list', roles: ['ADMIN', 'USER'],
-        },
-        {
-          ordinal: 5, title: 'Graph', link: '/graphiql/', icon: 'search', roles: ['ANON', 'USER'],
-        },
+        },        
       ],
     },
   ],
@@ -309,3 +358,12 @@ export default {
   ],
 };
 
+
+staticContentMappings.forEach((mapping) => {
+  REACTORY_CONFIG.routes.push({
+    ...mapping,
+    componentFqn: 'core.StaticContent@1.0.0'
+  });
+});
+
+export default REACTORY_CONFIG;
