@@ -4,7 +4,6 @@ import fs from 'fs';
 import { readFileSync, existsSync } from 'fs';
 import { PNG } from 'pngjs';
 import imageType from 'image-type';
-import path from 'path';
 import lodash from 'lodash';
 import { hex2RGBA } from '../../../utils/colors';
 import om from 'object-mapper';
@@ -51,7 +50,7 @@ const greyscalePng = (path, outpath) => {
     .on('parsed', function() {          
         this.pack().pipe(fs.createWriteStream(outpath));
     });
-}
+};
 
 const resolveData = async ({ surveyId, delegateId }) => {
   logger.info(`Resolving data for delegate-360-assessment Survey: ${surveyId}  DelegateEntry: ${delegateId}`);
@@ -506,6 +505,22 @@ export const pdfmakedefinition = (data, partner, user) => {
     },
   };
 
+  const coverPage = [
+    {
+      image: 'partnerLogoGreyScale', width: 190, style: ['centerAligned'], margin: [0, 0, 0, 20],
+    },
+    { text: '360°\nLeadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },      
+    { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned'], margin: [0, 5] },
+    includeAvatar === true ?
+      {
+        image: 'delegateAvatar', width: 120, style: ['centerAligned'], margin: [0, 15],
+      } : undefined,
+    //{ text: `${data.organization.name}`, style: ['header', 'centerAligned'] },
+    {
+      image: 'organizationLogo', width: 240, style: ['centerAligned'], margin: [0, 30, 0, 50],
+    },
+  ]
+
   const introductionSection = [
     {
       text: '1. Introduction', newPage: 'before', style: ['header', 'primary'], pageBreak: 'before',
@@ -602,7 +617,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     const lowratingsForQuality = data.lowratings(quality, 2);
 
     if (lodash.isArray(lowratingsForQuality) === true && lowratingsForQuality.length > 0) {
-      behaviourSection.push({ text: 'Start Behaviours', style: ['default', 'primary'], margin: [0, 10, 0, 30], bold: true });
+      behaviourSection.push({ text: 'Start Behaviours', style: ['default', 'primary'], margin: [0, 10, 0, 5], bold: true });
       behaviourSection.push({ text: 'You received low ratings for the behaviours below which means that your colleagues are not noticing these behaviours in the way you show up.', style: ['default'], margin: [0, 5] });
       behaviourSection.push({ text: 'Pay special attention to developing and displaying these behaviours on a daily basis.\n\n',  style: ['default'] });
 
@@ -631,8 +646,8 @@ export const pdfmakedefinition = (data, partner, user) => {
 
     const customLowRatingsForQuality = lodash.filter(data.lowratings(quality, 5), rating => rating.custom && lodash.isEmpty(rating.behaviourText) === false );
     if(customLowRatingsForQuality.length > 0) {
-      behaviourSection.push({ text: 'Additional Comments', style: ['default', 'primary'], bold: true, margin: [0, 10, 0, 15] });
-      behaviourSection.push({ text: `The assessors have provided some the following additional behaviour${customLowRatingsForQuality.length > 1 ? 's': ''} and how it impacts others (them).`, style: ['default'], margin: [0, 15] });
+      behaviourSection.push({ text: 'Additional Comments', style: ['default', 'primary'], bold: true, margin: [0, 0, 0, 10],  pageBreak: 'before' });
+      behaviourSection.push({ text: `The assessors have provided some the following additional behaviour${customLowRatingsForQuality.length > 1 ? 's': ''} and how it impacts others (them).`, style: ['default'], margin: [0, 0, 0, 15] });
       
       let customRowEntries = customLowRatingsForQuality.map(custom => [{ text: custom.behaviourText, style: ['default'] }, { text: custom.rating, style: ['default'] }, { text: custom.comment || '(No comment provided)', style: ['default'] }]);
       if(customRowEntries.length > 0) {
@@ -795,19 +810,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       keywords: 'Leadership Training Personal Growth',
     },
     content: [
-      {
-        image: 'partnerLogoGreyScale', width: 200, style: ['centerAligned'], margin: [0, 5],
-      },
-      { text: '360°\nLeadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 5, 0, 10] },      
-      { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned'], margin: [0, 5] },
-      includeAvatar === true ?
-        {
-          image: 'delegateAvatar', width: 120, style: ['centerAligned'], margin: [0, 15],
-        } : undefined,
-      //{ text: `${data.organization.name}`, style: ['header', 'centerAligned'] },
-      {
-        image: 'organizationLogo', width: 240, style: ['centerAligned'], margin: [0, 30, 0, 50],
-      },      
+      ...coverPage,      
       ...introductionSection,      
       ...scaleSection,
       ...qualitiesSection,
