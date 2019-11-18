@@ -121,10 +121,10 @@ const REACTORY_CONFIG = {
           ordinal: 1, title: 'My Applications', link: '/applications', icon: 'dashboard', roles: ['USER', 'ADMIN'],
         },
         {
-          ordinal: 2, title: 'Reactory Clients', link: '/reactory-clients/', icon: 'check_circle', roles: ['ADMIN'],
+          ordinal: 2, title: 'Reactory Clients', link: '/reactory-clients/', icon: 'check_circle', roles: ['SYS-ADMIN'],
         },
         {
-          ordinal: 3, title: 'About Us', link: '/about-us/', icon: 'supervised_user_circle', roles: ['ANON', 'USER'],
+          ordinal: 3, title: 'About Reactory', link: '/about/', icon: 'supervised_user_circle', roles: ['ANON', 'USER'],
         },
         {
           ordinal: 4, title: 'Add Content', link: '/content-capture/new', icon: 'create', roles: ['ADMIN', 'USER'],
@@ -216,23 +216,14 @@ const REACTORY_CONFIG = {
       public: false,
       roles: ['USER'],
       componentFqn: 'core.Profile@1.0.0',
-    },
-    {
-      key: 'about-us',
-      title: 'About Us',
-      path: '/about-us',
-      public: false,
-      roles: ['USER', 'ANON'],
-      componentFqn: 'static.AboutUs@1.0.0',
-
-    },
+    },   
     {
       key: 'content-capture',
       title: 'Content Capture',
       path: '/content-capture/edit/:slug/',
       public: false,
       exact: false,
-      roles: ['USER', 'ADMIN'],
+      roles: ['ADMIN'],
       componentFqn: 'static.ContentCapture@1.0.0',
       args: [
         {
@@ -250,7 +241,7 @@ const REACTORY_CONFIG = {
       path: '/content-capture/new',
       public: false,
       exact: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['ADMIN'],
       componentFqn: 'static.ContentCapture@1.0.0',
       args: [
         {
@@ -268,7 +259,7 @@ const REACTORY_CONFIG = {
       path: '/content-list/',
       public: false,
       exact: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['ADMIN'],
       componentFqn: 'static.ContentList@1.0.0',
 
     },
@@ -278,17 +269,9 @@ const REACTORY_CONFIG = {
       path: '/graphiql/**',
       exact: true,
       public: true,
-      roles: ['ANON'],
-      componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
-    },
-    {
-      key: 'administration',
-      title: 'Administration',
-      path: '/admin',
-      public: false,
       roles: ['ADMIN'],
-      componentFqn: 'core.Administration@1.0.0',
-    },
+      componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
+    },    
   ],
   theme: 'reactory',
   themeOptions: {
