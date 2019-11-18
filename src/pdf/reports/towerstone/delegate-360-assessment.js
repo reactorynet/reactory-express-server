@@ -546,7 +546,11 @@ export const pdfmakedefinition = (data, partner, user) => {
   ];
 
   const scaleSection = [
-    { text: '2. Rating Scale', style: ['header', 'primary'] },
+    { 
+      text: '2. Rating Scale', 
+      style: ['header', 'primary'], 
+      margin: [0, 30, 0, 30] 
+    },
     { text: 'The feedback that you have received is in the context of the following rating scale:', style: ['default'] },
     ...scaleSegments
   ];
@@ -598,9 +602,9 @@ export const pdfmakedefinition = (data, partner, user) => {
     const lowratingsForQuality = data.lowratings(quality, 2);
 
     if (lodash.isArray(lowratingsForQuality) === true && lowratingsForQuality.length > 0) {
-      behaviourSection.push({ text: 'Start Behaviours', style: ['primary'], margin: [0, 15] });
-      behaviourSection.push({ text: 'You received low ratings for the behaviours below which means that your colleagues are not noticing these behaviours in the way you show up.', margin: [0, 5] });
-      behaviourSection.push({ text: 'Pay special attention to developing and displaying these behaviours on a daily basis.\n\n' });
+      behaviourSection.push({ text: 'Start Behaviours', style: ['default', 'primary'], margin: [0, 10, 0, 30], bold: true });
+      behaviourSection.push({ text: 'You received low ratings for the behaviours below which means that your colleagues are not noticing these behaviours in the way you show up.', style: ['default'], margin: [0, 5] });
+      behaviourSection.push({ text: 'Pay special attention to developing and displaying these behaviours on a daily basis.\n\n',  style: ['default'] });
 
       quality.behaviours.forEach((behaviour) => {
         const lowratingsForBehaviour = lodash.filter(lowratingsForQuality, r => r.custom !== true && behaviour._id.equals(r.behaviourId));
@@ -625,12 +629,15 @@ export const pdfmakedefinition = (data, partner, user) => {
       });
     }
 
-    const customLowRatingsForQuality = lodash.filter(data.lowratings(quality, 5), rating => rating.custom);
+    const customLowRatingsForQuality = lodash.filter(data.lowratings(quality, 5), rating => rating.custom && lodash.isEmpty(rating.behaviourText) === false );
     if(customLowRatingsForQuality.length > 0) {
-      behaviourSection.push({ text: 'Additional Comments', style: ['default', 'primary'], margin: [0, 15] });
+      behaviourSection.push({ text: 'Additional Comments', style: ['default', 'primary'], bold: true, margin: [0, 10, 0, 15] });
       behaviourSection.push({ text: `The assessors have provided some the following additional behaviour${customLowRatingsForQuality.length > 1 ? 's': ''} and how it impacts others (them).`, style: ['default'], margin: [0, 15] });
-      const customRowEntries = customLowRatingsForQuality.map(custom => [{ text: custom.behaviourText, style: ['default'] }, { text: custom.rating, style: ['default'] }, { text: custom.comment, style: ['default'] }]);
+      
+      let customRowEntries = customLowRatingsForQuality.map(custom => [{ text: custom.behaviourText, style: ['default'] }, { text: custom.rating, style: ['default'] }, { text: custom.comment || '(No comment provided)', style: ['default'] }]);
+      if(customRowEntries.length > 0) {
 
+      }
       behaviourSection.push({
         table: {
           // headers are automatically repeated if the table spans over multiple pages
@@ -791,9 +798,8 @@ export const pdfmakedefinition = (data, partner, user) => {
       {
         image: 'partnerLogoGreyScale', width: 200, style: ['centerAligned'], margin: [0, 5],
       },
-      { text: '360°\nLeadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
-      //{ text: 'for', style: ['header', 'centerAligned'], margin: [0, 0] },
-      { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned'], margin: [0, 15] },
+      { text: '360°\nLeadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 5, 0, 10] },      
+      { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned'], margin: [0, 5] },
       includeAvatar === true ?
         {
           image: 'delegateAvatar', width: 120, style: ['centerAligned'], margin: [0, 15],
@@ -907,7 +913,7 @@ export const pdfmakedefinition = (data, partner, user) => {
         italics: false,
       },
       title: {
-        fontSize: 18,
+        fontSize: 16,
         bold: true,
         font: 'Verdana',
       },
