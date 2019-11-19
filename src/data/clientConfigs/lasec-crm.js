@@ -463,9 +463,44 @@ const LASEC_CONFIG = {
           key: 'authlist',
           value: {
             type: 'bool',
-            authlist: [
-              'local',
+            authlist: [              
               'microsoft',
+            ],
+          },
+        },
+      ],
+    },
+    {
+      key: 'login_alt',
+      title: 'Login Alt',
+      path: '/login_alt',
+      public: true,
+      roles: ['ANON'],
+      componentFqn: 'core.Login@1.0.0',      
+      background: {
+        image: 'default',
+      },
+      args: [
+        {
+          key: 'magicLink',
+          value: {
+            type: 'bool',
+            magicLink: false,
+          },
+        },
+        {
+          key: 'forgotEnabled',
+          value: {
+            type: 'bool',
+            forgotEnabled: true,
+          },
+        },
+        {
+          key: 'authlist',
+          value: {
+            type: 'bool',
+            authlist: [              
+              'local',
             ],
           },
         },
