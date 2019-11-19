@@ -12,8 +12,8 @@ import { jzon } from '../../../utils/validators';
 const config = {
   WEBSOCKET_BASE_URL: 'wss://api.lasec.co.za/ws/',
   UI_BASE_URL: process.env.LASEC_UI_BASE_URL || 'https://l360.lasec.co.za',
-  API_BASE_URL: process.env.API_BASE_URL || 'https://bapi.lasec.co.za',
-  SECONDARY_API_URL: process.env.SECONDARY_API_URL || 'https://bapi.lasec.co.za',
+  API_BASE_URL: process.env.API_BASE_URL || 'https://api.lasec.co.za',
+  SECONDARY_API_URL: process.env.SECONDARY_API_URL || 'https://api.lasec.co.za',
   PRIMARY_API_URL_PREFIX_1: 'api',
   PRIMARY_API_URL_PREFIX_2: 'l360',
   SECONDARY_API_URL_PREFIX_1: 'api',
