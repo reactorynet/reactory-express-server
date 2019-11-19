@@ -1,6 +1,6 @@
 export default {
   // testCard: {
-  //   'ui:widget': 'MaterialCardWidget',
+    // 'ui:widget': 'MaterialCardWidget',
   //   'ui:options': {
   //     component: 'lasec-crm.QuotesList',
   //     componentProps: {
@@ -29,15 +29,15 @@ export default {
   filterResultList: {
     'ui:widget': 'MaterialGridListWidget',
     'ui:options': {
-      contentType: 'widget',
-      componentFqn: 'MaterialCardWidget',
-      'ui:options': {
-        component: 'lasec-crm.QuotesList',
-        componentProps: {
-          query: {
-            filterType: 'Recent'
-          }
-        },
+      columns: { lg: 6, md: 4, sm: 1 },
+      component: 'core.MaterialCardWidget@1.0.0',
+      componentProps: {
+        // component: 'lasec-crm.QuotesList',
+        // componentProps: {
+        //   query: {
+        //     filterType: 'Recent'
+        //   }
+        // },
         actions: [
           {
             buttonType: 'button',
@@ -54,7 +54,7 @@ export default {
             actionHandler: ''
           },
         ]
-      }
+      },
     }
   }
 };
