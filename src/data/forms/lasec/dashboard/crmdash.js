@@ -500,6 +500,7 @@ export const CrmDashboardForm = {
   ],
   title: 'CRM Dashboard',
   tags: ['CRM Dashboard'],
+  helpTopics: ['sales-dashboard'],
   schema: CrmDashboardSchema,
   registerAsComponent: true,
   components: ['lasec-crm.Lasec360Plugin@1.0.0'],

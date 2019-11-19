@@ -4,6 +4,8 @@ query ReactoryGetContentBySlug($slug: String!) {
     slug
     title
     content
+    published
+    topics
     createdBy {
       id
       fullName

@@ -1,5 +1,13 @@
  import { fileAsString } from '@reactory/server-core/utils/io';
 
+ const mutationVariables = {
+  'formData.slug': 'createInput.slug',
+  'formData.title': 'createInput.title',
+  'formData.content': 'createInput.content',
+  'formData.published': 'createInput.published',
+  'formData.topics': 'createInput.topics'
+}
+
  export default {
    query: {
      name: 'ReactoryGetContentBySlug',
@@ -12,7 +20,9 @@
        'createdAt': 'createdAt',
        'title': 'title',
        'content': 'content',
-       'slug': 'slug'
+       'slug': 'slug',
+       'published': 'published',
+       'topics': 'topics'
      },
      edit: false,
      new: false,
@@ -23,11 +33,7 @@
        text: fileAsString(require.resolve('./ReactoryCreateContent.graphql')),
        objectMap: true,
        updateMessage: 'Creating Entry ...',
-       variables: {
-         'formData.slug': 'createInput.slug',
-         'formData.title': 'createInput.title',
-         'formData.content': 'createInput.content',
-       },
+       variables: mutationVariables,      
        onSuccessMethod: 'refresh'
      },
      edit: {
@@ -35,11 +41,7 @@
        text: fileAsString(require.resolve('./ReactoryCreateContent.graphql')),
        objectMap: true,
        updateMessage: 'Updating Content ...',
-       variables: {
-         'formData.slug': 'createInput.slug',
-         'formData.title': 'createInput.title',
-         'formData.content': 'createInput.content',
-       },
+       variables: mutationVariables,
        onSuccessMethod: 'refresh'
      },
    },

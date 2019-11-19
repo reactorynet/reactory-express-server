@@ -297,6 +297,13 @@ const Menus = {
           roles: ['ADMIN', 'DEVELOPER'],
         },
         {
+          ordinal: 0,
+          title: 'New Static Entry',
+          link: '/admin/content/new',
+          icon: 'file_copy',
+          roles: ['ADMIN', 'DEVELOPER'],
+        },
+        {
           ordinal: 1,
           title: 'Customer',
           link: '/admin/customer/',

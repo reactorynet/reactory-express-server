@@ -32,7 +32,7 @@ export default {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   roles: ['*'],
-  helpTopics: ['dashboard'],
+  helpTopics: ['sales-dashboard'],
   uiSchema: $uiSchema,
   graphql: $graphql,
   refresh: {

@@ -1,6 +1,6 @@
 export default {
   type: 'object',
-  title: 'About Us',
+  title: 'Edit / Create Content',
   required: ['slug', 'title', 'content'],
   properties: {
     slug: {

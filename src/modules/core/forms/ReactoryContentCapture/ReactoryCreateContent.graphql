@@ -4,6 +4,8 @@ mutation ReactoryCreateContent($createInput: CreateContentInput!){
     slug
     title
     content
+    topics
+    published
     createdBy {
       id
       fullName
