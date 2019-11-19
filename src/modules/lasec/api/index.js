@@ -522,7 +522,7 @@ const Api = {
   },
   User: {
     getLasecUser: async ( staff_user_id ) => {
-      const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data, { filter: {
+      const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, { filter: {
         ids: [staff_user_id]
       }}, true, false, 0).then()
 
@@ -538,11 +538,12 @@ const Api = {
     },
 
     getLasecUsers: async ( staff_user_ids = [] ) => {
-      const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data, { filter: {
+      const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, { filter: {
         ids: staff_user_ids
       }}, true, false, 0).then();
       
-      if(lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {
+      logger.debug(`Response from API ${lasecStaffUserResponse.status}`, lasecStaffUserResponse);
+      if(lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {        
         return lasecStaffUserResponse.payload;
       }
       
