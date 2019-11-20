@@ -39,6 +39,7 @@ export const UpdateQuoteStatusForm = {
     nextAction: 'follow-up-call',
     reminder: 1
   },
+  roles: ['*'],
   startWith: '${!formData.quote_id ? \'lasec-crm.QuoteIdInputForm@1.0.0\' : null}',    
   registerAsComponent: true,
   name: 'UpdateQuoteStatus',
