@@ -5,24 +5,15 @@ import lodash, { isArray, isNil } from 'lodash';
 import { ObjectId } from 'mongodb';
 import gql from 'graphql-tag';
 import uuid from 'uuid';
-import lasecApi from '../api';
-import logger from '../../../logging';
-import ApiError from '../../../exceptions';
-import {  Organization, User, Task } from '../../../models';
-import { Quote, QuoteReminder } from '../schema/Quote';
-import amq from '../../../amq';
-import { clientFor } from '../../../graph/client';
-import { getCacheItem, setCacheItem } from '../models';
-import { Workflows } from '../workflow';
+import lasecApi from '@reactory/server-modules/lasec/api';
+import logger from '@reactory/server-core/logging';
+import ApiError from '@reactory/server-core/exceptions';
+import {  Organization, User, Task } from '@reactory/server-core/models';
+import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
+import amq from '@reactory/server-core/amq';
+import { clientFor } from '@reactory/server-core/graph/client';
+// import { getCacheItem, setCacheItem } from '../models';
 
-
-const defaultMeta = (reference, owner = global.partner.key) => ({
-  mustSync: true,
-  lastSync: null,
-  nextSync: new Date().valueOf(),
-  reference,
-  owner
-});
 
 const lookups = {
   statusGroupName: {
@@ -836,34 +827,42 @@ export default {
     timeline: async (quote) => {
 
       const { timeline, id, meta, code } = quote;
-      const _timeline = []; //create a virtual timeline
+      const _timeline: Array<any> = []; //create a virtual timeline
 
       if(isArray(timeline) === true && timeline.length > 0) {
         timeline.forEach(tl => _timeline.push(tl));
       }
 
       //create timeline from mails
-      const mails = await getQuoteEmails(quote.code).then();
-
-      if(mails && isArray(mails)) {
-
+      let mails: Array<any> = [];
+      try {
+        mails = await getQuoteEmails(quote.code).then();
+      } catch (exc) {
+        logger.error(`Could not read the user email due to an error, ${exc.message}`);
+        mails = [];
+      }
+      
+      if(mails && isArray(mails) === true && mails.length > 0) {
+        
         mails.forEach((mail) => {
-          logger.debug('Transforming Email to timeline entry', mail);
-          const entry = om(mail, {
-            'createdAt': 'when',
-            'from': {
-              key: 'who',
-              transform: ( sourceValue ) => {
-                //user lookup
-                return User.find({ email: sourceValue }).then()
+          if(mail.id !== 'no-id') {
+            logger.debug('Transforming Email to timeline entry', mail);
+            const entry = om(mail, {
+              'createdAt': 'when',
+              'from': {
+                key: 'who',
+                transform: ( sourceValue: String ) => {
+                  //user lookup
+                  return User.find({ email: sourceValue }).then()
+                },
               },
-            },
-            'message': 'notes'
-          });
-          entry.actionType = 'email',
-          entry.what = `Email Communication from ${mail.from} to ${mail.to}`,
-          logger.debug(`Transformed Email:\n ${mail} \n to timeline entry \n ${entry} \n`);
-          _timeline.push(entry);
+              'message': 'notes'
+            });
+            entry.actionType = 'email',
+            entry.what = `Email Communication from ${mail.from} to ${mail.to}`,
+            logger.debug(`Transformed Email:\n ${mail} \n to timeline entry \n ${entry} \n`);
+            _timeline.push(entry);
+          }          
         });
       }
       return lodash.sortBy(_timeline, ['when']);

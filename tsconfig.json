@@ -1,9 +1,12 @@
 {
   "compilerOptions": {
       "noImplicitAny": true,
-      "removeComments": true,  
+      "removeComments": true,
+      "moduleResolution": "node",
+      // Process & infer types from .js files.
+      "allowJs": true,  
       "target":"es6",
-      "baseUrl": "src",
+      "baseUrl": "./",
       "paths": {
         "*": ["src/*"],
         "@reactory/server-core/*": ["src/*"],
