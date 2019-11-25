@@ -4,8 +4,7 @@ import logger from '../logging';
 import { defaultFormProps } from './forms/defs';
 import { FormBuilder } from './forms/core/FormBuilder';
 import { HelpFormEdit, HelpListForm } from './forms/core/HelpEditor';
-import { TemplateEditor, TemplateList } from './forms/core/TemplateEditor';
-import { SurveySettingsForm } from './forms/towerstone/SurveySettings';
+import { TemplateEditor } from '../modules/core/forms/EmailTemplate/TemplateEditor/TemplateEditor';
 import TaskDetailForm from './forms/core/task';
 import modules from '../modules';
 
@@ -1581,14 +1580,6 @@ const BusinessUnitForm = {
 };
 
 
-const TowerStoneTaskDetailUISchema = require('./forms/towerstone/TowerStoneTask').TowerStoneTaskDetailUISchema;
-
-const TowerStoneTaskDetailForm = {
-  ...TaskDetailForm,
-  id: 'TowerStoneTaskDetailForm',
-  name: 'TowerStoneTaskDetailForm',
-  uiSchema: TowerStoneTaskDetailUISchema,
-};
 
 
 const CommentForm = {
@@ -1634,10 +1625,6 @@ const ProjectForm = {
 
 const { ReactoryApplicationsForm, ReactoryDashboard, ReactoryClientAdminPage } = require('./forms/core/dashboard');
 
-const TowerStoneLeadershipBrandConfigForm = require('./forms/towerstone/LeadershipBrands').default;
-const TowerStoneSurveyConfigForm = require('./forms/towerstone/SurveyConfig').TowerStoneSurveyConfigForm;
-const TowerStoneSurveyDelegateConfig = require('./forms/towerstone/SurveyDelegates').SurveyDelegatesForm;
-const TowerStoneSurveySettings = require('./forms/towerstone/SurveySettings').SurveySettingsForm;
 const UserPeers = require('./forms/core/user/UserPeers/index').default;
 const ProjectLayout = require('./forms/core/project').default;
 const ProjectListWidget = require('./forms/core/project').ProjectListWidget;
@@ -1681,16 +1668,10 @@ export default [
   ReactoryApplicationsForm,
   ReactoryClientAdminPage,
   ReactoryDashboard,
-  TowerStoneSurveyConfigForm,
-  TowerStoneLeadershipBrandConfigForm,
-  TowerStoneSurveyDelegateConfig,
-  TowerStoneSurveySettings,
   FormBuilder,
   HelpFormEdit,
   HelpListForm,
   TemplateEditor,
-  TemplateList,
-  TowerStoneTaskDetailForm,
   UserPeers,
   MicrosoftOpenIDAuthenticationForm,
   ..._forms

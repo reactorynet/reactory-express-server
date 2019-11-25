@@ -1286,5 +1286,20 @@ export default {
         message: 'Quote status updated'
       };
     },
+    LasecCreateClientEnquiry: async( parent, params ) => {
+      const { customerId: String } = params;
+
+      return {
+        id: new ObjectId(),
+        customer: {
+          id: new ObjectId(),
+          fullName: 'Placeholder'
+        },
+        company: {
+          id: new ObjectId(),
+          tradingName: 'Trading Name'
+        }
+      }
+    }
   }
 };

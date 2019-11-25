@@ -1,6 +1,6 @@
 export default {
   type: 'object',
-  title: 'New Quote',
+  title: 'New Enquiry',
   properties: {
     client: {
       title: 'Client',
@@ -10,9 +10,5 @@ export default {
       title: 'Date',
       type: 'string'
     },
-    poNumber: {
-      title: 'PO Number',
-      type: 'string'
-    }
   }
 };

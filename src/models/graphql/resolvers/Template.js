@@ -13,7 +13,7 @@ const TemplateResolvers = {
     id: (template) => { return template._id || null; },
   },
   Query: {
-    templates: async (obj, { client = null, organization = null }) => {
+    ReactoryTemplates: async (obj, { client = null, organization = null }) => {
       logger.info(`Listing templates using search criteria client id: ${client || 'null'} orgnization: ${organization || 'null'}`);
       if (isNil(client) === false && ObjectId.isValid(client)) {
         logger.debug('Filtering templates by client and organization id');
@@ -33,10 +33,10 @@ const TemplateResolvers = {
       logger.debug(`Returning template list for authenticated partner id ${global.partner._id}`);
       return Template.find({ client: global.partner._id }).then();
     },
-    template: (obj, { id }) => { return Template.findById(id).then(); },
+    ReactoryTemplate: (obj, { id }) => { return Template.findById(id).then(); },
   },
   Mutation: {
-    updateTemplateContent: async (parent, { id, content }) => {
+    ReactoryUpdateTemplateContent: async (parent, { id, content }) => {
       const template = await Template.findById(id).then();
       if (!template) throw new RecordNotFoundError('Could not locate the template with the id', 'Template');
 

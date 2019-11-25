@@ -1,1 +1,0 @@
-export { IArraySchema, IObjectSchema, ISchema } from './interface';

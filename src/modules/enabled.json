@@ -16,5 +16,14 @@
     "moduleEntry": "lasec/index.js",
     "license": "commercial",
     "shop": "https://reactory.net/shop/modules/0c22819f-bca0-4947-b662-9190063c8277/"
+  },
+  { 
+    "id": "10c75836-37bf-4000-95d2-18d69afc5321", 
+    "name": "TowerStone",  
+    "key": "towerstone",
+    "fqn": "towerstone.Assessor@1.0.0",
+    "moduleEntry": "towerstone/index.ts",
+    "license": "commercial",
+    "shop": "https://reactory.net/shop/modules/10c75836-37bf-4000-95d2-18d69afc5321/"
   }
 ]

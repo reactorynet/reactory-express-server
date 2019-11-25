@@ -1,0 +1,6 @@
+mutation LasecCreateClientEnquiry {
+  LasecCreateClientEnquiry( customerId: String ) {
+    id
+    
+  }
+}

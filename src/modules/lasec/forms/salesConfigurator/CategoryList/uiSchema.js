@@ -12,7 +12,7 @@ export default {
         label: 'Edit',
         componentFqn: 'core.Link',
         action: 'event:onRouteChanged',
-        link: '#/capturecategory/edit/${item.id}/'
+        link: '/capturecategory/edit/${item.id}/'
       }
     }
   },
@@ -36,5 +36,4 @@ export default {
       }
     }
   }
-
 };

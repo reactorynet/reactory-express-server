@@ -1,5 +1,7 @@
 type Template {
   id: String
+  name: String
+  description: String
   organization: Organization
   reactoryClient: ReactoryClient
   enabled: Boolean
@@ -12,10 +14,10 @@ type Template {
 }
 
 extend type Query {
-  templates(client: String, organization: String): [Template]
-  template(id: String): Template 
+  ReactoryTemplates(client: String, organization: String): [Template]
+  ReactoryTemplate(id: String): Template 
 }
 
 extend type Mutation {
-  updateTemplateContent(id: String, content: String): Template
+  ReactoryUpdateTemplateContent(id: String, content: String): Template  
 }

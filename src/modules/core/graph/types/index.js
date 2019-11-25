@@ -20,8 +20,6 @@ const typeDefs = [];
   'Organization/Organization',
   'Organization/BusinessUnit',
   'Organization/LeadershipBrand',
-  'Survey/Survey',
-  'Survey/Assessment',
   'System/Email',
   'System/Template',
   'System/Statistics',

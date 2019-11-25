@@ -223,6 +223,10 @@ input LasecQuoteHeaderInput {
   header_text: String
   action: QuoteHeaderAction!
 }
+ 
+type LasecCustomerEnquiry {
+  id: String
+}
 
 
 extend type Query {
@@ -236,4 +240,5 @@ extend type Query {
 extend type Mutation {
   LasecSetQuoteHeader( quote_id: String!, input: LasecQuoteHeaderInput ): LasecQuoteHeader
   LasecUpdateQuoteStatus( quote_id: String!, input: LasecQuoteStatusUpdate ): LasecQuoteStatusUpdateResult
+  LasecCreateClientEnquiry( customerId: String! ): LasecCustomerEnquiry
 }

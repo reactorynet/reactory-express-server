@@ -3,6 +3,7 @@
       "noImplicitAny": true,
       "removeComments": true,
       "moduleResolution": "node",
+      "allowSyntheticDefaultImports": true,
       // Process & infer types from .js files.
       "allowJs": true,  
       "target":"es6",

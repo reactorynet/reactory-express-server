@@ -13,7 +13,6 @@ import orgnizationResolvers from './OrganizationResolver';
 import assessmentResolvers from './AssessmentResolver';
 import reactoryClientResolver from './ReactoryClient';
 import leadershipBrandResolver from './LeadershipBrandResolver';
-import surveyResolver from './SurveyResolver';
 import projectResolver from './ProjectResolver';
 import scaleResolver from './ScaleResolver';
 import { MenuItem, Menu, ClientComponent, User } from '../../../models';
@@ -252,7 +251,6 @@ merge(
   assessmentResolvers,
   reactoryClientResolver,
   leadershipBrandResolver,
-  surveyResolver,
   scaleResolver,
   projectResolver,
   require('./BusinessUnitResolver').default,

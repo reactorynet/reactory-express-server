@@ -1,11 +1,11 @@
 import { fileAsString } from '@reactory/server-core/utils/io';
 
-export default {
-  submitIcon: '$none',
+export default {  
   'ui:options': {
     submitProps: {
       variant: 'button',
-      text: 'Next'
+      text: 'Next',
+      iconAlign: 'right'
     },
   },
   client: {

@@ -270,6 +270,24 @@ export default {
       roles: ['ADMIN'],
       componentFqn: 'core.Administration@1.0.0',
     },
+    {
+      key: 'reactoryrouter',
+      title: 'Reactory Forms',
+      path: '/reactory/**',
+      exact: false,
+      public: false,
+      roles: ['ADMIN', 'DEVELOPER'],
+      componentFqn: 'core.ReactoryRouter',
+      args: [
+        {
+          key: 'routePrefix',
+          value: {
+            type: 'string',
+            routePrefix: '/reactory'
+          },
+        }
+      ]
+    },
   ],
   theme: 'towerstone',
   themeOptions: {

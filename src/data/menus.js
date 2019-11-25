@@ -30,19 +30,13 @@ export const towerStoneMenuDef = {
   entries: [
     {
       ordinal: 0, title: 'Dashboard', link: '/', icon: 'dashboard', roles: ['USER'],
-    },
-    // {
-    //  ordinal: 1, title: 'Inbox', link: '/inbox/', icon: 'email', roles: ['USER'],
-    // },
+    },    
     {
       ordinal: 2, title: 'Surveys', link: '/surveys/', icon: 'check_circle', roles: ['USER'],
     },
     {
       ordinal: 3, title: 'Reports', link: '/reports/', icon: 'bug_report', roles: ['USER'],
-    },
-    // {
-    //  ordinal: 4, title: 'Actions', link: '/tasks/', icon: 'autorenew', roles: ['USER'],
-    // },
+    },    
     {
       ordinal: 5, title: 'Profile', link: '/profile/', icon: 'account_circle', roles: ['USER'],
     },
@@ -50,7 +44,15 @@ export const towerStoneMenuDef = {
       ordinal: 6, title: 'Admin', link: '/admin/', icon: 'supervisor_account', roles: ['ADMIN'],
     },
     {
-      ordinal: 7, title: 'Forms Admin', link: '/forms/', icon: 'supervisor_account', roles: ['ADMIN'],
+      ordinal: 17, title: 'Develop', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN'],
+      items: [
+        {
+          ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['DEVELOPER',  'ADMIN']
+        },
+        {
+          ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
+        },        
+      ]
     },
   ],
 };

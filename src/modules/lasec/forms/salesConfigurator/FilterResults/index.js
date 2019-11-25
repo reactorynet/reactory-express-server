@@ -40,43 +40,7 @@ export default {
           avatar: 'https://www.codewars.com/assets/logos/logo-square-red-big-c74ae0e7a89b33acd3beb1f08229630391934650e3bbd30ddc40e8be5bbfc71e.png'
         },
         content: 'Assertively reinvent highly efficient methodologies whereas interactive ideas. Uniquely conceptualize long-term high-impact.',
-      },
-      // {
-      //   header: {
-      //     cardTitle: 'Title From Form Data',
-      //     cardSubHeader: 'Title From Subheader Form Data',
-      //     avatar: 'https://www.codewars.com/assets/logos/logo-square-red-big-c74ae0e7a89b33acd3beb1f08229630391934650e3bbd30ddc40e8be5bbfc71e.png'
-      //   },
-      //   content: 'Assertively reinvent highly efficient methodologies whereas interactive ideas. Uniquely conceptualize long-term high-impact.',
-      //   actions: []
-      // },
-      // {
-      //   header: {
-      //     cardTitle: 'Title From Form Data',
-      //     cardSubHeader: 'Title From Subheader Form Data',
-      //     avatar: 'https://www.codewars.com/assets/logos/logo-square-red-big-c74ae0e7a89b33acd3beb1f08229630391934650e3bbd30ddc40e8be5bbfc71e.png'
-      //   },
-      //   content: 'Assertively reinvent highly efficient methodologies whereas interactive ideas. Uniquely conceptualize long-term high-impact.',
-      //   actions: []
-      // },
-      // {
-      //   header: {
-      //     cardTitle: 'Title From Form Data',
-      //     cardSubHeader: 'Title From Subheader Form Data',
-      //     avatar: 'https://www.codewars.com/assets/logos/logo-square-red-big-c74ae0e7a89b33acd3beb1f08229630391934650e3bbd30ddc40e8be5bbfc71e.png'
-      //   },
-      //   content: 'Assertively reinvent highly efficient methodologies whereas interactive ideas. Uniquely conceptualize long-term high-impact.',
-      //   actions: []
-      // },
-      // {
-      //   header: {
-      //     cardTitle: 'Title From Form Data',
-      //     cardSubHeader: 'Title From Subheader Form Data',
-      //     avatar: 'https://www.codewars.com/assets/logos/logo-square-red-big-c74ae0e7a89b33acd3beb1f08229630391934650e3bbd30ddc40e8be5bbfc71e.png'
-      //   },
-      //   content: 'Assertively reinvent highly efficient methodologies whereas interactive ideas. Uniquely conceptualize long-term high-impact.',
-      //   actions: []
-      // }
+      },   
     ],
     testCard: {
       header: {

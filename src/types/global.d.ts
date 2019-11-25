@@ -11,3 +11,5 @@ declare namespace NodeJS {
 
 declare var user: Reactory.IUser;
 declare var partner: Reactory.IPartner;
+
+declare module 'object-mapper';

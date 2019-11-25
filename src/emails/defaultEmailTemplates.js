@@ -36,11 +36,11 @@ export default [
         parameters: [
           {
             name: 'applicationTitle',
-            propType: 'text',
+            type: 'text',
           },
           {
             name: 'user',
-            propType: 'User',
+            type: 'User',
           },
         ],
         elements: [],
@@ -80,15 +80,15 @@ export default [
         parameters: [
           {
             name: 'applicationTitle',
-            propType: 'text',
+            type: 'text',
           },
           {
             name: 'user',
-            propType: 'User',
+            type: 'User',
           },
           {
             name: 'resetLink',
-            propType: 'text',
+            type: 'text',
           },
         ],
         elements: [],
@@ -140,15 +140,15 @@ export default [
         parameters: [
           {
             name: 'applicationTitle',
-            propType: 'text',
+            type: 'text',
           },
           {
             name: 'user',
-            propType: 'User',
+            type: 'User',
           },
           {
             name: 'resetLink',
-            propType: 'text',
+            type: 'text',
           },
           {
             name: 'peer',
@@ -204,15 +204,15 @@ export default [
         parameters: [
           {
             name: 'applicationTitle',
-            propType: 'text',
+            type: 'text',
           },
           {
             name: 'user',
-            propType: 'User',
+            type: 'User',
           },
           {
             name: 'resetLink',
-            propType: 'text',
+            type: 'text',
           },
           {
             name: 'peer',
@@ -268,15 +268,15 @@ export default [
         parameters: [
           {
             name: 'applicationTitle',
-            propType: 'text',
+            type: 'text',
           },
           {
             name: 'user',
-            propType: 'User',
+            type: 'User',
           },
           {
             name: 'resetLink',
-            propType: 'text',
+            type: 'text',
           },
           {
             name: 'peer',
@@ -332,15 +332,15 @@ export default [
         parameters: [
           {
             name: 'applicationTitle',
-            propType: 'text',
+            type: 'text',
           },
           {
             name: 'user',
-            propType: 'User',
+            type: 'User',
           },
           {
             name: 'resetLink',
-            propType: 'text',
+            type: 'text',
           },
           {
             name: 'peer',

@@ -1,6 +1,6 @@
 import $schema from './schema';
 import $uiSchema from './uiSchema';
-// import $graphql from './graphql';
+import $graphql from './graphql';
 
 export default {
   id: 'NewQuote',
@@ -15,4 +15,8 @@ export default {
   version: '1.0.0',
   schema: $schema,
   uiSchema: $uiSchema,
+  graphql: $graphql,
+  default: {
+
+  }
 };
