@@ -19,6 +19,7 @@ type TimelineEntry {
 type DelegateEntry {
   id: String
   delegate: User
+  team: String
   peers: UserPeers
   status: String
   notifications: [Notification]
@@ -97,7 +98,7 @@ input SurveyInput {
   title: String!  
   surveyType: String!
   delegateTeamName: String,
-  assessorTeamName0: String,
+  assessorTeamName: String,
   startDate: Date
   endDate: Date
   mode: String
@@ -107,7 +108,7 @@ input SurveyInput {
 input DelegateInput {
   id: String
   delegate: String!
-  status: String
+  status: String  
   launched: Boolean
   complete: Boolean
   removed: Boolean  

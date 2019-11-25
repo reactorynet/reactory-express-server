@@ -288,6 +288,24 @@ export default {
         }
       ]
     },
+    {
+      key: 'content-capture',
+      title: 'Content Capture',
+      path: '/content-capture/edit/:slug/',
+      public: false,
+      exact: false,
+      roles: ['ADMIN'],
+      componentFqn: 'static.ContentCapture@1.0.0',
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'edit',
+          }
+        }
+      ]
+    },
   ],
   theme: 'towerstone',
   themeOptions: {

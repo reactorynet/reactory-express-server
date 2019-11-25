@@ -170,6 +170,7 @@ const graphql = {
             lastName
             avatar
           }
+          team
           status
           peers {
             user {

@@ -1,5 +1,6 @@
-import { Reactory } from "types/reactory";
+
 import { ObjectID } from "bson";
+import Mongoose from "mongoose";
 
 declare namespace TowerStone {
 
@@ -39,13 +40,13 @@ declare namespace TowerStone {
   }
 
   export interface ISurvey {
-    id: string,
-    _id: ObjectID
     title: string,
     status: string,
     surveyType: string,
     organization: Reactory.IOrganization,
     leadershipBrand?: ILeadershipBrand 
+    assessorTeamName?: string,
+    delegateTeamName?: string,
     startDate: Date,
     endDate: Date,
     timeline: any[],
@@ -54,8 +55,10 @@ declare namespace TowerStone {
     templates: ISurveyTemplates
   }
 
+  export interface ISurveyDocument extends Mongoose.Document, ISurvey { }
+
   export interface ITowerStoneSurveyService {
-    get(id: string): Promise<ISurvey>
+    get(id: string): Promise<ISurveyDocument>
   }
 
   export interface IEmailSendResult {
@@ -75,7 +78,7 @@ declare namespace TowerStone {
   }
   
   export interface ITowerStoneEmailService {
-    send: (survey: ISurvey, action: string) => Promise<IEmailSendResult>
+    send: (survey: ISurvey, activity: string, target: string, users: Reactory.IUser[]) => Promise<IEmailSendResult>
     templates: (survey: ISurvey) => Promise<ISurveyTemplates>
     patchTemplates: (survey: ISurvey, templates: ISurveyTemplates) => Promise<ISurveyTemplates>  
   }

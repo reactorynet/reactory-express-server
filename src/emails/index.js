@@ -38,7 +38,7 @@ const {
  * @param {UserModel} user
  * @param {ReactorClient} partner
  */
-const resolveUserEmailAddress = (user, reactoryClient = null) => {
+export const resolveUserEmailAddress = (user, reactoryClient = null) => {
   const { partner } = global;
   const { MODE } = process.env;
 
@@ -169,7 +169,7 @@ const queueMail = co.wrap(function* queueMail(user, msg, options = DefaultQueueO
   }
 });
 
-const renderTemplate = (template, properties) => {
+export const renderTemplate = (template, properties) => {
   if (template && typeof template.content === 'string') {
     if (template.content.toString().indexOf('$ref://') === 0) {
       const filename = `${APP_DATA_ROOT}/templates/email/${template.content.replace('$ref://', '')}`;
@@ -902,4 +902,6 @@ export default {
   queueSurveyEmails,
   organigramEmails,
   surveyEmails,
+  renderTemplate,
+  resolveUserEmailAddress
 };

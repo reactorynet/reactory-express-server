@@ -22,6 +22,7 @@ type Assessment {
     assessmentType: String
     organization: Organization!
     survey: Survey!
+    team: String
     assessor: User!
     delegate: User!
     ratings: [Rating]

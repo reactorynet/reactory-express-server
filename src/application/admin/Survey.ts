@@ -8,6 +8,7 @@ import moment from 'moment';
 import logger from '../../logging';
 import emails from '../../emails';
 import Organization from './Organization';
+import { TowerStone } from 'modules/towerstone/towerstone';
 
 
 /**
@@ -373,48 +374,46 @@ export const sendPeerNominationNotifications = async (user, organigram) => {
  * @param {UserModel} delegateEntry
  * @param {OrganigramModel} organigram
  */
-export const launchSurveyForDelegate = async (survey, delegateEntry, organigram, relaunch = false) => {
+export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, relaunch: boolean = false) => {
   // options for the launch
   logger.info(`Launching Survey: ${survey.title} for delegate ${delegateEntry.delegate.firstName} (is-relaunch: ${relaunch})`);
-  const result = (message, success = false, assessments) => ({
+  const result = (message: string, success = false, assessments: any[]) => ({
     launched: success,
     success,
     message,
     assessments,
   });
 
+  const { surveyType } = survey;
+
+  const is180 = surveyType === '180';
+  const is360 = surveyType === '360';
+  const isPLC = surveyType === 'plc';
+  debugger;
+  
   try {
     const options = { ...defaultLaunchOptions, ...survey.options };
 
     if (iz.nil(survey)) throw new Error('survey parameter cannot be empty');
     if (iz.nil(delegateEntry)) throw new Error('delegate parameter cannot be empty');
-    if (iz.nil(organigram)) result(`The user does not have an organigram for ${survey.organization}`);
-    if (iz.nil(organigram.confirmedAt)) return result('Peers have not yet been confirmed');
-    if (iz.nil(organigram.peers)) return result('User has no peers defined');
+    if(is180 === false) {
+      //skip organigram and peer checks when doing 180 work
+      if (iz.nil(organigram)) result(`The user does not have an organigram for ${survey.organization}`, false, []);
+      if (iz.nil(organigram.confirmedAt)) return result('Peers have not yet been confirmed', false, []);
+      if (iz.nil(organigram.peers)) return result('User has no peers defined', false, []);
+    }
+    
 
     const maximumAssessments = 5;
     const minimumAssessments = 3;
 
-    if (organigram.peers && organigram.peers.length > 0) {
-      if (organigram.peers.length < options.minimumPeers) return result(`Delegate does not have the minimum of ${options.minimumPeers} peers for this survey (${organigram.peers})`);
+    
 
-      const assessmentsPomises = [];
-      if (delegateEntry.assessments.length === 0) {
-        for (let ai = 0; ai < delegateEntry.assessments.length; ai += 1) {
-          assessmentsPomises.push(Assessment.findById(delegateEntry.assessments[ai]));
-        }
-      }
-
+    if(is180 === true) {
       const assessments = [];
-      const assessmentPromiseResult = await Promise.all(assessmentsPomises).then();
-      logger.info(`Delegate has ${assessmentPromiseResult.length} assessments`);
-      for (let ri = 0; ri <= assessmentPromiseResult.length; ri += 1) {
-        const _assessment = assessmentPromiseResult[ri];
-        assessments.push({ ..._assessment });
-      }
 
       const leadershipBrand = await LeadershipBrand.findById(survey.leadershipBrand);
-      const templateRatings = [];
+      const templateRatings: any[] = [];
       logger.info(`Building Ratings template for Leadership Brand: ${leadershipBrand.title}`);
       leadershipBrand.qualities.map((quality, qi) => {
         quality.behaviours.map((behaviour, bi) => {
@@ -428,61 +427,126 @@ export const launchSurveyForDelegate = async (survey, delegateEntry, organigram,
         });
       });
 
-      if (relaunch === false) {
-        organigram.peers.forEach((peer) => {
-          const peerhasAssessment = lodash.has(assessments, assessment => assessment.assessor === peer.user);
-          if (!peerhasAssessment) {
-            const assessment = new Assessment({
-              id: ObjectId(),
-              organization: ObjectId(survey.organization),
-              client: ObjectId(global.partner._id),
-              delegate: ObjectId(delegateEntry.delegate._id),
-              team: null,
-              assessor: ObjectId(peer.user),
-              survey: ObjectId(survey._id),
-              complete: false,
-              ratings: [...templateRatings],
-              createdAt: new Date().valueOf(),
-              updatedAt: new Date().valueOf(),
-            });
-
-            assessment.save().then();
-            assessments.push(assessment);
-          }
-        });
-
-        const selfAssessment = new Assessment({
-          id: ObjectId(),
-          organization: ObjectId(survey.organization),
-          client: ObjectId(global.partner._id),
-          delegate: ObjectId(delegateEntry.delegate._id),
-          team: null,
-          assessor: ObjectId(delegateEntry.delegate._id),
-          survey: ObjectId(survey._id),
-          complete: false,
-          ratings: [...templateRatings],
-          createdAt: new Date().valueOf(),
-          updatedAt: new Date().valueOf(),
-        });
-        await selfAssessment.save().then();
-        assessments.push(selfAssessment);
+      let team = '';
+      if(delegateEntry.team === survey.assessorTeamName) {
+        //delegate is on assessor team      
+        team = 'assessors';
       }
 
-      // send emails
-      logger.info(`(${assessments.length}) Assessments Created / Loaded, sending emails to delegates and assessor`);
-      let emailResults = null;
-      try {
-        emailResults = await sendSurveyEmail(survey, delegateEntry, organigram, EmailTypesForSurvey.SurveyLaunch, { assessments, relaunch });
-        logger.info('Email results from sending Survey Emails', emailResults);
-        if (emailResults.success === true) {
-          return result(`Successfully created ${assessments.length} assessments for delegate and emails sent ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
+
+      if(delegateEntry.team === survey.delegateTeamName) {
+        //delegate is on delegates team
+        //self assessment
+        team = 'delegates';
+      }
+
+      const assessment = new Assessment({
+        id: new ObjectId(),
+        organization: new ObjectId(survey.organization),
+        client: new ObjectId(global.partner._id),
+        delegate: new ObjectId(delegateEntry.delegate._id),
+        team: team,
+        assessor: new ObjectId(delegateEntry.delegate._id),
+        survey: new ObjectId(survey._id),
+        complete: false,
+        ratings: [...templateRatings],
+        createdAt: new Date().valueOf(),
+        updatedAt: new Date().valueOf(),
+      })
+
+      await assessment.save().then()
+      return result(`Created 180 ${assessments.length} for assessor delegate`, true, [assessment])
+    } else {
+      if (organigram.peers && organigram.peers.length > 0 && (is360 === true || isPLC === true)) {
+        if (organigram.peers.length < options.minimumPeers) return result(`Delegate does not have the minimum of ${options.minimumPeers} peers for this survey (${organigram.peers})`);
+  
+        const assessmentsPomises = [];
+        if (delegateEntry.assessments.length === 0) {
+          for (let ai = 0; ai < delegateEntry.assessments.length; ai += 1) {
+            assessmentsPomises.push(Assessment.findById(delegateEntry.assessments[ai]));
+          }
         }
-        return result(`Assessments created but could not send the mails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
-      } catch (ex) {
-        logger.error(ex);
-        return result(`Successfully created ${assessments.length} assessments for delegate, failed sending emails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
+  
+        const assessments: any[] = [];
+        const assessmentPromiseResult = await Promise.all(assessmentsPomises).then();
+        logger.info(`Delegate has ${assessmentPromiseResult.length} assessments`);
+        for (let ri = 0; ri <= assessmentPromiseResult.length; ri += 1) {
+          const _assessment = assessmentPromiseResult[ri];
+          assessments.push({ ..._assessment });
+        }
+  
+        const leadershipBrand = await LeadershipBrand.findById(survey.leadershipBrand);
+        const templateRatings: any[] = [];
+        logger.info(`Building Ratings template for Leadership Brand: ${leadershipBrand.title}`);
+        leadershipBrand.qualities.map((quality, qi) => {
+          quality.behaviours.map((behaviour, bi) => {
+            templateRatings.push({
+              qualityId: quality.id,
+              behaviourId: behaviour.id,
+              rating: 0,
+              ordinal: templateRatings.length,
+              comment: '',
+            });
+          });
+        });
+  
+        if (relaunch === false) {
+          organigram.peers.forEach((peer) => {
+            const peerhasAssessment = lodash.has(assessments, assessment => assessment.assessor === peer.user);
+            if (!peerhasAssessment) {
+              const assessment = new Assessment({
+                id: ObjectId(),
+                organization: ObjectId(survey.organization),
+                client: ObjectId(global.partner._id),
+                delegate: ObjectId(delegateEntry.delegate._id),
+                team: null,
+                assessor: ObjectId(peer.user),
+                survey: ObjectId(survey._id),
+                complete: false,
+                ratings: [...templateRatings],
+                createdAt: new Date().valueOf(),
+                updatedAt: new Date().valueOf(),
+              });
+  
+              assessment.save().then();
+              assessments.push(assessment);
+            }
+          });
+  
+          const selfAssessment = new Assessment({
+            id: ObjectId(),
+            organization: ObjectId(survey.organization),
+            client: ObjectId(global.partner._id),
+            delegate: ObjectId(delegateEntry.delegate._id),
+            team: null,
+            assessor: ObjectId(delegateEntry.delegate._id),
+            survey: ObjectId(survey._id),
+            complete: false,
+            ratings: [...templateRatings],
+            createdAt: new Date().valueOf(),
+            updatedAt: new Date().valueOf(),
+          });
+          await selfAssessment.save().then();
+          assessments.push(selfAssessment);
+        }
+  
+        // send emails
+        logger.info(`(${assessments.length}) Assessments Created / Loaded, sending emails to delegates and assessor`);
+        let emailResults = null;
+        try {
+          emailResults = await sendSurveyEmail(survey, delegateEntry, organigram, EmailTypesForSurvey.SurveyLaunch, { assessments, relaunch });
+          logger.info('Email results from sending Survey Emails', emailResults);
+          if (emailResults.success === true) {
+            return result(`Successfully created ${assessments.length} assessments for delegate and emails sent ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
+          }
+          return result(`Assessments created but could not send the mails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
+        } catch (ex) {
+          logger.error(ex);
+          return result(`Successfully created ${assessments.length} assessments for delegate, failed sending emails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
+        }
       }
     }
+
     return result('data error, organigram.peers is not a valid array');
   } catch (exception) {
     logger.error(`Error occured launching survey for delegate ${exception.message}`);

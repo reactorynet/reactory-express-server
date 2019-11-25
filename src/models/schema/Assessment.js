@@ -20,8 +20,7 @@ const AssessmentSchema = mongoose.Schema({
     ref: 'User',
   },
   team: {
-    type: ObjectId,
-    ref: 'Team',
+    type: String
   },
   assessor: {
     type: ObjectId,

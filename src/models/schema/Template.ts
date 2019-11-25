@@ -2,10 +2,11 @@
 import mongoose from 'mongoose';
 import * as lodash from 'lodash';
 import logger from '../../logging';
+import { Reactory } from 'types/reactory';
 
 
 const { ObjectId } = mongoose.Schema.Types;
-const TemplateSchema = mongoose.Schema({
+const TemplateSchema = new mongoose.Schema({
   id: ObjectId,
   organization: {
     type: ObjectId,
@@ -71,8 +72,8 @@ const TemplateSchema = mongoose.Schema({
 });
 
 // eslint-disable-next-line max-len
-TemplateSchema.statics.findClientTemplate = function findClientTemplate(template, organization, client) {
-  const qry = { view: template.view, client: client._id }; // eslint-disable-line no-underscore-dangle
+TemplateSchema.statics.findClientTemplate = function findClientTemplate(template: Reactory.ITemplate, organization: Reactory.IOrganization, client: Reactory.IPartner) {
+  const qry = { view: template.view, client: client._id, organization: null as Reactory.IOrganization }; // eslint-disable-line no-underscore-dangle
   if (organization && organization._id) qry.organization = organization._id; // eslint-disable-line no-underscore-dangle
   return this.findOne(qry).then();
 };
@@ -97,4 +98,4 @@ TemplateSchema.statics.templates = async (client = null, organization = null) =>
 };
 
 const TemplateModel = mongoose.model('Template', TemplateSchema);
-export default TemplateModel;
+export default TemplateModel

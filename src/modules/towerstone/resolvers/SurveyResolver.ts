@@ -293,6 +293,8 @@ export default {
 
       const { user, partner } = global;
 
+      const mailService = getMailService(survey, 'Survey.templates()');
+      
       const surveyModel = await Survey.findById(survey).populate('delegates.delegate', 'delegates.assessments').then();
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
@@ -323,7 +325,7 @@ export default {
       };
 
       try {
-        logger.info(`Survey Model has ${surveyModel.delegates.length} delegates, finding ${entryId}`);
+        logger.info(`Survey Model has ${(surveyModel as TowerStone.ISurveyDocument).delegates.length} delegates, finding ${entryId}`);
         if (entryId === '' && action === 'add') {
           entryData.entry = {
             id: new ObjectId(),
@@ -332,11 +334,10 @@ export default {
             assessments: [],
             launched: false,
             complete: false,
-            removed: false,
-            team: surveyModel.surveyType === '180' ? inputData.team || surveyModel.delegateTeamName : 'default',
+            removed: false,            
             message: `Added ${delegateModel.firstName} ${delegateModel.lastName} to survey ${surveyModel.title}`,
             lastAction: 'added',
-            satus: 'new',
+            status: 'new',
             actions: [{
               action: 'added',
               when: moment().valueOf(),
@@ -346,7 +347,21 @@ export default {
             updatedAt: moment().valueOf(),
             createdAt: moment().valueOf(),
           };
-          surveyModel.delegates.push(entryData.entry);
+
+          if((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') {
+            if(typeof inputData.userAddType === 'string') {
+              if(inputData.userAddType === 'delegate') {
+                entryData.entry.team = (surveyModel as TowerStone.ISurveyDocument).delegateTeamName;                
+                entryData.entry.status = 'new-delegate'
+              }
+              if(inputData.userAddType === 'assessor') {
+                entryData.entry.team = (surveyModel as TowerStone.ISurveyDocument).assessorTeamName;
+                entryData.entry.status = 'new-assessor'
+              }
+            }
+          }
+
+          (surveyModel as TowerStone.ISurveyDocument).delegates.push(entryData.entry);
           await surveyModel.save().then();
           // TODO: Figure out why this is throwing a mongoose error now
           // record is inserted, but on return it fails
@@ -359,113 +374,172 @@ export default {
           entryData.patch = false;
 
           return entryData.entry;
-        }
-
-        // not a new entry, find it!
-        entryData.entry = surveyModel.delegates.id(entryId);
-        if (entryData.entry === null) {
-          throw new ApiError('Could not find the delegate entry with the entry id', entryId);
-        }
-
-        for (let entryIndex = 0; entryIndex < surveyModel.delegates.length; entryIndex += 1) {
-          if (surveyModel.delegates[entryIndex]._id === entryData.entry._id) {
-            entryData.entryIdx = entryIndex;
+        } else {
+          // not a new entry, find it!
+          entryData.entry = (surveyModel as TowerStone.ISurveyDocument).delegates.id(entryId);
+          if (entryData.entry === null) {
+            throw new ApiError('Could not find the delegate entry with the entry id', entryId);
           }
-        }
 
-        entryData.entry.delegate = delegateModel;
-        logger.info(`Performing "${action}" action:\n 
-          \tOrganigram model: ${organigramModel ? organigramModel._id.toString() : 'No Organigram'}\n 
-          \tDelegateEntry: ${entryData.entry._id} at index ${entryData.entryIdx}\n 
-          \tDelegate: ${entryData.entry.delegate.email}
-          \tAssessments: ${entryData.entry.assessments}`);
-
-        switch (action) {
-          case 'send-invite': {
-            const inviteResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.ParticipationInvite);
-            entryData.entry.message = `${inviteResult.message} @ ${moment().format('YYYY-MM-DD HH:mm:ss')}`;
-            entryData.patch = true;
-            entryData.entry.status = 'invite-sent';
-            entryData.entry.lastAction = inviteResult.success ? 'invitation-sent' : 'invite-failed';
-            entryData.entry.actions.push({
-              action: inviteResult.success ? 'invitation-sent' : 'invite-failed',
-              when: new Date(),
-              result: inviteResult.message,
-              who: user._id,
-            });
-            break;
-          }
-          case 'launch': {
-            if (organigramModel && organigramModel.confirmedAt) {
-              const relaunch = inputData.relaunch === true;
-              const launchResult = await launchSurveyForDelegate(surveyModel, entryData.entry, organigramModel, relaunch);
-              entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
-              if (launchResult.assessments) {
-                entryData.entry.assessments = launchResult.assessments.map(a => a._id);
-              }
-              entryData.patch = true;
-              entryData.entry.status = launchResult.success ? 'launched' : entryData.entry.status;
-              entryData.entry.lastAction = launchResult.success ? 'launched' : 'launch-fail';
-              entryData.entry.launched = launchResult.success === true;
-              entryData.entry.actions.push({
-                action: launchResult.success ? 'launched' : 'launch-fail',
-                when: new Date(),
-                result: launchResult.message,
-                who: user._id,
-              });
-            } else {
-              // //console.log('No Organigram Model', organigramModel);
-              entryData.entry.message = `Please set user organigram / peers. ${delegateModel.firstName} ${delegateModel.lastName}`;
-              entryData.patch = true;
-              entryData.entry.status = 'new';
-              entryData.entry.lastAction = 'launch';
-
-              entryData.entry.actions.push({
-                action: 'launch',
-                when: new Date(),
-                result: entryData.entry.message,
-                who: user._id,
-              });
+          for (let entryIndex = 0; entryIndex < surveyModel.delegates.length; entryIndex += 1) {
+            if (surveyModel.delegates[entryIndex]._id === entryData.entry._id) {
+              entryData.entryIdx = entryIndex;
             }
-            break;
           }
-          case 'send-reminder': {
-            const reminderResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
-            entryData.entry.message = reminderResult.message;
-            entryData.patch = true;
-            // entryData.entry.status = 'reminded';
-            entryData.entry.lastAction = 'reminder';
 
-            entryData.entry.actions.push({
-              action: 'reminder',
-              when: new Date(),
-              result: reminderResult.message,
-              who: user._id,
-            });
+          entryData.entry.delegate = delegateModel;
+          logger.info(`Performing "${action}" action:\n 
+            \tOrganigram model: ${organigramModel ? organigramModel._id.toString() : 'No Organigram'}\n 
+            \tDelegateEntry: ${entryData.entry._id} at index ${entryData.entryIdx}\n 
+            \tDelegate: ${entryData.entry.delegate.email}
+            \tAssessments: ${entryData.entry.assessments}`);
 
-            break;
-          }
-          case 'send-closed': {
-            const closeResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyClose);
-            entryData.entry.message = closeResult.message;
-            entryData.patch = true;
-            entryData.entry.status = 'closed';
-            entryData.entry.lastAction = 'closed';
-            entryData.complete = true;
-            entryData.entry.actions.push({
-              action: 'closed',
-              when: new Date(),
-              result: closeResult.message,
-              who: user._id,
-            });
-            break;
-          }
-          case 'remove': {
-            entryData.entry.message = `Removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
-            if (!entryData.entry.removed) {
-              entryData.entry.removed = true;
-              entryData.entry.status = 'removed';
-              entryData.entry.lastAction = 'removed';
+          switch (action) {
+            case 'send-invite': {
+              const inviteResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.ParticipationInvite);
+              entryData.entry.message = `${inviteResult.message} @ ${moment().format('YYYY-MM-DD HH:mm:ss')}`;
+              entryData.patch = true;
+              entryData.entry.status = 'invite-sent';
+              entryData.entry.lastAction = inviteResult.success ? 'invitation-sent' : 'invite-failed';
+              entryData.entry.actions.push({
+                action: inviteResult.success ? 'invitation-sent' : 'invite-failed',
+                when: new Date(),
+                result: inviteResult.message,
+                who: user._id,
+              });
+              break;
+            }
+            case 'launch': {
+              debugger;
+              if((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') {
+                
+                const relaunch = inputData.relaunch === true;
+                  const launchResult = await launchSurveyForDelegate(surveyModel as TowerStone.ISurveyDocument, entryData.entry, organigramModel, relaunch);
+                  
+                  entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
+                  if (launchResult.assessments) {
+                    entryData.entry.assessments = launchResult.assessments.map(a => a._id);
+                  }
+
+                  const isAssessorTeam = entryData.entry.team === (surveyModel as TowerStone.ISurveyDocument).assessorTeamName;                  
+                  if(launchResult.success === true) {
+                    const mailSendResult = await mailService.send(surveyModel, 'launch', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate]);
+                    logger.debug('Sent mails for 180 launch', {mailSendResult})
+                  }
+
+                  entryData.patch = true;
+                  entryData.entry.status = launchResult.success ? `launched-${isAssessorTeam === true ? 'assessor' : 'delegeate' }` : entryData.entry.status;
+                  entryData.entry.lastAction = launchResult.success ? `launched-${isAssessorTeam === true ? 'assessor' : 'delegeate' }` : 'launch-fail';
+                  entryData.entry.launched = launchResult.success === true;
+                  entryData.entry.actions.push({
+                    action: launchResult.success ? 'launched' : 'launch-fail',
+                    when: new Date(),
+                    result: launchResult.message,
+                    who: user._id,
+                  });
+
+              } else {
+
+                if (organigramModel && organigramModel.confirmedAt) {
+                  const relaunch = inputData.relaunch === true;
+                  const launchResult = await launchSurveyForDelegate(surveyModel, entryData.entry, organigramModel, relaunch);
+                  entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
+                  if (launchResult.assessments) {
+                    entryData.entry.assessments = launchResult.assessments.map(a => a._id);
+                  }
+                  entryData.patch = true;
+                  entryData.entry.status = launchResult.success ? 'launched' : entryData.entry.status;
+                  entryData.entry.lastAction = launchResult.success ? 'launched' : 'launch-fail';
+                  entryData.entry.launched = launchResult.success === true;
+                  entryData.entry.actions.push({
+                    action: launchResult.success ? 'launched' : 'launch-fail',
+                    when: new Date(),
+                    result: launchResult.message,
+                    who: user._id,
+                  });
+                } else {
+                  // //console.log('No Organigram Model', organigramModel);
+                  entryData.entry.message = `Please set user organigram / peers. ${delegateModel.firstName} ${delegateModel.lastName}`;
+                  entryData.patch = true;
+                  entryData.entry.status = 'new';
+                  entryData.entry.lastAction = 'launch';
+  
+                  entryData.entry.actions.push({
+                    action: 'launch',
+                    when: new Date(),
+                    result: entryData.entry.message,
+                    who: user._id,
+                  });
+                }
+                break;
+
+              }                  
+            }
+            case 'send-reminder': {
+              const reminderResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
+              entryData.entry.message = reminderResult.message;
+              entryData.patch = true;
+              // entryData.entry.status = 'reminded';
+              entryData.entry.lastAction = 'reminder';
+
+              entryData.entry.actions.push({
+                action: 'reminder',
+                when: new Date(),
+                result: reminderResult.message,
+                who: user._id,
+              });
+
+              break;
+            }
+            case 'send-closed': {
+              const closeResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyClose);
+              entryData.entry.message = closeResult.message;
+              entryData.patch = true;
+              entryData.entry.status = 'closed';
+              entryData.entry.lastAction = 'closed';
+              entryData.complete = true;
+              entryData.entry.actions.push({
+                action: 'closed',
+                when: new Date(),
+                result: closeResult.message,
+                who: user._id,
+              });
+              break;
+            }
+            case 'remove': {
+              entryData.entry.message = `Removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
+              if (!entryData.entry.removed) {
+                entryData.entry.removed = true;
+                entryData.entry.status = 'removed';
+                entryData.entry.lastAction = 'removed';
+                entryData.patch = true;
+
+                entryData.entry.actions.push({
+                  action: 'removed',
+                  when: new Date(),
+                  result: entryData.entry.message,
+                  who: user._id,
+                });
+              } else {
+                surveyModel.delegates[entryData.entryIdx].remove();
+                entryData.entry.status = 'deleted';
+                entryData.entry.actions.push({
+                  action: 'deleted',
+                  when: new Date(),
+                  result: 'Deleted from Survey',
+                  who: user._id,
+                });
+
+                surveyModel.addTimelineEntry('User Removed', `${user.firstName} removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
+                entryData.patch = false;
+              }
+              break;
+            }
+            case 'enable': {
+              entryData.entry.message = `Re-enabled delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
+              entryData.entry.removed = false;
+              entryData.entry.status = 'new';
+              entryData.entry.lastAction = 're-added';
               entryData.patch = true;
 
               entryData.entry.actions.push({
@@ -474,85 +548,59 @@ export default {
                 result: entryData.entry.message,
                 who: user._id,
               });
-            } else {
-              surveyModel.delegates[entryData.entryIdx].remove();
-              entryData.entry.status = 'deleted';
-              entryData.entry.actions.push({
-                action: 'deleted',
-                when: new Date(),
-                result: 'Deleted from Survey',
-                who: user._id,
-              });
 
-              surveyModel.addTimelineEntry('User Removed', `${user.firstName} removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
-              entryData.patch = false;
+              break;
             }
-            break;
-          }
-          case 'enable': {
-            entryData.entry.message = `Re-enabled delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
-            entryData.entry.removed = false;
-            entryData.entry.status = 'new';
-            entryData.entry.lastAction = 're-added';
-            entryData.patch = true;
+            case 'remove-assessor': {
+              // used when we remove an assessor from a particular delegate
+              try {
+                const { assessmentId } = inputData;
+                const assessment = await Assessment.findById(assessmentId).populate('assessor').then();
+                if (assessment !== null && assessment !== undefined) {
+                  assessment.deleted = true;
+                  assessment.completed = true;
+                  assessment.updatedAt = new Date();
+                  const assessmentCount = entryData.entry.assessments.length;
+                  let pullAtIndex = -1;
 
-            entryData.entry.actions.push({
-              action: 'removed',
-              when: new Date(),
-              result: entryData.entry.message,
-              who: user._id,
-            });
-
-            break;
-          }
-          case 'remove-assessor': {
-            // used when we remove an assessor from a particular delegate
-            try {
-              const { assessmentId } = inputData;
-              const assessment = await Assessment.findById(assessmentId).populate('assessor').then();
-              if (assessment !== null && assessment !== undefined) {
-                assessment.deleted = true;
-                assessment.completed = true;
-                assessment.updatedAt = new Date();
-                const assessmentCount = entryData.entry.assessments.length;
-                let pullAtIndex = -1;
-
-                for (let aidx = 0; aidx < assessmentCount; aidx += 1) {
-                  const sourceId = entryData.entry.assessments[aidx];
-                  if (ObjectId(sourceId).equals(ObjectId(assessmentId))) {
-                    pullAtIndex = aidx;
+                  for (let aidx = 0; aidx < assessmentCount; aidx += 1) {
+                    const sourceId = entryData.entry.assessments[aidx];
+                    if (ObjectId(sourceId).equals(ObjectId(assessmentId))) {
+                      pullAtIndex = aidx;
+                    }
                   }
+
+                  if (pullAtIndex > -1) pullAt(entryData.entry.assessments, [pullAtIndex]);
+
+                  entryData.entry.message = `Removed ${assessment.assessor.firstName} ${assessment.assessor.lastName} for ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
+                  entryData.entry.lastAction = 'removed-assessor';
+                  entryData.patch = true;
                 }
-
-                if (pullAtIndex > -1) pullAt(entryData.entry.assessments, [pullAtIndex]);
-
-                entryData.entry.message = `Removed ${assessment.assessor.firstName} ${assessment.assessor.lastName} for ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
-                entryData.entry.lastAction = 'removed-assessor';
-                entryData.patch = true;
+              } catch (removeError) {
+                logger.error(`Error occured removing the assessment from the delegate ${delegateModel.email}: ${removeError.message}`, removeError);
               }
-            } catch (removeError) {
-              logger.error(`Error occured removing the assessment from the delegate ${delegateModel.email}: ${removeError.message}`, removeError);
+              break;
             }
-            break;
+            default: {
+              entryData.message = 'Default action taken, none';
+              break;
+            }
           }
-          default: {
-            entryData.message = 'Default action taken, none';
-            break;
-          }
-        }
 
-        if (entryData.patch === true && entryData.entryIdx >= 0) {
-          logger.info(`Updating entry ${entryData.entry.id}`);
-          entryData.entry.lastAction = action;
-          entryData.entry.updatedAt = moment().valueOf();
-          surveyModel.delegates.set(entryData.entryIdx, entryData.entry);
-          await surveyModel.save().then();
-        }
+          if (entryData.patch === true && entryData.entryIdx >= 0) {
+            logger.info(`Updating entry ${entryData.entry.id}`);
+            entryData.entry.lastAction = action;
+            entryData.entry.updatedAt = moment().valueOf();
+            surveyModel.delegates.set(entryData.entryIdx, entryData.entry);
+            await surveyModel.save().then();
+          }
+
+          return entryData.entry;
+        }        
       } catch (error) {
         // console.log(error);
         logger.error(error.message, error);
-      }
-      return entryData.entry;
+      }      
     },
     async TowerStoneSurveySetTemplates(parent: any, params: TowerStone.ITowerStoneSetTemplatesParameters ) {
       const { id, templates } = params;      

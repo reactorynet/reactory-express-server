@@ -1,15 +1,10 @@
 import { ObjectId } from "mongodb";
+import Mongoose from "mongoose";
+import { TemplateType, UIFrameWork } from "./constants";
 
 
 declare namespace Reactory {
   
-  export enum UIFrameWork {
-    material = 'material',
-    bootstrap = 'bootstrap',
-    office = 'office',
-    blueprint = 'blueprint'
-  }
-
   export interface IMongoDocument {
     _id: ObjectId
     id: string
@@ -25,21 +20,23 @@ declare namespace Reactory {
     name: string
     type: string
   }
-
-  export interface ITemplate extends IMongoDocument {
+  
+  export interface ITemplate {
     enabled: boolean
     organization?: ObjectId
     client: ObjectId
     view: string
-    kind: string
+    kind: TemplateType
     format: string
     content: string
     description?: string
     name?: string
     locale?: string
-    elements: Array<ITemplate>
+    elements: Array<ITemplateDocument>
     parameters: Array<ITemplateParam>
   }
+
+  export interface ITemplateDocument extends Mongoose.Document, ITemplate {}
 
   export interface IPartner extends IMongoDocument {
     key: string
@@ -72,7 +69,6 @@ declare namespace Reactory {
   }
 
   export interface IUser {
-    id: string | any,
     email: string
     firstName: string
     lastName: string
@@ -84,8 +80,9 @@ declare namespace Reactory {
     getAuthentication(provider: string): IAuthentication
   }
 
+  export interface IUserDocument extends Mongoose.Document, IUser {
 
-
+  }
 
   export interface ISchema {
     type: string,

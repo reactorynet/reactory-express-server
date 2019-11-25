@@ -186,6 +186,7 @@
     "@types/co": "^4.6.2",
     "@types/lodash": "^4.14.149",
     "@types/mongodb": "^3.3.11",
+    "@types/mongoose": "^5.5.32",
     "@types/uuid": "^3.4.6",
     "awesome-typescript-loader": "^5.2.1"
   },

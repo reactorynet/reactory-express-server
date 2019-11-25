@@ -1,9 +1,30 @@
 import mongoose from 'mongoose';
+import mongo from 'mongodb';
 import logger from '../../logging';
-
 const { ObjectId } = mongoose.Schema.Types;
 
-const EmailQueueSchema = mongoose.Schema({
+export interface IEmailQueue {
+  sendAfter: Date,
+  sentAt: Date,
+  sent: Boolean,
+  error: String,
+  failures: Number,
+  from: String,
+  message: String,
+  subject: String,
+  to: String,
+  archived: Boolean,
+  createdAt: Date,
+  format: String,
+  postalService: String,
+  client: mongo.ObjectId,
+  user: mongo.ObjectId,
+  survey: mongo.ObjectId
+}
+
+export interface IEmailQueueDocument extends mongoose.Document, IEmailQueue { }
+
+const EmailQueueSchema = new mongoose.Schema({
   id: ObjectId,
   sendAfter: Date,
   sentAt: Date,
