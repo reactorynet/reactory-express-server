@@ -1,4 +1,4 @@
-import { UIFrameWork } from "types/constants";
+import { UIFrameWork } from "@reactory/server-core/types/constants";
 import { FormNameSpace } from "../constants";
 
 const propsFactory = require('../../../data/forms/defs').default;
