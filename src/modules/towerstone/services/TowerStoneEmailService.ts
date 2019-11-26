@@ -466,7 +466,7 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
           const msg = {
             to: `${_user.firstName} ${_user.lastName}<${_user.email}>`,
             from: `${partner.name}<${partner.email}>`,
-            ...ReactoryMail.resolveUserEmailAddress(user, partner),
+            ...ReactoryMail.resolveUserEmailAddress(_user, partner),
             subject: '',
             html: ''
           };
