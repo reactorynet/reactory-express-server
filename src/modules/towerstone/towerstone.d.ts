@@ -53,6 +53,7 @@ declare namespace TowerStone {
     calendar: any[],
     delegates: any[],
     templates: ISurveyTemplates
+    addTimelineEntry( eventType: string, eventDetail: string, who: ObjectID, save: boolean): Promise<void> 
   }
 
   export interface ISurveyDocument extends Mongoose.Document, ISurvey { }
@@ -78,7 +79,7 @@ declare namespace TowerStone {
   }
   
   export interface ITowerStoneEmailService {
-    send: (survey: ISurvey, activity: string, target: string, users: Reactory.IUser[]) => Promise<IEmailSendResult>
+    send: (survey: ISurvey, activity: string, target: string, users: Reactory.IUser[], properties: any ) => Promise<IEmailSendResult>
     templates: (survey: ISurvey) => Promise<ISurveyTemplates>
     patchTemplates: (survey: ISurvey, templates: ISurveyTemplates) => Promise<ISurveyTemplates>  
   }

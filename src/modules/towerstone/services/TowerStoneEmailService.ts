@@ -149,6 +149,7 @@ const keyForTemplate = (template: TowerStone.ISurveyEmailTemplate) : string => {
 };
 
 const getTowerStoneSurveyEmailTemplate = (surveyType: string,  activity: string, target:string) : TowerStone.ISurveyEmailTemplate => {
+
   const _template = lodash.find(EmailDefaults, { surveyType, activity, target });
   if(_template) {
     _template.id = keyForTemplate(_template);
@@ -228,6 +229,7 @@ const getReactoryTemplate = async (view: string, organization: Reactory.IOrganiz
   return templateDocument;
 };
 
+
 /**
  * Function used to patch a survey template
  * @param template 
@@ -248,6 +250,7 @@ const patchTemplate = async ( template: TowerStone.ISurveyEmailTemplate, organiz
     _subjectTemplate.kind = TemplateType.content;
     _subjectTemplate.organization = organization._id
     _subjectTemplate.view = `${template.key}/subject`
+    _subjectTemplate.content = template.subject;
     _subjectTemplate.format = "text"
     _subjectTemplate.enabled = true
     _subjectTemplate.parameters = [
@@ -270,6 +273,7 @@ const patchTemplate = async ( template: TowerStone.ISurveyEmailTemplate, organiz
     _bodyTemplate.kind = TemplateType.content
     _bodyTemplate.view = `${template.key}/body`
     _bodyTemplate.format = "html"
+    _bodyTemplate.content = template.body;
     _bodyTemplate.enabled = true
     _bodyTemplate.parameters = [
       {
@@ -408,6 +412,7 @@ const extractSubjectAndBody = (template: Reactory.ITemplateDocument) : TemplateS
     }); 
   }
 
+  logger.debug('Extracted Subject and Body', extracted);
   return extracted;
 };
 
@@ -417,37 +422,44 @@ const extractSubjectAndBody = (template: Reactory.ITemplateDocument) : TemplateS
  * @param context 
  */
 const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context: any): TowerStone.ITowerStoneEmailService =>  {
-  logger.debug("TowerStoneEmailService Constructor", {props, context});
+  logger.debug("TowerStoneEmailService Constructor");
   return {
-    send: async (survey: TowerStone.ISurveyDocument, activity: string, target: string, users: Reactory.IUser[] ) => {  
+    send: async (survey: TowerStone.ISurveyDocument, activity: string, target: string, users: Reactory.IUser[], properties: any = {} ) => {  
       logger.debug(`Sending email for Survey ${survey.title} for ${activity} action targeting ${target} with ${users.length} user(s)`);      
       if(survey.surveyType === '180') {
-        debugger;
         const surveyTemplate = getTowerStoneSurveyEmailTemplate(survey.surveyType, activity, target);        
         const _template = await getReactoryTemplate(surveyTemplate.key, survey.organization, partner);
-        const _subjectAndBody = extractSubjectAndBody(_template as Reactory.ITemplateDocument);
-
+        
         if(lodash.isNil(_template) === true) {
           throw new RecordNotFoundError(`Template with view name ${surveyTemplate.key} could not be loaded`);
         }
 
+        const _subjectAndBody = extractSubjectAndBody(_template as Reactory.ITemplateDocument);
+
+        if(lodash.isEmpty(_subjectAndBody.body)) throw new ApiError(`Could not extract body from template, please ensure ${surveyTemplate.key}/body exists`); 
+        if(lodash.isEmpty(_subjectAndBody.subject)) throw new ApiError(`Could not extract body from template, please ensure ${surveyTemplate.key}/subject exists`); 
+
+       
+
         // setup api key for email being sent
+        logger.debug('Setting up sgMail')
         try {
           sgMail.setApiKey(partner.emailApiKey);
         } catch (sgError) {
           logger.error('Error setting API key', sgError);
         }
 
-        logger.info('Api Key Set, configuring property bag for template.');
+        logger.debug('Api Key Set, configuring property bag for template.');
         // property bag for template
         const baseProperties = {
           partner,
-          user,
+          user, //this be global users
           organization: survey.organization,          
           survey,          
           applicationTitle: partner.name,
           timeEnd: moment(survey.endDate).format('HH:mm'),
           dateEnd: moment(survey.endDate).format('YYYY-MM-DD'),
+          ...properties
         };
 
         users.map((_user: Reactory.IUserDocument) => {          
@@ -460,13 +472,13 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
           };
 
           try {
-            msg.subject = ReactoryMail.renderTemplate(_subjectAndBody.subject, { ...baseProperties, user: _user });
+            msg.subject = ReactoryMail.renderTemplate({ content: _subjectAndBody.subject }, { ...baseProperties, user: _user });
           } catch (subjectRenderError) {
             msg.subject = 'Subject Render Error';
           }
 
           try {
-            msg.html = ReactoryMail.renderTemplate(_subjectAndBody.subject, );
+            msg.html = ReactoryMail.renderTemplate({content: _subjectAndBody.body }, { ...baseProperties, user: _user });
           } catch (bodyRenderError) {
             msg.html = `Could not render body due to error ${bodyRenderError}`
           }

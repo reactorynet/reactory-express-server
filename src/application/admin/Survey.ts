@@ -389,7 +389,6 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
   const is180 = surveyType === '180';
   const is360 = surveyType === '360';
   const isPLC = surveyType === 'plc';
-  debugger;
   
   try {
     const options = { ...defaultLaunchOptions, ...survey.options };
@@ -411,7 +410,6 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
 
     if(is180 === true) {
       const assessments = [];
-
       const leadershipBrand = await LeadershipBrand.findById(survey.leadershipBrand);
       const templateRatings: any[] = [];
       logger.info(`Building Ratings template for Leadership Brand: ${leadershipBrand.title}`);
@@ -440,22 +438,35 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
         team = 'delegates';
       }
 
-      const assessment = new Assessment({
-        id: new ObjectId(),
-        organization: new ObjectId(survey.organization),
-        client: new ObjectId(global.partner._id),
-        delegate: new ObjectId(delegateEntry.delegate._id),
-        team: team,
-        assessor: new ObjectId(delegateEntry.delegate._id),
-        survey: new ObjectId(survey._id),
-        complete: false,
-        ratings: [...templateRatings],
-        createdAt: new Date().valueOf(),
-        updatedAt: new Date().valueOf(),
-      })
+      const existingAssessment = await Assessment.find({ 
+        survey: survey._id, 
+        delegate: delegateEntry.delegate._id, 
+        assessor: delegateEntry.delegate._id   
+      }).then()
 
-      await assessment.save().then()
-      return result(`Created 180 ${assessments.length} for assessor delegate`, true, [assessment])
+
+
+      if( existingAssessment.length === 1 ) {
+        logger.debug('Delegate / Assessor already have assessment asigned')
+        return result(`Re-Launched 180 for ${delegateEntry.delegate.firstName}`, true, existingAssessment);
+      } else {
+        const assessment = new Assessment({
+          id: new ObjectId(),
+          organization: new ObjectId(survey.organization),
+          client: new ObjectId(global.partner._id),
+          delegate: new ObjectId(delegateEntry.delegate._id),
+          team: team,
+          assessor: new ObjectId(delegateEntry.delegate._id),
+          survey: new ObjectId(survey._id),
+          complete: false,
+          ratings: [...templateRatings],
+          createdAt: new Date().valueOf(),
+          updatedAt: new Date().valueOf(),
+        });
+        await assessment.save().then()
+        return result(`Created 180 ${assessments.length} for assessor delegate`, true, [assessment]);
+      }
+      
     } else {
       if (organigram.peers && organigram.peers.length > 0 && (is360 === true || isPLC === true)) {
         if (organigram.peers.length < options.minimumPeers) return result(`Delegate does not have the minimum of ${options.minimumPeers} peers for this survey (${organigram.peers})`);

@@ -169,14 +169,21 @@ const queueMail = co.wrap(function* queueMail(user, msg, options = DefaultQueueO
   }
 });
 
+String.prototype.replaceAll = function(search, replacement) {
+  var target = this;
+  return target.replace(new RegExp(search, 'g'), replacement);
+};
+
 export const renderTemplate = (template, properties) => {
   if (template && typeof template.content === 'string') {
     if (template.content.toString().indexOf('$ref://') === 0) {
       const filename = `${APP_DATA_ROOT}/templates/email/${template.content.replace('$ref://', '')}`;
       logger.info(`Loading template filename: ${filename}`);
-      const templateString = readFileSync(filename).toString('utf8');
+      let templateString = readFileSync(filename).toString('utf8');
       if (existsSync(filename)) {
         try {
+          templateString = templateString.replaceAll("&lt;%=", "<%=").replaceAll("%&gt;", "%>");
+          templateString = templateString.replaceAll("%3C%=", "<%=").replaceAll("%%3E", "%>");
           return ejs.render(templateString, properties);
         } catch (renderErr) {
           logger.error('::TEMPLATE RENDER ERROR::', { templateString, renderErr });
@@ -185,7 +192,9 @@ export const renderTemplate = (template, properties) => {
       }
       throw new RecordNotFoundError('Filename for template not found', 'TEMPLATE_REF');
     } else {
-      return ejs.render(template.content, properties);
+      let templateString = template.content.replaceAll("&lt;%=", "<%=").replaceAll("%&gt;", "%>");
+      templateString = templateString.replaceAll("%3C%=", "<%=").replaceAll("%%3E", "%>")
+      return ejs.render(templateString, properties);
     }
   }
   throw new ApiError(`Invalid type for template.content, expected string, but got ${typeof template.content}`);

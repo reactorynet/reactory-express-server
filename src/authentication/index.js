@@ -260,7 +260,7 @@ class AuthConfig {
         userId: user._id.toString(), // eslint-disable-line no-underscore-dangle
         refresh: uuid(),
         name: `${user.firstName} ${user.lastName}`,
-        memberships: user.memberships,
+        // memberships: user.memberships,
       };
     }
 

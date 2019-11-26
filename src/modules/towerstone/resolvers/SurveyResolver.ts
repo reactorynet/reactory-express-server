@@ -24,6 +24,7 @@ import {
 } from '@reactory/server-core/application/admin/Survey';
 import { TowerStone } from '../towerstone';
 import { TowerStoneServicesMap } from "../services";
+import AuthConfig from 'authentication';
 
 const { findIndex, pullAt } = lodash;
 
@@ -409,34 +410,41 @@ export default {
               });
               break;
             }
-            case 'launch': {
-              debugger;
+            case 'launch': {              
               if((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') {
                 
                 const relaunch = inputData.relaunch === true;
-                  const launchResult = await launchSurveyForDelegate(surveyModel as TowerStone.ISurveyDocument, entryData.entry, organigramModel, relaunch);
+                const launchResult = await launchSurveyForDelegate(surveyModel as TowerStone.ISurveyDocument, entryData.entry, organigramModel, relaunch);
                   
-                  entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
-                  if (launchResult.assessments) {
-                    entryData.entry.assessments = launchResult.assessments.map(a => a._id);
-                  }
+                entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
+                if (launchResult.assessments) {
+                  entryData.entry.assessments = launchResult.assessments.map(a => a._id);
+                }
 
-                  const isAssessorTeam = entryData.entry.team === (surveyModel as TowerStone.ISurveyDocument).assessorTeamName;                  
-                  if(launchResult.success === true) {
-                    const mailSendResult = await mailService.send(surveyModel, 'launch', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate]);
-                    logger.debug('Sent mails for 180 launch', {mailSendResult})
-                  }
-
-                  entryData.patch = true;
-                  entryData.entry.status = launchResult.success ? `launched-${isAssessorTeam === true ? 'assessor' : 'delegeate' }` : entryData.entry.status;
-                  entryData.entry.lastAction = launchResult.success ? `launched-${isAssessorTeam === true ? 'assessor' : 'delegeate' }` : 'launch-fail';
-                  entryData.entry.launched = launchResult.success === true;
-                  entryData.entry.actions.push({
-                    action: launchResult.success ? 'launched' : 'launch-fail',
-                    when: new Date(),
-                    result: launchResult.message,
-                    who: user._id,
+                const isAssessorTeam = entryData.entry.team === (surveyModel as TowerStone.ISurveyDocument).assessorTeamName;                  
+                if(launchResult.success === true) {
+                  logger.debug(`:::Launch For 180 LaunchResult`, launchResult);
+                  let assessment = launchResult.assessments[0]
+                  debugger;
+                  const mailSendResult = await mailService.send((surveyModel as TowerStone.ISurveyDocument), 'launch', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate], { 
+                    user: entryData.entry.delegate as Reactory.IUserDocument,
+                    assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(entryData.entry.delegate, { exp: moment((surveyModel as TowerStone.ISurveyDocument).endDate).valueOf() }))}`,
                   });
+                  logger.debug('Sent mails for 180 launch', {mailSendResult})
+                }
+
+                entryData.patch = true;
+                entryData.entry.status = launchResult.success ? `launched-${isAssessorTeam === true ? 'assessor' : 'delegate' }` : entryData.entry.status;
+                entryData.entry.lastAction = launchResult.success ? `launched-${isAssessorTeam === true ? 'assessor' : 'delegate' }` : 'launch-fail';
+                entryData.entry.launched = launchResult.success === true;
+                entryData.entry.actions.push({
+                  action: launchResult.success ? 'launched' : 'launch-fail',
+                  when: new Date(),
+                  result: launchResult.message,
+                  who: user._id,
+                });
+                
+                await (surveyModel as TowerStone.ISurveyDocument).addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();                  
 
               } else {
 
@@ -470,25 +478,55 @@ export default {
                     result: entryData.entry.message,
                     who: user._id,
                   });
-                }
-                break;
-
-              }                  
+                }              
+              }  
+              break;                
             }
             case 'send-reminder': {
-              const reminderResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
-              entryData.entry.message = reminderResult.message;
-              entryData.patch = true;
-              // entryData.entry.status = 'reminded';
-              entryData.entry.lastAction = 'reminder';
 
-              entryData.entry.actions.push({
-                action: 'reminder',
-                when: new Date(),
-                result: reminderResult.message,
-                who: user._id,
-              });
+              if((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') { 
+                const isAssessorTeam = entryData.entry.team === (surveyModel as TowerStone.ISurveyDocument).assessorTeamName;       
+                let assessment : any = null;
+                if(lodash.isArray(entryData.entry.assessments) === true && entryData.entry.assessments.length === 1) {
+                  assessment = entryData.entry.assessments[0];
+                }
+                
+                debugger;
 
+                if(assessment !== null) {
+                  const mailSendResult = await mailService.send((surveyModel as TowerStone.ISurveyDocument), 'reminder', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate], { 
+                    user: entryData.entry.delegate as Reactory.IUserDocument,
+                    assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(entryData.entry.delegate, { exp: moment((surveyModel as TowerStone.ISurveyDocument).endDate).valueOf() }))}`,
+                  });
+  
+                  entryData.entry.message = mailSendResult.sent === 1 ? 'Sent reminder to delegate for 180' : 'Could not send reminder';
+                  entryData.patch = true;
+                  entryData.entry.lastAction = 'reminder';
+
+                  entryData.entry.actions.push({
+                    action: 'reminder',
+                    when: new Date(),
+                    result: mailSendResult.sent === 1 ? 'Sent reminder to delegate for 180' : 'Could not send reminder',
+                    who: user._id,
+                  });
+                  logger.debug('Sent mails for 180 launch', {mailSendResult})
+                }                                      
+              } else {
+                const reminderResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
+                entryData.entry.message = reminderResult.message;
+                entryData.patch = true;
+                entryData.entry.lastAction = 'reminder';
+
+                entryData.entry.actions.push({
+                  action: 'reminder',
+                  when: new Date(),
+                  result: reminderResult.message,
+                  who: user._id,
+                });
+  
+              }
+
+              
               break;
             }
             case 'send-closed': {
