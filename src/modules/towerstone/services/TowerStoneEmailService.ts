@@ -8,7 +8,7 @@ import { ObjectId } from 'mongodb'
 import { Template, EmailQueue } from '@reactory/server-core/models';
 import { TowerStone } from '../towerstone';
 import { FormNameSpace } from '../constants';
-import { TemplateType } from 'types/constants';
+import { TemplateType } from '@reactory/server-core/types/constants';
 import ApiError, { RecordNotFoundError } from 'exceptions';
 import { Reactory } from 'types/reactory';
 
