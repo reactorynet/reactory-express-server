@@ -99,7 +99,7 @@ const getProducts = async (params) => {
   let apiFilter = {};
 
   let _cachedResults = await getCacheItem(cachekey);
-  if(_cachedResults) return _cachedResults;
+  if (_cachedResults) return _cachedResults;
 
   const productResult = await lasecApi.Products.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
 
@@ -151,15 +151,40 @@ const getProducts = async (params) => {
 
   setCacheItem(cachekey, products, 60 * 10)
 
-  logger.debug(`PRODUCT RESOLVER - PRODUCT COUNT::  `, { products });
+  logger.debug(`PRODUCT RESOLVER - PRODUCTS::  `, { products });
 
   return products;
+}
+
+const getProductClasses = async (params) => {
+
+  return [
+    {
+      id: 0,
+      name: 'Poduct Class 1'
+    },
+    {
+      id: 0,
+      name: 'Poduct Class 2'
+    },
+    {
+      id: 0,
+      name: 'Poduct Class 3'
+    },
+    {
+      id: 0,
+      name: 'Poduct Class 4'
+    }
+  ]
 }
 
 export default {
   Query: {
     LasecGetProductList: async (obj, args) => {
       return getProducts();
-    }
+    },
+    LasecGetProductClassList: async (obj, args) => {
+      return getProductClasses();
+    },
   }
 };

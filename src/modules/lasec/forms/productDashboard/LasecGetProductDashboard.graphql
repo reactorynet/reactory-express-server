@@ -1,5 +1,5 @@
-query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
-  LasecGetDashboard(dashparams: $dashparams){
+query LasecGetProductDashboard($dashparams: LasecQuoteQueryInput){
+  LasecGetProductDashboard(dashparams: $dashparams){
     id
     period
     periodStart
@@ -30,17 +30,17 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
         options
       }
     }
-    quotes { 
+    quotes {
       id
       statusName
       customer {
         id
         fullName
-      }         
+      }
       company {
         id
         tradingName
-      }     
+      }
       code
       totalVATExclusive
       totalVAT

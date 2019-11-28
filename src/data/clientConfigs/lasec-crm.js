@@ -470,7 +470,7 @@ const LASEC_CONFIG = {
           key: 'authlist',
           value: {
             type: 'bool',
-            authlist: [              
+            authlist: [
               'microsoft',
             ],
           },
@@ -483,7 +483,7 @@ const LASEC_CONFIG = {
       path: '/login_alt',
       public: true,
       roles: ['ANON'],
-      componentFqn: 'core.Login@1.0.0',      
+      componentFqn: 'core.Login@1.0.0',
       background: {
         image: 'default',
       },
@@ -506,7 +506,7 @@ const LASEC_CONFIG = {
           key: 'authlist',
           value: {
             type: 'bool',
-            authlist: [              
+            authlist: [
               'local',
             ],
           },
@@ -525,6 +525,24 @@ const LASEC_CONFIG = {
       exact: true,
       roles: ['USER'],
       componentFqn: `${key}.Dashboard@1.0.0`,
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'edit'
+          }
+        }
+      ],
+    },
+    {
+      key: 'product-dashboard',
+      title: 'Product Dashboard',
+      path: '/dashboard/product',
+      public: false,
+      exact: true,
+      roles: ['USER'],
+      componentFqn: `${key}.ProductDashboard@1.0.0`,
       args: [
         {
           key: 'mode',

@@ -151,6 +151,10 @@ type LasecQuoteDashboardCharts {
   quoteStatusComposed: LasecChart
 }
 
+type LasecProductDashboardCharts {
+  quoteStatusPie: LasecChart
+}
+
 type LasecQuoteDashboard {
   id: String
   period: String
@@ -168,6 +172,25 @@ type LasecQuoteDashboard {
   quotes: [ Quote ]
   nextActions: LasecUserNextActions
   charts: LasecQuoteDashboardCharts
+}
+
+type LasecProductDashboard {
+  id: String
+  period: String
+  periodLabel: String
+  periodStart: Date
+  periodEnd: Date
+  repIds: [String]
+  agentSelection: String
+  teamIds: [String]
+  target: Float
+  targetPercent: Float
+  totalQuotes: Int
+  totalBad: Int
+  statusSummary: [ LasecQuoteDashboardSummary ]
+  quotes: [ Quote ]
+  nextActions: LasecUserNextActions
+  charts: LasecProductDashboardCharts
 }
 
 type LasecQuoteStatus {
@@ -198,6 +221,7 @@ input LasecQuoteQueryInput {
   repIds: [ String ]
   teamIds: [ String ]
   status: [ String ]
+  productClass: [ String ]
 }
 
 enum QuoteFilterType {
@@ -223,7 +247,7 @@ input LasecQuoteHeaderInput {
   header_text: String
   action: QuoteHeaderAction!
 }
- 
+
 type LasecCustomerEnquiry {
   id: String
 }
@@ -232,6 +256,7 @@ type LasecCustomerEnquiry {
 extend type Query {
   LasecGetQuoteList( search: String ) : [ Quote ],
   LasecGetDashboard( dashparams: LasecQuoteQueryInput ) : LasecQuoteDashboard
+  LasecGetProductDashboard( productDashparams: LasecQuoteQueryInput ) : LasecProductDashboard
   LasecGetQuoteById(quote_id: String!): Quote
   LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [ Quote ]
 }

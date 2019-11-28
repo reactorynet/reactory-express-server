@@ -8,10 +8,10 @@ export default {
       dependencies: {
         period: {
           oneOf: [
-            { properties: 
+            { properties:
               {
                 period: {
-                  enum: ["custom"],              
+                  enum: ["custom"],
                 },
                 periodStart: {
                   type: 'string',
@@ -22,14 +22,14 @@ export default {
                   type: 'string',
                   title: 'Period End',
                   description: 'End of the period for which to collate quote data',
-                },        
-              } 
+                },
+              }
             },
-            { 
-              properties: 
+            {
+              properties:
               {
                 period: {
-                  enum: [ 
+                  enum: [
                     'today',
                     'yesterday',
                     'this-week',
@@ -38,9 +38,9 @@ export default {
                     'last-month',
                     'this-year',
                     'last-year',
-                  ]              
-                },                
-              } 
+                  ]
+                },
+              }
             },
           ]
         },
@@ -51,21 +51,21 @@ export default {
               properties: {
                 agentSelection: {
                   enum: ['me']
-                },                
-              }                
+                },
+              }
             },
             //team filter
-            {  
+            {
               agentSelection: {
                 enum: ['team']
               },
               teamFilter: {
                 tile: 'Team Filter',
-                type: 'string',                
+                type: 'string',
               }
             },
             //customer filter
-            {  
+            {
               agentSelection: {
                 enum: ['custom']
               },
@@ -118,27 +118,70 @@ export default {
             'team',
             'custom'
           ]
-        },                
+        },
+        productClass: {
+          title: 'Product Class',
+          type: 'array',
+          items: {
+            type: 'object',
+            properies: {
+              id: {
+                title: 'Produc Class Id',
+                type: 'string'
+              },
+              productName: {
+                title: 'Produc Class Name',
+                type: 'string'
+              }
+            }
+          }
+        },
       },
-    },    
+    },
     charts: {
       type: 'object',
       title: 'Charts',
       description: 'Charts Container',
       properties: {
-        quoteStatusFunnel: {
+        // quoteStatusFunnel: {
+        //   type: 'object',
+        //   title: 'Quote Status Funnel',
+        //   properties: {
+        //     data: {
+        //       type: 'array',
+        //       items: {
+        //         type: 'object',
+        //         title: 'Data Point',
+        //         properties: {
+        //           value: {
+        //             type: 'number',
+        //             title: 'value',
+        //           },
+        //           name: {
+        //             type: 'string',
+        //             title: 'name'
+        //           },
+        //           fill: {
+        //             type: 'string',
+        //             title: 'fillcolor'
+        //           }
+        //         }
+        //       }
+        //     },
+        //   },
+        // },
+        quoteProductPie: {
           type: 'object',
-          title: 'Quote Status Funnel',
+          title: 'Quote Product Funnel',
           properties: {
             data: {
               type: 'array',
               items: {
                 type: 'object',
-                title: 'Data Point',
                 properties: {
                   value: {
                     type: 'number',
-                    title: 'value',            
+                    title: 'value',
                   },
                   name: {
                     type: 'string',
@@ -149,149 +192,123 @@ export default {
                     title: 'fillcolor'
                   }
                 }
-              }              
-            },                    
-          },
-        },        
-        quoteStatusPie: {
-          type: 'object',
-          title: 'Quote Status Funnel',
-          properties: {
-            data: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  value: {
-                    type: 'number',
-                    title: 'value',            
-                  },
-                  name: {
-                    type: 'string',
-                    title: 'name'
-                  },
-                  fill: {
-                    type: 'string',
-                    title: 'fillcolor'
-                  }
-                }
-              }            
+              }
             }
-          }          
+          }
         },
-        quoteStatusComposed: {
-          type: 'object',
-          title: 'Quote Status Funnel',
-          properties: {
-            data: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  value: {
-                    type: 'number',
-                    title: 'value',            
-                  },
-                  name: {
-                    type: 'string',
-                    title: 'name'
-                  },
-                  fill: {
-                    type: 'string',
-                    title: 'fillcolor'
-                  }
-                }
-              }            
-            }
-          }          
-        }
-      }      
+        // quoteStatusComposed: {
+        //   type: 'object',
+        //   title: 'Quote Status Funnel',
+        //   properties: {
+        //     data: {
+        //       type: 'array',
+        //       items: {
+        //         type: 'object',
+        //         properties: {
+        //           value: {
+        //             type: 'number',
+        //             title: 'value',
+        //           },
+        //           name: {
+        //             type: 'string',
+        //             title: 'name'
+        //           },
+        //           fill: {
+        //             type: 'string',
+        //             title: 'fillcolor'
+        //           }
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
+      }
     },
-    targetPercent: {
-      type: 'number',
-      title: 'Target Percent'
-    },
-    target: {
-      type: 'number',
-      title: 'Target ZAR'
-    },
-    totalQuotes: {
-      type: 'number',
-      title: 'Total Good',
-    },
-    totalBad: {
-      type: 'number',
-      title: 'Total Bad',
-    },
-    combinedData: {
-      type: 'string',
-      title: 'combined'
-    },        
-    statusSummary: {
-      title: 'Status Funnel',
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          statusGroup: {
-            type: 'string',
-            title: 'Status Group',
-          },
-          statusKey: {
-            type: 'string',
-            title: 'Status Key',
-          },
-          status: {
-            type: 'string',
-            title: 'status',
-          },
-          good: {
-            type: 'number',
-            title: 'Good',
-          },
-          naughty: {
-            type: 'number',
-            title: '',
-          },
-        },
-      },
-    },    
-    quotes: {
-      type: 'array',
-      title: 'Quote Grid',
-      items: {
-        type: 'object',
-        properties: {
-          id: {
-            type: 'string',
-            title: 'Quote Id',
-          },
-          code: {
-            type: 'string',
-            title: 'Code',
-          },
-          statusName: {
-            type: 'string',
-            title: 'Status',
-          },
-          companyTradingName: {
-            type: 'string',
-            title: 'Company',
-          },
-          customerName: {
-            type: 'string',
-            title: 'Customer',
-          },
-          totalVATExclusive: {
-            type: 'number',
-            title: 'Total Vat (Excl)',
-          },
-          totalVATInclusive: {
-            type: 'number',
-            title: 'Total Vat (Incl)',
-          },
-        },
-      },
-    },
+    // targetPercent: {
+    //   type: 'number',
+    //   title: 'Target Percent'
+    // },
+    // target: {
+    //   type: 'number',
+    //   title: 'Target ZAR'
+    // },
+    // totalQuotes: {
+    //   type: 'number',
+    //   title: 'Total Good',
+    // },
+    // totalBad: {
+    //   type: 'number',
+    //   title: 'Total Bad',
+    // },
+    // combinedData: {
+    //   type: 'string',
+    //   title: 'combined'
+    // },
+    // statusSummary: {
+    //   title: 'Status Funnel',
+    //   type: 'array',
+    //   items: {
+    //     type: 'object',
+    //     properties: {
+    //       statusGroup: {
+    //         type: 'string',
+    //         title: 'Status Group',
+    //       },
+    //       statusKey: {
+    //         type: 'string',
+    //         title: 'Status Key',
+    //       },
+    //       status: {
+    //         type: 'string',
+    //         title: 'status',
+    //       },
+    //       good: {
+    //         type: 'number',
+    //         title: 'Good',
+    //       },
+    //       naughty: {
+    //         type: 'number',
+    //         title: '',
+    //       },
+    //     },
+    //   },
+    // },
+    // quotes: {
+    //   type: 'array',
+    //   title: 'Quote Grid',
+    //   items: {
+    //     type: 'object',
+    //     properties: {
+    //       id: {
+    //         type: 'string',
+    //         title: 'Quote Id',
+    //       },
+    //       code: {
+    //         type: 'string',
+    //         title: 'Code',
+    //       },
+    //       statusName: {
+    //         type: 'string',
+    //         title: 'Status',
+    //       },
+    //       companyTradingName: {
+    //         type: 'string',
+    //         title: 'Company',
+    //       },
+    //       customerName: {
+    //         type: 'string',
+    //         title: 'Customer',
+    //       },
+    //       totalVATExclusive: {
+    //         type: 'number',
+    //         title: 'Total Vat (Excl)',
+    //       },
+    //       totalVATInclusive: {
+    //         type: 'number',
+    //         title: 'Total Vat (Incl)',
+    //       },
+    //     },
+    //   },
+    // },
   },
 };
