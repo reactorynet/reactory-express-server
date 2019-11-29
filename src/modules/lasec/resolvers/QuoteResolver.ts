@@ -473,7 +473,7 @@ const groupQuotesByStatus = (quotes) => {
 
 const groupQuotesByProduct = (quotes) => {
 
-  logger.debug('GROUPING BY PRODUCT!!');
+  logger.debug('GROUPING BY PRODUCT!! Quote count:: ', quotes.length);
 
   // RANDOM PRODUCT CLASSES
   const randomProducts = ['Prod 1', 'Prod 2', 'Prod 3', 'Prod 4']
@@ -485,7 +485,7 @@ const groupQuotesByProduct = (quotes) => {
     const key = randomProducts[Math.floor(Math.random() * randomProducts.length)];
     // const key = quote.productClass || 'none';
 
-    logger.debug('GROUP KEY:: ', key);
+    logger.debug(`GROUP KEY:: ${key}`);
 
     const { totals } = quote;
 
@@ -517,7 +517,7 @@ const groupQuotesByProduct = (quotes) => {
 
 const lasecGetProductDashboard = async (dashparams) => {
 
-  logger.debug('GET PRODUCT DASHBOARD QUERIED', dashparams);
+  logger.debug(`GET PRODUCT DASHBOARD QUERIED:: ${dashparams}`);
 
   let {
     period = 'this-week',
@@ -584,7 +584,6 @@ const lasecGetProductDashboard = async (dashparams) => {
   }
 
   let periodLabel = `Produc Quotes Dashboard ${periodStart.format('DD MM YY')} till ${periodEnd.format('DD MM YY')} For ${global.user.firstName} ${global.user.lastName}`;
-
   let cacheKey = `productQuote.dashboard.${user._id}.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
 
   /*
@@ -597,11 +596,25 @@ const lasecGetProductDashboard = async (dashparams) => {
      }
   */
 
-  logger.debug(`Fetching Lasec Dashboard Data`, dashparams);
   let palette = global.partner.colorScheme();
 
   logger.debug('Fetching Quote Data');
   const quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  logger.debug('Fetching Target Data');
+  const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  logger.debug('Fetching Next Actions for; User')
+  const nextActionsForUser = await getNextActionsForUser({ user: global.user }).then();
+  logger.debug('Fetching invoice data');
+  const invoices = await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  logger.debug('Fetching isos');
+  const isos = await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+
+  const quoteProductFunnel = {
+    chartType: 'FUNNEL',
+    data: [],
+    options: {},
+    key: `quote-product/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/funnel`
+  };
 
   const quoteProductPie = {
     chartType: 'PIE',
@@ -616,6 +629,66 @@ const lasecGetProductDashboard = async (dashparams) => {
     key: `quote-status/product-dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
   };
 
+  const quoteISOPie = {
+    chartType: 'PIE',
+    data: isos.map((iso) => {
+      return iso;
+    }),
+    options: {
+      multiple: false,
+      outerRadius: 140,
+      innerRadius: 70,
+      fill: `#${palette[1]}`,
+      dataKey: 'order_value',
+    },
+    key: `quote-iso/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
+  };
+
+  const quoteINVPie = {
+    chartType: 'PIE',
+    data: invoices.map((invoice) => {
+      return invoice;
+    }),
+    options: {
+      multiple: false,
+      outerRadius: 140,
+      innerRadius: 70,
+      fill: `#${palette[2]}`,
+      dataKey: 'invoice_value',
+    },
+    key: `quote-inv/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
+  };
+
+  const quoteStatusComposed = {
+    chartType: 'COMPOSED',
+    data: [],
+    options: {
+      xAxis: {
+        dataKey: 'modified',
+      },
+      line: {
+        dataKey: 'totalVATExclusive',
+        dataLabel: 'Total Quoted',
+        name: 'Total Quoted',
+        stroke: `#${palette[0]}`,
+      },
+      area: {
+        dataKey: 'invoiced',
+        dataLabel: 'Total Invoiced',
+        name: 'Total Invoiced',
+        stroke: `${global.partner.themeOptions.palette.primary1Color}`,
+      },
+      bar: {
+        dataKey: 'isos',
+        dataLabel: 'Total ISO',
+        name: 'Sales Orders',
+        stroke: `${global.partner.themeOptions.palette.primary2Color}`,
+      }
+    },
+    key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`
+  };
+
+
   const productDashboardResult = {
     period: period,
     periodLabel,
@@ -626,24 +699,35 @@ const lasecGetProductDashboard = async (dashparams) => {
     repIds,
     target: 0,
     targetPercent: 0,
-    // nextActions: {
-    //   owner: global.user,
-    //   nextActions: nextActionsForUser
-    // },
+    nextActions: {
+      owner: global.user,
+      nextActions: nextActionsForUser
+    },
     totalQuotes: 0,
     totalBad: 0,
-    statusSummary: [],
     productSummary: [],
     quotes,
     charts: {
+      quoteProductFunnel,
       quoteProductPie,
+      quoteISOPie,
+      quoteINVPie,
+      quoteStatusComposed
     }
   };
 
   productDashboardResult.totalQuotes = quotes.length;
-  productDashboardResult.productSummary = groupQuotesByProduct(productDashboardResult.quotes);
+  productDashboardResult.productSummary = groupQuotesByProduct(quotes);
+  productDashboardResult.charts.quoteProductFunnel.data = [];
+  productDashboardResult.charts.quoteProductPie.data = [];
 
-  productDashboardResult.statusSummary.forEach((entry, index) => {
+  productDashboardResult.productSummary.forEach((entry, index) => {
+
+    productDashboardResult.charts.quoteProductFunnel.data.push({
+      "value": entry.totalVATExclusive,
+      "name": entry.title,
+      "fill": `#${palette[index + 1 % palette.length]}`
+    });
 
     productDashboardResult.charts.quoteProductPie.data.push({
       "value": entry.totalVATExclusive,
@@ -654,7 +738,29 @@ const lasecGetProductDashboard = async (dashparams) => {
     });
   });
 
-  logger.debug('PRODUCT DASHBOARD RESULT:: ', JSON.stringify(productDashboardResult));
+  lodash.sortBy(quotes, [q => q.modified]).forEach((quote) => {
+    productDashboardResult.charts.quoteStatusComposed.data.push({
+      "name": quote.id,
+      "modified": moment(quote.modified).format('YYYY-MM-DD'),
+      "totalVATInclusive": quote.totals.totalVATInclusive / 100,
+      "totalVATExclusive": quote.totals.totalVATExclusive / 100,
+      "totalVAT": quote.grand_total_vat_cents
+    });
+  });
+
+  let totalTargetValue = 0;
+  targets.forEach((target) => {
+    productDashboardResult.target += target.target;
+    totalTargetValue += (target.target * 100) / (target.targetPercent || 100);
+  });
+
+  if (isNaN(productDashboardResult.target) && isNaN(totalTargetValue) === false) {
+    productDashboardResult.targetPercent = totalTargetValue * 100 / productDashboardResult.target;
+  }
+
+  productDashboardResult.charts.quoteProductFunnel.data = lodash.reverse(productDashboardResult.charts.quoteProductFunnel.data);
+
+  logger.debug(`PRODUCT DASHBOARD RESULT:: ${JSON.stringify(productDashboardResult)}`);
 
   return productDashboardResult;
 
@@ -1103,6 +1209,23 @@ export default {
     }
 
   },
+  // LasecQuoteProductDashboard: {
+  //   id: ({
+  //     period, periodStart, periodEnd, status,
+  //   }) => {
+  //     return `${period}.${moment(periodStart).valueOf()}.${moment(periodEnd).valueOf()}`;
+  //   },
+  //   target: (dashboard) => {
+
+  //     if (dashboard.target) return dashboard.target;
+  //     else return 1000000;
+  //   },
+
+  //   targetPercent: (dashboard) => {
+  //     if (dashboard.targetPercent) return dashboard.targetPercent;
+  //     return 50;
+  //   }
+  // },
   Query: {
     LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes();

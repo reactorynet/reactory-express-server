@@ -1,5 +1,5 @@
-query LasecGetProductDashboard($dashparams: LasecQuoteQueryInput){
-  LasecGetProductDashboard(dashparams: $dashparams){
+query LasecGetProductDashboard($productDashparams: LasecQuoteQueryInput){
+  LasecGetProductDashboard(productDashparams: $productDashparams){
     id
     period
     periodStart
@@ -9,7 +9,7 @@ query LasecGetProductDashboard($dashparams: LasecQuoteQueryInput){
     totalBad
     target
     targetPercent
-    statusSummary {
+    productSummary {
       key
       title
       good
@@ -17,11 +17,11 @@ query LasecGetProductDashboard($dashparams: LasecQuoteQueryInput){
       category
     }
     charts {
-      quoteStatusFunnel {
+      quoteProductFunnel {
         data
         options
       }
-      quoteStatusPie {
+      quoteProductPie {
         data
         options
       }

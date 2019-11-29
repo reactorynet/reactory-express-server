@@ -6,9 +6,12 @@ const {
 export default {
   submitIcon: 'refresh',
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    spacing: 4,
+  },
   'ui:grid-layout': [
     {
-      toolbar: { md: 3, sm: 12, xs: 12 },
+      toolbar: { lg: 12, md: 12, sm: 12, xs: 12 },
     },
     {
       totalQuotes: { md: 3, sm: 12 },
@@ -20,7 +23,7 @@ export default {
       charts: { md: 12 },
     },
     {
-      statusSummary: { md: 12 },
+      productSummary: { md: 12 },
     },
     {
       quotes: { md: 12 },
@@ -62,6 +65,13 @@ export default {
       },
     },
 
+    periodStart: {
+      'ui:widget': 'DateSelectorWidget',
+    },
+    periodEnd: {
+      'ui:widget': 'DateSelectorWidget',
+    },
+
     agentSelection: {
       'ui:widget': 'SelectWithDataWidget',
       'ui:options': {
@@ -99,12 +109,7 @@ export default {
       },
     },
 
-    periodStart: {
-      'ui:widget': 'DateSelectorWidget',
-    },
-    periodEnd: {
-      'ui:widget': 'DateSelectorWidget',
-    },
+
     agentFilter: {
       /*
       The agent should be pulled from AD groups.
@@ -121,16 +126,21 @@ export default {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
-        quoteStatusPie: { md: 12, sm: 12, xs: 12 },
-        // quoteStatusComposed: { md: 12, sm: 12, xs: 12 }
+        quoteProductPie: { md: 4, sm: 12, xs: 12 },
+        // quoteISOPie: { md: 4, sm: 12, xs: 12 },
+        // quoteINVPie: { md: 4, sm: 12, xs: 12 },
       },
+      {
+        quoteProductFunnel: { md: 12, sm: 12, xs: 12 }
+      },
+      {
+        quoteStatusComposed: { md: 12, sm: 12, xs: 12 }
+      }
     ],
-    // quoteStatusFunnel: {
-    //   'ui:widget': 'FunnelChartWidget',
-    //   'ui:options': {
-
-    //   }
-    // },
+    quoteProductFunnel: {
+      'ui:widget': 'FunnelChartWidget',
+      'ui:options': {}
+    },
     quoteProductPie: {
       'ui:widget': 'PieChartWidget',
       'ui:options': {
@@ -139,118 +149,118 @@ export default {
         variant: 'static',
       },
     },
-    // quoteStatusComposed: {
-    //   'ui:widget': 'ComposedChartWidget',
-    //   'ui:options': {
-    //   }
-    // }
+    quoteStatusComposed: {
+      'ui:widget': 'ComposedChartWidget',
+      'ui:options': {
+      }
+    }
   },
-  // totalQuotes: {
-  //   'ui:widget': 'LabelWidget',
-  //   'ui:options': {
-  //     format: 'Total Quotes: ${formData}',
-  //     variant: 'h3',
-  //     title: 'Total Quotes',
-  //   }
-  // },
+  totalQuotes: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: 'Total Quotes: ${formData}',
+      variant: 'h3',
+      title: 'Total Quotes',
+    }
+  },
 
-  // target: {
-  //   'ui:widget': 'LabelWidget',
-  //   'ui:options': {
-  //     format: 'Target: ${formData}',
-  //     variant: 'h4',
-  //   }
-  // },
+  target: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: 'Target: ${formData}',
+      variant: 'h4',
+    }
+  },
 
-  // targetPercent: {
-  //   'ui:widget': 'LabelWidget',
-  //   'ui:options': {
-  //     format: 'Target %: ${formData}',
-  //     variant: 'h4',
-  //   }
-  // },
+  targetPercent: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: 'Target %: ${formData}',
+      variant: 'h4',
+    }
+  },
 
-  // totalBad: {
-  //   'ui:widget': 'LabelWidget',
-  //   'ui:options': {
-  //     format: 'Naughty Quotes: ${formData}',
-  //     variant: 'h4',
-  //     title: 'Total Bad',
-  //   }
-  // },
+  totalBad: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: 'Naughty Quotes: ${formData}',
+      variant: 'h4',
+      title: 'Total Bad',
+    }
+  },
 
-  // statusSummary: {
-  //   'ui:widget': 'MaterialTableWidget',
-  //   'ui:options': {
-  //     columns: [
-  //       { title: 'Status Group', field: 'title' },
-  //       { title: 'Good', field: 'good' },
-  //       { title: 'Naughty', field: 'naughty' },
-  //       { title: 'Total', field: 'totalVATExclusive',
-  //         component: 'core.CurrencyLabel@1.0.0',
-  //         propsMap: {
-  //           totalVATExclusive: 'value',
-  //         },
-  //     },
-  //     ],
-  //     options: {
-  //       grouping: true,
-  //     },
-  //   },
-  // },
+  productSummary: {
+    'ui:widget': 'MaterialTableWidget',
+    'ui:options': {
+      columns: [
+        { title: 'Status Group', field: 'title' },
+        // { title: 'Good', field: 'good' },
+        // { title: 'Naughty', field: 'naughty' },
+        { title: 'Total', field: 'totalVATExclusive',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            totalVATExclusive: 'value',
+          },
+      },
+      ],
+      options: {
+        grouping: true,
+      },
+    },
+  },
 
-  // quotes: {
-  //   title: 'Quotes List',
-  //   'ui:widget': 'MaterialTableWidget',
-  //   'ui:options': {
-  //     columns: [
-  //       {
-  //         title: 'Overview',
-  //         field: 'code',
-  //         component: 'core.SlideOutLauncher@1.0.0',
-  //         props: {
-  //           componentFqn: 'lasec-crm.QuoteDetail@1.0.0',
-  //           componentProps: {
-  //             'code': ['data.quote_id', 'data.code', 'query.quote_id']
-  //           },
-  //           slideDirection: 'down',
-  //           buttonTitle: '${code}',
-  //           windowTitle: 'Details view for ${code}',
-  //         },
-  //       },
-  //       {
-  //         title: 'Overview',
-  //         field: 'code',
-  //         component: 'core.SlideOutLauncher@1.0.0',
-  //         props: {
-  //           componentFqn: 'lasec-crm.UpdateQuoteStatus@1.0.0',
-  //           componentProps: {
-  //             'code': ['data.quote_id', 'data.code', 'query.quote_id']
-  //           },
-  //           slideDirection: 'down',
-  //           buttonTitle: 'Next Actions',
-  //           windowTitle: 'Next Actions ${code}',
-  //         },
-  //       },
-  //       { title: 'Status', field: 'statusName', defaultGroupOrder: 0 },
-  //       { title: 'Company', field: 'companyTradingName', defaultGroupOrder: 1 },
-  //       { title: 'Customer', field: 'customerName' },
-  //       { title: 'Total (VAT Excl)',
-  //         field: 'totalVATExclusive',
-  //         component: 'core.CurrencyLabel@1.0.0',
-  //         propsMap: {
-  //           totalVATExclusive: 'value',
-  //         },
-  //       },
-  //       {
-  //         title: 'GP (%)',
-  //         field: 'GP',
-  //       },
-  //     ],
-  //     options: {
-  //       grouping: true,
-  //     },
-  //     title: 'Quotes List',
-  //   },
-  // },
+  quotes: {
+    title: 'Quotes List',
+    'ui:widget': 'MaterialTableWidget',
+    'ui:options': {
+      columns: [
+        {
+          title: 'Overview',
+          field: 'code',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.QuoteDetail@1.0.0',
+            componentProps: {
+              'code': ['data.quote_id', 'data.code', 'query.quote_id']
+            },
+            slideDirection: 'down',
+            buttonTitle: '${code}',
+            windowTitle: 'Details view for ${code}',
+          },
+        },
+        {
+          title: 'Overview',
+          field: 'code',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.UpdateQuoteStatus@1.0.0',
+            componentProps: {
+              'code': ['data.quote_id', 'data.code', 'query.quote_id']
+            },
+            slideDirection: 'down',
+            buttonTitle: 'Next Actions',
+            windowTitle: 'Next Actions ${code}',
+          },
+        },
+        { title: 'Status', field: 'statusName', defaultGroupOrder: 0 },
+        { title: 'Company', field: 'companyTradingName', defaultGroupOrder: 1 },
+        { title: 'Customer', field: 'customerName' },
+        { title: 'Total (VAT Excl)',
+          field: 'totalVATExclusive',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            totalVATExclusive: 'value',
+          },
+        },
+        {
+          title: 'GP (%)',
+          field: 'GP',
+        },
+      ],
+      options: {
+        grouping: true,
+      },
+      title: 'Quotes List',
+    },
+  },
 };

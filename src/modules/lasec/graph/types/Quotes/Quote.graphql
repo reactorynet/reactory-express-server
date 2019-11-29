@@ -152,7 +152,11 @@ type LasecQuoteDashboardCharts {
 }
 
 type LasecProductDashboardCharts {
-  quoteStatusPie: LasecChart
+  quoteProductFunnel: LasecChart
+  quoteProductPie: LasecChart
+  quoteINVPie: LasecChart
+  quoteISOPie: LasecChart
+  quoteStatusComposed: LasecChart
 }
 
 type LasecQuoteDashboard {
@@ -187,7 +191,7 @@ type LasecProductDashboard {
   targetPercent: Float
   totalQuotes: Int
   totalBad: Int
-  statusSummary: [ LasecQuoteDashboardSummary ]
+  productSummary: [ LasecQuoteDashboardSummary ]
   quotes: [ Quote ]
   nextActions: LasecUserNextActions
   charts: LasecProductDashboardCharts
