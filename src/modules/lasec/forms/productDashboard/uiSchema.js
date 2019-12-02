@@ -16,17 +16,20 @@ export default {
     {
       totalQuotes: { md: 3, sm: 12 },
       totalBad: { md: 3, sm: 12 },
-      target: {md: 3, sm: 12},
-      targetPercent: {md: 3, sm: 12},
+      target: { md: 3, sm: 12 },
+      targetPercent: { md: 3, sm: 12 },
     },
     {
       charts: { md: 12 },
     },
     {
-      productSummary: { md: 12 },
+      nextActions: { xs: 12 }
     },
     {
-      quotes: { md: 12 },
+      productSummary: { lg: 12, md: 12, sm: 12, xs: 12 },
+    },
+    {
+      quotes: { lg: 12, md: 12, sm: 12, xs: 12 },
     },
   ],
   toolbar: {
@@ -35,19 +38,15 @@ export default {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
-        period: { md: 3, sm: 12, xs: 12 },
+        period: { lg: 6, md: 6, sm: 12, xs: 12 },
         periodStart: { md: 3, sm: 12, xs: 12 },
         periodEnd: { md: 3, sm: 12, xs: 12 },
       },
       {
-        agentSelection: { md: 3, sm: 12, xs: 12 },
-      },
-      {
-        productClass: { md: 3, sm: 12, xs: 12 },
+        agentSelection: { lg: 6, md: 6, sm: 12, xs: 12 },
+        productClass: { lg: 6, md: 6, sm: 12, xs: 12 },
       },
     ],
-
-
     period: {
       'ui:widget': 'SelectWidget',
       'ui:options': {
@@ -122,39 +121,9 @@ export default {
       },
     }
   },
-  charts: {
-    'ui:field': 'GridLayout',
-    'ui:grid-layout': [
-      {
-        quoteProductPie: { md: 4, sm: 12, xs: 12 },
-        // quoteISOPie: { md: 4, sm: 12, xs: 12 },
-        // quoteINVPie: { md: 4, sm: 12, xs: 12 },
-      },
-      {
-        quoteProductFunnel: { md: 12, sm: 12, xs: 12 }
-      },
-      {
-        quoteStatusComposed: { md: 12, sm: 12, xs: 12 }
-      }
-    ],
-    quoteProductFunnel: {
-      'ui:widget': 'FunnelChartWidget',
-      'ui:options': {}
-    },
-    quoteProductPie: {
-      'ui:widget': 'PieChartWidget',
-      'ui:options': {
-        size: 80,
-        thickness: 5,
-        variant: 'static',
-      },
-    },
-    quoteStatusComposed: {
-      'ui:widget': 'ComposedChartWidget',
-      'ui:options': {
-      }
-    }
-  },
+
+  // TOTALS
+
   totalQuotes: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -189,25 +158,111 @@ export default {
     }
   },
 
+  // CHARTS
+
+  charts: {
+    'ui:field': 'GridLayout',
+    'ui:grid-layout': [
+      {
+        quoteProductPie: { lg: 6, md: 6, sm: 12, xs: 12 },
+        quoteISOPie: { lg: 6, md: 6, sm: 12, xs: 12 },
+        quoteINVPie: { lg: 6, md: 6, sm: 12, xs: 12 },
+      },
+      {
+        quoteProductFunnel: { lg: 12, md: 12, sm: 12, xs: 12 }
+      },
+      {
+        quoteStatusComposed: { lg: 12, md: 12, sm: 12, xs: 12 }
+      }
+    ],
+    quoteProductFunnel: {
+      'ui:widget': 'FunnelChartWidget',
+      'ui:options': {}
+    },
+    quoteProductPie: {
+      'ui:widget': 'PieChartWidget',
+      'ui:options': {
+        size: 80,
+        thickness: 5,
+        variant: 'static',
+      },
+    },
+    quoteStatusComposed: {
+      'ui:widget': 'ComposedChartWidget',
+      'ui:options': {
+      }
+    },
+    quoteISOPie: {
+      'ui:widget': 'PieChartWidget',
+      'ui:options': {
+        size: 80,
+        thickness: 5,
+        variant: 'static',
+      },
+    },
+    quoteINVPie: {
+      'ui:widget': 'PieChartWidget',
+      'ui:options': {
+        size: 80,
+        thickness: 5,
+        variant: 'static',
+      },
+    },
+  },
+
+  /**
+   * Next Actions Section
+   **/
+  nextActions: {
+    'ui:field': 'GridLayout',
+    'ui:grid-layout': [
+      {
+        actions: { sm: 12, xs: 12 },
+      }
+    ],
+    actions: {
+      'ui:widget': 'MaterialListWidget',
+      'ui:options': {
+        id: 'Id',
+        primaryText: '${item.text}',
+        showAvatar: false,
+        icon: 'history',
+        variant: 'button',
+        secondaryAction: {
+          iconKey: 'edit',
+          label: 'Edit',
+          componentFqn: 'core.Link',
+          action: 'event:onRouteChanged',
+          link: '/edit/${item.id}/'
+        }
+      }
+    }
+  },
+
+  // PRODUCT SUMMERY TABLE
+
   productSummary: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Status Group', field: 'title' },
-        // { title: 'Good', field: 'good' },
-        // { title: 'Naughty', field: 'naughty' },
-        { title: 'Total', field: 'totalVATExclusive',
+        { title: 'Product Group', field: 'title' },
+        { title: 'Good', field: 'good' },
+        { title: 'Naughty', field: 'naughty' },
+        {
+          title: 'Total', field: 'totalVATExclusive',
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {
             totalVATExclusive: 'value',
           },
-      },
+        },
       ],
       options: {
         grouping: true,
       },
     },
   },
+
+  // QUOTE TABLE
 
   quotes: {
     title: 'Quotes List',
@@ -242,10 +297,12 @@ export default {
             windowTitle: 'Next Actions ${code}',
           },
         },
-        { title: 'Status', field: 'statusName', defaultGroupOrder: 0 },
+        { title: 'Status', field: 'statusName' },
+        { title: 'Product Class', field: 'productClass', defaultGroupOrder: 0 },
         { title: 'Company', field: 'companyTradingName', defaultGroupOrder: 1 },
         { title: 'Customer', field: 'customerName' },
-        { title: 'Total (VAT Excl)',
+        {
+          title: 'Total (VAT Excl)',
           field: 'totalVATExclusive',
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {

@@ -94,6 +94,7 @@ type Quote {
   lineItems: [ LasecQuoteItem ]
   timeline: [ QuoteTimeLine ]
   meta: Any
+  productClass: String
 }
 
 

@@ -27,7 +27,7 @@
     "reactory:create-form": "NODE_PATH=./src npx babel-node ./src/scripts/create-form.js --presets @babel/env --max_old_space_size=200000",
     "lint": "eslint . --fix"
   },
-  "repository": {    
+  "repository": {
     "type": "git",
     "url": "https://bitbucket.org/WernerWeber/reactory-server.git"
   },

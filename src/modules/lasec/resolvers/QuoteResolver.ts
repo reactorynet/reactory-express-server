@@ -473,31 +473,37 @@ const groupQuotesByStatus = (quotes) => {
 
 const groupQuotesByProduct = (quotes) => {
 
-  logger.debug('GROUPING BY PRODUCT!! Quote count:: ', quotes.length);
-
-  // RANDOM PRODUCT CLASSES
-  const randomProducts = ['Prod 1', 'Prod 2', 'Prod 3', 'Prod 4']
-
   const groupsByKey = {};
 
   quotes.forEach((quote) => {
 
-    const key = randomProducts[Math.floor(Math.random() * randomProducts.length)];
-    // const key = quote.productClass || 'none';
-
-    logger.debug(`GROUP KEY:: ${key}`);
+    const key = quote.productClass || 'None';
+    const statusKey = quote.statusGroup || 'none';
 
     const { totals } = quote;
+
+    const good_bad = {
+      "1": "good",
+      "2": "good",
+      "3": "good",
+      "4": "good",
+      "5": "bad",
+      "6": "good",
+    };
 
     if (Object.getOwnPropertyNames(groupsByKey).indexOf(quote.statusGroup) >= 0) {
       groupsByKey[key].quotes.push(quote);
       groupsByKey[key].totalVAT = Math.floor(groupsByKey[key].totalVAT + (totals.totalVAT / 100));
       groupsByKey[key].totalVATExclusive = Math.floor(groupsByKey[key].totalVATExclusive + (totals.totalVATExclusive / 100));
       groupsByKey[key].totalVATInclusive = Math.floor(groupsByKey[key].totalVATInclusive + (totals.totalVATInclusive / 100));
+      if (good_bad[statusKey] === "good") groupsByKey[key].good += 1;
+      else groupsByKey[key].naughty += 1;
 
     } else {
       groupsByKey[key] = {
         quotes: [quote],
+        good: 0,
+        naughty: 0,
         category: '',
         key,
         totalVAT: Math.floor(totals.totalVAT / 100),
@@ -599,7 +605,7 @@ const lasecGetProductDashboard = async (dashparams) => {
   let palette = global.partner.colorScheme();
 
   logger.debug('Fetching Quote Data');
-  const quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
   logger.debug('Fetching Target Data');
   const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
   logger.debug('Fetching Next Actions for; User')
@@ -688,6 +694,13 @@ const lasecGetProductDashboard = async (dashparams) => {
     key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`
   };
 
+  // TODO - Remove this. Adding a random product class.
+  const randomProductClasses = ['Product 1', 'Product 2', 'Product 3', 'Product 4'];
+  quotes.forEach(quote => {
+    quote.productClass = randomProductClasses[Math.floor(Math.random() * randomProductClasses.length)];
+  });
+
+  lodash.orderBy(quotes, ['productClass'], ['asc']);
 
   const productDashboardResult = {
     period: period,
@@ -722,13 +735,11 @@ const lasecGetProductDashboard = async (dashparams) => {
   productDashboardResult.charts.quoteProductPie.data = [];
 
   productDashboardResult.productSummary.forEach((entry, index) => {
-
     productDashboardResult.charts.quoteProductFunnel.data.push({
       "value": entry.totalVATExclusive,
       "name": entry.title,
       "fill": `#${palette[index + 1 % palette.length]}`
     });
-
     productDashboardResult.charts.quoteProductPie.data.push({
       "value": entry.totalVATExclusive,
       "name": entry.title,
@@ -759,8 +770,6 @@ const lasecGetProductDashboard = async (dashparams) => {
   }
 
   productDashboardResult.charts.quoteProductFunnel.data = lodash.reverse(productDashboardResult.charts.quoteProductFunnel.data);
-
-  logger.debug(`PRODUCT DASHBOARD RESULT:: ${JSON.stringify(productDashboardResult)}`);
 
   return productDashboardResult;
 

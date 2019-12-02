@@ -51,6 +51,7 @@ query LasecGetProductDashboard($productDashparams: LasecQuoteQueryInput){
       modified
       expirationDate
       note
+      productClass
     }
   }
 }

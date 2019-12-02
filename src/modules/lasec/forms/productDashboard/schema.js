@@ -1,3 +1,6 @@
+import { PieChart } from '@reactory/server-modules/core/schema/formSchema';
+import { nextActions } from '@reactory/server-modules/lasec/schema/formSchema';
+
 export default {
   type: 'object',
   title: '',
@@ -98,6 +101,7 @@ export default {
         period: {
           type: 'string',
           title: 'Period',
+          description: 'Select the time period for which you want to generate the dashboard',
           enum: [
             'today',
             'yesterday',
@@ -113,6 +117,7 @@ export default {
         agentSelection: {
           type: 'string',
           title: 'Filter Reps / User',
+          description: 'Select a User or Rep',
           enum: [
             'me',
             'team',
@@ -121,6 +126,7 @@ export default {
         },
         productClass: {
           title: 'Product Class',
+          description: 'Select a product class.',
           type: 'array',
           items: {
             type: 'object',
@@ -170,32 +176,9 @@ export default {
             },
           },
         },
-        quoteProductPie: {
-          type: 'object',
-          title: 'Quote Product Funnel',
-          properties: {
-            data: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  value: {
-                    type: 'number',
-                    title: 'value',
-                  },
-                  name: {
-                    type: 'string',
-                    title: 'name'
-                  },
-                  fill: {
-                    type: 'string',
-                    title: 'fillcolor'
-                  }
-                }
-              }
-            }
-          }
-        },
+        quoteProductPie: PieChart("quoteProductPie"),
+        quoteISOPie: PieChart("quoteISOPie"),
+        quoteINVPie: PieChart("quoteINVPie"),
         quoteStatusComposed: {
           type: 'object',
           title: 'Quote Status Funnel',
@@ -224,6 +207,9 @@ export default {
         }
       }
     },
+    nextActions: {
+      ...nextActions
+    },
     targetPercent: {
       type: 'number',
       title: 'Target Percent'
@@ -236,10 +222,10 @@ export default {
       type: 'number',
       title: 'Total Good',
     },
-    // totalBad: {
-    //   type: 'number',
-    //   title: 'Total Bad',
-    // },
+    totalBad: {
+      type: 'number',
+      title: 'Total Bad',
+    },
     combinedData: {
       type: 'string',
       title: 'combined'
@@ -262,14 +248,14 @@ export default {
             type: 'string',
             title: 'status',
           },
-          // good: {
-          //   type: 'number',
-          //   title: 'Good',
-          // },
-          // naughty: {
-          //   type: 'number',
-          //   title: '',
-          // },
+          good: {
+            type: 'number',
+            title: 'Good',
+          },
+          naughty: {
+            type: 'number',
+            title: '',
+          },
         },
       },
     },
@@ -290,6 +276,10 @@ export default {
           statusName: {
             type: 'string',
             title: 'Status',
+          },
+          productClass: {
+            type: 'string',
+            title: 'Product Class',
           },
           companyTradingName: {
             type: 'string',
