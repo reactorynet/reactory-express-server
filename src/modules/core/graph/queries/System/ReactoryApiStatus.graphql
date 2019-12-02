@@ -1,0 +1,51 @@
+	query ReactoryApiStatus {
+		apiStatus {
+			applicationName
+			applicationAvatar
+			when
+			status
+			firstName
+			lastName
+			avatar
+			roles
+			id
+			theme
+			themeOptions
+			routes {
+				id
+				path
+				public
+				roles
+				componentFqn
+				component {
+					nameSpace
+					name
+					version
+					args {
+						key
+						value
+					}
+					title
+					description
+					roles
+				}
+			}
+			menus {
+				id
+				key
+				name
+				target
+				roles
+				entries {
+					id
+					ordinal
+					title
+					link
+					external
+					icon
+					roles
+				}
+				
+			}
+		}
+	}
