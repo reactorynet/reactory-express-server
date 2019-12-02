@@ -23,6 +23,7 @@ import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
 import workflow from './workflow';
 import pdf from './pdf';
+import { ExcelRouter } from './excel';
 import amq from './amq';
 // import bots from './bot/server';
 import startup from './utils/startup';
@@ -151,6 +152,7 @@ startup().then((startResult) => {
   app.use('/workflow', workflow);
   app.use('/resources', resources);
   app.use('/pdf', pdf);
+  app.use('/excel', ExcelRouter);
   app.use('/charts', charts);
   app.use('/amq', amq.router);
   app.use(resourcesPath, 

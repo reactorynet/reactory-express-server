@@ -491,8 +491,6 @@ export default {
                   assessment = entryData.entry.assessments[0];
                 }
                 
-                debugger;
-
                 if(assessment !== null) {
                   const mailSendResult = await mailService.send((surveyModel as TowerStone.ISurveyDocument), 'reminder', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate], { 
                     user: entryData.entry.delegate as Reactory.IUserDocument,

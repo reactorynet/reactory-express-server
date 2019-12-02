@@ -279,7 +279,7 @@ export const TowerStoneSurveyDelegateConfig = {
   nameSpace: FormNameSpace,
   version: '1.0.0',
   helpTopics: ['survey-delegate-config'],
-  defaultReport: {
+  defaultPdfReport: {
     report: 'survey-status-delegates',
     folder: 'towerstone',
     method: 'post',

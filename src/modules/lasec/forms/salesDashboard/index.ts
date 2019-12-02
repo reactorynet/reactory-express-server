@@ -1,16 +1,16 @@
 import { defaultFormProps } from '@reactory/server-core/data/forms/defs';
 import moment from 'moment';
+import { Reactory } from '@reactory/server-core/types/reactory'
 
 import $schema from './schema';
 import $uiSchema from './uiSchema';
 import $graphql from './graphql';
 
-const {
-  CDN_ROOT,
-} = process.env;
+import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
 
-export default {
+
+const SalesDashboard: Reactory.IReactoryForm = {
   id: 'CrmDashboard',
   ...defaultFormProps,
   uiFramework: 'material',
@@ -20,7 +20,7 @@ export default {
       id: 'reactory.plugin.lasec360', 
       name: 'reactory.plugin.lasec360', 
       type: 'script', 
-      uri: `${CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
+      uri: `${ENVIRONMENT.CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
     },
   ],
   title: 'CRM Dashboard',
@@ -32,11 +32,28 @@ export default {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   roles: ['*'],
+  defaultExcelExport: {
+    title: 'Excel Export',
+    frameProps: {
+      height: '100%',
+      width: '100%',
+      styles: {
+        height: '100%',
+        width: '100%',
+      },
+      url: `${ENVIRONMENT.API_URI_ROOT}/excel?formId=lasec-crm.Dashboard.1.0.0`,
+      method: 'post'      
+    }
+  },
   helpTopics: ['sales-dashboard'],
   uiSchema: $uiSchema,
   graphql: $graphql,
   refresh: {
-    onChange: ['period', 'periodStart', 'periodEnd']
+    onChange: [
+      'period', 
+      'periodStart', 
+      'periodEnd'
+    ]
   },
   defaultFormValue: {
     toolbar: {
@@ -46,3 +63,5 @@ export default {
     }
   }
 };
+
+export default SalesDashboard;

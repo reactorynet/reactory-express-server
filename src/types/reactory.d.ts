@@ -1,9 +1,36 @@
 import { ObjectId } from "mongodb";
 import Mongoose from "mongoose";
+import ExcelJS from 'exceljs';
 import { TemplateType, UIFrameWork } from "./constants";
+import { Stream } from "stream";
 
 
 declare namespace Reactory {
+
+  export namespace Client {
+
+    export interface IFrameProperties {
+      url: string
+      height: string
+      width: string
+      styles: any
+      method?: string 
+    }
+
+    export interface IMessageHandler {
+      id: string
+      name: string
+      type: string
+      uri: string
+      component: string
+    }
+
+    export interface IFramedWindowProperties {
+      proxyRoot?: string
+      frameProps?: IFrameProperties
+      messageHandlers?: IMessageHandler[]
+    }
+  }
   
   export interface IMongoDocument {
     _id: ObjectId
@@ -138,6 +165,14 @@ declare namespace Reactory {
     widget: String
   }
 
+  export interface IReactoryPdfReport extends Client.IFramedWindowProperties {
+    title?: string
+  }
+
+  export interface IExcelExport extends Client.IFramedWindowProperties {
+    title?: string
+  }
+
   export interface IReactoryForm {
     id: String,
     uiFramework: String,
@@ -157,6 +192,10 @@ declare namespace Reactory {
     components?: String[],
     graphql?: IFormGraphDefinition,
     defaultFormValue?: any,
+    defaultPdfReport?: IReactoryPdfReport, 
+    defaultExcelExport?: IExcelExport,
+    reports?: IReactoryPdfReport[],
+    excelExports?:IExcelExport[], 
     refresh?: any,
     widgetMap?: IWidgetMap[],
     backButton?: Boolean,
@@ -213,7 +252,33 @@ declare namespace Reactory {
     service: Function,
     serviceType?: string
     dependencies?: string[]    
+  }   
+  
+  export namespace Service {
+    
+    export interface IExcelWriterService {
+      writeAsFile(options: IExcelWriterOptions): Promise<Boolean>
+      writeAsStream(options: IExcelWriterOptions): Promise<Boolean>
+      writeToBuffer(options: IExcelWriterOptions): Promise<Buffer>
+    }
+
+    export interface IExcelReaderService {
+      readFile(file: string): Promise<ExcelJS.Workbook>
+    }
+
+    export interface IExcelFormat {
+      font: string
+    }
+
+    export interface IExcelWriterOptions {
+      filename: string,
+      query: string,
+      params: any,
+      output: string,
+      formatting?: IExcelFormat,
+      stream?: Stream
+    }    
   }
-
-
 }
+
+
