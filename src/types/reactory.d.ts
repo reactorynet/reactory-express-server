@@ -126,6 +126,11 @@ declare namespace Reactory {
     items: IObjectSchema | IArraySchema
   }
 
+  export interface IReactoryFormQueryErrorHandlerDefinition {
+    componentRef: string,
+    method: string
+  }
+
   export interface IReactoryFormQuery {
     name: String,
     text: String,
@@ -134,7 +139,9 @@ declare namespace Reactory {
     variables: Object,
     edit?: boolean,
     new?: boolean,
-    delete?: boolean
+    delete?: boolean,
+    options?: any,
+    onError?: IReactoryFormQueryErrorHandlerDefinition
   }
 
   export interface IReactoryFormMutation {
@@ -173,6 +180,15 @@ declare namespace Reactory {
     title?: string
   }
 
+  export interface IUISchemaMenuItem {
+    id: string,
+    title: string,
+    key: string,
+    description: string,
+    icon: string,
+    uiSchema: any,
+  }
+
   export interface IReactoryForm {
     id: String,
     uiFramework: String,
@@ -183,6 +199,7 @@ declare namespace Reactory {
     helpTopics?: String[]
     schema: ISchema | IObjectSchema | IArraySchema,
     uiSchema?: any,
+    uiSchemas?: IUISchemaMenuItem[],
     registerAsComponent: boolean,
     nameSpace: String,
     name: String,
@@ -200,6 +217,12 @@ declare namespace Reactory {
     widgetMap?: IWidgetMap[],
     backButton?: Boolean,
     workflow?: Object,  
+    noHtml5Validate?: boolean,
+    formContext?: any,
+      /**
+     * components to mount in the componentDef propertie
+     */
+    componentDefs?: String[]
   }
 
   export interface IGraphShape {
