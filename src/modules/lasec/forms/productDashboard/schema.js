@@ -1,3 +1,6 @@
+import { PieChart } from '@reactory/server-modules/core/schema/formSchema';
+import { nextActions } from '@reactory/server-modules/lasec/schema/formSchema';
+
 export default {
   type: 'object',
   title: '',
@@ -8,10 +11,10 @@ export default {
       dependencies: {
         period: {
           oneOf: [
-            { properties: 
+            { properties:
               {
                 period: {
-                  enum: ["custom"],              
+                  enum: ["custom"],
                 },
                 periodStart: {
                   type: 'string',
@@ -22,14 +25,14 @@ export default {
                   type: 'string',
                   title: 'Period End',
                   description: 'End of the period for which to collate quote data',
-                },        
-              } 
+                },
+              }
             },
-            { 
-              properties: 
+            {
+              properties:
               {
                 period: {
-                  enum: [ 
+                  enum: [
                     'today',
                     'yesterday',
                     'this-week',
@@ -38,9 +41,9 @@ export default {
                     'last-month',
                     'this-year',
                     'last-year',
-                  ]              
-                },                
-              } 
+                  ]
+                },
+              }
             },
           ]
         },
@@ -51,21 +54,21 @@ export default {
               properties: {
                 agentSelection: {
                   enum: ['me']
-                },                
-              }                
+                },
+              }
             },
             //team filter
-            {  
+            {
               agentSelection: {
                 enum: ['team']
               },
               teamFilter: {
                 tile: 'Team Filter',
-                type: 'string',                
+                type: 'string',
               }
             },
             //customer filter
-            {  
+            {
               agentSelection: {
                 enum: ['custom']
               },
@@ -98,6 +101,7 @@ export default {
         period: {
           type: 'string',
           title: 'Period',
+          description: 'Select the time period for which you want to generate the dashboard',
           enum: [
             'today',
             'yesterday',
@@ -113,22 +117,41 @@ export default {
         agentSelection: {
           type: 'string',
           title: 'Filter Reps / User',
+          description: 'Select a User or Rep',
           enum: [
             'me',
             'team',
             'custom'
           ]
-        },                
+        },
+        productClass: {
+          title: 'Product Class',
+          description: 'Select a product class.',
+          type: 'array',
+          items: {
+            type: 'object',
+            properies: {
+              id: {
+                title: 'Produc Class Id',
+                type: 'string'
+              },
+              productName: {
+                title: 'Produc Class Name',
+                type: 'string'
+              }
+            }
+          }
+        },
       },
-    },    
+    },
     charts: {
       type: 'object',
       title: 'Charts',
       description: 'Charts Container',
       properties: {
-        quoteStatusFunnel: {
+        quoteProductFunnel: {
           type: 'object',
-          title: 'Quote Status Funnel',
+          title: 'Quote Product Funnel',
           properties: {
             data: {
               type: 'array',
@@ -138,7 +161,7 @@ export default {
                 properties: {
                   value: {
                     type: 'number',
-                    title: 'value',            
+                    title: 'value',
                   },
                   name: {
                     type: 'string',
@@ -149,36 +172,13 @@ export default {
                     title: 'fillcolor'
                   }
                 }
-              }              
-            },                    
+              }
+            },
           },
-        },        
-        quoteStatusPie: {
-          type: 'object',
-          title: 'Quote Status Funnel',
-          properties: {
-            data: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  value: {
-                    type: 'number',
-                    title: 'value',            
-                  },
-                  name: {
-                    type: 'string',
-                    title: 'name'
-                  },
-                  fill: {
-                    type: 'string',
-                    title: 'fillcolor'
-                  }
-                }
-              }            
-            }
-          }          
         },
+        quoteProductPie: PieChart("quoteProductPie"),
+        quoteISOPie: PieChart("quoteISOPie"),
+        quoteINVPie: PieChart("quoteINVPie"),
         quoteStatusComposed: {
           type: 'object',
           title: 'Quote Status Funnel',
@@ -190,7 +190,7 @@ export default {
                 properties: {
                   value: {
                     type: 'number',
-                    title: 'value',            
+                    title: 'value',
                   },
                   name: {
                     type: 'string',
@@ -201,11 +201,14 @@ export default {
                     title: 'fillcolor'
                   }
                 }
-              }            
+              }
             }
-          }          
+          }
         }
-      }      
+      }
+    },
+    nextActions: {
+      ...nextActions
     },
     targetPercent: {
       type: 'number',
@@ -226,9 +229,9 @@ export default {
     combinedData: {
       type: 'string',
       title: 'combined'
-    },        
-    statusSummary: {
-      title: 'Status Funnel',
+    },
+    productSummary: {
+      title: 'Product Funnel',
       type: 'array',
       items: {
         type: 'object',
@@ -255,7 +258,7 @@ export default {
           },
         },
       },
-    },    
+    },
     quotes: {
       type: 'array',
       title: 'Quote Grid',
@@ -273,6 +276,10 @@ export default {
           statusName: {
             type: 'string',
             title: 'Status',
+          },
+          productClass: {
+            type: 'string',
+            title: 'Product Class',
           },
           companyTradingName: {
             type: 'string',

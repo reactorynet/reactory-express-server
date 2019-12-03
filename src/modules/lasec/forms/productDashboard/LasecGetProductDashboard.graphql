@@ -1,5 +1,5 @@
-query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
-  LasecGetDashboard(dashparams: $dashparams){
+query LasecGetProductDashboard($productDashparams: LasecQuoteQueryInput){
+  LasecGetProductDashboard(productDashparams: $productDashparams){
     id
     period
     periodStart
@@ -9,7 +9,7 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
     totalBad
     target
     targetPercent
-    statusSummary {
+    productSummary {
       key
       title
       good
@@ -17,11 +17,11 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
       category
     }
     charts {
-      quoteStatusFunnel {
+      quoteProductFunnel {
         data
         options
       }
-      quoteStatusPie {
+      quoteProductPie {
         data
         options
       }
@@ -30,17 +30,17 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
         options
       }
     }
-    quotes { 
+    quotes {
       id
       statusName
       customer {
         id
         fullName
-      }         
+      }
       company {
         id
         tradingName
-      }     
+      }
       code
       totalVATExclusive
       totalVAT
@@ -51,6 +51,7 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
       modified
       expirationDate
       note
+      productClass
     }
   }
 }

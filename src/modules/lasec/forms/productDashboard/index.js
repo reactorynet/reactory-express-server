@@ -1,13 +1,11 @@
-import { defaultFormProps } from '../../../../data/forms/defs';
+import { defaultFormProps } from '@reactory/server-core/data/forms/defs';
 import moment from 'moment';
 
 import $schema from './schema';
 import $uiSchema from './uiSchema';
 import $graphql from './graphql';
 
-const {
-  CDN_ROOT,
-} = process.env;
+const { CDN_ROOT } = process.env;
 
 
 export default {
@@ -17,9 +15,9 @@ export default {
   uiSupport: ['material'],
   uiResources: [
     {
-      id: 'reactory.plugin.lasec360', 
-      name: 'reactory.plugin.lasec360', 
-      type: 'script', 
+      id: 'reactory.plugin.lasec360',
+      name: 'reactory.plugin.lasec360',
+      type: 'script',
       uri: `${CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
     },
   ],
@@ -42,7 +40,7 @@ export default {
     toolbar: {
       period: 'this-month',
       periodStart: moment().startOf('month').toISOString(),
-      periodEnd: moment().endOf('month').toISOString()
+      periodEnd: moment().endOf('month').toISOString(),
     }
   }
 };

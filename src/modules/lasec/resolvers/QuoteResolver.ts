@@ -8,7 +8,7 @@ import uuid from 'uuid';
 import lasecApi from '@reactory/server-modules/lasec/api';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
-import {  Organization, User, Task } from '@reactory/server-core/models';
+import { Organization, User, Task } from '@reactory/server-core/models';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
 import { clientFor } from '@reactory/server-core/graph/client';
@@ -48,9 +48,11 @@ const maps = {
   },
   status: {
     "status_id": "status",
-    "substatus_id": ["statusGroup",{ key: "statusGroupName", transform: (substatus_id) => {
-      return lookups.statusGroupName[`${substatus_id}`];
-    }}],
+    "substatus_id": ["statusGroup", {
+      key: "statusGroupName", transform: (substatus_id) => {
+        return lookups.statusGroupName[`${substatus_id}`];
+      }
+    }],
     "status_name": "statusName",
   },
   totals: {
@@ -82,9 +84,20 @@ const defaultDashboardParams = {
   periodStart: moment().startOf('week'),
   periodEnd: moment().endOf('week'),
   agentSelction: 'me',
-  teamIds: [ ],
-  repIds: [ ],
-  status: [ ]
+  teamIds: [],
+  repIds: [],
+  status: []
+};
+
+const defaultProductDashboardParams = {
+  period: 'this-week',
+  periodStart: moment().startOf('week'),
+  periodEnd: moment().endOf('week'),
+  agentSelction: 'me',
+  teamIds: [],
+  repIds: [],
+  status: [],
+  productClass: []
 };
 
 const quoteSyncTimeout = 3;
@@ -102,15 +115,15 @@ const quote_sync = async (quote_id, owner, source = null, map = true) => {
 
   const _existing = await Quote.findOne(_predicate).then();
 
-  if(_source === null) {
+  if (_source === null) {
     _source = await lasecApi.Quotes.getByQuoteId(quote_id).then();
   }
 
-  if(_source === null && _existing !== null){
+  if (_source === null && _existing !== null) {
     _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
   }
 
-  if(map === true && _source) {
+  if (map === true && _source) {
     const _map = {
       ...maps.meta,
       ...maps.company,
@@ -122,22 +135,22 @@ const quote_sync = async (quote_id, owner, source = null, map = true) => {
     _quoteDoc = om(_source, _map);
   }
 
-  if(_source === null) return null;
+  if (_source === null) return null;
 
   try {
-    if(_existing) {
-        _existing.meta = {
-          owner,
-          reference: quote_id,
-          source: { ..._source },
-          lastSync: now.valueOf(),
-          nextSync: moment(now).add(quoteSyncTimeout,'minutes').valueOf(),
-          mustSync: true,
-        };
-        _existing.totals = _quoteDoc.totals;
-        _existing.modified = moment(_quoteDoc.modified || now).valueOf();
-        await _existing.save();
-        return _existing;
+    if (_existing) {
+      _existing.meta = {
+        owner,
+        reference: quote_id,
+        source: { ..._source },
+        lastSync: now.valueOf(),
+        nextSync: moment(now).add(quoteSyncTimeout, 'minutes').valueOf(),
+        mustSync: true,
+      };
+      _existing.totals = _quoteDoc.totals;
+      _existing.modified = moment(_quoteDoc.modified || now).valueOf();
+      await _existing.save();
+      return _existing;
     } else {
       const _newQuote = new Quote({
         ..._quoteDoc,
@@ -146,7 +159,7 @@ const quote_sync = async (quote_id, owner, source = null, map = true) => {
           reference: quote_id,
           source: { ..._source },
           lastSync: now.valueOf(),
-          nextSync: moment(now).add(quoteSyncTimeout,'minutes').valueOf(),
+          nextSync: moment(now).add(quoteSyncTimeout, 'minutes').valueOf(),
           mustSync: true,
         },
         created: moment(_quoteDoc.created || now).valueOf(),
@@ -187,7 +200,7 @@ const getQuotes = async (params) => {
 
   let _params = params;
 
-  if(!_params) {
+  if (!_params) {
     _params = {
       periodStart: moment().startOf('year'),
       periodEnd: moment().endOf('day')
@@ -196,45 +209,48 @@ const getQuotes = async (params) => {
 
   let apiFilter = {
     start_date: _params.periodStart ? _params.periodStart.toISOString() : moment().startOf('year'),
-    end_date: _params.periodEnd? _params.periodEnd.toISOString() : moment().endOf('day')
+    end_date: _params.periodEnd ? _params.periodEnd.toISOString() : moment().endOf('day')
   };
 
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
-  
+
   let ids = [];
 
-  if(isArray(quoteResult.ids) === true) {
+  if (isArray(quoteResult.ids) === true) {
     ids = [...quoteResult.ids];
   }
 
   const pagePromises = [];
 
-  if(quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
-    const max_pages = quoteResult.pagination.num_pages < 10 ?  quoteResult.pagination.num_pages : 10;
+  if (quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
+    const max_pages = quoteResult.pagination.num_pages < 10 ? quoteResult.pagination.num_pages : 10;
 
-    for(let pageIndex = quoteResult.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
+    for (let pageIndex = quoteResult.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
       pagePromises.push(lasecApi.Quotes.list({ filter: apiFilter, pagination: { ...quoteResult.pagination, current_page: pageIndex } }));
     }
   }
 
   const pagedResults = await Promise.all(pagePromises).then();
 
-  pagedResults.forEach(( pagedResult ) => {
+  pagedResults.forEach((pagedResult) => {
     ids = [...ids, ...pagedResult.ids]
   });
 
   logger.debug(`Loading (${ids.length}) quote ids`);
 
+
   const quotesDetails = await lasecApi.Quotes.list({ filter: { ids: ids } });
   logger.debug(`Fetched Expanded View for (${quotesDetails.items.length}) Quotes from API`);
   let quotes = [...quotesDetails.items];
+
+  logger.debug(`QUOT ITEMS:: ${JSON.stringify(quotes)}`);
 
   //perform a lightweight map
   const quoteSyncResult = await Promise.all(quotes.map((quote) => {
     return quote_sync(quote.id, global.partner.key, quote, true);
   })).then();
 
-  quotes = quoteSyncResult.map( doc => doc);
+  quotes = quoteSyncResult.map(doc => doc);
 
   amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
 
@@ -242,63 +258,63 @@ const getQuotes = async (params) => {
 };
 
 
-const getTargets = async({ periodStart, periodEnd, teamIds, repIds, agentSelection }) => {  
+const getTargets = async ({ periodStart, periodEnd, teamIds, repIds, agentSelection }) => {
   try {
     let lasecUsersWithTargets = null;
-    switch(agentSelection) {
+    switch (agentSelection) {
       case "team": {
         lasecUsersWithTargets = await lasecApi.User.getLasecUsers(teamIds).then();
         break;
-      }      
+      }
       //case "bu": {
 
       //}
-      case "bu": 
-      case "me": 
+      case "bu":
+      case "me":
       default: {
         const lasecCreds = user.getAuthentication("lasec");
-        if(!lasecCreds) {
-          return []; 
+        if (!lasecCreds) {
+          return [];
         } else {
-          if(lasecCreds.props && lasecCreds.props.payload) {
+          if (lasecCreds.props && lasecCreds.props.payload) {
             const staff_user_id = lasecCreds.props.payload.user_id
             lasecUsersWithTargets = await lasecApi.User.getLasecUsers([staff_user_id]).then();
           } else {
             return [];
-          }          
+          }
         }
-        
+
       }
     }
-            
+
     const targets = await Promise.all(lasecUsersWithTargets.map((lasecUser) => {
       logger.debug(`Checking targets for ${lasecUser}`);
       return new Promise((resolve, reject) => {
         logger.debug(`Checking user status:`, lasecUser);
-                
-        resolve({ 
-          target: lasecUser.target || 1,          
+
+        resolve({
+          target: lasecUser.target || 1,
         });
-            
+
       });
     })).then();
-    
+
     return targets;
 
   } catch (targetFetchError) {
     logger.error(`Could not retrieve targets`, targetFetchError);
     return [];
-  }  
+  }
 };
 
 const getInvoices = async ({ periodStart, periodEnd }) => {
   try {
 
-    const invoiceResult = await lasecApi.Invoices.list({ filter: {  start_date: periodStart, end_date: periodEnd } }).then();
-    if(invoiceResults.ids && isArray(invoiceResult.ids)) {
-      const invoices = await lasecApi.Invoices.list({ filter: {  ids: invoiceResult.ids } }).then();
-      if(invoices && isArray(invoices.payload) === true) return invoices.payload;
-      return []; 
+    const invoiceResult = await lasecApi.Invoices.list({ filter: { start_date: periodStart, end_date: periodEnd } }).then();
+    if (invoiceResults.ids && isArray(invoiceResult.ids)) {
+      const invoices = await lasecApi.Invoices.list({ filter: { ids: invoiceResult.ids } }).then();
+      if (invoices && isArray(invoices.payload) === true) return invoices.payload;
+      return [];
     } else {
       logger.warning(`No invoice result with ids`)
       return [];
@@ -308,39 +324,39 @@ const getInvoices = async ({ periodStart, periodEnd }) => {
     logger.error(`Error fetching invoices for period`, invoiceGetError);
     return [];
   }
-  
+
 };
 
 const getISOs = async ({ periodStart, periodEnd }) => {
   try {
-    const isoIds = await lasecApi.PurchaseOrders.list({ filter: { start_date: periodStart, end_date: periodEnd }}).then();
-    if(isArray(isoIds.ids) === true) {      
-      const isos = await lasecApi.PurchaseOrders.list({ filter: { ids: isoIds.ids }}).then();
-      if(isos && isArray(isos.ids) === true) {
-        return iso.ids;        
+    const isoIds = await lasecApi.PurchaseOrders.list({ filter: { start_date: periodStart, end_date: periodEnd } }).then();
+    if (isArray(isoIds.ids) === true) {
+      const isos = await lasecApi.PurchaseOrders.list({ filter: { ids: isoIds.ids } }).then();
+      if (isos && isArray(isos.ids) === true) {
+        return iso.ids;
       }
     }
   } catch (isoGetError) {
     logger.error('Error fetching ISOs for the period', isoGetError);
     return [];
   }
-  
+
 };
 
 //retrieves next actions for a user
-const getNextActionsForUser = async({ periodStart, periodEnd, user = global.user, actioned = false }) => {
-  
-  try {    
-    if(!user) throw new ApiError("Invalid user data", user);
-    logger.debug('Fetching nextActions (Quote Reminders) for user');    
-    const reminders = await QuoteReminder.find({ 
-        owner: user._id, 
-        next: {
-          $gte: moment(periodStart).toDate(),
-          $lte: moment(periodEnd).endOf('day').toDate()      
-        }, 
-        actioned: false 
-    }).then();    
+const getNextActionsForUser = async ({ periodStart, periodEnd, user = global.user, actioned = false }) => {
+
+  try {
+    if (!user) throw new ApiError("Invalid user data", user);
+    logger.debug('Fetching nextActions (Quote Reminders) for user');
+    const reminders = await QuoteReminder.find({
+      owner: user._id,
+      next: {
+        $gte: moment(periodStart).toDate(),
+        $lte: moment(periodEnd).endOf('day').toDate()
+      },
+      actioned: false
+    }).then();
     logger.debug(`Loaded ${reminders.length} reminder documents for user`);
     return reminders;
   } catch (nextActionError) {
@@ -370,14 +386,14 @@ const getQuoteEmails = async (quote_id) => {
             archived
           }
         }`, variables: {
-          mailFilter: {
-            search: quote_id,
-            via: ['microsoft'],
-          }
+        mailFilter: {
+          search: quote_id,
+          via: ['microsoft'],
         }
+      }
     }).then((emailResult) => {
       logger.debug('Got emails for user', emailResult);
-      if(emailResult.data && emailResult.data.userEmails) {
+      if (emailResult.data && emailResult.data.userEmails) {
         resolve(emailResult.data.userEmails);
       } else {
         resolve([]);
@@ -426,8 +442,8 @@ const groupQuotesByStatus = (quotes) => {
       groupsByKey[key].quotes.push(quote);
       groupsByKey[key].totalVAT = Math.floor(groupsByKey[key].totalVAT + (totals.totalVAT / 100));
       groupsByKey[key].totalVATExclusive = Math.floor(groupsByKey[key].totalVATExclusive + (totals.totalVATExclusive / 100));
-      groupsByKey[key].totalVATInclusive = Math.floor(groupsByKey[key].totalVATInclusive + (totals.totalVATInclusive /100));
-      if(good_bad[key] === "good") groupsByKey[key].good += 1;
+      groupsByKey[key].totalVATInclusive = Math.floor(groupsByKey[key].totalVATInclusive + (totals.totalVATInclusive / 100));
+      if (good_bad[key] === "good") groupsByKey[key].good += 1;
       else groupsByKey[key].naughty += 1;
 
     } else {
@@ -443,7 +459,7 @@ const groupQuotesByStatus = (quotes) => {
         title: titleFromKey(key),
       };
 
-      if(good_bad[key] === "good") groupsByKey[key].good += 1;
+      if (good_bad[key] === "good") groupsByKey[key].good += 1;
       else groupsByKey[key].naughty += 1;
     }
   });
@@ -455,27 +471,331 @@ const groupQuotesByStatus = (quotes) => {
   return groupedByStatus;
 };
 
+const groupQuotesByProduct = (quotes) => {
+
+  const groupsByKey = {};
+
+  quotes.forEach((quote) => {
+
+    const key = quote.productClass || 'None';
+    const statusKey = quote.statusGroup || 'none';
+
+    const { totals } = quote;
+
+    const good_bad = {
+      "1": "good",
+      "2": "good",
+      "3": "good",
+      "4": "good",
+      "5": "bad",
+      "6": "good",
+    };
+
+    if (Object.getOwnPropertyNames(groupsByKey).indexOf(quote.statusGroup) >= 0) {
+      groupsByKey[key].quotes.push(quote);
+      groupsByKey[key].totalVAT = Math.floor(groupsByKey[key].totalVAT + (totals.totalVAT / 100));
+      groupsByKey[key].totalVATExclusive = Math.floor(groupsByKey[key].totalVATExclusive + (totals.totalVATExclusive / 100));
+      groupsByKey[key].totalVATInclusive = Math.floor(groupsByKey[key].totalVATInclusive + (totals.totalVATInclusive / 100));
+      if (good_bad[statusKey] === "good") groupsByKey[key].good += 1;
+      else groupsByKey[key].naughty += 1;
+
+    } else {
+      groupsByKey[key] = {
+        quotes: [quote],
+        good: 0,
+        naughty: 0,
+        category: '',
+        key,
+        totalVAT: Math.floor(totals.totalVAT / 100),
+        totalVATExclusive: Math.floor(totals.totalVATExclusive / 100),
+        totalVATInclusive: Math.floor(totals.totalVATInclusive / 100),
+        title: key,
+      };
+    }
+  });
+
+  const groupedByProduct = Object.getOwnPropertyNames(groupsByKey).map((statusKey) => {
+    return groupsByKey[statusKey];
+  });
+
+  return groupedByProduct;
+};
+
+const lasecGetProductDashboard = async (dashparams) => {
+
+  logger.debug(`GET PRODUCT DASHBOARD QUERIED:: ${dashparams}`);
+
+  let {
+    period = 'this-week',
+    periodStart = moment(dashparams.periodStart || moment()).startOf('week'),
+    periodEnd = moment(dashparams.periodEnd || moment()).endOf('week'),
+    agentSelection = 'me',
+    teamIds = [],
+    repIds = [],
+  } = dashparams;
+
+  const now = moment();
+  switch (period) {
+    case 'today': {
+      periodStart = moment(now).startOf('day');
+      periodEnd = moment(periodStart).endOf('day');
+      break;
+    }
+    case 'yesterday': {
+      periodStart = moment(now).startOf('day').subtract('24', 'hour');
+      periodEnd = moment(periodStart).endOf('day');
+      break;
+    }
+    case 'last-week': {
+      periodStart = moment(now).startOf('week').subtract('1', 'week');
+      periodEnd = moment(periodStart).endOf('week');
+      break;
+    }
+    case 'this-month': {
+      periodStart = moment(now).startOf('month');
+      periodEnd = moment(periodStart).endOf('month');
+      break;
+    }
+    case 'last-month': {
+      periodStart = moment(now).startOf('month').subtract('1', 'month');
+      periodEnd = moment(periodStart).endOf('month');
+      break;
+    }
+    case 'this-year': {
+      periodStart = moment(now).startOf('year');
+      periodEnd = moment(periodStart).endOf('year');
+      break;
+    }
+    case 'last-year': {
+      periodStart = moment(now).startOf('year').subtract(1, 'year');
+      periodEnd = moment(periodStart).endOf('year');
+      break;
+    }
+    case 'custom': {
+      //already bound to incoming params, only check if they are in correct order
+      if (periodEnd.isBefore(periodStart) === true) {
+        const _periodStart = moment(periodEnd);
+        const _periodEnd = moment(periodStart);
+
+        periodStart = _periodStart;
+        periodEnd = _periodEnd;
+      }
+      break;
+    }
+    case 'this-week':
+    default: {
+      //ain't nothing to do
+      break;
+    }
+  }
+
+  let periodLabel = `Produc Quotes Dashboard ${periodStart.format('DD MM YY')} till ${periodEnd.format('DD MM YY')} For ${global.user.firstName} ${global.user.lastName}`;
+  let cacheKey = `productQuote.dashboard.${user._id}.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
+
+  /*
+     let _cached = await getCacheItem(cacheKey);
+
+     if(_cached) {
+       logger.debug('Found results in cache');
+       periodLabel = `${periodLabel} [cache]`;
+       return _cached;
+     }
+  */
+
+  let palette = global.partner.colorScheme();
+
+  logger.debug('Fetching Quote Data');
+  let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  logger.debug('Fetching Target Data');
+  const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  logger.debug('Fetching Next Actions for; User')
+  const nextActionsForUser = await getNextActionsForUser({ user: global.user }).then();
+  logger.debug('Fetching invoice data');
+  const invoices = await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  logger.debug('Fetching isos');
+  const isos = await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+
+  const quoteProductFunnel = {
+    chartType: 'FUNNEL',
+    data: [],
+    options: {},
+    key: `quote-product/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/funnel`
+  };
+
+  const quoteProductPie = {
+    chartType: 'PIE',
+    data: [],
+    options: {
+      multiple: false,
+      outerRadius: 140,
+      innerRadius: 70,
+      fill: `#${palette[0]}`,
+      dataKey: 'value',
+    },
+    key: `quote-status/product-dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
+  };
+
+  const quoteISOPie = {
+    chartType: 'PIE',
+    data: isos.map((iso) => {
+      return iso;
+    }),
+    options: {
+      multiple: false,
+      outerRadius: 140,
+      innerRadius: 70,
+      fill: `#${palette[1]}`,
+      dataKey: 'order_value',
+    },
+    key: `quote-iso/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
+  };
+
+  const quoteINVPie = {
+    chartType: 'PIE',
+    data: invoices.map((invoice) => {
+      return invoice;
+    }),
+    options: {
+      multiple: false,
+      outerRadius: 140,
+      innerRadius: 70,
+      fill: `#${palette[2]}`,
+      dataKey: 'invoice_value',
+    },
+    key: `quote-inv/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
+  };
+
+  const quoteStatusComposed = {
+    chartType: 'COMPOSED',
+    data: [],
+    options: {
+      xAxis: {
+        dataKey: 'modified',
+      },
+      line: {
+        dataKey: 'totalVATExclusive',
+        dataLabel: 'Total Quoted',
+        name: 'Total Quoted',
+        stroke: `#${palette[0]}`,
+      },
+      area: {
+        dataKey: 'invoiced',
+        dataLabel: 'Total Invoiced',
+        name: 'Total Invoiced',
+        stroke: `${global.partner.themeOptions.palette.primary1Color}`,
+      },
+      bar: {
+        dataKey: 'isos',
+        dataLabel: 'Total ISO',
+        name: 'Sales Orders',
+        stroke: `${global.partner.themeOptions.palette.primary2Color}`,
+      }
+    },
+    key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`
+  };
+
+  // TODO - Remove this. Adding a random product class.
+  const randomProductClasses = ['Product 1', 'Product 2', 'Product 3', 'Product 4'];
+  quotes.forEach(quote => {
+    quote.productClass = randomProductClasses[Math.floor(Math.random() * randomProductClasses.length)];
+  });
+
+  lodash.orderBy(quotes, ['productClass'], ['asc']);
+
+  const productDashboardResult = {
+    period: period,
+    periodLabel,
+    periodStart,
+    periodEnd,
+    agentSelection,
+    teamIds,
+    repIds,
+    target: 0,
+    targetPercent: 0,
+    nextActions: {
+      owner: global.user,
+      nextActions: nextActionsForUser
+    },
+    totalQuotes: 0,
+    totalBad: 0,
+    productSummary: [],
+    quotes,
+    charts: {
+      quoteProductFunnel,
+      quoteProductPie,
+      quoteISOPie,
+      quoteINVPie,
+      quoteStatusComposed
+    }
+  };
+
+  productDashboardResult.totalQuotes = quotes.length;
+  productDashboardResult.productSummary = groupQuotesByProduct(quotes);
+  productDashboardResult.charts.quoteProductFunnel.data = [];
+  productDashboardResult.charts.quoteProductPie.data = [];
+
+  productDashboardResult.productSummary.forEach((entry, index) => {
+    productDashboardResult.charts.quoteProductFunnel.data.push({
+      "value": entry.totalVATExclusive,
+      "name": entry.title,
+      "fill": `#${palette[index + 1 % palette.length]}`
+    });
+    productDashboardResult.charts.quoteProductPie.data.push({
+      "value": entry.totalVATExclusive,
+      "name": entry.title,
+      "outerRadius": 140,
+      "innerRadius": 70,
+      "fill": `#${palette[index + 1 % palette.length]}`
+    });
+  });
+
+  lodash.sortBy(quotes, [q => q.modified]).forEach((quote) => {
+    productDashboardResult.charts.quoteStatusComposed.data.push({
+      "name": quote.id,
+      "modified": moment(quote.modified).format('YYYY-MM-DD'),
+      "totalVATInclusive": quote.totals.totalVATInclusive / 100,
+      "totalVATExclusive": quote.totals.totalVATExclusive / 100,
+      "totalVAT": quote.grand_total_vat_cents
+    });
+  });
+
+  let totalTargetValue = 0;
+  targets.forEach((target) => {
+    productDashboardResult.target += target.target;
+    totalTargetValue += (target.target * 100) / (target.targetPercent || 100);
+  });
+
+  if (isNaN(productDashboardResult.target) && isNaN(totalTargetValue) === false) {
+    productDashboardResult.targetPercent = totalTargetValue * 100 / productDashboardResult.target;
+  }
+
+  productDashboardResult.charts.quoteProductFunnel.data = lodash.reverse(productDashboardResult.charts.quoteProductFunnel.data);
+
+  return productDashboardResult;
+
+}
+
 export default {
   QuoteReminder: {
     id: ({ id, _id }) => id || _id,
     who: ({ who = [] }) => {
-      return who.map(whoObj =>  ObjectId.isValid(whoObj) ? User.findById(whoObj) : whoObj);
+      return who.map(whoObj => ObjectId.isValid(whoObj) ? User.findById(whoObj) : whoObj);
     },
     quote: ({ quote }) => {
-      if(quote && ObjectId.isValid(quote)) return Quote.findById(quote);
+      if (quote && ObjectId.isValid(quote)) return Quote.findById(quote);
       return quote;
     }
   },
   QuoteTimeLine: {
     who: (tl) => {
-      if(ObjectId.isValid(tl.who)) {
+      if (ObjectId.isValid(tl.who)) {
         return User.findById(tl.who);
       }
 
       return null;
     },
     reminder: (tl) => {
-      if(ObjectId.isValid(tl.reminder) === true) {
+      if (ObjectId.isValid(tl.reminder) === true) {
         return QuoteReminder.findById(tl.reminder);
       }
 
@@ -492,31 +812,31 @@ export default {
     },
     code: (quote) => {
       const { meta, code } = quote;
-      if(code && typeof code === 'string') return code;
-      if(meta && meta.reference) return meta.reference;
-      if(meta && meta.source.id) return meta.source.id;
+      if (code && typeof code === 'string') return code;
+      if (meta && meta.reference) return meta.reference;
+      if (meta && meta.source.id) return meta.source.id;
 
       return null;
     },
     customer: async (quote) => {
-      if(quote === null) throw new ApiError('Quote is null');
+      if (quote === null) throw new ApiError('Quote is null');
       const { customer } = quote;
-      if(isNil(customer) === false) {
-        if(customer && ObjectId.isValid(customer) === true) {
+      if (isNil(customer) === false) {
+        if (customer && ObjectId.isValid(customer) === true) {
           return await User.findById(quote.customer).then();
         }
       }
 
-      if(quote.meta && quote.meta.source) {
+      if (quote.meta && quote.meta.source) {
         const { customer_full_name, customer_id } = quote.meta.source;
 
-        if(customer_full_name && customer_id) {
+        if (customer_full_name && customer_id) {
           //check if a customer with this reference exists?
-          let _customer = await User.findByForeignId( customer_id, global.partner.key ).then();
+          let _customer = await User.findByForeignId(customer_id, global.partner.key).then();
           if (_customer !== null) {
             logger.debug(`Customer ${_customer.fullName()} found via foreign reference`);
             quote.customer = _customer._id;
-            if(typeof quote.save === 'function') {
+            if (typeof quote.save === 'function') {
               try { await quote.save() } catch (parallelSaveError) {
                 logger.warn(`Could not update quote`, parallelSaveError);
               }
@@ -538,23 +858,23 @@ export default {
             await _customer.save();
             quote.customer = _customer._id;
 
-            if(typeof quote.save === 'function') {
+            if (typeof quote.save === 'function') {
               try { await quote.save(); } catch (parallelSaveError) {
                 logger.warn(`Could not update quote`, parallelSaveError);
               }
             }
             _customer.addRole(global.partner._id, 'CUSTOMER');
-              amq.raiseWorkFlowEvent('startWorkFlow', {
-                id: 'LasecSyncCustomer',
-                version: 1,
-                src: 'QuoteResolver:Quote.customer()',
-                data: {
-                  reference: customer_id,
-                  id: _customer.id,
-                  owner: global.partner.key,
-                  user: global.user.id,
-                },
-              }, global.partner);
+            amq.raiseWorkFlowEvent('startWorkFlow', {
+              id: 'LasecSyncCustomer',
+              version: 1,
+              src: 'QuoteResolver:Quote.customer()',
+              data: {
+                reference: customer_id,
+                id: _customer.id,
+                owner: global.partner.key,
+                user: global.user.id,
+              },
+            }, global.partner);
 
             return _customer;
           }
@@ -591,14 +911,15 @@ export default {
           '[].quote_item_id',
           '[].meta.reference',
           '[].line_id',
-          { key: '[].id', transform: ()=>(new ObjectId())
-        }],
+          {
+            key: '[].id', transform: () => (new ObjectId())
+          }],
         'items.[].code': '[].code',
         'items.[].description': '[].title',
         'items.[].quantity': '[].quantity',
         'items.[].total_price_cents': '[].price',
         'items.[].gp_percent': '[].GP',
-        'items.[].total_price_before_discount_cents' : [
+        'items.[].total_price_before_discount_cents': [
           '[].totalVATExclusive',
           {
             key: '[].totalVATInclusive',
@@ -607,11 +928,13 @@ export default {
         ],
         'items.[].note': '[].note',
         'items.[].quote_heading_id': '[].header.meta.reference',
-        'items.[].header_name': { key: '[].header.text', transform: (v) => {
-          if(lodash.isEmpty(v) === false) return v;
+        'items.[].header_name': {
+          key: '[].header.text', transform: (v) => {
+            if (lodash.isEmpty(v) === false) return v;
 
-          return 'Uncategorised';
-        } },
+            return 'Uncategorised';
+          }
+        },
         'items.[].total_discount_percent': '[].discount',
 
       });
@@ -623,16 +946,16 @@ export default {
     status: ({ status, meta }) => {
       return status || meta.source ? meta.source.status_id : 'unset';
     },
-    statusGroup: ( { meta }) => {
+    statusGroup: ({ meta }) => {
       return meta.source &&
-              meta.source.substatus_id ? meta.source.substatus_id : '1';
+        meta.source.substatus_id ? meta.source.substatus_id : '1';
     },
     statusGroupName: (quote) => {
       const { statusGroupName, meta } = quote;
 
-      if(statusGroupName) return statusGroupName;
+      if (statusGroupName) return statusGroupName;
 
-      if(meta && meta.source.substatus_id) {
+      if (meta && meta.source.substatus_id) {
         quote.statusGroupName = lookups.statusGroupName[`${meta.source.substatus_id}`];
 
         return quote.statusGroupName;
@@ -643,12 +966,12 @@ export default {
     totals: (quote) => {
       const { meta, totals } = quote;
 
-      if(totals) return totals;
+      if (totals) return totals;
 
-      if(meta.source) {
+      if (meta.source) {
         const _totals = totalsFromMeta(meta);
 
-        if(quote.save) {
+        if (quote.save) {
 
           quote.totals = _totals;
 
@@ -671,27 +994,27 @@ export default {
         totalDiscountPercent: 0,
       };
     },
-    allowedStatus: ( { meta } ) => {
+    allowedStatus: ({ meta }) => {
       return meta && meta.source && meta.source.allowed_status_ids
     },
     company: async (quote) => {
 
       const { meta } = quote;
 
-      if(isNil(quote.company) === false) {
-        if(ObjectId.isValid(quote.company) === true) {
+      if (isNil(quote.company) === false) {
+        if (ObjectId.isValid(quote.company) === true) {
           return await Organization.findById(quote.company).then();
         }
       }
 
-      if(quote.meta && quote.meta.source) {
+      if (quote.meta && quote.meta.source) {
         const { company_id, company_trading_name } = meta.source;
-        if(company_trading_name && company_id) {
+        if (company_trading_name && company_id) {
           //check if a customer with this reference exists?
 
-          let _company = await Organization.findByForeignId( company_id, global.partner.key ).then();
-          if(_company !== null) {
-            if(typeof quote.save === "function") {
+          let _company = await Organization.findByForeignId(company_id, global.partner.key).then();
+          if (_company !== null) {
+            if (typeof quote.save === "function") {
               quote.company = _company._id;
               await quote.save();
             }
@@ -721,7 +1044,7 @@ export default {
 
             await _company.save();
 
-            if(typeof quote.save === "function") {
+            if (typeof quote.save === "function") {
               quote.company = _company._id;
               try {
                 await quote.save();
@@ -753,9 +1076,9 @@ export default {
     totalVATExclusive: (quote) => {
       const { totals, meta } = quote;
 
-      if(totals && totals.totalVATExclusive) return totals.totalVATExclusive;
+      if (totals && totals.totalVATExclusive) return totals.totalVATExclusive;
 
-      if(meta.source) {
+      if (meta.source) {
         const _totals = totalsFromMeta(meta);
         quote.totals = _totals;
         return _totals.totalVATExclusive;
@@ -766,9 +1089,9 @@ export default {
     totalVAT: (quote) => {
       const { totals, meta } = quote;
 
-      if(totals && totals.totalVAT) return totals.totalVAT;
+      if (totals && totals.totalVAT) return totals.totalVAT;
 
-      if(meta.source) {
+      if (meta.source) {
         const _totals = totalsFromMeta(meta);
         quote.totals = _totals;
 
@@ -780,9 +1103,9 @@ export default {
     totalVATInclusive: (quote) => {
       const { totals, meta } = quote;
 
-      if(totals && totals.totalVATInclusive) return totals.totalVATInclusive;
+      if (totals && totals.totalVATInclusive) return totals.totalVATInclusive;
 
-      if(meta.source) {
+      if (meta.source) {
         const _totals = totalsFromMeta(meta);
         quote.totals = _totals;
         return _totals.totalVATInclusive;
@@ -793,9 +1116,9 @@ export default {
     GP: (quote) => {
       const { totals, meta } = quote;
 
-      if(totals && totals.GP) return totals.GP;
+      if (totals && totals.GP) return totals.GP;
 
-      if(meta.source) {
+      if (meta.source) {
         const _totals = totalsFromMeta(meta);
         quote.totals = _totals;
         return _totals.GP;
@@ -806,9 +1129,9 @@ export default {
     actualGP: (quote) => {
       const { totals, meta } = quote;
 
-      if(totals && totals.actualGP) return totals.actualGP;
+      if (totals && totals.actualGP) return totals.actualGP;
 
-      if(meta.source) {
+      if (meta.source) {
         const _totals = totalsFromMeta(meta);
         quote.totals = _totals;
         return _totals.actualGP;
@@ -819,8 +1142,8 @@ export default {
     created: ({ created }) => { return moment(created); },
     modified: ({ modified }) => { return moment(modified); },
     expirationDate: ({ expirationDate, meta }) => {
-      if(expirationDate) return moment(expirationDate);
-      if(meta && meta.source && meta.source.expiration_date) return  moment(meta.source.expiration_date);
+      if (expirationDate) return moment(expirationDate);
+      if (meta && meta.source && meta.source.expiration_date) return moment(meta.source.expiration_date);
       return null;
     },
     note: ({ note }) => (note),
@@ -829,7 +1152,7 @@ export default {
       const { timeline, id, meta, code } = quote;
       const _timeline: Array<any> = []; //create a virtual timeline
 
-      if(isArray(timeline) === true && timeline.length > 0) {
+      if (isArray(timeline) === true && timeline.length > 0) {
         timeline.forEach(tl => _timeline.push(tl));
       }
 
@@ -841,17 +1164,17 @@ export default {
         logger.error(`Could not read the user email due to an error, ${exc.message}`);
         mails = [];
       }
-      
-      if(mails && isArray(mails) === true && mails.length > 0) {
-        
+
+      if (mails && isArray(mails) === true && mails.length > 0) {
+
         mails.forEach((mail) => {
-          if(mail.id !== 'no-id') {
+          if (mail.id !== 'no-id') {
             logger.debug('Transforming Email to timeline entry', mail);
             const entry = om(mail, {
               'createdAt': 'when',
               'from': {
                 key: 'who',
-                transform: ( sourceValue: String ) => {
+                transform: (sourceValue: String) => {
                   //user lookup
                   return User.find({ email: sourceValue }).then()
                 },
@@ -859,15 +1182,15 @@ export default {
               'message': 'notes'
             });
             entry.actionType = 'email',
-            entry.what = `Email Communication from ${mail.from} to ${mail.to}`,
-            logger.debug(`Transformed Email:\n ${mail} \n to timeline entry \n ${entry} \n`);
+              entry.what = `Email Communication from ${mail.from} to ${mail.to}`,
+              logger.debug(`Transformed Email:\n ${mail} \n to timeline entry \n ${entry} \n`);
             _timeline.push(entry);
-          }          
+          }
         });
       }
       return lodash.sortBy(_timeline, ['when']);
     },
-    meta: ( quote ) => {
+    meta: (quote) => {
       return quote.meta || {}
     }
   },
@@ -885,16 +1208,33 @@ export default {
     },
     target: (dashboard) => {
 
-      if(dashboard.target) return dashboard.target;
+      if (dashboard.target) return dashboard.target;
       else return 1000000;
     },
 
     targetPercent: (dashboard) => {
-      if(dashboard.targetPercent) return dashboard.targetPercent;
+      if (dashboard.targetPercent) return dashboard.targetPercent;
       return 50;
     }
 
   },
+  // LasecQuoteProductDashboard: {
+  //   id: ({
+  //     period, periodStart, periodEnd, status,
+  //   }) => {
+  //     return `${period}.${moment(periodStart).valueOf()}.${moment(periodEnd).valueOf()}`;
+  //   },
+  //   target: (dashboard) => {
+
+  //     if (dashboard.target) return dashboard.target;
+  //     else return 1000000;
+  //   },
+
+  //   targetPercent: (dashboard) => {
+  //     if (dashboard.targetPercent) return dashboard.targetPercent;
+  //     return 50;
+  //   }
+  // },
   Query: {
     LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes();
@@ -906,8 +1246,8 @@ export default {
         periodStart = moment(dashparams.periodStart || moment()).startOf('week'),
         periodEnd = moment(dashparams.periodEnd || moment()).endOf('week'),
         agentSelection = 'me',
-        teamIds = [ ],
-        repIds = [ ],                
+        teamIds = [],
+        repIds = [],
       } = dashparams;
 
       const date_period_keys = [
@@ -923,7 +1263,7 @@ export default {
       ];
 
       const now = moment();
-      switch(period) {
+      switch (period) {
         case 'today': {
           periodStart = moment(now).startOf('day');
           periodEnd = moment(periodStart).endOf('day');
@@ -939,12 +1279,12 @@ export default {
           periodEnd = moment(periodStart).endOf('week');
           break;
         }
-        case 'this-month' : {
+        case 'this-month': {
           periodStart = moment(now).startOf('month');
           periodEnd = moment(periodStart).endOf('month');
           break;
         }
-        case 'last-month' : {
+        case 'last-month': {
           periodStart = moment(now).startOf('month').subtract('1', 'month');
           periodEnd = moment(periodStart).endOf('month');
           break;
@@ -961,7 +1301,7 @@ export default {
         }
         case 'custom': {
           //already bound to incoming params, only check if they are in correct order
-          if(periodEnd.isBefore(periodStart) === true) {
+          if (periodEnd.isBefore(periodStart) === true) {
             const _periodStart = moment(periodEnd);
             const _periodEnd = moment(periodStart);
 
@@ -993,11 +1333,11 @@ export default {
 
       logger.debug(`Fetching Lasec Dashboard Data`, dashparams);
       let palette = global.partner.colorScheme();
-      
+
       logger.debug('Fetching Quote Data');
-      const quotes = await getQuotes( { periodStart, periodEnd, teamIds, repIds, agentSelection } ).then();
+      const quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug('Fetching Target Data');
-      const targets = await getTargets( { periodStart, periodEnd, teamIds, repIds, agentSelection } ).then();
+      const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug('Fetching Next Actions for; User')
       const nextActionsForUser = await getNextActionsForUser({ user: global.user }).then();
       logger.debug('Fetching invoice data');
@@ -1018,8 +1358,7 @@ export default {
 
       const quoteStatusPie = {
         chartType: 'PIE',
-        data: [
-        ],
+        data: [],
         options: {
           multiple: false,
           outerRadius: 140,
@@ -1045,7 +1384,6 @@ export default {
         key: `quote-iso/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
       };
 
-      
       const quoteINVPie = {
         chartType: 'PIE',
         data: invoices.map((invoice) => {
@@ -1061,17 +1399,13 @@ export default {
         key: `quote-inv/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
       };
 
-
-
       const quoteStatusComposed = {
         chartType: 'COMPOSED',
-        data: [
-
-        ],
+        data: [],
         options: {
           xAxis: {
             dataKey: 'modified',
-          },                    
+          },
           line: {
             dataKey: 'totalVATExclusive',
             dataLabel: 'Total Quoted',
@@ -1104,10 +1438,10 @@ export default {
         repIds,
         target: 0,
         targetPercent: 0,
-        nextActions: {          
+        nextActions: {
           owner: global.user,
           nextActions: nextActionsForUser
-        },        
+        },
         totalQuotes: 0,
         totalBad: 0,
         statusSummary: [],
@@ -1122,7 +1456,7 @@ export default {
       };
 
       dashboardResult.totalQuotes = quotes.length;
-      dashboardResult.statusSummary = groupQuotesByStatus(dashboardResult.quotes);      
+      dashboardResult.statusSummary = groupQuotesByStatus(dashboardResult.quotes);
       dashboardResult.charts.quoteStatusFunnel.data = [];
       dashboardResult.charts.quoteStatusPie.data = [];
       dashboardResult.charts.quoteStatusComposed.data = [];
@@ -1157,29 +1491,32 @@ export default {
       let totalTargetValue = 0;
       targets.forEach((target) => {
         dashboardResult.target += target.target;
-        totalTargetValue += (target.target * 100) / (target.targetPercent || 100 );
+        totalTargetValue += (target.target * 100) / (target.targetPercent || 100);
       });
 
-      if(isNaN(dashboardResult.target) &&  isNaN(totalTargetValue) === false) {
+      if (isNaN(dashboardResult.target) && isNaN(totalTargetValue) === false) {
         dashboardResult.targetPercent = totalTargetValue * 100 / dashboardResult.target;
       }
-      
+
       dashboardResult.charts.quoteStatusFunnel.data = lodash.reverse(dashboardResult.charts.quoteStatusFunnel.data);
 
       //setCacheItem(cacheKey, dashboardResult, 60 * 5);
 
       return dashboardResult;
     },
+    LasecGetProductDashboard: async (obj, { productdashparams = defaultProductDashboardParams }) => {
+      return lasecGetProductDashboard(productdashparams);
+    },
     LasecGetQuoteById: async (obj, { quote_id }) => {
-      if(isNil(quote_id) === true) throw new ApiError('This method requies a quote id to work');
+      if (isNil(quote_id) === true) throw new ApiError('This method requies a quote id to work');
       const result = await getLasecQuoteById(quote_id).then();
       return result;
     },
-    LasecGetFilteredQuotes: async(obj, args) => {
+    LasecGetFilteredQuotes: async (obj, args) => {
 
-      logger.info(`QUOTE RESOLVER - GETTING QUOTES::`, {args});
+      logger.info(`QUOTE RESOLVER - GETTING QUOTES::`, { args });
 
-      const quotes = await getQuotes( {
+      const quotes = await getQuotes({
         periodStart: moment().subtract(1, 'month'),
         periodEnd: moment().endOf('month')
       }).then();
@@ -1212,12 +1549,12 @@ export default {
 
       const quote = await getLasecQuoteById(quote_id).then();
 
-      if(!quote) {
+      if (!quote) {
         const message = `Quote with quote id ${quote_id}, not found`;
-        throw new ApiError(message, { quote_id, message, code: 404  });
+        throw new ApiError(message, { quote_id, message, code: 404 });
       }
 
-      if(!quote.note && input.note) {
+      if (!quote.note && input.note) {
         quote.note = input.note;
       }
 
@@ -1225,7 +1562,7 @@ export default {
 
       let reminder = null;
 
-      if(lodash.isArray(quote.timeline) === false) quote.timeline = [];
+      if (lodash.isArray(quote.timeline) === false) quote.timeline = [];
 
       const timelineEntry = {
         when: new Date().valueOf(),
@@ -1236,7 +1573,7 @@ export default {
       };
 
 
-      if(input.reminder > 0) {
+      if (input.reminder > 0) {
         reminder = new QuoteReminder({
           quote: quote._id,
           who: user._id,
@@ -1286,7 +1623,7 @@ export default {
         message: 'Quote status updated'
       };
     },
-    LasecCreateClientEnquiry: async( parent, params ) => {
+    LasecCreateClientEnquiry: async (parent, params) => {
       const { customerId: String } = params;
 
       return {

@@ -2,12 +2,12 @@ import { fileAsString } from '../../../../utils/io';
 
 export default {
   query: {
-    name: 'LasecGetDashboard',
-    text: fileAsString(require.resolve('./LasecGetDashboard.graphql')),
+    name: 'LasecGetProductDashboard',
+    text: fileAsString(require.resolve('./LasecGetProductDashboard.graphql')),
     variables: {
-      'formData.toolbar.period': 'dashparams.period',
-      'formData.toolbar.periodStart': 'dashparams.periodStart',
-      'formData.toolbar.periodEnd': 'dashparams.periodEnd'
+      'formData.toolbar.period': 'productDashparams.period',
+      'formData.toolbar.periodStart': 'productDashparams.periodStart',
+      'formData.toolbar.periodEnd': 'productDashparams.periodEnd'
     },
     resultMap: {
       id: 'id',
@@ -15,14 +15,14 @@ export default {
       periodStart: 'toolbar.periodStart',
       periodEnd: 'toolbar.periodEnd',
       repIds: 'toolbar.repIds',
-      statusSummary: 'statusSummary',
-      quotes: 'quotes',      
+      productSummary: 'productSummary',
+      quotes: 'quotes',
       totalQuotes: 'totalQuotes',
       totalBad: 'totalBad',
       target: 'target',
       targetPercent: 'targetPercent',
       charts: 'charts',
-      nextActions: 'nextActions',      
+      nextActions: 'nextActions',
       'quotes[].code': ['quotes[].quote_id', 'quotes[].code'],
       'quotes[].customer.fullName': 'quotes[].customerName',
       'quotes[].statusName' : 'quotes[].statusName',
@@ -34,5 +34,5 @@ export default {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
-  },  
+  },
 };

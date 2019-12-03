@@ -5,6 +5,12 @@ type Product {
   description: String
 }
 
+type ProductClass {
+  id: String
+  name: String
+}
+
 extend type Query {
   LasecGetProductList: [Product]
+  LasecGetProductClassList: [ProductClass]
 }
