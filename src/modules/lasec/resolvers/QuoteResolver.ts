@@ -236,14 +236,9 @@ const getQuotes = async (params) => {
     ids = [...ids, ...pagedResult.ids]
   });
 
-  logger.debug(`Loading (${ids.length}) quote ids`);
-
-
   const quotesDetails = await lasecApi.Quotes.list({ filter: { ids: ids } });
   logger.debug(`Fetched Expanded View for (${quotesDetails.items.length}) Quotes from API`);
   let quotes = [...quotesDetails.items];
-
-  logger.debug(`QUOT ITEMS:: ${JSON.stringify(quotes)}`);
 
   //perform a lightweight map
   const quoteSyncResult = await Promise.all(quotes.map((quote) => {
@@ -256,7 +251,6 @@ const getQuotes = async (params) => {
 
   return quotes;
 };
-
 
 const getTargets = async ({ periodStart, periodEnd, teamIds, repIds, agentSelection }) => {
   try {
@@ -523,7 +517,7 @@ const groupQuotesByProduct = (quotes) => {
 
 const lasecGetProductDashboard = async (dashparams) => {
 
-  logger.debug(`GET PRODUCT DASHBOARD QUERIED:: ${dashparams}`);
+  logger.debug(`GET PRODUCT DASHBOARD QUERIED`);
 
   let {
     period = 'this-week',
@@ -532,6 +526,7 @@ const lasecGetProductDashboard = async (dashparams) => {
     agentSelection = 'me',
     teamIds = [],
     repIds = [],
+    productClasses = [],
   } = dashparams;
 
   const now = moment();
@@ -605,7 +600,7 @@ const lasecGetProductDashboard = async (dashparams) => {
   let palette = global.partner.colorScheme();
 
   logger.debug('Fetching Quote Data');
-  let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection, productClasses }).then();
   logger.debug('Fetching Target Data');
   const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
   logger.debug('Fetching Next Actions for; User')

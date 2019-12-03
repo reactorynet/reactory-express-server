@@ -7,7 +7,8 @@ export default {
     variables: {
       'formData.toolbar.period': 'productDashparams.period',
       'formData.toolbar.periodStart': 'productDashparams.periodStart',
-      'formData.toolbar.periodEnd': 'productDashparams.periodEnd'
+      'formData.toolbar.periodEnd': 'productDashparams.periodEnd',
+      'formData.toolbar.productClass': 'productDashparams.productClass',
     },
     resultMap: {
       id: 'id',
