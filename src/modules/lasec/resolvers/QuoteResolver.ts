@@ -342,13 +342,15 @@ const getNextActionsForUser = async ({ periodStart, periodEnd, user = global.use
 
   try {
     if (!user) throw new ApiError("Invalid user data", user);
-    logger.debug('Fetching nextActions (Quote Reminders) for user');
+    logger.debug(`Fetching nextActions (Quote Reminders) for user:: ${JSON.stringify(user)}`);
+    logger.debug(`Fetching nextActions (Period) for user:: ${periodStart} - ${periodEnd}`);
     const reminders = await QuoteReminder.find({
-      owner: user._id,
-      next: {
-        $gte: moment(periodStart).toDate(),
-        $lte: moment(periodEnd).endOf('day').toDate()
-      },
+      // owner: user._id,
+      who: user._id,
+      // next: {
+      //   $gte: moment(periodStart).toDate(),
+      //   $lte: moment(periodEnd).endOf('day').toDate()
+      // },
       actioned: false
     }).then();
     logger.debug(`Loaded ${reminders.length} reminder documents for user`);
@@ -1334,7 +1336,12 @@ export default {
       logger.debug('Fetching Target Data');
       const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug('Fetching Next Actions for; User')
-      const nextActionsForUser = await getNextActionsForUser({ user: global.user }).then();
+      const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
+
+
+      logger.debug(`NEXT ACTION::  ${nextActionsForUser} - ${nextActionsForUser.length}`);
+
+
       logger.debug('Fetching invoice data');
       const invoices = await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug('Fetching isos');
@@ -1435,7 +1442,7 @@ export default {
         targetPercent: 0,
         nextActions: {
           owner: global.user,
-          nextActions: nextActionsForUser
+          actions: nextActionsForUser
         },
         totalQuotes: 0,
         totalBad: 0,
@@ -1540,6 +1547,7 @@ export default {
       }
     },
     LasecUpdateQuoteStatus: async (parent, { quote_id, input }) => {
+
       logger.debug('Mutation.LasecUpdateQuoteStatus(...)', { quote_id, input });
 
       const quote = await getLasecQuoteById(quote_id).then();
@@ -1580,6 +1588,8 @@ export default {
           importance: 'normal',
         });
         await reminder.save().then();
+
+        logger.debug(`SAVED REMONDER:: ${reminder}`);
 
         amq.raiseWorkFlowEvent('startWorkFlow', {
           id: 'LasecSetReminderForQuote',

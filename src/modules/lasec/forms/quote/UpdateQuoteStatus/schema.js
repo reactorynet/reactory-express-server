@@ -1,8 +1,5 @@
-
-
-
 const schema = {
-  type: 'object',    
+  type: 'object',
   required: [
     //'customer',
     //'quoteStatus',
@@ -27,7 +24,7 @@ const schema = {
           type: 'string',
           title: 'Customer Name'
         }
-      },      
+      },
     },
     company: {
       type: 'object',
@@ -49,12 +46,12 @@ const schema = {
       title: 'Status Group',
       description: 'Status Grouping',
       default: '1',
-    },   
+    },
     statusName: {
       type: 'string',
       title: 'Quote Status',
       description: 'Current Quote Status',
-    },    
+    },
     nextAction: {
       type: 'string',
       title: 'Next Action',
@@ -82,8 +79,7 @@ const schema = {
       title: 'Note (Internal)',
       description: 'Leave a small note',
     }
-  }    
+  }
 };
-
 
 export default schema;

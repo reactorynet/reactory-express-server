@@ -97,7 +97,6 @@ type Quote {
   productClass: String
 }
 
-
 type LasecQuoteDashboardSummary {
   key: String
   title: String
@@ -118,7 +117,6 @@ enum LasecChartType {
   TREEMAP
   COMPOSED
 }
-
 
 type LasecChart {
   chartType: LasecChartType

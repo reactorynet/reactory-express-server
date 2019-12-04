@@ -12,14 +12,13 @@ const froalaOptions = {
   },
 };
 
-
-const uiSchema = {  
+const uiSchema = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    {      
+    {
       customer: { lg: 6, md: 12, sm: 12, xs: 12 },
       statusName: { lg: 6, md: 12, sm: 12, xs: 12 },
-    },    
+    },
     {
       nextAction: {
         lg: 12, md: 12, sm: 12, xs: 12,
@@ -28,7 +27,7 @@ const uiSchema = {
         lg: 12, md: 12, sm: 12, xs: 12,
       },
     },
-    {      
+    {
       reminder: {
         md: 12, sm: 12, xs: 12,
       },
@@ -37,7 +36,7 @@ const uiSchema = {
       note: {
         lg: 12, md: 12, sm: 12, xs: 12,
       },
-    },    
+    },
   ],
   code: {
     'ui:widget':'HiddenWidget',
@@ -47,26 +46,13 @@ const uiSchema = {
     'ui:options': {
       format: '${formContext.formData.customer.fullName} @ ${formContext.formData.company.tradingName}',
       icon: 'account_circle',
-      iconPosition: 'left', 
+      iconPosition: 'left',
       iconProps: {
         marginTop: '4px',
         float: 'left'
-      }     
+      }
     }
-  },  
-  reasonCodes: {
-    'ui:widget': 'ChipArrayWidget',
-    'ui:options': {
-      container: 'core.BasicContainer',
-      containerProps: {
-        title: 'Reasons',
-        style: {
-          maxWidth: '100%',
-          justifyContent: 'flex-end',
-        },
-      },
-    },
-  }, 
+  },
   statusName: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -78,12 +64,6 @@ const uiSchema = {
         marginTop: '4px',
         float: 'left'
       }
-    },
-  },   
-  reason: {
-    'ui:widget': 'FroalaWidget',
-    'ui:options': {
-      froalaOptions,
     },
   },
   nextAction: {
@@ -106,6 +86,25 @@ const uiSchema = {
           group: 'default', key: '3-other', value: 'other', label: 'Other', step: 3,
         },
       ],
+    },
+  },
+  reason: {
+    'ui:widget': 'FroalaWidget',
+    'ui:options': {
+      froalaOptions,
+    },
+  },
+  reasonCodes: {
+    'ui:widget': 'ChipArrayWidget',
+    'ui:options': {
+      container: 'core.BasicContainer',
+      containerProps: {
+        title: 'Reasons',
+        style: {
+          maxWidth: '100%',
+          justifyContent: 'flex-end',
+        },
+      },
     },
   },
   reminder: {
@@ -135,14 +134,14 @@ const uiSchema = {
     'ui:options': {
       froalaOptions,
     },
-  },  
+  },
 };
 
 export default uiSchema;
 
 /**
- * 
- * 
+ *
+ *
  *  /*
     'ui:widget': 'QuoteStatusWidget',
     'ui:options': {
@@ -215,12 +214,12 @@ export default uiSchema;
         }
       ],
     },
-    
+
   },
 
   nextStatus: {
     'ui:widget': 'StepperWidget',
-    'ui:options': {      
+    'ui:options': {
       steps: [
         {
           group: '1', groupTitle: 'Draft', key: '1-1', value: '1-1', label: 'Pending Submission', step: 0,

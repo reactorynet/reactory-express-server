@@ -17,8 +17,8 @@ export default {
     {
       totalQuotes: { md: 3, xs: 12 },
       totalBad: { md: 3, xs: 12 },
-      target: {md: 3, xs: 12},
-      targetPercent: {md: 3, xs: 12},
+      target: { md: 3, xs: 12 },
+      targetPercent: { md: 3, xs: 12 },
     },
     {
       charts: { xs: 12 },
@@ -44,7 +44,7 @@ export default {
         periodEnd: { md: 3, sm: 12, xs: 12 },
       },
       {
-        agentSelection: { md: 3,  sm: 12, xs: 12 },
+        agentSelection: { md: 3, sm: 12, xs: 12 },
         teamFilter: { md: 3, sm: 12, xs: 12 },
         userFilter: { md: 3, sm: 12, xs: 12 },
       }
@@ -218,21 +218,31 @@ export default {
       }
     ],
     actions: {
-      'ui:widget': 'MaterialListWidget',
+      'ui:widget': 'MaterialTableWidget',
       'ui:options': {
-        id: 'Id',
-        primaryText: '${item.text}',
-        showAvatar: false,
-        icon: 'history',
-        variant: 'button',
-        secondaryAction: {
-          iconKey: 'edit',
-          label: 'Edit',
-          componentFqn: 'core.Link',
-          action: 'event:onRouteChanged',
-          link: '/edit/${item.id}/'
-        }
-      }
+        columns: [
+          { title: 'Action Type', field: 'actionType' },
+          { title: 'Importance', field: 'importance' },
+        ],
+        options: {
+          // grouping: true,
+        },
+      },
+      // 'ui:widget': 'MaterialListWidget',
+      // 'ui:options': {
+      //   id: 'Id',
+      //   primaryText: '${item.text}',
+      //   showAvatar: false,
+      //   icon: 'history',
+      //   variant: 'button',
+      //   secondaryAction: {
+      //     iconKey: 'edit',
+      //     label: 'Edit',
+      //     componentFqn: 'core.Link',
+      //     action: 'event:onRouteChanged',
+      //     link: '/edit/${item.id}/'
+      //   }
+      // }
     }
   },
 
@@ -246,12 +256,13 @@ export default {
         { title: 'Status Group', field: 'title' },
         { title: 'Good', field: 'good' },
         { title: 'Naughty', field: 'naughty' },
-        { title: 'Total', field: 'totalVATExclusive',
+        {
+          title: 'Total', field: 'totalVATExclusive',
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {
             totalVATExclusive: 'value',
           },
-      },
+        },
       ],
       options: {
         grouping: true,
@@ -294,7 +305,8 @@ export default {
         { title: 'Status', field: 'statusName', defaultGroupOrder: 0 },
         { title: 'Company', field: 'companyTradingName', defaultGroupOrder: 1 },
         { title: 'Customer', field: 'customerName' },
-        { title: 'Total (VAT Excl)',
+        {
+          title: 'Total (VAT Excl)',
           field: 'totalVATExclusive',
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {
