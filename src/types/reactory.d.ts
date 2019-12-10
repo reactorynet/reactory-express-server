@@ -176,8 +176,35 @@ declare namespace Reactory {
     title?: string
   }
 
-  export interface IExcelExport extends Client.IFramedWindowProperties {
+  
+  export interface IExcelColumnDefinition {
+    title: string
+    propertyField: string
+    format: string
+    type: string
+    required: boolean    
+  }
+
+  export interface IExcelSheet {
+    name: string
+    index: number
+    arrayField: string
+    startRow: number
+    columns: IExcelColumnDefinition[]
+  }
+
+  export interface IExcelExportOptions {
+    filename: string
+    sheets: IExcelSheet[]
+  }
+  
+  export interface IExport extends Client.IFramedWindowProperties {
     title?: string
+    engine?: string
+    useClient?: boolean
+    mappingType?: string
+    mapping?: any
+    exportOptions?: any
   }
 
   export interface IUISchemaMenuItem {
@@ -210,9 +237,9 @@ declare namespace Reactory {
     graphql?: IFormGraphDefinition,
     defaultFormValue?: any,
     defaultPdfReport?: IReactoryPdfReport, 
-    defaultExcelExport?: IExcelExport,
+    defaultExport?: IExport,
     reports?: IReactoryPdfReport[],
-    excelExports?:IExcelExport[], 
+    exports?:IExport[], 
     refresh?: any,
     widgetMap?: IWidgetMap[],
     backButton?: Boolean,
@@ -224,6 +251,7 @@ declare namespace Reactory {
      */
     componentDefs?: String[]
   }
+  
 
   export interface IGraphShape {
     Query: Object,

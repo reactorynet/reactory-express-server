@@ -5,9 +5,9 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import $schema from './schema';
 import $uiSchema from './uiSchema';
 import $graphql from './graphql';
+import $defaultExport from './exports';
 
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
-
 
 
 const SalesDashboard: Reactory.IReactoryForm = {
@@ -32,19 +32,7 @@ const SalesDashboard: Reactory.IReactoryForm = {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   roles: ['*'],
-  defaultExcelExport: {
-    title: 'Excel Export',
-    frameProps: {
-      height: '100%',
-      width: '100%',
-      styles: {
-        height: '100%',
-        width: '100%',
-      },
-      url: `${ENVIRONMENT.API_URI_ROOT}/excel?formId=lasec-crm.Dashboard.1.0.0`,
-      method: 'post'      
-    }
-  },
+  defaultExport: $defaultExport,
   helpTopics: ['sales-dashboard'],
   uiSchema: $uiSchema,
   graphql: $graphql,

@@ -300,7 +300,7 @@ const Menus = {
           ordinal: 0,
           title: 'New Static Entry',
           link: '/admin/content/new',
-          icon: 'file_copy',
+          icon: 'note_add',
           roles: ['ADMIN', 'DEVELOPER'],
         },
         {
@@ -310,6 +310,27 @@ const Menus = {
           icon: 'business',
           roles: ['ADMIN', 'DEVELOPER'],
         },
+        {
+          ordinal: 2,
+          title: 'Users',
+          link: '/360/admin/users',
+          icon: 'how_to_reg',
+          roles: ['ADMIN', 'DEVELOPER']
+        },        
+        {
+          ordinal: 3,
+          title: 'Teams',
+          link: '/360/admin/teams',
+          icon: 'supervised_user_circle',
+          roles: ['ADMIN', 'DEVELOPER']
+        },
+        {
+          ordinal: 4,
+          title: 'Groups',
+          link: '/360/admin/groups',
+          icon: 'group_work', 
+          roles: ['ADMIN', 'DEVELOPER']
+        }
       ]
     },
     {
