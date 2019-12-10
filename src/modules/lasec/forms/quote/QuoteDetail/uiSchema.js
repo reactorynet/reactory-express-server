@@ -2,7 +2,7 @@ export default {
   submitIcon: 'refresh',
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    {      
+    {
       statusName: { md: 6, sm: 12 },
       totalVATExclusive: { md: 3, sm: 12 },
       GP: { md: 3, sm: 4 },
@@ -15,7 +15,7 @@ export default {
     },
     {
       created: { md: 4, sm: 12 },
-      modified: { md: 4, sm: 12 },    
+      modified: { md: 4, sm: 12 },
       note: { md: 4, sm: 12 }
     },
     {
@@ -48,7 +48,7 @@ export default {
     'ui:options': {
       format: 'GP: ${formData}',
       icon: 'money',
-      iconPosition: 'left', 
+      iconPosition: 'left',
       iconProps: {
         marginTop: '4px',
         float: 'left'
@@ -60,7 +60,7 @@ export default {
     'ui:options': {
       format: 'Actual GP: ${formData}',
       icon: 'money',
-      iconPosition: 'left', 
+      iconPosition: 'left',
       iconProps: {
         marginTop: '4px',
         float: 'left'
@@ -72,7 +72,7 @@ export default {
     'ui:options': {
       format: 'Created: ${formData}',
       icon: 'time',
-      iconPosition: 'left', 
+      iconPosition: 'left',
       iconProps: {
         marginTop: '4px',
         float: 'left'
@@ -84,7 +84,7 @@ export default {
     'ui:options': {
       format: 'Modified: ${formData}',
       icon: 'time',
-      iconPosition: 'left', 
+      iconPosition: 'left',
       iconProps: {
         marginTop: '4px',
         float: 'left'
@@ -93,24 +93,24 @@ export default {
   },
   companyTradingName: {
     'ui:widget': 'LabelWidget',
-    'ui:options': {      
+    'ui:options': {
       icon: 'account_circle',
-      iconPosition: 'left', 
+      iconPosition: 'left',
       iconProps: {
         marginTop: '4px',
         float: 'left'
-      }     
+      }
     }
   },
   customerName: {
     'ui:widget': 'LabelWidget',
-    'ui:options': {      
+    'ui:options': {
       icon: 'account_circle',
-      iconPosition: 'left', 
+      iconPosition: 'left',
       iconProps: {
         marginTop: '4px',
         float: 'left'
-      }     
+      }
     }
   },
   customerAvatar: {
@@ -129,26 +129,26 @@ export default {
         'client-visit': 'face',
         'email': 'email',
         'follow-up-call': 'voicemail',
-      },      
+      },
     }
   },
   quoteLineItems: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      columns: [        
+      columns: [
         { title: 'Header', field: 'headerText', defaultGroupOrder: 0 },
         { title: 'Code', field: 'code' },
         { title: 'Title', field: 'title' },
-        { title: 'GP %', field: 'GP' },        
-        { title: 'Discount %', field: 'discount' },        
+        { title: 'GP %', field: 'GP' },
+        { title: 'Discount %', field: 'discount' },
         { title: 'Quantity', field: 'quantity' },
-        { title: 'Total (VAT Excl)', 
+        { title: 'Total (VAT Excl)',
           field: 'totalVATExclusive',
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {
             totalVATExclusive: 'value',
-          }, 
-        },        
+          },
+        },
       ],
       options: {
         grouping: true,

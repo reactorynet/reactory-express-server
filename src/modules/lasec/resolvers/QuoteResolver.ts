@@ -1337,11 +1337,6 @@ export default {
       const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug('Fetching Next Actions for; User')
       const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
-
-
-      logger.debug(`NEXT ACTION::  ${nextActionsForUser} - ${nextActionsForUser.length}`);
-
-
       logger.debug('Fetching invoice data');
       const invoices = await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug('Fetching isos');
