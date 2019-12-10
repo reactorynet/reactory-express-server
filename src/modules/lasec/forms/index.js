@@ -25,6 +25,7 @@ import CategoryList from './salesConfigurator/CategoryList';
 import CreateCategoryFilter from './salesConfigurator/CreateCategoryFilter';
 import CategoryFilterList from './salesConfigurator/CategoryFilterList';
 import FilterResults from './salesConfigurator/FilterResults';
+import NextActionDetail from './nextActionDetail';
 
 export default [
   SalesDashboard,
@@ -43,5 +44,6 @@ export default [
   CategoryList,
   CreateCategoryFilter,
   CategoryFilterList,
-  FilterResults
+  FilterResults,
+  NextActionDetail
 ];

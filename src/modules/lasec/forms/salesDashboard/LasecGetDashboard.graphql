@@ -24,16 +24,22 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
         firstName
         lastName
         email
-      }    
+      }
     	actions {
         id
         quote {
           id
-          code        
+          code
+        }
+        who {
+          id
+          firstName
+          lastName
         }
         actionType
         text
-        importance        
+        next
+        importance
       }
     }
     charts {
@@ -54,17 +60,17 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
         options
       }
     }
-    quotes { 
+    quotes {
       id
       statusName
       customer {
         id
         fullName
-      }         
+      }
       company {
         id
         tradingName
-      }     
+      }
       code
       totalVATExclusive
       totalVAT

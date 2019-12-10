@@ -132,7 +132,7 @@ export default {
     'ui:options': {
       format: 'Total Quotes: ${formData}',
       variant: 'h4',
-      title: 'Total Quotes',
+      // title: 'Total Quotes',
     }
   },
 
@@ -141,7 +141,7 @@ export default {
     'ui:options': {
       format: 'Target: ${formData}',
       variant: 'h4',
-      title: 'Target:'
+      // title: 'Target:'
     }
   },
 
@@ -150,7 +150,7 @@ export default {
     'ui:options': {
       format: 'Target %: ${formData}',
       variant: 'h4',
-      title: 'Target %:'
+      // title: 'Target %:'
     }
   },
 
@@ -159,7 +159,7 @@ export default {
     'ui:options': {
       format: 'Naughty Quotes: ${formData}',
       variant: 'h4',
-      title: 'Total Bad',
+      // title: 'Total Bad',
     }
   },
 
@@ -218,31 +218,51 @@ export default {
       }
     ],
     actions: {
+      title: 'Next Actions',
       'ui:widget': 'MaterialTableWidget',
       'ui:options': {
         columns: [
+          {
+            title: 'Next Action Date', field: 'next',
+            component: 'core.DateLabel@1.0.0',
+            propsMap: {
+              next: 'value',
+            },
+            props: {
+              uiSchema: {
+                'ui:options': {
+                  format: 'DD MMM YYYY HH:mm',
+                }
+              },
+              variant: 'p'
+            },
+          },
           { title: 'Action Type', field: 'actionType' },
           { title: 'Importance', field: 'importance' },
+          { title: 'Quote', field: 'quote.code' },
+          {
+            title: 'View Details',
+            field: 'id',
+            component: 'core.SlideOutLauncher@1.0.0',
+            props: {
+              componentFqn: 'lasec-crm.LasecNextActionDetail@1.0.0',
+              componentProps: {
+                'id': ['data.id', 'data.id', 'query.id'],
+                'next': ['data.next', 'data.next', 'query.next'],
+                'importance': ['data.importance', 'data.importance', 'query.importance'],
+                'actionType': ['data.type', 'data.type', 'query.type'],
+                'text': ['data.text', 'data.text', 'query.text'],
+                'who': ['data.who', 'data.who', 'query.who'],
+                'quote': ['data.quote', 'data.quote', 'query.quote'],
+              },
+              slideDirection: 'down',
+              buttonTitle: 'View Details',
+              windowTitle: 'Next Action ${quote.code}',
+            },
+          },
         ],
-        options: {
-          // grouping: true,
-        },
+        options: {},
       },
-      // 'ui:widget': 'MaterialListWidget',
-      // 'ui:options': {
-      //   id: 'Id',
-      //   primaryText: '${item.text}',
-      //   showAvatar: false,
-      //   icon: 'history',
-      //   variant: 'button',
-      //   secondaryAction: {
-      //     iconKey: 'edit',
-      //     label: 'Edit',
-      //     componentFqn: 'core.Link',
-      //     action: 'event:onRouteChanged',
-      //     link: '/edit/${item.id}/'
-      //   }
-      // }
     }
   },
 

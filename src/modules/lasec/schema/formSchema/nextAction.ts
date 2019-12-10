@@ -43,6 +43,42 @@ export default {
         title: "Action via"
       }
     },
+    who: {
+      type: "array",
+      title: "Who",
+      items: {
+        type: "object",
+        title: "Action via",
+        properties: {
+          id: {
+            type: 'string',
+            title: 'User Id'
+          },
+          firstName: {
+            type: 'string',
+            title: 'First Name'
+          },
+          lastName: {
+            type: 'string',
+            title: 'Last Name'
+          },
+        }
+      }
+    },
+    quote: {
+      type: "object",
+      title: "Quote",
+      properties: {
+        id: {
+          type: 'string',
+          title: 'Quote Id'
+        },
+        code: {
+          type: 'string',
+          title: 'Quote Code'
+        }
+      }
+    },
     text: {
       type: "string",
       title: "Action Text"

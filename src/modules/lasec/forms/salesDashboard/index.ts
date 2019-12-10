@@ -17,9 +17,9 @@ const SalesDashboard: Reactory.IReactoryForm = {
   uiSupport: ['material'],
   uiResources: [
     {
-      id: 'reactory.plugin.lasec360', 
-      name: 'reactory.plugin.lasec360', 
-      type: 'script', 
+      id: 'reactory.plugin.lasec360',
+      name: 'reactory.plugin.lasec360',
+      type: 'script',
       uri: `${ENVIRONMENT.CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
     },
   ],
@@ -42,7 +42,7 @@ const SalesDashboard: Reactory.IReactoryForm = {
         width: '100%',
       },
       url: `${ENVIRONMENT.API_URI_ROOT}/excel?formId=lasec-crm.Dashboard.1.0.0`,
-      method: 'post'      
+      method: 'post'
     }
   },
   helpTopics: ['sales-dashboard'],
@@ -50,8 +50,8 @@ const SalesDashboard: Reactory.IReactoryForm = {
   graphql: $graphql,
   refresh: {
     onChange: [
-      'period', 
-      'periodStart', 
+      'period',
+      'periodStart',
       'periodEnd'
     ]
   },
@@ -61,7 +61,7 @@ const SalesDashboard: Reactory.IReactoryForm = {
       periodStart: moment().startOf('month').toISOString(),
       periodEnd: moment().endOf('month').toISOString()
     }
-  }
+  },
 };
 
 export default SalesDashboard;
