@@ -182,7 +182,10 @@ declare namespace Reactory {
     propertyField: string
     format: string
     type: string
-    required: boolean    
+    width?: number,
+    key?: string,    
+    required: boolean
+    style?: any    
   }
 
   export interface IExcelSheet {

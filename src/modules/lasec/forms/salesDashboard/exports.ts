@@ -9,41 +9,71 @@ const dashboardExcelExportOptions : Reactory.IExcelExportOptions =  {
       index: 0,
       arrayField: 'quotes',
       startRow: 1,
-      columns: [
-        { 
-          title: 'Quote Id', 
-          propertyField: 'id',
-          format: '',
-          type: 'string',
-          required: true
-        },
+      columns: [        
         {
           title: 'Code', 
           propertyField: 'code',
           format: '',
+          width: 30,
           type: 'string',
-          required: true
+          required: true,
+          style: {}
         },
         {
           title: 'Status', 
           propertyField: 'statusName',
           format: '',
+          width: 30,
           type: 'string',
-          required: true
+          required: true,
+          style: {}
+        },
+        {
+          title: 'Company', 
+          propertyField: 'companyName',
+          format: '',
+          width: 45,
+          type: 'string',
+          required: true,
+          style: {}
         },
         {
           title: 'Customer', 
           propertyField: 'customerName',
           format: '',
+          width: 45,
           type: 'string',
-          required: true
+          required: true,
+          style: {}
         },
+        {
+          title: 'GP', 
+          propertyField: 'GP',
+          format: 'percent',
+          width: 45,
+          type: 'number',
+          required: true,
+          style: {}
+        },        
+        {
+          title: 'Actual GP', 
+          propertyField: 'Actual GP',
+          format: 'percent',
+          width: 45,
+          type: 'number',
+          required: true,
+          style: {}
+        },        
         {
           title: 'Total (Vat Excl)',
           propertyField: 'totalVATExclusive',
           format: 'currency',
           type: 'number',
-          required: true
+          width: 20,
+          required: true,
+          style: {
+            numFmt: '"£"#,##0.00;[Red]\-"£"#,##0.00'
+          }
         }
       ]
     }        
