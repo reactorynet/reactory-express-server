@@ -30,7 +30,7 @@ const dashboardExcelExportOptions : Reactory.IExcelExportOptions =  {
         },
         {
           title: 'Company', 
-          propertyField: 'companyName',
+          propertyField: 'companyTradingName',
           format: '',
           width: 45,
           type: 'string',
