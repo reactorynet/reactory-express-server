@@ -1,6 +1,6 @@
 import pf from '../../../data/forms/defs';
 import { FormNameSpace } from '../constants';
-
+import $defaultExport from './exports/SurveyDelegateExcelExport';
 
 export const SurveyDelegatesSchema = {
   type: 'object',
@@ -290,6 +290,7 @@ export const TowerStoneSurveyDelegateConfig = {
       'surveyId': 'id',
     }
   },
+  defaultExport: $defaultExport,
   uiSchema: SurveyDelegatesUISchema,
   defaultFormValue: {
     launched: 0,

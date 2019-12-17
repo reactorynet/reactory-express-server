@@ -319,13 +319,13 @@ export default {
         light: '#cf445c',
         main: '#990033',
         dark: '#64000d',
-        contrastText: '#fff',
+        contrastText: '#FFFFFF',
       },
       secondary: {
         light: '#e04d43',
         main: '#a8111b',
         dark: '#720000',
-        contrastText: '#fff',
+        contrastText: '#FFFFFF',
       },
       report: {
         empty: '#F7BFBA',
