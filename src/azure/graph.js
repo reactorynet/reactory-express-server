@@ -8,6 +8,7 @@ import om from 'object-mapper';
 import { Stream } from "stream";
 import ApiError from "exceptions";
 import { sendSurveyEmail } from "application/admin/Survey";
+import { response } from "express";
 
 
 const getAuthenticatedClient = (accessToken, apiVersion = 'v1.0') => {
@@ -16,10 +17,10 @@ const getAuthenticatedClient = (accessToken, apiVersion = 'v1.0') => {
     // Use the provided access token to authenticate
     // requests
     defaultVersion: apiVersion,
-	  debugLogging: true,
+    debugLogging: true,
     authProvider: (done) => {
       done(null, accessToken);
-    },    
+    },
   });
 
   return client;
@@ -30,31 +31,31 @@ const MSGraph = {
     const client = getAuthenticatedClient(accessToken);
 
     try {
-      
+
       const imageResponse = await client
         .api(`/me/photos/${size}/$value`)
         .headers({
           'accept': 'image/jpeg'
         })
-        .responseType(ResponseType.RAW)        
+        .responseType(ResponseType.RAW)
         .get();
 
       const s2b = async (readStream) => {
 
-        return await new Promise((resolve, reject)=>{
+        return await new Promise((resolve, reject) => {
           const chunks = [];
 
           readStream.on("data", function (chunk) {
             chunks.push(chunk);
           });
-        
+
           // Send the buffer or you can put it into a var
           readStream.on("end", function () {
             resolve(Buffer.concat(chunks));
-          });      
+          });
 
         }).then();
-      };      
+      };
       const imageBuffer = await s2b(imageResponse.body);
       return `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
     } catch (getImageError) {
@@ -69,7 +70,7 @@ const MSGraph = {
       firstName: '',
       lastName: '',
       email: '',
-      avatar: null,      
+      avatar: null,
     };
 
     try {
@@ -82,12 +83,12 @@ const MSGraph = {
       throw new ApiError(`Could not connect with Microsoft Graph API: ${userGetError.message}`, { MicrosoftError: userGetError });
     }
 
-    if(options.profileImage === true) {
+    if (options.profileImage === true) {
       user.avatar = await MSGraph.getProfileImage(accessToken, options.imageSize);
     }
 
     logger.debug(`MSGraph /me ${options.profileImage ? 'with profile image fetch' : ''} result`, { user })
-                
+
     return user;
   },
 
@@ -105,31 +106,31 @@ const MSGraph = {
 
   async getEmails(accessToken, filter) {
     logger.debug(`Getting emails via MS graph`, filter);
-    const client = getAuthenticatedClient(accessToken);    
+    const client = getAuthenticatedClient(accessToken);
     let emails = [];
     try {
 
-      if(filter && filter.search) {
+      if (filter && filter.search) {
         emails = await client
-        .api('/me/messages')
-        .select('id,subject,receivedDateTime,sentDateTime,bodyPreview,body,sender,from,toRecipients')      
-        .search(filter.search)
-        .get()
-        .then();
+          .api('/me/messages')
+          .select('id,subject,receivedDateTime,sentDateTime,bodyPreview,body,sender,from,toRecipients')
+          .search(filter.search)
+          .get()
+          .then();
 
       } else {
-        
+
         emails = await client
-        .api('/me/messages')
-        .select('id,subject,receivedDateTime,sentDateTime,bodyPreview,body,sender,from,toRecipients')      
-        .get()
-        .then();
+          .api('/me/messages')
+          .select('id,subject,receivedDateTime,sentDateTime,bodyPreview,body,sender,from,toRecipients')
+          .get()
+          .then();
       }
-  
-    } catch(error) {
+
+    } catch (error) {
       logger.debug('Error fetching emails from MS', error);
     }
-              
+
     return emails;
   },
 
@@ -147,7 +148,43 @@ const MSGraph = {
 
   },
 
-  async sendEmail(accessToken, message) {
+  async sendEmail(accessToken, subject, contentType = 'text', content, recipients, ccRecipients = [], saveToSentItems = false) {
+
+    // https://docs.microsoft.com/en-us/graph/api/user-sendmail?view=graph-rest-1.0&tabs=javascript
+
+    const message = {
+      message: {
+        subject,
+        body: {
+          contentType,
+          content
+        },
+        toRecipients: recipients.map(address => {
+          return {
+            emailAddress: {
+              address
+            }
+          }
+        }),
+        ccRecipients: ccRecipients.map(address => {
+          return {
+            emailAddress: {
+              address
+            }
+          }
+        }),
+      },
+      saveToSentItems
+    };
+
+    logger.debug(`SENDING MAIL ${JSON.stringify(message)}`);
+
+    const response = await getAuthenticatedClient(accessToken, 'beta')
+      .api('/me/sendMail')
+      .post(message)
+      .then();
+
+    return response;
 
   }
 };

@@ -250,17 +250,17 @@ const userResolvers = {
   User: {
     id(obj) {
       return obj._id;
-    },    
-    fullName ( user ) {
-      if(!user) return 'null-user';
-      if(typeof user.fullName === 'function') return user.fullName();
-      
-      return `${user.firstName} ${user.lastName}`;      
-    },    
-    fullNameWithEmail (user) {
+    },
+    fullName(user) {
+      if (!user) return 'null-user';
+      if (typeof user.fullName === 'function') return user.fullName();
+
+      return `${user.firstName} ${user.lastName}`;
+    },
+    fullNameWithEmail(user) {
       const { firstName, lastName, email } = user;
       return `${firstName} ${lastName}<${email}>`;
-    },    
+    },
     username(obj) {
       return obj.username;
     },
@@ -729,6 +729,49 @@ const userResolvers = {
       }
       return false;
     },
+    async sendMail(parent, { message }) {
+      const { id, via, subject, contentType, content, recipients, ccRecipients, saveToSentItems } = message;
+
+      logger.debug(`SEND MAIL MESSAGE:: ${JSON.stringify(message)}`);
+
+      const { user } = global;
+      if (isNil(user) === true) throw new ApiError('Not Authorized');
+      const userId = isNil(id) ? user._id : ObjectId(id);
+      logger.info(`USER ID ${userId} via ${message.via}`);
+
+
+      switch (via) {
+        case 'microsoft': {
+
+          const emailUser = await User.findById(userId).then();
+          if (emailUser.authentications) {
+            const found = find(emailUser.authentications, { provider: via });
+            logger.debug(`EMAIL USER FOUND: ${found}`);
+
+
+            if (found) {
+              logger.debug('Found Authentication Info For MS', { token: found.props.accessToken });
+
+              const result = await O365.sendEmail(found.props.accessToken, subject, contentType, content, recipients, ccRecipients, saveToSentItems);
+
+              logger.debug('SEND EMAIL RESULT', result);
+
+              return {
+                Successful: true,
+                Message: 'Your mail was sent successfully.'
+              }
+            }
+            throw new ApiError('User has not authenticated with microsoft');
+          } else {
+            throw new ApiError('User has not authenticated via microsoft');
+          }
+        }
+        // default: {
+        //   return EmailQueue.find({ user: userId }).then();
+        // }
+      }
+
+    }
   },
 };
 

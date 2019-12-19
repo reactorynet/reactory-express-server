@@ -10,7 +10,7 @@ enum PeerType {
 type UserSession {
   id: ObjID
   host: String
-  client: String  
+  client: String
   started: Date
   expires: Date
   refresh: String
@@ -36,7 +36,7 @@ type UserPeers {
   updatedAt: Date
 }
 
-type UserMembership {  
+type UserMembership {
   client: ReactoryClient
   organization: Organization
   businessUnit: BusinessUnit
@@ -68,9 +68,9 @@ type User {
   fullName: String
   fullNameWithEmail: String
   lastName: String
-  email: String  
+  email: String
   deleted: Boolean
-  peers: UserPeers,  
+  peers: UserPeers,
   salt: String,
   password: String
   avatar: String
@@ -78,8 +78,8 @@ type User {
   providerId: String!
   lastLogin: Date
   organization: Organization
-  businessUnit: BusinessUnit  
-  roles: [String]  
+  businessUnit: BusinessUnit
+  roles: [String]
   memberships: [UserMembership]
   sessionInfo: [UserSession]
   authentications: [ UserAuthentication ]
@@ -108,7 +108,7 @@ extend type Query {
   refreshProfileData(id: String, skipImage: Boolean): ProfileRefreshResult
   authenticatedUser: User,
   userInbox(id: String, sort: String, via: String): [Email]
-  searchUser(searchString: String!, sort: String): [User]   
+  searchUser(searchString: String!, sort: String): [User]
   getUserCredentials(provider: String!): UserAuthentication
 }
 
@@ -117,7 +117,7 @@ input CreateUserInput {
   firstName: String!
   lastName: String!
   avatar: String
-  businessUnit: String  
+  businessUnit: String
   authProvider: AuthProvider
   providerId: String
 }
@@ -139,7 +139,7 @@ input UpdateUserInput {
   deleted: Boolean
 }
 
-input UpdatePasswordInput {  
+input UpdatePasswordInput {
   password: String
   confirmPassword: String
   authToken: String
@@ -148,7 +148,23 @@ input UpdatePasswordInput {
 input PeerInput {
   user: String
   relationship: PeerType
-  isInternal: Boolean 
+  isInternal: Boolean
+}
+
+input SendMailInput {
+  id: String!
+  via: String!
+  subject: String!
+  contentType: String
+  content: String!
+  recipients: [String!]!
+  ccRecipients: [String!]
+  saveToSentItems: Boolean
+}
+
+type SendMailResult {
+  Successful: Boolean!
+  Message: String!
 }
 
 extend type Mutation {
@@ -157,15 +173,16 @@ extend type Mutation {
   deleteUser(id: String!): Boolean
   setOrganizationForUser(id: String!, organizationId: String) : Boolean
   setPeersForUser(id: String!, peers: [PeerInput], sendConfirmations: Boolean): UserPeers
-  setPeerRelationShip(id: String!, peer: String!, organization: String!, relationship: PeerType): UserPeers 
+  setPeerRelationShip(id: String!, peer: String!, organization: String!, relationship: PeerType): UserPeers
   removePeer(id: String!, peer: String!, organization: String!): UserPeers
   removeUser(id: String!): Boolean
-  setPassword(input: UpdatePasswordInput!): User  
+  setPassword(input: UpdatePasswordInput!): User
   confirmPeers(id: String!, organization: String!): UserPeers
   addUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]
-  removeUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]  
+  removeUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]
   addUserCredentials(provider: String!, props: Any): Boolean
-  removeUserCredentials(provider: String!): Boolean    
+  removeUserCredentials(provider: String!): Boolean
+  sendMail(message: SendMailInput!): SendMailResult
 }
 
 extend type Subscription {
