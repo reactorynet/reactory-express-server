@@ -1,10 +1,27 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, MongooseDocument, Model } from 'mongoose';
 const { ObjectId } = mongoose.Schema.Types;
 import moment from 'moment';
 
 import logger from '../../../logging';
 
-const CacheSchema = mongoose.Schema({
+export interface ICache extends MongooseDocument {
+  id: any,
+  key: string,
+  partner: any,
+  ttl: number,
+  item: any | any[], 
+};
+
+export interface ICacheStatic {
+  new(): Cache
+  getItem( cacheKey: string, includeKey: boolean ): Promise<Cache>
+  setItem( cacheKey: string, item: any | any[], partner: any ): void
+  clean(): void
+}
+
+export type Cache = ICache & ICacheStatic;
+
+const CacheSchema: Schema<Cache> = new Schema<Cache>({
   id: ObjectId,
   key: String,
   partner: {
@@ -15,7 +32,7 @@ const CacheSchema = mongoose.Schema({
   item: {},  
 });
 
-CacheSchema.statics.getItem = async function getItem(cacheKey) {
+CacheSchema.statics.getItem = async function getItem(cacheKey: string, includeKey: boolean = false) {
   let cached = await this.findOne({ key: cacheKey, partner: global.partner._id }).then();
 
   if(cached !== null && typeof cached === 'object' && cached.ttl) {
@@ -23,14 +40,23 @@ CacheSchema.statics.getItem = async function getItem(cacheKey) {
       cached.remove();
       return null;
     } else {
-      return cached.item;
+      if(includeKey === true) {
+        
+        return {
+          key: cacheKey,
+          item: cached.item
+        };
+
+      } else {
+        return cached.item;
+      }      
     } 
   }
 
   return null;
 };
 
-CacheSchema.statics.setItem = async (cacheKey, item, ttl, partner) => {
+CacheSchema.statics.setItem = async (cacheKey: string, item: any | any[], ttl: number, partner: any) => {
   return new CacheModel({
     partner: partner ? partner._id : global.partner._id,
     key: cacheKey,
@@ -44,7 +70,7 @@ CacheSchema.statics.clean = function Clean() {
 
   const now = moment().valueOf();
   try {
-    this.deleteMany({ ttl: { $lt: now }}, (err)=>{
+    this.deleteMany({ ttl: { $lt: now }}, (err: Error)=>{
       if(err) {
         logger.error(`Could not clean cache - deleteMany({}) fail: ${err ? err.message : 'No Error Message'}`, err);   
       }

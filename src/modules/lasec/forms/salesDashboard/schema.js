@@ -271,6 +271,14 @@ export default {
             type: 'string',
             title: 'Quote Id',
           },
+          created: {
+            type: 'string',
+            title: 'Created'
+          },
+          modified: {
+            type: 'string',
+            title: 'Modified'
+          },
           code: {
             type: 'string',
             title: 'Code',

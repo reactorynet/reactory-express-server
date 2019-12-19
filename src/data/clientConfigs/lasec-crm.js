@@ -1033,7 +1033,7 @@ const LASEC_CONFIG = {
       title: 'Reactory Forms Generation Settings',
       description: '',
       data: {
-        enabled: false,
+        enabled: true,
         generators: [
           {
             id: 'generators.MySQLFormGenerator',

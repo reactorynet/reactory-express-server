@@ -1,0 +1,29 @@
+
+input ReactorySQLQuery {
+
+}
+
+type PagingRequest {
+  page: Int
+  pageSize: Int 
+}
+
+type PagingResult {
+  total: Int
+  page: Int
+  hastNext: Boolean
+  pageSize: Int
+}
+
+type ReactorySQLResult {
+  paging: PagingResult
+}
+
+
+extend type Query {
+
+}
+
+extend type Mutation {
+
+}
