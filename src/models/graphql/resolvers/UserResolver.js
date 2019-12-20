@@ -731,30 +731,19 @@ const userResolvers = {
     },
     async sendMail(parent, { message }) {
       const { id, via, subject, contentType, content, recipients, ccRecipients, saveToSentItems } = message;
-
-      logger.debug(`SEND MAIL MESSAGE:: ${JSON.stringify(message)}`);
-
       const { user } = global;
       if (isNil(user) === true) throw new ApiError('Not Authorized');
       const userId = isNil(id) ? user._id : ObjectId(id);
       logger.info(`USER ID ${userId} via ${via}`);
-
-
       switch (via) {
         case 'microsoft': {
-
           const emailUser = await User.findById(userId).then();
           if (emailUser.authentications) {
             const found = find(emailUser.authentications, { provider: via });
             logger.debug(`EMAIL USER FOUND: ${found}`);
-
-
             if (found) {
               logger.debug('Found Authentication Info For MS', { token: found.props.accessToken });
-
               const result = await O365.sendEmail(found.props.accessToken, subject, contentType, content, recipients, ccRecipients, saveToSentItems);
-
-              logger.debug('SEND EMAIL RESULT', result);
 
               if (result.statusCode != 400) {
                 throw new ApiError(`${result.code}. ${result.message}`);
@@ -777,30 +766,19 @@ const userResolvers = {
     },
     async createOutlookTask(parent, { task }) {
       const { id, via, subject, startDate, dueDate, timeZone } = task;
-
-      logger.debug(`CREATE TASK:: ${JSON.stringify(task)}`);
-
       const { user } = global;
       if (isNil(user) === true) throw new ApiError('Not Authorized');
       const userId = isNil(id) ? user._id : ObjectId(id);
       logger.info(`USER ID ${userId} via ${via}`);
-
-
       switch (via) {
         case 'microsoft': {
-
           const emailUser = await User.findById(userId).then();
           if (emailUser.authentications) {
             const found = find(emailUser.authentications, { provider: via });
             logger.debug(`EMAIL USER FOUND: ${found}`);
-
-
             if (found) {
               logger.debug('Found Authentication Info For MS', { token: found.props.accessToken });
-
               const result = await O365.createTask(found.props.accessToken, subject, startDate, dueDate, timeZone);
-
-              logger.debug('CREATE TASK RESULT', result);
 
               if (result.statusCode != 400) {
                 throw new ApiError(`${result.code}. ${result.message}`);

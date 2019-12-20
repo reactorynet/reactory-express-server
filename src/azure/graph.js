@@ -171,9 +171,6 @@ const MSGraph = {
   },
 
   async sendEmail(accessToken, subject, contentType = 'text', content, recipients, ccRecipients = [], saveToSentItems = false) {
-
-    // https://docs.microsoft.com/en-us/graph/api/user-sendmail?view=graph-rest-1.0&tabs=javascript
-
     const message = {
       message: {
         subject,
@@ -198,8 +195,6 @@ const MSGraph = {
       },
       saveToSentItems
     };
-
-    logger.debug(`SENDING MAIL ${JSON.stringify(message)}`);
 
     const response = await getAuthenticatedClient(accessToken, 'beta')
       .api('/me/sendMail')
