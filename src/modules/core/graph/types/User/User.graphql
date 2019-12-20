@@ -162,6 +162,15 @@ input SendMailInput {
   saveToSentItems: Boolean
 }
 
+input CreateTaskInput {
+  id: String!
+  via: String!
+  subject: String!
+  startDate: Date!
+  dueDate: Date!
+  timeZone: String
+}
+
 type SendMailResult {
   Successful: Boolean!
   Message: String!
@@ -183,6 +192,7 @@ extend type Mutation {
   addUserCredentials(provider: String!, props: Any): Boolean
   removeUserCredentials(provider: String!): Boolean
   sendMail(message: SendMailInput!): SendMailResult
+  createOutlookTask(task: CreateTaskInput!): SendMailResult
 }
 
 extend type Subscription {

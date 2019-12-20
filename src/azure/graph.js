@@ -9,6 +9,7 @@ import { Stream } from "stream";
 import ApiError from "exceptions";
 import { sendSurveyEmail } from "application/admin/Survey";
 import { response } from "express";
+import moment from 'moment';
 
 
 const getAuthenticatedClient = (accessToken, apiVersion = 'v1.0') => {
@@ -144,8 +145,29 @@ const MSGraph = {
     return tasks;
   },
 
-  async createTask(accessToken, task) {
+  async createTask(accessToken, subject, startDate, dueDate, timeZone = 'South Africa Standard Time') {
 
+    startDate = moment(startDate);
+    dueDate = moment(dueDate);
+
+    const task = {
+      subject,
+      startDateTime: {
+        dateTime: `${startDate.format('YYYY-MM-DD')}T${startDate.format('HH:mm:ss')}`,
+        timeZone
+      },
+      dueDateTime: {
+        dateTime: `${dueDate.format('YYYY-MM-DD')}T${dueDate.format('HH:mm:ss')}`,
+        timeZone
+      }
+    };
+
+    const response = await getAuthenticatedClient(accessToken, 'beta')
+      .api('/me/outlook/tasks')
+      .version('beta')
+      .post(task);
+
+    return response;
   },
 
   async sendEmail(accessToken, subject, contentType = 'text', content, recipients, ccRecipients = [], saveToSentItems = false) {
