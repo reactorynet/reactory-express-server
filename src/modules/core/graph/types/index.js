@@ -25,6 +25,7 @@ const typeDefs = [];
   'System/Statistics',
   'System/ReactoryContent',
   'Communications/Notification',
+  'SQL/ReactorySQL',
   'Custom/FuniSaveGateway',
 ].forEach((name) => {
   try {

@@ -1062,16 +1062,18 @@ const LASEC_CONFIG = {
     {
       name: 'mysql.default',
       data: {
+        provider: 'mysql',
         host: 'localhost',
         user: 'reactory',
         password: 'reactory_password',
         database: 'reactory',
         port:3306
       },
-    },
+    },    
     {
       name: 'mysql.lasec360.development',
       data: {
+        provider: 'mysql',
         host: 'localhost',
         user: 'reactory',
         password: 'reactory_password',

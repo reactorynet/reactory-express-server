@@ -100,6 +100,7 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
   let _required: string[] = [];
   let properties: any = {};
 
+  const tableName = nameFactory(table.tableName, 'table');
   let tableWidgetColumns: any[] = [];
 
 
@@ -112,7 +113,7 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
   };
 
   if(table.columns && table.columns.length > 0) {
-    const tableName = nameFactory(table.tableName, 'table');
+    
     table.columns.forEach((tableColumn: GeneratorColumnDefinition, index: number) => {
       const columnName = nameFactory(tableColumn.name, 'column');
 
@@ -162,8 +163,14 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
     ],
     registerAsComponent: true,
     schema: {
-      type: 'array',
+      type: 'object',
       title: `List Access For ${table.tableName}`,
+      properties: {
+        data: {
+          type:'array',
+          title: `${tableName}`  
+        }
+      },
       items: {
         type: 'object',
         title: `Row Item ${table.tableName}`,        
@@ -192,19 +199,25 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
           }
           context {
             schema
-            table                        
+            table
+            commandText
+            provider                        
           }
           data
         }`,
         variables: {
           'formData.paging': 'input.paging',
           'formData.columns': 'input.columns',
-          'formData.filter': 'input.filter',
-          'formData.context': 'input.context'
+          'formData.filters': 'input.filters',
+          'formData.context': 'input.context',          
         },
-      },
-      
-
+        delete: false,
+        edit: false,
+        new: false,
+        queryMessage: 'Executing Query',
+        resultMap: { },
+        options: { }
+      },      
     },        
     uiSchema: propertiesUISchema,
     uiSchemas: [

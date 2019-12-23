@@ -1,9 +1,58 @@
-
-input ReactorySQLQuery {
-
+enum Operator {
+  EQ
+  GT
+  GTEQ
+  LT
+  LTEQ
+  BETWEEN
+  LIKE
+  IN
 }
 
-type PagingRequest {
+
+type SQLColumn {
+  field: String
+  title: String
+  widget: String
+}
+
+input SQLColumnInput {
+  field: String
+  title: String
+  widget: String
+}
+
+
+type SQLContext {
+  schema: String
+  table: String
+  commandText: String
+  provider: String
+}
+
+input SQLContextInput {
+  schema: String
+  table: String
+  commandText: String
+  provider: String
+}
+
+
+type SQLFilter {
+  field: String
+  value: Any
+  operator: Operator
+}
+
+input SQLFilterInput {
+  field: String
+  value: Any
+  operator: Operator
+}
+
+
+
+input PagingRequest {
   page: Int
   pageSize: Int 
 }
@@ -15,15 +64,61 @@ type PagingResult {
   pageSize: Int
 }
 
-type ReactorySQLResult {
+type SQLQueryResult {
   paging: PagingResult
+  columns: [ SQLColumn ]
+  filters: [ SQLFilter ]
+  context: SQLContext
+  data: [ Any ]
 }
 
+type SQLInsertResult {
+  columns: [ SQLColumn ]
+  success: Boolean
+  recordsAffected: Int  
+}
+
+type SQLUpdateResult {
+  success: Boolean
+  recordsAffected: Int
+}
+
+type SQLDeleteResult {
+  success: Boolean
+  recordsAffected: Int  
+}
+
+input SQLQuery {
+  paging: PagingRequest
+  columns: [ SQLColumnInput ]
+  filters: [ SQLFilterInput ]
+  context: SQLContextInput
+}
+
+input SQLInsert {
+  columns: [ SQLColumnInput ]
+  values: [ Any ]
+  context: SQLContextInput
+}
+
+input SQLUpdate {
+  columns: [ SQLColumnInput ]
+  values: [ Any ]
+  context: SQLContextInput
+}
+
+input SQLDelete {
+  columns: [ SQLColumnInput ]
+  filter: [ SQLFilterInput ]
+  context: SQLContextInput
+}
 
 extend type Query {
-
+  ReactorySQLQuery(connectionId: String!, input: SQLQuery): SQLQueryResult
 }
 
 extend type Mutation {
-
+  ReactorySQLInsert(connectionId: String!, input: SQLInsert): SQLInsertResult 
+  ReactorySQLUpdate(connectionId: String!, input: SQLUpdate): SQLUpdateResult
+  ReactorySQLDelete(connectionId: String!, input: SQLDelete): SQLDeleteResult  
 }

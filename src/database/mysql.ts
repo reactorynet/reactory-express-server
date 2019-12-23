@@ -1,11 +1,26 @@
 import mysql from 'mysql';
-import co from 'co';
 import logger from '../logging';
 import ApiError from '../exceptions';
+import {
+  QueryStringGenerator,
+  SQLQuery,
+  SQLInsert,
+  SQLDelete,
+  SQLUpdate,
+  SQLFilter,
+  SQLColumn
+} from './types';
 
-let pool = null;
+let pool: mysql.Pool = null;
 
-const defaultConnectionObject = {
+interface MySqlConnectionObject {
+  host: string,
+  database: string,
+  user: string,
+  password: string,
+  port: number
+}
+const defaultConnectionObject: MySqlConnectionObject = {
   host: 'localhost',
   database: 'reactory',
   user: 'reactory',
@@ -13,7 +28,7 @@ const defaultConnectionObject = {
   port: 3306,  
 };
 
-export const getPool = (database = 'plc', host = 'localhost', user = 'towerstone', password = process.end.DATABASE_PASSWORD_LEGACY, port = 3306, clientKey = 'plc') => {
+export const getPool = (database = 'plc', host = 'localhost', user = 'towerstone', password = process.end.DATABASE_PASSWORD_LEGACY, port = 3306, clientKey = 'plc') : mysql.Pool => {
   if (pool === null) {
     pool = mysql.createPool({
       connectionLimit: 100,
@@ -74,7 +89,62 @@ export const testConnection = (tenant = 'plc') => {
     });
   });
 };
-  
+
+const whereClause = (filter: SQLFilter[]) => {
+  if(filter && filter.length > 0) {
+    return `
+      WHERE
+        ${filter.map((columnFilter: SQLFilter) => {
+          return ` ${columnFilter.field} ${columnFilter.operator} ${columnFilter.value} `
+        })
+      }
+    `
+  } else {
+    return '';
+  }
+}
+
+export const MySQLQueryStringGenerator: QueryStringGenerator = {
+  fromQuery: (queryCommand: SQLQuery): string => {
+    return `
+      SELECT
+        ${queryCommand.columns.map((sqlColumn: SQLColumn, index: number) => {
+          return `${sqlColumn.field} ${index < queryCommand.columns.length ? ',' : ''}`
+        })}
+      FROM 
+        ${queryCommand.context.schema}
+      ${whereClause(queryCommand.filters)}
+    `;
+  },
+  fromInsert: (insertCommand: SQLInsert): string => {
+    return `
+      INSERT 
+
+      INTO
+        ${insertCommand.context.table}
+      VALUES ()
+    `;
+  },
+  fromUpdate: (updateCommand: SQLUpdate): string => {
+    return `
+      UPDATE
+
+      SET
+      ${updateCommand.columns.map((sqlColumn: SQLColumn, index: number) => {
+        return `${sqlColumn.field} ${index < updateCommand.columns.length ? ',' : ''}`
+      })}
+    `;
+  },
+  fromDelete: (deleteCommand: SQLDelete): string => {
+    return `
+      DELETE        
+      FROM
+        ${deleteCommand.context.table}      
+        ${whereClause(deleteCommand.filter)}
+    `;
+  }  
+};
+
 export const queryAsync = async (query, connectionId = 'mysql.default') => {
   logger.debug('queryAsync', { query, connectionId });
 
@@ -89,6 +159,7 @@ export const queryAsync = async (query, connectionId = 'mysql.default') => {
     const connection =  getConnection(connectionId);
     if(connection) {
       connection.query(query, resultCallback);
+      
     } else {
       reject(new ApiError(`Could not establish a connection using the connection details for ${connectionId}`));
     }
