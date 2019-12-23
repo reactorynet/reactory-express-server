@@ -30,7 +30,7 @@ const dashboardExcelExportOptions : Reactory.IExcelExportOptions =  {
         },
         {
           title: 'Company', 
-          propertyField: 'companyName',
+          propertyField: 'companyTradingName',
           format: '',
           width: 45,
           type: 'string',
@@ -54,16 +54,7 @@ const dashboardExcelExportOptions : Reactory.IExcelExportOptions =  {
           type: 'number',
           required: true,
           style: {}
-        },        
-        {
-          title: 'Actual GP', 
-          propertyField: 'Actual GP',
-          format: 'percent',
-          width: 45,
-          type: 'number',
-          required: true,
-          style: {}
-        },        
+        },              
         {
           title: 'Total (Vat Excl)',
           propertyField: 'totalVATExclusive',
@@ -72,8 +63,26 @@ const dashboardExcelExportOptions : Reactory.IExcelExportOptions =  {
           width: 20,
           required: true,
           style: {
-            numFmt: '"£"#,##0.00;[Red]\-"£"#,##0.00'
+            numFmt: '"R"#,##0.00;[Red]\-"R"#,##0.00'
           }
+        },
+        {
+          title: 'Date Created', 
+          propertyField: 'created',         
+          format: 'date',
+          width: 45,
+          type: 'number',
+          required: true,
+          style: {}
+        },
+        {
+          title: 'Date Modified', 
+          propertyField: 'modified',         
+          format: 'date',
+          width: 45,
+          type: 'number',
+          required: true,
+          style: {}
         }
       ]
     }        

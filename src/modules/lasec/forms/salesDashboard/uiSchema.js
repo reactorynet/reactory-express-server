@@ -223,7 +223,8 @@ export default {
       'ui:options': {
         columns: [
           {
-            title: 'Next Action Date', field: 'next',
+            title: 'Next Action Date', 
+            field: 'next',
             component: 'core.DateLabel@1.0.0',
             propsMap: {
               next: 'value',

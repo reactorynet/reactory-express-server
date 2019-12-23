@@ -223,7 +223,7 @@ declare namespace Reactory {
     id: String,
     uiFramework: String,
     uiSupport: String[],
-    uiResources?: any[],    
+    uiResources?: any[],
     title: String,
     tags?: String[],
     helpTopics?: String[]
