@@ -202,7 +202,6 @@ const MSGraph = {
       .then();
 
     return response;
-
   }
 };
 
