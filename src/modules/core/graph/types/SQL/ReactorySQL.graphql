@@ -9,17 +9,24 @@ enum Operator {
   IN
 }
 
+enum OperationModifier {
+  AND
+  OR
+}
+
 
 type SQLColumn {
   field: String
   title: String
   widget: String
+  selected: Boolean
 }
 
 input SQLColumnInput {
   field: String
   title: String
   widget: String
+  selected: Boolean
 }
 
 
@@ -28,6 +35,7 @@ type SQLContext {
   table: String
   commandText: String
   provider: String
+  connectionId: String
 }
 
 input SQLContextInput {
@@ -35,6 +43,7 @@ input SQLContextInput {
   table: String
   commandText: String
   provider: String
+  connectionId: String
 }
 
 
@@ -42,15 +51,16 @@ type SQLFilter {
   field: String
   value: Any
   operator: Operator
+  modifier: OperationModifier
+  invert: Boolean
 }
 
 input SQLFilterInput {
   field: String
+  title: String
   value: Any
   operator: Operator
 }
-
-
 
 input PagingRequest {
   page: Int
@@ -60,7 +70,7 @@ input PagingRequest {
 type PagingResult {
   total: Int
   page: Int
-  hastNext: Boolean
+  hasNext: Boolean
   pageSize: Int
 }
 
@@ -114,11 +124,11 @@ input SQLDelete {
 }
 
 extend type Query {
-  ReactorySQLQuery(connectionId: String!, input: SQLQuery): SQLQueryResult
+  ReactorySQLQuery(input: SQLQuery): SQLQueryResult
 }
 
 extend type Mutation {
-  ReactorySQLInsert(connectionId: String!, input: SQLInsert): SQLInsertResult 
-  ReactorySQLUpdate(connectionId: String!, input: SQLUpdate): SQLUpdateResult
-  ReactorySQLDelete(connectionId: String!, input: SQLDelete): SQLDeleteResult  
+  ReactorySQLInsert(input: SQLInsert): SQLInsertResult 
+  ReactorySQLUpdate(input: SQLUpdate): SQLUpdateResult
+  ReactorySQLDelete(input: SQLDelete): SQLDeleteResult  
 }

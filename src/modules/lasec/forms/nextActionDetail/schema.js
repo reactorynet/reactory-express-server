@@ -48,9 +48,10 @@ export default {
     },
     importance: {
       title: 'Importance',
-      type: 'string'
+      type: ['string', 'null'],
+      defaultValue: 'normal',
     },
-    type: {
+    actionType: {
       title: 'Type',
       type: 'string'
     },

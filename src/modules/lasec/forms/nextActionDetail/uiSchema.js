@@ -1,7 +1,6 @@
 import moment from 'moment';
 
-export default {
-
+export default {  
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
@@ -15,7 +14,7 @@ export default {
       next: {
         lg: 4, md: 4, sm: 12, xs: 12,
       },
-      type: {
+      actionType: {
         lg: 4, md: 4, sm: 12, xs: 12,
       },
       importance: {
@@ -32,14 +31,14 @@ export default {
     'ui:widget': 'ChipLabelWidget',
     'ui:options': {
       title: 'Reps / Users',
-      // userAvatar: true,
-      // format: '${formContext.formData.who.firstName} ${formContext.formData.who.lastName}',
+      userAvatar: true,
+      format: '${who.firstName} ${who.lastName}',
     }
   },
   quote: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: '${formContext.formData.quote.code}',
+      format: '${formData.code}',
       variant: 'subtitle1',
       title: 'Quote Code',
     }
@@ -52,10 +51,10 @@ export default {
       title: 'Next Action Date',
     }
   },
-  type: {
+  actionType: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: '${formContext.formData.type}',
+      format: '${formData}',
       variant: 'subtitle1',
       title: 'Action Type',
     }
@@ -63,7 +62,7 @@ export default {
   importance: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: '${formContext.formData.importance}',
+      format: '${formData}',
       variant: 'subtitle1',
       title: 'Importance',
     }
@@ -71,7 +70,7 @@ export default {
   text: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: '${formContext.formData.text}',
+      format: '${formData}',
       variant: 'subtitle1',
       title: 'Reminder',
     }

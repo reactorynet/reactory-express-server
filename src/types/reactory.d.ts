@@ -68,6 +68,7 @@ declare namespace Reactory {
   export interface IPartner extends IMongoDocument {
     key: string
     name: string
+    getSetting: (key: String) => any
   }
 
   export interface IOrganization extends IMongoDocument {

@@ -1,7 +1,10 @@
+import { Reactory } from '@reactory/server-core/types/reactory'
+
 import $schema from './schema';
 import $uiSchema from './uiSchema';
+// import $graphql from './graphql';
 
-export default {
+const LasecNextActionDetailForm: Reactory.IReactoryForm = {
   id: 'LasecNextActionDetail',
   uiFramework: 'material',
   uiSupport: ['material'],
@@ -13,6 +16,7 @@ export default {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,
+  // graphql: $graphql,
   uiSchema: $uiSchema,
   widgetMap: [
     {

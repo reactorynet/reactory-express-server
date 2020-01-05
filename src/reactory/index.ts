@@ -19,6 +19,8 @@ import { Reactory } from 'types/reactory';
 import * as ReactorySchemaTypes from './types';
 import { ICacheStatic } from 'modules/core/models/CoreCache';
 
+
+
 const router = express.Router();
 router.options('/schema', (req, res) => {
   res.status(203).send('');
@@ -27,6 +29,8 @@ router.options('/schema', (req, res) => {
 router.post('/schema', (req, res) => {
   res.send({ ok: true });
 });
+
+const 24Hours = 86400; //24 
 
 router.get('/schema', async (req, res) => {
 
@@ -63,10 +67,13 @@ router.get('/schema', async (req, res) => {
               let connectionCacheResult = await Promise.all(cachePromises).then();
               connectionCacheResult.forEach((cachedItem) => {
                 const { key, item } = cachedItem;
-                if(item !== null && isArray(item) === true) {                  
-                  logger.debug(`Found ${item.length} forms for ${key}`);
-                  skipGenerationFor.set(key, true);
-                  schemas = [...schemas, ...item];
+                if(item !== null) {                  
+                  let itemObject = JSON.parse(item);
+                  if(isArray(itemObject) === true) {
+                    logger.debug(`Found ${itemObject.length} forms for ${key}`);
+                    skipGenerationFor.set(key, true);
+                    schemas = [...schemas, ...itemObject];
+                  }                  
                 }
               });
             } catch(error) {
@@ -74,9 +81,7 @@ router.get('/schema', async (req, res) => {
             }            
           }                              
         }
-
-        
-         
+                 
         if(_generators.length > 0) {
           const formPromiseResults = await Promise.all(_generators.map(({ id, connectionId, props }) => {
             return ( async (id, connectionId, props) => {                
@@ -89,12 +94,15 @@ router.get('/schema', async (req, res) => {
                   const forms = await generators[id]({ partner: global.partner, connectionId, props }).then();
                   logger.debug(`Provider generated ${forms.length} forms`)
                   if(Cache) {
-                    Cache.setItem(cacheKey, forms, 3600, global.partner);
-                  }                
+                    try {
+                      Cache.setItem(cacheKey, JSON.stringify(forms), 24Hours, global.partner);
+                    } catch(setCacheError) {
+                      logger.error("Could not set the cache item due to an error", setCacheError);
+                    }
+                  }
                   return forms;
                 }
-                
-                return []
+                return [];
               } else {
                 logger.warn(`Warning, no generator found with the id: ${id} - skipped generation of forms`, generators);
               }

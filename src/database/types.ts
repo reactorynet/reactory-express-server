@@ -13,6 +13,7 @@ export enum Operator {
 
 export interface SQLColumn {
   field: string,
+  type: string,
   title: string,
   widget: string
 }
@@ -27,7 +28,8 @@ export interface SQLContext {
   schema: string,
   table: string,
   commandText: string,
-  provider: string
+  provider: string,
+  connectionId: string
 }
 
 export interface SQLFilter {
@@ -38,7 +40,7 @@ export interface SQLFilter {
 
 export interface PagingRequest {
   page: number
-  pageSize: number
+  pageSize: number  
 }
 
 export interface PagingResult {
@@ -76,7 +78,7 @@ export interface SQLQuery {
   paging: PagingRequest
   columns: SQLColumn[]
   filters: SQLFilter[]
-  context: SQLContext
+  context: SQLContext, 
 }
 
 export interface SQLInsert {
@@ -97,8 +99,13 @@ export interface SQLDelete {
   context: SQLContext
 }
 
+export interface QueryStringResultWithCount {
+  query: string,
+  count: number
+}
+
 export interface QueryStringGenerator {
-  fromQuery(queryCommand: SQLQuery): string;
+  fromQuery(queryCommand: SQLQuery): Promise<QueryStringResultWithCount>;
   fromInsert(insertCommand: SQLInsert): string;
   fromUpdate(updateCommand: SQLUpdate): string;
   fromDelete(deleteCommand: SQLDelete): string;

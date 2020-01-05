@@ -323,14 +323,19 @@ const Menus = {
           link: '/360/admin/teams',
           icon: 'supervised_user_circle',
           roles: ['ADMIN', 'DEVELOPER']
-        },
+        },        
         {
           ordinal: 4,
           title: 'Groups',
           link: '/360/admin/groups',
           icon: 'group_work', 
           roles: ['ADMIN', 'DEVELOPER']
-        }
+        },
+        {
+            ordinal: 5,
+            title: 'AR Invoices',
+            link: '/db/arinvoices'
+        },
       ]
     },
     {
@@ -652,6 +657,15 @@ const LASEC_CONFIG = {
       ]
     },
     {
+      key: 'ar-invoices',
+      title: 'AR Invoices - Table Access',
+      path: '/db/arinvoices',
+      public: false,
+      exact: true,
+      roles: ['ADMIN'],
+      componentFqn: 'core-generated.ReactoryConnectedTableList_mysql_default_arinvoice@1.0.0'
+    },
+    {
       key: 'help-item',
       title: 'Help Item',
       path: '/help/:slug',
@@ -695,7 +709,7 @@ const LASEC_CONFIG = {
           }
         }
       ]
-    },
+    },    
     {
       key: 'profile',
       title: 'Profile',

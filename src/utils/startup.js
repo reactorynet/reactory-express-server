@@ -7,6 +7,7 @@ import { installDefaultEmailTemplates } from '../emails';
 import data from '../data';
 import logger from '../logging';
 import { ReactoryClientValidationError } from '../exceptions';
+import { schemaStartup } from '../reactory';
 
 
 const { clients, users, components } = data;

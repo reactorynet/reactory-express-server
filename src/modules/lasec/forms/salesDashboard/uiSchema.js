@@ -30,6 +30,10 @@ export default {
       quotes: { xs: 12 },
     },
   ],
+
+  /**
+   * Primary Toolbar for salesDashboard
+   */
   toolbar: {
     'ui:wrapper': 'Toolbar',
     'ui:widget': 'MaterialToolbar',
@@ -211,14 +215,55 @@ export default {
    * Next Actions Section
    **/
   nextActions: {
+    'ui:toolbar': {
+      buttons: [
+        {
+          command: 'syncNextActionsToOutlook',
+          id: 'SyncNextActionsToOutlook',
+          color: 'primary',
+          icon: 'refresh',
+          tooltip: 'Synchronize next actions to your outlook calendar',
+          graphql: 'SynchronizeNextActionsToOutloook',
+        }
+      ]
+    },
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
         actions: { sm: 12, xs: 12 },
       }
     ],
-    actions: {
-      title: 'Next Actions',
+    actions: {      
+      'ui:widget': 'MaterialListWidget',
+      'ui:options': {
+        id: 'Id',
+        primaryText: '${item.actionType} due on ${props.api.utils.moment(item.next).format("YYYY.MM.DD")}',
+        secondaryText: '${item.quote.code} ${item.importance} assigned to ${item.who && item.who.length > 0 ? item.who.map((w)=>(w.firstName + " " + w.lastName)) : "no one" }',
+        showAvatar: false,
+        icon: 'history',
+        variant: 'button',
+        secondaryAction: {
+          iconKey: 'edit',
+          label: 'Edit',
+          componentFqn: 'core.SlideOutLauncher@1.0.0',
+          action: 'mount:Component',
+          link: '/edit/${item.id}/',          
+          props: {
+            componentFqn: 'lasec-crm.LasecNextActionDetail@1.0.0',
+            componentProps: {
+              'formData': 'formData',
+            },
+            slideDirection: 'down',
+            buttonTitle: 'View Details',
+            windowTitle: 'Next Action ${formData.quote.code}',
+            buttonVariant: 'IconButton',               
+          },          
+        },
+        listProps: {
+          dense: true
+        }
+      },
+      /*
       'ui:widget': 'MaterialTableWidget',
       'ui:options': {
         columns: [
@@ -262,8 +307,10 @@ export default {
             },
           },
         ],
+        
         options: {},
       },
+      */
     }
   },
 

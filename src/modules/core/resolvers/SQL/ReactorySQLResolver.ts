@@ -12,6 +12,7 @@ import {
 
   SQLQuery,
   SQLQueryResult,
+  QueryStringResultWithCount,
 
 } from '@reactory/server-core/database/types';
 import logger from 'logging';
@@ -38,35 +39,39 @@ interface SQLDeleteParams {
 }
 
 
-
-
-const queryFromInput = (query: SQLQuery, connectionId: string) :string => {
-  
-  return `SELECT FROM ${query.context.}`;
-};
-
 const ReactorySQLResolver = {
   Query : {
     ReactorySQLQuery: async (obj: any, params: SQLQueryParams): Promise<SQLQueryResult>  => {
-      let result: SQLQueryResult;
-      const { connectionId, input } = params;
       
-      let query: string = MySQLQueryStringGenerator.fromQuery(input);
-      logger.debug(`Query String Generated: ${query}`);
+      const { input } = params;
+      const { connectionId } = input.context;      
       
-      result.data = await mysql(query, connectionId).then();
+      let result: SQLQueryResult = {
+        columns: input.columns,
+        context: input.context,
+        data: [],
+        filters: input.filters || [],
+        paging: {
+          hasNext: true, 
+          page: input.paging.page,
+          pageSize: input.paging.pageSize,
+          total: 0
+        }
+      };
+      
+      let query: QueryStringResultWithCount = await MySQLQueryStringGenerator.fromQuery(input).then();
+      logger.debug(`Query String Generated: ${query}`, query);
+      result.data = await mysql(query.query, connectionId).then();
       result.columns = input.columns;
       result.paging = {
-        hasNext: true,
-        page: 1,
-        pageSize: 100,
-        total: result.data.length
+        hasNext: (input.paging.page * input.paging.pageSize) < query.count ?  true : false,
+        page: input.paging.page,
+        pageSize: input.paging.pageSize,
+        total: query.count
       };
-      result.filters = input.filters;
-      result.context = input.context;
-      
+      result.context = input.context;      
       return result;
-    }
+    }    
   },
   Mutation: {
     ReactorySQLInsert: async (obj: any, params: any): Promise<SQLInsertResult> => {

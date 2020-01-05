@@ -8,7 +8,8 @@ import {
   SQLDelete,
   SQLUpdate,
   SQLFilter,
-  SQLColumn
+  SQLColumn,
+  QueryStringResultWithCount
 } from './types';
 
 let pool: mysql.Pool = null;
@@ -90,8 +91,14 @@ export const testConnection = (tenant = 'plc') => {
   });
 };
 
+
 const whereClause = (filter: SQLFilter[]) => {
   if(filter && filter.length > 0) {
+
+    const formatValue = (filter: SQLFilter) => {
+
+    };
+
     return `
       WHERE
         ${filter.map((columnFilter: SQLFilter) => {
@@ -102,27 +109,49 @@ const whereClause = (filter: SQLFilter[]) => {
   } else {
     return '';
   }
-}
+};
 
 export const MySQLQueryStringGenerator: QueryStringGenerator = {
-  fromQuery: (queryCommand: SQLQuery): string => {
-    return `
-      SELECT
-        ${queryCommand.columns.map((sqlColumn: SQLColumn, index: number) => {
-          return `${sqlColumn.field} ${index < queryCommand.columns.length ? ',' : ''}`
-        })}
-      FROM 
-        ${queryCommand.context.schema}
-      ${whereClause(queryCommand.filters)}
-    `;
+  fromQuery: async (queryCommand: SQLQuery): Promise<QueryStringResultWithCount> => {
+    logger.debug('Generating SQL Query using queryCommand', queryCommand);    
+    let queryStringResultWithCount: QueryStringResultWithCount = {
+      query: `
+        SELECT
+          ${queryCommand.columns.map((sqlColumn: SQLColumn, index: number) => {
+            return `${sqlColumn.field}`
+          })}
+        FROM 
+          ${queryCommand.context.schema}.${queryCommand.context.table}
+        ${whereClause(queryCommand.filters)}
+        LIMIT ${queryCommand.paging.pageSize || 100}
+        OFFSET ${((queryCommand.paging.page || 1) - 1) * (queryCommand.paging.pageSize || 100)}
+      `,
+      count: 0
+    };
+
+    const countResult: any[] = await queryAsync(`
+      SELECT 
+        COUNT(1) as total
+      FROM ${queryCommand.context.schema}.${queryCommand.context.table}
+      ${whereClause(queryCommand.filters)}`, queryCommand.context.connectionId).then();
+
+    queryStringResultWithCount.count = countResult[0].total;
+
+    return queryStringResultWithCount;
   },
   fromInsert: (insertCommand: SQLInsert): string => {
     return `
       INSERT 
-
+      ${insertCommand.columns.map((sqlColumn: SQLColumn, index: number) => {
+        return `${sqlColumn.field} ${index < insertCommand.columns.length ? ',' : ''}`
+      })}
       INTO
         ${insertCommand.context.table}
-      VALUES ()
+      VALUES (
+        ${insertCommand.values.map((columnValue: any, cIndex: number) => {  
+          return `'${columnValue}'`
+        })}
+      )
     `;
   },
   fromUpdate: (updateCommand: SQLUpdate): string => {
@@ -142,7 +171,7 @@ export const MySQLQueryStringGenerator: QueryStringGenerator = {
         ${deleteCommand.context.table}      
         ${whereClause(deleteCommand.filter)}
     `;
-  }  
+  },  
 };
 
 export const queryAsync = async (query, connectionId = 'mysql.default') => {

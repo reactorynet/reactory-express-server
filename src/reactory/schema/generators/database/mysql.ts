@@ -66,7 +66,7 @@ const listColumns = async( connectionId: string, table: GeneratorTableDefinition
 const MySqlDataTypeMap: Map<string, string> = new Map<string, string>()
 
 const getTypeFromDBType = (dbType: string): string => {
-  logger.debug(`Mapping MySQL DataType `)
+  logger.debug(`Mapping MySQL DataType ${dbType}`)
   switch(dbType.toLowerCase()) {
     case 'bool': 
     case 'bit': {
@@ -76,12 +76,14 @@ const getTypeFromDBType = (dbType: string): string => {
     case 'int32':
     case 'int64':
     case 'decimal':
-    case 'float':   
+    case 'float':
+    case 'tinyint':   
     case 'bigint': {
       return 'number'
     }
     case 'date':
     case 'date-time':
+    case 'datetime':
     case 'varchar': 
     case 'nvarchar': 
     case 'char':
@@ -92,24 +94,223 @@ const getTypeFromDBType = (dbType: string): string => {
 }
 
 const nameFactory = (databaseName: string, entityType: string): string => {
-  return databaseName;
+  switch(entityType) {
+    case 'table': 
+    default: {
+      return databaseName.toLocaleUpperCase()
+    }
+  }  
 };
 
-const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, connectionId: string = 'mysql.default'): Reactory.IReactoryForm => {
+const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, connectionId: string = 'mysql.default'): any => {
   logger.debug(`Generating List Definition For ${table.schemaName}.${table.tableName}@${connectionId}`);
   let _required: string[] = [];
-  let properties: any = {};
-
   const tableName = nameFactory(table.tableName, 'table');
-  let tableWidgetColumns: any[] = [];
 
+  let defaultSelectedColumns: any[] = [];
 
-
-  let propertiesUISchema: any = {
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
-
+  let formRootPoperties: any = {
+    filters: {      
+      type: 'array',
+      title: 'Column Filter',      
+      items: {
+        type: 'object',
+        title: 'Column Filter',
+        properties: {
+          field: {
+            type: 'string',
+            title: 'Field Name',
+          },
+          value: {
+            type: 'string',
+            title: 'Value'
+          },
+          operator: {
+            type: 'string',
+            title: 'Operation'
+          },
+          modifier: {
+            type: 'string',
+            title: 'Operation Modifier',
+          },
+          invert: {
+            type: 'boolean',
+            title: 'Invert Operation (NOT)'
+          }
+        },
+      },
     },
+    paging: {
+      type: 'object',
+      title: 'Paging',
+      properties: {
+        total: {
+          type: 'number',
+          title: 'Total',
+        },
+        page: {
+          type: 'number',
+          title: 'Page'
+        },
+        hasNext: {
+          type: 'boolean',
+          title: 'Has Next'
+        },
+        pageSize: {
+          type: 'number',
+          title: 'Page Size'
+        },
+      },
+    },
+    columns: {
+      type: "array",
+      title: "Columns",
+      items: {
+        type: "object",
+        properties: {
+          field: {
+            type: "string",
+            title: "Column Name"
+          },
+          title: {
+            type: "string",
+            title: "Title"
+          },
+          widget: {
+            type: ["string", "null"],
+            title: "Widget"
+          },
+          selected: {
+            type: "boolean",
+            title: "Selected"
+          }
+        }
+      }
+    },
+    context: {
+      type: 'object',
+      title: 'DB Context',
+      properties: {
+        schema: {
+          type: 'string',
+          title: 'Schema name'
+        },
+        table: { 
+          type: 'string',
+          title: 'Table name'
+        },
+        commandText: {
+          type: 'string',
+          title: 'Command Text',          
+        },
+        provider: {
+          type: 'string',
+          title: 'Provider'
+        },
+        connectionId: {
+          type: 'string',
+          title: 'Connection Id'
+        },
+      },
+    },
+    data: {
+      type: 'array',
+      title: `Table Data ${tableName}`,
+      items: {
+        type: 'object',
+        properties: {
+
+        },
+      },
+    },
+  };
+
+  
+  let tableWidgetColumns: any[] = [];
+  let propertiesUISchema: any = {
+    'ui:field': 'GridLayout',
+    'ui:grid-layout': [
+      {
+        context: { sm: 12, xs: 12, md: 12, lg: 4 },
+        paging: { sm: 12, xs: 12, md: 6, lg: 4 },
+        filters: { sm: 6, xs: 6, md: 3, lg: 2 },
+        columns: { sm: 6, xs: 6, md: 3, lg: 2 },
+      },
+      {
+        data: { sm: 12, xs: 12 },
+      }
+    ],
+    context: {
+      'ui:widget': 'LabelWidget',
+      'ui:options': {
+        format: 'Connection: ${formData.schema}.${formData.table}@${formData.connectionId}',
+        variant: 'h6',
+      },
+    },
+    columns: {
+      'ui:widget': 'ColumnSelectorWidget',      
+    },
+    filters: {
+      'ui:widget': 'ColumnFilterWidget',
+      items: {
+        field: {
+          'ui:widget': 'SelectWidget',
+          'ui:options': {
+            selectOptions: [
+              
+            ],
+          },
+        },
+        operator: {
+          'ui:widget': 'SelectWidget',
+          'ui:options': {
+            selectOptions: [
+              { key: 'EQ', value: 'EQ', label: 'Equals == ?' },
+              { key: 'GT', value: 'GT', label: 'Greater Than > ?' },
+              { key: 'GTEQ', value: 'GTEQ', label: 'Greater Than or Equals >= ?' },
+              { key: 'LT', value: 'LT', label: 'Less Than < ' },
+              { key: 'LTEQ', value: 'LTEQ', label: 'Less Than or Equals <= ?' },
+              { key: 'BETWEEN', value: 'BETWEEN', label: 'Between x and y' },
+              { key: 'LIKE', value: 'LIKE', label: 'Like %value%' },
+              { key: 'IN', value: 'IN', label: 'In ( ... )' },
+            ],
+          },
+        },
+        value: {
+
+        },        
+        modifier: {
+          'ui:widget': 'SelectWidget',
+          'ui:options': {
+            selectOptions: [
+              { key: 'AND', value: 'AND', label: 'AND' },
+              { key: 'OR', value: 'OR', label: 'OR' },              
+            ],
+          },
+        },
+        invert: {
+
+        },
+      },
+    },
+
+    paging: {
+      'ui:widget': 'DataPageWidget',
+      'ui:options': {
+        format: 'Records: (${formData.total | 0}) Data Set: ${formData.page | 1} of ${Math.floor(formData.total/formData.pageSize)}',
+        variant: 'h6',
+      },
+    },
+
+    data: {
+      'ui:widget': 'MaterialTableWidget',
+      'ui:options': {
+
+      },
+      items: {
+        
+      },      
+    },    
   };
 
   if(table.columns && table.columns.length > 0) {
@@ -119,7 +320,7 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
 
       if(tableColumn.isNullable === false) _required.push(tableColumn.name);
             
-      properties[tableColumn.name] = {
+      formRootPoperties.data.items.properties[tableColumn.name] = {
         type: getTypeFromDBType(tableColumn.dataType),
         default: tableColumn.defaultValue || null,
         description: `${tableColumn.metaData}`,
@@ -131,16 +332,38 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
         field: tableColumn.name,
       });
 
-      propertiesUISchema[tableColumn.name] = {
+      /*
+      propertiesUISchema.data.items[tableColumn.name] = {
         'ordinal': index,
         'ui:options': {
           enabled: true
         },
-      }
+      },
+      */
+
+      propertiesUISchema.filters.items.field["ui:options"].selectOptions.push({ 
+          key: tableColumn.name, 
+          value: tableColumn.name, 
+          label: columnName
+        });
+      
+      if(tableColumn.isNullable === false) {
+        propertiesUISchema.filters.items.field["ui:options"].selectOptions.push({
+          key: 'null', 
+          value: null, 
+          label: 'Null (Empty / None)'
+        })
+      };
+      
+      defaultSelectedColumns.push({
+        field: tableColumn.name,
+        title: columnName
+      });
+
     });
 
-    propertiesUISchema["ui:options"].columns = tableWidgetColumns;
-    propertiesUISchema["ui:options"].options = {};
+    propertiesUISchema.data["ui:options"].columns = tableWidgetColumns;
+    propertiesUISchema.data["ui:options"].options = {};
   }; 
 
   
@@ -159,75 +382,93 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
     componentDefs: [],
     description: `${table.tableName}@${connectionId}`,    
     helpTopics: [
-      `Reactory ${table.tableName}`,
+      `Help.Generated.${table.tableName}@${connectionId}`,
     ],
     registerAsComponent: true,
     schema: {
       type: 'object',
       title: `List Access For ${table.tableName}`,
-      properties: {
-        data: {
-          type:'array',
-          title: `${tableName}`  
-        }
-      },
-      items: {
-        type: 'object',
-        title: `Row Item ${table.tableName}`,        
-        properties: properties,
-      },      
+      properties: formRootPoperties,           
     },
     graphql: {
       query: {
-        name: 'ReactorySQL',
-        text: `query ReactorySQL($connectionId: String!, $input: ReactorySQLQuery){
-          paging {
-            total
-            page
-            hasNext
-            pageSize
+        name: 'ReactorySQLQuery',
+        text: `query ReactorySQLQuery($input: SQLQuery){
+          ReactorySQLQuery(input: $input){  
+            paging {
+              total
+              page
+              hasNext
+              pageSize
+            }
+            columns {
+              field
+              title
+              widget
+            }
+            filters {
+              field
+              value            
+              operator
+            }
+            context {
+              schema
+              table
+              commandText
+              provider       
+              connectionId                 
+            }
+            data
           }
-          columns {
-            field
-            title
-            widget
-          }
-          filters {
-            field
-            value            
-            operator
-          }
-          context {
-            schema
-            table
-            commandText
-            provider                        
-          }
-          data
         }`,
         variables: {
-          'formData.paging': 'input.paging',
+          'formData.paging.page': 'input.paging.page',
+          'formData.paging.pageSize': 'input.paging.pageSize',
           'formData.columns': 'input.columns',
           'formData.filters': 'input.filters',
-          'formData.context': 'input.context',          
+          'formData.context': 'input.context'
         },
         delete: false,
         edit: false,
         new: false,
         queryMessage: 'Executing Query',
-        resultMap: { },
+        resultMap: { 
+
+        },
         options: { }
       },      
+    },
+    defaultFormValue: {
+      context: {
+        table: tableName,
+        connectionId: connectionId,
+        schema: table.schemaName,
+        provider: 'mysql',
+        commandText: `SELECT * FROM ${table.tableName}`
+      },
+      columns: defaultSelectedColumns,
+      paging: {
+        pageSize: 100,
+        page: 1
+      }
     },        
     uiSchema: propertiesUISchema,
     uiSchemas: [
       { 
         id: 'default',
         key: 'default', 
-        description: "List View", 
-        title: 'default',
+        description: `Table View for ${table.tableName}`, 
+        title: 'Table View',
         uiSchema: propertiesUISchema, 
-        icon: 'view_stream'
+        icon: 'table_chart'
+      },
+      { 
+        id: 'list_view',
+        key: 'list_view', 
+        description: `List View for ${table.tableName}`, 
+        title: 'List View',
+        uiSchema: propertiesUISchema, 
+        icon: 'view_list'
       },
     ],     
   };
@@ -304,7 +545,6 @@ const formDefinitionFromTableConnection = (table: GeneratorTableDefinition, conn
       },
     ],     
   };
-
 };
 
 export const generate = async (props: GeneratorConfig): Promise<Reactory.IReactoryForm[]> => {
@@ -333,7 +573,12 @@ export const generate = async (props: GeneratorConfig): Promise<Reactory.IReacto
     const instanceForm = formDefinitionFromTableConnection(table, props.connectionId || 'mysql.default');
     const listForm =  arrayListFormFromTableConnection(table, props.connectionId || 'mysql.default');
     
-    generatedForms.push(instanceForm, listForm);
+    generatedForms.push(
+      instanceForm,
+      listForm,
+      //JSON.stringify(instanceForm), 
+      //JSON.stringify(listForm)
+    );
   });
 
   return generatedForms;
