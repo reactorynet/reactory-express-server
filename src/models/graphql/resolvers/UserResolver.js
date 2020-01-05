@@ -742,10 +742,12 @@ const userResolvers = {
             const found = find(emailUser.authentications, { provider: via });
             logger.debug(`EMAIL USER FOUND: ${found}`);
             if (found) {
+
               logger.debug('Found Authentication Info For MS', { token: found.props.accessToken });
+
               const result = await O365.sendEmail(found.props.accessToken, subject, contentType, content, recipients, ccRecipients, saveToSentItems);
 
-              if (result.statusCode != 400) {
+              if (result && result.statusCode && result.statusCode != 400) {
                 throw new ApiError(`${result.code}. ${result.message}`);
               }
 
@@ -780,7 +782,7 @@ const userResolvers = {
               logger.debug('Found Authentication Info For MS', { token: found.props.accessToken });
               const result = await O365.createTask(found.props.accessToken, subject, startDate, dueDate, timeZone);
 
-              if (result.statusCode != 400) {
+              if (result && result.statusCode && result.statusCode != 400) {
                 throw new ApiError(`${result.code}. ${result.message}`);
               }
 
