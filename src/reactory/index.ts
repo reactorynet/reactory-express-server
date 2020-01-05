@@ -30,7 +30,7 @@ router.post('/schema', (req, res) => {
   res.send({ ok: true });
 });
 
-const 24Hours = 86400; //24 
+const CacheTimeout24Hours = 86400; //24 
 
 router.get('/schema', async (req, res) => {
 
@@ -95,7 +95,7 @@ router.get('/schema', async (req, res) => {
                   logger.debug(`Provider generated ${forms.length} forms`)
                   if(Cache) {
                     try {
-                      Cache.setItem(cacheKey, JSON.stringify(forms), 24Hours, global.partner);
+                      Cache.setItem(cacheKey, JSON.stringify(forms), CacheTimeout24Hours, global.partner);
                     } catch(setCacheError) {
                       logger.error("Could not set the cache item due to an error", setCacheError);
                     }
