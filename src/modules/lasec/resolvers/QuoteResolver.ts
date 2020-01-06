@@ -816,6 +816,7 @@ export default {
       return null;
     },
     customer: async (quote) => {
+      logger.debug(`Resolving Quote.customer ${quote.code}`)
       if (quote === null) throw new ApiError('Quote is null');
       const { customer } = quote;
       if (isNil(customer) === false) {
@@ -995,20 +996,29 @@ export default {
       return meta && meta.source && meta.source.allowed_status_ids
     },
     company: async (quote) => {
-
+      logger.debug(`Resolving Quote.company ${quote.code} - ${quote.company}`);
       const { meta } = quote;
 
       if (isNil(quote.company) === false) {
         if (ObjectId.isValid(quote.company) === true) {
-          return await Organization.findById(quote.company).then();
+          logger.debug(`Company found in db, load with id ${quote.company}`);
+          const loadedOrganization = await Organization.findById(quote.company).then();
+          if(loadedOrganization === null || loadedOrganization === undefined) {
+            logger.error(`Could not load the organization with the reference number ${quote.company}`);            
+          } else {
+            logger.debug(`Found organization ${loadedOrganization.name} - ${loadedOrganization.tradingName}`, loadedOrganization)
+            return loadedOrganization;
+          }                    
         }
       }
 
+      
       if (quote.meta && quote.meta.source) {
+        logger.debug(`No organization, checking meta data`);
         const { company_id, company_trading_name } = meta.source;
         if (company_trading_name && company_id) {
           //check if a customer with this reference exists?
-
+          logger.debug(`No organization, checking foreign reference ${company_id} ${global.partner.key}`);
           let _company = await Organization.findByForeignId(company_id, global.partner.key).then();
           if (_company !== null) {
             if (typeof quote.save === "function") {
@@ -1019,7 +1029,7 @@ export default {
             return _company;
           }
           else {
-
+            logger.debug(`No organization, checking meta data`);
             _company = new Organization({
               meta: {
                 owner: global.partner.key,

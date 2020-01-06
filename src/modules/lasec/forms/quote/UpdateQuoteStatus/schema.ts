@@ -1,4 +1,6 @@
-const schema = {
+import Reactory from '@reactory/server-core/types/reactory';
+
+const schema: Reactory.ISchema = {
   type: 'object',
   required: [
     //'customer',
@@ -67,6 +69,7 @@ const schema = {
       title: 'Reason Codes',
       items: {
         type: 'string',
+        title: 'Reason Code'
       },
     },
     reason: {

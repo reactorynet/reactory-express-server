@@ -1,16 +1,12 @@
-import { defaultFormProps } from '../../../../../data/forms/defs';
-import { defaultUiResources } from '../../uiResources';
 import $graphql from './graphql';
 import $schema from './schema';
 import $uiSchema from './uiSchema';
+import Reactory from '@reactory/server-core/types/reactory';
 
-
-export const UpdateQuoteStatusForm = {
+export const UpdateQuoteStatusForm: Reactory.IReactoryForm = {
   id: 'UpdateQuoteStatus',
-  ...defaultFormProps,
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [...defaultUiResources],
   title: 'Update Quote Status',
   tags: ['Quote Status'],
   schema: $schema,
@@ -40,7 +36,7 @@ export const UpdateQuoteStatusForm = {
     reminder: 1
   },
   roles: ['*'],
-  startWith: '${!formData.quote_id ? \'lasec-crm.QuoteIdInputForm@1.0.0\' : null}',    
+  //startWith: '${!formData.quote_id ? \'lasec-crm.QuoteIdInputForm@1.0.0\' : null}',    
   registerAsComponent: true,
   name: 'UpdateQuoteStatus',
   nameSpace: 'lasec-crm',

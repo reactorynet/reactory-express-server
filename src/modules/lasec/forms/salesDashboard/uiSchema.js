@@ -368,6 +368,7 @@ export default {
             slideDirection: 'down',
             buttonTitle: 'Next Actions',
             windowTitle: 'Next Actions ${code}',
+            buttonIcon: 'add_alert'
           },
         },
         { title: 'Status', field: 'statusName', defaultGroupOrder: 0 },
