@@ -89,6 +89,7 @@ export default {
       enum: [
         "critical",
         "high",
+        "normal",
         "medium",
         "low",
       ],

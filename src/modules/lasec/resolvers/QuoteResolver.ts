@@ -821,7 +821,10 @@ export default {
       const { customer } = quote;
       if (isNil(customer) === false) {
         if (customer && ObjectId.isValid(customer) === true) {
-          return await User.findById(quote.customer).then();
+          const loadedCustomer = await User.findById(quote.customer).then(); 
+          if(loadedCustomer !== undefined && loadedCustomer !== null) {
+            return loadedCustomer;
+          }
         }
       }
 
@@ -1594,7 +1597,7 @@ export default {
         });
         await reminder.save().then();
 
-        logger.debug(`SAVED REMONDER:: ${reminder}`);
+        logger.debug(`SAVED REMINDER:: ${reminder}`);
 
         amq.raiseWorkFlowEvent('startWorkFlow', {
           id: 'LasecSetReminderForQuote',
@@ -1627,10 +1630,40 @@ export default {
 
       await quote.save();
 
+      //create task via ms if the user has MS authentication
+      let taskCreated = false;
+      let _message = '.';
+      if(user.getAuthentication("microsoft") !== null) {
+        const taskCreateResult = await clientFor(user, global.partner).query({
+          query: gql`
+            mutation createOutlookTask($task: CreateTaskInput!) {
+              createOutlookTask(task: $task) {
+                Successful
+                Message
+              }
+            }`, variables: {
+              "task": {
+                "id": `${user._id.toString()}`,
+                "via": "microsoft",
+                "subject": reminder.text,
+                "startDate": moment(reminder.next).add(-6, "h").format("YYYY-MM-DD HH:MM"),
+                "dueDate": moment(reminder.next).format("YYYY-MM-DD HH:MM")  
+              }
+          }
+        }).then();
+
+        if(taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
+          logger.debug('Task Synched', taskCreateResult);
+          taskCreated = true;
+          _message = ' and task synchronized via Outlook task.'
+        }
+      }
+
+
       return {
         quote,
         success: true,
-        message: 'Quote status updated'
+        message: `Quote status updated${_message}`
       };
     },
     LasecCreateClientEnquiry: async (parent, params) => {

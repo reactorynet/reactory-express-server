@@ -425,7 +425,7 @@ export default {
                 if(launchResult.success === true) {
                   logger.debug(`:::Launch For 180 LaunchResult`, launchResult);
                   let assessment = launchResult.assessments[0]
-                  debugger;
+                  //debugger;
                   const mailSendResult = await mailService.send((surveyModel as TowerStone.ISurveyDocument), 'launch', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate], { 
                     user: entryData.entry.delegate as Reactory.IUserDocument,
                     assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(entryData.entry.delegate, { exp: moment((surveyModel as TowerStone.ISurveyDocument).endDate).valueOf() }))}`,
