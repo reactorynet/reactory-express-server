@@ -816,7 +816,6 @@ export default {
       return null;
     },
     customer: async (quote) => {
-      logger.debug(`Resolving Quote.customer ${quote.code}`)
       if (quote === null) throw new ApiError('Quote is null');
       const { customer } = quote;
       if (isNil(customer) === false) {
@@ -999,17 +998,14 @@ export default {
       return meta && meta.source && meta.source.allowed_status_ids
     },
     company: async (quote) => {
-      logger.debug(`Resolving Quote.company ${quote.code} - ${quote.company}`);
       const { meta } = quote;
 
       if (isNil(quote.company) === false) {
         if (ObjectId.isValid(quote.company) === true) {
-          logger.debug(`Company found in db, load with id ${quote.company}`);
           const loadedOrganization = await Organization.findById(quote.company).then();
           if(loadedOrganization === null || loadedOrganization === undefined) {
-            logger.error(`Could not load the organization with the reference number ${quote.company}`);            
+            logger.error(`Could not load the organization with the reference number ${quote.company}, will fallback to meta check`);            
           } else {
-            logger.debug(`Found organization ${loadedOrganization.name} - ${loadedOrganization.tradingName}`, loadedOrganization)
             return loadedOrganization;
           }                    
         }
