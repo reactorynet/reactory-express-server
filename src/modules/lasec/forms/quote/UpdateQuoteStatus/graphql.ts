@@ -14,12 +14,12 @@ const graphql = {
         company {
            id
            tradingName
-        }                                
+        }
       }
     }`,
     variables: {
       'formContext.query.quote_id': 'quote_id',
-    },    
+    },
     edit: false,
     new: true,
   },
@@ -32,18 +32,18 @@ const graphql = {
             id
           }
           success
-          message                                    
+          message
         }
       }`,
       objectMap: true,
       updateMessage: 'Updating next actions for quote ${formData.id}',
       variables: {
-        'formData.code': 'quote_id',        
+        'formData.code': 'quote_id',
         'formData.nextAction': 'input.nextAction',
         'formData.reason': 'input.reason',
         'formData.reminder': 'input.reminder',
         'formData.note': 'input.note'
-      },      
+      },
       options: {
         refetchQueries: ['LasecGetQuoteById($quote_id: String!)'],
       },

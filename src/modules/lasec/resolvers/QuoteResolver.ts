@@ -821,7 +821,7 @@ export default {
       const { customer } = quote;
       if (isNil(customer) === false) {
         if (customer && ObjectId.isValid(customer) === true) {
-          const loadedCustomer = await User.findById(quote.customer).then(); 
+          const loadedCustomer = await User.findById(quote.customer).then();
           if(loadedCustomer !== undefined && loadedCustomer !== null) {
             return loadedCustomer;
           }
@@ -1007,15 +1007,15 @@ export default {
           logger.debug(`Company found in db, load with id ${quote.company}`);
           const loadedOrganization = await Organization.findById(quote.company).then();
           if(loadedOrganization === null || loadedOrganization === undefined) {
-            logger.error(`Could not load the organization with the reference number ${quote.company}`);            
+            logger.error(`Could not load the organization with the reference number ${quote.company}`);
           } else {
             logger.debug(`Found organization ${loadedOrganization.name} - ${loadedOrganization.tradingName}`, loadedOrganization)
             return loadedOrganization;
-          }                    
+          }
         }
       }
 
-      
+
       if (quote.meta && quote.meta.source) {
         logger.debug(`No organization, checking meta data`);
         const { company_id, company_trading_name } = meta.source;
@@ -1634,8 +1634,8 @@ export default {
       let taskCreated = false;
       let _message = '.';
       if(user.getAuthentication("microsoft") !== null) {
-        const taskCreateResult = await clientFor(user, global.partner).query({
-          query: gql`
+        const taskCreateResult = await clientFor(user, global.partner).mutate({
+          mutation: gql`
             mutation createOutlookTask($task: CreateTaskInput!) {
               createOutlookTask(task: $task) {
                 Successful
@@ -1647,10 +1647,21 @@ export default {
                 "via": "microsoft",
                 "subject": reminder.text,
                 "startDate": moment(reminder.next).add(-6, "h").format("YYYY-MM-DD HH:MM"),
-                "dueDate": moment(reminder.next).format("YYYY-MM-DD HH:MM")  
+                "dueDate": moment(reminder.next).format("YYYY-MM-DD HH:MM")
               }
           }
-        }).then();
+        })
+        .then()
+        .catch(error => {
+          logger.debug(`CREATE OUTLOOK TASK FAILED - ERROR:: ${error}`);
+          _message = `. ${error.message}`
+          return {
+            quote,
+            success: true,
+            message: `Quote status updated${_message}`
+          };
+        });
+
 
         if(taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
           logger.debug('Task Synched', taskCreateResult);
@@ -1658,7 +1669,6 @@ export default {
           _message = ' and task synchronized via Outlook task.'
         }
       }
-
 
       return {
         quote,
