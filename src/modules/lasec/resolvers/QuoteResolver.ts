@@ -816,13 +816,12 @@ export default {
       return null;
     },
     customer: async (quote) => {
-      logger.debug(`Resolving Quote.customer ${quote.code}`)
       if (quote === null) throw new ApiError('Quote is null');
       const { customer } = quote;
       if (isNil(customer) === false) {
         if (customer && ObjectId.isValid(customer) === true) {
           const loadedCustomer = await User.findById(quote.customer).then();
-          if(loadedCustomer !== undefined && loadedCustomer !== null) {
+          if (loadedCustomer !== undefined && loadedCustomer !== null) {
             return loadedCustomer;
           }
         }
@@ -999,17 +998,14 @@ export default {
       return meta && meta.source && meta.source.allowed_status_ids
     },
     company: async (quote) => {
-      logger.debug(`Resolving Quote.company ${quote.code} - ${quote.company}`);
       const { meta } = quote;
 
       if (isNil(quote.company) === false) {
         if (ObjectId.isValid(quote.company) === true) {
-          logger.debug(`Company found in db, load with id ${quote.company}`);
           const loadedOrganization = await Organization.findById(quote.company).then();
-          if(loadedOrganization === null || loadedOrganization === undefined) {
-            logger.error(`Could not load the organization with the reference number ${quote.company}`);
+          if (loadedOrganization === null || loadedOrganization === undefined) {
+            logger.error(`Could not load the organization with the reference number ${quote.company}, will fallback to meta check`);
           } else {
-            logger.debug(`Found organization ${loadedOrganization.name} - ${loadedOrganization.tradingName}`, loadedOrganization)
             return loadedOrganization;
           }
         }
@@ -1633,7 +1629,7 @@ export default {
       //create task via ms if the user has MS authentication
       let taskCreated = false;
       let _message = '.';
-      if(user.getAuthentication("microsoft") !== null) {
+      if (user.getAuthentication("microsoft") !== null) {
         const taskCreateResult = await clientFor(user, global.partner).mutate({
           mutation: gql`
             mutation createOutlookTask($task: CreateTaskInput!) {
@@ -1642,28 +1638,28 @@ export default {
                 Message
               }
             }`, variables: {
-              "task": {
-                "id": `${user._id.toString()}`,
-                "via": "microsoft",
-                "subject": reminder.text,
-                "startDate": moment(reminder.next).add(-6, "h").format("YYYY-MM-DD HH:MM"),
-                "dueDate": moment(reminder.next).format("YYYY-MM-DD HH:MM")
-              }
+            "task": {
+              "id": `${user._id.toString()}`,
+              "via": "microsoft",
+              "subject": reminder.text,
+              "startDate": moment(reminder.next).add(-6, "h").format("YYYY-MM-DD HH:MM"),
+              "dueDate": moment(reminder.next).format("YYYY-MM-DD HH:MM")
+            }
           }
         })
-        .then()
-        .catch(error => {
-          logger.debug(`CREATE OUTLOOK TASK FAILED - ERROR:: ${error}`);
-          _message = `. ${error.message}`
-          return {
-            quote,
-            success: true,
-            message: `Quote status updated${_message}`
-          };
-        });
+          .then()
+          .catch(error => {
+            logger.debug(`CREATE OUTLOOK TASK FAILED - ERROR:: ${error}`);
+            _message = `. ${error.message}`
+            return {
+              quote,
+              success: true,
+              message: `Quote status updated${_message}`
+            };
+          });
 
 
-        if(taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
+        if (taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
           logger.debug('Task Synched', taskCreateResult);
           taskCreated = true;
           _message = ' and task synchronized via Outlook task.'

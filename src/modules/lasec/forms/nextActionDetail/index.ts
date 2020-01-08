@@ -29,3 +29,5 @@ const LasecNextActionDetailForm: Reactory.IReactoryForm = {
     },
   ],
 };
+
+export default LasecNextActionDetailForm;
