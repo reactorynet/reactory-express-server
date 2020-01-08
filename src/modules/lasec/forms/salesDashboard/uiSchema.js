@@ -223,7 +223,22 @@ export default {
           color: 'primary',
           icon: 'refresh',
           tooltip: 'Synchronize next actions to your outlook calendar',
-          graphql: 'SynchronizeNextActionsToOutloook',
+          graphql: {
+            mutation: {
+              name: 'SynchronizeNextActionsToOutloook',
+              text: `
+              mutation SynchronizeNextActionsToOutloook($nextActions: [Any]!){
+                SynchronizeNextActionsToOutloook(nextActions: $nextActions){
+                  success
+                  message
+                }
+              }
+              `,
+              variables: {
+                'nextActions': 'nextActions'
+              }
+            }
+          },
         }
       ]
     },
@@ -233,7 +248,7 @@ export default {
         actions: { sm: 12, xs: 12 },
       }
     ],
-    actions: {      
+    actions: {
       'ui:widget': 'MaterialListWidget',
       'ui:options': {
         id: 'Id',
@@ -247,7 +262,7 @@ export default {
           label: 'Edit',
           componentFqn: 'core.SlideOutLauncher@1.0.0',
           action: 'mount:Component',
-          link: '/edit/${item.id}/',          
+          link: '/edit/${item.id}/',
           props: {
             componentFqn: 'lasec-crm.LasecNextActionDetail@1.0.0',
             componentProps: {
@@ -256,8 +271,8 @@ export default {
             slideDirection: 'down',
             buttonTitle: 'View Details',
             windowTitle: 'Next Action ${formData.quote.code}',
-            buttonVariant: 'IconButton',               
-          },          
+            buttonVariant: 'IconButton',
+          },
         },
         listProps: {
           dense: true
@@ -268,7 +283,7 @@ export default {
       'ui:options': {
         columns: [
           {
-            title: 'Next Action Date', 
+            title: 'Next Action Date',
             field: 'next',
             component: 'core.DateLabel@1.0.0',
             propsMap: {
@@ -307,7 +322,7 @@ export default {
             },
           },
         ],
-        
+
         options: {},
       },
       */

@@ -279,4 +279,5 @@ extend type Mutation {
     input: LasecQuoteStatusUpdate
   ): LasecQuoteStatusUpdateResult
   LasecCreateClientEnquiry(customerId: String!): LasecCustomerEnquiry
+  SynchronizeNextActionsToOutloook(nextActions: [Any]!): Any
 }

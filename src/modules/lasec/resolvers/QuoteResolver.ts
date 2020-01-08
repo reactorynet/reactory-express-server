@@ -1686,6 +1686,20 @@ export default {
           tradingName: 'Trading Name'
         }
       }
+    },
+    SynchronizeNextActionsToOutloook: async (parent, args) => {
+
+      // TODO
+      // 1. Need collection of next actions
+      // 2. Need collection of tasks in calendar
+
+      logger.debug('BOOM SHACKALAK FROM QUOTE RESOLVER')
+
+      return {
+        success: true,
+        message: 'This is a test'
+      }
+
     }
   }
 };

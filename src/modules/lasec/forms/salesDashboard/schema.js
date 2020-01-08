@@ -31,7 +31,7 @@ export default {
       type: 'object',
       title: 'Filter',
       required: [
-        "agentSelection", 
+        "agentSelection",
         "period"
       ],
       dependencies: {
@@ -76,14 +76,14 @@ export default {
         },
         agentSelection: {
           oneOf: [
-            //me filter 
+            //me filter
             {
               properties: {
                 agentSelection: {
                   enum: ['me']
-                },                
-              },              
-            },          
+                },
+              },
+            },
             //team filter
             {
               properties: {
@@ -96,11 +96,11 @@ export default {
                   items: {
                     type: 'string'
                   }
-                },                
+                },
               },
               required: [
                 "teamFilter"
-              ]              
+              ]
             },
             //custom filter
             {
@@ -108,12 +108,12 @@ export default {
                 agentSelection: {
                   enum: ['custom']
                 },
-                userFilter,                
+                userFilter,
               },
               required: [
                 "userFilter"
               ]
-            },            
+            },
           ]
         }
       },
@@ -132,7 +132,7 @@ export default {
             'this-year',
             'last-year',
             'custom',
-          ],        
+          ],
         },
         agentSelection: {
           type: 'string',
@@ -144,12 +144,12 @@ export default {
             'team',
             'custom'
           ],
-        },        
+        },
       },
     },
     charts: {
       type: 'object',
-      title: 'Overview',      
+      title: 'Overview',
       properties: {
         quoteStatusFunnel: {
           type: 'object',
