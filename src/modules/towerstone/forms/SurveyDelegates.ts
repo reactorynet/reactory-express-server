@@ -1,6 +1,8 @@
 import pf from '../../../data/forms/defs';
 import { FormNameSpace } from '../constants';
 import $defaultExport from './exports/SurveyDelegateExcelExport';
+import $TeamSurveyDelegateExport from'./exports/TeamSurveyDelegateExcelExport';
+import { Reactory } from 'types/reactory';
 
 export const SurveyDelegatesSchema = {
   type: 'object',
@@ -265,7 +267,7 @@ const graphql = {
   },
 };
 
-export const TowerStoneSurveyDelegateConfig = {
+export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
   id: 'TowerStoneSurveyDelegateConfig',
   uiFramework: 'material',
   uiSupport: ['material', 'bootstrap'],
@@ -279,6 +281,10 @@ export const TowerStoneSurveyDelegateConfig = {
   nameSpace: FormNameSpace,
   version: '1.0.0',
   helpTopics: ['survey-delegate-config'],
+  exports: [
+    $defaultExport,
+    $TeamSurveyDelegateExport
+  ],
   defaultPdfReport: {
     report: 'survey-status-delegates',
     folder: 'towerstone',
