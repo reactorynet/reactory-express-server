@@ -52,7 +52,7 @@ const dashboardExcelExportOptions : Reactory.IExcelExportOptions =  {
 };
 
 export default {
-  title: '360 Survey Excel Export',
+  title: '180 Survey Export',
   frameProps: {
     height: '100%',
     width: '100%',
@@ -63,6 +63,7 @@ export default {
     url: `blob`,
     method: 'get'      
   },
+  disabled: '${state.formData.surveyType !== "180"}',
   engine: 'excel',    
   useClient: true,
   mappingType: 'om',
@@ -71,6 +72,7 @@ export default {
     'formData.delegates[].delegate.firstName': 'sheets.Delegates.delegates[].firstName',
     'formData.delegates[].delegate.lastName': 'sheets.Delegates.delegates[].lastName',
     'formData.delegates[].delegate.email': 'sheets.Delegates.delegates[].email',
+    'formData.delegates[].assessments[0].complete': 'sheets.Delegates.delegates[].complete'
   },
   exportOptions: dashboardExcelExportOptions
 };

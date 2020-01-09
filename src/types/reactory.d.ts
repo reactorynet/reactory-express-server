@@ -209,6 +209,7 @@ declare namespace Reactory {
     mappingType?: string
     mapping?: any
     exportOptions?: any
+    disabled?: string
   }
 
   export interface IUISchemaMenuItem {
