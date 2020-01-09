@@ -259,6 +259,11 @@ type LasecCustomerEnquiry {
   id: String
 }
 
+type OutlookSyncResponse {
+  success: String
+  message: String
+}
+
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetDashboard(dashparams: LasecQuoteQueryInput): LasecQuoteDashboard
@@ -279,5 +284,5 @@ extend type Mutation {
     input: LasecQuoteStatusUpdate
   ): LasecQuoteStatusUpdateResult
   LasecCreateClientEnquiry(customerId: String!): LasecCustomerEnquiry
-  SynchronizeNextActionsToOutloook(nextActions: [Any]!): Any
+  SynchronizeNextActionsToOutloook(nextActions: [Any]!): OutlookSyncResponse
 }

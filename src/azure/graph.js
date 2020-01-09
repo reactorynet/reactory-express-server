@@ -145,13 +145,14 @@ const MSGraph = {
     return tasks;
   },
 
-  async createTask(accessToken, subject, startDate, dueDate, timeZone = 'South Africa Standard Time') {
+  async createTask(accessToken, subject, assignedTo = null, startDate, dueDate, timeZone = 'South Africa Standard Time') {
 
     startDate = moment(startDate);
     dueDate = moment(dueDate);
 
     const task = {
       subject,
+      assignedTo,
       startDateTime: {
         dateTime: `${startDate.format('YYYY-MM-DD')}T${startDate.format('HH:mm:ss')}`,
         timeZone

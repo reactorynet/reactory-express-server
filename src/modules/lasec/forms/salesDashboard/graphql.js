@@ -23,6 +23,7 @@ export default {
       statusSummary: 'statusSummary',
       quotes: 'quotes',
       // nextActions: 'nextActions',
+      'nextActions.actions[].id': 'nextActions.actions[].id',
       'nextActions.actions[].actionType': 'nextActions.actions[].actionType',
       'nextActions.actions[].importance': 'nextActions.actions[].importance',
       'nextActions.actions[].text': 'nextActions.actions[].text',

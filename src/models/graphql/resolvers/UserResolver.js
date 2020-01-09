@@ -777,11 +777,12 @@ const userResolvers = {
           const emailUser = await User.findById(userId).then();
           if (emailUser.authentications) {
             const found = find(emailUser.authentications, { provider: via });
-            logger.debug(`EMAIL USER FOUND: ${found}`);
             if (found) {
-              logger.debug('Found Authentication Info For MS', { token: found.props.accessToken });
-
-              const result = await O365.createTask(found.props.accessToken, subject, startDate, dueDate, timeZone)
+              let TaskId = '';
+              const result = await O365.createTask(found.props.accessToken, subject, id, startDate, dueDate, timeZone)
+                .then(response => {
+                  TaskId = response.id;
+                })
                 .catch(error => {
                   if (error.statusCode == 401) {
                     throw new ApiError(`Error Creating Outlook Task. Invalid Authentication Token`, { statusCode: error.statusCode, type: "MSAuthenticationFailure" });
@@ -790,12 +791,14 @@ const userResolvers = {
                   }
                 });
 
-              if (result && result.statusCode && result.statusCode != 400) {
-                throw new ApiError(`Error Createing Outlook Task: ${result.message} - ${result.message}`);
-              }
-              return {
+                if (result && result.statusCode && result.statusCode != 400) {
+                  throw new ApiError(`Error Createing Outlook Task: ${result.message} - ${result.message}`);
+                }
+
+                return {
                 Successful: true,
-                Message: 'Your task was created successfully.'
+                Message: 'Your task was created successfully.',
+                TaskId
               }
             }
             throw new ApiError('User has not authenticated with microsoft');

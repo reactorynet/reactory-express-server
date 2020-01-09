@@ -16,6 +16,14 @@ const meta = new mongoose.Schema({
   },
 });
 
+const quoteRemindermeta = new mongoose.Schema({
+  reference: {
+    source: String,
+    taskId: String
+  },
+  lastSync: Date,
+});
+
 const QuoteReminderShema = new mongoose.Schema({
   id: ObjectId,
   quote: {
@@ -34,7 +42,8 @@ const QuoteReminderShema = new mongoose.Schema({
   result: { },
   via: [String],
   text: String,
-  importance: String
+  importance: String,
+  meta: quoteRemindermeta
 });
 
 QuoteReminderShema.statics.findRemindersForQuote = async (quote) => {
@@ -62,31 +71,31 @@ const QuoteHeaderSchema = new mongoose.Schema({
 const totals = new mongoose.Schema({
   totalVATExclusive: {
     type: Number,
-    required: true,    
+    required: true,
   },
   totalVAT: {
     type: Number,
-    required: true,    
+    required: true,
   },
   totalVATInclusive: {
     type: Number,
-    required: true,    
+    required: true,
   },
   totalDiscount: {
     type: Number,
-    required: true,    
+    required: true,
   },
   totalDiscountPercent: {
     type: Number,
-    required: true,    
+    required: true,
   },
   GP: {
     type: Number,
-    required: true,    
+    required: true,
   },
   actualGP: {
     type: Number,
-    required: true,    
+    required: true,
   }
 });
 
@@ -107,7 +116,7 @@ const QuoteSchema = new mongoose.Schema({
   statusGroup: String,
   statusGroupName: String,
   status: String,
-  statusName: String,  
+  statusName: String,
   allowedStatus: [String],
   code: String, // https://siteurl/quote/00000001
   note: String,

@@ -12,6 +12,7 @@ import { Organization, User, Task } from '@reactory/server-core/models';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
 import { clientFor } from '@reactory/server-core/graph/client';
+import O365 from '../../../azure/graph';
 // import { getCacheItem, setCacheItem } from '../models';
 
 
@@ -347,10 +348,10 @@ const getNextActionsForUser = async ({ periodStart, periodEnd, user = global.use
     const reminders = await QuoteReminder.find({
       // owner: user._id,
       who: user._id,
-      // next: {
-      //   $gte: moment(periodStart).toDate(),
-      //   $lte: moment(periodEnd).endOf('day').toDate()
-      // },
+      next: {
+        $gte: moment(periodStart).toDate(),
+        $lte: moment(periodEnd).endOf('day').toDate()
+      },
       actioned: false
     }).then();
     logger.debug(`Loaded ${reminders.length} reminder documents for user`);
@@ -1636,6 +1637,7 @@ export default {
               createOutlookTask(task: $task) {
                 Successful
                 Message
+                TaskId
               }
             }`, variables: {
             "task": {
@@ -1660,7 +1662,19 @@ export default {
 
 
         if (taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
-          logger.debug('Task Synched', taskCreateResult);
+
+          logger.debug(`SYNCED:: ${JSON.stringify(taskCreateResult)}`);
+
+          reminder.meta = {
+            reference: {
+              source: 'microsoft',
+              taskId: taskCreateResult.data.createOutlookTask.TaskId
+            },
+            lastSync: moment().valueOf(),
+          }
+
+          await reminder.save();
+
           taskCreated = true;
           _message = ' and task synchronized via Outlook task.'
         }
@@ -1690,10 +1704,16 @@ export default {
     SynchronizeNextActionsToOutloook: async (parent, args) => {
 
       // TODO
-      // 1. Need collection of next actions
-      // 2. Need collection of tasks in calendar
+      // 1. Need collection of next actions comes from args
+      // 2. Need collection of tasks from outlook calendar - need to get these in specified date range
+      // 3. Need to compare the 2
 
-      logger.debug('BOOM SHACKALAK FROM QUOTE RESOLVER')
+
+      logger.debug(`BOOM SHACKALAK FROM QUOTE RESOLVER - ARGS:: ${JSON.stringify(args)}`);
+
+      const outlookTasks = await O365.getTasks();
+
+      logger.debug(`OUTLOOK TASKS:: ${outlookTasks}`);
 
       return {
         success: true,
