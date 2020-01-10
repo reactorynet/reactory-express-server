@@ -29,6 +29,7 @@ export default {
       'nextActions.actions[].text': 'nextActions.actions[].text',
       'nextActions.actions[].next': 'nextActions.actions[].next',
       'nextActions.actions[].quote': 'nextActions.actions[].quote',
+      'nextActions.actions[].meta': 'nextActions.actions[].meta',
       'nextActions.actions[].who[].id': 'nextActions.actions[].who[].id',
       'nextActions.actions[].who[].firstName': 'nextActions.actions[].who[].firstName',
       'nextActions.actions[].who[].lastName': 'nextActions.actions[].who[].lastName',

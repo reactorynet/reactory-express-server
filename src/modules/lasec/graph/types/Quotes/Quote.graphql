@@ -44,6 +44,7 @@ type QuoteReminder {
   via: [String]
   text: String
   importance: String
+  meta: Any
 }
 
 type QuoteTimeLine {
@@ -284,5 +285,5 @@ extend type Mutation {
     input: LasecQuoteStatusUpdate
   ): LasecQuoteStatusUpdateResult
   LasecCreateClientEnquiry(customerId: String!): LasecCustomerEnquiry
-  SynchronizeNextActionsToOutloook(nextActions: [Any]!): OutlookSyncResponse
+  SynchronizeNextActionsToOutloook(nextActions: Any!): OutlookSyncResponse
 }

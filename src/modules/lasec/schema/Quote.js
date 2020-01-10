@@ -16,10 +16,10 @@ const meta = new mongoose.Schema({
   },
 });
 
-const quoteRemindermeta = new mongoose.Schema({
+const QuoteReminderMeta = new mongoose.Schema({
   reference: {
     source: String,
-    taskId: String
+    referenceId: String
   },
   lastSync: Date,
 });
@@ -43,7 +43,7 @@ const QuoteReminderShema = new mongoose.Schema({
   via: [String],
   text: String,
   importance: String,
-  meta: quoteRemindermeta
+  meta: QuoteReminderMeta
 });
 
 QuoteReminderShema.statics.findRemindersForQuote = async (quote) => {

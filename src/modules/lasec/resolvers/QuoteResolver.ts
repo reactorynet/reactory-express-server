@@ -362,6 +362,19 @@ const getNextActionsForUser = async ({ periodStart, periodEnd, user = global.use
   }
 };
 
+// retrieve next action by id
+const getNextActionById = async (id) => {
+  try {
+    logger.debug(`Fetching nextAction (Quote Reminders) for Id:: ${id}`);
+
+  }
+  catch (nextActionError) {
+    logger.error(nextActionError);
+    throw nextActionError;
+  }
+
+}
+
 /**
  * Fetches emails where content / subject matches the quote
  * @param {*} quote_id
@@ -1665,10 +1678,11 @@ export default {
 
           logger.debug(`SYNCED:: ${JSON.stringify(taskCreateResult)}`);
 
+          // Save the task id in meta on the quote reminder
           reminder.meta = {
             reference: {
               source: 'microsoft',
-              taskId: taskCreateResult.data.createOutlookTask.TaskId
+              referenceId: taskCreateResult.data.createOutlookTask.TaskId
             },
             lastSync: moment().valueOf(),
           }
@@ -1704,16 +1718,80 @@ export default {
     SynchronizeNextActionsToOutloook: async (parent, args) => {
 
       // TODO
-      // 1. Need collection of next actions comes from args
-      // 2. Need collection of tasks from outlook calendar - need to get these in specified date range
-      // 3. Need to compare the 2
+      // 1. Next actions from args
+      // 2. Iterate next actions:
+      //    missing meta - reference - source: "microsoft": add these to outlook tasks
+      //    has meta - reference - source: "microsoft" and actioned = true: delete task
+      // 3. Cleanup. Pull all tasks for time period. Iterate next actions. If no match, delete.
+
+      // logger.debug(`SYNC NEXT ACTIONS - ARGS:: ${JSON.stringify(args)}`);
+
+      const { nextActions } = args;
+      const { user } = global;
+
+      nextActions.nextActions.forEach(async action => {
 
 
-      logger.debug(`BOOM SHACKALAK FROM QUOTE RESOLVER - ARGS:: ${JSON.stringify(args)}`);
+        logger.debug(`ACTION:: ${JSON.stringify(action)}`);
 
-      const outlookTasks = await O365.getTasks();
+        // Get the actual quote reminder to get up to date meta data
+        const quoteReminder = await QuoteReminder.findById(action.id).then();
 
-      logger.debug(`OUTLOOK TASKS:: ${outlookTasks}`);
+        // check for meta - resource
+        if (!quoteReminder.meta || !quoteReminder.meta.reference || !quoteReminder.meta.reference.referenceId || quoteReminder.meta.reference.referenceId != 'microsoft') {
+          logger.debug(`CREATING TASK FOR:: ${action.id}`);
+
+          if (user.getAuthentication("microsoft") !== null) {
+            const taskCreateResult = await clientFor(user, global.partner).mutate({
+              mutation: gql`
+                mutation createOutlookTask($task: CreateTaskInput!) {
+                  createOutlookTask(task: $task) {
+                    Successful
+                    Message
+                    TaskId
+                  }
+                }`, variables: {
+                "task": {
+                  "id": `${user._id.toString()}`,
+                  "via": "microsoft",
+                  "subject": action.text,
+                  "startDate": moment(action.next).add(-6, "h").format("YYYY-MM-DD HH:MM"),
+                  "dueDate": moment(action.next).format("YYYY-MM-DD HH:MM")
+                }
+              }
+            })
+              .then()
+              .catch(error => {
+                logger.debug(`CREATE OUTLOOK TASK FAILED - ERROR:: ${error}`);
+                return {
+                  success: true,
+                  message: `Error syncing actions`
+                };
+              });
+
+
+            if (taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
+
+              logger.debug(`TASK CREATED:: ${JSON.stringify(taskCreateResult)}`);
+
+
+              quoteReminder.meta = {
+                reference: {
+                  source: 'microsoft',
+                  referenceId: taskCreateResult.data.createOutlookTask.TaskId
+                },
+                lastSync: moment().valueOf(),
+              }
+
+              await quoteReminder.save();
+
+              logger.debug(`TASK CREATED AND REMIDER UPDATED :: ${reminder._id}`);
+            }
+          }
+        }
+
+      });
+
 
       return {
         success: true,

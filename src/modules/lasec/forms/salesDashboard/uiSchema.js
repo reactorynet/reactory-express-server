@@ -227,7 +227,7 @@ export default {
             mutation: {
               name: 'SynchronizeNextActionsToOutloook',
               text: `
-              mutation SynchronizeNextActionsToOutloook($nextActions: [Any]!){
+              mutation SynchronizeNextActionsToOutloook($nextActions: Any!){
                 SynchronizeNextActionsToOutloook(nextActions: $nextActions){
                   success
                   message
@@ -235,7 +235,9 @@ export default {
               }
               `,
               variables: {
-                'nextActions': 'nextActions'
+                'nextActions.actions': 'nextActions',
+                'periodStart': 'periodStart',
+                'periodEnd': 'periodEnd'
               }
             }
           },

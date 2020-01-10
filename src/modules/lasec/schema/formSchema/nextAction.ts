@@ -93,6 +93,26 @@ export default {
         "medium",
         "low",
       ],
+    },
+    meta: {
+      type: 'object',
+      title: 'Meta Info',
+      properties: {
+        reference: {
+          type: 'object',
+          title: 'Reference',
+          properties: {
+            source: {
+              type: 'string',
+              title: 'Reference Source'
+            },
+            referenceId: {
+              type: 'string',
+              title: 'Reference Id'
+            }
+          }
+        },
+      }
     }
   }
 };
