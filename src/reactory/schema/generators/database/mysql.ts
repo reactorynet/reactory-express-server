@@ -305,13 +305,19 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
     data: {
       'ui:widget': 'MaterialTableWidget',
       'ui:options': {
-
+        columnsProperty: 'columns',
+        options: {
+          selection: true,
+          grouping: true,
+        }
       },
       items: {
         
       },      
     },    
   };
+
+  let exportColumns: any[] = [];
 
   if(table.columns && table.columns.length > 0) {
     
@@ -330,6 +336,18 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
       tableWidgetColumns.push({
         title: columnName,
         field: tableColumn.name,
+        selected: true,
+        component: undefined
+      });
+
+      exportColumns.push({
+        title: columnName,
+        propertyField: tableColumn.name,
+        format: '',
+        width: 30,
+        type: 'string',
+        required: true,
+        style: {}
       });
 
       /*
@@ -357,18 +375,15 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
       
       defaultSelectedColumns.push({
         field: tableColumn.name,
-        title: columnName
+        title: columnName,
+        selected: true,
+        component: undefined
       });
-
     });
 
     propertiesUISchema.data["ui:options"].columns = tableWidgetColumns;
-    propertiesUISchema.data["ui:options"].options = {};
   }; 
-
   
-
-
   return {
     id: `Generated.LIST_${table.schemaName}_${table.tableName}@${connectionId}`,
     uiFramework: 'material',        
@@ -405,6 +420,7 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
               field
               title
               widget
+              selected
             }
             filters {
               field
@@ -437,6 +453,37 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
         },
         options: { }
       },      
+    },
+    defaultExport: {
+      title: `Table ${table.tableName} Excel Export`,
+      frameProps: {
+        height: '100%',
+        width: '100%',
+        styles: {
+          height: '100%',
+          width: '100%',
+        },
+        url: `blob`,
+        method: 'get'      
+      },
+      engine: 'excel',    
+      useClient: true,
+      mappingType: 'om',
+      mapping: {        
+        'formData': 'sheets.Export',
+      },
+      exportOptions: {
+        filename: `Export ${table.tableName}.xlsx`,
+        sheets: [
+          {
+            name: 'Export',
+            index: 0,
+            arrayField: 'data',
+            startRow: 1,
+            columns: exportColumns,                            
+          }        
+        ]
+      }
     },
     defaultFormValue: {
       context: {
