@@ -77,6 +77,18 @@ input BrandInput {
     qualities: [QualityInput]
 }
 
+input TowerStoneLeadershipBrandCopyInput {
+    targetOrganizationId: String
+    sourceLeadershipBrandId: String
+    targetTitle: String
+}
+
+type LeadershipBrandOperationResult {
+    success: Boolean
+    message: String
+    leadershipBrand: LeadershipBrand
+}
+
 extend type Query {
     brandListForOrganization(organizationId: String!): [LeadershipBrand]
     brandWithId(brandId: String!): LeadershipBrand
@@ -86,4 +98,5 @@ extend type Query {
 extend type Mutation {
     createBrandForOrganization(brandInput: BrandInput!, organizationId: String!) : LeadershipBrand
     updateBrandForOrganization(brandInput: BrandInput!, organizationId: String!) : LeadershipBrand
+    TowerStoneLeadershipBrandCopy(input: TowerStoneLeadershipBrandCopyInput) : LeadershipBrandOperationResult
 }

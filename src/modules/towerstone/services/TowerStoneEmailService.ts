@@ -17,6 +17,7 @@ import { IEmailQueueDocument } from 'models/schema/EmailQueue';
 
 
 const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
+  // 180 assessment types
   {
     id: ``,
     key: ``, 
@@ -71,6 +72,68 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     id: ``,
     key: ``,
     surveyType: '180', 
+    activity: 'reminder', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+
+  // plc types
+  {
+    id: ``,
+    key: ``, 
+    surveyType: 'plc', 
+    activity: 'invite', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'plc', 
+    activity: 'invite', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'plc', 
+    activity: 'launch', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'plc', 
+    activity: 'launch', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'plc', 
+    activity: 'reminder', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'plc', 
     activity: 'reminder', 
     target: 'assessor',
     subject: 'No Subject',
@@ -438,9 +501,7 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
 
         if(lodash.isEmpty(_subjectAndBody.body)) throw new ApiError(`Could not extract body from template, please ensure ${surveyTemplate.key}/body exists`); 
         if(lodash.isEmpty(_subjectAndBody.subject)) throw new ApiError(`Could not extract body from template, please ensure ${surveyTemplate.key}/subject exists`); 
-
        
-
         // setup api key for email being sent
         logger.debug('Setting up sgMail')
         try {

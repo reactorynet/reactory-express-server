@@ -644,7 +644,66 @@ export default {
       logger.debug(`Patching Templates For Survey ${survey.title}`)
       const mailService = getMailService(survey, 'TowerStoneSurveySetTemplates');
       mailService.patchTemplates(survey, templates);
-    }
+    },
+    async TowerStoneLeadershipBrandCopy(parent: any, params: TowerStone.ICopyLeadershipBrandParams) {
+      
+      const { input } = params;
+      const { targetOrganizationId, sourceLeadershipBrandId, targetTitle } = input;
+
+      logger.debug(`Cloning Leadership brand ${sourceLeadershipBrandId}`, { sourceLeadershipBrandId })
+
+      const leadershipbrand = await LeadershipBrand.findById(sourceLeadershipBrandId).then()
+      const organization = await Organization.findById(targetOrganizationId).then();
+
+      try {
+
+        if(leadershipbrand === null || leadershipbrand === undefined) throw new ApiError(`No Leadership Brand with the ID ${sourceLeadershipBrandId} available`);
+        if(organization === null || organization === undefined) throw new ApiError(`No organization with the ID ${targetOrganizationId} available`);
+
+        const _clone = new LeadershipBrand();
+        
+        _clone.organization = organization;
+        _clone.title = leadershipbrand.title;
+        _clone.description = leadershipbrand.description;
+        _clone.scale = leadershipbrand.scale;
+        
+        leadershipbrand.qualities.forEach((quality, index) => {
+            _clone.qualities = [];
+            const _quality = {
+              title: quality.title,
+              description: quality.description,
+              ordinal: quality.ordinal || index,
+              behaviours: [], 
+            };
+            // 
+            quality.behaviours.forEach((behaviour, index) => {
+              const _behaviour = {
+                title: behaviour.title,
+                description: behaviour.description,
+                ordinal: behaviour.ordinal || index
+              };
+              _quality.behaviours.push(_behaviour);
+            });
+            // 
+            _clone.qualities.push(_quality);
+        });
+        
+        _clone.createdAt = new Date();
+        _clone.updatedAt = new Date();
+
+        await _clone.save().then();
+
+        return {
+          success: true,
+          message: 'Leadership brand copied',
+          leadershipBrand: _clone,
+        };
+
+      } catch (error) {
+        logger.error(`An error occured while cloning the leadership brand ==> ${error.message}`, error);
+        throw error;
+      }
+    }    
   },
 };
 

@@ -194,27 +194,20 @@ export const uiSchema = {
         color: 'primary',
         icon: 'file_copy',
         tooltip: 'Copy this leadershipbrand for another organization',
-        componentFqn: 'core.SlideOutLauncher',
-        componentProps: {
+        action: 'component',
+        component: {
+          componentFqn: 'core.SlideOutLauncher',
+          props: {
+            componentFqn: 'towerstone.CopyLeadershipBrand',
+            componentProps: {
 
-        },        
-        graphql: {
-          mutation: {
-            name: 'TowerStoneLeadershipBrandCopy',
-            text: `
-            mutation TowerStoneLeadershipBrandCopy($input: TowerStoneLeaderhipBrandCopyInput!){
-              SynchronizeNextActionsToOutloook(input: $input){
-                success
-                message
-              }
-            }
-            `,
-            variables: {
-              'nextActions.actions': 'nextActions',
-              'periodStart': 'periodStart',
-              'periodEnd': 'periodEnd'
-            }
-          }
+            },
+            propsMap: {
+              'formData.organizationId': 'formData.SourceOrganization',
+              'formData.brandId': 'formData.SourceLeadershipBrand',
+              'formData.title': 'formData.TargetTitle'
+            },
+          },
         },
       }
     ]
