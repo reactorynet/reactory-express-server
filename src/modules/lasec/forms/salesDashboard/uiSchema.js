@@ -238,7 +238,8 @@ export default {
                 'nextActions.actions': 'nextActions',
                 'periodStart': 'periodStart',
                 'periodEnd': 'periodEnd'
-              }
+              },
+              onSuccessMethod: 'refresh'
             }
           },
         }

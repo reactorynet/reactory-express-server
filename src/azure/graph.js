@@ -145,6 +145,28 @@ const MSGraph = {
     return tasks;
   },
 
+  async getTask(accesstoken, id) {
+    const tasks = await getAuthenticatedClient(accesstoken, 'beta')
+      .api(`/me/outlook/tasks/${id}`)
+      .select('id,dueDateTime,assignedTo,subject,body')
+      .get()
+      .then();
+
+    return tasks;
+  },
+
+  async deleteTask(accesstoken, id) {
+
+    logger.debug(`MS DELETING TASK - ID:: ${id}`)
+
+    const tasks = await getAuthenticatedClient(accesstoken, 'beta')
+      .api(`/me/outlook/tasks/${id}`)
+      .delete()
+      .then();
+
+    return tasks;
+  },
+
   async createTask(accessToken, subject, assignedTo = null, startDate, dueDate, timeZone = 'South Africa Standard Time') {
 
     startDate = moment(startDate);

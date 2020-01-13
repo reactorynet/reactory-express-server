@@ -37,6 +37,7 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
           lastName
         }
         actionType
+        actioned
         text
         next
         importance

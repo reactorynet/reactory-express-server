@@ -810,6 +810,48 @@ const userResolvers = {
           throw new ApiError('Not Implemented Yet');
         }
       }
+    },
+    async deleteOutlookTask(parent, { task }) {
+      const { id, via, taskId } = task;
+      const { user } = global;
+      if (isNil(user) === true) throw new ApiError('Not Authorized');
+      const userId = isNil(id) ? user._id : ObjectId(id);
+      switch (via) {
+        case 'microsoft': {
+          const emailUser = await User.findById(userId).then();
+          if (emailUser.authentications) {
+            const found = find(emailUser.authentications, { provider: via });
+            if (found) {
+              const result = await O365.deleteTask(found.props.accessToken, taskId)
+                .then()
+                .catch(error => {
+                  if (error.statusCode == 401) {
+                    throw new ApiError(`Error Deleting Outlook Task. Invalid Authentication Token`, { statusCode: error.statusCode, type: "MSAuthenticationFailure" });
+                  } else {
+                    throw new ApiError(`Error Deleting Outlook Task: ${error.code} - ${error.message}`, { statusCode: error.statusCode });
+                  }
+                });
+
+                logger.info(`DELETION RESULT::  ${JSON.stringify(result)}`);
+
+                if (result && result.statusCode && result.statusCode != 400) {
+                  throw new ApiError(`Error Createing Outlook Task: ${result.message} - ${result.message}`);
+                }
+
+                return {
+                Successful: true,
+                Message: 'Task successfully deleted.',
+              }
+            }
+            throw new ApiError('User has not authenticated with microsoft');
+          } else {
+            throw new ApiError('User has not authenticated via microsoft');
+          }
+        }
+        default: {
+          throw new ApiError('Not Implemented Yet');
+        }
+      }
     }
   },
 };
