@@ -23,6 +23,16 @@ declare namespace TowerStone {
     ratingScale?: IRatingScale
   }
 
+  export interface CopyLeadershipBrandParams {
+    targetOrganizationId: string
+    sourceLeadershipBrandId: string
+    targetTitle: string
+  }
+
+  export interface ICopyLeadershipBrandParams {
+    input: CopyLeadershipBrandParams
+  }
+
   export interface ISurveyEmailTemplate {
     id: string
     key: string

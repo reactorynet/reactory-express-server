@@ -1,9 +1,10 @@
 import { UIFrameWork } from "@reactory/server-core/types/constants";
+import Reactory from "@reactory/server-core/types/reactory";
 import { FormNameSpace } from "../constants";
 
 const propsFactory = require('../../../data/forms/defs').default;
 
-export const LeadershipBrandSchema = {
+export const LeadershipBrandSchema: Reactory.ISchema  = {
   title: 'Leadership Brand Configuration',
   description: 'Use the form below to configure your Leadership brand',
   type: 'object',
@@ -185,7 +186,32 @@ export const queryMap = {
 };
 
 export const uiSchema = {
+  'ui:toolbar': {
+    buttons: [
+      {
+        command: 'copyLeadershipBrand',
+        id: 'copyLeadershipBrand',
+        color: 'primary',
+        icon: 'file_copy',
+        tooltip: 'Copy this leadershipbrand for another organization',
+        action: 'component',
+        component: {
+          componentFqn: 'core.SlideOutLauncher',
+          props: {
+            componentFqn: 'towerstone.CopyLeadershipBrand',
+            componentProps: {
 
+            },
+            propsMap: {
+              'formData.organizationId': 'formData.SourceOrganization',
+              'formData.brandId': 'formData.SourceLeadershipBrand',
+              'formData.title': 'formData.TargetTitle'
+            },
+          },
+        },
+      }
+    ]
+  },
   id: {
     'ui:widget': 'HiddenWidget',
   },

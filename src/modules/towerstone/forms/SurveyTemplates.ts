@@ -108,7 +108,7 @@ const $schema: Reactory.IObjectSchema = {
     surveyType: {
       type: "string",
       title: "Survey Type",
-      enum: ['180', '360',  'PLC'],
+      enum: ['180', '360',  'plc'],
       readOnly: true,
     },
     templates: {

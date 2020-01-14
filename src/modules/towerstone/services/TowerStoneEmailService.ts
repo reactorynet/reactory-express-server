@@ -17,6 +17,7 @@ import { IEmailQueueDocument } from 'models/schema/EmailQueue';
 
 
 const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
+  // 180 assessment types
   {
     id: ``,
     key: ``, 
@@ -76,7 +77,131 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     subject: 'No Subject',
     body: `No Template`,
     engine: 'ejs'
-  }
+  },
+
+  // plc types
+  {
+    id: ``,
+    key: ``, 
+    surveyType: 'plc', 
+    activity: 'invite', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'plc', 
+    activity: 'invite', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'plc', 
+    activity: 'launch', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'plc', 
+    activity: 'launch', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'plc', 
+    activity: 'reminder', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'plc', 
+    activity: 'reminder', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+
+  //360 email types
+  {
+    id: ``,
+    key: ``, 
+    surveyType: '360', 
+    activity: 'invite', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: '360', 
+    activity: 'invite', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: '360', 
+    activity: 'launch', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: '360', 
+    activity: 'launch', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: '360', 
+    activity: 'reminder', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: '360', 
+    activity: 'reminder', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
 ]
 
 const DefaultQueueOptions: any = {
@@ -426,7 +551,7 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
   return {
     send: async (survey: TowerStone.ISurveyDocument, activity: string, target: string, users: Reactory.IUser[], properties: any = {} ) => {  
       logger.debug(`Sending email for Survey ${survey.title} for ${activity} action targeting ${target} with ${users.length} user(s)`);      
-      if(survey.surveyType === '180') {
+      if(survey.surveyType === '180' || survey.surveyType === 'plc') {
         const surveyTemplate = getTowerStoneSurveyEmailTemplate(survey.surveyType, activity, target);        
         const _template = await getReactoryTemplate(surveyTemplate.key, survey.organization, partner);
         
@@ -438,9 +563,7 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
 
         if(lodash.isEmpty(_subjectAndBody.body)) throw new ApiError(`Could not extract body from template, please ensure ${surveyTemplate.key}/body exists`); 
         if(lodash.isEmpty(_subjectAndBody.subject)) throw new ApiError(`Could not extract body from template, please ensure ${surveyTemplate.key}/subject exists`); 
-
        
-
         // setup api key for email being sent
         logger.debug('Setting up sgMail')
         try {
