@@ -193,7 +193,7 @@ export const renderTemplate = (template, properties) => {
       throw new RecordNotFoundError('Filename for template not found', 'TEMPLATE_REF');
     } else {
       let templateString = template.content.replaceAll("&lt;%=", "<%=").replaceAll("%&gt;", "%>");
-      templateString = templateString.replaceAll("%3C%=", "<%=").replaceAll("%%3E", "%>")
+      templateString = templateString.replaceAll("%3C%=", "<%=").replaceAll("%%3E", "%>");
       return ejs.render(templateString, properties);
     }
   }
@@ -297,7 +297,7 @@ const loadEmailTemplate = async (view, organization, client, keys = [], template
     qry = { ...qry, organization: organization._id };
   }
 
-  logger.info('Searching for template', qry);
+  logger.debug(`finding view: ${view}`);
 
   let templateDocument = await Template.findOne(qry)
     .populate('client')
@@ -324,7 +324,6 @@ const loadEmailTemplate = async (view, organization, client, keys = [], template
       }
     }
   }
-
 
   return templateDocument;
 };
@@ -400,9 +399,15 @@ export const surveyEmails = {
       error: null,
     };
 
+    const isSelfAssessment = ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true;
+
+    //TODO: this should be changed by changing all the keys for the emails on the 360s
+    //mail template
+    const viewName = survey.surveyType === '360' ? TemplateView.SurveyLaunch : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate': 'assessor' }-launch`;
+
     try {
       const { partner } = global;
-      const templateResult = await loadEmailTemplate(TemplateViews.SurveyLaunch, organization, partner).then();
+      const templateResult = await loadEmailTemplate(viewName, organization, partner).then();
 
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');
@@ -426,7 +431,7 @@ export const surveyEmails = {
         assessment,
         user: assessorModel,
         organization: organization || survey.organization,
-        isSelfAssessment: ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true,
+        isSelfAssessment,
         survey,
         applicationTitle: partner.name,
         timeEnd: moment(survey.endDate).format('HH:mm'),
@@ -442,8 +447,8 @@ export const surveyEmails = {
         templateResult.elements.forEach((templateElement) => {
           logger.info(`Checking template element view: ${templateElement.view}`);
           switch (templateElement.view) {
-            case `${TemplateViews.SurveyLaunch}/subject`: subjectTemplate = templateElement; break;
-            case `${TemplateViews.SurveyLaunch}/body`: bodyTemplate = templateElement; break;
+            case `${viewName}/subject`: subjectTemplate = templateElement; break;
+            case `${viewName}/body`: bodyTemplate = templateElement; break;
             default: break;
           }
         });
@@ -532,10 +537,14 @@ export const surveyEmails = {
 
     try {
       const { partner } = global;
-      const templateResult = await loadEmailTemplate(TemplateViews.SurveyReminder, organization, partner).then();
+      let isSelfAssessment = ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true;
+      //TODO: this should be changed by changing all the keys for the emails on the 360s
+      //mail template
+      let viewName = survey.surveyType === '360' ? TemplateView.SurveyReminder : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate': 'assessor'}-reminder`;
+      const templateResult = await loadEmailTemplate(viewName, organization, partner).then();
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');
-        throw new RecordNotFoundError(`Cannot find a template using the input params ${TemplateViews.SurveyReminder} ${organization} ${partner}`);
+        throw new RecordNotFoundError(`Cannot find a template using the input params ${viewName} ${organization} ${partner}`);
       }
       logger.info('Template loaded, setting up email and client.');
 
@@ -555,7 +564,7 @@ export const surveyEmails = {
         assessment,
         user: assessorModel,
         organization: organization || survey.organization,
-        isSelfAssessment: ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true,
+        isSelfAssessment: isSelfAssessment,
         survey,
         applicationTitle: partner.name,
         timeEnd: moment(survey.endDate).format('HH:mm'),
@@ -571,8 +580,8 @@ export const surveyEmails = {
         templateResult.elements.forEach((templateElement) => {
           logger.info(`Checking template element view: ${templateElement.view}`);
           switch (templateElement.view) {
-            case `${TemplateViews.SurveyReminder}/subject`: subjectTemplate = templateElement; break;
-            case `${TemplateViews.SurveyReminder}/body`: bodyTemplate = templateElement; break;
+            case `${viewName}/subject`: subjectTemplate = templateElement; break;
+            case `${viewName}/body`: bodyTemplate = templateElement; break;
             default: break;
           }
         });
@@ -593,7 +602,7 @@ export const surveyEmails = {
           logger.info(`Rendering subject ${JSON.stringify(subjectTemplate)}`);
           msg.subject = renderTemplate(subjectTemplate, properties);
         } else {
-          msg.subject = `"${TemplateViews.SurveyReminder}/subject" - template segment is not set/empty`;
+          msg.subject = `"${viewName}/subject" - template segment is not set/empty`;
         }
       } catch (renderError) {
         logger.error(`An error occured rendering the subject ${renderError.message}`, renderError);
@@ -607,7 +616,7 @@ export const surveyEmails = {
           logger.info('Rendering body');
           msg.html = renderTemplate(bodyTemplate, properties);
         } else {
-          msg.html = `"${TemplateViews.SurveyReminder}/body" template segment is not set/empty`;
+          msg.html = `"${viewName}/body" template segment is not set/empty`;
         }
       } catch (renderError) {
         logger.error(`An error occured rendering the body ${renderError.message}`, renderError);
@@ -654,7 +663,8 @@ export const surveyEmails = {
 
     try {
       const { partner } = global;
-      const templateResult = await loadEmailTemplate(TemplateViews.SurveyInvite, organization, partner).then();
+      let viewName = survey.surveyType === '360' ? TemplateView.SurveyInvite : `towerstone-${survey.surveyType}-delegate-invite`;
+      const templateResult = await loadEmailTemplate(viewName, organization, partner).then();
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');
         throw new RecordNotFoundError(`Cannot find a template using the input params ${TemplateViews.SurveyInvite} ${organization} ${partner}`);
@@ -690,8 +700,8 @@ export const surveyEmails = {
         templateResult.elements.forEach((templateElement) => {
           logger.info(`Checking template element view: ${templateElement.view}`);
           switch (templateElement.view) {
-            case `${TemplateViews.SurveyInvite}/subject`: subjectTemplate = templateElement; break;
-            case `${TemplateViews.SurveyInvite}/body`: bodyTemplate = templateElement; break;
+            case `${viewName}/subject`: subjectTemplate = templateElement; break;
+            case `${viewName}/body`: bodyTemplate = templateElement; break;
             default: break;
           }
         });
@@ -712,7 +722,7 @@ export const surveyEmails = {
           logger.info(`Rendering subject ${JSON.stringify(subjectTemplate)}`);
           msg.subject = renderTemplate(subjectTemplate, properties);
         } else {
-          msg.subject = `"${TemplateViews.SurveyInvite}/subject" - template segment is not set/empty`;
+          msg.subject = `"${viewName}/subject" - template segment is not set/empty`;
         }
       } catch (renderError) {
         logger.error(`An error occured rendering the subject ${renderError.message}`, renderError);
@@ -726,7 +736,7 @@ export const surveyEmails = {
           logger.info('Rendering body');
           msg.html = renderTemplate(bodyTemplate, properties);
         } else {
-          msg.html = `"${TemplateViews.SurveyInvite}/body" template segment is not set/empty`;
+          msg.html = `"${viewName}/body" template segment is not set/empty`;
         }
       } catch (renderError) {
         logger.error(`An error occured rendering the body ${renderError.message}`, renderError);
