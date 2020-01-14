@@ -1730,13 +1730,11 @@ export default {
 
         const quoteReminder = await QuoteReminder.findById(action.id).then();
 
-        // if no meta (task not created yet)
         if ((!quoteReminder.meta || !quoteReminder.meta.reference || !quoteReminder.meta.reference.referenceId || quoteReminder.meta.reference.source != 'microsoft')) {
         // if ((!action.meta || !action.meta.reference || !action.meta.reference.referenceId || action.meta.reference.source != 'microsoft')) {
           logger.debug(`CREATING TASK FOR:: ${action.id}`);
 
           if (!quoteReminder.actioned) {
-            // only create tasks for unactioned tasks
             if (user.getAuthentication("microsoft") !== null) {
               const taskCreateResult = await clientFor(user, global.partner).mutate({
                 mutation: gql`
@@ -1765,7 +1763,6 @@ export default {
                   };
                 });
 
-
               if (taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
                 logger.debug(`TASK CREATED:: ${JSON.stringify(taskCreateResult)}`);
                 quoteReminder.meta = {
@@ -1782,6 +1779,7 @@ export default {
         } else {
 
           // If is actioned delete task from outlook
+          // This wont run as actioned items arent in the list
           if (action.actioned) {
             const taskDeleteResult = await clientFor(user, global.partner).mutate({
               mutation: gql`
@@ -1799,14 +1797,10 @@ export default {
             })
               .then();
 
-            logger.debug(`TASK DELETION RESULT :: ${JSON.stringify(taskDeleteResult)}`);
-
-            if (taskDeleteResult.data && taskDeleteResult.data.createOutlookTask) {
+            if (taskDeleteResult.data && taskDeleteResult.data.deleteOutlookTask) {
               logger.debug(`TASK DELETED :: ${JSON.stringify(taskDeleteResult)}`);
               quoteReminder.meta = null;
               await quoteReminder.save();
-
-              logger.debug(`TASK DELETED AND REMIDER UPDATED :: ${quoteReminder._id}`);
             }
           }
         }
