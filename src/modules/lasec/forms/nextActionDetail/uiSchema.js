@@ -1,7 +1,36 @@
 import moment from 'moment';
 
-export default {  
+export default {
+  showSubmit: false,
   'ui:field': 'GridLayout',
+  'ui:toolbar': {
+    buttons: [
+      {
+        command: 'LasecMarkNextActionAsActioned',
+        id: 'LasecMarkNextActionAsActioned',
+        color: 'primary',
+        icon: 'check_circle_outline',
+        tooltip: 'Mark as Actioned',
+        graphql: {
+          mutation: {
+            name: 'LasecMarkNextActionAsActioned',
+            text: `
+            mutation LasecMarkNextActionAsActioned($id: String!){
+              LasecMarkNextActionAsActioned(id: $id){
+                success
+                message
+              }
+            }
+            `,
+            variables: {
+              'id': 'id',
+            },
+            onSuccessMethod: 'refresh'
+          }
+        },
+      }
+    ]
+  },
   'ui:grid-layout': [
     {
       quote: { lg: 12, md: 12, sm: 12, xs: 12 },

@@ -265,6 +265,11 @@ type OutlookSyncResponse {
   message: String
 }
 
+type SimpleResponse {
+  success: String
+  message: String
+}
+
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetDashboard(dashparams: LasecQuoteQueryInput): LasecQuoteDashboard
@@ -286,4 +291,5 @@ extend type Mutation {
   ): LasecQuoteStatusUpdateResult
   LasecCreateClientEnquiry(customerId: String!): LasecCustomerEnquiry
   SynchronizeNextActionsToOutloook(nextActions: Any!): OutlookSyncResponse
+  LasecMarkNextActionAsActioned(id: String!): SimpleResponse
 }

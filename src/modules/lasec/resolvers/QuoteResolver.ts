@@ -1715,28 +1715,20 @@ export default {
         }
       }
     },
-    SynchronizeNextActionsToOutloook: async (parent, args) => {
+    SynchronizeNextActionsToOutloook: async (parent, { nextActions }) => {
 
       // TODO - at a later stage
       // Add categories to the task, so we can pull all tasks for that period and then delete
       // tasks that have been actioned
 
-      const { nextActions } = args;
       const { user } = global;
 
-      nextActions.nextActions.forEach(async action => {
-
-        logger.debug(`ACTION:: ${JSON.stringify(action)}`);
-
+      nextActions.forEach(async action => {
         const quoteReminder = await QuoteReminder.findById(action.id).then();
 
-        // if no meta (task not created yet)
-        if ((!quoteReminder.meta || !quoteReminder.meta.reference || !quoteReminder.meta.reference.referenceId || quoteReminder.meta.reference.source != 'microsoft')) {
-        // if ((!action.meta || !action.meta.reference || !action.meta.reference.referenceId || action.meta.reference.source != 'microsoft')) {
+        if ((!quoteReminder.meta || !quoteReminder.meta.reference || !quoteReminder.meta.reference.source || quoteReminder.meta.reference.source != 'microsoft')) {
           logger.debug(`CREATING TASK FOR:: ${action.id}`);
-
           if (!quoteReminder.actioned) {
-            // only create tasks for unactioned tasks
             if (user.getAuthentication("microsoft") !== null) {
               const taskCreateResult = await clientFor(user, global.partner).mutate({
                 mutation: gql`
@@ -1765,7 +1757,6 @@ export default {
                   };
                 });
 
-
               if (taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
                 logger.debug(`TASK CREATED:: ${JSON.stringify(taskCreateResult)}`);
                 quoteReminder.meta = {
@@ -1782,6 +1773,7 @@ export default {
         } else {
 
           // If is actioned delete task from outlook
+          // This wont run as actioned items arent in the list
           if (action.actioned) {
             const taskDeleteResult = await clientFor(user, global.partner).mutate({
               mutation: gql`
@@ -1799,14 +1791,10 @@ export default {
             })
               .then();
 
-            logger.debug(`TASK DELETION RESULT :: ${JSON.stringify(taskDeleteResult)}`);
-
-            if (taskDeleteResult.data && taskDeleteResult.data.createOutlookTask) {
+            if (taskDeleteResult.data && taskDeleteResult.data.deleteOutlookTask) {
               logger.debug(`TASK DELETED :: ${JSON.stringify(taskDeleteResult)}`);
               quoteReminder.meta = null;
               await quoteReminder.save();
-
-              logger.debug(`TASK DELETED AND REMIDER UPDATED :: ${quoteReminder._id}`);
             }
           }
         }
@@ -1818,6 +1806,55 @@ export default {
         message: 'Actions successfully synced!'
       }
 
+    },
+    LasecMarkNextActionAsActioned: async (parent, { id }) => {
+      const { user } = global;
+      const quoteReminder = await QuoteReminder.findById(id).then();
+      if (!quoteReminder) {
+        return {
+          success: false,
+          message: `Could not find a matching quote reminder.`
+        }
+      }
+      quoteReminder.actioned = true;
+      const result = await quoteReminder.save()
+        .then()
+        .catch(error => {
+          return {
+            success: false,
+            message: `Could not update this quote reminder.`
+          }
+        });
+
+
+      if (quoteReminder.meta && quoteReminder.meta.reference && quoteReminder.meta.reference.source && quoteReminder.meta.reference.source == 'microsoft') {
+        const taskDeleteResult = await clientFor(user, global.partner).mutate({
+          mutation: gql`
+              mutation deleteOutlookTask($task: DeleteTaskInput!) {
+                deleteOutlookTask(task: $task) {
+                  Successful
+                  Message
+                }
+              }`, variables: {
+            "task": {
+              "via": "microsoft",
+              "taskId": quoteReminder.meta.reference.referenceId,
+            }
+          }
+        })
+          .then();
+
+        if (taskDeleteResult.data && taskDeleteResult.data.deleteOutlookTask) {
+          logger.debug(`TASK DELETED :: ${JSON.stringify(taskDeleteResult)}`);
+          quoteReminder.meta = null;
+          await quoteReminder.save().then();
+        }
+      }
+
+      return {
+        success: true,
+        message: `Quote reminder marked as actioned.`
+      }
     }
   }
 };
