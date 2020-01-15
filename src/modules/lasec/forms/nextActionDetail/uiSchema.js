@@ -1,11 +1,37 @@
 import moment from 'moment';
 
 export default {
+  showSubmit: false,
   'ui:field': 'GridLayout',
+  'ui:toolbar': {
+    buttons: [
+      {
+        command: 'LasecMarkNextActionAsActioned',
+        id: 'LasecMarkNextActionAsActioned',
+        color: 'primary',
+        icon: 'check_circle_outline',
+        tooltip: 'Mark as Actioned',
+        graphql: {
+          mutation: {
+            name: 'LasecMarkNextActionAsActioned',
+            text: `
+            mutation LasecMarkNextActionAsActioned($id: String!){
+              LasecMarkNextActionAsActioned(id: $id){
+                success
+                message
+              }
+            }
+            `,
+            variables: {
+              'id': 'id',
+            },
+            onSuccessMethod: 'refresh'
+          }
+        },
+      }
+    ]
+  },
   'ui:grid-layout': [
-    {
-      toolBar: { lg: 12, md: 12, sm: 12, xs: 12 },
-    },
     {
       quote: { lg: 12, md: 12, sm: 12, xs: 12 },
       // test: { lg: 12, md: 12, sm: 12, xs: 12 },
@@ -30,48 +56,6 @@ export default {
       },
     },
   ],
-  toolbar: {
-    'ui:wrapper': 'Toolbar',
-    'ui:widget': 'MaterialToolbar',
-    'ui:field': 'GridLayout',
-    'ui:grid-layout': [
-      {
-        markAsActioned: { lg: 12, md: 12, sm: 12, xs: 12 },
-      },
-    ],
-    markAsActioned: {
-      'ui:toolbar': {
-        buttons: [
-          {
-            command: 'syncNextActionsToOutlook',
-            id: 'SyncNextActionsToOutlook',
-            color: 'primary',
-            icon: 'refresh',
-            tooltip: 'Synchronize next actions to your outlook calendar',
-            graphql: {
-              mutation: {
-                name: 'SynchronizeNextActionsToOutloook',
-                text: `
-                mutation SynchronizeNextActionsToOutloook($nextActions: Any!){
-                  SynchronizeNextActionsToOutloook(nextActions: $nextActions){
-                    success
-                    message
-                  }
-                }
-                `,
-                variables: {
-                  'nextActions.actions': 'nextActions',
-                  'periodStart': 'periodStart',
-                  'periodEnd': 'periodEnd'
-                },
-                onSuccessMethod: 'refresh'
-              }
-            },
-          }
-        ]
-      },
-    }
-  },
   who: {
     'ui:widget': 'ChipLabelWidget',
     'ui:options': {
