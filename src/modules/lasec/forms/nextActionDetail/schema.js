@@ -6,6 +6,10 @@ export default {
       title: 'Id',
       type: 'string',
     },
+    targetFormId: {
+      title: 'Form Id',
+      type: 'string',
+    },
     code: {
       title: 'Code',
       type: 'string',
