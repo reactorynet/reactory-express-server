@@ -171,6 +171,11 @@ input CreateTaskInput {
   timeZone: String
 }
 
+input DeleteTaskInput {
+  via: String!
+  taskId: String!
+}
+
 type SendMailResult {
   Successful: Boolean!
   Message: String!
@@ -194,6 +199,7 @@ extend type Mutation {
   removeUserCredentials(provider: String!): Boolean
   sendMail(message: SendMailInput!): SendMailResult
   createOutlookTask(task: CreateTaskInput!): SendMailResult
+  deleteOutlookTask(task: DeleteTaskInput!): SendMailResult
 }
 
 extend type Subscription {

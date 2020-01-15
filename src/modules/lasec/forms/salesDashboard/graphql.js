@@ -25,6 +25,7 @@ export default {
       // nextActions: 'nextActions',
       'nextActions.actions[].id': 'nextActions.actions[].id',
       'nextActions.actions[].actionType': 'nextActions.actions[].actionType',
+      'nextActions.actions[].actioned': 'nextActions.actions[].actioned',
       'nextActions.actions[].importance': 'nextActions.actions[].importance',
       'nextActions.actions[].text': 'nextActions.actions[].text',
       'nextActions.actions[].next': 'nextActions.actions[].next',

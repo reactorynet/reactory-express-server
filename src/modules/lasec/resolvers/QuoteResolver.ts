@@ -1717,85 +1717,105 @@ export default {
     },
     SynchronizeNextActionsToOutloook: async (parent, args) => {
 
-      // TODO
-      // 1. Next actions from args
-      // 2. Iterate next actions:
-      //    missing meta - reference - source: "microsoft": add these to outlook tasks
-      //    has meta - reference - source: "microsoft" and actioned = true: delete task
-      // 3. Cleanup. Pull all tasks for time period. Iterate next actions. If no match, delete.
-
-      // logger.debug(`SYNC NEXT ACTIONS - ARGS:: ${JSON.stringify(args)}`);
+      // TODO - at a later stage
+      // Add categories to the task, so we can pull all tasks for that period and then delete
+      // tasks that have been actioned
 
       const { nextActions } = args;
       const { user } = global;
 
       nextActions.nextActions.forEach(async action => {
 
-
         logger.debug(`ACTION:: ${JSON.stringify(action)}`);
 
-        // Get the actual quote reminder to get up to date meta data
         const quoteReminder = await QuoteReminder.findById(action.id).then();
 
-        // check for meta - resource
-        if (!quoteReminder.meta || !quoteReminder.meta.reference || !quoteReminder.meta.reference.referenceId || quoteReminder.meta.reference.referenceId != 'microsoft') {
+        // if no meta (task not created yet)
+        if ((!quoteReminder.meta || !quoteReminder.meta.reference || !quoteReminder.meta.reference.referenceId || quoteReminder.meta.reference.source != 'microsoft')) {
+        // if ((!action.meta || !action.meta.reference || !action.meta.reference.referenceId || action.meta.reference.source != 'microsoft')) {
           logger.debug(`CREATING TASK FOR:: ${action.id}`);
 
-          if (user.getAuthentication("microsoft") !== null) {
-            const taskCreateResult = await clientFor(user, global.partner).mutate({
+          if (!quoteReminder.actioned) {
+            // only create tasks for unactioned tasks
+            if (user.getAuthentication("microsoft") !== null) {
+              const taskCreateResult = await clientFor(user, global.partner).mutate({
+                mutation: gql`
+                  mutation createOutlookTask($task: CreateTaskInput!) {
+                    createOutlookTask(task: $task) {
+                      Successful
+                      Message
+                      TaskId
+                    }
+                  }`, variables: {
+                  "task": {
+                    "id": `${user._id.toString()}`,
+                    "via": "microsoft",
+                    "subject": action.text,
+                    "startDate": moment(action.next).add(-6, "h").format("YYYY-MM-DD HH:MM"),
+                    "dueDate": moment(action.next).format("YYYY-MM-DD HH:MM")
+                  }
+                }
+              })
+                .then()
+                .catch(error => {
+                  logger.debug(`CREATE OUTLOOK TASK FAILED - ERROR:: ${error}`);
+                  return {
+                    success: false,
+                    message: `Error syncing actions`
+                  };
+                });
+
+
+              if (taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
+                logger.debug(`TASK CREATED:: ${JSON.stringify(taskCreateResult)}`);
+                quoteReminder.meta = {
+                  reference: {
+                    source: 'microsoft',
+                    referenceId: taskCreateResult.data.createOutlookTask.TaskId
+                  },
+                  lastSync: moment().valueOf(),
+                }
+                await quoteReminder.save();
+              }
+            }
+          }
+        } else {
+
+          // If is actioned delete task from outlook
+          if (action.actioned) {
+            const taskDeleteResult = await clientFor(user, global.partner).mutate({
               mutation: gql`
-                mutation createOutlookTask($task: CreateTaskInput!) {
-                  createOutlookTask(task: $task) {
+                mutation deleteOutlookTask($task: DeleteTaskInput!) {
+                  deleteOutlookTask(task: $task) {
                     Successful
                     Message
-                    TaskId
                   }
                 }`, variables: {
                 "task": {
-                  "id": `${user._id.toString()}`,
                   "via": "microsoft",
-                  "subject": action.text,
-                  "startDate": moment(action.next).add(-6, "h").format("YYYY-MM-DD HH:MM"),
-                  "dueDate": moment(action.next).format("YYYY-MM-DD HH:MM")
+                  "taskId": action.meta.reference.referenceId,
                 }
               }
             })
-              .then()
-              .catch(error => {
-                logger.debug(`CREATE OUTLOOK TASK FAILED - ERROR:: ${error}`);
-                return {
-                  success: true,
-                  message: `Error syncing actions`
-                };
-              });
+              .then();
 
+            logger.debug(`TASK DELETION RESULT :: ${JSON.stringify(taskDeleteResult)}`);
 
-            if (taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
-
-              logger.debug(`TASK CREATED:: ${JSON.stringify(taskCreateResult)}`);
-
-
-              quoteReminder.meta = {
-                reference: {
-                  source: 'microsoft',
-                  referenceId: taskCreateResult.data.createOutlookTask.TaskId
-                },
-                lastSync: moment().valueOf(),
-              }
-
+            if (taskDeleteResult.data && taskDeleteResult.data.createOutlookTask) {
+              logger.debug(`TASK DELETED :: ${JSON.stringify(taskDeleteResult)}`);
+              quoteReminder.meta = null;
               await quoteReminder.save();
 
-              logger.debug(`TASK CREATED AND REMIDER UPDATED :: ${reminder._id}`);
+              logger.debug(`TASK DELETED AND REMIDER UPDATED :: ${quoteReminder._id}`);
             }
           }
         }
 
       });
 
-
       return {
         success: true,
-        message: 'This is a test'
+        message: 'Actions successfully synced!'
       }
 
     }
