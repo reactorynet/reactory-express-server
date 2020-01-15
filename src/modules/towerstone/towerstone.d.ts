@@ -35,18 +35,20 @@ declare namespace TowerStone {
 
   export interface ISurveyEmailTemplate {
     id: string
-    key: string
+    key: string    
     activity: string
     subject: string
     body: string
     surveyType: string
     engine: string
-    target: string
+    target: string,
+    description?: string
   }
 
   export interface ISurveyTemplates {
     assessorTemplates?: Array<ISurveyEmailTemplate>,
     delegateTemplates?: Array<ISurveyEmailTemplate>,
+    generalTemplates?:  Array<ISurveyEmailTemplate>
   }
 
   export interface ISurvey {

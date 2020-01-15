@@ -17,6 +17,15 @@ mutation TowerStoneSurveySetTemplates ($id: String!, $templates: TowerStoneSurve
       engine
       subject                
       target
+    },
+    generalTemplates {
+      id
+      key
+      activity
+      body
+      engine
+      subject                
+      target
     }
   }
 }

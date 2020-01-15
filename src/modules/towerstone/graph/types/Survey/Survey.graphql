@@ -58,11 +58,13 @@ input TowerStoneEmailTemplateInput {
 type TowerStoneSurveyTemplates {
   delegateTemplates: [TowerStoneEmailTemplate]
   assessorTemplates: [TowerStoneEmailTemplate]
+  generalTemplates: [TowerStoneEmailTemplate]
 }
 
 input TowerStoneSurveyTemplatesInput {
   delegateTemplates: [TowerStoneEmailTemplateInput]
   assessorTemplates: [TowerStoneEmailTemplateInput]
+  generalTemplates:  [TowerStoneEmailTemplateInput]
 }
 
 

@@ -21,6 +21,15 @@ query surveyDetail ($surveyId: String!) {
         subject                
         target
       }
+      generalTemplates {
+        id
+        key
+        activity
+        body
+        engine
+        subject                
+        target
+      }
     }
   }
 }

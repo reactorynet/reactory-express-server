@@ -17,6 +17,20 @@ import { IEmailQueueDocument } from 'models/schema/EmailQueue';
 
 
 const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
+  // general templates 
+  // these are mapped from the const TemplateView in src/emails/index.js
+  // these will replace the old mappings over time as we improve this module.
+  {
+    id: 'towerstone.peer-invite-email',
+    key: 'towerstone.peer-invite-email', 
+    surveyType: '$general', //hijacking survey type field used as special filter
+    activity: 'peer-nomination', 
+    target: 'nominee',
+    subject: 'You have been nominated by <%=employee.firstName%>',
+    body: `No Template`,
+    engine: 'ejs',
+    description: `Sent to a nominated peer, when a user confirms their peers or when the administrator confirms their peers on their behalf.`,
+  },
   // 180 assessment types
   {
     id: ``,
@@ -80,16 +94,7 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   },
 
   // plc types
-  {
-    id: ``,
-    key: ``, 
-    surveyType: 'plc', 
-    activity: 'invite', 
-    target: 'assessor',
-    subject: 'No Subject',
-    body: `No Template`,
-    engine: 'ejs'
-  },
+    
   {
     id: ``,
     key: ``,
@@ -98,7 +103,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
-    engine: 'ejs'
+    engine: 'ejs',
+    description: 'Sent to a delegate when the administrator sends the invitation to participate',
   },
   {
     id: ``,
@@ -649,7 +655,8 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
 
       const result: TowerStone.ISurveyTemplates = {
         assessorTemplates: [],
-        delegateTemplates: []
+        delegateTemplates: [],
+        generalTemplates: [],
       };
 
       result.assessorTemplates = lodash.filter(EmailDefaults, (email) => {
@@ -668,6 +675,10 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
         return template;
       });
 
+      result.generalTemplates = lodash.filter(EmailDefaults, (email) => {
+        return email.surveyType === '$general';
+      });
+
       result.assessorTemplates = await Promise.all(result.assessorTemplates.map((template) => {
         return hydrateContent(template, survey);
       })).then();
@@ -675,11 +686,18 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
       result.delegateTemplates = await Promise.all(result.delegateTemplates.map((template) => {
         return hydrateContent(template, survey);
       })).then();
+
+      result.generalTemplates = await Promise.all(result.generalTemplates.map((template) => {
+        return hydrateContent(template, survey);
+      })).then();
+
+      logger.debug('Hydradted templates', { result });
       
       return result;
     },
     patchTemplates: async (survey: TowerStone.ISurveyDocument, templates: TowerStone.ISurveyTemplates) => {
       logger.debug(`Patching email template for survey ${survey.title}`, templates);
+      const { partner } = global;
       if(survey.id || survey._id) {
         let assessorTemplatePatchResult = await Promise.all(templates.assessorTemplates.map(
           (template: TowerStone.ISurveyEmailTemplate) => {
@@ -698,6 +716,16 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
         )).then();
 
         delegatesTemplatePatchResult.forEach((patched) => {
+          logger.debug('Result for Template Patch', patched)
+        });
+
+        let generalTemplatePatchResult = await Promise.all(templates.generalTemplates.map(
+          (template: TowerStone.ISurveyEmailTemplate) => {
+            return patchTemplate(template, survey.organization, partner);
+          }
+        )).then();
+
+        generalTemplatePatchResult.forEach((patched) => {
           logger.debug('Result for Template Patch', patched)
         });
       }

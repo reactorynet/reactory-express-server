@@ -128,6 +128,13 @@ const $schema: Reactory.IObjectSchema = {
           items: {
             ...emailTemplate
           }
+        },
+        generalTemplates: {
+          type: 'array',
+          title: 'General Email Templates',
+          items: {
+            ...emailTemplate
+          }
         }
       }
     }
@@ -156,6 +163,7 @@ const $uiSchema: Object = {
       {
         assessorTemplates: { md: 12 },
         delegateTemplates: { md: 12 },
+        generalTemplates: { md: 12 },
       },      
     ],
     "assessorTemplates": {
@@ -164,6 +172,11 @@ const $uiSchema: Object = {
       }
     },
     "delegateTemplates": {
+      "items": {
+        ...emailTemplateUiSchema
+      }
+    },
+    "generalTemplates": {
       "items": {
         ...emailTemplateUiSchema
       }
