@@ -270,7 +270,7 @@ export default {
             componentFqn: 'lasec-crm.LasecNextActionDetail@1.0.0',
             componentProps: {
               'formData': 'formData',
-              'formId' : 'formContext.targetFormId'
+              'formContext.formInstanceId' : 'formData.targetFormId'
             },
             slideDirection: 'down',
             buttonTitle: 'View Details',
