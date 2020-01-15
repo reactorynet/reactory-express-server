@@ -273,9 +273,7 @@ type SimpleResponse {
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetDashboard(dashparams: LasecQuoteQueryInput): LasecQuoteDashboard
-  LasecGetProductDashboard(
-    productDashparams: LasecQuoteQueryInput
-  ): LasecProductDashboard
+  LasecGetProductDashboard(dashparams: LasecQuoteQueryInput): LasecProductDashboard
   LasecGetQuoteById(quote_id: String!): Quote
   LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [Quote]
 }

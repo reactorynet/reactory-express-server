@@ -11,7 +11,7 @@ export default {
   },
   'ui:grid-layout': [
     {
-      toolbar: { lg: 12, md: 12, sm: 12, xs: 12 },
+      toolbar: { xs: 12 },
     },
     {
       totalQuotes: { md: 3, sm: 12 },
@@ -38,12 +38,14 @@ export default {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
-        period: { lg: 6, md: 6, sm: 12, xs: 12 },
+        period: { md: 3, sm: 12, xs: 12 },
         periodStart: { md: 3, sm: 12, xs: 12 },
         periodEnd: { md: 3, sm: 12, xs: 12 },
       },
       {
-        agentSelection: { lg: 6, md: 6, sm: 12, xs: 12 },
+        agentSelection: { md: 3, sm: 12, xs: 12 },
+        teamFilter: { md: 3, sm: 12, xs: 12 },
+        userFilter: { md: 3, sm: 12, xs: 12 },
         productClass: { lg: 6, md: 6, sm: 12, xs: 12 },
       },
     ],
@@ -72,22 +74,14 @@ export default {
     },
 
     agentSelection: {
-      'ui:widget': 'SelectWithDataWidget',
+      'ui:widget': 'SelectWidget',
       'ui:options': {
-        query: `query LasecSalesTeams {
-          LasecSalesTeams {
-            id
-            title
-            meta  {
-              reference
-            }
-          }
-        }`,
-        resultItem: 'LasecSalesTeams',
-        resultsMap: {
-          'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
-          'LasecSalesTeams.[].title': '[].label',
-        },
+
+        selectOptions: [
+          { key: 'me', value: 'me', label: 'My Quotes' },
+          { key: 'team', value: 'team', label: 'Team / Reps' },
+          { key: 'custom', value: 'custom', label: 'Custom User Selection' },
+        ],
       },
     },
 
@@ -108,6 +102,26 @@ export default {
       },
     },
 
+    teamFilter: {
+      'ui:widget': 'SelectWithDataWidget',
+      'ui:options': {
+        multiSelect: true,
+        query: `query LasecSalesTeams {
+          LasecSalesTeams {
+            id
+            title
+            meta  {
+              reference
+            }
+          }
+        }`,
+        resultItem: 'LasecSalesTeams',
+        resultsMap: {
+          'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
+          'LasecSalesTeams.[].title': '[].label',
+        },
+      },
+    },
 
     agentFilter: {
       /*
@@ -119,7 +133,16 @@ export default {
         lookupWidget: 'core.UserSearch',
         lookupOnSelect: 'onSelect',
       },
-    }
+    },
+
+    userFilter: {
+      'ui:widget': 'UserSelectorWidget',
+      'ui:options': {
+        widget: 'UserSelectorWidget',
+        lookupWidget: 'core.UserSearch',
+        lookupOnSelect: 'onSelect',
+      },
+    },
   },
 
   // TOTALS
@@ -214,6 +237,36 @@ export default {
    * Next Actions Section
    **/
   nextActions: {
+    'ui:toolbar': {
+      buttons: [
+        {
+          command: 'syncNextActionsToOutlook',
+          id: 'SyncNextActionsToOutlook',
+          color: 'primary',
+          icon: 'refresh',
+          tooltip: 'Synchronize next actions to your outlook calendar',
+          graphql: {
+            mutation: {
+              name: 'SynchronizeNextActionsToOutloook',
+              text: `
+              mutation SynchronizeNextActionsToOutloook($nextActions: Any!){
+                SynchronizeNextActionsToOutloook(nextActions: $nextActions){
+                  success
+                  message
+                }
+              }
+              `,
+              variables: {
+                'nextActions.actions': 'nextActions',
+                'periodStart': 'periodStart',
+                'periodEnd': 'periodEnd'
+              },
+              onSuccessMethod: 'refresh'
+            }
+          },
+        }
+      ]
+    },
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
@@ -224,18 +277,33 @@ export default {
       'ui:widget': 'MaterialListWidget',
       'ui:options': {
         id: 'Id',
-        primaryText: '${item.text}',
+        primaryText: '${item.actionType} due on ${props.api.utils.moment(item.next).format("YYYY.MM.DD")}',
+        secondaryText: '${item.quote.code} ${item.importance} assigned to ${item.who && item.who.length > 0 ? item.who.map((w)=>(w.firstName + " " + w.lastName)) : "no one" }',
         showAvatar: false,
         icon: 'history',
         variant: 'button',
         secondaryAction: {
           iconKey: 'edit',
           label: 'Edit',
-          componentFqn: 'core.Link',
-          action: 'event:onRouteChanged',
-          link: '/edit/${item.id}/'
+          componentFqn: 'core.SlideOutLauncher@1.0.0',
+          action: 'mount:Component',
+          link: '/edit/${item.id}/',
+          props: {
+            componentFqn: 'lasec-crm.LasecNextActionDetail@1.0.0',
+            componentProps: {
+              'formData': 'formData',
+              'formContext.formInstanceId' : 'formData.targetFormId'
+            },
+            slideDirection: 'down',
+            buttonTitle: 'View Details',
+            windowTitle: 'Next Action ${formData.quote.code}',
+            buttonVariant: 'IconButton',
+          },
+        },
+        listProps: {
+          dense: true
         }
-      }
+      },
     }
   },
 

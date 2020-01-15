@@ -1,6 +1,28 @@
 import { PieChart } from '@reactory/server-modules/core/schema/formSchema';
 import { nextActions } from '@reactory/server-modules/lasec/schema/formSchema';
 
+const userFilter = {
+  type: 'array',
+  title: 'Selected Reps',
+  items: {
+    type: 'object',
+    properties: {
+      id: {
+        title: 'User Id',
+        type: 'string'
+      },
+      firstName: {
+        type: 'string',
+        title: 'Firstname'
+      },
+      lastName: {
+        type: 'string',
+        title: 'Lastname'
+      }
+    }
+  }
+};
+
 export default {
   type: 'object',
   title: '',
@@ -8,10 +30,15 @@ export default {
     toolbar: {
       type: 'object',
       title: 'Filter',
+      required: [
+        "agentSelection",
+        "period"
+      ],
       dependencies: {
         period: {
           oneOf: [
-            { properties:
+            {
+              properties:
               {
                 period: {
                   enum: ["custom"],
@@ -55,44 +82,37 @@ export default {
                 agentSelection: {
                   enum: ['me']
                 },
-              }
+              },
             },
             //team filter
             {
-              agentSelection: {
-                enum: ['team']
-              },
-              teamFilter: {
-                tile: 'Team Filter',
-                type: 'string',
-              }
-            },
-            //customer filter
-            {
-              agentSelection: {
-                enum: ['custom']
-              },
-              agentFilter: {
-                type: 'array',
-                title: 'Selected Reps',
-                items: {
-                  type: 'object',
-                  properties: {
-                    id: {
-                      title: 'User Id',
-                      type: 'string'
-                    },
-                    firstName: {
-                      type: 'String',
-                      title: 'Firstname'
-                    },
-                    lastName: {
-                      type: 'String',
-                      title: 'Lastname'
-                    }
+              properties: {
+                agentSelection: {
+                  enum: ['team']
+                },
+                teamFilter: {
+                  title: 'Team Filter',
+                  type: 'array',
+                  items: {
+                    type: 'string'
                   }
-                }
-              }
+                },
+              },
+              required: [
+                "teamFilter"
+              ]
+            },
+            //custom filter
+            {
+              properties: {
+                agentSelection: {
+                  enum: ['custom']
+                },
+                userFilter,
+              },
+              required: [
+                "userFilter"
+              ]
             },
           ]
         }

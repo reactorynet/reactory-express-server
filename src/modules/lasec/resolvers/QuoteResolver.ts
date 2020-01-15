@@ -531,9 +531,9 @@ const groupQuotesByProduct = (quotes) => {
   return groupedByProduct;
 };
 
-const lasecGetProductDashboard = async (dashparams) => {
+const lasecGetProductDashboard = async (dashparams = defaultProductDashboardParams) => {
 
-  logger.debug(`GET PRODUCT DASHBOARD QUERIED`);
+  logger.debug(`GET PRODUCT DASHBOARD QUERIED: ${JSON.stringify(dashparams)}`);
 
   let {
     period = 'this-week',
@@ -601,26 +601,29 @@ const lasecGetProductDashboard = async (dashparams) => {
   }
 
   let periodLabel = `Produc Quotes Dashboard ${periodStart.format('DD MM YY')} till ${periodEnd.format('DD MM YY')} For ${global.user.firstName} ${global.user.lastName}`;
-  let cacheKey = `productQuote.dashboard.${user._id}.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
 
   /*
-     let _cached = await getCacheItem(cacheKey);
+    let cacheKey = `productQuote.dashboard.${user._id}.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
+    let _cached = await getCacheItem(cacheKey);
 
-     if(_cached) {
-       logger.debug('Found results in cache');
-       periodLabel = `${periodLabel} [cache]`;
-       return _cached;
-     }
+    if(_cached) {
+      logger.debug('Found results in cache');
+      periodLabel = `${periodLabel} [cache]`;
+      return _cached;
+    }
   */
 
   let palette = global.partner.colorScheme();
 
   logger.debug('Fetching Quote Data');
   let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection, productClasses }).then();
+
+  logger.debug(`QUOTES:: ${JSON.stringify(quotes)}`);
+
   logger.debug('Fetching Target Data');
   const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
   logger.debug('Fetching Next Actions for; User')
-  const nextActionsForUser = await getNextActionsForUser({ user: global.user }).then();
+  const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
   logger.debug('Fetching invoice data');
   const invoices = await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
   logger.debug('Fetching isos');
@@ -705,7 +708,7 @@ const lasecGetProductDashboard = async (dashparams) => {
     key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`
   };
 
-  // TODO - Remove this. Adding a random product class.
+  // TODO - REMOVE THIS. Adding a random product class.
   const randomProductClasses = ['Product 1', 'Product 2', 'Product 3', 'Product 4'];
   quotes.forEach(quote => {
     quote.productClass = randomProductClasses[Math.floor(Math.random() * randomProductClasses.length)];
@@ -714,7 +717,7 @@ const lasecGetProductDashboard = async (dashparams) => {
   lodash.orderBy(quotes, ['productClass'], ['asc']);
 
   const productDashboardResult = {
-    period: period,
+    period,
     periodLabel,
     periodStart,
     periodEnd,
@@ -725,7 +728,7 @@ const lasecGetProductDashboard = async (dashparams) => {
     targetPercent: 0,
     nextActions: {
       owner: global.user,
-      nextActions: nextActionsForUser
+      actions: nextActionsForUser
     },
     totalQuotes: 0,
     totalBad: 0,
@@ -1339,9 +1342,10 @@ export default {
 
       let periodLabel = `Quotes Dashboard ${periodStart.format('DD MM YY')} till ${periodEnd.format('DD MM YY')} For ${global.user.firstName} ${global.user.lastName}`;
 
-      let cacheKey = `quote.dashboard.${user._id}.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
+
 
       /*
+      let cacheKey = `quote.dashboard.${user._id}.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
       let _cached = await getCacheItem(cacheKey);
 
       if(_cached) {
@@ -1368,11 +1372,8 @@ export default {
 
       const quoteStatusFunnel = {
         chartType: 'FUNNEL',
-        data: [
-        ],
-        options: {
-
-        },
+        data: [],
+        options: {},
         key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/funnel`
       };
 
@@ -1524,8 +1525,8 @@ export default {
 
       return dashboardResult;
     },
-    LasecGetProductDashboard: async (obj, { productdashparams = defaultProductDashboardParams }) => {
-      return lasecGetProductDashboard(productdashparams);
+    LasecGetProductDashboard: async (obj, { dashparams }) => {
+      return lasecGetProductDashboard(dashparams);
     },
     LasecGetQuoteById: async (obj, { quote_id }) => {
       if (isNil(quote_id) === true) throw new ApiError('This method requies a quote id to work');

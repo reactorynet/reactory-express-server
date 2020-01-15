@@ -1,9 +1,11 @@
-query LasecGetProductDashboard($productDashparams: LasecQuoteQueryInput){
-  LasecGetProductDashboard(productDashparams: $productDashparams){
+query LasecGetProductDashboard($dashparams: LasecQuoteQueryInput) {
+  LasecGetProductDashboard(dashparams: $dashparams) {
     id
     period
     periodStart
     periodEnd
+    agentSelection
+    teamIds
     repIds
     totalQuotes
     totalBad
@@ -52,6 +54,32 @@ query LasecGetProductDashboard($productDashparams: LasecQuoteQueryInput){
       expirationDate
       note
       productClass
+    }
+    nextActions {
+      owner {
+        id
+        firstName
+        lastName
+        email
+      }
+      actions {
+        id
+        quote {
+          id
+          code
+        }
+        who {
+          id
+          firstName
+          lastName
+        }
+        actionType
+        actioned
+        text
+        next
+        importance
+        meta
+      }
     }
   }
 }
