@@ -1,6 +1,6 @@
 
 import om from 'object-mapper';
-import moment from 'moment';
+import moment, { Moment } from 'moment';
 import lodash, { isArray, isNil } from 'lodash';
 import { ObjectId } from 'mongodb';
 import gql from 'graphql-tag';
@@ -15,6 +15,20 @@ import { clientFor } from '@reactory/server-core/graph/client';
 import O365 from '../../../azure/graph';
 // import { getCacheItem, setCacheItem } from '../models';
 
+
+export interface DashboardParams {
+  period: string,
+  periodStart: Moment,
+  periodEnd: Moment,
+  agentSelection: string,
+  teamIds: any[],
+  repIds: any[],
+  status: any[]
+};
+
+export interface ProductDashboardParams extends DashboardParams {
+  productClass: any[],
+};
 
 const lookups = {
   statusGroupName: {
@@ -80,21 +94,21 @@ const totalsFromMeta = (meta) => {
   });
 }
 
-const defaultDashboardParams = {
+const defaultDashboardParams :DashboardParams = {
   period: 'this-week',
   periodStart: moment().startOf('week'),
   periodEnd: moment().endOf('week'),
-  agentSelction: 'me',
+  agentSelection: 'me',
   teamIds: [],
   repIds: [],
   status: []
 };
 
-const defaultProductDashboardParams = {
+const defaultProductDashboardParams : ProductDashboardParams = {
   period: 'this-week',
   periodStart: moment().startOf('week'),
   periodEnd: moment().endOf('week'),
-  agentSelction: 'me',
+  agentSelection: 'me',
   teamIds: [],
   repIds: [],
   status: [],
@@ -241,8 +255,6 @@ const getQuotes = async (params) => {
   logger.debug(`Fetched Expanded View for (${quotesDetails.items.length}) Quotes from API`);
   let quotes = [...quotesDetails.items];
 
-  logger.debug(`FIRST QUOTE ${JSON.stringify(quotes[0])}`);
-
   //perform a lightweight map
   const quoteSyncResult = await Promise.all(quotes.map((quote) => {
     return quote_sync(quote.id, global.partner.key, quote, true);
@@ -251,9 +263,6 @@ const getQuotes = async (params) => {
   quotes = quoteSyncResult.map(doc => doc);
 
   amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
-
-
-
 
   return quotes;
 };
@@ -622,14 +631,11 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
 
   logger.debug('Fetching Quote Data');
   let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection, productClasses }).then();
-
-  logger.debug(`QUOTES:: ${JSON.stringify(quotes[0])}`);
-
-  logger.debug('Fetching Target Data');
+  logger.debug(`QUOTES:: (${quotes.length})`);
   const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
-  logger.debug('Fetching Next Actions for; User')
+  logger.debug('Fetching Next Actions for User');
   const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
-  logger.debug('Fetching invoice data');
+  logger.debug(`Fetching invoice data ${periodStart.format('YYYY-MM-DD HH:mm')} ${periodEnd.format('YYYY-MM-DD HH:mm')} ${global.user.firstName} ${global.user.lastName}`);
   const invoices = await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
   logger.debug('Fetching isos');
   const isos = await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
@@ -638,7 +644,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
     chartType: 'FUNNEL',
     data: [],
     options: {},
-    key: `quote-product/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/funnel`
+    key: `quote-product/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/funnel`,
   };
 
   const quoteProductPie = {
@@ -651,7 +657,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
       fill: `#${palette[0]}`,
       dataKey: 'value',
     },
-    key: `quote-status/product-dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
+    key: `quote-status/product-dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`,
   };
 
   const quoteISOPie = {
@@ -713,11 +719,13 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
     key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`
   };
 
+  debugger;
+
   // TODO - REMOVE THIS. Adding a random product class.
-  const randomProductClasses = ['Product 1', 'Product 2', 'Product 3', 'Product 4'];
-  quotes.forEach(quote => {
-    quote.productClass = randomProductClasses[Math.floor(Math.random() * randomProductClasses.length)];
-  });
+  // const randomProductClasses = ['Product 1', 'Product 2', 'Product 3', 'Product 4'];
+  // quotes.forEach(quote => {
+  //   quote.productClass = randomProductClasses[Math.floor(Math.random() * randomProductClasses.length)];
+  // });
 
   lodash.orderBy(quotes, ['productClass'], ['asc']);
 
@@ -752,7 +760,6 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
   productDashboardResult.productSummary = groupQuotesByProduct(quotes);
   productDashboardResult.charts.quoteProductFunnel.data = [];
   productDashboardResult.charts.quoteProductPie.data = [];
-
   productDashboardResult.productSummary.forEach((entry, index) => {
     productDashboardResult.charts.quoteProductFunnel.data.push({
       "value": entry.totalVATExclusive,
@@ -926,8 +933,7 @@ export default {
     lineItems: async (quote) => {
       const { code } = quote;
       const lineItems = await lasecApi.Quotes.getLineItems(code).then();
-
-      logger.debug(`Found line items for quote ${quote.code}`, lineItems);
+      logger.debug(`Found line items for quote ${code}`, lineItems);
       return om(lineItems, {
         'items.[].id': [
           '[].quote_item_id',
@@ -935,7 +941,8 @@ export default {
           '[].line_id',
           {
             key: '[].id', transform: () => (new ObjectId())
-          }],
+          }
+        ],
         'items.[].code': '[].code',
         'items.[].description': '[].title',
         'items.[].quantity': '[].quantity',
@@ -951,14 +958,14 @@ export default {
         'items.[].note': '[].note',
         'items.[].quote_heading_id': '[].header.meta.reference',
         'items.[].header_name': {
-          key: '[].header.text', transform: (v) => {
+          key: '[].header.text', transform: (v: any) => {
             if (lodash.isEmpty(v) === false) return v;
-
             return 'Uncategorised';
           }
         },
         'items.[].total_discount_percent': '[].discount',
-
+        'items.[].product_class': '[].productClass',
+        'items.[].product_class_description': '[].productClassDescription',
       });
     },
     statusName: (quote) => {
