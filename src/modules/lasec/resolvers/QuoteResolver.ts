@@ -138,6 +138,9 @@ const quote_sync = async (quote_id, owner, source = null, map = true) => {
     _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
   }
 
+  logger.debug(`SOURCE ${JSON.stringify(_source)}`);
+  logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
+
   if (map === true && _source) {
     const _map = {
       ...maps.meta,
@@ -261,6 +264,8 @@ const getQuotes = async (params) => {
   })).then();
 
   quotes = quoteSyncResult.map(doc => doc);
+
+  // logger.debug(`QUOTES ${JSON.stringify(quotes.slice(0, 5))}`);
 
   amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
 
@@ -724,7 +729,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
   // TODO - REMOVE THIS. Adding a random product class.
   // const randomProductClasses = ['Product 1', 'Product 2', 'Product 3', 'Product 4'];
   // quotes.forEach(quote => {
-  //   quote.productClass = randomProductClasses[Math.floor(Math.random() * randomProductClasses.length)];
+  //   quote.productClass = randomProductClasses[Math.floor(Math.ra ndom() * randomProductClasses.length)];
   // });
 
   lodash.orderBy(quotes, ['productClass'], ['asc']);
