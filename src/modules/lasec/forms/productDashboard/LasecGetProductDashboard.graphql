@@ -27,6 +27,14 @@ query LasecGetProductDashboard($dashparams: LasecQuoteQueryInput) {
         data
         options
       }
+       quoteINVPie {
+        data
+        options
+      }
+      quoteISOPie {
+        data
+        options
+      }
       quoteStatusComposed {
         data
         options

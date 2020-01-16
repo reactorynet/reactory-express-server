@@ -241,6 +241,8 @@ const getQuotes = async (params) => {
   logger.debug(`Fetched Expanded View for (${quotesDetails.items.length}) Quotes from API`);
   let quotes = [...quotesDetails.items];
 
+  logger.debug(`FIRST QUOTE ${JSON.stringify(quotes[0])}`);
+
   //perform a lightweight map
   const quoteSyncResult = await Promise.all(quotes.map((quote) => {
     return quote_sync(quote.id, global.partner.key, quote, true);
@@ -249,6 +251,9 @@ const getQuotes = async (params) => {
   quotes = quoteSyncResult.map(doc => doc);
 
   amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
+
+
+
 
   return quotes;
 };
@@ -618,7 +623,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
   logger.debug('Fetching Quote Data');
   let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection, productClasses }).then();
 
-  logger.debug(`QUOTES:: ${JSON.stringify(quotes)}`);
+  logger.debug(`QUOTES:: ${JSON.stringify(quotes[0])}`);
 
   logger.debug('Fetching Target Data');
   const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
