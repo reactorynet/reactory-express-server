@@ -13,6 +13,8 @@ type LasecQuoteItem {
   quote_item_id: String
   code: String
   title: String
+  productClass: String
+  productClassDescription: String
   quantity: Int
   price: Int
   discount: Int
