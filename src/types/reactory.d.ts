@@ -14,7 +14,7 @@ declare namespace Reactory {
       height: string
       width: string
       styles: any
-      method?: string 
+      method?: string
     }
 
     export interface IMessageHandler {
@@ -31,11 +31,11 @@ declare namespace Reactory {
       messageHandlers?: IMessageHandler[]
     }
   }
-  
+
   export interface IMongoDocument {
     _id: ObjectId
     id: string
-  }  
+  }
 
   export interface IAuthentication {
     provider: string
@@ -47,7 +47,7 @@ declare namespace Reactory {
     name: string
     type: string
   }
-  
+
   export interface ITemplate {
     enabled: boolean
     organization?: ObjectId
@@ -81,7 +81,7 @@ declare namespace Reactory {
 
   export interface IBusinessUnit {
     id: string
-    name: string    
+    name: string
   }
 
   export interface IMemberShip {
@@ -116,14 +116,16 @@ declare namespace Reactory {
     type: string,
     title?: string | undefined,
     description?: string | undefined,
-    default?: any | undefined
+    default?: any | undefined,
+    required?: any | undefined,
+    properties?: any | undefined,
   }
-  
-  export interface IObjectSchema extends ISchema {  
-    properties?: Object, 
+
+  export interface IObjectSchema extends ISchema {
+    properties?: Object,
   }
-  
-  export interface IArraySchema extends ISchema {  
+
+  export interface IArraySchema extends ISchema {
     items: IObjectSchema | IArraySchema
   }
 
@@ -163,11 +165,11 @@ declare namespace Reactory {
     delete?: IReactoryFormMutation
   }
 
-  export interface IFormGraphDefinition {    
+  export interface IFormGraphDefinition {
     query?: IReactoryFormQuery,
     mutation?: IReactoryFormMutations,
   }
-  
+
   export interface IWidgetMap {
     componentFqn: String,
     widget: String
@@ -177,16 +179,16 @@ declare namespace Reactory {
     title?: string
   }
 
-  
+
   export interface IExcelColumnDefinition {
     title: string
     propertyField: string
     format: string
     type: string
     width?: number,
-    key?: string,    
+    key?: string,
     required: boolean
-    style?: any    
+    style?: any
   }
 
   export interface IExcelSheet {
@@ -201,7 +203,7 @@ declare namespace Reactory {
     filename: string
     sheets: IExcelSheet[]
   }
-  
+
   export interface IExport extends Client.IFramedWindowProperties {
     title?: string
     engine?: string
@@ -241,14 +243,14 @@ declare namespace Reactory {
     components?: String[],
     graphql?: IFormGraphDefinition,
     defaultFormValue?: any,
-    defaultPdfReport?: IReactoryPdfReport, 
+    defaultPdfReport?: IReactoryPdfReport,
     defaultExport?: IExport,
     reports?: IReactoryPdfReport[],
-    exports?:IExport[], 
+    exports?:IExport[],
     refresh?: any,
     widgetMap?: IWidgetMap[],
     backButton?: Boolean,
-    workflow?: Object,  
+    workflow?: Object,
     noHtml5Validate?: boolean,
     formContext?: any,
       /**
@@ -256,7 +258,7 @@ declare namespace Reactory {
      */
     componentDefs?: String[]
   }
-  
+
 
   export interface IGraphShape {
     Query: Object,
@@ -288,18 +290,18 @@ declare namespace Reactory {
     graphDefinitions?: IGraphDefinitions,
     workflows?: IWorkflow[],
     forms?: IReactoryForm[],
-    services?: IReactoryServiceDefinition[], 
+    services?: IReactoryServiceDefinition[],
   }
 
   export interface IReactoryServiceResult<T> {
     data?: T,
-    errors?: Error[],    
+    errors?: Error[],
   }
-  
+
   export interface IReactoryResultService<T> {
     (props: any, context: any):  IReactoryServiceResult<T>;
   }
-  
+
   export interface IReactoryServiceDefinition {
     id: string
     name: string
@@ -307,11 +309,11 @@ declare namespace Reactory {
     isAsync?: boolean
     service: Function,
     serviceType?: string
-    dependencies?: string[]    
-  }   
-  
+    dependencies?: string[]
+  }
+
   export namespace Service {
-    
+
     export interface IExcelWriterService {
       writeAsFile(options: IExcelWriterOptions): Promise<Boolean>
       writeAsStream(options: IExcelWriterOptions): Promise<Boolean>
@@ -333,7 +335,7 @@ declare namespace Reactory {
       output: string,
       formatting?: IExcelFormat,
       stream?: Stream
-    }    
+    }
   }
 }
 
