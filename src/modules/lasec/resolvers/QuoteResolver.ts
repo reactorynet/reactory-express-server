@@ -801,6 +801,45 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
 
 }
 
+const lasecGetQuoteLineItems = async (code: string) => {
+  
+  const lineItems = await lasecApi.Quotes.getLineItems(code).then();
+  logger.debug(`Found line items for quote ${code}`, lineItems);
+  return om(lineItems, {
+    'items.[].id': [
+      '[].quote_item_id',
+      '[].meta.reference',
+      '[].line_id',
+      {
+        key: '[].id', transform: () => (new ObjectId())
+      }
+    ],
+    'items.[].code': '[].code',
+    'items.[].description': '[].title',
+    'items.[].quantity': '[].quantity',
+    'items.[].total_price_cents': '[].price',
+    'items.[].gp_percent': '[].GP',
+    'items.[].total_price_before_discount_cents': [
+      '[].totalVATExclusive',
+      {
+        key: '[].totalVATInclusive',
+        transform: (v) => (Number.parseInt(v) * 1.15)
+      }
+    ],
+    'items.[].note': '[].note',
+    'items.[].quote_heading_id': '[].header.meta.reference',
+    'items.[].header_name': {
+      key: '[].header.text', transform: (v: any) => {
+        if (lodash.isEmpty(v) === false) return v;
+        return 'Uncategorised';
+      }
+    },
+    'items.[].total_discount_percent': '[].discount',
+    'items.[].product_class': '[].productClass',
+    'items.[].product_class_description': '[].productClassDescription',
+  });
+}
+
 export default {
   QuoteReminder: {
     id: ({ id, _id }) => id || _id,
@@ -930,43 +969,10 @@ export default {
 
       return headers;
     },
-    lineItems: async (quote) => {
+    lineItems: async (quote: any) => {
       const { code } = quote;
-      const lineItems = await lasecApi.Quotes.getLineItems(code).then();
-      logger.debug(`Found line items for quote ${code}`, lineItems);
-      return om(lineItems, {
-        'items.[].id': [
-          '[].quote_item_id',
-          '[].meta.reference',
-          '[].line_id',
-          {
-            key: '[].id', transform: () => (new ObjectId())
-          }
-        ],
-        'items.[].code': '[].code',
-        'items.[].description': '[].title',
-        'items.[].quantity': '[].quantity',
-        'items.[].total_price_cents': '[].price',
-        'items.[].gp_percent': '[].GP',
-        'items.[].total_price_before_discount_cents': [
-          '[].totalVATExclusive',
-          {
-            key: '[].totalVATInclusive',
-            transform: (v) => (Number.parseInt(v) * 1.15)
-          }
-        ],
-        'items.[].note': '[].note',
-        'items.[].quote_heading_id': '[].header.meta.reference',
-        'items.[].header_name': {
-          key: '[].header.text', transform: (v: any) => {
-            if (lodash.isEmpty(v) === false) return v;
-            return 'Uncategorised';
-          }
-        },
-        'items.[].total_discount_percent': '[].discount',
-        'items.[].product_class': '[].productClass',
-        'items.[].product_class_description': '[].productClassDescription',
-      });
+      logger.debug(`Finding LineItems for Quote ${code}`, { quote });
+      return lasecGetQuoteLineItems(code);
     },
     statusName: (quote) => {
       const { source } = quote.meta;
