@@ -17,6 +17,7 @@ import { isArray } from 'util';
 const TemplateViews = {
   ActivationEmail: 'activation-email',
   ForgotPassword: 'forgot-password-email',
+  ProductQuery: 'product-query-email',
   WelcomeUser: 'welcome-email',
   SurveyInvite: 'towerstone.survey-invite-email',
   InvitePeers: 'towerstone.peer-invite-email',
@@ -65,6 +66,51 @@ export const resolveUserEmailAddress = (user, reactoryClient = null) => {
 };
 
 const sendActivationEmail = (user) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const { partner } = global;
+      loadEmailTemplate(TemplateViews.ActivationEmail, null, partner._id).then((templateResult) => {
+        sgMail.setApiKey(partner.emailApiKey);
+        const properties = {
+          partner,
+          user,
+          applicationTitle: partner.name,
+          activateLink: '',
+        };
+        let bodyTemplate = null;
+        let subjectTemplate = null;
+        let textTemplate = null;
+
+        templateResult.elements.forEach((templateElement) => {
+          switch (templateElement.view) {
+            case `${TemplateViews.ActivationEmail}/subject`: subjectTemplate = templateElement; break;
+            case `${TemplateViews.ActivationEmail}/body`: bodyTemplate = templateElement; break;
+            case `${TemplateViews.ActivationEmail}/text`: textTemplate = templateElement; break;
+            default: break;
+          }
+        });
+
+        const msg = {
+          to: user.email,
+          from: partner.email,
+          subject: ejs.render(subjectTemplate, properties),
+          text: ejs.render(textTemplate, properties),
+          html: ejs.render(bodyTemplate, properties),
+          ...resolveUserEmailAddress(user, partner),
+        };
+
+        sgMail.send(msg);
+        resolve({ sent: true });
+      }).catch((loadError) => {
+        reject(loadError);
+      });
+    } catch (mailError) {
+      reject(mailError);
+    }
+  });
+};
+
+const sendProductQueryEmail = (user) => {
   return new Promise((resolve, reject) => {
     try {
       const { partner } = global;
@@ -917,6 +963,7 @@ export const queueSurveyEmails = (survey, surveyEmailTask = 'delegateInvites') =
 export default {
   sendActivationEmail,
   sendForgotPasswordEmail,
+  sendProductQueryEmail,
   installDefaultEmailTemplates,
   queueSurveyEmails,
   organigramEmails,

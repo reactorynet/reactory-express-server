@@ -276,14 +276,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    byId: async (id) => {
-
-      const filters = {
-        ids: [id]
-      }
-
-      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...filters } });
-
+    byId: async (params = defaultParams) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } });
       const {
         status, payload,
       } = apiResponse;

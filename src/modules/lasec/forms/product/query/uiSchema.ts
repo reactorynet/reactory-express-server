@@ -23,6 +23,22 @@ const uiSchema: any = {
       message: { md: 12, sm: 12, xs: 12 }
     },
   ],
+  code: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Product Code',
+    }
+  },
+  name: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Product Name',
+    }
+  },
   message: {
     'ui:widget': 'FroalaWidget',
     'ui:options': {

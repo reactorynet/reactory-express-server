@@ -1,15 +1,15 @@
 const graphql = {
   query: {
     name: 'LasecGetProductQueryDetail',
-    text: `query LasecGetProductQueryDetail($product_id: String!){
-      LasecGetProductQueryDetail(product_id: $product_id){
+    text: `query LasecGetProductQueryDetail($productId: String!){
+      LasecGetProductQueryDetail(productId: $productId){
         id
       }
     }`,
     variables: {
-      'formData.code': 'product_id',
+      'formData.code': 'productId',
     },
-    edit: false,
+    edit: true,
     new: true,
   },
   // mutation: {

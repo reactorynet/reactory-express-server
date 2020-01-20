@@ -15,7 +15,7 @@ export default {
         props: {
           componentFqn: 'lasec-crm.ProductQuery@1.0.0',
           componentProps: {
-            'formData': 'item'
+            'formData': 'formData'
           },
           slideDirection: 'down',
           buttonTitle: 'Send Product Query',

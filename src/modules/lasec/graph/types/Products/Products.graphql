@@ -5,14 +5,30 @@ type Product {
   description: String
 }
 
+type ProductQueryDetail {
+  productName: String
+  productDescription: String
+  productCode: String
+  from: String
+  buyer: String
+}
+
 type ProductClass {
   id: String
   name: String
 }
 
+type SimpleResponse {
+  Success: Boolean
+  Message: String
+}
+
 extend type Query {
   LasecGetProductList: [Product]
   LasecGetProductById: [Product]
-  LasecGetProductQueryDetail: [Product]
+  LasecGetProductQueryDetail(productId: String!): ProductQueryDetail
   LasecGetProductClassList: [ProductClass]
+}
+extend type Mutation {
+  LasecSendProductQuery(productId: String!, subject: String!, message: String!): SimpleResponse
 }

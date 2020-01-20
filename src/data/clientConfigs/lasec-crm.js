@@ -494,7 +494,7 @@ const LASEC_CONFIG = {
           key: 'mode',
           value: {
             type: 'string',
-            mode: 'view'
+            mode: 'edit'
           }
         }
       ],

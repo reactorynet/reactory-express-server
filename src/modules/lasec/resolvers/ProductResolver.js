@@ -156,20 +156,26 @@ const getProducts = async (params) => {
   return products;
 }
 
-const LasecGetProductQueryDetail = async (params) => {
+const LasecGetProductQueryDetail = async ({ productId }) => {
 
-  logger.debug(`PRODUCT RESOLVER - GET PRODUCT QUERY DETAIL::  ${JSON.stringify(params)}`);
+  logger.debug(`PRODUCT RESOLVER - GET PRODUCT QUERY DETAIL::  ${JSON.stringify(productId)}`);
 
-  // const productResult = await lasecApi.Products.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
-  const productResult = await lasecApi.Products.byId(id).then();
+  // const productDetails = await lasecApi.Products.list({ filter: { ids: ids } });
+  const productResult = await lasecApi.Products.byId({ filter: { ids: [productId] } }).then();
 
   logger.debug(`PRODUCT RESOLVER - GOT A PRODUCT::  ${JSON.stringify(productResult)}`);
 
+  if (!productResult.items || productResult.items.length == 0)
+    throw new ApiError(`Could not find a matching product for: ${productId}`);
+
+  const product = productResult.items[0];
+
   return {
-    id: 12,
-    name: 'name',
-    code: 'code',
-    description: 'description'
+    productCode: product.code,
+    productName: product.name,
+    productDescription: product.description,
+    from: global.user.email,
+    buyer: product.buyer
   }
 }
 
@@ -195,16 +201,86 @@ const getProductClasses = async (params) => {
   ]
 }
 
+const sendProductQuery = async (params) => {
+  logger.debug(`PRODUCT RESOLVER - SENDING PRODUCT QUERY::  ${JSON.stringify(params)}`);
+  const { user } = global;
+
+
+  if (user.getAuthentication("microsoft") !== null) {
+
+    // IF IS AUTHENTICATE - MICROSOFT
+
+    const taskCreateResult = await clientFor(user, global.partner).mutate({
+      mutation: gql`
+        mutation createOutlookTask($task: CreateTaskInput!) {
+          createOutlookTask(task: $task) {
+            Successful
+            Message
+            TaskId
+          }
+        }`, variables: {
+        "task": {
+          "id": `${user._id.toString()}`,
+          "via": "microsoft",
+          "subject": reminder.text,
+          "startDate": moment(reminder.next).add(-6, "h").format("YYYY-MM-DD HH:MM"),
+          "dueDate": moment(reminder.next).format("YYYY-MM-DD HH:MM")
+        }
+      }
+    })
+      .then()
+      .catch(error => {
+        logger.debug(`CREATE OUTLOOK TASK FAILED - ERROR:: ${error}`);
+        _message = `. ${error.message}`
+        return {
+          quote,
+          success: true,
+          message: `Quote status updated${_message}`
+        };
+      });
+
+
+    if (taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
+
+      logger.debug(`SYNCED:: ${JSON.stringify(taskCreateResult)}`);
+
+      // Save the task id in meta on the quote reminder
+      reminder.meta = {
+        reference: {
+          source: 'microsoft',
+          referenceId: taskCreateResult.data.createOutlookTask.TaskId
+        },
+        lastSync: moment().valueOf(),
+      }
+
+      await reminder.save();
+
+      taskCreated = true;
+      _message = ' and task synchronized via Outlook task.'
+    }
+  } else {
+
+    // SEND VIA SENDGRID
+
+
+  }
+}
+
 export default {
   Query: {
     LasecGetProductList: async (obj, args) => {
       return getProducts();
     },
     LasecGetProductQueryDetail: async (obj, args) => {
-      return LasecGetProductQueryDetail();
+      return LasecGetProductQueryDetail(args);
     },
     LasecGetProductClassList: async (obj, args) => {
       return getProductClasses();
     },
+  },
+  Mutation: {
+    LasecSendProductQuery: async (obj, args) => {
+      return sendProductQuery();
+    }
   }
 };
