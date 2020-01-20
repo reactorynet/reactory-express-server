@@ -156,6 +156,23 @@ const getProducts = async (params) => {
   return products;
 }
 
+const LasecGetProductQueryDetail = async (params) => {
+
+  logger.debug(`PRODUCT RESOLVER - GET PRODUCT QUERY DETAIL::  ${JSON.stringify(params)}`);
+
+  // const productResult = await lasecApi.Products.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
+  const productResult = await lasecApi.Products.byId(id).then();
+
+  logger.debug(`PRODUCT RESOLVER - GOT A PRODUCT::  ${JSON.stringify(productResult)}`);
+
+  return {
+    id: 12,
+    name: 'name',
+    code: 'code',
+    description: 'description'
+  }
+}
+
 const getProductClasses = async (params) => {
 
   return [
@@ -182,6 +199,9 @@ export default {
   Query: {
     LasecGetProductList: async (obj, args) => {
       return getProducts();
+    },
+    LasecGetProductQueryDetail: async (obj, args) => {
+      return LasecGetProductQueryDetail();
     },
     LasecGetProductClassList: async (obj, args) => {
       return getProductClasses();

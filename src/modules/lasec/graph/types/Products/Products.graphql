@@ -12,5 +12,7 @@ type ProductClass {
 
 extend type Query {
   LasecGetProductList: [Product]
+  LasecGetProductById: [Product]
+  LasecGetProductQueryDetail: [Product]
   LasecGetProductClassList: [ProductClass]
 }

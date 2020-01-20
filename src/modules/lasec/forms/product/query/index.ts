@@ -17,7 +17,7 @@ export const ProductQuery: Reactory.IReactoryForm = {
   registerAsComponent: true,
   schema: $schema,
   uiSchema: $uiSchema,
-  // graphql: $graphql,
+  graphql: $graphql,
 };
 
 export default ProductQuery;

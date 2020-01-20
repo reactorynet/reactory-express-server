@@ -12,6 +12,14 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'Product Code',
     },
+    name: {
+      type: 'string',
+      title: 'Product Name',
+    },
+    description: {
+      type: 'string',
+      title: 'Product Description',
+    },
     from: {
       type: 'string',
       title: 'From'

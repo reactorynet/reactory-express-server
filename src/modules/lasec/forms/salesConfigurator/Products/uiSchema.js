@@ -11,7 +11,7 @@ export default {
         label: 'Send Query',
         componentFqn: 'core.SlideOutLauncher@1.0.0',
         action: 'mount:Component',
-        link: '/edit/${item.code}/',
+        link: '/product-query',
         props: {
           componentFqn: 'lasec-crm.ProductQuery@1.0.0',
           componentProps: {

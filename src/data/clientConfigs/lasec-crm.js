@@ -316,19 +316,19 @@ const Menus = {
           link: '/360/admin/users',
           icon: 'how_to_reg',
           roles: ['ADMIN', 'DEVELOPER']
-        },        
+        },
         {
           ordinal: 3,
           title: 'Teams',
           link: '/360/admin/teams',
           icon: 'supervised_user_circle',
           roles: ['ADMIN', 'DEVELOPER']
-        },        
+        },
         {
           ordinal: 4,
           title: 'Groups',
           link: '/360/admin/groups',
-          icon: 'group_work', 
+          icon: 'group_work',
           roles: ['ADMIN', 'DEVELOPER']
         },
         {
@@ -479,6 +479,28 @@ const LASEC_CONFIG = {
 
   ],
   routes: [
+
+
+    {
+      key: 'product-query',
+      title: 'Product Query',
+      path: '/product-query',
+      public: true,
+      exact: true,
+      roles: ['USER'],
+      componentFqn: `${key}.ProductQuery@1.0.0`,
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'view'
+          }
+        }
+      ],
+    },
+
+
     {
       ...loginroute,
       background: {
@@ -709,7 +731,7 @@ const LASEC_CONFIG = {
           }
         }
       ]
-    },    
+    },
     {
       key: 'profile',
       title: 'Profile',
@@ -1083,7 +1105,7 @@ const LASEC_CONFIG = {
         database: 'reactory',
         port:3306
       },
-    },    
+    },
     {
       name: 'mysql.lasec360.development',
       data: {
