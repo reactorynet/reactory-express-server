@@ -3,6 +3,120 @@ const {
   CDN_ROOT,
 } = process.env;
 
+const $toolbar = {
+  'ui:wrapper': 'Toolbar',
+  'ui:widget': 'MaterialToolbar',
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      period: { md: 3, sm: 12, xs: 12 },
+      periodStart: { md: 3, sm: 12, xs: 12 },
+      periodEnd: { md: 3, sm: 12, xs: 12 },
+    },
+    {
+      agentSelection: { md: 3, sm: 12, xs: 12 },
+      teamFilter: { md: 3, sm: 12, xs: 12 },
+      userFilter: { md: 3, sm: 12, xs: 12 },
+      productClass: { lg: 6, md: 6, sm: 12, xs: 12 },
+    },
+  ],
+  period: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      selectOptions: [
+        { key: 'today', value: 'today', label: 'Today' },
+        { key: 'yesterday', value: 'yesterday', label: 'Yesterday' },
+        { key: 'this-week', value: 'this-week', label: 'This Week' },
+        { key: 'last-week', value: 'last-week', label: 'Last Week' },
+        { key: 'this-month', value: 'this-month', label: 'This Month' },
+        { key: 'last-month', value: 'last-month', label: 'Last Month' },
+        { key: 'this-year', value: 'this-year', label: 'This Year' },
+        { key: 'last-year', value: 'last-year', label: 'Last Year' },
+        { key: 'custom', value: 'custom', label: 'Custom' },
+      ],
+    },
+  },
+
+  periodStart: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  periodEnd: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+
+  agentSelection: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+
+      selectOptions: [
+        { key: 'me', value: 'me', label: 'My Quotes' },
+        { key: 'team', value: 'team', label: 'Team / Reps' },
+        { key: 'custom', value: 'custom', label: 'Custom User Selection' },
+      ],
+    },
+  },
+
+  productClass: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: true,
+      query: `query LasecGetProductClassList {
+        LasecGetProductClassList {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetProductClassList',
+      resultsMap: {
+        'LasecGetProductClassList.[].id': ['[].key', '[].value'],
+        'LasecGetProductClassList.[].name': '[].label',
+      },
+    },
+  },
+
+  teamFilter: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: true,
+      query: `query LasecSalesTeams {
+        LasecSalesTeams {
+          id
+          title
+          meta  {
+            reference
+          }
+        }
+      }`,
+      resultItem: 'LasecSalesTeams',
+      resultsMap: {
+        'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
+        'LasecSalesTeams.[].title': '[].label',
+      },
+    },
+  },
+
+  agentFilter: {
+    /*
+    The agent should be pulled from AD groups.
+    */
+    'ui:widget': 'UserSelectorWidget',
+    'ui:options': {
+      widget: 'UserSelectorWidget',
+      lookupWidget: 'core.UserSearch',
+      lookupOnSelect: 'onSelect',
+    },
+  },
+
+  userFilter: {
+    'ui:widget': 'UserSelectorWidget',
+    'ui:options': {
+      widget: 'UserSelectorWidget',
+      lookupWidget: 'core.UserSearch',
+      lookupOnSelect: 'onSelect',
+    },
+  },
+};
+
 export default {
   submitIcon: 'refresh',
   'ui:field': 'GridLayout',
@@ -32,126 +146,14 @@ export default {
       quotes: { lg: 12, md: 12, sm: 12, xs: 12 },
     },
   ],
-  toolbar: {
-    'ui:wrapper': 'Toolbar',
-    'ui:widget': 'MaterialToolbar',
-    'ui:field': 'GridLayout',
-    'ui:grid-layout': [
-      {
-        period: { md: 3, sm: 12, xs: 12 },
-        periodStart: { md: 3, sm: 12, xs: 12 },
-        periodEnd: { md: 3, sm: 12, xs: 12 },
-      },
-      {
-        agentSelection: { md: 3, sm: 12, xs: 12 },
-        teamFilter: { md: 3, sm: 12, xs: 12 },
-        userFilter: { md: 3, sm: 12, xs: 12 },
-        productClass: { lg: 6, md: 6, sm: 12, xs: 12 },
-      },
-    ],
-    period: {
-      'ui:widget': 'SelectWidget',
-      'ui:options': {
-        selectOptions: [
-          { key: 'today', value: 'today', label: 'Today' },
-          { key: 'yesterday', value: 'yesterday', label: 'Yesterday' },
-          { key: 'this-week', value: 'this-week', label: 'This Week' },
-          { key: 'last-week', value: 'last-week', label: 'Last Week' },
-          { key: 'this-month', value: 'this-month', label: 'This Month' },
-          { key: 'last-month', value: 'last-month', label: 'Last Month' },
-          { key: 'this-year', value: 'this-year', label: 'This Year' },
-          { key: 'last-year', value: 'last-year', label: 'Last Year' },
-          { key: 'custom', value: 'custom', label: 'Custom' },
-        ],
-      },
-    },
-
-    periodStart: {
-      'ui:widget': 'DateSelectorWidget',
-    },
-    periodEnd: {
-      'ui:widget': 'DateSelectorWidget',
-    },
-
-    agentSelection: {
-      'ui:widget': 'SelectWidget',
-      'ui:options': {
-
-        selectOptions: [
-          { key: 'me', value: 'me', label: 'My Quotes' },
-          { key: 'team', value: 'team', label: 'Team / Reps' },
-          { key: 'custom', value: 'custom', label: 'Custom User Selection' },
-        ],
-      },
-    },
-
-    productClass: {
-      'ui:widget': 'SelectWithDataWidget',
-      'ui:options': {
-        query: `query LasecGetProductClassList {
-          LasecGetProductClassList {
-            id
-            name
-          }
-        }`,
-        resultItem: 'LasecGetProductClassList',
-        resultsMap: {
-          'LasecGetProductClassList.[].id': ['[].key', '[].value'],
-          'LasecGetProductClassList.[].name': '[].label',
-        },
-      },
-    },
-
-    teamFilter: {
-      'ui:widget': 'SelectWithDataWidget',
-      'ui:options': {
-        multiSelect: true,
-        query: `query LasecSalesTeams {
-          LasecSalesTeams {
-            id
-            title
-            meta  {
-              reference
-            }
-          }
-        }`,
-        resultItem: 'LasecSalesTeams',
-        resultsMap: {
-          'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
-          'LasecSalesTeams.[].title': '[].label',
-        },
-      },
-    },
-
-    agentFilter: {
-      /*
-      The agent should be pulled from AD groups.
-      */
-      'ui:widget': 'UserSelectorWidget',
-      'ui:options': {
-        widget: 'UserSelectorWidget',
-        lookupWidget: 'core.UserSearch',
-        lookupOnSelect: 'onSelect',
-      },
-    },
-
-    userFilter: {
-      'ui:widget': 'UserSelectorWidget',
-      'ui:options': {
-        widget: 'UserSelectorWidget',
-        lookupWidget: 'core.UserSearch',
-        lookupOnSelect: 'onSelect',
-      },
-    },
-  },
-
+  toolbar: $toolbar,
   // TOTALS
 
   totalQuotes: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: 'Total Quotes: ${formData}',
-      variant: 'h3',
+      variant: 'h4',
       title: 'Total Quotes',
     }
   },
@@ -161,6 +163,7 @@ export default {
     'ui:options': {
       format: 'Target: ${formData}',
       variant: 'h4',
+      title: 'Target',
     }
   },
 
@@ -169,6 +172,7 @@ export default {
     'ui:options': {
       format: 'Target %: ${formData}',
       variant: 'h4',
+      title: 'Target %'
     }
   },
 
@@ -188,8 +192,6 @@ export default {
     'ui:grid-layout': [
       {
         quoteProductPie: { lg: 6, md: 6, sm: 12, xs: 12 },
-        quoteISOPie: { lg: 6, md: 6, sm: 12, xs: 12 },
-        quoteINVPie: { lg: 6, md: 6, sm: 12, xs: 12 },
       },
       {
         quoteProductFunnel: { lg: 12, md: 12, sm: 12, xs: 12 }
@@ -197,11 +199,7 @@ export default {
       {
         quoteStatusComposed: { lg: 12, md: 12, sm: 12, xs: 12 }
       }
-    ],
-    quoteProductFunnel: {
-      'ui:widget': 'FunnelChartWidget',
-      'ui:options': {}
-    },
+    ],    
     quoteProductPie: {
       'ui:widget': 'PieChartWidget',
       'ui:options': {
@@ -214,23 +212,7 @@ export default {
       'ui:widget': 'ComposedChartWidget',
       'ui:options': {
       }
-    },
-    quoteISOPie: {
-      'ui:widget': 'PieChartWidget',
-      'ui:options': {
-        size: 80,
-        thickness: 5,
-        variant: 'static',
-      },
-    },
-    quoteINVPie: {
-      'ui:widget': 'PieChartWidget',
-      'ui:options': {
-        size: 80,
-        thickness: 5,
-        variant: 'static',
-      },
-    },
+    },    
   },
 
   /**
@@ -367,6 +349,7 @@ export default {
         },
         { title: 'Status', field: 'statusName' },
         { title: 'Product Class', field: 'productClass', defaultGroupOrder: 0 },
+        { title: 'Product Description', field: 'productDescription'} ,
         { title: 'Company', field: 'companyTradingName', defaultGroupOrder: 1 },
         { title: 'Customer', field: 'customerName' },
         {

@@ -1059,7 +1059,7 @@ const LASEC_CONFIG = {
           },
           {
             id: 'generators.MySQLFormGenerator',
-            connectionId: 'mysql.lasec360.development',
+            connectionId: 'mysql.lasec360',
             props: {
               database: [
                 {
@@ -1085,7 +1085,7 @@ const LASEC_CONFIG = {
       },
     },    
     {
-      name: 'mysql.lasec360.development',
+      name: 'mysql.lasec360',
       data: {
         provider: 'mysql',
         host: 'localhost',

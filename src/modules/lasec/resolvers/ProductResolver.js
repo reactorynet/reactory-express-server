@@ -1,5 +1,7 @@
 import lasecApi from '../api';
 import moment from 'moment';
+import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
+
 import logger from '../../../logging';
 // import { Quote, QuoteReminder } from '../schema/Quote';
 import lodash, { isArray, isNil } from 'lodash';
@@ -158,25 +160,16 @@ const getProducts = async (params) => {
 
 const getProductClasses = async (params) => {
 
-  return [
-    {
-      id: 0,
-      name: 'Poduct Class 1'
-    },
-    {
-      id: 0,
-      name: 'Poduct Class 2'
-    },
-    {
-      id: 0,
-      name: 'Poduct Class 3'
-    },
-    {
-      id: 0,
-      name: 'Poduct Class 4'
-    }
-  ]
-}
+  const rows = await mysql(`
+    SELECT 
+      ProductClass as id, 
+      Description as name 
+    FROM 
+      SalProductClassDes
+  `, 'mysql.lasec360').then();
+
+  return rows;
+};
 
 export default {
   Query: {
