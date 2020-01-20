@@ -9,6 +9,14 @@ const graphql = {
     variables: {
       'formData.code': 'productId',
     },
+    resultMap: {
+      '*':'*',
+      'productCode':'code',
+      'productName':'name',
+      'productDescription':'description',
+      'from':'from',
+      'buyer':'buyer',
+    },
     edit: true,
     new: true,
   },
