@@ -11,4 +11,5 @@ export default {
   Organization,
   Users,
   Survey,
+  mysql
 };

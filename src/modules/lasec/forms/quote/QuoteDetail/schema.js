@@ -71,6 +71,14 @@ export default {
               type: 'string',
               title: 'Line Entry',
             },
+            productClass: {
+              type: 'string',
+              title: 'Product Class'
+            },
+            productClassDescription: {
+              type: 'string',
+              title: 'Product Class Description'
+            },
             title: {
               type: 'string',
               title: 'Product Title'

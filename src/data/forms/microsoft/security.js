@@ -13,7 +13,7 @@ export const MicrosoftOpenIDAuthentication = {
   },
 };
 
-export const MicrosoftOpenIDAuthenticationUISchema = {
+export const MicrosoftOpenIDAuthenticationUISchema = {  
   'ui:options': {
     showSubmit: false,
     showHelp: false,

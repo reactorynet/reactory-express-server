@@ -40,6 +40,14 @@ export default {
             type: 'number',
             title: 'Quantity',
           },
+          productClass: {
+            type: 'string',
+            title: 'Product Class'
+          },
+          productClassDescription: {
+            type: 'string',
+            title: 'Product Class Description'
+          },
           totalVATExclusive: {
             type: 'number',
             title: 'Total Vat (Excl)',

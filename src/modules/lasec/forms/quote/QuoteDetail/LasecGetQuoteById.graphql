@@ -26,6 +26,8 @@ query LasecGetQuote($quote_id: String!) {
       id
       quote_item_id
       code
+      productClass
+      productClassDescription
       header {
         id
         text

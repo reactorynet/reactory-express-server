@@ -619,7 +619,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
     }
   }
 
-  let periodLabel = `Produc Quotes Dashboard ${periodStart.format('DD MM YY')} till ${periodEnd.format('DD MM YY')} For ${global.user.firstName} ${global.user.lastName}`;
+  let periodLabel = `Product Quotes Dashboard ${periodStart.format('DD MM YY')} till ${periodEnd.format('DD MM YY')} For ${global.user.firstName} ${global.user.lastName}`;
 
   /*
     let cacheKey = `productQuote.dashboard.${user._id}.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
@@ -632,8 +632,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
     }
   */
 
-  let palette = global.partner.colorScheme();
-
+  let palette = global.partner.colorScheme();    
   logger.debug('Fetching Quote Data');
   let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection, productClasses }).then();
   logger.debug(`QUOTES:: (${quotes.length})`);
@@ -723,9 +722,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
     },
     key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`
   };
-
-  debugger;
-
+  
   // TODO - REMOVE THIS. Adding a random product class.
   // const randomProductClasses = ['Product 1', 'Product 2', 'Product 3', 'Product 4'];
   // quotes.forEach(quote => {
@@ -755,8 +752,6 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
     charts: {
       quoteProductFunnel,
       quoteProductPie,
-      quoteISOPie,
-      quoteINVPie,
       quoteStatusComposed
     }
   };

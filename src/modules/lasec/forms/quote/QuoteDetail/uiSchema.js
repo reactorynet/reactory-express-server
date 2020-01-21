@@ -138,6 +138,8 @@ export default {
       columns: [
         { title: 'Header', field: 'headerText', defaultGroupOrder: 0 },
         { title: 'Code', field: 'code' },
+        { title: 'Product Class', field: 'productClass' },
+        { title: 'Product Class Description', field: 'productClassDescription' },
         { title: 'Title', field: 'title' },
         { title: 'GP %', field: 'GP' },
         { title: 'Discount %', field: 'discount' },
