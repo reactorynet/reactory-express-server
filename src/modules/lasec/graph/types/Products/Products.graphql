@@ -11,16 +11,14 @@ type ProductQueryDetail {
   productCode: String
   from: String
   buyer: String
+  buyerEmail: String
+  subject: String
+  message: String
 }
 
 type ProductClass {
   id: String
   name: String
-}
-
-type SimpleResponse {
-  Success: Boolean
-  Message: String
 }
 
 extend type Query {
@@ -30,5 +28,5 @@ extend type Query {
   LasecGetProductClassList: [ProductClass]
 }
 extend type Mutation {
-  LasecSendProductQuery(productId: String!, subject: String!, message: String!): SimpleResponse
+  LasecSendProductQuery(buyerEmail: String!, subject: String!, message: String!): SimpleResponse
 }

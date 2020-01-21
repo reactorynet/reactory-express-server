@@ -5,7 +5,7 @@ const schema: Reactory.ISchema = {
   description: 'Enquiry Form',
   type: 'object',
   required: [
-    'id','subject', 'message', 'from'
+    'subject', 'message'
   ],
   properties: {
     code: {
@@ -23,6 +23,14 @@ const schema: Reactory.ISchema = {
     from: {
       type: 'string',
       title: 'From'
+    },
+    buyer: {
+      type: 'string',
+      title: 'Buyer'
+    },
+    buyerEmail: {
+      type: 'string',
+      title: 'Buyer Email'
     },
     subject: {
       type: 'string',

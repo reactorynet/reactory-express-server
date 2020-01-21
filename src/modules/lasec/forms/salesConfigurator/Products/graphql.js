@@ -5,6 +5,7 @@ export default {
     name: 'LasecGetProductList',
     text: fileAsString(require.resolve('./LasecGetProductList.graphql')),
     resultMap: {
+      '[].id': 'list.[].id',
       '[].name': 'list.[].name',
       '[].code': 'list.[].code',
     },

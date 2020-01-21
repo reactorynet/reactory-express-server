@@ -18,11 +18,13 @@ const uiSchema: any = {
     {
       code: { md: 6, sm: 12, xs: 12 },
       name: { md: 6, sm: 12, xs: 12 },
+      buyer: { md: 6, sm: 12, xs: 12 },
       from: { md: 6, sm: 12, xs: 12 },
       subject: { md: 12, sm: 12, xs: 12 },
       message: { md: 12, sm: 12, xs: 12 }
     },
   ],
+
   code: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -37,6 +39,22 @@ const uiSchema: any = {
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Product Name',
+    }
+  },
+  from: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'From',
+    }
+  },
+  buyer: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Buyer',
     }
   },
   message: {
