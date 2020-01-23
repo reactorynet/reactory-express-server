@@ -16,11 +16,11 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      code: { md: 6, sm: 12, xs: 12 },
-      name: { md: 6, sm: 12, xs: 12 },
-      buyer: { md: 6, sm: 12, xs: 12 },
-      from: { md: 6, sm: 12, xs: 12 },
-      subject: { md: 12, sm: 12, xs: 12 },
+      code: { md: 6, sm: 6, xs: 12 },
+      name: { md: 6, sm: 6, xs: 12 },
+      buyer: { md: 6, sm: 6, xs: 12 },
+      from: { md: 6, sm: 6, xs: 12 },
+      subject: { md: 12, sm: 6, xs: 12 },
       message: { md: 12, sm: 12, xs: 12 }
     },
   ],

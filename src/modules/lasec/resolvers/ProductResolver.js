@@ -8,6 +8,7 @@ import { getCacheItem, setCacheItem } from '../models';
 import { clientFor } from '@reactory/server-core/graph/client';
 import gql from 'graphql-tag';
 import { ENVIRONMENT } from 'types/constants';
+import emails from '@reactory/server-core/emails';
 
 // const product_sync = async (product_id, owner, source = null, map = true) => {
 
@@ -188,17 +189,12 @@ const getProductClasses = async (params) => {
 };
 
 const sendProductQuery = async (params) => {
-
-  logger.debug(`PRODUCT RESOLVER - SENDING PRODUCT QUERY::  ${JSON.stringify(params)}`);
-
   const { buyerEmail, subject, message } = params;
   const { user } = global;
+  let mailResponse = { success: true, message: `Product Query sent successfully!` };
 
   if (user.getAuthentication("microsoft") !== null) {
-
-    // IF IS AUTHENTICATE - MICROSOFT
-
-    const sendMailResult = await clientFor(user, global.partner).mutate({
+    await clientFor(user, global.partner).mutate({
       mutation: gql`
         mutation sendMail($message: SendMailInput!) {
           sendMail(message: $message) {
@@ -211,7 +207,7 @@ const sendProductQuery = async (params) => {
           "via": "microsoft",
           "subject": subject,
           "content": message,
-          "recipients": [buyerEmail], //["drewmurphyza@gmail.com"]
+          "recipients": [buyerEmail],
           'contentType': 'html'
         }
       }
@@ -219,27 +215,27 @@ const sendProductQuery = async (params) => {
       .then()
       .catch(error => {
         logger.debug(`SENDING PRODUCT QUERY FAILED - ERROR:: ${error}`);
-        return {
-          success: false,
-          message: `Product Query Failed: ${error}`
-        };
+        mailResponse.success = false;
+        mailResponse.message = `Product Query Failed: ${error}`
       });
 
-
-      logger.debug(`QUERY SENT SUCCESSFULLY:: ${JSON.stringify(sendMailResult)}`);
-
-      return {
-        success: true,
-        message: `Product Query sent successfully!`
-      };
-
-
+    return mailResponse;
 
   } else {
+    const mailParams = {
+      to: buyerEmail,
+      from: user.email,
+      subject,
+      message
+    }
+    const response = await emails.sendProductQueryEmail(mailParams);
+    if (!response.success) {
+      logger.debug(`SENDING PRODUCT QUERY FAILED - ERROR:: ${error}`);
+      mailResponse.success = false;
+      mailResponse.message = `Product Query Failed: ${response.message}`
+    }
 
-    // SEND VIA SENDGRID
-
-
+    return mailResponse;
   }
 }
 

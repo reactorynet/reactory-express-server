@@ -1,8 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 
 const schema: Reactory.ISchema = {
-  title: 'Product Query',
-  description: 'Enquiry Form',
   type: 'object',
   required: [
     'subject', 'message'

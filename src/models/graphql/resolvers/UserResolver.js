@@ -742,10 +742,15 @@ const userResolvers = {
             const found = find(emailUser.authentications, { provider: via });
             logger.debug(`EMAIL USER FOUND: ${found}`);
             if (found) {
-
-              logger.debug('Found Authentication Info For MS', { token: found.props.accessToken });
-
-              const result = await O365.sendEmail(found.props.accessToken, subject, contentType, content, recipients, ccRecipients, saveToSentItems);
+              const result = await O365.sendEmail(found.props.accessToken, subject, contentType, content, recipients, ccRecipients, saveToSentItems)
+              .then()
+              .catch(error => {
+                if (error.statusCode == 401) {
+                  throw new ApiError(`Error Sending Mail. Invalid Authentication Token`, { statusCode: error.statusCode, type: "MSAuthenticationFailure" });
+                } else {
+                  throw new ApiError(`Error Sending Mail: ${error.code} - ${error.message}`, { statusCode: error.statusCode });
+                }
+              });
 
               if (result && result.statusCode && result.statusCode != 400) {
                 throw new ApiError(`${result.code}. ${result.message}`);
