@@ -115,7 +115,7 @@ const MSGraph = {
         emails = await client
           .api('/me/messages')
           .select('id,subject,receivedDateTime,sentDateTime,bodyPreview,body,sender,from,toRecipients')
-          .search(filter.search)
+          .search(`"${filter.search}"`)
           .get()
           .then();
 

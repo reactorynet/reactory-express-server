@@ -316,19 +316,19 @@ const Menus = {
           link: '/360/admin/users',
           icon: 'how_to_reg',
           roles: ['ADMIN', 'DEVELOPER']
-        },        
+        },
         {
           ordinal: 3,
           title: 'Teams',
           link: '/360/admin/teams',
           icon: 'supervised_user_circle',
           roles: ['ADMIN', 'DEVELOPER']
-        },        
+        },
         {
           ordinal: 4,
           title: 'Groups',
           link: '/360/admin/groups',
-          icon: 'group_work', 
+          icon: 'group_work',
           roles: ['ADMIN', 'DEVELOPER']
         },
         {
@@ -709,7 +709,7 @@ const LASEC_CONFIG = {
           }
         }
       ]
-    },    
+    },
     {
       key: 'profile',
       title: 'Profile',
@@ -749,7 +749,6 @@ const LASEC_CONFIG = {
         }
       ]
     },
-
     {
       key: 'administration',
       title: 'Administration',
@@ -768,7 +767,6 @@ const LASEC_CONFIG = {
         },
       ],
     },
-
     {
       key: 'sales',
       title: 'Sales',
@@ -903,7 +901,25 @@ const LASEC_CONFIG = {
       public: false,
       roles: ['ADMIN', 'DEVELOPER'],
       componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
-    }
+    },
+    {
+      key: 'quote-note',
+      title: 'Quote Note',
+      path: '/quotenote/',
+      public: false,
+      exact: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'lasec-crm.LasecQuoteNoteDetail@1.0.0',
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'view',
+          }
+        }
+      ]
+    },
   ],
   theme: key,
   themeOptions: {
@@ -1083,7 +1099,7 @@ const LASEC_CONFIG = {
         database: 'reactory',
         port:3306
       },
-    },    
+    },
     {
       name: 'mysql.lasec360',
       data: {

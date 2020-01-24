@@ -120,7 +120,7 @@ export default {
     'ui:widget': 'MaterialListWidget',
     'ui:options': {
       primaryText: '${props.api.utils.moment(item.when).format("YYYY-MM-DD HH:mm")} ${item.what}',
-      secondaryText: '${item.notes}',
+      secondaryText: '${item.actionType == "email" ? "Click to see details" : item.notes}',
       showAvatar: true,
       avatarSrc: '${props.api.getAvatar(item.who)}',
       iconField: 'actionType',
@@ -129,6 +129,23 @@ export default {
         'client-visit': 'face',
         'email': 'email',
         'follow-up-call': 'voicemail',
+      },
+      secondaryAction: {
+        iconKey: 'search',
+        label: 'View Note',
+        componentFqn: 'core.SlideOutLauncher@1.0.0',
+        action: 'mount:Component',
+        link: '/quotenote/',
+        props: {
+          componentFqn: 'lasec-crm.LasecQuoteNoteDetail@1.0.0',
+          componentProps: {
+            'formData': 'formData',
+          },
+          slideDirection: 'down',
+          buttonTitle: 'View Note',
+          windowTitle: 'Quote Notes',
+          buttonVariant: 'IconButton',
+        },
       },
     }
   },
