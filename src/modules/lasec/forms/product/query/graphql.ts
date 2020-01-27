@@ -1,14 +1,31 @@
-const graphql = {
+export default {
   query: {
     name: 'LasecGetProductQueryDetail',
     text: `query LasecGetProductQueryDetail($productId: String!){
       LasecGetProductQueryDetail(productId: $productId){
-        id
-        
+        id        
+        productCode
+        productName
+        productDescription
+        from
+        buyer
+        buyerEmail
+        subject
+        message
       }
     }`,
     variables: {
-      'formData.code': 'productId',
+      'formData.id': 'productId',
+    },
+    resultMap: {
+      'productCode': 'code',
+      'productName': 'name',
+      'productDescription': 'description',
+      'from': 'from',
+      'buyer': 'buyer',
+      'buyerEmail': 'buyerEmail',
+      'subject': 'subject',
+      'message': 'message'
     },
     resultMap: {
       '*':'*'
@@ -16,28 +33,26 @@ const graphql = {
     edit: true,
     new: true,
   },
-  // mutation: {
-  //   new: {
-  //     name: 'LasecSendProductQuery',
-  //     text: `mutation LasecSendProductQuery($product_id: String!, $subject: !String, $message: !String){
-  //       LasecSendProductQuery(product_id: $product_id, subject: $subject, message: $message){
-  //         success
-  //         message
-  //       }
-  //     }`,
-  //     objectMap: true,
-  //     updateMessage: 'Sending Product Query for ${formData.name}',
-  //     variables: {
-  //       'formData.code': 'product_id',
-  //       'formData.subject': 'subject',
-  //       'formData.message': 'message',
-  //     },
-  //     // options: {
-  //     //   refetchQueries: ['LasecGetQuoteById($quote_id: String!)'],
-  //     // },
-  //     // onSuccessMethod: 'event:UpdateQuoteStatus_onMutationSuccess',
-  //   },
-  // },
+  mutation: {
+    new: {
+      name: 'LasecSendProductQuery',
+      text: `mutation LasecSendProductQuery($buyerEmail: String!, $subject: String!, $message: String!){
+        LasecSendProductQuery(buyerEmail: $buyerEmail, subject: $subject, message: $message){
+          success
+          message
+        }
+      }`,
+      updateMessage: 'Sending Product Query for ${formData.name}',
+      variables: {
+        'formData.buyerEmail': 'buyerEmail',
+        'formData.subject': 'subject',
+        'formData.message': 'message',
+      },
+      objectMap: true,
+      resultMap: {
+        '*': '*',
+      },
+      options: {},
+    },
+  },
 };
-
-export default graphql;

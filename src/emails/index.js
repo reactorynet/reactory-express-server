@@ -110,48 +110,31 @@ const sendActivationEmail = (user) => {
   });
 };
 
-const sendProductQueryEmail = (user) => {
+const sendProductQueryEmail = async ({ to, from, subject, message }) => {
   return new Promise((resolve, reject) => {
-    try {
-      const { partner } = global;
-      loadEmailTemplate(TemplateViews.ActivationEmail, null, partner._id).then((templateResult) => {
-        sgMail.setApiKey(partner.emailApiKey);
-        const properties = {
-          partner,
-          user,
-          applicationTitle: partner.name,
-          activateLink: '',
-        };
-        let bodyTemplate = null;
-        let subjectTemplate = null;
-        let textTemplate = null;
+    const { partner } = global;
+    sgMail.setApiKey(partner.emailApiKey);
+    const msg = {
+      to,
+      from,
+      subject,
+      html: message
+    };
 
-        templateResult.elements.forEach((templateElement) => {
-          switch (templateElement.view) {
-            case `${TemplateViews.ActivationEmail}/subject`: subjectTemplate = templateElement; break;
-            case `${TemplateViews.ActivationEmail}/body`: bodyTemplate = templateElement; break;
-            case `${TemplateViews.ActivationEmail}/text`: textTemplate = templateElement; break;
-            default: break;
-          }
-        });
-
-        const msg = {
-          to: user.email,
-          from: partner.email,
-          subject: ejs.render(subjectTemplate, properties),
-          text: ejs.render(textTemplate, properties),
-          html: ejs.render(bodyTemplate, properties),
-          ...resolveUserEmailAddress(user, partner),
-        };
-
-        sgMail.send(msg);
-        resolve({ sent: true });
-      }).catch((loadError) => {
-        reject(loadError);
-      });
-    } catch (mailError) {
-      reject(mailError);
+    let response = {
+      success: true,
+      message: 'Mail sent successfully.'
     }
+
+    try {
+      sgMail.send(msg);
+    } catch (sendError) {
+      logger.log('::ERROR SENDING MAIL::', msg);
+      response.success = false;
+      response.message = sendError.message;
+    }
+
+    resolve(response);
   });
 };
 
@@ -215,7 +198,7 @@ const queueMail = co.wrap(function* queueMail(user, msg, options = DefaultQueueO
   }
 });
 
-String.prototype.replaceAll = function(search, replacement) {
+String.prototype.replaceAll = function (search, replacement) {
   var target = this;
   return target.replace(new RegExp(search, 'g'), replacement);
 };
@@ -449,7 +432,7 @@ export const surveyEmails = {
 
     //TODO: this should be changed by changing all the keys for the emails on the 360s
     //mail template
-    const viewName = survey.surveyType === '360' ? TemplateView.SurveyLaunch : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate': 'assessor' }-launch`;
+    const viewName = survey.surveyType === '360' ? TemplateView.SurveyLaunch : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-launch`;
 
     try {
       const { partner } = global;
@@ -586,7 +569,7 @@ export const surveyEmails = {
       let isSelfAssessment = ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true;
       //TODO: this should be changed by changing all the keys for the emails on the 360s
       //mail template
-      let viewName = survey.surveyType === '360' ? TemplateView.SurveyReminder : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate': 'assessor'}-reminder`;
+      let viewName = survey.surveyType === '360' ? TemplateView.SurveyReminder : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-reminder`;
       const templateResult = await loadEmailTemplate(viewName, organization, partner).then();
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');
