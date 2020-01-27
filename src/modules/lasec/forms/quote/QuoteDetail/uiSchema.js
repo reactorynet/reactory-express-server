@@ -143,7 +143,7 @@ export default {
           },
           slideDirection: 'down',
           buttonTitle: 'View Note',
-          windowTitle: 'Quote Notes',
+          windowTitle: 'Quote Note',
           buttonVariant: 'IconButton',
         },
       },

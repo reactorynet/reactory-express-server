@@ -3,7 +3,7 @@ export default {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      note: {
+      notes: {
         md: 12, sm: 12, xs: 12,
       },
     },
@@ -11,9 +11,10 @@ export default {
   notes: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: '${formData.notes}',
+      format: '${formData}',
       variant: 'subtitle1',
-      title: 'Reminder',
+      title: '',
+      renderHtml: true
     }
   },
 };
