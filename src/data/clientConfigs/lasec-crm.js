@@ -942,7 +942,7 @@ const LASEC_CONFIG = {
     overrides: {
       MuiAppBar: {
         colorPrimary: {
-          color: '#1b7e11',
+          color: '#222732',
           backgroundColor: "#fff"
         }
       },
@@ -960,13 +960,13 @@ const LASEC_CONFIG = {
         light: '#92eb77',
         main: '#5fb848',
         dark: '#298717',
-        contrastText: '#492002',
+        contrastText: '#222732',
       },
       secondary: {
         light: '#62b4b8',
         main: '#2d8488',
         dark: '#00575b',
-        contrastText: '#000000',
+        contrastText: '#222732',
       },
       report: {
         empty: '#89ee8e',
@@ -1214,13 +1214,24 @@ proxiedRoutes.forEach((props) => {
         },
       },
       {
+        key: 'containerProps',
+        value: {
+          type: 'object',
+          containerProps: {
+            style: { 
+              top:'48px'
+            }
+          }
+        } 
+      },
+      {
         key: 'frameProps',
         value: {
           type: 'object',
           frameProps: {
             url: MODE === 'PRODUCTION' ? 'https://l360.lasec.co.za/' + props.path : LASEC_360_URL + '/' + props.path,
             height: '100%',
-            width: '100%',
+            width: '100%',            
             styles: {
               border: 'none',
               height: '100%',
