@@ -771,7 +771,6 @@ const LASEC_CONFIG = {
         }
       ]
     },
-
     {
       key: 'administration',
       title: 'Administration',
@@ -790,7 +789,6 @@ const LASEC_CONFIG = {
         },
       ],
     },
-
     {
       key: 'sales',
       title: 'Sales',
@@ -925,7 +923,25 @@ const LASEC_CONFIG = {
       public: false,
       roles: ['ADMIN', 'DEVELOPER'],
       componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
-    }
+    },
+    {
+      key: 'quote-note',
+      title: 'Quote Note',
+      path: '/quotenote/',
+      public: false,
+      exact: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'lasec-crm.LasecQuoteNoteDetail@1.0.0',
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'view',
+          }
+        }
+      ]
+    },
   ],
   theme: key,
   themeOptions: {

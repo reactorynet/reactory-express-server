@@ -632,7 +632,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
     }
   */
 
-  let palette = global.partner.colorScheme();    
+  let palette = global.partner.colorScheme();
   logger.debug('Fetching Quote Data');
   let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection, productClasses }).then();
   logger.debug(`QUOTES:: (${quotes.length})`);
@@ -722,7 +722,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
     },
     key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`
   };
-  
+
   // TODO - REMOVE THIS. Adding a random product class.
   // const randomProductClasses = ['Product 1', 'Product 2', 'Product 3', 'Product 4'];
   // quotes.forEach(quote => {
@@ -802,7 +802,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
 }
 
 const lasecGetQuoteLineItems = async (code: string) => {
-  
+
   const lineItems = await lasecApi.Quotes.getLineItems(code).then();
   logger.debug(`Found line items for quote ${code}`, lineItems);
   return om(lineItems, {
@@ -1223,8 +1223,8 @@ export default {
               'message': 'notes'
             });
             entry.actionType = 'email',
-              entry.what = `Email Communication from ${mail.from} to ${mail.to}`,
-              logger.debug(`Transformed Email:\n ${mail} \n to timeline entry \n ${entry} \n`);
+              entry.what = `Email Communication from ${mail.from} ${mail.to ? 'to ' + mail.to : '' }`,
+              logger.debug(`Transformed Email:\n ${JSON.stringify(mail)} \n to timeline entry \n ${entry} \n`);
             _timeline.push(entry);
           }
         });
