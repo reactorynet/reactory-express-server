@@ -75,9 +75,9 @@ export interface SQLDeleteResult {
 }
 
 export interface SQLQuery {
-  paging: PagingRequest
-  columns: SQLColumn[]
-  filters: SQLFilter[]
+  paging?: PagingRequest
+  columns?: SQLColumn[]
+  filters?: SQLFilter[]
   context: SQLContext, 
 }
 
@@ -93,10 +93,20 @@ export interface SQLUpdate {
   context: SQLContext
 }
 
-export interface SQLDelete {
-  columns: SQLColumn[  ]
+export interface SQLDelete {  
   filter: SQLFilter[  ]
   context: SQLContext
+}
+
+export interface SQLParam {
+  name: string
+  type: string
+  value: any
+}
+
+export interface SQLProcedure {
+  name: String,
+  parameters: SQLParam[]
 }
 
 export interface QueryStringResultWithCount {
@@ -109,5 +119,24 @@ export interface QueryStringGenerator {
   fromInsert(insertCommand: SQLInsert): string;
   fromUpdate(updateCommand: SQLUpdate): string;
   fromDelete(deleteCommand: SQLDelete): string;
+}
+  
+
+export interface IReactoryDatabase {
+  Create: {
+    [key: string]: ( insertCommand: SQLInsert ) => Promise<any>
+  },
+  Read: {
+    [key: string]: (queryCommand: SQLQuery) => Promise<any>
+  },
+  Update: {
+    [key: string]: SQLUpdate
+  },
+  Delete: {
+    [key: string]: SQLDelete
+  }
+  StoredProcedures: {
+    [key: string]: SQLProcedure
+  },  
 }
 

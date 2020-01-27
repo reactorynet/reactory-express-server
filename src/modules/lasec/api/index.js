@@ -276,6 +276,21 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+    byId: async (params = defaultParams) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = apiResponse;
+
+      logger.debug(`PRODUCT RESPONSE::  ${JSON.stringify(apiResponse)}`);
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+
+    }
   },
   Invoices: {
     list: async (params = defaultParams) => {
@@ -285,13 +300,13 @@ const Api = {
       }
 
       return { pagination: {}, ids: [], items: [] };
-    } 
+    }
   },
   PurchaseOrders: {
     list: async (params = defaultParams) => {
       const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } });;
       const {
-        status, 
+        status,
         payload,
       } = isoResult;
 
@@ -518,7 +533,7 @@ const Api = {
         filter: {
           "ids":["LAB101","LAB102","LAB103","LAB104","LAB105","LAB106","LAB107","LAB121"]
         }}}, true).then();
-    },    
+    },
   },
   User: {
     getLasecUser: async ( staff_user_id ) => {
@@ -531,9 +546,9 @@ const Api = {
           return lasecStaffUserResponse.payload[0];
         } else {
           return lasecStaffUserResponse.payload;
-        }        
+        }
       }
-      
+
       return null;
     },
 
@@ -541,15 +556,15 @@ const Api = {
       const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, { filter: {
         ids: staff_user_ids
       }}, true, false, 0).then();
-      
+
       logger.debug(`Response from API ${lasecStaffUserResponse.status}`, lasecStaffUserResponse);
-      if(lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {        
+      if(lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {
         return lasecStaffUserResponse.payload;
       }
-      
+
       return null;
     },
-  }, 
+  },
   Authentication: {
     login: async (username, password) => {
       return await POST(SECONDARY_API_URLS.login_lasec_user.url, { username, password }, false).then();

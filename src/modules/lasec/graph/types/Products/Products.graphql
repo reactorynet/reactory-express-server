@@ -5,6 +5,14 @@ type Product {
   description: String
 }
 
+type ProductQueryDetail {
+  productName: String
+  productDescription: String
+  productCode: String
+  from: String
+  buyer: String
+}
+
 type ProductClass {
   id: String
   name: String
@@ -12,5 +20,10 @@ type ProductClass {
 
 extend type Query {
   LasecGetProductList: [Product]
+  LasecGetProductById: [Product]
+  LasecGetProductQueryDetail(productId: String!): ProductQueryDetail
   LasecGetProductClassList: [ProductClass]
+}
+extend type Mutation {
+  LasecSendProductQuery(productId: String!, subject: String!, message: String!): SimpleResponse
 }

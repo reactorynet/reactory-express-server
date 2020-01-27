@@ -3,9 +3,11 @@ import { default as SalesDashboard,
 
 import { default as ProductDashboard } from './productDashboard';
 
-import {
-  ProductEnquiry as ProductEnquiryForm
-} from './product';
+// import {
+//   ProductEnquiry as ProductEnquiryForm
+// } from './product';
+
+import ProductQuery from './product/query';
 
 import TabbedQuoteList from './salesConfigurator/TabbedQuoteList'
 
@@ -30,7 +32,8 @@ import NextActionDetail from './nextActionDetail';
 export default [
   SalesDashboard,
   ProductDashboard,
-  ProductEnquiryForm,
+  // ProductEnquiryForm,
+  ProductQuery,
   QuoteIdInputForm,
   QuoteListForm,
   QuoteDetailForm,
