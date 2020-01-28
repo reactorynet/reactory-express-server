@@ -1,11 +1,15 @@
 import lasecApi from '../api';
 import moment from 'moment';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
-
+import LasecDatabase from '@reactory/server-modules/lasec/database';
+import ApiError from '@reactory/server-core/exceptions';
 import logger from '../../../logging';
-// import { Quote, QuoteReminder } from '../schema/Quote';
 import lodash, { isArray, isNil } from 'lodash';
 import { getCacheItem, setCacheItem } from '../models';
+import { clientFor } from '@reactory/server-core/graph/client';
+import gql from 'graphql-tag';
+import { ENVIRONMENT } from 'types/constants';
+import emails from '@reactory/server-core/emails';
 
 // const product_sync = async (product_id, owner, source = null, map = true) => {
 
@@ -133,15 +137,6 @@ const getProducts = async (params) => {
   logger.debug(`Fetched Expanded View for (${productDetails.items.length}) Products from API`);
   let products = [...productDetails.items];
 
-  // const productSyncResult = await Promise.all(products.map((product) => {
-  //   return product_sync(product.id, global.partner.key, product, true);
-  // })).then();
-
-  // products = productSyncResult.map(doc => doc);
-
-  // amq.raiseWorkFlowEvent('product.list.refresh', products, global.partner);
-
-
   products = products.map(prd => {
     return {
       id: prd.id,
@@ -158,26 +153,105 @@ const getProducts = async (params) => {
   return products;
 }
 
+const LasecGetProductQueryDetail = async ({ productId }) => {
+  const { user } = global;
+
+  const productResult = await lasecApi.Products.byId({ filter: { ids: [productId] } }).then();
+  if (!productResult.items || productResult.items.length == 0)
+    throw new ApiError(`Could not find a matching product for: ${productId}`);
+  const product = productResult.items[0];
+
+  return {
+    id: productId,
+    productCode: product.code,
+    productName: product.name,
+    productDescription: product.description,
+    from: user.email,
+    buyer: product.buyer,
+    buyerEmail: product.buyer_email,
+    subject: `Product query regarding: ${product.name} (${product.code})`,
+    message: `
+    Product query from ${user.firstName} ${user.lastName}, regards the following product:
+    ${product.name} (${product.code})
+    `
+  }
+}
+
 const getProductClasses = async (params) => {
-
-  const rows = await mysql(`
-    SELECT 
-      ProductClass as id, 
-      Description as name 
-    FROM 
-      SalProductClassDes
-  `, 'mysql.lasec360').then();
-
-  return rows;
+  return await LasecDatabase.Read.LasecGetProductClasses({
+    context: {
+      connectionId: 'mysql.lasec360',
+      schema: 'lasec360'
+    }
+  }).then();
 };
+
+const sendProductQuery = async (params) => {
+  const { buyerEmail, subject, message } = params;
+  const { user } = global;
+  let mailResponse = { success: true, message: `Product Query sent successfully!` };
+
+  if (user.getAuthentication("microsoft") !== null) {
+    await clientFor(user, global.partner).mutate({
+      mutation: gql`
+        mutation sendMail($message: SendMailInput!) {
+          sendMail(message: $message) {
+            Successful
+            Message
+          }
+        }`, variables: {
+        "message": {
+          "id": `${user._id.toString()}`,
+          "via": "microsoft",
+          "subject": subject,
+          "content": message,
+          "recipients": [buyerEmail],
+          'contentType': 'html'
+        }
+      }
+    })
+      .then()
+      .catch(error => {
+        logger.debug(`SENDING PRODUCT QUERY FAILED - ERROR:: ${error}`);
+        mailResponse.success = false;
+        mailResponse.message = `Product Query Failed: ${error}`
+      });
+
+    return mailResponse;
+
+  } else {
+    const mailParams = {
+      to: buyerEmail,
+      from: user.email,
+      subject,
+      message
+    }
+    const response = await emails.sendProductQueryEmail(mailParams);
+    if (!response.success) {
+      logger.debug(`SENDING PRODUCT QUERY FAILED - ERROR:: ${error}`);
+      mailResponse.success = false;
+      mailResponse.message = `Product Query Failed: ${response.message}`
+    }
+
+    return mailResponse;
+  }
+}
 
 export default {
   Query: {
     LasecGetProductList: async (obj, args) => {
       return getProducts();
     },
+    LasecGetProductQueryDetail: async (obj, args) => {
+      return LasecGetProductQueryDetail(args);
+    },
     LasecGetProductClassList: async (obj, args) => {
       return getProductClasses();
     },
+  },
+  Mutation: {
+    LasecSendProductQuery: async (obj, args) => {
+      return sendProductQuery(args);
+    }
   }
 };

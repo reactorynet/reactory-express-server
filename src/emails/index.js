@@ -17,6 +17,7 @@ import { isArray } from 'util';
 const TemplateViews = {
   ActivationEmail: 'activation-email',
   ForgotPassword: 'forgot-password-email',
+  ProductQuery: 'product-query-email',
   WelcomeUser: 'welcome-email',
   SurveyInvite: 'towerstone.survey-invite-email',
   InvitePeers: 'towerstone.peer-invite-email',
@@ -109,6 +110,34 @@ const sendActivationEmail = (user) => {
   });
 };
 
+const sendProductQueryEmail = async ({ to, from, subject, message }) => {
+  return new Promise((resolve, reject) => {
+    const { partner } = global;
+    sgMail.setApiKey(partner.emailApiKey);
+    const msg = {
+      to,
+      from,
+      subject,
+      html: message
+    };
+
+    let response = {
+      success: true,
+      message: 'Mail sent successfully.'
+    }
+
+    try {
+      sgMail.send(msg);
+    } catch (sendError) {
+      logger.log('::ERROR SENDING MAIL::', msg);
+      response.success = false;
+      response.message = sendError.message;
+    }
+
+    resolve(response);
+  });
+};
+
 const DefaultQueueOptions = {
   sent: false,
   sentAt: null,
@@ -169,7 +198,7 @@ const queueMail = co.wrap(function* queueMail(user, msg, options = DefaultQueueO
   }
 });
 
-String.prototype.replaceAll = function(search, replacement) {
+String.prototype.replaceAll = function (search, replacement) {
   var target = this;
   return target.replace(new RegExp(search, 'g'), replacement);
 };
@@ -403,7 +432,7 @@ export const surveyEmails = {
 
     //TODO: this should be changed by changing all the keys for the emails on the 360s
     //mail template
-    const viewName = survey.surveyType === '360' ? TemplateView.SurveyLaunch : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate': 'assessor' }-launch`;
+    const viewName = survey.surveyType === '360' ? TemplateView.SurveyLaunch : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-launch`;
 
     try {
       const { partner } = global;
@@ -540,7 +569,7 @@ export const surveyEmails = {
       let isSelfAssessment = ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true;
       //TODO: this should be changed by changing all the keys for the emails on the 360s
       //mail template
-      let viewName = survey.surveyType === '360' ? TemplateView.SurveyReminder : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate': 'assessor'}-reminder`;
+      let viewName = survey.surveyType === '360' ? TemplateView.SurveyReminder : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-reminder`;
       const templateResult = await loadEmailTemplate(viewName, organization, partner).then();
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');
@@ -917,6 +946,7 @@ export const queueSurveyEmails = (survey, surveyEmailTask = 'delegateInvites') =
 export default {
   sendActivationEmail,
   sendForgotPasswordEmail,
+  sendProductQueryEmail,
   installDefaultEmailTemplates,
   queueSurveyEmails,
   organigramEmails,

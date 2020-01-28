@@ -228,7 +228,7 @@ const Menus = {
     {
       ordinal: 2,
       title: 'Product',
-      link: '/360/crm/catalog',
+      link: '/360/catalogue/search',
       icon: 'book',
       roles: ['USER'],
       items: [
@@ -479,6 +479,28 @@ const LASEC_CONFIG = {
 
   ],
   routes: [
+
+
+    {
+      key: 'product-query',
+      title: 'Product Query',
+      path: '/product-query',
+      public: true,
+      exact: true,
+      roles: ['USER'],
+      componentFqn: `${key}.ProductQuery@1.0.0`,
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'new'
+          }
+        }
+      ],
+    },
+
+
     {
       ...loginroute,
       background: {
@@ -758,7 +780,6 @@ const LASEC_CONFIG = {
         }
       ]
     },
-
     {
       key: 'administration',
       title: 'Administration',
@@ -777,7 +798,6 @@ const LASEC_CONFIG = {
         },
       ],
     },
-
     {
       key: 'sales',
       title: 'Sales',
@@ -912,12 +932,51 @@ const LASEC_CONFIG = {
       public: false,
       roles: ['ADMIN', 'DEVELOPER'],
       componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
-    }
+    },
+    {
+      key: 'quote-note',
+      title: 'Quote Note',
+      path: '/quotenote/',
+      public: false,
+      exact: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'lasec-crm.LasecQuoteNoteDetail@1.0.0',
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'view',
+          }
+        }
+      ]
+    },
   ],
   theme: key,
   themeOptions: {
     typography: {
       useNextVariants: true,
+    },
+    '@global': {
+      '@media (min-width: 600px)': {
+        'MuiToolbar-regular': {        
+          minHeight: '48px'
+        }
+      }
+    },    
+    overrides: {
+      MuiAppBar: {
+        colorPrimary: {
+          color: '#222732',
+          backgroundColor: "#fff"
+        }
+      },
+      MuiToolbar: {
+        regular: {
+          minHeight: '48px'
+        },        
+      },
+      
     },
     type: 'material',
     palette: {
@@ -926,19 +985,19 @@ const LASEC_CONFIG = {
         light: '#92eb77',
         main: '#5fb848',
         dark: '#298717',
-        contrastText: '#492002',
+        contrastText: '#222732',
       },
       secondary: {
         light: '#62b4b8',
         main: '#2d8488',
         dark: '#00575b',
-        contrastText: '#000000',
+        contrastText: '#222732',
       },
       report: {
         empty: '#89ee8e',
         fill: '#ff8c63',
       },
-    },
+    },    
     provider: {
       material: {
         typography: {
@@ -1180,13 +1239,27 @@ proxiedRoutes.forEach((props) => {
         },
       },
       {
+        key: 'containerProps',
+        value: {
+          type: 'object',
+          containerProps: {
+            style: { 
+              top:'48px',
+              bottom: '0px',
+              position: 'absolute',
+              width: '100%'
+            }
+          }
+        } 
+      },
+      {
         key: 'frameProps',
         value: {
           type: 'object',
           frameProps: {
             url: MODE === 'PRODUCTION' ? 'https://l360.lasec.co.za/' + props.path : LASEC_360_URL + '/' + props.path,
             height: '100%',
-            width: '100%',
+            width: '100%',            
             styles: {
               border: 'none',
               height: '100%',

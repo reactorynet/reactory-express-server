@@ -3,9 +3,11 @@ import { default as SalesDashboard,
 
 import { default as ProductDashboard } from './productDashboard';
 
-import {
-  ProductEnquiry as ProductEnquiryForm
-} from './product';
+// import {
+//   ProductEnquiry as ProductEnquiryForm
+// } from './product';
+
+import ProductQuery from './product/query';
 
 import TabbedQuoteList from './salesConfigurator/TabbedQuoteList'
 
@@ -27,11 +29,13 @@ import CreateCategoryFilter from './salesConfigurator/CreateCategoryFilter';
 import CategoryFilterList from './salesConfigurator/CategoryFilterList';
 import FilterResults from './salesConfigurator/FilterResults';
 import NextActionDetail from './nextActionDetail';
+import QuoteNoteDetail from './quote/QuoteNoteDetail';
 
 export default [
   SalesDashboard,
   ProductDashboard,
-  ProductEnquiryForm,
+  // ProductEnquiryForm,
+  ProductQuery,
   QuoteIdInputForm,
   QuoteListForm,
   QuoteEmail,
@@ -47,5 +51,6 @@ export default [
   CreateCategoryFilter,
   CategoryFilterList,
   FilterResults,
-  NextActionDetail
+  NextActionDetail,
+  QuoteNoteDetail
 ];
