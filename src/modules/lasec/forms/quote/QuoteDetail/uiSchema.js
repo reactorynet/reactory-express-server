@@ -1,13 +1,33 @@
 export default {
   submitIcon: 'refresh',
   'ui:field': 'GridLayout',
+  'ui:toolbar': {
+    buttons: [
+      {
+        command: 'sendQuoteEmail',
+        id: 'sendQuoteEmail',
+        color: 'primary',
+        icon: 'email',
+        tooltip: 'Send email to customer.',
+        action: 'component',
+        title: 'Quote Email',
+        component: {
+            componentFqn: 'lasec-crm.LasecQuoteEmail',
+            componentProps: {
+              'formData': 'formData'
+            },
+            propsMap: {},
+        },
+      }
+    ]
+  },
   'ui:grid-layout': [
     {
       statusName: { md: 6, sm: 12 },
       totalVATExclusive: { md: 3, sm: 12 },
       GP: { md: 3, sm: 4 },
-      actualGP: { md: 3, sm: 4},
-      totalDiscount: { md: 3, sm: 4},
+      actualGP: { md: 3, sm: 4 },
+      totalDiscount: { md: 3, sm: 4 },
     },
     {
       companyTradingName: { md: 6, sm: 12 },
@@ -25,6 +45,7 @@ export default {
       timeline: { md: 12 },
     }
   ],
+
   statusName: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -116,7 +137,7 @@ export default {
   customerAvatar: {
 
   },
-  timeline:{
+  timeline: {
     'ui:widget': 'MaterialListWidget',
     'ui:options': {
       primaryText: '${props.api.utils.moment(item.when).format("YYYY-MM-DD HH:mm")} ${item.what}',
@@ -144,7 +165,8 @@ export default {
         { title: 'GP %', field: 'GP' },
         { title: 'Discount %', field: 'discount' },
         { title: 'Quantity', field: 'quantity' },
-        { title: 'Total (VAT Excl)',
+        {
+          title: 'Total (VAT Excl)',
           field: 'totalVATExclusive',
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {

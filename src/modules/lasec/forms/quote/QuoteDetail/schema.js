@@ -1,6 +1,6 @@
 export default {
     type: 'object',
-    title: 'Quote Details',    
+    title: 'Quote Details',
     properties: {
       id: {
         type: 'string',
@@ -98,7 +98,7 @@ export default {
             totalVATExclusive: {
               type: 'number',
               title: 'Total Vat (Excl)',
-            },            
+            },
           },
         },
       },
