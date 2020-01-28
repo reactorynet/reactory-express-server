@@ -26,10 +26,7 @@ export default {
       'buyerEmail': 'buyerEmail',
       'subject': 'subject',
       'message': 'message'
-    },
-    resultMap: {
-      '*':'*'
-    },
+    },    
     edit: true,
     new: true,
   },

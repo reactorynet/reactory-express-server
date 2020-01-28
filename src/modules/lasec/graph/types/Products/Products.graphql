@@ -6,6 +6,7 @@ type Product {
 }
 
 type ProductQueryDetail {
+  id: String
   productName: String
   productDescription: String
   productCode: String

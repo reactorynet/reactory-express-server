@@ -13,6 +13,10 @@ const froalaOptions = {
 
 
 const uiSchema: any = {
+  submitIcon: 'send',
+  'ui:options': {
+    showRefresh: false  
+  },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {

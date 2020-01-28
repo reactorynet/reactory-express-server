@@ -162,6 +162,7 @@ const LasecGetProductQueryDetail = async ({ productId }) => {
   const product = productResult.items[0];
 
   return {
+    id: productId,
     productCode: product.code,
     productName: product.name,
     productDescription: product.description,

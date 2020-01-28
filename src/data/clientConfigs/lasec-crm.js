@@ -228,7 +228,7 @@ const Menus = {
     {
       ordinal: 2,
       title: 'Product',
-      link: '/360/crm/catalog',
+      link: '/360/catalogue/search',
       icon: 'book',
       roles: ['USER'],
       items: [
@@ -1235,7 +1235,10 @@ proxiedRoutes.forEach((props) => {
           type: 'object',
           containerProps: {
             style: { 
-              top:'48px'
+              top:'48px',
+              bottom: '0px',
+              position: 'absolute',
+              width: '100%'
             }
           }
         } 

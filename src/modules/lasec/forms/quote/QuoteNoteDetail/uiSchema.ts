@@ -1,5 +1,7 @@
 export default {
-  showSubmit: false,
+  'ui:options': {
+    showSubmit: false,
+  },  
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
