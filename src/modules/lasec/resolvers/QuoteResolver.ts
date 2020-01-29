@@ -14,6 +14,7 @@ import amq from '@reactory/server-core/amq';
 import { clientFor } from '@reactory/server-core/graph/client';
 import O365 from '../../../azure/graph';
 // import { getCacheItem, setCacheItem } from '../models';
+import emails from '@reactory/server-core/emails';
 
 
 export interface DashboardParams {
@@ -94,7 +95,7 @@ const totalsFromMeta = (meta) => {
   });
 }
 
-const defaultDashboardParams :DashboardParams = {
+const defaultDashboardParams: DashboardParams = {
   period: 'this-week',
   periodStart: moment().startOf('week'),
   periodEnd: moment().endOf('week'),
@@ -104,7 +105,7 @@ const defaultDashboardParams :DashboardParams = {
   status: []
 };
 
-const defaultProductDashboardParams : ProductDashboardParams = {
+const defaultProductDashboardParams: ProductDashboardParams = {
   period: 'this-week',
   periodStart: moment().startOf('week'),
   periodEnd: moment().endOf('week'),
@@ -840,6 +841,57 @@ const lasecGetQuoteLineItems = async (code: string) => {
   });
 }
 
+const LasecSendQuoteEmail = async (params) => {
+  const { code, email, subject, message } = params;
+  const { user } = global;
+  let mailResponse = { success: true, message: `Customer mail sent successfully!` };
+
+  if (user.getAuthentication("microsoft") !== null) {
+    await clientFor(user, global.partner).mutate({
+      mutation: gql`
+        mutation sendMail($message: SendMailInput!) {
+          sendMail(message: $message) {
+            Successful
+            Message
+          }
+        }`, variables: {
+        "message": {
+          "id": `${user._id.toString()}`,
+          "via": "microsoft",
+          "subject": subject,
+          "content": message,
+          "recipients": [email],
+          'contentType': 'html'
+        }
+      }
+    })
+      .then()
+      .catch(error => {
+        logger.debug(`SENDING CUSTOMER COMMUNICTATION FAILED - ERROR:: ${error}`);
+        mailResponse.success = false;
+        mailResponse.message = `Sending customer communication failed: ${error}`
+      });
+
+    return mailResponse;
+
+  } else {
+    const mailParams = {
+      to: email,
+      from: user.email,
+      subject,
+      message
+    }
+    const response = await emails.sendSimpleEmail(mailParams);
+    if (!response.success) {
+      logger.debug(`SENDING CUSTOMER COMMUNICATION FAILED - ERROR:: ${response.message}`);
+      mailResponse.success = false;
+      mailResponse.message = `Sending customer communication failed: ${response.message}`
+    }
+
+    return mailResponse;
+  }
+}
+
 export default {
   QuoteReminder: {
     id: ({ id, _id }) => id || _id,
@@ -1223,7 +1275,7 @@ export default {
               'message': 'notes'
             });
             entry.actionType = 'email',
-              entry.what = `Email Communication from ${mail.from} ${mail.to ? 'to ' + mail.to : '' }`,
+              entry.what = `Email Communication from ${mail.from} ${mail.to ? 'to ' + mail.to : ''}`,
               logger.debug(`Transformed Email:\n ${JSON.stringify(mail)} \n to timeline entry \n ${entry} \n`);
             _timeline.push(entry);
           }
@@ -1874,6 +1926,9 @@ export default {
         success: true,
         message: `Quote reminder marked as actioned.`
       }
+    },
+    LasecSendQuoteEmail: async (obj, args) => {
+      return LasecSendQuoteEmail(args);
     }
   }
 };

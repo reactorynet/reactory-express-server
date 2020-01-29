@@ -14,9 +14,10 @@ export default {
         component: {
             componentFqn: 'lasec-crm.LasecQuoteEmail',
             componentProps: {
-              'formData': 'formData'
+              'formData.code': 'formData.code',
+              'formData.customer.firstName': 'formData.customerName',
+              'formData.customer.email': 'formData.customerEmail'
             },
-            propsMap: {},
         },
       }
     ]

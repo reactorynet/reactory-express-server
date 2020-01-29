@@ -2,14 +2,28 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 
 // const schema: Reactory.ISchema = {
 const schema: Reactory.IObjectSchema = {
-  title: 'Quote Email',
-  description: 'Use this form to send customers an email regarding this quote.',
+  title: '',
   type: 'object',
   properties: {
+    code: {
+      type: 'string',
+      title: 'Quote Code:',
+    },
+    customerName: {
+      type: 'string',
+      title: 'Customer Name:',
+    },
+    customerEmail: {
+      type: 'string',
+      title: 'Customer Email:',
+    },
+    subject: {
+      type: 'string',
+      title: 'Subject:',
+    },
     message: {
       type: 'string',
-      title: 'Email content',
-      description: 'Email content',
+      title: 'Message:',
     },
   }
 };

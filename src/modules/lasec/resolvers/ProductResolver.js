@@ -228,7 +228,7 @@ const sendProductQuery = async (params) => {
     }
     const response = await emails.sendProductQueryEmail(mailParams);
     if (!response.success) {
-      logger.debug(`SENDING PRODUCT QUERY FAILED - ERROR:: ${error}`);
+      logger.debug(`SENDING PRODUCT QUERY FAILED - ERROR:: ${error.message}`);
       mailResponse.success = false;
       mailResponse.message = `Product Query Failed: ${response.message}`
     }
