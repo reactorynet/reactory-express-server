@@ -11,9 +11,10 @@ import ApiError from '@reactory/server-core/exceptions';
 import { Organization, User, Task } from '@reactory/server-core/models';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
+import Hash from '@reactory/server-core/utils/hash';
 import { clientFor } from '@reactory/server-core/graph/client';
 import O365 from '../../../azure/graph';
-// import { getCacheItem, setCacheItem } from '../models';
+import { getCacheItem, setCacheItem } from '../models';
 
 
 export interface DashboardParams {
@@ -138,8 +139,8 @@ const quote_sync = async (quote_id, owner, source = null, map = true) => {
     _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
   }
 
-  logger.debug(`SOURCE ${JSON.stringify(_source)}`);
-  logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
+  // logger.debug(`SOURCE ${JSON.stringify(_source)}`);
+  // logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
 
   if (map === true && _source) {
     const _map = {
@@ -321,21 +322,27 @@ const getTargets = async ({ periodStart, periodEnd, teamIds, repIds, agentSelect
   }
 };
 
-const getInvoices = async ({ periodStart, periodEnd }) => {
+const getInvoices = async ({ periodStart, periodEnd, teamIds = null }) => {
   try {
-
-    const invoiceResult = await lasecApi.Invoices.list({ filter: { start_date: periodStart, end_date: periodEnd } }).then();
+    logger.debug(`QuoteResolver getInvoices({ ${periodStart}, ${periodEnd}, ${teamIds} })`);
+    const invoiceResult = await lasecApi.Invoices.list({ filter: { sales_team_id: teamIds, start_date: periodStart, end_date: periodEnd } }).then();    
     if (invoiceResults.ids && isArray(invoiceResult.ids)) {
-      const invoices = await lasecApi.Invoices.list({ filter: { ids: invoiceResult.ids } }).then();
-      if (invoices && isArray(invoices.payload) === true) return invoices.payload;
+      logger.debug(`QuoteResolver getInvoices({ ${periodStart}, ${periodEnd} }) --> Result ${invoiceResult.ids.length}`);
+      if(invoiceResults.ids.length > 0) {
+        const invoices = await lasecApi.Invoices.list({ filter: { ids: invoiceResult.ids } }).then();
+        if (invoices && isArray(invoices.items) === true) {
+          logger.debug(`Found ${invoices.items.length} invoices for the period`)
+          return invoices.items;
+        }
+      }      
       return [];
     } else {
-      logger.warning(`No invoice result with ids`)
+      logger.warning(`No invoice result with ids`);
       return [];
     }
 
   } catch (invoiceGetError) {
-    logger.error(`Error fetching invoices for period`, invoiceGetError);
+    logger.error(`Error fetching invoices for period ${invoiceGetError}`, invoiceGetError);
     return [];
   }
 
@@ -343,11 +350,17 @@ const getInvoices = async ({ periodStart, periodEnd }) => {
 
 const getISOs = async ({ periodStart, periodEnd }) => {
   try {
+    logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} })`);
     const isoIds = await lasecApi.PurchaseOrders.list({ filter: { start_date: periodStart, end_date: periodEnd } }).then();
+    logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} }) --> Result`, isoIds);
     if (isArray(isoIds.ids) === true) {
       const isos = await lasecApi.PurchaseOrders.list({ filter: { ids: isoIds.ids } }).then();
-      if (isos && isArray(isos.ids) === true) {
-        return iso.ids;
+      if (isos && isArray(isos.items) === true) {
+        logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} }) --> (${isos.items.length}) items`);
+        return isos.items;
+      } else {
+        logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} }) --> no items in result`, isos);
+        return [];
       }
     }
   } catch (isoGetError) {
@@ -362,7 +375,7 @@ const getNextActionsForUser = async ({ periodStart, periodEnd, user = global.use
 
   try {
     if (!user) throw new ApiError("Invalid user data", user);
-    logger.debug(`Fetching nextActions (Quote Reminders) for user:: ${JSON.stringify(user)}`);
+    logger.debug(`Fetching nextActions (Quote Reminders) for user:: ${user.firstName} ${user.lastName} [${user.email}]`);
     logger.debug(`Fetching nextActions (Period) for user:: ${periodStart} - ${periodEnd}`);
     const reminders = await QuoteReminder.find({
       // owner: user._id,
@@ -640,9 +653,17 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
   logger.debug('Fetching Next Actions for User');
   const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
   logger.debug(`Fetching invoice data ${periodStart.format('YYYY-MM-DD HH:mm')} ${periodEnd.format('YYYY-MM-DD HH:mm')} ${global.user.firstName} ${global.user.lastName}`);
-  const invoices = await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  const invoices = await getInvoices({ 
+    periodStart, 
+    periodEnd, 
+    teamIds: teamIds.length === 0 ? null : teamIds, 
+    repIds, 
+    agentSelection 
+  }).then();
+  logger.debug(`Found ${isArray(invoices) ? invoices.length : '##' } invoices`)
   logger.debug('Fetching isos');
   const isos = await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  logger.debug(`Found ${isArray(isos) ? isos.length : '##' } isos`);
 
   const quoteProductFunnel = {
     chartType: 'FUNNEL',
@@ -1360,24 +1381,23 @@ export default {
 
       let periodLabel = `Quotes Dashboard ${periodStart.format('DD MM YY')} till ${periodEnd.format('DD MM YY')} For ${global.user.firstName} ${global.user.lastName}`;
 
+      const teamFilterHash = Hash(teamIds);
+      logger.debug(`TeamFilter Hash ${teamFilterHash}`, teamIds);
+      const repIdsFilterHash = Hash(repIds);
+      logger.debug(`repIdsFilterHash ${repIdsFilterHash}`, repIds);
 
-
-      /*
-      let cacheKey = `quote.dashboard.${user._id}.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
-      let _cached = await getCacheItem(cacheKey);
-
+      let cacheKey = Hash(`quote.dashboard.${user._id}.${agentSelection}.${teamFilterHash}.${repIdsFilterHash}.${periodStart.valueOf()}.${periodEnd.valueOf()}`);
+      let _cached = await getCacheItem(`${cacheKey}`);
+      let hasCachedItem = false;
       if(_cached) {
+        hasCachedItem = true;
         logger.debug('Found results in cache');
-        periodLabel = `${periodLabel} [cache]`;
-        return _cached;
-      }
-      */
-
+        periodLabel = `${periodLabel} [cache]`; 
+      }      
       logger.debug(`Fetching Lasec Dashboard Data`, dashparams);
       let palette = global.partner.colorScheme();
-
       logger.debug('Fetching Quote Data');
-      const quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+      const quotes = hasCachedItem === true ? _cached.quotes : await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug('Fetching Target Data');
       const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug('Fetching Next Actions for; User')
@@ -1485,6 +1505,8 @@ export default {
         totalBad: 0,
         statusSummary: [],
         quotes,
+        invoices,
+        isos,
         charts: {
           quoteStatusFunnel,
           quoteStatusPie,
@@ -1539,7 +1561,7 @@ export default {
 
       dashboardResult.charts.quoteStatusFunnel.data = lodash.reverse(dashboardResult.charts.quoteStatusFunnel.data);
 
-      //setCacheItem(cacheKey, dashboardResult, 60 * 5);
+      setCacheItem(`${cacheKey}`, dashboardResult, 60 * 5);
 
       return dashboardResult;
     },

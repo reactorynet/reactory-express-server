@@ -24,3 +24,8 @@ export const setCacheItem = async (cacheKey, item, ttl) => {
     ttl: (new Date().valueOf()) + ((ttl || 60) * 1000),
   }).save().then();
 };
+
+
+export const clearCache = () => {
+    LasecCache.clean();
+}
