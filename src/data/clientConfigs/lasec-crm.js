@@ -284,6 +284,9 @@ const Menus = {
         {
           ordinal: 19, title: 'Filter Results', link: '/filter-results/', icon: 'reorder', roles: ['USER'],
         },
+        {
+          ordinal: 19, title: 'Product Catelog', link: '/product-catelog/', icon: 'reorder', roles: ['USER'],
+        },
       ]
     },
     {
@@ -754,6 +757,17 @@ const LASEC_CONFIG = {
       ],
     },
     {
+      key: 'product-catalog',
+      title: 'Product Catelog',
+      path: '/product-catelog',
+      exact: false,
+      public: true,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'lasec-crm.LasecCMSProductCatalog@1.0.0',
+      componentProps: {withPeers: false},
+      args: [],
+    },
+    {
       key: 'reactoryrouter',
       title: 'Reactory Forms',
       path: '/reactory/**',
@@ -950,11 +964,11 @@ const LASEC_CONFIG = {
     },
     '@global': {
       '@media (min-width: 600px)': {
-        'MuiToolbar-regular': {        
+        'MuiToolbar-regular': {
           minHeight: '48px'
         }
       }
-    },    
+    },
     overrides: {
       MuiAppBar: {
         colorPrimary: {
@@ -965,9 +979,9 @@ const LASEC_CONFIG = {
       MuiToolbar: {
         regular: {
           minHeight: '48px'
-        },        
+        },
       },
-      
+
     },
     type: 'material',
     palette: {
@@ -988,7 +1002,7 @@ const LASEC_CONFIG = {
         empty: '#89ee8e',
         fill: '#ff8c63',
       },
-    },    
+    },
     provider: {
       material: {
         typography: {
@@ -1234,14 +1248,14 @@ proxiedRoutes.forEach((props) => {
         value: {
           type: 'object',
           containerProps: {
-            style: { 
+            style: {
               top:'48px',
               bottom: '0px',
               position: 'absolute',
               width: '100%'
             }
           }
-        } 
+        }
       },
       {
         key: 'frameProps',
@@ -1250,7 +1264,7 @@ proxiedRoutes.forEach((props) => {
           frameProps: {
             url: MODE === 'PRODUCTION' ? 'https://l360.lasec.co.za/' + props.path : LASEC_360_URL + '/' + props.path,
             height: '100%',
-            width: '100%',            
+            width: '100%',
             styles: {
               border: 'none',
               height: '100%',

@@ -29,6 +29,7 @@ import CategoryFilterList from './salesConfigurator/CategoryFilterList';
 import FilterResults from './salesConfigurator/FilterResults';
 import NextActionDetail from './nextActionDetail';
 import QuoteNoteDetail from './quote/QuoteNoteDetail';
+import ProductCatalog from './productCatalog';
 
 export default [
   SalesDashboard,
@@ -50,5 +51,6 @@ export default [
   CategoryFilterList,
   FilterResults,
   NextActionDetail,
-  QuoteNoteDetail
+  QuoteNoteDetail,
+  ProductCatalog
 ];
