@@ -16,6 +16,7 @@ import {
   UpdateQuoteStatusForm ,
   QuoteDetailForm,
   QuoteListForm,
+  QuoteEmail,
 } from './quote';
 
 import QuoteList from './salesConfigurator/QuoteList';
@@ -37,6 +38,7 @@ export default [
   ProductQuery,
   QuoteIdInputForm,
   QuoteListForm,
+  QuoteEmail,
   QuoteDetailForm,
   UpdateQuoteStatusForm,
   TabbedQuoteList,

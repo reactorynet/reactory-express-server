@@ -157,6 +157,7 @@ declare namespace Reactory {
     onSuccessUrl?: String,
     onSuccessRedirectTimeout?: number,
     options?: any,
+    notitifcation?: any
   }
 
   export interface IReactoryFormMutations {

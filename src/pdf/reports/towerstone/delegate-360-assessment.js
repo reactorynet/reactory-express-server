@@ -78,6 +78,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
     },
     key: `towerstone.survey@${surveyId}/${delegateId}`,
     delegate: {},
+    employee: {}, //alias for delegate
     assessors: [],
     assessments: [],
     survey,
@@ -102,6 +103,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
 
   try {
     reportData.delegate = await User.findById(reportData.survey.delegates.id(delegateId).delegate).then();
+    reportData.employee = reportData.delegate;
     logger.debug(`Found delegate ${reportData.delegate._id}`);
     reportData.organization = reportData.survey.organization;
     reportData.leadershipBrand = reportData.survey.leadershipBrand;
@@ -175,7 +177,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
   const { colorSchemes, palette } = reportData.meta;
   const qualitiesMap = reportData.qualities.map((quality, qi) => {
     const behaviourScores = quality.behaviours.map((behaviour, bi) => {
-      logger.debug(`Calculating behaviour score ${quality.title} ==> ${behaviour.description}`);
+      logger.debug(`Calculating behaviour score ${quality.title} ==> ${lodash.template(behaviour.description)(reportData)}`);
       let scoreSelf = 0;
       let scoreAvgAll = 0;
       let scoreAvgOthers = 0;
@@ -489,6 +491,7 @@ export const pdfmakedefinition = (data, partner, user) => {
   logger.debug('Generating PDF definition');
   
   const scaleSegments = [   ];
+  const isPlcReport = data.survey.surveyType === 'plc';
 
   data.scale.entries.forEach((scale) => {
     if(scale.rating > 0) {
@@ -507,9 +510,9 @@ export const pdfmakedefinition = (data, partner, user) => {
 
   const coverPage = [
     {
-      image: 'partnerLogoGreyScale', width: 190, style: ['centerAligned'], margin: [0, 0, 0, 20],
+      image: isPlcReport === false ? 'partnerLogoGreyScale' : 'partnerLogo', width: 190, style: ['centerAligned'], margin: [0, 0, 0, 20],
     },
-    { text: '360°\nLeadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },      
+    { text: isPlcReport === true ? '\nFive Essentials of\nPurposeful Leadership Assessment' : '360°\nLeadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },      
     { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned'], margin: [0, 5] },
     includeAvatar === true ?
       {
@@ -521,6 +524,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     },
   ]
 
+  
   const introductionSection = [
     {
       text: '1. Introduction', newPage: 'before', style: ['header', 'primary'], pageBreak: 'before',
@@ -528,40 +532,49 @@ export const pdfmakedefinition = (data, partner, user) => {
     {
       text: [
         `${data.delegate.firstName}, this report compares the results of your self-assessment with those of the colleagues who assessed you.\n\n`,
-        'These assessors include the person you report to and randomly selected colleagues from the list that you submitted. ',
-        `You have been assessed against the ${data.organization.name} values and supporting leadership behaviours for all ${data.organization.name} employees.`,
+        'These assessors include the person you report to and the nominated assessors from the list that you submitted. ',
+        isPlcReport === false ?
+        `You have been assessed against the ${data.organization.name} values and supporting leadership behaviours for all ${data.organization.name} employees.`:
+        'You have been assessed against the Five Essentials of Purposeful Leadership.',
       ],
       style: ['default'],
     },
     {
       text: `${data.leadershipBrand.description.replace('\r', ' ')}`,
       style: ['default', 'quote', 'centerAligned'],
-      margin: [5, 5],
+      margin: [5, isPlcReport === true ? 30: 5, 5, isPlcReport === true ? 30: 5],
     },
-    {
+    isPlcReport === false ? {
       text: [
         `These values form the foundation of our desired culture at ${data.organization.name} and in order to build this culture, we as leaders must`,
         `intentionally live the values by displaying the supporting behaviours. In this way, we will align our people to the purpose and strategy of ${data.organization.name}.`,
       ],
       style: ['default'],
-    },
+    } : undefined,
+    isPlcReport === true ? {
+      image: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/feplinfo.png`),
+      width: 400, 
+      style: ['centerAligned'], 
+      margin: [0, 50, 0, 50]
+    } :
     {
       text: '"You cannot manage what you cannot measure"',
       style: ['default', 'quote', 'centerAligned'],
       margin: [5, 5],
     },
-    {
-      text: ['The TowerStone Leadership Brand 360° Assessment is a tool that provides insight to track your behavioural growth as you seek ',
+    isPlcReport === false ? {
+      text: [`The ${isPlcReport === true ? 'Purposeful Leadership ' : 'TowerStone Leadership Brand 360°'} Assessment is a tool that provides insight to track your behavioural growth as you seek `,
         `to align yourself with the ${data.organization.name} values. It is now your responsibility to use this feedback to improve your ability `,
         `to (a) model these behaviours and (b) coach the next levels of leadership to align to the ${data.organization.name} values.  Please `,
         'consider the feedback carefully before completing the development plan that follows the assessment',
         ' results.'],
       style: ['default'],
-    },
+    } : undefined,
   ];
 
   const scaleSection = [
     { 
+      newPage: 'before',
       text: '2. Rating Scale', 
       style: ['header', 'primary'], 
       margin: [0, 30, 0, 30] 
@@ -603,7 +616,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     behaviourSection.push({ text: `4.${qi + 1} ${quality.title}`, style: ['subheader', 'primary'], pageBreak: qi === 0 ? 'auto' : 'before' });
 
     quality.behaviours.forEach((behaviour, bi) => {
-      behaviourSection.push({ text: `B${bi + 1} - ${behaviour.description}`, style: ['default'] });
+      behaviourSection.push({ text: `B${bi + 1} - ${lodash.template(behaviour.description)(data)}`, style: ['default'] });
     });
 
     behaviourSection.push({
@@ -634,7 +647,7 @@ export const pdfmakedefinition = (data, partner, user) => {
               widths: ['*'],
               body: [
                 [{
-                  text: behaviour.description, fillColor: palette.primary.main, style: ['default'], color: '#fff', bold: true
+                  text: lodash.template(behaviour.description)(data), fillColor: palette.primary.main, style: ['default'], color: '#fff', bold: true
                 }],
                 ...lowRatingRowElements,
               ],
@@ -649,7 +662,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       behaviourSection.push({ text: 'Additional Comments', style: ['default', 'primary'], bold: true, margin: [0, 0, 0, 10],  pageBreak: 'before' });
       behaviourSection.push({ text: `The assessors have provided some the following additional behaviour${customLowRatingsForQuality.length > 1 ? 's': ''} and how it impacts others (them).`, style: ['default'], margin: [0, 0, 0, 15] });
       
-      let customRowEntries = customLowRatingsForQuality.map(custom => [{ text: custom.behaviourText, style: ['default'] }, { text: custom.rating, style: ['default'] }, { text: custom.comment || '(No comment provided)', style: ['default'] }]);
+      let customRowEntries = customLowRatingsForQuality.map(custom => [{ text: custom.behaviourText, style: ['default'] }, { text: custom.rating === 0 ? 'N/A' : custom.rating, style: ['default'] }, { text: custom.comment || '(No comment provided)', style: ['default'] }]);
       if(customRowEntries.length > 0) {
 
       }
@@ -802,11 +815,11 @@ export const pdfmakedefinition = (data, partner, user) => {
   }
 
   return {
-    filename: `360° Leadership Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}.pdf`,
+    filename: `${isPlcReport === true ? 'Purposeful' : '360° ' } Leadership Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}.pdf`,
     info: {
-      title: `360° Leadership Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}`,
+      title: `${isPlcReport === true ? 'Purposeful' : '360° ' } LeadershipAssessment Report - ${data.delegate.firstName} ${data.delegate.lastName}`,
       author: partner.name,
-      subject: 'TowerStone Leadership Centre - 360° Leadership Assessment Report',
+      subject: isPlcReport === true ? 'Purposeful Leadership Company - Purposeful Leadership Assessment Report' : 'TowerStone Leadership Centre - 360° Leadership Assessment Report',
       keywords: 'Leadership Training Personal Growth',
     },
     content: [
@@ -816,10 +829,10 @@ export const pdfmakedefinition = (data, partner, user) => {
       ...qualitiesSection,
       ...behaviourSection,
       ...overallSection,
-      ...developmentPlan,
-      ...nextactions,
-      ...acceptance,
-      ...facilitatornotes,
+      ...(isPlcReport === false ? developmentPlan : []),
+      ...(isPlcReport === false ? nextactions : []),
+      ...(isPlcReport === false ? acceptance : []),
+      ...(isPlcReport === false ? facilitatornotes : []),
       /*{
         qr: `${partner.siteUrl}/reports/towerstone/delegate-360-assessment/${data.survey._id}/${data.delegate._id}`,
         fit: '180',
@@ -856,14 +869,14 @@ export const pdfmakedefinition = (data, partner, user) => {
         return [
           {
             text: [
-              '©TowerStone Engage',
+              isPlcReport === true ? '©Purposeful Leadership Company' : '©TowerStone Engage',
             ],
             alignment: 'center',
             fontSize: 8,
             margin: [20, 0, 20, 0],
           },
           {
-            text: `${data.organization.name}: Individual Leadership Brand 360° Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
+            text: `${data.organization.name}: ${ isPlcReport === true ? 'The Five Essentials of Purposeful Leadership' : 'Individual Leadership Brand 360°' } Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
             fontSize: 8,
             alignment: 'center',
             margin: [5, 5],

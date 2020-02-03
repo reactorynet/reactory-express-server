@@ -138,6 +138,34 @@ const sendProductQueryEmail = async ({ to, from, subject, message }) => {
   });
 };
 
+const sendSimpleEmail = async ({ to, from, subject, message }) => {
+  return new Promise((resolve, reject) => {
+    const { partner } = global;
+    sgMail.setApiKey(partner.emailApiKey);
+    const msg = {
+      to,
+      from,
+      subject,
+      html: message
+    };
+
+    let response = {
+      success: true,
+      message: 'Mail sent successfully.'
+    }
+
+    try {
+      sgMail.send(msg);
+    } catch (sendError) {
+      logger.log('::ERROR SENDING MAIL::', msg);
+      response.success = false;
+      response.message = sendError.message;
+    }
+
+    resolve(response);
+  });
+};
+
 const DefaultQueueOptions = {
   sent: false,
   sentAt: null,
@@ -947,6 +975,7 @@ export default {
   sendActivationEmail,
   sendForgotPasswordEmail,
   sendProductQueryEmail,
+  sendSimpleEmail,
   installDefaultEmailTemplates,
   queueSurveyEmails,
   organigramEmails,

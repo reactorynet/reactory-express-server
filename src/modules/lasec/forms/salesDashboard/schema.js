@@ -151,6 +151,10 @@ export default {
       type: 'object',
       title: 'Overview',
       properties: {
+        /*
+         * Deprecated property - not used on dashboard
+         * left for reference purposes
+
         quoteStatusFunnel: {
           type: 'object',
           title: 'Quote Status Funnel',
@@ -178,9 +182,10 @@ export default {
             },
           },
         },
+        */
         quoteStatusPie: PieChart("Quote by Status"),
-        quoteISOPie: PieChart("ISO by Status"),
-        quoteINVPie: PieChart("Invoices by Status"),
+        // quoteISOPie: PieChart("ISO by Status"),
+        // quoteINVPie: PieChart("Invoices by Status"),
         quoteStatusComposed: {
           type: 'object',
           title: 'Quote Status Funnel',

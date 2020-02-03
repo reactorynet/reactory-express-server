@@ -110,17 +110,29 @@ const resolvers = {
                 }      
               }
               messages {
+                id
+                title
                 text
-                description
-                status
-                componentFqn
-                modal
-                modalType
-                priority
+                data
+                via
+                icon
+                actions {
+                  id
+                  action
+                  title
+                  icon
+                  componentFqn
+                  componentProps
+                  modal
+                  modalSize
+                  priority
+                }                
               }
             }
           }
         `).then();
+
+        logger.debug('Result from profile refresh', refreshResult);
 
         if(refreshResult && refreshResult.data && refreshResult.data.refreshProfileData) {
           const { user, messages } = refreshResult.data.refreshProfileData;

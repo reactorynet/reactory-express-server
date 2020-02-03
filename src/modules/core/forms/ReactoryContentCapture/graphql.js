@@ -13,6 +13,7 @@
      name: 'ReactoryGetContentBySlug',
      text: fileAsString(require.resolve('./ReactoryGetContentBySlug.graphql')),
      variables: {
+       'formData.slug': 'slug',
        '$route.params.slug': 'slug',
      },
      resultMap: {

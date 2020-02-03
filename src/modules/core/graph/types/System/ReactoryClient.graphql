@@ -26,6 +26,33 @@ type ClientComponent {
   args: [ComponentArgs]
 }
 
+type ReactoryUXMessageAction {
+  id: String
+  action: String
+  title: String
+  icon: String
+  componentFqn: String
+  componentProps: Any
+  modal: Boolean
+  modalSize: String
+  priority: Int
+}
+
+type ReactoryUXMessage {
+  id: String
+  title: String
+  text: String
+  data: Any
+  via: String
+  icon: String
+  actions: [ReactoryUXMessageAction]  
+  image: String
+  requireInteraction: Boolean
+  silent: Boolean
+  timestamp: Date
+  vibrate: [Int]  
+}
+
 type ClientRoute {
   id: ObjID
   path: String
@@ -78,7 +105,8 @@ type ApiStatus {
     applicationName: String
     theme: String
     themeOptions: Any
-    colorSchemes: Any        
+    colorSchemes: Any
+    messages: [ReactoryUXMessage]        
 }
 
 extend type Query {

@@ -9,6 +9,9 @@ import ApiError from '../../../exceptions';
 import AuthenticationSchema from '../schema/Authentication';
 import { jzon } from '../../../utils/validators';
 
+import LasecDatabase from '../database';
+import LasecQueries from '../database/queries';
+
 const config = {
   WEBSOCKET_BASE_URL: 'wss://api.lasec.co.za/ws/',
   UI_BASE_URL: process.env.LASEC_UI_BASE_URL || 'https://l360.lasec.co.za',
@@ -536,19 +539,26 @@ const Api = {
   },
   User: {
     getLasecUser: async ( staff_user_id ) => {
-      const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, { filter: {
-        ids: [staff_user_id]
-      }}, true, false, 0).then()
-
-      if(lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {
-        if(isArray(lasecStaffUserResponse.payload) && lasecStaffUserResponse.payload.length === 1) {
-          return lasecStaffUserResponse.payload[0];
-        } else {
-          return lasecStaffUserResponse.payload;
+      try {
+        const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, { filter: {
+          ids: [staff_user_id]
+        }}, true, false, 0)
+        .then()
+        
+        if(lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {
+          if(isArray(lasecStaffUserResponse.payload) && lasecStaffUserResponse.payload.length === 1) {
+            return lasecStaffUserResponse.payload[0];
+          } else {
+            return lasecStaffUserResponse.payload;
+          }
         }
+  
+        return null;
+      } catch (apiError) {
+        logger.error('Could not execute fetch for user data against staff user api', apiError);
+        return null;
       }
-
-      return null;
+      
     },
 
     getLasecUsers: async ( staff_user_ids = [] ) => {
@@ -563,6 +573,27 @@ const Api = {
 
       return null;
     },
+
+    getUserTargets: async ( staff_user_ids = [], sum = true) => {
+      const targets = await LasecDatabase.Read.LasecGetUserTargets({
+        context: {
+          connectionId: 'mysql.lasec360',
+          schema: 'lasec360',
+          commandText: LasecQueries.LasecGetUserTargets({staffuserids: staff_user_ids})          
+        }                
+      }).then();
+
+      logger.debug(`Found ${targets.length} results for user targets`, targets);
+
+      if(sum === true) {
+        let total = 0;
+        targets.forEach(target => total += target);
+        return total;
+      }
+
+      return targets;
+    }
+
   },
   Authentication: {
     login: async (username, password) => {

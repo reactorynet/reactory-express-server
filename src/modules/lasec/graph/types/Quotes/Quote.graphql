@@ -292,4 +292,5 @@ extend type Mutation {
   LasecCreateClientEnquiry(customerId: String!): LasecCustomerEnquiry
   SynchronizeNextActionsToOutloook(nextActions: Any!): OutlookSyncResponse
   LasecMarkNextActionAsActioned(id: String!): SimpleResponse
+  LasecSendQuoteEmail(code: String!, email: String!, subject: String!, message: String!): SimpleResponse
 }
