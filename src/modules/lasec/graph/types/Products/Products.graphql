@@ -23,7 +23,7 @@ type ProductClass {
 }
 
 extend type Query {
-  LasecGetProductList: [Product]
+  LasecGetProductList(product: String, supplier: String): [Product]
   LasecGetProductById: [Product]
   LasecGetProductQueryDetail(productId: String!): ProductQueryDetail
   LasecGetProductClassList: [ProductClass]

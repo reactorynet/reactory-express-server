@@ -92,6 +92,13 @@ import emails from '@reactory/server-core/emails';
 
 const getProducts = async (params) => {
 
+
+  logger.debug('GETTING PRODUCTS');
+
+  // ADITIONAL PARAMS
+  // Product Name
+  // Supplier
+
   let _params = params;
 
   if (!_params) {
@@ -148,7 +155,7 @@ const getProducts = async (params) => {
 
   setCacheItem(cachekey, products, 60 * 10)
 
-  logger.debug(`PRODUCT RESOLVER - PRODUCTS::  `, { products });
+  logger.debug(`PRODUCT RESOLVER - PRODUCTS::  ${JSON.stringify(products[0])}`);
 
   return products;
 }
@@ -240,7 +247,7 @@ const sendProductQuery = async (params) => {
 export default {
   Query: {
     LasecGetProductList: async (obj, args) => {
-      return getProducts();
+      return getProducts(args);
     },
     LasecGetProductQueryDetail: async (obj, args) => {
       return LasecGetProductQueryDetail(args);

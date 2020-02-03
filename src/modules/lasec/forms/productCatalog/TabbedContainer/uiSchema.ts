@@ -36,7 +36,7 @@ const uiSchema: any = {
   submitIcon: 'refresh',
   'ui:field': 'GridLayout',
   'ui:grid-options': {
-    // spacing: 4,
+    spacing: 4,
   },
   'ui:grid-layout': [
     {
@@ -55,40 +55,11 @@ const uiSchema: any = {
           title: 'Product Overview',
           componentFqn: 'lasec-crm.LasecProductOverviewTable',
           componentProps: {
-            // query: {
-            //   filterType: 'Recent'
-            // }
+            query: {
+              product: 'formData.product',
+              supplier: 'formData.supplier'
+            }
           },
-          // additionalComponents: [
-            // {
-            //   componentFqn: 'core.SlideOutLauncher',
-            //   componentProps: {
-            //     buttonVariant: 'SpeedDial',
-            //     actions: [
-            //       {
-            //         key: 'new-quote',
-            //         title: 'New Quote',
-            //         clickAction: 'navigate',
-            //         link: '/newquote/',
-            //         icon: 'create',
-            //         enabled: true,
-            //         ordinal: 0,
-            //         eventHandler: 'toBeImplemented'
-            //       },
-            //       {
-            //         key: 'search-procducts',
-            //         title: 'Search Products',
-            //         clickAction: 'navigate',
-            //         link: '/productlist/',
-            //         icon: 'search',
-            //         enabled: true,
-            //         ordinal: 2,
-            //         eventHandler: 'toBeImplemented'
-            //       }
-            //     ]
-            //   }
-            // }
-          // ]
         },
       ]
     }

@@ -111,7 +111,7 @@ const MainMenu = {
   ],
 };
 
-const TopRightMenu =  {
+const TopRightMenu = {
   name: 'Profile Small',
   key: 'profile-small',
   target: 'top-right',
@@ -252,7 +252,7 @@ const Menus = {
       ordinal: 17, title: 'Develop', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN'],
       items: [
         {
-          ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['DEVELOPER',  'ADMIN']
+          ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN']
         },
         {
           ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
@@ -285,7 +285,7 @@ const Menus = {
           ordinal: 19, title: 'Filter Results', link: '/filter-results/', icon: 'reorder', roles: ['USER'],
         },
         {
-          ordinal: 19, title: 'Product Catelog', link: '/product-catelog/', icon: 'reorder', roles: ['USER'],
+          ordinal: 19, title: 'Tabbed Product Catelog', link: '/product-catelog/', icon: 'reorder', roles: ['USER'],
         },
       ]
     },
@@ -335,9 +335,9 @@ const Menus = {
           roles: ['ADMIN', 'DEVELOPER']
         },
         {
-            ordinal: 5,
-            title: 'AR Invoices',
-            link: '/db/arinvoices'
+          ordinal: 5,
+          title: 'AR Invoices',
+          link: '/db/arinvoices'
         },
       ]
     },
@@ -759,13 +759,20 @@ const LASEC_CONFIG = {
     {
       key: 'product-catalog',
       title: 'Product Catelog',
-      path: '/product-catelog',
-      exact: false,
-      public: true,
+      path: '/product-catelog/**',
+      exact: true,
+      public: false,
       roles: ['USER', 'ADMIN'],
-      componentFqn: 'lasec-crm.LasecCMSProductCatalog@1.0.0',
-      componentProps: {withPeers: false},
-      args: [],
+      componentFqn: `${key}.LasecCMSProductCatalog@1.0.0`,
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'view'
+          }
+        }
+      ],
     },
     {
       key: 'reactoryrouter',
@@ -1154,7 +1161,7 @@ const LASEC_CONFIG = {
         user: 'reactory',
         password: 'reactory_password',
         database: 'reactory',
-        port:3306
+        port: 3306
       },
     },
     {
@@ -1165,7 +1172,7 @@ const LASEC_CONFIG = {
         user: 'reactory',
         password: 'reactory_password',
         database: 'lasec360',
-        port:3306
+        port: 3306
       },
     },
   ],
@@ -1249,7 +1256,7 @@ proxiedRoutes.forEach((props) => {
           type: 'object',
           containerProps: {
             style: {
-              top:'48px',
+              top: '48px',
               bottom: '0px',
               position: 'absolute',
               width: '100%'
@@ -1290,12 +1297,12 @@ proxiedRoutes.forEach((props) => {
   });
 });
 
-if( MODE === 'DEVELOP' ) {
-  MainMenu.entries = [ ...Menus.PRODUCTION, ...Menus.DEVELOP ];
+if (MODE === 'DEVELOP') {
+  MainMenu.entries = [...Menus.PRODUCTION, ...Menus.DEVELOP];
 } else {
-  MainMenu.entries = [ ...Menus.PRODUCTION ];
+  MainMenu.entries = [...Menus.PRODUCTION];
 }
 
-LASEC_CONFIG.menus = [ TopRightMenu, MainMenu ];
+LASEC_CONFIG.menus = [TopRightMenu, MainMenu];
 
 export default LASEC_CONFIG;

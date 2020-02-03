@@ -1,7 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import $schema from './schema';
 import $uiSchema from './uiSchema';
-// import $graphql from './graphql';
+import $graphql from './graphql';
 
 const LasecCMSProductCatalogForm: Reactory.IReactoryForm = {
   id: 'LasecProductOverviewTable',
@@ -15,15 +15,15 @@ const LasecCMSProductCatalogForm: Reactory.IReactoryForm = {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,
-  // graphql: $graphql,
+  graphql: $graphql,
   uiSchema: $uiSchema,
   widgetMap: [],
-  defaultFormData: {
-    items: [
-      { name: 'Product 1' },
-      { name: 'Product 2' },
-    ]
-  }
+  // defaultFormData: {
+  //   products: [
+  //     { name: 'Product 1' },
+  //     { name: 'Product 2' },
+  //   ]
+  // }
 };
 
 export default LasecCMSProductCatalogForm;
