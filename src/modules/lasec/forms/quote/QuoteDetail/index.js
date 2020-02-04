@@ -11,12 +11,12 @@ export default {
   uiResources: [],
   title: 'Quotes Detail',
   tags: ['CRM Dashboard'],
-  schema: $schema,  
-  widgetMap: [    
+  schema: $schema,
+  widgetMap: [
     {
       componentFqn: 'core.CurrencyLabel@1.0.0',
       widget: 'CurrencyWidget',
-    },      
+    },
   ],
   registerAsComponent: true,
   name: 'QuoteDetail',

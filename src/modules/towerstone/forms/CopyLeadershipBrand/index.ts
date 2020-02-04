@@ -43,7 +43,7 @@ export const CopyLeadershipBrand: Reactory.IReactoryForm = {
         },
         onSuccessMethod: 'notify',
         notification: {
-
+          text: '${TowerStoneLeadershipBrandCopy.data.message}'          
         },
         onSuccessUrl: '', // eslint-disable-line
         onSuccessRedirectTimeout: 1000,

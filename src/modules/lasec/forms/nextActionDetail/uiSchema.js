@@ -25,7 +25,13 @@ export default {
             variables: {
               'id': 'id',
             },
-            onSuccessMethod: 'refresh'
+            onSuccessMethod: 'notification',
+            resultMap: {              
+              message: 'body',
+            },
+            notificationProperties: {
+              title: 'Next Action Update'
+            }
           }
         },
       }

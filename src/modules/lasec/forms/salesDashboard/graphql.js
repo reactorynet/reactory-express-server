@@ -22,7 +22,8 @@ export default {
       agentSelection: 'toolbar.agentSelection',
       statusSummary: 'statusSummary',
       quotes: 'quotes',
-      // nextActions: 'nextActions',
+      nextActions: 'nextActions',
+      /*
       'nextActions.actions[].id': 'nextActions.actions[].id',
       'nextActions.actions[].actionType': 'nextActions.actions[].actionType',
       'nextActions.actions[].actioned': 'nextActions.actions[].actioned',
@@ -34,6 +35,7 @@ export default {
       'nextActions.actions[].who[].id': 'nextActions.actions[].who[].id',
       'nextActions.actions[].who[].firstName': 'nextActions.actions[].who[].firstName',
       'nextActions.actions[].who[].lastName': 'nextActions.actions[].who[].lastName',
+      */
       totalQuotes: 'totalQuotes',
       target: 'target',
       targetPercent: 'targetPercent',

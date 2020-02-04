@@ -98,7 +98,7 @@ type Comment {
 
 type ProfileRefreshResult {
   user: User,
-  messages: [ UXMessage ]
+  messages: [ ReactoryUXMessage ]
 }
 
 extend type Query {

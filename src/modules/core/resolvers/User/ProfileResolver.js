@@ -121,7 +121,8 @@ const isTokenValid = async (msauth, refresh = true, userToCheck = null) => {
         logger.debug(`Token already expired ${Math.abs(expiresInMinutes)} minutes ago. Use must login`);
         return {
           valid: false,
-          msauth
+          msauth,
+          message: `Your Microsoft login expired ${Math.abs(expiresInMinutes)} minutes ago. Please login to continue using Microsoft Features.`
         };
       }
 
@@ -134,13 +135,15 @@ const isTokenValid = async (msauth, refresh = true, userToCheck = null) => {
          // await userToCheck.save();
           return {
             valid: true,
-            msauth: _auth
+            msauth: _auth,
+            message: `Your Microsoft token authentication has been refreshed`
           };
         } catch (tokenRefreshError) {
           logger.error(`Token refresh failed ${tokenRefreshError} - user will need to login again`, { tokenRefreshError });
           return {
             valid: false,
             msauth,
+            message: `Your Microsoft refresh token has failed, please login using your Microsoft Account in order to keep using Microsoft Features`
           };
         }        
       }
@@ -149,7 +152,8 @@ const isTokenValid = async (msauth, refresh = true, userToCheck = null) => {
         logger.debug(`The token is valid and expires in ${expiresInMinutes} minutes`);
         return {
           valid: true,
-          msauth
+          msauth,
+          message: `Your Microsoft token expires in ${expiresInMinutes} minutes`
         };
       }
     }    
@@ -200,7 +204,13 @@ export default {
           //our token is valid and we possibly refreshed the refresh and access tokens.          
           try {                      
             msuser = await MSGraph.getUserDetails(msauth.props.accessToken, { imageSize: '120x120', profileImage: skipImage === false });
-            logger.debug('microsoft user response', msuser);                        
+            logger.debug('microsoft user response received', msuser);     
+            uxmessage.push({
+              title: 'Microsoft Authentication',
+              text: 'Login valid',
+              status: 'success',
+              via: 'notification'
+            });
           } catch (microsoftGraphError) {
             logger.error(`${microsoftGraphError.message}`, microsoftGraphError);            
             /**
@@ -236,15 +246,24 @@ export default {
             }                    
           }
         } else {
+          const now = moment().valueOf();
           uxmessages.push({
-            text: 'Your Microsoft Login has expired, please login again in order to resume Office 365 features.',
-            description: 'The login you use for Offfice 365 has expired, please login again in order to resume Office 365 features. ',
-            status: 'warning',
-            canDismiss: true,
-            modal: true,
-            modalType: 'large',
-            componentFqn: 'microsoft.MicrosoftLogin',
-            priority: -1                        
+            id: `ms-auth-expired-${now}`,
+            title: 'Login Expired',            
+            text: tokenValidation.message || 'Your Microsoft Login has expired, please login again in order to resume Office 365 features.',
+            data: {
+              status: 'warning'
+            },
+            actions: [
+              { 
+                id: `ms-auth-login-${now}`, 
+                title: 'Re-Authenticate',
+                action: `${process.env.API_URI_ROOT}/auth/microsoft/openid/${global.partner.key}?x-client-key=${global.partner.key}&x-reactory-pass=${global.partner.password}+${global.partner.salt}`,
+              }
+            ],            
+            via: 'notification',
+            reqiuresInteraction: true,
+            timestamp: now                        
           });          
         }
 

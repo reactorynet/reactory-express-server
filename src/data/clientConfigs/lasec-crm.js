@@ -19,10 +19,15 @@ const {
   MODE = 'DEVELOP',
   API_URI_ROOT,
   LASEC_360_URL = 'http://localhost:3001',
-  REACTORY_CLIENT_URL = 'http://localhost:3000'
+  REACTORY_CLIENT_URL = 'http://localhost:3000',
+  LASEC360DB_HOST = 'localhost',
+  LASEC360DB_USER = 'reactory',
+  LASEC360DB_PASSWORD = 'reactory_password',
+  LASEC360DB_DATABASE = 'lasec360',
+  LASEC360DB_PORT = 3306
 } = process.env;
 
-let siteUrl = REACTORY_CLIENT_URL; // 'http://localhost:3000' : 'https://app.towerstone-global.com/';
+let siteUrl = REACTORY_CLIENT_URL;
 
 switch (MODE) {
   case 'QA': {
@@ -614,6 +619,15 @@ const LASEC_CONFIG = {
       componentFqn: `${key}.QuoteDetail@1.0.0`,
     },
     {
+      key: 'quote-email',
+      title: 'Quote Email',
+      path: '/quote-email',
+      public: false,
+      exact: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: `${key}.LasecQuoteEmail@1.0.0`,
+    },
+    {
       key: 'inbox',
       title: 'Discuss',
       path: '/discuss/**',
@@ -1127,8 +1141,9 @@ const LASEC_CONFIG = {
       title: 'Reactory Forms Generation Settings',
       description: '',
       data: {
-        enabled: true,
+        enabled: false,
         generators: [
+          /*
           {
             id: 'generators.MySQLFormGenerator',
             connectionId: 'mysql.default',
@@ -1137,6 +1152,7 @@ const LASEC_CONFIG = {
               tables: ['*']
             }
           },
+          */
           {
             id: 'generators.MySQLFormGenerator',
             connectionId: 'mysql.lasec360',
@@ -1147,7 +1163,6 @@ const LASEC_CONFIG = {
                   tables: ['address'],
                 }
               ],
-
             }
           },
         ]
@@ -1157,9 +1172,9 @@ const LASEC_CONFIG = {
       name: 'mysql.default',
       data: {
         provider: 'mysql',
-        host: 'localhost',
-        user: 'reactory',
-        password: 'reactory_password',
+        host: LASEC360DB_HOST || 'localhost',
+        user: LASEC360DB_USER || 'reactory',
+        password: LASEC360DB_PASSWORD || 'reactory_password',
         database: 'reactory',
         port: 3306
       },
@@ -1168,11 +1183,11 @@ const LASEC_CONFIG = {
       name: 'mysql.lasec360',
       data: {
         provider: 'mysql',
-        host: 'localhost',
-        user: 'reactory',
-        password: 'reactory_password',
-        database: 'lasec360',
-        port: 3306
+        host: LASEC360DB_HOST || 'localhost',
+        user: LASEC360DB_USER || 'reactory',
+        password: LASEC360DB_PASSWORD || 'reactory_password',
+        database: LASEC360DB_DATABASE || 'lasec360',
+        port: LASEC360DB_PORT || 3306
       },
     },
   ],

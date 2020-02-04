@@ -178,9 +178,9 @@ export default {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
-        quoteStatusPie: { md: 4, sm: 12, xs: 12 },
-        quoteISOPie: { md: 4, sm: 12, xs: 12 },
-        quoteINVPie: { md: 4, sm: 12, xs: 12 },
+        quoteStatusPie: { md: 12, sm: 12, xs: 12 },
+        //quoteISOPie: { md: 4, sm: 12, xs: 12 },
+        //quoteINVPie: { md: 4, sm: 12, xs: 12 },
       },
       {
         quoteStatusComposed: { md: 12, sm: 12, xs: 12 }
@@ -189,11 +189,12 @@ export default {
     quoteStatusPie: {
       'ui:widget': 'PieChartWidget',
       'ui:options': {
-        size: 80,
+        size: 120,
         thickness: 5,
         variant: 'static',
       },
     },
+    /*
     quoteISOPie: {
       'ui:widget': 'PieChartWidget',
       'ui:options': {
@@ -210,6 +211,7 @@ export default {
         variant: 'static',
       },
     },
+    */
     quoteStatusComposed: {
       'ui:widget': 'ComposedChartWidget',
     }

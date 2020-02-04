@@ -2,7 +2,7 @@
 const froalaOptions = {
   key: 'SDB17hB8E7F6D3eMRPYa1c1REe1BGQOQIc1CDBREJImD6F5E4G3E1A9D7C3B4B4==',
   imageManagerLoadMethod: 'GET',
-  toolbarInline: true,    
+  toolbarInline: false,    
   toolbarVisibleWithoutSelection: false,
   imageDefaultWidth: 300,
   imageDefaultDisplay: 'inline',

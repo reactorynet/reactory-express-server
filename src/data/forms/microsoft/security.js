@@ -17,6 +17,8 @@ export const MicrosoftOpenIDAuthenticationUISchema = {
   'ui:options': {
     showSubmit: false,
     showHelp: false,
+    componentType: 'div',
+    container: 'div',    
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
