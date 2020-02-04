@@ -95,9 +95,8 @@ const getProducts = async (params) => {
 
   logger.debug('GETTING PRODUCTS');
 
-  // ADITIONAL PARAMS
-  // Product Name
-  // Supplier
+  // ADITIONAL PARAMS : Product Name
+  // {"filter":{"any_field":"beakers"}
 
   let _params = params;
 
@@ -144,18 +143,24 @@ const getProducts = async (params) => {
   logger.debug(`Fetched Expanded View for (${productDetails.items.length}) Products from API`);
   let products = [...productDetails.items];
 
+  logger.debug(`PRODUCT RESOLVER - PRODUCTS::  ${JSON.stringify(products[0])}`);
+
   products = products.map(prd => {
     return {
       id: prd.id,
       name: prd.name,
       code: prd.code,
-      description: prd.description
+      description: prd.description,
+      qtyAvailable: prd.QtyAvailable,
+      qtyOnHand: prd.QtyOnHand,
+      qtyOnOrder: prd.QtyOnOrder,
+      unitOfMeasure: prd.pack_size,
+      price: prd.list_price_cents,
+      image: prd.image_url
     }
   });
 
   setCacheItem(cachekey, products, 60 * 10)
-
-  logger.debug(`PRODUCT RESOLVER - PRODUCTS::  ${JSON.stringify(products[0])}`);
 
   return products;
 }

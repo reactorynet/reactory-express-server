@@ -14,9 +14,30 @@ const schema: Reactory.ISchema = {
       items: {
         type: 'object',
         properties: {
+          code: {
+            type: 'string'
+          },
           name: {
             type: 'string'
-          }
+          },
+          description: {
+            type: 'string'
+          },
+          qtyAvailable: {
+            type: 'number'
+          },
+          qtyOnHand: {
+            type: 'number'
+          },
+          qtyOnOrder: {
+            type: 'number'
+          },
+          unitOfMeasure: {
+            type: 'string'
+          },
+          price: {
+            type: 'number'
+          },
         }
       },
     }

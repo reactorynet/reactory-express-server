@@ -3,6 +3,12 @@ type Product {
   name: String
   code: String
   description: String
+  qtyAvailable: Int
+  qtyOnHand: Int
+  qtyOnOrder: Int
+  unitOfMeasure: String
+  price: Int
+  image: String
 }
 
 type ProductQueryDetail {
@@ -23,11 +29,15 @@ type ProductClass {
 }
 
 extend type Query {
-  LasecGetProductList(product: String, supplier: String): [Product]
+  LasecGetProductList(product: String): [Product]
   LasecGetProductById: [Product]
   LasecGetProductQueryDetail(productId: String!): ProductQueryDetail
   LasecGetProductClassList: [ProductClass]
 }
 extend type Mutation {
-  LasecSendProductQuery(buyerEmail: String!, subject: String!, message: String!): SimpleResponse
+  LasecSendProductQuery(
+    buyerEmail: String!
+    subject: String!
+    message: String!
+  ): SimpleResponse
 }

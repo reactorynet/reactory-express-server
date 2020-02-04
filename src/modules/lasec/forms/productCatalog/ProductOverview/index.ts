@@ -17,13 +17,9 @@ const LasecCMSProductCatalogForm: Reactory.IReactoryForm = {
   schema: $schema,
   graphql: $graphql,
   uiSchema: $uiSchema,
-  widgetMap: [],
-  // defaultFormData: {
-  //   products: [
-  //     { name: 'Product 1' },
-  //     { name: 'Product 2' },
-  //   ]
-  // }
+  widgetMap: [
+    {  componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' }
+  ],
 };
 
 export default LasecCMSProductCatalogForm;

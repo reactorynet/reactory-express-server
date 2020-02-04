@@ -1,8 +1,14 @@
-query LasecGetProductList ($product: String, $supplier: String,) {
-  LasecGetProductList (product: $product, supplier: $supplier) {
+query LasecGetProductList($product: String) {
+  LasecGetProductList(product: $product) {
     id
     name
     code
     description
+    qtyAvailable
+    qtyOnHand
+    qtyOnOrder
+    unitOfMeasure
+    price
+    image
   }
 }
