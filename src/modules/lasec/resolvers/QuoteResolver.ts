@@ -275,9 +275,16 @@ const getQuotes = async (params) => {
 };
 
 const getTargets = async ({ periodStart, periodEnd, teamIds, repIds, agentSelection }) => {
-  logger.debug(`QuoteResolver.getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection })`, { periodStart, periodEnd, teamIds, repIds, agentSelection });
+  logger.debug(`QuoteResolver.getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection })`, 
+    { 
+      periodStart, 
+      periodEnd, 
+      teamIds, 
+      repIds, 
+      agentSelection 
+    });
   try {
-    let userTargets: any[] = [];
+    let userTargets: number = 0;
     const { user } = global;
     switch (agentSelection) {
       case "team": {
@@ -287,13 +294,15 @@ const getTargets = async ({ periodStart, periodEnd, teamIds, repIds, agentSelect
       case "bu":
       case "me":
       default: {
-        const lasecCreds = user.getAuthentication("lasec");
+        const lasecCreds = user.getAuthentication("lasec");        
         if (!lasecCreds) {
+          logger.error(`agentSelection: ${agentSelection} and user has no Lasec Credentials? Should not happen`, lasecCreds);
           return userTargets;
         } else {
+          logger.debug(`agentSelection: ${agentSelection} and use has Lasec Credentials`, { props: lasecCreds.props });
           if (lasecCreds.props && lasecCreds.props.payload) {
             const staff_user_id = lasecCreds.props.payload.user_id
-            userTargets = await lasecApi.User.getUserTargets([staff_user_id]).then();
+            userTargets = await lasecApi.User.getUserTargets([`${staff_user_id}`]).then();
           } 
         }
       }
@@ -304,19 +313,37 @@ const getTargets = async ({ periodStart, periodEnd, teamIds, repIds, agentSelect
 
   } catch (targetFetchError) {
     logger.error(`Could not retrieve targets`, targetFetchError);
-    return [];
+    return 0;
   }
 };
 
 const getInvoices = async ({ periodStart, periodEnd, teamIds = null, repIds = null }) => {
   try {
     logger.debug(`QuoteResolver getInvoices({ ${periodStart}, ${periodEnd}, ${teamIds} })`);
-    debugger;
-    const invoiceResult = await lasecApi.Invoices.list({ filter: { sales_team_id: teamIds, start_date: periodStart, end_date: periodEnd } }).then();    
-    if (invoiceResults.ids && isArray(invoiceResult.ids)) {
+    // debugger;
+    const invoiceResult = await lasecApi.Invoices.list({ 
+      filter: { 
+        sales_team_id: null,
+        start_date: periodStart, 
+        end_date: periodEnd 
+      },
+      ordering: {},
+      pagination: {
+        enabled: false
+      }, 
+    }).then();    
+    if (invoiceResult.ids && isArray(invoiceResult.ids)) {
       logger.debug(`QuoteResolver getInvoices({ ${periodStart}, ${periodEnd} }) --> Result ${invoiceResult.ids.length}`);
-      if(invoiceResults.ids.length > 0) {
-        const invoices = await lasecApi.Invoices.list({ filter: { ids: invoiceResult.ids } }).then();
+      if(invoiceResult.ids.length > 0) {
+        const invoices = await lasecApi.Invoices.list({ 
+          filter: { 
+            ids: invoiceResult.ids 
+          },
+          ordering: {},
+          pagination: {
+            enabled: false,
+          } 
+        }).then();
         if (invoices && isArray(invoices.items) === true) {
           logger.debug(`Found ${invoices.items.length} invoices for the period`)
           return invoices.items;
@@ -637,7 +664,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
   let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection, productClasses }).then();
   logger.debug(`QUOTES:: (${quotes.length})`);
   const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
-  logger.debug('Fetching Next Actions for User');
+  logger.debug('Fetching Next Actions for User, targets loaded', {targets});
   const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
   logger.debug(`Fetching invoice data ${periodStart.format('YYYY-MM-DD HH:mm')} ${periodEnd.format('YYYY-MM-DD HH:mm')} ${global.user.firstName} ${global.user.lastName}`);
   const invoices = await getInvoices({ 
@@ -747,7 +774,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
     agentSelection,
     teamIds,
     repIds,
-    target: 0,
+    target: targets || 0,
     targetPercent: 0,
     nextActions: {
       owner: global.user,
@@ -794,11 +821,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
   });
 
   let totalTargetValue = 0;
-  targets.forEach((target) => {
-    productDashboardResult.target += target.target;
-    totalTargetValue += (target.target * 100) / (target.targetPercent || 100);
-  });
-
+  
   if (isNaN(productDashboardResult.target) && isNaN(totalTargetValue) === false) {
     productDashboardResult.targetPercent = totalTargetValue * 100 / productDashboardResult.target;
   }
@@ -1439,7 +1462,7 @@ export default {
       logger.debug('Fetching Quote Data');
       const quotes = hasCachedItem === true ? _cached.quotes : await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug('Fetching Target Data');
-      const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+      const targets: number = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug('Fetching Next Actions for; User')
       const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
       logger.debug('Fetching invoice data');
@@ -1535,7 +1558,7 @@ export default {
         agentSelection,
         teamIds,
         repIds,
-        target: 0,
+        target: targets || 0,
         targetPercent: 0,
         nextActions: {
           owner: global.user,
@@ -1589,14 +1612,21 @@ export default {
         });
       });
 
-      let totalTargetValue = 0;
-      targets.forEach((target) => {
-        dashboardResult.target += target.target;
-        totalTargetValue += (target.target * 100) / (target.targetPercent || 100);
-      });
+      // let totalTargetValue = 0;
+      //targets.forEach((target) => {
+      //  dashboardResult.target += target.target;
+      //  totalTargetValue += (target.target * 100) / (target.targetPercent || 100);
+      //});
 
-      if (isNaN(dashboardResult.target) && isNaN(totalTargetValue) === false) {
-        dashboardResult.targetPercent = totalTargetValue * 100 / dashboardResult.target;
+      let invoicesTotal = 0;
+      if(isArray(invoices) === true) {
+        invoices.forEach((invoice: any) => {
+          invoicesTotal += invoice.invoice_value
+        });
+      }
+
+      if (isNaN(dashboardResult.target) === false && isNaN(invoicesTotal) === false && dashboardResult.target > 0 && invoicesTotal > 0) {
+        dashboardResult.targetPercent = dashboardResult.target * 100 / invoicesTotal;
       }
 
       dashboardResult.charts.quoteStatusFunnel.data = lodash.reverse(dashboardResult.charts.quoteStatusFunnel.data);
