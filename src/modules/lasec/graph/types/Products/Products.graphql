@@ -9,6 +9,7 @@ type Product {
   unitOfMeasure: String
   price: Int
   image: String
+  onSyspro: String
 }
 
 type ProductQueryDetail {

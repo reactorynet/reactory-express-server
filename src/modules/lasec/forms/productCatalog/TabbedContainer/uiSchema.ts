@@ -17,13 +17,6 @@ const $toolbar: any = {
       placeholder: 'Find a Product'
     }
   },
-  supplier: {
-    'ui:widget': 'InputWidget',
-    'ui:options': {
-      icon: 'search',
-      placeholder: 'Find a Suplier'
-    }
-  },
   submitButton: {
     'ui:widget': 'FormSubmitWidget',
     'ui:options': {
@@ -31,7 +24,6 @@ const $toolbar: any = {
     }
   }
 }
-
 const uiSchema: any = {
   submitIcon: 'refresh',
   'ui:field': 'GridLayout',

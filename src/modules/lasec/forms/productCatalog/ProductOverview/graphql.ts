@@ -13,6 +13,7 @@ export default {
         unitOfMeasure
         price
         image
+        onSyspro
       }
     }`,
     variables: {
@@ -29,6 +30,7 @@ export default {
       '[].unitOfMeasure': 'products.[].unitOfMeasure',
       '[].price': 'products.[].price',
       '[].image': 'products.[].image',
+      '[].onSyspro': 'products.[].onSyspro',
     },
     resultType: 'array',
     edit: false,

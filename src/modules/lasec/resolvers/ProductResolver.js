@@ -156,7 +156,8 @@ const getProducts = async (params) => {
       qtyOnOrder: prd.QtyOnOrder,
       unitOfMeasure: prd.pack_size,
       price: prd.list_price_cents,
-      image: prd.image_url
+      image: prd.image_url,
+      onSyspro: prd.is_in_syspro
     }
   });
 

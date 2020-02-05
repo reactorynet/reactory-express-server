@@ -6,9 +6,6 @@ const schema: Reactory.ISchema = {
     product: {
       type: 'string'
     },
-    supplier: {
-      type: 'string'
-    },
     products: {
       type: 'array',
       items: {
@@ -38,6 +35,9 @@ const schema: Reactory.ISchema = {
           price: {
             type: 'number'
           },
+          onSyspro:{
+            type: 'string'
+          }
         }
       },
     }

@@ -8,10 +8,6 @@ const $toolbar = {
       type: 'string',
       title: 'Product',
     },
-    supplier: {
-      title: 'Supplier',
-      type: 'string',
-    },
     submitButton: {
       title: 'Search',
       type: 'string',
