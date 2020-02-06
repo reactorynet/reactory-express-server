@@ -33,6 +33,7 @@ import QuoteNoteDetail from './quote/QuoteNoteDetail';
 
 import TabbedProductList from './productCatalog/TabbedContainer';
 import ProductOverview from './productCatalog/ProductOverview';
+import ProductPricing from './productCatalog/ProductPricing';
 
 export default [
   SalesDashboard,
@@ -57,5 +58,6 @@ export default [
   NextActionDetail,
   QuoteNoteDetail,
   TabbedProductList,
-  ProductOverview
+  ProductOverview,
+  ProductPricing
 ];

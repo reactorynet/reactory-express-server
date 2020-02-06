@@ -92,9 +92,6 @@ import emails from '@reactory/server-core/emails';
 
 const getProducts = async (params) => {
 
-
-  logger.debug('GETTING PRODUCTS');
-
   // ADITIONAL PARAMS : Product Name
   // {"filter":{"any_field":"beakers"}
 
@@ -137,13 +134,13 @@ const getProducts = async (params) => {
     ids = [...ids, ...pagedResult.ids]
   });
 
-  logger.debug(`Loading (${ids.length}) product ids`);
+  // logger.debug(`Loading (${ids.length}) product ids`);
 
   const productDetails = await lasecApi.Products.list({ filter: { ids: ids } });
-  logger.debug(`Fetched Expanded View for (${productDetails.items.length}) Products from API`);
+  // logger.debug(`Fetched Expanded View for (${productDetails.items.length}) Products from API`);
   let products = [...productDetails.items];
 
-  logger.debug(`PRODUCT RESOLVER - PRODUCTS::  ${JSON.stringify(products[0])}`);
+  // logger.debug('PRODUCT RESOLVER - PRODUCTS::', products.slice(0, 10));
 
   products = products.map(prd => {
     return {

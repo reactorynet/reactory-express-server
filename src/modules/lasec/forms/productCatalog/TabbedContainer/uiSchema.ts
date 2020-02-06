@@ -49,7 +49,15 @@ const uiSchema: any = {
           componentProps: {
             query: {
               product: 'formData.product',
-              supplier: 'formData.supplier'
+            }
+          },
+        },
+        {
+          title: 'Product Pricing',
+          componentFqn: 'lasec-crm.LasecProductPricingTable',
+          componentProps: {
+            query: {
+              product: 'formData.product',
             }
           },
         },

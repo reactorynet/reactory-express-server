@@ -3,15 +3,15 @@ import $schema from './schema';
 import $uiSchema from './uiSchema';
 import $graphql from './graphql';
 
-const LasecCMSProductOverview: Reactory.IReactoryForm = {
-  id: 'LasecProductOverviewTable',
+const LasecCMSProductPricing: Reactory.IReactoryForm = {
+  id: 'LasecProductPricingTable',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
-  title: 'CMS Product Overview',
-  tags: ['CMS Product Overview'],
+  title: 'CMS Product Pricing',
+  tags: ['CMS Product Pricing'],
   registerAsComponent: true,
-  name: 'LasecProductOverviewTable',
+  name: 'LasecProductPricingTable',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,
@@ -24,4 +24,4 @@ const LasecCMSProductOverview: Reactory.IReactoryForm = {
   ],
 };
 
-export default LasecCMSProductOverview;
+export default LasecCMSProductPricing;
