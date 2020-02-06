@@ -156,8 +156,9 @@ const getProducts = async (params) => {
       qtyOnOrder: prd.QtyOnOrder,
       unitOfMeasure: prd.pack_size,
       price: prd.list_price_cents,
+      priceAdditionalInfo: prd.price_is_expired ? 'EXPIRED': (prd.on_special ? 'ON_SPECIAL' : ''),
       image: prd.image_url,
-      onSyspro: prd.is_in_syspro
+      onSyspro: prd.is_in_syspro,
     }
   });
 

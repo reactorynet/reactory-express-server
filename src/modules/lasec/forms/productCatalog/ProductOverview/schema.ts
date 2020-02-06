@@ -37,6 +37,9 @@ const schema: Reactory.ISchema = {
           },
           onSyspro:{
             type: 'string'
+          },
+          priceAdditionalInfo:{
+            type: 'string'
           }
         }
       },

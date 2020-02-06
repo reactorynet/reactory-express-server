@@ -19,7 +19,8 @@ const LasecCMSProductCatalogForm: Reactory.IReactoryForm = {
   uiSchema: $uiSchema,
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
-    {  componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' }
+    { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
+    { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' }
   ],
 };
 
