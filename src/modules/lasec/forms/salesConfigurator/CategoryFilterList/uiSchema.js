@@ -11,7 +11,7 @@ export default {
         {
           title: 'Select Multiple',
           field: 'selectMultiple',
-          component: 'core.Label@1.0.0',
+          component: 'core.LabelWidgetComponent@1.0.0',
           props: {
             uiSchema: {
               'ui:options': {

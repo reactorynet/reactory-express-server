@@ -31,6 +31,9 @@ import FilterResults from './salesConfigurator/FilterResults';
 import NextActionDetail from './nextActionDetail';
 import QuoteNoteDetail from './quote/QuoteNoteDetail';
 
+import TabbedProductList from './productCatalog/TabbedContainer';
+import ProductOverview from './productCatalog/ProductOverview';
+
 export default [
   SalesDashboard,
   ProductDashboard,
@@ -52,5 +55,7 @@ export default [
   CategoryFilterList,
   FilterResults,
   NextActionDetail,
-  QuoteNoteDetail
+  QuoteNoteDetail,
+  TabbedProductList,
+  ProductOverview
 ];
