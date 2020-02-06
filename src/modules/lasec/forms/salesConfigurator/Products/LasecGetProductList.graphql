@@ -9,6 +9,7 @@ query LasecGetProductList($product: String) {
     qtyOnOrder
     unitOfMeasure
     price
+    priceAdditionalInfo
     image
     onSyspro
   }

@@ -12,6 +12,7 @@ export default {
         qtyOnOrder
         unitOfMeasure
         price
+        priceAdditionalInfo
         image
         onSyspro
       }
@@ -31,6 +32,7 @@ export default {
       '[].price': 'products.[].price',
       '[].image': 'products.[].image',
       '[].onSyspro': 'products.[].onSyspro',
+      '[].priceAdditionalInfo': 'products.[].priceAdditionalInfo',
     },
     resultType: 'array',
     edit: false,

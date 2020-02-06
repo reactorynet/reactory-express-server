@@ -133,9 +133,33 @@ const uiSchema: any = {
         },
         {
           title: 'Price', field: 'price',
-          component: 'core.CurrencyLabel@1.0.0',
+          component: 'core.StyledCurrencyLabel@1.0.0',
+          props:{
+            uiSchema: {
+              'ui:options': {
+                prependText: 'From: ',
+                conditionalStyles: [
+                  {
+                    key: 'ON_SPECIAL',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'PRICE ON SPECIAL'
+                  },
+                  {
+                    key: 'EXPIRED',
+                    style: {
+                      color: '#4AC0DC'
+                    },
+                    tooltip: 'PRICE EXPIRED'
+                  }
+                ]
+              }
+            },
+          },
           propsMap: {
             price: 'value',
+            priceAdditionalInfo: 'condition',
           },
         },
       ],
