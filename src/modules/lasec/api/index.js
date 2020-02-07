@@ -193,13 +193,23 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
   logger.debug(`Making fetch call with ${absoluteUrl}`, kwargs);
 
   const apiResponse = await fetch(absoluteUrl, kwargs).then();
-  if(apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201 ) {
-    logger.debug('Successful API call returning json body', { status: apiResponse.status });
-    return apiResponse.json();
-  } else {
-    logger.warn(`Failed API call to ${absoluteUrl}`, { apiResponse });
+  if(apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201 ) {    
+    try {
+      logger.debug('Successful API call returning json body', { status: apiResponse.status });     
+      return apiResponse.json();
+    } catch(jsonError) {
+      logger.error("JSON Error", jsonError);
+      apiResponse.text().then( text => {
+        logger.error(`Error Source: ${text}`);
+      });
+    }    
+  } else {    
+    logger.warn(`Failed API call to ${absoluteUrl}`, { apiResponse, status: apiResponse.status || 'xxx', statusText: apiResponse.statusText });
     switch (apiResponse.status) {
-      case 401:
+      case 400: {
+        throw new ApiError('Could not execute fetch against Lasec API, Bad Request', { status: apiResponse, statusText: apiResponse.statusText });
+      }
+      case 401:      
       case 403: {
 
         const retry =  async function retry(){
@@ -236,7 +246,7 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
         break;
       }
       default: {
-        throw new ApiError('Could not execute fetch against Lasec API', apiResponse);
+        throw new ApiError('Could not execute fetch against Lasec API',  { status: apiResponse, statusText: apiResponse.statusText });        
       }
     }
 
@@ -297,11 +307,16 @@ const Api = {
   },
   Invoices: {
     list: async (params = defaultParams) => {
-      const invoiceResult = await FETCH(SECONDARY_API_URLS.invoices.url, { params: { ...defaultParams, ...params } });;
-      if (invoiceResult.status === 'success') {
-        return invoiceResult.payload;
-      }       
-      return { pagination: {}, ids: [], items: [] };
+      try {
+        const invoiceResult = await FETCH(SECONDARY_API_URLS.invoices.url, { params: { ...defaultParams, ...params } });
+        if (invoiceResult.status === 'success') {
+          return invoiceResult.payload;
+        }       
+        return { pagination: {}, ids: [], items: [] };
+      } catch(invoiceErrors) {
+        logger.error(`Error fetching invoices ${invoiceErrors.message}`, invoiceErrors);
+        return { pagination: {}, ids: [], items: [] };
+      }      
     }
   },
   PurchaseOrders: {
@@ -562,38 +577,33 @@ const Api = {
     },
 
     getLasecUsers: async ( staff_user_ids = [] ) => {
-      const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, { filter: {
-        ids: staff_user_ids
+      const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, { 
+        params: { 
+          filter: {
+          ids: staff_user_ids
+        }
       }}, true, false, 0).then();
 
       logger.debug(`Response from API ${lasecStaffUserResponse.status}`, lasecStaffUserResponse);
-      if(lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {
-        return lasecStaffUserResponse.payload;
+      if(lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload && isArray(lasecStaffUserResponse.payload.items)) {
+        return lasecStaffUserResponse.payload.items;
       }
 
       return null;
     },
 
-    getUserTargets: async ( staff_user_ids = [], sum = true) => {
-      const targets = await LasecDatabase.Read.LasecGetUserTargets({
-        context: {
-          connectionId: 'mysql.lasec360',
-          schema: 'lasec360',
-          commandText: LasecQueries.LasecGetUserTargets({staffuserids: staff_user_ids})          
-        }                
-      }).then();
-
-      logger.debug(`Found ${targets.length} results for user targets`, targets);
-
-      if(sum === true) {
+    getUserTargets: async ( staff_user_ids = []) => { 
+      try {
+        const users = await Api.User.getLasecUsers(staff_user_ids).then();
+        logger.debug(`Found ${users.length} results for user targets`, users);        
         let total = 0;
-        targets.forEach(target => total += target);
+        users.forEach(user => total += user.target);
         return total;
-      }
-
-      return targets;
+      } catch (getUsersErrors) {
+        logger.error(`Error getting users and calculating targets`, { getUsersErrors });
+        return 0;
+      }      
     }
-
   },
   Authentication: {
     login: async (username, password) => {

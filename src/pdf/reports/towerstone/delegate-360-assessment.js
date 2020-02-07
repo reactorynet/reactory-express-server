@@ -232,7 +232,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
           behaviour._id.equals(rating.behaviourId)),
         );
 
-        scoreSelf = lodash.isArray(selfRating) === true ? selfRating[0].rating : 0;
+        scoreSelf = lodash.isArray(selfRating) === true && selfRating.length >= 1 ? selfRating[0].rating : 0;
         logger.debug(`Score for self ${scoreSelf}`);
             
         return {
@@ -244,7 +244,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
           individualScores,
         };
       } catch (calcError) {
-        logger.error('Error calculating score', calcError);
+        logger.error(`Error calculating score "${calcError.message}"`, calcError);
 
         return {
           behaviourIndex: bi + 1,
