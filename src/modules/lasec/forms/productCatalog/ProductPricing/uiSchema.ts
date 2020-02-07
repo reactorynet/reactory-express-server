@@ -80,7 +80,11 @@ const uiSchema: any = {
             unitOfMeasure: 'value',
           }
         },
-        { title: 'Price - to be continued', field: 'price' },
+        {
+          title: 'Price',
+          field: 'price',
+          component: 'core.PricingSliderComponent@1.0.0',
+        },
       ],
       options: {
         grouping: true,

@@ -43,15 +43,15 @@ const uiSchema: any = {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
       tabs: [
-        {
-          title: 'Product Overview',
-          componentFqn: 'lasec-crm.LasecProductOverviewTable',
-          componentProps: {
-            query: {
-              product: 'formData.product',
-            }
-          },
-        },
+        // {
+        //   title: 'Product Overview',
+        //   componentFqn: 'lasec-crm.LasecProductOverviewTable',
+        //   componentProps: {
+        //     query: {
+        //       product: 'formData.product',
+        //     }
+        //   },
+        // },
         {
           title: 'Product Pricing',
           componentFqn: 'lasec-crm.LasecProductPricingTable',
