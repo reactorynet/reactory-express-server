@@ -19,6 +19,15 @@ export default {
         wh10CostPrice
         threeMonthAvePrice
         listPrice
+        buyer
+        planner
+        isHazardous
+        siteEvaluationRequired
+        packedLength
+        packedWidth
+        packedHeight
+        packedVolume
+        packedWeight
       }
     }`,
     variables: {
@@ -41,6 +50,15 @@ export default {
       '[].wh10CostPrice': 'products.[].wh10CostPrice',
       '[].threeMonthAvePrice': 'products.[].threeMonthAvePrice',
       '[].listPrice': 'products.[].listPrice',
+      '[].buyer': 'products.[].buyer',
+      '[].planner': 'products.[].planner',
+      '[].isHazardous': 'products.[].isHazardous',
+      '[].siteEvaluationRequired': 'products.[].siteEvaluationRequired',
+      '[].packedLength': 'products.[].packedLength',
+      '[].packedWidth': 'products.[].packedWidth',
+      '[].packedHeight': 'products.[].packedHeight',
+      '[].packedVolume': 'products.[].packedVolume',
+      '[].packedWeight': 'products.[].packedWeight',
     },
     resultType: 'array',
     edit: false,

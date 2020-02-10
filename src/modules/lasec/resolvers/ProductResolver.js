@@ -140,7 +140,7 @@ const getProducts = async (params) => {
   // logger.debug(`Fetched Expanded View for (${productDetails.items.length}) Products from API`);
   let products = [...productDetails.items];
 
-  // logger.debug('PRODUCT RESOLVER - PRODUCTS::', products.slice(0, 10));
+  logger.debug('PRODUCT RESOLVER - PRODUCTS::', products.slice(0, 10));
 
   products = products.map(prd => {
     return {
@@ -156,6 +156,19 @@ const getProducts = async (params) => {
       priceAdditionalInfo: prd.price_is_expired ? 'EXPIRED': (prd.on_special ? 'ON_SPECIAL' : ''),
       image: prd.image_url,
       onSyspro: prd.is_in_syspro,
+      landedPrice: prd.cost_price_cents,
+      wh10CostPrice: prd.actual_cost_wh10,
+      threeMonthAvePrice: prd.three_month_ave_price_cents,
+      listPrice: prd.list_price_cents,
+      buyer: prd.buyer,
+      planner: prd.planner,
+      isHazardous: prd.is_hazardous ? 'Yes' : 'No',
+      siteEvaluationRequired: prd.site_evaluation_required ? 'Yes' : 'No',
+      packedLength: prd.packed_length,
+      packedWidth: prd.packed_width,
+      packedHeight: prd.packed_height,
+      packedVolume: prd.packed_volume,
+      packedWeight: prd.packed_weight,
     }
   });
 

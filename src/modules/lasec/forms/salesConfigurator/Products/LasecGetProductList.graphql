@@ -12,5 +12,18 @@ query LasecGetProductList($product: String) {
     priceAdditionalInfo
     image
     onSyspro
+    landedPrice
+    wh10CostPrice
+    threeMonthAvePrice
+    listPrice
+    buyer
+    planner
+    isHazardous
+    siteEvaluationRequired
+    packedLength
+    packedWidth
+    packedHeight
+    packedVolume
+    packedWeight
   }
 }

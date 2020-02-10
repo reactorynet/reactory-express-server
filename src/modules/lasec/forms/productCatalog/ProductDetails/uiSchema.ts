@@ -83,13 +83,13 @@ const uiSchema: any = {
         {
           title: 'Price',
           field: 'price',
-          component: 'core.PricingSliderComponent@1.0.0',
-          propsMap: {
-            landedPrice: 'landedPrice',
-            wh10CostPrice: 'wh10CostPrice',
-            threeMonthAvePrice: 'threeMonthAvePrice',
-            listPrice: 'listPrice',
-          }
+          component: 'core.TableChildComponentWrapper@1.0.0',
+          props: {
+            childComponent: 'core.TableChildComponentWrapper@1.0.0',
+            'ui:options': {
+              variant: 'rounded'
+            },
+          },
         },
       ],
       options: {

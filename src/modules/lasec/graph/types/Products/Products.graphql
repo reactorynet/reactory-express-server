@@ -11,6 +11,19 @@ type Product {
   priceAdditionalInfo: String
   image: String
   onSyspro: String
+  landedPrice: Int
+  wh10CostPrice: Int
+  threeMonthAvePrice: Int
+  listPrice: Int
+  buyer: String
+  planner: String
+  isHazardous: String
+  siteEvaluationRequired: String
+  packedLength: Int
+  packedWidth: Int
+  packedHeight: Int
+  packedVolume: Int
+  packedWeight: Int
 }
 
 type ProductQueryDetail {

@@ -52,9 +52,27 @@ const uiSchema: any = {
         //     }
         //   },
         // },
+        // {
+        //   title: 'Product Pricing',
+        //   componentFqn: 'lasec-crm.LasecProductPricingTable',
+        //   componentProps: {
+        //     query: {
+        //       product: 'formData.product',
+        //     }
+        //   },
+        // },
+        // {
+        //   title: 'More Details',
+        //   componentFqn: 'lasec-crm.LasecProductDetailTable',
+        //   componentProps: {
+        //     query: {
+        //       product: 'formData.product',
+        //     }
+        //   },
+        // },
         {
-          title: 'Product Pricing',
-          componentFqn: 'lasec-crm.LasecProductPricingTable',
+          title: 'Dimensions',
+          componentFqn: 'lasec-crm.LasecProductDetailTable',
           componentProps: {
             query: {
               product: 'formData.product',
