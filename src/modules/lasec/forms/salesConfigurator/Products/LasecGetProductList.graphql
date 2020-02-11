@@ -25,5 +25,6 @@ query LasecGetProductList($product: String) {
     packedHeight
     packedVolume
     packedWeight
+    numberOfSalesOrders
   }
 }

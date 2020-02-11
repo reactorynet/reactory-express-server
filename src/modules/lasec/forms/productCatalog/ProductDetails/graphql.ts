@@ -28,6 +28,7 @@ export default {
         packedHeight
         packedVolume
         packedWeight
+        numberOfSalesOrders
       }
     }`,
     variables: {
@@ -59,6 +60,7 @@ export default {
       '[].packedHeight': 'products.[].packedHeight',
       '[].packedVolume': 'products.[].packedVolume',
       '[].packedWeight': 'products.[].packedWeight',
+      '[].numberOfSalesOrders': 'products.[].numberOfSalesOrders',
     },
     resultType: 'array',
     edit: false,
