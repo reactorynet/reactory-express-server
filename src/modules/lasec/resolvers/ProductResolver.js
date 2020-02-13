@@ -206,10 +206,7 @@ const getWarehouseStockLevels = async (params) => {
   }).then();
 
   let totalOnHand = 0;
-  let quantityAllocated = 0;
-  let totalOnOrder = 0;
   let totalOnBO = 0;
-  let totalInTransit = 0;
   let totalAvailable = 0;
 
   // Get warehouse details
@@ -218,11 +215,6 @@ const getWarehouseStockLevels = async (params) => {
     totalAvailable += warehouse.QtyAvailable;
     totalOnHand += warehouse.QtyOnHand;
     totalOnBO += warehouse.QtyOnBackOrder;
-    // quantityAllocated += warehouse.QtyAllocated;
-    // totalOnOrder += warehouse.QtyOnOrder;
-    // totalInTransit += warehouse.QtyInTransit;
-
-    //{"filter":{"ids":["10"]},"pagination":{"enabled":false}}
     const warehouseDetails = await lasecApi.Products.warehouse({ filter: { ids: [warehouse.warehouse_id], pagination: { enabled: false } } }).then();
     const detail = warehouseDetails.items[0];
 
@@ -231,20 +223,24 @@ const getWarehouseStockLevels = async (params) => {
       qtyAvailable: warehouse.QtyAvailable,
       qtyOnHand: warehouse.QtyOnHand,
       qtyOnBO: warehouse.QtyOnBackOrder,
-    }
+    };
 
+  });
+
+  stock.push({
+    name: 'Totals',
+    qtyAvailable: totalAvailable,
+    qtyOnHand: totalOnHand,
+    qtyOnBO: totalOnBO,
   });
 
   return {
     stock,
-    totals: [
-      { field: 'Available', qty: totalAvailable },
-      { field: 'On Hand', qty: totalOnHand },
-      { field: 'On Order', qty: totalOnOrder },
-      // { field: 'Allocated', qty: quantityAllocated },
-      // { field: 'On Back Order', qty: totalOnBO },
-      // { field: 'In Transit', qty: totalInTransit },
-    ],
+    totals: {
+      qtyAvailable: totalAvailable,
+      qtyOnHand: totalOnHand,
+      qtyOnBO: totalOnBO,
+    },
   };
 }
 

@@ -46,7 +46,7 @@ type ProductClass {
 
 type WarehouseStockDetails {
   stock: [WarehouseStock]
-  totals: [StockTotals]
+  totals: StockTotals
 }
 
 type WarehouseStock {
@@ -57,8 +57,9 @@ type WarehouseStock {
 }
 
 type StockTotals {
-  field: String
-  qty: Int
+  qtyAvailable: Int
+  qtyOnHand: Int
+  qtyOnBO: Int
 }
 
 extend type Query {

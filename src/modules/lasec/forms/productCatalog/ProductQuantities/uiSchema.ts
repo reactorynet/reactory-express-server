@@ -6,13 +6,14 @@ const uiSchema: any = {
     componentType: 'div',
     container: 'div',
   },
-  locations: {
+  stock: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       options: {
         toolbar: false,
         draggable: false,
         grouping: false,
+        paging: false
       },
       columns: [
         { title: 'Warehouse', field: 'name' },
@@ -20,9 +21,9 @@ const uiSchema: any = {
         { title: 'Quantity On Hand', field: 'qtyOnHand' },
         { title: 'Quantity On BO', field: 'qtyOnBO' },
       ],
+      lastRowFooter: true,
     },
-  }
-
+  },
 };
 
 export default uiSchema;

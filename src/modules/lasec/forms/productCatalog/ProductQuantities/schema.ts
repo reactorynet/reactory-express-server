@@ -22,7 +22,7 @@ const schema: Reactory.ISchema = {
           },
         }
       },
-    }
+    },
   }
 
 };

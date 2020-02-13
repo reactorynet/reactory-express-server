@@ -1,8 +1,8 @@
 export default {
   query: {
-    name: 'LasecGetWarehouseStock',
-    text: `query LasecGetWarehouseStock {
-      LasecGetWarehouseStock {
+    name: 'LasecGetWarehouseStockLevels',
+    text: `query LasecGetWarehouseStockLevels {
+      LasecGetWarehouseStockLevels {
         stock {
           name
           qtyAvailable
@@ -10,8 +10,9 @@ export default {
           qtyOnBO
         }
         totals {
-          field
-          qty
+          qtyAvailable
+          qtyOnHand
+          qtyOnBO
         }
       }
     }`,
