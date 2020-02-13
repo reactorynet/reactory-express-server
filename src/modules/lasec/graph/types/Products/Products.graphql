@@ -19,11 +19,11 @@ type Product {
   planner: String
   isHazardous: String
   siteEvaluationRequired: String
-  packedLength: Int
-  packedWidth: Int
-  packedHeight: Int
-  packedVolume: Int
-  packedWeight: Int
+  packedLength: Float
+  packedWidth: Float
+  packedHeight: Float
+  packedVolume: Float
+  packedWeight: Float
   numberOfSalesOrders: Int
 }
 
@@ -44,12 +44,29 @@ type ProductClass {
   name: String
 }
 
+type WarehouseStockDetails {
+  stock: [WarehouseStock]
+  totals: [StockTotals]
+}
+
+type WarehouseStock {
+  name: String
+  qtyAvailable: Int
+  qtyOnHand: Int
+  qtyOnBO: Int
+}
+
+type StockTotals {
+  field: String
+  qty: Int
+}
+
 extend type Query {
   LasecGetProductList(product: String): [Product]
   LasecGetProductById: [Product]
   LasecGetProductQueryDetail(productId: String!): ProductQueryDetail
   LasecGetProductClassList: [ProductClass]
-  LasecGetWarehouseStockLevels: Any
+  LasecGetWarehouseStockLevels: WarehouseStockDetails
 }
 extend type Mutation {
   LasecSendProductQuery(

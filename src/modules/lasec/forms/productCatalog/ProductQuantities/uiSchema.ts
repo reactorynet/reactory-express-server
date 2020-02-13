@@ -15,11 +15,10 @@ const uiSchema: any = {
         grouping: false,
       },
       columns: [
-        { title: 'Warehouse', field: 'warehouse' },
+        { title: 'Warehouse', field: 'name' },
         { title: 'Quantity Available', field: 'qtyAvailable' },
         { title: 'Quantity On Hand', field: 'qtyOnHand' },
         { title: 'Quantity On BO', field: 'qtyOnBO' },
-        { title: 'Total', field: 'total' },
       ],
     },
   }

@@ -3,25 +3,22 @@ import Reactory from '@reactory/server-core/types/reactory';
 const schema: Reactory.ISchema = {
   type: 'object',
   properties: {
-    locations: {
+    stock: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
-          warehouse: {
+          name: {
             type: 'string'
           },
           qtyAvailable: {
-            type: 'string'
+            type: 'number'
           },
           qtyOnHand: {
-            type: 'string'
+            type: 'number'
           },
           qtyOnBO: {
-            type: 'string'
-          },
-          total: {
-            type: 'string'
+            type: 'number'
           },
         }
       },
