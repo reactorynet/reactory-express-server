@@ -81,86 +81,15 @@ const uiSchema: any = {
           }
         },
         {
-          title: 'Qty Available',
-          field: 'qtyAvailable',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                icon: 'shopping_basket',
-                iconPosition: 'left',
-                variant: 'p'
-              }
-            },
-          },
+          title: 'Price',
+          field: 'price',
+          component: 'core.PricingSliderComponent@1.0.0',
           propsMap: {
-            qtyAvailable: 'value',
+            landedPrice: 'landedPrice',
+            wh10CostPrice: 'wh10CostPrice',
+            threeMonthAvePrice: 'threeMonthAvePrice',
+            listPrice: 'listPrice',
           }
-        },
-        {
-          title: 'Qty on Hand',
-          field: 'qtyOnHand',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                icon: 'perm_identity',
-                iconPosition: 'left',
-                variant: 'p'
-              }
-            },
-          },
-          propsMap: {
-            qtyOnHand: 'value',
-          }
-        },
-        {
-          title: 'Qty on PO',
-          field: 'qtyOnOrder',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                icon: 'receipt',
-                iconPosition: 'left',
-                variant: 'p'
-              }
-            },
-          },
-          propsMap: {
-            qtyOnOrder: 'value',
-          }
-        },
-        {
-          title: 'Price', field: 'price',
-          component: 'core.StyledCurrencyLabel@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                prependText: 'From: ',
-                conditionalStyles: [
-                  {
-                    key: 'ON_SPECIAL',
-                    style: {
-                      color: '#4AC0DC'
-                    },
-                    tooltip: 'PRICE ON SPECIAL'
-                  },
-                  {
-                    key: 'EXPIRED',
-                    style: {
-                      color: '#D22D2C'
-                    },
-                    tooltip: 'PRICE EXPIRED'
-                  }
-                ]
-              }
-            },
-          },
-          propsMap: {
-            price: 'value',
-            priceAdditionalInfo: 'condition',
-          },
         },
       ],
       options: {

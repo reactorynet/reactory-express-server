@@ -73,7 +73,9 @@ export default {
   product_get: { url: `api/${ENTITY_KEY__PRODUCT}/`, allowed_methods: ['get'] },
   product_costing_get: { url: `api/${ENTITY_KEY__PRODUCT_COSTING}/`, allowed_methods: ['get'] },
   groups: { url: `api/${ENTITY_KEY__REP_CODE}/`, allowed_methods: ['get'] },
-  
+  warehouse: { url: `api/${ENTITY_KEY__WAREHOUSE}/`, allowed_methods: ['get'] },
+  warehouse_strock: { url: `api/${ENTITY_KEY__WAREHOUSE_STOCK}/`, allowed_methods: ['get'] },
+
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },
   { url: `api/${ENTITY_KEY__PRODUCT_BUYER}/`, allowed_methods: ['get'] },

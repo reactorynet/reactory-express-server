@@ -43,13 +43,39 @@ const uiSchema: any = {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
       tabs: [
+        // {
+        //   title: 'Product Overview',
+        //   componentFqn: 'lasec-crm.LasecProductOverviewTable',
+        //   componentProps: {
+        //     query: {
+        //       product: 'formData.product',
+        //     }
+        //   },
+        // },
+        // {
+        //   title: 'Product Pricing',
+        //   componentFqn: 'lasec-crm.LasecProductPricingTable',
+        //   componentProps: {
+        //     query: {
+        //       product: 'formData.product',
+        //     }
+        //   },
+        // },
+        // {
+        //   title: 'More Details',
+        //   componentFqn: 'lasec-crm.LasecProductDetailTable',
+        //   componentProps: {
+        //     query: {
+        //       product: 'formData.product',
+        //     }
+        //   },
+        // },
         {
-          title: 'Product Overview',
-          componentFqn: 'lasec-crm.LasecProductOverviewTable',
+          title: 'Dimensions',
+          componentFqn: 'lasec-crm.LasecProductDetailTable',
           componentProps: {
             query: {
               product: 'formData.product',
-              supplier: 'formData.supplier'
             }
           },
         },

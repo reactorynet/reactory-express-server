@@ -11,6 +11,20 @@ type Product {
   priceAdditionalInfo: String
   image: String
   onSyspro: String
+  landedPrice: Int
+  wh10CostPrice: Int
+  threeMonthAvePrice: Int
+  listPrice: Int
+  buyer: String
+  planner: String
+  isHazardous: String
+  siteEvaluationRequired: String
+  packedLength: Int
+  packedWidth: Int
+  packedHeight: Int
+  packedVolume: Int
+  packedWeight: Int
+  numberOfSalesOrders: Int
 }
 
 type ProductQueryDetail {
@@ -35,6 +49,7 @@ extend type Query {
   LasecGetProductById: [Product]
   LasecGetProductQueryDetail(productId: String!): ProductQueryDetail
   LasecGetProductClassList: [ProductClass]
+  LasecGetWarehouseStockLevels: Any
 }
 extend type Mutation {
   LasecSendProductQuery(

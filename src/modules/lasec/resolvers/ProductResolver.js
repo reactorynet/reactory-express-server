@@ -92,9 +92,6 @@ import emails from '@reactory/server-core/emails';
 
 const getProducts = async (params) => {
 
-
-  logger.debug('GETTING PRODUCTS');
-
   // ADITIONAL PARAMS : Product Name
   // {"filter":{"any_field":"beakers"}
 
@@ -137,15 +134,15 @@ const getProducts = async (params) => {
     ids = [...ids, ...pagedResult.ids]
   });
 
-  logger.debug(`Loading (${ids.length}) product ids`);
+  // logger.debug(`Loading (${ids.length}) product ids`);
 
   const productDetails = await lasecApi.Products.list({ filter: { ids: ids } });
-  logger.debug(`Fetched Expanded View for (${productDetails.items.length}) Products from API`);
+  // logger.debug(`Fetched Expanded View for (${productDetails.items.length}) Products from API`);
   let products = [...productDetails.items];
 
-  logger.debug(`PRODUCT RESOLVER - PRODUCTS::  ${JSON.stringify(products[0])}`);
+  logger.debug('PRODUCT RESOLVER - PRODUCTS::', products.slice(0, 10));
 
-  products = products.map(prd => {
+  products = products.map((prd) => {
     return {
       id: prd.id,
       name: prd.name,
@@ -156,13 +153,120 @@ const getProducts = async (params) => {
       qtyOnOrder: prd.QtyOnOrder,
       unitOfMeasure: prd.pack_size,
       price: prd.list_price_cents,
-      priceAdditionalInfo: prd.price_is_expired ? 'EXPIRED': (prd.on_special ? 'ON_SPECIAL' : ''),
+      priceAdditionalInfo: prd.price_is_expired ? 'EXPIRED' : (prd.on_special ? 'ON_SPECIAL' : ''),
       image: prd.image_url,
       onSyspro: prd.is_in_syspro,
-    }
+      landedPrice: prd.cost_price_cents,
+      wh10CostPrice: prd.actual_cost_wh10,
+      threeMonthAvePrice: prd.three_month_ave_price_cents,
+      listPrice: prd.list_price_cents,
+      buyer: prd.buyer,
+      planner: prd.planner,
+      isHazardous: prd.is_hazardous ? 'Yes' : 'No',
+      siteEvaluationRequired: prd.site_evaluation_required ? 'Yes' : 'No',
+      packedLength: prd.packed_length,
+      packedWidth: prd.packed_width,
+      packedHeight: prd.packed_height,
+      packedVolume: prd.packed_volume,
+      packedWeight: prd.packed_weight,
+      numberOfSalesOrders: prd.QtyOnOrder, // WHAT FIELD TO BIND TO - IS THIS THE SEPARATE API CALL?
+    };
   });
 
   setCacheItem(cachekey, products, 60 * 10)
+
+  return products;
+}
+
+const getWarehouseStockLevels = async (params) => {
+
+  // {"filter":{"product_id":"3892"},"format":{"ids_only":true},"ordering":{},"pagination":{"current_page":1,"page_size":25}}
+
+
+  const apiFilter = { product_id: '3892' };
+
+  // const cachekey = `PRODUCT_LIST_TEST`;
+  // let _cachedResults = await getCacheItem(cachekey);
+  // if (_cachedResults) return _cachedResults;
+
+  const warehouseResult = await lasecApi.Products.warehouse_stock({
+    filter: apiFilter,
+    format: {
+      ids_only: true,
+    },
+    ordering: {},
+    pagination: {
+      current_page: 1,
+      page_size: 25,
+    },
+  }).then();
+
+  logger.debug('WAREHOUSE RESPONSE:: ', warehouseResult)
+
+  return [];
+
+  // let ids = [];
+
+  // if (isArray(productResult.ids) === true) {
+  //   ids = [...productResult.ids];
+  // }
+
+  // const pagePromises = [];
+
+  // if (productResult.pagination && productResult.pagination.num_pages > 1) {
+  //   const max_pages = productResult.pagination.num_pages < 10 ? productResult.pagination.num_pages : 10;
+
+  //   for (let pageIndex = productResult.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
+  //     pagePromises.push(lasecApi.Products.list({ filter: apiFilter, pagination: { ...productResult.pagination, current_page: pageIndex } }));
+  //   }
+  // }
+
+  // const pagedResults = await Promise.all(pagePromises).then();
+
+  // pagedResults.forEach((pagedResult) => {
+  //   ids = [...ids, ...pagedResult.ids]
+  // });
+
+  // // logger.debug(`Loading (${ids.length}) product ids`);
+
+  // const productDetails = await lasecApi.Products.list({ filter: { ids: ids } });
+  // // logger.debug(`Fetched Expanded View for (${productDetails.items.length}) Products from API`);
+  // let products = [...productDetails.items];
+
+  // logger.debug('PRODUCT RESOLVER - PRODUCTS::', products.slice(0, 10));
+
+  // products = products.map((prd) => {
+  //   return {
+  //     id: prd.id,
+  //     name: prd.name,
+  //     code: prd.code,
+  //     description: prd.description,
+  //     qtyAvailable: prd.QtyAvailable,
+  //     qtyOnHand: prd.QtyOnHand,
+  //     qtyOnOrder: prd.QtyOnOrder,
+  //     unitOfMeasure: prd.pack_size,
+  //     price: prd.list_price_cents,
+  //     priceAdditionalInfo: prd.price_is_expired ? 'EXPIRED' : (prd.on_special ? 'ON_SPECIAL' : ''),
+  //     image: prd.image_url,
+  //     onSyspro: prd.is_in_syspro,
+  //     landedPrice: prd.cost_price_cents,
+  //     wh10CostPrice: prd.actual_cost_wh10,
+  //     threeMonthAvePrice: prd.three_month_ave_price_cents,
+  //     listPrice: prd.list_price_cents,
+  //     buyer: prd.buyer,
+  //     planner: prd.planner,
+  //     isHazardous: prd.is_hazardous ? 'Yes' : 'No',
+  //     siteEvaluationRequired: prd.site_evaluation_required ? 'Yes' : 'No',
+  //     packedLength: prd.packed_length,
+  //     packedWidth: prd.packed_width,
+  //     packedHeight: prd.packed_height,
+  //     packedVolume: prd.packed_volume,
+  //     packedWeight: prd.packed_weight,
+  //     numberOfSalesOrders: prd.QtyOnOrder, // WHAT FIELD TO BIND TO - IS THIS THE SEPARATE API CALL?
+  //   };
+  // });
+
+  // setCacheItem(cachekey, products, 60 * 10)
 
   return products;
 }
@@ -261,6 +365,9 @@ export default {
     },
     LasecGetProductClassList: async (obj, args) => {
       return getProductClasses();
+    },
+    LasecGetWarehouseStockLevels: async (obj, args) => {
+      return getWarehouseStockLevels();
     },
   },
   Mutation: {
