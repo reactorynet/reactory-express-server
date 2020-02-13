@@ -19,11 +19,11 @@ type Product {
   planner: String
   isHazardous: String
   siteEvaluationRequired: String
-  packedLength: Int
-  packedWidth: Int
-  packedHeight: Int
-  packedVolume: Int
-  packedWeight: Int
+  packedLength: Float
+  packedWidth: Float
+  packedHeight: Float
+  packedVolume: Float
+  packedWeight: Float
   numberOfSalesOrders: Int
 }
 
