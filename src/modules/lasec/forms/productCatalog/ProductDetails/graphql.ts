@@ -29,11 +29,10 @@ export default {
         packedVolume
         packedWeight
         numberOfSalesOrders
+        numberOfPurchaseOrders
       }
     }`,
-    variables: {
-      // 'formData.product': 'product',
-    },
+    variables: {},
     resultMap: {
       '[].id': 'products.[].id',
       '[].name': 'products.[].name',
@@ -61,6 +60,7 @@ export default {
       '[].packedVolume': 'products.[].packedVolume',
       '[].packedWeight': 'products.[].packedWeight',
       '[].numberOfSalesOrders': 'products.[].numberOfSalesOrders',
+      '[].numberOfPurchaseOrders': 'products.[].numberOfPurchaseOrders',
     },
     resultType: 'array',
     edit: false,

@@ -1,8 +1,8 @@
 export default {
   query: {
     name: 'LasecGetWarehouseStockLevels',
-    text: `query LasecGetWarehouseStockLevels {
-      LasecGetWarehouseStockLevels {
+    text: `query LasecGetWarehouseStockLevels($productId: String) {
+      LasecGetWarehouseStockLevels(productId: $productId) {
         stock {
           name
           qtyAvailable
@@ -17,7 +17,7 @@ export default {
       }
     }`,
     variables: {
-      // 'formData.product': 'product',
+      'formData.id': 'productId',
     },
     resultMap: {
       'stock': 'stock',

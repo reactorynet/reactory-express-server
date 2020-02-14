@@ -2,6 +2,7 @@
 const uiSchema: any = {
   'ui:options': {
     showSubmit: false,
+    showRefresh: false,
     showHelp: false,
     componentType: 'div',
     container: 'div',

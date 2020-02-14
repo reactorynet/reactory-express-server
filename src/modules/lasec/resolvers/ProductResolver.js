@@ -107,8 +107,8 @@ const getProducts = async (params) => {
 
   let apiFilter = {};
 
-  let _cachedResults = await getCacheItem(cachekey);
-  if (_cachedResults) return _cachedResults;
+  // let _cachedResults = await getCacheItem(cachekey);
+  // if (_cachedResults) return _cachedResults;
 
   const productResult = await lasecApi.Products.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
 
@@ -142,7 +142,7 @@ const getProducts = async (params) => {
 
   logger.debug('PRODUCT RESOLVER - PRODUCTS::', products.slice(0, 10));
 
-  products = products.map((prd) => {
+  products = products.map(async (prd) => {
     return {
       id: prd.id,
       name: prd.name,
@@ -169,22 +169,16 @@ const getProducts = async (params) => {
       packedHeight: prd.packed_height,
       packedVolume: prd.packed_volume,
       packedWeight: prd.packed_weight,
-      numberOfSalesOrders: prd.QtyOnOrder, // WHAT FIELD TO BIND TO - IS THIS THE SEPARATE API CALL?
     };
   });
 
-  setCacheItem(cachekey, products, 60 * 10)
+  setCacheItem(cachekey, products, 60 * 10);
 
   return products;
 }
 
 const getWarehouseStockLevels = async (params) => {
-
-  const apiFilter = { product_id: '3892' };
-
-  // const cachekey = `PRODUCT_LIST_TEST`;
-  // let _cachedResults = await getCacheItem(cachekey);
-  // if (_cachedResults) return _cachedResults;
+  const apiFilter = { product_id: params.productId };
 
   const warehouseIds = await lasecApi.Products.warehouse_stock({
     filter: apiFilter,
@@ -209,7 +203,6 @@ const getWarehouseStockLevels = async (params) => {
   let totalOnBO = 0;
   let totalAvailable = 0;
 
-  // Get warehouse details
   const stock = warehouseStock.items.map(async (warehouse) => {
 
     totalAvailable += warehouse.QtyAvailable;
@@ -340,7 +333,7 @@ export default {
       return getProductClasses();
     },
     LasecGetWarehouseStockLevels: async (obj, args) => {
-      return getWarehouseStockLevels();
+      return getWarehouseStockLevels(args);
     },
   },
   Mutation: {

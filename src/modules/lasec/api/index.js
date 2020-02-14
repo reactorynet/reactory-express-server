@@ -328,6 +328,18 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+    sales_orders: async (params = defaultParams) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = apiResponse;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
   },
   Invoices: {
     list: async (params = defaultParams) => {

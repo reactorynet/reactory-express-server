@@ -24,7 +24,6 @@ const schema: Reactory.ISchema = {
       },
     },
   }
-
 };
 
 export default schema;
