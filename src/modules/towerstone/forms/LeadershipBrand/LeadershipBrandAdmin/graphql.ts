@@ -26,7 +26,10 @@ mutation CreateBrandMutation($brandInput: BrandInput!, $organizationId: String!)
 }
 `;
 
+
+
 export const mutationMap = {
+  'formContext.organizationId': 'organizationId',
   'formData.id': 'brandInput.id',
   'formData.title': 'brandInput.title',
   'formData.description': 'brandInput.description',
@@ -120,7 +123,13 @@ export default {
       name: 'createLeadershipBrand',
       text: createBrandForOrganization,
       objectMap: true,
-      variables: mutationMap,
+      variables: {
+        'formContext.organizationId': 'organizationId',      
+        'formData.title': 'brandInput.title',
+        'formData.description': 'brandInput.description',
+        'formData.scale.id': 'brandInput.scale',
+        'formData.qualities': 'brandInput.qualities',
+      },
       options: {
         refetchQueries: [],
       },

@@ -323,11 +323,13 @@ const getInvoices = async ({ periodStart, periodEnd, teamIds = null, repIds = nu
     // debugger;
     const invoiceResult = await lasecApi.Invoices.list({ 
       filter: { 
-        sales_team_id: null,
+        sales_team_id: teamIds,
         start_date: periodStart, 
         end_date: periodEnd 
       },
-      ordering: {},
+      ordering: {
+        "invoice_date": "asc"
+      },
       pagination: {
         enabled: false
       }, 
@@ -339,7 +341,9 @@ const getInvoices = async ({ periodStart, periodEnd, teamIds = null, repIds = nu
           filter: { 
             ids: invoiceResult.ids 
           },
-          ordering: {},
+          ordering: {
+            "invoice_date": "asc"
+          },
           pagination: {
             enabled: false,
           } 
@@ -365,10 +369,21 @@ const getInvoices = async ({ periodStart, periodEnd, teamIds = null, repIds = nu
 const getISOs = async ({ periodStart, periodEnd }) => {
   try {
     logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} })`);
-    const isoIds = await lasecApi.PurchaseOrders.list({ filter: { start_date: periodStart, end_date: periodEnd } }).then();
+    const isoIds = await lasecApi.PurchaseOrders.list(
+      {
+        filter: { order_status: "1",  start_date: periodStart, end_date: periodEnd },
+        ordering: { order_date: "desc" },
+        pagination: { enabled: false }
+      }).then();
     logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} }) --> Result`, isoIds);
+
     if (isArray(isoIds.ids) === true) {
-      const isos = await lasecApi.PurchaseOrders.list({ filter: { ids: isoIds.ids } }).then();
+      const isos = await lasecApi.PurchaseOrders.list({ 
+        filter: { ids: isoIds.ids }, 
+        ordering: { order_date: "desc" }, 
+        pagination: { enabled: false } 
+      }).then();
+
       if (isos && isArray(isos.items) === true) {
         logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} }) --> (${isos.items.length}) items`);
         return isos.items;
@@ -1371,8 +1386,8 @@ export default {
         periodStart = moment(dashparams.periodStart || moment()).startOf('week'),
         periodEnd = moment(dashparams.periodEnd || moment()).endOf('week'),
         agentSelection = 'me',
-        teamIds = [],
-        repIds = [],
+        teamIds = null,
+        repIds = null,
       } = dashparams;
 
       const date_period_keys = [
@@ -1442,6 +1457,10 @@ export default {
         }
       }
 
+
+      let days = moment(periodEnd).diff(moment(periodStart), 'days');
+      logger.debug(`Days in period for LasecDashBoard ${days}`);
+
       let periodLabel = `Quotes Dashboard ${periodStart.format('DD MM YY')} till ${periodEnd.format('DD MM YY')} For ${global.user.firstName} ${global.user.lastName}`;
 
       const teamFilterHash = Hash(teamIds);
@@ -1464,12 +1483,11 @@ export default {
       logger.debug('Fetching Target Data');
       const targets: number = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug('Fetching Next Actions for; User')
-      const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
-      logger.debug('Fetching invoice data');
+      const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();      
       const invoices = await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
-      logger.debug('Fetching isos');
+      logger.debug('Fetching invoice data', invoices);      
       const isos = await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
-
+      logger.debug('Fetching isos', isos);
 
       const quoteStatusFunnel = {
         chartType: 'FUNNEL',
@@ -1493,8 +1511,13 @@ export default {
 
       const quoteISOPie = {
         chartType: 'PIE',
-        data: isos.map((iso) => {
-          return iso;
+        data: isos.map((iso: any, isoIndex: number) => {
+          return { ...iso ,  
+            "value": iso.order_value / 100,
+            "name": iso.sales_team_id || `iso_${isoIndex}`,
+            "outerRadius": 140,
+            "innerRadius": 70,
+            "fill": `#${palette[isoIndex + 1 % palette.length]}`};
         }),
         options: {
           multiple: false,
@@ -1508,8 +1531,15 @@ export default {
 
       const quoteINVPie = {
         chartType: 'PIE',
-        data: invoices.map((invoice) => {
-          return invoice;
+        data: invoices.map((invoice: any, index: number) => {
+          return { 
+            ...invoice, 
+            "value": Math.floor(invoice.invoice_value / 100),
+            "name": invoice.sales_team_id || `invoice_${index}`,
+            "outerRadius": 140,
+            "innerRadius": 70,
+            "fill": `#${palette[index + 1 % palette.length]}`
+          };
         }),
         options: {
           multiple: false,
@@ -1529,7 +1559,7 @@ export default {
             dataKey: 'modified',
           },
           line: {
-            dataKey: 'totalVATExclusive',
+            dataKey: 'quoted',
             dataLabel: 'Total Quoted',
             name: 'Total Quoted',
             stroke: `#${palette[0]}`,
@@ -1602,15 +1632,28 @@ export default {
         });
       });
 
+
+
+
       lodash.sortBy(quotes, [q => q.modified]).forEach((quote) => {
-        dashboardResult.charts.quoteStatusComposed.data.push({
-          "name": quote.id,
+        dashboardResult.charts.quoteStatusComposed.data.push({    
+          "name": quote.id,      
           "modified": moment(quote.modified).format('YYYY-MM-DD'),
-          "totalVATInclusive": quote.totals.totalVATInclusive / 100,
-          "totalVATExclusive": quote.totals.totalVATExclusive / 100,
-          "totalVAT": quote.grand_total_vat_cents
+          "invoiced": 0,
+          "isos": 0,
+          "quoted": quote.totals.totalVATExclusive / 100,
         });
       });
+
+      lodash.sortBy(invoices, [i => i.invoice_date]).forEach((invoice) => {
+        dashboardResult.charts.quoteStatusComposed.data.push({
+          "name": invoice.quote_id,
+          "modified": moment(invoice.invoice_date).format('YYYY-MM-DD'),          
+          "invoiced": invoice.invoice_value / 100,
+          "isos": 0,
+          "quoted": 0,          
+        });
+      })
 
       // let totalTargetValue = 0;
       //targets.forEach((target) => {

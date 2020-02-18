@@ -1,30 +1,21 @@
-const uiSchema = {
-  'ui:toolbar': {
-    buttons: [
-      {
-        command: 'copyLeadershipBrand',
-        id: 'copyLeadershipBrand',
-        color: 'primary',
-        icon: 'file_copy',
-        tooltip: 'Copy this leadershipbrand for another organization',
-        action: 'component',
-        component: {
-          componentFqn: 'core.SlideOutLauncher',
-          props: {
-            componentFqn: 'towerstone.CopyLeadershipBrand',
-            componentProps: {
+import { santizeQualitySpec } from './schema';
 
-            },
-            propsMap: {
-              'formData.organizationId': 'formData.SourceOrganization',
-              'formData.brandId': 'formData.SourceLeadershipBrand',
-              'formData.title': 'formData.TargetTitle'
-            },
-          },
-        },
-      }
-    ]
-  },
+const uiSchema = {  
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [    
+    {
+      title: { md: 6, sm: 12 },
+      scale: { md: 6, sm: 12 },
+      description: { md: 12 }
+    },    
+    {
+      qualityDisplay: { md: 12 },
+      qualities: { md: 12 }
+    }
+  ], 
+  /*
+  ,
+  */
   id: {
     'ui:widget': 'HiddenWidget',
   },
@@ -74,7 +65,35 @@ const uiSchema = {
     },
     */
   },
-  qualities: {
+  qualities: {      
+    'ui:widget': 'MaterialListWidget',
+    'ui:options': {
+      id: 'id',      
+      primaryText: '${item.title || "Edit Quality"}',
+      secondaryText: '${item.description}',
+      variant: 'button',
+      allowAdd: true,
+      title: "Leadership Brand Qualities",
+      secondaryAction: {
+        iconKey: 'edit',
+        label: 'Edit',
+        componentFqn: 'core.SlideOutLauncher@1.0.0',
+        action: 'mount:Component',                  
+        props: {
+          componentFqn: 'towerstone.QualityFormWidget@1.0.0',            
+          componentProps: {
+            'formData': 'formData',
+            'onChange':'onSubmit'
+          },
+          buttonIcon: 'edit',
+          slideDirection: 'down',
+          buttonTitle: 'View Details',
+          windowTitle: 'Edit Quality',
+          buttonVariant: 'IconButton',
+        },        
+      }
+    },
+    /*
     items: {
       id: {
         'ui:widget': 'HiddenWidget',
@@ -98,7 +117,7 @@ const uiSchema = {
             },
           },
         },
-        */
+        
       },
       ordinal: {
         'ui:widget': 'HiddenWidget',
@@ -118,7 +137,6 @@ const uiSchema = {
             },
           },
           description: {
-            /*
             'ui:widget': 'FroalaWidget',
             'ui:options': {
               froalaOptions: {
@@ -135,11 +153,10 @@ const uiSchema = {
                 },
               },
             },
-            */
           },
         },
       },
-    },
+    },*/
   },
 };
 

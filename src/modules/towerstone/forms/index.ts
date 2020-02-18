@@ -5,9 +5,13 @@ import { TowerStoneSurveyDelegateConfig } from './SurveyDelegates';
 import { TowerStoneSurveySettings } from './SurveySettings';
 import { TowerStoneSurveyTemplatesForm } from './SurveyTemplates';
 import { CopyLeadershipBrand } from './CopyLeadershipBrand';
+import { QualityFormWidget } from './LeadershipBrand/QualityFormWidget';
+import { BehaviourFormWidget } from './LeadershipBrand/BehaviourFormWidget';
 
 
 const Forms: Reactory.IReactoryForm[] = [
+  BehaviourFormWidget,
+  QualityFormWidget,
   CopyLeadershipBrand,
   TowerStoneLeadershipBrandConfigForm,
   TowerStoneSurveyConfigForm,

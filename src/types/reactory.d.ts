@@ -233,6 +233,7 @@ declare namespace Reactory {
     tags?: String[],
     helpTopics?: String[]
     schema: ISchema | IObjectSchema | IArraySchema,
+    sanitizeSchema?: ISchema | IObjectSchema | IArraySchema,
     uiSchema?: any,
     uiSchemas?: IUISchemaMenuItem[],
     registerAsComponent: boolean,

@@ -20,7 +20,10 @@ const nilStr = (s) => {
 export const jzon = {
   validate: (data, schema, custom, callback) => {
     return inspector.validate(data, schema, custom, callback);
-  },
+  }, 
+  sanitize: (data, schema) => {
+    return inspector.sanitize(data, schema);
+  } 
 };
 
 

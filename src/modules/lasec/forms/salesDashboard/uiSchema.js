@@ -156,7 +156,7 @@ export default {
   targetPercent: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: 'Target %: ${formData}',
+      format: 'Target: ${Math.floor(formData)}%',
       variant: 'h4',
       // title: 'Target %:'
     }
@@ -178,9 +178,9 @@ export default {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
-        quoteStatusPie: { md: 12, sm: 12, xs: 12 },
-        //quoteISOPie: { md: 4, sm: 12, xs: 12 },
-        //quoteINVPie: { md: 4, sm: 12, xs: 12 },
+        quoteStatusPie: { md: 4, sm: 12, xs: 12 },
+        quoteISOPie: { md: 4, sm: 12, xs: 12 },
+        quoteINVPie: { md: 4, sm: 12, xs: 12 },
       },
       {
         quoteStatusComposed: { md: 12, sm: 12, xs: 12 }
@@ -193,8 +193,7 @@ export default {
         thickness: 5,
         variant: 'static',
       },
-    },
-    /*
+    },  
     quoteISOPie: {
       'ui:widget': 'PieChartWidget',
       'ui:options': {
@@ -202,16 +201,15 @@ export default {
         thickness: 5,
         variant: 'static',
       },
-    },
+    },    
     quoteINVPie: {
       'ui:widget': 'PieChartWidget',
       'ui:options': {
-        size: 80,
+        size: 120,
         thickness: 5,
         variant: 'static',
       },
-    },
-    */
+    },    
     quoteStatusComposed: {
       'ui:widget': 'ComposedChartWidget',
     }

@@ -1,0 +1,172 @@
+{ 
+    "_id" : ObjectId("5e4b6f06c81fb00804a63532"), 
+    "qualities" : [
+        {
+            "_id" : ObjectId("5e4b6f06c81fb00804a63547"), 
+            "title" : "TELOS", 
+            "description" : "Your message has a purpose.", 
+            "ordinal" : NumberInt(0), 
+            "behaviours" : [
+                {
+                    "_id" : ObjectId("5e4b6f06c81fb00804a6354b"), 
+                    "title" : "The purpose of ${employee.firstName}’s message is always clear to his audience (i.e. they clearly understand the why of his message right at the outset).", 
+                    "description" : "The purpose of ${employee.firstName}’s message is always clear to his audience (i.e. they clearly understand the why of his message right at the outset).", 
+                    "ordinal" : NumberInt(0)
+                }, 
+                {
+                    "_id" : ObjectId("5e4b6f06c81fb00804a6354a"), 
+                    "title" : "${employee.firstName} ensures that all parts of his message link to the purpose of his message so that his audience remains engaged.", 
+                    "description" : "${employee.firstName} ensures that all parts of his message link to the purpose of his message so that his audience remains engaged.", 
+                    "ordinal" : NumberInt(1)
+                }, 
+                {
+                    "_id" : ObjectId("5e4b6f06c81fb00804a63549"), 
+                    "title" : "${employee.firstName} ensures that everyone understands how they contribute/can contribute to the purpose that he is conveying.", 
+                    "description" : "${employee.firstName} ensures that everyone understands how they contribute/can contribute to the purpose that he is conveying.", 
+                    "ordinal" : NumberInt(2)
+                }, 
+                {
+                    "_id" : ObjectId("5e4b6f06c81fb00804a63548"), 
+                    "title" : "${employee.firstName}'s messages make the desired impact i.e. achieve the intended purpose.", 
+                    "description" : "${employee.firstName}'s messages make the desired impact i.e. achieve the intended purpose.", 
+                    "ordinal" : NumberInt(3)
+                }
+            ]
+        }, 
+        {
+            "_id" : ObjectId("5e4b7368e0aa5b36acf3b2c7"), 
+            "title" : "TOPOS", 
+            "description" : "Choose your frame i.e. create context", 
+            "ordinal" : NumberInt(0), 
+            "behaviours" : [
+                {
+                    "_id" : ObjectId("5e4b74cae0aa5b36acf3b2cd"), 
+                    "title" : "${employee.firstName} effectively links different parts of his message to each other and to the purpose (Telos) of the message so that all can understand.", 
+                    "description" : "${employee.firstName} effectively links different parts of his message to each other and to the purpose (Telos) of the message so that all can understand.", 
+                    "ordinal" : NumberInt(0)
+                }, 
+                {
+                    "_id" : ObjectId("5e4b74cae0aa5b36acf3b2ce"), 
+                    "title" : "${employee.firstName} creates a story for his audience that they can identify with i.e. that is relevant to them.", 
+                    "description" : "${employee.firstName} creates a story for his audience that they can identify with i.e. that is relevant to them.", 
+                    "ordinal" : NumberInt(1)
+                }, 
+                {
+                    "_id" : ObjectId("5e4b74cae0aa5b36acf3b2cf"), 
+                    "title" : "${employee.firstName} provides context and relevant examples to illustrate his message.", 
+                    "description" : "${employee.firstName} provides context and relevant examples to illustrate his message.", 
+                    "ordinal" : NumberInt(2)
+                }, 
+                {
+                    "_id" : ObjectId("5e4b74cae0aa5b36acf3b2d0"), 
+                    "title" : "${employee.firstName}'s appropriately utilises the different mediums (spoken, email, SMS, WhatsApp) to make sure the desired tone of his message comes across clearly (e.g. he does not offend or confuse people unintentionally by how his message lands and is received).", 
+                    "description" : "${employee.firstName}'s appropriately utilises the different mediums (spoken, email, SMS, WhatsApp) to make sure the desired tone of his message comes across clearly (e.g. he does not offend or confuse people unintentionally by how his message lands and is received).", 
+                    "ordinal" : NumberInt(3)
+                }
+            ]
+        },
+        {
+          "_id" : ObjectId(), 
+          "title" : "LOGOS", 
+          "description" : "Logic and Reason", 
+          "ordinal" : NumberInt(0), 
+          "behaviours" : [
+            {
+                "_id" : ObjectId(), 
+                "title" : "${employee.firstName} put his facts into perspective by using appropriate metaphors or examples that his audience will easily understand.", 
+                "description" : "${employee.firstName} put his facts into perspective by using appropriate metaphors or examples that his audience will easily understand.", 
+                "ordinal" : NumberInt(0)
+            }, 
+            {
+                "_id" : ObjectId(), 
+                "title" : "${employee.firstName}’s messages are concise, easy to understand and flow well – they are congruent.", 
+                "description" : "${employee.firstName}’s messages are concise, easy to understand and flow well – they are congruent.", 
+                "ordinal" : NumberInt(1)
+            }, 
+            {
+                "_id" : ObjectId(), 
+                "title" : "${employee.firstName} substantiates his messages with facts, not assumptions and he uses the correct terms and phrases without using jargon and abbreviations that some won’t understand.", 
+                "description" : "${employee.firstName} substantiates his messages with facts, not assumptions and he uses the correct terms and phrases without using jargon and abbreviations that some won’t understand.", 
+                "ordinal" : NumberInt(2)
+            }, 
+            {
+                "_id" : ObjectId(), 
+                "title" : "${employee.firstName}'s provides an appropriate amount of detail based on his audience without losing the message or repeating himself.", 
+                "description" : "${employee.firstName}'s provides an appropriate amount of detail based on his audience without losing the message or repeating himself.", 
+                "ordinal" : NumberInt(3)
+            }
+          ]
+        },
+        {
+          "_id" : ObjectId(), 
+          "title" : "ETHOS", 
+          "description" : "Make your message believable", 
+          "ordinal" : NumberInt(0), 
+          "behaviours" : [
+            {
+                "_id" : ObjectId(), 
+                "title" : "${employee.firstName} inspires others with his passion and enthusiasm when he communicates (e.g. he is not a boring, repetitive, constantly pessimistic speaker who loses the audience).", 
+                "description" : "${employee.firstName} inspires others with his passion and enthusiasm when he communicates (e.g. he is not a boring, repetitive, constantly pessimistic speaker who loses the audience).", 
+                "ordinal" : NumberInt(0)
+            }, 
+            {
+                "_id" : ObjectId(), 
+                "title" : "${employee.firstName} uses the appropriate tone and body language to effectively appeal to others’ emotions and adjusts their message according to the body language of his audience.", 
+                "description" : "${employee.firstName} uses the appropriate tone and body language to effectively appeal to others’ emotions and adjusts their message according to the body language of his audience.", 
+                "ordinal" : NumberInt(1)
+            }, 
+            {
+                "_id" : ObjectId(), 
+                "title" : "${employee.firstName} realises that he is a message and therefore ensures his message is supported by his actions i.e. he displays integrity.", 
+                "description" : "${employee.firstName} realises that he is a message and therefore ensures his message is supported by his actions i.e. he displays integrity.", 
+                "ordinal" : NumberInt(2)
+            }, 
+            {
+                "_id" : ObjectId(), 
+                "title" : "${employee.firstName}'s communications complement and build on each other to form a coherent and believable message.", 
+                "description" : "${employee.firstName}'s communications complement and build on each other to form a coherent and believable message.", 
+                "ordinal" : NumberInt(3)
+            }
+          ]
+        },
+        {
+            "_id" : ObjectId(), 
+            "title" : "PATHOS", 
+            "description" : "Touch their hearts", 
+            "ordinal" : NumberInt(0), 
+            "behaviours" : [
+              {
+                  "_id" : ObjectId(), 
+                  "title" : "${employee.firstName} effectively uses messaging to gain the audience’s buy-in with hearts, minds and hands.", 
+                  "description" : "${employee.firstName} effectively uses messaging to gain the audience’s buy-in with hearts, minds and hands.", 
+                  "ordinal" : NumberInt(0)
+              }, 
+              {
+                  "_id" : ObjectId(), 
+                  "title" : "${employee.firstName} keeps his audience connected to the message and the purpose thereof by explaining the significance to them.", 
+                  "description" : "${employee.firstName} keeps his audience connected to the message and the purpose thereof by explaining the significance to them.", 
+                  "ordinal" : NumberInt(1)
+              }, 
+              {
+                  "_id" : ObjectId(), 
+                  "title" : "${employee.firstName} keeps his audience enrolled throughout the engagement by speaking their language to ensure he doesn’t lose them i.e. at the right level, with their needs in mind while being inclusive and respectful.", 
+                  "description" : "${employee.firstName} keeps his audience enrolled throughout the engagement by speaking their language to ensure he doesn’t lose them i.e. at the right level, with their needs in mind while being inclusive and respectful.", 
+                  "ordinal" : NumberInt(2)
+              }, 
+              {
+                  "_id" : ObjectId(), 
+                  "title" : "It is evident that ${employee.firstName} takes the time to prepare thoroughly and practice his message so he doesn’t come across as speaking just for the sake of speaking.", 
+                  "description" : "It is evident that ${employee.firstName} takes the time to prepare thoroughly and practice his message so he doesn’t come across as speaking just for the sake of speaking.", 
+                  "ordinal" : NumberInt(3)
+              }
+            ]
+          }        
+    ], 
+    "organization" : ObjectId("5d0875ae39aa3a5fda74b508"), 
+    "title" : "Five Essentials of Purposeful Leadership Communication", 
+    "description" : "The Five Essentials of Purposeful Communication highlight the following five aspects as being vital for effective engagement:\r\n•\tTelos highlights the ultimate final cause – or purpose – of one’s message. \r\n•\tTopos is all about framing one’s communication within a situation so that it meets expectations or is more clearly understood.\r\n•\tLogos means using reason or logic and providing factual information when communicating.\r\n•\tEthos is about acquiring and maintaining the trust and respect of the audience – and engaging them with passion.\r\n•\tPathos refers to emotional appeal and how enrolling one’s message is\r\n", 
+    "scale" : ObjectId("5c6aabd4e3f99eb0c13dc902"), 
+    "createdAt" : ISODate("2020-02-18T04:58:46.788+0000"), 
+    "updatedAt" : ISODate("2020-02-18T04:58:46.794+0000"), 
+    "__v" : NumberInt(0)
+}

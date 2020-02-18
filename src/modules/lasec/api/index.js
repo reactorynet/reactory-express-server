@@ -322,6 +322,7 @@ const Api = {
       try {
         const invoiceResult = await FETCH(SECONDARY_API_URLS.invoices.url, { params: { ...defaultParams, ...params } });
         if (invoiceResult.status === 'success') {
+          logger.debug('Invoice Results', invoiceResult);
           return invoiceResult.payload;
         }
         return { pagination: {}, ids: [], items: [] };
