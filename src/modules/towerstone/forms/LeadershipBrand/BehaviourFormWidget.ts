@@ -1,6 +1,6 @@
-import { Reactory } from "types/reactory";
-import { FormNameSpace } from "../../constants";
-import { UIFrameWork } from "types/constants";
+import { Reactory } from "@reactory/server-core/types/reactory";
+import { UIFrameWork } from "@reactory/server-core/types/constants";
+import { FormNameSpace } from "@reactory/server-core/modules/towerstone/constants";
 
 import { behaviourSchema } from './LeadershipBrandAdmin/schema';
 

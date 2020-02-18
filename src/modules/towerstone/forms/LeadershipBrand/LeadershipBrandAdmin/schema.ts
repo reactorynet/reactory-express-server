@@ -3,7 +3,6 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 import propsFactory from '@reactory/server-core/data/forms/defs';
 import { jzon } from "@reactory/server-core/utils/validators";
 
-
 export const behaviourSchema: Reactory.ISchema = {
   type: 'object',
   title: 'Behaviour',
@@ -17,7 +16,6 @@ export const behaviourSchema: Reactory.ISchema = {
     },
   },
 };
-
 
 export const qualitySchema : Reactory.ISchema = {
   type: 'object',
