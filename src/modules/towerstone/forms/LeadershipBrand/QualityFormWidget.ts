@@ -1,5 +1,5 @@
 import { Reactory } from "types/reactory";
-import { FormNameSpace } from "modules/towerstone/constants";
+import { FormNameSpace } from "../../constants";
 import { UIFrameWork } from "types/constants";
 
 import { qualitySchema } from './LeadershipBrandAdmin/schema';
