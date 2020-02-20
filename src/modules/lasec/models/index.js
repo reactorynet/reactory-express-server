@@ -16,6 +16,12 @@ export const getCacheItem = async (cacheKey) => {
   return null;
 };
 
+/**
+ * 
+ * @param {*} cacheKey 
+ * @param {*} item 
+ * @param {*} ttl - number of seconds
+ */
 export const setCacheItem = async (cacheKey, item, ttl) => {
   return new LasecCache({
     partner: global.partner._id,

@@ -119,6 +119,10 @@ const $toolbar = {
 
 export default {
   submitIcon: 'refresh',
+  'ui:options': {
+    toolbarPosition: 'top|bottom',
+    showRefresh: false,
+  },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
     spacing: 4,

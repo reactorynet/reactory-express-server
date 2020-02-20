@@ -12,9 +12,10 @@ export interface Meta {
 }
 
 export interface Quote {
-  id: String
-  code: String
+  id: string
+  code: string
   meta: any
+  [key: string]: any
 }
 
 export interface ProductClass {
