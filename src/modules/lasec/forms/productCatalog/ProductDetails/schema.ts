@@ -11,6 +11,9 @@ const schema: Reactory.ISchema = {
       items: {
         type: 'object',
         properties: {
+          id: {
+            type: 'string'
+          },
           code: {
             type: 'string'
           },
@@ -52,6 +55,12 @@ const schema: Reactory.ISchema = {
           },
           siteEvaluationRequired:{
             type: 'string'
+          },
+          numberOfSalesOrders:{
+            type: 'number'
+          },
+          numberOfPurchaseOrders:{
+            type: 'number'
           },
         }
       },

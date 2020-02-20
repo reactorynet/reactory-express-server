@@ -25,6 +25,7 @@ type Product {
   packedVolume: Float
   packedWeight: Float
   numberOfSalesOrders: Int
+  numberOfPurchaseOrders: Int
 }
 
 type ProductQueryDetail {
@@ -44,12 +45,30 @@ type ProductClass {
   name: String
 }
 
+type WarehouseStockDetails {
+  stock: [WarehouseStock]
+  totals: StockTotals
+}
+
+type WarehouseStock {
+  name: String
+  qtyAvailable: Int
+  qtyOnHand: Int
+  qtyOnBO: Int
+}
+
+type StockTotals {
+  qtyAvailable: Int
+  qtyOnHand: Int
+  qtyOnBO: Int
+}
+
 extend type Query {
   LasecGetProductList(product: String): [Product]
   LasecGetProductById: [Product]
   LasecGetProductQueryDetail(productId: String!): ProductQueryDetail
   LasecGetProductClassList: [ProductClass]
-  LasecGetWarehouseStockLevels: Any
+  LasecGetWarehouseStockLevels(productId: String): WarehouseStockDetails
 }
 extend type Mutation {
   LasecSendProductQuery(

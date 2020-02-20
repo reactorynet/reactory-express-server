@@ -61,17 +61,8 @@ const uiSchema: any = {
         //     }
         //   },
         // },
-        // {
-        //   title: 'More Details',
-        //   componentFqn: 'lasec-crm.LasecProductDetailTable',
-        //   componentProps: {
-        //     query: {
-        //       product: 'formData.product',
-        //     }
-        //   },
-        // },
         {
-          title: 'Dimensions',
+          title: 'More Details',
           componentFqn: 'lasec-crm.LasecProductDetailTable',
           componentProps: {
             query: {
