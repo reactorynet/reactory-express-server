@@ -11,6 +11,14 @@ const $toolbar = {
     submitButton: {
       title: 'Search',
       type: 'string',
+    },
+    resultCount: {
+      title: '',
+      type: 'number'
+    },
+    view: {
+      title: '',
+      type: 'string'
     }
   }
 };

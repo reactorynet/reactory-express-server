@@ -138,12 +138,16 @@ declare namespace Reactory {
     name: String,
     text: String,
     resultMap?: Object,
+    resultType?: string,
     queryMessage?: String,
     variables: Object,
     edit?: boolean,
     new?: boolean,
     delete?: boolean,
     options?: any,
+    autoQuery?:boolean,
+    interval?: number,
+    useWebsocket?: boolean,
     onError?: IReactoryFormQueryErrorHandlerDefinition
   }
 

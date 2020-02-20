@@ -16,6 +16,24 @@ const LasecProductCatalogTabs: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: $schema,
   uiSchema: $uiSchema,
+  uiSchemas: [
+    {
+      id: 'default',
+      title: 'Grid View',
+      key: 'default',
+      description: 'View Product Catalog As Grid',
+      icon: 'list',
+      uiSchema:  $schema,
+    },
+    {
+      id: 'detail',
+      title: 'Card View',
+      key: 'detail',
+      description: 'View Product Catalog As Card',
+      icon: 'view_module',
+      uiSchema:  $schema,
+    },
+  ],
   widgetMap: [
     {
       componentFqn: 'core.MaterialInput@1.0.0',

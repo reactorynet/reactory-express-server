@@ -1,7 +1,10 @@
-export default {
+import { Reactory } from "types/reactory";
+
+const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetProductList',
-    text: `query LasecGetProductList($product: String){
+    autoQuery: false,
+    text: `query LasecGetProductList($product: String!){
       LasecGetProductList(product: $product){
         id
         name
@@ -18,8 +21,9 @@ export default {
       }
     }`,
     variables: {
-      // 'formData.product': 'product',
+      'formData.product': 'product',
     },
+    
     resultMap: {
       '[].id': 'products.[].id',
       '[].name': 'products.[].name',
@@ -37,5 +41,7 @@ export default {
     resultType: 'array',
     edit: false,
     new: false,
-  },
+  }
 };
+
+export default graphql; 

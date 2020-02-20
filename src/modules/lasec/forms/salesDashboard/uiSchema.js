@@ -147,7 +147,7 @@ export default {
   target: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: 'Target: ${formData}',
+      format: 'Target: R ${formData}',
       variant: 'h4',
       // title: 'Target:'
     }

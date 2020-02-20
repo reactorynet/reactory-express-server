@@ -233,14 +233,14 @@ const Menus = {
     {
       ordinal: 2,
       title: 'Product',
-      link: '/360/catalogue/search',
+      link: '/product-catalogue/',
       icon: 'book',
       roles: ['USER'],
       items: [
         {
           ordinal: 0,
           title: 'Catalogue',
-          link: '/360/catalogue/search',
+          link: '/product-catalogue/',
           icon: 'book',
           roles: ['USER'],
         },
@@ -290,7 +290,7 @@ const Menus = {
           ordinal: 19, title: 'Filter Results', link: '/filter-results/', icon: 'reorder', roles: ['USER'],
         },
         {
-          ordinal: 19, title: 'Tabbed Product Catelog', link: '/product-catelog/', icon: 'reorder', roles: ['USER'],
+          ordinal: 19, title: 'Tabbed Product Catelog', link: '/product-catelogue/', icon: 'reorder', roles: ['USER'],
         },
       ]
     },
@@ -773,7 +773,7 @@ const LASEC_CONFIG = {
     {
       key: 'product-catalog',
       title: 'Product Catelog',
-      path: '/product-catelog/**',
+      path: '/product-catelogue/**',
       exact: true,
       public: false,
       roles: ['USER', 'ADMIN'],
@@ -1002,7 +1002,18 @@ const LASEC_CONFIG = {
           minHeight: '48px'
         },
       },
-
+      MuiTableCell: {
+        head: {
+          backgroundColor: "#E1E1E4 !important",
+          fontWeight: 700
+        }
+      },
+      MuiBox: {
+        root: {
+          padding: '0px',
+          paddingTop: '8px'
+        }
+      }      
     },
     type: 'material',
     palette: {

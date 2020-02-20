@@ -1,6 +1,8 @@
 
-const uiSchema: any = {
-  product: {},
+const uiSchema: any = {  
+  product: {
+    'ui:widget': 'HiddenWidget'
+  },
   products: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {

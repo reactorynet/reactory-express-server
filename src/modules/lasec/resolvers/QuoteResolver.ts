@@ -572,13 +572,21 @@ const groupQuotesByStatus = (quotes) => {
   return groupedByStatus;
 };
 
-interface QuotesByProductClass {
+interface QuotesByProductClassMap {
   [key: string]: LasecQuote[]
+}
+
+interface ProductClassQuotes
+{
+  ProductClassCode: string,
+  ProductClassDescription: string,
+  Quotes: LasecQuote[],
+  QuoteLineItems: any[],
 }
 
 const groupQuotesByProduct = async (quotes: LasecQuote[]) => {
   
-  const quotesByProductClass: QuotesByProductClass = {};
+  const quotesByProductClass: QuotesByProductClassMap = {};
   try {
     const lineitemsPromises = quotes.map((quote: LasecQuote ) => { lasecGetQuoteLineItems(quote.id)})    
     const LineItemResults = await Promise.all(lineitemsPromises).then();
@@ -588,8 +596,7 @@ const groupQuotesByProduct = async (quotes: LasecQuote[]) => {
   }
   
   
-  quotes.forEach( (quote) => {
-    debugger;
+  quotes.forEach( (quote) => {    
     logger.debug(`Checking Quote ${quote.id} items for product class`, quote);
     const key = quote.productClass || 'None';
     const statusKey = quote.statusGroup || 'none';
@@ -855,7 +862,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
   };
 
   productDashboardResult.totalQuotes = quotes.length;
-  productDashboardResult.productSummary = groupQuotesByProduct(quotes);
+  productDashboardResult.productSummary = [] 
   productDashboardResult.charts.quoteProductFunnel.data = [];
   productDashboardResult.charts.quoteProductPie.data = [];
   productDashboardResult.productSummary.forEach((entry, index) => {

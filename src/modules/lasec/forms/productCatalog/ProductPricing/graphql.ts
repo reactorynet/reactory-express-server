@@ -1,6 +1,7 @@
 export default {
   query: {
     name: 'LasecGetProductList',
+    autoQuery: false,
     text: `query LasecGetProductList($product: String){
       LasecGetProductList(product: $product){
         id
@@ -22,7 +23,7 @@ export default {
       }
     }`,
     variables: {
-      // 'formData.product': 'product',
+      'formData.product': 'product',
     },
     resultMap: {
       '[].id': 'products.[].id',
