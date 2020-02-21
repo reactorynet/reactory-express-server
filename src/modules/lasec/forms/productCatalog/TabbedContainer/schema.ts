@@ -1,12 +1,16 @@
-import Reactory from '@reactory/server-core/types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 const $toolbar = {
   type: 'object',
   title: '',
+  required: ['product'],
   properties: {
     product: {
       type: 'string',
-      title: 'Product',
+      title: '',
+      format: "search",
+      description: 'Enter a product code or description',
+      minLength: 3
     },
     submitButton: {
       title: 'Search',

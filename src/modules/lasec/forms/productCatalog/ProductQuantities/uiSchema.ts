@@ -6,6 +6,10 @@ const uiSchema: any = {
     showHelp: false,
     componentType: 'div',
     container: 'div',
+    containerStyles: {
+      padding: '0px',
+      margin: '0px'
+    }
   },
   stock: {
     'ui:widget': 'MaterialTableWidget',

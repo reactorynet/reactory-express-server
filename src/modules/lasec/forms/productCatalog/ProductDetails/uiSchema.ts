@@ -1,6 +1,17 @@
 // MORE DETAILS - DETAILS
 const uiSchemaDetails: any = {
-  product: {},
+  'ui:options': {    
+    componentType: "div", 
+    containerStyles: {
+      padding: '0px',
+      margin: '0px'
+    },
+    showSubmit: false,
+    showRefresh: false,   
+  },
+  product: {
+    'ui:widget': 'HiddenWidget'
+  },
   products: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -94,12 +105,22 @@ const uiSchemaDetails: any = {
 
 // MORE DETAILS: STOCK
 const uiSchema: any = {
-  product: {},
+  'ui:options': {    
+    componentType: "div", 
+    containerStyles: {
+      padding: '0px',
+      margin: '0px'
+    },
+    showSubmit: false,
+    showRefresh: false,   
+  },
+  product: {
+    'ui:widget': 'HiddenWidget'
+  },
   products: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'ID', field: 'id' },
         {
           title: '', field: 'onSyspro',
           component: 'core.ConditionalIconComponent@1.0.0',
@@ -190,7 +211,10 @@ const uiSchema: any = {
         },
       ],
       options: {
-        grouping: true,
+        grouping: false,
+        search: false,
+        showTitle: false,
+        toolbar: false,
       },
     },
   }
@@ -199,6 +223,9 @@ const uiSchema: any = {
 
 //MORE DETAILS - SALES ORDERS
 const uiSchemaOrders: any = {
+  'ui:options': {    
+    componentType: "div",    
+  },
   product: {},
   products: {
     'ui:widget': 'MaterialTableWidget',
@@ -297,7 +324,10 @@ const uiSchemaOrders: any = {
         },
       ],
       options: {
-        grouping: true,
+        grouping: false,
+        search: false,
+        showTitle: false,
+        toolbar: false,
       },
     },
   }
@@ -305,6 +335,9 @@ const uiSchemaOrders: any = {
 
 //MORE DETAILS - PURCHASE ORDERS
 const uiSchemaPurOrders: any = {
+  'ui:options': {    
+    componentType: "div",    
+  },
   product: {},
   products: {
     'ui:widget': 'MaterialTableWidget',

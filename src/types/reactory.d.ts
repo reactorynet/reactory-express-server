@@ -176,7 +176,8 @@ declare namespace Reactory {
   }
 
   export interface IWidgetMap {
-    componentFqn: String,
+    componentFqn?: String,
+    component?: String,
     widget: String
   }
 

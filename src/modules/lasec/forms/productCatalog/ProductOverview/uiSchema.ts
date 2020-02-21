@@ -1,5 +1,15 @@
 
-const uiSchema: any = {  
+const uiSchema: any = {
+  'ui:options': {
+    componentType: "div",
+    showSubmit: false,
+    showRefresh: false,
+    container: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px'
+    }
+  },  
   product: {
     'ui:widget': 'HiddenWidget'
   },
@@ -50,6 +60,12 @@ const uiSchema: any = {
           propsMap: {
             onSyspro: 'value',
           },
+          cellStyle: {
+            width: '40px'
+          },
+          headerStyles: {
+            width: '40px'
+          }
         },
         {
           title: '', field: 'image',
@@ -166,7 +182,10 @@ const uiSchema: any = {
         },
       ],
       options: {
-        grouping: true,
+        grouping: false,
+        search: false,
+        showTitle: false,
+        toolbar: false,
       },
     },
   }

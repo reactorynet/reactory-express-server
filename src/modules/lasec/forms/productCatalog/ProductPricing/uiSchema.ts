@@ -1,6 +1,18 @@
 
 const uiSchema: any = {
-  product: {},
+  'ui:options': {    
+    componentType: "div",    
+    showSubmit: false,
+    showRefresh: false,
+    container: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px'
+    }
+  },
+  product: {
+    'ui:widget': 'HiddenWidget'
+  },
   products: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -93,7 +105,10 @@ const uiSchema: any = {
         },
       ],
       options: {
-        grouping: true,
+        grouping: false,
+        search: false,
+        showTitle: false,
+        toolbar: false,
       },
     },
   }

@@ -290,7 +290,7 @@ const Menus = {
           ordinal: 19, title: 'Filter Results', link: '/filter-results/', icon: 'reorder', roles: ['USER'],
         },
         {
-          ordinal: 19, title: 'Tabbed Product Catelog', link: '/product-catelogue/', icon: 'reorder', roles: ['USER'],
+          ordinal: 19, title: 'Tabbed Product Catelog', link: '/product-catalogue/', icon: 'reorder', roles: ['USER'],
         },
       ]
     },
@@ -773,7 +773,7 @@ const LASEC_CONFIG = {
     {
       key: 'product-catalog',
       title: 'Product Catelog',
-      path: '/product-catelogue/**',
+      path: '/product-catalogue/**',
       exact: true,
       public: false,
       roles: ['USER', 'ADMIN'],

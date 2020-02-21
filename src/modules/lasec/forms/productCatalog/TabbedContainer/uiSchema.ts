@@ -12,13 +12,14 @@ const $toolbar: any = {
       view: { md: 3, sm: 4, xs: 6 },
     }
   ],  
-  product: {
-    'ui:widget': 'InputWidget',
+  product: {    
     'ui:options': {
-      icon: 'search',
-      placeholder: 'Find a Product',
-      inputProps: {
-        variant: 'outline',
+      showLabel: false,
+      icon: 'search',     
+      component: "TextField", 
+      variant: 'outlined',
+      props: {        
+        placeholder: 'Find a Product',
         type: 'search',
         styles: {
           minWidth: '180px'
@@ -48,6 +49,9 @@ const $toolbar: any = {
   },
   view: {
     'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+
+    }    
   }
 };
 
@@ -82,7 +86,8 @@ const uiSchema: any = {
           componentProps: {},
           componentPropsMap: {
             'formContext.$formData.toolbar.product': ['formData.product', 'query.product'],
-            'formContext.$formData.toolbar.view': 'query.uiSchema'
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+            'formContext.$formState.autoQueryDisabled' : 'autoQueryDisabled',
           },
         },
         {
@@ -91,7 +96,8 @@ const uiSchema: any = {
           componentProps: {},
           componentPropsMap: {
             'formContext.$formData.toolbar.product': ['formData.product', 'query.product'],
-            'formContext.$formData.toolbar.view': 'query.uiSchema'
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+            'formContext.$formState.autoQueryDisabled' : 'autoQueryDisabled',
           },
         },
         {
@@ -100,7 +106,8 @@ const uiSchema: any = {
           componentProps: {},
           componentPropsMap: {
             'formContext.$formData.toolbar.product': ['formData.product', 'query.product'],
-            'formContext.$formData.toolbar.view': 'query.uiSchema'
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+            'formContext.$formState.autoQueryDisabled' : 'autoQueryDisabled',
           },
         },
       ]
