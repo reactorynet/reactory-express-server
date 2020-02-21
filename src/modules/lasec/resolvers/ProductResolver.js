@@ -10,6 +10,7 @@ import { clientFor } from '@reactory/server-core/graph/client';
 import gql from 'graphql-tag';
 import { ENVIRONMENT } from 'types/constants';
 import emails from '@reactory/server-core/emails';
+import Hash from '@reactory/server-core/utils/hash';
 
 // const product_sync = async (product_id, owner, source = null, map = true) => {
 
@@ -105,12 +106,10 @@ const getProducts = async (params) => {
       periodEnd: moment().endOf('day')
     }
   }
-  const cachekey = `PRODUCT_LIST_TEST`;
+  const cachekey = Hash(`product_list_${product}`);
 
-  let apiFilter = {};
-
-  // let _cachedResults = await getCacheItem(cachekey);
-  // if (_cachedResults) return _cachedResults;
+  let _cachedResults = await getCacheItem(cachekey);
+  if (_cachedResults) return _cachedResults;
 
   const productResult = await lasecApi.Products.list({ filter, pagination: { page_size: 10 } }).then();
 
@@ -126,7 +125,7 @@ const getProducts = async (params) => {
     const max_pages = 2; //productResult.pagination.num_pages < 10 ? productResult.pagination.num_pages : 10;
 
     for (let pageIndex = productResult.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
-      pagePromises.push(lasecApi.Products.list({ filter: apiFilter, pagination: { ...productResult.pagination, current_page: pageIndex } }));
+      pagePromises.push(lasecApi.Products.list({ filter, pagination: { ...productResult.pagination, current_page: pageIndex } }));
     }
   }
 
@@ -144,7 +143,7 @@ const getProducts = async (params) => {
 
   logger.debug('PRODUCT RESOLVER - PRODUCTS::', products.slice(0, 10));
 
-  products = products.map(async (prd) => {
+  products = products.map((prd) => {
     return {
       id: prd.id,
       name: prd.name,
