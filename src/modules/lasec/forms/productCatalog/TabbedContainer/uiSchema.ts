@@ -30,6 +30,7 @@ const $toolbar: any = {
     'ui:widget': 'FormSubmitWidget',
     'ui:options': {
       text: 'SEARCH',
+      color: 'default',
       props: {
         styles: {
           maxWidth: '180px'
@@ -56,6 +57,7 @@ const uiSchema: any = {
   'ui:options': {
     toolbarPosition: 'top|bottom',
     showRefresh: false,
+    showSubmit: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
@@ -76,33 +78,29 @@ const uiSchema: any = {
       tabs: [
         {
           title: 'Product Overview',
-          componentFqn: 'lasec-crm.LasecProductOverviewTable',
-          componentProps: {
-            query: {
-              product: 'formData.product',
-            }
-          },
+          componentFqn: 'lasec-crm.LasecProductOverviewTable',          
+          componentProps: {},
           componentPropsMap: {
-            'formData.product': 'formData.product',
-            'formData.view': 'query.uiSchema'
+            'formContext.$formData.toolbar.product': ['formData.product', 'query.product'],
+            'formContext.$formData.toolbar.view': 'query.uiSchema'
           },
         },
         {
           title: 'Product Pricing',
           componentFqn: 'lasec-crm.LasecProductPricingTable',
-          componentProps: {
-            query: {
-              product: 'formData.product',
-            }
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': ['formData.product', 'query.product'],
+            'formContext.$formData.toolbar.view': 'query.uiSchema'
           },
         },
         {
           title: 'More Details',
           componentFqn: 'lasec-crm.LasecProductDetailTable',
-          componentProps: {
-            query: {
-              product: 'formData.product',
-            }
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': ['formData.product', 'query.product'],
+            'formContext.$formData.toolbar.view': 'query.uiSchema'
           },
         },
       ]

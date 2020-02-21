@@ -3,7 +3,7 @@ import { Reactory } from "types/reactory";
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetProductList',
-    autoQuery: false,
+    autoQuery: true,
     text: `query LasecGetProductList($product: String!){
       LasecGetProductList(product: $product){
         id
@@ -22,8 +22,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     }`,
     variables: {
       'formData.product': 'product',
-    },
-    
+    },    
     resultMap: {
       '[].id': 'products.[].id',
       '[].name': 'products.[].name',

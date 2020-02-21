@@ -4,7 +4,7 @@ import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import LasecDatabase from '@reactory/server-modules/lasec/database';
 import ApiError from '@reactory/server-core/exceptions';
 import logger from '../../../logging';
-import lodash, { isArray, isNil } from 'lodash';
+import lodash, { isArray, isNil, isString } from 'lodash';
 import { getCacheItem, setCacheItem } from '../models';
 import { clientFor } from '@reactory/server-core/graph/client';
 import gql from 'graphql-tag';
@@ -91,9 +91,11 @@ import emails from '@reactory/server-core/emails';
 // };
 
 const getProducts = async (params) => {
-
+  const { product = ""  } = params;
   // ADITIONAL PARAMS : Product Name
-  // {"filter":{"any_field":"beakers"}
+  if(isString(product) === false || product.length < 3) return [];
+
+  let filter = { "any_field": product };
 
   let _params = params;
 
@@ -110,7 +112,7 @@ const getProducts = async (params) => {
   // let _cachedResults = await getCacheItem(cachekey);
   // if (_cachedResults) return _cachedResults;
 
-  const productResult = await lasecApi.Products.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
+  const productResult = await lasecApi.Products.list({ filter, pagination: { page_size: 10 } }).then();
 
   let ids = [];
 
@@ -121,7 +123,7 @@ const getProducts = async (params) => {
   const pagePromises = [];
 
   if (productResult.pagination && productResult.pagination.num_pages > 1) {
-    const max_pages = productResult.pagination.num_pages < 10 ? productResult.pagination.num_pages : 10;
+    const max_pages = 2; //productResult.pagination.num_pages < 10 ? productResult.pagination.num_pages : 10;
 
     for (let pageIndex = productResult.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
       pagePromises.push(lasecApi.Products.list({ filter: apiFilter, pagination: { ...productResult.pagination, current_page: pageIndex } }));

@@ -1,7 +1,7 @@
 export default {
   query: {
     name: 'LasecGetProductList',
-    autoQuery: false,
+    autoQuery: true,
     text: `query LasecGetProductList($product: String){
       LasecGetProductList(product: $product){
         id
