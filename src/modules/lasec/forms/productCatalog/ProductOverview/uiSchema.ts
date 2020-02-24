@@ -27,7 +27,7 @@ const uiSchema: any = {
                 key: 'on_syspro',
                 icon: 'error',
                 style: {
-                  color: '#9AD86E'
+                  color: '#9AD86E'                  
                 },
                 tooltip: 'ON SYSPRO'
               },
@@ -61,10 +61,10 @@ const uiSchema: any = {
             onSyspro: 'value',
           },
           cellStyle: {
-            width: '40px'
+            maxWidth: '40px'
           },
           headerStyles: {
-            width: '40px'
+            maxWidth: '40px'
           }
         },
         {

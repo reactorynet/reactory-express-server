@@ -121,7 +121,7 @@ export default {
   submitIcon: 'refresh',
   'ui:options': {
     toolbarPosition: 'top|bottom',
-    showRefresh: false,
+    showRefresh: false,    
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
