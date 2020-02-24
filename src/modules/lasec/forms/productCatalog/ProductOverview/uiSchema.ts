@@ -9,6 +9,9 @@ const uiSchema: any = {
       padding: '0px',
       margin: '0px'
     }
+  },
+  paging: {
+    'ui:widget': 'HiddenWidget'
   },  
   product: {
     'ui:widget': 'HiddenWidget'
@@ -61,10 +64,12 @@ const uiSchema: any = {
             onSyspro: 'value',
           },
           cellStyle: {
-            maxWidth: '40px'
+            maxWidth: '40px',
+            width: '40px'
           },
           headerStyles: {
-            maxWidth: '40px'
+            maxWidth: '40px',
+            width: '40px'
           }
         },
         {
@@ -78,6 +83,14 @@ const uiSchema: any = {
           propsMap: {
             image: 'value',
           },
+          cellStyle: {
+            maxWidth: 40,
+            width: 40
+          },
+          headerStyles: {
+            maxWidth: 40,
+            width: 40
+          }
         },
         { title: 'Stock Code', field: 'code' },
         { title: 'Description', field: 'name' },
@@ -187,9 +200,35 @@ const uiSchema: any = {
         showTitle: false,
         toolbar: false,
       },
+      remoteData: true,
+      query: 'query',
+      variables: {
+        'state.formData.product': 'product'
+      },
+      resultMap: {
+        'paging.page': 'page',
+        'paging.total': 'totalCount',
+        'paging.pageSize': 'pageSize',
+        'products.[].id': 'data.[].id',
+        'products.[].name': 'data.[].name',
+        'products.[].code': 'data.[].code',
+        'products.[].description': 'data.[].description',
+        'products.[].qtyAvailable': 'data.[].qtyAvailable',
+        'products.[].qtyOnHand': 'data.[].qtyOnHand',
+        'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
+        'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
+        'products.[].price': 'data.[].price',
+        'products.[].image': 'data.[].image',
+        'products.[].onSyspro': 'data.[].onSyspro',
+        'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
+      },
     },
   }
-
 };
+
+const cardUiSchema: any = {
+  ...uiSchema,
+  products: undefined,  
+}
 
 export default uiSchema;

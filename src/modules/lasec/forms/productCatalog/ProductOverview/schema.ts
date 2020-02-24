@@ -6,6 +6,24 @@ const schema: Reactory.ISchema = {
     product: {
       type: 'string'
     },
+    paging: {
+      type: 'object',
+      title: 'Paging',
+      properties: {
+        total: {
+          type: 'number'
+        },
+        page: {
+          type: 'number'
+        },
+        pageSize: {
+          type: 'number'
+        },
+        hasNext: {
+          type: 'boolean'
+        }
+      }
+    },
     products: {
       type: 'array',
       items: {

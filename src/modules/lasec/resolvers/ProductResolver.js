@@ -11,6 +11,7 @@ import gql from 'graphql-tag';
 import { ENVIRONMENT } from 'types/constants';
 import emails from '@reactory/server-core/emails';
 import Hash from '@reactory/server-core/utils/hash';
+import PageTemplateConfigForm from 'data/forms/boxcommerce/pageTemplateConfig';
 
 // const product_sync = async (product_id, owner, source = null, map = true) => {
 
@@ -92,9 +93,18 @@ import Hash from '@reactory/server-core/utils/hash';
 // };
 
 const getProducts = async (params) => {
-  const { product = ""  } = params;
+  const { product = "", paging = { page: 1, pageSize: 10 }  } = params;
   // ADITIONAL PARAMS : Product Name
+  logger.debug(`Getting Products For Using Query ${product}`, {paging});
+
   if(isString(product) === false || product.length < 3) return [];
+  
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
 
   let filter = { "any_field": product };
 
@@ -106,12 +116,12 @@ const getProducts = async (params) => {
       periodEnd: moment().endOf('day')
     }
   }
-  const cachekey = Hash(`product_list_${product}`);
+  const cachekey = Hash(`product_list_${product}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`);
 
   let _cachedResults = await getCacheItem(cachekey);
   if (_cachedResults) return _cachedResults;
 
-  const productResult = await lasecApi.Products.list({ filter, pagination: { page_size: 10 } }).then();
+  const productResult = await lasecApi.Products.list({ filter, pagination: { current_page: paging.page, page_size: paging.pageSize } }).then();
 
   let ids = [];
 
@@ -119,25 +129,29 @@ const getProducts = async (params) => {
     ids = [...productResult.ids];
   }
 
-  const pagePromises = [];
+  //const pagePromises = [];
 
   if (productResult.pagination && productResult.pagination.num_pages > 1) {
-    const max_pages = 2; //productResult.pagination.num_pages < 10 ? productResult.pagination.num_pages : 10;
+    pagingResult.total = productResult.pagination.num_items;
+    pagingResult.pageSize = productResult.pagination.page_size || 10;
+    pagingResult.hasNext = productResult.pagination.has_next_page === true;
+    pagingResult.page = productResult.pagination.current_page || 1;
+    //const max_pages = 2; //productResult.pagination.num_pages < 10 ? productResult.pagination.num_pages : 10;
 
-    for (let pageIndex = productResult.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
-      pagePromises.push(lasecApi.Products.list({ filter, pagination: { ...productResult.pagination, current_page: pageIndex } }));
-    }
+    //for (let pageIndex = productResult.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
+    //  pagePromises.push(lasecApi.Products.list({ filter, pagination: { ...productResult.pagination, current_page: pageIndex } }));
+    //}
   }
 
-  const pagedResults = await Promise.all(pagePromises).then();
+  //const pagedResults = await Promise.all(pagePromises).then();
 
-  pagedResults.forEach((pagedResult) => {
-    ids = [...ids, ...pagedResult.ids]
-  });
+  //pagedResults.forEach((pagedResult) => {
+  //  ids = [...ids, ...pagedResult.ids]
+  //});
 
   // logger.debug(`Loading (${ids.length}) product ids`);
 
-  const productDetails = await lasecApi.Products.list({ filter: { ids: ids } });
+  const productDetails = await lasecApi.Products.list({ filter: { ids: ids }, pagination: { page_size: paging.pageSize }  });
   // logger.debug(`Fetched Expanded View for (${productDetails.items.length}) Products from API`);
   let products = [...productDetails.items];
 
@@ -173,9 +187,14 @@ const getProducts = async (params) => {
     };
   });
 
-  setCacheItem(cachekey, products, 60 * 10);
+  let result = {
+    paging: pagingResult,
+    products,
+  }
 
-  return products;
+  setCacheItem(cachekey, result, 60);
+
+  return result;  
 }
 
 const getWarehouseStockLevels = async (params) => {

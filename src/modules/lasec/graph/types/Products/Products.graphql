@@ -3,9 +3,9 @@ type Product {
   name: String
   code: String
   description: String
-  qtyAvailable: Int
-  qtyOnHand: Int
-  qtyOnOrder: Int
+  qtyAvailable: Float
+  qtyOnHand: Float
+  qtyOnOrder: Float
   unitOfMeasure: String
   price: Int
   priceAdditionalInfo: String
@@ -63,8 +63,14 @@ type StockTotals {
   qtyOnBO: Int
 }
 
+type PagedProductResult {
+  filter: String  
+  paging: PagingResult
+  products: [Product] 
+}
+
 extend type Query {
-  LasecGetProductList(product: String): [Product]
+  LasecGetProductList(product: String, paging: PagingRequest): PagedProductResult
   LasecGetProductById: [Product]
   LasecGetProductQueryDetail(productId: String!): ProductQueryDetail
   LasecGetProductClassList: [ProductClass]

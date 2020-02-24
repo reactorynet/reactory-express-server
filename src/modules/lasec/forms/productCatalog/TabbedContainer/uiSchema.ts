@@ -14,14 +14,13 @@ const $toolbar: any = {
   ],  
   product: {    
     'ui:options': {
-      showLabel: false,
+      showLabel: true,
       icon: 'search',     
-      component: "TextField", 
-      variant: 'outlined',
+      component: "TextField",       
       props: {        
         placeholder: 'Find a Product',
         type: 'search',
-        styles: {
+        style: {
           minWidth: '180px'
         }
       }      
@@ -33,8 +32,10 @@ const $toolbar: any = {
       text: 'SEARCH',
       color: 'default',
       props: {
-        styles: {
-          maxWidth: '180px'
+        color: 'default',
+        style: {
+          maxWidth: '180px',
+          width: '180px'
         }
       }
     }
@@ -51,7 +52,8 @@ const $toolbar: any = {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        width: 'unset'
+        width: 'unset',
+        float: 'right'
       },
     }    
   }
@@ -64,6 +66,7 @@ const uiSchema: any = {
     toolbarPosition: 'none',
     showRefresh: false,
     showSubmit: false,
+    schemaSelectorStyle: 'button',
     style: {
       backgroundColor: "#F6F6F6",
       position: "absolute",

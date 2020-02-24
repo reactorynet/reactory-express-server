@@ -17,6 +17,14 @@ const LasecCMSProductOverview: Reactory.IReactoryForm = {
   schema: $schema,
   graphql: $graphql,
   uiSchema: $uiSchema,
+  defaultFormValue: {
+    paging: {
+      page: 1,
+      pageSize: 10,      
+    },
+    product: "",
+    products: []
+  },
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
