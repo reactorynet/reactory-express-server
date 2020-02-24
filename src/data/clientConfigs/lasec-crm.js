@@ -1006,6 +1006,9 @@ const LASEC_CONFIG = {
         head: {
           backgroundColor: "#E1E1E4 !important",
           fontWeight: 700
+        },
+        root: {
+          verticalAlign: 'top'
         }
       },
       MuiBox: {

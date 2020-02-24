@@ -1,49 +1,59 @@
 export default {
   query: {
     name: 'LasecGetProductList',
-    autoQuery: true,
-    text: `query LasecGetProductList($product: String){
-      LasecGetProductList(product: $product){
-        id
-        name
-        code
-        description
-        qtyAvailable
-        qtyOnHand
-        qtyOnOrder
-        unitOfMeasure
-        price
-        priceAdditionalInfo
-        image
-        onSyspro
-        landedPrice
-        wh10CostPrice
-        threeMonthAvePrice
-        listPrice
+    autoQuery: false,
+    text: `query LasecGetProductList($product: String,  $paging: PagingRequest){
+      LasecGetProductList(product: $product, paging: $paging){
+        paging {
+          total
+          page
+          hasNext
+          pageSize
+        }
+        products {
+          id
+          name
+          code
+          description
+          qtyAvailable
+          qtyOnHand
+          qtyOnOrder
+          unitOfMeasure
+          price
+          priceAdditionalInfo
+          image
+          onSyspro
+          landedPrice
+          wh10CostPrice
+          threeMonthAvePrice
+          listPrice
+        }        
       }
     }`,
     variables: {
       'formData.product': 'product',
+      'formData.paging': 'paging'
     },
     resultMap: {
-      '[].id': 'products.[].id',
-      '[].name': 'products.[].name',
-      '[].code': 'products.[].code',
-      '[].description': 'products.[].description',
-      '[].qtyAvailable': 'products.[].qtyAvailable',
-      '[].qtyOnHand': 'products.[].qtyOnHand',
-      '[].qtyOnOrder': 'products.[].qtyOnOrder',
-      '[].unitOfMeasure': 'products.[].unitOfMeasure',
-      '[].price': 'products.[].price',
-      '[].image': 'products.[].image',
-      '[].onSyspro': 'products.[].onSyspro',
-      '[].priceAdditionalInfo': 'products.[].priceAdditionalInfo',
-      '[].landedPrice': 'products.[].landedPrice',
-      '[].wh10CostPrice': 'products.[].wh10CostPrice',
-      '[].threeMonthAvePrice': 'products.[].threeMonthAvePrice',
-      '[].listPrice': 'products.[].listPrice',
+      'paging': 'paging',
+      'products[].id': 'products.[].id',
+      'products.[].name': 'products.[].name',
+      'products.[].code': 'products.[].code',
+      'products.[].description': 'products.[].description',
+      'products.[].qtyAvailable': 'products.[].qtyAvailable',
+      'products.[].qtyOnHand': 'products.[].qtyOnHand',
+      'products.[].qtyOnOrder': 'products.[].qtyOnOrder',
+      'products.[].unitOfMeasure': 'products.[].unitOfMeasure',
+      'products.[].price': 'products.[].price',
+      'products.[].image': 'products.[].image',
+      'products.[].onSyspro': 'products.[].onSyspro',
+      'products.[].priceAdditionalInfo': 'products.[].priceAdditionalInfo',
+      'products.[].landedPrice': 'products.[].landedPrice',
+      'products.[].wh10CostPrice': 'products.[].wh10CostPrice',
+      'products.[].threeMonthAvePrice': 'products.[].threeMonthAvePrice',
+      'products.[].listPrice': 'products.[].listPrice',
     },
-    resultType: 'array',
+    resultType: 'object',
     edit: false,
     new: false,
   },

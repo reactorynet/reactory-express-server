@@ -6,12 +6,36 @@ import ApiError from '@reactory/server-core/exceptions';
 import logger from '../../../logging';
 import lodash, { isArray, isNil, isString } from 'lodash';
 import { getCacheItem, setCacheItem } from '../models';
-import { clientFor } from '@reactory/server-core/graph/client';
+import { clientFor, execql } from '@reactory/server-core/graph/client';
 import gql from 'graphql-tag';
 import { ENVIRONMENT } from 'types/constants';
 import emails from '@reactory/server-core/emails';
 import Hash from '@reactory/server-core/utils/hash';
 import PageTemplateConfigForm from 'data/forms/boxcommerce/pageTemplateConfig';
+
+
+const WarehouseIds = {
+  "10": {
+    id: 10,
+    title: 'Cape Town'
+  },
+  "20": {
+    id: 20,
+    title: 'Gauteng'
+  },
+  "21": {
+    id: 21,
+    title: 'Edu Gauteng'
+  },
+  "30": {
+    id: 30,
+    title: 'Pine Town'
+  },
+  "31": {
+    id: 31,
+    title: 'Edu Pine Town'
+  }
+};
 
 // const product_sync = async (product_id, owner, source = null, map = true) => {
 
@@ -93,7 +117,7 @@ import PageTemplateConfigForm from 'data/forms/boxcommerce/pageTemplateConfig';
 // };
 
 const getProducts = async (params) => {
-  const { product = "", paging = { page: 1, pageSize: 10 }  } = params;
+  const { product = "", paging = { page: 1, pageSize: 10 },  iter = 0  } = params;
   // ADITIONAL PARAMS : Product Name
   logger.debug(`Getting Products For Using Query ${product}`, {paging});
 
@@ -116,7 +140,9 @@ const getProducts = async (params) => {
       periodEnd: moment().endOf('day')
     }
   }
-  const cachekey = Hash(`product_list_${product}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`);
+  const cachekey = Hash(`product_list_${product}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`.toLowerCase());
+
+   
 
   let _cachedResults = await getCacheItem(cachekey);
   if (_cachedResults) return _cachedResults;
@@ -190,15 +216,50 @@ const getProducts = async (params) => {
   let result = {
     paging: pagingResult,
     products,
+  };
+
+  if(result.paging.pageSize >= 10 && result.paging.hasNext === true) {
+    // cache the next result
+
+    // create segments for page size 5 and 10
+    if(result.paging.pageSize === 20) {
+      const cachekeys_10 = `product_list_${product}_page_${paging.page || 1}_page_size_10`.toLowerCase();
+      setCacheItem(cachekeys_10, { paging: {...result.paging, pageSize: 10, hasNext: true }, products: lodash.take(result.products, 10) } );
+    }
+    
+    const cachekeys_5 = `product_list_${product}_page_${paging.page || 1}_page_size_5`.toLowerCase();
+    setCacheItem(cachekeys_5, { paging: {...result.paging, pageSize: 5, hasNext: true }, products: lodash.take(result.products, 5) } );       
   }
 
+  if(result.paging.hasNext === true && iter === 0) {    
+    execql(`query LasecGetProductList($product: String!, $paging: PagingRequest, $iter: Int){
+      LasecGetProductList(product: $product, paging: $paging, iter: $iter){
+        paging {
+          total
+          page
+          hasNext
+          pageSize
+        }
+        products {
+          id           
+        }        
+      }
+    }`, {product, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1}).then();        
+  } 
+    
   setCacheItem(cachekey, result, 60);
 
   return result;  
 }
 
 const getWarehouseStockLevels = async (params) => {
+  logger.debug('Getting Warehouse Stock Levels For Product', {params});
   const apiFilter = { product_id: params.productId };
+
+  const cachekey = Hash(`product_warehouse_stock_product_id_${params.productId}`.toLowerCase());
+
+  const cached = await getCacheItem(cachekey).then();
+  if(cached) return cached;
 
   const warehouseIds = await lasecApi.Products.warehouse_stock({
     filter: apiFilter,
@@ -223,22 +284,25 @@ const getWarehouseStockLevels = async (params) => {
   let totalOnBO = 0;
   let totalAvailable = 0;
 
-  const stock = warehouseStock.items.map(async (warehouse) => {
+  logger.debug(`Loaded Warehouse Stock For Product ${params.product_id}`, warehouseStock);
+
+  const stock = warehouseStock.items.map((warehouse) => {
 
     totalAvailable += warehouse.QtyAvailable;
     totalOnHand += warehouse.QtyOnHand;
     totalOnBO += warehouse.QtyOnBackOrder;
-    const warehouseDetails = await lasecApi.Products.warehouse({ filter: { ids: [warehouse.warehouse_id], pagination: { enabled: false } } }).then();
-    const detail = warehouseDetails.items[0];
+    //const warehouseDetails = await lasecApi.Products.warehouse({ filter: { ids: [warehouse.warehouse_id], pagination: { enabled: false } } }).then();
+    //const detail = warehouseDetails.items[0];
 
     return {
-      name: detail.name,
+      name: WarehouseIds[warehouse.warehouse_id].title,
       qtyAvailable: warehouse.QtyAvailable,
       qtyOnHand: warehouse.QtyOnHand,
       qtyOnBO: warehouse.QtyOnBackOrder,
     };
-
   });
+
+
 
   stock.push({
     name: 'Totals',
@@ -246,6 +310,15 @@ const getWarehouseStockLevels = async (params) => {
     qtyOnHand: totalOnHand,
     qtyOnBO: totalOnBO,
   });
+
+  setCacheItem(cachekey, {
+    stock,
+    totals: {
+      qtyAvailable: totalAvailable,
+      qtyOnHand: totalOnHand,
+      qtyOnBO: totalOnBO,
+    },
+  }, 60 * 5);
 
   return {
     stock,

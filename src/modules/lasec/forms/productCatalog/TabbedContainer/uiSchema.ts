@@ -67,6 +67,11 @@ const uiSchema: any = {
     showRefresh: false,
     showSubmit: false,
     schemaSelectorStyle: 'button',
+    schemaSelector: {
+      variant: 'button',
+      showTitle: false,
+      activeColor: 'secondary'      
+    },
     style: {
       backgroundColor: "#F6F6F6",
       position: "absolute",

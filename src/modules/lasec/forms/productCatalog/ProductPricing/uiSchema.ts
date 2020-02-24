@@ -19,60 +19,66 @@ const uiSchema: any = {
       columns: [
         {
           title: '', field: 'onSyspro',
-          component: 'core.ConditionalIconComponent@1.0.0',
-          props: {
-            'ui:options': {},
-            conditions: [
-              {
-                key: 'on_syspro',
-                icon: 'error',
-                style: {
-                  color: '#9AD86E'
-                },
-                tooltip: 'ON SYSPRO'
+          components: [
+            {
+              component: 'core.ConditionalIconComponent@1.0.0',
+              props: {
+                'ui:options': {},
+                conditions: [
+                  {
+                    key: 'on_syspro',
+                    icon: 'error',
+                    style: {
+                      color: '#9AD86E'                  
+                    },
+                    tooltip: 'ON SYSPRO'
+                  },
+                  {
+                    key: 'not_on_syspro',
+                    icon: 'error',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'NOT ON SYSPRO'
+                  },
+                  {
+                    key: 'on_hold',
+                    icon: 'error',
+                    style: {
+                      color: '#D22D2C',
+                    },
+                    tooltip: 'ON HOLD'
+                  },
+                  {
+                    key: 'on_partial_hold',
+                    icon: 'error',
+                    style: {
+                      color: '#f7b425',
+                    },
+                    tooltip: 'ON PARTIAL HOLD'
+                  },
+                ]
               },
-              {
-                key: 'not_on_syspro',
-                icon: 'error',
-                style: {
-                  color: '#D22D2C'
-                },
-                tooltip: 'NOT ON SYSPRO'
+              style: {
+                marginRight: '8px',
               },
-              {
-                key: 'on_hold',
-                icon: 'error',
-                style: {
-                  color: '#D22D2C'
-                },
-                tooltip: 'ON HOLD'
+              propsMap: {
+                onSyspro: 'value',
               },
-              {
-                key: 'on_partial_hold',
-                icon: 'error',
-                style: {
-                  color: '#f7b425'
-                },
-                tooltip: 'ON PARTIAL HOLD'
-              },
-            ]
-          },
-          propsMap: {
-            onSyspro: 'value',
-          },
-        },
-        {
-          title: '', field: 'image',
-          component: 'core.ImageComponent@1.0.0',
-          props: {
-            'ui:options': {
-              variant: 'rounded'
             },
-          },
-          propsMap: {
-            image: 'value',
-          },
-        },
+            {
+              component: 'core.ImageComponent@1.0.0',
+              props: {
+                'ui:options': {
+                  variant: 'rounded'
+                },                
+              },
+              propsMap: {
+                image: 'value',
+              },
+            }
+          ], 
+        },        
         { title: 'Stock Code', field: 'code' },
         { title: 'Description', field: 'name' },
         {
@@ -110,9 +116,34 @@ const uiSchema: any = {
         showTitle: false,
         toolbar: false,
       },
+      remoteData: true,
+      query: 'query',
+      variables: {
+        'state.formData.product': 'product'
+      },
+      resultMap: {
+        'paging.page': 'page',
+        'paging.total': 'totalCount',
+        'paging.pageSize': 'pageSize',        
+        'products.[].id': 'data.[].id',
+        'products.[].name': 'data.[].name',
+        'products.[].code': 'data.[].code',
+        'products.[].description': 'data.[].description',
+        'products.[].qtyAvailable': 'data.[].qtyAvailable',
+        'products.[].qtyOnHand': 'data.[].qtyOnHand',
+        'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
+        'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
+        'products.[].price': 'data.[].price',
+        'products.[].image': 'data.[].image',
+        'products.[].onSyspro': 'data.[].onSyspro',
+        'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
+        'products.[].landedPrice': 'data.[].landedPrice',
+        'products.[].wh10CostPrice': 'data.[].wh10CostPrice',
+        'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
+        'products.[].listPrice': 'data.[].listPrice',
+      },
     },
   }
-
 };
 
 export default uiSchema;

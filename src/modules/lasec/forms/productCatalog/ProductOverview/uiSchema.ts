@@ -22,6 +22,7 @@ const uiSchema: any = {
       columns: [
         {
           title: '', field: 'onSyspro',
+          width: '40px',
           component: 'core.ConditionalIconComponent@1.0.0',
           props: {
             'ui:options': {},
@@ -74,6 +75,7 @@ const uiSchema: any = {
         },
         {
           title: '', field: 'image',
+          width: '80px',
           component: 'core.ImageComponent@1.0.0',
           props: {
             'ui:options': {
@@ -199,6 +201,10 @@ const uiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
+        fixedColumns: {
+          left: 5,           
+        },
+        tableLayout: 'fixed',
       },
       remoteData: true,
       query: 'query',

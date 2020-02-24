@@ -7,7 +7,7 @@ const $toolbar = {
   properties: {
     product: {
       type: 'string',
-      title: '',
+      title: 'Search',
       format: "search",
       description: 'Enter a product code or description',
       minLength: 3

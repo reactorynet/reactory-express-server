@@ -18,6 +18,7 @@ const uiSchemaDetails: any = {
       columns: [
         {
           title: '', field: 'onSyspro',
+          width: 40,
           component: 'core.ConditionalIconComponent@1.0.0',
           props: {
             'ui:options': {},
@@ -62,6 +63,7 @@ const uiSchemaDetails: any = {
         },
         {
           title: '', field: 'image',
+          width: 80,
           component: 'core.ImageComponent@1.0.0',
           props: {
             'ui:options': {
@@ -99,11 +101,47 @@ const uiSchemaDetails: any = {
       options: {
         grouping: true,
       },
+      remoteData: true,
+      query: 'query',
+      variables: {
+        'state.formData.product': 'product'
+      },
+      resultMap: {
+        'paging.page': 'page',
+        'paging.total': 'totalCount',
+        'paging.pageSize': 'pageSize',        
+        'products.[].name': 'data.[].name',
+        'products.[].code': 'data.[].code',
+        'products.[].description': 'data.[].description',
+        'products.[].qtyAvailable': 'data.[].qtyAvailable',
+        'products.[].qtyOnHand': 'data.[].qtyOnHand',
+        'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
+        'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
+        'products.[].price': 'data.[].price',
+        'products.[].image': 'data.[].image',
+        'products.[].onSyspro': 'data.[].onSyspro',
+        'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
+        'products.[].landedPrice': 'data.[].landedPrice',
+        'products.[].wh10CostPrice': 'data.[].wh10CostPrice',
+        'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
+        'products.[].listPrice': 'data.[].listPrice',
+        'products.[].buyer': 'data.[].buyer',
+        'products.[].planner': 'data.[].planner',
+        'products.[].isHazardous': 'data.[].isHazardous',
+        'products.[].siteEvaluationRequired': 'data.[].siteEvaluationRequired',
+        'products.[].packedLength': 'data.[].packedLength',
+        'products.[].packedWidth': 'data.[].packedWidth',
+        'products.[].packedHeight': 'data.[].packedHeight',
+        'products.[].packedVolume': 'data.[].packedVolume',
+        'products.[].packedWeight': 'data.[].packedWeight',
+        'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
+        'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',        
+      },
     },
   }
 };
 
-// MORE DETAILS: STOCK
+// MORE DETAILS: STOCK -- DEFAULT 
 const uiSchema: any = {
   'ui:options': {    
     componentType: "div", 
@@ -123,6 +161,7 @@ const uiSchema: any = {
       columns: [
         {
           title: '', field: 'onSyspro',
+          width: '40px',
           component: 'core.ConditionalIconComponent@1.0.0',
           props: {
             'ui:options': {},
@@ -164,9 +203,11 @@ const uiSchema: any = {
           propsMap: {
             onSyspro: 'value',
           },
+          
         },
         {
           title: '', field: 'image',
+          width: '80px',
           component: 'core.ImageComponent@1.0.0',
           props: {
             'ui:options': {
@@ -199,6 +240,11 @@ const uiSchema: any = {
         {
           title: '',
           field: 'id',
+          width: '35%',
+          cellStyle: {
+            margin: 0,
+            padding: 0
+          },
           component: 'core.TableChildComponentWrapper@1.0.0',
           props: {
             'ui:options': {
@@ -215,10 +261,48 @@ const uiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
+        fixedColumns: {
+          left: 3,           
+        },        
+      },
+      remoteData: true,
+      query: 'query',
+      variables: {
+        'state.formData.product': 'product'
+      },
+      resultMap: {
+        'paging.page': 'page',
+        'paging.total': 'totalCount',
+        'paging.pageSize': 'pageSize',        
+        'products.[].name': 'data.[].name',
+        'products.[].code': 'data.[].code',
+        'products.[].description': 'data.[].description',
+        'products.[].qtyAvailable': 'data.[].qtyAvailable',
+        'products.[].qtyOnHand': 'data.[].qtyOnHand',
+        'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
+        'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
+        'products.[].price': 'data.[].price',
+        'products.[].image': 'data.[].image',
+        'products.[].onSyspro': 'data.[].onSyspro',
+        'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
+        'products.[].landedPrice': 'data.[].landedPrice',
+        'products.[].wh10CostPrice': 'data.[].wh10CostPrice',
+        'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
+        'products.[].listPrice': 'data.[].listPrice',
+        'products.[].buyer': 'data.[].buyer',
+        'products.[].planner': 'data.[].planner',
+        'products.[].isHazardous': 'data.[].isHazardous',
+        'products.[].siteEvaluationRequired': 'data.[].siteEvaluationRequired',
+        'products.[].packedLength': 'data.[].packedLength',
+        'products.[].packedWidth': 'data.[].packedWidth',
+        'products.[].packedHeight': 'data.[].packedHeight',
+        'products.[].packedVolume': 'data.[].packedVolume',
+        'products.[].packedWeight': 'data.[].packedWeight',
+        'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
+        'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',        
       },
     },
   }
-
 };
 
 //MORE DETAILS - SALES ORDERS
