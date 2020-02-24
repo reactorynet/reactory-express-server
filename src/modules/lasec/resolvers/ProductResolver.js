@@ -145,7 +145,27 @@ const getProducts = async (params) => {
    
 
   let _cachedResults = await getCacheItem(cachekey);
-  if (_cachedResults) return _cachedResults;
+  if (_cachedResults) {
+    
+    if(iter === 0) {
+      //client request and we have a cache so we fire off the next fetch anyway
+      execql(`query LasecGetProductList($product: String!, $paging: PagingRequest, $iter: Int){
+        LasecGetProductList(product: $product, paging: $paging, iter: $iter){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          products {
+            id           
+          }        
+        }
+      }`, {product, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1}).then();
+    }
+
+    return _cachedResults;
+  }
 
   const productResult = await lasecApi.Products.list({ filter, pagination: { current_page: paging.page, page_size: paging.pageSize } }).then();
 
