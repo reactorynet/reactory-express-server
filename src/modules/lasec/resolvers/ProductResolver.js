@@ -121,13 +121,18 @@ const getProducts = async (params) => {
   // ADITIONAL PARAMS : Product Name
   logger.debug(`Getting Products For Using Query ${product}`, {paging});
 
-  if(isString(product) === false || product.length < 3) return [];
+  
   
   let pagingResult = {
     total: 0,
     page: paging.page || 1,
     hasNext: false,
     pageSize: paging.pageSize || 10
+  };
+
+  if(isString(product) === false || product.length < 3) return {
+    paging: pagingResult,
+    products: []
   };
 
   let filter = { "any_field": product };

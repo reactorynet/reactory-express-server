@@ -11,7 +11,7 @@ const uiSchema: any = {
     }
   },
   product: {
-    'ui:widget': 'HiddenWidget'
+    //'ui:widget': 'HiddenWidget'
   },
   products: {
     'ui:widget': 'MaterialTableWidget',
@@ -119,7 +119,7 @@ const uiSchema: any = {
       remoteData: true,
       query: 'query',
       variables: {
-        'state.formData.product': 'product'
+        'props.formContext.$formData.product': 'product'
       },
       resultMap: {
         'paging.page': 'page',

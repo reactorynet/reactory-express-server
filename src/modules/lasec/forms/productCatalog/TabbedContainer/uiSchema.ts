@@ -111,9 +111,8 @@ const uiSchema: any = {
           componentFqn: 'lasec-crm.LasecProductOverviewTable',          
           componentProps: {},
           componentPropsMap: {
-            'formContext.$formData.toolbar.product': ['formData.product', 'query.product'],
+            'formContext.$formData.toolbar.product': 'formData.product',
             'formContext.$formData.toolbar.view': 'query.uiSchema',
-            'formContext.$formState.autoQueryDisabled' : 'autoQueryDisabled',
           },
         },
         {
@@ -121,9 +120,8 @@ const uiSchema: any = {
           componentFqn: 'lasec-crm.LasecProductPricingTable',
           componentProps: {},
           componentPropsMap: {
-            'formContext.$formData.toolbar.product': ['formData.product', 'query.product'],
+            'formContext.$formData.toolbar.product': 'formData.product',
             'formContext.$formData.toolbar.view': 'query.uiSchema',
-            'formContext.$formState.autoQueryDisabled' : 'autoQueryDisabled',
           },
         },
         {
@@ -131,9 +129,8 @@ const uiSchema: any = {
           componentFqn: 'lasec-crm.LasecProductDetailTable',
           componentProps: {},
           componentPropsMap: {
-            'formContext.$formData.toolbar.product': ['formData.product', 'query.product'],
+            'formContext.$formData.toolbar.product': 'formData.product',
             'formContext.$formData.toolbar.view': 'query.uiSchema',
-            'formContext.$formState.autoQueryDisabled' : 'autoQueryDisabled',
           },
         },
       ]
