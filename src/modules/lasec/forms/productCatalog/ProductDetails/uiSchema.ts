@@ -153,7 +153,7 @@ const uiSchema: any = {
     showRefresh: false,   
   },
   product: {
-    //'ui:widget': 'HiddenWidget'
+    'ui:widget': 'HiddenWidget'
   },
   products: {
     'ui:widget': 'MaterialTableWidget',

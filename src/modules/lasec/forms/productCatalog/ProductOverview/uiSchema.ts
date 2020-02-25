@@ -14,7 +14,7 @@ const uiSchema: any = {
     'ui:widget': 'HiddenWidget'
   },  
   product: {
-    //'ui:widget': 'HiddenWidget'
+    'ui:widget': 'HiddenWidget'        
   },
   products: {
     'ui:widget': 'MaterialTableWidget',
