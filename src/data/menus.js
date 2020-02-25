@@ -42,6 +42,11 @@ export const towerStoneMenuDef = {
     },
     {
       ordinal: 6, title: 'Admin', link: '/admin/', icon: 'supervisor_account', roles: ['ADMIN'],
+      items: [
+        {
+          ordinal: 0, title: 'Static Content', link: '/static-content/', icon: 'pencil', roles: ['DEVELOPER',  'ADMIN']
+        },
+      ],
     },
     {
       ordinal: 17, title: 'Develop', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN'],

@@ -240,7 +240,7 @@ const uiSchema: any = {
         {
           title: '',
           field: 'id',
-          width: '35%',
+          width: '',
           cellStyle: {
             margin: 0,
             padding: 0
@@ -250,7 +250,7 @@ const uiSchema: any = {
             'ui:options': {
               componentFqn: 'lasec-crm.LasecProductQuantityTable@1.0.0',
               propsMap: {
-                'id': 'formData.id'
+                'formData.id': 'formData.id'
               }
             },
           },
@@ -260,10 +260,7 @@ const uiSchema: any = {
         grouping: false,
         search: false,
         showTitle: false,
-        toolbar: false,
-        fixedColumns: {
-          left: 3,           
-        },        
+        toolbar: false,        
       },
       remoteData: true,
       query: 'query',

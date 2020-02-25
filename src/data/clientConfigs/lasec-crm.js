@@ -648,7 +648,7 @@ const LASEC_CONFIG = {
     {
       key: 'content-capture',
       title: 'Content Capture',
-      path: '/admin/content/edit/:slug/*',
+      path: '/static-content/edit/:slug/*',
       public: false,
       exact: false,
       roles: ['USER', 'ADMIN'],

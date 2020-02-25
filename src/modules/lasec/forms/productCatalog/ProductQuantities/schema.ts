@@ -3,6 +3,9 @@ import Reactory from '@reactory/server-core/types/reactory';
 const schema: Reactory.ISchema = {
   type: 'object',
   properties: {
+    id: {
+      type: 'string'
+    },
     stock: {
       type: 'array',
       items: {

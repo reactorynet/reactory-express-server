@@ -11,6 +11,9 @@ const uiSchema: any = {
       margin: '0px'
     }
   },
+  id: {
+    
+  },
   stock: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
