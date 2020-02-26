@@ -147,12 +147,14 @@ const uiSchema: any = {
     componentType: "div", 
     containerStyles: {
       padding: '0px',
-      margin: '0px'
+      margin: '0px',
+      paddingBottom: '8px'
     },
     showSubmit: false,
     showRefresh: false,   
   },
   product: {
+    hidden: true,
     'ui:widget': 'HiddenWidget'
   },
   products: {
@@ -201,7 +203,7 @@ const uiSchema: any = {
             ]
           },
           propsMap: {
-            onSyspro: 'value',
+            'rowData.onSyspro': 'value',
           },
           
         },
@@ -215,7 +217,7 @@ const uiSchema: any = {
             },
           },
           propsMap: {
-            image: 'value',
+            'rowData.image': 'value',
           },
         },
         { title: 'Stock Code', field: 'code' },
@@ -229,31 +231,38 @@ const uiSchema: any = {
               'ui:options': {
                 icon: 'square_foot',
                 iconPosition: 'left',
-                variant: 'p'
+                variant: 'p',
+                format: '${rowData.unitOfMeasure}'
               }
             },
-          },
-          propsMap: {
-            unitOfMeasure: 'value',
-          }
+          },          
         },
         {
-          title: '',
+          title: 'Stock',
           field: 'id',
           width: '',
           cellStyle: {
             margin: 0,
             padding: 0
           },
+          component: 'lasec-crm.LasecProductQuantityTable@1.0.0',
+          props: {},
+          propsMap: {
+            'rowData.id': 'formData.id',                
+          },
+          //component: {
+          //  
+          //},
+          /*
           component: 'core.TableChildComponentWrapper@1.0.0',
           props: {
-            'ui:options': {
-              componentFqn: 'lasec-crm.LasecProductQuantityTable@1.0.0',
-              propsMap: {
-                'formData.id': 'formData.id'
-              }
-            },
+           
           },
+          propsMap: {
+            'rowData': 'rowData',
+            'formData': 'formData'
+          },
+          */          
         },
       ],
       options: {
@@ -270,7 +279,8 @@ const uiSchema: any = {
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
-        'paging.pageSize': 'pageSize',        
+        'paging.pageSize': 'pageSize',     
+        'products.[].id': 'data.[].id',   
         'products.[].name': 'data.[].name',
         'products.[].code': 'data.[].code',
         'products.[].description': 'data.[].description',

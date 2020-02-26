@@ -62,7 +62,7 @@ const uiSchema: any = {
             ]
           },
           propsMap: {
-            onSyspro: 'value',
+            'rowData.onSyspro': 'value',
           },
           cellStyle: {
             maxWidth: '40px',
@@ -83,7 +83,7 @@ const uiSchema: any = {
             },
           },
           propsMap: {
-            image: 'value',
+            'rowData.image' : 'value',
           },
           cellStyle: {
             maxWidth: 40,
@@ -105,12 +105,13 @@ const uiSchema: any = {
               'ui:options': {
                 icon: 'square_foot',
                 iconPosition: 'left',
-                variant: 'p'
+                variant: 'p',
+                format: '${rowData.unitOfMeasure}'
               }
             },
           },
           propsMap: {
-            unitOfMeasure: 'value',
+            'rowData.unitOfMeasure': 'value',
           }
         },
         {
@@ -122,12 +123,13 @@ const uiSchema: any = {
               'ui:options': {
                 icon: 'shopping_basket',
                 iconPosition: 'left',
-                variant: 'p'
+                variant: 'p',
+                format: '${rowData.qtyAvailable}'
               }
             },
           },
           propsMap: {
-            qtyAvailable: 'value',
+            'rowData.qtyAvailable' : 'value',
           }
         },
         {
@@ -139,13 +141,11 @@ const uiSchema: any = {
               'ui:options': {
                 icon: 'perm_identity',
                 iconPosition: 'left',
-                variant: 'p'
+                variant: 'p',
+                format: '${rowData.qtyOnHand}'
               }
             },
-          },
-          propsMap: {
-            qtyOnHand: 'value',
-          }
+          },          
         },
         {
           title: 'Qty on PO',
@@ -156,20 +156,18 @@ const uiSchema: any = {
               'ui:options': {
                 icon: 'receipt',
                 iconPosition: 'left',
-                variant: 'p'
+                variant: 'p',
+                format: '${rowData.qtyOnOrder}'
               }
             },
-          },
-          propsMap: {
-            qtyOnOrder: 'value',
-          }
+          },          
         },
         {
           title: 'Price', field: 'price',
           component: 'core.StyledCurrencyLabel@1.0.0',
           props: {
             uiSchema: {
-              'ui:options': {
+              'ui:options': {                
                 prependText: 'From: ',
                 conditionalStyles: [
                   {
@@ -191,8 +189,8 @@ const uiSchema: any = {
             },
           },
           propsMap: {
-            price: 'value',
-            priceAdditionalInfo: 'condition',
+            'rowData.price': ['value', 'formData'],
+            'rowData.priceAdditionalInfo' : ['condition'],
           },
         },
       ],

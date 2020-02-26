@@ -324,27 +324,33 @@ export default {
           props: {
             componentFqn: 'lasec-crm.QuoteDetail@1.0.0',
             componentProps: {
-              'code': ['data.quote_id', 'data.code', 'query.quote_id']
+              'rowData.code': ['data.quote_id', 'data.code', 'query.quote_id']
             },
             slideDirection: 'down',
-            buttonTitle: '${code}',
-            windowTitle: 'Details view for ${code}',
+            buttonTitle: '${rowData.code}',
+            windowTitle: 'Details view for ${rowData.code}',
           },
+          propsMap: {
+            'rowData': 'rowData'
+          }
         },
         {
-          title: 'Overview',
+          title: 'Next Actions',
           field: 'code',
           component: 'core.SlideOutLauncher@1.0.0',
           props: {
             componentFqn: 'lasec-crm.UpdateQuoteStatus@1.0.0',
             componentProps: {
-              'code': ['data.quote_id', 'data.code', 'query.quote_id']
+              'rowData.code': ['data.quote_id', 'data.code', 'query.quote_id']
             },
             slideDirection: 'down',
             buttonTitle: 'Next Actions',
-            windowTitle: 'Next Actions ${code}',
+            windowTitle: 'Next Actions ${rowData.code}',
             buttonIcon: 'add_alert'
           },
+          propsMap: {
+            'rowData': 'rowData'
+          }
         },
         { title: 'Status', field: 'statusName', defaultGroupOrder: 0 },
         { title: 'Company', field: 'companyTradingName', defaultGroupOrder: 1 },

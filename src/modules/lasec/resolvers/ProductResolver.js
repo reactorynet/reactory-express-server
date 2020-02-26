@@ -279,9 +279,11 @@ const getProducts = async (params) => {
 
 const getWarehouseStockLevels = async (params) => {
   logger.debug('Getting Warehouse Stock Levels For Product', {params});
-  const apiFilter = { product_id: params.productId };
+  
+  const product_id = params.productId;
+  const apiFilter = { product_id };
 
-  const cachekey = Hash(`product_warehouse_stock_product_id_${params.productId}`.toLowerCase());
+  const cachekey = Hash(`product_warehouse_stock_product_id_${product_id}`.toLowerCase());
 
   const cached = await getCacheItem(cachekey).then();
   if(cached) return cached;
@@ -329,7 +331,7 @@ const getWarehouseStockLevels = async (params) => {
 
 
 
-  stock.push({
+  stock.push({    
     name: 'Totals',
     qtyAvailable: totalAvailable,
     qtyOnHand: totalOnHand,
@@ -337,6 +339,7 @@ const getWarehouseStockLevels = async (params) => {
   });
 
   setCacheItem(cachekey, {
+    id: product_id,
     stock,
     totals: {
       qtyAvailable: totalAvailable,
@@ -346,6 +349,7 @@ const getWarehouseStockLevels = async (params) => {
   }, 60 * 5);
 
   return {
+    id: product_id,
     stock,
     totals: {
       qtyAvailable: totalAvailable,

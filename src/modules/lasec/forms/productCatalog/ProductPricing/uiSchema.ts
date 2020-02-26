@@ -63,7 +63,7 @@ const uiSchema: any = {
                 marginRight: '8px',
               },
               propsMap: {
-                onSyspro: 'value',
+                'rowData.onSyspro': 'value',
               },
             },
             {
@@ -74,7 +74,7 @@ const uiSchema: any = {
                 },                
               },
               propsMap: {
-                image: 'value',
+                'rowData.image': 'value',
               },
             }
           ], 
@@ -90,29 +90,27 @@ const uiSchema: any = {
               'ui:options': {
                 icon: 'square_foot',
                 iconPosition: 'left',
-                variant: 'p'
+                variant: 'p',
+                format: '${rowData.unitOfMeasure}',
               }
             },
-          },
-          propsMap: {
-            unitOfMeasure: 'value',
-          }
+          },          
         },
         {
           title: 'Price',
           field: 'price',
           component: 'core.PricingSliderComponent@1.0.0',
           propsMap: {
-            landedPrice: 'landedPrice',
-            wh10CostPrice: 'wh10CostPrice',
-            threeMonthAvePrice: 'threeMonthAvePrice',
-            listPrice: 'listPrice',
+            'rowData.landedPrice': 'landedPrice',
+            'rowData.wh10CostPrice': 'wh10CostPrice',
+            'rowData.threeMonthAvePrice': 'threeMonthAvePrice',
+            'rowData.listPrice': 'listPrice',
           }
         },
       ],
       options: {
         grouping: false,
-        search: false,
+        search: false,  
         showTitle: false,
         toolbar: false,
       },

@@ -46,21 +46,22 @@ type ProductClass {
 }
 
 type WarehouseStockDetails {
+  id: String
   stock: [WarehouseStock]
   totals: StockTotals
 }
 
 type WarehouseStock {
   name: String
-  qtyAvailable: Int
-  qtyOnHand: Int
-  qtyOnBO: Int
+  qtyAvailable: Float
+  qtyOnHand: Float
+  qtyOnBO: Float
 }
 
 type StockTotals {
-  qtyAvailable: Int
-  qtyOnHand: Int
-  qtyOnBO: Int
+  qtyAvailable: Float
+  qtyOnHand: Float
+  qtyOnBO: Float
 }
 
 type PagedProductResult {

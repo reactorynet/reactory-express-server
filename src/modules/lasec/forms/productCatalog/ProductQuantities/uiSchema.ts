@@ -4,19 +4,21 @@ const uiSchema: any = {
     showSubmit: false,
     showRefresh: false,
     showHelp: false,
+    toolbarPosition: 'none',
     componentType: 'div',
     container: 'div',
     containerStyles: {
       padding: '0px',
-      margin: '0px'
+      margin: '0px',
+      //position: 'relative',
+      //top: '-78px',
+      //zIndex: 'auto',
     }
   },
-  id: {
-    
-  },
+  
   stock: {
     'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
+    'ui:options': {      
       options: {
         toolbar: false,
         draggable: false,
@@ -31,6 +33,16 @@ const uiSchema: any = {
       ],
       lastRowFooter: true,
     },
+  },
+
+  id: {
+    class: 'none',    
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      containerStyles: {
+        'display': 'none'        
+      }
+    }
   },
 };
 

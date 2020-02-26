@@ -4,7 +4,7 @@ const schema: Reactory.ISchema = {
   type: 'object',
   properties: {
     product: {
-      type: 'string'
+      type: 'string',      
     },
     products: {
       type: 'array',
