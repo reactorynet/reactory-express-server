@@ -182,7 +182,7 @@ const Menus = {
         {
           ordinal: 0,
           title: 'Clients',
-          link: '/360/crm/customer-search',
+          link: '/crm/client/',
           icon: 'accessible',
           roles: ['USER'],
         },
@@ -784,6 +784,24 @@ const LASEC_CONFIG = {
           value: {
             type: 'string',
             mode: 'view'
+          }
+        }
+      ],
+    },
+    {
+      key: 'crm-client',
+      title: 'Lasec CRM',
+      path: '/crm/:tab/**',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.LasecCRMComponent@1.0.0`,
+      args: [
+        {
+          key: 'tab',
+          value: {
+            type: 'string',
+            tab: 'client'
           }
         }
       ],
