@@ -19,6 +19,10 @@
 
 
 ## Client Details
+* Form with container type form / div 
+* no toolbar
+* no submit button
+* query and update / new mutations
 
 ### Personal Details Form
 
@@ -27,7 +31,6 @@
 ### Job Details Form
 
 ### Client Documents
-
 
 ## Customer Details Form
 
