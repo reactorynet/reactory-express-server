@@ -7,24 +7,24 @@ const $toolbar: any = {
     {
       search: { md: 3, sm: 4, xs: 6 },
       // supplier: { md: 3, sm: 4, xs: 6 },
-      fabButton: { md: 3, sm: 4, xs: 6 },      
+      fabButton: { md: 3, sm: 4, xs: 6 },
     }
-  ],  
-  search: {    
+  ],
+  search: {
     'ui:options': {
       showLabel: true,
-      icon: 'search',     
-      component: "TextField",       
-      props: {        
+      icon: 'search',
+      component: "TextField",
+      props: {
         placeholder: 'Search',
         type: 'search',
         style: {
           minWidth: '180px'
         }
-      }      
+      }
     }
   },
-  fabButton: {    
+  fabButton: {
     'ui:options': {
       text: 'SEARCH',
       color: 'default',
@@ -36,7 +36,7 @@ const $toolbar: any = {
         }
       }
     }
-  },  
+  },
 };
 
 
@@ -46,11 +46,11 @@ const uiSchema: any = {
     toolbarPosition: 'none',
     showRefresh: false,
     showSubmit: false,
-    schemaSelectorStyle: 'button',
+    schemaSelectorStyle: 'icon-button',
     schemaSelector: {
-      variant: 'button',
+      variant: 'icon-button',
       showTitle: false,
-      activeColor: 'secondary'      
+      activeColor: 'secondary'
     },
     style: {
       backgroundColor: "#F6F6F6",
@@ -65,7 +65,7 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
-    spacing: 4,    
+    spacing: 4,
     containerStyles: {
       backgroundColor: "#F6F6F6",
       border: "none",
@@ -89,7 +89,7 @@ const uiSchema: any = {
       tabs: [
         {
           title: 'Product Overview',
-          componentFqn: 'lasec-crm.LasecProductOverviewTable',          
+          componentFqn: 'lasec-crm.LasecProductOverviewTable',
           componentProps: {},
           componentPropsMap: {
             'formContext.$formData.toolbar.product': 'formData.product',

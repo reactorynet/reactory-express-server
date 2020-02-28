@@ -11,19 +11,19 @@ const $toolbar: any = {
       resultCount: { md: 3, sm: 4, xs: 6 },
       view: { md: 3, sm: 4, xs: 6 },
     }
-  ],  
-  product: {    
+  ],
+  product: {
     'ui:options': {
       showLabel: true,
-      icon: 'search',     
-      component: "TextField",       
-      props: {        
+      icon: 'search',
+      component: "TextField",
+      props: {
         placeholder: 'Find a Product',
         type: 'search',
         style: {
           minWidth: '180px'
         }
-      }      
+      }
     }
   },
   submitButton: {
@@ -55,7 +55,7 @@ const $toolbar: any = {
         width: 'unset',
         float: 'right'
       },
-    }    
+    }
   }
 };
 
@@ -68,9 +68,9 @@ const uiSchema: any = {
     showSubmit: false,
     schemaSelectorStyle: 'button',
     schemaSelector: {
-      variant: 'button',
+      variant: 'icon-button',
       showTitle: false,
-      activeColor: 'secondary'      
+      activeColor: 'secondary'
     },
     style: {
       backgroundColor: "#F6F6F6",
@@ -85,7 +85,7 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
-    spacing: 4,    
+    spacing: 4,
     containerStyles: {
       backgroundColor: "#F6F6F6",
       border: "none",
@@ -108,7 +108,7 @@ const uiSchema: any = {
       tabs: [
         {
           title: 'Product Overview',
-          componentFqn: 'lasec-crm.LasecProductOverviewTable',          
+          componentFqn: 'lasec-crm.LasecProductOverviewTable',
           componentProps: {},
           componentPropsMap: {
             'formContext.$formData.toolbar.product': 'formData.product',
