@@ -25,6 +25,11 @@ export const SurveySettingsSchema = {
       min: 1,
       max: 10,
     },
+    autoLaunchOnPeerConfirm: {
+      type: 'boolean',
+      title: 'Auto Launch On Peer Confirm',
+      default: true
+    },
     maximumPeers: {
       type: 'number',
       title: 'Maximum Number of Peers',
@@ -80,14 +85,21 @@ export const SurveySettingsSchema = {
 };
 
 export const SurveySetttingsUISchema = {
+  submitIcon: 'save',
   'ui:options': {
-    showSubmit: false,
+    submitProps: {
+      variant: 'button',
+      text: '${props.mode === "edit" ? "Update" : "Create" }',
+      color: 'primary',      
+      iconAlign: 'left'
+    }
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [    
     {
-      defaultMinimumPeers: { md: 6 },
-      mustHaveSupervisor: { md: 6 },
+      defaultMinimumPeers: { md: 4 },
+      mustHaveSupervisor: { md: 4 },
+      autoLaunchOnPeerConfirm: { md: 4 }
     },
     {
       minimumPeers: { md: 6 },
@@ -201,6 +213,7 @@ const graphql = {
       'options.mustHaveSupervisor': 'mustHaveSupervisor',
       'options.numberOfReminders': 'numberOfReminders',
       'options.spreadReminders': 'spreadReminders',
+      'options.autoLaunchOnPeerConfirm' : 'autoLaunchOnPeerConfirm',
       'surveyType': 'surveyType',
       timeline: 'timeline',
     },
@@ -245,6 +258,7 @@ export const TowerStoneSurveySettings = {
     numberOfReminders: 3,
     spreadReminders: 'even',
     maxReminders: 3,
+    autoLaunchOnPeerConfirm: true,
   },
   helpTopics: ['towerstone-survey-settings'],
   name: 'TowerStoneSurveySettings',

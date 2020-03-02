@@ -25,6 +25,7 @@ import logger from '../../../logging';
 import iz from '../../../utils/validators';
 import TaskModel from '../../schema/Task';
 import { isObject, isNull } from 'util';
+import { execml } from 'graph/client';
 
 const uuid = require('uuid');
 
@@ -499,7 +500,7 @@ const userResolvers = {
         return created;
       })(id || _id.toString(), taskInput);
     },
-    async confirmPeers(obj, { id, organization }) {
+    async confirmPeers(obj, { id, organization, surveyId }) {
       const userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
         organization: ObjectId(organization),
@@ -509,7 +510,21 @@ const userResolvers = {
         .populate('peers.user')
         .then();
 
+
+
       if (lodash.isNil(userOrganigram) === true) throw new RecordNotFoundError('User Organigram Record Not Found');
+
+      let survey = null;
+
+      if(surveyId) {
+        survey = await Survey.findById(survey).then();
+        if(survey && survey.options) {
+          if(survey.options.autoLaunchOnPeerConfirm === true) {
+            // execml(``, {}, user, partner)
+            logger.debug(`NEED TO IMPLEMENT AUTO LAUNCH FEATURE HERE`);
+          }
+        }
+      }
 
       userOrganigram.confirmedAt = new Date().valueOf();
       userOrganigram.updatedAt = new Date().valueOf();
@@ -535,6 +550,7 @@ const userResolvers = {
             userOrganigram.organization,
             userOrganigram,
             peerIndex,
+            survey,
           ));
         }
       }
@@ -546,6 +562,7 @@ const userResolvers = {
         logger.error(`Error processing email promises ${emailError.message}`, emailError);
       }
       await userOrganigram.save().then();
+      
       return Organigram.findById(userOrganigram._id);
     },
     async removePeer(obj, { id, peer, organization }) {

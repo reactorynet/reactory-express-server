@@ -86,6 +86,7 @@ const uiSchema: any = {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
       activeTab: '${formContext.$route.match.params.tab}',
+      /*
       tabs: [
         {
           title: 'Product Overview',
@@ -115,6 +116,7 @@ const uiSchema: any = {
           },
         },
       ]
+      */
     }
   },
 

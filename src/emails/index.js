@@ -460,7 +460,7 @@ export const surveyEmails = {
 
     //TODO: this should be changed by changing all the keys for the emails on the 360s
     //mail template
-    const viewName = survey.surveyType === '360' ? TemplateView.SurveyLaunch : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-launch`;
+    const viewName = `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-launch`;
 
     try {
       const { partner } = global;
@@ -597,7 +597,7 @@ export const surveyEmails = {
       let isSelfAssessment = ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true;
       //TODO: this should be changed by changing all the keys for the emails on the 360s
       //mail template
-      let viewName = survey.surveyType === '360' ? TemplateView.SurveyReminder : `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-reminder`;
+      let viewName = `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-reminder`;
       const templateResult = await loadEmailTemplate(viewName, organization, partner).then();
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');
@@ -720,7 +720,7 @@ export const surveyEmails = {
 
     try {
       const { partner } = global;
-      let viewName = survey.surveyType === '360' ? TemplateView.SurveyInvite : `towerstone-${survey.surveyType}-delegate-invite`;
+      let viewName = `towerstone-${survey.surveyType}-delegate-invite`;
       const templateResult = await loadEmailTemplate(viewName, organization, partner).then();
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');
@@ -748,6 +748,12 @@ export const surveyEmails = {
         authToken,
         link: `${partner.siteUrl}/profile/?auth_token=${authToken}&peerconfig=true`,
       };
+
+      if(survey.options) {
+        if(survey.options.autoLaunchOnPeerConfirm === true) {
+          properties.link = `${properties.link}&survey=${survey._id.toString()}`;
+        }
+      }
 
       let bodyTemplate = null;
       let subjectTemplate = null;
@@ -870,6 +876,7 @@ export const organigramEmails = {
         peer,
         nominee: peer,
         user,
+        survey,
         employee: user,
         applicationTitle: partner.name,
         relationShip,

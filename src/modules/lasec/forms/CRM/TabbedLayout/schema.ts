@@ -8,7 +8,6 @@ const $toolbar = {
     search: {
       type: 'string',
       title: 'Search',
-      format: "search",
       description: 'Enter search string',
       minLength: 3
     },

@@ -19,7 +19,54 @@ const LasecProductCatalogTabs: Reactory.IReactoryForm = {
   defaultFormValue: {
     toolbar: {
       search: ""
-    }
+    },
+    tabs: [
+      {
+        id: 'clients',
+        title: 'Clients',
+        componentFqn: 'lasec-crm.LasecClientGrid',
+        componentProps: {},
+        componentPropsMap: {
+          'formContext.$formData.toolbar.search': 'formData.search'
+        }        
+      },
+      {
+        id: 'quotes',
+        title: 'Quotes',
+        componentFqn: 'lasec-crm.LasecQuoteGrid',
+        componentProps: {},
+        componentPropsMap: {
+          'formContext.$formData.toolbar.search': 'formData.search'
+        }
+      },
+      {
+        id: 'sales-orders',
+        title: 'Sales Orders',
+        componentFqn: 'lasec-crm.LasecSalesOrderGrid',
+        componentProps: {},
+        componentPropsMap: {
+          'formContext.$formData.toolbar.search': 'formData.search'
+        }
+      },
+      {
+        id: 'invoices',
+        title: 'Invoices',
+        componentFqn: 'lasec-crm.LasecInvoicesGrid',
+        componentProps: {},
+        componentPropsMap: {
+          'formContext.$formData.toolbar.search': 'formData.search'
+        }
+      },
+      {
+        id: 'sales-history',
+        title: 'Sales History',
+        componentFqn: 'lasec-crm.LasecSalesHistoryGrid',
+        componentProps: {},
+        componentPropsMap: {
+          'formContext.$formData.toolbar.search': 'formData.search'
+        }
+      }      
+    ]    
   },
   uiSchemas: [
     {
