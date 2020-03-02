@@ -806,6 +806,21 @@ const LASEC_CONFIG = {
         }
       ],
     },
+
+
+    // PERSONAL DETAILS
+    {
+      key: 'crm-client-details',
+      title: 'Lasec CRM',
+      path: '/crm/personal-details',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.LasecCRMPersonalInformation@1.0.0`,
+      args: [],
+    },
+
+
     {
       key: 'reactoryrouter',
       title: 'Reactory Forms',
@@ -1034,7 +1049,7 @@ const LASEC_CONFIG = {
           padding: '0px',
           paddingTop: '8px'
         }
-      }      
+      }
     },
     type: 'material',
     palette: {

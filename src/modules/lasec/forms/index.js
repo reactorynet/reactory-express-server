@@ -38,6 +38,7 @@ import ProductDetail from './productCatalog/ProductDetails';
 import ProductQuantities from './productCatalog/ProductQuantities';
 
 import TabbedCrmForm from './CRM/TabbedLayout';
+import ClientPersonalInformation from './CRM/Client/Personal';
 
 export default [
   SalesDashboard,
@@ -61,12 +62,13 @@ export default [
   FilterResults,
   NextActionDetail,
   QuoteNoteDetail,
-  
+
   TabbedProductList,
   ProductOverview,
   ProductPricing,
   ProductDetail,
   ProductQuantities,
 
-  TabbedCrmForm
+  TabbedCrmForm,
+  ClientPersonalInformation,
 ];
