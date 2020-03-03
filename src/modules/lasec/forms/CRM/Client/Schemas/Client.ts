@@ -1,16 +1,27 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 
 const ClientSchema: Reactory.ISchema = {
-  type: "object",
-  title: "${formData.firstName} ${formData.lastName}",
+  type: "object",  
   properties: {
+    id: {
+      type: "string",
+      title: "Client Id"
+    },
     clientStatus: {
       type: "string",
       title: "Client Status"
     },
+    firstName: {
+      type: "string",
+      title: "Firstname"
+    },
+    lastName: {
+      type: "string",
+      title: "Lastname"
+    },
     fullName: {
       type: "string",
-      title: "Client Full Name"
+      title: "Client Name"
     },
     emailAddress: {
       type: "string",

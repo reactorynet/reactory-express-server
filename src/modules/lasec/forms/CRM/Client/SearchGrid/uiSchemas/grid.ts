@@ -152,7 +152,7 @@ const uiSchema: any = {
           field: 'fullName',
           component: 'core.SlideOutLauncher@1.0.0',
           props: {
-            componentFqn: 'lasec-crm.LasecCRMPersonalInformation@1.0.0',
+            componentFqn: 'lasec-crm.LasecCRMClientDetail@1.0.0',
             componentProps: {
               'rowData.id': 'formData.id'
             },
@@ -165,7 +165,7 @@ const uiSchema: any = {
                 'cursor': 'pointer',
               }
             },
-            windowTitle: 'Details view for ${rowData.fullName}',
+            windowTitle: 'Client details: ${rowData.fullName}',
           }, 
           propsMap: {
             'rowData': 'rowData',

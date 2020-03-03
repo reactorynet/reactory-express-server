@@ -8,7 +8,7 @@ const displayUiSchema: any = {
     toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
-      margin: '0px',
+      margin: '0px',     
       paddingBottom: '8px'
     },
     schemaSelector: {
@@ -32,10 +32,10 @@ const displayUiSchema: any = {
       view: { md: 12 },      
     },
     {
-      clientStatus: { md: 12 },
-      firstName: { md: 12 },
-      lastName: { md: 12 },
-      country: { md: 12 },      
+      emailAddress: { md: 12 },
+      alternateEmail: { md: 12 },
+      mobileNumber: { md: 12 },
+      alternateNumber: { md: 12 },      
     }
   ],
   view: {
@@ -48,37 +48,37 @@ const displayUiSchema: any = {
       },
     }
   },
-  clientStatus: {
+  emailAddress: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
-      title: 'Client Status',
+      title: 'Email Address',
     }
   },
 
-  firstName: {
+  alternateEmail: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
-      title: 'Firstname',
+      title: 'Alternate Email',      
     }
   },
-  lastName: {
+  mobileNumber: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
-      title: 'Last Name',
+      title: 'Mobile Number',
     }
   },
-  country: {
+  alternateNumber: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
-      title: 'Country',
+      title: 'Alternate Number',
     }
   },
 };
@@ -101,10 +101,10 @@ const editUiSchema: any = {
       view: { md: 12 },      
     },
     {
-      clientStatus: { md: 12 },
-      firstName: { md: 12 },
-      lastName: { md: 12 },
-      country: { md: 12 },      
+      emailAddress: { md: 12 },
+      alternateEmail: { md: 12 },
+      mobileNumber: { md: 12 },
+      alternateNumber: { md: 12 },      
     }
   ],
   view: {
@@ -117,23 +117,44 @@ const editUiSchema: any = {
       },
     }
   },
-  clientStatus: {},
-  lastName: {},
-  firstName: {},
-  country: {},
+  emailAddress: {},
+  alternateEmail: {},
+  mobileNumber: {},
+  alternateNumber: {},
 };
 
-const schema: Reactory.ISchema = ClientSchema;
-schema.title = "PERSONAL DETAILS"
-const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
-  id: 'LasecCRMPersonalInformation',
+const schema: Reactory.ISchema = { 
+  type: "object",
+  title: "CONTACT DETAILS",
+  properties: {
+    emailAddress: {
+      type: "string",
+      title: "Email Address",
+    },
+    alternateEmail: {
+      type: "string",
+      title: "Alternate Email",
+    },
+    mobileNumber: {
+      type: "string",
+      title: "Mobile Number",
+    },
+    alternateNumber: {
+      type: "string",
+      title: "Alternate Number",
+    }
+  }
+};
+
+const LasecCRMContactInformation: Reactory.IReactoryForm = {
+  id: 'LasecCRMContactInformation',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
   title: 'CRM Personal Information',
   tags: ['CRM Personal Information'],
   registerAsComponent: true,
-  name: 'LasecCRMPersonalInformation',
+  name: 'LasecCRMContactInformation',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
@@ -144,7 +165,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       id: 'display',
       title: 'VIEW',
       key: 'display',
-      description: 'View Client Details',
+      description: 'View Contact Details',
       icon: 'list',
       uiSchema: displayUiSchema,
     },
@@ -152,7 +173,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       id: 'edit',
       title: 'EDIT',
       key: 'edit',
-      description: 'Edit Client Details',
+      description: 'Edit Contact Details',
       icon: 'view_module',
       uiSchema: editUiSchema,
     },
@@ -163,4 +184,4 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
 
 };
 
-export default LasecCRMPersonalInformationForm;
+export default LasecCRMContactInformation;

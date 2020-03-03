@@ -9,6 +9,7 @@ const displayUiSchema: any = {
     containerStyles: {
       padding: '0px',
       margin: '0px',
+      marginTop: '16px',
       paddingBottom: '8px'
     },
     schemaSelector: {
@@ -123,17 +124,18 @@ const editUiSchema: any = {
   country: {},
 };
 
-const schema: Reactory.ISchema = ClientSchema;
-schema.title = "PERSONAL DETAILS"
+const schema: Reactory.ISchema = { ...ClientSchema };
+schema.title = "DOCUMENTS"
+
 const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
-  id: 'LasecCRMPersonalInformation',
+  id: 'LasecCRMClientDocuments',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
-  title: 'CRM Personal Information',
-  tags: ['CRM Personal Information'],
+  title: 'CRM Client Documents',
+  tags: ['CRM Client Documents'],
   registerAsComponent: true,
-  name: 'LasecCRMPersonalInformation',
+  name: 'LasecCRMClientDocuments',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
@@ -144,7 +146,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       id: 'display',
       title: 'VIEW',
       key: 'display',
-      description: 'View Client Details',
+      description: 'View Contact Details',
       icon: 'list',
       uiSchema: displayUiSchema,
     },
@@ -152,7 +154,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       id: 'edit',
       title: 'EDIT',
       key: 'edit',
-      description: 'Edit Client Details',
+      description: 'Edit Contact Details',
       icon: 'view_module',
       uiSchema: editUiSchema,
     },

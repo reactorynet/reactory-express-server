@@ -32,10 +32,12 @@ const displayUiSchema: any = {
       view: { md: 12 },      
     },
     {
-      clientStatus: { md: 12 },
-      firstName: { md: 12 },
-      lastName: { md: 12 },
-      country: { md: 12 },      
+      accountType: { md: 12 },
+      repCode: { md: 12 },
+      jobTitle: { md: 12 },
+      clientDepartment: { md: 12 },
+      clientClass: { md: 12 },
+      ranking: { md: 12 }     
     }
   ],
   view: {
@@ -48,37 +50,57 @@ const displayUiSchema: any = {
       },
     }
   },
-  clientStatus: {
+  accountType: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
-      title: 'Client Status',
+      title: 'Account Type',
     }
   },
 
-  firstName: {
+  repCode: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
-      title: 'Firstname',
+      title: 'Rep Code',
     }
   },
-  lastName: {
+
+  jobTitle: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
-      title: 'Last Name',
+      title: 'Job Title',
     }
   },
-  country: {
+
+  clientDepartment: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
-      title: 'Country',
+      title: 'Client Department',
+    }
+  },
+
+  clientClass: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Client Class',
+    }
+  },
+
+  ranking:  {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Ranking',
     }
   },
 };
@@ -101,10 +123,12 @@ const editUiSchema: any = {
       view: { md: 12 },      
     },
     {
-      clientStatus: { md: 12 },
-      firstName: { md: 12 },
-      lastName: { md: 12 },
-      country: { md: 12 },      
+      accountType: { md: 12 },
+      repCode: { md: 12 },
+      jobTitle: { md: 12 },
+      clientDepartment: { md: 12 },
+      clientClass: { md: 12 },
+      ranking: { md: 12 }
     }
   ],
   view: {
@@ -117,23 +141,54 @@ const editUiSchema: any = {
       },
     }
   },
-  clientStatus: {},
-  lastName: {},
-  firstName: {},
-  country: {},
+  accountType: {},
+  repCode: {},
+  jobTitle: {},
+  clientDepartment: {},
+  clientClass:{},
+  ranking:{}
 };
 
-const schema: Reactory.ISchema = ClientSchema;
-schema.title = "PERSONAL DETAILS"
-const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
-  id: 'LasecCRMPersonalInformation',
+const schema: Reactory.ISchema = { 
+  type: "object",
+  title: "JOB DETAILS",
+  properties: {
+    accountType: {
+      type: "string",
+      title: "Account Type"
+    },
+    repCode: {
+      type: "string",
+      title: "Rep Code"
+    },
+    jobTitle: {
+      type: "string",
+      title: "Job Title"
+    },
+    clientDepartment: {
+      type: "string",
+      title: "Client Department"
+    },
+    clientClass: {
+      type: "string",
+      title: "Class"
+    },
+    ranking: {
+      type: "string",
+      title: "Ranking"
+    }
+  }
+};
+
+const LasecCRMClientJobDetails: Reactory.IReactoryForm = {
+  id: 'LasecCRMClientJobDetails',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
   title: 'CRM Personal Information',
   tags: ['CRM Personal Information'],
   registerAsComponent: true,
-  name: 'LasecCRMPersonalInformation',
+  name: 'LasecCRMClientJobDetails',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
@@ -144,7 +199,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       id: 'display',
       title: 'VIEW',
       key: 'display',
-      description: 'View Client Details',
+      description: 'View Contact Details',
       icon: 'list',
       uiSchema: displayUiSchema,
     },
@@ -152,7 +207,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       id: 'edit',
       title: 'EDIT',
       key: 'edit',
-      description: 'Edit Client Details',
+      description: 'Edit Contact Details',
       icon: 'view_module',
       uiSchema: editUiSchema,
     },
@@ -163,4 +218,4 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
 
 };
 
-export default LasecCRMPersonalInformationForm;
+export default LasecCRMClientJobDetails;

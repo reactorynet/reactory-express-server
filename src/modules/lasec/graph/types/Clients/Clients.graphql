@@ -3,6 +3,7 @@ type LasecCRMCustomer {
   tradingName: String
   accountNumber: String
   customerStatus: String
+  accountType: String
   country: String
 }
 
@@ -12,6 +13,8 @@ type LasecCRMClient {
   emailAddress: String
   customer: LasecCRMCustomer
   fullName: String 
+  firstName: String
+  lastName: String
   country: String 
 }
 
@@ -24,4 +27,5 @@ type PagedCRMClient {
 
 extend type Query {
   LasecGetClientList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMClient
+  LasecGetClientDetail(id: String!): LasecCRMClient
 }

@@ -197,10 +197,46 @@ const getClients = async (params) => {
   return result;  
 }
 
+const getClient = async (params) => {
+  
+  const clientDetails = await lasecApi.Customers.list({ filter: { ids: [params.id] } });
+
+  let clients = [...clientDetails.items];
+  if(clients.length === 1) {
+    return om(clients[0], {
+      'id': 'id',
+      'first_name': [{ 
+        "key": 
+        'fullName',
+        "transform": (sourceValue, sourceObject, destinationObject, destinationKey) => `${sourceValue} ${sourceObject.surname}`,
+      }, "firstName"],
+      'surname': 'lastName',
+      'activity_status': {key: 'clientStatus', transform: (sourceValue) => `${sourceValue}`.toLowerCase()},
+      'email': 'emailAddress',
+      'company_id': 'customer.id',
+      'company_account_number': 'customer.accountNumber',
+      'company_trading_name': 'customer.tradingName',
+      'company_sales_team': 'customer.salesTeam',
+      'company_on_hold': { 
+        'key': 'customer.customerStatus', 
+        'transform': (val) => (`${val === true ? 'on-hold' : 'not-on-hold'}`) 
+      },
+      'currency_code': 'customer.currencyCode',
+      'currency_symbol': 'customer.currencySymbol',
+      'country': ['country', 'customer.country']
+    });
+  } 
+  
+  return null;
+};
+
 export default {
   Query: {
     LasecGetClientList: async (obj, args) => {
       return getClients(args);
+    },
+    LasecGetClientDetail: async(obj, args) => {
+      return getClient(args);
     }
   }
 };

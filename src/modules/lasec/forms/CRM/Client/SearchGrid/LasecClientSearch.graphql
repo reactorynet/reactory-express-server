@@ -18,7 +18,7 @@ query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy){
         tradingName
         accountNumber
         customerStatus
-        country
+        country      
       }
     }        
   }
