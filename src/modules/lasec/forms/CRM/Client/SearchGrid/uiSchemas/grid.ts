@@ -58,7 +58,6 @@ const uiSchema: any = {
       columns: [
         {
           title: 'Client Status', field: 'clientStatus',
-          /*
           components: [
             {
               component: 'core.ConditionalIconComponent@1.0.0',
@@ -67,41 +66,111 @@ const uiSchema: any = {
                 conditions: [
                   {
                     key: 'active',
-                    icon: 'error',
+                    icon: 'trip_origin',
                     style: {
-                      color: '#9AD86E'                  
+                      color: '#5EB848'                  
                     },
-                    tooltip: 'Active'
+                    tooltip: 'Client Active'
                   },
                   {
                     key: 'unfinished',
-                    icon: 'error',
+                    icon: 'trip_origin',
                     style: {
-                      color: '#D22D2C'
+                      color: '#FF9901'
                     },
-                    tooltip: 'Unfinished'
+                    tooltip: 'Client Unfinished'
                   },
                   {
                     key: 'deactivated',
-                    icon: 'error',
+                    icon: 'trip_origin',
                     style: {
-                      color: '#D22D2C',
+                      color: '#AB1257'
                     },
-                    tooltip: 'Deactivated'
-                  },                  
+                    tooltip: 'Client Deactivated'
+                  }                  
                 ]
               },
               style: {
                 marginRight: '8px',
+                marginTop: '8px',
               },
               propsMap: {
                 'rowData.clientStatus': 'value',
               },
-            },            
-          ], 
-          */
+            },
+            {
+              component: 'core.DropDownMenu',
+              props: {
+                style: {                  
+                  marginTop: '-10px',
+                },
+                menus: [
+                  {
+                    id: 'active',
+                    key: 'active',
+                    title: 'Active',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#5EB848'  
+                      }
+                    }                    
+                  },
+                  {
+                    id: 'unfinished',
+                    key: 'unfinished',
+                    title: 'Unfinished',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#FF9901'  
+                      }
+                    }  
+
+                  },
+                  {
+                    id: 'deactivated',
+                    key: 'deactivated',
+                    title: 'Deactivate',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'  
+                      }
+                    },  
+                  },
+                ]  
+              }
+            }
+          ],                  
+          propsMap: {
+            'rowData.clientStatus': 'selectedKey'
+          }                    
         },        
-        { title: 'Client Full Name', field: 'fullName' },
+        { 
+          title: 'Client Full Name', 
+          field: 'fullName',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.LasecCRMPersonalInformation@1.0.0',
+            componentProps: {
+              'rowData.id': 'formData.id'
+            },
+            slideDirection: 'down',
+            buttonTitle: '${rowData.fullName}',
+            buttonVariant: 'Typography',
+            buttonProps: {
+              style: {
+                'textDecoration': 'underline',
+                'cursor': 'pointer',
+              }
+            },
+            windowTitle: 'Details view for ${rowData.fullName}',
+          }, 
+          propsMap: {
+            'rowData': 'rowData',
+          }
+        },
         { title: 'Email Address', field: 'emailAddress' },
         {
           title: 'Customer',
@@ -138,15 +207,38 @@ const uiSchema: any = {
         {
           title: 'Customer Status',
           field: 'customer',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {     
-                variant: 'body2',                           
-                format: '${rowData.customer && rowData.customer.customerStatus ? (rowData.customer.customerStatus === "true" ? "on-hold" : "not-on-hold") : "not-set"}'
-              }
-            },
-          },
+          components: [
+            {
+              component: 'core.ConditionalIconComponent@1.0.0',
+              props: {
+                'ui:options': {},
+                conditions: [
+                  {
+                    key: 'not-on-hold',
+                    icon: 'fiber_manual_record',
+                    style: {
+                      color: '#5EB848'                  
+                    },
+                    tooltip: 'Not on hold'
+                  },
+                  {
+                    key: 'on-hold',
+                    icon: 'fiber_manual_record',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'On hold'
+                  },                  
+                ]
+              },
+              style: {
+                marginRight: '8px',
+              },
+              propsMap: {
+                'rowData.customer.customerStatus': 'value',
+              },
+            },            
+          ],                     
           propsMap: {
             'rowData': 'value',
           }
