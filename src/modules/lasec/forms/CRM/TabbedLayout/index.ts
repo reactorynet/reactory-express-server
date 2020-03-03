@@ -3,13 +3,13 @@ import $schema from './schema';
 import $uiSchema from './uiSchema';
 // import $graphql from './graphql';
 
-const LasecProductCatalogTabs: Reactory.IReactoryForm = {
+const LasecCRMTabs: Reactory.IReactoryForm = {
   id: 'LasecCRMComponent',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
-  title: 'CMS Product Catalog',
-  tags: ['CMS Product Catalog'],
+  title: 'CRM Tabs',
+  tags: ['CRM Tabs'],
   registerAsComponent: true,  
   name: 'LasecCRMComponent',
   nameSpace: 'lasec-crm',
@@ -73,7 +73,7 @@ const LasecProductCatalogTabs: Reactory.IReactoryForm = {
       id: 'default',
       title: 'Grid View',
       key: 'default',
-      description: 'View Product Catalog As Grid',
+      description: 'View Clients As Grid',
       icon: 'list',
       uiSchema:  $schema,
     },
@@ -81,7 +81,7 @@ const LasecProductCatalogTabs: Reactory.IReactoryForm = {
       id: 'detail',
       title: 'Card View',
       key: 'detail',
-      description: 'View Product Catalog As Card',
+      description: 'View Clients As Cards',
       icon: 'view_module',
       uiSchema:  $schema,
     },
@@ -102,4 +102,4 @@ const LasecProductCatalogTabs: Reactory.IReactoryForm = {
   ],
 };
 
-export default LasecProductCatalogTabs;
+export default LasecCRMTabs;

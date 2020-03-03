@@ -38,7 +38,11 @@ import ProductDetail from './productCatalog/ProductDetails';
 import ProductQuantities from './productCatalog/ProductQuantities';
 
 import TabbedCrmForm from './CRM/TabbedLayout';
+import ClientGrid from './CRM/Client/SearchGrid';
+
+
 import ClientPersonalInformation from './CRM/Client/Personal';
+
 
 export default [
   SalesDashboard,
@@ -71,4 +75,5 @@ export default [
 
   TabbedCrmForm,
   ClientPersonalInformation,
+  ClientGrid
 ];

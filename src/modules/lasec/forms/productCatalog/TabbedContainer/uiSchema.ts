@@ -107,6 +107,7 @@ const uiSchema: any = {
     'ui:options': {
       tabs: [
         {
+          id: 'product-overview',
           title: 'Product Overview',
           componentFqn: 'lasec-crm.LasecProductOverviewTable',
           componentProps: {},
@@ -116,6 +117,7 @@ const uiSchema: any = {
           },
         },
         {
+          id: 'product-pricing',
           title: 'Product Pricing',
           componentFqn: 'lasec-crm.LasecProductPricingTable',
           componentProps: {},
@@ -125,6 +127,7 @@ const uiSchema: any = {
           },
         },
         {
+          id: 'product-more-details',
           title: 'More Details',
           componentFqn: 'lasec-crm.LasecProductDetailTable',
           componentProps: {},

@@ -112,17 +112,21 @@ declare namespace Reactory {
 
   }
 
+  export interface ISchemaObjectProperties {
+    [key: string]: ISchema
+  }
+
   export interface ISchema {
-    type: string,
+    type: string | "object" | "string" | "number" | "boolean" | "array",
     title?: string | undefined,
     description?: string | undefined,
     default?: any | undefined,
     required?: any | undefined,
-    properties?: any | undefined,
+    properties?: ISchemaObjectProperties | any | undefined,
   }
 
   export interface IObjectSchema extends ISchema {
-    properties?: Object,
+    properties?: Object | ISchemaObjectProperties,
   }
 
   export interface IArraySchema extends ISchema {

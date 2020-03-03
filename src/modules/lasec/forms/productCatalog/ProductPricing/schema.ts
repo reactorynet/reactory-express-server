@@ -1,4 +1,4 @@
-import Reactory from '@reactory/server-core/types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 const schema: Reactory.ISchema = {
   type: 'object',

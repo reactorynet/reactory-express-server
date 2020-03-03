@@ -3,7 +3,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 const $toolbar = {
   type: 'object',
   title: '',
-  required: ['product'],
+  required: ['search'],
   properties: {
     search: {
       type: 'string',
@@ -12,8 +12,12 @@ const $toolbar = {
       minLength: 3
     },
     fabButton: {
-      title: '',
+      title: 'Search',
       type: 'string',
+    },
+    view: {
+      title: '',
+      type: 'string'
     }    
   }
 };
@@ -23,19 +27,14 @@ const schema: Reactory.ISchema = {
   title: '',
   properties: {
     toolbar: $toolbar,
-    tabs: {
-      type: 'object',
+    tabs: {      
       title: 'CRM Navigation',
-      properties: {
-        tabs: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              title: {
-                type: 'string'
-              }
-            }
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          title: {
+            type: 'string'
           }
         }
       }

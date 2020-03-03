@@ -32,23 +32,17 @@ const schema: Reactory.ISchema = {
   title: '',
   properties: {
     toolbar: $toolbar,
-    tabs: {
-      type: 'object',
-      title: 'Tabbed Navigation',
-      properties: {
-        tabs: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              title: {
-                type: 'string'
-              }
-            }
+    tabs: {      
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          title: {
+            type: 'string'
           }
         }
       }
-    }
+    }          
   }
 
 };

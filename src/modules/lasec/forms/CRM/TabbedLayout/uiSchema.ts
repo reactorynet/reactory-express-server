@@ -4,10 +4,11 @@ const $toolbar: any = {
   'ui:widget': 'MaterialToolbar',
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    {
+    {      
       search: { md: 3, sm: 4, xs: 6 },
       // supplier: { md: 3, sm: 4, xs: 6 },
       fabButton: { md: 3, sm: 4, xs: 6 },
+      view: { md: 1, sm: 1, xs: 1 },
     }
   ],
   search: {
@@ -25,6 +26,7 @@ const $toolbar: any = {
     }
   },
   fabButton: {
+    'ui:widget': 'FormSubmitWidget',
     'ui:options': {
       text: 'SEARCH',
       color: 'default',
@@ -37,6 +39,16 @@ const $toolbar: any = {
       }
     }
   },
+  view: {
+    'ui:widget': 'HiddenWidget',
+    //'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+      style: {
+        width: 'unset',
+        float: 'right'
+      },
+    }
+  }
 };
 
 
@@ -85,38 +97,7 @@ const uiSchema: any = {
   tabs: {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
-      activeTab: '${formContext.$route.match.params.tab}',
-      /*
-      tabs: [
-        {
-          title: 'Product Overview',
-          componentFqn: 'lasec-crm.LasecProductOverviewTable',
-          componentProps: {},
-          componentPropsMap: {
-            'formContext.$formData.toolbar.product': 'formData.product',
-            'formContext.$formData.toolbar.view': 'query.uiSchema',
-          },
-        },
-        {
-          title: 'Product Pricing',
-          componentFqn: 'lasec-crm.LasecProductPricingTable',
-          componentProps: {},
-          componentPropsMap: {
-            'formContext.$formData.toolbar.product': 'formData.product',
-            'formContext.$formData.toolbar.view': 'query.uiSchema',
-          },
-        },
-        {
-          title: 'More Details',
-          componentFqn: 'lasec-crm.LasecProductDetailTable',
-          componentProps: {},
-          componentPropsMap: {
-            'formContext.$formData.toolbar.product': 'formData.product',
-            'formContext.$formData.toolbar.view': 'query.uiSchema',
-          },
-        },
-      ]
-      */
+      activeTab: '${formContext.$route.match.params.tab}',     
     }
   },
 

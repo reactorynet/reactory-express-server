@@ -1,8 +1,27 @@
-type Client {
+type LasecCRMCustomer {
   id: String
-  fullname: String
+  tradingName: String
+  accountNumber: String
+  customerStatus: String
+  country: String
+}
+
+type LasecCRMClient {  
+  id: String
+  clientStatus: String
+  emailAddress: String
+  customer: LasecCRMCustomer
+  fullName: String 
+  country: String 
+}
+
+type PagedCRMClient {
+  search: String
+  filterBy: String  
+  paging: PagingResult
+  clients: [LasecCRMClient] 
 }
 
 extend type Query {
-  LasecGetClientList: [Client]
+  LasecGetClientList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMClient
 }

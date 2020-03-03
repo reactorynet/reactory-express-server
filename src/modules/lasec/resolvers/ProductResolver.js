@@ -122,7 +122,6 @@ const getProducts = async (params) => {
   logger.debug(`Getting Products For Using Query ${product}`, {paging});
 
   
-  
   let pagingResult = {
     total: 0,
     page: paging.page || 1,
@@ -136,18 +135,8 @@ const getProducts = async (params) => {
   };
 
   let filter = { "any_field": product };
-
-  let _params = params;
-
-  if (!_params) {
-    _params = {
-      periodStart: moment().startOf('year'),
-      periodEnd: moment().endOf('day')
-    }
-  }
+  
   const cachekey = Hash(`product_list_${product}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`.toLowerCase());
-
-   
 
   let _cachedResults = await getCacheItem(cachekey);
   if (_cachedResults) {
@@ -180,33 +169,19 @@ const getProducts = async (params) => {
     ids = [...productResult.ids];
   }
 
-  //const pagePromises = [];
 
   if (productResult.pagination && productResult.pagination.num_pages > 1) {
     pagingResult.total = productResult.pagination.num_items;
     pagingResult.pageSize = productResult.pagination.page_size || 10;
     pagingResult.hasNext = productResult.pagination.has_next_page === true;
     pagingResult.page = productResult.pagination.current_page || 1;
-    //const max_pages = 2; //productResult.pagination.num_pages < 10 ? productResult.pagination.num_pages : 10;
-
-    //for (let pageIndex = productResult.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
-    //  pagePromises.push(lasecApi.Products.list({ filter, pagination: { ...productResult.pagination, current_page: pageIndex } }));
-    //}
   }
-
-  //const pagedResults = await Promise.all(pagePromises).then();
-
-  //pagedResults.forEach((pagedResult) => {
-  //  ids = [...ids, ...pagedResult.ids]
-  //});
-
-  // logger.debug(`Loading (${ids.length}) product ids`);
 
   const productDetails = await lasecApi.Products.list({ filter: { ids: ids }, pagination: { page_size: paging.pageSize }  });
   // logger.debug(`Fetched Expanded View for (${productDetails.items.length}) Products from API`);
   let products = [...productDetails.items];
 
-  logger.debug('PRODUCT RESOLVER - PRODUCTS::', products.slice(0, 10));
+  logger.debug(`PRODUCT RESOLVER - PRODUCTS:: found (${products.length}) products for request`);
 
   products = products.map((prd) => {
     return {
