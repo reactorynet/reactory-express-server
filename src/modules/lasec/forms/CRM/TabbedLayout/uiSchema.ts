@@ -13,11 +13,12 @@ const $toolbar: any = {
   ],
   search: {
     'ui:options': {
-      showLabel: true,
+      showLabel: false,
       icon: 'search',
       component: "TextField",
-      props: {
+      componentProps: {
         placeholder: 'Search',
+        variant: "outlined",
         type: 'search',
         style: {
           minWidth: '180px'

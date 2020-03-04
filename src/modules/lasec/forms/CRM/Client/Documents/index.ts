@@ -33,10 +33,8 @@ const displayUiSchema: any = {
       view: { md: 12 },      
     },
     {
-      clientStatus: { md: 12 },
-      firstName: { md: 12 },
-      lastName: { md: 12 },
-      country: { md: 12 },      
+      documents: { md: 12 },
+      inputDocument: { md: 12 },
     }
   ],
   view: {
@@ -49,39 +47,52 @@ const displayUiSchema: any = {
       },
     }
   },
-  clientStatus: {
-    'ui:widget': 'LabelWidget',
+  documents: {
+    'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Client Status',
+      columns: [
+        {
+          title: "Title", field: "title"
+        },
+        {
+          title: "Filename", field: "filename"
+        },
+        {
+          title: "Size", field: "size"
+        },
+        {
+          title: "Link", field: "link"
+        }
+      ],
+      options: {
+        grouping: false,
+        search: false,
+        showTitle: false,
+        toolbar: false,
+      }
     }
   },
-
-  firstName: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Firstname',
+  inputDocument: {
+    'ui:field': 'GridLayout',
+    'ui:grid-layout': [      
+      {
+        title: { md: 6, sm: 12 },
+        filename: { md: 6, sm: 12 },        
+      },
+      {
+        link: {md: 12}
+      }
+    ],
+    filename: {
+      readOnly: true,
+    },
+    link: {
+      'ui:widget': 'DropZoneWidget',
+      'ui:options': {
+        accept: ['text/html', 'text/text', 'application/xml'],
+      }
     }
-  },
-  lastName: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Last Name',
-    }
-  },
-  country: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Country',
-    }
-  },
+  },  
 };
 
 const editUiSchema: any = {
@@ -101,11 +112,9 @@ const editUiSchema: any = {
     {
       view: { md: 12 },      
     },
-    {
-      clientStatus: { md: 12 },
-      firstName: { md: 12 },
-      lastName: { md: 12 },
-      country: { md: 12 },      
+    {      
+      documents: { md: 12 },
+      inputDocument: { md: 12 },           
     }
   ],
   view: {
@@ -118,13 +127,72 @@ const editUiSchema: any = {
       },
     }
   },
-  clientStatus: {},
-  lastName: {},
-  firstName: {},
-  country: {},
+  documents: {
+    'ui:widget': 'MaterialTableWidget',
+    'ui:options': {
+      columns: [
+        {
+          title: "Title", field: "title"
+        },
+        {
+          title: "Filename", field: "filename"
+        },
+        {
+          title: "Size", field: "size"
+        },
+        {
+          title: "Link", field: "link"
+        }
+      ],
+      options: {
+        grouping: false,
+        search: false,
+        showTitle: false,
+        toolbar: false,
+      }
+    }
+  },
+  inputDocument: {
+
+  },  
 };
 
-const schema: Reactory.ISchema = { ...ClientSchema };
+const documentSchema: Reactory.ISchema = {
+  type: "object",
+  properties: {
+    title: {
+      type: "string",
+      title: "Title"
+    },
+    filename: {
+      type: "string",
+      title: "Filename"
+    },
+    size: {
+      type: "number",
+      title: "Size"
+    },
+    link: {
+      type: "string",
+      title: "Link"
+    },    
+  }
+}; 
+
+const schema: Reactory.ISchema = {
+  type: "object",
+  properties: {
+    id: {
+      type: "string",
+      title: "Client ID"
+    },
+    documents: {
+      type: "array",
+      items: { ...documentSchema }
+    },
+    inputDocument: { ...documentSchema }
+  }
+};
 schema.title = "DOCUMENTS"
 
 const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {

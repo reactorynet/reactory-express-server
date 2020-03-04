@@ -44,33 +44,79 @@ const displayUiSchema: any = {
       style: {
         top: '10px',
         right: '10px',
-        position: 'relative'
+        //position: 'relative'
       },
     }
   },
   clientStatus: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
+      readOnly: true,      
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Client Status',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
 
   firstName: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
+      readOnly: true,      
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Firstname',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
   lastName: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
+      readOnly: true,
+      component: "TextField",
+      componentProps: {
+        variant: "outlined"
+      },
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Last Name',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
   country: {
@@ -79,6 +125,19 @@ const displayUiSchema: any = {
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Country',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
 };

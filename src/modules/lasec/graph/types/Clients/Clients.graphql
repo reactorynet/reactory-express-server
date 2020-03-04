@@ -11,11 +11,15 @@ type LasecCRMClient {
   id: String
   clientStatus: String
   emailAddress: String
+  alertnateEmail: String
   customer: LasecCRMCustomer
   fullName: String 
   firstName: String
   lastName: String
-  country: String 
+  country: String
+  mobileNumber: String
+  officeNumber: String
+  alternateOfficeNumber: String
 }
 
 type PagedCRMClient {

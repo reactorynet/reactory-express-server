@@ -5,7 +5,7 @@ import graphql from './graphql';
 const displayUiSchema: any = {
   'ui:options': {
     componentType: "div",
-    toolbarPosition: 'none',
+    toolbarPosition: 'bottom',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -21,7 +21,7 @@ const displayUiSchema: any = {
     style:{
       marginTop: '16px',
     },
-    showSubmit: false,
+    showSubmit: true,
     showRefresh: false,
   },
   'ui:titleStyle': {
@@ -33,10 +33,8 @@ const displayUiSchema: any = {
       view: { md: 12 },      
     },
     {
-      clientStatus: { md: 12 },
-      firstName: { md: 12 },
-      lastName: { md: 12 },
-      country: { md: 12 },      
+      comments: { md: 12 },
+      newComment: { md: 12 },                
     }
   ],
   view: {
@@ -48,38 +46,44 @@ const displayUiSchema: any = {
         position: 'relative'
       },
     }
-  },
-  clientStatus: {
-    'ui:widget': 'LabelWidget',
+  },  
+  comments: {
+    'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Client Status',
+      columns: [
+        {
+          title: "Who", field: "fullName"
+        },
+        {
+          title: "When", field: "filename"
+        },
+        {
+          title: "Comment", field: "size"
+        },        
+      ],
+      options: {
+        grouping: false,
+        search: false,
+        showTitle: false,
+        toolbar: false,
+      }
     }
   },
-
-  firstName: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Firstname',
-    }
-  },
-  lastName: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Last Name',
-    }
-  },
-  country: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Country',
+  newComment: {
+    'ui:field': 'GridLayout',
+    'ui:grid-layout': [      
+      {
+        comment: { md: 12, sm: 12 },        
+      },      
+    ],
+    comment: {
+      'ui:options': {
+        component: 'TextField',
+        componentProps: {
+          multiline: true,
+          variant: 'outlined'
+        }
+      }      
     }
   },
 };
@@ -102,10 +106,8 @@ const editUiSchema: any = {
       view: { md: 12 },      
     },
     {
-      clientStatus: { md: 12 },
-      firstName: { md: 12 },
-      lastName: { md: 12 },
-      country: { md: 12 },      
+      comments: { md: 12 },
+      newComment: { md: 12 },                
     }
   ],
   view: {
@@ -116,15 +118,89 @@ const editUiSchema: any = {
         right: '10px',
         position: 'relative'
       },
+    },
+  },  
+  comments: {
+    'ui:widget': 'MaterialTableWidget',
+    'ui:options': {
+      title: 'Client Comments',
+      columns: [
+        {
+          title: "Who", field: "fullName"
+        },
+        {
+          title: "When", field: "filename"
+        },
+        {
+          title: "Comment", field: "size"
+        },        
+      ],
+      options: {
+        grouping: false,
+        search: false,
+        showTitle: false,
+        toolbar: false,
+      }
+    },
+  },
+  newComment: {
+    'ui:field': 'GridLayout',
+    'ui:grid-layout': [      
+      {
+        comment: { md: 12, sm: 12 },        
+      },      
+    ],
+    comment: {
+      'ui:options': {
+        component: 'TextField',
+        componentProps: {
+          multiline: true,
+          variant: 'outlined'
+        }
+      }
     }
   },
-  clientStatus: {},
-  lastName: {},
-  firstName: {},
-  country: {},
 };
 
-const schema: Reactory.ISchema = { ...ClientSchema };
+
+const commentSchema: Reactory.ISchema = {
+  type: "object",
+  properties: {
+    comment: {
+      type: "string",
+      title: "comment"
+    },
+    fullName: {
+      type: "string",
+      title: "userName"
+    },
+    avatar: {
+      type: "string",
+      title: "Avatar"
+    },
+    when: {
+      type: "string",
+      format: "date",
+      title: "when"
+    },    
+  }
+}; 
+
+const schema: Reactory.ISchema = {
+  type: "object",
+  properties: {
+    id: {
+      type: "string",
+      title: "Client ID"
+    },
+    comments: {
+      type: "array",
+      items: { ...commentSchema }
+    },
+    newComment: { ...commentSchema }
+  }
+};
+
 schema.title = "COMMENTS"
 const LasecCRMClientComments: Reactory.IReactoryForm = {
   id: 'LasecCRMClientComments',
