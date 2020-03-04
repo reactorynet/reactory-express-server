@@ -5,21 +5,32 @@ type LasecCRMCustomer {
   customerStatus: String
   accountType: String
   country: String
+  customerClass: String
+  ranking: String
+  availableBalance: Float
+  salesTeam: String
+  creditLimit: Float
 }
 
 type LasecCRMClient {  
   id: String
   clientStatus: String
   emailAddress: String
-  alertnateEmail: String
+  alternateEmail: String
+  accountType: String
   customer: LasecCRMCustomer
   fullName: String 
   firstName: String
   lastName: String
+  department: String
+  jobTitle: String
   country: String
+  salesTeam: String
   mobileNumber: String
   officeNumber: String
   alternateOfficeNumber: String
+  availableBalance: Float
+  creditLimit: Float
 }
 
 type PagedCRMClient {

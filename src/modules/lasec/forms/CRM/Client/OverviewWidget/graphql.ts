@@ -16,6 +16,8 @@ const graphql: Reactory.IFormGraphDefinition = {
           accountNumber
           customerStatus
           country
+          creditLimit
+          availableBalance
         }
       }      
     }`,

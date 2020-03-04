@@ -6,6 +6,7 @@ import lodash, { isArray, isNil, orderBy, isString } from 'lodash';
 import { getCacheItem, setCacheItem } from '../models';
 import Hash from '@reactory/server-core/utils/hash';
 import { clientFor, execql } from '@reactory/server-core/graph/client';
+import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 
 const getClients = async (params) => {    
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0  } = params;
@@ -262,13 +263,37 @@ const getClient = async (params) => {
       'office_number': 'officeNumber',
       'alternate_office_number': 'alternateOfficeNumber',
       'special_notes': 'note',
-      'sales_team_id': 'rep_code',
-      'department': 'clientDepartment',
-      'ranking_id': 'rankingId',
+      'sales_team_id': 'salesTeam',
+      'department': ['department', 'jobTitle'],
+      'ranking_id': ['customer.rankingId', 
+        {
+          key: 'customer.ranking',
+          transform: (sourceValue) => {
+            /**
+             * 1	A - High Value	
+               2	B - Medium Value	
+               3	C - Low Value			
+             */
+              const rankings = {
+                "1": 'A - High Value',
+                "2": 'B - Medium Value',
+                "3": 'C - Low Value'
+              };
+              return rankings[sourceValue];
+          }
+        }
+      ],
       'company_id': 'customer.id',
       'company_account_number': 'customer.accountNumber',
       'company_trading_name': 'customer.tradingName',
       'company_sales_team': 'customer.salesTeam',
+      'customer_class_id': ['customer.classId', 
+        {
+          key: 'customer.customerClass',
+          transform: (sourceValue) => `${sourceValue} => Lookup Pending`
+        }
+      ],
+      'account_type':['accountType', 'customer.accountType'],
       'company_on_hold': { 
         'key': 'customer.customerStatus', 
         'transform': (val) => (`${val === true ? 'on-hold' : 'not-on-hold'}`) 
@@ -283,6 +308,37 @@ const getClient = async (params) => {
 };
 
 export default {
+  LasecCRMClient: {
+    creditLimit: async (parent, obj) => {
+      return 10;
+    },
+    availableBalance: async(parent, obj) => {
+      return 10;
+    }
+  },
+  LasecCRMCustomer: {
+    customerClass: async (parent, obj) => {
+      if(parent.classId) {
+        try {
+          const result = await mysql(`SELECT Description FROM TblCustomerClass WHERE Class = '${parent.classId}'`, 'mysql.lasec360').then();
+          logger.debug('Results from querying description', result);
+          if(result && result.length) {
+            return result[0].Description;
+          }          
+        } catch (dbError) {
+          logger.error(`MySQL Error resolving description from db ${dbError.message}`,);
+          return parent.customerClass;
+        }        
+      }
+      return parent.customerClass;
+    },
+    creditLimit: async (parent, obj) => {
+      return 100;
+    },
+    availableBalance: async(parent, obj) => {
+      return 100;
+    }
+  },  
   Query: {
     LasecGetClientList: async (obj, args) => {
       return getClients(args);

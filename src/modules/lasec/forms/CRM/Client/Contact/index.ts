@@ -29,13 +29,14 @@ const displayUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { md: 12, sm: 12 },      
     },
     {
-      emailAddress: { md: 12 },
-      alternateEmail: { md: 12 },
-      mobileNumber: { md: 12 },
-      alternateNumber: { md: 12 },      
+      emailAddress: { md: 12, sm: 12 },
+      alternateEmail: { md: 12, sm: 12 },
+      officeNumber: { md: 12, sm: 12 },
+      mobileNumber: { md: 12, sm: 12 },
+      alternateNumber: { md: 12, sm: 12 },      
     }
   ],
   view: {
@@ -54,6 +55,19 @@ const displayUiSchema: any = {
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Email Address',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
 
@@ -62,7 +76,41 @@ const displayUiSchema: any = {
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
-      title: 'Alternate Email',      
+      title: 'Alternate Email',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }      
+    }
+  },
+  officeNumber: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Office Number',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
   mobileNumber: {
@@ -71,6 +119,19 @@ const displayUiSchema: any = {
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Mobile Number',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
   alternateNumber: {
@@ -79,6 +140,19 @@ const displayUiSchema: any = {
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Alternate Number',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
 };
@@ -134,6 +208,10 @@ const schema: Reactory.ISchema = {
     alternateEmail: {
       type: "string",
       title: "Alternate Email",
+    },
+    officeNumber: {
+      type: "string",
+      title: "Office Number",
     },
     mobileNumber: {
       type: "string",

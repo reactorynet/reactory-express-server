@@ -56,6 +56,19 @@ const displayUiSchema: any = {
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Account Type',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
 
@@ -65,6 +78,19 @@ const displayUiSchema: any = {
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Rep Code',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
 
@@ -74,6 +100,19 @@ const displayUiSchema: any = {
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Job Title',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
 
@@ -83,6 +122,19 @@ const displayUiSchema: any = {
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Client Department',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
 
@@ -92,6 +144,19 @@ const displayUiSchema: any = {
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Client Class',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
 
@@ -101,6 +166,19 @@ const displayUiSchema: any = {
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Ranking',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
 };

@@ -10,8 +10,12 @@ const graphql: Reactory.IFormGraphDefinition = {
         firstName
         lastName
         fullName
-        emailAddress      
+        emailAddress 
+        alternateEmail       
         country
+        mobileNumber
+        officeNumber
+        alternateOfficeNumber
         customer {
           id
           tradingName
@@ -26,11 +30,11 @@ const graphql: Reactory.IFormGraphDefinition = {
     },
     resultMap: {      
       'id': 'id',
-      'clientStatus': 'clientStatus',
-      'fullName': 'fullName',
-      'customer.customerStatus': 'customerStatus', 
-      'customer.accountNumber':'accountNumber',
-      'customer.tradingName': 'customer',     
+      'emailAddress': 'emailAddress',      
+      'alternateEmail': 'alternateEmail',
+      'officeNumber': 'officeNumber',
+      'mobileNumber': 'mobileNumber',
+      'alternateNumber': 'alternateNumber',
     },
     autoQuery: true,
     queryMessage: 'Loading customer details',
