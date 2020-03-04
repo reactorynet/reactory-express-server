@@ -17,9 +17,10 @@ const displayUiSchema: any = {
       activeColor: 'primary',
       selectSchemaId: 'edit'
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
+    showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
   },
@@ -29,29 +30,28 @@ const displayUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { sm: 12, md: 12, lg: 12 },
     },
     {
       clientStatus: { md: 12 },
       firstName: { md: 12 },
       lastName: { md: 12 },
-      country: { md: 12 },      
+      country: { md: 12 },
     }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        top: '10px',
-        right: '10px',
-        //position: 'relative'
+        width: '100%',
+        float: "right"
       },
     }
   },
   clientStatus: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      readOnly: true,      
+      readOnly: true,
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Client Status',
@@ -74,7 +74,7 @@ const displayUiSchema: any = {
   firstName: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      readOnly: true,      
+      readOnly: true,
       format: '${formData}',
       variant: 'subtitle1',
       title: 'Firstname',
@@ -145,34 +145,41 @@ const displayUiSchema: any = {
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
-    toolbarPosition: 'none',
+    // toolbarPosition: 'none', // needs the toolbar to save
     containerStyles: {
       padding: '0px',
       margin: '0px',
       paddingBottom: '8px'
     },
-    showSubmit: false,
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'CANCEL',
+      activeColor: 'secondary',
+      buttonVariant: "contained",
+      selectSchemaId: 'display'
+    },
+    showSchemaSelectorInToolbar: false,
+    showSubmit: true,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      clientStatus: { md: 12 },
-      firstName: { md: 12 },
-      lastName: { md: 12 },
-      country: { md: 12 },      
+      clientStatus: { sm: 12, md: 6 },
+      firstName: { sm: 12, md: 6 },
+      lastName: { sm: 12, md: 6 },
+      country: { sm: 12, md: 6 },
     }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
+        width: '100%',
+        float: "right"
       },
     }
   },
@@ -184,6 +191,7 @@ const editUiSchema: any = {
 
 const schema: Reactory.ISchema = ClientSchema;
 schema.title = "PERSONAL DETAILS"
+
 const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
   id: 'LasecCRMPersonalInformation',
   uiFramework: 'material',
@@ -217,7 +225,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
     },
   ],
   defaultFormValue: {
-    
+
   },
 
 };
