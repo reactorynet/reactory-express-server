@@ -267,6 +267,35 @@ const graphql = {
   },
 };
 
+const SurveyDelegateStatusReport : Reactory.IReactoryPdfReport = {
+  title: 'Survey Status Report',
+  report: 'survey-status-delegates',
+  folder: 'towerstone',
+  method: 'post',
+  delivery: 'inline',
+  reportTitle: 'Survey Status Report',
+  waitingText: 'Please wait loading status report',
+  dataMap: {
+    'id': 'id',
+  }
+};
+
+const Survey180Report : Reactory.IReactoryPdfReport = {
+  title: 'Team 180 Report',
+  report: 'delegate-180-assessment',
+  folder: 'towerstone',
+  method: 'post',
+  delivery: 'inline',
+  reportTitle: 'Survey Status Report',
+  waitingText: 'Please wait loading status report',
+  dataMap: {
+    'id': 'surveyId',
+    'delegates[0].id': 'delegateId' 
+  }
+};
+
+
+
 export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
   id: 'TowerStoneSurveyDelegateConfig',
   uiFramework: 'material',
@@ -274,8 +303,7 @@ export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
   uiResources: [],
   title: 'Survey Delegate Management',
   tags: ['Survey Settings Editor', 'Forms'],
-  schema: SurveyDelegatesSchema,
-  icon: 'check_circle_outline',
+  schema: SurveyDelegatesSchema,  
   registerAsComponent: true,
   name: 'TowerStoneSurveyDelegateConfig',
   nameSpace: FormNameSpace,
@@ -285,19 +313,13 @@ export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
     $defaultExport,
     $TeamSurveyDelegateExport
   ],
-  defaultPdfReport: {
-    report: 'survey-status-delegates',
-    folder: 'towerstone',
-    method: 'post',
-    delivery: 'inline',
-    reportTitle: 'Survey Status Report',
-    waitingText: 'Please wait loading status report',
-    dataMap: {
-      'surveyId': 'id',
-    }
-  },
+  defaultPdfReport: SurveyDelegateStatusReport,
+  reports: [
+    SurveyDelegateStatusReport,
+    Survey180Report
+  ],
   defaultExport: $defaultExport,
-  uiSchema: SurveyDelegatesUISchema,
+  uiSchema: SurveyDelegatesUISchema,  
   defaultFormValue: {
     launched: 0,
     complete: 0,

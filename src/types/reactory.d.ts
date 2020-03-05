@@ -28,7 +28,9 @@ declare namespace Reactory {
     export interface IFramedWindowProperties {
       proxyRoot?: string
       frameProps?: IFrameProperties
-      messageHandlers?: IMessageHandler[]
+      messageHandlers?: IMessageHandler[],
+      method?: string,
+      delivery?: string,
     }
   }
 
@@ -184,9 +186,19 @@ declare namespace Reactory {
     component?: String,
     widget: String
   }
+  
+  export interface IObjectMap {
+    [key: string]: string | Array<any> | object
+  }
 
   export interface IReactoryPdfReport extends Client.IFramedWindowProperties {
-    title?: string
+    title?: string,
+    report: string,
+    folder: string,
+    icon?: string,
+    reportTitle?: string,
+    waitingText?: string,
+    dataMap?: IObjectMap
   }
 
 

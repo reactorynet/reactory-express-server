@@ -45,6 +45,7 @@ import {
   ENTITY_KEY__QUOTE_STATUS,
   ENTITY_KEY__PERMISSION,
   COLLECTION_KEY__PERMISSION,
+  ENTITY_KEY__COMPANY_ADDRESS,
 } from './constants';
 
 export default {
@@ -52,10 +53,13 @@ export default {
   logout_user: { url: 'api/user/logout_lasec_user/', allowed_methods: ['post'] },
   login_lasec_user: { url: 'api/user/login_lasec_user/', allowed_methods: ['post'] },
   create_user: { url: 'api/user/', allowed_methods: ['post'] },
+  file_upload: { url: `api/${ENTITY_KEY__UPLOAD_FILE}/`, allowed_methods: ['get'] },
   release_notes: { url: `api/${ENTITY_KEY__RELEASE_NOTE}/`, allowed_methods: ['get'] },
   release_notes_seen: { url: `api/${ENTITY_KEY__RELEASE_NOTE_SEEN}/`, allowed_methods: ['post'] },
   permissions: { url: `api/${ENTITY_KEY__PERMISSION}/`, allowed_methods: ['get'] },
   customers: { url: `api/${ENTITY_KEY__CUSTOMER}/`, allowed_methods: ['get'] },
+  company: { url: `api/${ENTITY_KEY__COMPANY}/`, allowed_methods: ['get'] },
+  company_address: { url: `api/${ENTITY_KEY__COMPANY_ADDRESS}/`, allowed_methods: ['get'] },
   invoices: { url: `api/${ENTITY_KEY__INVOICE}/`, allowed_methods: ['get'] },
   staff_user_data: { url: `api/${ENTITY_KEY__STAFF_USER_DATA}/`, allowed_methods: ['get'] },
   staff_user_data_put: { url: `api/${ENTITY_KEY__STAFF_USER_DATA}/\\d+/`, allowed_methods: ['put'] },

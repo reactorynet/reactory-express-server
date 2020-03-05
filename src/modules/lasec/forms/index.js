@@ -49,6 +49,11 @@ import ClientJobDetail from './CRM/Client/JobDetail';
 import ClientComments from './CRM/Client/Comments';
 import ClientDocuments from './CRM/Client/Documents';
 
+import CustomerDetails from './CRM/Customer/Detail';
+import CustomerSpecialRequirement from './CRM/Customer/SpecialRequirements';
+import CustomerAccountInfo from './CRM/Customer/Account';
+import CustomerOrganizationInfo from './CRM/Customer/Organization';
+
 export default [
   SalesDashboard,
   ProductDashboard,
@@ -87,4 +92,9 @@ export default [
   ClientGrid,
   ClientDetail,
   ClientOverviewWidget,
+
+  CustomerDetails,
+  CustomerSpecialRequirement,
+  CustomerAccountInfo,
+  CustomerOrganizationInfo
 ];

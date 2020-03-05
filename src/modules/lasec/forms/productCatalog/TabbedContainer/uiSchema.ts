@@ -8,8 +8,7 @@ const $toolbar: any = {
       product: { md: 3, sm: 4, xs: 6 },
       // supplier: { md: 3, sm: 4, xs: 6 },
       submitButton: { md: 3, sm: 4, xs: 6 },
-      resultCount: { md: 3, sm: 4, xs: 6 },
-      view: { md: 3, sm: 4, xs: 6 },
+      resultCount: { md: 3, sm: 4, xs: 6 },      
     }
   ],
   product: {

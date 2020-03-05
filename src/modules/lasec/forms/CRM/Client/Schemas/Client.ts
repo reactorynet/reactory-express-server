@@ -1,8 +1,12 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 
 const ClientSchema: Reactory.ISchema = {
-  type: "object",  
+  type: "object",
   properties: {
+    view: {
+      title: '',
+      type: 'string'
+    },
     id: {
       type: "string",
       title: "Client Id"
@@ -37,7 +41,7 @@ const ClientSchema: Reactory.ISchema = {
     },
     customerStatus: {
       type: "string",
-      title: "Customer Status",      
+      title: "Customer Status",
     },
     country: {
       type: "string",

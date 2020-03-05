@@ -97,15 +97,133 @@ const uiSchema: any = {
           },          
         },
         {
-          title: 'Price',
-          field: 'price',
-          component: 'core.PricingSliderComponent@1.0.0',
+          title: 'Landed Cost',
+          field: 'landedPrice',
+          component: 'core.StyledCurrencyLabel@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {                
+                prependText: '',
+                conditionalStyles: [
+                  {
+                    key: 'ON_SPECIAL',
+                    style: {
+                      color: '#4AC0DC'
+                    },
+                    tooltip: 'PRICE ON SPECIAL'
+                  },
+                  {
+                    key: 'EXPIRED',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'PRICE EXPIRED'
+                  }
+                ]
+              }
+            },
+          },
           propsMap: {
-            'rowData.landedPrice': 'landedPrice',
-            'rowData.wh10CostPrice': 'wh10CostPrice',
-            'rowData.threeMonthAvePrice': 'threeMonthAvePrice',
-            'rowData.listPrice': 'listPrice',
-          }
+            'rowData.landedPrice': ['value', 'formData'],
+            'rowData.priceAdditionalInfo' : ['condition'],
+          },     
+        },
+        {
+          title: 'WH10 Cost',
+          field: 'wh10CostPrice',
+          component: 'core.StyledCurrencyLabel@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {                
+                prependText: '',
+                conditionalStyles: [
+                  {
+                    key: 'ON_SPECIAL',
+                    style: {
+                      color: '#4AC0DC'
+                    },
+                    tooltip: 'PRICE ON SPECIAL'
+                  },
+                  {
+                    key: 'EXPIRED',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'PRICE EXPIRED'
+                  }
+                ]
+              }
+            },
+          },
+          propsMap: {
+            'rowData.wh10CostPrice': ['value', 'formData'],
+            'rowData.priceAdditionalInfo' : ['condition'],
+          },     
+        },
+        {
+          title: '3 Month Avg.',
+          field: 'threeMonthAvePrice',
+          component: 'core.StyledCurrencyLabel@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {                
+                prependText: '',
+                conditionalStyles: [
+                  {
+                    key: 'ON_SPECIAL',
+                    style: {
+                      color: '#4AC0DC'
+                    },
+                    tooltip: 'PRICE ON SPECIAL'
+                  },
+                  {
+                    key: 'EXPIRED',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'PRICE EXPIRED'
+                  }
+                ]
+              }
+            },
+          },
+          propsMap: {
+            'rowData.threeMonthAvePrice': ['value', 'formData'],
+            'rowData.priceAdditionalInfo' : ['condition'],
+          },     
+          
+        },
+        {
+          title: 'List Price',
+          field: 'listPrice',
+          component: 'core.StyledCurrencyLabel@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {                
+                prependText: '',
+                conditionalStyles: [
+                  {
+                    key: 'ON_SPECIAL',
+                    style: {
+                      color: '#4AC0DC'
+                    },
+                    tooltip: 'PRICE ON SPECIAL'
+                  },
+                  {
+                    key: 'EXPIRED',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'PRICE EXPIRED'
+                  }
+                ]
+              }
+            },
+          },
+          propsMap: {
+            'rowData.listPrice': ['value', 'formData'],
+            'rowData.priceAdditionalInfo' : ['condition'],
+          },                           
         },
       ],
       options: {

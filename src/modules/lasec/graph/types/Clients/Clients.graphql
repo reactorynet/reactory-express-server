@@ -1,15 +1,35 @@
 type LasecCRMCustomer {
   id: String
+  registeredName: String
   tradingName: String
   accountNumber: String
   customerStatus: String
   accountType: String
   country: String
   customerClass: String
+  description: String
   ranking: String
   availableBalance: Float
   salesTeam: String
+  physicalAddressId: Int
+  physicalAddress: String
+  deliveryAddressId: Int
+  deliveryAddress: String
+  billingAddressId: Int
+  billingAddress: String
+  currencyCode: String
+  currencySymbol: String
+  currencyDisplay: String
+  registrationNumber: String
+  taxNumber: String
   creditLimit: Float
+  currentBalance: Float
+  currentInvoice: Float
+  balance30Days: Float
+  balance60Days: Float
+  balance90Days: Float
+  balance120Days: Float
+  creditTotal: Float
 }
 
 type LasecCRMClient {  
@@ -40,7 +60,18 @@ type PagedCRMClient {
   clients: [LasecCRMClient] 
 }
 
+type PagedCRMCustomer {
+  search: String
+  filterBy: String  
+  paging: PagingResult
+  customers: [LasecCRMCustomer] 
+}
+
+
+
 extend type Query {
   LasecGetClientList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMClient
   LasecGetClientDetail(id: String!): LasecCRMClient
+  LasecGetCustomerList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMCustomer
+  LasecGetCustomerDetail(id: String!): LasecCRMCustomer
 }

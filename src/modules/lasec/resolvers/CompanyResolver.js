@@ -248,7 +248,7 @@ const getClient = async (params) => {
 
   let clients = [...clientDetails.items];
   if(clients.length === 1) {
-    return om(clients[0], {
+    let clientResponse = om(clients[0], {
       'id': 'id',
       'first_name': [{ 
         "key": 
@@ -298,10 +298,101 @@ const getClient = async (params) => {
         'key': 'customer.customerStatus', 
         'transform': (val) => (`${val === true ? 'on-hold' : 'not-on-hold'}`) 
       },
-      'currency_code': 'customer.currencyCode',
+      'currency_code': 'customer.currencyCode',      
       'currency_symbol': 'customer.currencySymbol',
+      'physical_address_id': 'customer.physicalAddressId',
+      'physical_address': 'customer.physicalAddress',
+      'delivery_address': 'customer.deliveryAddressId',
+      'delivery_address': 'customer.deliveryAddress',
       'country': ['country', 'customer.country']
     });
+
+    try {
+      let hashkey = Hash(`LASEC_COMPANY::${clientResponse.customer.id}`);
+      let found = await getCacheItem(hashkey).then();
+      logger.debug(`Found Cached Item for LASEC_COMPANY::${clientResponse.customer.id} ==> ${found}`)
+      if( found ===  null || found === undefined ) {
+        let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] }}).then()
+        if(companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
+          if(companyPayloadResponse.items.length === 1) {
+            /**
+             * 
+             * 
+             * {
+                "id": "11999",
+                "registered_name": "COD  LAB  CPT",
+                "description": null,
+                "trading_name": "COD  LAB  CPT",
+                "registration_number": null,
+                "vat_number": "-",
+                "credit_facility_requested": "10",
+                "account_terms": "COD General Accts",
+                "bank_account_type_id": null,
+                "bank_name": null,
+                "bank_account_number": null,
+                "branch_code": null,
+                "organisation_id": null,
+                "department_id": null,
+                "customer_class_id": "IND024",
+                "customer_sub_class_id": null,
+                "legal_address_id": null,
+                "physical_address_id": null,
+                "procurement_person_ids": null,
+                "account_person_ids": null,
+                "company_on_hold": false,
+                "currency_id": "1",
+                "currency_code": "ZAR",
+                "currency_symbol": "R",
+                "currency_description": "Rand",
+                "sales_team_id": "LAB100",
+                "billing_address": ",,,,,",
+                "warehouse_id": "10",
+                "credit_limit_total_cents": 0,
+                "current_balance_total_cents": -7532620,
+                "current_invoice_total_cents": -1252537,
+                "30_day_invoice_total_cents": -948730,
+                "60_day_invoice_total_cents": -1574862,
+                "90_day_invoice_total_cents": -413671,
+                "120_day_invoice_total_cents": -3342820,
+                "credit_invoice_total_cents": -7698211
+              }
+             * 
+             */
+
+            let customerObject = { ...clientResponse.customer,  ...om(companyPayloadResponse.items[0], {
+              'company_id': 'id',              
+              'registered_name': 'registeredName',
+              'description': 'description',
+              'trading_name': 'tradingName',   
+              "registration_number": 'registrationNumber',
+              "vat_number": "taxNumber",           
+              'organization_id': 'organizationId',
+              'currency_code': 'currencyCode',      
+              'currency_symbol': 'currencySymbol',
+              'currency_description': 'currencyDescription',
+              "credit_limit_total_cents": "creditLimit",
+              "current_balance_total_cents": "currentBalance",
+              "current_invoice_total_cents": "currentInvoice",
+              "30_day_invoice_total_cents": "balance30Days",
+              "60_day_invoice_total_cents": "balance60Days",
+              "90_day_invoice_total_cents": "balance90Days",
+              "120_day_invoice_total_cents": "balance120Days",
+              "credit_invoice_total_cents": "creditTotal"
+              }) 
+            };
+
+            setCacheItem(hashkey, customerObject, 10);
+            clientResponse.customer = customerObject;
+          }
+        }
+      } else {
+        clientResponse.customer = found;
+      }            
+    } catch (companyLoadError) {
+      logger.error(`Could not laod company data ${companyLoadError.message}`);
+    }
+    
+    return clientResponse;
   } 
   
   return null;
@@ -331,6 +422,15 @@ export default {
         }        
       }
       return parent.customerClass;
+    },
+    currencyDisplay: (customerObject) => {
+      let code = '???', symbol = '?';
+      if(customerObject) {
+        code = customerObject.currencyCode || code;
+        symbol = customerObject.currencySymbol || symbol;
+      }
+
+      return `${code} (${symbol})`;
     },
     creditLimit: async (parent, obj) => {
       return 100;
