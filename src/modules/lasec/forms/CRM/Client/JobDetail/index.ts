@@ -17,9 +17,10 @@ const displayUiSchema: any = {
       activeColor: 'primary',
       selectSchemaId: 'edit'
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
+    showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
   },
@@ -29,7 +30,7 @@ const displayUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { sm: 12, md: 12, lg: 12 },
     },
     {
       accountType: { md: 12 },
@@ -37,16 +38,15 @@ const displayUiSchema: any = {
       jobTitle: { md: 12 },
       clientDepartment: { md: 12 },
       clientClass: { md: 12 },
-      ranking: { md: 12 }     
+      ranking: { md: 12 }
     }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
+        width: '100%',
+        float: "right"
       },
     }
   },
@@ -160,7 +160,7 @@ const displayUiSchema: any = {
     }
   },
 
-  ranking:  {
+  ranking: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
@@ -186,36 +186,46 @@ const displayUiSchema: any = {
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
-    toolbarPosition: 'none',
+    // toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
       paddingBottom: '8px'
     },
-    showSubmit: false,
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'CANCEL',
+      activeColor: 'secondary',
+      buttonVariant: "contained",
+      selectSchemaId: 'display'
+    },
+    style:{
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
+    showSubmit: true,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { md: 12 },
-      repCode: { md: 12 },
-      jobTitle: { md: 12 },
-      clientDepartment: { md: 12 },
-      clientClass: { md: 12 },
-      ranking: { md: 12 }
+      accountType: { sm: 12, md: 6 },
+      repCode: { sm: 12, md: 6 },
+      jobTitle: { sm: 12, md: 6 },
+      clientDepartment: { sm: 12, md: 6 },
+      clientClass: { sm: 12, md: 6 },
+      ranking: { sm: 12, md: 6 },
     }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
+        width: '100%',
+        float: "right"
       },
     }
   },
@@ -223,14 +233,18 @@ const editUiSchema: any = {
   repCode: {},
   jobTitle: {},
   clientDepartment: {},
-  clientClass:{},
-  ranking:{}
+  clientClass: {},
+  ranking: {}
 };
 
-const schema: Reactory.ISchema = { 
+const schema: Reactory.ISchema = {
   type: "object",
   title: "JOB DETAILS",
   properties: {
+    view: {
+      title: '',
+      type: 'string'
+    },
     accountType: {
       type: "string",
       title: "Account Type"
@@ -291,7 +305,7 @@ const LasecCRMClientJobDetails: Reactory.IReactoryForm = {
     },
   ],
   defaultFormValue: {
-    
+
   },
 
 };

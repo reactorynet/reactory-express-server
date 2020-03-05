@@ -145,7 +145,7 @@ const displayUiSchema: any = {
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
-    // toolbarPosition: 'none', // needs the toolbar to save
+    // toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -157,6 +157,9 @@ const editUiSchema: any = {
       activeColor: 'secondary',
       buttonVariant: "contained",
       selectSchemaId: 'display'
+    },
+    style:{
+      marginTop: '16px',
     },
     showSchemaSelectorInToolbar: false,
     showSubmit: true,

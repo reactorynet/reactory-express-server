@@ -8,7 +8,7 @@ const displayUiSchema: any = {
     toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
-      margin: '0px',     
+      margin: '0px',
       paddingBottom: '8px'
     },
     schemaSelector: {
@@ -20,6 +20,7 @@ const displayUiSchema: any = {
     style:{
       marginTop: '16px',
     },
+    showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
   },
@@ -29,23 +30,22 @@ const displayUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12, sm: 12 },      
+      view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { md: 12, sm: 12 },
-      alternateEmail: { md: 12, sm: 12 },
-      officeNumber: { md: 12, sm: 12 },
-      mobileNumber: { md: 12, sm: 12 },
-      alternateNumber: { md: 12, sm: 12 },      
+      emailAddress: { md: 12 },
+      alternateEmail: { md: 12 },
+      officeNumber: { md: 12 },
+      mobileNumber: { md: 12 },
+      alternateNumber: { md: 12 },
     }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
+        width: '100%',
+        float: "right"
       },
     }
   },
@@ -70,7 +70,6 @@ const displayUiSchema: any = {
       }
     }
   },
-
   alternateEmail: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -89,7 +88,7 @@ const displayUiSchema: any = {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      }      
+      }
     }
   },
   officeNumber: {
@@ -160,34 +159,46 @@ const displayUiSchema: any = {
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
-    toolbarPosition: 'none',
+    // toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
+      marginBottom: '0px',
+      // margin: '0px',
       paddingBottom: '8px'
     },
-    showSubmit: false,
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'CANCEL',
+      activeColor: 'secondary',
+      buttonVariant: "contained",
+      selectSchemaId: 'display'
+    },
+    style:{
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
+    showSubmit: true,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { md: 12 },
-      alternateEmail: { md: 12 },
-      mobileNumber: { md: 12 },
-      alternateNumber: { md: 12 },      
+      emailAddress: { sm: 12, md: 6, lg: 6 },
+      alternateEmail: { sm: 12, md: 6, lg: 6 },
+      mobileNumber: { sm: 12, md: 6, lg: 6 },
+      alternateNumber: { sm: 12, md: 6, lg: 6 },
     }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
+        width: '100%',
+        float: "right"
       },
     }
   },
@@ -197,10 +208,14 @@ const editUiSchema: any = {
   alternateNumber: {},
 };
 
-const schema: Reactory.ISchema = { 
+const schema: Reactory.ISchema = {
   type: "object",
   title: "CONTACT DETAILS",
   properties: {
+    view: {
+      title: '',
+      type: 'string'
+    },
     emailAddress: {
       type: "string",
       title: "Email Address",
@@ -257,7 +272,7 @@ const LasecCRMContactInformation: Reactory.IReactoryForm = {
     },
   ],
   defaultFormValue: {
-    
+
   },
 
 };

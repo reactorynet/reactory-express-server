@@ -32,14 +32,14 @@ type LasecCRMCustomer {
   creditTotal: Float
 }
 
-type LasecCRMClient {  
+type LasecCRMClient {
   id: String
   clientStatus: String
   emailAddress: String
   alternateEmail: String
   accountType: String
   customer: LasecCRMCustomer
-  fullName: String 
+  fullName: String
   firstName: String
   lastName: String
   department: String
@@ -55,23 +55,29 @@ type LasecCRMClient {
 
 type PagedCRMClient {
   search: String
-  filterBy: String  
+  filterBy: String
   paging: PagingResult
-  clients: [LasecCRMClient] 
+  clients: [LasecCRMClient]
 }
 
 type PagedCRMCustomer {
   search: String
-  filterBy: String  
+  filterBy: String
   paging: PagingResult
-  customers: [LasecCRMCustomer] 
+  customers: [LasecCRMCustomer]
 }
 
-
+type ClientDetailUpdateResponse {
+  Success: Boolean
+}
 
 extend type Query {
   LasecGetClientList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMClient
   LasecGetClientDetail(id: String!): LasecCRMClient
   LasecGetCustomerList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMCustomer
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
+}
+
+extend type Mutation {
+   LasecUpdateClientDetail(clientStatus: String!, firstName: String!, lastName: String!, country: String!): ClientDetailUpdateResponse
 }
