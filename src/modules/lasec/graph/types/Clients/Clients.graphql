@@ -79,5 +79,6 @@ extend type Query {
 }
 
 extend type Mutation {
-   LasecUpdateClientDetail(clientStatus: String!, firstName: String!, lastName: String!, country: String!): ClientDetailUpdateResponse
+   LasecUpdateClientPersonalDetails(clientId: String!, clientStatus: String!, firstName: String!, lastName: String!, country: String!): ClientDetailUpdateResponse
+   LasecUpdateClientContactDetails(clientId: String!, mobileNumber: String!, alternateNumber: String!, email: String!, alternateEmail: String!): ClientDetailUpdateResponse
 }

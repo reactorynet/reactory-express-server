@@ -80,6 +80,7 @@ export default {
   groups: { url: `api/${ENTITY_KEY__REP_CODE}/`, allowed_methods: ['get'] },
   warehouse: { url: `api/${ENTITY_KEY__WAREHOUSE}/`, allowed_methods: ['get'] },
   warehouse_strock: { url: `api/${ENTITY_KEY__WAREHOUSE_STOCK}/`, allowed_methods: ['get'] },
+  customer: { url: `api/${ENTITY_KEY__CUSTOMER}/\\d+/update/`, allowed_methods: ['post'] },
 
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },

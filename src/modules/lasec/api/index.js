@@ -196,6 +196,7 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
     try {
       logger.debug('Successful API call returning json body', { status: apiResponse.status });
+      logger.debug('Successful API call returning json body', { resp: apiResponse });
       return apiResponse.json();
     } catch (jsonError) {
       logger.error("JSON Error", jsonError);
@@ -286,9 +287,34 @@ const Api = {
       }
 
       return { pagination: {}, ids: [], items: [] };
+    },
+    UpdateClientDetails: async (clientId, params) => {
+      try {
+
+        logger.debug(`PARAMS: ${JSON.stringify(params)}`);
+
+        const apiResponse = await POST(`api/customer/${clientId}/update/`, params);
+
+        const {
+          status, payload, id,
+        } = apiResponse;
+
+        logger.debug(`UPDATE CLIENT DETAILS RESPONSE: ${JSON.stringify(apiResponse)}`);
+
+        if (status === 'sucess') {
+          return {
+            Success: true
+          };
+        }
+      } catch (error) {
+        logger.error(`ERROR UPDATING CLIENT DETAILS:: ${error}`);
+        return {
+          Success: false
+        };
+      }
     }
   },
-  Company: {    
+  Company: {
     getById: async(params) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } });
       const {

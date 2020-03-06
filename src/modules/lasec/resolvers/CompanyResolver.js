@@ -401,11 +401,75 @@ const getClient = async (params) => {
 
 const updateCientDetail = async (params) => {
 
-  logger.debug(`UPDATE PARAMS::  ${JSON.stringify(params)}`);
+  try {
+    logger.debug(`UPDATE PARAMS::  ${JSON.stringify(params)}`);
 
-  return {
-    Success: true
+    const preFetchClientDetails = await lasecApi.Customers.list({ filter: { ids: [params.clientId] } });
+
+    let clients = [...preFetchClientDetails.items];
+    if (clients.length === 1) {
+
+      const client = clients[0];
+
+      // let updateParams = {
+      //   clientId: params.clientId,
+      //   activity_status: params.clientStatus || client.activity_status,
+      //   first_name: params.firstName || client.first_name,
+      //   surname: params.lastName || client.surname,
+      //   email: params.email || client.email,
+      //   country: params.country || client.country,
+      //   confirm_email: params.email || client.confirm_email,
+      //   account_type: client.account_type,
+      //   ranking_id: client.ranking_id,
+      //   department: client.department,
+      //   role_id: client.role_id,
+      //   title_id: client.title_id,
+      //   office_number: client.office_number,
+      // }
+
+      let updateParams = {
+        first_name: params.firstName || (client.first_name || ''),
+        surname: params.lastName || (client.surname || ''),
+        activity_status: params.clientStatus || (client.activity_status || ''),
+        country: params.country || (client.country || ''),
+        department: params.department || (client.department || ''),
+        title_id: client.title_id,
+        mobile_number: params.mobileNumber || (client.mobile_number || ''),
+        office_number: params.officeNumber || (client.office_number || ''),
+        alternate_office_number: params.alternateNumber || (client.alternate_office_number || ''),
+        email: params.email || (client.email || ''),
+        confirm_email: params.email || (client.email || ''),
+        alternate_email: params.alternateEmail || (client.alternate_email || ''),
+        ranking_id: 1,
+        sales_team_id: "LAB107",
+        role_id: 6,
+        account_type: "cod",
+        customer_class_id: "02"
+      }
+
+      const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams).then();
+
+      logger.debug(`RESOLVER UPDATE RESPONSE::  ${JSON.stringify(apiResponse)}`);
+
+      return {
+        Success: true
+      }
+
+    }
+
+    return {
+      Success: false
+    }
+
   }
+  catch (ex) {
+    logger.error(`ERROR UPDATING CLIENT DETAISL::  ${ex}`);
+    return {
+      Success: false
+    }
+  }
+
+
 }
 
 export default {
@@ -458,7 +522,10 @@ export default {
     }
   },
   Mutation: {
-    LasecUpdateClientDetail: async (obj, args) => {
+    LasecUpdateClientPersonalDetails: async (obj, args) => {
+      return updateCientDetail(args);
+    },
+    LasecUpdateClientContactDetails: async (obj, args) => {
       return updateCientDetail(args);
     }
   }
