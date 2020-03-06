@@ -1,4 +1,7 @@
 
 export default {
-  'ui:widget': 'ReactoryFormEditor'
+  'ui:widget': 'ReactoryFormEditor',
+  'ui:options': {
+    
+  }
 };
