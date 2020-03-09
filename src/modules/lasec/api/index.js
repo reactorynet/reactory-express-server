@@ -134,9 +134,9 @@ const getStorageItem = async (key) => {
   throw new Error('How?');
 };
 
-export function POST(url, data, auth = true) {
+export async function POST(url, data, auth = true) {
   const args = { body: data, method: 'POST' };
-  return FETCH(url, args, auth);
+  return await FETCH(url, args, auth);
 }
 
 export function DELETE(url, data, auth = true) {
@@ -291,7 +291,7 @@ const Api = {
     UpdateClientDetails: async (clientId, params) => {
       try {
 
-        logger.debug(`PARAMS: ${JSON.stringify(params)}`);
+        // logger.debug(`PARAMS: `, params);
 
         const apiResponse = await POST(`api/customer/${clientId}/update/`, params);
 
@@ -299,17 +299,23 @@ const Api = {
           status, payload, id,
         } = apiResponse;
 
-        logger.debug(`UPDATE CLIENT DETAILS RESPONSE: ${JSON.stringify(apiResponse)}`);
+        // logger.debug(`UPDATE CLIENT DETAILS RESPONSE: ${JSON.stringify(apiResponse)}`);
+        logger.debug(`PAYLOAD: ${JSON.stringify(payload)}`);
 
-        if (status === 'sucess') {
+        if (status === 'success') {
           return {
-            Success: true
-          };
+            success: true,
+          }
         }
+
+        return {
+          success: false,
+        };
+
       } catch (error) {
         logger.error(`ERROR UPDATING CLIENT DETAILS:: ${error}`);
         return {
-          Success: false
+          success: false,
         };
       }
     }

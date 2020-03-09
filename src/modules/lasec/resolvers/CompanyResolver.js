@@ -71,8 +71,6 @@ const getClients = async (params) => {
     pagingResult.page = clientResult.pagination.current_page || 1;
   }
 
-
-
   logger.debug(`Loading (${ids.length}) client ids`);
 
   const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids } });
@@ -248,6 +246,11 @@ const getClient = async (params) => {
 
   let clients = [...clientDetails.items];
   if (clients.length === 1) {
+
+
+    logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
+
+
     let clientResponse = om(clients[0], {
       'id': 'id',
       'first_name': [{
@@ -399,10 +402,11 @@ const getClient = async (params) => {
   return null;
 };
 
-const updateCientDetail = async (params) => {
-
+const updateCientDetail = async (args) => {
   try {
-    logger.debug(`UPDATE PARAMS::  ${JSON.stringify(params)}`);
+    logger.debug(`UPDATE PARAMS::  ${JSON.stringify(args)}`);
+
+    const params = args.clientInfo;
 
     const preFetchClientDetails = await lasecApi.Customers.list({ filter: { ids: [params.clientId] } });
 
@@ -410,22 +414,6 @@ const updateCientDetail = async (params) => {
     if (clients.length === 1) {
 
       const client = clients[0];
-
-      // let updateParams = {
-      //   clientId: params.clientId,
-      //   activity_status: params.clientStatus || client.activity_status,
-      //   first_name: params.firstName || client.first_name,
-      //   surname: params.lastName || client.surname,
-      //   email: params.email || client.email,
-      //   country: params.country || client.country,
-      //   confirm_email: params.email || client.confirm_email,
-      //   account_type: client.account_type,
-      //   ranking_id: client.ranking_id,
-      //   department: client.department,
-      //   role_id: client.role_id,
-      //   title_id: client.title_id,
-      //   office_number: client.office_number,
-      // }
 
       let updateParams = {
         first_name: params.firstName || (client.first_name || ''),
@@ -440,27 +428,24 @@ const updateCientDetail = async (params) => {
         email: params.email || (client.email || ''),
         confirm_email: params.email || (client.email || ''),
         alternate_email: params.alternateEmail || (client.alternate_email || ''),
-        ranking_id: 1,
-        sales_team_id: "LAB107",
-        role_id: 6,
-        account_type: "cod",
-        customer_class_id: "02"
+        role_id: client.role_id,
+        ranking_id: params.ranking || (client.ranking_id || ''),
+        account_type: params.accountType || (client.account_type || ''),
+        customer_class_id: params.clientClass || (client.customer_class_id || ''),
+        sales_team_id: params.repCode || (client.sales_team || ''),
       }
 
-      const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams).then();
-
-      logger.debug(`RESOLVER UPDATE RESPONSE::  ${JSON.stringify(apiResponse)}`);
+      const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams);
+      // logger.debug(`RESOLVER UPDATE RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
       return {
-        Success: true
-      }
-
+        Success: apiResponse.success,
+      };
     }
 
     return {
       Success: false
     }
-
   }
   catch (ex) {
     logger.error(`ERROR UPDATING CLIENT DETAISL::  ${ex}`);
@@ -468,8 +453,6 @@ const updateCientDetail = async (params) => {
       Success: false
     }
   }
-
-
 }
 
 export default {
@@ -522,11 +505,14 @@ export default {
     }
   },
   Mutation: {
-    LasecUpdateClientPersonalDetails: async (obj, args) => {
+    LasecUpdateClientDetails: async (obj, args) => {
       return updateCientDetail(args);
     },
-    LasecUpdateClientContactDetails: async (obj, args) => {
-      return updateCientDetail(args);
-    }
+    // LasecUpdateClientContactDetails: async (obj, args) => {
+    //   return updateCientDetail(args);
+    // },
+    // LasecUpdateClientJobDetails: async (obj, args) => {
+    //   return updateCientDetail(args);
+    // }
   }
 };

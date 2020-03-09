@@ -8,7 +8,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         id
         jobTitle
         salesTeam
-        department        
+        department
         customer {
           id
           accountType
@@ -18,9 +18,9 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-      'formData.id': 'id',            
+      'formData.id': 'id',
     },
-    resultMap: {      
+    resultMap: {
       'customer.accountType': 'accountType',
       'salesTeam': 'repCode',
       'jobTitle': 'jobTitle',
@@ -33,6 +33,27 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultType: 'object',
     edit: false,
     new: false,
+  },
+  mutation: {
+    edit: {
+      name: "LasecUpdateClientDetails",
+      text: `LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
+        LasecUpdateClientDetails(clientInfo: $clientInfo) {
+          Success
+        }`,
+      objectMap: true,
+      updateMessage: 'Updating Template Content',
+      variables: {
+        'formData.id': 'clientInfo.clientId',
+        'formData.accountType': 'clientInfo.accountType',
+        'formData.repCode': 'clientInfo.repCode',
+        'formData.jobTitle': 'clientInfo.jobTitle',
+        'formData.clientDepartment': 'clientInfo.clientDepartment',
+        'formData.clientClass': 'clientInfo.clientClass',
+        'formData.ranking': 'clientInfo.ranking',
+      },
+      onSuccessMethod: 'refresh'
+    }
   }
 };
 

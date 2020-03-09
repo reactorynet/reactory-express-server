@@ -10,7 +10,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         firstName
         lastName
         fullName
-        emailAddress      
+        emailAddress
         country
         customer {
           id
@@ -19,18 +19,18 @@ const graphql: Reactory.IFormGraphDefinition = {
           customerStatus
           country
         }
-      }      
+      }
     }`,
     variables: {
-      'formData.id': 'id',            
+      'formData.id': 'id',
     },
-    resultMap: {      
+    resultMap: {
       'id': 'id',
       'clientStatus': 'clientStatus',
       'fullName': 'fullName',
-      'customer.customerStatus': 'customerStatus', 
+      'customer.customerStatus': 'customerStatus',
       'customer.accountNumber':'accountNumber',
-      'customer.tradingName': 'customer', 
+      'customer.tradingName': 'customer',
       'country': 'country',
       'firstName' : 'firstName',
       'lastName': 'lastName',
@@ -40,6 +40,25 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultType: 'object',
     edit: false,
     new: false,
+  },
+  mutation: {
+    edit: {
+      name: "LasecUpdateClientDetails",
+      text: `LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
+        LasecUpdateClientDetails(clientInfo: $clientInfo) {
+          Success
+        }`,
+      objectMap: true,
+      updateMessage: 'Updating Template Content',
+      variables: {
+        'formData.id': 'clientInfo.clientId',
+        'formData.clientStatus': 'clientInfo.clientStatus',
+        'formData.firstName': 'clientInfo.firstName',
+        'formData.lastName': 'clientInfo.lastName',
+        'formData.country': 'clientInfo.country',
+      },
+      onSuccessMethod: 'refresh'
+    }
   }
 };
 

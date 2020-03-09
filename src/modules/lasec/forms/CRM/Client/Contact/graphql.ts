@@ -10,8 +10,8 @@ const graphql: Reactory.IFormGraphDefinition = {
         firstName
         lastName
         fullName
-        emailAddress 
-        alternateEmail       
+        emailAddress
+        alternateEmail
         country
         mobileNumber
         officeNumber
@@ -23,14 +23,14 @@ const graphql: Reactory.IFormGraphDefinition = {
           customerStatus
           country
         }
-      }      
+      }
     }`,
     variables: {
-      'formData.id': 'id',            
+      'formData.id': 'id',
     },
-    resultMap: {      
+    resultMap: {
       'id': 'id',
-      'emailAddress': 'emailAddress',      
+      'emailAddress': 'emailAddress',
       'alternateEmail': 'alternateEmail',
       'officeNumber': 'officeNumber',
       'mobileNumber': 'mobileNumber',
@@ -41,6 +41,25 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultType: 'object',
     edit: false,
     new: false,
+  },
+  mutation: {
+    edit: {
+      name: "LasecUpdateClientDetails",
+      text: `LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
+        LasecUpdateClientDetails(clientInfo: $clientInfo) {
+          Success
+        }`,
+      objectMap: true,
+      updateMessage: 'Updating Template Content',
+      variables: {
+        'formData.id': 'clientInfo.clientId',
+        'formData.mobileNumber': 'clientInfo.mobileNumber',
+        'formData.alternateNumber': 'clientInfo.alternateNumber',
+        'formData.emailAddress': 'clientInfo.email',
+        'formData.alternateEmail': 'clientInfo.alternateEmail',
+      },
+      onSuccessMethod: 'refresh'
+    }
   }
 };
 
