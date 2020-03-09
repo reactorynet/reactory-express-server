@@ -145,7 +145,6 @@ const displayUiSchema: any = {
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
-    // toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
