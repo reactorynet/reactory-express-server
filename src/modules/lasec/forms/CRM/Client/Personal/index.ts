@@ -67,7 +67,43 @@ const displayUiSchema: any = {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      }
+      },
+      componentFqn: 'core.ConditionalIconComponent@1.0.0',
+      componentProps: {        
+        conditions: [
+          {
+            key: 'active',
+            icon: 'trip_origin',
+            style: {
+              color: '#5EB848'                  
+            },            
+            tooltip: 'Client Active'
+          },
+          {
+            key: 'unfinished',
+            icon: 'trip_origin',
+            style: {
+              color: '#FF9901'
+            },
+            tooltip: 'Client Unfinished'
+          },
+          {
+            key: 'deactivated',
+            icon: 'trip_origin',
+            style: {
+              color: '#AB1257'
+            },
+            tooltip: 'Client Deactivated'
+          }                  
+        ]
+      },
+      style: {
+        marginRight: '8px',
+        marginTop: '8px',
+      },
+      componentPropsMap: {
+        'formData': 'value',
+      },
     }
   },
 
