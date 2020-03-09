@@ -21,6 +21,16 @@
         helpTopics: [
           'ReactoryFormEditor',
         ],
+        defaultFormValue: {
+          diagramOptions: {
+
+          },
+          nodes: [
+            { id: 'test', title: 'Node Test 1', color: 'rgb(0,192,255)', ports: [{ title: 'Out Port', type: 'out' }] },
+            { id: 'test', title: 'Node Test 2', color: 'rgb(192,255,0)', ports: [{ title: 'In Port', type: 'int' }] },
+            { id: 'test', title: 'Node Test 3', color: 'rgb(192,0,255)', ports: [{ title: 'Out Port', type: 'out' }] }
+          ]
+        },
         registerAsComponent: true,
         schema: $schema,
         uiSchema: $uiSchema,

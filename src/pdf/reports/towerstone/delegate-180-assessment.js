@@ -485,8 +485,8 @@ export const pdfmakedefinition = (data, partner, user) => {
     {
       image:'partnerLogo', width: 190, style: ['centerAligned'], margin: [0, 0, 0, 20],
     },
-    { text: '180°\nLeadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },      
-    { text: `${data.delegateTeamName}`, style: ['header', 'centerAligned'], margin: [0, 5] },
+    { text: '180°\nTeam Leadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },      
+    { text: `Executive Team (Exco)`, style: ['header', 'centerAligned'], margin: [0, 5] },
     includeAvatar === true ?
       {
         image: 'delegateAvatar', width: 120, style: ['centerAligned'], margin: [0, 15],
@@ -497,6 +497,15 @@ export const pdfmakedefinition = (data, partner, user) => {
     },
   ]
 
+  const valuesText = () => {
+    let text = '';
+    data.qualities.forEach((quality,qi)=>{ 
+      text=`${text}${quality.title}${qi === data.qualities.length - 2 ? ' and ' : ', ' }`;
+    });
+    text = text.trim();
+    text = text.substr(0, text.length - 1);
+    return text;
+  }
   
   const introductionSection = [
     {
@@ -504,8 +513,8 @@ export const pdfmakedefinition = (data, partner, user) => {
     },
     {
       text: [
-        `${data.delegateTeamName} team members, this report shows the aggregate and detailed results of your team leadership assessment conducted by Senior Leadership team members.\n\n`,        
-        `You have been assessed against the ${data.organization.name} values and supporting leadership behaviours for all ${data.organization.name} employees.`
+        `This report shows the aggregate and detailed results of the 180° Team Leadership Brand Assessment for the ${data.organization.name} ${data.delegateTeamName} team as completed by Senior Leadership team members.\n\n`,        
+        `You have been assessed against the ${data.organization.name} values of ${valuesText()} as well as the supporting leadership behaviours for all ${data.organization.name} employees as articulated in the Leadership Brand statement of:`
       ],
       style: ['default'],
     },
@@ -516,8 +525,8 @@ export const pdfmakedefinition = (data, partner, user) => {
     },
     isPlcReport === false ? {
       text: [
-        `These values form the foundation of our desired culture at ${data.organization.name} and in order to build this culture, we as leaders must`,
-        `intentionally live the values by displaying the supporting behaviours. In this way, we will align our people to the purpose and strategy of ${data.organization.name}.`,
+        `These values form the foundation of the desired culture at ${data.organization.name}. In order to build this culture, leaders must`,
+        `intentionally live the values by displaying the supporting behaviours. This will enhance the alignment of the greater organisation to the purpose and strategy of ${data.organization.name}.`,
       ],
       style: ['default'],
     } : undefined,
@@ -557,7 +566,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     { text: '3. Qualities', style: ['header', 'primary'], pageBreak: 'before' },
     { text: 'The ratings for your different leadership behaviours have been combined to achieve an average rating for each value.', style: ['default'] },
     { text: '3.1 Individual Ratings', style: ['subheader', 'primary'] },
-    { text: 'The chart below indicates the ratings submitted by the individual assessors. Please pay attention to the graph scale as it is spread according to your average per quality and not scale from 1 to 5.', style: ['default'] },
+    { text: 'The chart below indicates the ratings submitted by the individual assessors. Please pay attention to the graph scale as it is spread according to your average per quality and not from 1 to 5.', style: ['default'] },
     {
       image: 'spiderChartAll',
       width: 400,
@@ -566,7 +575,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       margin: [0, 40],
     },
     { text: '3.2 Aggregate Ratings', style: ['subheader', 'primary'], pageBreak: 'before' },
-    { text: 'The chart below indicates the combined ratings from all assessors.  Please pay attention to the graph scale as it is spread according to your average per quality and not scale from 1 to 5.', style: ['default'] },
+    { text: 'The chart below indicates the combined ratings from all assessors.  Please pay attention to the graph scale as it is spread according to your average per quality and not from 1 to 5.', style: ['default'] },
     {
       image: 'spiderChartAvg',
       width: 400,
@@ -677,7 +686,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     { text: '5 Overall', pageBreak: 'before', style: ['header', 'primary'] },
     { text: 'This is the result of averaging the behaviours within all the values as per the ratings from each assessor.', style: ['default'] },
     {
-      text: ['Your overall score for this assessment is'], style: ['subheader'], alignment: 'center', margin: [0, 40],
+      text: [`Your overall score for living the ${data.organization.name} is`], style: ['subheader'], alignment: 'center', margin: [0, 40],
     },
     { text: `${data.score}%`, style: ['header', 'primary'], alignment: 'center' },
     {
@@ -699,7 +708,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     '1. How aligned are your expectations to the feedback that you received from your assessors, and why?',
     '2. How intentional are you about leading by example?',
     `3. How does this feedback help you in your leadership capacity to support the ${data.organization.name} strategic objectives?`,
-    `4. What is your contribution to ${data.organization.name}?`,
+    `4. What is your real contribution to ${data.organization.name}?`,
     '5. What can you do to build stronger trust relationships with others?',
   ].forEach((question) => {
     developmentPlan.push({ text: question, style: ['default'] });
@@ -711,14 +720,14 @@ export const pdfmakedefinition = (data, partner, user) => {
   const nextactions = [
     { text: '6.2 Next Actions', style: ['subheader', 'primary'], pageBreak: 'before' },
     {
-      text: ['Your development as brand ambassadors require that you commit to specific actions that will make our values more visible in your ',
+      text: ['Your development as brand ambassadors requires that you commit to specific actions that will make our values more visible in your ',
         `behaviour so that your colleagues see you modelling the ${data.organization.name} Leadership Brand.`],
       style: ['default'],
     },
     // { text: 'Start', style: ['subheader', 'primary'] },
     // { text: 'These are the leadership behaviours your assessors have said you are not currently displaying:', style: ['default'] },
 
-    { text: 'Use the table below to plan the actions you will put in place to address the feedback you received:', style: ['default'], margin: [0, 15] },
+    { text: 'Use the table below to plan the actions you will put in place to address the feedback that you received:', style: ['default'], margin: [0, 15] },
     {
       table: {
       // headers are automatically repeated if the table spans over multiple pages
@@ -846,7 +855,7 @@ export const pdfmakedefinition = (data, partner, user) => {
             margin: [20, 0, 20, 0],
           },
           {
-            text: `${data.organization.name}: 'Team Leadership Brand 180° Assessment for ${data.delegateTeamName} - ${data.meta.when.format('DD MMMM YYYY')}`,
+            text: `${data.organization.name}: '180° Team Leadership Brand Assessment for the ${data.delegateTeamName} team - ${data.meta.when.format('DD MMMM YYYY')}`,
             fontSize: 8,
             alignment: 'center',
             margin: [5, 5],
