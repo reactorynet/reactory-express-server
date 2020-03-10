@@ -180,15 +180,16 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      customerStatus: { sm: 12, md: 6 },
-      registeredCompanyName: { sm: 12, md: 6 },
-      tradingName: { sm: 12, md: 6 },
-      tradingCurrency: { sm: 12, md: 6 },
+      customerStatus: { sm: 12, md: 12, lg: 12 },
+      registeredCompanyName: { sm: 12, md: 12, lg: 12 },
+      tradingName: { sm: 12, md: 12, lg: 12 },
+      tradingCurrency: { sm: 12, md: 12, lg: 12 },
       description: { sm: 12, md: 12, lg: 12 },
       physicalAddress: { sm: 12, md: 12, lg: 12 },
       deliveryAddress: { sm: 12, md: 12, lg: 12 },
-      registrationNumber: { sm: 12, md: 6 },
-      taxNumber: { sm: 12, md: 6 },
+      billingAddress: { sm: 12, md: 12, lg: 12 },
+      registrationNumber: { sm: 12, md: 12, lg: 12 },
+      taxNumber: { sm: 12, md: 12, lg: 12 }
     }
   ],
   view: {
@@ -200,15 +201,78 @@ const editUiSchema: any = {
       },
     }
   },
-  customerStatus: {},
+  customerStatus: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      title: 'Customer Status',
+      ...labelProps
+    }
+  },
+
   registeredCompanyName: {},
-  tradingName: {},
-  tradingCurrency: {},
-  description: {},
-  physicalAddress: {},
-  deliveryAddress: {},
-  registrationNumber: {},
-  taxNumber: {}
+  tradingName: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      readOnly: true,
+      component: "TextField",
+      componentProps: {
+        variant: "outlined"
+      },
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Trading Name',
+      ...labelProps
+    }
+  },
+  tradingCurrency: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      title: 'Trading Currency',
+      ...labelProps
+    }
+  },
+  description: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      title: 'Description',
+      ...labelProps
+    }
+  },
+  physicalAddress: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      title: 'Physical Address',
+      ...labelProps
+    }
+  },
+  deliveryAddress: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      title: 'Delivery Address',
+      ...labelProps
+    }
+  },
+  billingAddress: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      title: 'Billing Address',
+      ...labelProps
+    }
+  },
+  registrationNumber: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      title: 'Registration Number',
+      ...labelProps
+    }
+  },
+  taxNumber: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      title: 'Tax Number',
+      ...labelProps
+    }
+  }
 };
 
 const schema: Reactory.ISchema = {

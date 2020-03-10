@@ -1,0 +1,18 @@
+query LasecGetCRMQuoteList($search: String!, $paging: PagingRequest, $filterBy){
+  LasecGetCRMQuoteList(search: $search, paging: $paging, filterBy: $filterBy){
+    paging {
+      total
+      page
+      hasNext
+      pageSize
+    }
+    filterBy
+    quotes {
+      id
+      code
+      customer {
+          fullName
+      }
+    }
+  }
+}

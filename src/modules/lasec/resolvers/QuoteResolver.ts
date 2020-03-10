@@ -1,7 +1,7 @@
 
 import om from 'object-mapper';
 import moment, { Moment } from 'moment';
-import lodash, { isArray, isNil } from 'lodash';
+import lodash, { isArray, isNil, isString } from 'lodash';
 import { ObjectId } from 'mongodb';
 import gql from 'graphql-tag';
 import uuid from 'uuid';
@@ -17,7 +17,6 @@ import O365 from '../../../azure/graph';
 import { getCacheItem, setCacheItem } from '../models';
 import emails from '@reactory/server-core/emails';
 import { Quote as LasecQuote } from '../types/lasec';
-
 
 export interface DashboardParams {
   period: string,
@@ -268,7 +267,7 @@ const getQuotes = async (params) => {
 
   quotes = quoteSyncResult.map(doc => doc);
 
-  // logger.debug(`QUOTES ${JSON.stringify(quotes.slice(0, 5))}`);
+  logger.debug(`QUOTES ${JSON.stringify(quotes.slice(0, 1))}`);
 
   amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
 
@@ -276,13 +275,13 @@ const getQuotes = async (params) => {
 };
 
 const getTargets = async ({ periodStart, periodEnd, teamIds, repIds, agentSelection }) => {
-  logger.debug(`QuoteResolver.getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection })`, 
-    { 
-      periodStart, 
-      periodEnd, 
-      teamIds, 
-      repIds, 
-      agentSelection 
+  logger.debug(`QuoteResolver.getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection })`,
+    {
+      periodStart,
+      periodEnd,
+      teamIds,
+      repIds,
+      agentSelection
     });
   try {
     let userTargets: number = 0;
@@ -291,11 +290,11 @@ const getTargets = async ({ periodStart, periodEnd, teamIds, repIds, agentSelect
       case "team": {
         // lasecUsersWithTargets = await lasecApi.User.getLasecUsers(teamIds).then();
         // break;
-      }      
+      }
       case "bu":
       case "me":
       default: {
-        const lasecCreds = user.getAuthentication("lasec");        
+        const lasecCreds = user.getAuthentication("lasec");
         if (!lasecCreds) {
           logger.error(`agentSelection: ${agentSelection} and user has no Lasec Credentials? Should not happen`, lasecCreds);
           return userTargets;
@@ -304,11 +303,11 @@ const getTargets = async ({ periodStart, periodEnd, teamIds, repIds, agentSelect
           if (lasecCreds.props && lasecCreds.props.payload) {
             const staff_user_id = lasecCreds.props.payload.user_id
             userTargets = await lasecApi.User.getUserTargets([`${staff_user_id}`]).then();
-          } 
+          }
         }
       }
     }
-    
+
     logger.debug('QuoteResolver.getTargets() => result', userTargets);
     return userTargets;
 
@@ -319,79 +318,79 @@ const getTargets = async ({ periodStart, periodEnd, teamIds, repIds, agentSelect
 };
 
 const getInvoices = async ({ periodStart, periodEnd, teamIds = null, repIds = null }) => {
-  
+
   let ids: any[] = [];
   let invoices: any = null;
-  let idsQueryResults: any =  null;
+  let idsQueryResults: any = null;
   let pagePromises = [];
   let invoice_fetch_promises = [];
   let invoice_items: any[] = [];
-  let filter = { 
+  let filter = {
     sales_team_id: teamIds,
-    start_date: periodStart, 
-    end_date: periodEnd 
+    start_date: periodStart,
+    end_date: periodEnd
   };
 
   try {
-    logger.debug(`QuoteResolver getInvoices({ ${periodStart}, ${periodEnd}, ${teamIds} })`);    
+    logger.debug(`QuoteResolver getInvoices({ ${periodStart}, ${periodEnd}, ${teamIds} })`);
     idsQueryResults = await lasecApi.Invoices.list({ filter: filter, pagination: { page_size: 20, enabled: true }, ordering: { "invoice_date": "asc" } }).then();
     if (isArray(idsQueryResults.ids) === true) {
       ids = [...idsQueryResults.ids];
     }
 
-    invoice_fetch_promises.push(lasecApi.Invoices.list({ filter: {ids: idsQueryResults.ids }, pagination: { enabled: false }, ordering: { "invoice_date": "asc" } }))
+    invoice_fetch_promises.push(lasecApi.Invoices.list({ filter: { ids: idsQueryResults.ids }, pagination: { enabled: false }, ordering: { "invoice_date": "asc" } }))
   }
   catch (e) {
     logger.error(`Error querying Invoices ${e.message}`)
     return [];
   }
-  
+
   try {
-    
+
     if (idsQueryResults.pagination && idsQueryResults.pagination.num_pages > 1) {
       logger.debug(`Period requires paged invoice result`)
       const max_pages = idsQueryResults.pagination.num_pages;
       for (let pageIndex = idsQueryResults.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
-        pagePromises.push(lasecApi.Invoices.list({ 
-          filter: filter, 
-          pagination: { ...idsQueryResults.pagination, current_page: pageIndex }, 
-          ordering: { "invoice_date": "asc" } 
+        pagePromises.push(lasecApi.Invoices.list({
+          filter: filter,
+          pagination: { ...idsQueryResults.pagination, current_page: pageIndex },
+          ordering: { "invoice_date": "asc" }
         }));
       }
     }
 
-    if(pagePromises.length > 0) {
+    if (pagePromises.length > 0) {
       const pagedResults = await Promise.all(pagePromises).then();
       //collect all ids
       pagedResults.forEach((pagedResult) => {
-        invoice_fetch_promises.push(lasecApi.Invoices.list({ filter: {ids: pagedResult.ids }, pagination: { enabled: false }, ordering: { "invoice_date": "asc" } }))
+        invoice_fetch_promises.push(lasecApi.Invoices.list({ filter: { ids: pagedResult.ids }, pagination: { enabled: false }, ordering: { "invoice_date": "asc" } }))
       });
     }
-    
+
   } catch (e) {
     logger.error(`Could not fetch paged results for Invoice ids query ${e.message}`);
     return [];
   }
-  
+
   /**Detail fetch*/
-  try{
-    if(invoice_fetch_promises.length>0) {
+  try {
+    if (invoice_fetch_promises.length > 0) {
       const invoice_fetch_results = await Promise.all(invoice_fetch_promises).then();
-      if(invoice_fetch_results) {
-        for(let idx = 0; idx < invoice_fetch_results.length; idx+=1) {
-          if(invoice_fetch_results[0].items) {
+      if (invoice_fetch_results) {
+        for (let idx = 0; idx < invoice_fetch_results.length; idx += 1) {
+          if (invoice_fetch_results[0].items) {
             invoice_items = [...invoice_items, ...invoice_fetch_results[0].items]
           }
         }
       }
     }
-    
+
     return invoice_items;
-  } catch(e) {
+  } catch (e) {
     logger.debug(`Error while fetching error invoice detailed records ${e.message}`);
     return [];
-  }        
-   
+  }
+
 };
 
 const getISOs = async ({ periodStart, periodEnd }) => {
@@ -399,17 +398,17 @@ const getISOs = async ({ periodStart, periodEnd }) => {
     logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} })`);
     const isoIds = await lasecApi.PurchaseOrders.list(
       {
-        filter: { order_status: "1",  start_date: periodStart, end_date: periodEnd },
+        filter: { order_status: "1", start_date: periodStart, end_date: periodEnd },
         ordering: { order_date: "desc" },
         pagination: { enabled: false }
       }).then();
     logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} }) --> Result`, isoIds);
 
     if (isArray(isoIds.ids) === true && isoIds.ids.length > 0) {
-      const isos = await lasecApi.PurchaseOrders.list({ 
-        filter: { ids: isoIds.ids }, 
-        ordering: { order_date: "desc" }, 
-        pagination: { enabled: false } 
+      const isos = await lasecApi.PurchaseOrders.list({
+        filter: { ids: isoIds.ids },
+        ordering: { order_date: "desc" },
+        pagination: { enabled: false }
       }).then();
 
       if (isos && isArray(isos.items) === true) {
@@ -576,8 +575,7 @@ interface QuotesByProductClassMap {
   [key: string]: LasecQuote[]
 }
 
-interface ProductClassQuotes
-{
+interface ProductClassQuotes {
   ProductClassCode: string,
   ProductClassDescription: string,
   Quotes: LasecQuote[],
@@ -585,25 +583,25 @@ interface ProductClassQuotes
 }
 
 const groupQuotesByProduct = async (quotes: LasecQuote[]) => {
-  
+
   const quotesByProductClass: QuotesByProductClassMap = {};
   try {
-    const lineitemsPromises = quotes.map((quote: LasecQuote ) => { lasecGetQuoteLineItems(quote.id)})    
+    const lineitemsPromises = quotes.map((quote: LasecQuote) => { lasecGetQuoteLineItems(quote.id) })
     const LineItemResults = await Promise.all(lineitemsPromises).then();
   } catch (e) {
-    logger.error(`Error Getting Line Items For Quote(s) ${e.message}`, e);      
+    logger.error(`Error Getting Line Items For Quote(s) ${e.message}`, e);
     return quotesByProductClass;
   }
-  
-  
-  quotes.forEach( (quote) => {    
+
+
+  quotes.forEach((quote) => {
     logger.debug(`Checking Quote ${quote.id} items for product class`, quote);
     const key = quote.productClass || 'None';
     const statusKey = quote.statusGroup || 'none';
 
-    
-    
-    // logger.debug(`Found ${lineItems ? lineItems.length : ' (none) '} lineitems`)    
+
+
+    // logger.debug(`Found ${lineItems ? lineItems.length : ' (none) '} lineitems`)
     const { totals } = quote;
 
     const good_bad = {
@@ -732,22 +730,22 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
   let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection, productClass }).then();
   logger.debug(`QUOTES:: (${quotes.length})`);
   const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
-  logger.debug('Fetching Next Actions for User, targets loaded', {targets});
+  logger.debug('Fetching Next Actions for User, targets loaded', { targets });
   const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
   logger.debug(`Fetching invoice data ${periodStart.format('YYYY-MM-DD HH:mm')} ${periodEnd.format('YYYY-MM-DD HH:mm')} ${global.user.firstName} ${global.user.lastName}`);
-  const invoices = await getInvoices({ 
-    periodStart, 
-    periodEnd, 
-    teamIds: teamIds.length === 0 ? null : teamIds, 
-    repIds, 
-    agentSelection 
+  const invoices = await getInvoices({
+    periodStart,
+    periodEnd,
+    teamIds: teamIds.length === 0 ? null : teamIds,
+    repIds,
+    agentSelection
   }).then();
-  logger.debug(`Found ${isArray(invoices) ? invoices.length : '##' } invoices`)
+  logger.debug(`Found ${isArray(invoices) ? invoices.length : '##'} invoices`)
   logger.debug('Fetching isos');
   const isos = await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
-  logger.debug(`Found ${isArray(isos) ? isos.length : '##' } isos`);
+  logger.debug(`Found ${isArray(isos) ? isos.length : '##'} isos`);
 
-  
+
 
   const quoteProductFunnel = {
     chartType: 'FUNNEL',
@@ -862,7 +860,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
   };
 
   productDashboardResult.totalQuotes = quotes.length;
-  productDashboardResult.productSummary = [] 
+  productDashboardResult.productSummary = []
   productDashboardResult.charts.quoteProductFunnel.data = [];
   productDashboardResult.charts.quoteProductPie.data = [];
   productDashboardResult.productSummary.forEach((entry, index) => {
@@ -891,7 +889,7 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
   });
 
   let totalTargetValue = 0;
-  
+
   if (isNaN(productDashboardResult.target) && isNaN(totalTargetValue) === false) {
     productDashboardResult.targetPercent = totalTargetValue * 100 / productDashboardResult.target;
   }
@@ -904,13 +902,13 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
 
 const lasecGetQuoteLineItems = async (code: string) => {
   const keyhash = Hash(`quote.${code}.lineitems`);
-  
+
   let cached = await getCacheItem(keyhash);
-  if(cached) logger.debug(`Found Cached Line Items For Invoice: ${code}`);
-  if(lodash.isNil(cached) === true){
+  if (cached) logger.debug(`Found Cached Line Items For Invoice: ${code}`);
+  if (lodash.isNil(cached) === true) {
     const lineItems = await lasecApi.Quotes.getLineItems(code).then();
     logger.debug(`Found line items for quote ${code}`, lineItems);
-    
+
     cached = om(lineItems, {
       'items.[].id': [
         '[].quote_item_id',
@@ -950,7 +948,7 @@ const lasecGetQuoteLineItems = async (code: string) => {
 
     setCacheItem(keyhash, cached, 60);
   }
-  
+
   return cached;
 }
 
@@ -1005,17 +1003,68 @@ const LasecSendQuoteEmail = async (params) => {
   }
 }
 
+const getPagedQuotes = async (params) => {
+
+  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0 } = params;
+
+  logger.debug(`Getting Clients using search ${search}`, { search, paging, filterBy, iter });
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  if (isString(search) === false || search.length < 3) return {
+    paging: pagingResult,
+    clients: []
+  };
+
+  let filter = {};
+
+  filter[filterBy] = search;
+
+  const quotes = await getQuotes();
+
+
+
+  // if (clientResult.pagination && clientResult.pagination.num_pages > 1) {
+    //   logger.debug('Paged Result From Lasec API', { pagination: clientResult.pagination });
+    //   pagingResult.total = clientResult.pagination.num_items;
+    //   pagingResult.pageSize = clientResult.pagination.page_size || 10;
+    //   pagingResult.hasNext = clientResult.pagination.has_next_page === true;
+    //   pagingResult.page = clientResult.pagination.current_page || 1;
+    // }
+
+  // FAKING THIS FOR NOW
+  pagingResult.total = quotes.length;
+  pagingResult.pageSize = 10;
+  pagingResult.hasNext = true;
+  pagingResult.page = 1;
+
+  let result = {
+    paging: pagingResult,
+    search,
+    filterBy,
+    quotes,
+  };
+
+  return result;
+
+}
+
 export default {
   QuoteReminder: {
     id: ({ id, _id }) => id || _id,
     who: ({ id, who = [] }) => {
-      if(who.length === 0) return null
+      if (who.length === 0) return null
 
       return who.map(whoObj => ObjectId.isValid(whoObj) ? User.findById(whoObj) : null);
     },
     quote: ({ quote }) => {
       if (quote && ObjectId.isValid(quote) === true) return Quote.findById(quote);
-      else return null;      
+      else return null;
     }
   },
   QuoteTimeLine: {
@@ -1447,6 +1496,9 @@ export default {
     LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes();
     },
+    LasecGetCRMQuoteList: async (obj, args) => {
+      return getPagedQuotes(args);
+    },
     LasecGetDashboard: async (obj, { dashparams = defaultDashboardParams }) => {
       logger.debug('Get Dashboard Queried', dashparams);
       let {
@@ -1539,22 +1591,22 @@ export default {
       let cacheKey = Hash(`quote.dashboard.${user._id}.${agentSelection}.${teamFilterHash}.${repIdsFilterHash}.${periodStart.valueOf()}.${periodEnd.valueOf()}`);
       let _cached = await getCacheItem(`${cacheKey}`);
       let hasCachedItem = false;
-      if(_cached) {
+      if (_cached) {
         hasCachedItem = true;
         logger.debug('Found results in cache');
-        periodLabel = `${periodLabel} [cache]`; 
-      }      
+        periodLabel = `${periodLabel} [cache]`;
+      }
       logger.debug(`Fetching Lasec Dashboard Data`, dashparams);
       let palette = global.partner.colorScheme();
-      
+
       const quotes = hasCachedItem === true ? _cached.quotes : await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
-      logger.debug(`Fetched ${quotes.length} quote(s)`);      
-      const targets: number =  await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
-      logger.debug(`Fetched ${targets} as Target`);      
-      const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();      
+      logger.debug(`Fetched ${quotes.length} quote(s)`);
+      const targets: number = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+      logger.debug(`Fetched ${targets} as Target`);
+      const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
       logger.debug(`User has ${nextActionsForUser.length} next actions for this period`)
-      const invoices = hasCachedItem === true ? _cached.invoices :  await  getInvoices({ periodStart, periodEnd, teamIds, repIds }).then();
-      logger.debug(`Fetched ${invoices.length} invoice(s)`);      
+      const invoices = hasCachedItem === true ? _cached.invoices : await getInvoices({ periodStart, periodEnd, teamIds, repIds }).then();
+      logger.debug(`Fetched ${invoices.length} invoice(s)`);
       const isos = hasCachedItem === true ? _cached.isos : await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug(`Fetched  ${isos.length} iso(s)`);
 
@@ -1581,12 +1633,14 @@ export default {
       const quoteISOPie = {
         chartType: 'PIE',
         data: isos.map((iso: any, isoIndex: number) => {
-          return { ...iso ,  
+          return {
+            ...iso,
             "value": iso.order_value / 100,
             "name": iso.sales_team_id || `iso_${isoIndex}`,
             "outerRadius": 140,
             "innerRadius": 70,
-            "fill": `#${palette[isoIndex + 1 % palette.length]}`};
+            "fill": `#${palette[isoIndex + 1 % palette.length]}`
+          };
         }),
         options: {
           multiple: false,
@@ -1601,8 +1655,8 @@ export default {
       const quoteINVPie = {
         chartType: 'PIE',
         data: invoices.map((invoice: any, index: number) => {
-          return { 
-            ...invoice, 
+          return {
+            ...invoice,
             "value": Math.floor(invoice.invoice_value / 100),
             "name": invoice.sales_team_id || 'NO TEAM',
             "outerRadius": 140,
@@ -1706,9 +1760,9 @@ export default {
 
       };
 
-      for(let dayIndex = 0; dayIndex <= days; dayIndex += 1){
+      for (let dayIndex = 0; dayIndex <= days; dayIndex += 1) {
         let modified: string = moment(periodStart).add(dayIndex, "day").format("YYYY-MM-DD");
-        dateIndex[modified] = dayIndex;                
+        dateIndex[modified] = dayIndex;
         dashboardResult.charts.quoteStatusComposed.data.push({
           "name": `quote_status_${dayIndex}`,
           "modified": modified,
@@ -1718,27 +1772,27 @@ export default {
         })
       }
 
-      lodash.sortBy(quotes, [q => q.modified]).forEach((quote) => {        
+      lodash.sortBy(quotes, [q => q.modified]).forEach((quote) => {
         let dayIndex = dateIndex[moment(quote.modified).format('YYYY-MM-DD')];
-        if(dayIndex >= 0) {
-          dashboardResult.charts.quoteStatusComposed.data[dayIndex].quoted += (quote.totals.totalVATExclusive / 100);         
-        }        
+        if (dayIndex >= 0) {
+          dashboardResult.charts.quoteStatusComposed.data[dayIndex].quoted += (quote.totals.totalVATExclusive / 100);
+        }
       });
 
       lodash.sortBy(invoices, [i => i.invoice_date]).forEach((invoice) => {
         let dayIndex = dateIndex[moment(invoice.invoice_date).format('YYYY-MM-DD')];
-        if(dayIndex >= 0) {
+        if (dayIndex >= 0) {
           dashboardResult.charts.quoteStatusComposed.data[dayIndex].invoiced += (invoice.invoice_value / 100);
-        }        
+        }
       });
 
       lodash.sortBy(isos, [i => i.order_date]).forEach((iso) => {
         let dayIndex = dateIndex[moment(iso.order_date).format('YYYY-MM-DD')];
-        if(dayIndex >= 0) {
-          dashboardResult.charts.quoteStatusComposed.data[dayIndex].isos += (iso.order_value / 100);        
-        }        
+        if (dayIndex >= 0) {
+          dashboardResult.charts.quoteStatusComposed.data[dayIndex].isos += (iso.order_value / 100);
+        }
       });
-      
+
 
       // let totalTargetValue = 0;
       //targets.forEach((target) => {
@@ -1747,7 +1801,7 @@ export default {
       //});
 
       let invoicesTotal = 0;
-      if(isArray(invoices) === true) {
+      if (isArray(invoices) === true) {
         invoices.forEach((invoice: any) => {
           invoicesTotal += invoice.invoice_value
         });

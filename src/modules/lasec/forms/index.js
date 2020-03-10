@@ -39,6 +39,7 @@ import ProductQuantities from './productCatalog/ProductQuantities';
 
 import TabbedCrmForm from './CRM/TabbedLayout';
 import ClientGrid from './CRM/Client/SearchGrid';
+import QuoteGrid from './CRM/Quote/SearchGrid';
 import ClientDetail from './CRM/Client/Details';
 import ClientOverviewWidget from './CRM/Client/OverviewWidget';
 
@@ -90,6 +91,7 @@ export default [
   ClientComments,
   ClientDocuments,
   ClientGrid,
+  QuoteGrid,
   ClientDetail,
   ClientOverviewWidget,
 
