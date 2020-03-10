@@ -198,9 +198,10 @@ const uiSchema: any = {
           field: 'listPrice',
           component: 'core.StyledCurrencyLabel@1.0.0',
           props: {
+            displayAdditionalCurrencies: true,
             uiSchema: {
               'ui:options': {                
-                prependText: '',
+                prependText: '(ZAR)',
                 conditionalStyles: [
                   {
                     key: 'ON_SPECIAL',
@@ -223,6 +224,7 @@ const uiSchema: any = {
           propsMap: {
             'rowData.listPrice': ['value', 'formData'],
             'rowData.priceAdditionalInfo' : ['condition'],
+            'rowData.productPricing': 'currencies',            
           },                           
         },
       ],
@@ -257,6 +259,7 @@ const uiSchema: any = {
         'products.[].wh10CostPrice': 'data.[].wh10CostPrice',
         'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
         'products.[].listPrice': 'data.[].listPrice',
+        'products.[].productPricing.[]': 'data.[].productPricing.[]'
       },
     },
   }

@@ -1,5 +1,6 @@
 import lasecApi from '../api';
 import moment from 'moment';
+import om from 'object-mapper';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import LasecDatabase from '@reactory/server-modules/lasec/database';
 import ApiError from '@reactory/server-core/exceptions';
@@ -184,7 +185,8 @@ const getProducts = async (params) => {
   logger.debug(`PRODUCT RESOLVER - PRODUCTS:: found (${products.length}) products for request`);
 
   products = products.map((prd) => {
-    return {
+    logger.debug(`PRODUCT MAP ${prd}`);
+    let productResult = {
       id: prd.id,
       name: prd.name,
       code: prd.code,
@@ -200,7 +202,7 @@ const getProducts = async (params) => {
       landedPrice: prd.cost_price_cents,
       wh10CostPrice: prd.actual_cost_wh10,
       threeMonthAvePrice: prd.three_month_ave_price_cents,
-      listPrice: prd.list_price_cents,
+      listPrice: prd.list_price_cents,      
       buyer: prd.buyer,
       planner: prd.planner,
       isHazardous: prd.is_hazardous ? 'Yes' : 'No',
@@ -211,6 +213,14 @@ const getProducts = async (params) => {
       packedVolume: prd.packed_volume,
       packedWeight: prd.packed_weight,
     };
+
+    productResult.productPricing = [];
+
+    if(prd.currency_pricing && Object.keys(prd.currency_pricing).length > 0) {
+      productResult.productPricing = Object.keys(prd.currency_pricing).map((key) => prd.currency_pricing[key]);
+    } 
+
+    return productResult;
   });
 
   let result = {
