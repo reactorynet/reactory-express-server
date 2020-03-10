@@ -323,21 +323,33 @@ const editUiSchema: any = {
     },
   },
   ranking: {
-    'ui:widget': 'SelectWithDataWidget',
+    'ui:widget': 'SelectWidget',
     'ui:options': {
-      multiSelect: false,
-      query: `query LasecGetCustomerRanking {
-        LasecGetCustomerRanking {
-          id
-          name          
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
         }
-      }`,
-      resultItem: 'LasecGetCustomerRanking',
-      resultsMap: {
-        'LasecGetCustomerClass.[].id': ['[].key', '[].value'],
-        'LasecGetCustomerClass.[].name': '[].label',
       },
-    },
+      selectOptions: [
+        { 
+          key: '1', 
+          value: '1', 
+          label: 'A - High Value',           
+        },
+        { 
+          key: '2', 
+          value: '2', 
+          label: 'B - Medium Value', 
+        },  
+        { 
+          key: '3', 
+          value: '3', 
+          label: 'C - Low Value', 
+        },       
+      ],
+    }
   }
 };
 
