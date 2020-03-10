@@ -261,7 +261,7 @@ const editUiSchema: any = {
         { 
           key: 'deactivated', 
           value: 'deactivated', 
-          label: 'Deactovated', 
+          label: 'Deactivated', 
           icon: 'trip_origin',
           iconProps: {  
             style: {
