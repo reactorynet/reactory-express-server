@@ -6,23 +6,11 @@ const graphql: Reactory.IFormGraphDefinition = {
     text: `query LasecGetClientDetail($id: String!){
       LasecGetClientDetail(id: $id){
         id
-        clientStatus
-        firstName
-        lastName
-        fullName
         emailAddress
-        alternateEmail
-        country
+        alternateEmail        
         mobileNumber
         officeNumber
-        alternateOfficeNumber
-        customer {
-          id
-          tradingName
-          accountNumber
-          customerStatus
-          country
-        }
+        alternateOfficeNumber        
       }
     }`,
     variables: {
@@ -34,21 +22,22 @@ const graphql: Reactory.IFormGraphDefinition = {
       'alternateEmail': 'alternateEmail',
       'officeNumber': 'officeNumber',
       'mobileNumber': 'mobileNumber',
-      'alternateNumber': 'alternateNumber',
+      'alternateOfficeNumber': 'alternateNumber',
     },
     autoQuery: true,
     queryMessage: 'Loading customer details',
     resultType: 'object',
-    edit: false,
+    edit: true,
     new: false,
   },
   mutation: {
     edit: {
       name: "LasecUpdateClientDetails",
-      text: `LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
+      text: `mutation LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
         LasecUpdateClientDetails(clientInfo: $clientInfo) {
           Success
-        }`,
+        }
+      }`,
       objectMap: true,
       updateMessage: 'Updating Template Content',
       variables: {

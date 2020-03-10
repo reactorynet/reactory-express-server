@@ -31,16 +31,17 @@ const graphql: Reactory.IFormGraphDefinition = {
     autoQuery: true,
     queryMessage: 'Loading customer job details',
     resultType: 'object',
-    edit: false,
+    edit: true,
     new: false,
   },
   mutation: {
     edit: {
       name: "LasecUpdateClientDetails",
-      text: `LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
+      text: `mutation LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
         LasecUpdateClientDetails(clientInfo: $clientInfo) {
           Success
-        }`,
+        }
+      }`,
       objectMap: true,
       updateMessage: 'Updating Template Content',
       variables: {

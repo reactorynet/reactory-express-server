@@ -404,7 +404,7 @@ const getClient = async (params) => {
 
 const updateCientDetail = async (args) => {
   try {
-    logger.debug(`UPDATE PARAMS::  ${JSON.stringify(args)}`);
+    logger.debug(`>> >> >> UPDATE PARAMS:: `, args);
 
     const params = args.clientInfo;
 
@@ -420,7 +420,7 @@ const updateCientDetail = async (args) => {
         surname: params.lastName || (client.surname || ''),
         activity_status: params.clientStatus || (client.activity_status || ''),
         country: params.country || (client.country || ''),
-        department: params.department || (client.department || ''),
+        department: params.department || (client.department || 'NONE'),
         title_id: client.title_id,
         mobile_number: params.mobileNumber || (client.mobile_number || ''),
         office_number: params.officeNumber || (client.office_number || ''),
@@ -436,7 +436,7 @@ const updateCientDetail = async (args) => {
       }
 
       const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams);
-      // logger.debug(`RESOLVER UPDATE RESPONSE:: ${JSON.stringify(apiResponse)}`);
+      logger.debug(`RESOLVER UPDATE RESPONSE:: ${JSON.stringify(apiResponse)}`, apiResponse);  
 
       return {
         Success: apiResponse.success,
@@ -506,6 +506,7 @@ export default {
   },
   Mutation: {
     LasecUpdateClientDetails: async (obj, args) => {
+      logger.debug(`UPDATING CLIENT DETAILS WITH ARGS ${args}`);
       return updateCientDetail(args);
     },
     // LasecUpdateClientContactDetails: async (obj, args) => {

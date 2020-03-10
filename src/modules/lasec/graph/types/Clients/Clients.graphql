@@ -78,7 +78,8 @@ input ClientUpdateInput {
   lastName: String
   country: String
   mobileNumber: String
-  alternateNumber: String
+  officeNumber: String
+  alternateOfficeNumber: String
   email: String
   alternateEmail: String
   accountType: String

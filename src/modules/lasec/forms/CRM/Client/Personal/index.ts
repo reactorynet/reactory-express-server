@@ -170,10 +170,10 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      clientStatus: { sm: 12, md: 6 },
-      firstName: { sm: 12, md: 6 },
-      lastName: { sm: 12, md: 6 },
-      country: { sm: 12, md: 6 },
+      clientStatus: { sm: 12, md: 12 },
+      firstName: { sm: 12, md: 12 },
+      lastName: { sm: 12, md: 12 },
+      country: { sm: 12, md: 12 },
     }
   ],
   view: {
@@ -185,13 +185,51 @@ const editUiSchema: any = {
       },
     }
   },
-  clientStatus: {},
+  clientStatus: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      selectOptions: [
+        { 
+          key: 'active', 
+          value: 'active', 
+          label: 'Active', 
+          icon: 'trip_origin', 
+          iconProps: {  
+            style: {
+              color: '#5EB848',
+              marginRight: '16px',
+            }, 
+          } 
+        },
+        { 
+          key: 'unfinished', 
+          value: 'unfinished', 
+          label: 'Unfinished', 
+          icon: 'trip_origin',
+          iconProps: {  
+            style: {
+              color: '#FF9901',
+              marginRight: '16px',                  
+            }, 
+          } 
+        },       
+      ],
+    },
+  },
   lastName: {},
   firstName: {},
   country: {},
 };
 
-const schema: Reactory.ISchema = ClientSchema;
+const schema: Reactory.ISchema = { ...ClientSchema };
+schema.required = ["clientStatus", "firstName", "lastName", "country"];
 schema.title = "PERSONAL DETAILS"
 
 const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {

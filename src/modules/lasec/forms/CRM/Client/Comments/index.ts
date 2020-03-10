@@ -193,6 +193,24 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Client ID"
     },
+    paging: {
+      type: 'object',
+      title: 'Paging',
+      properties: {
+        total: {
+          type: 'number'
+        },
+        page: {
+          type: 'number'
+        },
+        pageSize: {
+          type: 'number'
+        },
+        hasNext: {
+          type: 'boolean'
+        }
+      }
+    },
     comments: {
       type: "array",
       items: { ...commentSchema }

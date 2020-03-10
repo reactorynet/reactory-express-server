@@ -187,10 +187,10 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { sm: 12, md: 6, lg: 6 },
-      alternateEmail: { sm: 12, md: 6, lg: 6 },
-      mobileNumber: { sm: 12, md: 6, lg: 6 },
-      alternateNumber: { sm: 12, md: 6, lg: 6 },
+      emailAddress:  { sm: 12, md: 12, lg: 12 },
+      alternateEmail: { sm: 12, md: 12, lg: 12 },
+      mobileNumber:  { sm: 12, md: 12, lg: 12 },
+      alternateNumber:  { sm: 12, md: 12, lg: 12 },
     }
   ],
   view: {

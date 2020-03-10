@@ -194,9 +194,7 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
 
   const apiResponse = await fetch(absoluteUrl, kwargs).then();
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
-    try {
-      logger.debug('Successful API call returning json body', { status: apiResponse.status });
-      logger.debug('Successful API call returning json body', { resp: apiResponse });
+    try {      
       return apiResponse.json();
     } catch (jsonError) {
       logger.error("JSON Error", jsonError);
