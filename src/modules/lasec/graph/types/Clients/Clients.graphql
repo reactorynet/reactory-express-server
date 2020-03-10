@@ -71,6 +71,12 @@ type ClientDetailUpdateResponse {
   Success: Boolean
 }
 
+type LasecLookupItem {
+  id: String
+  name: String
+  description: String
+}
+
 input ClientUpdateInput {
   clientId: String!
   clientStatus: String
@@ -95,6 +101,9 @@ extend type Query {
   LasecGetClientDetail(id: String!): LasecCRMClient
   LasecGetCustomerList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMCustomer
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
+  LasecGetCustomerClass: [LasecLookupItem]
+  LasecGetCustomerRanking: [LasecLookupItem]
+  LasecGetCustomerRoles: [LasecLookupItem]
 }
 
 extend type Mutation {

@@ -455,6 +455,26 @@ const updateCientDetail = async (args) => {
   }
 }
 
+
+const getCustomerRoles = async (params) => {
+
+  const customerRolesResponse = await lasecApi.Customers.GetCustomerRoles();
+
+  
+  return [];
+
+};
+
+const getCustomerRanking = async (params) => {
+
+  return [];
+};
+
+const getCustomerClass = async (params) => {
+
+  return [];
+};
+
 export default {
   LasecCRMClient: {
     creditLimit: async (parent, obj) => {
@@ -502,6 +522,15 @@ export default {
     },
     LasecGetClientDetail: async (obj, args) => {
       return getClient(args);
+    },
+    LasecGetCustomerRoles: async (obj, args) => {
+      return getCustomerRoles(args);
+    },
+    LasecGetCustomerClass: async (obj, args) => {
+      return getCustomerClass(args);
+    },
+    LasecGetCustomerRanking: async(object, args) => {
+      return getCustomerRanking(args);
     }
   },
   Mutation: {

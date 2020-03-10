@@ -212,12 +212,12 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { sm: 12, md: 6 },
-      repCode: { sm: 12, md: 6 },
-      jobTitle: { sm: 12, md: 6 },
-      clientDepartment: { sm: 12, md: 6 },
-      clientClass: { sm: 12, md: 6 },
-      ranking: { sm: 12, md: 6 },
+      accountType: { md: 12 },
+      repCode: { md: 12 },
+      jobTitle: { md: 12 },
+      clientDepartment: { md: 12 },
+      clientClass: { md: 12 },
+      ranking: { md: 12 }
     }
   ],
   view: {
@@ -229,12 +229,116 @@ const editUiSchema: any = {
       },
     }
   },
-  accountType: {},
-  repCode: {},
-  jobTitle: {},
+  accountType: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      selectOptions: [
+        { 
+          key: 'account', 
+          value: 'account', 
+          label: 'Account', 
+          icon: 'account_balance_wallet', 
+          iconProps: {  
+            style: {
+              color: '#FF9901',
+              marginRight: '16px',
+            }, 
+          } 
+        },
+        { 
+          key: 'cod', 
+          value: 'COD', 
+          label: 'COD', 
+          icon: 'attach_money',
+          iconProps: {  
+            style: {
+              color: '#5EB848',
+              marginRight: '16px',                  
+            }, 
+          } 
+        },       
+      ],
+    }
+  },
+  repCode: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecSalesTeams {
+        LasecSalesTeams {
+          id
+          title
+          meta  {
+            reference
+          }
+        }
+      }`,
+      resultItem: 'LasecSalesTeams',
+      resultsMap: {
+        'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
+        'LasecSalesTeams.[].title': '[].label',
+      },
+    },
+  },
+  jobTitle: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerRoles {
+        LasecGetCustomerRoles {
+          id
+          name          
+        }
+      }`,
+      resultItem: 'LasecGetCustomerRoles',
+      resultsMap: {
+        'LasecGetCustomerRoles.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerRoles.[].name': '[].label',
+      },
+    },
+  },
   clientDepartment: {},
-  clientClass: {},
-  ranking: {}
+  clientClass: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerClass {
+        LasecGetCustomerClass {
+          id
+          name          
+        }
+      }`,
+      resultItem: 'LasecGetCustomerClass',
+      resultsMap: {
+        'LasecGetCustomerClass.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerClass.[].name': '[].label',
+      },
+    },
+  },
+  ranking: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerRanking {
+        LasecGetCustomerRanking {
+          id
+          name          
+        }
+      }`,
+      resultItem: 'LasecGetCustomerRanking',
+      resultsMap: {
+        'LasecGetCustomerClass.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerClass.[].name': '[].label',
+      },
+    },
+  }
 };
 
 const schema: Reactory.ISchema = {

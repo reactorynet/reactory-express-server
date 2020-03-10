@@ -316,6 +316,48 @@ const Api = {
           success: false,
         };
       }
+    },
+    GetCustomerRoles: async (params = defaultParams) => {
+        
+        const resp = await FETCH(SECONDARY_API_URLS.customer_roles, { params: {...defaultParams, ...params }});
+        const {
+          status, payload,
+        } = resp;
+  
+        if (status === 'success') {
+          return payload;
+        }
+  
+        return { pagination: {}, ids: [], items: [] };
+
+    },
+    GetCustomerRankings: async (params = defaultParams) => {
+
+      const resp = await FETCH(SECONDARY_API_URLS.customer_ranking, { params: {...defaultParams, ...params }});
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+
+    },
+    GetCustomerClass: async (params = defaultParams) => {
+
+      const resp = await FETCH(SECONDARY_API_URLS.customer_class, { params: {...defaultParams, ...params }});
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+
     }
   },
   Company: {

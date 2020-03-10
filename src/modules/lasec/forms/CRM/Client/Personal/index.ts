@@ -68,6 +68,7 @@ const displayUiSchema: any = {
           justifyContent: 'flex-end'
         }
       },
+      /*
       componentFqn: 'core.ConditionalIconComponent@1.0.0',
       componentProps: {        
         conditions: [
@@ -104,6 +105,7 @@ const displayUiSchema: any = {
       componentPropsMap: {
         'formData': 'value',
       },
+      */
     }
   },
 
