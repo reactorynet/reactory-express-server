@@ -199,21 +199,27 @@ const uiSchema: any = {
           component: 'core.StyledCurrencyLabel@1.0.0',
           props: {
             displayAdditionalCurrencies: true,
+            displayPrimaryCurrency: false,
+            currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
+            region: 'en-IN',
             uiSchema: {
               'ui:options': {                
                 prependText: '(ZAR)',
-                conditionalStyles: [
+                defaultStyle: {
+                  borderBottom: '1px solid #E1E1E4'
+                },
+                conditionalStyles: [                  
                   {
                     key: 'ON_SPECIAL',
                     style: {
-                      color: '#4AC0DC'
+                      color: '#4AC0DC',
                     },
                     tooltip: 'PRICE ON SPECIAL'
                   },
                   {
                     key: 'EXPIRED',
                     style: {
-                      color: '#D22D2C'
+                      color: '#D22D2C',
                     },
                     tooltip: 'PRICE EXPIRED'
                   }
