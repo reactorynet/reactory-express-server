@@ -1007,7 +1007,18 @@ const getPagedQuotes = async (params) => {
 
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0 } = params;
 
-  logger.debug(`Getting Clients using search ${search}`, { search, paging, filterBy, iter });
+  // let {
+  // period = 'this-week',
+  // periodStart = moment(dashparams.periodStart || moment()).startOf('week'),
+  // periodEnd = moment(dashparams.periodEnd || moment()).endOf('week'),
+  // agentSelection = 'me',
+  // } = dashparams;
+
+  let periodStart = moment(moment()).startOf('year');
+  let periodEnd = moment(moment()).endOf('month');
+  let agentSelection = 'me';
+
+  logger.debug(`GETTING PAGED QUOTES:: ${params}`);
 
   let pagingResult = {
     total: 0,
@@ -1016,26 +1027,27 @@ const getPagedQuotes = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  if (isString(search) === false || search.length < 3) return {
-    paging: pagingResult,
-    clients: []
-  };
+  // if (isString(search) === false || search.length < 3) return {
+  //   paging: pagingResult,
+  //   quotes: []
+  // };
 
   let filter = {};
 
   filter[filterBy] = search;
 
-  const quotes = await getQuotes();
+  // const quotes = await getQuotes();
+  let quotes = await getQuotes({ periodStart, periodEnd, agentSelection }).then();
 
-
+  logger.debug(`QUOTES:: ${quotes[0]}`);
 
   // if (clientResult.pagination && clientResult.pagination.num_pages > 1) {
-    //   logger.debug('Paged Result From Lasec API', { pagination: clientResult.pagination });
-    //   pagingResult.total = clientResult.pagination.num_items;
-    //   pagingResult.pageSize = clientResult.pagination.page_size || 10;
-    //   pagingResult.hasNext = clientResult.pagination.has_next_page === true;
-    //   pagingResult.page = clientResult.pagination.current_page || 1;
-    // }
+  //   logger.debug('Paged Result From Lasec API', { pagination: clientResult.pagination });
+  //   pagingResult.total = clientResult.pagination.num_items;
+  //   pagingResult.pageSize = clientResult.pagination.page_size || 10;
+  //   pagingResult.hasNext = clientResult.pagination.has_next_page === true;
+  //   pagingResult.page = clientResult.pagination.current_page || 1;
+  // }
 
   // FAKING THIS FOR NOW
   pagingResult.total = quotes.length;
@@ -1049,6 +1061,8 @@ const getPagedQuotes = async (params) => {
     filterBy,
     quotes,
   };
+
+
 
   return result;
 

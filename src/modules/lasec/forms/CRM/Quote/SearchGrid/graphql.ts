@@ -15,9 +15,24 @@ const graphql: Reactory.IFormGraphDefinition = {
         quotes {
           id
           code
+          created
+          statusName
+          totalVATInclusive
           customer {
+            id
             fullName
           }
+          company {
+            id
+            tradingName
+          }
+          totalVATExclusive
+          totalVAT
+          GP
+          actualGP
+          modified
+          expirationDate
+          note
         }
       }
     }`,
@@ -29,6 +44,13 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultMap: {
       'paging': 'paging',
       'quotes': 'quotes',
+      'quotes[].code': 'quotes[].code',
+      'quotes[].created': 'quotes[].date',
+      'quotes[].statusName': 'quotes[].status',
+      'quotes[].totalVATInclusive': 'quotes[].total',
+
+      'quotes[].customer.fullName': 'quotes[].customerName',
+      'quotes[].company.tradingName': 'quotes[].companyTradingName',
     },
     autoQuery: false,
     queryMessage: 'Search for client',

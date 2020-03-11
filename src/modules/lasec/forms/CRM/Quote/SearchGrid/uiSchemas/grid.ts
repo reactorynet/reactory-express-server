@@ -9,7 +9,7 @@ const uiSchema: any = {
       margin: '0px'
     }
   },
-  'ui:field':'GridLayout',
+  'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
       paging: { md: 2, sm: 12 },
@@ -34,19 +34,28 @@ const uiSchema: any = {
   },
   filterBy: {
     'ui:widget': 'SelectWidget',
-      'ui:options': {
-        selectOptions: [
-          { key: 'my_quotes', value: 'my_quotes', label: 'My Quptes' },
-          { key: 'all_quotes', value: 'all_quotes', label: 'All Quotes' },
-        ],
-      },
+    'ui:options': {
+      selectOptions: [
+        { key: 'my_quotes', value: 'my_quotes', label: 'My Quptes' },
+        { key: 'all_quotes', value: 'all_quotes', label: 'All Quotes' },
+      ],
+    },
   },
   quotes: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-
         { title: 'Quotes Number', field: 'code' },
+        { title: 'Quotes Date', field: '${props.api.utils.moment(date).format("DD-MM-YYYY")}' },
+        { title: 'Status', field: 'status' },
+        // { title: 'Total Quote Value', field: 'total' },
+         {
+          title: 'Total Quote Value', field: 'total',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            total: 'value',
+          },
+        },
       ],
       options: {
         grouping: false,
@@ -65,7 +74,14 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'quotes': 'data',
+        // 'quotes': 'data',
+        'quotes[].code': 'data[].code',
+        'quotes[].created': 'data[].date',
+        'quotes[].statusName': 'data[].status',
+        'quotes[].totalVATInclusive': 'data[].total',
+
+        'quotes[].customer.fullName': 'data[].customerName',
+
       },
       resultType: 'object',
     },
