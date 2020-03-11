@@ -511,6 +511,13 @@ const getCustomerClassById = async (id) => {
 
 };
 
+const getCustomerCountries = async (params) => {
+  const results = await lasecApi.get(lasecApi.URIS.customer_country.url,undefined);
+  logger.debug(`Country List Result ${results}`);
+
+  return om(results, {'country.[]': ['[].id', '[].name']})
+};
+
 
 export default {
   LasecCRMClient: {
@@ -564,6 +571,9 @@ export default {
     },
     LasecGetCustomerRanking: async(object, args) => {
       return getCustomerRanking(args);
+    },
+    LasecGetCustomerCountries: async(object, args) => {
+      return getCustomerCountries(args);
     }
   },
   Mutation: {

@@ -104,6 +104,7 @@ extend type Query {
   LasecGetCustomerClass: [LasecLookupItem]
   LasecGetCustomerRanking: [LasecLookupItem]
   LasecGetCustomerRoles: [LasecLookupItem]
+  LasecGetCustomerCountries: [LasecLookupItem]
 }
 
 extend type Mutation {
