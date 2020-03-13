@@ -33,18 +33,8 @@ const graphql: Reactory.IFormGraphDefinition = {
           modified
           expirationDate
           note
-          salesRep {
-            username
-            organization {
-              code
-            }
-          }
-          salesTeam {
-            title
-            organization {
-              code
-            }
-          }
+          repCode
+          quoteType
         }
       }
     }`,
@@ -60,9 +50,9 @@ const graphql: Reactory.IFormGraphDefinition = {
       'quotes[].created': 'quotes[].date',
       'quotes[].statusName': 'quotes[].status',
       'quotes[].totalVATInclusive': 'quotes[].total',
-
-      'quotes[].customer.fullName': 'quotes[].customerName',
       'quotes[].company.tradingName': 'quotes[].companyTradingName',
+      'quotes[].repCode': 'data[].repCode',
+      'quotes[].quoteType': 'data[].quoteType',
     },
     autoQuery: false,
     queryMessage: 'Search for client',

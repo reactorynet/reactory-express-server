@@ -96,6 +96,8 @@ type Quote {
   timeline: [QuoteTimeLine]
   meta: Any
   productClass: String
+  repCode: String
+  quoteType: String
 }
 
 type LasecQuoteDashboardSummary {
@@ -281,9 +283,16 @@ type PagedCRMQuote {
 
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
-  LasecGetCRMQuoteList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMQuote
+  LasecGetCRMQuoteList(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    iter: Int
+  ): PagedCRMQuote
   LasecGetDashboard(dashparams: LasecQuoteQueryInput): LasecQuoteDashboard
-  LasecGetProductDashboard(dashparams: LasecQuoteQueryInput): LasecProductDashboard
+  LasecGetProductDashboard(
+    dashparams: LasecQuoteQueryInput
+  ): LasecProductDashboard
   LasecGetQuoteById(quote_id: String!): Quote
   LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [Quote]
 }
@@ -300,5 +309,10 @@ extend type Mutation {
   LasecCreateClientEnquiry(customerId: String!): LasecCustomerEnquiry
   SynchronizeNextActionsToOutloook(nextActions: Any!): OutlookSyncResponse
   LasecMarkNextActionAsActioned(id: String!): SimpleResponse
-  LasecSendQuoteEmail(code: String!, email: String!, subject: String!, message: String!): SimpleResponse
+  LasecSendQuoteEmail(
+    code: String!
+    email: String!
+    subject: String!
+    message: String!
+  ): SimpleResponse
 }

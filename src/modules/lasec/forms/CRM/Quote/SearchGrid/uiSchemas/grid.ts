@@ -80,12 +80,12 @@ const uiSchema: any = {
                     tooltip: 'Draft - Pending Submission'
                   },
                   {
-                    key: 'unfinished',
+                    key: 'Open - Submitted Quote',
                     icon: 'trip_origin',
                     style: {
                       color: '#FF9901'
                     },
-                    tooltip: 'Client Unfinished'
+                    tooltip: 'Open - Submitted Quote'
                   },
                   {
                     key: 'deactivated',
@@ -124,9 +124,9 @@ const uiSchema: any = {
                     }
                   },
                   {
-                    id: 'unfinished',
-                    key: 'unfinished',
-                    title: 'Unfinished',
+                    id: 'Open - Submitted Quote',
+                    key: 'Open - Submitted Quote',
+                    title: 'Open - Submitted Quote',
                     icon: 'trip_origin',
                     iconProps: {
                       style: {
@@ -161,8 +161,11 @@ const uiSchema: any = {
             'rowData.total': 'value',
           },
         },
+        { title: 'Client', field: 'client' },
+        { title: 'Customer', field: 'companyTradingName' },
+        // { title: 'Account Number', field: 'accountNumber' },
         {
-          title: 'Quote Type', field: 'type',
+          title: 'Quote Type', field: 'quoteType',
           components: [
             {
               component: 'core.ConditionalIconComponent@1.0.0',
@@ -200,7 +203,7 @@ const uiSchema: any = {
                 marginTop: '8px',
               },
               propsMap: {
-                'rowData.type': 'value',
+                'rowData.quoteType': 'value',
               },
             },
             {
@@ -249,7 +252,7 @@ const uiSchema: any = {
             }
           ],
           propsMap: {
-            'rowData.status': 'selectedKey'
+            'rowData.quoteType': 'selectedKey'
           }
         },
         { title: 'Rep Code', field: 'repCode' },
@@ -276,12 +279,11 @@ const uiSchema: any = {
         'quotes[].created': 'data[].date',
         'quotes[].statusName': 'data[].status',
         'quotes[].totalVATInclusive': 'data[].total',
-        'quotes[].sales_team_id': 'data[].repCode',
-        'quotes[].quote_type': 'data[].type',
-        // 'quotes[].salesTeam': 'data[].type',
-        // 'quotes[].quote_type': 'data[].type',
-
-        'quotes[].customer.fullName': 'data[].customerName',
+        'quotes[].repCode': 'data[].repCode',
+        'quotes[].quoteType': 'data[].quoteType',
+        // 'quotes[].accountNumber': 'data[].accountNumber',
+        'quotes[].customer.fullName': 'data[].client',
+        'quotes[].company.tradingName': 'data[].companyTradingName',
 
       },
       resultType: 'object',

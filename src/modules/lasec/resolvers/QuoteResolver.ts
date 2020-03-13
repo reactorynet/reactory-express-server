@@ -17,6 +17,7 @@ import O365 from '../../../azure/graph';
 import { getCacheItem, setCacheItem } from '../models';
 import emails from '@reactory/server-core/emails';
 import { Quote as LasecQuote } from '../types/lasec';
+import { execql } from '@reactory/server-core/graph/client';
 
 export interface DashboardParams {
   period: string,
@@ -1007,17 +1008,6 @@ const getPagedQuotes = async (params) => {
 
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0 } = params;
 
-  // let {
-  // period = 'this-week',
-  // periodStart = moment(dashparams.periodStart || moment()).startOf('week'),
-  // periodEnd = moment(dashparams.periodEnd || moment()).endOf('week'),
-  // agentSelection = 'me',
-  // } = dashparams;
-
-  let periodStart = moment(moment()).startOf('year');
-  let periodEnd = moment(moment()).endOf('month');
-  let agentSelection = 'me';
-
   logger.debug(`GETTING PAGED QUOTES:: ${params}`);
 
   let pagingResult = {
@@ -1027,17 +1017,57 @@ const getPagedQuotes = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  // if (isString(search) === false || search.length < 3) return {
-  //   paging: pagingResult,
-  //   quotes: []
-  // };
+  let {
+  period = 'this-week',
+  periodStart = moment(params.periodStart || moment()).startOf('week'),
+  periodEnd = moment(params.periodEnd || moment()).endOf('week'),
+  // agentSelection = params.agent || 'me',
+  } = params;
 
-  let filter = {};
+  let _params = params;
 
-  filter[filterBy] = search;
+  if (!_params) {
+    _params = {
+      periodStart: moment().startOf('year'),
+      periodEnd: moment().endOf('day')
+    }
+  }
 
-  // const quotes = await getQuotes();
-  let quotes = await getQuotes({ periodStart, periodEnd, agentSelection }).then();
+  let apiFilter = {
+    start_date: _params.periodStart ? _params.periodStart.toISOString() : moment().startOf('year'),
+    end_date: _params.periodEnd ? _params.periodEnd.toISOString() : moment().endOf('day'),
+    // agentSelection: _params.agentSelect || 'me'
+  };
+
+  // const cachekey = Hash(`quote_list_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`.toLowerCase());
+
+  // let _cachedResults = await getCacheItem(cachekey);
+
+  // if (_cachedResults) {
+
+  //   if (iter === 0) {
+  //     //client request and we have a cache so we fire off the next fetch anyway
+  //     execql(`query LasecGetCRMQuoteList($search: String!, $paging: PagingRequest, $filterBy: String){
+  //       LasecGetCRMQuoteList(search: $search, paging: $paging, filterBy: $filterBy){
+  //         paging {
+  //         total
+  //         page
+  //         hasNext
+  //         pageSize
+  //       }
+  //       quotes {
+  //         id
+  //       }
+  //     }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+  //   }
+  //   logger.debug(`Returning cached item ${cachekey}`);
+  //   return _cachedResults;
+  // }
+
+  let agentSelection = 'me'
+
+  let quotes = await getQuotes({ agentSelection }).then();
+  // let quotes = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
 
   logger.debug(`QUOTES:: ${quotes[0]}`);
 
@@ -1186,6 +1216,22 @@ export default {
         email: '404@customer.reactory.net'
       }
     },
+
+    repCode: (quote) => {
+      const { meta, code } = quote;
+      if (meta && meta.source.sales_team_id) return meta.source.sales_team_id;
+
+      return null;
+    },
+
+    quoteType: (quote) => {
+      const { meta, code } = quote;
+      if (meta && meta.source.quote_type) return meta.source.quote_type;
+
+      return null;
+    },
+
+
     headers: async () => {
 
       let headers = [
@@ -1848,7 +1894,6 @@ export default {
         periodEnd: moment().endOf('month')
       }).then();
       return quotes;
-      // return getQuotes();
     }
   },
   Mutation: {
