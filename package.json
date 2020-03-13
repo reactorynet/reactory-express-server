@@ -180,7 +180,6 @@
     "@types/mongoose": "^5.5.32",
     "@types/uuid": "^3.4.6",
     "@types/mysql": "^2.15.8",
-    "@types/schema-inspector": "^1.6.9",
     "awesome-typescript-loader": "^5.2.1"
   },
   "nodemonConfig": {

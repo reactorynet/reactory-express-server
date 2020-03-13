@@ -30,6 +30,7 @@ type LasecCRMCustomer {
   balance90Days: Float
   balance120Days: Float
   creditTotal: Float
+  documents: [LasecDocument]
 }
 
 type LasecCRMClient {
@@ -51,6 +52,13 @@ type LasecCRMClient {
   alternateOfficeNumber: String
   availableBalance: Float
   creditLimit: Float
+  
+}
+
+type LasecDocument {
+  id: String
+  name: String
+  url: String
 }
 
 type PagedCRMClient {
@@ -105,6 +113,7 @@ extend type Query {
   LasecGetCustomerRanking: [LasecLookupItem]
   LasecGetCustomerRoles: [LasecLookupItem]
   LasecGetCustomerCountries: [LasecLookupItem]
+  LasecGetCustomerDocuments(id: String!): [LasecDocument]
 }
 
 extend type Mutation {
