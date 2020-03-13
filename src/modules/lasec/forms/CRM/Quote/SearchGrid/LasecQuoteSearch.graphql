@@ -28,6 +28,18 @@ query LasecGetCRMQuoteList($search: String!, $paging: PagingRequest, $filterBy){
       modified
       expirationDate
       note
+      salesRep {
+        username
+        organization {
+          code
+        }
+      }
+      salesTeam {
+        title
+        organization {
+          code
+        }
+      }
     }
   }
 }

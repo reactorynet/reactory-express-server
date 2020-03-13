@@ -33,6 +33,18 @@ const graphql: Reactory.IFormGraphDefinition = {
           modified
           expirationDate
           note
+          salesRep {
+            username
+            organization {
+              code
+            }
+          }
+          salesTeam {
+            title
+            organization {
+              code
+            }
+          }
         }
       }
     }`,

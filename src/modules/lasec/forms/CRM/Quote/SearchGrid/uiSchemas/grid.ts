@@ -45,17 +45,214 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Quotes Number', field: 'code' },
-        { title: 'Quotes Date', field: '${props.api.utils.moment(date).format("DD-MM-YYYY")}' },
-        { title: 'Status', field: 'status' },
-        // { title: 'Total Quote Value', field: 'total' },
-         {
+        { title: 'Quote Number', field: 'code' },
+        {
+          title: 'Quote Date',
+          field: 'date',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${props.api.utils.moment(rowData.date).format(\'DD MMM YYYY HH:mm\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
+        // TODO - NEED A LIST OF POTENTIAL QUOTE STATUS TYPES
+        {
+          title: 'Quote Status', field: 'status',
+          components: [
+            {
+              component: 'core.ConditionalIconComponent@1.0.0',
+              props: {
+                'ui:options': {},
+                conditions: [
+                  {
+                    key: 'Draft - Pending Submission',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#5EB848'
+                    },
+                    tooltip: 'Draft - Pending Submission'
+                  },
+                  {
+                    key: 'unfinished',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'Client Unfinished'
+                  },
+                  {
+                    key: 'deactivated',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#AB1257'
+                    },
+                    tooltip: 'Client Deactivated'
+                  }
+                ]
+              },
+              style: {
+                marginRight: '8px',
+                marginTop: '8px',
+              },
+              propsMap: {
+                'rowData.status': 'value',
+              },
+            },
+            {
+              component: 'core.DropDownMenu',
+              props: {
+                style: {
+                  marginTop: '-10px',
+                },
+                menus: [
+                  {
+                    id: 'draft',
+                    key: 'Draft - Pending Submission',
+                    title: 'Draft - Pending Submission',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#5EB848'
+                      }
+                    }
+                  },
+                  {
+                    id: 'unfinished',
+                    key: 'unfinished',
+                    title: 'Unfinished',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#FF9901'
+                      }
+                    }
+
+                  },
+                  {
+                    id: 'deactivated',
+                    key: 'deactivated',
+                    title: 'Deactivate',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                ]
+              }
+            }
+          ],
+          propsMap: {
+            'rowData.status': 'selectedKey'
+          }
+        },
+        {
           title: 'Total Quote Value', field: 'total',
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {
-            total: 'value',
+            'rowData.total': 'value',
           },
         },
+        {
+          title: 'Quote Type', field: 'type',
+          components: [
+            {
+              component: 'core.ConditionalIconComponent@1.0.0',
+              props: {
+                'ui:options': {},
+                conditions: [
+                  {
+                    key: 'Normal',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#904095'
+                    },
+                    tooltip: 'Normal'
+                  },
+                  {
+                    key: 'unfinished',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'Client Unfinished'
+                  },
+                  {
+                    key: 'deactivated',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#AB1257'
+                    },
+                    tooltip: 'Client Deactivated'
+                  }
+                ]
+              },
+              style: {
+                marginRight: '8px',
+                marginTop: '8px',
+              },
+              propsMap: {
+                'rowData.type': 'value',
+              },
+            },
+            {
+              component: 'core.DropDownMenu',
+              props: {
+                style: {
+                  marginTop: '-10px',
+                },
+                menus: [
+                  {
+                    id: 'normal',
+                    key: 'Normal',
+                    title: 'Normal',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#904095'
+                      }
+                    }
+                  },
+                  {
+                    id: 'unfinished',
+                    key: 'unfinished',
+                    title: 'Unfinished',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#FF9901'
+                      }
+                    }
+
+                  },
+                  {
+                    id: 'deactivated',
+                    key: 'deactivated',
+                    title: 'Deactivate',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                ]
+              }
+            }
+          ],
+          propsMap: {
+            'rowData.status': 'selectedKey'
+          }
+        },
+        { title: 'Rep Code', field: 'repCode' },
       ],
       options: {
         grouping: false,
@@ -79,6 +276,10 @@ const uiSchema: any = {
         'quotes[].created': 'data[].date',
         'quotes[].statusName': 'data[].status',
         'quotes[].totalVATInclusive': 'data[].total',
+        'quotes[].sales_team_id': 'data[].repCode',
+        'quotes[].quote_type': 'data[].type',
+        // 'quotes[].salesTeam': 'data[].type',
+        // 'quotes[].quote_type': 'data[].type',
 
         'quotes[].customer.fullName': 'data[].customerName',
 
