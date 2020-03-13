@@ -257,7 +257,19 @@ const editUiSchema: any = {
               marginRight: '16px',                  
             }, 
           } 
-        },       
+        },
+        { 
+          key: 'deactivated', 
+          value: 'deactivated', 
+          label: 'Deactivated', 
+          icon: 'trip_origin',
+          iconProps: {  
+            style: {
+              color: '#AB1257',
+              marginRight: '16px',                  
+            }, 
+          } 
+        },          
       ],
     },
   },

@@ -27,6 +27,18 @@ export default {
           wh10CostPrice
           threeMonthAvePrice
           listPrice
+          productPricing {
+            cost_price_cents
+            max_price_cents
+            min_price_cents
+            min_non_authorisation_price_cents
+            three_month_ave_price_cents
+            list_price_cents
+            currency_symbol
+            currency_code
+            currency_description
+            special_price_cents
+          }
         }        
       }
     }`,
@@ -36,7 +48,7 @@ export default {
     },
     resultMap: {
       'paging': 'paging',
-      'products[].id': 'products.[].id',
+      'products.[].id': 'products.[].id',
       'products.[].name': 'products.[].name',
       'products.[].code': 'products.[].code',
       'products.[].description': 'products.[].description',
@@ -52,6 +64,7 @@ export default {
       'products.[].wh10CostPrice': 'products.[].wh10CostPrice',
       'products.[].threeMonthAvePrice': 'products.[].threeMonthAvePrice',
       'products.[].listPrice': 'products.[].listPrice',
+      'products.[].productPricing': 'products.[].productPricing',
     },
     resultType: 'object',
     edit: false,

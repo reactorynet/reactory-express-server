@@ -198,21 +198,28 @@ const uiSchema: any = {
           field: 'listPrice',
           component: 'core.StyledCurrencyLabel@1.0.0',
           props: {
+            displayAdditionalCurrencies: true,
+            displayPrimaryCurrency: false,
+            currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
+            region: 'en-IN',
             uiSchema: {
               'ui:options': {                
-                prependText: '',
-                conditionalStyles: [
+                prependText: '(ZAR)',
+                defaultStyle: {
+                  borderBottom: '1px solid #E1E1E4'
+                },
+                conditionalStyles: [                  
                   {
                     key: 'ON_SPECIAL',
                     style: {
-                      color: '#4AC0DC'
+                      color: '#4AC0DC',
                     },
                     tooltip: 'PRICE ON SPECIAL'
                   },
                   {
                     key: 'EXPIRED',
                     style: {
-                      color: '#D22D2C'
+                      color: '#D22D2C',
                     },
                     tooltip: 'PRICE EXPIRED'
                   }
@@ -223,6 +230,7 @@ const uiSchema: any = {
           propsMap: {
             'rowData.listPrice': ['value', 'formData'],
             'rowData.priceAdditionalInfo' : ['condition'],
+            'rowData.productPricing': 'currencies',            
           },                           
         },
       ],
@@ -257,6 +265,7 @@ const uiSchema: any = {
         'products.[].wh10CostPrice': 'data.[].wh10CostPrice',
         'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
         'products.[].listPrice': 'data.[].listPrice',
+        'products.[].productPricing.[]': 'data.[].productPricing.[]'
       },
     },
   }

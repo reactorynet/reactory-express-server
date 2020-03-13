@@ -3,11 +3,20 @@ import $schema from './schema';
 import { GridUISchema } from './uiSchema';
 import $graphql from './graphql';
 
+import { ENVIRONMENT } from '@reactory/server-core/types/constants';
+
 const LasecClientGrid: Reactory.IReactoryForm = {
   id: 'LasecClientGrid',
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [],
+  uiResources: [
+    {
+      id: 'reactory.plugin.lasec360',
+      name: 'reactory.plugin.lasec360',
+      type: 'script',
+      uri: `${ENVIRONMENT.CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
+    },
+  ],
   title: 'CMS Product Pricing',
   tags: ['CMS Product Pricing'],
   registerAsComponent: true,

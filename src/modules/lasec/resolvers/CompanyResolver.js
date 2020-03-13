@@ -458,8 +458,14 @@ const updateCientDetail = async (args) => {
 
 const getCustomerRoles = async (params) => {
 
-  const customerRolesResponse = await lasecApi.Customers.GetCustomerRoles();
+  const idsResponse = await lasecApi.Customers.GetCustomerRoles();
 
+  if(isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerRoles({filter: { ids: [...idsResponse.ids] }, pagination: { }});
+    if(details && details.items) {
+      return details.items;
+    }
+  }
   
   return [];
 
@@ -467,13 +473,44 @@ const getCustomerRoles = async (params) => {
 
 const getCustomerRanking = async (params) => {
 
+  const idsResponse = await lasecApi.Customers.GetCustomerRankings();
+
+  if(isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerRankings({filter: { ids: [...idsResponse.ids] }, pagination: { }});
+    if(details && details.items) {
+      return details.items;
+    }
+  }
+  
   return [];
 };
 
 const getCustomerClass = async (params) => {
 
+  const idsResponse = await lasecApi.Customers.GetCustomerClass();
+
+  if(isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerClass({filter: { ids: [...idsResponse.ids] }, pagination: { }});
+    if(details && details.items) {
+      return details.items;
+    }
+  }
+  
   return [];
+
 };
+
+const getCustomerClassById = async (id) => {
+
+    const details = await lasecApi.Customers.GetCustomerClass({filter: { ids: [id] }, pagination: { }});
+    if(details && details.items && details.items.length === 1) {
+      return details.items[0];
+    }
+  
+  return null;
+
+};
+
 
 export default {
   LasecCRMClient: {
@@ -488,13 +525,9 @@ export default {
     customerClass: async (parent, obj) => {
       if (parent.classId) {
         try {
-          const result = await mysql(`SELECT Description FROM TblCustomerClass WHERE Class = '${parent.classId}'`, 'mysql.lasec360').then();
-          logger.debug('Results from querying description', result);
-          if (result && result.length) {
-            return result[0].Description;
-          }
-        } catch (dbError) {
-          logger.error(`MySQL Error resolving description from db ${dbError.message}`);
+          const customerClass = getCustomerClassById(parent.classId);
+          return customerClass.name;
+        } catch (dbError) {          
           return parent.customerClass;
         }
       }

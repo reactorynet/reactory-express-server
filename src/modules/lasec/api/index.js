@@ -11,6 +11,7 @@ import { jzon } from '../../../utils/validators';
 
 import LasecDatabase from '../database';
 import LasecQueries from '../database/queries';
+import { execql } from 'graph/client';
 
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
@@ -243,9 +244,12 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
         }
 
         break;
-      }
+      }      
       default: {
-        throw new ApiError('Could not execute fetch against Lasec API', { status: apiResponse, statusText: apiResponse.statusText });
+        await execml(`mutation LasecReset360Credentials {
+          LasecReset360Credentials
+        }`);
+        throw new ApiError('Could not execute fetch against Lasec API', { status: apiResponse, statusText: apiResponse.statusText });        
       }
     }
 
@@ -319,7 +323,7 @@ const Api = {
     },
     GetCustomerRoles: async (params = defaultParams) => {
         
-        const resp = await FETCH(SECONDARY_API_URLS.customer_roles, { params: {...defaultParams, ...params }});
+        const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: {...defaultParams, ...params }});
         const {
           status, payload,
         } = resp;
@@ -333,7 +337,7 @@ const Api = {
     },
     GetCustomerRankings: async (params = defaultParams) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_ranking, { params: {...defaultParams, ...params }});
+      const resp = await FETCH(SECONDARY_API_URLS.customer_ranking.url, { params: {...defaultParams, ...params }});
       const {
         status, payload,
       } = resp;
@@ -347,7 +351,21 @@ const Api = {
     },
     GetCustomerClass: async (params = defaultParams) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_class, { params: {...defaultParams, ...params }});
+      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: {...defaultParams, ...params }});
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+
+    },
+    GetCustomerClassById: async (id) => {
+
+      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { filter: { ids: [id] }, paging: {} }});
       const {
         status, payload,
       } = resp;
