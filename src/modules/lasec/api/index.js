@@ -11,7 +11,7 @@ import { jzon } from '../../../utils/validators';
 
 import LasecDatabase from '../database';
 import LasecQueries from '../database/queries';
-import { execql } from 'graph/client';
+import { execql, execml } from 'graph/client';
 
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
@@ -265,6 +265,40 @@ const defaultQuoteObjectMap = {
 };
 
 const Api = {
+  FETCH,
+  URIS: SECONDARY_API_URLS,
+  get: async (uri, params, shape) => {
+    const resp = await FETCH(uri, { params });
+    const {
+      status, payload,
+    } = resp;
+
+    if (status === 'success') {
+      if(shape && Object.keys(shape).length > 0) {
+        return om(payload, shape);
+      } else {
+        return payload;
+      }        
+    } else {
+      return { pagination: {}, ids: [], items: [] };
+    }      
+  },  
+  post: async (uri, params, shape) => {
+    const resp = await POST(uri, { params: { ...defaultParams, ...params } });
+    const {
+      status, payload,
+    } = resp;
+
+    if (status === 'success') {
+      if(shape && Object.keys(shape).length > 0) {
+        return om(payload, shape);
+      } else {
+        return payload;
+      }        
+    } else {
+      return { pagination: {}, ids: [], items: [] };
+    }      
+  },  
   Customers: {
     list: async (params = defaultParams) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.customers.url, { params: { ...defaultParams, ...params } });

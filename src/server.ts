@@ -6,7 +6,7 @@ import path from 'path';
 import express from 'express';
 import bodyParser from 'body-parser';
 import passport from 'passport';
-import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
+import { ApolloServer, gql, ApolloServerExpressConfig } from 'apollo-server-express';
 import { makeExecutableSchema } from 'graphql-tools';
 import mongoose from 'mongoose';
 import session from 'express-session';
@@ -73,7 +73,6 @@ if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/asciilogo.txt`)) {
 
 
 const ENV_STRING_DEBUG = `
-${asciilogo}
 Environment Settings: 
   API_DATA_ROOT: ${APP_DATA_ROOT}
   APP_SYSTEM_FONTS: ${APP_SYSTEM_FONTS}
@@ -101,10 +100,18 @@ const queryRoot = '/api';
 const graphiql = '/q';
 const resourcesPath = '/cdn';
 const publicFolder = path.join(__dirname, 'public');
-let schema = null;
+
+mongoose.connect(MONGOOSE, { useNewUrlParser: true });
+
+let apolloServer: ApolloServer = null;
 
 try {
-  schema = makeExecutableSchema({ typeDefs, resolvers });
+  let expressConfig : ApolloServerExpressConfig = {
+    typeDefs,
+    resolvers,
+  };
+  apolloServer = new ApolloServer(expressConfig);
+  //schema = makeExecutableSchema({ typeDefs, resolvers });
   logger.info('Graph Schema Compiled, starting express');
 } catch (schemaCompilationError) {
   if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`)) {
@@ -118,6 +125,12 @@ const app = express();
 app.use('*', cors(corsOptions));
 app.use(reactoryClientAuthenticationMiddleware);
 
+app.use(queryRoot,
+  //authentication
+  passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
+  //bodyparser options
+  bodyParser.json({ limit: '10mb' }));
+
 //TODO: Werner Weber - investigate session and session management for auth.
 app.use(session({
   secret: SECRET_SAUCE,
@@ -127,24 +140,35 @@ app.use(session({
 }));
 
 
-mongoose.connect(MONGOOSE, { useNewUrlParser: true });
+
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: '10mb' }));
+
+if(apolloServer) {
+  apolloServer.applyMiddleware({ app, path: queryRoot });
+} else {
+  if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`)) {
+    const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { enocding: 'utf-8' });    
+    logger.error(`\n\n${error}`);
+  }
+  logger.error(`Error compiling the graphql schema: apolloServer instance is null!`);
+}
 
 // try {
 startup().then((startResult) => {
   logger.debug('Startup Generator Done.');
   amq.raiseSystemEvent('server.startup.begin');
   AuthConfig.Configure(app);
+  /*
   app.use(
     queryRoot,
     passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
     bodyParser.json({ limit: '10mb' }),
-    graphqlExpress({ schema, debug: true }),
+    //apolloServer({ schema: apolloServer, debug: true }),
   );
-
-  app.use(graphiql, graphiqlExpress({ endpointURL: queryRoot }));
+  */
+  //app.use(graphiql, graphiqlExpress({ endpointURL: queryRoot }));
   app.use(userAccountRouter);
   app.use('/reactory', reactory);
   app.use('/froala', froala);
@@ -165,6 +189,7 @@ startup().then((startResult) => {
   app.listen(API_PORT);
   app.use(flash());
   // logger.info(`Bots server using ${bots.name}`);
+  logger.info(asciilogo);
   logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
   logger.info('System Initialized/Ready, enabling app');
   amq.raiseSystemEvent('server.startup.complete');

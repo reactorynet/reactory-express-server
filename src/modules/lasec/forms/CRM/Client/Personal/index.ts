@@ -275,7 +275,23 @@ const editUiSchema: any = {
   },
   lastName: {},
   firstName: {},
-  country: {},
+  country: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerCountries {
+        LasecGetCustomerCountries {
+          id
+          name          
+        }
+      }`,
+      resultItem: 'LasecGetCustomerCountries',
+      resultsMap: {
+        'LasecGetCustomerCountries.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerCountries.[].name': '[].label',
+      },
+    },
+  },
 };
 
 const schema: Reactory.ISchema = { ...ClientSchema };

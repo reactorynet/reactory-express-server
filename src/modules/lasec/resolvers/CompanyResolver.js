@@ -511,6 +511,15 @@ const getCustomerClassById = async (id) => {
 
 };
 
+const getCustomerCountries = async (params) => {
+  return await lasecApi.get(lasecApi.URIS.customer_country.url,undefined, {'country.[]': ['[].id', '[].name']});    
+};
+
+const getCustomerDocuments = async (params) => {  
+  let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } } );  
+  return documents.items;
+};
+
 
 export default {
   LasecCRMClient: {
@@ -519,7 +528,7 @@ export default {
     },
     availableBalance: async (parent, obj) => {
       return 10;
-    }
+    },    
   },
   LasecCRMCustomer: {
     customerClass: async (parent, obj) => {
@@ -547,7 +556,10 @@ export default {
     },
     availableBalance: async (parent, obj) => {
       return 100;
-    }
+    },
+    documents: async(parent, object) => {
+      return getCustomerDocuments({id: parent.id });
+    }    
   },
   Query: {
     LasecGetClientList: async (obj, args) => {
@@ -564,6 +576,12 @@ export default {
     },
     LasecGetCustomerRanking: async(object, args) => {
       return getCustomerRanking(args);
+    },
+    LasecGetCustomerCountries: async(object, args) => {
+      return getCustomerCountries(args);
+    },
+    LasecGetCustomerDocuments: async(object, args) => {
+      return getCustomerDocuments(args);
     }
   },
   Mutation: {

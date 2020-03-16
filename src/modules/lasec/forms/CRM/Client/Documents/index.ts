@@ -52,16 +52,10 @@ const displayUiSchema: any = {
     'ui:options': {
       columns: [
         {
-          title: "Title", field: "title"
-        },
+          title: "Title", field: "name"
+        },        
         {
-          title: "Filename", field: "filename"
-        },
-        {
-          title: "Size", field: "size"
-        },
-        {
-          title: "Link", field: "link"
+          title: "Link", field: "url"
         }
       ],
       options: {
@@ -76,7 +70,6 @@ const displayUiSchema: any = {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [      
       {
-        title: { md: 6, sm: 12 },
         filename: { md: 6, sm: 12 },        
       },
       {
@@ -87,9 +80,35 @@ const displayUiSchema: any = {
       readOnly: true,
     },
     link: {
-      'ui:widget': 'DropZoneWidget',
+      'ui:widget': 'ReactoryDropZoneWidget',
       'ui:options': {
-        accept: ['text/html', 'text/text', 'application/xml'],
+        //main container styles
+        style: {
+
+        },
+        //properties for Reactory DropZone
+        ReactoryDropZoneProps: {
+          text: `Drop files here, or click to select files to upload`,
+          accept: ['text/html', 'text/text', 'application/xml', 'application/pdf'],
+          uploadOnDrop: true,
+          mutation: 'new',
+          iconProps: {
+            icon: 'upload',
+            color: 'secondary'
+          },
+          labelProps: {          
+            style: {
+              display: 'block',
+              paddingTop: '95px',
+              height: '200px',
+              textAlign: 'center',
+            }
+          },
+          style: {
+            minHeight: `200px`,
+            outline: '1px dashed #E8E8E8'
+          }
+        },        
       }
     }
   },  
@@ -132,16 +151,10 @@ const editUiSchema: any = {
     'ui:options': {
       columns: [
         {
-          title: "Title", field: "title"
-        },
+          title: "Title", field: "name"
+        },        
         {
-          title: "Filename", field: "filename"
-        },
-        {
-          title: "Size", field: "size"
-        },
-        {
-          title: "Link", field: "link"
+          title: "Link", field: "url"
         }
       ],
       options: {
@@ -163,15 +176,7 @@ const documentSchema: Reactory.ISchema = {
     title: {
       type: "string",
       title: "Title"
-    },
-    filename: {
-      type: "string",
-      title: "Filename"
-    },
-    size: {
-      type: "number",
-      title: "Size"
-    },
+    },    
     link: {
       type: "string",
       title: "Link"

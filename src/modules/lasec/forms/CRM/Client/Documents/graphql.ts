@@ -2,41 +2,46 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
-    name: 'LasecGetClientDetail',
-    text: `query LasecGetClientDetail($id: String!){
-      LasecGetClientDetail(id: $id){
+    name: 'LasecCustomerDocuments',
+    text: `query LasecCustomerDocuments($id: String!){
+      LasecGetCustomerDocuments(id: $id){
         id
-        clientStatus
-        firstName
-        lastName
-        fullName
-        emailAddress      
-        country
-        customer {
-          id
-          tradingName
-          accountNumber
-          customerStatus
-          country
-        }
+        name
+        url
       }      
     }`,
     variables: {
       'formData.id': 'id',            
     },
     resultMap: {      
-      'id': 'id',
-      'clientStatus': 'clientStatus',
-      'fullName': 'fullName',
-      'customer.customerStatus': 'customerStatus', 
-      'customer.accountNumber':'accountNumber',
-      'customer.tradingName': 'customer',     
+      '[]':'documents.[]'
     },
     autoQuery: true,
     queryMessage: 'Loading customer details',
     resultType: 'object',
     edit: false,
     new: false,
+  },
+  mutation: {
+    new: {
+      name: 'LasecUploadCustomerDocument',
+      text: `mutation LasecUploadCustomerDocument($id: String, $file: Upload!){
+        LasecUploadCustomerDocument(id: $id, file: $file) {
+          id
+          name
+          url
+          mimetype
+        }
+      }`,
+      notification: {
+        
+      },
+      variables: {
+
+      },
+      objectMap: true,
+
+    }
   }
 };
 

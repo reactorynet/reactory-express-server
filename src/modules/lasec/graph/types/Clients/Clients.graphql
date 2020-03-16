@@ -30,6 +30,7 @@ type LasecCRMCustomer {
   balance90Days: Float
   balance120Days: Float
   creditTotal: Float
+  documents: [LasecDocument]
 }
 
 type LasecCRMClient {
@@ -51,6 +52,14 @@ type LasecCRMClient {
   alternateOfficeNumber: String
   availableBalance: Float
   creditLimit: Float
+  
+}
+
+type LasecDocument {
+  id: String
+  name: String
+  url: String
+  mimetype: String  
 }
 
 type PagedCRMClient {
@@ -96,6 +105,8 @@ input ClientUpdateInput {
   ranking: String
 }
 
+
+
 extend type Query {
   LasecGetClientList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMClient
   LasecGetClientDetail(id: String!): LasecCRMClient
@@ -104,10 +115,13 @@ extend type Query {
   LasecGetCustomerClass: [LasecLookupItem]
   LasecGetCustomerRanking: [LasecLookupItem]
   LasecGetCustomerRoles: [LasecLookupItem]
+  LasecGetCustomerCountries: [LasecLookupItem]
+  LasecGetCustomerDocuments(id: String!): [LasecDocument]
 }
 
 extend type Mutation {
    LasecUpdateClientDetails(clientInfo: ClientUpdateInput!): ClientDetailUpdateResponse
+   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
 }
 
   #  LasecUpdateClientJobDetails(clientId: String!, accountType: String!, repCode: String!, jobTitle: String!, clientDepartment: String!, clientClass: String!, ranking: String!): ClientDetailUpdateResponse
