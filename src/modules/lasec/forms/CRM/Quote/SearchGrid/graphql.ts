@@ -27,12 +27,6 @@ const graphql: Reactory.IFormGraphDefinition = {
             tradingName
           }
           totalVATExclusive
-          totalVAT
-          GP
-          actualGP
-          modified
-          expirationDate
-          note
           repCode
           quoteType
         }

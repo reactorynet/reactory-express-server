@@ -195,7 +195,7 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
 
   const apiResponse = await fetch(absoluteUrl, kwargs).then();
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
-    try {      
+    try {
       return apiResponse.json();
     } catch (jsonError) {
       logger.error("JSON Error", jsonError);
@@ -244,12 +244,12 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
         }
 
         break;
-      }      
+      }
       default: {
         await execml(`mutation LasecReset360Credentials {
           LasecReset360Credentials
         }`);
-        throw new ApiError('Could not execute fetch against Lasec API', { status: apiResponse, statusText: apiResponse.statusText });        
+        throw new ApiError('Could not execute fetch against Lasec API', { status: apiResponse, statusText: apiResponse.statusText });
       }
     }
 
@@ -322,22 +322,22 @@ const Api = {
       }
     },
     GetCustomerRoles: async (params = defaultParams) => {
-        
-        const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: {...defaultParams, ...params }});
-        const {
-          status, payload,
-        } = resp;
-  
-        if (status === 'success') {
-          return payload;
-        }
-  
-        return { pagination: {}, ids: [], items: [] };
+
+      const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
 
     },
     GetCustomerRankings: async (params = defaultParams) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_ranking.url, { params: {...defaultParams, ...params }});
+      const resp = await FETCH(SECONDARY_API_URLS.customer_ranking.url, { params: { ...defaultParams, ...params } });
       const {
         status, payload,
       } = resp;
@@ -351,7 +351,7 @@ const Api = {
     },
     GetCustomerClass: async (params = defaultParams) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: {...defaultParams, ...params }});
+      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { ...defaultParams, ...params } });
       const {
         status, payload,
       } = resp;
@@ -365,7 +365,7 @@ const Api = {
     },
     GetCustomerClassById: async (id) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { filter: { ids: [id] }, paging: {} }});
+      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { filter: { ids: [id] }, paging: {} } });
       const {
         status, payload,
       } = resp;
@@ -379,7 +379,7 @@ const Api = {
     }
   },
   Company: {
-    getById: async(params) => {
+    getById: async (params) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } });
       const {
         status, payload,
@@ -391,7 +391,7 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    getAddress: async(params) => {
+    getAddress: async (params) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } });
       const {
         status, payload,
@@ -507,6 +507,7 @@ const Api = {
       } = apiResponse;
 
       if (status === 'success') {
+        logger.debug(`PAYLOAD:: ${JSON.stringify(payload)}`);
         return payload;
       }
 

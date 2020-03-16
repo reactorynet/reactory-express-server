@@ -1017,28 +1017,6 @@ const getPagedQuotes = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  let {
-  period = 'this-week',
-  periodStart = moment(params.periodStart || moment()).startOf('week'),
-  periodEnd = moment(params.periodEnd || moment()).endOf('week'),
-  // agentSelection = params.agent || 'me',
-  } = params;
-
-  let _params = params;
-
-  if (!_params) {
-    _params = {
-      periodStart: moment().startOf('year'),
-      periodEnd: moment().endOf('day')
-    }
-  }
-
-  let apiFilter = {
-    start_date: _params.periodStart ? _params.periodStart.toISOString() : moment().startOf('year'),
-    end_date: _params.periodEnd ? _params.periodEnd.toISOString() : moment().endOf('day'),
-    // agentSelection: _params.agentSelect || 'me'
-  };
-
   // const cachekey = Hash(`quote_list_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`.toLowerCase());
 
   // let _cachedResults = await getCacheItem(cachekey);
@@ -1064,26 +1042,38 @@ const getPagedQuotes = async (params) => {
   //   return _cachedResults;
   // }
 
-  let agentSelection = 'me'
+  let apiFilter = {
+    start_date: params.periodStart ? params.periodStart.toISOString() : moment().startOf('year'),
+    end_date: params.periodEnd ? params.periodEnd.toISOString() : moment().endOf('day'),
+    agentSelection : 'me',
+  };
 
-  let quotes = await getQuotes({ agentSelection }).then();
-  // let quotes = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: 10 } }).then();
+  let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter,  pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
 
-  logger.debug(`QUOTES:: ${quotes[0]}`);
+  let ids = [];
 
-  // if (clientResult.pagination && clientResult.pagination.num_pages > 1) {
-  //   logger.debug('Paged Result From Lasec API', { pagination: clientResult.pagination });
-  //   pagingResult.total = clientResult.pagination.num_items;
-  //   pagingResult.pageSize = clientResult.pagination.page_size || 10;
-  //   pagingResult.hasNext = clientResult.pagination.has_next_page === true;
-  //   pagingResult.page = clientResult.pagination.current_page || 1;
-  // }
+  if (isArray(quoteResult.ids) === true) {
+    ids = [...quoteResult.ids];
+  }
 
-  // FAKING THIS FOR NOW
-  pagingResult.total = quotes.length;
-  pagingResult.pageSize = 10;
-  pagingResult.hasNext = true;
-  pagingResult.page = 1;
+  if (quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
+    pagingResult.total = quoteResult.pagination.num_items;
+    pagingResult.pageSize = quoteResult.pagination.page_size || 10;
+    pagingResult.hasNext = quoteResult.pagination.has_next_page === true;
+    pagingResult.page = quoteResult.pagination.current_page || 1;
+  }
+
+  logger.debug(`Loading (${ids.length}) quote ids`);
+
+  let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }).then();
+  logger.debug(`Fetched Expanded View for (${quoteDetails.items.length}) Quotes from API`);
+  let quotes = [...quoteDetails.items];
+
+  const quoteSyncResult = await Promise.all(quotes.map((quote) => {
+    return quote_sync(quote.id, global.partner.key, quote, true);
+  })).then();
+
+  quotes = quoteSyncResult.map(doc => doc);
 
   let result = {
     paging: pagingResult,
@@ -1091,8 +1081,6 @@ const getPagedQuotes = async (params) => {
     filterBy,
     quotes,
   };
-
-
 
   return result;
 

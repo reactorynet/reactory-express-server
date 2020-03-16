@@ -54,7 +54,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${props.api.utils.moment(rowData.date).format(\'DD MMM YYYY HH:mm\')}'
+                format: '${api.utils.moment(rowData.date).format(\'DD MMM YYYY HH:mm\')}'
               }
             },
           },
