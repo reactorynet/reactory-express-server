@@ -21,6 +21,27 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultType: 'object',
     edit: false,
     new: false,
+  },
+  mutation: {
+    new: {
+      name: 'LasecUploadCustomerDocument',
+      text: `mutation LasecUploadCustomerDocument($id: String, $file: Upload!){
+        LasecUploadCustomerDocument(id: $id, file: $file) {
+          id
+          name
+          url
+          mimetype
+        }
+      }`,
+      notification: {
+        
+      },
+      variables: {
+
+      },
+      objectMap: true,
+
+    }
   }
 };
 

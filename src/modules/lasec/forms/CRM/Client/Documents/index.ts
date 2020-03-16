@@ -82,9 +82,16 @@ const displayUiSchema: any = {
     link: {
       'ui:widget': 'ReactoryDropZoneWidget',
       'ui:options': {
+        //main container styles
+        style: {
+
+        },
+        //properties for Reactory DropZone
         ReactoryDropZoneProps: {
           text: `Drop files here, or click to select files to upload`,
           accept: ['text/html', 'text/text', 'application/xml', 'application/pdf'],
+          uploadOnDrop: true,
+          mutation: 'new',
           iconProps: {
             icon: 'upload',
             color: 'secondary'
@@ -94,13 +101,14 @@ const displayUiSchema: any = {
               display: 'block',
               paddingTop: '95px',
               height: '200px',
+              textAlign: 'center',
             }
+          },
+          style: {
+            minHeight: `200px`,
+            outline: '1px dashed #E8E8E8'
           }
-        },
-        style: {
-          minHeight: `200px`,
-          outline: '1px dashed #E8E8E8'
-        }
+        },        
       }
     }
   },  
