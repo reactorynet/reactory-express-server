@@ -35,6 +35,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     },
     resultMap: {
       'paging': 'paging',
+      'filterBy': 'filterBy',
       'clients': 'clients',      
     },
     autoQuery: false,

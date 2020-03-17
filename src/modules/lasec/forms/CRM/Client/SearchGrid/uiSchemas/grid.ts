@@ -1,7 +1,8 @@
 const uiSchema: any = {
-  'ui:options': {    
-    componentType: "div",    
-    showSubmit: false,
+  'ui:options': {
+    icon: 'search',    
+    componentType: "form",    
+    showSubmit: true,
     showRefresh: false,
     container: "div",
     containerStyles: {
@@ -11,10 +12,10 @@ const uiSchema: any = {
   },
   'ui:field':'GridLayout',
   'ui:grid-layout': [
-    { 
-      paging: { md: 2, sm: 12 },
-      search: { md: 4, sm: 12 },
-      filterBy: { md: 4, sm: 12 },
+    {             
+      search: { md: 6, sm: 12 },      
+      filterBy: { md: 4, sm: 8 },
+      submit: { md: 2, sm: 2 },
     },
     {
       clients: {
@@ -23,19 +24,49 @@ const uiSchema: any = {
     }
   ],  
   search: {
+    'ui:options': {
+      showLabel: false,
+      icon: 'search',
+      component: "TextField",
+      componentProps: {
+        placeholder: 'Search',
+        variant: "outlined",
+        type: 'search',
+        style: {
+          minWidth: '180px'
+        }
+      }
+    }
+    /*
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData && formData.length > 3 ? "Searching for `" + formData + "`" : "Enter search keyword" }',
       variant: 'body1',      
-    }    
+    } 
+    */   
   },
   paging: {
     'ui:widget': 'HiddenWidget'
+  },
+  submit: {
+    'ui:widget': 'FormSubmitWidget',
+    'ui:options': {
+      text: 'SEARCH',
+      color: 'default',
+      props: {
+        color: 'default',
+        style: {
+          maxWidth: '180px',
+          width: '180px'
+        }
+      }
+    }
   },
   filterBy: {
     'ui:widget': 'SelectWidget',
       'ui:options': {
         selectOptions: [
+          { key: 'any_field', value: 'any_field', label: 'Any Field' },
           { key: 'activity_status', value: 'activity_status', label: 'Client Status' },
           { key: 'fullname', value: 'fullname', label: 'Client Full name' },
           { key: 'email', value: 'email', label: 'Email Address' },
@@ -97,51 +128,7 @@ const uiSchema: any = {
               propsMap: {
                 'rowData.clientStatus': 'value',
               },
-            },
-            {
-              component: 'core.DropDownMenu',
-              props: {
-                style: {                  
-                  marginTop: '-10px',
-                },
-                menus: [
-                  {
-                    id: 'active',
-                    key: 'active',
-                    title: 'Active',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#5EB848'  
-                      }
-                    }                    
-                  },
-                  {
-                    id: 'unfinished',
-                    key: 'unfinished',
-                    title: 'Unfinished',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#FF9901'  
-                      }
-                    }  
-
-                  },
-                  {
-                    id: 'deactivated',
-                    key: 'deactivated',
-                    title: 'Deactivate',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'  
-                      }
-                    },  
-                  },
-                ]  
-              }
-            }
+            }            
           ],                  
           propsMap: {
             'rowData.clientStatus': 'selectedKey'
@@ -248,11 +235,31 @@ const uiSchema: any = {
           field: 'country'
         }        
       ],
+      actions: [
+        {
+          icon: 'remove_circle',
+          tooltip: 'Deactivate Client(s)',          
+          iconProps: {
+            color: 'error'
+          },
+          mutation: 'deactivate',
+          variables: {
+
+          },
+          resultMap: {
+
+          },
+          resultAction: 'refresh'
+        },             
+      ],
       options: {
         grouping: false,
         search: false,  
         showTitle: false,
-        toolbar: false,
+        toolbar: true,
+        selection: true,
+        toolbarButtonAlignment: 'left',
+        actionsColumnIndex: -1
       },
       remoteData: true,
       query: 'query',

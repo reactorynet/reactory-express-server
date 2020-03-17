@@ -5,10 +5,10 @@ const $toolbar: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {      
-      search: { md: 3, sm: 4, xs: 6 },
-      // supplier: { md: 3, sm: 4, xs: 6 },
-      fabButton: { md: 3, sm: 4, xs: 6 },
-      view: { md: 1, sm: 1, xs: 1 },
+      // search: { md: 3, sm: 4, xs: 6 },
+      // supplier: { md: 3, sm: 4, xs: 6 },      
+      // view: { md: 1, sm: 1, xs: 1 },
+      fabButton: { md: 12, sm: 12, xs: 12, alignItems: 'right' },
     }
   ],
   search: {
@@ -27,18 +27,19 @@ const $toolbar: any = {
     }
   },
   fabButton: {
-    'ui:widget': 'FormSubmitWidget',
+    'ui:widget': 'LinkFieldWidget',
     'ui:options': {
-      text: 'SEARCH',
-      color: 'default',
-      props: {
-        color: 'default',
+      format: '/', //eslint-disable-line
+      component: 'fab',
+      title: '',
+      icon: 'add',      
+      iconProps: {
+        color: 'primary',
         style: {
-          maxWidth: '180px',
-          width: '180px'
-        }
-      }
-    }
+        },
+      },
+      userouter: true, // use browser navigator
+    },
   },
   view: {
     'ui:widget': 'HiddenWidget',
@@ -53,9 +54,10 @@ const $toolbar: any = {
 };
 
 
-const uiSchema: any = {
+const uiSchema: any = {    
   submitIcon: 'refresh',
   'ui:options': {
+    componentType: "div",
     toolbarPosition: 'none',
     showRefresh: false,
     showSubmit: false,

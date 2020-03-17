@@ -31,13 +31,15 @@ const LasecClientGrid: Reactory.IReactoryForm = {
       page: 1,
       pageSize: 10,      
     },
+    filterBy: "any_field",
     search: "",
     clients: []
   },
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
-    { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' }
+    { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
+    { componentFqn: 'core.FormSubmissionComponent@1.0.0', widget: 'FormSubmitWidget' }
   ],
 };
 
