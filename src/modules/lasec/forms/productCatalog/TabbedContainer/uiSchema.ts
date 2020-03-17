@@ -8,7 +8,7 @@ const $toolbar: any = {
       product: { md: 3, sm: 4, xs: 6 },
       // supplier: { md: 3, sm: 4, xs: 6 },
       submitButton: { md: 3, sm: 4, xs: 6 },
-      resultCount: { md: 3, sm: 4, xs: 6 },      
+      resultCount: { md: 3, sm: 4, xs: 6 },
     }
   ],
   product: {
@@ -128,6 +128,26 @@ const uiSchema: any = {
         {
           id: 'product-more-details',
           title: 'More Details',
+          componentFqn: 'lasec-crm.LasecProductDetailTable',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-more-details',
+          title: 'TEST',
+          componentFqn: 'lasec-crm.LasecProductDetailTable',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-more-details',
+          title: 'TEST 2',
           componentFqn: 'lasec-crm.LasecProductDetailTable',
           componentProps: {},
           componentPropsMap: {

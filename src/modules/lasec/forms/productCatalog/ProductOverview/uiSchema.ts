@@ -12,9 +12,9 @@ const uiSchema: any = {
   },
   paging: {
     'ui:widget': 'HiddenWidget'
-  },  
+  },
   product: {
-    'ui:widget': 'HiddenWidget'        
+    'ui:widget': 'HiddenWidget'
   },
   products: {
     'ui:widget': 'MaterialTableWidget',
@@ -31,7 +31,7 @@ const uiSchema: any = {
                 key: 'on_syspro',
                 icon: 'error',
                 style: {
-                  color: '#9AD86E'                  
+                  color: '#9AD86E'
                 },
                 tooltip: 'ON SYSPRO'
               },
@@ -83,7 +83,7 @@ const uiSchema: any = {
             },
           },
           propsMap: {
-            'rowData.image' : 'value',
+            'rowData.image': 'value',
           },
           cellStyle: {
             maxWidth: 40,
@@ -92,6 +92,20 @@ const uiSchema: any = {
           headerStyles: {
             maxWidth: 40,
             width: 40
+          }
+        },
+        {
+          title: '',
+          width: '80px',
+          field: 'code',
+          props: {
+            actionButton: {
+              text: '',
+              icon: 'add',
+              color: 'primary',
+              size: "small",
+              action: {}
+            }
           }
         },
         { title: 'Stock Code', field: 'code' },
@@ -129,7 +143,7 @@ const uiSchema: any = {
             },
           },
           propsMap: {
-            'rowData.qtyAvailable' : 'value',
+            'rowData.qtyAvailable': 'value',
           }
         },
         {
@@ -145,7 +159,7 @@ const uiSchema: any = {
                 format: '${rowData.qtyOnHand}'
               }
             },
-          },          
+          },
         },
         {
           title: 'Qty on PO',
@@ -160,7 +174,7 @@ const uiSchema: any = {
                 format: '${rowData.qtyOnOrder}'
               }
             },
-          },          
+          },
         },
         {
           title: 'Price', field: 'price',
@@ -171,16 +185,16 @@ const uiSchema: any = {
             currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
             region: 'en-IN',
             uiSchema: {
-              'ui:options': {                
+              'ui:options': {
                 prependText: '(ZAR)',
                 defaultStyle: {
                   borderBottom: '1px solid #E1E1E4'
                 },
-                conditionalStyles: [                  
+                conditionalStyles: [
                   {
                     key: 'ON_SPECIAL',
                     style: {
-                      color: '#4AC0DC',
+                      color: '#22B2D4',
                     },
                     tooltip: 'PRICE ON SPECIAL'
                   },
@@ -197,9 +211,9 @@ const uiSchema: any = {
           },
           propsMap: {
             'rowData.price': ['value', 'formData'],
-            'rowData.priceAdditionalInfo' : ['condition'],
-            'rowData.productPricing': 'currencies',            
-          }, 
+            'rowData.priceAdditionalInfo': ['condition'],
+            'rowData.productPricing': 'currencies',
+          },
         },
       ],
       options: {
@@ -208,7 +222,7 @@ const uiSchema: any = {
         showTitle: false,
         toolbar: false,
         fixedColumns: {
-          left: 5,           
+          left: 5,
         },
         tableLayout: 'fixed',
       },
@@ -241,7 +255,7 @@ const uiSchema: any = {
 
 const cardUiSchema: any = {
   ...uiSchema,
-  products: undefined,  
+  products: undefined,
 }
 
 export default uiSchema;
