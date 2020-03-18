@@ -48,6 +48,7 @@ import ClientContact from './CRM/Client/Contact';
 import ClientJobDetail from './CRM/Client/JobDetail';
 import ClientComments from './CRM/Client/Comments';
 import ClientDocuments from './CRM/Client/Documents';
+import NewClient from './CRM/Client/NewClient';
 
 import CustomerDetails from './CRM/Customer/Detail';
 import CustomerSpecialRequirement from './CRM/Customer/SpecialRequirements';
@@ -92,9 +93,10 @@ export default [
   ClientGrid,
   ClientDetail,
   ClientOverviewWidget,
+  NewClient,
 
   CustomerDetails,
   CustomerSpecialRequirement,
   CustomerAccountInfo,
-  CustomerOrganizationInfo
+  CustomerOrganizationInfo,
 ];

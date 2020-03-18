@@ -70,14 +70,14 @@ const displayUiSchema: any = {
       },
       /*
       componentFqn: 'core.ConditionalIconComponent@1.0.0',
-      componentProps: {        
+      componentProps: {
         conditions: [
           {
             key: 'active',
             icon: 'trip_origin',
             style: {
-              color: '#5EB848'                  
-            },            
+              color: '#5EB848'
+            },
             tooltip: 'Client Active'
           },
           {
@@ -95,7 +95,7 @@ const displayUiSchema: any = {
               color: '#AB1257'
             },
             tooltip: 'Client Deactivated'
-          }                  
+          }
         ]
       },
       style: {
@@ -234,42 +234,42 @@ const editUiSchema: any = {
         }
       },
       selectOptions: [
-        { 
-          key: 'active', 
-          value: 'active', 
-          label: 'Active', 
-          icon: 'trip_origin', 
-          iconProps: {  
+        {
+          key: 'active',
+          value: 'active',
+          label: 'Active',
+          icon: 'trip_origin',
+          iconProps: {
             style: {
               color: '#5EB848',
               marginRight: '16px',
-            }, 
-          } 
+            },
+          }
         },
-        { 
-          key: 'unfinished', 
-          value: 'unfinished', 
-          label: 'Unfinished', 
+        {
+          key: 'unfinished',
+          value: 'unfinished',
+          label: 'Unfinished',
           icon: 'trip_origin',
-          iconProps: {  
+          iconProps: {
             style: {
               color: '#FF9901',
-              marginRight: '16px',                  
-            }, 
-          } 
+              marginRight: '16px',
+            },
+          }
         },
-        { 
-          key: 'deactivated', 
-          value: 'deactivated', 
-          label: 'Deactivated', 
+        {
+          key: 'deactivated',
+          value: 'deactivated',
+          label: 'Deactivated',
           icon: 'trip_origin',
-          iconProps: {  
+          iconProps: {
             style: {
               color: '#AB1257',
-              marginRight: '16px',                  
-            }, 
-          } 
-        },          
+              marginRight: '16px',
+            },
+          }
+        },
       ],
     },
   },
@@ -282,13 +282,117 @@ const editUiSchema: any = {
       query: `query LasecGetCustomerCountries {
         LasecGetCustomerCountries {
           id
-          name          
+          name
         }
       }`,
       resultItem: 'LasecGetCustomerCountries',
       resultsMap: {
         'LasecGetCustomerCountries.[].id': ['[].key', '[].value'],
         'LasecGetCustomerCountries.[].name': '[].label',
+      },
+    },
+  },
+};
+
+const newUiSchema: any = {
+  'ui:options': {
+    componentType: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '8px'
+    },
+    style:{
+      marginTop: '16px',
+    },
+    showSubmit: true,
+    showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      title: { sm: 12, md: 12 },
+      firstName: { sm: 12, md: 12 },
+      lastName: { sm: 12, md: 12 },
+      country: { sm: 12, md: 12 },
+      accountType: { sm: 12, md: 12 },
+    }
+  ],
+  title: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetPersonTitles {
+        LasecGetPersonTitles {
+          id
+          title
+        }
+      }`,
+      resultItem: 'LasecGetPersonTitles',
+      resultsMap: {
+        'LasecGetPersonTitles.[].id': ['[].key', '[].value'],
+        'LasecGetPersonTitles.[].title': '[].label',
+      },
+    },
+  },
+  firstName: {},
+  lastName: {},
+  country: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerCountries {
+        LasecGetCustomerCountries {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetCustomerCountries',
+      resultsMap: {
+        'LasecGetCustomerCountries.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerCountries.[].name': '[].label',
+      },
+    },
+  },
+  accountType: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      selectOptions: [
+        {
+          key: 'account',
+          value: 'account',
+          label: 'Account',
+        },
+        {
+          key: 'cod',
+          value: 'cod',
+          label: 'COD',
+        },
+
+      ],
+    },
+  },
+  repCode: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerRepCodes {
+        LasecGetCustomerRepCodes {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetCustomerRepCodes',
+      resultsMap: {
+        'LasecGetCustomerRepCodes.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerRepCodes.[].name': '[].label',
       },
     },
   },
@@ -329,11 +433,16 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       icon: 'view_module',
       uiSchema: editUiSchema,
     },
+    {
+      id: 'new',
+      title: 'New',
+      key: 'new',
+      description: 'Capture Personal Details',
+      icon: 'view_module',
+      uiSchema: newUiSchema,
+    },
   ],
-  defaultFormValue: {
-
-  },
-
+  defaultFormValue: {},
 };
 
 export default LasecCRMPersonalInformationForm;

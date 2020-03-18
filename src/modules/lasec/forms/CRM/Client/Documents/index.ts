@@ -30,7 +30,7 @@ const displayUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { md: 12 },
     },
     {
       documents: { md: 12 },
@@ -53,7 +53,7 @@ const displayUiSchema: any = {
       columns: [
         {
           title: "Title", field: "name"
-        },        
+        },
         {
           title: "Link", field: "url"
         }
@@ -68,9 +68,9 @@ const displayUiSchema: any = {
   },
   inputDocument: {
     'ui:field': 'GridLayout',
-    'ui:grid-layout': [      
+    'ui:grid-layout': [
       {
-        filename: { md: 6, sm: 12 },        
+        filename: { md: 6, sm: 12 },
       },
       {
         link: {md: 12}
@@ -96,7 +96,7 @@ const displayUiSchema: any = {
             icon: 'upload',
             color: 'secondary'
           },
-          labelProps: {          
+          labelProps: {
             style: {
               display: 'block',
               paddingTop: '95px',
@@ -108,10 +108,10 @@ const displayUiSchema: any = {
             minHeight: `200px`,
             outline: '1px dashed #E8E8E8'
           }
-        },        
+        },
       }
     }
-  },  
+  },
 };
 
 const editUiSchema: any = {
@@ -129,11 +129,11 @@ const editUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { md: 12 },
     },
-    {      
+    {
       documents: { md: 12 },
-      inputDocument: { md: 12 },           
+      inputDocument: { md: 12 },
     }
   ],
   view: {
@@ -152,7 +152,7 @@ const editUiSchema: any = {
       columns: [
         {
           title: "Title", field: "name"
-        },        
+        },
         {
           title: "Link", field: "url"
         }
@@ -167,7 +167,7 @@ const editUiSchema: any = {
   },
   inputDocument: {
 
-  },  
+  },
 };
 
 const documentSchema: Reactory.ISchema = {
@@ -176,13 +176,13 @@ const documentSchema: Reactory.ISchema = {
     title: {
       type: "string",
       title: "Title"
-    },    
+    },
     link: {
       type: "string",
       title: "Link"
-    },    
+    },
   }
-}; 
+};
 
 const schema: Reactory.ISchema = {
   type: "object",
@@ -233,7 +233,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
     },
   ],
   defaultFormValue: {
-    
+
   },
 
 };

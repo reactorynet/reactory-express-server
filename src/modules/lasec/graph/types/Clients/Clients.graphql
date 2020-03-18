@@ -52,14 +52,13 @@ type LasecCRMClient {
   alternateOfficeNumber: String
   availableBalance: Float
   creditLimit: Float
-  
 }
 
 type LasecDocument {
   id: String
   name: String
   url: String
-  mimetype: String  
+  mimetype: String
 }
 
 type PagedCRMClient {
@@ -86,6 +85,12 @@ type LasecLookupItem {
   description: String
 }
 
+type LasecTitleLookupItem {
+  id: String
+  title: String
+  long_title: String
+}
+
 input ClientUpdateInput {
   clientId: String!
   clientStatus: String
@@ -105,25 +110,38 @@ input ClientUpdateInput {
   ranking: String
 }
 
-
-
 extend type Query {
-  LasecGetClientList(search: String!, paging: PagingRequest, filterBy: String, iter: Int, filter: String): PagedCRMClient
+  LasecGetClientList(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    iter: Int
+    filter: String
+  ): PagedCRMClient
   LasecGetClientDetail(id: String!): LasecCRMClient
-  LasecGetCustomerList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMCustomer
+  LasecGetCustomerList(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    iter: Int
+  ): PagedCRMCustomer
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecLookupItem]
   LasecGetCustomerRanking: [LasecLookupItem]
   LasecGetCustomerRoles: [LasecLookupItem]
   LasecGetCustomerCountries: [LasecLookupItem]
-  LasecGetCustomerFilterLookup (filterBy: String): [LasecLookupItem]
+  LasecGetCustomerRepCodes: [LasecLookupItem]
+  LasecGetCustomerFilterLookup(filterBy: String): [LasecLookupItem]
   LasecGetCustomerDocuments(id: String!): [LasecDocument]
+  LasecGetPersonTitles: [LasecLookupItem]
 }
 
 extend type Mutation {
-   LasecUpdateClientDetails(clientInfo: ClientUpdateInput!): ClientDetailUpdateResponse
-   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
+  LasecUpdateClientDetails(
+    clientInfo: ClientUpdateInput!
+  ): ClientDetailUpdateResponse
+  LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
 }
 
-  #  LasecUpdateClientJobDetails(clientId: String!, accountType: String!, repCode: String!, jobTitle: String!, clientDepartment: String!, clientClass: String!, ranking: String!): ClientDetailUpdateResponse
-  #  LasecUpdateClientContactDetails(clientId: String!, mobileNumber: String!, alternateNumber: String!, email: String!, alternateEmail: String!): ClientDetailUpdateResponse
+#  LasecUpdateClientJobDetails(clientId: String!, accountType: String!, repCode: String!, jobTitle: String!, clientDepartment: String!, clientClass: String!, ranking: String!): ClientDetailUpdateResponse
+#  LasecUpdateClientContactDetails(clientId: String!, mobileNumber: String!, alternateNumber: String!, email: String!, alternateEmail: String!): ClientDetailUpdateResponse
