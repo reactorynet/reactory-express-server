@@ -1041,7 +1041,8 @@ const LASEC_CONFIG = {
           fontWeight: 700
         },
         root: {
-          verticalAlign: 'top'
+          verticalAlign: 'top',
+          border: '1px solid #E1E1E4'
         }
       },
       MuiBox: {
@@ -1152,6 +1153,14 @@ const LASEC_CONFIG = {
         message: `${key} powered by reactory.net`,
       },
     },
+    MaterialTableWidget: {
+      rowStyle: {
+        backgroundColor: '#E7E7E7'
+      },
+      altRowStyle: {
+        backgroundColor: '#FAFAFA'
+      }
+    }
   },
   settings: [
     {

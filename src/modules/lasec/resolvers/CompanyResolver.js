@@ -7,9 +7,10 @@ import { getCacheItem, setCacheItem } from '../models';
 import Hash from '@reactory/server-core/utils/hash';
 import { clientFor, execql } from '@reactory/server-core/graph/client';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
+import { getScaleForKey } from 'data/scales';
 
 const getClients = async (params) => {
-  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0 } = params;
+  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter } = params;
 
   logger.debug(`Getting Clients using search ${search}`, { search, paging, filterBy, iter });
 
@@ -20,14 +21,14 @@ const getClients = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  if (isString(search) === false || search.length < 3) return {
+  let _filter = {};
+
+  _filter[filterBy] = filter || search;
+
+  if (isString(search) === false || search.length < 3 && filter === undefined) return {
     paging: pagingResult,
     clients: []
   };
-
-  let filter = {};
-
-  filter[filterBy] = search;
 
   const cachekey = Hash(`client_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
@@ -37,8 +38,8 @@ const getClients = async (params) => {
 
     if (iter === 0) {
       //client request and we have a cache so we fire off the next fetch anyway
-      execql(`query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
-        LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+      execql(`query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int, $filter: String){
+        LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter, filter: $filter){
           paging {
             total
             page
@@ -49,13 +50,13 @@ const getClients = async (params) => {
             id
           }
         }
-      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1, filter }).then();
     }
     logger.debug(`Returning cached item ${cachekey}`);
     return _cachedResults;
   }
 
-  const clientResult = await lasecApi.Customers.list({ filter: filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
+  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
 
   let ids = [];
 
@@ -185,7 +186,7 @@ const getClients = async (params) => {
             id
           }
         }
-      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1 }).then();
+      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
     } catch (cacheFetchError) {
       logger.error('An error occured attempting to cache next page', cacheFetchError);
     }
@@ -515,6 +516,11 @@ const getCustomerCountries = async (params) => {
   return await lasecApi.get(lasecApi.URIS.customer_country.url,undefined, {'country.[]': ['[].id', '[].name']});    
 };
 
+const getLasecSalesTeamsForLookup = async () => {
+  const salesTeamsResults = await lasecApi.get(lasecApi.URIS.groups, undefined).then();
+  logger.debug('SalesTeamsLookupResult >> ', salesTeamsResults);
+}
+
 const getCustomerDocuments = async (params) => {  
   let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } } );  
   return documents.items;
@@ -582,6 +588,23 @@ export default {
     },
     LasecGetCustomerDocuments: async(object, args) => {
       return getCustomerDocuments(args);
+    },
+    LasecGetCustomerFilterLookup: async (object, args) => {
+      switch(args.filterBy) {
+        case 'country': {
+          return getCustomerCountries(args);          
+        }
+        case 'activity_status': {
+          return [
+            { id: 'activated', name: 'Active' },
+            { id: 'unfinished', name: 'Unfinished' },
+            { id: 'deactivated', name: 'Deactivated' },
+          ];
+        }
+        case 'company_sales_team': {
+          return getLasecSalesTeamsForLookup();
+        }
+      }
     }
   },
   Mutation: {

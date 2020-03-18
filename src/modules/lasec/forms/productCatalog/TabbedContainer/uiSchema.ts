@@ -136,8 +136,8 @@ const uiSchema: any = {
           },
         },
         {
-          id: 'product-more-details',
-          title: 'TEST',
+          id: 'product-dimensions',
+          title: 'Dimension',
           componentFqn: 'lasec-crm.LasecProductDetailTable',
           componentProps: {},
           componentPropsMap: {
@@ -146,9 +146,59 @@ const uiSchema: any = {
           },
         },
         {
-          id: 'product-more-details',
-          title: 'TEST 2',
+          id: 'product-stock',
+          title: 'Stock',
           componentFqn: 'lasec-crm.LasecProductDetailTable',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-sales-order',
+          title: 'Sales Order',
+          componentFqn: 'lasec-crm.LasecProductSalesOrders',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-sales-order',
+          title: 'Sales Order',
+          componentFqn: 'lasec-crm.LasecProductPurchaseOrders',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-contracts',
+          title: 'Contracts',
+          componentFqn: 'lasec-crm.LasecProductContracts',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-tenders',
+          title: 'Tenders',
+          componentFqn: 'lasec-crm.LasecProductTenders',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-costings',
+          title: 'Costings',
+          componentFqn: 'lasec-crm.LasecProductCostings',
           componentProps: {},
           componentPropsMap: {
             'formContext.$formData.toolbar.product': 'formData.product',

@@ -19,6 +19,7 @@ const uiSchema: any = {
       columns: [
         {
           title: '', field: 'onSyspro',
+          width: '200px',
           components: [
             {
               component: 'core.ConditionalIconComponent@1.0.0',
@@ -29,7 +30,7 @@ const uiSchema: any = {
                     key: 'on_syspro',
                     icon: 'error',
                     style: {
-                      color: '#9AD86E'                  
+                      color: '#9AD86E'
                     },
                     tooltip: 'ON SYSPRO'
                   },
@@ -45,7 +46,7 @@ const uiSchema: any = {
                     key: 'on_hold',
                     icon: 'error',
                     style: {
-                      color: '#D22D2C',
+                      color: '#D22D2C'
                     },
                     tooltip: 'ON HOLD'
                   },
@@ -53,14 +54,11 @@ const uiSchema: any = {
                     key: 'on_partial_hold',
                     icon: 'error',
                     style: {
-                      color: '#f7b425',
+                      color: '#f7b425'
                     },
                     tooltip: 'ON PARTIAL HOLD'
                   },
                 ]
-              },
-              style: {
-                marginRight: '8px',
               },
               propsMap: {
                 'rowData.onSyspro': 'value',
@@ -70,15 +68,47 @@ const uiSchema: any = {
               component: 'core.ImageComponent@1.0.0',
               props: {
                 'ui:options': {
-                  variant: 'rounded'
-                },                
+                  variant: 'rounded',
+                  style: {
+                    marginLeft: '16px'
+                  }
+                },
               },
               propsMap: {
                 'rowData.image': 'value',
               },
+            },
+            {
+              component: 'core.SlideOutLauncher@1.0.0',
+              props: {
+                componentFqn: 'lasec-crm.LasecAddProductToQuote@1.0.0',
+                componentProps: {
+                  'rowData.code': 'formData.id'
+                },
+                slideDirection: 'down',                
+                buttonVariant: 'Fab',
+                buttonProps: {
+                  color: "#23A06A",
+                  size: 'small',
+                  style: {
+                    marginLeft: '16px',
+                    backgroundColor: "#23A06A"
+                  }
+                },
+                buttonIcon: 'add',                
+                windowTitle: 'Add to quote ${rowData.code}',
+              },
             }
-          ], 
-        },        
+          ],          
+          cellStyle: {
+            maxWidth: '200px',
+            width: '200px'
+          },
+          headerStyles: {
+            maxWidth: '200px',
+            width: '200px'
+          }
+        },         
         { title: 'Stock Code', field: 'code' },
         { title: 'Description', field: 'name' },
         {

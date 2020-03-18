@@ -22,92 +22,96 @@ const uiSchema: any = {
       columns: [
         {
           title: '', field: 'onSyspro',
-          width: '40px',
-          component: 'core.ConditionalIconComponent@1.0.0',
-          props: {
-            'ui:options': {},
-            conditions: [
-              {
-                key: 'on_syspro',
-                icon: 'error',
-                style: {
-                  color: '#9AD86E'
-                },
-                tooltip: 'ON SYSPRO'
+          width: '200px',
+          components: [
+            {
+              component: 'core.ConditionalIconComponent@1.0.0',
+              props: {
+                'ui:options': {},
+                conditions: [
+                  {
+                    key: 'on_syspro',
+                    icon: 'error',
+                    style: {
+                      color: '#9AD86E'
+                    },
+                    tooltip: 'ON SYSPRO'
+                  },
+                  {
+                    key: 'not_on_syspro',
+                    icon: 'error',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'NOT ON SYSPRO'
+                  },
+                  {
+                    key: 'on_hold',
+                    icon: 'error',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'ON HOLD'
+                  },
+                  {
+                    key: 'on_partial_hold',
+                    icon: 'error',
+                    style: {
+                      color: '#f7b425'
+                    },
+                    tooltip: 'ON PARTIAL HOLD'
+                  },
+                ]
               },
-              {
-                key: 'not_on_syspro',
-                icon: 'error',
-                style: {
-                  color: '#D22D2C'
-                },
-                tooltip: 'NOT ON SYSPRO'
+              propsMap: {
+                'rowData.onSyspro': 'value',
               },
-              {
-                key: 'on_hold',
-                icon: 'error',
-                style: {
-                  color: '#D22D2C'
-                },
-                tooltip: 'ON HOLD'
-              },
-              {
-                key: 'on_partial_hold',
-                icon: 'error',
-                style: {
-                  color: '#f7b425'
-                },
-                tooltip: 'ON PARTIAL HOLD'
-              },
-            ]
-          },
-          propsMap: {
-            'rowData.onSyspro': 'value',
-          },
-          cellStyle: {
-            maxWidth: '40px',
-            width: '40px'
-          },
-          headerStyles: {
-            maxWidth: '40px',
-            width: '40px'
-          }
-        },
-        {
-          title: '', field: 'image',
-          width: '80px',
-          component: 'core.ImageComponent@1.0.0',
-          props: {
-            'ui:options': {
-              variant: 'rounded'
             },
-          },
-          propsMap: {
-            'rowData.image': 'value',
-          },
+            {
+              component: 'core.ImageComponent@1.0.0',
+              props: {
+                'ui:options': {
+                  variant: 'rounded',
+                  style: {
+                    marginLeft: '16px'
+                  }
+                },
+              },
+              propsMap: {
+                'rowData.image': 'value',
+              },
+            },
+            {
+              component: 'core.SlideOutLauncher@1.0.0',
+              props: {
+                componentFqn: 'lasec-crm.LasecAddProductToQuote@1.0.0',
+                componentProps: {
+                  'rowData.code': 'formData.id'
+                },
+                slideDirection: 'down',                
+                buttonVariant: 'Fab',
+                buttonProps: {
+                  color: "#23A06A",
+                  size: 'small',
+                  style: {
+                    marginLeft: '16px',
+                    backgroundColor: "#23A06A"
+                  }
+                },
+                buttonIcon: 'add',                
+                windowTitle: 'Add to quote ${rowData.code}',
+              },
+            }
+          ],          
           cellStyle: {
-            maxWidth: 40,
-            width: 40
+            maxWidth: '200px',
+            width: '200px'
           },
           headerStyles: {
-            maxWidth: 40,
-            width: 40
+            maxWidth: '200px',
+            width: '200px'
           }
-        },
-        {
-          title: '',
-          width: '80px',
-          field: 'code',
-          props: {
-            actionButton: {
-              text: '',
-              icon: 'add',
-              color: 'primary',
-              size: "small",
-              action: {}
-            }
-          }
-        },
+        },                
         { title: 'Stock Code', field: 'code' },
         { title: 'Description', field: 'name' },
         {

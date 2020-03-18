@@ -1,6 +1,9 @@
+import {
+  FilterByOptions,
+} from '../shared';
 const uiSchema: any = {
   'ui:options': {
-    icon: 'search',    
+    submitIcon: 'search',    
     componentType: "form",    
     showSubmit: true,
     showRefresh: false,
@@ -13,16 +16,16 @@ const uiSchema: any = {
   'ui:field':'GridLayout',
   'ui:grid-layout': [
     {             
-      search: { md: 6, sm: 12 },      
-      filterBy: { md: 4, sm: 8 },
-      submit: { md: 2, sm: 2 },
+      search: { md: 4, sm: 12 },      
+      filterBy: { md: 4, sm: 12 },      
+      filter: { md: 4, sm: 12 },      
     },
     {
       clients: {
         md: 12
       }
     }
-  ],  
+  ],    
   search: {
     'ui:options': {
       showLabel: false,
@@ -64,24 +67,29 @@ const uiSchema: any = {
   },
   filterBy: {
     'ui:widget': 'SelectWidget',
-      'ui:options': {
-        selectOptions: [
-          { key: 'any_field', value: 'any_field', label: 'Any Field' },
-          { key: 'activity_status', value: 'activity_status', label: 'Client Status' },
-          { key: 'fullname', value: 'fullname', label: 'Client Full name' },
-          { key: 'email', value: 'email', label: 'Email Address' },
-          { 
-            key: 'company_trading_name', 
-            value: 'company_trading_name', 
-            label: 'Customer' 
-          },
-          { key: 'account_number', value: 'account_number', label: 'Account Number' },
-          { key: 'company_on_hold', value: 'company_on_hold', label: 'Company Status' },
-          { key: 'country', value: 'country', label: 'Country' },
-          { key: 'currency', value: 'currency', label: 'Currency' },
-          { key: 'company_sales_team', value: 'company_sales_team', label: 'Customer Rep Code' },
-        ],
+    'ui:options': {
+      selectOptions: FilterByOptions,
+    },
+  },
+  filter: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
+        LasecGetCustomerFilterLookup(filterBy: $filterBy) {
+          id
+          name          
+        }
+      }`,
+      propertyMap: {
+        'formContext.$formData.filterBy': 'filterBy'
       },
+      resultItem: 'LasecGetCustomerFilterLookup',
+      resultsMap: {
+        'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerFilterLookup.[].name': '[].label',
+      },
+    },
   },
   clients: {
     'ui:widget': 'MaterialTableWidget',
@@ -266,7 +274,8 @@ const uiSchema: any = {
       variables: {
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.paging': 'paging',
-        'props.formContext.$formData.filterBy': 'filterBy'
+        'props.formContext.$formData.filterBy': 'filterBy',
+        'props.formContext.$formData.filter': 'filter',
       },
       resultMap: {
         'paging.page': 'page',

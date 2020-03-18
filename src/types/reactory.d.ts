@@ -125,6 +125,7 @@ declare namespace Reactory {
     default?: any | undefined,
     required?: any | undefined,
     properties?: ISchemaObjectProperties | any | undefined,
+    dependencies?: any | undefined,
   }
 
   export interface IObjectSchema extends ISchema {
