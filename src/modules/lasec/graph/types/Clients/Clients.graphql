@@ -133,7 +133,7 @@ extend type Query {
   LasecGetCustomerRepCodes: [LasecLookupItem]
   LasecGetCustomerFilterLookup(filterBy: String): [LasecLookupItem]
   LasecGetCustomerDocuments(id: String!): [LasecDocument]
-  LasecGetPersonTitles: [LasecLookupItem]
+  LasecGetPersonTitles: [LasecTitleLookupItem]
 }
 
 extend type Mutation {

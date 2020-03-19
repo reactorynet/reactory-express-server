@@ -60,7 +60,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
     panels: [
       {
         id: 'client-details',
-        title: 'Client Details',
+        title: 'CLIENT DETAILS',
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMPersonalInformation',
@@ -70,64 +70,56 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
           {
             componentFqn: 'lasec-crm.LasecCRMContactInformation',
             componentProps: { mode: 'new' },
-            componentPropsMap: {
-              // 'formContext.$formData.id': 'formData.id'
-            },
+            componentPropsMap: {},
           },
           {
             componentFqn: 'lasec-crm.LasecCRMClientJobDetails',
             componentProps: { mode: 'new' },
-            componentPropsMap: {
-              // 'formContext.$formData.id': 'formData.id'
-            },
+            componentPropsMap: {},
           },
-          {
-            componentFqn: 'lasec-crm.LasecCRMClientDocuments',
-            componentProps: { mode: 'new' },
-            componentPropsMap: {
-              // 'formContext.$formData.id': 'formData.id'
-            },
-          },
-          {
-            componentFqn: 'lasec-crm.LasecCRMClientComments',
-            componentProps: { mode: 'new' },
-            componentPropsMap: {
-              // 'formContext.$formData.id': 'formData.id'
-            },
-          }
         ],
       },
       {
         id: 'customer-details',
-        title: 'Customer Details',
+        title: 'CUSTOMER & ORGANISATION',
         Components: [
           {
-            componentFqn: 'lasec-crm.LasecCRMCustomerDetails',
+            componentFqn: 'lasec-crm.LasecCRMCustomerLookup',
             componentProps: { mode: 'new' },
-            componentPropsMap: {
-              // 'formContext.$formData.id': 'formData.id'
-            },
+            componentPropsMap: {},
           },
+        ],
+      },
+      {
+        id: 'address',
+        title: 'ADDRESS',
+        Components: [
+          // {
+          //   componentFqn: 'lasec-crm.LasecCRMClientDocuments',
+          //   componentProps: { mode: 'new' },
+          //   componentPropsMap: {},
+          // },
+        ],
+      },
+      {
+        id: 'documents',
+        title: 'DOCUMENTS',
+        Components: [
           {
-            componentFqn: 'lasec-crm.LasecCRMSpecialRequirements',
+            componentFqn: 'lasec-crm.LasecCRMClientDocuments',
             componentProps: { mode: 'new' },
-            componentPropsMap: {
-              // 'formContext.$formData.id': 'formData.id'
-            },
+            componentPropsMap: {},
           },
+        ],
+      },
+      {
+        id: 'save',
+        title: 'COFIRM & SAVE',
+        Components: [
           {
-            componentFqn: 'lasec-crm.LasecCRMCustomerAccountInfo',
+            componentFqn: 'lasec-crm.LasecCRMClientDocuments',
             componentProps: { mode: 'new' },
-            componentPropsMap: {
-              // 'formContext.$formData.id': 'formData.id'
-            },
-          },
-          {
-            componentFqn: 'lasec-crm.LasecCRMCustomerOrganizationDetails',
-            componentProps: { mode: 'new' },
-            componentPropsMap: {
-              // 'formContext.$formData.id': 'formData.id'
-            },
+            componentPropsMap: {},
           },
         ],
       },

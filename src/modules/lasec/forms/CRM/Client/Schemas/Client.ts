@@ -15,6 +15,10 @@ const ClientSchema: Reactory.ISchema = {
       type: "string",
       title: "Client Status"
     },
+    clientTitle: {
+      type: "string",
+      title: "Client Title"
+    },
     firstName: {
       type: "string",
       title: "Firstname"
@@ -27,10 +31,6 @@ const ClientSchema: Reactory.ISchema = {
       type: "string",
       title: "Client Name"
     },
-    emailAddress: {
-      type: "string",
-      title: "Email Address"
-    },
     customer: {
       type: "string",
       title: "Customer"
@@ -39,6 +39,10 @@ const ClientSchema: Reactory.ISchema = {
       type: "string",
       title: "Account Number"
     },
+    accountType: {
+      type: "string",
+      title: "Account Type"
+    },
     customerStatus: {
       type: "string",
       title: "Customer Status",
@@ -46,6 +50,10 @@ const ClientSchema: Reactory.ISchema = {
     country: {
       type: "string",
       title: "Country"
+    },
+    repCode: {
+      type: "string",
+      title: "Rep Code"
     }
   }
 };

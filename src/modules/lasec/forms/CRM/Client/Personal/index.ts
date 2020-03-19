@@ -311,14 +311,15 @@ const newUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      title: { sm: 12, md: 12 },
-      firstName: { sm: 12, md: 12 },
-      lastName: { sm: 12, md: 12 },
-      country: { sm: 12, md: 12 },
-      accountType: { sm: 12, md: 12 },
+      clientTitle: { sm: 12, md: 6 },
+      firstName: { sm: 12, md: 6 },
+      lastName: { sm: 12, md: 6 },
+      country: { sm: 12, md: 6 },
+      accountType: { sm: 12, md: 6 },
+      repCode: { sm: 12, md: 6 },
     }
   ],
-  title: {
+  clientTitle: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
@@ -415,7 +416,8 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: schema,
   graphql,
-  uiSchema: displayUiSchema,
+  // uiSchema: displayUiSchema,
+  uiSchema: newUiSchema,
   uiSchemas: [
     {
       id: 'display',
