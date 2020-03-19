@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: 'ReactoryApi-Towerstone',
-    script: 'src/server.js',
+    script: 'src/server.ts',
     kill_timeout: 3000,
     listen_timeout: 10000,
     max_memory_restart: '2G',
