@@ -609,6 +609,26 @@ const LASEC_CONFIG = {
         }
       ],
     },
+
+    {
+      key: 'new-client',
+      title: 'New Client',
+      path: '/newClient',
+      public: false,
+      exact: true,
+      roles: ['USER'],
+      componentFqn: `${key}.LasecCRMNewClient@1.0.0`,
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'new'
+          }
+        }
+      ],
+    },
+
     {
       key: 'quote-detail',
       title: 'Quote Detail',

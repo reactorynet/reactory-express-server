@@ -437,7 +437,7 @@ const updateCientDetail = async (args) => {
       }
 
       const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams);
-      logger.debug(`RESOLVER UPDATE RESPONSE:: ${JSON.stringify(apiResponse)}`, apiResponse);  
+      logger.debug(`RESOLVER UPDATE RESPONSE:: ${JSON.stringify(apiResponse)}`, apiResponse);
 
       return {
         Success: apiResponse.success,
@@ -456,18 +456,17 @@ const updateCientDetail = async (args) => {
   }
 }
 
-
 const getCustomerRoles = async (params) => {
 
   const idsResponse = await lasecApi.Customers.GetCustomerRoles();
 
-  if(isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetCustomerRoles({filter: { ids: [...idsResponse.ids] }, pagination: { }});
-    if(details && details.items) {
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerRoles({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
       return details.items;
     }
   }
-  
+
   return [];
 
 };
@@ -476,13 +475,13 @@ const getCustomerRanking = async (params) => {
 
   const idsResponse = await lasecApi.Customers.GetCustomerRankings();
 
-  if(isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetCustomerRankings({filter: { ids: [...idsResponse.ids] }, pagination: { }});
-    if(details && details.items) {
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerRankings({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
       return details.items;
     }
   }
-  
+
   return [];
 };
 
@@ -490,39 +489,68 @@ const getCustomerClass = async (params) => {
 
   const idsResponse = await lasecApi.Customers.GetCustomerClass();
 
-  if(isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetCustomerClass({filter: { ids: [...idsResponse.ids] }, pagination: { }});
-    if(details && details.items) {
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerClass({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
       return details.items;
     }
   }
-  
+
   return [];
 
 };
 
 const getCustomerClassById = async (id) => {
 
-    const details = await lasecApi.Customers.GetCustomerClass({filter: { ids: [id] }, pagination: { }});
-    if(details && details.items && details.items.length === 1) {
-      return details.items[0];
-    }
-  
+  const details = await lasecApi.Customers.GetCustomerClass({ filter: { ids: [id] }, pagination: {} });
+  if (details && details.items && details.items.length === 1) {
+    return details.items[0];
+  }
+
   return null;
 
 };
 
 const getCustomerCountries = async (params) => {
-  return await lasecApi.get(lasecApi.URIS.customer_country.url,undefined, {'country.[]': ['[].id', '[].name']});    
+  return await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country.[]': ['[].id', '[].name'] });
 };
+
+const getCustomerRepCodes = async (params) => {
+  const idsResponse = await lasecApi.Customers.GetRepCodes();
+
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetRepCodes({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
+      return details.items;
+    }
+  }
+
+  return [];
+
+};
+
+const getPersonTitles = async (params) => {
+
+  const idsResponse = await lasecApi.Customers.GetPersonTitles();
+
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
+      return details.items;
+    }
+  }
+
+  return [];
+
+}
 
 const getLasecSalesTeamsForLookup = async () => {
   const salesTeamsResults = await lasecApi.get(lasecApi.URIS.groups, undefined).then();
   logger.debug('SalesTeamsLookupResult >> ', salesTeamsResults);
 }
 
-const getCustomerDocuments = async (params) => {  
-  let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } } );  
+const getCustomerDocuments = async (params) => {
+  let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } });
   return documents.items;
 };
 
@@ -534,7 +562,7 @@ export default {
     },
     availableBalance: async (parent, obj) => {
       return 10;
-    },    
+    },
   },
   LasecCRMCustomer: {
     customerClass: async (parent, obj) => {
@@ -542,7 +570,7 @@ export default {
         try {
           const customerClass = getCustomerClassById(parent.classId);
           return customerClass.name;
-        } catch (dbError) {          
+        } catch (dbError) {
           return parent.customerClass;
         }
       }
@@ -563,9 +591,9 @@ export default {
     availableBalance: async (parent, obj) => {
       return 100;
     },
-    documents: async(parent, object) => {
-      return getCustomerDocuments({id: parent.id });
-    }    
+    documents: async (parent, object) => {
+      return getCustomerDocuments({ id: parent.id });
+    }
   },
   Query: {
     LasecGetClientList: async (obj, args) => {
@@ -580,19 +608,22 @@ export default {
     LasecGetCustomerClass: async (obj, args) => {
       return getCustomerClass(args);
     },
-    LasecGetCustomerRanking: async(object, args) => {
+    LasecGetCustomerRanking: async (object, args) => {
       return getCustomerRanking(args);
     },
-    LasecGetCustomerCountries: async(object, args) => {
+    LasecGetCustomerCountries: async (object, args) => {
       return getCustomerCountries(args);
     },
-    LasecGetCustomerDocuments: async(object, args) => {
+    LasecGetCustomerRepCodes: async (object, args) => {
+      return getCustomerRepCodes(args);
+    },
+    LasecGetCustomerDocuments: async (object, args) => {
       return getCustomerDocuments(args);
     },
     LasecGetCustomerFilterLookup: async (object, args) => {
-      switch(args.filterBy) {
+      switch (args.filterBy) {
         case 'country': {
-          return getCustomerCountries(args);          
+          return getCustomerCountries(args);
         }
         case 'activity_status': {
           return [
@@ -605,6 +636,9 @@ export default {
           return getLasecSalesTeamsForLookup();
         }
       }
+    },
+    LasecGetPersonTitles: async (object, args) => {
+      return getPersonTitles(args);
     }
   },
   Mutation: {
@@ -618,5 +652,5 @@ export default {
     // LasecUpdateClientJobDetails: async (obj, args) => {
     //   return updateCientDetail(args);
     // }
-  }
+  },
 };
