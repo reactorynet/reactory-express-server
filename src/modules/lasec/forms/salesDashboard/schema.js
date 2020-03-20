@@ -266,6 +266,16 @@ export default {
       type: 'string',
       title: 'combined'
     },
+    options: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          //ADD OPTIONS TO BYPASS EMAIL SEARCH
+          
+        }
+      }
+    },
     quotes: {
       type: 'array',
       title: 'Quote Grid',
@@ -308,6 +318,26 @@ export default {
             type: 'number',
             title: 'Total Vat (Incl)',
           },
+          nextAction: {
+            type: 'string',
+            title: 'Next Action'
+          },
+          nextActionNote : {
+            type: 'string',
+            title: 'Next Action Note'
+          },
+          followUp: {
+            type: 'string',
+            title: 'Follow Up'
+          },
+          followUpNote: {
+            type: 'string',
+            title: 'Follow Up Note',
+          },
+          nextActionWho: {
+            type: 'string',
+            title: 'Follow Up User'
+          }
         },
       },
     },

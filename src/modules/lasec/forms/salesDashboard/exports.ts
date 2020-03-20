@@ -67,6 +67,51 @@ const dashboardExcelExportOptions : Reactory.IExcelExportOptions =  {
           }
         },
         {
+          title: 'Next Action', 
+          propertyField: 'nextAction',         
+          format: '',
+          width: 90,
+          type: 'string',
+          required: false,
+          style: {}
+        },
+        {
+          title: 'Note', 
+          propertyField: 'nextActionNote',         
+          format: '',
+          width: 120,
+          type: 'string',
+          required: false,
+          style: {}
+        },
+        {
+          title: 'Follow Up', 
+          propertyField: 'followUp',         
+          format: '',
+          width: 90,
+          type: 'string',
+          required: false,
+          style: {}
+        },
+        {
+          title: 'Follow Up Note', 
+          propertyField: 'followUpNote',         
+          format: '',
+          width: 90,
+          type: 'string',
+          required: false,
+          style: {}
+        },
+        {
+          title: 'User', 
+          propertyField: 'nextActionWho',         
+          format: '',
+          width: 90,
+          type: 'string',
+          required: false,
+          style: {}
+        },
+        {
           title: 'Date Created', 
           propertyField: 'created',         
           format: 'date',

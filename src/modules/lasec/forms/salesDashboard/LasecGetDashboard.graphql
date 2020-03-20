@@ -83,6 +83,29 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
       modified
       expirationDate
       note
+      timeline {
+        id
+        what
+        when
+        actionType
+        who {
+          id
+          fullName          
+        }
+        notes
+        reminder {          
+          who {
+            id
+            fullName
+          }
+          next
+          actionType
+          actioned
+          result
+          text
+          importance          
+        }
+      }
     }
   }
 }
