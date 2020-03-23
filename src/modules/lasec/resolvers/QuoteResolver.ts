@@ -26,7 +26,8 @@ export interface DashboardParams {
   agentSelection: string,
   teamIds: any[],
   repIds: any[],
-  status: any[]
+  status: any[],
+  options?: any
 };
 
 export interface ProductDashboardParams extends DashboardParams {
@@ -104,7 +105,10 @@ const defaultDashboardParams: DashboardParams = {
   agentSelection: 'me',
   teamIds: [],
   repIds: [],
-  status: []
+  status: [],
+  options: {
+
+  }
 };
 
 const defaultProductDashboardParams: ProductDashboardParams = {
@@ -645,10 +649,9 @@ const groupQuotesByProduct = async (quotes: LasecQuote[]) => {
   return groupedByProduct;
 };
 
-const lasecGetProductDashboard = async (dashparams = defaultProductDashboardParams) => {
+const lasecGetProductDashboard = async (dashparams = defaultProductDashboardParams, ) => {
 
-  logger.debug(`GET PRODUCT DASHBOARD QUERIED: ${JSON.stringify(dashparams)}`);
-
+  logger.debug(`GET PRODUCT DASHBOARD QUERIED: ${JSON.stringify(dashparams)}`);  
   let {
     period = 'this-week',
     periodStart = moment(dashparams.periodStart || moment()).startOf('week'),
@@ -657,7 +660,12 @@ const lasecGetProductDashboard = async (dashparams = defaultProductDashboardPara
     teamIds = [],
     repIds = [],
     productClass = [],
+    options = {
+      bypassEmail: true,
+    }
   } = dashparams;
+
+
 
   const now = moment();
   switch (period) {
@@ -1355,7 +1363,10 @@ export default {
       return null;
     },
     note: ({ note }) => (note),
-    timeline: async (quote) => {
+    timeline: async (quote, args, context, info) => {
+      debugger;
+      const { options = { bypassEmail : true} } = args;
+      logger.debug(`Getting timeline for quote "${quote.code}" >> `, options);
 
       const { timeline, id, meta, code } = quote;
       const _timeline: Array<any> = []; //create a virtual timeline
@@ -1364,8 +1375,8 @@ export default {
         timeline.forEach(tl => _timeline.push(tl));
       }
 
-      //create timeline from mails
-      let mails: Array<any> = [];
+      if(options && options.bypassEmail !== true) {
+        let mails: Array<any> = [];
       try {
         mails = await getQuoteEmails(quote.code).then();
       } catch (exc) {
@@ -1396,6 +1407,9 @@ export default {
           }
         });
       }
+      }
+      //create timeline from mails
+      
       return lodash.sortBy(_timeline, ['when']);
     },
     meta: (quote) => {
@@ -1447,8 +1461,11 @@ export default {
     LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes();
     },
-    LasecGetDashboard: async (obj, { dashparams = defaultDashboardParams }) => {
+    LasecGetDashboard: async (obj, { dashparams = defaultDashboardParams }, context: any, info) => {
+      debugger;
       logger.debug('Get Dashboard Queried', dashparams);
+      context.query_options = dashparams.options;
+
       let {
         period = 'this-week',
         periodStart = moment(dashparams.periodStart || moment()).startOf('week'),

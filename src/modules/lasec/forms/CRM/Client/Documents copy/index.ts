@@ -1,8 +1,8 @@
-import { Reactory } from '@reactory/server-core/types/reactory'
+import { Reactory } from './node_modules/@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
 
-export const displayUiSchema: any = {
+const displayUiSchema: any = {
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -237,7 +237,7 @@ const LasecCRMClientDocuments: Reactory.IReactoryForm = {
       key: 'new',
       description: 'Manage Documents',
       icon: 'upload',
-      uiSchema: displayUiSchema,
+      uiSchema: editUiSchema,
     },
   ],
   defaultFormValue: {

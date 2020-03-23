@@ -11,35 +11,39 @@ const $toolbar: any = {
       fabButton: { md: 12, sm: 12, xs: 12, alignItems: 'right' },
     }
   ],
-  search: {
-    'ui:options': {
-      showLabel: false,
-      icon: 'search',
-      component: "TextField",
-      componentProps: {
-        placeholder: 'Search',
-        variant: "outlined",
-        type: 'search',
-        style: {
-          minWidth: '180px'
-        }
-      }
-    }
+  'ui:grid-options': {
+
   },
+  
   fabButton: {
-    'ui:widget': 'LinkFieldWidget',
+    'ui:widget': 'SlideOutLauncher',
     'ui:options': {
-      format: '/', //eslint-disable-line
-      component: 'fab',
-      title: '',
-      icon: 'add',      
-      iconProps: {
-        color: 'primary',
-        style: {
+      props: {
+        componentFqn: 'lasec-crm.LasecCRMNewClient@1.0.0',
+        componentProps: {
+         
         },
+        slideDirection: 'down',                
+        buttonVariant: 'Fab',
+        buttonProps: {
+          size: 'small',
+          style: {
+            color: "#ffffff",
+            marginLeft: '16px',
+            backgroundColor: "#000000"
+          }
+        },
+        buttonIcon: 'add',                
+        windowTitle: 'Add New Client',
       },
-      userouter: true, // use browser navigator
-    },
+      propertyMap: {
+
+      },
+      fullWidth:false,
+      style: {
+        float: 'right'
+      }
+    }      
   },
   view: {
     'ui:widget': 'HiddenWidget',

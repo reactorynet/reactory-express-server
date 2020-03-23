@@ -2,7 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
 
-const displayUiSchema: any = {
+export const displayUiSchema: any = {
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -364,7 +364,7 @@ const newUiSchema: any = {
     style: {
       marginTop: '16px',
     },
-    showSubmit: true,
+    showSubmit: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
@@ -603,8 +603,8 @@ const LasecCRMClientJobDetails: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: schema,
   graphql,
-  // uiSchema: displayUiSchema,
-  uiSchema: newUiSchema,
+  uiSchema: displayUiSchema,
+  //uiSchema: newUiSchema,
   uiSchemas: [
     {
       id: 'display',
@@ -621,6 +621,14 @@ const LasecCRMClientJobDetails: Reactory.IReactoryForm = {
       description: 'Edit Contact Details',
       icon: 'view_module',
       uiSchema: editUiSchema,
+    },
+    {
+      id: 'new',
+      title: 'NEW',
+      key: 'new',
+      description: 'Edit Contact Details',
+      icon: 'view_module',
+      uiSchema: newUiSchema,
     },
   ],
   defaultFormValue: {},

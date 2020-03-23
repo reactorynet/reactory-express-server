@@ -267,13 +267,13 @@ export default {
       title: 'combined'
     },
     options: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          //ADD OPTIONS TO BYPASS EMAIL SEARCH
-          
-        }
+      type: 'object',
+      properties: {
+        //ADD OPTIONS TO BYPASS EMAIL SEARCH
+        bypassEmail: {
+          type: 'boolean',
+          title: 'Bypass Email'
+        },          
       }
     },
     quotes: {

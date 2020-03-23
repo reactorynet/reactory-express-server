@@ -49,12 +49,14 @@ import ClientJobDetail from './CRM/Client/JobDetail';
 import ClientComments from './CRM/Client/Comments';
 import ClientDocuments from './CRM/Client/Documents';
 import NewClient from './CRM/Client/NewClient';
+import NewClientConfirmAndSave from './CRM/Client/NewCustomerConfirm';
 
 import CustomerDetails from './CRM/Customer/Detail';
 import CustomerSpecialRequirement from './CRM/Customer/SpecialRequirements';
 import CustomerAccountInfo from './CRM/Customer/Account';
 import CustomerOrganizationInfo from './CRM/Customer/Organization';
 import CustomerLookUp from './CRM/Customer/Lookup';
+import CustomerAddress from './CRM/Customer/Address';
 
 export default [
   SalesDashboard,
@@ -95,10 +97,12 @@ export default [
   ClientDetail,
   ClientOverviewWidget,
   NewClient,
+  NewClientConfirmAndSave,
 
   CustomerDetails,
   CustomerSpecialRequirement,
   CustomerAccountInfo,
+  CustomerAddress,
   CustomerOrganizationInfo,
   CustomerLookUp,
 ];
