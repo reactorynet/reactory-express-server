@@ -1,47 +1,5 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 
-export const displayUiSchema: any = {
-  'ui:options': {
-    componentType: "div",
-    containerStyles: {
-      padding: '0px',
-      margin: '0px',
-      paddingBottom: '16px'
-    },
-    style: {
-      marginTop: '0',
-    },
-    showSubmit: false,
-    showRefresh: false,
-  },
-  'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      customerName: { sm: 4 },
-    },
-    {
-      organizationName: { sm: 4 },
-    },
-  ],
-  customerName: {},
-  // customerName: {
-  //   'ui:widget': 'SlideOutLauncher',
-  //   'ui:options': {},
-  //   props: {
-  //     componentFqn: 'lasec-crm.UpdateQuoteStatus@1.0.0',
-  //     componentProps: {
-  //       'code': ['data.quote_id', 'data.code', 'query.quote_id']
-  //     },
-  //     slideDirection: 'down',
-  //     buttonTitle: 'Next Actions',
-  //     windowTitle: 'Next Actions ${code}',
-  //   },
-  // },
-  organizationName: {},
-};
-
-
-
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -59,41 +17,37 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      customerName: { sm: 4 },
+      customer: { sm: 12 },
     },
-    {
-      organizationName: { sm: 4 },
-    },
+    // {
+    //   organizationName: { sm: 4 },
+    // },
   ],
-  customerName: {},
-  // customerName: {
-  //   'ui:widget': 'SlideOutLauncher',
-  //   'ui:options': {},
-  //   props: {
-  //     componentFqn: 'lasec-crm.UpdateQuoteStatus@1.0.0',
-  //     componentProps: {
-  //       'code': ['data.quote_id', 'data.code', 'query.quote_id']
-  //     },
-  //     slideDirection: 'down',
-  //     buttonTitle: 'Next Actions',
-  //     windowTitle: 'Next Actions ${code}',
-  //   },
-  // },
-  organizationName: {},
+  customer: {
+    'ui:widget': 'LookupComponent',
+    'ui:options': {
+      label: 'Select a Customer',
+      title: 'Search for a Customer'
+    },
+    props: {
+      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+      componentProps: {},
+    },
+  },
 };
 
 const schema: Reactory.ISchema = {
   type: 'object',
   title: "",
   properties: {
-    customerName: {
+    customer: {
       title: 'Select a Customer',
       type: 'string'
     },
-    organizationName: {
-      title: 'Select an Organisation',
-      type: 'string'
-    },
+    // organizationName: {
+    //   title: 'Select an Organisation',
+    //   type: 'string'
+    // },
   }
 };
 
@@ -112,6 +66,7 @@ const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
   uiSchema: uiSchema,
   widgetMap: [
     { componentFqn: 'core.SlideOutLauncher@1.0.0', widget: 'SlideOutLauncher' },
+    { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
   ],
 };
 

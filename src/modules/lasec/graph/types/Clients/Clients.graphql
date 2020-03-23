@@ -125,6 +125,12 @@ extend type Query {
     filterBy: String
     iter: Int
   ): PagedCRMCustomer
+  LasecGetCompanyList(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    iter: Int
+  ): PagedCRMCustomer
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecLookupItem]
   LasecGetCustomerRanking: [LasecLookupItem]

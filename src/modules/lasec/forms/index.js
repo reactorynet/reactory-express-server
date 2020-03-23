@@ -56,6 +56,7 @@ import CustomerSpecialRequirement from './CRM/Customer/SpecialRequirements';
 import CustomerAccountInfo from './CRM/Customer/Account';
 import CustomerOrganizationInfo from './CRM/Customer/Organization';
 import CustomerLookUp from './CRM/Customer/Lookup';
+import CustomerLookUpForm from './CRM/Customer/Lookup/LookUpForm';
 import CustomerAddress from './CRM/Customer/Address';
 
 export default [
@@ -105,4 +106,5 @@ export default [
   CustomerAddress,
   CustomerOrganizationInfo,
   CustomerLookUp,
+  CustomerLookUpForm,
 ];
