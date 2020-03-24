@@ -554,11 +554,11 @@ const getCustomerDocuments = async (params) => {
   return documents.items;
 };
 
-const getCompanyList = async (params) => {
+const getCustomerList = async (params) => {
 
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter } = params;
 
-  logger.debug(`Getting Companies using search ${search}`, { search, paging, filterBy, iter });
+  logger.debug(`Getting Customers using search ${search}`, { search, paging, filterBy, iter });
 
   let pagingResult = {
     total: 0,
@@ -576,52 +576,66 @@ const getCompanyList = async (params) => {
     customers: []
   };
 
-  // const cachekey = Hash(`company_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
+  const cachekey = Hash(`company_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
-  // let _cachedResults = await getCacheItem(cachekey);
+  let _cachedResults = await getCacheItem(cachekey);
 
-  // if (_cachedResults) {
+  if (_cachedResults) {
 
-  //   if (iter === 0) {
-  //     //client request and we have a cache so we fire off the next fetch anyway
-  //     execql(`query LasecGetCompanyList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
-  //       LasecGetCompanyList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
-  //         paging {
-  //           total
-  //           page
-  //           hasNext
-  //           pageSize
-  //         }
-  //         customers {
-  //           id
-  //           registeredName
-  //         }
-  //       }
-  //     }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
-  //   }
-  //   logger.debug(`Returning cached item ${cachekey}`);
-  //   return _cachedResults;
-  // }
+    if (iter === 0) {
+      //client request and we have a cache so we fire off the next fetch anyway
+      execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+        LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          customers {
+            id
+            registeredName
+          }
+        }
+      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+    }
+    logger.debug(`Returning cached item ${cachekey}`);
+    return _cachedResults;
+  }
 
   logger.debug(`Calling companies api`);
 
-  let testParams = { filter: { account_type: "account", any_field: "COD" }, format: { ids_only: true }, ordering: {}, pagination: { current_page: 1, page_size: 20 } };
-  const compantResult = await lasecApi.Company.list(testParams).then();
+  let filterParams = {
+    filter: {
+      account_type: "",
+      any_field: search,
+    },
+    format: {
+      ids_only: true,
+    },
+    ordering: {},
+    pagination: {
+      current_page: pagingResult.page,
+      page_size: pagingResult.pageSize,
+    }
+  };
 
-  logger.debug(`Returning ids ${compantResult.ids}`);
+  const companyResult = await lasecApi.Company.list(filterParams).then();
+
+  logger.debug(`Returning ids ${companyResult.ids}`);
 
   let ids = [];
 
-  if (isArray(compantResult.ids) === true) {
-    ids = [...compantResult.ids];
+  if (isArray(companyResult.ids) === true) {
+    ids = [...companyResult.ids];
   }
 
-  if (compantResult.pagination && compantResult.pagination.num_pages > 1) {
-    logger.debug('Paged Result From Lasec API', { pagination: compantResult.pagination });
-    pagingResult.total = compantResult.pagination.num_items;
-    pagingResult.pageSize = compantResult.pagination.page_size || 10;
-    pagingResult.hasNext = compantResult.pagination.has_next_page === true;
-    pagingResult.page = compantResult.pagination.current_page || 1;
+  if (companyResult.pagination && companyResult.pagination.num_pages > 1) {
+    logger.debug('Paged Result From Lasec API', { pagination: companyResult.pagination });
+    pagingResult.total = companyResult.pagination.num_items;
+    pagingResult.pageSize = companyResult.pagination.page_size || 10;
+    pagingResult.hasNext = companyResult.pagination.has_next_page === true;
+    pagingResult.page = companyResult.pagination.current_page || 1;
   }
 
   logger.debug(`Loading (${ids.length}) company ids`);
@@ -630,55 +644,16 @@ const getCompanyList = async (params) => {
   logger.debug(`Fetched Expanded View for (${companyDetails.items.length}) Companies from API`);
   let customers = [...companyDetails.items];
 
-  logger.debug(`COMPANY RESOLVER - COMPANY:: Found (${customers.length}) for request`);
+  logger.debug(`CUSTOMER RESOLVER - CUSTOMER:: Found (${customers.length}) for request`);
 
-  customers = customers.map(company => {
-    /*
-      id: "11999"
-      registered_name: "COD  LAB  CPT"
-      description: null
-      trading_name: "COD  LAB  CPT"
-      registration_number: null
-      vat_number: "-"
-      import_vat_number: null
-      credit_facility_requested: "10"
-      account_terms: "COD General Accts"
-      bank_account_type_id: null
-      bank_name: null
-      bank_account_number: null
-      branch_code: null
-      organisation_id: null
-      department_id: null
-      customer_class_id: "IND024"
-      customer_sub_class_id: null
-      legal_address_id: null
-      physical_address_id: null
-      procurement_person_ids: null
-      account_person_ids: null
-      company_on_hold: false
-      currency_id: "1"
-      currency_code: "ZAR"
-      currency_symbol: "R"
-      currency_description: "Rand"
-      sales_team_id: "LAB100"
-      billing_address: ",,,,,"
-      warehouse_id: "10"
-      comment_ids: null
-      credit_limit_total_cents: 0
-      current_balance_total_cents: -6432215
-      current_invoice_total_cents: 34666
-      30_day_invoice_total_cents: -2352596
-      60_day_invoice_total_cents: -136425
-      90_day_invoice_total_cents: -242889
-      120_day_invoice_total_cents: -3734971
-      credit_invoice_total_cents: -6529959
-      comments: []
-     */
-    let _company = om(company, {
+  customers = customers.map(customer => {
+    let _customer = om(customer, {
       'id': 'id',
-      'registeredName': 'registered_name'
+      'registered_name': 'registeredName',
+      'trading_name': 'tradingName',
+      'sales_team_id': 'salesTeam',
     });
-    return _company;
+    return _customer;
   });
 
   customers = orderBy(customers, ['registeredName', ['asc']]);
@@ -690,22 +665,20 @@ const getCompanyList = async (params) => {
     customers,
   };
 
-  return result;
+  if (result.paging.pageSize >= 10 && result.paging.hasNext === true) {
+    if (result.paging.pageSize === 20) {
+      const cachekeys_10 = `company_list_${search}_page_${paging.page || 1}_page_size_10`.toLowerCase();
+      setCacheItem(cachekeys_10, { paging: { ...result.paging, pageSize: 10, hasNext: true }, clients: lodash.take(result.products, 10) });
+    }
 
-  // if (result.paging.pageSize >= 10 && result.paging.hasNext === true) {
-  //   if (result.paging.pageSize === 20) {
-  //     const cachekeys_10 = `company_list_${search}_page_${paging.page || 1}_page_size_10`.toLowerCase();
-  //     setCacheItem(cachekeys_10, { paging: { ...result.paging, pageSize: 10, hasNext: true }, clients: lodash.take(result.products, 10) });
-  //   }
-
-  //   const cachekeys_5 = `company_list_${search}_page_${paging.page || 1}_page_size_5`.toLowerCase();
-  //   setCacheItem(cachekeys_5, { paging: { ...result.paging, pageSize: 5, hasNext: true }, clients: lodash.take(result.products, 5) });
-  // }
+    const cachekeys_5 = `company_list_${search}_page_${paging.page || 1}_page_size_5`.toLowerCase();
+    setCacheItem(cachekeys_5, { paging: { ...result.paging, pageSize: 5, hasNext: true }, clients: lodash.take(result.products, 5) });
+  }
 
   if (result.paging.hasNext === true && iter === 0) {
     try {
-      execql(`query LasecGetCompanyList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
-        LasecGetCompanyList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+      execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+        LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
           paging {
             total
             page
@@ -727,7 +700,150 @@ const getCompanyList = async (params) => {
 
   return result;
 
-}
+};
+
+const getOrganisationList = async (params) => {
+
+  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter } = params;
+
+  logger.debug(`Getting Organization using search ${search}`, { search, paging, filterBy, iter });
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  let _filter = {};
+
+  _filter[filterBy] = filter || search;
+
+  if (isString(search) === false || search.length < 3 && filter === undefined) return {
+    paging: pagingResult,
+    organisations: []
+  };
+
+  // const cachekey = Hash(`organization_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
+
+  // let _cachedResults = await getCacheItem(cachekey);
+
+  // if (_cachedResults) {
+
+  //   if (iter === 0) {
+  //     //client request and we have a cache so we fire off the next fetch anyway
+  //     execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+  //       LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+  //         paging {
+  //           total
+  //           page
+  //           hasNext
+  //           pageSize
+  //         }
+  //         customers {
+  //           id
+  //           registeredName
+  //         }
+  //       }
+  //     }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+  //   }
+  //   logger.debug(`Returning cached item ${cachekey}`);
+  //   return _cachedResults;
+  // }
+
+  logger.debug(`Calling Organisations api`);
+
+  let filterParams = {
+    filter: {
+      any_field: search,
+    },
+    format: {
+      ids_only: true,
+    },
+    ordering: {},
+    pagination: {
+      current_page: pagingResult.page,
+      page_size: pagingResult.pageSize,
+    },
+  };
+
+  const organisationResult = await lasecApi.Organisation.list(filterParams).then();
+
+  logger.debug(`Returning ids ${organisationResult.ids}`);
+
+  let ids = [];
+
+  if (isArray(organisationResult.ids) === true) {
+    ids = [...organisationResult.ids];
+  }
+
+  if (organisationResult.pagination && organisationResult.pagination.num_pages > 1) {
+    logger.debug('Paged Result From Lasec API', { pagination: organisationResult.pagination });
+    pagingResult.total = organisationResult.pagination.num_items;
+    pagingResult.pageSize = organisationResult.pagination.page_size || 10;
+    pagingResult.hasNext = organisationResult.pagination.has_next_page === true;
+    pagingResult.page = organisationResult.pagination.current_page || 1;
+  }
+
+  logger.debug(`Loading (${ids.length}) company ids`);
+
+  const organisationDetails = await lasecApi.Organisation.list({ filter: { ids: ids } });
+
+
+  logger.debug(`ORGANISATION DETAILS (${JSON.stringify(organisationDetails)})`);
+
+
+  logger.debug(`Fetched Expanded View for (${organisationDetails.organisations.length}) ORGANISATIONS from API`);
+  let organisations = [...organisationDetails.organisations];
+
+  logger.debug(`ORGANISATION RESOLVER - ORGANISATION:: Found (${organisations.length}) for request`);
+
+  organisations = organisations.map(organisation => {
+    let _organisation = om(organisation, {
+      'id': 'id',
+      'name': 'name',
+      'description': 'description',
+    });
+    return _organisation;
+  });
+
+  logger.debug(`ORGANISATIONS:: (${JSON.stringify(organisations)})`);
+
+  // organisations = orderBy(organisations, ['registeredName', ['asc']]);
+
+  let result = {
+    paging: pagingResult,
+    search,
+    filterBy,
+    organisations,
+  };
+
+  // if (result.paging.hasNext === true && iter === 0) {
+  //   try {
+  //     execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+  //       LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+  //         paging {
+  //           total
+  //           page
+  //           hasNext
+  //           pageSize
+  //         }
+  //         customers {
+  //           id
+  //           registeredName
+  //         }
+  //       }
+  //     }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
+  //   } catch (cacheFetchError) {
+  //     logger.error('An error occured attempting to cache next page', cacheFetchError);
+  //   }
+  // }
+
+  // setCacheItem(cachekey, result, 60 * 10);
+
+  return result;
+
+};
 
 export default {
   LasecCRMClient: {
@@ -814,8 +930,11 @@ export default {
     LasecGetPersonTitles: async (object, args) => {
       return getPersonTitles(args);
     },
-    LasecGetCompanyList: async (obj, args) => {
-      return getCompanyList(args);
+    LasecGetCustomerList: async (obj, args) => {
+      return getCustomerList(args);
+    },
+    LasecGetOrganisationList: async (obj, args) => {
+      return getOrganisationList(args);
     },
   },
   Mutation: {

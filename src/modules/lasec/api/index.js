@@ -476,6 +476,20 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     }
   },
+  Organisation: {
+    list: async (params = defaultParams) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.organisation.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = apiResponse;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+  },
   Products: {
     list: async (params = defaultParams) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } });

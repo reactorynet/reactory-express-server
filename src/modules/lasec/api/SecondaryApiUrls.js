@@ -87,6 +87,8 @@ export default {
   customer_country: { url: `api/${ENTITY_KEY__CUSTOMER}/country_list`, allowed_methods: ['get'] },
   person_title: { url: `api/${ENTITY_KEY__PERSON_TITLE}/`, allowed_methods: ['get'] },
   rep_code: { url: `api/${ENTITY_KEY__REP_CODE}/`, allowed_methods: ['get'] },
+  organisation: { url: `api/${ENTITY_KEY__ORGANISATION}/`, allowed_methods: ['get'] },
+
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },
   { url: `api/${ENTITY_KEY__PRODUCT_BUYER}/`, allowed_methods: ['get'] },

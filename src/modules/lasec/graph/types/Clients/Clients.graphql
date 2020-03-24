@@ -33,6 +33,12 @@ type LasecCRMCustomer {
   documents: [LasecDocument]
 }
 
+type LasecCRMOrganisation {
+  id: String
+  name: String
+  description: String
+}
+
 type LasecCRMClient {
   id: String
   clientStatus: String
@@ -75,6 +81,13 @@ type PagedCRMCustomer {
   customers: [LasecCRMCustomer]
 }
 
+type PagedCRMOrganisation {
+  search: String
+  filterBy: String
+  paging: PagingResult
+  organisations: [LasecCRMOrganisation]
+}
+
 type ClientDetailUpdateResponse {
   Success: Boolean
 }
@@ -111,26 +124,9 @@ input ClientUpdateInput {
 }
 
 extend type Query {
-  LasecGetClientList(
-    search: String!
-    paging: PagingRequest
-    filterBy: String
-    iter: Int
-    filter: String
-  ): PagedCRMClient
+  LasecGetClientList(search: String! paging: PagingRequest filterBy: String iter: Int filter: String): PagedCRMClient
   LasecGetClientDetail(id: String!): LasecCRMClient
-  LasecGetCustomerList(
-    search: String!
-    paging: PagingRequest
-    filterBy: String
-    iter: Int
-  ): PagedCRMCustomer
-  LasecGetCompanyList(
-    search: String!
-    paging: PagingRequest
-    filterBy: String
-    iter: Int
-  ): PagedCRMCustomer
+  LasecGetCustomerList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMCustomer
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecLookupItem]
   LasecGetCustomerRanking: [LasecLookupItem]
@@ -140,6 +136,7 @@ extend type Query {
   LasecGetCustomerFilterLookup(filterBy: String): [LasecLookupItem]
   LasecGetCustomerDocuments(id: String!): [LasecDocument]
   LasecGetPersonTitles: [LasecTitleLookupItem]
+  LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
 }
 
 extend type Mutation {

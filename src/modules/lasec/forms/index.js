@@ -59,6 +59,9 @@ import CustomerLookUp from './CRM/Customer/Lookup';
 import CustomerLookUpForm from './CRM/Customer/Lookup/LookUpForm';
 import CustomerAddress from './CRM/Customer/Address';
 
+import OrganizationLookup from './CRM/Organization/Lookup';
+import OrganizationLookupForm from './CRM/Organization/Lookup/LookUpForm';
+
 export default [
   SalesDashboard,
   ProductDashboard,
@@ -107,4 +110,7 @@ export default [
   CustomerOrganizationInfo,
   CustomerLookUp,
   CustomerLookUpForm,
+
+  OrganizationLookup,
+  OrganizationLookupForm,
 ];
