@@ -18,7 +18,10 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    { search: { md: 4, sm: 12 } },
+    {
+      search: { sm: 12, md: 6 },
+      addNew: { sm: 12, md: 6 },
+    },
     { organisations: { sm: 12 } },
   ],
   search: {
@@ -34,6 +37,28 @@ const uiSchema: any = {
           minWidth: '180px'
         }
       }
+    }
+  },
+  addNew: {
+    'ui:widget': 'SlideOutLauncher',
+    'ui:options': {
+      props: {
+        componentFqn: 'lasec-crm.LasecCRMNewOrganisation@1.0.0',
+        componentProps: {},
+        slideDirection: 'down',
+        buttonVariant: 'Typography',
+        buttonTitle: 'Add New Organisation',
+        buttonProps: {
+          color: 'primary',
+          style: {
+            fontWeight: 'bold',
+            fontSize: '16px'
+          }
+        },
+        windowTitle: 'Add New Organisation',
+      },
+      propertyMap: {},
+      fullWidth:false
     }
   },
   paging: {
@@ -79,6 +104,10 @@ const schema: Reactory.ISchema = {
     search: {
       type: 'string',
       title: 'Search'
+    },
+    addNew: {
+      type: 'string',
+      title: 'Add New Organisation'
     },
     paging: {
       type: 'object',
@@ -128,7 +157,12 @@ const LasecCRMOrganisationLookupForm: Reactory.IReactoryForm = {
   schema: schema,
   uiSchema: uiSchema,
   graphql: $graphql,
-  widgetMap: [],
+  widgetMap: [
+    {
+      componentFqn: 'core.SlideOutLauncher@1.0.0',
+      widget: 'SlideOutLauncher'
+    },
+  ],
   defaultFormValue: {
     paging: { page: 1, pageSize: 10 },
     search: "",

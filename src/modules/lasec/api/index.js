@@ -489,6 +489,23 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+    createNew: async (params) => {
+      try {
+        const url = 'api/organisation/0/';
+
+        const apiResponse = await POST(url, { ...params });
+        const { status, payload } = apiResponse;
+
+        logger.debug(`CREATE ORG RESULT:: ${JSON.stringify(apiResponse)}`);
+
+        if (status === 'sucess') {
+          return payload;
+        }
+      } catch (lasecApiError) {
+        logger.error(`Error creating:: ${JSON.stringify(lasecApiError)}`);
+        return null;
+      }
+    }
   },
   Products: {
     list: async (params = defaultParams) => {

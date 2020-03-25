@@ -88,6 +88,7 @@ export default {
   person_title: { url: `api/${ENTITY_KEY__PERSON_TITLE}/`, allowed_methods: ['get'] },
   rep_code: { url: `api/${ENTITY_KEY__REP_CODE}/`, allowed_methods: ['get'] },
   organisation: { url: `api/${ENTITY_KEY__ORGANISATION}/`, allowed_methods: ['get'] },
+  createOrganisation: { url: `api/${ENTITY_KEY__ORGANISATION}/\\d+/`, allowed_methods: ['put'] },
 
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },

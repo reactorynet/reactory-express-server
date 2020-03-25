@@ -61,6 +61,7 @@ import CustomerAddress from './CRM/Customer/Address';
 
 import OrganizationLookup from './CRM/Organization/Lookup';
 import OrganizationLookupForm from './CRM/Organization/Lookup/LookUpForm';
+import NewOrganisation from './CRM/Organization/NewOrganisation';
 
 export default [
   SalesDashboard,
@@ -113,4 +114,5 @@ export default [
 
   OrganizationLookup,
   OrganizationLookupForm,
+  NewOrganisation
 ];

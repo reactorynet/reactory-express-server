@@ -845,6 +845,31 @@ const getOrganisationList = async (params) => {
 
 };
 
+const createNewOrganisation = async (args) => {
+
+  // Required
+  // Name
+  // Customer Id
+
+  try {
+    logger.debug(`>> >> >> CREATE ORGANISATION PARAMS:: `, args);
+
+    const apiResponse = await lasecApi.Organisation.createNew({ name: args.name });
+
+    logger.debug(`RESOLVER API RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
+    return {
+      Success: false,
+    }
+  }
+  catch (ex) {
+    logger.error(`ERROR CREATING ORGANISATION::  ${ex}`);
+    return {
+      Success: false,
+    }
+  }
+};
+
 export default {
   LasecCRMClient: {
     creditLimit: async (parent, obj) => {
@@ -942,11 +967,8 @@ export default {
       logger.debug(`UPDATING CLIENT DETAILS WITH ARGS ${args}`);
       return updateCientDetail(args);
     },
-    // LasecUpdateClientContactDetails: async (obj, args) => {
-    //   return updateCientDetail(args);
-    // },
-    // LasecUpdateClientJobDetails: async (obj, args) => {
-    //   return updateCientDetail(args);
-    // }
+    LasecCreateNewOrganisation: async (onj, args) => {
+      return createNewOrganisation(args);
+    },
   },
 };
