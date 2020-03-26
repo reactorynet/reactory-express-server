@@ -491,18 +491,19 @@ const Api = {
     },
     createNew: async (params) => {
       try {
-        const url = 'api/organisation/0/';
+        // const url = 'api/organisation/0/';
+        // const apiResponse = await PUT(url, { ...params });
 
+        const url = 'api/customer/create_organisation_and_save_to_customer/';
         const apiResponse = await POST(url, { ...params });
-        const { status, payload } = apiResponse;
 
-        logger.debug(`CREATE ORG RESULT:: ${JSON.stringify(apiResponse)}`);
+        const { status } = apiResponse;
 
-        if (status === 'sucess') {
-          return payload;
+        if (status === 'success') {
+          return apiResponse;
         }
       } catch (lasecApiError) {
-        logger.error(`Error creating:: ${JSON.stringify(lasecApiError)}`);
+        logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`);
         return null;
       }
     }
@@ -768,7 +769,7 @@ const Api = {
         } = apiResponse;
 
         logger.debug(`CreateQuoteHeader response status: ${status}  payload: ${payload} id: ${id}`);
-        if (status === 'sucess') {
+        if (status === 'success') {
           return payload;
         }
       } catch (lasecApiError) {
@@ -785,7 +786,7 @@ const Api = {
 
         logger.debug(`CreateQuoteHeader response status: ${status}  payload: ${payload} id: ${id}`);
 
-        if (status === 'sucess') {
+        if (status === 'success') {
           return payload;
         }
       } catch (lasecApiError) {
@@ -802,7 +803,7 @@ const Api = {
 
         logger.debug(`Deleted quote header: ${status}  payload: ${payload} id: ${id}`);
 
-        if (status === 'sucess') {
+        if (status === 'success') {
           return null;
         }
       } catch (lasecApiError) {

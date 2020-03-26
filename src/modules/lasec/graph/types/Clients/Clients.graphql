@@ -104,6 +104,11 @@ type LasecTitleLookupItem {
   long_title: String
 }
 
+type CreateNewOrganisationResponse {
+  id: Int
+  success: Boolean
+}
+
 input ClientUpdateInput {
   clientId: String!
   clientStatus: String
@@ -144,7 +149,7 @@ extend type Mutation {
     clientInfo: ClientUpdateInput!
   ): ClientDetailUpdateResponse
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
-  LasecCreateNewOrganisation(name: String): SimpleResponse
+  LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
 }
 
 #  LasecUpdateClientJobDetails(clientId: String!, accountType: String!, repCode: String!, jobTitle: String!, clientDepartment: String!, clientClass: String!, ranking: String!): ClientDetailUpdateResponse

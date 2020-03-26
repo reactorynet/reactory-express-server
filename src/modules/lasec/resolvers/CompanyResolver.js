@@ -847,25 +847,29 @@ const getOrganisationList = async (params) => {
 
 const createNewOrganisation = async (args) => {
 
-  // Required
-  // Name
-  // Customer Id
+  // Required:: customer_id name description
+  // Possibly also needs "onboarding_step_completed"
 
   try {
-    logger.debug(`>> >> >> CREATE ORGANISATION PARAMS:: `, args);
 
-    const apiResponse = await lasecApi.Organisation.createNew({ name: args.name });
+    const apiResponse = await lasecApi.Organisation.createNew({
+      customer_id: args.customerId,
+      name: args.name,
+      description: args.description,
+    }).then();
 
     logger.debug(`RESOLVER API RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
     return {
-      Success: false,
+      success: apiResponse.status === 'success',
+      id: apiResponse.payload.id,
     }
   }
   catch (ex) {
     logger.error(`ERROR CREATING ORGANISATION::  ${ex}`);
     return {
-      Success: false,
+      success: false,
+      id: 0,
     }
   }
 };

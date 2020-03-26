@@ -1,5 +1,5 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
-// import $graphql from './graphql';
+import $graphql from './graphql';
 
 const uiSchema: any = {
   'ui:options': {
@@ -11,7 +11,7 @@ const uiSchema: any = {
     style: {
       marginTop: '0',
     },
-    submitIcon: 'search',
+    // submitIcon: 'search',
     componentType: "form",
     showSubmit: true,
     showRefresh: false,
@@ -23,6 +23,9 @@ const uiSchema: any = {
       description: { sm: 12},
     },
   ],
+  customerId: {
+    'ui:widget': 'HiddenWidget',
+  },
   name: {
     'ui:options': {
       containerStyles: {
@@ -48,9 +51,7 @@ const uiSchema: any = {
         variant: "outlined",
         multiline: true,
         rows: 5,
-        style: {
-          // minHeight: '100px',
-        }
+        style: {}
       }
     }
   },
@@ -60,6 +61,10 @@ const schema: Reactory.ISchema = {
   type: 'object',
   title: "",
   properties: {
+    customerId: {
+      type: 'string',
+      title: 'Customer Id'
+    },
     name: {
       type: 'string',
       title: 'Organisation Name'
@@ -84,9 +89,11 @@ const LasecCRMNewOrganisationForm: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: schema,
   uiSchema: uiSchema,
-  // graphql: $graphql,
+  graphql: $graphql,
   widgetMap: [],
-  defaultFormValue: {}
+  defaultFormValue: {
+    customerId: '42160'
+  }
 };
 
 export default LasecCRMNewOrganisationForm;
