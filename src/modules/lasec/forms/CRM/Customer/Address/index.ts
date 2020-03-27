@@ -1,6 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 import AddressSchema from '../../Shared/Address';
 
+// const GOOGLE_MAPS_API_KEY_DEVELOPMENT = '<GOOGLE MAPS API KEY>';
 const GOOGLE_MAPS_API_KEY_DEVELOPMENT = '<GOOGLE MAPS API KEY>';
 
 const baseUiSchema: any =  {
@@ -20,30 +21,34 @@ const baseUiSchema: any =  {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      physicalAddress: { sm: 4 },
+      physicalAddress: { sm: 12 },
     },
     {
-      deliveryAddress: { sm: 4 },
+      deliveryAddress: { sm: 12 },
     },
     {
-      billingAddress: { sm: 4 },
+      billingAddress: { sm: 12 },
     },
   ],
   physicalAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget',
     'ui:options': {
-      props: {
-        key: GOOGLE_MAPS_API_KEY_DEVELOPMENT,
-        viewMode: 'MAP_WITH_SEARCH',
+      props: {        
+        viewMode: 'MAP_WITH_SEARCH|ADDRESS_LABEL',        
+      },
+      mapProps: {
+        googleMapURL: `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY_DEVELOPMENT}&v=3.exp&libraries=geometry,drawing,places`,
       }
     }
   },  
   deliveryAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget',
     'ui:options': {
-      props: {
-        key: GOOGLE_MAPS_API_KEY_DEVELOPMENT,
-        viewMode: 'MAP_WITH_SEARCH'
+      props: {        
+        viewMode: 'MAP_WITH_SEARCH|ADDRESS_LABEL',        
+      },
+      mapProps: {
+        googleMapURL: `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY_DEVELOPMENT}&v=3.exp&libraries=geometry,drawing,places`,
       }
     }
 
@@ -52,8 +57,10 @@ const baseUiSchema: any =  {
     'ui:widget': 'ReactoryGoogleMapWidget',
     'ui:options': {
       props: {
-        key: GOOGLE_MAPS_API_KEY_DEVELOPMENT,
-        viewMode: 'MAP_WITH_SEARCH',
+        viewMode: 'MAP_WITH_SEARCH|ADDRESS_LABEL',
+      },
+      mapProps: {
+        googleMapURL: `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY_DEVELOPMENT}&v=3.exp&libraries=geometry,drawing,places`,
       }
     }
   }
@@ -90,13 +97,13 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      physicalAddress: { sm: 4 },
+      physicalAddress: { sm: 12 },
     },
     {
-      deliveryAddress: { sm: 4 },
+      deliveryAddress: { sm: 12 },
     },
     {
-      billingAddress: { sm: 4 },
+      billingAddress: { sm: 12 },
     },
   ],
   physicalAddress: {
