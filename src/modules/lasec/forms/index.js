@@ -56,7 +56,12 @@ import CustomerSpecialRequirement from './CRM/Customer/SpecialRequirements';
 import CustomerAccountInfo from './CRM/Customer/Account';
 import CustomerOrganizationInfo from './CRM/Customer/Organization';
 import CustomerLookUp from './CRM/Customer/Lookup';
+import CustomerLookUpForm from './CRM/Customer/Lookup/LookUpForm';
 import CustomerAddress from './CRM/Customer/Address';
+
+import OrganizationLookup from './CRM/Organization/Lookup';
+import OrganizationLookupForm from './CRM/Organization/Lookup/LookUpForm';
+import NewOrganisation from './CRM/Organization/NewOrganisation';
 
 export default [
   SalesDashboard,
@@ -105,4 +110,9 @@ export default [
   CustomerAddress,
   CustomerOrganizationInfo,
   CustomerLookUp,
+  CustomerLookUpForm,
+
+  OrganizationLookup,
+  OrganizationLookupForm,
+  NewOrganisation
 ];

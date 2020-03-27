@@ -195,7 +195,7 @@ export const editUiSchema: any = {
       buttonVariant: "contained",
       selectSchemaId: 'display'
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSchemaSelectorInToolbar: false,
@@ -302,11 +302,11 @@ export const newUiSchema: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSubmit: false,
-    showRefresh: false,    
+    showRefresh: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -384,16 +384,19 @@ export const newUiSchema: any = {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
-      query: `query LasecGetCustomerRepCodes {
-        LasecGetCustomerRepCodes {
+      query: `query LasecSalesTeams {
+        LasecSalesTeams {
           id
-          name
+          title
+          meta  {
+            reference
+          }
         }
       }`,
-      resultItem: 'LasecGetCustomerRepCodes',
+      resultItem: 'LasecSalesTeams',
       resultsMap: {
-        'LasecGetCustomerRepCodes.[].id': ['[].key', '[].value'],
-        'LasecGetCustomerRepCodes.[].name': '[].label',
+        'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
+        'LasecSalesTeams.[].title': '[].label',
       },
     },
   },

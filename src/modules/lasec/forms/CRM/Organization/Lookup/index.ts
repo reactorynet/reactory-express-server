@@ -17,17 +17,17 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      customer: { sm: 12 },
+      organisation: { sm: 12 },
     },
   ],
-  customer: {
+  organisation: {
     'ui:widget': 'LookupComponent',
     'ui:options': {
-      label: 'Select a Customer',
-      title: 'Search for a Customer'
+      label: 'Select an Organisation',
+      title: 'Search for an Organisation'
     },
     props: {
-      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+      componentFqn: 'lasec-crm.LasecCRMOrganisationLookupTable@1.0.0',
       componentProps: {},
     },
   },
@@ -37,22 +37,22 @@ const schema: Reactory.ISchema = {
   type: 'object',
   title: "",
   properties: {
-    customer: {
-      title: 'Select a Customer',
+    organisation: {
+      title: 'Select an Organisation',
       type: 'string'
     },
   }
 };
 
-const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
-  id: 'LasecCRMCustomerLookup',
+const LasecCRMOrganizationLookupForm: Reactory.IReactoryForm = {
+  id: 'LasecCRMOrganizationLookup',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
-  title: 'CRM Customer Lookup',
-  tags: ['CRM Customer Lookup'],
+  title: 'CRM Organization Lookup',
+  tags: ['CRM Organization Lookup'],
   registerAsComponent: true,
-  name: 'LasecCRMCustomerLookup',
+  name: 'LasecCRMOrganizationLookup',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
@@ -63,4 +63,4 @@ const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
   ],
 };
 
-export default LasecCRMCustomerLookupForm;
+export default LasecCRMOrganizationLookupForm;

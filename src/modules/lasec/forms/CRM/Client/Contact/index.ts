@@ -259,7 +259,7 @@ const newUiSchema: any = {
         },
         {
           key: 'fax',
-          value: 'faxe',
+          value: 'fax',
           label: 'Fax',
         },
       ]
@@ -358,7 +358,7 @@ const LasecCRMContactInformation: Reactory.IReactoryForm = {
     },
   ],
   defaultFormValue: {
-    prefferedMethodOfContact: 'email'
+    prefferedMethodOfContact: 'phone'
   },
   widgetMap: [
     { componentFqn: 'core.RadioGroupComponent@1.0.0', widget: 'RadioGroupComponent' },

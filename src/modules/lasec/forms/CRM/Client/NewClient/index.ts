@@ -88,14 +88,14 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: schema,
   uiSchema: uiSchema,
-  defaultFormValue: {    
+  defaultFormValue: {
     expandedPanels: [
       'client-details'
     ],
     panels: [
       {
         id: 'client-details',
-        title: 'CLIENT DETAILS',        
+        title: 'CLIENT DETAILS',
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMPersonalInformation',
@@ -104,12 +104,12 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
           },
           {
             componentFqn: 'lasec-crm.LasecCRMContactInformation',
-            componentProps: { mode: 'new',  uiSchemaKey: 'new' },
+            componentProps: { mode: 'new', uiSchemaKey: 'new' },
             componentPropsMap: {},
           },
           {
             componentFqn: 'lasec-crm.LasecCRMClientJobDetails',
-            componentProps: { mode: 'new',  uiSchemaKey: 'new' },
+            componentProps: { mode: 'new', uiSchemaKey: 'new' },
             componentPropsMap: {},
           },
         ],
@@ -120,7 +120,12 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMCustomerLookup',
-            componentProps: { mode: 'new', uiSchemaKey: 'new'  },
+            componentProps: { mode: 'new', uiSchemaKey: 'new' },
+            componentPropsMap: {},
+          },
+          {
+            componentFqn: 'lasec-crm.LasecCRMOrganizationLookup',
+            componentProps: { mode: 'new', uiSchemaKey: 'new' },
             componentPropsMap: {},
           },
         ],
@@ -129,11 +134,11 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         id: 'address',
         title: 'ADDRESS',
         Components: [
-           {
-             componentFqn: 'lasec-crm.LasecCRMCustomerAddress',
-             componentProps: { mode: 'new',  uiSchemaKey: 'new'  },
-             componentPropsMap: {},
-           },
+          {
+            componentFqn: 'lasec-crm.LasecCRMCustomerAddress',
+            componentProps: { mode: 'new', uiSchemaKey: 'new' },
+            componentPropsMap: {},
+          },
         ],
       },
       {
@@ -142,7 +147,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMClientDocuments',
-            componentProps: { mode: 'new',  uiSchemaKey: 'new'  },
+            componentProps: { mode: 'new', uiSchemaKey: 'new' },
             componentPropsMap: {},
           },
         ],
@@ -153,7 +158,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMNewCustomerConfirm',
-            componentProps: { mode: 'new',  uiSchemaKey: 'new'  },
+            componentProps: { mode: 'new', uiSchemaKey: 'new' },
             componentPropsMap: {
               'formData.client': 'formData'
             },

@@ -437,6 +437,20 @@ const Api = {
     },
   },
   Company: {
+    list: async (params) => {
+
+      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = apiResponse;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+
+    },
     getById: async (params) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } });
       const {
@@ -460,6 +474,38 @@ const Api = {
       }
 
       return { pagination: {}, ids: [], items: [] };
+    }
+  },
+  Organisation: {
+    list: async (params = defaultParams) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.organisation.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = apiResponse;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+    createNew: async (params) => {
+      try {
+        // const url = 'api/organisation/0/';
+        // const apiResponse = await PUT(url, { ...params });
+
+        const url = 'api/customer/create_organisation_and_save_to_customer/';
+        const apiResponse = await POST(url, { ...params });
+
+        const { status } = apiResponse;
+
+        if (status === 'success') {
+          return apiResponse;
+        }
+      } catch (lasecApiError) {
+        logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`);
+        return null;
+      }
     }
   },
   Products: {
@@ -723,7 +769,7 @@ const Api = {
         } = apiResponse;
 
         logger.debug(`CreateQuoteHeader response status: ${status}  payload: ${payload} id: ${id}`);
-        if (status === 'sucess') {
+        if (status === 'success') {
           return payload;
         }
       } catch (lasecApiError) {
@@ -740,7 +786,7 @@ const Api = {
 
         logger.debug(`CreateQuoteHeader response status: ${status}  payload: ${payload} id: ${id}`);
 
-        if (status === 'sucess') {
+        if (status === 'success') {
           return payload;
         }
       } catch (lasecApiError) {
@@ -757,7 +803,7 @@ const Api = {
 
         logger.debug(`Deleted quote header: ${status}  payload: ${payload} id: ${id}`);
 
-        if (status === 'sucess') {
+        if (status === 'success') {
           return null;
         }
       } catch (lasecApiError) {

@@ -409,16 +409,11 @@ const newUiSchema: any = {
         }
       },
       selectOptions: [
-        {
-          key: 'type-1',
-          value: 'type-1',
-          label: 'Type 1',
-        },
-        {
-          key: 'type-2',
-          value: 'type-2',
-          label: 'Type 2',
-        },
+        // {
+        //   key: 'type-1',
+        //   value: 'type-1',
+        //   label: 'Type 1',
+        // },
       ],
     },
   },
@@ -457,16 +452,11 @@ const newUiSchema: any = {
         }
       },
       selectOptions: [
-        {
-          key: 'type-1',
-          value: 'type-1',
-          label: 'Type 1',
-        },
-        {
-          key: 'type-2',
-          value: 'type-2',
-          label: 'Type 2',
-        },
+        // {
+        //   key: 'type-1',
+        //   value: 'type-1',
+        //   label: 'Type 1',
+        // },
       ],
     },
   },
@@ -498,16 +488,11 @@ const newUiSchema: any = {
         }
       },
       selectOptions: [
-        {
-          key: 'type-1',
-          value: 'type-1',
-          label: 'Faculty 1',
-        },
-        {
-          key: 'type-2',
-          value: 'type-2',
-          label: 'Faculty 2',
-        },
+        // {
+        //   key: 'type-1',
+        //   value: 'type-1',
+        //   label: 'Faculty 1',
+        // },
       ],
     },
   },
