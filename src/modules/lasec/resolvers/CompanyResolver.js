@@ -724,32 +724,32 @@ const getOrganisationList = async (params) => {
     organisations: []
   };
 
-  // const cachekey = Hash(`organization_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
+  const cachekey = Hash(`organization_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
-  // let _cachedResults = await getCacheItem(cachekey);
+  let _cachedResults = await getCacheItem(cachekey);
 
-  // if (_cachedResults) {
+  if (_cachedResults) {
 
-  //   if (iter === 0) {
-  //     //client request and we have a cache so we fire off the next fetch anyway
-  //     execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
-  //       LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
-  //         paging {
-  //           total
-  //           page
-  //           hasNext
-  //           pageSize
-  //         }
-  //         customers {
-  //           id
-  //           registeredName
-  //         }
-  //       }
-  //     }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
-  //   }
-  //   logger.debug(`Returning cached item ${cachekey}`);
-  //   return _cachedResults;
-  // }
+    if (iter === 0) {
+      //client request and we have a cache so we fire off the next fetch anyway
+      execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+        LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          customers {
+            id
+            registeredName
+          }
+        }
+      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+    }
+    logger.debug(`Returning cached item ${cachekey}`);
+    return _cachedResults;
+  }
 
   logger.debug(`Calling Organisations api`);
 
@@ -789,10 +789,6 @@ const getOrganisationList = async (params) => {
 
   const organisationDetails = await lasecApi.Organisation.list({ filter: { ids: ids } });
 
-
-  logger.debug(`ORGANISATION DETAILS (${JSON.stringify(organisationDetails)})`);
-
-
   logger.debug(`Fetched Expanded View for (${organisationDetails.organisations.length}) ORGANISATIONS from API`);
   let organisations = [...organisationDetails.organisations];
 
@@ -809,7 +805,7 @@ const getOrganisationList = async (params) => {
 
   logger.debug(`ORGANISATIONS:: (${JSON.stringify(organisations)})`);
 
-  // organisations = orderBy(organisations, ['registeredName', ['asc']]);
+  organisations = orderBy(organisations, ['name', ['asc']]);
 
   let result = {
     paging: pagingResult,
@@ -818,28 +814,28 @@ const getOrganisationList = async (params) => {
     organisations,
   };
 
-  // if (result.paging.hasNext === true && iter === 0) {
-  //   try {
-  //     execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
-  //       LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
-  //         paging {
-  //           total
-  //           page
-  //           hasNext
-  //           pageSize
-  //         }
-  //         customers {
-  //           id
-  //           registeredName
-  //         }
-  //       }
-  //     }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
-  //   } catch (cacheFetchError) {
-  //     logger.error('An error occured attempting to cache next page', cacheFetchError);
-  //   }
-  // }
+  if (result.paging.hasNext === true && iter === 0) {
+    try {
+      execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+        LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          customers {
+            id
+            registeredName
+          }
+        }
+      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
+    } catch (cacheFetchError) {
+      logger.error('An error occured attempting to cache next page', cacheFetchError);
+    }
+  }
 
-  // setCacheItem(cachekey, result, 60 * 10);
+  setCacheItem(cachekey, result, 60 * 10);
 
   return result;
 
