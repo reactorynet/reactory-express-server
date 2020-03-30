@@ -8,12 +8,12 @@ const graphql: Reactory.IFormGraphDefinition = {
         id
         name
         url
-      }      
+      }
     }`,
     variables: {
-      'formData.id': 'id',            
+      'formData.id': 'id',
     },
-    resultMap: {      
+    resultMap: {
       '[]':'documents.[]'
     },
     autoQuery: true,
@@ -24,9 +24,9 @@ const graphql: Reactory.IFormGraphDefinition = {
   },
   mutation: {
     new: {
-      name: 'LasecUploadCustomerDocument',
-      text: `mutation LasecUploadCustomerDocument($id: String, $file: Upload!){
-        LasecUploadCustomerDocument(id: $id, file: $file) {
+      name: 'LasecUploadDocument',
+      text: `mutation LasecUploadDocument($file: Upload!){
+        LasecUploadDocument(file: $file) {
           id
           name
           url
@@ -34,7 +34,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         }
       }`,
       notification: {
-        
+
       },
       variables: {
 

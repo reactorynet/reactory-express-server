@@ -91,7 +91,19 @@ export const displayUiSchema: any = {
           text: `Drop files here, or click to select files to upload`,
           accept: ['text/html', 'text/text', 'application/xml', 'application/pdf'],
           uploadOnDrop: true,
-          mutation: 'new',
+          mutation: {
+            text: `mutation LasecUploadDocument($file: Upload!){
+              LasecUploadDocument(file: $file) {
+                id
+                name
+                url
+                mimetype
+              }
+            }`,
+            variables: {
+              'formData.customerId': 'customerId',
+            },
+          },
           iconProps: {
             icon: 'upload',
             color: 'secondary'

@@ -8,6 +8,7 @@ import Hash from '@reactory/server-core/utils/hash';
 import { clientFor, execql } from '@reactory/server-core/graph/client';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { getScaleForKey } from 'data/scales';
+const fs = require('fs');
 
 const getClients = async (params) => {
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter } = params;
@@ -724,32 +725,32 @@ const getOrganisationList = async (params) => {
     organisations: []
   };
 
-  // const cachekey = Hash(`organization_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
+  const cachekey = Hash(`organization_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
-  // let _cachedResults = await getCacheItem(cachekey);
+  let _cachedResults = await getCacheItem(cachekey);
 
-  // if (_cachedResults) {
+  if (_cachedResults) {
 
-  //   if (iter === 0) {
-  //     //client request and we have a cache so we fire off the next fetch anyway
-  //     execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
-  //       LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
-  //         paging {
-  //           total
-  //           page
-  //           hasNext
-  //           pageSize
-  //         }
-  //         customers {
-  //           id
-  //           registeredName
-  //         }
-  //       }
-  //     }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
-  //   }
-  //   logger.debug(`Returning cached item ${cachekey}`);
-  //   return _cachedResults;
-  // }
+    if (iter === 0) {
+      //client request and we have a cache so we fire off the next fetch anyway
+      execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+        LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          customers {
+            id
+            registeredName
+          }
+        }
+      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+    }
+    logger.debug(`Returning cached item ${cachekey}`);
+    return _cachedResults;
+  }
 
   logger.debug(`Calling Organisations api`);
 
@@ -789,10 +790,6 @@ const getOrganisationList = async (params) => {
 
   const organisationDetails = await lasecApi.Organisation.list({ filter: { ids: ids } });
 
-
-  logger.debug(`ORGANISATION DETAILS (${JSON.stringify(organisationDetails)})`);
-
-
   logger.debug(`Fetched Expanded View for (${organisationDetails.organisations.length}) ORGANISATIONS from API`);
   let organisations = [...organisationDetails.organisations];
 
@@ -809,7 +806,7 @@ const getOrganisationList = async (params) => {
 
   logger.debug(`ORGANISATIONS:: (${JSON.stringify(organisations)})`);
 
-  // organisations = orderBy(organisations, ['registeredName', ['asc']]);
+  organisations = orderBy(organisations, ['name', ['asc']]);
 
   let result = {
     paging: pagingResult,
@@ -818,28 +815,28 @@ const getOrganisationList = async (params) => {
     organisations,
   };
 
-  // if (result.paging.hasNext === true && iter === 0) {
-  //   try {
-  //     execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
-  //       LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
-  //         paging {
-  //           total
-  //           page
-  //           hasNext
-  //           pageSize
-  //         }
-  //         customers {
-  //           id
-  //           registeredName
-  //         }
-  //       }
-  //     }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
-  //   } catch (cacheFetchError) {
-  //     logger.error('An error occured attempting to cache next page', cacheFetchError);
-  //   }
-  // }
+  if (result.paging.hasNext === true && iter === 0) {
+    try {
+      execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+        LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          customers {
+            id
+            registeredName
+          }
+        }
+      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
+    } catch (cacheFetchError) {
+      logger.error('An error occured attempting to cache next page', cacheFetchError);
+    }
+  }
 
-  // setCacheItem(cachekey, result, 60 * 10);
+  setCacheItem(cachekey, result, 60 * 10);
 
   return result;
 
@@ -873,6 +870,71 @@ const createNewOrganisation = async (args) => {
     }
   }
 };
+
+const uploadDocument = async (args) => {
+
+  logger.debug(`UPLOAD FILE::  ${JSON.stringify(args)}`);
+
+  const { createReadStream } = await args.file;
+
+  // const test = await args.file;
+
+  args.file.then(file => {
+
+    logger.debug(`UPLOAD FILE::  ${JSON.stringify(file)}`);
+
+  });
+
+  const stream = createReadStream();
+  stream
+    .on('data', async (data) => {
+      logger.debug(`GOT DATA::  ${typeof data} ${data.length}`);
+
+      // const apiResponse = await POST(SECONDARY_API_URLS.quote_section_header, { body: { id: quote_heading_id, quote_id, quote_item_id } });
+      // const {
+      //   status, payload, id,
+      // } = apiResponse;
+
+      // logger.debug(`CreateQuoteHeader response status: ${status}  payload: ${payload} id: ${id}`);
+
+      // if (status === 'success') {
+      //   return payload;
+      // }
+
+    })
+    .on('error', (error) => {
+      logger.error(`Error reading file:: ${error}`);
+    })
+    .on('end', () => {
+      logger.debug('Finished reding stream');
+    });
+
+  // stream
+  //   .on('error', error => {
+  //     logger.debug('STREAM FINISHED - 1')
+  //   })
+  //   .pipe(fs.createWriteStream(path))
+  //   .on('error', error => {
+  //     logger.debug('STREAM ERROR - 2')
+  //   })
+  //   .on('finish', (result) => {}));
+
+  // const fileLocation = pathObj.path;
+  // const photo = await models.Photo.create({
+  //     fileLocation,
+  //     description,
+  //     tags
+  // })
+  // return photo;
+
+  return {
+    id: '0',
+    name: 'test doc',
+    url: 'testUrl',
+    mimetype: 'mimetype',
+  };
+
+}
 
 export default {
   LasecCRMClient: {
@@ -974,5 +1036,8 @@ export default {
     LasecCreateNewOrganisation: async (onj, args) => {
       return createNewOrganisation(args);
     },
+    LasecUploadDocument: async (obj, args) => {
+      return uploadDocument(args);
+    }
   },
 };
