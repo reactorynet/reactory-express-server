@@ -149,6 +149,7 @@ extend type Mutation {
     clientInfo: ClientUpdateInput!
   ): ClientDetailUpdateResponse
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
+  LasecUploadDocument(file: Upload!): LasecDocument
   LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
 }
 
