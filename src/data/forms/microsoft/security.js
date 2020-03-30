@@ -49,7 +49,7 @@ export const MicrosoftOpenIDAuthenticationUISchema = {
         style: {
           marginLeft: '16px',
         },
-      },
+      },      
       userouter: false, // use browser navigator
     },
   },
