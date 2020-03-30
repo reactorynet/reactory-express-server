@@ -474,6 +474,27 @@ const Api = {
       }
 
       return { pagination: {}, ids: [], items: [] };
+    },
+    uploadFile: async (params) => {
+      try {
+        logger.debug(`BEGINNING DOCUMENT UPLOAD:: ${params}`);
+
+        const apiResponse = await POST(SECONDARY_API_URLS.file_uploads, { body: { ...params } });
+        const { status, payload } = apiResponse;
+        // payload - name id url
+
+        logger.debug(`UPLOAD DOCUMENT RESPONSE STATUS: ${status}  PAYLOAD: ${payload}`);
+
+        if (status === 'success') {
+          return apiResponse;
+        }
+
+        return apiResponse;
+
+      } catch (error) {
+        logger.error(`ERROR UPLOADING DOCUMENT:: ${error}`);
+        return null;
+      }
     }
   },
   Organisation: {
