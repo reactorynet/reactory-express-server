@@ -155,7 +155,9 @@ declare namespace Reactory {
     autoQuery?:boolean,
     interval?: number,
     useWebsocket?: boolean,
-    onError?: IReactoryFormQueryErrorHandlerDefinition
+    onError?: IReactoryFormQueryErrorHandlerDefinition,
+    onSuccessMethod?: String | "redirect" | "notification" | "function",
+    notification?: any
   }
 
   export interface IReactoryFormMutation {
@@ -168,7 +170,7 @@ declare namespace Reactory {
     onSuccessUrl?: String,
     onSuccessRedirectTimeout?: number,
     options?: any,
-    notification?: any
+    notification?: any,
   }
 
   export interface IReactoryFormMutations {
@@ -188,7 +190,7 @@ declare namespace Reactory {
     component?: String,
     widget: String
   }
-  
+
   export interface IObjectMap {
     [key: string]: string | Array<any> | object
   }

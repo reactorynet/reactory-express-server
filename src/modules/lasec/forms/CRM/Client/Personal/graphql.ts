@@ -29,10 +29,10 @@ const graphql: Reactory.IFormGraphDefinition = {
       'clientStatus': 'clientStatus',
       'fullName': 'fullName',
       'customer.customerStatus': 'customerStatus',
-      'customer.accountNumber':'accountNumber',
+      'customer.accountNumber': 'accountNumber',
       'customer.tradingName': 'customer',
       'country': 'country',
-      'firstName' : 'firstName',
+      'firstName': 'firstName',
       'lastName': 'lastName',
     },
     autoQuery: true,
@@ -40,6 +40,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultType: 'object',
     edit: true,
     new: false,
+
   },
   mutation: {
     edit: {
@@ -58,7 +59,25 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.lastName': 'clientInfo.lastName',
         'formData.country': 'clientInfo.country',
       },
-      onSuccessMethod: 'refresh'
+      // onSuccessMethod: 'refresh'
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Personal details successfully updated.',
+        props: {
+          timeOut: 10000,
+          canDismiss: false,
+          components: [
+            {
+              componentFqn: 'lasec-crm.LasecProductOverviewTable',
+              componentProps: {},
+              componentPropsMap: {
+                'data': 'data',
+              },
+            }
+          ]
+        }
+      },
     }
   }
 };
