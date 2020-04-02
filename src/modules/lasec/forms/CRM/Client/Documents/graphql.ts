@@ -3,15 +3,23 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecCustomerDocuments',
-    text: `query LasecCustomerDocuments($id: String!){
-      LasecGetCustomerDocuments(id: $id){
+    text: `query LasecCustomerDocuments($id: String, $uploadContexts: [String]){
+      LasecGetCustomerDocuments(id: $id, uploadContexts: $uploadContexts){
         id
-        name
-        url
+        filename
+        link
+        size
       }      
     }`,
     variables: {
-      'formData.id': 'id',            
+      'formData.id': 'id',
+      'formData.$uploadContexts': 'uploadContexts'            
+    },
+    formData: {
+      $uploadContext: [
+        'lasec-crm::new-company::document',
+        'lasec-crm::company-document'
+      ]
     },
     resultMap: {      
       '[]':'documents.[]'

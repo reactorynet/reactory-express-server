@@ -154,7 +154,7 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
   // url = `${url}`;
   let absoluteUrl = `${config.SECONDARY_API_URL}/${url}`;
 
-  logger.debug(`::lasec-api::FETCH(${absoluteUrl})\n`, { args, auth, failed, attempt });
+  logger.debug(`::lasec-api::FETCH(${absoluteUrl})\n`, { auth, failed, attempt });
 
   const kwargs = args || {};
   if (!kwargs.headers) {
@@ -435,6 +435,21 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+    UploadDocument: async(params) => {
+      debugger;
+      const apiResponse = await POST(SECONDARY_API_URLS.file_uploads.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = apiResponse;
+
+      if (status === 'success') {
+        return payload;
+      } else {
+        return apiResponse;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    }
   },
   Company: {
     list: async (params) => {

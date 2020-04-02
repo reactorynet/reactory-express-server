@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+import sha1 from 'sha1';
 import lasecApi from '../api';
 import moment from 'moment';
 import om from 'object-mapper';
@@ -6,9 +9,14 @@ import lodash, { isArray, isNil, orderBy, isString } from 'lodash';
 import { getCacheItem, setCacheItem } from '../models';
 import Hash from '@reactory/server-core/utils/hash';
 import { clientFor, execql } from '@reactory/server-core/graph/client';
+import ReactoryFile, { IReactoryFile } from '@reactory/server-modules/core/models/CoreFile';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { getScaleForKey } from 'data/scales';
 import FormData from 'form-data';
+import { GraphQLUpload }  from 'graphql-upload';
+import ApiError from 'exceptions';
+import { ObjectID } from 'mongodb';
+import { urlencoded } from 'body-parser';
 
 const getClients = async (params) => {
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter } = params;
@@ -550,9 +558,46 @@ const getLasecSalesTeamsForLookup = async () => {
   logger.debug('SalesTeamsLookupResult >> ', salesTeamsResults);
 }
 
-const getCustomerDocuments = async (params) => {
+interface CustomerDocumentQueryParams {
+  id?: String,
+  uploadContexts?: string[],
+}
+
+const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
+  
+  logger.debug(`Fetching customer documents`, params);
+
   let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } });
-  return documents.items;
+
+  const _docs: any[] = []
+
+  documents.items.forEach((documentItem: any) => {
+    _docs.push({
+      id: new ObjectID(),
+      partner: global.partner,
+      filename: documentItem.name,
+      link: documentItem.url,
+      hash: Hash(documentItem.url),
+      path: '',
+      alias: '',
+      alt: [],
+      size: 0,
+      uploadContext: 'lasec-crm::company-document',
+      mimetype: '',
+      uploadedBy: global.user.id,
+      owner: global.user.id
+    }) 
+  });
+
+  if(params.uploadContexts && params.uploadContexts.length > 0) {
+    let reactoryFiles = await ReactoryFile.find({ uploadContext: { $in: params.uploadContexts } }).then();
+    reactoryFiles.forEach((rfile) => {
+      _docs.push(rfile)
+    })
+  }
+
+  return _docs;
+  
 };
 
 const getCustomerList = async (params) => {
@@ -871,26 +916,122 @@ const createNewOrganisation = async (args) => {
   }
 };
 
-const uploadDocument = async (args) => {
 
+// Gets a filename extension.
+const getExtension = (filename: string) => {
+  return filename.split('.').pop();
+}
+
+const allowedExts = ['txt', 'pdf', 'doc', 'zip'];
+const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf', 'application/pdf', 'application/zip'];
+
+// Test if a file is valid based on its extension and mime type.
+function isFileValid(filename: string, mimetype: string) {  
+  // Get file extension.
+  const extension = getExtension(filename);
+
+  return allowedExts.indexOf(extension.toLowerCase()) != -1 &&
+     allowedMimeTypes.indexOf(mimetype) != -1;
+}
+
+
+const uploadDocument = async (args: any) => {
+  
   // NOTE
   // This will only upload a file
   // Need to create additional function to save file and associate to customer
+  
+  return new Promise(async (resolve, reject) => {
 
-  logger.debug(`UPLOAD FILE::  ${JSON.stringify(args)}`);
+    const { createReadStream, filename, mimetype, encoding } = await args.file;
+    logger.debug(`UPLOADED FILE:: ${filename} - ${mimetype} ${encoding}`);
 
-  const { createReadStream } = await args.file;
+    const stream: NodeJS.ReadStream = createReadStream();
+    
+    const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
 
-  const stream = createReadStream();
+    const link = `${process.env.CDN_ROOT}content/files/${randomName}`;
+    
+
+      // Flag to tell if a stream had an error.
+    let hadStreamError: boolean = null;
+
+    //ahndles any errors during upload / processing of file
+    const handleStreamError = (error: any) => {
+      // Do not enter twice in here.
+      if (hadStreamError) {
+        return;
+      }
+
+      hadStreamError = true;
+
+      // Cleanup: delete the saved path.
+      if (saveToPath) {
+        // eslint-disable-next-line consistent-return
+        return fs.unlink(saveToPath, (err) => {
+          reject( error )
+        });
+      }
+
+      // eslint-disable-next-line consistent-return
+      reject( error )
+    }
+
+
+    const catalogFile =  () => {
+      // Check if image is valid    
+      const fileStats = fs.statSync(saveToPath);
+      
+      logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
+
+      const reactoryFile = {
+        id: new ObjectID(),
+        filename,
+        mimetype,
+        partner: new ObjectID(global.partner.id),
+        owner: new ObjectID(global.user.id),
+        uploadedBy: new ObjectID(global.user.id),
+        size: fileStats.size,
+        hash: Hash(link),
+        link: link,
+        path: 'content/files/',
+        uploadContext: args.uploadContext || 'lasec-crm::company-document',
+        public: false,
+        published: false,        
+      };
+
+      const savedDocument = new ReactoryFile(reactoryFile);
+
+      savedDocument.save().then();
+
+      logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
+
+      resolve(savedDocument);
+    }
+
+    // Generate path where the file will be saved.
+    // const appDir = path.dirname(require.main.filename);
+    const saveToPath = path.join(process.env.APP_DATA_ROOT, 'content', 'files', randomName);
+
+    logger.debug(`SAVING FILE:: ${filename} --> ${saveToPath}`);
+
+    const diskWriterStream: NodeJS.WriteStream  = fs.createWriteStream(saveToPath);
+    diskWriterStream.on('error', handleStreamError);
+
+    // Validate image after it is successfully saved to disk.
+    diskWriterStream.on('finish', catalogFile);
+
+    // Save image to disk.
+    stream.pipe(diskWriterStream);
+
+     /*
   stream
     .on('data', async (data) => {
-      logger.debug(`GOT DATA::  ${typeof data} ${data.length}`);
-
+      logger.debug(`Read File Data For File ${filename}`);
       const formData = new FormData();
       formData.append('files', data); // this needs to be file: binary
-      const apiResponse = await lasecApi.Customers.uploadDocument(formData);
+      const apiResponse = await lasecApi.Customers.UploadDocument(formData);
       logger.debug(`RESOLVER UPLOAD DOCUMENT RESPONSE:: ${JSON.stringify(apiResponse)}`);
-
     })
     .on('error', (error) => {
       logger.error(`Error reading file:: ${error}`);
@@ -898,24 +1039,9 @@ const uploadDocument = async (args) => {
     .on('end', () => {
       logger.debug('Finished reding stream');
     });
+  */  
 
-  // stream
-  //   .on('error', error => {
-  //     logger.debug('STREAM FINISHED - 1')
-  //   })
-  //   .pipe(fs.createWriteStream(path))
-  //   .on('error', error => {
-  //     logger.debug('STREAM ERROR - 2')
-  //   })
-  //   .on('finish', (result) => {}));
-
-  return {
-    id: '0',
-    name: 'test doc',
-    url: 'testUrl',
-    mimetype: 'mimetype',
-  };
-
+  });     
 }
 
 export default {
@@ -1019,6 +1145,7 @@ export default {
       return createNewOrganisation(args);
     },
     LasecUploadDocument: async (obj, args) => {
+      debugger;
       return uploadDocument(args);
     }
   },

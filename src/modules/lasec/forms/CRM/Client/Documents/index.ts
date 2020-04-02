@@ -52,10 +52,10 @@ export const displayUiSchema: any = {
     'ui:options': {
       columns: [
         {
-          title: "Title", field: "name"
+          title: "Title", field: "filename"
         },
         {
-          title: "Link", field: "url"
+          title: "Link", field: "link"
         }
       ],
       options: {
@@ -92,17 +92,18 @@ export const displayUiSchema: any = {
           accept: ['text/html', 'text/text', 'application/xml', 'application/pdf'],
           uploadOnDrop: true,
           mutation: {
-            text: `mutation LasecUploadDocument($file: Upload!){
-              LasecUploadDocument(file: $file) {
+            text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
+              LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
                 id
-                name
-                url
+                filename
+                link
                 mimetype
+                size
               }
             }`,
             variables: {
-              'formData.customerId': 'customerId',
-            },
+              'uploadContext': 'lasec-crm::new-company::document'
+            },            
           },
           iconProps: {
             icon: 'upload',
@@ -163,10 +164,10 @@ const editUiSchema: any = {
     'ui:options': {
       columns: [
         {
-          title: "Title", field: "name"
+          title: "Filename", field: "filename"
         },
         {
-          title: "Link", field: "url"
+          title: "Link", field: "link"
         }
       ],
       options: {

@@ -62,9 +62,12 @@ type LasecCRMClient {
 
 type LasecDocument {
   id: String
-  name: String
-  url: String
+  filename: String
+  link: String
   mimetype: String
+  size: Int
+  public: Boolean
+  published: Boolean
 }
 
 type PagedCRMClient {
@@ -139,7 +142,7 @@ extend type Query {
   LasecGetCustomerCountries: [LasecLookupItem]
   LasecGetCustomerRepCodes: [LasecLookupItem]
   LasecGetCustomerFilterLookup(filterBy: String): [LasecLookupItem]
-  LasecGetCustomerDocuments(id: String!): [LasecDocument]
+  LasecGetCustomerDocuments(id: String!, uploadContexts: [String]): [LasecDocument]
   LasecGetPersonTitles: [LasecTitleLookupItem]
   LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
 }
@@ -149,7 +152,7 @@ extend type Mutation {
     clientInfo: ClientUpdateInput!
   ): ClientDetailUpdateResponse
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
-  LasecUploadDocument(file: Upload!): LasecDocument
+  LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument
   LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
 }
 
