@@ -73,13 +73,21 @@ const graphql: Reactory.IFormGraphDefinition = {
               componentProps: {
                 conditions: [
                   {
-                    key: 'active',
+                    key: 'de-active',
                     icon: 'trip_origin',
                     style: {
-                      color: '#5EB848'
+                      color: 'red'
                     },
                     tooltip: 'Client Active'
                   },
+                  {
+                    key: 'active',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#fff'
+                    },
+                    tooltip: 'Client Active'
+                  }
 
                 ]
               },
@@ -88,7 +96,7 @@ const graphql: Reactory.IFormGraphDefinition = {
                 marginTop: '8px',
               },
               propsMap: {
-                'formContext.formData': 'value',
+                'formData.clientStatus': 'value',
               },
             }
           ]
