@@ -69,10 +69,34 @@ const graphql: Reactory.IFormGraphDefinition = {
           canDismiss: false,
           components: [
             {
-              componentFqn: 'lasec-crm.LasecProductOverviewTable',
-              componentProps: {},
-              componentPropsMap: {
-                'data': 'data',
+              componentFqn: 'core.ConditionalIconComponent@1.0.0',
+              componentProps: {
+                conditions: [
+                  {
+                    key: 'de-active',
+                    icon: 'trip_origin',
+                    style: {
+                      color: 'red'
+                    },
+                    tooltip: 'Client Active'
+                  },
+                  {
+                    key: 'active',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#fff'
+                    },
+                    tooltip: 'Client Active'
+                  }
+
+                ]
+              },
+              style: {
+                marginRight: '8px',
+                marginTop: '8px',
+              },
+              propsMap: {
+                'formData.clientStatus': 'value',
               },
             }
           ]
