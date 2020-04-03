@@ -91,6 +91,7 @@ export const displayUiSchema: any = {
           text: `Drop files here, or click to select files to upload`,
           accept: ['text/html', 'text/text', 'application/xml', 'application/pdf'],
           uploadOnDrop: true,
+          name: "LasecUploadDocument",
           mutation: {
             text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
               LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
