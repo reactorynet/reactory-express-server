@@ -918,6 +918,63 @@ const uploadDocument = async (args) => {
 
 }
 
+const lasecCreateNewAddress = async (args) => {
+
+  logger.debug(`CREATE ADDRESS PARAMS:: ${JSON.stringify(args)}`);
+
+  // {
+  //   "building_description_id": "1",
+  //   "building_floor_number_id": "2",
+  //   "unit": "1",
+  //   "map": {
+  //     "lat": -33.932568,
+  //     "lng": 18.4933,
+  //     "formatted_address": "1, 1 Test Location 11 Test Street Test Suburb Test Metro Test City 1234 Test State Test Country",
+  //     "address_components": []
+  //   },
+  //   "confirm_pin": true,
+  //   "address_fields": {
+  //     "0": "1", ------------------> UNIT NUMBER
+  //     "1": "Test Location", ------> UNIT NAME
+  //     "2": "11", -----------------> STREET NUMBER
+  //     "3": "Test Street", --------> STREE NAME
+  //     "4": "Test Suburb", --------> SUBURB
+  //     "5": "Test Metro", ---------> METRO / MUNICIPALITY
+  //     "6": "Test City", ----------> CITY
+  //     "7": "1234", ---------------> POST CODE
+  //     "8": "Test State", ---------> PROVINCE / STATE
+  //     "9": "Test Country" --------> COUNTRY
+  //   },
+  //   "confirm_address": true
+  // }
+
+  const addressParams = {
+    building_description_id: args.buildingDescriptionId,
+    building_floor_number_id: args.buildingFloorId,
+    unit: args.unit,
+    address_fields: {
+      0: args.addressFields.unitNumber,
+      1: args.addressFields.unitName,
+      2: args.addressFields.streetNumber,
+      3: args.addressFields.streetName,
+      4: args.addressFields.suburb,
+      5: args.addressFields.metro,
+      6: args.addressFields.city,
+      7: args.addressFields.postCode,
+      8: args.addressFields.province,
+      9: args.addressFields.country,
+    },
+
+  }
+
+
+  return {
+    success: true,
+    message: 'Successfully Created',
+  };
+
+}
+
 export default {
   LasecCRMClient: {
     creditLimit: async (parent, obj) => {
@@ -1020,6 +1077,9 @@ export default {
     },
     LasecUploadDocument: async (obj, args) => {
       return uploadDocument(args);
-    }
+    },
+    LasecCreateNewAddress: async (obj, args) => {
+      return lasecCreateNewAddress(args);
+    },
   },
 };

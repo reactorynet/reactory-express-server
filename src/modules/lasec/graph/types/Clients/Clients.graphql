@@ -129,9 +129,20 @@ input ClientUpdateInput {
 }
 
 extend type Query {
-  LasecGetClientList(search: String! paging: PagingRequest filterBy: String iter: Int filter: String): PagedCRMClient
+  LasecGetClientList(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    iter: Int
+    filter: String
+  ): PagedCRMClient
   LasecGetClientDetail(id: String!): LasecCRMClient
-  LasecGetCustomerList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMCustomer
+  LasecGetCustomerList(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    iter: Int
+  ): PagedCRMCustomer
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecLookupItem]
   LasecGetCustomerRanking: [LasecLookupItem]
@@ -141,7 +152,25 @@ extend type Query {
   LasecGetCustomerFilterLookup(filterBy: String): [LasecLookupItem]
   LasecGetCustomerDocuments(id: String!): [LasecDocument]
   LasecGetPersonTitles: [LasecTitleLookupItem]
-  LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
+  LasecGetOrganisationList(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    iter: Int
+  ): PagedCRMOrganisation
+}
+
+input AddressFields {
+  unitNumber: Int,
+  unitName: String,
+  streetNumber: Int,
+  streetName: String,
+  suburb: String,
+  metro: String,
+  city: String,
+  postCode: String,
+  province: String,
+  country: String,
 }
 
 extend type Mutation {
@@ -150,7 +179,20 @@ extend type Mutation {
   ): ClientDetailUpdateResponse
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
   LasecUploadDocument(file: Upload!): LasecDocument
-  LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
+  LasecCreateNewOrganisation(
+    customerId: String
+    name: String
+    description: String
+  ): CreateNewOrganisationResponse
+  LasecCreateNewAddress(
+    buildingDescriptionId: String
+    buildingFloorNumberId: String
+    unit: String
+    map: Any
+    confirmPin: Boolean
+    addressFields: AddressFields
+    confirmAddress: Boolean
+  ): SimpleResponse
 }
 
 #  LasecUpdateClientJobDetails(clientId: String!, accountType: String!, repCode: String!, jobTitle: String!, clientDepartment: String!, clientClass: String!, ranking: String!): ClientDetailUpdateResponse

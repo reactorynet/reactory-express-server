@@ -9,10 +9,10 @@ const GOOGLE_PLACE_TO_ADDRESS_MAP = {
 
 };
 
-const DEFAULT_ADDRESS_PROPS = {        
+const DEFAULT_ADDRESS_PROPS = {
   viewMode: 'MAP_WITH_SEARCH|ADDRESS_LABEL',
   objectMap: GOOGLE_PLACE_TO_ADDRESS_MAP,
-  checkExists: true,  
+  checkExists: true,
   query: `query LasecCheckAddressExists($input: Any!, $create: Boolean, $mapProvider: String){
     LasecCheckAddressExists(input: $input, create: $create, mapProvider: $mapProvider) {
       id
@@ -25,16 +25,16 @@ const DEFAULT_ADDRESS_PROPS = {
       countryCode
       countryName
       lat
-      long            
+      long
     }
   }`,
   variables: {
     'formData': 'input'
   },
   resultName: 'LasecCheckAddressExists',
-  resultMap: {  
+  resultMap: {
     '*':'*'
-  }        
+  }
 };
 
 const baseUiSchema: any =  {
@@ -102,8 +102,8 @@ const baseUiSchema: any =  {
       ],
       "html_attributions": []
     }
-   * 
-   * 
+   *
+   *
    */
   physicalAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget',
@@ -113,7 +113,7 @@ const baseUiSchema: any =  {
         googleMapURL: `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY_DEVELOPMENT}&v=3.exp&libraries=geometry,drawing,places`,
       }
     }
-  },  
+  },
   deliveryAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget',
     'ui:options': {
@@ -174,7 +174,7 @@ const uiSchema: any = {
   ],
   physicalAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget'
-  },  
+  },
   deliveryAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget'
   },
