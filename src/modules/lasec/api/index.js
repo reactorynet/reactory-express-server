@@ -436,7 +436,6 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     UploadDocument: async(params) => {
-      debugger;
       const apiResponse = await POST(SECONDARY_API_URLS.file_uploads.url, { params: { ...defaultParams, ...params } });
       const {
         status, payload,

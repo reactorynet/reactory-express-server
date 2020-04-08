@@ -69,9 +69,13 @@ const schema: Reactory.ISchema = {
     jobDetail: LasecJobDetailForm.schema,
     customer: LasecCRMCustomerLookupForm.schema,
     address: LasecCRMCustomerAddress.schema,
-    documents: LasecCRMClientDocuments.schema  
+    documents: LasecCRMClientDocuments.schema
   }
 };
+
+
+
+
 
 schema.title = "CONFIRM & SAVE"
 

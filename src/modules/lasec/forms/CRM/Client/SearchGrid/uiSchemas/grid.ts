@@ -158,6 +158,7 @@ const uiSchema: any = {
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
+                'color': 'black'
               }
             },
             windowTitle: 'Client details: ${rowData.fullName}',
@@ -283,7 +284,7 @@ const uiSchema: any = {
         'paging.pageSize': 'pageSize',             
         'clients': 'data',        
       },
-      resultType: 'object',
+      resultType: 'object',       
     },
   }
 };

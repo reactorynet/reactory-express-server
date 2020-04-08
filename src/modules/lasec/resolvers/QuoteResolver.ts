@@ -1364,7 +1364,6 @@ export default {
     },
     note: ({ note }) => (note),
     timeline: async (quote, args, context, info) => {
-      debugger;
       const { options = { bypassEmail : true} } = args;
       logger.debug(`Getting timeline for quote "${quote.code}" >> `, options);
 
@@ -1462,7 +1461,6 @@ export default {
       return getQuotes();
     },
     LasecGetDashboard: async (obj, { dashparams = defaultDashboardParams }, context: any, info) => {
-      debugger;
       logger.debug('Get Dashboard Queried', dashparams);
       context.query_options = dashparams.options;
 

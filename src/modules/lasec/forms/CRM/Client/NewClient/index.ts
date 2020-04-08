@@ -149,7 +149,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMClientDocuments',
-            ...$sharedProps,
+            ...$sharedProps,            
           },
         ],
       },

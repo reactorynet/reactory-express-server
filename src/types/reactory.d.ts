@@ -141,6 +141,11 @@ declare namespace Reactory {
     method: string
   }
 
+  export interface IReactoryEvent {
+    name: String,
+    data?: any | undefined,
+  }
+
   export interface IReactoryFormQuery {
     name: String,
     text: String,
@@ -158,7 +163,9 @@ declare namespace Reactory {
     useWebsocket?: boolean,
     onError?: IReactoryFormQueryErrorHandlerDefinition,
     onSuccessMethod?: String | "redirect" | "notification" | "function",
-    notification?: any
+    onSuccessEvent?: IReactoryEvent | undefined,
+    notification?: any,
+    refreshEvents?: IReactoryEvent[] | undefined
   }
 
   export interface IReactoryFormMutation {

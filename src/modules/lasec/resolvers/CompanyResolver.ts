@@ -559,45 +559,68 @@ const getLasecSalesTeamsForLookup = async () => {
 }
 
 interface CustomerDocumentQueryParams {
-  id?: String,
+  id?: string,
   uploadContexts?: string[],
+  paging?: {
+    page: number, 
+    pageSize: number
+  }
 }
 
 const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
   
-  logger.debug(`Fetching customer documents`, params);
 
-  let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } });
 
   const _docs: any[] = []
 
-  documents.items.forEach((documentItem: any) => {
-    _docs.push({
-      id: new ObjectID(),
-      partner: global.partner,
-      filename: documentItem.name,
-      link: documentItem.url,
-      hash: Hash(documentItem.url),
-      path: '',
-      alias: '',
-      alt: [],
-      size: 0,
-      uploadContext: 'lasec-crm::company-document',
-      mimetype: '',
-      uploadedBy: global.user.id,
-      owner: global.user.id
-    }) 
-  });
+  if(params.id) {    
+    logger.debug(`Fetching Remote Documents for Lasec Customer ${params.id}`);
+    let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } });  
+    documents.items.forEach((documentItem: any) => {
+      logger.debug(`Adding Document item from Lasec For Customer Id ${params.id}`);
+      _docs.push({
+        id: new ObjectID(),
+        partner: global.partner,
+        filename: documentItem.name,
+        link: documentItem.url,
+        hash: Hash(documentItem.url),
+        path: '',
+        alias: '',
+        alt: [],
+        size: 0,
+        uploadContext: 'lasec-crm::company-document',
+        mimetype: '',
+        uploadedBy: global.user.id,
+        owner: global.user.id
+      }) 
+    });
+  }
 
   if(params.uploadContexts && params.uploadContexts.length > 0) {
+    logger.debug(`Checking Documents With Context ${params.uploadContexts.map(ctx => `${ctx}, `)}`.trim());
     let reactoryFiles = await ReactoryFile.find({ uploadContext: { $in: params.uploadContexts } }).then();
     reactoryFiles.forEach((rfile) => {
       _docs.push(rfile)
-    })
+    });
   }
 
-  return _docs;
-  
+  if(params.paging) {
+
+    let skipCount: number = params.paging.page * params.paging.pageSize;
+
+    return {
+      documents: lodash(_docs).drop(skipCount).take(params.paging.pageSize),
+      paging: {  
+        total: _docs.length,
+        page: params.paging.page,
+        hasNext: skipCount + params.paging.pageSize < _docs.length,
+        pageSize: params.paging.pageSize
+      },      
+    }
+
+  } else {
+    return _docs;
+  }        
 };
 
 const getCustomerList = async (params) => {
@@ -1144,8 +1167,7 @@ export default {
     LasecCreateNewOrganisation: async (onj, args) => {
       return createNewOrganisation(args);
     },
-    LasecUploadDocument: async (obj, args) => {
-      debugger;
+    LasecUploadDocument: async (obj, args) => {      
       return uploadDocument(args);
     }
   },

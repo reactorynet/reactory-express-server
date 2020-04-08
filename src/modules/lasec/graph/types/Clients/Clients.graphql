@@ -70,6 +70,13 @@ type LasecDocument {
   published: Boolean
 }
 
+type PagedLasecDocument {
+  search: String
+  filterBy: String
+  paging: PagingResult
+  documents: [LasecDocument]
+}
+
 type PagedCRMClient {
   search: String
   filterBy: String
@@ -142,7 +149,7 @@ extend type Query {
   LasecGetCustomerCountries: [LasecLookupItem]
   LasecGetCustomerRepCodes: [LasecLookupItem]
   LasecGetCustomerFilterLookup(filterBy: String): [LasecLookupItem]
-  LasecGetCustomerDocuments(id: String!, uploadContexts: [String]): [LasecDocument]
+  LasecGetCustomerDocuments(id: String, uploadContexts: [String], paging: PagingRequest): PagedLasecDocument
   LasecGetPersonTitles: [LasecTitleLookupItem]
   LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
 }

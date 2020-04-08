@@ -2,17 +2,23 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
-    name: 'LasecCustomerDocuments',
-    text: `query LasecCustomerDocuments($id: String, $uploadContexts: [String]){
-      LasecGetCustomerDocuments(id: $id, uploadContexts: $uploadContexts){
-        id
-        filename
-        link
-        size
+    name: 'LasecGetCustomerDocuments',
+    text: `query LasecGetCustomerDocuments($uploadContexts: [String], $paging: PagingRequest){
+      LasecGetCustomerDocuments(uploadContexts: $uploadContexts, paging: $paging){
+        paging {
+          total
+          page
+          pageSize          
+        }
+        documents {
+          id
+          filename
+          link
+          size
+        }        
       }      
     }`,
-    variables: {
-      'formData.id': 'id',
+    variables: {      
       'formData.$uploadContexts': 'uploadContexts'            
     },
     formData: {
@@ -20,15 +26,15 @@ const graphql: Reactory.IFormGraphDefinition = {
         'lasec-crm::new-company::document',
         'lasec-crm::company-document'
       ]
-    },
-    resultMap: {      
-      '[]':'documents.[]'
-    },
+    },    
     autoQuery: true,
-    queryMessage: 'Loading customer details',
+    queryMessage: 'Loading customer documents',
     resultType: 'object',
     edit: false,
     new: false,
+    refreshEvents: [
+      {name: 'lasec-crm::new-document::uploaded'}
+    ],
   },
   mutation: {
     new: {

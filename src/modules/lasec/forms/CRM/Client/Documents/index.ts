@@ -184,7 +184,7 @@ const editUiSchema: any = {
   },
 };
 
-const documentSchema: Reactory.ISchema = {
+export const documentSchema: Reactory.ISchema = {
   type: "object",
   properties: {
     title: {
@@ -198,7 +198,7 @@ const documentSchema: Reactory.ISchema = {
   }
 };
 
-const schema: Reactory.ISchema = {
+export const schema: Reactory.ISchema = {
   type: "object",
   properties: {
     id: {
