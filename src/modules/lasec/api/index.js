@@ -435,6 +435,15 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+    createNewAddress: async (params) => {
+      try {
+        const apiResponse = await POST(SECONDARY_API_URLS.new_address.url, { ...params });
+        return apiResponse; //{"status":"success","payload":{"id":31907}}
+      } catch (lasecApiError) {
+        logger.error(`ERROR CREATING NEW ADDRESS:: ${lasecApiError}`);
+        return null;
+      }
+    }
   },
   Company: {
     list: async (params) => {

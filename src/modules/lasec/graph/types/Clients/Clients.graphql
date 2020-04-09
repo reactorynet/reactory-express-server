@@ -161,9 +161,9 @@ extend type Query {
 }
 
 input AddressFields {
-  unitNumber: Int,
+  unitNumber: String,
   unitName: String,
-  streetNumber: Int,
+  streetNumber: String,
   streetName: String,
   suburb: String,
   metro: String,
@@ -171,6 +171,11 @@ input AddressFields {
   postCode: String,
   province: String,
   country: String,
+}
+
+type NewAddressResponse {
+  success: Boolean
+  id: String
 }
 
 extend type Mutation {
@@ -188,12 +193,6 @@ extend type Mutation {
     buildingDescriptionId: String
     buildingFloorNumberId: String
     unit: String
-    map: Any
-    confirmPin: Boolean
     addressFields: AddressFields
-    confirmAddress: Boolean
-  ): SimpleResponse
+  ): NewAddressResponse
 }
-
-#  LasecUpdateClientJobDetails(clientId: String!, accountType: String!, repCode: String!, jobTitle: String!, clientDepartment: String!, clientClass: String!, ranking: String!): ClientDetailUpdateResponse
-#  LasecUpdateClientContactDetails(clientId: String!, mobileNumber: String!, alternateNumber: String!, email: String!, alternateEmail: String!): ClientDetailUpdateResponse

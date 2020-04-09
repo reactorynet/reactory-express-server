@@ -920,8 +920,6 @@ const uploadDocument = async (args) => {
 
 const lasecCreateNewAddress = async (args) => {
 
-  logger.debug(`CREATE ADDRESS PARAMS:: ${JSON.stringify(args)}`);
-
   // {
   //   "building_description_id": "1",
   //   "building_floor_number_id": "2",
@@ -948,31 +946,50 @@ const lasecCreateNewAddress = async (args) => {
   //   "confirm_address": true
   // }
 
-  const addressParams = {
-    building_description_id: args.buildingDescriptionId,
-    building_floor_number_id: args.buildingFloorId,
-    unit: args.unit,
-    address_fields: {
-      0: args.addressFields.unitNumber,
-      1: args.addressFields.unitName,
-      2: args.addressFields.streetNumber,
-      3: args.addressFields.streetName,
-      4: args.addressFields.suburb,
-      5: args.addressFields.metro,
-      6: args.addressFields.city,
-      7: args.addressFields.postCode,
-      8: args.addressFields.province,
-      9: args.addressFields.country,
-    },
+  try {
 
+    const addressParams = {
+      building_description_id: args.buildingDescriptionId,
+      building_floor_number_id: args.buildingFloorNumberId,
+      unit: args.unit,
+      address_fields: {
+        0: args.addressFields.unitNumber,
+        1: args.addressFields.unitName,
+        2: args.addressFields.streetNumber,
+        3: args.addressFields.streetName,
+        4: args.addressFields.suburb,
+        5: args.addressFields.metro,
+        6: args.addressFields.city,
+        7: args.addressFields.postCode,
+        8: args.addressFields.province,
+        9: args.addressFields.country,
+      },
+      map: {
+        lat: 0,
+        lng: 0,
+        formatted_address: `${args.addressFields.unitNumber}, ${args.addressFields.unitName} ${args.addressFields.streetNumber} ${args.addressFields.streetName}${args.addressFields.suburb} ${args.addressFields.metro} ${args.addressFields.city} ${args.addressFields.postCode} ${args.addressFields.province} ${args.addressFields.country}`,
+        address_components: [],
+      },
+      confirm_pin: true,
+      confirm_address: true,
+    };
+
+    const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
+
+    logger.debug(`RESOLVER API RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
+    return {
+      success: apiResponse.status === 'success',
+      id: apiResponse.status === 'success' ? apiResponse.payload.id : 0,
+    };
+
+  } catch (ex) {
+    logger.error(`ERROR CREATING ADDRESS::  ${ex}`);
+    return {
+      success: false,
+      id: 0,
+    };
   }
-
-
-  return {
-    success: true,
-    message: 'Successfully Created',
-  };
-
 }
 
 export default {

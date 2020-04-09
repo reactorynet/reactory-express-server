@@ -58,6 +58,7 @@ import CustomerOrganizationInfo from './CRM/Customer/Organization';
 import CustomerLookUp from './CRM/Customer/Lookup';
 import CustomerLookUpForm from './CRM/Customer/Lookup/LookUpForm';
 import CustomerAddress from './CRM/Customer/Address';
+import NewCustomerAddress from './CRM/Customer/Address/NewAddress';
 
 import OrganizationLookup from './CRM/Organization/Lookup';
 import OrganizationLookupForm from './CRM/Organization/Lookup/LookUpForm';
@@ -108,11 +109,12 @@ export default [
   CustomerSpecialRequirement,
   CustomerAccountInfo,
   CustomerAddress,
+  NewCustomerAddress,
   CustomerOrganizationInfo,
   CustomerLookUp,
   CustomerLookUpForm,
 
   OrganizationLookup,
   OrganizationLookupForm,
-  NewOrganisation
+  NewOrganisation,
 ];
