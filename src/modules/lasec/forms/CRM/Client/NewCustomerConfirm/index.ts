@@ -6,7 +6,7 @@ import LasecContactForm, { displayUiSchema as ContactDisplauUISchema } from '../
 import LasecJobDetailForm, { displayUiSchema as JobDetailUISchema } from '../JobDetail';
 import LasecCRMCustomerLookupForm from '../../Customer/Lookup';
 import LasecCRMCustomerAddress, { DisplayUISchema as CustomerAddressUISchema } from '../../Customer/Address';
-import LasecCRMClientDocuments, { displayUiSchema as CustomerDocumentsUISchmea } from '../Documents';
+import LasecCRMDocuments from '../Documents';
 
 const displayUiSchema: any = {
   'ui:options': {
@@ -47,14 +47,14 @@ const displayUiSchema: any = {
       address: { md: 12 },      
     },
     {
-      documents: {md: 12}
+      uploadedDocuments: {md: 12}
     }
   ],
   personal: PersonalDisplayUISchema,
   contact: ContactDisplauUISchema,
   jobDetail: JobDetailUISchema,  
   address: CustomerAddressUISchema,
-  documents: CustomerDocumentsUISchmea,
+  uploadedDocuments: LasecCRMDocuments.ViewUiSchema,
 };
 
 
@@ -69,7 +69,7 @@ const schema: Reactory.ISchema = {
     jobDetail: LasecJobDetailForm.schema,
     customer: LasecCRMCustomerLookupForm.schema,
     address: LasecCRMCustomerAddress.schema,
-    documents: LasecCRMClientDocuments.schema
+    uploadedDocuments: LasecCRMDocuments.ViewSchema
   }
 };
 

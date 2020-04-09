@@ -47,7 +47,7 @@ import ClientPersonalInformation from './CRM/Client/Personal';
 import ClientContact from './CRM/Client/Contact';
 import ClientJobDetail from './CRM/Client/JobDetail';
 import ClientComments from './CRM/Client/Comments';
-import ClientDocuments from './CRM/Client/Documents';
+import LasecClientDocuments from './CRM/Client/Documents';
 import NewClient from './CRM/Client/NewClient';
 import NewClientConfirmAndSave from './CRM/Client/NewCustomerConfirm';
 
@@ -62,6 +62,8 @@ import CustomerAddress from './CRM/Customer/Address';
 import OrganizationLookup from './CRM/Organization/Lookup';
 import OrganizationLookupForm from './CRM/Organization/Lookup/LookUpForm';
 import NewOrganisation from './CRM/Organization/NewOrganisation';
+
+const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
 
 export default [
   SalesDashboard,
@@ -97,7 +99,9 @@ export default [
   ClientContact,
   ClientJobDetail,
   ClientComments,
-  ClientDocuments,
+  LasecCRMViewClientDocuments,
+  LasecCRMNewClientDocuments,
+  LasecCRMEditClientDocuments,
   ClientGrid,
   ClientDetail,
   ClientOverviewWidget,

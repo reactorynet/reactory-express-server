@@ -596,13 +596,13 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
     });
   }
 
-  if(params.uploadContexts && params.uploadContexts.length > 0) {
-    logger.debug(`Checking Documents With Context ${params.uploadContexts.map(ctx => `${ctx}, `)}`.trim());
-    let reactoryFiles = await ReactoryFile.find({ uploadContext: { $in: params.uploadContexts } }).then();
-    reactoryFiles.forEach((rfile) => {
-      _docs.push(rfile)
-    });
-  }
+  //if(params.uploadContexts && params.uploadContexts.length > 0) {
+  //logger.debug(`Checking Documents With Context ${params.uploadContexts.map(ctx => `${ctx}, `)}`.trim());
+  let reactoryFiles = await ReactoryFile.find({}).then();
+  reactoryFiles.forEach((rfile) => {
+    _docs.push(rfile)
+  });
+  //}
 
   if(params.paging) {
 
