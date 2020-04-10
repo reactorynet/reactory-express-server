@@ -128,6 +128,33 @@ input ClientUpdateInput {
   ranking: String
 }
 
+input AddressFields {
+  unitNumber: String,
+  unitName: String,
+  streetNumber: String,
+  streetName: String,
+  suburb: String,
+  metro: String,
+  city: String,
+  postCode: String,
+  province: String,
+  country: String,
+}
+
+type NewAddressResponse {
+  success: Boolean
+  id: String
+}
+
+type GoogleAddressDetails {
+  streetName: String
+  streetNumber: String
+  suburb: String
+  city: String
+  province: String
+  postalCode: String
+}
+
 extend type Query {
   LasecGetClientList(
     search: String!
@@ -158,24 +185,7 @@ extend type Query {
     filterBy: String
     iter: Int
   ): PagedCRMOrganisation
-}
-
-input AddressFields {
-  unitNumber: String,
-  unitName: String,
-  streetNumber: String,
-  streetName: String,
-  suburb: String,
-  metro: String,
-  city: String,
-  postCode: String,
-  province: String,
-  country: String,
-}
-
-type NewAddressResponse {
-  success: Boolean
-  id: String
+  LasecGetPlaceDetails(placeId: String!): GoogleAddressDetails
 }
 
 extend type Mutation {

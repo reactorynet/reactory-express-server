@@ -992,6 +992,20 @@ const lasecCreateNewAddress = async (args) => {
   }
 }
 
+const getPlaceDetails = async (args) => {
+
+  logger.debug(`___GETTING PLACE DETAILS_____ ${JSON.stringify(args)}`);
+
+  const apiResponse = await lasecApi.Customers.getPlaceDetails(args.placeId);
+
+  logger.debug(`API RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
+  return {
+    placeName: 'THIS IS A NAME'
+  }
+
+}
+
 export default {
   LasecCRMClient: {
     creditLimit: async (parent, obj) => {
@@ -1082,6 +1096,9 @@ export default {
     },
     LasecGetOrganisationList: async (obj, args) => {
       return getOrganisationList(args);
+    },
+    LasecGetPlaceDetails: async (obj, args) => {
+      return getPlaceDetails(args);
     },
   },
   Mutation: {

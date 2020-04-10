@@ -443,6 +443,17 @@ const Api = {
         logger.error(`ERROR CREATING NEW ADDRESS:: ${lasecApiError}`);
         return null;
       }
+    },
+    getPlaceDetails: async (placeId) => {
+      const drewsTempApiKey = '<GOOGLE MAPS API KEY>';
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=address_component&key=${drewsTempApiKey}`;
+      const response = await fetch(url, { method: 'GET' }).then();
+
+      try {
+        return response.json();
+      } catch (ex) {
+        return response.text();
+      }
     }
   },
   Company: {

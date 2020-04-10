@@ -1,6 +1,24 @@
 import { Reactory } from "@reactory/server-core/types/reactory";
 
 const graphql: Reactory.IFormGraphDefinition = {
+  query: {
+    name: 'LasecGetPlaceDetails',
+    text: `query LasecGetPlaceDetails($placeId: String!){
+      LasecGetPlaceDetails(placeId: $placeId) {
+        streetName
+        streetNumber
+        suburb
+        city
+        province
+        postalCode
+      }
+    }`,
+    variables: {
+      'formContext.place_id': 'placeId',
+    },
+    edit: false,
+    new: true
+  },
   mutation: {
     edit: {
       name: "LasecCreateNewAddress",
