@@ -9,6 +9,8 @@ import { defaultUiResources } from '../../../uiResources';
 
 const newSchema = cloneDeep<Reactory.ISchema>(DocumentFormSchema);
 // newSchema.properties.paging = { ...PagingSchema }
+newSchema.title = 'UPLOAD DOCUMENTS';
+newSchema.description = 'Use the area below to add files for this customer.';
 export const NewSchema = newSchema;
 
 
@@ -40,9 +42,9 @@ export const NewUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [          
     {
-      id: { md: 12, style: { height: 0, display: 'none' } },
-      upload: { md: 12 },
-      uploadedDocuments: { md: 12 },      
+      //id: { md: 12, style: { height: 0, display: 'none' } },
+      upload: { lg: 6, md: 6, sm: 12, },
+      uploadedDocuments: { lg: 6, md: 6, sm: 12 },      
     }
   ],  
 
@@ -112,7 +114,33 @@ export const NewUiSchema: any = {
   },
   
   uploadedDocuments: {
-    ...DocumentGridWidget
+    ...DocumentGridWidget,
+    'ui:options': {
+      ...DocumentGridWidget['ui:options'],
+      options: {
+        ...DocumentGridWidget['ui:options'].options,
+        toolbar: true,
+        selection: true,
+      },
+      actions: [
+        {
+          icon: 'remove_circle',
+          tooltip: 'Remove Files',          
+          iconProps: {
+            color: 'error'
+          },
+          mutation: 'delete',
+          variables: {
+            'formContext.formData.uploadContext': 'uploadContext',
+            'selected[].id': 'fileIds',
+          },
+          resultMap: {
+            
+          },
+          resultAction: 'refresh',                   
+        },   
+      ]
+    }        
   },    
 };
 
@@ -143,20 +171,37 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
           documents {
             id
             filename
+            mimetype
             link
             size
           }        
         }      
       }`,
       variables: {      
-        'formData.$uploadContexts': 'uploadContexts'            
-      },
-      formData: {
-        $uploadContext: [
-          'lasec-crm::new-company::document',
-          'lasec-crm::company-document'
-        ]
-      }, 
+        'formData.paging': 'paging',      
+        'formData.uploadContexts': 'uploadContexts',           
+      },      
+    },
+    mutation: {
+      delete: {
+        name: 'LasecDeleteNewClientDocuments',        
+        text: `
+          mutation LasecDeleteNewClientDocuments($fileIds: [String]!){
+            LasecDeleteNewClientDocuments(fileIds: $fileIds){
+              description
+              text
+              status
+            }
+          }
+        `,
+        variables: {
+          'selected.[].id': 'fileIds'  
+        },        
+        objectMap: true,        
+        onSuccessEvent: {
+          name: 'lasec-crm::new-company::documents::delete'
+        },        
+      }
     }
   },
   uiSchema: { ...NewUiSchema },
@@ -177,6 +222,9 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
       pageSize: 10,
     },
     uploadedDocuments: [],
-    upload: ''
+    upload: '',
+    uploadContexts: [
+      `lasec-crm::new-company::document`,
+    ]
   }  
 };

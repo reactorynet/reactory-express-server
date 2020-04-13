@@ -33,12 +33,12 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { md: 12 },
-      repCode: { md: 12 },
-      jobTitle: { md: 12 },
-      clientDepartment: { md: 12 },
-      clientClass: { md: 12 },
-      ranking: { md: 12 }
+      accountType: { lg: 4, md: 6, sm: 12 },
+      repCode: { lg: 4, md: 6, sm: 12 },
+      jobTitle: { lg: 4, md: 6, sm: 12 },
+      clientDepartment: { lg: 4, md: 6, sm: 12 },
+      clientClass: { lg: 4, md: 6, sm: 12 },
+      ranking: { lg: 4, md: 6, sm: 12 }
     }
   ],
   view: {
@@ -212,12 +212,12 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { md: 12 },
-      repCode: { md: 12 },
-      jobTitle: { md: 12 },
-      clientDepartment: { md: 12 },
-      clientClass: { md: 12 },
-      ranking: { md: 12 }
+      accountType: { lg: 4, md: 6, sm: 12 },
+      repCode: { lg: 4, md: 6, sm: 12 },
+      jobTitle: { lg: 4, md: 6, sm: 12 },
+      clientDepartment: { lg: 4, md: 6, sm: 12 },
+      clientClass: { lg: 4, md: 6, sm: 12 },
+      ranking: { lg: 4, md: 6, sm: 12 }
     }
   ],
   view: {
@@ -370,14 +370,14 @@ const newUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      jobTitle: { sm: 12, md: 6 },
-      jobType: { sm: 12, md: 6 },
-      lineManager: { sm: 12, md: 6 },
-      customerType: { sm: 12, md: 6 },
-      clientClass: { sm: 12, md: 6 },
-      faculty: { sm: 12, md: 6 },
-      clientDepartment: { sm: 12, md: 6 },
-      ranking: { sm: 12, md: 6 },
+      jobTitle: { lg: 4, md: 6, sm: 12 },
+      jobType: { lg: 4, md: 6, sm: 12 },
+      lineManager: { lg: 4, md: 6, sm: 12 },
+      customerType: { lg: 4, md: 6, sm: 12 },
+      clientClass: { lg: 4, md: 6, sm: 12 },
+      faculty: { lg: 4, md: 6, sm: 12 },
+      clientDepartment: { lg: 4, md: 6, sm: 12 },
+      ranking: { lg: 4, md: 6, sm: 12 },
     }
   ],
 

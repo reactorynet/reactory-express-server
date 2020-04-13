@@ -12,15 +12,20 @@ dotenv.config();
 
 let _forms = [];
 
-modules.enabled.forEach( ( module ) => {
-  logger.debug(`Loading Forms for module ${module.name}`);
-  if(isArray(module.forms) === true) {
-    module.forms.forEach((form) => {
-      logger.debug(`Validating and Loading Form ${form.id}`);
-      _forms.push(form);
-    });
-  }
-});
+const getModuleForms = () => {
+  _forms = [];
+  modules.enabled.forEach( ( module ) => {
+    logger.debug(`Loading Forms for module ${module.name}`);
+    if(isArray(module.forms) === true) {
+      module.forms.forEach((form) => {
+        logger.debug(`Validating and Loading Form ${form.id}`);
+        _forms.push(form);
+      });
+    }
+  });
+  
+  return _forms;
+};
 
 const { CDN_ROOT } = process.env;
 
@@ -1674,5 +1679,5 @@ export default [
   TemplateEditor,
   UserPeers,
   MicrosoftOpenIDAuthenticationForm,
-  ..._forms
+  ...getModuleForms()
 ];

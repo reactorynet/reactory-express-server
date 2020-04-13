@@ -144,6 +144,102 @@ const editUiSchema: any = {
   ...baseUiSchema
 };
 
+
+const readOnlySchema = { 
+  ...baseUiSchema, 
+  'ui:options': {
+    componentType: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '16px'
+    },
+    style: {
+      marginTop: '0',
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      physicalAddress: { sm: 12 },
+    },
+    {
+      deliveryAddress: { sm: 12 },
+    },
+    {
+      billingAddress: { sm: 12 },
+    },
+  ],
+  
+  physicalAddress: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData.fullAddress}',
+      variant: 'subtitle1',
+      title: 'Physical Address',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }    
+    }
+  },  
+  deliveryAddress: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData.fullAddress}',
+      variant: 'subtitle1',
+      title: 'Delivery Address',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }    
+    }
+  },
+  billingAddress:{
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData.fullAddress}',
+      variant: 'subtitle1',
+      title: 'Billing Address',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }    
+    }
+  }
+};
+
+export const ReadOnlyUiSchema = readOnlySchema;
+
 export const EditUISchema = editUiSchema;
 
 const uiSchema: any = {

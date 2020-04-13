@@ -1,11 +1,11 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
-import LasecPersonalForm, { displayUiSchema as PersonalDisplayUISchema } from '../Personal/';
+import LasecPersonalForm, { confirmUiSchema as PersonalDisplayUISchema } from '../Personal/';
 import LasecContactForm, { displayUiSchema as ContactDisplauUISchema } from '../Contact';
 import LasecJobDetailForm, { displayUiSchema as JobDetailUISchema } from '../JobDetail';
 import LasecCRMCustomerLookupForm from '../../Customer/Lookup';
-import LasecCRMCustomerAddress, { DisplayUISchema as CustomerAddressUISchema } from '../../Customer/Address';
+import LasecCRMCustomerAddress, {  ReadOnlyUiSchema as CustomerAddressUISchema } from '../../Customer/Address';
 import LasecCRMDocuments from '../Documents';
 
 const displayUiSchema: any = {
@@ -54,7 +54,7 @@ const displayUiSchema: any = {
   contact: ContactDisplauUISchema,
   jobDetail: JobDetailUISchema,  
   address: CustomerAddressUISchema,
-  uploadedDocuments: LasecCRMDocuments.ViewUiSchema,
+  uploadedDocuments: LasecCRMDocuments.ConfirmUiSchema,
 };
 
 
@@ -69,7 +69,7 @@ const schema: Reactory.ISchema = {
     jobDetail: LasecJobDetailForm.schema,
     customer: LasecCRMCustomerLookupForm.schema,
     address: LasecCRMCustomerAddress.schema,
-    uploadedDocuments: LasecCRMDocuments.ViewSchema
+    uploadedDocuments: LasecCRMDocuments.schema
   }
 };
 

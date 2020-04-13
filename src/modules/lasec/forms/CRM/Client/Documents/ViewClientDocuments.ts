@@ -39,8 +39,7 @@ export const ViewUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [    
     {
-      view: { sm: 12, md: 12 },
-      id: { md: 12 },            
+      view: { sm: 12, md: 12 },      
       uploadedDocuments: { md: 12 },
     }
   ],
@@ -59,6 +58,43 @@ export const ViewUiSchema: any = {
   },
   uploadedDocuments: { ...DocumentGridWidget }
 };
+
+
+export const ConfirmUiSchema: any = {
+  'ui:options': {
+    componentType: 'div',
+    toolbarPosition: 'none',
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      marginTop: '16px',
+      paddingBottom: '8px'
+    },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'Edit',
+      activeColor: 'primary',
+      selectSchemaId: 'edit'
+    },
+    style:{
+      marginTop: '16px',
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5'
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [    
+    {      
+      uploadedDocuments: { md: 12 },
+    }
+  ],  
+  
+  uploadedDocuments: { ...DocumentGridWidget }
+};
+
 
 export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
   id: 'LasecCRMViewClientDocuments',

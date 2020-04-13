@@ -82,7 +82,7 @@ export const EditUiSchema: any = {
             }
           }`,
           variables: {
-            'uploadContext': 'lasec-crm::company::document'
+            'uploadContext': 'lasec-crm::new-company::document'
           },
         },
         iconProps: {

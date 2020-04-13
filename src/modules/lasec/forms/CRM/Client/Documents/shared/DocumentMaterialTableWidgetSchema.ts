@@ -8,17 +8,60 @@ const MaterialTableWidgetDefintion: any =  {
         title: 'Filename', field: 'filename'
       },
       {
-        title: 'Friendly Name', field: 'alias'
-      },
-      {
-        title: 'Size', field: 'size'
-      },
-      {
-        title: 'Type', field: 'mimetype'
-      },
-      {
-        title: 'Link', field: 'link'
-      },
+        title: 'Type', field: 'mimetype',
+        components: [
+          {
+            component: 'core.ConditionalIconComponent@1.0.0',
+            props: {
+              'ui:options': {},
+              conditions: [
+                {
+                  key: 'image/png',
+                  icon: 'photo',
+                  style: {
+                    color: '#5EB848'                  
+                  },
+                  tooltip: 'PNG'
+                },
+                {
+                  key: 'image/jpeg',
+                  icon: 'photo',
+                  style: {
+                    color: '#5EB848'
+                  },
+                  tooltip: 'JPEG'
+                },                
+                {
+                  key: 'image/gif',
+                  icon: 'gif',
+                  style: {
+                    color: '#5EB848'
+                  },
+                  tooltip: 'GIF'
+                },
+                {
+                  key: 'application/pdf',
+                  icon: 'picture_as_pdf',
+                  style: {
+                    color: '#5EB848'
+                  },
+                  tooltip: 'Pdf document'
+                }                  
+              ]
+            },
+            style: {
+              marginRight: '8px',
+              marginTop: '8px',
+            },
+            propsMap: {
+              'rowData.mimetype': 'value',
+            },
+          }            
+        ],                  
+        propsMap: {
+          'rowData.mimetype': 'selectedKey'
+        }
+      },      
     ],
 
     options: {
@@ -29,10 +72,13 @@ const MaterialTableWidgetDefintion: any =  {
     },
     remoteData: true,
     query: 'query',
-    refreshOn: ['lasec-crm::new-company::document::uploaded'],
+    refreshEvents: [
+      { name: 'lasec-crm::new-company::document::uploaded' }
+    ],
     variables: {      
       'props.formContext.$formData.paging': 'paging',      
       'props.formContext.$formData.filter': 'filter',
+      'props.formContext.$formData.uploadContexts': 'uploadContexts',
     },
     resultMap: {
       'paging.page': 'page',

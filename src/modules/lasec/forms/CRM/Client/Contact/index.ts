@@ -33,11 +33,11 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { md: 12 },
-      alternateEmail: { md: 12 },
-      officeNumber: { md: 12 },
-      mobileNumber: { md: 12 },
-      alternateNumber: { md: 12 },
+      emailAddress: { lg: 6, md: 12, sm: 12 },
+      alternateEmail: { lg: 6, md: 12, sm: 12 },
+      officeNumber: { lg: 6, md: 12, sm: 12 },
+      mobileNumber: { lg: 6, md: 12, sm: 12 },
+      alternateNumber: { lg: 6, md: 12, sm: 12 },
     }
   ],
   view: {
@@ -225,14 +225,14 @@ const newUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      emailAddress: { sm: 12, md: 6, },
-      confirmEmailAddress: { sm: 12, md: 6, },
-      alternateEmail: { sm: 12, md: 6, },
-      confirmAlternateEmail: { sm: 12, md: 6, },
-      mobileNumber: { sm: 12, md: 6, },
-      alternateMobileNumber: { sm: 12, md: 6, },
-      officeNumber: { sm: 12, md: 6, },
-      prefferedMethodOfContact: { sm: 12, md: 6, },
+      emailAddress: { lg: 4, md: 6, sm: 12 },
+      confirmEmailAddress: { lg: 4, md: 6, sm: 12 },
+      alternateEmail: { lg: 4, md: 6, sm: 12 },
+      confirmAlternateEmail: { lg: 4, md: 6, sm: 12 },
+      mobileNumber: { lg: 4, md: 6, sm: 12 },
+      alternateMobileNumber: { lg: 4, md: 6, sm: 12 },
+      officeNumber: { lg: 4, md: 6, sm: 12 },
+      prefferedMethodOfContact: { lg: 4, md: 6, sm: 12 },
     }
   ],
   emailAddress: {},

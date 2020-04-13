@@ -15,7 +15,7 @@ import { getScaleForKey } from 'data/scales';
 import FormData from 'form-data';
 import { GraphQLUpload }  from 'graphql-upload';
 import ApiError from 'exceptions';
-import { ObjectID } from 'mongodb';
+import { ObjectID, ObjectId } from 'mongodb';
 import { urlencoded } from 'body-parser';
 
 const getClients = async (params) => {
@@ -569,11 +569,9 @@ interface CustomerDocumentQueryParams {
 
 const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
   
-
-
   const _docs: any[] = []
 
-  if(params.id) {    
+  if(params.id && params.id !== 'new') {    
     logger.debug(`Fetching Remote Documents for Lasec Customer ${params.id}`);
     let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } });  
     documents.items.forEach((documentItem: any) => {
@@ -588,7 +586,7 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
         alias: '',
         alt: [],
         size: 0,
-        uploadContext: 'lasec-crm::company-document',
+        uploadContext: 'lasec-crm::company-document::remote',
         mimetype: '',
         uploadedBy: global.user.id,
         owner: global.user.id
@@ -596,17 +594,27 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
     });
   }
 
-  //if(params.uploadContexts && params.uploadContexts.length > 0) {
-  //logger.debug(`Checking Documents With Context ${params.uploadContexts.map(ctx => `${ctx}, `)}`.trim());
-  let reactoryFiles = await ReactoryFile.find({}).then();
-  reactoryFiles.forEach((rfile) => {
-    _docs.push(rfile)
-  });
-  //}
+  let documentFilter: any = {};
+  if(params.uploadContexts && params.uploadContexts.length > 0) {    
+    documentFilter.uploadContext = { $in: params.uploadContexts.map( (ctx: string) => { 
+      //append the the logged in user id for the context.
+      if(ctx === 'lasec-crm::new-company::document') return `${ctx}::${global.user._id}`;
+      return ctx;
+    })
+    };
+  }
 
+  logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
+  let reactoryFiles = await ReactoryFile.find(documentFilter).then();
+  logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> ReactorFile.find({documentFileter}) --> reactorFiles[${reactoryFiles.length}]`);
+  
+  reactoryFiles.forEach((rfile) => {
+    _docs.push(rfile);
+  });
+  
   if(params.paging) {
 
-    let skipCount: number = params.paging.page * params.paging.pageSize;
+    let skipCount: number = params.paging.page - 1 * params.paging.pageSize;
 
     return {
       documents: lodash(_docs).drop(skipCount).take(params.paging.pageSize),
@@ -1011,6 +1019,7 @@ const uploadDocument = async (args: any) => {
         id: new ObjectID(),
         filename,
         mimetype,
+        alias: randomName,
         partner: new ObjectID(global.partner.id),
         owner: new ObjectID(global.user.id),
         uploadedBy: new ObjectID(global.user.id),
@@ -1023,6 +1032,10 @@ const uploadDocument = async (args: any) => {
         published: false,        
       };
 
+      if(reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
+        reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
+      }
+        
       const savedDocument = new ReactoryFile(reactoryFile);
 
       savedDocument.save().then();
@@ -1065,7 +1078,102 @@ const uploadDocument = async (args: any) => {
   */  
 
   });     
+};
+
+const deleteDocuments = async (args: any) => {
+  
+  const { fileIds } = args;
+
+  let files = await ReactoryFile.find({ id: { $in: fileIds } }).then()
+
+  files.forEach((fileDocument) => {
+    const fileToRemove = path.join(process.env.APP_DATA_ROOT, 'content', 'files', fileDocument.alias);
+    try {
+      if(fs.existsSync(fileToRemove)) fs.unlinkSync( fileToRemove );
+
+      fileDocument.remove().then();
+    } catch (unlinkError) {
+      logger.debug(`Could not unlink file`)
+    }    
+  });
+
+  return {
+    description: `Successfully deleted (${fileIds.length}) files`,
+    text: 'Files deleted',
+    status: 'success',
+  }
+  
+};
+
+export interface NewClientResponse {
+  client: any,
+  success: Boolean,
+  messages: any[]
 }
+
+const clientDocuments: any[] = [];
+
+export const DEFAULT_NEW_CLIENT = {
+  __typename: 'LasecNewClient',
+  id: '',
+  personalDetails: {      
+    title: 'Mr',
+    firstName: '',
+    lastName: '',
+    country: 'SOUTH AFRICA',
+    repCode: ''
+  },
+  contactDetails: {
+    emailAddress: '',
+    confirmEmail: '',
+    alternateEmail: '',
+    confirmAlternateEmail: '',
+    mobileNumber: '',
+    alternateMobile: '',
+    officeNumber: '',
+    prefferedMethodOfContact: '',
+  },
+  jobDetails: {
+    jobTitle: '',
+    jobType: '',
+    salesTeam: '',
+    lineManager: '',
+    customerType: '',
+    customerClass: '',
+    faculty: '',
+    clientDepartment: '',
+    ranking: '',
+  },
+  customer: {
+    id: '',
+    tradingName: '',
+  },
+  organization: {
+    id: '',
+    name: '',
+  },
+  address: {
+    physicalAddress: {
+      id: '',
+      fullAddress: '',
+      map: {}        
+    },
+    deliveryAddress: {
+      id: '',
+      fullAddress: '',
+      map: {}        
+    },
+    billingAddress: {
+      id: '',
+      fullAddress: '',
+      map: {}
+    },
+  },
+  clientDocuments,
+  confirmed: false,
+  saved: false,    
+};
+
 
 export default {
   LasecCRMClient: {
@@ -1158,6 +1266,16 @@ export default {
     LasecGetOrganisationList: async (obj, args) => {
       return getOrganisationList(args);
     },
+    LasecGetNewClient: async(obj, args) => {
+      let hash = Hash(`__LasecNewClient::${global.user._id}`);
+
+      const newClient = await getCacheItem(hash).then();
+            
+      let _newClient =  newClient || { ...DEFAULT_NEW_CLIENT,  id: new ObjectId() };
+      //cache this object for 12 h
+      await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+      return _newClient;
+    } 
   },
   Mutation: {
     LasecUpdateClientDetails: async (obj, args) => {
@@ -1169,6 +1287,34 @@ export default {
     },
     LasecUploadDocument: async (obj, args) => {      
       return uploadDocument(args);
+    },
+    LasecDeleteNewClientDocuments: async (obj, args) => {
+      return deleteDocuments(args);
+    },
+    LasecUpdateNewClient: async (obj, args) => {
+      const { newClient } = args;
+
+      let hash = Hash(`__LasecNewClient::${global.user._id}`);
+      const _cached = await getCacheItem(hash).then();
+      let _newClient = { ..._cached, ...newClient };
+      //update the cache for the NewClient
+      await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+
+      return _newClient;
+    },
+    LasecCreateNewClient: async ( obj, args ) => {
+      const { newClient } = args;
+
+      let response: NewClientResponse = {
+        client: null,
+        success: false, 
+        messages: [
+
+        ],
+      };
+
+      return response;
     }
+
   },
 };

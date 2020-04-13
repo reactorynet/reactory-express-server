@@ -2,13 +2,15 @@
 import { DocumentSchema } from './shared/DocumentSchema';
 import { DocumentFormSchema } from './shared/DocumentFormSchema';
 //Schema for display purposes, should not support upload
-import { ViewSchema, ViewUiSchema, LasecCRMViewClientDocuments } from './ViewClientDocuments';
+import { ViewSchema, ViewUiSchema, ConfirmUiSchema, LasecCRMViewClientDocuments } from './ViewClientDocuments';
 import { EditSchema, EditUiSchema, LasecCRMEditClientDocuments } from './EditClientDocuments';
 import { NewSchema, NewUiSchema, LasecCRMNewClientDocuments } from './NewClientDocuments';
 import { Reactory } from 'types/reactory';
 
 //Display for schema for new document uploads
 export interface LasecClientDocumentExport {
+  //Confirm Ui Schema
+  ConfirmUiSchema: Reactory.ISchema,
   //Root Document Schema
   DocumentSchema: Reactory.ISchema,
   //Base Document Form Schema
@@ -31,14 +33,16 @@ export interface LasecClientDocumentExport {
   NewSchema: Reactory.ISchema,
   //New Document UiSchema
   NewUiSchema: any,
-  
+
   LasecCRMNewClientDocuments: Reactory.IReactoryForm,
 };
 
 const LasecClientDocuments: LasecClientDocumentExport = {
-  DocumentSchema,
-  DocumentFormSchema,
+  ConfirmUiSchema,
 
+  DocumentSchema,
+  DocumentFormSchema,  
+  
   ViewSchema,
   ViewUiSchema,
   LasecCRMViewClientDocuments,

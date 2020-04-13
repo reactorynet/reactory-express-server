@@ -176,6 +176,8 @@ declare namespace Reactory {
     variables?: Object,
     formData?: Object,
     onSuccessMethod?: String | "redirect" | "notification" | "function",
+    onSuccessEvent?: IReactoryEvent | undefined,
+    refreshEvents?: IReactoryEvent[] | undefined
     onSuccessUrl?: String,
     onSuccessRedirectTimeout?: number,
     options?: any,
@@ -192,6 +194,8 @@ declare namespace Reactory {
   export interface IFormGraphDefinition {
     query?: IReactoryFormQuery,
     mutation?: IReactoryFormMutations,
+    queries?: [IReactoryFormQuery],
+    clientResolvers?: any
   }
 
   export interface IWidgetMap {
@@ -277,7 +281,7 @@ declare namespace Reactory {
     version: String,
     roles?: String[],
     components?: String[],
-    graphql?: IFormGraphDefinition,
+    graphql?: IFormGraphDefinition,    
     defaultFormValue?: any,
     defaultPdfReport?: IReactoryPdfReport,
     defaultExport?: IExport,

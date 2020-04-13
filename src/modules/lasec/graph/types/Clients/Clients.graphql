@@ -119,6 +119,78 @@ type CreateNewOrganisationResponse {
   success: Boolean
 }
 
+type LasecClientPersonalDetails {
+  title: String
+  firstName: String
+  lastName: String
+  country: String
+  repCode: String  
+}
+
+type LasecAddress {
+  id: String
+  fullAddress: String
+  map: Any
+}
+
+type LasecContactDetails {
+  emailAddess: String
+  confirmEmail: String
+  alternateEmail: String
+  confirmAlternateEmail: String
+  mobileNumber: String
+  alternateMobile: String
+  officeNumber: String
+  prefferedMethodOfContact: String
+}
+
+type LasecJobDetails {
+  jobTitle: String
+  jobType: String
+  salesTeam: String
+  lineManager: String
+  customerType: String
+  customerClass: String
+  faculty: String
+  clientDepartment: String
+  ranking: String
+}
+
+type LasecClientAddresses {
+  physicalAddress: LasecAddress
+  deliveryAddress: LasecAddress
+  billingAddress: LasecAddress
+}
+
+type LasecNewClient {
+  id: String
+  personalDetails: LasecClientPersonalDetails
+  contactDetails: LasecContactDetails
+  jobDetails: LasecJobDetails
+  cutomer: LasecCRMCustomer
+  organization: LasecCRMOrganisation
+  address: LasecClientAddresses
+  clientDocuments: [LasecDocument]
+  confirmed: Boolean
+  saved: Boolean
+}
+
+type NewClientResponse {
+  client: LasecCRMClient
+  success: Boolean
+  messages: [UXMessage]
+}
+
+input LasecNewClientInput {
+  id: String
+  personalDetails: Any
+  contactDetails: Any
+  jobDetails: Any
+  cutomer: Any
+  organization: Any
+  address: Any
+}
+
 input ClientUpdateInput {
   clientId: String!
   clientStatus: String
@@ -151,6 +223,7 @@ extend type Query {
   LasecGetCustomerFilterLookup(filterBy: String): [LasecLookupItem]
   LasecGetCustomerDocuments(id: String, uploadContexts: [String], paging: PagingRequest): PagedLasecDocument
   LasecGetPersonTitles: [LasecTitleLookupItem]
+  LasecGetNewClient: LasecNewClient
   LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
 }
 
@@ -159,8 +232,12 @@ extend type Mutation {
     clientInfo: ClientUpdateInput!
   ): ClientDetailUpdateResponse
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
-  LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument
+  LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument  
+  LasecDeleteNewClientDocuments(fileIds: [String]!): UXMessage
   LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
+  LasecCreateNewClient(newClient: LasecNewClientInput): NewClientResponse
+  LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
+
 }
 
 #  LasecUpdateClientJobDetails(clientId: String!, accountType: String!, repCode: String!, jobTitle: String!, clientDepartment: String!, clientClass: String!, ranking: String!): ClientDetailUpdateResponse

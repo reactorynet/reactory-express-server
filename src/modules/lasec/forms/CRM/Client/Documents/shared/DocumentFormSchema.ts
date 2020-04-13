@@ -38,7 +38,14 @@ export const DocumentFormSchema: Reactory.ISchema = {
       type: 'string',
       title: 'File',
       description: 'This field is used to upload the file'
-    },    
+    },
+    
+    uploadContext: {
+      type: 'array',
+      items: {
+        type: 'string',
+      }
+    },
     
     uploadedDocuments: {
       type: 'array',      
