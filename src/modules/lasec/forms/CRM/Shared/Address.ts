@@ -8,10 +8,14 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'id'
     },
+    placeId: {
+      type: 'string',
+      title: 'Place Id'
+    },
     fullAddress: {
       type: 'string',
       title: 'Full Address'
-    },   
+    },
     addressLine1: {
       type: 'string',
       title: 'Street'
@@ -22,23 +26,23 @@ const schema: Reactory.ISchema = {
     },
     city: {
       type: 'string',
-      title: 'City',      
+      title: 'City',
     },
     zipCode: {
       type: 'string',
-      title: 'Postal Code', 
+      title: 'Postal Code',
     },
     state: {
       type: 'string',
-      title: 'Province', 
+      title: 'Province',
     },
     countryCode: {
       type: 'string',
-      title: 'Country Code',      
+      title: 'Country Code',
     },
     countryName: {
       type: 'string',
-      title: 'Country Name',      
+      title: 'Country Name',
     },
     lat: {
       type: 'number',

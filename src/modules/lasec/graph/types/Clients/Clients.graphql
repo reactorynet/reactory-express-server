@@ -136,13 +136,21 @@ input AddressFields {
   suburb: String,
   metro: String,
   city: String,
-  postCode: String,
+  postalCode: String,
   province: String,
   country: String,
 }
 
+input NewAddressInput {
+  buildingDescriptionId: String
+  buildingFloorNumberId: String
+  unit: String
+  addressFields: AddressFields
+}
+
 type NewAddressResponse {
   success: Boolean
+  message: String
   id: String
 }
 
@@ -151,8 +159,10 @@ type GoogleAddressDetails {
   streetNumber: String
   suburb: String
   city: String
+  metro: String
   province: String
   postalCode: String
+  country: String
 }
 
 extend type Query {
@@ -186,23 +196,13 @@ extend type Query {
     iter: Int
   ): PagedCRMOrganisation
   LasecGetPlaceDetails(placeId: String!): GoogleAddressDetails
+  LasecGetAddress(searchTerm: String!): [String!]
 }
 
 extend type Mutation {
-  LasecUpdateClientDetails(
-    clientInfo: ClientUpdateInput!
-  ): ClientDetailUpdateResponse
+  LasecUpdateClientDetails(clientInfo: ClientUpdateInput!): ClientDetailUpdateResponse
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
   LasecUploadDocument(file: Upload!): LasecDocument
-  LasecCreateNewOrganisation(
-    customerId: String
-    name: String
-    description: String
-  ): CreateNewOrganisationResponse
-  LasecCreateNewAddress(
-    buildingDescriptionId: String
-    buildingFloorNumberId: String
-    unit: String
-    addressFields: AddressFields
-  ): NewAddressResponse
+  LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
+  LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
 }

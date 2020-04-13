@@ -3,7 +3,7 @@ import $graphql from './graphql';
 
 const uiSchema: any = {
   'ui:options': {
-    componentType: "div",
+    componentType: "form",
     containerStyles: {
       margin: '0',
       padding: '0px',
@@ -18,20 +18,18 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      id: { sm: 6 },
       unitNumber: { sm: 6 },
       unitName: { sm: 6 },
-      suburb: { sm: 6 },
-      // metro: { sm: 6 },
-      province: { sm: 6 },
       floorNumber: { sm: 6 },
-      postalCode: { sm: 6 },
       buildingName: { sm: 6 },
-      // state: { sm: 6 },
       buildingType: { sm: 6 },
-      city: { sm: 6 },
       streetNumber: { sm: 6 },
       streetName: { sm: 6 },
+      suburb: { sm: 6 },
+      city: { sm: 6 },
+      metro: { sm: 6 },
+      province: { sm: 6 },
+      postalCode: { sm: 6 },
       country: { sm: 6 },
     },
   ],
@@ -40,14 +38,129 @@ const uiSchema: any = {
   unitNumber: {},
   unitName: {},
   suburb: {},
-  // metro: {},
   province: {},
-  floorNumber: {},
+  floorNumber: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      selectOptions: [
+        {
+          key: '1',
+          value: '1',
+          label: 'Ground Level',
+        },
+        {
+          key: '2',
+          value: '2',
+          label: '1st Floor',
+        },
+        {
+          key: '3',
+          value: '3',
+          label: '2nd Floor',
+        },
+        {
+          key: '4',
+          value: '4',
+          label: '3rd Floor',
+        },
+        {
+          key: '5',
+          value: '5',
+          label: '4th Floor',
+        },
+        {
+          key: '6',
+          value: '6',
+          label: '5th Floor',
+        },
+        {
+          key: '7',
+          value: '7',
+          label: '6th Floor',
+        },
+        {
+          key: '8',
+          value: '8',
+          label: '8th Floor',
+        },
+        {
+          key: '9',
+          value: '9',
+          label: '9th Floor',
+        },
+        {
+          key: '10',
+          value: '10',
+          label: '10th Floor +',
+        },
+      ],
+    },
+  },
   postalCode: {},
   buildingName: {},
-  // state: {},
-  buildingType: {},
+  buildingType: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      selectOptions: [
+        {
+          key: '1',
+          value: '1',
+          label: 'Industrial Park',
+        },
+        {
+          key: '2',
+          value: '2',
+          label: 'Multi-Level Building',
+        },
+        {
+          key: '3',
+          value: '3',
+          label: 'Office Block',
+        },
+        {
+          key: '4',
+          value: '4',
+          label: 'Office',
+        },
+        {
+          key: '5',
+          value: '5',
+          label: 'Office Park',
+        },
+        {
+          key: '6',
+          value: '6',
+          label: 'Other',
+        },
+        {
+          key: '7',
+          value: '7',
+          label: 'Warehouse',
+        },
+        {
+          key: '8',
+          value: '8',
+          label: 'School',
+        },
+      ],
+    },
+  },
   city: {},
+  metro: {},
   streetNumber: {},
   streetName: {},
   country: {},
@@ -67,15 +180,11 @@ const schema: Reactory.ISchema = {
       type: 'string'
     },
     unitName: {
-      title: 'UnitName',
+      title: 'Unit Name',
       type: 'string'
     },
     suburb: {
       title: 'Suburb',
-      type: 'string'
-    },
-    metro: {
-      title: 'Metro',
       type: 'string'
     },
     province: {
@@ -94,16 +203,16 @@ const schema: Reactory.ISchema = {
       title: 'Complex/Building Name',
       type: 'string'
     },
-    state: {
-      title: 'State/Province',
-      type: 'string'
-    },
     buildingType: {
-      title: 'Building Type',
+      title: 'Building Description',
       type: 'string'
     },
     city: {
       title: 'City',
+      type: 'string'
+    },
+    metro: {
+      title: 'Metro',
       type: 'string'
     },
     streetName: {

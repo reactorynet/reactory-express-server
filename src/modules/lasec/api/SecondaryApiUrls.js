@@ -91,6 +91,7 @@ export default {
   rep_code: { url: `api/${ENTITY_KEY__REP_CODE}/`, allowed_methods: ['get'] },
   organisation: { url: `api/${ENTITY_KEY__ORGANISATION}/`, allowed_methods: ['get'] },
   createOrganisation: { url: `api/${ENTITY_KEY__ORGANISATION}/\\d+/`, allowed_methods: ['put'] },
+  address: { url: `api/${ENTITY_KEY__ADDRESS}/`, allowed_methods: ['get', 'post'] },
   new_address: { url: `api/${ENTITY_KEY__ADDRESS}/`, allowed_methods: ['get', 'post'] },
 
   /*

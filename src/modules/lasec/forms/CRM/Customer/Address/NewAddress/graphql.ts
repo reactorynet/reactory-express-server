@@ -9,50 +9,53 @@ const graphql: Reactory.IFormGraphDefinition = {
         streetNumber
         suburb
         city
+        metro
         province
         postalCode
+        country
       }
     }`,
     variables: {
       'formContext.place_id': 'placeId',
     },
+    resultMap: {
+      'streetName': 'streetName',
+      'streetNumber': 'streetNumber',
+      'suburb': 'suburb',
+      'city': 'city',
+      'metro': 'metro',
+      'province': 'province',
+      'postalCode': 'postalCode',
+      'country': 'country',
+    },
     edit: false,
     new: true
   },
   mutation: {
-    edit: {
+    new: {
       name: "LasecCreateNewAddress",
-      text: `mutation LasecCreateNewAddress(
-        $buildingDescriptionId: String,
-        $buildingFloorNumberId: String,
-        $unit: String,
-        $addressFields: AddressFields
-      ){
-        LasecCreateNewAddress(
-          buildingDescriptionId: $buildingDescriptionId,
-          buildingFloorNumberId: $buildingFloorNumberId,
-          unit: $unit,
-          addressFields: $addressFields,
-          ) {
+      text: `mutation LasecCreateNewAddress($addressDetails: NewAddressInput!){
+        LasecCreateNewAddress(addressDetails: $addressDetails) {
           success
+          message
           id
         }
       }`,
       objectMap: true,
       updateMessage: 'Updating Template Content',
       variables: {
-        'formData.buildingType': 'buildingDescriptionId',
-        'formData.floorNumber': 'buildingFloorNumberId',
-        'formData.unitNumber': ['unit', 'addressFields.unitNumber'],
-        'formData.unitName': 'addressFields.unitName',
-        'formData.streetName': 'addressFields.streetName',
-        'formData.streetNumber': 'addressFields.streetNumber',
-        'formData.suburb': 'addressFields.suburb',
-        'formData.metro': 'addressFields.metro',
-        'formData.city': 'addressFields.city',
-        'formData.postCode': 'addressFields.postCode',
-        'formData.province': 'addressFields.province',
-        'formData.country': 'addressFields.country',
+        'formData.buildingType': 'addressDetails.buildingDescriptionId',
+        'formData.floorNumber': 'addressDetails.buildingFloorNumberId',
+        'formData.unitNumber': ['addressDetails.unit', 'addressDetails.addressFields.unitNumber'],
+        'formData.unitName': 'addressDetails.addressFields.unitName',
+        'formData.streetName': 'addressDetails.addressFields.streetName',
+        'formData.streetNumber': 'addressDetails.addressFields.streetNumber',
+        'formData.suburb': 'addressDetails.addressFields.suburb',
+        'formData.city': 'addressDetails.addressFields.city',
+        'formData.metro': 'addressDetails.addressFields.metro',
+        'formData.province': 'addressDetails.addressFields.province',
+        'formData.postalCode': 'addressDetails.addressFields.postalCode',
+        'formData.country': 'addressDetails.addressFields.country',
       },
       onSuccessMethod: 'refresh'
     }

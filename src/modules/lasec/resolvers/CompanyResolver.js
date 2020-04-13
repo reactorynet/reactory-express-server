@@ -916,10 +916,29 @@ const uploadDocument = async (args) => {
     mimetype: 'mimetype',
   };
 
+};
+
+const getAddress = async (args) => {
+
+  logger.debug(`GETTING ADDRESS:: ${JSON.stringify(args)}`);
+
+  const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true } });
+
+  let _ids = [];
+  if (isArray(addressIds.ids) === true) {
+    _ids = [...addressIds.ids];
+  }
+
+  const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
+  const addresses = [...addressDetails.items];
+  const formattedAddresses = addresses.map((ad) => {
+    return ad.formatted_address;
+  });
+
+  return formattedAddresses;
 }
 
-const lasecCreateNewAddress = async (args) => {
-
+const createNewAddress = async (args) => {
   // {
   //   "building_description_id": "1",
   //   "building_floor_number_id": "2",
@@ -947,39 +966,47 @@ const lasecCreateNewAddress = async (args) => {
   // }
 
   try {
-
+    const { addressDetails } = args;
     const addressParams = {
-      building_description_id: args.buildingDescriptionId,
-      building_floor_number_id: args.buildingFloorNumberId,
-      unit: args.unit,
+      building_description_id: addressDetails.buildingDescriptionId,
+      building_floor_number_id: addressDetails.buildingFloorNumberId,
+      unit: addressDetails.unit,
       address_fields: {
-        0: args.addressFields.unitNumber,
-        1: args.addressFields.unitName,
-        2: args.addressFields.streetNumber,
-        3: args.addressFields.streetName,
-        4: args.addressFields.suburb,
-        5: args.addressFields.metro,
-        6: args.addressFields.city,
-        7: args.addressFields.postCode,
-        8: args.addressFields.province,
-        9: args.addressFields.country,
+        0: addressDetails.addressFields.unitNumber,
+        1: addressDetails.addressFields.unitName,
+        2: addressDetails.addressFields.streetNumber,
+        3: addressDetails.addressFields.streetName,
+        4: addressDetails.addressFields.suburb,
+        5: addressDetails.addressFields.metro,
+        6: addressDetails.addressFields.city,
+        7: addressDetails.addressFields.postalCode,
+        8: addressDetails.addressFields.province,
+        9: addressDetails.addressFields.country,
       },
       map: {
         lat: 0,
         lng: 0,
-        formatted_address: `${args.addressFields.unitNumber}, ${args.addressFields.unitName} ${args.addressFields.streetNumber} ${args.addressFields.streetName}${args.addressFields.suburb} ${args.addressFields.metro} ${args.addressFields.city} ${args.addressFields.postCode} ${args.addressFields.province} ${args.addressFields.country}`,
+        formatted_address: `${addressDetails.addressFields.unitNumber}, ${addressDetails.addressFields.unitName} ${addressDetails.addressFields.streetNumber} ${addressDetails.addressFields.streetName}${addressDetails.addressFields.suburb} ${addressDetails.addressFields.metro} ${addressDetails.addressFields.city} ${addressDetails.addressFields.postalCode} ${addressDetails.addressFields.province} ${addressDetails.addressFields.country}`,
         address_components: [],
       },
       confirm_pin: true,
       confirm_address: true,
     };
 
-    const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
+    const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address }).then();
+    if (existingAddress && existingAddress.length > 0) {
+      return {
+        success: false,
+        message: 'Address already exists',
+        id: 0,
+      };
+    }
 
-    logger.debug(`RESOLVER API RESPONSE:: ${JSON.stringify(apiResponse)}`);
+    const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
 
     return {
       success: apiResponse.status === 'success',
+      message: apiResponse.status === 'success' ? 'Address added successfully' : 'Could not add new address.',
       id: apiResponse.status === 'success' ? apiResponse.payload.id : 0,
     };
 
@@ -987,24 +1014,50 @@ const lasecCreateNewAddress = async (args) => {
     logger.error(`ERROR CREATING ADDRESS::  ${ex}`);
     return {
       success: false,
+      message: ex,
       id: 0,
     };
   }
-}
+};
 
 const getPlaceDetails = async (args) => {
-
-  logger.debug(`___GETTING PLACE DETAILS_____ ${JSON.stringify(args)}`);
-
   const apiResponse = await lasecApi.Customers.getPlaceDetails(args.placeId);
 
-  logger.debug(`API RESPONSE:: ${JSON.stringify(apiResponse)}`);
+  if (apiResponse && apiResponse.status === 'OK') {
+    const addressObj = {
+      streetName: '',
+      streetNumber: '',
+      suburb: '',
+      city: '',
+      metro: '',
+      province: '',
+      postalCode: '',
+    };
 
-  return {
-    placeName: 'THIS IS A NAME'
+    apiResponse.result.address_components.forEach((comp) => {
+      if (comp.types.includes('street_number')) addressObj.streetNumber = comp.long_name;
+      if (comp.types.includes('route')) addressObj.streetName = comp.long_name;
+      if (comp.types.includes('sublocality') || comp.types.includes('sublocality_level_1')) addressObj.suburb = comp.long_name;
+      if (comp.types.includes('locality')) addressObj.city = comp.long_name;
+      if (comp.types.includes('administrative_area_level_2')) addressObj.metro = comp.long_name;
+      if (comp.types.includes('administrative_area_level_1')) addressObj.province = comp.long_name;
+      if (comp.types.includes('postal_code')) addressObj.postalCode = comp.long_name;
+      if (comp.types.includes('country')) addressObj.country = comp.long_name;
+    });
+
+    return addressObj;
   }
 
-}
+  return {
+    streetName: '',
+    streetNumber: '',
+    suburb: '',
+    city: '',
+    metro: '',
+    province: '',
+    postalCode: '',
+  };
+};
 
 export default {
   LasecCRMClient: {
@@ -1097,6 +1150,9 @@ export default {
     LasecGetOrganisationList: async (obj, args) => {
       return getOrganisationList(args);
     },
+    LasecGetAddress: async (obj, args) => {
+      return getAddress(args);
+    },
     LasecGetPlaceDetails: async (obj, args) => {
       return getPlaceDetails(args);
     },
@@ -1113,7 +1169,7 @@ export default {
       return uploadDocument(args);
     },
     LasecCreateNewAddress: async (obj, args) => {
-      return lasecCreateNewAddress(args);
+      return createNewAddress(args);
     },
   },
 };
