@@ -58,7 +58,7 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      panels: { sm: 12, md: 12 },
+      panels: { xs: 12, sm: 12, md: 12, lg: 12 },
     }
   ],
   panels: {

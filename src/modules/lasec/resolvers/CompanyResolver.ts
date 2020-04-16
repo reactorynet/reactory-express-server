@@ -779,6 +779,12 @@ const getCustomerList = async (params) => {
 
 };
 
+const getCustomerById = async ( id: string ) => {
+  const companyDetails = await lasecApi.Company.list({ filter: { ids: [id] } }).then();
+  logger.debug(`Fetched Expanded View for (${companyDetails.items.length}) Companies from API`);
+  if(companyDetails.items[0]) return companyDetails.items[0];
+};
+
 const getOrganisationList = async (params) => {
 
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter } = params;
@@ -1146,7 +1152,7 @@ export const DEFAULT_NEW_CLIENT = {
   },
   customer: {
     id: '',
-    tradingName: '',
+    registeredName: '',
   },
   organization: {
     id: '',
@@ -1182,9 +1188,21 @@ export default {
     },
     availableBalance: async (parent, obj) => {
       return 10;
-    },
+    },  
   },
-  LasecCRMCustomer: {
+  LasecNewClient: {
+    customer: async( parent, obj ) => {
+      logger.debug('Finding new Customer for LasecNewClient', parent);
+
+      if(parent.customer && parent.customer.id) return getCustomerById(parent.customer.id);
+      
+      return {
+        id: '',
+        registeredName: ''
+      };
+    }
+  },
+  LasecCRMCustomer: {  
     customerClass: async (parent, obj) => {
       if (parent.classId) {
         try {
@@ -1213,6 +1231,9 @@ export default {
     },
     documents: async (parent, object) => {
       return getCustomerDocuments({ id: parent.id });
+    },
+    registeredName: async (parent, obj) => {
+      return parent.registered_name || parent.registeredName      
     }
   },
   Query: {
@@ -1269,12 +1290,15 @@ export default {
     LasecGetNewClient: async(obj, args) => {
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
 
-      const newClient = await getCacheItem(hash).then();
-            
-      let _newClient =  newClient || { ...DEFAULT_NEW_CLIENT,  id: new ObjectId() };
+      const newClient = await getCacheItem(hash, global.partner.id).then();
+      
+      if(newClient) return newClient;
+      else {
+        let _newClient = { ...DEFAULT_NEW_CLIENT,  id: new ObjectId(), createdBy: global.user._id };
       //cache this object for 12 h
-      await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
-      return _newClient;
+        await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+        return _newClient;
+      }            
     } 
   },
   Mutation: {
@@ -1296,14 +1320,46 @@ export default {
 
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
       const _cached = await getCacheItem(hash).then();
-      let _newClient = { ..._cached, ...newClient };
-      //update the cache for the NewClient
+      
+      let _newClient = { 
+        ..._cached,
+      };
+
+      if(newClient.personalDetails) {
+        _newClient.personalDetails = { ..._newClient.personalDetails, ...newClient.personalDetails };
+      }
+
+      if(newClient.contactDetails) {        
+        _newClient.contactDetails = { ..._newClient.contactDetails, ...newClient.contactDetails };
+      }
+
+      if(newClient.jobDetails) {
+        _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
+      }
+
+      if(newClient.customer) {
+        _newClient.customer = { ..._newClient.customer, ...newClient.customer };
+      }
+
+      if(newClient.organization) {
+        _newClient.organization = { ..._newClient.organization, ...newClient.organization };
+      }
+
+      if(newClient.address) {
+        _newClient.address = { ..._newClient.address, ...newClient.address };
+      }
+
+      _newClient.updated = new Date().valueOf()
+      //update the cache for the new
       await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
 
       return _newClient;
     },
     LasecCreateNewClient: async ( obj, args ) => {
       const { newClient } = args;
+
+      let hash = Hash(`__LasecNewClient::${global.user._id}`);
+      const _cached = await getCacheItem(hash).then();
 
       let response: NewClientResponse = {
         client: null,

@@ -124,6 +124,7 @@ type LasecClientPersonalDetails {
   firstName: String
   lastName: String
   country: String
+  accountType: String
   repCode: String  
 }
 
@@ -134,7 +135,7 @@ type LasecAddress {
 }
 
 type LasecContactDetails {
-  emailAddess: String
+  emailAddress: String
   confirmEmail: String
   alternateEmail: String
   confirmAlternateEmail: String
@@ -167,12 +168,16 @@ type LasecNewClient {
   personalDetails: LasecClientPersonalDetails
   contactDetails: LasecContactDetails
   jobDetails: LasecJobDetails
-  cutomer: LasecCRMCustomer
+  customer: LasecCRMCustomer
   organization: LasecCRMOrganisation
   address: LasecClientAddresses
   clientDocuments: [LasecDocument]
   confirmed: Boolean
+  valid: Boolean
   saved: Boolean
+  createdBy: User
+  created: Date
+  updated: Date
 }
 
 type NewClientResponse {
@@ -186,7 +191,7 @@ input LasecNewClientInput {
   personalDetails: Any
   contactDetails: Any
   jobDetails: Any
-  cutomer: Any
+  customer: Any
   organization: Any
   address: Any
 }

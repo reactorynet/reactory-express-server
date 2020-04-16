@@ -2,21 +2,77 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
-    name: 'LasecGetCustomerDocuments',
-    text: `query LasecGetCustomerDocuments($uploadContexts: [String], $paging: PagingRequest){
-      LasecGetCustomerDocuments(uploadContexts: $uploadContexts, paging: $paging){
-        paging {
-          total
-          page
-          pageSize          
+    name: 'LasecGetNewClient',
+    text: `query LasecGetNewClient {
+      LasecGetNewClient {
+        id
+        confirmed
+        saved
+        createdBy {
+          id
+          firstName
+          lastName
         }
-        documents {
+        personalDetails {
+          title
+          firstName
+          lastName
+          country
+          repCode
+        }
+        contactDetails {
+          emailAddess
+          confirmEmail
+          alternateEmail
+          confirmAlternateEmail
+          mobileNumber
+          alternateMobile
+          officeNumber
+          prefferedMethodOfContact
+        }
+        jobDetails {
+          jobTitle
+          jobType
+          salesTeam
+          lineManager
+          customerType
+          faculty
+          clientDepartment
+          ranking
+          customerClass
+        }
+        cutomer {
+          id
+          registeredName
+          tradingName
+        }
+        organization {
+          id
+          name
+          description
+        }
+        address {
+          physicalAddress {
+            id
+            fullAddress
+          }
+          deliveryAddress {
+            id
+            fullAddress
+          }
+          billingAddress {
+            id
+            fullAddress
+          }
+        }
+        clientDocuments {
           id
           filename
           link
+          mimetype
           size
-        }        
-      }      
+        }          
+      }
     }`,
     variables: {      
       'formData.$uploadContexts': 'uploadContexts'            
@@ -33,7 +89,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     edit: false,
     new: false,
     refreshEvents: [
-      {name: 'lasec-crm::new-document::uploaded'}
+      { name: 'lasec-crm::new-document::uploaded' }
     ],
   },
   mutation: {
@@ -55,7 +111,17 @@ const graphql: Reactory.IFormGraphDefinition = {
       },
       objectMap: true,
 
-    }
+    },
+    onChange: {
+      name: '',
+      text: `mutation LasecUpdateNewClient(newClient: LasecNewClientInput) {
+        
+      }`,
+      variables: {
+
+      },
+      objectMap: true
+    }    
   }
 };
 

@@ -54,13 +54,9 @@ const baseUiSchema: any =  {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      physicalAddress: { sm: 12 },
-    },
-    {
-      deliveryAddress: { sm: 12 },
-    },
-    {
-      billingAddress: { sm: 12 },
+      physicalAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+      deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+      billingAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
     },
   ],
   /**
@@ -163,14 +159,10 @@ const readOnlySchema = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      physicalAddress: { sm: 12 },
-    },
-    {
-      deliveryAddress: { sm: 12 },
-    },
-    {
-      billingAddress: { sm: 12 },
-    },
+      physicalAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+      deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+      billingAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+    },    
   ],
   
   physicalAddress: {

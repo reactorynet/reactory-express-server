@@ -173,6 +173,8 @@ declare namespace Reactory {
     text: String,
     objectMap: boolean,
     updateMessage?: String,
+    resultMap?: Object,
+    resultType?: string,
     variables?: Object,
     formData?: Object,
     onSuccessMethod?: String | "redirect" | "notification" | "function",
@@ -182,6 +184,7 @@ declare namespace Reactory {
     onSuccessRedirectTimeout?: number,
     options?: any,
     notification?: any,
+    handledBy?:String | 'onChange' | 'onSubmit' 
   }
 
   export interface IReactoryFormMutations {
@@ -191,10 +194,14 @@ declare namespace Reactory {
     [key: string]: IReactoryFormMutation
   }
 
+  export interface IReactoryFormQueries {
+    [key: string]: IReactoryFormQuery,
+  }
+
   export interface IFormGraphDefinition {
     query?: IReactoryFormQuery,
     mutation?: IReactoryFormMutations,
-    queries?: [IReactoryFormQuery],
+    queries?: IReactoryFormQueries,
     clientResolvers?: any
   }
 
@@ -260,6 +267,8 @@ declare namespace Reactory {
     description: string,
     icon: string,
     uiSchema: any,
+    //used to override the graphql definitions for that view type
+    graphql?: IFormGraphDefinition,
   }
 
   export interface IReactoryForm {

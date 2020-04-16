@@ -1,6 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
-import graphql from './graphql';
+import graphql, { newClientGraphQL } from './graphql';
 
 export const displayUiSchema: any = {
   'ui:options': {
@@ -295,6 +295,7 @@ export const editUiSchema: any = {
 };
 
 export const newUiSchema: any = {
+  'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
     containerStyles: {
@@ -311,12 +312,12 @@ export const newUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      clientTitle: { lg: 4, md: 6, sm: 12 },
-      firstName: { lg: 4, md: 6, sm: 12 },
-      lastName: { lg: 4, md: 6, sm: 12 },
-      country: { lg: 4, md: 6, sm: 12 },
-      accountType: { lg: 4, md: 6, sm: 12 },
-      repCode: { lg: 4, md: 6, sm: 12 },
+      clientTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
+      firstName: { xs: 12, sm: 12, md: 6, lg: 4 },
+      lastName: { xs: 12, sm: 12, md: 6, lg: 4 },
+      country: { xs: 12, sm: 12, md: 6, lg: 4},
+      accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
     }
   ],
   clientTitle: {
@@ -507,7 +508,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       key: 'new',
       description: 'Capture Personal Details',
       icon: 'view_module',
-      uiSchema: newUiSchema,
+      uiSchema: newUiSchema,      
     },
   ],
   defaultFormValue: {},

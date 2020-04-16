@@ -36,18 +36,19 @@ const displayUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      personal: { md: 12 },
-      contact: { md: 12 },      
-      jobDetail: { md: 12 },      
+      personal: {sm: 12, md: 12, lg: 12 },
+      contact: {sm: 12, md: 12, lg: 12 },      
+      jobDetail: {sm: 12, md: 12, lg: 12 },      
     },
     {
-      customer: { md: 12 },      
+      customer: {sm: 12, md: 12, lg: 12 },
+      organization: {sm: 12, md: 12, lg: 12 },
     },
     {
-      address: { md: 12 },      
+      address: { sm: 12, md: 12, lg: 12 },      
     },
     {
-      uploadedDocuments: {md: 12}
+      uploadedDocuments: { sm: 12, md: 12, lg: 12 }
     }
   ],
   personal: PersonalDisplayUISchema,
@@ -69,13 +70,9 @@ const schema: Reactory.ISchema = {
     jobDetail: LasecJobDetailForm.schema,
     customer: LasecCRMCustomerLookupForm.schema,
     address: LasecCRMCustomerAddress.schema,
-    uploadedDocuments: LasecCRMDocuments.schema
+    uploadedDocuments: LasecCRMDocuments.DocumentSchema
   }
 };
-
-
-
-
 
 schema.title = "CONFIRM & SAVE"
 

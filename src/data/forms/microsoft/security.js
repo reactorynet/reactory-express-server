@@ -27,7 +27,7 @@ export const MicrosoftOpenIDAuthenticationUISchema = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      route: { md: 12 },
+      route: { xs: 12, sm: 12, md: 12, lg:12 },
     },
   ],
   'ui:grid-options': {

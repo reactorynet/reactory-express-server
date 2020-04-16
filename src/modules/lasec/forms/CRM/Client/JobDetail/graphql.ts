@@ -58,4 +58,88 @@ const graphql: Reactory.IFormGraphDefinition = {
   }
 };
 
+
+export const newClientGraphQL: Reactory.IFormGraphDefinition = {
+  query: {
+    name: 'LasecGetNewClient',
+    text: `query LasecGetNewClient {
+      LasecGetNewClient {
+        id
+        jobDetails {
+          jobTitle
+          jobType
+          salesTeam
+          lineManager
+          customerType
+          faculty
+          clientDepartment
+          ranking
+          customerClass
+        }
+      }
+    }`,
+    variables: {    
+      
+    },
+    resultMap: {
+      'id': 'id',
+      'jobDetails.jobTitle': 'jobTitle',      
+      'jobDetails.jobType': 'jobType',
+      'jobDetails.salesTeam': 'salesTeam',
+      'jobDetails.lineManager': 'lineManager',
+      'jobDetails.customerType': 'customerType',
+      'jobDetails.faculty': 'faculty',                        
+      'jobDetails.clientDepartment':'clientDepartment',
+      'jobDetails.ranking':'ranking',
+      'jobDetails.customerClass':'customerClass',
+
+    },
+    autoQuery: true,
+    queryMessage: 'Loading new customer contact details',
+    resultType: 'object',
+    edit: false,
+    new: true,
+  },
+  mutation: {
+    onChange: {
+      name: "LasecUpdateNewClient",
+      text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
+        LasecUpdateNewClient(newClient: $newClient) {
+          id
+          jobDetails {
+            jobTitle
+            jobType
+            salesTeam
+            lineManager
+            customerType
+            faculty
+            clientDepartment
+            ranking
+            customerClass
+          }
+        }
+      }`,
+      objectMap: true,
+      updateMessage: 'Updating Personal Content',
+      variables: {    
+        'eventData.formData': 'newClient.jobDetails',
+      },
+      // handledBy: 'onChange',
+      resultType: 'object',
+      resultMap: {
+        'id': 'id',
+        'jobDetails.jobTitle': 'jobTitle',      
+        'jobDetails.jobType': 'jobType',
+        'jobDetails.salesTeam': 'salesTeam',
+        'jobDetails.lineManager': 'lineManager',
+        'jobDetails.customerType': 'customerType',
+        'jobDetails.faculty': 'faculty',                        
+        'jobDetails.clientDepartment':'clientDepartment',
+        'jobDetails.ranking':'ranking',
+        'jobDetails.customerClass':'customerClass',     
+      },
+    }
+  },  
+};
+
 export default graphql;
