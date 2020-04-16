@@ -2,7 +2,7 @@
 import logger from '@reactory/server-core/logging';
 import modules from '@reactory/server-modules';
 
-const typeDefs = [];
+const typeDefs: any[] = [];
 modules.enabled.forEach((installedModule) => {
 /**
     "id": "0c22819f-bca0-4947-b662-9190063c8277",

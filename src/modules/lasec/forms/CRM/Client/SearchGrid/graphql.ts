@@ -4,8 +4,8 @@ import { fileAsString } from "@reactory/server-core/utils/io";
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetClientList',
-    text: `query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String){
-      LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy){
+    text: `query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $filter: String){
+      LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy, filter: $filter){
         paging {
           total
           page
@@ -35,6 +35,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     },
     resultMap: {
       'paging': 'paging',
+      'filterBy': 'filterBy',
       'clients': 'clients',      
     },
     autoQuery: false,

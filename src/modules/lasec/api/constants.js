@@ -139,6 +139,7 @@ export const ENTITY_KEY__CUSTOMER_ACCOUNT_PERSON = 'customer_account_person';
 export const ENTITY_KEY__COMPANY = 'company';
 export const ENTITY_KEY__DEPARTMENT = 'department';
 export const ENTITY_KEY__UPLOAD_FILE = 'upload_file';
+export const ENTITY_KEY__FILE_UPLOADS = 'file_uploads';
 export const ENTITY_KEY__COUNTRY = 'country';
 export const ENTITY_KEY__COMPANY_ADDRESS = 'company_address';
 export const ENTITY_KEY__PROVINCE = 'province';

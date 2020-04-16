@@ -2,7 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
 
-const displayUiSchema: any = {
+export const displayUiSchema: any = {
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -199,7 +199,7 @@ const editUiSchema: any = {
       buttonVariant: "contained",
       selectSchemaId: 'display'
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSchemaSelectorInToolbar: false,
@@ -240,30 +240,30 @@ const editUiSchema: any = {
         }
       },
       selectOptions: [
-        { 
-          key: 'account', 
-          value: 'account', 
-          label: 'Account', 
-          icon: 'account_balance_wallet', 
-          iconProps: {  
+        {
+          key: 'account',
+          value: 'account',
+          label: 'Account',
+          icon: 'account_balance_wallet',
+          iconProps: {
             style: {
               color: '#FF9901',
               marginRight: '16px',
-            }, 
-          } 
+            },
+          }
         },
-        { 
-          key: 'cod', 
-          value: 'COD', 
-          label: 'COD', 
+        {
+          key: 'cod',
+          value: 'COD',
+          label: 'COD',
           icon: 'attach_money',
-          iconProps: {  
+          iconProps: {
             style: {
               color: '#5EB848',
-              marginRight: '16px',                  
-            }, 
-          } 
-        },       
+              marginRight: '16px',
+            },
+          }
+        },
       ],
     }
   },
@@ -294,7 +294,7 @@ const editUiSchema: any = {
       query: `query LasecGetCustomerRoles {
         LasecGetCustomerRoles {
           id
-          name          
+          name
         }
       }`,
       resultItem: 'LasecGetCustomerRoles',
@@ -312,7 +312,7 @@ const editUiSchema: any = {
       query: `query LasecGetCustomerClass {
         LasecGetCustomerClass {
           id
-          name          
+          name
         }
       }`,
       resultItem: 'LasecGetCustomerClass',
@@ -333,21 +333,196 @@ const editUiSchema: any = {
         }
       },
       selectOptions: [
-        { 
-          key: '1', 
-          value: '1', 
-          label: 'A - High Value',           
+        {
+          key: '1',
+          value: '1',
+          label: 'A - High Value',
         },
-        { 
-          key: '2', 
-          value: '2', 
-          label: 'B - Medium Value', 
-        },  
-        { 
-          key: '3', 
-          value: '3', 
-          label: 'C - Low Value', 
-        },       
+        {
+          key: '2',
+          value: '2',
+          label: 'B - Medium Value',
+        },
+        {
+          key: '3',
+          value: '3',
+          label: 'C - Low Value',
+        },
+      ],
+    }
+  }
+};
+
+const newUiSchema: any = {
+  'ui:options': {
+    componentType: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '8px'
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      jobTitle: { sm: 12, md: 6 },
+      jobType: { sm: 12, md: 6 },
+      lineManager: { sm: 12, md: 6 },
+      customerType: { sm: 12, md: 6 },
+      clientClass: { sm: 12, md: 6 },
+      faculty: { sm: 12, md: 6 },
+      clientDepartment: { sm: 12, md: 6 },
+      ranking: { sm: 12, md: 6 },
+    }
+  ],
+
+  jobTitle: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerRoles {
+        LasecGetCustomerRoles {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetCustomerRoles',
+      resultsMap: {
+        'LasecGetCustomerRoles.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerRoles.[].name': '[].label',
+      },
+    },
+  },
+  jobType: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      selectOptions: [
+        // {
+        //   key: 'type-1',
+        //   value: 'type-1',
+        //   label: 'Type 1',
+        // },
+      ],
+    },
+  },
+  lineManager: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      selectOptions: [
+        {
+          key: 'manager-1',
+          value: 'manager-1',
+          label: 'Manager 1',
+        },
+        {
+          key: 'manager-2',
+          value: 'manager-2',
+          label: 'Manager 2',
+        },
+      ],
+    },
+  },
+  customerType: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      selectOptions: [
+        // {
+        //   key: 'type-1',
+        //   value: 'type-1',
+        //   label: 'Type 1',
+        // },
+      ],
+    },
+  },
+  clientClass: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerClass {
+        LasecGetCustomerClass {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetCustomerClass',
+      resultsMap: {
+        'LasecGetCustomerClass.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerClass.[].name': '[].label',
+      },
+    },
+  },
+  faculty: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      selectOptions: [
+        // {
+        //   key: 'type-1',
+        //   value: 'type-1',
+        //   label: 'Faculty 1',
+        // },
+      ],
+    },
+  },
+  clientDepartment: {},
+  ranking: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      selectOptions: [
+        {
+          key: '1',
+          value: '1',
+          label: 'A - High Value',
+        },
+        {
+          key: '2',
+          value: '2',
+          label: 'B - Medium Value',
+        },
+        {
+          key: '3',
+          value: '3',
+          label: 'C - Low Value',
+        },
       ],
     }
   }
@@ -357,10 +532,6 @@ const schema: Reactory.ISchema = {
   type: "object",
   title: "JOB DETAILS",
   properties: {
-    view: {
-      title: '',
-      type: 'string'
-    },
     accountType: {
       type: "string",
       title: "Account Type"
@@ -373,6 +544,10 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Job Title"
     },
+    jobType: {
+      type: "string",
+      title: "Job Type"
+    },
     clientDepartment: {
       type: "string",
       title: "Client Department"
@@ -384,7 +559,19 @@ const schema: Reactory.ISchema = {
     ranking: {
       type: "string",
       title: "Ranking"
-    }
+    },
+    lineManager: {
+      type: "string",
+      title: "Line Manager"
+    },
+    customerType: {
+      type: "string",
+      title: "Customer Type"
+    },
+    faculty: {
+      type: "string",
+      title: "Faculty"
+    },
   }
 };
 
@@ -402,6 +589,7 @@ const LasecCRMClientJobDetails: Reactory.IReactoryForm = {
   schema: schema,
   graphql,
   uiSchema: displayUiSchema,
+  //uiSchema: newUiSchema,
   uiSchemas: [
     {
       id: 'display',
@@ -419,10 +607,16 @@ const LasecCRMClientJobDetails: Reactory.IReactoryForm = {
       icon: 'view_module',
       uiSchema: editUiSchema,
     },
+    {
+      id: 'new',
+      title: 'NEW',
+      key: 'new',
+      description: 'Edit Contact Details',
+      icon: 'view_module',
+      uiSchema: newUiSchema,
+    },
   ],
-  defaultFormValue: {
-
-  },
+  defaultFormValue: {},
 
 };
 

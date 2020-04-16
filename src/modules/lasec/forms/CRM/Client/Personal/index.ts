@@ -2,7 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
 
-const displayUiSchema: any = {
+export const displayUiSchema: any = {
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -70,14 +70,14 @@ const displayUiSchema: any = {
       },
       /*
       componentFqn: 'core.ConditionalIconComponent@1.0.0',
-      componentProps: {        
+      componentProps: {
         conditions: [
           {
             key: 'active',
             icon: 'trip_origin',
             style: {
-              color: '#5EB848'                  
-            },            
+              color: '#5EB848'
+            },
             tooltip: 'Client Active'
           },
           {
@@ -95,7 +95,7 @@ const displayUiSchema: any = {
               color: '#AB1257'
             },
             tooltip: 'Client Deactivated'
-          }                  
+          }
         ]
       },
       style: {
@@ -180,7 +180,7 @@ const displayUiSchema: any = {
   },
 };
 
-const editUiSchema: any = {
+export const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
     containerStyles: {
@@ -195,7 +195,7 @@ const editUiSchema: any = {
       buttonVariant: "contained",
       selectSchemaId: 'display'
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSchemaSelectorInToolbar: false,
@@ -234,48 +234,172 @@ const editUiSchema: any = {
         }
       },
       selectOptions: [
-        { 
-          key: 'active', 
-          value: 'active', 
-          label: 'Active', 
-          icon: 'trip_origin', 
-          iconProps: {  
+        {
+          key: 'active',
+          value: 'active',
+          label: 'Active',
+          icon: 'trip_origin',
+          iconProps: {
             style: {
               color: '#5EB848',
               marginRight: '16px',
-            }, 
-          } 
+            },
+          }
         },
-        { 
-          key: 'unfinished', 
-          value: 'unfinished', 
-          label: 'Unfinished', 
+        {
+          key: 'unfinished',
+          value: 'unfinished',
+          label: 'Unfinished',
           icon: 'trip_origin',
-          iconProps: {  
+          iconProps: {
             style: {
               color: '#FF9901',
-              marginRight: '16px',                  
-            }, 
-          } 
+              marginRight: '16px',
+            },
+          }
         },
-        { 
-          key: 'deactivated', 
-          value: 'deactivated', 
-          label: 'Deactivated', 
+        {
+          key: 'deactivated',
+          value: 'deactivated',
+          label: 'Deactivated',
           icon: 'trip_origin',
-          iconProps: {  
+          iconProps: {
             style: {
               color: '#AB1257',
-              marginRight: '16px',                  
-            }, 
-          } 
-        },          
+              marginRight: '16px',
+            },
+          }
+        },
       ],
     },
   },
   lastName: {},
   firstName: {},
-  country: {},
+  country: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerCountries {
+        LasecGetCustomerCountries {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetCustomerCountries',
+      resultsMap: {
+        'LasecGetCustomerCountries.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerCountries.[].name': '[].label',
+      },
+    },
+  },
+};
+
+export const newUiSchema: any = {
+  'ui:options': {
+    componentType: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '8px'
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      clientTitle: { sm: 12, md: 6 },
+      firstName: { sm: 12, md: 6 },
+      lastName: { sm: 12, md: 6 },
+      country: { sm: 12, md: 6 },
+      accountType: { sm: 12, md: 6 },
+      repCode: { sm: 12, md: 6 },
+    }
+  ],
+  clientTitle: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetPersonTitles {
+        LasecGetPersonTitles {
+          id
+          title
+        }
+      }`,
+      resultItem: 'LasecGetPersonTitles',
+      resultsMap: {
+        'LasecGetPersonTitles.[].id': ['[].key', '[].value'],
+        'LasecGetPersonTitles.[].title': '[].label',
+      },
+    },
+  },
+  firstName: {},
+  lastName: {},
+  country: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerCountries {
+        LasecGetCustomerCountries {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetCustomerCountries',
+      resultsMap: {
+        'LasecGetCustomerCountries.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerCountries.[].name': '[].label',
+      },
+    },
+  },
+  accountType: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      selectOptions: [
+        {
+          key: 'account',
+          value: 'account',
+          label: 'Account',
+        },
+        {
+          key: 'cod',
+          value: 'cod',
+          label: 'COD',
+        },
+
+      ],
+    },
+  },
+  repCode: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecSalesTeams {
+        LasecSalesTeams {
+          id
+          title
+          meta  {
+            reference
+          }
+        }
+      }`,
+      resultItem: 'LasecSalesTeams',
+      resultsMap: {
+        'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
+        'LasecSalesTeams.[].title': '[].label',
+      },
+    },
+  },
 };
 
 const schema: Reactory.ISchema = { ...ClientSchema };
@@ -296,6 +420,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
   schema: schema,
   graphql,
   uiSchema: displayUiSchema,
+  //uiSchema: newUiSchema,
   uiSchemas: [
     {
       id: 'display',
@@ -313,11 +438,16 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       icon: 'view_module',
       uiSchema: editUiSchema,
     },
+    {
+      id: 'new',
+      title: 'New',
+      key: 'new',
+      description: 'Capture Personal Details',
+      icon: 'view_module',
+      uiSchema: newUiSchema,
+    },
   ],
-  defaultFormValue: {
-
-  },
-
+  defaultFormValue: {},
 };
 
 export default LasecCRMPersonalInformationForm;

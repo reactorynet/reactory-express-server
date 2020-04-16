@@ -39,6 +39,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     },
     resultMap: {
       'paging': 'paging',
+      'filterBy': 'filterBy',
       'quotes': 'quotes',
       'quotes[].code': 'quotes[].code',
       'quotes[].created': 'quotes[].date',
@@ -49,10 +50,14 @@ const graphql: Reactory.IFormGraphDefinition = {
       'quotes[].quoteType': 'data[].quoteType',
     },
     autoQuery: false,
-    queryMessage: 'Search for client',
+    queryMessage: 'Search for quote',
     resultType: 'object',
     edit: false,
     new: false,
+    onError: {
+      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+      method: 'onGraphQLQueryError',
+    },
   }
 };
 

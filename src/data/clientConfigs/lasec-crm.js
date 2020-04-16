@@ -609,6 +609,26 @@ const LASEC_CONFIG = {
         }
       ],
     },
+
+    {
+      key: 'new-client',
+      title: 'New Client',
+      path: '/newClient',
+      public: false,
+      exact: true,
+      roles: ['USER'],
+      componentFqn: `${key}.LasecCRMNewClient@1.0.0`,
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'new'
+          }
+        }
+      ],
+    },
+
     {
       key: 'quote-detail',
       title: 'Quote Detail',
@@ -1041,7 +1061,8 @@ const LASEC_CONFIG = {
           fontWeight: 700
         },
         root: {
-          verticalAlign: 'top'
+          verticalAlign: 'top',
+          border: '1px solid #E1E1E4'
         }
       },
       MuiBox: {
@@ -1152,6 +1173,14 @@ const LASEC_CONFIG = {
         message: `${key} powered by reactory.net`,
       },
     },
+    MaterialTableWidget: {
+      rowStyle: {
+        backgroundColor: '#E7E7E7'
+      },
+      altRowStyle: {
+        backgroundColor: '#FAFAFA'
+      }
+    }
   },
   settings: [
     {

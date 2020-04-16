@@ -83,6 +83,6 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
       modified
       expirationDate
       note
-    }
+    }      
   }
 }

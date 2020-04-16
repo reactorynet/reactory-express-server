@@ -25,6 +25,7 @@ export default {
   Mutation: {
     CorePublishStatistics: (parent, { entries }) => {
       logger.info('Publishing Statistics', { entries });
+      
       return true;
     },
   },

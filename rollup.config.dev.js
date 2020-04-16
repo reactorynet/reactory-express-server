@@ -2,7 +2,7 @@ import resolve from 'rollup-plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
 
 export default {
-  input: 'src/server.js',
+  input: 'src/server.ts',
   output: {
     file: 'dist/reactory-api.js',
     format: 'umd',

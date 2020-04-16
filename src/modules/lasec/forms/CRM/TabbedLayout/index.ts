@@ -99,6 +99,10 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
       componentFqn: 'core.TabbedNavigation@1.0.0',
       widget: 'TabbedNavWidget',
     },
+    { 
+      componentFqn: 'core.SlideOutLauncher@1.0.0', 
+      widget: 'SlideOutLauncher' 
+    },
   ],
 };
 

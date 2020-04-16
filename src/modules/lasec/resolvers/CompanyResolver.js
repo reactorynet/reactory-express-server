@@ -7,9 +7,11 @@ import { getCacheItem, setCacheItem } from '../models';
 import Hash from '@reactory/server-core/utils/hash';
 import { clientFor, execql } from '@reactory/server-core/graph/client';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
+import { getScaleForKey } from 'data/scales';
+import FormData from 'form-data';
 
 const getClients = async (params) => {
-  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0 } = params;
+  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter } = params;
 
   logger.debug(`Getting Clients using search ${search}`, { search, paging, filterBy, iter });
 
@@ -20,14 +22,14 @@ const getClients = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  if (isString(search) === false || search.length < 3) return {
+  let _filter = {};
+
+  _filter[filterBy] = filter || search;
+
+  if (isString(search) === false || search.length < 3 && filter === undefined) return {
     paging: pagingResult,
     clients: []
   };
-
-  let filter = {};
-
-  filter[filterBy] = search;
 
   const cachekey = Hash(`client_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
@@ -37,8 +39,8 @@ const getClients = async (params) => {
 
     if (iter === 0) {
       //client request and we have a cache so we fire off the next fetch anyway
-      execql(`query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
-        LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+      execql(`query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int, $filter: String){
+        LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter, filter: $filter){
           paging {
             total
             page
@@ -49,13 +51,13 @@ const getClients = async (params) => {
             id
           }
         }
-      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1, filter }).then();
     }
     logger.debug(`Returning cached item ${cachekey}`);
     return _cachedResults;
   }
 
-  const clientResult = await lasecApi.Customers.list({ filter: filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
+  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
 
   let ids = [];
 
@@ -185,7 +187,7 @@ const getClients = async (params) => {
             id
           }
         }
-      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1 }).then();
+      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
     } catch (cacheFetchError) {
       logger.error('An error occured attempting to cache next page', cacheFetchError);
     }
@@ -436,7 +438,7 @@ const updateCientDetail = async (args) => {
       }
 
       const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams);
-      logger.debug(`RESOLVER UPDATE RESPONSE:: ${JSON.stringify(apiResponse)}`, apiResponse);  
+      logger.debug(`RESOLVER UPDATE RESPONSE:: ${JSON.stringify(apiResponse)}`, apiResponse);
 
       return {
         Success: apiResponse.success,
@@ -455,18 +457,17 @@ const updateCientDetail = async (args) => {
   }
 }
 
-
 const getCustomerRoles = async (params) => {
 
   const idsResponse = await lasecApi.Customers.GetCustomerRoles();
 
-  if(isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetCustomerRoles({filter: { ids: [...idsResponse.ids] }, pagination: { }});
-    if(details && details.items) {
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerRoles({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
       return details.items;
     }
   }
-  
+
   return [];
 
 };
@@ -475,13 +476,13 @@ const getCustomerRanking = async (params) => {
 
   const idsResponse = await lasecApi.Customers.GetCustomerRankings();
 
-  if(isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetCustomerRankings({filter: { ids: [...idsResponse.ids] }, pagination: { }});
-    if(details && details.items) {
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerRankings({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
       return details.items;
     }
   }
-  
+
   return [];
 };
 
@@ -489,28 +490,433 @@ const getCustomerClass = async (params) => {
 
   const idsResponse = await lasecApi.Customers.GetCustomerClass();
 
-  if(isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetCustomerClass({filter: { ids: [...idsResponse.ids] }, pagination: { }});
-    if(details && details.items) {
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerClass({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
       return details.items;
     }
   }
-  
+
   return [];
 
 };
 
 const getCustomerClassById = async (id) => {
 
-    const details = await lasecApi.Customers.GetCustomerClass({filter: { ids: [id] }, pagination: { }});
-    if(details && details.items && details.items.length === 1) {
-      return details.items[0];
-    }
-  
+  const details = await lasecApi.Customers.GetCustomerClass({ filter: { ids: [id] }, pagination: {} });
+  if (details && details.items && details.items.length === 1) {
+    return details.items[0];
+  }
+
   return null;
 
 };
 
+const getCustomerCountries = async (params) => {
+  return await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country.[]': ['[].id', '[].name'] });
+};
+
+const getCustomerRepCodes = async (params) => {
+  const idsResponse = await lasecApi.Customers.GetRepCodes();
+
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetRepCodes({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
+      return details.items;
+    }
+  }
+
+  return [];
+
+};
+
+const getPersonTitles = async (params) => {
+
+  const idsResponse = await lasecApi.Customers.GetPersonTitles();
+
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
+      return details.items;
+    }
+  }
+
+  return [];
+
+}
+
+const getLasecSalesTeamsForLookup = async () => {
+  const salesTeamsResults = await lasecApi.get(lasecApi.URIS.groups, undefined).then();
+  logger.debug('SalesTeamsLookupResult >> ', salesTeamsResults);
+}
+
+const getCustomerDocuments = async (params) => {
+  let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } });
+  return documents.items;
+};
+
+const getCustomerList = async (params) => {
+
+  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter } = params;
+
+  logger.debug(`Getting Customers using search ${search}`, { search, paging, filterBy, iter });
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  let _filter = {};
+
+  _filter[filterBy] = filter || search;
+
+  if (isString(search) === false || search.length < 3 && filter === undefined) return {
+    paging: pagingResult,
+    customers: []
+  };
+
+  const cachekey = Hash(`company_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
+
+  let _cachedResults = await getCacheItem(cachekey);
+
+  if (_cachedResults) {
+
+    if (iter === 0) {
+      //client request and we have a cache so we fire off the next fetch anyway
+      execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+        LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          customers {
+            id
+            registeredName
+          }
+        }
+      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+    }
+    logger.debug(`Returning cached item ${cachekey}`);
+    return _cachedResults;
+  }
+
+  logger.debug(`Calling companies api`);
+
+  let filterParams = {
+    filter: {
+      account_type: "",
+      any_field: search,
+    },
+    format: {
+      ids_only: true,
+    },
+    ordering: {},
+    pagination: {
+      current_page: pagingResult.page,
+      page_size: pagingResult.pageSize,
+    }
+  };
+
+  const companyResult = await lasecApi.Company.list(filterParams).then();
+
+  logger.debug(`Returning ids ${companyResult.ids}`);
+
+  let ids = [];
+
+  if (isArray(companyResult.ids) === true) {
+    ids = [...companyResult.ids];
+  }
+
+  if (companyResult.pagination && companyResult.pagination.num_pages > 1) {
+    logger.debug('Paged Result From Lasec API', { pagination: companyResult.pagination });
+    pagingResult.total = companyResult.pagination.num_items;
+    pagingResult.pageSize = companyResult.pagination.page_size || 10;
+    pagingResult.hasNext = companyResult.pagination.has_next_page === true;
+    pagingResult.page = companyResult.pagination.current_page || 1;
+  }
+
+  logger.debug(`Loading (${ids.length}) company ids`);
+
+  const companyDetails = await lasecApi.Company.list({ filter: { ids: ids } });
+  logger.debug(`Fetched Expanded View for (${companyDetails.items.length}) Companies from API`);
+  let customers = [...companyDetails.items];
+
+  logger.debug(`CUSTOMER RESOLVER - CUSTOMER:: Found (${customers.length}) for request`);
+
+  customers = customers.map(customer => {
+    let _customer = om(customer, {
+      'id': 'id',
+      'registered_name': 'registeredName',
+      'trading_name': 'tradingName',
+      'sales_team_id': 'salesTeam',
+    });
+    return _customer;
+  });
+
+  customers = orderBy(customers, ['registeredName', ['asc']]);
+
+  let result = {
+    paging: pagingResult,
+    search,
+    filterBy,
+    customers,
+  };
+
+  if (result.paging.pageSize >= 10 && result.paging.hasNext === true) {
+    if (result.paging.pageSize === 20) {
+      const cachekeys_10 = `company_list_${search}_page_${paging.page || 1}_page_size_10`.toLowerCase();
+      setCacheItem(cachekeys_10, { paging: { ...result.paging, pageSize: 10, hasNext: true }, clients: lodash.take(result.products, 10) });
+    }
+
+    const cachekeys_5 = `company_list_${search}_page_${paging.page || 1}_page_size_5`.toLowerCase();
+    setCacheItem(cachekeys_5, { paging: { ...result.paging, pageSize: 5, hasNext: true }, clients: lodash.take(result.products, 5) });
+  }
+
+  if (result.paging.hasNext === true && iter === 0) {
+    try {
+      execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+        LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          customers {
+            id
+            registeredName
+          }
+        }
+      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
+    } catch (cacheFetchError) {
+      logger.error('An error occured attempting to cache next page', cacheFetchError);
+    }
+  }
+
+  // setCacheItem(cachekey, result, 60 * 10);
+
+  return result;
+
+};
+
+const getOrganisationList = async (params) => {
+
+  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter } = params;
+
+  logger.debug(`Getting Organization using search ${search}`, { search, paging, filterBy, iter });
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  let _filter = {};
+
+  _filter[filterBy] = filter || search;
+
+  if (isString(search) === false || search.length < 3 && filter === undefined) return {
+    paging: pagingResult,
+    organisations: []
+  };
+
+  const cachekey = Hash(`organization_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
+
+  let _cachedResults = await getCacheItem(cachekey);
+
+  if (_cachedResults) {
+
+    if (iter === 0) {
+      //client request and we have a cache so we fire off the next fetch anyway
+      execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+        LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          customers {
+            id
+            registeredName
+          }
+        }
+      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+    }
+    logger.debug(`Returning cached item ${cachekey}`);
+    return _cachedResults;
+  }
+
+  logger.debug(`Calling Organisations api`);
+
+  let filterParams = {
+    filter: {
+      any_field: search,
+    },
+    format: {
+      ids_only: true,
+    },
+    ordering: {},
+    pagination: {
+      current_page: pagingResult.page,
+      page_size: pagingResult.pageSize,
+    },
+  };
+
+  const organisationResult = await lasecApi.Organisation.list(filterParams).then();
+
+  logger.debug(`Returning ids ${organisationResult.ids}`);
+
+  let ids = [];
+
+  if (isArray(organisationResult.ids) === true) {
+    ids = [...organisationResult.ids];
+  }
+
+  if (organisationResult.pagination && organisationResult.pagination.num_pages > 1) {
+    logger.debug('Paged Result From Lasec API', { pagination: organisationResult.pagination });
+    pagingResult.total = organisationResult.pagination.num_items;
+    pagingResult.pageSize = organisationResult.pagination.page_size || 10;
+    pagingResult.hasNext = organisationResult.pagination.has_next_page === true;
+    pagingResult.page = organisationResult.pagination.current_page || 1;
+  }
+
+  logger.debug(`Loading (${ids.length}) company ids`);
+
+  const organisationDetails = await lasecApi.Organisation.list({ filter: { ids: ids } });
+
+  logger.debug(`Fetched Expanded View for (${organisationDetails.organisations.length}) ORGANISATIONS from API`);
+  let organisations = [...organisationDetails.organisations];
+
+  logger.debug(`ORGANISATION RESOLVER - ORGANISATION:: Found (${organisations.length}) for request`);
+
+  organisations = organisations.map(organisation => {
+    let _organisation = om(organisation, {
+      'id': 'id',
+      'name': 'name',
+      'description': 'description',
+    });
+    return _organisation;
+  });
+
+  logger.debug(`ORGANISATIONS:: (${JSON.stringify(organisations)})`);
+
+  organisations = orderBy(organisations, ['name', ['asc']]);
+
+  let result = {
+    paging: pagingResult,
+    search,
+    filterBy,
+    organisations,
+  };
+
+  if (result.paging.hasNext === true && iter === 0) {
+    try {
+      execql(`query LasecGetCustomerList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int){
+        LasecGetCustomerList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          customers {
+            id
+            registeredName
+          }
+        }
+      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
+    } catch (cacheFetchError) {
+      logger.error('An error occured attempting to cache next page', cacheFetchError);
+    }
+  }
+
+  setCacheItem(cachekey, result, 60 * 10);
+
+  return result;
+
+};
+
+const createNewOrganisation = async (args) => {
+
+  // Required:: customer_id name description
+  // Possibly also needs "onboarding_step_completed"
+
+  try {
+
+    const apiResponse = await lasecApi.Organisation.createNew({
+      customer_id: args.customerId,
+      name: args.name,
+      description: args.description,
+    }).then();
+
+    logger.debug(`RESOLVER API RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
+    return {
+      success: apiResponse.status === 'success',
+      id: apiResponse.payload.id,
+    }
+  }
+  catch (ex) {
+    logger.error(`ERROR CREATING ORGANISATION::  ${ex}`);
+    return {
+      success: false,
+      id: 0,
+    }
+  }
+};
+
+const uploadDocument = async (args) => {
+
+  // NOTE
+  // This will only upload a file
+  // Need to create additional function to save file and associate to customer
+
+  logger.debug(`UPLOAD FILE::  ${JSON.stringify(args)}`);
+
+  const { createReadStream } = await args.file;
+
+  const stream = createReadStream();
+  stream
+    .on('data', async (data) => {
+      logger.debug(`GOT DATA::  ${typeof data} ${data.length}`);
+
+      const formData = new FormData();
+      formData.append('files', data); // this needs to be file: binary
+      const apiResponse = await lasecApi.Customers.uploadDocument(formData);
+      logger.debug(`RESOLVER UPLOAD DOCUMENT RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
+    })
+    .on('error', (error) => {
+      logger.error(`Error reading file:: ${error}`);
+    })
+    .on('end', () => {
+      logger.debug('Finished reding stream');
+    });
+
+  // stream
+  //   .on('error', error => {
+  //     logger.debug('STREAM FINISHED - 1')
+  //   })
+  //   .pipe(fs.createWriteStream(path))
+  //   .on('error', error => {
+  //     logger.debug('STREAM ERROR - 2')
+  //   })
+  //   .on('finish', (result) => {}));
+
+  return {
+    id: '0',
+    name: 'test doc',
+    url: 'testUrl',
+    mimetype: 'mimetype',
+  };
+
+}
 
 export default {
   LasecCRMClient: {
@@ -519,7 +925,7 @@ export default {
     },
     availableBalance: async (parent, obj) => {
       return 10;
-    }
+    },
   },
   LasecCRMCustomer: {
     customerClass: async (parent, obj) => {
@@ -527,7 +933,7 @@ export default {
         try {
           const customerClass = getCustomerClassById(parent.classId);
           return customerClass.name;
-        } catch (dbError) {          
+        } catch (dbError) {
           return parent.customerClass;
         }
       }
@@ -547,6 +953,9 @@ export default {
     },
     availableBalance: async (parent, obj) => {
       return 100;
+    },
+    documents: async (parent, object) => {
+      return getCustomerDocuments({ id: parent.id });
     }
   },
   Query: {
@@ -562,20 +971,72 @@ export default {
     LasecGetCustomerClass: async (obj, args) => {
       return getCustomerClass(args);
     },
-    LasecGetCustomerRanking: async(object, args) => {
+    LasecGetCustomerRanking: async (object, args) => {
       return getCustomerRanking(args);
-    }
+    },
+    LasecGetCustomerCountries: async (object, args) => {
+      return getCustomerCountries(args);
+    },
+    LasecGetCustomerRepCodes: async (object, args) => {
+      return getCustomerRepCodes(args);
+    },
+    LasecGetCustomerDocuments: async (object, args) => {
+      return getCustomerDocuments(args);
+    },
+    LasecGetCustomerFilterLookup: async (object, args) => {
+      switch (args.filterBy) {
+        case 'country': {
+          return getCustomerCountries(args);
+        }
+        case 'activity_status': {
+          return [
+            { id: 'activated', name: 'Active' },
+            { id: 'unfinished', name: 'Unfinished' },
+            { id: 'deactivated', name: 'Deactivated' },
+          ];
+        }
+        case 'quote_status': {
+          return [
+            { id: 'awaitingFreight', name: 'Draft - Awaiting Freight' },
+            { id: 'awaitingApproval', name: 'Draft - Awaiting Approval' },
+            { id: 'awaitingSubmission', name: 'Draft - Awaiting Submission' },
+            { id: 'expired', name: 'Expired' },
+            { id: 'openBudget', name: 'Open-Budget Timeline' },
+            { id: 'accepted', name: 'Accepted Fully' },
+            { id: 'lost', name: 'Lost' },
+          ];
+        }
+        case 'company_sales_team': {
+          return getLasecSalesTeamsForLookup();
+        }
+        case 'rep_code': {
+          return getCustomerRepCodes();
+        }
+        default: {
+          return [];
+        }
+      }
+    },
+    LasecGetPersonTitles: async (object, args) => {
+      return getPersonTitles(args);
+    },
+    LasecGetCustomerList: async (obj, args) => {
+      return getCustomerList(args);
+    },
+    LasecGetOrganisationList: async (obj, args) => {
+      return getOrganisationList(args);
+    },
   },
   Mutation: {
     LasecUpdateClientDetails: async (obj, args) => {
       logger.debug(`UPDATING CLIENT DETAILS WITH ARGS ${args}`);
       return updateCientDetail(args);
     },
-    // LasecUpdateClientContactDetails: async (obj, args) => {
-    //   return updateCientDetail(args);
-    // },
-    // LasecUpdateClientJobDetails: async (obj, args) => {
-    //   return updateCientDetail(args);
-    // }
-  }
+    LasecCreateNewOrganisation: async (onj, args) => {
+      return createNewOrganisation(args);
+    },
+    LasecUploadDocument: async (obj, args) => {
+      return uploadDocument(args);
+    }
+  },
 };

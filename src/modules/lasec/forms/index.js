@@ -49,11 +49,20 @@ import ClientContact from './CRM/Client/Contact';
 import ClientJobDetail from './CRM/Client/JobDetail';
 import ClientComments from './CRM/Client/Comments';
 import ClientDocuments from './CRM/Client/Documents';
+import NewClient from './CRM/Client/NewClient';
+import NewClientConfirmAndSave from './CRM/Client/NewCustomerConfirm';
 
 import CustomerDetails from './CRM/Customer/Detail';
 import CustomerSpecialRequirement from './CRM/Customer/SpecialRequirements';
 import CustomerAccountInfo from './CRM/Customer/Account';
 import CustomerOrganizationInfo from './CRM/Customer/Organization';
+import CustomerLookUp from './CRM/Customer/Lookup';
+import CustomerLookUpForm from './CRM/Customer/Lookup/LookUpForm';
+import CustomerAddress from './CRM/Customer/Address';
+
+import OrganizationLookup from './CRM/Organization/Lookup';
+import OrganizationLookupForm from './CRM/Organization/Lookup/LookUpForm';
+import NewOrganisation from './CRM/Organization/NewOrganisation';
 
 export default [
   SalesDashboard,
@@ -94,9 +103,18 @@ export default [
   QuoteGrid,
   ClientDetail,
   ClientOverviewWidget,
+  NewClient,
+  NewClientConfirmAndSave,
 
   CustomerDetails,
   CustomerSpecialRequirement,
   CustomerAccountInfo,
-  CustomerOrganizationInfo
+  CustomerAddress,
+  CustomerOrganizationInfo,
+  CustomerLookUp,
+  CustomerLookUpForm,
+
+  OrganizationLookup,
+  OrganizationLookupForm,
+  NewOrganisation
 ];

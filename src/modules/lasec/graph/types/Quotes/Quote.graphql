@@ -234,6 +234,7 @@ input LasecQuoteQueryInput {
   teamIds: [String]
   status: [String]
   productClass: [String]
+  options: Any
 }
 
 enum QuoteFilterType {

@@ -1,7 +1,10 @@
+import {
+  FilterByOptions,
+} from '../shared';
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
-    showSubmit: false,
+    showSubmit: true,
     showRefresh: false,
     container: "div",
     containerStyles: {
@@ -12,9 +15,12 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      paging: { md: 2, sm: 12 },
-      search: { md: 4, sm: 12 },
+      search: { md: 8, sm: 12 },
       filterBy: { md: 4, sm: 12 },
+      periodStart: { md: 6, xs: 12 },
+      periodEnd: { md: 6, xs: 12 },
+      dateFilter: { md: 6, xs: 12 },
+      selectFilter: { md: 6, xs: 12 },
     },
     {
       quotes: {
@@ -23,23 +29,71 @@ const uiSchema: any = {
     }
   ],
   search: {
-    'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: '${formData && formData.length > 3 ? "Searching for `" + formData + "`" : "Enter search keyword" }',
-      variant: 'body1',
+      showLabel: false,
+      icon: 'search',
+      component: "TextField",
+      componentProps: {
+        placeholder: 'Search',
+        variant: "outlined",
+        type: 'search',
+        style: {
+          minWidth: '180px'
+        }
+      }
     }
   },
   paging: {
     'ui:widget': 'HiddenWidget'
   },
+  submit: {
+    'ui:widget': 'FormSubmitWidget',
+    'ui:options': {
+      text: 'SEARCH',
+      color: 'default',
+      props: {
+        color: 'default',
+        style: {
+          maxWidth: '180px',
+          width: '180px'
+        }
+      }
+    }
+  },
   filterBy: {
     'ui:widget': 'SelectWidget',
     'ui:options': {
-      selectOptions: [
-        { key: 'my_quotes', value: 'my_quotes', label: 'My Quptes' },
-        { key: 'all_quotes', value: 'all_quotes', label: 'All Quotes' },
-      ],
+      selectOptions: FilterByOptions,
     },
+  },
+  dateFilter: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  selectFilter: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
+        LasecGetCustomerFilterLookup(filterBy: $filterBy) {
+          id
+          name
+        }
+      }`,
+      propertyMap: {
+        'formContext.$formData.filterBy': 'filterBy'
+      },
+      resultItem: 'LasecGetCustomerFilterLookup',
+      resultsMap: {
+        'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerFilterLookup.[].name': '[].label',
+      },
+    },
+  },
+  periodStart: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  periodEnd: {
+    'ui:widget': 'DateSelectorWidget',
   },
   quotes: {
     'ui:widget': 'MaterialTableWidget',

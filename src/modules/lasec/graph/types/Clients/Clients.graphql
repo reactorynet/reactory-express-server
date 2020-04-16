@@ -30,6 +30,13 @@ type LasecCRMCustomer {
   balance90Days: Float
   balance120Days: Float
   creditTotal: Float
+  documents: [LasecDocument]
+}
+
+type LasecCRMOrganisation {
+  id: String
+  name: String
+  description: String
 }
 
 type LasecCRMClient {
@@ -53,6 +60,13 @@ type LasecCRMClient {
   creditLimit: Float
 }
 
+type LasecDocument {
+  id: String
+  name: String
+  url: String
+  mimetype: String
+}
+
 type PagedCRMClient {
   search: String
   filterBy: String
@@ -67,6 +81,13 @@ type PagedCRMCustomer {
   customers: [LasecCRMCustomer]
 }
 
+type PagedCRMOrganisation {
+  search: String
+  filterBy: String
+  paging: PagingResult
+  organisations: [LasecCRMOrganisation]
+}
+
 type ClientDetailUpdateResponse {
   Success: Boolean
 }
@@ -75,6 +96,17 @@ type LasecLookupItem {
   id: String
   name: String
   description: String
+}
+
+type LasecTitleLookupItem {
+  id: String
+  title: String
+  long_title: String
+}
+
+type CreateNewOrganisationResponse {
+  id: Int
+  success: Boolean
 }
 
 input ClientUpdateInput {
@@ -97,18 +129,29 @@ input ClientUpdateInput {
 }
 
 extend type Query {
-  LasecGetClientList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMClient
+  LasecGetClientList(search: String! paging: PagingRequest filterBy: String iter: Int filter: String): PagedCRMClient
   LasecGetClientDetail(id: String!): LasecCRMClient
-  LasecGetCustomerList(search: String!, paging: PagingRequest, filterBy: String, iter: Int): PagedCRMCustomer
+  LasecGetCustomerList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMCustomer
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecLookupItem]
   LasecGetCustomerRanking: [LasecLookupItem]
   LasecGetCustomerRoles: [LasecLookupItem]
+  LasecGetCustomerCountries: [LasecLookupItem]
+  LasecGetCustomerRepCodes: [LasecLookupItem]
+  LasecGetCustomerFilterLookup(filterBy: String): [LasecLookupItem]
+  LasecGetCustomerDocuments(id: String!): [LasecDocument]
+  LasecGetPersonTitles: [LasecTitleLookupItem]
+  LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
 }
 
 extend type Mutation {
-   LasecUpdateClientDetails(clientInfo: ClientUpdateInput!): ClientDetailUpdateResponse
+  LasecUpdateClientDetails(
+    clientInfo: ClientUpdateInput!
+  ): ClientDetailUpdateResponse
+  LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
+  LasecUploadDocument(file: Upload!): LasecDocument
+  LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
 }
 
-  #  LasecUpdateClientJobDetails(clientId: String!, accountType: String!, repCode: String!, jobTitle: String!, clientDepartment: String!, clientClass: String!, ranking: String!): ClientDetailUpdateResponse
-  #  LasecUpdateClientContactDetails(clientId: String!, mobileNumber: String!, alternateNumber: String!, email: String!, alternateEmail: String!): ClientDetailUpdateResponse
+#  LasecUpdateClientJobDetails(clientId: String!, accountType: String!, repCode: String!, jobTitle: String!, clientDepartment: String!, clientClass: String!, ranking: String!): ClientDetailUpdateResponse
+#  LasecUpdateClientContactDetails(clientId: String!, mobileNumber: String!, alternateNumber: String!, email: String!, alternateEmail: String!): ClientDetailUpdateResponse

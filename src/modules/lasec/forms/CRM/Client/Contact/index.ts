@@ -2,7 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
 
-const displayUiSchema: any = {
+export const displayUiSchema: any = {
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -17,7 +17,7 @@ const displayUiSchema: any = {
       activeColor: 'primary',
       selectSchemaId: 'edit'
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSchemaSelectorInToolbar: false,
@@ -174,7 +174,7 @@ const editUiSchema: any = {
       buttonVariant: "contained",
       selectSchemaId: 'display'
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSchemaSelectorInToolbar: false,
@@ -187,10 +187,10 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress:  { sm: 12, md: 12, lg: 12 },
+      emailAddress: { sm: 12, md: 12, lg: 12 },
       alternateEmail: { sm: 12, md: 12, lg: 12 },
-      mobileNumber:  { sm: 12, md: 12, lg: 12 },
-      alternateNumber:  { sm: 12, md: 12, lg: 12 },
+      mobileNumber: { sm: 12, md: 12, lg: 12 },
+      alternateNumber: { sm: 12, md: 12, lg: 12 },
     }
   ],
   view: {
@@ -207,6 +207,68 @@ const editUiSchema: any = {
   mobileNumber: {},
   alternateNumber: {},
 };
+const newUiSchema: any = {
+  'ui:options': {
+    componentType: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      marginBottom: '0px',
+      paddingBottom: '8px'
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      emailAddress: { sm: 12, md: 6, },
+      confirmEmailAddress: { sm: 12, md: 6, },
+      alternateEmail: { sm: 12, md: 6, },
+      confirmAlternateEmail: { sm: 12, md: 6, },
+      mobileNumber: { sm: 12, md: 6, },
+      alternateMobileNumber: { sm: 12, md: 6, },
+      officeNumber: { sm: 12, md: 6, },
+      prefferedMethodOfContact: { sm: 12, md: 6, },
+    }
+  ],
+  emailAddress: {},
+  confirmEmailAddress: {},
+  alternateEmail: {},
+  confirmAlternate: {},
+  mobileNumber: {},
+  alternateMobileNumber: {},
+  officeNumber: {},
+  prefferedMethodOfContact: {
+    'ui:widget': 'RadioGroupComponent',
+    'ui:options': {
+      label: 'Preffered Method Of Contact',
+      radioOptions: [
+        {
+          key: 'email',
+          value: 'email',
+          label: 'Email',
+        },
+        {
+          key: 'phone',
+          value: 'phone',
+          label: 'Phone',
+        },
+        {
+          key: 'fax',
+          value: 'fax',
+          label: 'Fax',
+        },
+      ]
+    },
+    propsMap: {
+      'formContext.formData.prefferedMethodOfContact': 'selectedValue',
+    },
+  },
+};
 
 const schema: Reactory.ISchema = {
   type: "object",
@@ -220,9 +282,17 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Email Address",
     },
+    confirmEmailAddress: {
+      type: "string",
+      title: "Confirm Email Address"
+    },
     alternateEmail: {
       type: "string",
       title: "Alternate Email",
+    },
+    confirmAlternateEmail: {
+      type: "string",
+      title: "Confirm Alternate Email Address"
     },
     officeNumber: {
       type: "string",
@@ -232,10 +302,18 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Mobile Number",
     },
+    alternateMobileNumber: {
+      type: "string",
+      title: "Alternate Mobile Number"
+    },
     alternateNumber: {
       type: "string",
       title: "Alternate Number",
-    }
+    },
+    prefferedMethodOfContact: {
+      type: 'number',
+      title: 'Preffered Method of Communication'
+    },
   }
 };
 
@@ -270,11 +348,21 @@ const LasecCRMContactInformation: Reactory.IReactoryForm = {
       icon: 'view_module',
       uiSchema: editUiSchema,
     },
+    {
+      id: 'new',
+      title: 'EDIT',
+      key: 'new',
+      description: 'Create Contact Details',
+      icon: 'pencil',
+      uiSchema: newUiSchema,
+    },
   ],
   defaultFormValue: {
-
+    prefferedMethodOfContact: 'phone'
   },
-
+  widgetMap: [
+    { componentFqn: 'core.RadioGroupComponent@1.0.0', widget: 'RadioGroupComponent' },
+  ],
 };
 
 export default LasecCRMContactInformation;

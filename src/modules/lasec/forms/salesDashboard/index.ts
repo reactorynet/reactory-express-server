@@ -45,10 +45,13 @@ const SalesDashboard: Reactory.IReactoryForm = {
   },
   defaultFormValue: {
     toolbar: {
-      period: 'this-month',
+      period: 'this-week',
       periodStart: moment().startOf('month').toISOString(),
       periodEnd: moment().endOf('month').toISOString()
-    }
+    },
+    options: {  
+      bypassEmail: true
+    }    
   },
 };
 

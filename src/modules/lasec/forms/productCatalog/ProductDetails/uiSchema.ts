@@ -1,15 +1,17 @@
 // MORE DETAILS - DETAILS
-const uiSchemaDetails: any = {
-  'ui:options': {    
-    componentType: "div", 
+const uiSchema: any = {
+  'ui:options': {
+    componentType: "div",
     containerStyles: {
       padding: '0px',
-      margin: '0px'
+      margin: '0px',
+      paddingBottom: '8px'
     },
     showSubmit: false,
-    showRefresh: false,   
+    showRefresh: false,
   },
   product: {
+    hidden: true,
     'ui:widget': 'HiddenWidget'
   },
   products: {
@@ -18,62 +20,96 @@ const uiSchemaDetails: any = {
       columns: [
         {
           title: '', field: 'onSyspro',
-          width: 40,
-          component: 'core.ConditionalIconComponent@1.0.0',
-          props: {
-            'ui:options': {},
-            conditions: [
-              {
-                key: 'on_syspro',
-                icon: 'error',
-                style: {
-                  color: '#9AD86E'
-                },
-                tooltip: 'ON SYSPRO'
+          width: '200px',
+          components: [
+            {
+              component: 'core.ConditionalIconComponent@1.0.0',
+              props: {
+                'ui:options': {},
+                conditions: [
+                  {
+                    key: 'on_syspro',
+                    icon: 'error',
+                    style: {
+                      color: '#9AD86E'
+                    },
+                    tooltip: 'ON SYSPRO'
+                  },
+                  {
+                    key: 'not_on_syspro',
+                    icon: 'error',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'NOT ON SYSPRO'
+                  },
+                  {
+                    key: 'on_hold',
+                    icon: 'error',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'ON HOLD'
+                  },
+                  {
+                    key: 'on_partial_hold',
+                    icon: 'error',
+                    style: {
+                      color: '#f7b425'
+                    },
+                    tooltip: 'ON PARTIAL HOLD'
+                  },
+                ]
               },
-              {
-                key: 'not_on_syspro',
-                icon: 'error',
-                style: {
-                  color: '#D22D2C'
-                },
-                tooltip: 'NOT ON SYSPRO'
+              propsMap: {
+                'rowData.onSyspro': 'value',
               },
-              {
-                key: 'on_hold',
-                icon: 'error',
-                style: {
-                  color: '#D22D2C'
-                },
-                tooltip: 'ON HOLD'
-              },
-              {
-                key: 'on_partial_hold',
-                icon: 'error',
-                style: {
-                  color: '#f7b425'
-                },
-                tooltip: 'ON PARTIAL HOLD'
-              },
-            ]
-          },
-          propsMap: {
-            onSyspro: 'value',
-          },
-        },
-        {
-          title: '', field: 'image',
-          width: 80,
-          component: 'core.ImageComponent@1.0.0',
-          props: {
-            'ui:options': {
-              variant: 'rounded'
             },
+            {
+              component: 'core.ImageComponent@1.0.0',
+              props: {
+                'ui:options': {
+                  variant: 'rounded',
+                  style: {
+                    marginLeft: '16px'
+                  }
+                },
+              },
+              propsMap: {
+                'rowData.image': 'value',
+              },
+            },
+            {
+              component: 'core.SlideOutLauncher@1.0.0',
+              props: {
+                componentFqn: 'lasec-crm.LasecAddProductToQuote@1.0.0',
+                componentProps: {
+                  'rowData.code': 'formData.id'
+                },
+                slideDirection: 'down',                
+                buttonVariant: 'Fab',
+                buttonProps: {
+                  color: "#23A06A",
+                  size: 'small',
+                  style: {
+                    marginLeft: '16px',
+                    backgroundColor: "#23A06A"
+                  }
+                },
+                buttonIcon: 'add',                
+                windowTitle: 'Add to quote ${rowData.code}',
+              },
+            }
+          ],          
+          cellStyle: {
+            maxWidth: '200px',
+            width: '200px'
           },
-          propsMap: {
-            image: 'value',
-          },
-        },
+          headerStyles: {
+            maxWidth: '200px',
+            width: '200px'
+          }
+        },         
         { title: 'Stock Code', field: 'code' },
         { title: 'Description', field: 'name' },
         {
@@ -85,13 +121,11 @@ const uiSchemaDetails: any = {
               'ui:options': {
                 icon: 'square_foot',
                 iconPosition: 'left',
-                variant: 'p'
+                variant: 'p',
+                format: '${rowData.unitOfMeasure}'
               }
             },
           },
-          propsMap: {
-            unitOfMeasure: 'value',
-          }
         },
         { title: 'Buyer', field: 'buyer' },
         { title: 'Planner', field: 'planner' },
@@ -99,17 +133,21 @@ const uiSchemaDetails: any = {
         { title: 'Site Evaluation', field: 'siteEvaluationRequired' },
       ],
       options: {
-        grouping: true,
+        grouping: false,
+        search: false,
+        showTitle: false,
+        toolbar: false,
       },
       remoteData: true,
       query: 'query',
       variables: {
-        'state.formData.product': 'product'
+        'props.formContext.$formData.product': 'product'
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
-        'paging.pageSize': 'pageSize',        
+        'paging.pageSize': 'pageSize',
+        'products.[].id': 'data.[].id',
         'products.[].name': 'data.[].name',
         'products.[].code': 'data.[].code',
         'products.[].description': 'data.[].description',
@@ -135,23 +173,23 @@ const uiSchemaDetails: any = {
         'products.[].packedVolume': 'data.[].packedVolume',
         'products.[].packedWeight': 'data.[].packedWeight',
         'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
-        'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',        
+        'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',
       },
     },
   }
 };
 
-// MORE DETAILS: STOCK -- DEFAULT 
-const uiSchema: any = {
-  'ui:options': {    
-    componentType: "div", 
+// MORE DETAILS: STOCK -- DEFAULT
+const uiSchemaStock: any = {
+  'ui:options': {
+    componentType: "div",
     containerStyles: {
       padding: '0px',
       margin: '0px',
       paddingBottom: '8px'
     },
     showSubmit: false,
-    showRefresh: false,   
+    showRefresh: false,
   },
   product: {
     hidden: true,
@@ -205,7 +243,7 @@ const uiSchema: any = {
           propsMap: {
             'rowData.onSyspro': 'value',
           },
-          
+
         },
         {
           title: '', field: 'image',
@@ -235,7 +273,7 @@ const uiSchema: any = {
                 format: '${rowData.unitOfMeasure}'
               }
             },
-          },          
+          },
         },
         {
           title: 'Stock',
@@ -248,28 +286,28 @@ const uiSchema: any = {
           component: 'lasec-crm.LasecProductQuantityTable@1.0.0',
           props: {},
           propsMap: {
-            'rowData.id': 'formData.id',                
+            'rowData.id': 'formData.id',
           },
           //component: {
-          //  
+          //
           //},
           /*
           component: 'core.TableChildComponentWrapper@1.0.0',
           props: {
-           
+
           },
           propsMap: {
             'rowData': 'rowData',
             'formData': 'formData'
           },
-          */          
+          */
         },
       ],
       options: {
         grouping: false,
         search: false,
         showTitle: false,
-        toolbar: false,        
+        toolbar: false,
       },
       remoteData: true,
       query: 'query',
@@ -279,8 +317,8 @@ const uiSchema: any = {
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
-        'paging.pageSize': 'pageSize',     
-        'products.[].id': 'data.[].id',   
+        'paging.pageSize': 'pageSize',
+        'products.[].id': 'data.[].id',
         'products.[].name': 'data.[].name',
         'products.[].code': 'data.[].code',
         'products.[].description': 'data.[].description',
@@ -306,7 +344,7 @@ const uiSchema: any = {
         'products.[].packedVolume': 'data.[].packedVolume',
         'products.[].packedWeight': 'data.[].packedWeight',
         'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
-        'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',        
+        'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',
       },
     },
   }
@@ -314,8 +352,8 @@ const uiSchema: any = {
 
 //MORE DETAILS - SALES ORDERS
 const uiSchemaOrders: any = {
-  'ui:options': {    
-    componentType: "div",    
+  'ui:options': {
+    componentType: "div",
   },
   product: {},
   products: {
@@ -426,8 +464,8 @@ const uiSchemaOrders: any = {
 
 //MORE DETAILS - PURCHASE ORDERS
 const uiSchemaPurOrders: any = {
-  'ui:options': {    
-    componentType: "div",    
+  'ui:options': {
+    componentType: "div",
   },
   product: {},
   products: {

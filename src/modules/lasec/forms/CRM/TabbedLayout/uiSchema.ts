@@ -5,40 +5,45 @@ const $toolbar: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {      
-      search: { md: 3, sm: 4, xs: 6 },
-      // supplier: { md: 3, sm: 4, xs: 6 },
-      fabButton: { md: 3, sm: 4, xs: 6 },
-      view: { md: 1, sm: 1, xs: 1 },
+      // search: { md: 3, sm: 4, xs: 6 },
+      // supplier: { md: 3, sm: 4, xs: 6 },      
+      // view: { md: 1, sm: 1, xs: 1 },
+      fabButton: { md: 12, sm: 12, xs: 12, alignItems: 'right' },
     }
   ],
-  search: {
-    'ui:options': {
-      showLabel: false,
-      icon: 'search',
-      component: "TextField",
-      componentProps: {
-        placeholder: 'Search',
-        variant: "outlined",
-        type: 'search',
-        style: {
-          minWidth: '180px'
-        }
-      }
-    }
+  'ui:grid-options': {
+
   },
+  
   fabButton: {
-    'ui:widget': 'FormSubmitWidget',
+    'ui:widget': 'SlideOutLauncher',
     'ui:options': {
-      text: 'SEARCH',
-      color: 'default',
       props: {
-        color: 'default',
-        style: {
-          maxWidth: '180px',
-          width: '180px'
-        }
+        componentFqn: 'lasec-crm.LasecCRMNewClient@1.0.0',
+        componentProps: {
+         
+        },
+        slideDirection: 'down',                
+        buttonVariant: 'Fab',
+        buttonProps: {
+          size: 'small',
+          style: {
+            color: "#ffffff",
+            marginLeft: '16px',
+            backgroundColor: "#000000"
+          }
+        },
+        buttonIcon: 'add',                
+        windowTitle: 'Add New Client',
+      },
+      propertyMap: {
+
+      },
+      fullWidth:false,
+      style: {
+        float: 'right'
       }
-    }
+    }      
   },
   view: {
     'ui:widget': 'HiddenWidget',
@@ -53,9 +58,10 @@ const $toolbar: any = {
 };
 
 
-const uiSchema: any = {
+const uiSchema: any = {    
   submitIcon: 'refresh',
   'ui:options': {
+    componentType: "div",
     toolbarPosition: 'none',
     showRefresh: false,
     showSubmit: false,

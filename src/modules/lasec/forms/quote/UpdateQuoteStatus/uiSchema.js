@@ -10,6 +10,16 @@ const froalaOptions = {
     'x-client-key': '${formContext.api.CLIENT_KEY}',
     'x-client-pwd': '${formContext.api.CLIENT_PWD}',
   },
+  fontFamilyDefaultSelection: 'Roboto',
+  fontFamily: {
+    'Arial,Helvetica,sans-serif': 'Arial',
+    'Georgia,serif': 'Georgia',
+    'Impact,Charcoal,sans-serif': 'Impact',
+    'Tahoma,Geneva,sans-serif': 'Tahoma',
+    "'Times New Roman',Times,serif": 'Times New Roman',
+    'Verdana,Geneva,sans-serif': 'Verdana',
+    "Roboto,Helvetica,Arial,sans-serif": "Roboto"        
+  },
 };
 
 const uiSchema = {

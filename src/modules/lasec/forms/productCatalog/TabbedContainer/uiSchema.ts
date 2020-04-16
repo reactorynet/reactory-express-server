@@ -8,7 +8,7 @@ const $toolbar: any = {
       product: { md: 3, sm: 4, xs: 6 },
       // supplier: { md: 3, sm: 4, xs: 6 },
       submitButton: { md: 3, sm: 4, xs: 6 },
-      resultCount: { md: 3, sm: 4, xs: 6 },      
+      resultCount: { md: 3, sm: 4, xs: 6 },
     }
   ],
   product: {
@@ -129,6 +129,76 @@ const uiSchema: any = {
           id: 'product-more-details',
           title: 'More Details',
           componentFqn: 'lasec-crm.LasecProductDetailTable',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-dimensions',
+          title: 'Dimension',
+          componentFqn: 'lasec-crm.LasecProductDetailTable',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-stock',
+          title: 'Stock',
+          componentFqn: 'lasec-crm.LasecProductDetailTable',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-sales-order',
+          title: 'Sales Order',
+          componentFqn: 'lasec-crm.LasecProductSalesOrders',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-sales-order',
+          title: 'Sales Order',
+          componentFqn: 'lasec-crm.LasecProductPurchaseOrders',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-contracts',
+          title: 'Contracts',
+          componentFqn: 'lasec-crm.LasecProductContracts',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-tenders',
+          title: 'Tenders',
+          componentFqn: 'lasec-crm.LasecProductTenders',
+          componentProps: {},
+          componentPropsMap: {
+            'formContext.$formData.toolbar.product': 'formData.product',
+            'formContext.$formData.toolbar.view': 'query.uiSchema',
+          },
+        },
+        {
+          id: 'product-costings',
+          title: 'Costings',
+          componentFqn: 'lasec-crm.LasecProductCostings',
           componentProps: {},
           componentPropsMap: {
             'formContext.$formData.toolbar.product': 'formData.product',

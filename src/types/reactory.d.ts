@@ -125,6 +125,7 @@ declare namespace Reactory {
     default?: any | undefined,
     required?: any | undefined,
     properties?: ISchemaObjectProperties | any | undefined,
+    dependencies?: any | undefined,
   }
 
   export interface IObjectSchema extends ISchema {
@@ -163,17 +164,18 @@ declare namespace Reactory {
     objectMap: boolean,
     updateMessage?: String,
     variables?: Object,
-    onSuccessMethod?: String,
+    onSuccessMethod?: String | "redirect" | "notification" | "function",
     onSuccessUrl?: String,
     onSuccessRedirectTimeout?: number,
     options?: any,
-    notitifcation?: any
+    notification?: any
   }
 
   export interface IReactoryFormMutations {
     new?: IReactoryFormMutation,
     edit?: IReactoryFormMutation,
-    delete?: IReactoryFormMutation
+    delete?: IReactoryFormMutation,
+    [key: string]: IReactoryFormMutation
   }
 
   export interface IFormGraphDefinition {

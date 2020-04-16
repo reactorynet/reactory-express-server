@@ -3,22 +3,16 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 const $toolbar = {
   type: 'object',
   title: '',
-  required: ['search'],
-  properties: {
-    search: {
-      type: 'string',
-      title: 'Search',
-      description: 'Enter search string',
-      minLength: 3
-    },
+  properties: {  
     fabButton: {
-      title: 'Search',
+      title: 'NEW',
       type: 'string',
     },
+    
     view: {
       title: '',
       type: 'string'
-    }    
+    },    
   }
 };
 

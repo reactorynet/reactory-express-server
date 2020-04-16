@@ -10,7 +10,8 @@ export default {
       'formData.toolbar.periodEnd': 'dashparams.periodEnd',
       'formData.toolbar.agentSelection': 'dashparams.agentSelection',
       'formData.toolbar.repIds': 'dashparams.repIds',
-      'formData.toolbar.teamFilter': 'dashparams.teamIds'
+      'formData.toolbar.teamFilter': 'dashparams.teamIds',
+      'formData.options': 'dashparams.options'
     },
     resultMap: {
       id: 'id',

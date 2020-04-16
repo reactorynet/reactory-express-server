@@ -11,7 +11,7 @@ import { jzon } from '../../../utils/validators';
 
 import LasecDatabase from '../database';
 import LasecQueries from '../database/queries';
-import { execql } from 'graph/client';
+import { execql, execml } from 'graph/client';
 
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
@@ -265,6 +265,40 @@ const defaultQuoteObjectMap = {
 };
 
 const Api = {
+  FETCH,
+  URIS: SECONDARY_API_URLS,
+  get: async (uri, params, shape) => {
+    const resp = await FETCH(uri, { params });
+    const {
+      status, payload,
+    } = resp;
+
+    if (status === 'success') {
+      if (shape && Object.keys(shape).length > 0) {
+        return om(payload, shape);
+      } else {
+        return payload;
+      }
+    } else {
+      return { pagination: {}, ids: [], items: [] };
+    }
+  },
+  post: async (uri, params, shape) => {
+    const resp = await POST(uri, { params: { ...defaultParams, ...params } });
+    const {
+      status, payload,
+    } = resp;
+
+    if (status === 'success') {
+      if (shape && Object.keys(shape).length > 0) {
+        return om(payload, shape);
+      } else {
+        return payload;
+      }
+    } else {
+      return { pagination: {}, ids: [], items: [] };
+    }
+  },
   Customers: {
     list: async (params = defaultParams) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.customers.url, { params: { ...defaultParams, ...params } });
@@ -376,9 +410,47 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
 
-    }
+    },
+    GetPersonTitles: async (params = defaultParams) => {
+      const resp = await FETCH(SECONDARY_API_URLS.person_title.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+    GetRepCodes: async (params = defaultParams) => {
+      const resp = await FETCH(SECONDARY_API_URLS.rep_code.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
   },
   Company: {
+    list: async (params) => {
+
+      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = apiResponse;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+
+    },
     getById: async (params) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } });
       const {
@@ -402,6 +474,59 @@ const Api = {
       }
 
       return { pagination: {}, ids: [], items: [] };
+    },
+    uploadFile: async (params) => {
+      try {
+        logger.debug(`BEGINNING DOCUMENT UPLOAD:: ${params}`);
+
+        const apiResponse = await POST(SECONDARY_API_URLS.file_uploads, { body: { ...params } });
+        const { status, payload } = apiResponse;
+        // payload - name id url
+
+        logger.debug(`UPLOAD DOCUMENT RESPONSE STATUS: ${status}  PAYLOAD: ${payload}`);
+
+        if (status === 'success') {
+          return apiResponse;
+        }
+
+        return apiResponse;
+
+      } catch (error) {
+        logger.error(`ERROR UPLOADING DOCUMENT:: ${error}`);
+        return null;
+      }
+    }
+  },
+  Organisation: {
+    list: async (params = defaultParams) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.organisation.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = apiResponse;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+    createNew: async (params) => {
+      try {
+        // const url = 'api/organisation/0/';
+        // const apiResponse = await PUT(url, { ...params });
+
+        const url = 'api/customer/create_organisation_and_save_to_customer/';
+        const apiResponse = await POST(url, { ...params });
+
+        const { status } = apiResponse;
+
+        if (status === 'success') {
+          return apiResponse;
+        }
+      } catch (lasecApiError) {
+        logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`);
+        return null;
+      }
     }
   },
   Products: {
@@ -507,7 +632,6 @@ const Api = {
       } = apiResponse;
 
       if (status === 'success') {
-        logger.debug(`PAYLOAD:: ${JSON.stringify(payload)}`);
         return payload;
       }
 
@@ -666,7 +790,7 @@ const Api = {
         } = apiResponse;
 
         logger.debug(`CreateQuoteHeader response status: ${status}  payload: ${payload} id: ${id}`);
-        if (status === 'sucess') {
+        if (status === 'success') {
           return payload;
         }
       } catch (lasecApiError) {
@@ -683,7 +807,7 @@ const Api = {
 
         logger.debug(`CreateQuoteHeader response status: ${status}  payload: ${payload} id: ${id}`);
 
-        if (status === 'sucess') {
+        if (status === 'success') {
           return payload;
         }
       } catch (lasecApiError) {
@@ -700,7 +824,7 @@ const Api = {
 
         logger.debug(`Deleted quote header: ${status}  payload: ${payload} id: ${id}`);
 
-        if (status === 'sucess') {
+        if (status === 'success') {
           return null;
         }
       } catch (lasecApiError) {

@@ -314,6 +314,11 @@ const resolveData = async ({ surveyId, delegateId }) => {
       scale: {
         // Hides the scale
         display: true,
+        ticks: {
+          max: 5,
+          min: 0,
+          stepSize: 0.5
+        }
       },
       title: {
         display: true,
@@ -349,10 +354,15 @@ const resolveData = async ({ surveyId, delegateId }) => {
         // Hides the scale
         display: true,
         fontSize: 16,
+        ticks: {
+          max: 5,
+          min: 0,
+          stepSize: 0.5
+        }
       },
       title: {
         display: true,
-        text: 'Self vs Peers',
+        text: 'Average for all ratings',
       },
       legend: {
         labels: {
@@ -566,7 +576,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     { text: '3. Qualities', style: ['header', 'primary'], pageBreak: 'before' },
     { text: 'The ratings for your different leadership behaviours have been combined to achieve an average rating for each value.', style: ['default'] },
     { text: '3.1 Individual Ratings', style: ['subheader', 'primary'] },
-    { text: 'The chart below indicates the ratings submitted by the individual assessors. Please pay attention to the graph scale as it is spread according to your average per quality and not from 1 to 5.', style: ['default'] },
+    { text: 'The chart below indicates the ratings submitted by the individual assessors.', style: ['default'] },
     {
       image: 'spiderChartAll',
       width: 400,
@@ -575,7 +585,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       margin: [0, 40],
     },
     { text: '3.2 Aggregate Ratings', style: ['subheader', 'primary'], pageBreak: 'before' },
-    { text: 'The chart below indicates the combined ratings from all assessors.  Please pay attention to the graph scale as it is spread according to your average per quality and not from 1 to 5.', style: ['default'] },
+    { text: 'The chart below indicates the combined ratings from all assessors.', style: ['default'] },
     {
       image: 'spiderChartAvg',
       width: 400,
@@ -836,7 +846,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       if (currentPage > 1) {
         return [
           {
-            image: 'partnerAvatar', alignment: 'right', width: 25, margin: [0, 5, 15, 0],
+            image: 'partnerAvatar', alignment: 'right', width: 25, margin: [0, 15, 15, 0],
           },
         ];
       }

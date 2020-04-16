@@ -2,7 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
 
-const displayUiSchema: any = {
+export const displayUiSchema: any = {
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -30,7 +30,7 @@ const displayUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { md: 12 },
     },
     {
       documents: { md: 12 },
@@ -52,16 +52,10 @@ const displayUiSchema: any = {
     'ui:options': {
       columns: [
         {
-          title: "Title", field: "title"
+          title: "Title", field: "name"
         },
         {
-          title: "Filename", field: "filename"
-        },
-        {
-          title: "Size", field: "size"
-        },
-        {
-          title: "Link", field: "link"
+          title: "Link", field: "url"
         }
       ],
       options: {
@@ -74,10 +68,9 @@ const displayUiSchema: any = {
   },
   inputDocument: {
     'ui:field': 'GridLayout',
-    'ui:grid-layout': [      
+    'ui:grid-layout': [
       {
-        title: { md: 6, sm: 12 },
-        filename: { md: 6, sm: 12 },        
+        filename: { md: 6, sm: 12 },
       },
       {
         link: {md: 12}
@@ -87,12 +80,50 @@ const displayUiSchema: any = {
       readOnly: true,
     },
     link: {
-      'ui:widget': 'DropZoneWidget',
+      'ui:widget': 'ReactoryDropZoneWidget',
       'ui:options': {
-        accept: ['text/html', 'text/text', 'application/xml'],
+        //main container styles
+        style: {
+
+        },
+        //properties for Reactory DropZone
+        ReactoryDropZoneProps: {
+          text: `Drop files here, or click to select files to upload`,
+          accept: ['text/html', 'text/text', 'application/xml', 'application/pdf'],
+          uploadOnDrop: true,
+          mutation: {
+            text: `mutation LasecUploadDocument($file: Upload!){
+              LasecUploadDocument(file: $file) {
+                id
+                name
+                url
+                mimetype
+              }
+            }`,
+            variables: {
+              'formData.customerId': 'customerId',
+            },
+          },
+          iconProps: {
+            icon: 'upload',
+            color: 'secondary'
+          },
+          labelProps: {
+            style: {
+              display: 'block',
+              paddingTop: '95px',
+              height: '200px',
+              textAlign: 'center',
+            }
+          },
+          style: {
+            minHeight: `200px`,
+            outline: '1px dashed #E8E8E8'
+          }
+        },
       }
     }
-  },  
+  },
 };
 
 const editUiSchema: any = {
@@ -110,11 +141,11 @@ const editUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { md: 12 },
     },
-    {      
+    {
       documents: { md: 12 },
-      inputDocument: { md: 12 },           
+      inputDocument: { md: 12 },
     }
   ],
   view: {
@@ -132,16 +163,10 @@ const editUiSchema: any = {
     'ui:options': {
       columns: [
         {
-          title: "Title", field: "title"
+          title: "Title", field: "name"
         },
         {
-          title: "Filename", field: "filename"
-        },
-        {
-          title: "Size", field: "size"
-        },
-        {
-          title: "Link", field: "link"
+          title: "Link", field: "url"
         }
       ],
       options: {
@@ -154,7 +179,7 @@ const editUiSchema: any = {
   },
   inputDocument: {
 
-  },  
+  },
 };
 
 const documentSchema: Reactory.ISchema = {
@@ -164,20 +189,12 @@ const documentSchema: Reactory.ISchema = {
       type: "string",
       title: "Title"
     },
-    filename: {
-      type: "string",
-      title: "Filename"
-    },
-    size: {
-      type: "number",
-      title: "Size"
-    },
     link: {
       type: "string",
       title: "Link"
-    },    
+    },
   }
-}; 
+};
 
 const schema: Reactory.ISchema = {
   type: "object",
@@ -195,7 +212,7 @@ const schema: Reactory.ISchema = {
 };
 schema.title = "DOCUMENTS"
 
-const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
+const LasecCRMClientDocuments: Reactory.IReactoryForm = {
   id: 'LasecCRMClientDocuments',
   uiFramework: 'material',
   uiSupport: ['material'],
@@ -214,7 +231,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       id: 'display',
       title: 'VIEW',
       key: 'display',
-      description: 'View Contact Details',
+      description: 'View Documents',
       icon: 'list',
       uiSchema: displayUiSchema,
     },
@@ -222,15 +239,22 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       id: 'edit',
       title: 'EDIT',
       key: 'edit',
-      description: 'Edit Contact Details',
+      description: 'Manage Documents',
       icon: 'view_module',
       uiSchema: editUiSchema,
     },
+    {
+      id: 'new',
+      title: 'EDIT',
+      key: 'new',
+      description: 'Manage Documents',
+      icon: 'upload',
+      uiSchema: displayUiSchema,
+    },
   ],
   defaultFormValue: {
-    
-  },
 
+  },
 };
 
-export default LasecCRMPersonalInformationForm;
+export default LasecCRMClientDocuments;

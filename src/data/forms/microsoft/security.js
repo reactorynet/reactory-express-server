@@ -18,7 +18,11 @@ export const MicrosoftOpenIDAuthenticationUISchema = {
     showSubmit: false,
     showHelp: false,
     componentType: 'div',
-    container: 'div',    
+    container: 'div',
+    style: {
+      textAlign: 'center',
+      border: 'none'
+    }    
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -26,9 +30,16 @@ export const MicrosoftOpenIDAuthenticationUISchema = {
       route: { md: 12 },
     },
   ],
+  'ui:grid-options': {
+    container: 'div',
+    containerStyle: {
+      textAlign: 'center'
+    }
+  },
   route: {
     'ui:widget': 'LinkFieldWidget',
     'ui:options': {
+      fullWidth: false,      
       format: '${formData}/${formContext.api.CLIENT_KEY}?x-client-key=${formContext.api.CLIENT_KEY}&x-client-pwd=${formContext.api.CLIENT_PWD}', //eslint-disable-line
       title: 'Login With Microsoft O365',
       icon: 'O365',
@@ -38,7 +49,7 @@ export const MicrosoftOpenIDAuthenticationUISchema = {
         style: {
           marginLeft: '16px',
         },
-      },
+      },      
       userouter: false, // use browser navigator
     },
   },

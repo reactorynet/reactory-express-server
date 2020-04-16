@@ -24,6 +24,7 @@ import {
   ENTITY_KEY__CUSTOMER_CLASS,
   ENTITY_KEY__REP_CODE,
   ENTITY_KEY__UPLOAD_FILE,
+  ENTITY_KEY__FILE_UPLOADS,
   ENTITY_KEY__CUSTOMER_RANKING,
   ENTITY_KEY__CUSTOMER_ROLE,
   ENTITY_KEY__STOCK_ALLOCATED,
@@ -54,6 +55,7 @@ export default {
   login_lasec_user: { url: 'api/user/login_lasec_user/', allowed_methods: ['post'] },
   create_user: { url: 'api/user/', allowed_methods: ['post'] },
   file_upload: { url: `api/${ENTITY_KEY__UPLOAD_FILE}/`, allowed_methods: ['get'] },
+  file_uploads: { url: `api/${ENTITY_KEY__FILE_UPLOADS}/`, allowed_methods: ['post'] },
   release_notes: { url: `api/${ENTITY_KEY__RELEASE_NOTE}/`, allowed_methods: ['get'] },
   release_notes_seen: { url: `api/${ENTITY_KEY__RELEASE_NOTE_SEEN}/`, allowed_methods: ['post'] },
   permissions: { url: `api/${ENTITY_KEY__PERMISSION}/`, allowed_methods: ['get'] },
@@ -84,6 +86,12 @@ export default {
   customer_ranking: { url: `api/${ENTITY_KEY__CUSTOMER_RANKING}/`, allowed_methods: ['get'] },
   customer_roles: { url: `api/${ENTITY_KEY__CUSTOMER_ROLE}/`, allowed_methods: ['get'] },
   customer_class: { url: `api/${ENTITY_KEY__CUSTOMER_CLASS}/`, allowed_methods: ['get'] },
+  customer_country: { url: `api/${ENTITY_KEY__CUSTOMER}/country_list`, allowed_methods: ['get'] },
+  person_title: { url: `api/${ENTITY_KEY__PERSON_TITLE}/`, allowed_methods: ['get'] },
+  rep_code: { url: `api/${ENTITY_KEY__REP_CODE}/`, allowed_methods: ['get'] },
+  organisation: { url: `api/${ENTITY_KEY__ORGANISATION}/`, allowed_methods: ['get'] },
+  createOrganisation: { url: `api/${ENTITY_KEY__ORGANISATION}/\\d+/`, allowed_methods: ['put'] },
+
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },
   { url: `api/${ENTITY_KEY__PRODUCT_BUYER}/`, allowed_methods: ['get'] },

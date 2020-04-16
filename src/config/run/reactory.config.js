@@ -1,10 +1,10 @@
 /**
- * env-cmd -f ./config/.env.production npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000
+ * env-cmd -f ./config/.env.production npx nodemon --exec npx babel-node ./src/server.ts --presets @babel/env --max_old_space_size=2000000
  */
 module.exports = {
   apps: [{
     name: 'ReactoryApi',
-    script: 'src/server.js',
+    script: 'src/server.ts',
     kill_timeout: 3000,
     listen_timeout: 10000,
     max_memory_restart: '2G',
