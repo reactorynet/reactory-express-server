@@ -287,7 +287,10 @@ extend type Query {
   LasecGetCRMQuoteList(
     search: String!
     paging: PagingRequest
-    filterBy: String
+    filterBy: String,
+    periodStart: String,
+    periodEnd: String,
+    date: String,
     iter: Int
   ): PagedCRMQuote
   LasecGetDashboard(dashparams: LasecQuoteQueryInput): LasecQuoteDashboard

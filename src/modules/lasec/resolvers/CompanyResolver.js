@@ -997,13 +997,36 @@ export default {
         }
         case 'quote_status': {
           return [
-            { id: 'awaitingFreight', name: 'Draft - Awaiting Freight' },
-            { id: 'awaitingApproval', name: 'Draft - Awaiting Approval' },
-            { id: 'awaitingSubmission', name: 'Draft - Awaiting Submission' },
-            { id: 'expired', name: 'Expired' },
-            { id: 'openBudget', name: 'Open-Budget Timeline' },
-            { id: 'accepted', name: 'Accepted Fully' },
-            { id: 'lost', name: 'Lost' },
+            { id: 'Draft - Pending Submission', name: 'Draft - Pending Submission' },
+            { id: 'Draft - Awaiting Approval', name: 'Draft - Awaiting Approval' },
+            { id: 'Draft - Approved', name: 'Draft - Approved' },
+            { id: 'Draft - Declined', name: 'Draft - Declined' },
+            // { id: 'awaitingFreight', name: 'Draft - Awaiting Freight' },
+
+            { id: 'Open - Submitted Quote', name: 'Open - Submitted Quote' },
+            { id: 'Open - Under Assessement', name: 'Open - Under Assessement' },
+            { id: 'Open - Budget Timeline', name: 'Open - Budget Timeline' },
+            { id: 'Open - Price Negotiation', name: 'Open - Price Negotiation' },
+            { id: 'Open - Awaiting PO', name: 'Open - Awaiting PO' },
+            { id: 'Open - PO Received', name: 'Open - PO Received' },
+
+            { id: 'Lost - Price', name: 'Lost - Price' },
+            { id: 'Lost - No Funds', name: 'Lost - No Funds' },
+            { id: 'Lost - No Stock', name: 'Lost - No Stock' },
+            { id: 'Lost - No Info', name: 'Lost - No Info' },
+            { id: 'Lost - Lead Time', name: 'Lost - Lead Time' },
+            { id: 'Lost - Other', name: 'Lost - Other' },
+
+            { id: 'Accepted', name: 'Accepted' },
+            { id: 'Accepted - Fully', name: 'Accepted - Fully' },
+            { id: 'Accepted - Partially', name: 'Accepted - Partially' },
+            { id: 'Accepted - Jobcard', name: 'Accepted - Jobcard' },
+
+            { id: 'Expired', name: 'Expired' },
+            { id: 'Expired - Waiting Feedback', name: 'Expired - Waiting Feedback' },
+            { id: 'Expired - Waiting Budget', name: 'Expired - Waiting Budget' },
+
+            { id: 'Deleted', name: 'Deleted' },
           ];
         }
         case 'company_sales_team': {

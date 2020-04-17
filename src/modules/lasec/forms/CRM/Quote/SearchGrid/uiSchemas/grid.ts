@@ -116,7 +116,6 @@ const uiSchema: any = {
             'rowData.date': 'value',
           }
         },
-        // TODO - NEED A LIST OF POTENTIAL QUOTE STATUS TYPES
         {
           title: 'Quote Status', field: 'status',
           components: [
@@ -134,21 +133,189 @@ const uiSchema: any = {
                     tooltip: 'Draft - Pending Submission'
                   },
                   {
+                    key: 'Draft - Awaiting Approval',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#5EB848'
+                    },
+                    tooltip: 'Draft - Awaiting Approval'
+                  },
+                  {
+                    key: 'Draft - Approved',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#5EB848'
+                    },
+                    tooltip: 'Draft - Approved'
+                  },
+                  {
+                    key: 'Draft - Declined',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#5EB848'
+                    },
+                    tooltip: 'Draft - Declined'
+                  },
+                  {
                     key: 'Open - Submitted Quote',
                     icon: 'trip_origin',
                     style: {
-                      color: '#FF9901'
+                      color: '#5EB848'
                     },
                     tooltip: 'Open - Submitted Quote'
                   },
                   {
-                    key: 'deactivated',
+                    key: 'Open - Under Assessement',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#5EB848'
+                    },
+                    tooltip: 'Open - Under Assessement'
+                  },
+                  {
+                    key: 'Open - Budget Timeline',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#5EB848'
+                    },
+                    tooltip: 'Open - Budget Timeline'
+                  },
+                  {
+                    key: 'Open - Price Negotiation',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'Open - Price Negotiation'
+                  },
+                  {
+                    key: 'Open - Awaiting PO',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'Open - Awaiting PO'
+                  },
+                  {
+                    key: 'Open - PO Received',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'Open - PO Received'
+                  },
+                  {
+                    key: 'Lost - Price',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'Lost - Price'
+                  },
+                  {
+                    key: 'Lost - No Funds',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'Lost - No Funds'
+                  },
+                  {
+                    key: 'Lost - No Stock',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'Lost - No Stock'
+                  },
+                  {
+                    key: 'Lost - No Info',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'Lost - No Info'
+                  },
+                  {
+                    key: 'Lost - Lead Time',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'Lost - Lead Time'
+                  },
+                  {
+                    key: 'Lost - Other',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#FF9901'
+                    },
+                    tooltip: 'Lost - Other'
+                  },
+                  {
+                    key: 'Accepted',
                     icon: 'trip_origin',
                     style: {
                       color: '#AB1257'
                     },
-                    tooltip: 'Client Deactivated'
-                  }
+                    tooltip: 'Accepted'
+                  },
+                  {
+                    key: 'Accepted - Fully',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#AB1257'
+                    },
+                    tooltip: 'Accepted - Fully'
+                  },
+                  {
+                    key: 'Accepted - Partially',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#AB1257'
+                    },
+                    tooltip: 'Accepted - Partially'
+                  },
+                  {
+                    key: 'Accepted - Jobcard',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#AB1257'
+                    },
+                    tooltip: 'Accepted - Jobcard'
+                  },
+                  {
+                    key: 'Expired',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#AB1257'
+                    },
+                    tooltip: 'Expired'
+                  },
+                  {
+                    key: 'Expired - Waiting Feedback',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#AB1257'
+                    },
+                    tooltip: 'Expired - Waiting Feedback'
+                  },
+                  {
+                    key: 'Expired - Waiting Budget',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#AB1257'
+                    },
+                    tooltip: 'Expired - Waiting Budget'
+                  },
+                  {
+                    key: 'Deleted',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#AB1257'
+                    },
+                    tooltip: 'Deleted'
+                  },
                 ]
               },
               style: {
@@ -167,7 +334,7 @@ const uiSchema: any = {
                 },
                 menus: [
                   {
-                    id: 'draft',
+                    id: 'Draft - Pending Submission',
                     key: 'Draft - Pending Submission',
                     title: 'Draft - Pending Submission',
                     icon: 'trip_origin',
@@ -178,9 +345,9 @@ const uiSchema: any = {
                     }
                   },
                   {
-                    id: 'Open - Submitted Quote',
-                    key: 'Open - Submitted Quote',
-                    title: 'Open - Submitted Quote',
+                    id: 'Draft - Awaiting Approval',
+                    key: 'Draft - Awaiting Approval',
+                    title: 'Draft - Awaiting Approval',
                     icon: 'trip_origin',
                     iconProps: {
                       style: {
@@ -190,9 +357,240 @@ const uiSchema: any = {
 
                   },
                   {
-                    id: 'deactivated',
-                    key: 'deactivated',
-                    title: 'Deactivate',
+                    id: 'Draft - Approved',
+                    key: 'Draft - Approved',
+                    title: 'Draft - Approved',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Draft - Declined',
+                    key: 'Draft - Declined',
+                    title: 'Draft - Declined',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Open - Submitted Quote',
+                    key: 'Open - Submitted Quote',
+                    title: 'Open - Submitted Quote',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Open - Under Assessement',
+                    key: 'Open - Under Assessement',
+                    title: 'Open - Under Assessement',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Open - Budget Timeline',
+                    key: 'Open - Budget Timeline',
+                    title: 'Open - Budget Timeline',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Open - Price Negotiation',
+                    key: 'Open - Price Negotiation',
+                    title: 'Open - Price Negotiation',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Open - Awaiting PO',
+                    key: 'Open - Awaiting PO',
+                    title: 'Open - Awaiting PO',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Open - PO Received',
+                    key: 'Open - PO Received',
+                    title: 'Open - PO Received',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Lost - Price',
+                    key: 'Lost - Price',
+                    title: 'Lost - Price',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Lost - No Funds',
+                    key: 'Lost - No Funds',
+                    title: 'Lost - No Funds',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Lost - No Stock',
+                    key: 'Lost - No Stock',
+                    title: 'Lost - No Stock',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Lost - No Info',
+                    key: 'Lost - No Info',
+                    title: 'Lost - No Info',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Lost - Lead Time',
+                    key: 'Lost - Lead Time',
+                    title: 'Lost - Lead Time',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Lost - Other',
+                    key: 'Lost - Other',
+                    title: 'Lost - Other',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Accepted',
+                    key: 'Accepted',
+                    title: 'Accepted',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Accepted - Fully',
+                    key: 'Accepted - Fully',
+                    title: 'Accepted - Fully',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Accepted - Partially',
+                    key: 'Accepted - Partially',
+                    title: 'Accepted - Partially',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Accepted - Jobcard',
+                    key: 'Accepted - Jobcard',
+                    title: 'Accepted - Jobcard',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Expired',
+                    key: 'Expired',
+                    title: 'Expired',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Expired - Waiting Feedback',
+                    key: 'Expired - Waiting Feedback',
+                    title: 'Expired - Waiting Feedback',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Expired - Waiting Budget',
+                    key: 'Expired - Waiting Budget',
+                    title: 'Expired - Waiting Budget',
+                    icon: 'trip_origin',
+                    iconProps: {
+                      style: {
+                        color: '#AB1257'
+                      }
+                    },
+                  },
+                  {
+                    id: 'Deleted',
+                    key: 'Deleted',
+                    title: 'Deleted',
                     icon: 'trip_origin',
                     iconProps: {
                       style: {
@@ -217,7 +615,7 @@ const uiSchema: any = {
         },
         { title: 'Client', field: 'client' },
         { title: 'Customer', field: 'companyTradingName' },
-        // { title: 'Account Number', field: 'accountNumber' },
+        { title: 'Account Number', field: 'accountNumber' },
         {
           title: 'Quote Type', field: 'quoteType',
           components: [

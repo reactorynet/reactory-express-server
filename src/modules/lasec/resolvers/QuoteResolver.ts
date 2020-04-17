@@ -283,13 +283,19 @@ const getPagedQuotes = async (params) => {
 
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0 } = params;
 
-  logger.debug(`GETTING PAGED QUOTES:: ${params}`);
+  logger.debug(`GETTING PAGED QUOTES:: ${JSON.stringify(params)}`);
 
   let pagingResult = {
     total: 0,
     page: paging.page || 1,
     hasNext: false,
     pageSize: paging.pageSize || 10
+  };
+
+
+  if (isString(search) === false || search.length < 3 && filter === undefined) return {
+    paging: pagingResult,
+    quotes: []
   };
 
   // const cachekey = Hash(`quote_list_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`.toLowerCase());
@@ -322,6 +328,12 @@ const getPagedQuotes = async (params) => {
     end_date: params.periodEnd ? params.periodEnd.toISOString() : moment().endOf('day'),
     agentSelection : 'me',
   };
+
+  // Filter by specific date
+  if (params.date) {
+    apiFilter.start_date = moment(params.date).startOf('day');
+    apiFilter.end_date = moment(params.date).endOf('day');
+  }
 
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter,  pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
 
