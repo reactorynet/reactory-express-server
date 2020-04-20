@@ -448,6 +448,40 @@ const Api = {
       }
 
       return { pagination: {}, ids: [], items: [] };
+    },
+    getAddress: async (params) => {
+      const resp = await FETCH(SECONDARY_API_URLS.address.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+    createNewAddress: async (params) => {
+      try {
+        const apiResponse = await POST(SECONDARY_API_URLS.new_address.url, { ...params });
+        return apiResponse; //{"status":"success","payload":{"id":31907}}
+      } catch (lasecApiError) {
+        logger.error(`ERROR CREATING NEW ADDRESS:: ${lasecApiError}`);
+        return null;
+      }
+    },
+    getPlaceDetails: async (placeId) => {
+
+      const drewsTempApiKey = '<GOOGLE MAPS API KEY>';
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=address_component&key=${drewsTempApiKey}`;
+      const response = await fetch(url, { method: 'GET' }).then();
+
+      try {
+        return response.json();
+      } catch (ex) {
+        logger.error(`ERROR GETTING ADDRESS:: ${ex}`);
+        return response.text();
+      }
     }
   },
   Company: {

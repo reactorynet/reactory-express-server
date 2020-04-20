@@ -134,6 +134,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       'personalDetails.accountType': 'accountType',
       'personalDetails.repCode': 'repCode',                        
     },
+    //interval: 1500,
     autoQuery: true,
     queryMessage: 'Loading new customer details',
     resultType: 'object',

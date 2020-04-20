@@ -1,5 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 import AddressSchema from '../../Shared/Address';
+import { newClientGraphQL } from './graphql';
 
 // const GOOGLE_MAPS_API_KEY_DEVELOPMENT = '<GOOGLE MAPS API KEY>';
 const GOOGLE_MAPS_API_KEY_DEVELOPMENT = '<GOOGLE MAPS API KEY>';
@@ -9,10 +10,10 @@ const GOOGLE_PLACE_TO_ADDRESS_MAP = {
 
 };
 
-const DEFAULT_ADDRESS_PROPS = {        
+const DEFAULT_ADDRESS_PROPS = {
   viewMode: 'MAP_WITH_SEARCH|ADDRESS_LABEL',
   objectMap: GOOGLE_PLACE_TO_ADDRESS_MAP,
-  checkExists: true,  
+  checkExists: true,
   query: `query LasecCheckAddressExists($input: Any!, $create: Boolean, $mapProvider: String){
     LasecCheckAddressExists(input: $input, create: $create, mapProvider: $mapProvider) {
       id
@@ -25,16 +26,16 @@ const DEFAULT_ADDRESS_PROPS = {
       countryCode
       countryName
       lat
-      long            
+      long
     }
   }`,
   variables: {
     'formData': 'input'
   },
   resultName: 'LasecCheckAddressExists',
-  resultMap: {  
+  resultMap: {
     '*':'*'
-  }        
+  }
 };
 
 const baseUiSchema: any =  {
@@ -49,7 +50,7 @@ const baseUiSchema: any =  {
       marginTop: '0',
     },
     showSubmit: false,
-    showRefresh: false,
+    showRefresh: false,    
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -98,8 +99,8 @@ const baseUiSchema: any =  {
       ],
       "html_attributions": []
     }
-   * 
-   * 
+   *
+   *
    */
   physicalAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget',
@@ -109,7 +110,7 @@ const baseUiSchema: any =  {
         googleMapURL: `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY_DEVELOPMENT}&v=3.exp&libraries=geometry,drawing,places`,
       }
     }
-  },  
+  },
   deliveryAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget',
     'ui:options': {
@@ -228,52 +229,24 @@ const readOnlySchema = {
       }    
     }
   }
+
 };
+
+const newUiSchema: any = {
+  'ui:graphql': newClientGraphQL,
+  ...baseUiSchema
+};
+
+export const NewUiSchema = newUiSchema;
+
 
 export const ReadOnlyUiSchema = readOnlySchema;
 
 export const EditUISchema = editUiSchema;
 
-const uiSchema: any = {
-  'ui:options': {
-    componentType: "div",
-    containerStyles: {
-      padding: '0px',
-      margin: '0px',
-      paddingBottom: '16px'
-    },
-    style: {
-      marginTop: '0',
-    },
-    showSubmit: false,
-    showRefresh: false,
-  },
-  'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      physicalAddress: { sm: 12 },
-    },
-    {
-      deliveryAddress: { sm: 12 },
-    },
-    {
-      billingAddress: { sm: 12 },
-    },
-  ],
-  physicalAddress: {
-    'ui:widget': 'ReactoryGoogleMapWidget'
-  },  
-  deliveryAddress: {
-    'ui:widget': 'ReactoryGoogleMapWidget'
-  },
-  billingAddress:{
-    'ui:widget': 'ReactoryGoogleMapWidget'
-  }
-};
-
 const schema: Reactory.ISchema = {
   type: 'object',
-  title: "",
+  title: "Address Details",
   properties: {
     physicalAddress: { ...AddressSchema, title: 'Physical Address' },
     deliveryAddress: { ...AddressSchema, title: 'Delivery Address' },
@@ -296,6 +269,11 @@ const LasecCRMCustomerAddress: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: schema,
   uiSchema: DisplayUISchema,
+  uiSchemas: [
+    { id: 'view', key: 'view', icon: 'view', title: 'View', description: 'View Of Customer Address', uiSchema: DisplayUISchema },
+    { id: 'edit', key: 'edit', icon: 'edit', title: 'Edit', description: 'Edit Of Customer Address', uiSchema: EditUISchema },
+    { id: 'new', key: 'new', icon: 'new', title: 'New', description: 'Addresses for new customer', uiSchema: NewUiSchema },
+  ],
   widgetMap: [
     { componentFqn: 'core.SlideOutLauncher@1.0.0', widget: 'SlideOutLauncher' },
   ],

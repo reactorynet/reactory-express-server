@@ -104,7 +104,7 @@ ReactoryClientSchema.methods.getDefaultUserRoles = function getDefaultUserRoles(
 };
 
 // eslint-disable-next-line max-len
-ReactoryClientSchema.methods.getSetting = function getSetting(name, defaultValue = null, create = false) {
+ReactoryClientSchema.methods.getSetting = function getSetting(name, defaultValue = null, create = false, componentFqn = null) {
   logger.info(`Looking up setting ${name}`, { defaultValue, create });
   if (isArray(this.settings)) {
     const found = find(this.settings, { name });
@@ -112,13 +112,20 @@ ReactoryClientSchema.methods.getSetting = function getSetting(name, defaultValue
 
     if (lodash.isNil(defaultValue) === false && create === true) {
       this.settings.push({
-        name, data: defaultValue, componentFqn: null, formSchema: null,
+        name, 
+        data: defaultValue, 
+        componentFqn: componentFqn, 
+        formSchema: null,
       });
-      this.save(); // do not wait for return, assume it was saved
 
-      return defaultValue;
+      this.save().then(); // do not wait for return, assume it was saved
+      return { data: defaultValue };
     }
-  } return null;
+
+    return { data: defaultValue };
+  } 
+  
+  return { data: defaultValue };
 };
 
 ReactoryClientSchema.methods.validatePassword = function validatePassword(password) {

@@ -215,10 +215,58 @@ input ClientUpdateInput {
   ranking: String
 }
 
+input AddressFields {
+  unitNumber: String,
+  unitName: String,
+  streetNumber: String,
+  streetName: String,
+  suburb: String,
+  metro: String,
+  city: String,
+  postalCode: String,
+  province: String,
+  country: String,
+}
+
+input NewAddressInput {
+  buildingDescriptionId: String
+  buildingFloorNumberId: String
+  unit: String
+  addressFields: AddressFields
+}
+
+type NewAddressResponse {
+  success: Boolean
+  message: String
+  id: String
+}
+
+type GoogleAddressDetails {
+  streetName: String
+  streetNumber: String
+  suburb: String
+  city: String
+  metro: String
+  province: String
+  postalCode: String
+  country: String
+}
+
 extend type Query {
-  LasecGetClientList(search: String! paging: PagingRequest filterBy: String iter: Int filter: String): PagedCRMClient
+  LasecGetClientList(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    iter: Int
+    filter: String
+  ): PagedCRMClient
   LasecGetClientDetail(id: String!): LasecCRMClient
-  LasecGetCustomerList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMCustomer
+  LasecGetCustomerList(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    iter: Int
+  ): PagedCRMCustomer
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecLookupItem]
   LasecGetCustomerRanking: [LasecLookupItem]
@@ -229,21 +277,18 @@ extend type Query {
   LasecGetCustomerDocuments(id: String, uploadContexts: [String], paging: PagingRequest): PagedLasecDocument
   LasecGetPersonTitles: [LasecTitleLookupItem]
   LasecGetNewClient: LasecNewClient
-  LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
+  LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation  
+  LasecGetPlaceDetails(placeId: String!): GoogleAddressDetails
+  LasecGetAddress(searchTerm: String!): [String!]
 }
 
 extend type Mutation {
-  LasecUpdateClientDetails(
-    clientInfo: ClientUpdateInput!
-  ): ClientDetailUpdateResponse
+  LasecUpdateClientDetails(clientInfo: ClientUpdateInput!): ClientDetailUpdateResponse
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
   LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument  
   LasecDeleteNewClientDocuments(fileIds: [String]!): UXMessage
   LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
   LasecCreateNewClient(newClient: LasecNewClientInput): NewClientResponse
   LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
-
+  LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
 }
-
-#  LasecUpdateClientJobDetails(clientId: String!, accountType: String!, repCode: String!, jobTitle: String!, clientDepartment: String!, clientClass: String!, ranking: String!): ClientDetailUpdateResponse
-#  LasecUpdateClientContactDetails(clientId: String!, mobileNumber: String!, alternateNumber: String!, email: String!, alternateEmail: String!): ClientDetailUpdateResponse
