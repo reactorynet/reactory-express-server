@@ -64,6 +64,9 @@ import OrganizationLookup from './CRM/Organization/Lookup';
 import OrganizationLookupForm from './CRM/Organization/Lookup/LookUpForm';
 import NewOrganisation from './CRM/Organization/NewOrganisation';
 
+import ClientLookup from './CRM/Client/Lookup';
+import ClientLookupForm from './CRM/Client/Lookup/LookUpForm';
+
 export default [
   SalesDashboard,
   ProductDashboard,
@@ -116,5 +119,7 @@ export default [
 
   OrganizationLookup,
   OrganizationLookupForm,
-  NewOrganisation
+  NewOrganisation,
+  ClientLookup,
+  ClientLookupForm,
 ];

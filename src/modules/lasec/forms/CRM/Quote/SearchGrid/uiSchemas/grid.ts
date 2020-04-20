@@ -21,6 +21,8 @@ const uiSchema: any = {
       periodEnd: { md: 6, xs: 12 },
       dateFilter: { md: 6, xs: 12 },
       selectFilter: { md: 6, xs: 12 },
+      client: { md: 6, xs: 12 },
+      customer: { md: 6, xs: 12 },
     },
     {
       quotes: {
@@ -94,6 +96,28 @@ const uiSchema: any = {
   },
   periodEnd: {
     'ui:widget': 'DateSelectorWidget',
+  },
+  client: {
+    'ui:widget': 'LookupComponent',
+    'ui:options': {
+      label: 'Select a Client',
+      title: 'Search for a Client'
+    },
+    props: {
+      componentFqn: 'lasec-crm.LasecCRMClientLookupTable@1.0.0',
+      componentProps: {},
+    },
+  },
+  customer: {
+    'ui:widget': 'LookupComponent',
+    'ui:options': {
+      label: 'Select a Customer',
+      title: 'Search for a Customer'
+    },
+    props: {
+      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+      componentProps: {},
+    },
   },
   quotes: {
     'ui:widget': 'MaterialTableWidget',

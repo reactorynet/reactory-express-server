@@ -290,7 +290,7 @@ extend type Query {
     filterBy: String,
     periodStart: String,
     periodEnd: String,
-    date: String,
+    dateFilter: String,
     iter: Int
   ): PagedCRMQuote
   LasecGetDashboard(dashparams: LasecQuoteQueryInput): LasecQuoteDashboard

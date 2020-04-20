@@ -47,13 +47,39 @@ const schema: Reactory.ISchema = {
             filterBy: {
               enum: [
                 FilterByEnumsKeys.quote_status,
-                FilterByEnumsKeys.client,
-                FilterByEnumsKeys.customer,
                 FilterByEnumsKeys.quote_type,
                 FilterByEnumsKeys.rep_code,
               ]
             },
             selectFilter: {
+              type: 'string',
+              title: 'Show'
+            }
+          },
+        },
+        {
+          properties:
+          {
+            filterBy: {
+              enum: [
+                FilterByEnumsKeys.client,
+              ]
+            },
+            client: {
+              type: 'string',
+              title: 'Show'
+            }
+          },
+        },
+        {
+          properties:
+          {
+            filterBy: {
+              enum: [
+                FilterByEnumsKeys.customer,
+              ]
+            },
+            customer: {
               type: 'string',
               title: 'Show'
             }
@@ -88,22 +114,20 @@ const schema: Reactory.ISchema = {
         }
       }
     },
-    // periodStart: {
-    //   type: 'string',
-    //   title: 'Period Start',
-    // },
-    // periodEnd: {
-    //   type: 'string',
-    //   title: 'Period End',
-    // },
+
     filterBy: {
       type: 'string',
       title: 'Filter By'
     },
+    // client: {
+    //   type: 'string',
+    //   title: 'Show'
+    // },
     quotes: {
       type: 'array',
       items: QuotesSchema,
     }
+
   }
 };
 

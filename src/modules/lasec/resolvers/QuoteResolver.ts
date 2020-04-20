@@ -1,7 +1,7 @@
 
 import om from 'object-mapper';
 import moment, { Moment } from 'moment';
-import lodash, { isArray, isNil } from 'lodash';
+import lodash, { isArray, isNil, isString } from 'lodash';
 import { ObjectId } from 'mongodb';
 import gql from 'graphql-tag';
 import uuid from 'uuid';
@@ -281,7 +281,7 @@ const getQuotes = async (params) => {
 
 const getPagedQuotes = async (params) => {
 
-  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0 } = params;
+  const { search = "", filter = '', paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0 } = params;
 
   logger.debug(`GETTING PAGED QUOTES:: ${JSON.stringify(params)}`);
 
