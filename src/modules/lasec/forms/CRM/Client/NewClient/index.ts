@@ -18,7 +18,7 @@ const schema: Reactory.ISchema = {
         jobDetail: LasecJobDetailForm.schema,
         customer: LasecCRMCustomerLookupForm.schema,
         address: LasecCRMCustomerAddress.schema,
-        documents: LasecCRMClientDocuments.schema
+        documents: LasecCRMClientDocuments.ViewSchema
       }
     },
     expandedPanels: {
@@ -58,7 +58,7 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      panels: { sm: 12, md: 12 },
+      panels: { xs: 12, sm: 12, md: 12, lg: 12 },
     }
   ],
   panels: {
@@ -148,8 +148,8 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         title: 'DOCUMENTS',
         Components: [
           {
-            componentFqn: 'lasec-crm.LasecCRMClientDocuments',
-            ...$sharedProps,
+            componentFqn: 'lasec-crm.LasecCRMNewClientDocuments',
+            ...$sharedProps,            
           },
         ],
       },

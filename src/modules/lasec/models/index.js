@@ -1,5 +1,6 @@
 import LasecCache from './LasecCache';
 import moment from 'moment';
+import { addCatchUndefinedToSchema } from 'graphql-tools';
 
 export const getCacheItem = async (cacheKey) => {
   let cached = await LasecCache.findOne({ key: cacheKey, partner: global.partner._id }).then();
@@ -23,12 +24,26 @@ export const getCacheItem = async (cacheKey) => {
  * @param {*} ttl - number of seconds
  */
 export const setCacheItem = async (cacheKey, item, ttl) => {
-  return new LasecCache({
-    partner: global.partner._id,
-    key: cacheKey,
-    item,
-    ttl: (new Date().valueOf()) + ((ttl || 60) * 1000),
-  }).save().then();
+  let cached = await LasecCache.findOne({ key: cacheKey, partner: global.partner._id }).then();
+
+  if(cached) {
+    cached.item = item;
+    cached.ttl = (new Date().valueOf()) + ((ttl || 60) * 1000);
+
+    LasecCache.updateOne({ partner: global.partner._id,
+      key: cacheKey }, cached).then();
+
+    return cached;
+  } else {
+
+    return new LasecCache({
+      partner: global.partner._id,
+      key: cacheKey,
+      item,
+      ttl: (new Date().valueOf()) + ((ttl || 60) * 1000),
+    }).save().then();
+
+  }   
 };
 
 

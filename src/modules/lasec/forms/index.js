@@ -39,7 +39,6 @@ import ProductQuantities from './productCatalog/ProductQuantities';
 
 import TabbedCrmForm from './CRM/TabbedLayout';
 import ClientGrid from './CRM/Client/SearchGrid';
-import QuoteGrid from './CRM/Quote/SearchGrid';
 import ClientDetail from './CRM/Client/Details';
 import ClientOverviewWidget from './CRM/Client/OverviewWidget';
 
@@ -48,7 +47,7 @@ import ClientPersonalInformation from './CRM/Client/Personal';
 import ClientContact from './CRM/Client/Contact';
 import ClientJobDetail from './CRM/Client/JobDetail';
 import ClientComments from './CRM/Client/Comments';
-import ClientDocuments from './CRM/Client/Documents';
+import LasecClientDocuments from './CRM/Client/Documents';
 import NewClient from './CRM/Client/NewClient';
 import NewClientConfirmAndSave from './CRM/Client/NewCustomerConfirm';
 
@@ -59,13 +58,18 @@ import CustomerOrganizationInfo from './CRM/Customer/Organization';
 import CustomerLookUp from './CRM/Customer/Lookup';
 import CustomerLookUpForm from './CRM/Customer/Lookup/LookUpForm';
 import CustomerAddress from './CRM/Customer/Address';
+import NewCustomerAddress from './CRM/Customer/Address/NewAddress';
 
 import OrganizationLookup from './CRM/Organization/Lookup';
 import OrganizationLookupForm from './CRM/Organization/Lookup/LookUpForm';
 import NewOrganisation from './CRM/Organization/NewOrganisation';
 
+import QuoteGrid from './CRM/Quote/SearchGrid';
+
 import ClientLookup from './CRM/Client/Lookup';
 import ClientLookupForm from './CRM/Client/Lookup/LookUpForm';
+
+const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
 
 export default [
   SalesDashboard,
@@ -101,9 +105,10 @@ export default [
   ClientContact,
   ClientJobDetail,
   ClientComments,
-  ClientDocuments,
+  LasecCRMViewClientDocuments,
+  LasecCRMNewClientDocuments,
+  LasecCRMEditClientDocuments,
   ClientGrid,
-  QuoteGrid,
   ClientDetail,
   ClientOverviewWidget,
   NewClient,
@@ -113,6 +118,7 @@ export default [
   CustomerSpecialRequirement,
   CustomerAccountInfo,
   CustomerAddress,
+  NewCustomerAddress,
   CustomerOrganizationInfo,
   CustomerLookUp,
   CustomerLookUpForm,
@@ -120,6 +126,8 @@ export default [
   OrganizationLookup,
   OrganizationLookupForm,
   NewOrganisation,
+
+  QuoteGrid,
   ClientLookup,
   ClientLookupForm,
 ];

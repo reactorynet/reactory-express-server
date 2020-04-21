@@ -1,5 +1,5 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
-
+import { newClientGraphQL } from './graphql';
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -24,7 +24,13 @@ const uiSchema: any = {
     'ui:widget': 'LookupComponent',
     'ui:options': {
       label: 'Select a Customer',
-      title: 'Search for a Customer'
+      title: 'Search for a Customer',
+      modalProps: {
+        fullScreen: false,        
+        closeOnEvents: [
+          'CloseModal:LasecCRMCustomerLookupTable'
+        ]
+      }
     },
     props: {
       componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
@@ -33,12 +39,60 @@ const uiSchema: any = {
   },
 };
 
+
+
+const newUiSchema: any = {
+  'ui:graphql': newClientGraphQL,
+  'ui:options': {
+    componentType: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '16px'
+    },
+    style: {
+      marginTop: '0',
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      registeredName: { xs: 12, sm: 12, md: 6, lg: 4 },
+    },
+  ],
+  registeredName: {
+    'ui:widget': 'LookupComponent',
+    'ui:options': {
+      label: 'Customer Registered Name',
+      title: 'Search for a Customer',
+      modalProps: {
+        fullScreen: false,        
+        closeOnEvents: [
+          'CloseModal:LasecCRMCustomerLookupTable'
+        ]
+      }
+    },
+    props: {
+      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+      componentProps: {
+        
+      },
+    },
+  },
+};
+
 const schema: Reactory.ISchema = {
   type: 'object',
-  title: "",
+  title: "Select a customer",
   properties: {
-    customer: {
-      title: 'Select a Customer',
+    id: {
+      title: 'Customer ID',
+      type: 'string'
+    },
+    registeredName: {
+      title: 'Registered Name',
       type: 'string'
     },
   }
@@ -56,7 +110,33 @@ const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
-  uiSchema: uiSchema,
+  uiSchema: uiSchema, 
+  uiSchemas: [
+    {
+      id: 'display',
+      title: 'VIEW',
+      key: 'display',
+      description: 'View Customer',
+      icon: 'list',
+      uiSchema: uiSchema,
+    },
+    {
+      id: 'edit',
+      title: 'EDIT',
+      key: 'edit',
+      description: 'Set Customer',
+      icon: 'view_module',
+      uiSchema: uiSchema,
+    },
+    {
+      id: 'new',
+      title: 'EDIT',
+      key: 'new',
+      description: 'Set Customer',
+      icon: 'pencil',
+      uiSchema: newUiSchema,
+    },
+  ],
   widgetMap: [
     { componentFqn: 'core.SlideOutLauncher@1.0.0', widget: 'SlideOutLauncher' },
     { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },

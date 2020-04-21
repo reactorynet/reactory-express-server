@@ -141,12 +141,18 @@ declare namespace Reactory {
     method: string
   }
 
+  export interface IReactoryEvent {
+    name: String,
+    data?: any | undefined,
+  }
+
   export interface IReactoryFormQuery {
     name: String,
     text: String,
     resultMap?: Object,
     resultType?: string,
     queryMessage?: String,
+    formData?: Object,
     variables: Object,
     edit?: boolean,
     new?: boolean,
@@ -155,7 +161,11 @@ declare namespace Reactory {
     autoQuery?:boolean,
     interval?: number,
     useWebsocket?: boolean,
-    onError?: IReactoryFormQueryErrorHandlerDefinition
+    onError?: IReactoryFormQueryErrorHandlerDefinition,
+    onSuccessMethod?: String | "redirect" | "notification" | "function",
+    onSuccessEvent?: IReactoryEvent | undefined,
+    notification?: any,
+    refreshEvents?: IReactoryEvent[] | undefined
   }
 
   export interface IReactoryFormMutation {
@@ -163,12 +173,18 @@ declare namespace Reactory {
     text: String,
     objectMap: boolean,
     updateMessage?: String,
+    resultMap?: Object,
+    resultType?: string,
     variables?: Object,
+    formData?: Object,
     onSuccessMethod?: String | "redirect" | "notification" | "function",
+    onSuccessEvent?: IReactoryEvent | undefined,
+    refreshEvents?: IReactoryEvent[] | undefined
     onSuccessUrl?: String,
     onSuccessRedirectTimeout?: number,
     options?: any,
-    notification?: any
+    notification?: any,
+    handledBy?:String | 'onChange' | 'onSubmit' 
   }
 
   export interface IReactoryFormMutations {
@@ -178,9 +194,15 @@ declare namespace Reactory {
     [key: string]: IReactoryFormMutation
   }
 
+  export interface IReactoryFormQueries {
+    [key: string]: IReactoryFormQuery,
+  }
+
   export interface IFormGraphDefinition {
     query?: IReactoryFormQuery,
     mutation?: IReactoryFormMutations,
+    queries?: IReactoryFormQueries,
+    clientResolvers?: any
   }
 
   export interface IWidgetMap {
@@ -188,7 +210,7 @@ declare namespace Reactory {
     component?: String,
     widget: String
   }
-  
+
   export interface IObjectMap {
     [key: string]: string | Array<any> | object
   }
@@ -245,6 +267,8 @@ declare namespace Reactory {
     description: string,
     icon: string,
     uiSchema: any,
+    //used to override the graphql definitions for that view type
+    graphql?: IFormGraphDefinition,
   }
 
   export interface IReactoryForm {
@@ -266,7 +290,7 @@ declare namespace Reactory {
     version: String,
     roles?: String[],
     components?: String[],
-    graphql?: IFormGraphDefinition,
+    graphql?: IFormGraphDefinition,    
     defaultFormValue?: any,
     defaultPdfReport?: IReactoryPdfReport,
     defaultExport?: IExport,

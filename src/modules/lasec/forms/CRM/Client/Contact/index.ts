@@ -1,6 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
-import graphql from './graphql';
+import graphql, { newClientGraphQL } from './graphql';
 
 export const displayUiSchema: any = {
   'ui:options': {
@@ -33,11 +33,11 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { md: 12 },
-      alternateEmail: { md: 12 },
-      officeNumber: { md: 12 },
-      mobileNumber: { md: 12 },
-      alternateNumber: { md: 12 },
+      emailAddress: { lg: 6, md: 12, sm: 12 },
+      alternateEmail: { lg: 6, md: 12, sm: 12 },
+      officeNumber: { lg: 6, md: 12, sm: 12 },
+      mobileNumber: { lg: 6, md: 12, sm: 12 },
+      alternateNumber: { lg: 6, md: 12, sm: 12 },
     }
   ],
   view: {
@@ -207,7 +207,9 @@ const editUiSchema: any = {
   mobileNumber: {},
   alternateNumber: {},
 };
+
 const newUiSchema: any = {
+  'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
     containerStyles: {
@@ -225,18 +227,18 @@ const newUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      emailAddress: { sm: 12, md: 6, },
-      confirmEmailAddress: { sm: 12, md: 6, },
-      alternateEmail: { sm: 12, md: 6, },
-      confirmAlternateEmail: { sm: 12, md: 6, },
-      mobileNumber: { sm: 12, md: 6, },
-      alternateMobileNumber: { sm: 12, md: 6, },
-      officeNumber: { sm: 12, md: 6, },
-      prefferedMethodOfContact: { sm: 12, md: 6, },
+      emailAddress: { xs: 12, sm: 12, md: 6, lg: 4 },
+      confirmEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
+      alternateEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
+      confirmAlternateEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
+      mobileNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
+      alternateMobileNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
+      officeNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
+      prefferedMethodOfContact: { xs: 12, sm: 12, md: 6, lg: 4 },
     }
   ],
   emailAddress: {},
-  confirmEmailAddress: {},
+  confirmEmail: {},
   alternateEmail: {},
   confirmAlternate: {},
   mobileNumber: {},
@@ -282,7 +284,7 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Email Address",
     },
-    confirmEmailAddress: {
+    confirmEmail: {
       type: "string",
       title: "Confirm Email Address"
     },

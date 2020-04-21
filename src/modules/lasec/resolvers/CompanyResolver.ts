@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+import sha1 from 'sha1';
 import lasecApi from '../api';
 import moment from 'moment';
 import om from 'object-mapper';
@@ -6,9 +9,15 @@ import lodash, { isArray, isNil, orderBy, isString } from 'lodash';
 import { getCacheItem, setCacheItem } from '../models';
 import Hash from '@reactory/server-core/utils/hash';
 import { clientFor, execql } from '@reactory/server-core/graph/client';
+import ReactoryFile, { IReactoryFile } from '@reactory/server-modules/core/models/CoreFile';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { getScaleForKey } from 'data/scales';
 import FormData from 'form-data';
+import { GraphQLUpload } from 'graphql-upload';
+import ApiError from 'exceptions';
+import { ObjectID, ObjectId } from 'mongodb';
+import { urlencoded } from 'body-parser';
+import LasecAPI from '@reactory/server-modules/lasec/api';
 
 const getClients = async (params) => {
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter } = params;
@@ -516,7 +525,7 @@ const getCustomerCountries = async (params) => {
   return await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country.[]': ['[].id', '[].name'] });
 };
 
-const getCustomerRepCodes = async (params) => {
+const getCustomerRepCodes = async (args) => {
   const idsResponse = await lasecApi.Customers.GetRepCodes();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
@@ -527,7 +536,6 @@ const getCustomerRepCodes = async (params) => {
   }
 
   return [];
-
 };
 
 const getPersonTitles = async (params) => {
@@ -550,9 +558,78 @@ const getLasecSalesTeamsForLookup = async () => {
   logger.debug('SalesTeamsLookupResult >> ', salesTeamsResults);
 }
 
-const getCustomerDocuments = async (params) => {
-  let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } });
-  return documents.items;
+interface CustomerDocumentQueryParams {
+  id?: string,
+  uploadContexts?: string[],
+  paging?: {
+    page: number,
+    pageSize: number
+  }
+}
+
+const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
+
+  const _docs: any[] = []
+
+  if (params.id && params.id !== 'new') {
+    logger.debug(`Fetching Remote Documents for Lasec Customer ${params.id}`);
+    let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } });
+    documents.items.forEach((documentItem: any) => {
+      logger.debug(`Adding Document item from Lasec For Customer Id ${params.id}`);
+      _docs.push({
+        id: new ObjectID(),
+        partner: global.partner,
+        filename: documentItem.name,
+        link: documentItem.url,
+        hash: Hash(documentItem.url),
+        path: '',
+        alias: '',
+        alt: [],
+        size: 0,
+        uploadContext: 'lasec-crm::company-document::remote',
+        mimetype: '',
+        uploadedBy: global.user.id,
+        owner: global.user.id
+      })
+    });
+  }
+
+  let documentFilter: any = {};
+  if (params.uploadContexts && params.uploadContexts.length > 0) {
+    documentFilter.uploadContext = {
+      $in: params.uploadContexts.map((ctx: string) => {
+        //append the the logged in user id for the context.
+        if (ctx === 'lasec-crm::new-company::document') return `${ctx}::${global.user._id}`;
+        return ctx;
+      })
+    };
+  }
+
+  logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
+  let reactoryFiles = await ReactoryFile.find(documentFilter).then();
+  logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> ReactorFile.find({documentFileter}) --> reactorFiles[${reactoryFiles.length}]`);
+
+  reactoryFiles.forEach((rfile) => {
+    _docs.push(rfile);
+  });
+
+  if (params.paging) {
+
+    let skipCount: number = params.paging.page - 1 * params.paging.pageSize;
+
+    return {
+      documents: lodash(_docs).drop(skipCount).take(params.paging.pageSize),
+      paging: {
+        total: _docs.length,
+        page: params.paging.page,
+        hasNext: skipCount + params.paging.pageSize < _docs.length,
+        pageSize: params.paging.pageSize
+      },
+    }
+
+  } else {
+    return _docs;
+  }
 };
 
 const getCustomerList = async (params) => {
@@ -701,6 +778,12 @@ const getCustomerList = async (params) => {
 
   return result;
 
+};
+
+const getCustomerById = async (id: string) => {
+  const companyDetails = await lasecApi.Company.list({ filter: { ids: [id] } }).then();
+  logger.debug(`Fetched Expanded View for (${companyDetails.items.length}) Companies from API`);
+  if (companyDetails.items[0]) return companyDetails.items[0];
 };
 
 const getOrganisationList = async (params) => {
@@ -871,51 +954,388 @@ const createNewOrganisation = async (args) => {
   }
 };
 
-const uploadDocument = async (args) => {
+
+// Gets a filename extension.
+const getExtension = (filename: string) => {
+  return filename.split('.').pop();
+}
+
+const allowedExts = ['txt', 'pdf', 'doc', 'zip'];
+const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf', 'application/pdf', 'application/zip'];
+
+// Test if a file is valid based on its extension and mime type.
+function isFileValid(filename: string, mimetype: string) {
+  // Get file extension.
+  const extension = getExtension(filename);
+
+  return allowedExts.indexOf(extension.toLowerCase()) != -1 &&
+    allowedMimeTypes.indexOf(mimetype) != -1;
+}
+
+
+const uploadDocument = async (args: any) => {
 
   // NOTE
   // This will only upload a file
   // Need to create additional function to save file and associate to customer
 
-  logger.debug(`UPLOAD FILE::  ${JSON.stringify(args)}`);
+  return new Promise(async (resolve, reject) => {
 
-  const { createReadStream } = await args.file;
+    const { createReadStream, filename, mimetype, encoding } = await args.file;
+    logger.debug(`UPLOADED FILE:: ${filename} - ${mimetype} ${encoding}`);
 
-  const stream = createReadStream();
-  stream
-    .on('data', async (data) => {
-      logger.debug(`GOT DATA::  ${typeof data} ${data.length}`);
+    const stream: NodeJS.ReadStream = createReadStream();
 
-      const formData = new FormData();
-      formData.append('files', data); // this needs to be file: binary
-      const apiResponse = await lasecApi.Customers.uploadDocument(formData);
-      logger.debug(`RESOLVER UPLOAD DOCUMENT RESPONSE:: ${JSON.stringify(apiResponse)}`);
+    const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
 
-    })
-    .on('error', (error) => {
-      logger.error(`Error reading file:: ${error}`);
-    })
-    .on('end', () => {
-      logger.debug('Finished reding stream');
-    });
+    const link = `${process.env.CDN_ROOT}content/files/${randomName}`;
 
-  // stream
-  //   .on('error', error => {
-  //     logger.debug('STREAM FINISHED - 1')
-  //   })
-  //   .pipe(fs.createWriteStream(path))
-  //   .on('error', error => {
-  //     logger.debug('STREAM ERROR - 2')
-  //   })
-  //   .on('finish', (result) => {}));
+
+    // Flag to tell if a stream had an error.
+    let hadStreamError: boolean = null;
+
+    //ahndles any errors during upload / processing of file
+    const handleStreamError = (error: any) => {
+      // Do not enter twice in here.
+      if (hadStreamError) {
+        return;
+      }
+
+      hadStreamError = true;
+
+      // Cleanup: delete the saved path.
+      if (saveToPath) {
+        // eslint-disable-next-line consistent-return
+        return fs.unlink(saveToPath, (err) => {
+          reject(error)
+        });
+      }
+
+      // eslint-disable-next-line consistent-return
+      reject(error)
+    }
+
+
+    const catalogFile = () => {
+      // Check if image is valid
+      const fileStats = fs.statSync(saveToPath);
+
+      logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
+
+      const reactoryFile = {
+        id: new ObjectID(),
+        filename,
+        mimetype,
+        alias: randomName,
+        partner: new ObjectID(global.partner.id),
+        owner: new ObjectID(global.user.id),
+        uploadedBy: new ObjectID(global.user.id),
+        size: fileStats.size,
+        hash: Hash(link),
+        link: link,
+        path: 'content/files/',
+        uploadContext: args.uploadContext || 'lasec-crm::company-document',
+        public: false,
+        published: false,
+      };
+
+      if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
+        reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
+      }
+
+      const savedDocument = new ReactoryFile(reactoryFile);
+
+      savedDocument.save().then();
+
+      logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
+
+      resolve(savedDocument);
+    }
+
+    // Generate path where the file will be saved.
+    // const appDir = path.dirname(require.main.filename);
+    const saveToPath = path.join(process.env.APP_DATA_ROOT, 'content', 'files', randomName);
+
+    logger.debug(`SAVING FILE:: ${filename} --> ${saveToPath}`);
+
+    const diskWriterStream: NodeJS.WriteStream = fs.createWriteStream(saveToPath);
+    diskWriterStream.on('error', handleStreamError);
+
+    // Validate image after it is successfully saved to disk.
+    diskWriterStream.on('finish', catalogFile);
+
+    // Save image to disk.
+    stream.pipe(diskWriterStream);
+
+    /*
+ stream
+   .on('data', async (data) => {
+     logger.debug(`Read File Data For File ${filename}`);
+     const formData = new FormData();
+     formData.append('files', data); // this needs to be file: binary
+     const apiResponse = await lasecApi.Customers.UploadDocument(formData);
+     logger.debug(`RESOLVER UPLOAD DOCUMENT RESPONSE:: ${JSON.stringify(apiResponse)}`);
+   })
+   .on('error', (error) => {
+     logger.error(`Error reading file:: ${error}`);
+   })
+   .on('end', () => {
+     logger.debug('Finished reding stream');
+   });
+ */
+
+  });
+};
+
+const deleteDocuments = async (args: any) => {
+
+  const { fileIds } = args;
+
+  let files = await ReactoryFile.find({ id: { $in: fileIds } }).then()
+
+  files.forEach((fileDocument) => {
+    const fileToRemove = path.join(process.env.APP_DATA_ROOT, 'content', 'files', fileDocument.alias);
+    try {
+      if (fs.existsSync(fileToRemove)) fs.unlinkSync(fileToRemove);
+
+      fileDocument.remove().then();
+    } catch (unlinkError) {
+      logger.debug(`Could not unlink file`)
+    }
+  });
 
   return {
-    id: '0',
-    name: 'test doc',
-    url: 'testUrl',
-    mimetype: 'mimetype',
-  };
+    description: `Successfully deleted (${fileIds.length}) files`,
+    text: 'Files deleted',
+    status: 'success',
+  }
 
+};
+
+export interface NewClientResponse {
+  client: any,
+  success: Boolean,
+  messages: any[]
+}
+
+const clientDocuments: any[] = [];
+
+export const DEFAULT_NEW_CLIENT = {
+  __typename: 'LasecNewClient',
+  id: '',
+  personalDetails: {
+    title: 'Mr',
+    firstName: '',
+    lastName: '',
+    country: 'SOUTH AFRICA',
+    repCode: ''
+  },
+  contactDetails: {
+    emailAddress: '',
+    confirmEmail: '',
+    alternateEmail: '',
+    confirmAlternateEmail: '',
+    mobileNumber: '',
+    alternateMobile: '',
+    officeNumber: '',
+    prefferedMethodOfContact: '',
+  },
+  jobDetails: {
+    jobTitle: '',
+    jobType: '',
+    salesTeam: '',
+    lineManager: '',
+    customerType: '',
+    customerClass: '',
+    faculty: '',
+    clientDepartment: '',
+    ranking: '',
+  },
+  customer: {
+    id: '',
+    registeredName: '',
+  },
+  organization: {
+    id: '',
+    name: '',
+  },
+  address: {
+    physicalAddress: {
+      id: '',
+      fullAddress: '',
+      map: {}
+    },
+    deliveryAddress: {
+      id: '',
+      fullAddress: '',
+      map: {}
+    },
+    billingAddress: {
+      id: '',
+      fullAddress: '',
+      map: {}
+    },
+  },
+  clientDocuments,
+  confirmed: false,
+  saved: false,
+};
+
+const getAddress = async (args) => {
+
+  logger.debug(`GETTING ADDRESS:: ${JSON.stringify(args)}`);
+
+  const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true } });
+
+  let _ids = [];
+  if (isArray(addressIds.ids) === true) {
+    _ids = [...addressIds.ids];
+  }
+
+  const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
+  const addresses = [...addressDetails.items];
+  const formattedAddresses = addresses.map((ad) => {
+    return ad.formatted_address;
+  });
+
+  return formattedAddresses;
+}
+
+const createNewAddress = async (args) => {
+  // {
+  //   "building_description_id": "1",
+  //   "building_floor_number_id": "2",
+  //   "unit": "1",
+  //   "map": {
+  //     "lat": -33.932568,
+  //     "lng": 18.4933,
+  //     "formatted_address": "1, 1 Test Location 11 Test Street Test Suburb Test Metro Test City 1234 Test State Test Country",
+  //     "address_components": []
+  //   },
+  //   "confirm_pin": true,
+  //   "address_fields": {
+  //     "0": "1", ------------------> UNIT NUMBER
+  //     "1": "Test Location", ------> UNIT NAME
+  //     "2": "11", -----------------> STREET NUMBER
+  //     "3": "Test Street", --------> STREE NAME
+  //     "4": "Test Suburb", --------> SUBURB
+  //     "5": "Test Metro", ---------> METRO / MUNICIPALITY
+  //     "6": "Test City", ----------> CITY
+  //     "7": "1234", ---------------> POST CODE
+  //     "8": "Test State", ---------> PROVINCE / STATE
+  //     "9": "Test Country" --------> COUNTRY
+  //   },
+  //   "confirm_address": true
+  // }
+
+  try {
+    const { addressDetails } = args;
+    const addressParams = {
+      building_description_id: addressDetails.buildingDescriptionId,
+      building_floor_number_id: addressDetails.buildingFloorNumberId,
+      unit: addressDetails.unit,
+      address_fields: {
+        0: addressDetails.addressFields.unitNumber,
+        1: addressDetails.addressFields.unitName,
+        2: addressDetails.addressFields.streetNumber,
+        3: addressDetails.addressFields.streetName,
+        4: addressDetails.addressFields.suburb,
+        5: addressDetails.addressFields.metro,
+        6: addressDetails.addressFields.city,
+        7: addressDetails.addressFields.postalCode,
+        8: addressDetails.addressFields.province,
+        9: addressDetails.addressFields.country,
+      },
+      map: {
+        lat: 0,
+        lng: 0,
+        formatted_address: `${addressDetails.addressFields.unitNumber}, ${addressDetails.addressFields.unitName} ${addressDetails.addressFields.streetNumber} ${addressDetails.addressFields.streetName}${addressDetails.addressFields.suburb} ${addressDetails.addressFields.metro} ${addressDetails.addressFields.city} ${addressDetails.addressFields.postalCode} ${addressDetails.addressFields.province} ${addressDetails.addressFields.country}`,
+        address_components: [],
+      },
+      confirm_pin: true,
+      confirm_address: true,
+    };
+
+    const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address }).then();
+    if (existingAddress && existingAddress.length > 0) {
+      return {
+        success: false,
+        message: 'Address already exists',
+        id: 0,
+      };
+    }
+
+    const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
+
+    return {
+      success: apiResponse.status === 'success',
+      message: apiResponse.status === 'success' ? 'Address added successfully' : 'Could not add new address.',
+      id: apiResponse.status === 'success' ? apiResponse.payload.id : 0,
+    };
+
+  } catch (ex) {
+    logger.error(`ERROR CREATING ADDRESS::  ${ex}`);
+    return {
+      success: false,
+      message: ex,
+      id: 0,
+    };
+  }
+};
+
+const getPlaceDetails = async (args) => {
+  const apiResponse = await lasecApi.Customers.getPlaceDetails(args.placeId);
+
+  if (apiResponse && apiResponse.status === 'OK') {
+    const addressObj = {
+      streetName: '',
+      streetNumber: '',
+      suburb: '',
+      city: '',
+      metro: '',
+      province: '',
+      postalCode: '',
+    };
+
+    apiResponse.result.address_components.forEach((comp) => {
+      if (comp.types.includes('street_number')) addressObj.streetNumber = comp.long_name;
+      if (comp.types.includes('route')) addressObj.streetName = comp.long_name;
+      if (comp.types.includes('sublocality') || comp.types.includes('sublocality_level_1')) addressObj.suburb = comp.long_name;
+      if (comp.types.includes('locality')) addressObj.city = comp.long_name;
+      if (comp.types.includes('administrative_area_level_2')) addressObj.metro = comp.long_name;
+      if (comp.types.includes('administrative_area_level_1')) addressObj.province = comp.long_name;
+      if (comp.types.includes('postal_code')) addressObj.postalCode = comp.long_name;
+      if (comp.types.includes('country')) addressObj.country = comp.long_name;
+    });
+
+    return addressObj;
+  }
+
+  return {
+    streetName: '',
+    streetNumber: '',
+    suburb: '',
+    city: '',
+    metro: '',
+    province: '',
+    postalCode: '',
+  };
+};
+
+const getRepCodesForFilter = async () => {
+  const teamsPayload = await LasecAPI.Teams.list().then();
+  if (teamsPayload.status === "success") {
+    const { items } = teamsPayload.payload || [];
+    logger.debug(`SALES TEAM:: ${JSON.stringify(items[0])}`);
+    const teams = items.map((sales_team) => {
+      return {
+        id: sales_team.id,
+        name: sales_team.sales_team_id,
+      };
+    });
+
+    return teams;
+  }
 }
 
 export default {
@@ -926,6 +1346,18 @@ export default {
     availableBalance: async (parent, obj) => {
       return 10;
     },
+  },
+  LasecNewClient: {
+    customer: async (parent, obj) => {
+      logger.debug('Finding new Customer for LasecNewClient', parent);
+
+      if (parent.customer && parent.customer.id) return getCustomerById(parent.customer.id);
+
+      return {
+        id: '',
+        registeredName: ''
+      };
+    }
   },
   LasecCRMCustomer: {
     customerClass: async (parent, obj) => {
@@ -956,6 +1388,9 @@ export default {
     },
     documents: async (parent, object) => {
       return getCustomerDocuments({ id: parent.id });
+    },
+    registeredName: async (parent, obj) => {
+      return parent.registered_name || parent.registeredName
     }
   },
   Query: {
@@ -1033,7 +1468,7 @@ export default {
           return getLasecSalesTeamsForLookup();
         }
         case 'rep_code': {
-          return getCustomerRepCodes();
+            return getRepCodesForFilter();
         }
         default: {
           return [];
@@ -1049,6 +1484,25 @@ export default {
     LasecGetOrganisationList: async (obj, args) => {
       return getOrganisationList(args);
     },
+    LasecGetNewClient: async (obj, args) => {
+      let hash = Hash(`__LasecNewClient::${global.user._id}`);
+
+      const newClient = await getCacheItem(hash, global.partner.id).then();
+
+      if (newClient) return newClient;
+      else {
+        let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
+        //cache this object for 12 h
+        await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+        return _newClient;
+      }
+    },
+    LasecGetAddress: async (obj, args) => {
+      return getAddress(args);
+    },
+    LasecGetPlaceDetails: async (obj, args) => {
+      return getPlaceDetails(args);
+    },
   },
   Mutation: {
     LasecUpdateClientDetails: async (obj, args) => {
@@ -1060,6 +1514,68 @@ export default {
     },
     LasecUploadDocument: async (obj, args) => {
       return uploadDocument(args);
-    }
+    },
+    LasecDeleteNewClientDocuments: async (obj, args) => {
+      return deleteDocuments(args);
+    },
+    LasecUpdateNewClient: async (obj, args) => {
+      const { newClient } = args;
+
+      let hash = Hash(`__LasecNewClient::${global.user._id}`);
+      const _cached = await getCacheItem(hash).then();
+
+      let _newClient = {
+        ..._cached,
+      };
+
+      if (newClient.personalDetails) {
+        _newClient.personalDetails = { ..._newClient.personalDetails, ...newClient.personalDetails };
+      }
+
+      if (newClient.contactDetails) {
+        _newClient.contactDetails = { ..._newClient.contactDetails, ...newClient.contactDetails };
+      }
+
+      if (newClient.jobDetails) {
+        _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
+      }
+
+      if (newClient.customer) {
+        _newClient.customer = { ..._newClient.customer, ...newClient.customer };
+      }
+
+      if (newClient.organization) {
+        _newClient.organization = { ..._newClient.organization, ...newClient.organization };
+      }
+
+      if (newClient.address) {
+        _newClient.address = { ..._newClient.address, ...newClient.address };
+      }
+
+      _newClient.updated = new Date().valueOf()
+      //update the cache for the new
+      await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+
+      return _newClient;
+    },
+    LasecCreateNewClient: async (obj, args) => {
+      const { newClient } = args;
+
+      let hash = Hash(`__LasecNewClient::${global.user._id}`);
+      const _cached = await getCacheItem(hash).then();
+
+      let response: NewClientResponse = {
+        client: null,
+        success: false,
+        messages: [
+
+        ],
+      };
+
+      return response;
+    },
+    LasecCreateNewAddress: async (obj, args) => {
+      return createNewAddress(args);
+    },
   },
 };

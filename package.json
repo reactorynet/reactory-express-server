@@ -116,6 +116,7 @@
     "express-jwt-permissions": "^1.0.0",
     "express-session": "^1.15.6",
     "graphql": "^14.6.0",
+    "graphql-upload": "^10.0.0",
     "graphql-subscriptions": "^1.1.0",
     "graphql-tag": "^2.10.3",
     "graphql-tools": "^4.0.5",
@@ -177,8 +178,9 @@
     "@types/lodash": "^4.14.149",
     "@types/mongodb": "^3.3.11",
     "@types/mongoose": "^5.5.32",
-    "@types/uuid": "^3.4.6",
     "@types/mysql": "^2.15.8",
+    "@types/sha1": "^1.1.2",
+    "@types/uuid": "^3.4.6",
     "awesome-typescript-loader": "^5.2.1"
   },
   "nodemonConfig": {

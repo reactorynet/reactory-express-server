@@ -10,7 +10,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       $filterBy: String,
       $periodStart: String,
       $periodEnd: String,
-      $dateFilter: String,
+      $quoteDate: String,
       ){
       LasecGetCRMQuoteList(
         search: $search,
@@ -18,7 +18,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         filterBy: $filterBy,
         periodStart: $periodStart,
         periodEnd: $periodEnd,
-        dateFilter: $dateFilter,
+        quoteDate: $quoteDate,
         ){
         paging {
           total
@@ -39,10 +39,11 @@ const graphql: Reactory.IFormGraphDefinition = {
           company {
             id
             tradingName
+            code
           }
           totalVATExclusive
           repCode
-          quoteType
+          meta
         }
       }
     }`,
@@ -52,7 +53,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'formData.filterBy': 'filterBy',
       'formData.periodStart': 'periodStart',
       'formData.periodEnd': 'periodEnd',
-      'formData.dateFilter': 'dateFilter',
+      'formData.dateFilter': 'quoteDate',
     },
     resultMap: {
       'paging': 'paging',
@@ -64,8 +65,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       'quotes[].totalVATInclusive': 'quotes[].total',
       'quotes[].company.tradingName': 'quotes[].companyTradingName',
       'quotes[].accountNumber': 'data[].accountNumber',
-      'quotes[].repCode': 'data[].repCode',
-      'quotes[].quoteType': 'data[].quoteType',
+      'quotes[].meta.source.sales_team_id': 'data[].repCode',
+      'quotes[].meta.source.quote_type': 'data[].quoteType',
     },
     autoQuery: false,
     queryMessage: 'Search for quote',

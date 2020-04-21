@@ -1,7 +1,8 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
-import $graphql from './graphql';
+import $graphql, { newClientGraphQL } from './graphql';
 
 const uiSchema: any = {
+  'ui:graphql': newClientGraphQL,
   'ui:options': {
     containerStyles: {
       padding: '0px',
@@ -11,23 +12,22 @@ const uiSchema: any = {
     style: {
       marginTop: '0',
     },
+    componentType: 'div',
     submitIcon: 'search',
-    componentType: "form",
     showSubmit: true,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    { search: { md: 4, sm: 12 } },
-    { customers: { sm: 12 } },
+    { search: { xs: 12, sm: 12, md: 6, lg: 4 } },
+    { customers: { xs: 12, sm: 12, md: 12, lg: 12 } },
   ],
   search: {
     'ui:options': {
       showLabel: false,
       icon: 'search',
       component: "TextField",
-      componentProps: {
-        placeholder: 'Search',
+      componentProps: {        
         variant: "outlined",
         type: 'search',
         style: {
@@ -44,31 +44,42 @@ const uiSchema: any = {
     'ui:options': {
       columns: [
         { title: "Name", field: "registeredName" },
-        { title: "Country", field: "country" },
-        { title: "Syspro Number", field: "sysPro" },
       ],
       options: {
         grouping: false,
         search: false,
         showTitle: false,
         toolbar: true,
-        selection: true,
+        //selection: true,
+        //multiSelect: false,
         toolbarButtonAlignment: 'left',
         actionsColumnIndex: -1
       },
+      actions: [
+        {
+          icon: 'done_outline',
+          tooltip: 'Select Organization',          
+          iconProps: {
+            color: 'success'
+          },
+          mutation: 'onSelectCustomer',
+          variables: {            
+            'selected': 'newClient.customer',
+          },                                 
+        },   
+      ],
       remoteData: true,
-      query: 'query',
+      query: 'query',     
       variables: {
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.paging': 'paging',
-      },
+      }, 
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
         'customers': 'data',
-      },
-      resultType: 'object',
+      },      
     }
   },
 };
@@ -106,18 +117,10 @@ const schema: Reactory.ISchema = {
           type: "string",
           title: "Customer Id"
         },
-        name: {
+        registeredName: {
           type: "string",
-          title: "Name"
-        },
-        country: {
-          type: "string",
-          title: "Country"
-        },
-        sysPro: {
-          type: "string",
-          title: "Syspro Number"
-        },
+          title: "Registered Name"
+        },        
       },
     }
   }
@@ -135,8 +138,26 @@ const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
-  uiSchema: uiSchema,
-  graphql: $graphql,
+  uiSchema: uiSchema,  
+  uiSchemas: [
+    {
+      id: 'display',
+      key: 'display',
+      icon: 'view',
+      uiSchema: uiSchema,
+      title: 'View',
+      description: ''
+    },
+    {
+      id: 'new',
+      key: 'new',
+      icon: 'view',
+      uiSchema: uiSchema,
+      title: 'New',
+      description: ''
+    },
+  ],
+  graphql: $graphql,  
   widgetMap: [],
   defaultFormValue: {
     paging: { page: 1, pageSize: 10 },

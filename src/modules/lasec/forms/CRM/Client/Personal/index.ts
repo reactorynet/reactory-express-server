@@ -1,6 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
-import graphql from './graphql';
+import graphql, { newClientGraphQL } from './graphql';
 
 export const displayUiSchema: any = {
   'ui:options': {
@@ -30,13 +30,13 @@ export const displayUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { sm: 12, md: 12, lg: 12 },
+      view: { lg: 12, sm: 12, md: 12 },
     },
     {
-      clientStatus: { md: 12 },
-      firstName: { md: 12 },
-      lastName: { md: 12 },
-      country: { md: 12 },
+      clientStatus: { lg: 4, md: 6, sm: 12 },
+      firstName: { lg: 4, md: 6, sm: 12 },
+      lastName: { lg: 4, md: 6, sm: 12 },
+      country: { lg: 4, md: 6, sm: 12 },
     }
   ],
   view: {
@@ -208,10 +208,10 @@ export const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      clientStatus: { sm: 12, md: 12 },
-      firstName: { sm: 12, md: 12 },
-      lastName: { sm: 12, md: 12 },
-      country: { sm: 12, md: 12 },
+      clientStatus: { lg: 4, md: 6, sm: 12 },
+      firstName: { lg: 4, md: 6, sm: 12 },
+      lastName: { lg: 4, md: 6, sm: 12 },
+      country: { lg: 4, md: 6, sm: 12 },
     }
   ],
   view: {
@@ -295,6 +295,7 @@ export const editUiSchema: any = {
 };
 
 export const newUiSchema: any = {
+  'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
     containerStyles: {
@@ -311,12 +312,12 @@ export const newUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      clientTitle: { sm: 12, md: 6 },
-      firstName: { sm: 12, md: 6 },
-      lastName: { sm: 12, md: 6 },
-      country: { sm: 12, md: 6 },
-      accountType: { sm: 12, md: 6 },
-      repCode: { sm: 12, md: 6 },
+      clientTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
+      firstName: { xs: 12, sm: 12, md: 6, lg: 4 },
+      lastName: { xs: 12, sm: 12, md: 6, lg: 4 },
+      country: { xs: 12, sm: 12, md: 6, lg: 4},
+      accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
     }
   ],
   clientTitle: {
@@ -402,6 +403,69 @@ export const newUiSchema: any = {
   },
 };
 
+
+export const confirmUiSchema: any = {
+  'ui:options': {
+    componentType: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '8px'
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      clientTitle: { lg: 4, md: 6, sm: 12 },
+      firstName: { lg: 4, md: 6, sm: 12 },
+      lastName: { lg: 4, md: 6, sm: 12 },
+      country: { lg: 4, md: 6, sm: 12 },
+      accountType: { lg: 4, md: 6, sm: 12 },
+      repCode: { lg: 4, md: 6, sm: 12 },
+    }
+  ],
+  clientTitle: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+    
+    }
+  },
+  firstName: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+    
+    }
+  },
+  lastName: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+    
+    }
+  },
+  country: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+    
+    }
+  },
+  accountType: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+    }
+  },
+  repCode: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+    }
+  },
+};
+
+
 const schema: Reactory.ISchema = { ...ClientSchema };
 schema.required = ["clientStatus", "firstName", "lastName", "country"];
 schema.title = "PERSONAL DETAILS"
@@ -444,7 +508,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       key: 'new',
       description: 'Capture Personal Details',
       icon: 'view_module',
-      uiSchema: newUiSchema,
+      uiSchema: newUiSchema,      
     },
   ],
   defaultFormValue: {},

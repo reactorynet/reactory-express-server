@@ -87,6 +87,14 @@ type ReactoryClient {
   updatedAt: Date
 }
 
+type NavigationComponentDefinition {
+  componentFqn: String!
+  componentProps: Any
+  componentPropertyMap: Any
+  componentKey: String
+  componentContext: Any
+}
+
 type ApiStatus {
     when: Date!
     status: String!
@@ -94,6 +102,7 @@ type ApiStatus {
     lastName: String
     avatar: String
     email: String
+    navigationComponents: [NavigationComponentDefinition]
     organization: Organization
     businessUnit: BusinessUnit
     id: String

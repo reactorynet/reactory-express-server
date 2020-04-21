@@ -1,7 +1,8 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
-import $graphql from './graphql';
+import $graphql, { clientLookupGraphQL } from './graphql';
 
 const uiSchema: any = {
+  'ui:graphql': clientLookupGraphQL,
   'ui:options': {
     containerStyles: {
       padding: '0px',
@@ -82,10 +83,23 @@ const uiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: true,
-        selection: true,
+        // selection: true,
         toolbarButtonAlignment: 'left',
         actionsColumnIndex: -1
       },
+      actions: [
+        {
+          icon: 'done_outline',
+          tooltip: 'Select Client',
+          iconProps: {
+            color: 'success'
+          },
+          mutation: 'onSelectClient',
+          variables: {
+            'selected': 'newClient.customer',
+          },
+        },
+      ],
       remoteData: true,
       query: 'query',
       variables: {

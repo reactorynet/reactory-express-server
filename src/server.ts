@@ -7,10 +7,12 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import passport from 'passport';
 import { ApolloServer, gql, ApolloServerExpressConfig } from 'apollo-server-express';
-import { makeExecutableSchema } from 'graphql-tools';
+// import { makeExecutableSchema } from 'graphql-tools';
 import mongoose from 'mongoose';
 import session from 'express-session';
 import flash from 'connect-flash';
+// import { graphqlUploadExpress } from 'graphql-upload';
+
 import corsOptions from './config/cors';
 import reactoryClientAuthenticationMiddleware from './middleware/ReactoryClient';
 import userAccountRouter from './useraccount';
@@ -105,10 +107,24 @@ mongoose.connect(MONGOOSE, { useNewUrlParser: true });
 
 let apolloServer: ApolloServer = null;
 
+const app = express();
+app.use('*', cors(corsOptions));
+app.use(reactoryClientAuthenticationMiddleware);
+app.use(queryRoot,
+  //authentication
+  passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
+  //bodyparser options
+  bodyParser.json({ limit: '10mb' }));
+
 try {
+  //app.use(queryRoot, graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
   let expressConfig : ApolloServerExpressConfig = {
     typeDefs,
     resolvers,
+    uploads: {
+      maxFileSize: 10000000, 
+      maxFiles: 10,      
+    },    
   };
   apolloServer = new ApolloServer(expressConfig);
   //schema = makeExecutableSchema({ typeDefs, resolvers });
@@ -121,15 +137,7 @@ try {
   logger.error(`Error compiling the graphql schema ${schemaCompilationError.message}`);
 }
 
-const app = express();
-app.use('*', cors(corsOptions));
-app.use(reactoryClientAuthenticationMiddleware);
 
-app.use(queryRoot,
-  //authentication
-  passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
-  //bodyparser options
-  bodyParser.json({ limit: '10mb' }));
 
 //TODO: Werner Weber - investigate session and session management for auth.
 app.use(session({
@@ -140,12 +148,10 @@ app.use(session({
 }));
 
 
-
-
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: '10mb' }));
 
-if(apolloServer) {
+if(apolloServer) {  
   apolloServer.applyMiddleware({ app, path: queryRoot });
 } else {
   if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`)) {

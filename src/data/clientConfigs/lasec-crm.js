@@ -1266,6 +1266,29 @@ const LASEC_CONFIG = {
         port: LASEC360DB_PORT || 3306
       },
     },
+    {
+      name: 'navigation_components/DEVELOP',
+      data: [
+        {
+          componentFqn: "lasec-crm.ResetLasecLogin@1.0.0",
+          componentProps: {
+            target: 'self',
+          },
+          componentPropertyMap: {},
+          componentKey: "",
+          componentContext: {
+            contextType: "profile",
+            rendersAs: "button"
+          }
+        }
+      ],
+      componentFqn: 'core.NavigationComponentEditor@1.0.0'
+    },
+    {
+      name: 'navigation_components/PRODUCTION',
+      data: [],
+      componentFqn: 'core.NavigationComponentEditor@1.0.0'
+    }
   ],
   allowCustomTheme: true,
   auth_config: [

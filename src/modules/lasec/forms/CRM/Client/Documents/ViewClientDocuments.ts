@@ -1,0 +1,131 @@
+'use strict';
+import { Reactory } from '@reactory/server-core/types/reactory'
+import { cloneDeep } from 'lodash';
+import { DocumentFormSchema } from './shared/DocumentFormSchema';
+import DocumentGridWidget from './shared/DocumentMaterialTableWidgetSchema';
+import { EditUiSchema } from './EditClientDocuments';
+import graphql from './graphql';
+import { defaultUiResources } from '../../../uiResources';
+
+const viewSchema = cloneDeep<Reactory.ISchema>(DocumentFormSchema);
+export const ViewSchema = viewSchema;
+
+//Schema for display purposes, should not support upload
+export const ViewUiSchema: any = {
+  'ui:options': {
+    componentType: 'div',
+    toolbarPosition: 'none',
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      marginTop: '16px',
+      paddingBottom: '8px'
+    },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'Edit',
+      activeColor: 'primary',
+      selectSchemaId: 'edit'
+    },
+    style:{
+      marginTop: '16px',
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5'
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [    
+    {
+      view: { sm: 12, md: 12 },      
+      uploadedDocuments: { md: 12 },
+    }
+  ],
+  view: {
+    'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+      style: {
+        top: '10px',
+        right: '10px',
+        position: 'relative'
+      },
+    }
+  },
+  id: {
+    'ui:widget':'HiddenWidget',
+  },
+  uploadedDocuments: { ...DocumentGridWidget }
+};
+
+
+export const ConfirmUiSchema: any = {
+  'ui:options': {
+    componentType: 'div',
+    toolbarPosition: 'none',
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      marginTop: '16px',
+      paddingBottom: '8px'
+    },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'Edit',
+      activeColor: 'primary',
+      selectSchemaId: 'edit'
+    },
+    style:{
+      marginTop: '16px',
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5'
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [    
+    {      
+      uploadedDocuments: { md: 12 },
+    }
+  ],  
+  
+  uploadedDocuments: { ...DocumentGridWidget }
+};
+
+
+export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
+  id: 'LasecCRMViewClientDocuments',
+  uiFramework: 'material',
+  uiSupport: ['material'],
+  uiResources: [ ...defaultUiResources ],
+  title: 'CRM Client Documents',
+  tags: ['CRM Client Documents'],
+  registerAsComponent: true,
+  name: 'LasecCRMClientDocuments',
+  nameSpace: 'lasec-crm',
+  version: '1.0.0',
+  schema: { ...ViewSchema },
+  graphql,
+  uiSchema: { ...ViewUiSchema },
+  uiSchemas: [
+    {
+      id: 'display',
+      title: 'VIEW',
+      key: 'display',
+      description: 'View Documents',
+      icon: 'list',
+      uiSchema: { ...ViewUiSchema }
+    },
+    {
+      id: 'edit',
+      title: 'Edit',
+      key: 'edit',
+      description: 'Edit Documents',
+      icon: 'edit',
+      uiSchema: { ...EditUiSchema }
+    },        
+  ],  
+};

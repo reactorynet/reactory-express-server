@@ -1,12 +1,12 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
-import LasecPersonalForm, { displayUiSchema as PersonalDisplayUISchema } from '../Personal/';
+import LasecPersonalForm, { confirmUiSchema as PersonalDisplayUISchema } from '../Personal/';
 import LasecContactForm, { displayUiSchema as ContactDisplauUISchema } from '../Contact';
 import LasecJobDetailForm, { displayUiSchema as JobDetailUISchema } from '../JobDetail';
 import LasecCRMCustomerLookupForm from '../../Customer/Lookup';
-import LasecCRMCustomerAddress, { DisplayUISchema as CustomerAddressUISchema } from '../../Customer/Address';
-import LasecCRMClientDocuments, { displayUiSchema as CustomerDocumentsUISchmea } from '../Documents';
+import LasecCRMCustomerAddress, {  ReadOnlyUiSchema as CustomerAddressUISchema } from '../../Customer/Address';
+import LasecCRMDocuments from '../Documents';
 
 const displayUiSchema: any = {
   'ui:options': {
@@ -36,25 +36,26 @@ const displayUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      personal: { md: 12 },
-      contact: { md: 12 },      
-      jobDetail: { md: 12 },      
+      personal: {sm: 12, md: 12, lg: 12 },
+      contact: {sm: 12, md: 12, lg: 12 },      
+      jobDetail: {sm: 12, md: 12, lg: 12 },      
     },
     {
-      customer: { md: 12 },      
+      customer: {sm: 12, md: 12, lg: 12 },
+      organization: {sm: 12, md: 12, lg: 12 },
     },
     {
-      address: { md: 12 },      
+      address: { sm: 12, md: 12, lg: 12 },      
     },
     {
-      documents: {md: 12}
+      uploadedDocuments: { sm: 12, md: 12, lg: 12 }
     }
   ],
   personal: PersonalDisplayUISchema,
   contact: ContactDisplauUISchema,
   jobDetail: JobDetailUISchema,  
   address: CustomerAddressUISchema,
-  documents: CustomerDocumentsUISchmea,
+  uploadedDocuments: LasecCRMDocuments.ConfirmUiSchema,
 };
 
 
@@ -69,7 +70,7 @@ const schema: Reactory.ISchema = {
     jobDetail: LasecJobDetailForm.schema,
     customer: LasecCRMCustomerLookupForm.schema,
     address: LasecCRMCustomerAddress.schema,
-    documents: LasecCRMClientDocuments.schema  
+    uploadedDocuments: LasecCRMDocuments.DocumentSchema
   }
 };
 

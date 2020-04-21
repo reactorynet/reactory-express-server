@@ -50,7 +50,7 @@ const maps = {
     "id": ["code", "meta.reference"],
     "created": "created",
     "modified": "modified",
-    "note": "note"
+    "note": "note",
   },
   customer: {
     //"customer_id": "customer.meta.reference",
@@ -64,7 +64,6 @@ const maps = {
   company: {
     //"company_id": "company.meta.reference",
     //"company_trading_name": ["company.tradingName", "company.name"]
-    "company_account_number": "accountNumber"
   },
   status: {
     "status_id": "status",
@@ -85,7 +84,6 @@ const maps = {
     "actual_gp_percent": ["actualGP", "totals.actualGP"],
   },
 };
-
 
 const totalsFromMeta = (meta) => {
   return om(meta.source, {
@@ -279,105 +277,6 @@ const getQuotes = async (params) => {
 
   return quotes;
 };
-
-const getPagedQuotes = async (params) => {
-
-  const { search = "", filter = '', paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0 } = params;
-
-  logger.debug(`GETTING PAGED QUOTES:: ${JSON.stringify(params)}`);
-
-  let pagingResult = {
-    total: 0,
-    page: paging.page || 1,
-    hasNext: false,
-    pageSize: paging.pageSize || 10
-  };
-
-
-  if (isString(search) === false || search.length < 3 && filter === undefined) return {
-    paging: pagingResult,
-    quotes: []
-  };
-
-  // const cachekey = Hash(`quote_list_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`.toLowerCase());
-
-  // let _cachedResults = await getCacheItem(cachekey);
-
-  // if (_cachedResults) {
-
-  //   if (iter === 0) {
-  //     //client request and we have a cache so we fire off the next fetch anyway
-  //     execql(`query LasecGetCRMQuoteList($search: String!, $paging: PagingRequest, $filterBy: String){
-  //       LasecGetCRMQuoteList(search: $search, paging: $paging, filterBy: $filterBy){
-  //         paging {
-  //         total
-  //         page
-  //         hasNext
-  //         pageSize
-  //       }
-  //       quotes {
-  //         id
-  //       }
-  //     }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
-  //   }
-  //   logger.debug(`Returning cached item ${cachekey}`);
-  //   return _cachedResults;
-  // }
-
-  let apiFilter = {
-    start_date: params.periodStart ? params.periodStart.toISOString() : moment().startOf('year'),
-    end_date: params.periodEnd ? params.periodEnd.toISOString() : moment().endOf('day'),
-    agentSelection: 'me',
-  };
-
-  // Filter by specific date
-  if (params.date) {
-    apiFilter.start_date = moment(params.date).startOf('day');
-    apiFilter.end_date = moment(params.date).endOf('day');
-  }
-
-  let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
-
-  let ids = [];
-
-  if (isArray(quoteResult.ids) === true) {
-    ids = [...quoteResult.ids];
-  }
-
-  if (quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
-    pagingResult.total = quoteResult.pagination.num_items;
-    pagingResult.pageSize = quoteResult.pagination.page_size || 10;
-    pagingResult.hasNext = quoteResult.pagination.has_next_page === true;
-    pagingResult.page = quoteResult.pagination.current_page || 1;
-  }
-
-  logger.debug(`Loading (${ids.length}) quote ids`);
-
-  let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }).then();
-  logger.debug(`Fetched Expanded View for (${quoteDetails.items.length}) Quotes from API`);
-  let quotes = [...quoteDetails.items];
-
-
-  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
-
-  const quoteSyncResult = await Promise.all(quotes.map((quote) => {
-    return quote_sync(quote.id, global.partner.key, quote, true);
-  })).then();
-
-  logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
-
-  quotes = quoteSyncResult.map(doc => doc);
-
-  let result = {
-    paging: pagingResult,
-    search,
-    filterBy,
-    quotes,
-  };
-
-  return result;
-
-}
 
 const getTargets = async ({ periodStart, periodEnd, teamIds, repIds, agentSelection }) => {
   logger.debug(`QuoteResolver.getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection })`,
@@ -1112,6 +1011,99 @@ const LasecSendQuoteEmail = async (params) => {
   }
 }
 
+const getPagedQuotes = async (params) => {
+
+  logger.debug(`GETTING PAGED QUOTES:: ${JSON.stringify(params)}`);
+
+  const {
+    search = "",
+    periodStart,
+    periodEnd,
+    quoteDate,
+    filterBy = "any_field",
+    filter,
+    paging = { page: 1, pageSize: 10 },
+    iter = 0 } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  if (isString(search) === false || search.length < 3 && filter === undefined) return {
+    paging: pagingResult,
+    quotes: []
+  };
+
+  // NEED TO ADD CACHING
+
+  let apiFilter = {
+    [filterBy]: search,
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    // agentSelection: 'me',
+  };
+
+  // Filter by specific date
+  if (quoteDate) {
+    apiFilter.start_date = moment(quoteDate).startOf('day').toISOString();
+    apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
+  }
+
+  const filterExample = {
+    "filter": {
+      "any_field": "cod",
+      "start_date": "2020-04-06T22:00:00.000Z",
+      "end_date": "2020-05-05T22:00:00.000Z"
+    },
+    "format": { "ids_only": true },
+    "ordering": { "quote_id": "asc" }
+  }
+
+  let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
+
+  let ids = [];
+
+  if (isArray(quoteResult.ids) === true) {
+    ids = [...quoteResult.ids];
+  }
+
+  if (quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
+    pagingResult.total = quoteResult.pagination.num_items;
+    pagingResult.pageSize = quoteResult.pagination.page_size || 10;
+    pagingResult.hasNext = quoteResult.pagination.has_next_page === true;
+    pagingResult.page = quoteResult.pagination.current_page || 1;
+  }
+
+  // logger.debug(`Loading (${ids.length}) quote ids`);
+
+  let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }).then();
+  logger.debug(`Fetched Expanded View for (${quoteDetails.items.length}) Quotes from API`);
+  let quotes = [...quoteDetails.items];
+
+
+  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
+
+  const quoteSyncResult = await Promise.all(quotes.map((quote) => {
+    return quote_sync(quote.id, global.partner.key, quote, true);
+  })).then();
+
+  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
+
+  quotes = quoteSyncResult.map(doc => doc);
+
+  let result = {
+    paging: pagingResult,
+    search,
+    filterBy,
+    quotes,
+  };
+
+  return result;
+}
+
 export default {
   QuoteReminder: {
     id: ({ id, _id }) => id || _id,
@@ -1463,7 +1455,6 @@ export default {
     },
     note: ({ note }) => (note),
     timeline: async (quote, args, context, info) => {
-      debugger;
       const { options = { bypassEmail: true } } = args;
       logger.debug(`Getting timeline for quote "${quote.code}" >> `, options);
 
@@ -1558,13 +1549,9 @@ export default {
   // },
   Query: {
     LasecGetQuoteList: async (obj, { search }) => {
-      return getQuotes(search);
-    },
-    LasecGetCRMQuoteList: async (obj, args) => {
-      return getPagedQuotes(args);
+      return getQuotes();
     },
     LasecGetDashboard: async (obj, { dashparams = defaultDashboardParams }, context: any, info) => {
-      debugger;
       logger.debug('Get Dashboard Queried', dashparams);
       context.query_options = dashparams.options;
 
@@ -1892,17 +1879,9 @@ export default {
       const result = await getLasecQuoteById(quote_id).then();
       return result;
     },
-    LasecGetFilteredQuotes: async (obj, args) => {
-
-      logger.info(`QUOTE RESOLVER - GETTING QUOTES::`, { args });
-
-      const quotes = await getQuotes({
-        periodStart: moment().subtract(1, 'month'),
-        periodEnd: moment().endOf('month')
-      }).then();
-      return quotes;
-      // return getQuotes();
-    }
+    LasecGetCRMQuoteList: async (obj, args) => {
+      return getPagedQuotes(args);
+    },
   },
   Mutation: {
     LasecSetQuoteHeader: async (parent, { quote_id, input }) => {

@@ -640,97 +640,7 @@ const uiSchema: any = {
         { title: 'Client', field: 'client' },
         { title: 'Customer', field: 'companyTradingName' },
         { title: 'Account Number', field: 'accountNumber' },
-        {
-          title: 'Quote Type', field: 'quoteType',
-          components: [
-            {
-              component: 'core.ConditionalIconComponent@1.0.0',
-              props: {
-                'ui:options': {},
-                conditions: [
-                  {
-                    key: 'Normal',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#904095'
-                    },
-                    tooltip: 'Normal'
-                  },
-                  {
-                    key: 'unfinished',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'Client Unfinished'
-                  },
-                  {
-                    key: 'deactivated',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#AB1257'
-                    },
-                    tooltip: 'Client Deactivated'
-                  }
-                ]
-              },
-              style: {
-                marginRight: '8px',
-                marginTop: '8px',
-              },
-              propsMap: {
-                'rowData.quoteType': 'value',
-              },
-            },
-            {
-              component: 'core.DropDownMenu',
-              props: {
-                style: {
-                  marginTop: '-10px',
-                },
-                menus: [
-                  {
-                    id: 'normal',
-                    key: 'Normal',
-                    title: 'Normal',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#904095'
-                      }
-                    }
-                  },
-                  {
-                    id: 'unfinished',
-                    key: 'unfinished',
-                    title: 'Unfinished',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#FF9901'
-                      }
-                    }
-
-                  },
-                  {
-                    id: 'deactivated',
-                    key: 'deactivated',
-                    title: 'Deactivate',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                ]
-              }
-            }
-          ],
-          propsMap: {
-            'rowData.quoteType': 'selectedKey'
-          }
-        },
+        { title: 'Quote Type', field: 'quoteType' },
         { title: 'Rep Code', field: 'repCode' },
       ],
       options: {
@@ -738,13 +648,17 @@ const uiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
+        selection: true
       },
       remoteData: true,
       query: 'query',
       variables: {
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.paging': 'paging',
-        'props.formContext.$formData.filterBy': 'filterBy'
+        'props.formContext.$formData.filterBy': 'filterBy',
+        'props.formContext.$formData.periodStart': 'periodStart',
+        'props.formContext.$formData.periodEnd': 'periodEnd',
+        'props.formContext.$formData.dateFilter': 'quoteDate',
       },
       resultMap: {
         'paging.page': 'page',
@@ -755,11 +669,11 @@ const uiSchema: any = {
         'quotes[].created': 'data[].date',
         'quotes[].statusName': 'data[].status',
         'quotes[].totalVATInclusive': 'data[].total',
-        'quotes[].repCode': 'data[].repCode',
-        'quotes[].quoteType': 'data[].quoteType',
-        // 'quotes[].accountNumber': 'data[].accountNumber',
         'quotes[].customer.fullName': 'data[].client',
         'quotes[].company.tradingName': 'data[].companyTradingName',
+        'quotes[].company.code': 'data[].accountNumber',
+        'quotes[].meta.source.sales_team_id': 'data[].repCode',
+        'quotes[].meta.source.quote_type': 'data[].quoteType',
 
       },
       resultType: 'object',

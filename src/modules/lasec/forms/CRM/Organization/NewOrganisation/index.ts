@@ -19,8 +19,8 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      name: { sm: 12 },
-      description: { sm: 12},
+      name: { xs: 12, sm: 12, md: 6, lg: 6 },
+      description: { xs: 12, sm: 12, md: 6, lg: 6 },
     },
   ],
   customerId: {
@@ -92,7 +92,7 @@ const LasecCRMNewOrganisationForm: Reactory.IReactoryForm = {
   graphql: $graphql,
   widgetMap: [],
   defaultFormValue: {
-    customerId: '42160'
+    
   }
 };
 

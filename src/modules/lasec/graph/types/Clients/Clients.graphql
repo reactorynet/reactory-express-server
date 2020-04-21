@@ -62,9 +62,19 @@ type LasecCRMClient {
 
 type LasecDocument {
   id: String
-  name: String
-  url: String
+  filename: String
+  link: String
   mimetype: String
+  size: Int
+  public: Boolean
+  published: Boolean
+}
+
+type PagedLasecDocument {
+  search: String
+  filterBy: String
+  paging: PagingResult
+  documents: [LasecDocument]
 }
 
 type PagedCRMClient {
@@ -109,6 +119,83 @@ type CreateNewOrganisationResponse {
   success: Boolean
 }
 
+type LasecClientPersonalDetails {
+  title: String
+  firstName: String
+  lastName: String
+  country: String
+  accountType: String
+  repCode: String  
+}
+
+type LasecAddress {
+  id: String
+  fullAddress: String
+  map: Any
+}
+
+type LasecContactDetails {
+  emailAddress: String
+  confirmEmail: String
+  alternateEmail: String
+  confirmAlternateEmail: String
+  mobileNumber: String
+  alternateMobile: String
+  officeNumber: String
+  prefferedMethodOfContact: String
+}
+
+type LasecJobDetails {
+  jobTitle: String
+  jobType: String
+  salesTeam: String
+  lineManager: String
+  customerType: String
+  customerClass: String
+  faculty: String
+  clientDepartment: String
+  ranking: String
+}
+
+type LasecClientAddresses {
+  physicalAddress: LasecAddress
+  deliveryAddress: LasecAddress
+  billingAddress: LasecAddress
+}
+
+type LasecNewClient {
+  id: String
+  personalDetails: LasecClientPersonalDetails
+  contactDetails: LasecContactDetails
+  jobDetails: LasecJobDetails
+  customer: LasecCRMCustomer
+  organization: LasecCRMOrganisation
+  address: LasecClientAddresses
+  clientDocuments: [LasecDocument]
+  confirmed: Boolean
+  valid: Boolean
+  saved: Boolean
+  createdBy: User
+  created: Date
+  updated: Date
+}
+
+type NewClientResponse {
+  client: LasecCRMClient
+  success: Boolean
+  messages: [UXMessage]
+}
+
+input LasecNewClientInput {
+  id: String
+  personalDetails: Any
+  contactDetails: Any
+  jobDetails: Any
+  customer: Any
+  organization: Any
+  address: Any
+}
+
 input ClientUpdateInput {
   clientId: String!
   clientStatus: String
@@ -128,10 +215,58 @@ input ClientUpdateInput {
   ranking: String
 }
 
+input AddressFields {
+  unitNumber: String,
+  unitName: String,
+  streetNumber: String,
+  streetName: String,
+  suburb: String,
+  metro: String,
+  city: String,
+  postalCode: String,
+  province: String,
+  country: String,
+}
+
+input NewAddressInput {
+  buildingDescriptionId: String
+  buildingFloorNumberId: String
+  unit: String
+  addressFields: AddressFields
+}
+
+type NewAddressResponse {
+  success: Boolean
+  message: String
+  id: String
+}
+
+type GoogleAddressDetails {
+  streetName: String
+  streetNumber: String
+  suburb: String
+  city: String
+  metro: String
+  province: String
+  postalCode: String
+  country: String
+}
+
 extend type Query {
-  LasecGetClientList(search: String! paging: PagingRequest filterBy: String iter: Int filter: String): PagedCRMClient
+  LasecGetClientList(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    iter: Int
+    filter: String
+  ): PagedCRMClient
   LasecGetClientDetail(id: String!): LasecCRMClient
-  LasecGetCustomerList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMCustomer
+  LasecGetCustomerList(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    iter: Int
+  ): PagedCRMCustomer
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecLookupItem]
   LasecGetCustomerRanking: [LasecLookupItem]
@@ -139,19 +274,21 @@ extend type Query {
   LasecGetCustomerCountries: [LasecLookupItem]
   LasecGetCustomerRepCodes: [LasecLookupItem]
   LasecGetCustomerFilterLookup(filterBy: String): [LasecLookupItem]
-  LasecGetCustomerDocuments(id: String!): [LasecDocument]
+  LasecGetCustomerDocuments(id: String, uploadContexts: [String], paging: PagingRequest): PagedLasecDocument
   LasecGetPersonTitles: [LasecTitleLookupItem]
-  LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
+  LasecGetNewClient: LasecNewClient
+  LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation  
+  LasecGetPlaceDetails(placeId: String!): GoogleAddressDetails
+  LasecGetAddress(searchTerm: String!): [String!]
 }
 
 extend type Mutation {
-  LasecUpdateClientDetails(
-    clientInfo: ClientUpdateInput!
-  ): ClientDetailUpdateResponse
+  LasecUpdateClientDetails(clientInfo: ClientUpdateInput!): ClientDetailUpdateResponse
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
-  LasecUploadDocument(file: Upload!): LasecDocument
+  LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument  
+  LasecDeleteNewClientDocuments(fileIds: [String]!): UXMessage
   LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
+  LasecCreateNewClient(newClient: LasecNewClientInput): NewClientResponse
+  LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
+  LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
 }
-
-#  LasecUpdateClientJobDetails(clientId: String!, accountType: String!, repCode: String!, jobTitle: String!, clientDepartment: String!, clientClass: String!, ranking: String!): ClientDetailUpdateResponse
-#  LasecUpdateClientContactDetails(clientId: String!, mobileNumber: String!, alternateNumber: String!, email: String!, alternateEmail: String!): ClientDetailUpdateResponse

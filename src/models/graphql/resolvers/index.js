@@ -154,6 +154,15 @@ const resolvers = {
         });
       }
 
+      let navigationComponents = [];
+      const settingKey = `navigation_components/${process.env.MODE}`;
+      const navigationComponentsSetting = partner.getSetting(settingKey, [], false);
+      logger.debug(`>>>>> FOUND navigationComponentSettings <<<<<`, navigationComponentsSetting);
+
+      if(navigationComponentsSetting && navigationComponentsSetting.data) {
+        navigationComponents = [ ...navigationComponentsSetting.data ];
+      }
+
       return {
         when: moment(),
         status: 'API OK',
@@ -175,7 +184,8 @@ const resolvers = {
           primary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
           secondary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
         },
-        messages: uxmessages        
+        messages: uxmessages, 
+        navigationComponents       
       };
     },
   },

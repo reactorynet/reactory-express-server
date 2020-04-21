@@ -1,6 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
-import graphql from './graphql';
+import graphql, { newClientGraphQL } from './graphql';
 
 export const displayUiSchema: any = {
   'ui:options': {
@@ -33,12 +33,12 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { md: 12 },
-      repCode: { md: 12 },
-      jobTitle: { md: 12 },
-      clientDepartment: { md: 12 },
-      clientClass: { md: 12 },
-      ranking: { md: 12 }
+      accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
+      jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
+      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
+      clientClass: { xs: 12, sm: 12, md: 6, lg: 4 },
+      ranking: { xs: 12, sm: 12, md: 6, lg: 4 }
     }
   ],
   view: {
@@ -212,12 +212,12 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { md: 12 },
-      repCode: { md: 12 },
-      jobTitle: { md: 12 },
-      clientDepartment: { md: 12 },
-      clientClass: { md: 12 },
-      ranking: { md: 12 }
+      accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
+      jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
+      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
+      clientClass: { xs: 12, sm: 12, md: 6, lg: 4 },
+      ranking: { xs: 12, sm: 12, md: 6, lg: 4 }
     }
   ],
   view: {
@@ -354,6 +354,7 @@ const editUiSchema: any = {
 };
 
 const newUiSchema: any = {
+  'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
     containerStyles: {
@@ -370,14 +371,14 @@ const newUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      jobTitle: { sm: 12, md: 6 },
-      jobType: { sm: 12, md: 6 },
-      lineManager: { sm: 12, md: 6 },
-      customerType: { sm: 12, md: 6 },
-      clientClass: { sm: 12, md: 6 },
-      faculty: { sm: 12, md: 6 },
-      clientDepartment: { sm: 12, md: 6 },
-      ranking: { sm: 12, md: 6 },
+      jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
+      jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
+      customerType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      clientClass: { xs: 12, sm: 12, md: 6, lg: 4 },
+      faculty: { xs: 12, sm: 12, md: 6, lg: 4 },
+      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
+      ranking: { xs: 12, sm: 12, md: 6, lg: 4 },
     }
   ],
 
@@ -531,6 +532,7 @@ const newUiSchema: any = {
 const schema: Reactory.ISchema = {
   type: "object",
   title: "JOB DETAILS",
+  required: ['jobTitle', 'lineManager', 'customerType'],
   properties: {
     accountType: {
       type: "string",
