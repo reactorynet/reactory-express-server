@@ -75,7 +75,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
       key: 'default',
       description: 'View Clients As Grid',
       icon: 'list',
-      uiSchema:  $schema,
+      uiSchema:  $uiSchema,
     },
     {
       id: 'detail',
@@ -83,7 +83,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
       key: 'detail',
       description: 'View Clients As Cards',
       icon: 'view_module',
-      uiSchema:  $schema,
+      uiSchema:  $uiSchema,
     },
   ],
   widgetMap: [

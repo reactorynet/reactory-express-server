@@ -3,6 +3,7 @@ import { ClientSchema } from "../Schemas"
 import graphql, { newClientGraphQL } from './graphql';
 
 export const displayUiSchema: any = {
+  'ui:graphql': graphql,
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -484,7 +485,6 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
   schema: schema,
   graphql,
   uiSchema: displayUiSchema,
-  //uiSchema: newUiSchema,
   uiSchemas: [
     {
       id: 'display',

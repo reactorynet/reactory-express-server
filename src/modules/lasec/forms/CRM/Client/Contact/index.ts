@@ -3,6 +3,7 @@ import { ClientSchema } from "../Schemas"
 import graphql, { newClientGraphQL } from './graphql';
 
 export const displayUiSchema: any = {
+  'ui:graphql': graphql,
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -157,6 +158,7 @@ export const displayUiSchema: any = {
 };
 
 const editUiSchema: any = {
+  'ui:graphql': graphql,
   'ui:options': {
     componentType: "div",
     // toolbarPosition: 'none',

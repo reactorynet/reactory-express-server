@@ -6,29 +6,31 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
     text: `query LasecGetNewClient {
       LasecGetNewClient {
         id
-        physicalAddress {
-          id
-          fullAddress
-          map          
-        }
-        deliveryAddress {
-          id
-          fullAddress
-          map          
-        }
-        billingAddress {
-          id
-          fullAddress
-          map
-        }
+        address {
+          physicalAddress {
+            id
+            fullAddress
+            map          
+          }
+          deliveryAddress {
+            id
+            fullAddress
+            map          
+          }
+          billingAddress {
+            id
+            fullAddress
+            map
+          }
+        }        
       }
     }`,
     variables: {      
     },
     resultMap: {            
-      'physicalAddress': 'physicalAddress',
-      'deliveryAddress': 'physicalAddress',
-      'billlingAddress': 'billlingAddress',
+      'address.physicalAddress': 'physicalAddress',
+      'address.deliveryAddress': 'physicalAddress',
+      'address.billlingAddress': 'billlingAddress',
     },
     autoQuery: true,
     queryMessage: 'Fetch New Customer Address Detail',

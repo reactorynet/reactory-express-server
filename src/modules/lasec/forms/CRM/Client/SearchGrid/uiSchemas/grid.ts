@@ -140,7 +140,9 @@ const uiSchema: any = {
           ],                  
           propsMap: {
             'rowData.clientStatus': 'selectedKey'
-          }                    
+          },
+          breakpoint: 'xs'
+
         },        
         { 
           title: 'Client Full Name', 
@@ -150,6 +152,10 @@ const uiSchema: any = {
             componentFqn: 'lasec-crm.LasecCRMClientDetail@1.0.0',
             componentProps: {
               'rowData.id': 'formData.id'
+            },
+            childProps: {
+              mode: 'view',
+              uiSchemaKey: 'view'
             },
             slideDirection: 'down',
             buttonTitle: '${rowData.fullName}',
@@ -165,7 +171,7 @@ const uiSchema: any = {
           }, 
           propsMap: {
             'rowData': 'rowData',
-          }
+          },          
         },
         { title: 'Email Address', field: 'emailAddress' },
         {
@@ -182,7 +188,8 @@ const uiSchema: any = {
           },
           propsMap: {
             'rowData': 'value',
-          }          
+          },
+          breakpoint: 'md',
         },
         {
           title: 'Account Number',
@@ -198,11 +205,13 @@ const uiSchema: any = {
           },
           propsMap: {
             'rowData': 'value',
-          }            
+          },
+          breakpoint: 'md',            
         },
         {
           title: 'Customer Status',
           field: 'customer',
+          breakpoint: 'xs',
           components: [
             {
               component: 'core.ConditionalIconComponent@1.0.0',
@@ -241,7 +250,9 @@ const uiSchema: any = {
         },
         {
           title: 'Country',
-          field: 'country'
+          field: 'country',
+          breakpoint: 'md',
+
         }        
       ],
       actions: [
