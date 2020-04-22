@@ -64,6 +64,11 @@ import OrganizationLookup from './CRM/Organization/Lookup';
 import OrganizationLookupForm from './CRM/Organization/Lookup/LookUpForm';
 import NewOrganisation from './CRM/Organization/NewOrganisation';
 
+import QuoteGrid from './CRM/Quote/SearchGrid';
+
+import ClientLookup from './CRM/Client/Lookup';
+import ClientLookupForm from './CRM/Client/Lookup/LookUpForm';
+
 const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
 
 export default [
@@ -121,4 +126,8 @@ export default [
   OrganizationLookup,
   OrganizationLookupForm,
   NewOrganisation,
+
+  QuoteGrid,
+  ClientLookup,
+  ClientLookupForm,
 ];
