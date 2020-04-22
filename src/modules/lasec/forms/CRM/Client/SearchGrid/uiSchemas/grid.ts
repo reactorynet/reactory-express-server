@@ -173,7 +173,7 @@ const uiSchema: any = {
             'rowData': 'rowData',
           },          
         },
-        { title: 'Email Address', field: 'emailAddress' },
+        { title: 'Email Address', field: 'emailAddress', breakpoint: 'sm' },
         {
           title: 'Customer',
           field: 'customer',
