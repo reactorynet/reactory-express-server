@@ -20,7 +20,7 @@ const LasecCMSProductPricing: Reactory.IReactoryForm = {
   defaultFormValue: {
     paging: {
       page: 1,
-      pageSize: 10,      
+      pageSize: 10,
     },
     product: "",
     products: []

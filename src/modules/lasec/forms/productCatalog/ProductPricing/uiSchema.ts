@@ -1,7 +1,7 @@
 
 const uiSchema: any = {
-  'ui:options': {    
-    componentType: "div",    
+  'ui:options': {
+    componentType: "div",
     showSubmit: false,
     showRefresh: false,
     container: "div",
@@ -85,7 +85,7 @@ const uiSchema: any = {
                 componentProps: {
                   'rowData.code': 'formData.id'
                 },
-                slideDirection: 'down',                
+                slideDirection: 'down',
                 buttonVariant: 'Fab',
                 buttonProps: {
                   color: "#23A06A",
@@ -95,11 +95,11 @@ const uiSchema: any = {
                     backgroundColor: "#23A06A"
                   }
                 },
-                buttonIcon: 'add',                
+                buttonIcon: 'add',
                 windowTitle: 'Add to quote ${rowData.code}',
               },
             }
-          ],          
+          ],
           cellStyle: {
             maxWidth: '200px',
             width: '200px'
@@ -108,7 +108,7 @@ const uiSchema: any = {
             maxWidth: '200px',
             width: '200px'
           }
-        },         
+        },
         { title: 'Stock Code', field: 'code' },
         { title: 'Description', field: 'name' },
         {
@@ -124,149 +124,164 @@ const uiSchema: any = {
                 format: '${rowData.unitOfMeasure}',
               }
             },
-          },          
+          },
         },
         {
-          title: 'Landed Cost',
-          field: 'landedPrice',
-          component: 'core.StyledCurrencyLabel@1.0.0',
+          title: 'Price',
+          field: 'unitOfMeasure',
+          component: 'core.PricingLineChartComponent@1.0.0',
           props: {
             uiSchema: {
-              'ui:options': {                
-                prependText: '',
-                conditionalStyles: [
-                  {
-                    key: 'ON_SPECIAL',
-                    style: {
-                      color: '#4AC0DC'
-                    },
-                    tooltip: 'PRICE ON SPECIAL'
-                  },
-                  {
-                    key: 'EXPIRED',
-                    style: {
-                      color: '#D22D2C'
-                    },
-                    tooltip: 'PRICE EXPIRED'
-                  }
-                ]
+              'ui:options': {
+                icon: 'square_foot',
+                iconPosition: 'left',
+                variant: 'p',
+                format: '${rowData.unitOfMeasure}',
               }
             },
           },
-          propsMap: {
-            'rowData.landedPrice': ['value', 'formData'],
-            'rowData.priceAdditionalInfo' : ['condition'],
-          },     
         },
-        {
-          title: 'WH10 Cost',
-          field: 'wh10CostPrice',
-          component: 'core.StyledCurrencyLabel@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {                
-                prependText: '',
-                conditionalStyles: [
-                  {
-                    key: 'ON_SPECIAL',
-                    style: {
-                      color: '#4AC0DC'
-                    },
-                    tooltip: 'PRICE ON SPECIAL'
-                  },
-                  {
-                    key: 'EXPIRED',
-                    style: {
-                      color: '#D22D2C'
-                    },
-                    tooltip: 'PRICE EXPIRED'
-                  }
-                ]
-              }
-            },
-          },
-          propsMap: {
-            'rowData.wh10CostPrice': ['value', 'formData'],
-            'rowData.priceAdditionalInfo' : ['condition'],
-          },     
-        },
-        {
-          title: '3 Month Avg.',
-          field: 'threeMonthAvePrice',
-          component: 'core.StyledCurrencyLabel@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {                
-                prependText: '',
-                conditionalStyles: [
-                  {
-                    key: 'ON_SPECIAL',
-                    style: {
-                      color: '#4AC0DC'
-                    },
-                    tooltip: 'PRICE ON SPECIAL'
-                  },
-                  {
-                    key: 'EXPIRED',
-                    style: {
-                      color: '#D22D2C'
-                    },
-                    tooltip: 'PRICE EXPIRED'
-                  }
-                ]
-              }
-            },
-          },
-          propsMap: {
-            'rowData.threeMonthAvePrice': ['value', 'formData'],
-            'rowData.priceAdditionalInfo' : ['condition'],
-          },     
-          
-        },
-        {
-          title: 'List Price',
-          field: 'listPrice',
-          component: 'core.StyledCurrencyLabel@1.0.0',
-          props: {
-            displayAdditionalCurrencies: true,
-            displayPrimaryCurrency: false,
-            currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
-            region: 'en-IN',
-            uiSchema: {
-              'ui:options': {                
-                prependText: '(ZAR)',
-                defaultStyle: {
-                  borderBottom: '1px solid #E1E1E4'
-                },
-                conditionalStyles: [                  
-                  {
-                    key: 'ON_SPECIAL',
-                    style: {
-                      color: '#4AC0DC',
-                    },
-                    tooltip: 'PRICE ON SPECIAL'
-                  },
-                  {
-                    key: 'EXPIRED',
-                    style: {
-                      color: '#D22D2C',
-                    },
-                    tooltip: 'PRICE EXPIRED'
-                  }
-                ]
-              }
-            },
-          },
-          propsMap: {
-            'rowData.listPrice': ['value', 'formData'],
-            'rowData.priceAdditionalInfo' : ['condition'],
-            'rowData.productPricing': 'currencies',            
-          },                           
-        },
+        // {
+        //   title: 'Landed Cost',
+        //   field: 'landedPrice',
+        //   component: 'core.StyledCurrencyLabel@1.0.0',
+        //   props: {
+        //     uiSchema: {
+        //       'ui:options': {
+        //         prependText: '',
+        //         conditionalStyles: [
+        //           {
+        //             key: 'ON_SPECIAL',
+        //             style: {
+        //               color: '#4AC0DC'
+        //             },
+        //             tooltip: 'PRICE ON SPECIAL'
+        //           },
+        //           {
+        //             key: 'EXPIRED',
+        //             style: {
+        //               color: '#D22D2C'
+        //             },
+        //             tooltip: 'PRICE EXPIRED'
+        //           }
+        //         ]
+        //       }
+        //     },
+        //   },
+        //   propsMap: {
+        //     'rowData.landedPrice': ['value', 'formData'],
+        //     'rowData.priceAdditionalInfo' : ['condition'],
+        //   },
+        // },
+        // {
+        //   title: 'WH10 Cost',
+        //   field: 'wh10CostPrice',
+        //   component: 'core.StyledCurrencyLabel@1.0.0',
+        //   props: {
+        //     uiSchema: {
+        //       'ui:options': {
+        //         prependText: '',
+        //         conditionalStyles: [
+        //           {
+        //             key: 'ON_SPECIAL',
+        //             style: {
+        //               color: '#4AC0DC'
+        //             },
+        //             tooltip: 'PRICE ON SPECIAL'
+        //           },
+        //           {
+        //             key: 'EXPIRED',
+        //             style: {
+        //               color: '#D22D2C'
+        //             },
+        //             tooltip: 'PRICE EXPIRED'
+        //           }
+        //         ]
+        //       }
+        //     },
+        //   },
+        //   propsMap: {
+        //     'rowData.wh10CostPrice': ['value', 'formData'],
+        //     'rowData.priceAdditionalInfo' : ['condition'],
+        //   },
+        // },
+        // {
+        //   title: '3 Month Avg.',
+        //   field: 'threeMonthAvePrice',
+        //   component: 'core.StyledCurrencyLabel@1.0.0',
+        //   props: {
+        //     uiSchema: {
+        //       'ui:options': {
+        //         prependText: '',
+        //         conditionalStyles: [
+        //           {
+        //             key: 'ON_SPECIAL',
+        //             style: {
+        //               color: '#4AC0DC'
+        //             },
+        //             tooltip: 'PRICE ON SPECIAL'
+        //           },
+        //           {
+        //             key: 'EXPIRED',
+        //             style: {
+        //               color: '#D22D2C'
+        //             },
+        //             tooltip: 'PRICE EXPIRED'
+        //           }
+        //         ]
+        //       }
+        //     },
+        //   },
+        //   propsMap: {
+        //     'rowData.threeMonthAvePrice': ['value', 'formData'],
+        //     'rowData.priceAdditionalInfo' : ['condition'],
+        //   },
+
+        // },
+        // {
+        //   title: 'List Price',
+        //   field: 'listPrice',
+        //   component: 'core.StyledCurrencyLabel@1.0.0',
+        //   props: {
+        //     displayAdditionalCurrencies: true,
+        //     displayPrimaryCurrency: false,
+        //     currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
+        //     region: 'en-IN',
+        //     uiSchema: {
+        //       'ui:options': {
+        //         prependText: '(ZAR)',
+        //         defaultStyle: {
+        //           borderBottom: '1px solid #E1E1E4'
+        //         },
+        //         conditionalStyles: [
+        //           {
+        //             key: 'ON_SPECIAL',
+        //             style: {
+        //               color: '#4AC0DC',
+        //             },
+        //             tooltip: 'PRICE ON SPECIAL'
+        //           },
+        //           {
+        //             key: 'EXPIRED',
+        //             style: {
+        //               color: '#D22D2C',
+        //             },
+        //             tooltip: 'PRICE EXPIRED'
+        //           }
+        //         ]
+        //       }
+        //     },
+        //   },
+        //   propsMap: {
+        //     'rowData.listPrice': ['value', 'formData'],
+        //     'rowData.priceAdditionalInfo' : ['condition'],
+        //     'rowData.productPricing': 'currencies',
+        //   },
+        // },
       ],
       options: {
         grouping: false,
-        search: false,  
+        search: false,
         showTitle: false,
         toolbar: false,
       },
@@ -278,7 +293,7 @@ const uiSchema: any = {
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
-        'paging.pageSize': 'pageSize',        
+        'paging.pageSize': 'pageSize',
         'products.[].id': 'data.[].id',
         'products.[].name': 'data.[].name',
         'products.[].code': 'data.[].code',
