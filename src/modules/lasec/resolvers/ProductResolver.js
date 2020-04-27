@@ -122,7 +122,7 @@ const getProducts = async (params) => {
   // ADITIONAL PARAMS : Product Name
   logger.debug(`Getting Products For Using Query ${product}`, {paging});
 
-  
+
   let pagingResult = {
     total: 0,
     page: paging.page || 1,
@@ -136,12 +136,12 @@ const getProducts = async (params) => {
   };
 
   let filter = { "any_field": product };
-  
+
   const cachekey = Hash(`product_list_${product}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`.toLowerCase());
 
   let _cachedResults = await getCacheItem(cachekey);
   if (_cachedResults) {
-    
+
     if(iter === 0) {
       //client request and we have a cache so we fire off the next fetch anyway
       execql(`query LasecGetProductList($product: String!, $paging: PagingRequest, $iter: Int){
@@ -153,8 +153,8 @@ const getProducts = async (params) => {
             pageSize
           }
           products {
-            id           
-          }        
+            id
+          }
         }
       }`, {product, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1}).then();
     }
@@ -184,8 +184,9 @@ const getProducts = async (params) => {
 
   logger.debug(`PRODUCT RESOLVER - PRODUCTS:: found (${products.length}) products for request`);
 
+  logger.debug(`PRODUCT MAP ${JSON.stringify(products[0])}`);
+
   products = products.map((prd) => {
-    logger.debug(`PRODUCT MAP ${prd}`);
     let productResult = {
       id: prd.id,
       name: prd.name,
@@ -202,7 +203,7 @@ const getProducts = async (params) => {
       landedPrice: prd.cost_price_cents,
       wh10CostPrice: prd.actual_cost_wh10,
       threeMonthAvePrice: prd.three_month_ave_price_cents,
-      listPrice: prd.list_price_cents,      
+      listPrice: prd.list_price_cents,
       buyer: prd.buyer,
       planner: prd.planner,
       isHazardous: prd.is_hazardous ? 'Yes' : 'No',
@@ -212,13 +213,14 @@ const getProducts = async (params) => {
       packedHeight: prd.packed_height,
       packedVolume: prd.packed_volume,
       packedWeight: prd.packed_weight,
+      numberOfSalesOrders: 0,
     };
 
     productResult.productPricing = [];
 
     if(prd.currency_pricing && Object.keys(prd.currency_pricing).length > 0) {
       productResult.productPricing = Object.keys(prd.currency_pricing).map((key) => prd.currency_pricing[key]);
-    } 
+    }
 
     return productResult;
   });
@@ -236,12 +238,12 @@ const getProducts = async (params) => {
       const cachekeys_10 = `product_list_${product}_page_${paging.page || 1}_page_size_10`.toLowerCase();
       setCacheItem(cachekeys_10, { paging: {...result.paging, pageSize: 10, hasNext: true }, products: lodash.take(result.products, 10) } );
     }
-    
+
     const cachekeys_5 = `product_list_${product}_page_${paging.page || 1}_page_size_5`.toLowerCase();
-    setCacheItem(cachekeys_5, { paging: {...result.paging, pageSize: 5, hasNext: true }, products: lodash.take(result.products, 5) } );       
+    setCacheItem(cachekeys_5, { paging: {...result.paging, pageSize: 5, hasNext: true }, products: lodash.take(result.products, 5) } );
   }
 
-  if(result.paging.hasNext === true && iter === 0) {    
+  if(result.paging.hasNext === true && iter === 0) {
     execql(`query LasecGetProductList($product: String!, $paging: PagingRequest, $iter: Int){
       LasecGetProductList(product: $product, paging: $paging, iter: $iter){
         paging {
@@ -251,20 +253,20 @@ const getProducts = async (params) => {
           pageSize
         }
         products {
-          id           
-        }        
+          id
+        }
       }
-    }`, {product, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1}).then();        
-  } 
-    
+    }`, {product, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1}).then();
+  }
+
   setCacheItem(cachekey, result, 60);
 
-  return result;  
+  return result;
 }
 
 const getWarehouseStockLevels = async (params) => {
   logger.debug('Getting Warehouse Stock Levels For Product', {params});
-  
+
   const product_id = params.productId;
   const apiFilter = { product_id };
 
@@ -316,7 +318,7 @@ const getWarehouseStockLevels = async (params) => {
 
 
 
-  stock.push({    
+  stock.push({
     name: 'Totals',
     qtyAvailable: totalAvailable,
     qtyOnHand: totalOnHand,

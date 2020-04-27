@@ -128,156 +128,20 @@ const uiSchema: any = {
         },
         {
           title: 'Price',
-          field: 'unitOfMeasure',
+          field: 'id',
           component: 'core.PricingLineChartComponent@1.0.0',
           props: {
             uiSchema: {
               'ui:options': {
-                icon: 'square_foot',
-                iconPosition: 'left',
-                variant: 'p',
-                format: '${rowData.unitOfMeasure}',
+                currencySymbol: 'R',
+                region: 'en-ZA'
               }
             },
           },
+          propsMap: {
+            'rowData': ['value', 'formData'],
+          },
         },
-        // {
-        //   title: 'Landed Cost',
-        //   field: 'landedPrice',
-        //   component: 'core.StyledCurrencyLabel@1.0.0',
-        //   props: {
-        //     uiSchema: {
-        //       'ui:options': {
-        //         prependText: '',
-        //         conditionalStyles: [
-        //           {
-        //             key: 'ON_SPECIAL',
-        //             style: {
-        //               color: '#4AC0DC'
-        //             },
-        //             tooltip: 'PRICE ON SPECIAL'
-        //           },
-        //           {
-        //             key: 'EXPIRED',
-        //             style: {
-        //               color: '#D22D2C'
-        //             },
-        //             tooltip: 'PRICE EXPIRED'
-        //           }
-        //         ]
-        //       }
-        //     },
-        //   },
-        //   propsMap: {
-        //     'rowData.landedPrice': ['value', 'formData'],
-        //     'rowData.priceAdditionalInfo' : ['condition'],
-        //   },
-        // },
-        // {
-        //   title: 'WH10 Cost',
-        //   field: 'wh10CostPrice',
-        //   component: 'core.StyledCurrencyLabel@1.0.0',
-        //   props: {
-        //     uiSchema: {
-        //       'ui:options': {
-        //         prependText: '',
-        //         conditionalStyles: [
-        //           {
-        //             key: 'ON_SPECIAL',
-        //             style: {
-        //               color: '#4AC0DC'
-        //             },
-        //             tooltip: 'PRICE ON SPECIAL'
-        //           },
-        //           {
-        //             key: 'EXPIRED',
-        //             style: {
-        //               color: '#D22D2C'
-        //             },
-        //             tooltip: 'PRICE EXPIRED'
-        //           }
-        //         ]
-        //       }
-        //     },
-        //   },
-        //   propsMap: {
-        //     'rowData.wh10CostPrice': ['value', 'formData'],
-        //     'rowData.priceAdditionalInfo' : ['condition'],
-        //   },
-        // },
-        // {
-        //   title: '3 Month Avg.',
-        //   field: 'threeMonthAvePrice',
-        //   component: 'core.StyledCurrencyLabel@1.0.0',
-        //   props: {
-        //     uiSchema: {
-        //       'ui:options': {
-        //         prependText: '',
-        //         conditionalStyles: [
-        //           {
-        //             key: 'ON_SPECIAL',
-        //             style: {
-        //               color: '#4AC0DC'
-        //             },
-        //             tooltip: 'PRICE ON SPECIAL'
-        //           },
-        //           {
-        //             key: 'EXPIRED',
-        //             style: {
-        //               color: '#D22D2C'
-        //             },
-        //             tooltip: 'PRICE EXPIRED'
-        //           }
-        //         ]
-        //       }
-        //     },
-        //   },
-        //   propsMap: {
-        //     'rowData.threeMonthAvePrice': ['value', 'formData'],
-        //     'rowData.priceAdditionalInfo' : ['condition'],
-        //   },
-
-        // },
-        // {
-        //   title: 'List Price',
-        //   field: 'listPrice',
-        //   component: 'core.StyledCurrencyLabel@1.0.0',
-        //   props: {
-        //     displayAdditionalCurrencies: true,
-        //     displayPrimaryCurrency: false,
-        //     currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
-        //     region: 'en-IN',
-        //     uiSchema: {
-        //       'ui:options': {
-        //         prependText: '(ZAR)',
-        //         defaultStyle: {
-        //           borderBottom: '1px solid #E1E1E4'
-        //         },
-        //         conditionalStyles: [
-        //           {
-        //             key: 'ON_SPECIAL',
-        //             style: {
-        //               color: '#4AC0DC',
-        //             },
-        //             tooltip: 'PRICE ON SPECIAL'
-        //           },
-        //           {
-        //             key: 'EXPIRED',
-        //             style: {
-        //               color: '#D22D2C',
-        //             },
-        //             tooltip: 'PRICE EXPIRED'
-        //           }
-        //         ]
-        //       }
-        //     },
-        //   },
-        //   propsMap: {
-        //     'rowData.listPrice': ['value', 'formData'],
-        //     'rowData.priceAdditionalInfo' : ['condition'],
-        //     'rowData.productPricing': 'currencies',
-        //   },
-        // },
       ],
       options: {
         grouping: false,
