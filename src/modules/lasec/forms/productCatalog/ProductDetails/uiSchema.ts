@@ -444,7 +444,7 @@ const uiSchema: any = {
         {
           component: 'core.SlideOutLauncher@1.0.0',
           props: {
-            componentFqn: 'lasec-crm.LasecAddProductToQuote@1.0.0',
+            componentFqn: 'lasec-crm.LasecCMSProductSalesOrdersTable@1.0.0',
             componentProps: {
               'rowData.id': 'formData.id'
             },
@@ -452,7 +452,7 @@ const uiSchema: any = {
             buttonVariant: 'Typography',
             buttonProps: {
               color: "#000000",
-              style: { color: "#000000" }
+              style: { color: "#000000", textDecoraction: 'underline' }
             },
             buttonTitle: 'View Sales Orders',
             windowTitle: 'Sales Orders',

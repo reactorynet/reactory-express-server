@@ -4,31 +4,45 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 
 const graphql = {
   query: {
-    name: 'LasecGetProductList',
-    autoQuery: false,
-    text: `query LasecGetProductList($product: String!, $paging: PagingRequest){
-      LasecGetProductList(product: $product, paging: $paging){
+    name: 'LasecGetCRMSalesOrders',
+    text: `query LasecGetCRMSalesOrders($productId: String, $paging: PagingRequest){
+      LasecGetCRMSalesOrders(productId: $productId, paging: $paging){
         paging {
           total
           page
           hasNext
           pageSize
         }
-        orders {
+        salesOrders {
           id
-          date
+          orderDate
+          orderType
+          shippingDate
+          iso
+          customer
+          client
+          poNumber
+          value
         }
       }
     }`,
     variables: {
-      'formData.product': 'product',
+      'formData.id': 'productId',
       'formData.paging': 'paging'
     },
     resultMap: {
       'paging': 'paging',
-      'orders.[].id': 'orders.[].id',
-      'orders.[].date': 'orders.[].date',
+      'salesOrders.[].id': 'salesOrders.[].id',
+      'salesOrders.[].orderDate': 'salesOrders.[].orderDate',
+      'salesOrders.[].orderType': 'salesOrders.[].orderType',
+      'salesOrders.[].shippingDate': 'salesOrders.[].shippingDate',
+      'salesOrders.[].iso': 'salesOrders.[].iso',
+      'salesOrders.[].customer': 'salesOrders.[].customer',
+      'salesOrders.[].client': 'salesOrders.[].client',
+      'salesOrders.[].poNumber': 'salesOrders.[].poNumber',
+      'salesOrders.[].value': 'salesOrders.[].value',
     },
+    autoQuery: false,
     resultType: 'object',
     edit: false,
     new: false,
@@ -41,7 +55,7 @@ const schema: Reactory.ISchema = {
     product: {
       type: 'string',
     },
-    products: {
+    salesOrders: {
       type: 'array',
       items: {
         type: 'object',
@@ -49,7 +63,28 @@ const schema: Reactory.ISchema = {
           id: {
             type: 'string'
           },
-          date: {
+          orderDate: {
+            type: 'string'
+          },
+          orderType: {
+            type: 'string'
+          },
+          shippingDate: {
+            type: 'string'
+          },
+          iso: {
+            type: 'string'
+          },
+          customer: {
+            type: 'string'
+          },
+          client: {
+            type: 'string'
+          },
+          poNumber: {
+            type: 'string'
+          },
+          value: {
             type: 'string'
           },
         }
@@ -62,16 +97,64 @@ const schema: Reactory.ISchema = {
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
+    showSubmit: false,
+    showRefresh: false,
+    toolbarPosition: 'none',
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      // paddingBottom: '8px'
+    },
+    style: {
+      // marginTop: '16px',
+    },
   },
   product: {
     hidden: true,
     'ui:widget': 'HiddenWidget'
   },
-  products: {
+  salesOrders: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Order Date', field: 'date' },
+        { title: 'Order Type', field: 'orderType' },
+        {
+          title: 'Order Date',
+          field: 'orderDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
+        {
+          title: 'Shipping Date',
+          field: 'shippingDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
+        { title: 'ISO Number', field: 'id' },
+        { title: 'Customer', field: 'customer' },
+        { title: 'Client', field: 'client' },
+        { title: 'Purchase Order Number', field: 'poNumber' },
+        { title: 'Order Value', field: 'value' },
       ],
       options: {
         grouping: false,
@@ -82,14 +165,21 @@ const uiSchema: any = {
       remoteData: true,
       query: 'query',
       variables: {
-        'props.formContext.$formData.product': 'product'
+        'props.formContext.$formData.id': 'productId'
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'orders.[].id': 'data.[].id',
-        'orders.[].date': 'data.[].name',
+        'salesOrders.[].id': 'data.[].id',
+        'salesOrders.[].orderDate': 'data.[].orderDate',
+        'salesOrders.[].orderType': 'data.[].orderType',
+        'salesOrders.[].shippingDate': 'data.[].shippingDate',
+        'salesOrders.[].iso': 'data.[].iso',
+        'salesOrders.[].customer': 'data.[].customer',
+        'salesOrders.[].client': 'data.[].client',
+        'salesOrders.[].poNumber': 'data.[].poNumber',
+        'salesOrders.[].value': 'data.[].value',
       },
     },
   }

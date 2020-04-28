@@ -1104,6 +1104,72 @@ const getPagedQuotes = async (params) => {
   return result;
 }
 
+const getSalesOrders = async (params) => {
+
+  //{"filter":{"product_id":"3892","status":"open"},"format":{"ids_only":true}}
+
+  logger.debug(`GETTING PAGED SALES ORDERS:: ${JSON.stringify(params)}`);
+
+  const {
+    productId,
+    filter,
+    paging = { page: 1, pageSize: 10 }
+  } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  //order_status: "1"
+  const salesOrdersIds = await lasecApi.SalesOrders.list(
+    {
+      filter: { product_id: productId, order_status: "1" },
+      // format: { ids_only: true },
+      ordering: { order_date: "desc" },
+      pagination: paging
+    }).then();
+
+  logger.debug(`GOT IDS:: ${salesOrdersIds.ids.length}`);
+
+  let ids = [];
+
+  if (isArray(salesOrdersIds.ids) === true) {
+    ids = [...salesOrdersIds.ids];
+  }
+
+  let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
+  logger.debug(`GOT DETAILS:: ${JSON.stringify(salesOrdersDetails.items[0])}`);
+  let salesOrders = [...salesOrdersDetails.items];
+
+
+  salesOrders = salesOrders.map(order => {
+    return {
+      id: order.id,
+      orderDate: order.order_date,
+      orderType: order.order_type,
+      shippingDate: order.req_ship_date,
+      iso: order.sales_order_id,
+      customer: order.customer_name,
+      client: order.sales_team_id,
+      poNumber: order.sales_order_number,
+      value: order.order_value,
+    }
+
+
+  });
+
+  let result = {
+    paging: pagingResult,
+    salesOrders,
+  };
+
+  return result;
+
+}
+
 export default {
   QuoteReminder: {
     id: ({ id, _id }) => id || _id,
@@ -1881,6 +1947,9 @@ export default {
     },
     LasecGetCRMQuoteList: async (obj, args) => {
       return getPagedQuotes(args);
+    },
+    LasecGetCRMSalesOrders: async (obj, args) => {
+      return getSalesOrders(args);
     },
   },
   Mutation: {

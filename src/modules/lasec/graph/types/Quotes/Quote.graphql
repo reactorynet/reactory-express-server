@@ -282,6 +282,23 @@ type PagedCRMQuote {
   quotes: [Quote]
 }
 
+type SalesOrder {
+  id: String
+  orderDate: String
+  orderType: String
+  shippingDate: String
+  iso: Int
+  customer: String
+  client: String
+  poNumber: Int
+  value: Int
+}
+
+type PagedCRMSalesOrders {
+  paging: PagingResult
+  salesOrders: [SalesOrder]
+}
+
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetCRMQuoteList(
@@ -299,6 +316,7 @@ extend type Query {
   ): LasecProductDashboard
   LasecGetQuoteById(quote_id: String!): Quote
   LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [Quote]
+  LasecGetCRMSalesOrders(productId: String, paging: PagingRequest): PagedCRMSalesOrders
 }
 
 extend type Mutation {
