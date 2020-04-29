@@ -55,6 +55,21 @@ const schema: Reactory.ISchema = {
     product: {
       type: 'string',
     },
+    image: {
+      type: 'string',
+    },
+    code: {
+      type: 'string',
+    },
+    description: {
+      type: 'string',
+    },
+    unitOfMeasure: {
+      type: 'string',
+    },
+    price: {
+      type: 'string',
+    },
     salesOrders: {
       type: 'array',
       items: {
@@ -109,9 +124,123 @@ const uiSchema: any = {
       // marginTop: '16px',
     },
   },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      image: { xs: 2 },
+      code: { xs: 6, sm: 4, md: 2 },
+      description: { xs: 12, sm: 4, md: 4 },
+      unitOfMeasure: { xs: 6, md: 2 },
+      price: { xs: 6, md: 2 },
+    },
+    {
+      salesOrders: { xs: 12 }
+    }
+  ],
   product: {
     hidden: true,
     'ui:widget': 'HiddenWidget'
+  },
+  image: {
+    'ui:widget': 'ImageWidget',
+    props: {
+      'ui:options': {
+        variant: 'rounded',
+        style: {
+          marginLeft: '16px'
+        }
+      },
+    },
+    propsMap: {
+      'formData.image': 'value',
+    },
+  },
+  code: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'body2',
+      title: 'Stock Code',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
+  },
+  description: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'body2',
+      title: 'Description',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
+  },
+  unitOfMeasure: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'body2',
+      title: 'Unit of Measure',
+      icon: 'square_foot',
+      iconPosition: 'inline',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
+  },
+  price: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '<strong>From:</strong> R ${formData}',
+      variant: 'body2',
+      renderHtml: true,
+      title: 'Stock Code',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
   },
   salesOrders: {
     'ui:widget': 'MaterialTableWidget',
@@ -208,8 +337,9 @@ const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
     products: []
   },
   widgetMap: [
-    { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
+    { componentFqn: 'core.LabelComponent@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
+    { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageWidget' },
   ],
 };
 

@@ -1105,9 +1105,6 @@ const getPagedQuotes = async (params) => {
 }
 
 const getSalesOrders = async (params) => {
-
-  //{"filter":{"product_id":"3892","status":"open"},"format":{"ids_only":true}}
-
   logger.debug(`GETTING PAGED SALES ORDERS:: ${JSON.stringify(params)}`);
 
   const {

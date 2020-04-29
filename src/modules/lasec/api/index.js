@@ -643,6 +643,20 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+    costings: async (params) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_costing_get.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = apiResponse;
+
+      // logger.debug(`PRODUCT COSTINGS RESPONSE::  ${JSON.stringify(apiResponse)}`);
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    }
   },
   Invoices: {
     list: async (params = defaultParams) => {

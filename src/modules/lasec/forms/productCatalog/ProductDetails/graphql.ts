@@ -38,6 +38,11 @@ export default {
           packedWeight
           numberOfSalesOrders
           numberOfPurchaseOrders
+
+          supplier
+          model
+          shipmentSize
+          exWorker
         }
       }
     }`,
@@ -74,6 +79,12 @@ export default {
       'products.[].packedWeight': 'products.[].packedWeight',
       'products.[].numberOfSalesOrders': 'products.[].numberOfSalesOrders',
       'products.[].numberOfPurchaseOrders': 'products.[].numberOfPurchaseOrders',
+
+
+      'products.[].supplier': 'products.[].supplier',
+      'products.[].model': 'products.[].model',
+      'products.[].shipmentSize': 'products.[].shipmentSize',
+      'products.[].exWorker': 'products.[].exWorker',
     },
     resultType: 'object',
     edit: false,
