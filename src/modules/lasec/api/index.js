@@ -423,6 +423,18 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+    GetCustomerJobTypes: async(params = defaultParams) => {
+      const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
     GetRepCodes: async (params = defaultParams) => {
       const resp = await FETCH(SECONDARY_API_URLS.rep_code.url, { params: { ...defaultParams, ...params } });
       const {

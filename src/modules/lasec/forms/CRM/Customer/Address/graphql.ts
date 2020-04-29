@@ -43,33 +43,40 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
     },
   },
   mutation: {
-    onAddressSelected: {
+    onChange: {
       name: "LasecUpdateNewClient",
       text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
         LasecUpdateNewClient(newClient: $newClient) {
           id
-          physicalAddress {
-            id
-            fullAddress
-            map          
-          }
-          deliveryAddress {
-            id
-            fullAddress
-            map          
-          }
-          billingAddress {
-            id
-            fullAddress
-            map
-          }
+          address {
+            physicalAddress {
+              id
+              fullAddress
+              map          
+            }
+            deliveryAddress {
+              id
+              fullAddress
+              map          
+            }
+            billingAddress {
+              id
+              fullAddress
+              map
+            }
+          }          
         }
       }`,
       objectMap: true,
       updateMessage: 'Updating client customer selection',
       variables: {    
-        'eventData.address': 'newClient.address',
+        'eventData.formData': 'newClient.address',
       },
+      refreshEvents: [
+        {
+          name: "NewClient.onAddressUpdated"
+        }
+      ],
       resultType: 'object',
       resultMap: {
         'address': 'address'

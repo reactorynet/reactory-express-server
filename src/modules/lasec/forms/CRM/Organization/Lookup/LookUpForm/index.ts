@@ -93,7 +93,7 @@ const uiSchema: any = {
           errorMessage: 'Could not set ${selected.name} organization',
           variables: {            
             'selected': 'newClient.organization',
-          },                                 
+          },                                         
         },   
       ],
       remoteData: true,

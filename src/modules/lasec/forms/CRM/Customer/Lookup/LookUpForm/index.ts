@@ -19,7 +19,10 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    { search: { xs: 12, sm: 12, md: 6, lg: 4 } },
+    { 
+      search: { xs: 12, sm: 12, md: 6, lg: 4 },
+      selected: { xs: 12, sm: 12, md: 6, lg: 4 },
+    },
     { customers: { xs: 12, sm: 12, md: 12, lg: 12 } },
   ],
   search: {
@@ -32,6 +35,27 @@ const uiSchema: any = {
         type: 'search',
         style: {
           minWidth: '180px'
+        }
+      }
+    }
+  },
+  selected: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData && formData.registeredName ? formData.registeredName : "None"}',
+      variant: 'subtitle1',
+      title: 'Current Selected Customer',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
         }
       }
     }
@@ -49,7 +73,7 @@ const uiSchema: any = {
         grouping: false,
         search: false,
         showTitle: false,
-        toolbar: true,
+        toolbar: false,
         //selection: true,
         //multiSelect: false,
         toolbarButtonAlignment: 'left',
@@ -58,14 +82,22 @@ const uiSchema: any = {
       actions: [
         {
           icon: 'done_outline',
-          tooltip: 'Select Organization',          
+          tooltip: 'Select Customer',     
+          id: 'select_customer',     
           iconProps: {
-            color: 'success'
+            color: '#5fb848'
           },
           mutation: 'onSelectCustomer',
           variables: {            
             'selected': 'newClient.customer',
-          },                                 
+          },
+          event: {
+            name: 'onCustomerSelect',
+            via: 'form', // make either "form" || "amq"
+            paramsMap: {            
+              'selected': 'formData.selected',
+            },
+          }                                 
         },   
       ],
       remoteData: true,
@@ -110,17 +142,34 @@ const schema: Reactory.ISchema = {
         }
       }
     },
-    customers: {
-      type: 'array',
-      items: {
+    selected: {
+      type: "object",
+      title: "Selected",
+      properties: {
         id: {
           type: "string",
-          title: "Customer Id"
+          title: "Customer ID"
         },
         registeredName: {
           type: "string",
           title: "Registered Name"
-        },        
+        },       
+      }
+    },
+    customers: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: {
+            type: "string",
+            title: "Customer Id"
+          },
+          registeredName: {
+            type: "string",
+            title: "Registered Name"
+          },        
+        }        
       },
     }
   }

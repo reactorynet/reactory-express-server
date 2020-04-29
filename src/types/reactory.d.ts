@@ -144,6 +144,7 @@ declare namespace Reactory {
   export interface IReactoryEvent {
     name: String,
     data?: any | undefined,
+    dataMap?: any
   }
 
   export interface IReactoryFormQuery {

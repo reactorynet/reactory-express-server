@@ -37,7 +37,7 @@ export const displayUiSchema: any = {
       repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
       jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
       clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
-      clientClass: { xs: 12, sm: 12, md: 6, lg: 4 },
+      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
       ranking: { xs: 12, sm: 12, md: 6, lg: 4 }
     }
   ],
@@ -50,7 +50,7 @@ export const displayUiSchema: any = {
       },
     }
   },
-  accountType: {
+  accountType: {    
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
@@ -138,7 +138,7 @@ export const displayUiSchema: any = {
     }
   },
 
-  clientClass: {
+  customerClass: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
@@ -183,6 +183,274 @@ export const displayUiSchema: any = {
   },
 };
 
+export const ConfirmUiSchema: any = {
+  'ui:options': {
+    componentType: "div",
+    toolbarPosition: 'none',
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '8px'
+    },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'Edit',
+      activeColor: 'primary',
+      selectSchemaId: 'edit'
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5'
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [    
+    {
+      jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
+      jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
+      customerType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
+      faculty: { xs: 12, sm: 12, md: 6, lg: 4 },
+      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
+      ranking: { xs: 12, sm: 12, md: 6, lg: 4 },
+    }
+  ],  
+ 
+
+  jobTitle: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Job Title',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  jobType: {
+    'ui:graphql': {
+      name: 'LasecGetCustomerJobTypeById',
+      text: `query LasecGetCustomerJobTypeById($id: String){
+        LasecGetCustomerJobTypeById(id: $id) {
+          name
+        }
+      }`,
+      variables: {
+        'formData': 'id'
+      },
+      resultType: 'string',
+      resultKey: 'name',
+      resultMap: {
+        'name': 'formData',
+      },
+    },
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '$LOOKUP$',
+      variant: 'subtitle1',
+      title: 'Job Type',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  lineManager: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Line Manager',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  customerType: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Customer Type',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+  
+
+  faculty: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Faculty',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  clientDepartment: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Client Department',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  customerClass: {
+    'ui:graphql': {
+      name: 'LasecGetCustomerClassById',
+      text: `query LasecGetCustomerClassById($id: String){
+        LasecGetCustomerClassById(id: $id) {
+          name
+        }
+      }`,
+      variables: {
+        'formData': 'id'
+      },
+      resultType: 'string',
+      resultKey: 'name',
+      resultMap: {
+        'name': 'formData',
+      },
+    },
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '$LOOKUP$',
+      variant: 'subtitle1',
+      title: 'Client Class',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  ranking: {
+    'ui:graphql': {
+      name: 'LasecGetCustomerRankingById',
+      text: `query LasecGetCustomerRankingById($id: String){
+        LasecGetCustomerRankingById(id: $id) {
+          id
+          name
+        }
+      }`,
+      variables: {
+        'formData': 'id'
+      },
+      resultType: 'string',
+      resultKey: 'name',
+      resultMap: {
+        'name': 'formData',
+      },
+    },
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '$LOOKUP$',
+      variant: 'subtitle1',
+      title: 'Ranking',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+};
+
+
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -214,9 +482,9 @@ const editUiSchema: any = {
     {
       accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
       repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
-      jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
+      jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
       clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
-      clientClass: { xs: 12, sm: 12, md: 6, lg: 4 },
+      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
       ranking: { xs: 12, sm: 12, md: 6, lg: 4 }
     }
   ],
@@ -287,7 +555,7 @@ const editUiSchema: any = {
       },
     },
   },
-  jobTitle: {
+  jobType: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
@@ -305,7 +573,7 @@ const editUiSchema: any = {
     },
   },
   clientDepartment: {},
-  clientClass: {
+  customerClass: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
@@ -375,7 +643,7 @@ const newUiSchema: any = {
       jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
       lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
       customerType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      clientClass: { xs: 12, sm: 12, md: 6, lg: 4 },
+      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
       faculty: { xs: 12, sm: 12, md: 6, lg: 4 },
       clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
       ranking: { xs: 12, sm: 12, md: 6, lg: 4 },
@@ -383,6 +651,9 @@ const newUiSchema: any = {
   ],
 
   jobTitle: {
+    
+  },
+  jobType: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
@@ -399,69 +670,12 @@ const newUiSchema: any = {
       },
     },
   },
-  jobType: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      FormControl: {
-        props: {
-          style: {
-            maxWidth: '400px'
-          }
-        }
-      },
-      selectOptions: [
-        // {
-        //   key: 'type-1',
-        //   value: 'type-1',
-        //   label: 'Type 1',
-        // },
-      ],
-    },
-  },
   lineManager: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      FormControl: {
-        props: {
-          style: {
-            maxWidth: '400px'
-          }
-        }
-      },
-      selectOptions: [
-        {
-          key: 'manager-1',
-          value: 'manager-1',
-          label: 'Manager 1',
-        },
-        {
-          key: 'manager-2',
-          value: 'manager-2',
-          label: 'Manager 2',
-        },
-      ],
-    },
+    
   },
-  customerType: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      FormControl: {
-        props: {
-          style: {
-            maxWidth: '400px'
-          }
-        }
-      },
-      selectOptions: [
-        // {
-        //   key: 'type-1',
-        //   value: 'type-1',
-        //   label: 'Type 1',
-        // },
-      ],
-    },
+  customerType: {   
   },
-  clientClass: {
+  customerClass: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
@@ -479,23 +693,7 @@ const newUiSchema: any = {
     },
   },
   faculty: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      FormControl: {
-        props: {
-          style: {
-            maxWidth: '400px'
-          }
-        }
-      },
-      selectOptions: [
-        // {
-        //   key: 'type-1',
-        //   value: 'type-1',
-        //   label: 'Faculty 1',
-        // },
-      ],
-    },
+   
   },
   clientDepartment: {},
   ranking: {
@@ -532,7 +730,7 @@ const newUiSchema: any = {
 const schema: Reactory.ISchema = {
   type: "object",
   title: "JOB DETAILS",
-  required: ['jobTitle', 'lineManager', 'customerType'],
+  required: ['jobTitle', 'customerType', 'customerClass', 'clientDepartment', 'ranking'],
   properties: {
     accountType: {
       type: "string",
@@ -554,7 +752,7 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Client Department"
     },
-    clientClass: {
+    customerClass: {
       type: "string",
       title: "Class"
     },

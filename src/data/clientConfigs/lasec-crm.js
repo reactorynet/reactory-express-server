@@ -69,7 +69,7 @@ const proxiedRoutes = [
   {
     key: 'CrmSalesOrders',
     title: 'Sales Orders',
-    path: 'crm/sales-orders'
+    path: 'crm/360-sales-orders'
   },
   {
     key: '360-invoices',
@@ -182,42 +182,42 @@ const Menus = {
         {
           ordinal: 0,
           title: 'Clients',
-          link: '/crm/client/',
+          link: '/crm/clients/',
           icon: 'accessible',
           roles: ['USER'],
         },
         {
           ordinal: 0,
           title: 'Quotes',
-          link: '/360/crm/all-quotes',
+          link: '/crm/quotes',
           icon: 'add_shopping_cart',
           roles: ['USER'],
         },
         {
           ordinal: 3,
           title: 'ISO',
-          link: '/360/crm/sales-orders',
+          link: '/crm/sales-orders',
           icon: 'shopping_cart',
           roles: ['USER'],
         },
         {
           ordinal: 3,
           title: 'Invoices',
-          link: '/360/crm/invoices',
+          link: '/crm/invoices',
           icon: 'attach_money',
           roles: ['USER'],
         },
         {
           ordinal: 3,
           title: 'Sales History',
-          link: '/360/crm/sales-history',
+          link: '/crm/sales-history',
           icon: 'history',
           roles: ['USER'],
         },
         {
           ordinal: 1,
           title: 'Catalogue',
-          link: '/360/catalogue/search',
+          link: '/crm/catalogue/',
           icon: 'book',
           roles: ['USER'],
         },
@@ -812,16 +812,16 @@ const LASEC_CONFIG = {
       key: 'crm-client',
       title: 'Lasec CRM',
       path: '/crm/:tab/**',
-      exact: true,
+      exact: false,
       public: false,
       roles: ['USER'],
       componentFqn: `${key}.LasecCRMComponent@1.0.0`,
       args: [
         {
-          key: 'tab',
+          key: 'defaultTab',
           value: {
             type: 'string',
-            tab: 'client'
+            defaultTab: 'clients'
           }
         }
       ],

@@ -157,6 +157,150 @@ export const displayUiSchema: any = {
   },
 };
 
+
+export const newConfirmSchema: any = {  
+  'ui:graphql': newClientGraphQL,
+  'ui:options': {
+    componentType: "div",
+    toolbarPosition: 'none',
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '8px'
+    },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'Edit',
+      activeColor: 'primary',
+      selectSchemaId: 'edit'
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5'
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [   
+    {
+      emailAddress: { xs: 12, sm: 12, md: 6, lg: 4 },
+      alternateEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
+      officeNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
+      mobileNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
+      alternateNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
+    }
+  ], 
+  emailAddress: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Email Address',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+  alternateEmail: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Alternate Email',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+  officeNumber: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Office Number',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+  mobileNumber: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Mobile Number',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+  alternateNumber: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Alternate Number',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+};
+
 const editUiSchema: any = {
   'ui:graphql': graphql,
   'ui:options': {
@@ -277,6 +421,7 @@ const newUiSchema: any = {
 const schema: Reactory.ISchema = {
   type: "object",
   title: "CONTACT DETAILS",
+  required: ['emailAddress', 'confirmEmail', 'mobileNumber'],
   properties: {
     view: {
       title: '',
@@ -285,6 +430,7 @@ const schema: Reactory.ISchema = {
     emailAddress: {
       type: "string",
       title: "Email Address",
+      
     },
     confirmEmail: {
       type: "string",
@@ -316,7 +462,8 @@ const schema: Reactory.ISchema = {
     },
     prefferedMethodOfContact: {
       type: 'number',
-      title: 'Preffered Method of Communication'
+      title: 'Preffered Method of Communication',
+      default: 'email'
     },
   }
 };
@@ -362,7 +509,7 @@ const LasecCRMContactInformation: Reactory.IReactoryForm = {
     },
   ],
   defaultFormValue: {
-    prefferedMethodOfContact: 'phone'
+    prefferedMethodOfContact: 'email'
   },
   widgetMap: [
     { componentFqn: 'core.RadioGroupComponent@1.0.0', widget: 'RadioGroupComponent' },

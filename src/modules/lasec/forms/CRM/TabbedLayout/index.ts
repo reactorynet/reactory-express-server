@@ -25,6 +25,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
         id: 'clients',
         title: 'Clients',
         componentFqn: 'lasec-crm.LasecClientGrid',
+        route: '/crm/clients/',
         componentProps: {},
         componentPropsMap: {
           'formContext.$formData.toolbar.search': 'formData.search'
@@ -35,6 +36,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
         title: 'Quotes',
         componentFqn: 'lasec-crm.LasecQuoteGrid',
         componentProps: {},
+        route: '/crm/quotes/',
         componentPropsMap: {
           'formContext.$formData.toolbar.search': 'formData.search'
         }
@@ -44,6 +46,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
         title: 'Sales Orders',
         componentFqn: 'lasec-crm.LasecSalesOrderGrid',
         componentProps: {},
+        route: '/crm/sales-order/',
         componentPropsMap: {
           'formContext.$formData.toolbar.search': 'formData.search'
         }
@@ -53,6 +56,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
         title: 'Invoices',
         componentFqn: 'lasec-crm.LasecInvoicesGrid',
         componentProps: {},
+        route: '/crm/invoices/',
         componentPropsMap: {
           'formContext.$formData.toolbar.search': 'formData.search'
         }
@@ -62,6 +66,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
         title: 'Sales History',
         componentFqn: 'lasec-crm.LasecSalesHistoryGrid',
         componentProps: {},
+        route: '/crm/sales-history/',
         componentPropsMap: {
           'formContext.$formData.toolbar.search': 'formData.search'
         }

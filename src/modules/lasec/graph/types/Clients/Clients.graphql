@@ -269,13 +269,18 @@ extend type Query {
   ): PagedCRMCustomer
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecLookupItem]
+  LasecGetCustomerClassById(id: String): LasecLookupItem
   LasecGetCustomerRanking: [LasecLookupItem]
+  LasecGetCustomerRankingById(id: String): LasecLookupItem
   LasecGetCustomerRoles: [LasecLookupItem]
+  LasecGetCustomerJobTypes: [LasecLookupItem]
+  LasecGetCustomerJobTypeById(id: String): LasecLookupItem
   LasecGetCustomerCountries: [LasecLookupItem]
   LasecGetCustomerRepCodes: [LasecLookupItem]
   LasecGetCustomerFilterLookup(filterBy: String): [LasecLookupItem]
   LasecGetCustomerDocuments(id: String, uploadContexts: [String], paging: PagingRequest): PagedLasecDocument
   LasecGetPersonTitles: [LasecTitleLookupItem]
+  LasecGetPersonTitleById(id: String): LasecTitleLookupItem
   LasecGetNewClient: LasecNewClient
   LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation  
   LasecGetPlaceDetails(placeId: String!): GoogleAddressDetails
