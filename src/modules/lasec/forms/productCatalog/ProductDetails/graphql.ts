@@ -79,8 +79,6 @@ export default {
       'products.[].packedWeight': 'products.[].packedWeight',
       'products.[].numberOfSalesOrders': 'products.[].numberOfSalesOrders',
       'products.[].numberOfPurchaseOrders': 'products.[].numberOfPurchaseOrders',
-
-
       'products.[].supplier': 'products.[].supplier',
       'products.[].model': 'products.[].model',
       'products.[].shipmentSize': 'products.[].shipmentSize',

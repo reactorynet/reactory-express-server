@@ -20,7 +20,7 @@ const LasecCMSProductDetail: Reactory.IReactoryForm = {
   defaultFormValue: {
     paging: {
       page: 1,
-      pageSize: 10,      
+      pageSize: 10,
     },
     product: "",
     products: []
@@ -28,7 +28,8 @@ const LasecCMSProductDetail: Reactory.IReactoryForm = {
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
-    { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' }
+    { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
+    { componentFqn: 'core.GridLayoutComponent@1.0.0', widget: 'GridLayoutWidget' }
   ],
 };
 
