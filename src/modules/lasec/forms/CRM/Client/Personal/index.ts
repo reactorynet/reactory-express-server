@@ -344,8 +344,12 @@ export const newUiSchema: any = {
       },
     },
   },
-  firstName: {},
-  lastName: {},
+  firstName: {
+    'ui:description': "Please provide the client first name",
+  },
+  lastName: {
+    'ui:description': "Please provide the client Lastname",
+  },
   country: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
@@ -500,6 +504,7 @@ export const confirmUiSchema: any = {
 
   firstName: {
     'ui:widget': 'LabelWidget',
+    
     'ui:options': {
       readOnly: true,
       format: '${formData}',
@@ -522,7 +527,7 @@ export const confirmUiSchema: any = {
   },
 
   lastName: {
-    'ui:widget': 'LabelWidget',
+    'ui:widget': 'LabelWidget',    
     'ui:options': {
       readOnly: true,
       component: "TextField",
@@ -620,8 +625,8 @@ export const confirmUiSchema: any = {
 
 
 const schema: Reactory.ISchema = { ...ClientSchema };
-schema.required = ["clientStatus", "firstName", "lastName", "country", "accountType", "repCode"];
-schema.title = "Personal  Info"
+schema.required = ["firstName", "lastName", "country", "accountType", "repCode"];
+schema.title = "PERSONAL"
 
 const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
   id: 'LasecCRMPersonalInformation',

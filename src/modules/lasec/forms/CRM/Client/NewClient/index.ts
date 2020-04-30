@@ -76,7 +76,7 @@ const uiSchema: any = {
 };
 
 const $sharedProps = {
-  componentProps: { mode: 'new', uiSchemaKey: 'new' },
+  componentProps: { mode: 'new', uiSchemaKey: 'new', liveValidate: true },
   componentPropsMap: {    
     //'onChange': 'onChange',
     //'formContext.formData.client.personal': 'formData',

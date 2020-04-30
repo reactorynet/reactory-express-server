@@ -430,19 +430,20 @@ const schema: Reactory.ISchema = {
     emailAddress: {
       type: "string",
       title: "Email Address",
-      
+      format: "email",      
     },
     confirmEmail: {
       type: "string",
-      title: "Confirm Email Address"
+      title: "Confirm Email Address",
+      format: "email",
     },
     alternateEmail: {
       type: "string",
-      title: "Alternate Email",
+      title: "Alternate Email",      
     },
     confirmAlternateEmail: {
       type: "string",
-      title: "Confirm Alternate Email Address"
+      title: "Confirm Alternate Email Address",      
     },
     officeNumber: {
       type: "string",
@@ -461,7 +462,7 @@ const schema: Reactory.ISchema = {
       title: "Alternate Number",
     },
     prefferedMethodOfContact: {
-      type: 'number',
+      type: 'string',
       title: 'Preffered Method of Communication',
       default: 'email'
     },
