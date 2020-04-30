@@ -77,6 +77,7 @@ export default {
   quote_create_pdf: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/create_quote_pdf/`, allowed_methods: ['post'] },
   quote_section_header: { url: 'api/quote_heading', allowed_methods: ['post', 'put', 'delete', 'get'] },
   sales_order: { url: `api/${ENTITY_KEY__SALES_ORDER}/`, allowed_methods: ['post', 'get'] },
+  purchase_order: { url: `api/${ENTITY_KEY__PURCHASE_ORDER}/`, allowed_methods: ['get'] },
   product_get: { url: `api/${ENTITY_KEY__PRODUCT}/`, allowed_methods: ['get'] },
   product_costing_get: { url: `api/${ENTITY_KEY__PRODUCT_COSTING}/`, allowed_methods: ['get'] },
   groups: { url: `api/${ENTITY_KEY__REP_CODE}/`, allowed_methods: ['get'] },

@@ -257,7 +257,9 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
 }
 
 const defaultParams = {
-  filter: {}, ordering: {}, pagination: { enabled: false },
+  filter: {},
+  ordering: {},
+  pagination: { enabled: false },
 };
 
 const defaultQuoteObjectMap = {
@@ -447,7 +449,7 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    UploadDocument: async(params) => {
+    UploadDocument: async (params) => {
       const apiResponse = await POST(SECONDARY_API_URLS.file_uploads.url, { params: { ...defaultParams, ...params } });
       const {
         status, payload,
@@ -653,6 +655,20 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+    costings: async (params) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_costing_get.url, { params: { ...defaultParams, ...params } });
+      const {
+        status, payload,
+      } = apiResponse;
+
+      // logger.debug(`PRODUCT COSTINGS RESPONSE::  ${JSON.stringify(apiResponse)}`);
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    }
   },
   Invoices: {
     list: async (params = defaultParams) => {
@@ -671,7 +687,22 @@ const Api = {
   },
   PurchaseOrders: {
     list: async (params = defaultParams) => {
-      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } });;
+      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } });
+      const {
+        status,
+        payload,
+      } = isoResult;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    }
+  },
+  SalesOrders: {
+    list: async (params = defaultParams) => {
+      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } });
       const {
         status,
         payload,

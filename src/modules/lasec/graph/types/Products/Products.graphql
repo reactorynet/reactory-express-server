@@ -40,7 +40,11 @@ type Product {
   packedWeight: Float
   numberOfSalesOrders: Int
   numberOfPurchaseOrders: Int
-  
+
+  supplier: String
+  model: String
+  shipmentSize: Int
+  exWorker: Int
 }
 
 type ProductQueryDetail {
@@ -80,9 +84,9 @@ type StockTotals {
 }
 
 type PagedProductResult {
-  filter: String  
+  filter: String
   paging: PagingResult
-  products: [Product] 
+  products: [Product]
 }
 
 extend type Query {
