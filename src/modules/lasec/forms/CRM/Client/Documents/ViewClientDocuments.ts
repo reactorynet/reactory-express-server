@@ -60,7 +60,7 @@ export const ViewUiSchema: any = {
 };
 
 
-export const ConfirmUiSchema: any = {
+export const ConfirmUiSchema: any = {  
   'ui:options': {
     componentType: 'div',
     toolbarPosition: 'none',
@@ -69,13 +69,7 @@ export const ConfirmUiSchema: any = {
       margin: '0px',
       marginTop: '16px',
       paddingBottom: '8px'
-    },
-    schemaSelector: {
-      variant: 'button',
-      buttonTitle: 'Edit',
-      activeColor: 'primary',
-      selectSchemaId: 'edit'
-    },
+    },   
     style:{
       marginTop: '16px',
     },
@@ -92,7 +86,10 @@ export const ConfirmUiSchema: any = {
     }
   ],  
   
-  uploadedDocuments: { ...DocumentGridWidget }
+  uploadedDocuments: {
+    ...DocumentGridWidget,
+    'ui:options': { ...DocumentGridWidget['ui:options'], query: 'PagedNewCustomerDocuments' }    
+  }
 };
 
 

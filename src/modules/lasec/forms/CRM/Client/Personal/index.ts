@@ -2,6 +2,9 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql, { newClientGraphQL } from './graphql';
 
+/**
+ * Used for view purposes only
+ */
 export const displayUiSchema: any = {
   'ui:graphql': graphql,
   'ui:options': {
@@ -181,6 +184,9 @@ export const displayUiSchema: any = {
   },
 };
 
+/**
+ * Used for edit view only
+ */
 export const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -338,8 +344,12 @@ export const newUiSchema: any = {
       },
     },
   },
-  firstName: {},
-  lastName: {},
+  firstName: {
+    'ui:description': "Please provide the client first name",
+  },
+  lastName: {
+    'ui:description': "Please provide the client Lastname",
+  },
   country: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
@@ -404,7 +414,6 @@ export const newUiSchema: any = {
   },
 };
 
-
 export const confirmUiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -430,46 +439,194 @@ export const confirmUiSchema: any = {
       repCode: { lg: 4, md: 6, sm: 12 },
     }
   ],
+  
   clientTitle: {
+    'ui:graphql': {
+      name: 'LasecGetPersonTitleById',
+      text: `query LasecGetPersonTitleById($id: String){
+        LasecGetPersonTitleById(id: $id) {
+          title
+        }
+      }`,
+      variables: {
+        'formData': 'id'
+      },
+      resultType: 'string',
+      resultKey: 'title',
+      resultMap: {
+        'title': 'formData',
+      },
+    },
     'ui:widget': 'LabelWidget',
     'ui:options': {
-    
+      readOnly: true,
+      format: '$LOOKUP$',
+      variant: 'subtitle1',
+      title: 'Title',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {        
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      },      
     }
   },
+
+  clientStatus: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Client Status',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      },      
+    }
+  },
+
   firstName: {
     'ui:widget': 'LabelWidget',
-    'ui:options': {
     
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Firstname',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
+
   lastName: {
-    'ui:widget': 'LabelWidget',
+    'ui:widget': 'LabelWidget',    
     'ui:options': {
-    
+      readOnly: true,
+      component: "TextField",
+      componentProps: {
+        variant: "outlined"
+      },
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Last Name',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
+
   country: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-    
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Country',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
+
   accountType: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
+      readOnly: true,
+      format: '${formData ? formData.toUpperCase() : "ACCOUNT TYPE" }',
+      variant: 'subtitle1',
+      title: 'Account Type',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {        
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      },     
     }
   },
+
   repCode: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
+
+      readOnly: true,
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Rep Code',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {        
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      },     
     }
   },
 };
 
 
 const schema: Reactory.ISchema = { ...ClientSchema };
-schema.required = ["clientStatus", "firstName", "lastName", "country"];
-schema.title = "PERSONAL DETAILS"
+schema.required = ["firstName", "lastName", "country", "accountType", "repCode"];
+schema.title = "PERSONAL"
 
 const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
   id: 'LasecCRMPersonalInformation',

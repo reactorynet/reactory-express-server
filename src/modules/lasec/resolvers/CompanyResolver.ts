@@ -466,13 +466,19 @@ const updateCientDetail = async (args) => {
   }
 }
 
+const LASEC_ROLES_KEY = 'LASEC_CUSTOMER_ROLES';
+
 const getCustomerRoles = async (params) => {
+
+  const cached = await getCacheItem(Hash(LASEC_ROLES_KEY)).then();
+  if(cached) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetCustomerRoles();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetCustomerRoles({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
     if (details && details.items) {
+      setCacheItem(Hash(LASEC_ROLES_KEY), details, 60);
       return details.items;
     }
   }
@@ -483,42 +489,47 @@ const getCustomerRoles = async (params) => {
 
 const getCustomerRanking = async (params) => {
 
+  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_RANKING') ).then();
+
+  if(cached && cached.items) return cached.items;
+
   const idsResponse = await lasecApi.Customers.GetCustomerRankings();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetCustomerRankings({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
     if (details && details.items) {
+      setCacheItem('LASEC_CUSTOMER_RANKING', details, 60);
       return details.items;
     }
   }
 
   return [];
+
 };
 
-const getCustomerClass = async (params) => {
 
+
+const getCustomerClass = async () => {
+  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_CLASS')).then();
+  if(cached && cached.items) return cached.items;
   const idsResponse = await lasecApi.Customers.GetCustomerClass();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetCustomerClass({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
     if (details && details.items) {
+      setCacheItem(Hash('LASEC_CUSTOMER_CLASS'), details, 60);
       return details.items;
     }
   }
 
   return [];
-
 };
 
 const getCustomerClassById = async (id) => {
-
-  const details = await lasecApi.Customers.GetCustomerClass({ filter: { ids: [id] }, pagination: {} });
-  if (details && details.items && details.items.length === 1) {
-    return details.items[0];
-  }
-
-  return null;
-
+  const customerClasses = await getCustomerClass().then();
+  logger.debug(`Searching in ${customerClasses.length} classes for id ${id}`)
+  const found = lodash.find(customerClasses, { id: id  });
+  return found;
 };
 
 const getCustomerCountries = async (params) => {
@@ -538,19 +549,60 @@ const getCustomerRepCodes = async (args) => {
   return [];
 };
 
-const getPersonTitles = async (params) => {
+
+const CLIENT_TITLES_KEY = "LasecClientTitles";
+
+const getPersonTitles = async () => {
+
+  const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
+
+  if(cached) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetPersonTitles();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
     if (details && details.items) {
+      
+      setCacheItem(Hash(CLIENT_TITLES_KEY), details, 60);
+
       return details.items;
     }
   }
 
   return [];
 
+}
+
+const getPersonTitle = async (params) => {
+  logger.debug(`Looking for title with id ${params.id}`)
+  const titles = await getPersonTitles(params).then();  
+  
+  if(titles.length > 0) {
+    const found = lodash.find(titles, { id: params.id });
+    return found;
+  }
+  
+  return null;
+};
+
+ const CLIENT_JOBTYPES_KEY = "LasecClientJobTypesLookup";
+
+const getCustomerJobTypes = async () => {
+
+  const cached = await getCacheItem(Hash(CLIENT_JOBTYPES_KEY)).then();
+
+  if(cached) return cached.items;
+
+  const idsResponse = await lasecApi.Customers.GetCustomerJobTypes();
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerJobTypes({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
+      setCacheItem(Hash(CLIENT_JOBTYPES_KEY), details, 60);
+      return details.items;
+    }
+  }
+  return [];
 }
 
 const getLasecSalesTeamsForLookup = async () => {
@@ -1122,13 +1174,13 @@ const clientDocuments: any[] = [];
 
 export const DEFAULT_NEW_CLIENT = {
   __typename: 'LasecNewClient',
-  id: '',
+  id: new ObjectId(),
   personalDetails: {
     title: 'Mr',
     firstName: '',
     lastName: '',
     country: 'SOUTH AFRICA',
-    repCode: ''
+    repCode: 'LAB101'
   },
   contactDetails: {
     emailAddress: '',
@@ -1138,7 +1190,7 @@ export const DEFAULT_NEW_CLIENT = {
     mobileNumber: '',
     alternateMobile: '',
     officeNumber: '',
-    prefferedMethodOfContact: '',
+    prefferedMethodOfContact: 'email',
   },
   jobDetails: {
     jobTitle: '',
@@ -1160,6 +1212,7 @@ export const DEFAULT_NEW_CLIENT = {
     name: '',
   },
   address: {
+    id: new ObjectId(),
     physicalAddress: {
       id: '',
       fullAddress: '',
@@ -1406,8 +1459,30 @@ export default {
     LasecGetCustomerClass: async (obj, args) => {
       return getCustomerClass(args);
     },
+    LasecGetCustomerClassById: async (obj, args) => {
+      return getCustomerClassById(args.id);
+    },
     LasecGetCustomerRanking: async (object, args) => {
       return getCustomerRanking(args);
+    },
+    LasecGetCustomerRankingById: async(object, args) => {
+     logger.debug('LasecGetCustomerRankingById', args)
+     switch(args.id) {
+        case "1": return { 
+          id: '1',
+          name: 'A - High Value'
+        };
+        case "2": return {
+          id: '2',
+          name: 'B - Medium Value',
+        };
+        case "3": 
+        default: return {
+          id: '3',
+          name: 'C - Low Value',
+        };
+     }
+      
     },
     LasecGetCustomerCountries: async (object, args) => {
       return getCustomerCountries(args);
@@ -1478,23 +1553,37 @@ export default {
     LasecGetPersonTitles: async (object, args) => {
       return getPersonTitles(args);
     },
+    LasecGetPersonTitleById: async(object, args) => {
+      return getPersonTitle(args);
+    },
     LasecGetCustomerList: async (obj, args) => {
       return getCustomerList(args);
     },
     LasecGetOrganisationList: async (obj, args) => {
       return getOrganisationList(args);
     },
+    LasecGetCustomerJobTypes: async(obj, args) => {
+      return getCustomerJobTypes(args);
+    },
+    LasecGetCustomerJobTypeById: async(obj, args) => {
+      const jobtypes = await getCustomerJobTypes().then()
+
+      const lookupItem = lodash.find(jobtypes, { id: args.id });
+
+      return lookupItem;
+    },
     LasecGetNewClient: async (obj, args) => {
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
 
-      const newClient = await getCacheItem(hash, global.partner.id).then();
+      const newClient = await getCacheItem(hash).then();
 
-      if (newClient) return newClient;
+      if (newClient !== null) return newClient;
       else {
         let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
         //cache this object for 12 h
         await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
-        return _newClient;
+        let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: [ 'lasec-crm::new-company::document' ] }).then();
+        return { ..._newClient, clientDocuments };
       }
     },
     LasecGetAddress: async (obj, args) => {
@@ -1520,37 +1609,40 @@ export default {
     },
     LasecUpdateNewClient: async (obj, args) => {
       const { newClient } = args;
+      logger.debug('Updating new client address details with input', { newClient });
 
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
-      const _cached = await getCacheItem(hash).then();
+      let _newClient = await getCacheItem(hash).then();
 
-      let _newClient = {
-        ..._cached,
-      };
-
-      if (newClient.personalDetails) {
+      if (isNil(newClient.personalDetails) === false) {
         _newClient.personalDetails = { ..._newClient.personalDetails, ...newClient.personalDetails };
       }
 
-      if (newClient.contactDetails) {
+      if (isNil(newClient.contactDetails) === false) {
         _newClient.contactDetails = { ..._newClient.contactDetails, ...newClient.contactDetails };
       }
 
-      if (newClient.jobDetails) {
+      if (isNil(newClient.jobDetails)  === false) {
         _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
       }
 
-      if (newClient.customer) {
+      if (isNil(newClient.customer)  === false) {
         _newClient.customer = { ..._newClient.customer, ...newClient.customer };
       }
 
-      if (newClient.organization) {
+      if (isNil(newClient.organization)  === false) {
         _newClient.organization = { ..._newClient.organization, ...newClient.organization };
       }
 
-      if (newClient.address) {
-        _newClient.address = { ..._newClient.address, ...newClient.address };
+      if (isNil(newClient.address) === false) {        
+        _newClient.address = { 
+          physicalAddress: { ..._newClient.address.physicalAddress, ...newClient.address.physicalAddress },
+          deliveryAddress: { ..._newClient.address.deliveryAddress, ...newClient.address.deliveryAddress },
+          billingAddress: { ..._newClient.address.billingAddress, ...newClient.address.billingAddress },          
+        };                
       }
+
+      logger.debug('New Client Details', _newClient, 'debug');
 
       _newClient.updated = new Date().valueOf()
       //update the cache for the new

@@ -26,7 +26,7 @@ const uiSchema: any = {
       label: 'Select a Customer',
       title: 'Search for a Customer',
       modalProps: {
-        fullScreen: false,        
+        fullScreen: false,
         closeOnEvents: [
           'CloseModal:LasecCRMCustomerLookupTable'
         ]
@@ -68,7 +68,7 @@ const newUiSchema: any = {
       label: 'Customer Registered Name',
       title: 'Search for a Customer',
       modalProps: {
-        fullScreen: false,        
+        fullScreen: false,
         closeOnEvents: [
           'CloseModal:LasecCRMCustomerLookupTable'
         ]
@@ -77,9 +77,57 @@ const newUiSchema: any = {
     props: {
       componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
       componentProps: {
-        
+
       },
+      componentPropertyMap: {        
+        'LookupComponent.props.formContext.$formData': 'formData.selected',
+        'LookupComponent.props.onChange': 'onCustomerSelect',
+        'LookupComponent.props.formContext': 'LookupComponentFormContext',
+      },      
     },
+  },
+};
+
+export const CustomerConfirmUISchema: any = {  
+  'ui:options': {
+    componentType: "div",    
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '16px'
+    },
+    style: {
+      marginTop: '0',
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      registeredName: { xs: 12, sm: 12, md: 12, lg: 12 },
+    },
+  ],
+  registeredName: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Customer Registered Name',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }     
   },
 };
 
@@ -110,7 +158,7 @@ const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
-  uiSchema: uiSchema, 
+  uiSchema: uiSchema,
   uiSchemas: [
     {
       id: 'display',

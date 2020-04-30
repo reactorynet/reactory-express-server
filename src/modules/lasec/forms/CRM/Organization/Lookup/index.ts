@@ -1,7 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { newClientGraphQL } from './graphql';
 
-const uiSchema: any = {
+export const uiSchema: any = {
   'ui:options': {
     componentType: "div",
     containerStyles: {
@@ -42,7 +42,7 @@ const uiSchema: any = {
   },
 };
 
-const newUiSchema: any = {
+export const newUiSchema: any = {
   'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
@@ -84,7 +84,51 @@ const newUiSchema: any = {
   },
 };
 
-const schema: Reactory.ISchema = {
+export const ConfirmNewUISchema: any = {  
+  'ui:options': {
+    componentType: "div",
+    title: 'Selected Customer',
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '16px'
+    },
+    style: {
+      marginTop: '0',
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      name: { xs: 12, sm: 12, md: 12, lg: 12 },
+    },
+  ],
+  name: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Selected Organization',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+};
+
+export const schema: Reactory.ISchema = {
   type: 'object',
   title: "Select an Organization",
   properties: {

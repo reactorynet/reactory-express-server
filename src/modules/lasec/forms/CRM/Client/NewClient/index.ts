@@ -76,7 +76,7 @@ const uiSchema: any = {
 };
 
 const $sharedProps = {
-  componentProps: { mode: 'new', uiSchemaKey: 'new' },
+  componentProps: { mode: 'new', uiSchemaKey: 'new', liveValidate: true },
   componentPropsMap: {    
     //'onChange': 'onChange',
     //'formContext.formData.client.personal': 'formData',
@@ -87,7 +87,14 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
   id: 'LasecCRMNewClient',
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [],
+  uiResources: [
+    {
+      id: 'reactory.plugin.lasec360',
+      name: 'reactory.plugin.lasec360',
+      type: 'script',
+      uri: `${process.env.CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
+    },
+  ],
   title: 'CRM New Client',
   tags: ['CRM New Client'],
   registerAsComponent: true,
@@ -117,7 +124,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
             componentFqn: 'lasec-crm.LasecCRMClientJobDetails',
             ...$sharedProps,
           },
-        ],
+        ],        
       },
       {
         id: 'customer-details',
@@ -162,6 +169,10 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
             ...$sharedProps,
           },
         ],
+        nextButtonProps: {
+          title: 'CONFIRM & SAVE',
+          color: 'primary'
+        },
       },
     ]
   },

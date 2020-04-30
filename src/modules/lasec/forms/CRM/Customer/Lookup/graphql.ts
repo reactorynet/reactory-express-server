@@ -20,7 +20,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       'customer.registeredName': 'registeredName',
     },
     autoQuery: true,
-    queryMessage: 'Fetch customer detail',
+    queryMessage: 'Fetch customer detail',    
     resultType: 'object',
     edit: false,
     new: true,
@@ -28,6 +28,11 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
+    refreshEvents: [
+      {
+        name: 'NewClient.onCustomerSelected'
+      }
+    ]
   },
   mutation: {
     onCustomerSelected: {

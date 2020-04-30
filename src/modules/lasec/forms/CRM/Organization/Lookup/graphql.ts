@@ -28,6 +28,11 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
+    refreshEvents: [
+      {
+        name: 'NewClient.onOrganizationSelected'
+      }
+    ]
   },
   mutation: {
     onOrganizationSelected: {

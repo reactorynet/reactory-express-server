@@ -119,7 +119,7 @@ declare namespace Reactory {
   }
 
   export interface ISchema {
-    type: string | "object" | "string" | "number" | "boolean" | "array",
+    type: string | "object" | "string" | "number" | "boolean" | "array" | "null",
     title?: string | undefined,
     description?: string | undefined,
     default?: any | undefined,
@@ -144,6 +144,7 @@ declare namespace Reactory {
   export interface IReactoryEvent {
     name: String,
     data?: any | undefined,
+    dataMap?: any
   }
 
   export interface IReactoryFormQuery {

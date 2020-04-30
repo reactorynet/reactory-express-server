@@ -104,7 +104,7 @@ const uiSchema: any = {
   tabs: {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
-      activeTab: '${formContext.$route.match.params.tab}',     
+      activeTab: '${formContext.$route.params.tab}',
     }
   },
 

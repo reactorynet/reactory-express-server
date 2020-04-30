@@ -6,8 +6,46 @@ import { newClientGraphQL } from './graphql';
 const GOOGLE_MAPS_API_KEY_DEVELOPMENT = '<GOOGLE MAPS API KEY>';
 
 const GOOGLE_PLACE_TO_ADDRESS_MAP = {
-  'formattedAddress': 'fullAddress',
+  'address': 'fullAddress',
+  'placeId': 'map.place_id'
+};
 
+const onAddressSelectedMutationDefinition : Reactory.IReactoryFormMutation = {
+  name: "LasecUpdateNewClient",
+  text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
+    LasecUpdateNewClient(newClient: $newClient) {
+      id
+      physicalAddress {
+        id
+        fullAddress
+        map          
+      }
+      deliveryAddress {
+        id
+        fullAddress
+        map          
+      }
+      billingAddress {
+        id
+        fullAddress
+        map
+      }
+    }
+  }`,
+  objectMap: true,
+  updateMessage: 'Updating new client address',
+  variables: {    
+    'address': 'newClient.address',
+  },
+  refreshEvents: [
+    {
+      name: "NewClient.onAddressUpdated"
+    }
+  ],
+  resultType: 'object',
+  resultMap: {
+    'address': 'address'
+  }
 };
 
 const DEFAULT_ADDRESS_PROPS = {
@@ -26,9 +64,10 @@ const DEFAULT_ADDRESS_PROPS = {
       countryCode
       countryName
       lat
-      long
+      long    
     }
   }`,
+  // onAddressSelected: onAddressSelectedMutationDefinition,
   variables: {
     'formData': 'input'
   },
@@ -186,7 +225,8 @@ const readOnlySchema = {
         }
       }    
     }
-  },  
+  },
+
   deliveryAddress: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -208,7 +248,8 @@ const readOnlySchema = {
       }    
     }
   },
-  billingAddress:{
+
+  billingAddress: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData.fullAddress}',
@@ -226,10 +267,10 @@ const readOnlySchema = {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      }    
+      }
     }
   }
-
+  
 };
 
 const newUiSchema: any = {

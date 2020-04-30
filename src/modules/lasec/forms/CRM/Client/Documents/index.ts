@@ -38,7 +38,7 @@ export interface LasecClientDocumentExport {
 };
 
 const LasecClientDocuments: LasecClientDocumentExport = {
-  ConfirmUiSchema,
+  
 
   DocumentSchema,
   DocumentFormSchema,  
@@ -51,6 +51,7 @@ const LasecClientDocuments: LasecClientDocumentExport = {
   EditUiSchema,
   LasecCRMEditClientDocuments,
 
+  ConfirmUiSchema,
   NewSchema,
   NewUiSchema,
   LasecCRMNewClientDocuments,
