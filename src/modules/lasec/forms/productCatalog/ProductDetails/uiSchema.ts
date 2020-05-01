@@ -803,6 +803,8 @@ const uiSchema: any = {
     'ui:widget': 'GridLayoutWidget',
     'ui:options': {
       // ADD A CHILD COMPONENT
+      component: 'lasec.ProductDimensionCard',
+      componentProps: {},
       remoteData: true,
       variables: {
         'props.formContext.$formData.product': 'product',
