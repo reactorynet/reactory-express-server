@@ -15,14 +15,14 @@ type LasecQuoteItem {
   title: String
   productClass: String
   productClassDescription: String
-  quantity: Int
-  price: Int
-  discount: Int
-  subtotal: Int
-  totalVATExclusive: Int
-  totalVATInclusive: Int
-  VATRate: Int
-  GP: Int
+  quantity: Float
+  price: Float
+  discount: Float
+  subtotal: Float
+  totalVATExclusive: Float
+  totalVATInclusive: Float
+  VATRate: Float
+  GP: Float
   header: LasecQuoteHeader
   note: String
   content: Any
@@ -60,13 +60,13 @@ type QuoteTimeLine {
 }
 
 type QuoteTotals {
-  totalVATExclusive: Int
-  totalVAT: Int
-  totalVATInclusive: Int
-  totalDiscount: Int
-  totalDiscountPercent: Int
-  GP: Int
-  actualGP: Int
+  totalVATExclusive: Float
+  totalVAT: Float
+  totalVATInclusive: Float
+  totalDiscount: Float
+  totalDiscountPercent: Float
+  GP: Float
+  actualGP: Float
 }
 
 type Quote {
@@ -82,11 +82,11 @@ type Quote {
   customer: User
   company: Organization
   totals: QuoteTotals
-  totalVATExclusive: Int
-  totalVAT: Int
-  totalVATInclusive: Int
-  GP: Int
-  actualGP: Int
+  totalVATExclusive: Float
+  totalVAT: Float
+  totalVATInclusive: Float
+  GP: Float
+  actualGP: Float
   created: Date
   modified: Date
   expirationDate: Date

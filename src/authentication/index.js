@@ -26,7 +26,7 @@ class AuthConfig {
       // manage users
       passport.serializeUser((user, done) => {
       // Use the OID property of the user as a key
-        logger.debug('AuthConfig.passport.serializeUser((user, done))', user);
+        logger.debug('AuthConfig.passport.serializeUser((user, done))');
         // users[user.profile.oid] = user;
         done(null, user.oid);
       });

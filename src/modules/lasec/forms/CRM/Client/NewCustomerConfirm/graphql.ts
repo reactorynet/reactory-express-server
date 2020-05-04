@@ -93,11 +93,10 @@ const graphql: Reactory.IFormGraphDefinition = {
       'jobDetails': 'jobDetails',
       'customer': 'customer',
       'organization': 'organization',
-      'address': 'address',
-      'clientDocuments': 'uploadedDocuments'
+      'address': 'address',      
     },
     edit: false,
-    new: false,
+    new: true,
     refreshEvents: [
       { name: 'lasec-crm::new-document::uploaded' }
     ],

@@ -651,9 +651,6 @@ const newUiSchema: any = {
   ],
 
   jobTitle: {
-    
-  },
-  jobType: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
@@ -669,6 +666,9 @@ const newUiSchema: any = {
         'LasecGetCustomerRoles.[].name': '[].label',
       },
     },
+  },
+  jobType: {
+    
   },
   lineManager: {
     
@@ -746,7 +746,7 @@ const schema: Reactory.ISchema = {
     },
     jobType: {
       type: "string",
-      title: "Job Type"
+      title: "Job Description"
     },
     clientDepartment: {
       type: "string",

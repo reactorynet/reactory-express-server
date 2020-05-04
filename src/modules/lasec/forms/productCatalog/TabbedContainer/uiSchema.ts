@@ -164,17 +164,7 @@ const uiSchema: any = {
             'formContext.$formData.toolbar.product': 'formData.product',
             'formContext.$formData.toolbar.view': 'query.uiSchema',
           },
-        },
-        {
-          id: 'product-sales-order',
-          title: 'Sales Order',
-          componentFqn: 'lasec-crm.LasecProductPurchaseOrders',
-          componentProps: {},
-          componentPropsMap: {
-            'formContext.$formData.toolbar.product': 'formData.product',
-            'formContext.$formData.toolbar.view': 'query.uiSchema',
-          },
-        },
+        },        
         {
           id: 'product-contracts',
           title: 'Contracts',

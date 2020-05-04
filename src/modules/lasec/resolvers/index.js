@@ -1,3 +1,4 @@
+import DashboardReolver from './Dashboard';
 import QuoteResolver from './QuoteResolver';
 import TeamResolver from './TeamResolver';
 import AuthenticationResolver from './AuthenticationResolver';
@@ -7,6 +8,7 @@ import LasecUserResolver from './LasecUserResolver';
 import CategoryResolver from './CategoryResolver';
 
 const toMerge = [
+  DashboardReolver,
   QuoteResolver,
   TeamResolver,
   AuthenticationResolver,

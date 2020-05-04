@@ -23,7 +23,6 @@ const ClientSchema: Reactory.ISchema = {
     firstName: {
       type: "string",
       title: "Firstname",
-      description: "Full first name only",
       minLength: 2    
     },
     lastName: {

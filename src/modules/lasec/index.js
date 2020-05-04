@@ -3,6 +3,10 @@ import lasecTypes from './graph/types';
 import lasecWorkflows from './workflow';
 import lasecForms from './forms';
 
+
+export { default as CONSTANTS } from './constants';
+
+
 export default {
   nameSpace: 'lasec',
   version: '1.0.0',

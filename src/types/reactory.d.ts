@@ -32,6 +32,18 @@ declare namespace Reactory {
       method?: string,
       delivery?: string,
     }
+
+    export interface IReactoryPluginDefinition {
+      nameSpace: String,
+      name: String,
+      version: String,
+      roles?: String[],
+      root?: String,
+      disabled?: Boolean,
+      verified?: Boolean,
+      certificate?: String,
+      license?: String
+    }
   }
 
   export interface IMongoDocument {
@@ -341,6 +353,7 @@ declare namespace Reactory {
     workflows?: IWorkflow[],
     forms?: IReactoryForm[],
     services?: IReactoryServiceDefinition[],
+    clientPlugins: Client.IReactoryPluginDefinition
   }
 
   export interface IReactoryServiceResult<T> {

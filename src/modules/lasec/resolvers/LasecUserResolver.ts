@@ -2,6 +2,7 @@
 import logger from '@reactory/server-core/logging';
 import { isEmpty } from 'lodash';
 import { IObjectSchema } from '@reactory/server/core/schema';
+import LasecApi from '@reactory/server-modules/lasec/api';
 import { User } from "@reactory/server-core/models";
 import { Quote, QuoteReminder } from '../schema/Quote';
 
@@ -35,17 +36,16 @@ interface LasecNextActionsFilter {
 
 export default {  
   Query: {
-    LasecGetRemoteUsers: async () => {
-      logger.debug(`LasecSalesTeams() ${global.user.fullName()}`);
+    LasecGetRemoteUsers: async (pbj: any, params: Lasec360UserSearch) => {
+      logger.debug(`LasecGetRemoteUsers() ${global.user.fullName()}`);
       
-      return [];      
+      return LasecApi.User.getLasecUsers(params.repIds, "staff_user_id")                  
     },
     LasecGetRemoteUser: async (obj, params: any) => {      
       const search: Lasec360User = params.search;
-      logger.debug(`LasecSalesTeams() ${ search } ${global.user.fullName()}`);
+      logger.debug(`LasecGetRemoteUser() ${ search } ${global.user.fullName()}`);
       let userResult: Lasec360User = null;
-      
-      
+            
       return userResult;
     },
     LasecGetUserNextActions: async (obj, params: any): Promise<IObjectSchema> => {

@@ -44,7 +44,7 @@ type LasecNextAction {
 }
 
 extend type Query {
-  LasecGetRemoteUsers: [ Lasec360User ]
+  LasecGetRemoteUsers(search: Lasec360UserSearch): [ Lasec360User ]
   LasecGetRemoteUser(search: Lasec360UserSearch): Lasec360User
   LasecGetUserNextActions(id: String): [ LasecNextAction  ]
 }

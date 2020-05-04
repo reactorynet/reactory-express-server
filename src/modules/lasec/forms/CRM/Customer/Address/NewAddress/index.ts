@@ -12,6 +12,7 @@ const uiSchema: any = {
     style: {
       margin: '16',
     },
+    submitIcon: 'check',
     showSubmit: true,
     showRefresh: false,
     buttons: [
@@ -26,6 +27,7 @@ const uiSchema: any = {
         type: 'callback',
         handler: 'onCancel'
       },
+      /*
       {
         key: 'validate',
         buttonProps: {
@@ -34,9 +36,10 @@ const uiSchema: any = {
         iconProps: {
           icon: 'check_outline'
         },
-        type: 'mutation',
+        type: 'callback',
         handler: 'validateAddress'
       }
+      */
     ]
   },
   'ui:field': 'GridLayout',
@@ -194,6 +197,16 @@ const uiSchema: any = {
 const schema: Reactory.ISchema = {
   type: 'object',
   title: "",
+  required: [
+    "unitNumber", 
+    "suburb", 
+    "floorNumber", 
+    "postalCode", 
+    "buildingName", 
+    "province", 
+    "city",
+    "streetName"        
+  ],
   properties: {
     id: {
       title: 'Id',

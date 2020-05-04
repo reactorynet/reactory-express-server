@@ -1,4 +1,6 @@
 
+import { LasecUserLookupQuery } from './graphql';
+
 const {
   CDN_ROOT,
 } = process.env;
@@ -93,7 +95,7 @@ export default {
         selectOptions: [
           { key: 'me', value: 'me', label: 'My Quotes' },
           { key: 'team', value: 'team', label: 'Team / Reps' },
-          { key: 'custom', value: 'custom', label: 'Custom User Selection' },
+          /*{ key: 'custom', value: 'custom', label: 'Custom User Selection' },*/
         ],
       },
     },
@@ -102,6 +104,9 @@ export default {
       'ui:widget': 'SelectWithDataWidget',
       'ui:options': {
         multiSelect: true,
+        inputProps: {
+          variant: 'outline'
+        },
         query: `query LasecSalesTeams {
           LasecSalesTeams {
             id
@@ -123,11 +128,12 @@ export default {
        * The agent should be pulled from AD groups.
        **/
     userFilter: {
+      'ui:graphql': LasecUserLookupQuery,
       'ui:widget': 'UserSelectorWidget',
       'ui:options': {
         widget: 'UserSelectorWidget',
         lookupWidget: 'core.UserSearch',
-        lookupOnSelect: 'onSelect',
+        lookupOnSelect: 'onSelect',        
       },
     },
   },
@@ -203,11 +209,11 @@ export default {
       },
     },    
     quoteINVPie: {
-      'ui:widget': 'PieChartWidget',
+      'ui:widget': 'LineChartWidget',
       'ui:options': {
-        size: 120,
-        thickness: 5,
-        variant: 'static',
+        //size: 120,
+        //thickness: 5,
+        //variant: 'static',
       },
     },    
     quoteStatusComposed: {
@@ -354,13 +360,20 @@ export default {
         },
         { title: 'Status', field: 'statusName', defaultGroupOrder: 0 },
         { title: 'Company', field: 'companyTradingName', defaultGroupOrder: 1 },
-        { title: 'Customer', field: 'customerName' },
+        { title: 'Customer', field: 'customerName', style: { paddingTop: '8px' } },
         {
           title: 'Total (VAT Excl)',
           field: 'totalVATExclusive',
-          component: 'core.CurrencyLabel@1.0.0',
+          component: 'core.CurrencyLabel@1.0.0',  
+          props: {
+            uiSchema: {
+              'ui:options': {
+                valueProp: 'totalVATExclusive'
+              }
+            }
+          },        
           propsMap: {
-            totalVATExclusive: 'value',
+            'rowData.totalVATExclusive': 'totalVATExclusive',
           },
         },
         {

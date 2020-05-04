@@ -131,12 +131,11 @@ const resolvers = {
             }
           }
         `).then();
-
-        logger.debug('Result from profile refresh', refreshResult);
-
-        if(refreshResult && refreshResult.data && refreshResult.data.refreshProfileData) {
-          const { user, messages } = refreshResult.data.refreshProfileData;
+        
+        if(refreshResult && refreshResult.data && refreshResult.data.refreshProfileData) {          
+          const { user, messages } = refreshResult.data.refreshProfileData;          
           uxmessages = [ ...uxmessages, ...messages ];
+          logger.debug(`Result from profile refresh ${user.fullNameWithEmail}, has ${uxmessages.length} messages`);
         }
         } catch (profileRefreshError) {
           logger.error(`Error refreshing profile data for user ${user.firstName}`, profileRefreshError);
@@ -157,7 +156,7 @@ const resolvers = {
       let navigationComponents = [];
       const settingKey = `navigation_components/${process.env.MODE}`;
       const navigationComponentsSetting = partner.getSetting(settingKey, [], false);
-      logger.debug(`>>>>> FOUND navigationComponentSettings <<<<<`, navigationComponentsSetting);
+      //logger.debug(`>>>>> FOUND navigationComponentSettings <<<<<`, navigationComponentsSetting);
 
       if(navigationComponentsSetting && navigationComponentsSetting.data) {
         navigationComponents = [ ...navigationComponentsSetting.data ];

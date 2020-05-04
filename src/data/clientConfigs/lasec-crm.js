@@ -1180,6 +1180,12 @@ const LASEC_CONFIG = {
       altRowStyle: {
         backgroundColor: '#FAFAFA'
       }
+    },
+    MaterialTextField: {
+      variant: 'outlined'
+    },
+    MaterialInput: {
+      variant: 'outlined'
     }
   },
   settings: [

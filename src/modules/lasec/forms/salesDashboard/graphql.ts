@@ -1,4 +1,25 @@
 import { fileAsString } from '../../../../utils/io';
+import { Reactory } from 'types/reactory';
+
+
+export const LasecUserLookupQuery: Reactory.IReactoryFormQuery = {
+  name: 'Lasec360UserList',
+  text: fileAsString(require.resolve('./Lasec360UserList.gql')),
+  variables: {
+    '$formData.repIds': 'repIds'
+  },
+  autoQuery: false,
+  delete: false,
+  edit: false,
+  new: false,
+  resultMap: {
+    'id': 'id',
+    'code': 'code',
+    'staff_user_id': 'repId',
+    'first_name': 'firstName',
+    'email': 'email'
+  }
+};
 
 export default {
   query: {
@@ -45,6 +66,8 @@ export default {
       'quotes[].code': ['quotes[].quote_id', 'quotes[].code'],
       'quotes[].customer.fullName': 'quotes[].customerName',
       'quotes[].statusName' : 'quotes[].statusName',
+      'quotes[].totalVATExclusive' : 'quotes[].totalVATExclusive',
+      'quotes[].totalVATInclusive' : 'quotes[].totalVATInclusive',
       'quotes[].company.tradingName': 'quotes[].companyTradingName',
     },
     edit: false,

@@ -1241,17 +1241,19 @@ const getAddress = async (args) => {
   const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true } });
 
   let _ids = [];
-  if (isArray(addressIds.ids) === true) {
+  if (isArray(addressIds.ids) === true && addressIds.length > 0) {
+    debugger
     _ids = [...addressIds.ids];
+    const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
+    const addresses = [...addressDetails.items];
+    const formattedAddresses = addresses.map((ad) => {
+      return ad.formatted_address;
+    });
+
+    return formattedAddresses;
   }
-
-  const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
-  const addresses = [...addressDetails.items];
-  const formattedAddresses = addresses.map((ad) => {
-    return ad.formatted_address;
-  });
-
-  return formattedAddresses;
+  
+  return [];
 }
 
 const createNewAddress = async (args) => {
@@ -1302,7 +1304,7 @@ const createNewAddress = async (args) => {
       map: {
         lat: 0,
         lng: 0,
-        formatted_address: `${addressDetails.addressFields.unitNumber}, ${addressDetails.addressFields.unitName} ${addressDetails.addressFields.streetNumber} ${addressDetails.addressFields.streetName}${addressDetails.addressFields.suburb} ${addressDetails.addressFields.metro} ${addressDetails.addressFields.city} ${addressDetails.addressFields.postalCode} ${addressDetails.addressFields.province} ${addressDetails.addressFields.country}`,
+        formatted_address: `${addressDetails.addressFields.unitNumber}, ${addressDetails.addressFields.unitName} ${addressDetails.addressFields.streetNumber} ${addressDetails.addressFields.streetName} ${addressDetails.addressFields.suburb} ${addressDetails.addressFields.metro} ${addressDetails.addressFields.city} ${addressDetails.addressFields.postalCode} ${addressDetails.addressFields.province} ${addressDetails.addressFields.country}`,
         address_components: [],
       },
       confirm_pin: true,
@@ -1319,13 +1321,20 @@ const createNewAddress = async (args) => {
     }
 
     const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
-
+    if(apiResponse) {
+      return {
+        success: apiResponse.status === 'success',
+        message: apiResponse.status === 'success' ? 'Address added successfully' : 'Could not add new address.',
+        id: apiResponse.status === 'success' ? apiResponse.payload.id : 0,
+      };
+    } 
+    
     return {
-      success: apiResponse.status === 'success',
-      message: apiResponse.status === 'success' ? 'Address added successfully' : 'Could not add new address.',
-      id: apiResponse.status === 'success' ? apiResponse.payload.id : 0,
+      success: false,
+      message: 'No Response from API',
+      id: 0,
     };
-
+    
   } catch (ex) {
     logger.error(`ERROR CREATING ADDRESS::  ${ex}`);
     return {

@@ -386,7 +386,7 @@ export const newUiSchema: any = {
         {
           key: 'cod',
           value: 'cod',
-          label: 'COD',
+          label: 'Pre-Payment',
         },
 
       ],

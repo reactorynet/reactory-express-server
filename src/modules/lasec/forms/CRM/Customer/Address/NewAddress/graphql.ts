@@ -42,7 +42,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         }
       }`,
       objectMap: true,
-      updateMessage: 'Updating Template Content',
+      updateMessage: 'Updating Address / Place Details',
       variables: {
         'formData.buildingType': 'addressDetails.buildingDescriptionId',
         'formData.floorNumber': 'addressDetails.buildingFloorNumberId',

@@ -9,7 +9,9 @@ import $defaultExport from './exports';
 
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
-
+/**
+ * Sales Dashboard
+ */
 const SalesDashboard: Reactory.IReactoryForm = {
   id: 'CrmDashboard',
   ...defaultFormProps,
@@ -45,9 +47,11 @@ const SalesDashboard: Reactory.IReactoryForm = {
   },
   defaultFormValue: {
     toolbar: {
-      period: 'this-week',
+      period: 'this-month',
       periodStart: moment().startOf('month').toISOString(),
-      periodEnd: moment().endOf('month').toISOString()
+      periodEnd: moment().endOf('month').toISOString(),
+      teamFilter: [],
+      agentSelection: 'me'
     },
     options: {  
       bypassEmail: true

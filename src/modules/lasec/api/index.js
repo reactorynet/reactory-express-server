@@ -25,9 +25,9 @@ const config = {
 };
 
 
-class LasecNotAuthenticatedException extends ApiError {
+export class LasecNotAuthenticatedException extends ApiError {
   constructor(message) {
-    super(message, {
+    super(message || 'Please login with your 360 Credentials', {
       __typename: 'lasec.api.LasecNotAuthenticatedException',
       redirect: '/360',
       componentResolver: 'lasec-crm.Login360'
@@ -35,7 +35,7 @@ class LasecNotAuthenticatedException extends ApiError {
   }
 }
 
-class TokenExpiredException extends ApiError {
+export class TokenExpiredException extends ApiError {
   constructor(message) {
     super(message, {
       __typename: 'lasec.api.TokenExpiredException',
@@ -69,7 +69,7 @@ const getStorageItem = async (key) => {
     if (isNil(lasecAuth) === true) throw new LasecNotAuthenticatedException('Please login with your lasec 360 account');
 
     if (lasecAuth.props) {
-      logger.debug(`Found login information for lasec ${lasecAuth}`);
+      logger.debug(`Found login information for lasec`);
       const {
         payload,
         username,
@@ -127,7 +127,6 @@ const getStorageItem = async (key) => {
           logger.warn(`Could not log user in with lasec api ${authError.message}`);
         }
       }
-
       return null;
     }
   }
@@ -153,8 +152,6 @@ export function PUT(url, data, auth = true) {
 export async function FETCH(url, args, auth = true, failed = false, attempt = 0) {
   // url = `${url}`;
   let absoluteUrl = `${config.SECONDARY_API_URL}/${url}`;
-
-  logger.debug(`::lasec-api::FETCH(${absoluteUrl})\n`, { auth, failed, attempt });
 
   const kwargs = args || {};
   if (!kwargs.headers) {
@@ -259,7 +256,7 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
 const defaultParams = {
   filter: {},
   ordering: {},
-  pagination: { enabled: false },
+  pagination: { enabled: false, page_size: 10 },
 };
 
 const defaultQuoteObjectMap = {
@@ -425,7 +422,7 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    GetCustomerJobTypes: async(params = defaultParams) => {
+    GetCustomerJobTypes: async (params = defaultParams) => {
       const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } });
       const {
         status, payload,
@@ -695,7 +692,7 @@ const Api = {
 
       if (status === 'success') {
         return payload;
-      }
+      } 
 
       return { pagination: {}, ids: [], items: [] };
     }
@@ -939,12 +936,14 @@ const Api = {
   User: {
     getLasecUser: async (staff_user_id) => {
       try {
+        logger.debug(`Getting Lasec User With Staff User Id ${staff_user_id}`)
         const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {
+          ...defaultParams,
           filter: {
-            ids: [staff_user_id]
+            staff_user_id: [staff_user_id]
           }
         }, true, false, 0)
-          .then()
+          .then();
 
         if (lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {
           if (isArray(lasecStaffUserResponse.payload) && lasecStaffUserResponse.payload.length === 1) {
@@ -962,35 +961,119 @@ const Api = {
 
     },
 
-    getLasecUsers: async (staff_user_ids = []) => {
+    getLasecUsers: async (ids = [], fieldName = "ids") => {
+      debugger;
+      let params = { ...defaultParams };
+      let users = [];
+
+      params.filter[fieldName] = ids;
+
+      logger.debug(`LasecAPI.User.getLasecUsers(ids = ${ids}, fieldName = ${fieldName})`)
+
       const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {
-        params: {
-          filter: {
-            ids: staff_user_ids
-          }
-        }
+        params
       }, true, false, 0).then();
 
-      logger.debug(`Response from API ${lasecStaffUserResponse.status}`, lasecStaffUserResponse);
-      if (lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload && isArray(lasecStaffUserResponse.payload.items)) {
-        return lasecStaffUserResponse.payload.items;
+      debugger;
+      if (lasecStaffUserResponse.status === "success" && lasecStaffUserResponse.payload) {
+
+        if (isArray(lasecStaffUserResponse.payload.items) === true) {
+          logger.debug(`LasecApi.getLasecUsers() =>  (${lasecStaffUserResponse.payload.items}) items response`);
+          users = [...lasecStaffUserResponse.payload.items];
+        }
+
+        if (isArray(lasecStaffUserResponse.payload.ids) === true) {
+
+          const { pagination } = lasecStaffUserResponse.payload;
+          logger.debug(`LasecApi.getLasecUsers() =>  (${lasecStaffUserResponse.payload.ids}) ids response`);
+          if (pagination && pagination.has_next_page === true) {
+            /**
+             * 
+              "pagination": {
+                "num_items": 313,
+                "has_prev_page": false,
+                "current_page": 1,
+                "last_item_index": 20,
+                "page_size": 20,
+                "has_next_page": true,
+                "num_pages": 16,
+                "first_item_index": 1
+              },
+             */
+
+            let promises = [];
+            for (let pageIndex = lasecStaffUserResponse.payload.pagination.current_page + 1; pageIndex <= pagination.num_pages; pageIndex += 1) {
+              promises.push(FETCH(SECONDARY_API_URLS.staff_user_data.url, {
+                params,
+                pagination: {
+                  current_page: pageIndex,
+                  page_size: pagination.page_size,
+                }
+              }, true, false, 0));
+            }
+
+            let allIdResponses = await Promise.all(promises).then();
+            debugger;
+            promises = [];
+
+            allIdResponses.forEach((idsResponse) => {
+              if (idsResponse.status === "success" && idsResponse.payload.ids) {
+                promises.push(FETCH(SECONDARY_API_URLS.staff_user_data.url, {
+                  ...defaultParams,
+                  filter: {
+                    "ids": idsResponse.payload.ids
+                  }
+                }, true, false, 0));
+              }
+            });
+            debugger;
+            let allItemResponse = await Promise.all(promises).then();
+
+            allItemResponse.forEach((itemsResponse) => {
+              if (itemsResponse && itemsResponse.status === "success" && itemsResponse.items) {
+                users = [...users, ...itemsResponse.items];
+              }
+            });
+          } else {
+            debugger;
+            let detailResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {
+              params: {
+                filter: {
+                  ids: lasecStaffUserResponse.payload.ids,
+                }
+              },
+            }, true, false, 0).then();
+          }
+
+          debugger;
+          if (detailResponse.status === "success" && detailResponse.payload.items) {
+            users = [...users, ...detailResponse.payload.items];
+          }
+        }
+
+      } else {
+        logger.error("Could not load Lasec Users", lasecStaffUserResponse);
+        throw new ApiError("Did not get a good response from remote api");
       }
 
-      return null;
+      return users;
     },
 
-    getUserTargets: async (staff_user_ids = []) => {
+    getUserTargets: async (ids = [], fieldName = "ids") => {
       try {
-        const users = await Api.User.getLasecUsers(staff_user_ids).then();
+        debugger;
+        logger.debug(`LasecApi.User.getUserTargets( ids = ${ids} , fieldName = ${fieldName} )`);
+        const users = await Api.User.getLasecUsers(ids, fieldName).then();
+        debugger;
         logger.debug(`Found ${users.length} results for user targets`, users);
         let total = 0;
-        users.forEach(user => total += user.target);
+        users.forEach(user => total += (user.target | 0));
         return total;
       } catch (getUsersErrors) {
-        logger.error(`Error getting users and calculating targets`, { getUsersErrors });
+        logger.error(`Error getting users and calculating targets ${getUsersErrors.message}`);
         return 0;
       }
-    }
+    },
   },
   Authentication: {
     login: async (username, password) => {

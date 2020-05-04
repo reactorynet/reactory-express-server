@@ -94,8 +94,9 @@ export default {
                   title: 'Team Filter',
                   type: 'array',
                   items: {
-                    type: 'string'
-                  }
+                    type: 'string',
+                    title: 'Team Id'
+                  },
                 },
               },
               required: [
@@ -151,19 +152,16 @@ export default {
       type: 'object',
       title: 'Overview',
       properties: {
-        /*
-         * Deprecated property - not used on dashboard
-         * left for reference purposes
-
-        quoteStatusFunnel: {
+        quoteStatusPie: PieChart("Quote by Status"),
+        quoteISOPie: PieChart("ISO by Team"),
+        quoteINVPie: {
           type: 'object',
-          title: 'Quote Status Funnel',
+          title: 'Invoices by Team / Rep',
           properties: {
             data: {
               type: 'array',
               items: {
                 type: 'object',
-                title: 'Data Point',
                 properties: {
                   value: {
                     type: 'number',
@@ -179,13 +177,9 @@ export default {
                   }
                 }
               }
-            },
-          },
+            }
+          }
         },
-        */
-        quoteStatusPie: PieChart("Quote by Status"),
-        quoteISOPie: PieChart("ISO by Team"),
-        quoteINVPie: PieChart("Invoices by Team"),
         quoteStatusComposed: {
           type: 'object',
           title: 'Quote Status Funnel',
@@ -273,7 +267,7 @@ export default {
         bypassEmail: {
           type: 'boolean',
           title: 'Bypass Email'
-        },          
+        },
       }
     },
     quotes: {
@@ -322,7 +316,7 @@ export default {
             type: 'string',
             title: 'Next Action'
           },
-          nextActionNote : {
+          nextActionNote: {
             type: 'string',
             title: 'Next Action Note'
           },
