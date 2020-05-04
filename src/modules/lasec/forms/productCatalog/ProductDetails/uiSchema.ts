@@ -802,7 +802,6 @@ const uiSchema: any = {
   products: {
     'ui:widget': 'GridLayoutWidget',
     'ui:options': {
-      // ADD A CHILD COMPONENT
       component: 'lasec.ProductDimensionCard',
       componentProps: {},
       remoteData: true,
