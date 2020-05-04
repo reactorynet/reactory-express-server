@@ -139,27 +139,27 @@ const getProducts = async (params) => {
 
   const cachekey = Hash(`product_list_${product}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`.toLowerCase());
 
-  let _cachedResults = await getCacheItem(cachekey);
-  if (_cachedResults) {
+  // let _cachedResults = await getCacheItem(cachekey);
+  // if (_cachedResults) {
 
-    if (iter === 0) {
-      execql(`query LasecGetProductList($product: String!, $paging: PagingRequest, $iter: Int){
-        LasecGetProductList(product: $product, paging: $paging, iter: $iter){
-          paging {
-            total
-            page
-            hasNext
-            pageSize
-          }
-          products {
-            id
-          }
-        }
-      }`, { product, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
-    }
+  //   if (iter === 0) {
+  //     execql(`query LasecGetProductList($product: String!, $paging: PagingRequest, $iter: Int){
+  //       LasecGetProductList(product: $product, paging: $paging, iter: $iter){
+  //         paging {
+  //           total
+  //           page
+  //           hasNext
+  //           pageSize
+  //         }
+  //         products {
+  //           id
+  //         }
+  //       }
+  //     }`, { product, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+  //   }
 
-    return _cachedResults;
-  }
+  //   return _cachedResults;
+  // }
 
   const productResult = await lasecApi.Products.list({ filter, pagination: { current_page: paging.page, page_size: paging.pageSize } }).then();
 
