@@ -804,6 +804,7 @@ const uiSchema: any = {
     'ui:options': {
       component: 'lasec.ProductDimensionCard',
       componentProps: {},
+      loadingText: 'Loading Product Dimensions, please wait a moment',
       remoteData: true,
       variables: {
         'props.formContext.$formData.product': 'product',
