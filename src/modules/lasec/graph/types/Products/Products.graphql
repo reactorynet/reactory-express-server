@@ -40,7 +40,6 @@ type Product {
   packedWeight: Float
   numberOfSalesOrders: Int
   numberOfPurchaseOrders: Int
-
   supplier: String
   model: String
   shipmentSize: Int

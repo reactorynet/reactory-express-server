@@ -4,7 +4,7 @@ const schema: Reactory.ISchema = {
   type: 'object',
   properties: {
     product: {
-      type: 'string',      
+      type: 'string',
     },
     products: {
       type: 'array',
@@ -61,6 +61,19 @@ const schema: Reactory.ISchema = {
           },
           numberOfPurchaseOrders:{
             type: 'number'
+          },
+
+          supplier:{
+            type: 'string'
+          },
+          model:{
+            type: 'string'
+          },
+          shipmentSize:{
+            type: 'string'
+          },
+          exWorker:{
+            type: 'string'
           },
         }
       },
