@@ -181,46 +181,85 @@ const Menus = {
       items: [
         {
           ordinal: 0,
-          title: 'Clients',
+          title: 'Clients (NEW)',
           link: '/crm/clients/',
           icon: 'accessible',
           roles: ['USER'],
         },
+        
         {
           ordinal: 0,
-          title: 'Quotes',
-          link: '/crm/quotes',
+          title: 'Clients (360)',
+          link: '/360/crm/customer-search',
+          icon: 'accessible',
+          roles: ['USER'],
+        },
+        
+        {
+          ordinal: 0,
+          title: 'Quotes (NEW)',
+          link: '/crm/quotes/',
           icon: 'add_shopping_cart',
           roles: ['USER'],
         },
+        
+        {
+          ordinal: 0,
+          title: 'Quotes (360)',
+          link: '/360/crm/all-quotes',
+          icon: 'add_shopping_cart',
+          roles: ['USER'],
+        },
+        
         {
           ordinal: 3,
           title: 'ISO',
-          link: '/crm/sales-orders',
+          link: '/crm/sales-orders/',
           icon: 'shopping_cart',
           roles: ['USER'],
         },
+        
         {
           ordinal: 3,
-          title: 'Invoices',
-          link: '/crm/invoices',
+          title: 'ISO (360)',
+          link: '/360/crm/sales-orders',
+          icon: 'shopping_cart',
+          roles: ['USER'],
+        },
+        
+        {
+          ordinal: 3,
+          title: 'Invoices (NEW)',
+          link: '/crm/invoices/',
           icon: 'attach_money',
           roles: ['USER'],
         },
+
         {
           ordinal: 3,
-          title: 'Sales History',
-          link: '/crm/sales-history',
+          title: 'Invoices (360)',
+          link: '/360/crm/invoices',
+          icon: 'attach_money',
+          roles: ['USER'],
+        },
+        
+        {
+          ordinal: 3,
+          title: 'Sales History (NEW)',
+          link: '/crm/sales-history/',
           icon: 'history',
           roles: ['USER'],
         },
+
         {
-          ordinal: 1,
-          title: 'Catalogue',
-          link: '/crm/catalogue/',
-          icon: 'book',
+          ordinal: 3,
+          title: 'Sales History (360)',
+          link: '/360/crm/sales-history',
+          icon: 'history',
           roles: ['USER'],
         },
+       
+       
         {
           ordinal: 5,
           title: 'Sales Assistant',
@@ -241,6 +280,13 @@ const Menus = {
           ordinal: 0,
           title: 'Catalogue',
           link: '/product-catalogue/',
+          icon: 'book',
+          roles: ['USER'],
+        },
+        {
+          ordinal: 1,
+          title: 'Catalogue (360)',
+          link: '/360/catalogue/search',
           icon: 'book',
           roles: ['USER'],
         },
