@@ -1463,7 +1463,7 @@ proxiedRoutes.forEach((props) => {
   });
 });
 
-if (MODE === 'DEVELOP' || MODE === "QA") {
+if (MODE !== 'PRODUCTION') {
   MainMenu.entries = [...Menus.PRODUCTION, ...Menus.DEVELOP];
 } else {
   MainMenu.entries = [...Menus.PRODUCTION];
