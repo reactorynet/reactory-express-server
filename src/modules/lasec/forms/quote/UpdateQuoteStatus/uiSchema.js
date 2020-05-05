@@ -54,7 +54,7 @@ const uiSchema = {
   customer: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: '${formContext.formData.customer.fullName} @ ${formContext.formData.company.tradingName}',
+      format: '${formContext.$formData.customer.fullName} @ ${formContext.$formData.company.tradingName}',
       icon: 'account_circle',
       iconPosition: 'left',
       iconProps: {
@@ -66,7 +66,7 @@ const uiSchema = {
   statusName: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: '${formContext.query.quote_id} - ${formContext.formData.statusName}',
+      format: '${formContext.query.quote_id} - ${formContext.$formData.statusName}',
       title: 'Current Status',
       icon: 'visibility',
       iconPosition: 'left',

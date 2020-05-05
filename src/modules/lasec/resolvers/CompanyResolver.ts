@@ -553,7 +553,7 @@ const getCustomerRepCodes = async (args) => {
 const CLIENT_TITLES_KEY = "LasecClientTitles";
 
 const getPersonTitles = async () => {
-
+  logger.debug(`Fetching Client Titles`);
   const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
 
   if(cached) return cached.items;
@@ -561,7 +561,7 @@ const getPersonTitles = async () => {
   const idsResponse = await lasecApi.Customers.GetPersonTitles();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: { enabled: false, page_size: 10 } });
     if (details && details.items) {
       
       setCacheItem(Hash(CLIENT_TITLES_KEY), details, 60);

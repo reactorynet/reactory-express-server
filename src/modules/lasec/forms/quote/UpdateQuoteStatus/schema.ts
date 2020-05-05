@@ -30,8 +30,7 @@ const schema: Reactory.ISchema = {
     },
     company: {
       type: 'object',
-      title: 'Company',
-      description: 'Company For the Quote',
+      title: 'Company',      
       properties: {
         id: {
           type: 'string',
@@ -51,8 +50,7 @@ const schema: Reactory.ISchema = {
     },
     statusName: {
       type: 'string',
-      title: 'Quote Status',
-      description: 'Current Quote Status',
+      title: 'Quote Status',      
     },
     nextAction: {
       type: 'string',

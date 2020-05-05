@@ -28,6 +28,14 @@ import {
   totalsFromMetaData,
   synchronizeQuote,
   getTargets,
+  getQuotes,
+  getQuoteEmails,
+  getLasecQuoteById,
+  LasecSendQuoteEmail,
+  lasecGetProductDashboard,
+  getSalesOrders,
+  getPagedQuotes
+  
  } from './Helpers';
 
 
@@ -460,7 +468,7 @@ export default {
   }, 
   Query: {
     LasecGetQuoteList: async (obj, { search }) => {
-      return getQuotes();
+      return getQuotes({ search });
     },    
     LasecGetProductDashboard: async (obj, { dashparams }) => {
       return lasecGetProductDashboard(dashparams);

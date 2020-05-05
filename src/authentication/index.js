@@ -55,13 +55,7 @@ class AuthConfig {
       // Callback function called once the sign-in is complete
       // and an access token has been obtained
       async function signInComplete(req, iss, sub, profile, accessToken, refreshToken, params, done) {
-        logger.info('Sign in Complete', {
-          iss,
-          sub,
-          profile,
-          params: params || 'no-params',
-          done,
-        });
+        logger.info(`Sign in Complete ${profile && profile.displayName ? profile.displayName : 'NO DISPLAY NAME FOR USER'} : EXPIRES ${ moment().add(params.expires_in, 'seconds').format('YYYY-MM-DD HH:mm:ss') }`);
 
         if (!profile.oid) {
           // return done(new Error('No OID found in user profile.'), null);
