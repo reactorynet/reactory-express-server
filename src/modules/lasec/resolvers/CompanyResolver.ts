@@ -509,7 +509,7 @@ const getCustomerRanking = async (params) => {
 
 
 
-const getCustomerClass = async () => {
+const getCustomerClass = async (params) => {
   const cached = await getCacheItem(Hash('LASEC_CUSTOMER_CLASS')).then();
   if(cached && cached.items) return cached.items;
   const idsResponse = await lasecApi.Customers.GetCustomerClass();
