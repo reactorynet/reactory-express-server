@@ -554,16 +554,16 @@ const CLIENT_TITLES_KEY = "LasecClientTitles";
 
 const getPersonTitles = async () => {
   logger.debug(`<<<<<<<< Fetching Client Titles >>>>>>>>>>>>>`);
-  const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
-  if(cached && cached.items) return cached.items;
+  //const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
+  //if(cached && cached.items) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetPersonTitles();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: { enabled: false, page_size: 10 } });
+    const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: { enabled: false  } });
     if (details && details.items) {
       
-      setCacheItem(Hash(CLIENT_TITLES_KEY), details, 60);
+      //setCacheItem(Hash(CLIENT_TITLES_KEY), details, 60);
 
       return details.items;
     }
@@ -589,9 +589,9 @@ const getPersonTitle = async (params) => {
 
 const getCustomerJobTypes = async () => {
 
-  const cached = await getCacheItem(Hash(CLIENT_JOBTYPES_KEY)).then();
+  //const cached = await getCacheItem(Hash(CLIENT_JOBTYPES_KEY)).then();
 
-  if(cached && cached.items) return cached.items;
+ // if(cached && cached.items) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetCustomerJobTypes();
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
