@@ -802,10 +802,46 @@ const uiSchema: any = {
   products: {
     'ui:widget': 'GridLayoutWidget',
     'ui:options': {
-      component: 'lasec.ProductDimensionCard',
-      componentProps: {},
+      component: 'lasec.ProductCardComponent@1.0.0',
+      componentProps: {
+        cardContent: {
+          fields: [
+            {
+              label: 'Packed length',
+              value: 'packedLength',
+              unit: 'cm',
+              icon: ''
+            },
+            {
+              label: 'Packed Width',
+              value: 'packedWidth',
+              unit: 'cm',
+              icon: ''
+            },
+            {
+              label: 'Packed Height',
+              value: 'packedHeight',
+              unit: 'cm',
+              icon: ''
+            },
+            {
+              label: 'Packed Volume',
+              value: 'packedVolume',
+              unit: 'm3',
+              icon: ''
+            },
+            {
+              label: 'Packed Weight',
+              value: 'packedWeight',
+              unit: 'kg',
+              icon: ''
+            },
+          ]
+        },
+      },
       loadingText: 'Loading Product Dimensions, please wait a moment',
       remoteData: true,
+
       variables: {
         'props.formContext.$formData.product': 'product',
         'props.formContext.$formData.paging': 'paging'
@@ -849,7 +885,5 @@ const uiSchema: any = {
     },
   }
 };
-
-
 
 export default uiSchema;
