@@ -553,7 +553,7 @@ const getCustomerRepCodes = async (args) => {
 const CLIENT_TITLES_KEY = "LasecClientTitles";
 
 const getPersonTitles = async () => {
-  logger.debug(`Fetching Client Titles`);
+  logger.debug(`<<<<<<<< Fetching Client Titles >>>>>>>>>>>>>`);
   const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
 
   if(cached) return cached.items;
