@@ -198,14 +198,19 @@ const schema: Reactory.ISchema = {
   type: 'object',
   title: "",
   required: [
-    "unitNumber", 
-    "suburb", 
-    "floorNumber", 
-    "postalCode", 
-    "buildingName", 
-    "province", 
+    "unitNumber",
+    "unitName",
+    "suburb",
+    "floorNumber",
+    "postalCode",
+    "buildingName",
+    "province",
     "city",
-    "streetName"        
+    "metro",
+    "country",
+    "streetName",
+    "streetNumber",
+    "buildingType"
   ],
   properties: {
     id: {

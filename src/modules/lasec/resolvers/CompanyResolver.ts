@@ -563,7 +563,7 @@ const getPersonTitles = async () => {
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: { enabled: false, page_size: 10 } });
     if (details && details.items) {
-      
+
       setCacheItem(Hash(CLIENT_TITLES_KEY), details, 60);
 
       return details.items;
@@ -576,13 +576,13 @@ const getPersonTitles = async () => {
 
 const getPersonTitle = async (params) => {
   logger.debug(`Looking for title with id ${params.id}`)
-  const titles = await getPersonTitles(params).then();  
-  
+  const titles = await getPersonTitles(params).then();
+
   if(titles.length > 0) {
     const found = lodash.find(titles, { id: params.id });
     return found;
   }
-  
+
   return null;
 };
 
@@ -1252,7 +1252,7 @@ const getAddress = async (args) => {
 
     return formattedAddresses;
   }
-  
+
   return [];
 }
 
@@ -1286,25 +1286,25 @@ const createNewAddress = async (args) => {
   try {
     const { addressDetails } = args;
     const addressParams = {
-      building_description_id: addressDetails.buildingDescriptionId,
-      building_floor_number_id: addressDetails.buildingFloorNumberId,
-      unit: addressDetails.unit,
+      building_description_id: addressDetails.buildingDescriptionId || '',
+      building_floor_number_id: addressDetails.buildingFloorNumberId || '',
+      unit: addressDetails.unit || '',
       address_fields: {
-        0: addressDetails.addressFields.unitNumber,
-        1: addressDetails.addressFields.unitName,
-        2: addressDetails.addressFields.streetNumber,
-        3: addressDetails.addressFields.streetName,
-        4: addressDetails.addressFields.suburb,
-        5: addressDetails.addressFields.metro,
-        6: addressDetails.addressFields.city,
-        7: addressDetails.addressFields.postalCode,
-        8: addressDetails.addressFields.province,
-        9: addressDetails.addressFields.country,
+        0: addressDetails.addressFields.unitNumber || '',
+        1: addressDetails.addressFields.unitName || '',
+        2: addressDetails.addressFields.streetNumber || '',
+        3: addressDetails.addressFields.streetName || '',
+        4: addressDetails.addressFields.suburb || '',
+        5: addressDetails.addressFields.metro || '',
+        6: addressDetails.addressFields.city || '',
+        7: addressDetails.addressFields.postalCode || '',
+        8: addressDetails.addressFields.province || '',
+        9: addressDetails.addressFields.country || '',
       },
       map: {
         lat: 0,
         lng: 0,
-        formatted_address: `${addressDetails.addressFields.unitNumber}, ${addressDetails.addressFields.unitName} ${addressDetails.addressFields.streetNumber} ${addressDetails.addressFields.streetName} ${addressDetails.addressFields.suburb} ${addressDetails.addressFields.metro} ${addressDetails.addressFields.city} ${addressDetails.addressFields.postalCode} ${addressDetails.addressFields.province} ${addressDetails.addressFields.country}`,
+        formatted_address: `${addressDetails.addressFields.unitNumber || ''}, ${addressDetails.addressFields.unitName || ''} ${addressDetails.addressFields.streetNumber || ''} ${addressDetails.addressFields.streetName || ''} ${addressDetails.addressFields.suburb || ''} ${addressDetails.addressFields.metro || ''} ${addressDetails.addressFields.city || ''} ${addressDetails.addressFields.postalCode || ''} ${addressDetails.addressFields.province || ''} ${addressDetails.addressFields.country || ''}`,
         address_components: [],
       },
       confirm_pin: true,
@@ -1312,6 +1312,9 @@ const createNewAddress = async (args) => {
     };
 
     const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address }).then();
+
+    logger.debug(`EXISTING ADDRESS - ${JSON.stringify(existingAddress)}`);
+
     if (existingAddress && existingAddress.length > 0) {
       return {
         success: false,
@@ -1321,20 +1324,23 @@ const createNewAddress = async (args) => {
     }
 
     const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
+
+    logger.debug(`ADDRESS CREATION RESULT - ${JSON.stringify(apiResponse)}`);
+
     if(apiResponse) {
       return {
         success: apiResponse.status === 'success',
         message: apiResponse.status === 'success' ? 'Address added successfully' : 'Could not add new address.',
         id: apiResponse.status === 'success' ? apiResponse.payload.id : 0,
       };
-    } 
-    
+    }
+
     return {
       success: false,
       message: 'No Response from API',
       id: 0,
     };
-    
+
   } catch (ex) {
     logger.error(`ERROR CREATING ADDRESS::  ${ex}`);
     return {
@@ -1477,7 +1483,7 @@ export default {
     LasecGetCustomerRankingById: async(object, args) => {
      logger.debug('LasecGetCustomerRankingById', args)
      switch(args.id) {
-        case "1": return { 
+        case "1": return {
           id: '1',
           name: 'A - High Value'
         };
@@ -1485,13 +1491,13 @@ export default {
           id: '2',
           name: 'B - Medium Value',
         };
-        case "3": 
+        case "3":
         default: return {
           id: '3',
           name: 'C - Low Value',
         };
      }
-      
+
     },
     LasecGetCustomerCountries: async (object, args) => {
       return getCustomerCountries(args);
@@ -1643,12 +1649,12 @@ export default {
         _newClient.organization = { ..._newClient.organization, ...newClient.organization };
       }
 
-      if (isNil(newClient.address) === false) {        
-        _newClient.address = { 
+      if (isNil(newClient.address) === false) {
+        _newClient.address = {
           physicalAddress: { ..._newClient.address.physicalAddress, ...newClient.address.physicalAddress },
           deliveryAddress: { ..._newClient.address.deliveryAddress, ...newClient.address.deliveryAddress },
-          billingAddress: { ..._newClient.address.billingAddress, ...newClient.address.billingAddress },          
-        };                
+          billingAddress: { ..._newClient.address.billingAddress, ...newClient.address.billingAddress },
+        };
       }
 
       logger.debug('New Client Details', _newClient, 'debug');

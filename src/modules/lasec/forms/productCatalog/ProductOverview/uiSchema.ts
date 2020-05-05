@@ -88,7 +88,7 @@ const uiSchema: any = {
                 componentProps: {
                   'rowData.code': 'formData.id'
                 },
-                slideDirection: 'down',                
+                slideDirection: 'down',
                 buttonVariant: 'Fab',
                 buttonProps: {
                   color: "#23A06A",
@@ -98,11 +98,11 @@ const uiSchema: any = {
                     backgroundColor: "#23A06A"
                   }
                 },
-                buttonIcon: 'add',                
+                buttonIcon: 'add',
                 windowTitle: 'Add to quote ${rowData.code}',
               },
             }
-          ],          
+          ],
           cellStyle: {
             maxWidth: '200px',
             width: '200px'
@@ -111,7 +111,7 @@ const uiSchema: any = {
             maxWidth: '200px',
             width: '200px'
           }
-        },                
+        },
         { title: 'Stock Code', field: 'code' },
         { title: 'Description', field: 'name' },
         {
@@ -252,6 +252,111 @@ const uiSchema: any = {
         'products.[].onSyspro': 'data.[].onSyspro',
         'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
         'products.[].productPricing.[]': 'data.[].productPricing.[]',
+      },
+    },
+  }
+};
+
+const uiSchemaGrid: any = {
+  'ui:options': {
+    componentType: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '8px'
+    },
+    showSubmit: false,
+    showRefresh: false,
+  },
+  paging: {
+    'ui:widget': 'HiddenWidget'
+  },
+  product: {
+    hidden: true,
+    'ui:widget': 'HiddenWidget'
+  },
+  products: {
+    'ui:widget': 'GridLayoutWidget',
+    'ui:options': {
+      component: 'lasec.ProductCardComponent@1.0.0',
+      componentProps: {
+        cardContent: {
+          fields: [
+            {
+              label: 'Unit of Measure:',
+              value: 'unitOfMeasure',
+              unit: '',
+              icon: 'straighten'
+            },
+            {
+              label: 'Quantity Available:',
+              value: 'qtyAvailable',
+              unit: '',
+              icon: 'business_center'
+            },
+            {
+              label: 'Quantity on Hand:',
+              value: 'qtyOnHand',
+              unit: '',
+              icon: 'person_outline'
+            },
+            {
+              label: 'Quantity on PO:',
+              value: 'qtyOnOrder',
+              unit: '',
+              icon: 'receipt'
+            },
+            {
+              label: 'Price: From - ',
+              value: 'price',
+              unit: '',
+              icon: ''
+            },
+          ]
+        },
+      },
+      loadingText: 'Loading Product Overview, please wait a moment',
+      remoteData: true,
+
+      variables: {
+        'props.formContext.$formData.product': 'product',
+        'props.formContext.$formData.paging': 'paging'
+      },
+      resultMap: {
+        'paging.page': 'page',
+        'paging.total': 'totalCount',
+        'paging.pageSize': 'pageSize',
+        'products.[].id': 'data.[].id',
+        'products.[].name': 'data.[].name',
+        'products.[].code': 'data.[].code',
+        'products.[].description': 'data.[].description',
+        'products.[].qtyAvailable': 'data.[].qtyAvailable',
+        'products.[].qtyOnHand': 'data.[].qtyOnHand',
+        'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
+        'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
+        'products.[].price': 'data.[].price',
+        'products.[].image': 'data.[].image',
+        'products.[].onSyspro': 'data.[].onSyspro',
+        'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
+        'products.[].landedPrice': 'data.[].landedPrice',
+        'products.[].wh10CostPrice': 'data.[].wh10CostPrice',
+        'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
+        'products.[].listPrice': 'data.[].listPrice',
+        'products.[].buyer': 'data.[].buyer',
+        'products.[].planner': 'data.[].planner',
+        'products.[].isHazardous': 'data.[].isHazardous',
+        'products.[].siteEvaluationRequired': 'data.[].siteEvaluationRequired',
+        'products.[].packedLength': 'data.[].packedLength',
+        'products.[].packedWidth': 'data.[].packedWidth',
+        'products.[].packedHeight': 'data.[].packedHeight',
+        'products.[].packedVolume': 'data.[].packedVolume',
+        'products.[].packedWeight': 'data.[].packedWeight',
+        'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
+        'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',
+        'products.[].supplier': 'data.[].supplier',
+        'products.[].model': 'data.[].model',
+        'products.[].shipmentSize': 'data.[].shipmentSize',
+        'products.[].exWorker': 'data.[].exWorker',
       },
     },
   }
