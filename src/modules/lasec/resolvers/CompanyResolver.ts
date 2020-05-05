@@ -561,10 +561,8 @@ const getPersonTitles = async () => {
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: { enabled: false  } });
-    if (details && details.items) {
-      
+    if (details && details.items) {      
       //setCacheItem(Hash(CLIENT_TITLES_KEY), details, 60);
-
       return details.items;
     }
   }
