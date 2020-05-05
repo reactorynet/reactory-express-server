@@ -333,3 +333,11 @@ export const CAN_CREATE_RELEASE_NOTE = 'can_create_release_note';
 export const CAN_CREATE_PUSH_NOTIFICATION = 'can_create_push_notification';
 export const CAN_VIEW_GROUP_LIST = 'can_view_group_list';
 export const CAN_CREATE_USER = 'can_create_user';
+
+
+export const LASEC_API_ERROR_FORMAT = (msg, endpoint) => `
+-------------> LASEC API ERROR <------------------
+${endpoint}
+${msg}
+-------------> LASEC API ERROR <------------------
+`;

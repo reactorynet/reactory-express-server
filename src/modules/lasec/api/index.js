@@ -13,6 +13,8 @@ import LasecDatabase from '../database';
 import LasecQueries from '../database/queries';
 import { execql, execml } from 'graph/client';
 
+import { LASEC_API_ERROR_FORMAT } from './constants';
+
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
   UI_BASE_URL: process.env.LASEC_UI_BASE_URL || 'https://l360.lasec.co.za',
@@ -418,9 +420,13 @@ const Api = {
 
       if (status === 'success') {
         return payload;
+      } else {
+        
+        logger.error(LASEC_API_ERROR_FORMAT(`COULD NOT FETCH TITLES: ${status}`));
+        return { pagination: {}, ids: [], items: [], status };
       }
 
-      return { pagination: {}, ids: [], items: [] };
+      
     },
     GetCustomerJobTypes: async (params = defaultParams) => {
       const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } });
