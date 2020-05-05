@@ -526,7 +526,7 @@ const getCustomerClass = async (params) => {
 };
 
 const getCustomerClassById = async (id) => {
-  const customerClasses = await getCustomerClass().then();
+  const customerClasses = await getCustomerClass({}).then();
   logger.debug(`Searching in ${customerClasses.length} classes for id ${id}`)
   const found = lodash.find(customerClasses, { id: id  });
   return found;
