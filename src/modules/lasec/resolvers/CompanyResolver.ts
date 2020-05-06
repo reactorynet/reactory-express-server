@@ -509,7 +509,7 @@ const getCustomerRanking = async (params) => {
 
 
 
-const getCustomerClass = async () => {
+const getCustomerClass = async (params) => {
   const cached = await getCacheItem(Hash('LASEC_CUSTOMER_CLASS')).then();
   if(cached && cached.items) return cached.items;
   const idsResponse = await lasecApi.Customers.GetCustomerClass();
@@ -526,7 +526,7 @@ const getCustomerClass = async () => {
 };
 
 const getCustomerClassById = async (id) => {
-  const customerClasses = await getCustomerClass().then();
+  const customerClasses = await getCustomerClass({}).then();
   logger.debug(`Searching in ${customerClasses.length} classes for id ${id}`)
   const found = lodash.find(customerClasses, { id: id  });
   return found;
@@ -553,7 +553,7 @@ const getCustomerRepCodes = async (args) => {
 const CLIENT_TITLES_KEY = "LasecClientTitles";
 
 const getPersonTitles = async () => {
-  logger.debug(`Fetching Client Titles`);
+  logger.debug(`<<<<<<<< Fetching Client Titles >>>>>>>>>>>>>`);
   const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
 
   if(cached) return cached.items;
