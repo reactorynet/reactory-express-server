@@ -1241,10 +1241,10 @@ const getAddress = async (args) => {
   const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true } });
 
   let _ids = [];
-  if (isArray(addressIds.ids) === true && addressIds.length > 0) {
-    debugger
+  if (isArray(addressIds.ids) === true && addressIds.ids.length > 0) {
     _ids = [...addressIds.ids];
     const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
+
     const addresses = [...addressDetails.items];
     const formattedAddresses = addresses.map((ad) => {
       return ad.formatted_address;
@@ -1313,25 +1313,23 @@ const createNewAddress = async (args) => {
 
     const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address }).then();
 
-    logger.debug(`EXISTING ADDRESS - ${JSON.stringify(existingAddress)}`);
-
     if (existingAddress && existingAddress.length > 0) {
       return {
         success: false,
         message: 'Address already exists',
         id: 0,
+        fullAddress: ''
       };
     }
 
     const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
-
-    logger.debug(`ADDRESS CREATION RESULT - ${JSON.stringify(apiResponse)}`);
 
     if(apiResponse) {
       return {
         success: apiResponse.status === 'success',
         message: apiResponse.status === 'success' ? 'Address added successfully' : 'Could not add new address.',
         id: apiResponse.status === 'success' ? apiResponse.payload.id : 0,
+        fullAddress: apiResponse.status === 'success' ? addressParams.map.formatted_address : ''
       };
     }
 
@@ -1339,6 +1337,7 @@ const createNewAddress = async (args) => {
       success: false,
       message: 'No Response from API',
       id: 0,
+      fullAddress: ''
     };
 
   } catch (ex) {
