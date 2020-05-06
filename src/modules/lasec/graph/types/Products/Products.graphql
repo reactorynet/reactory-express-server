@@ -44,6 +44,17 @@ type Product {
   model: String
   shipmentSize: Int
   exWorker: Int
+
+  productClass: String,
+  tariffCode: String,
+  leadTime: String,
+  validPriceUntil: String,
+  lastUpdated: String,
+  lastUpdatedBy: String,
+  lastOrdered: String,
+  lastReceived: String,
+  supplyCurrency: String,
+  listCurrency: String,
 }
 
 type ProductQueryDetail {

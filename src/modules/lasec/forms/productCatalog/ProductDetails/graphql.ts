@@ -38,11 +38,21 @@ export default {
           packedWeight
           numberOfSalesOrders
           numberOfPurchaseOrders
-
           supplier
           model
           shipmentSize
           exWorker
+
+          productClass
+          tariffCode
+          leadTime
+          validPriceUntil
+          lastUpdated
+          lastUpdatedBy
+          lastOrdered
+          lastReceived
+          supplyCurrency
+          listCurrency
         }
       }
     }`,
@@ -83,6 +93,17 @@ export default {
       'products.[].model': 'products.[].model',
       'products.[].shipmentSize': 'products.[].shipmentSize',
       'products.[].exWorker': 'products.[].exWorker',
+
+      'products.[].productClass': 'products.[].productClass',
+      'products.[].tariffCode': 'products.[].tariffCode',
+      'products.[].leadTime': 'products.[].leadTime',
+      'products.[].validPriceUntil': 'products.[].validPriceUntil',
+      'products.[].lastUpdated': 'products.[].lastUpdated',
+      'products.[].lastUpdatedBy': 'products.[].lastUpdatedBy',
+      'products.[].lastOrdered': 'products.[].lastOrdered',
+      'products.[].lastReceived': 'products.[].lastReceived',
+      'products.[].supplyCurrency': 'products.[].supplyCurrency',
+      'products.[].listCurrency': 'products.[].listCurrency',
     },
     resultType: 'object',
     edit: false,
