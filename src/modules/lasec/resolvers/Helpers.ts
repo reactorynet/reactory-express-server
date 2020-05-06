@@ -332,7 +332,7 @@ export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds
     }
     case "me": 
     default: {
-      filter.staff_user_id = me360.id;
+      filter.sales_team_id = [me360.sales_team_id];
     }
   }
 
