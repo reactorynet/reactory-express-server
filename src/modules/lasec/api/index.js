@@ -412,8 +412,8 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
-    GetPersonTitles: async (params = defaultParams) => {
-      const resp = await FETCH(SECONDARY_API_URLS.person_title.url, { params: { ...defaultParams, ...params } }).then();
+    GetPersonTitles: async (personTitleParams = defaultParams) => {
+      const resp = await FETCH(SECONDARY_API_URLS.person_title.url, { params: { ...defaultParams, ...personTitleParams } }).then();
       const {
         status, payload,
       } = resp;

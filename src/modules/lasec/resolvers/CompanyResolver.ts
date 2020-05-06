@@ -591,12 +591,12 @@ const getPersonTitles = async () => {
   return titles;
 }
 
-const getPersonTitle = async (params) => {
-  logger.debug(`Looking for title with id ${params.id}`)
+const getPersonTitle = async (persionSearchParams: any) => {
+  logger.debug(`Looking for title with id ${persionSearchParams.id}`)
   const titles = await getPersonTitles({}).then();
 
   if (titles.length > 0) {
-    const found = lodash.find(titles, { id: params.id });
+    const found = lodash.find(titles, { id: persionSearchParams.id });
     return found;
   }
 
