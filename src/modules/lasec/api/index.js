@@ -164,15 +164,15 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
   if (auth === true) {
     const token = await getStorageItem('secondary_api_token').then();
     if (token) {
-      kwargs.headers['Authorization'] = `Token ${token}`;
-      kwargs.headers['Origin'] = 'http://localhost:3000';
+      kwargs.headers.Authorization = `Token ${token}`;
+      kwargs.headers.Origin = 'http://localhost:3000';
       kwargs.headers['X-LASEC-AUTH'] = `Token ${token}`;
       kwargs.headers['X-CSRFToken'] = '';
     }
     // should throw an error if there is no token!
   } else {
-    kwargs.headers['Authorization'] = 'Token null';
-    kwargs.headers['Origin'] = 'http://localhost:3000';
+    kwargs.headers.Authorization = 'Token null';
+    kwargs.headers.Origin = 'http://localhost:3000';
     kwargs.headers['X-LASEC-AUTH'] = 'Token null';
     kwargs.headers['X-CSRFToken'] = '';
   }
@@ -269,7 +269,7 @@ const Api = {
   FETCH,
   URIS: SECONDARY_API_URLS,
   get: async (uri, params, shape) => {
-    const resp = await FETCH(uri, { params });
+    const resp = await FETCH(uri, { params }).then();
     const {
       status, payload,
     } = resp;
@@ -281,11 +281,11 @@ const Api = {
         return payload;
       }
     } else {
-      return { pagination: {}, ids: [], items: [] };
+      return { pagination: {}, ids: [], items: [], status };
     }
   },
   post: async (uri, params, shape) => {
-    const resp = await POST(uri, { params: { ...defaultParams, ...params } });
+    const resp = await POST(uri, { params: { ...defaultParams, ...params } }).then();
     const {
       status, payload,
     } = resp;
@@ -302,7 +302,7 @@ const Api = {
   },
   Customers: {
     list: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.customers.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.customers.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -314,7 +314,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     Documents: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.file_upload.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.file_upload.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -330,7 +330,7 @@ const Api = {
 
         // logger.debug(`PARAMS: `, params);
 
-        const apiResponse = await POST(`api/customer/${clientId}/update/`, params);
+        const apiResponse = await POST(`api/customer/${clientId}/update/`, params).then();
 
         const {
           status, payload, id,
@@ -358,7 +358,7 @@ const Api = {
     },
     GetCustomerRoles: async (params = defaultParams) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } });
+      const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = resp;
@@ -372,7 +372,7 @@ const Api = {
     },
     GetCustomerRankings: async (params = defaultParams) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_ranking.url, { params: { ...defaultParams, ...params } });
+      const resp = await FETCH(SECONDARY_API_URLS.customer_ranking.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = resp;
@@ -386,7 +386,7 @@ const Api = {
     },
     GetCustomerClass: async (params = defaultParams) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { ...defaultParams, ...params } });
+      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = resp;
@@ -400,7 +400,7 @@ const Api = {
     },
     GetCustomerClassById: async (id) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { filter: { ids: [id] }, paging: {} } });
+      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { filter: { ids: [id] }, paging: {} } }).then();
       const {
         status, payload,
       } = resp;
@@ -413,7 +413,7 @@ const Api = {
 
     },
     GetPersonTitles: async (params = defaultParams) => {
-      const resp = await FETCH(SECONDARY_API_URLS.person_title.url, { params: { ...defaultParams, ...params } });
+      const resp = await FETCH(SECONDARY_API_URLS.person_title.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = resp;
@@ -429,7 +429,7 @@ const Api = {
       
     },
     GetCustomerJobTypes: async (params = defaultParams) => {
-      const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } });
+      const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = resp;
@@ -441,7 +441,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     GetRepCodes: async (params = defaultParams) => {
-      const resp = await FETCH(SECONDARY_API_URLS.rep_code.url, { params: { ...defaultParams, ...params } });
+      const resp = await FETCH(SECONDARY_API_URLS.rep_code.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = resp;
@@ -453,7 +453,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     UploadDocument: async (params) => {
-      const apiResponse = await POST(SECONDARY_API_URLS.file_uploads.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await POST(SECONDARY_API_URLS.file_uploads.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -467,7 +467,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     getAddress: async (params) => {
-      const resp = await FETCH(SECONDARY_API_URLS.address.url, { params: { ...defaultParams, ...params } });
+      const resp = await FETCH(SECONDARY_API_URLS.address.url, { params: { ...defaultParams, ...params } }).then()
       const {
         status, payload,
       } = resp;
@@ -480,7 +480,7 @@ const Api = {
     },
     createNewAddress: async (params) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.new_address.url, { ...params });
+        const apiResponse = await POST(SECONDARY_API_URLS.new_address.url, { ...params }).then();
         return apiResponse; //{"status":"success","payload":{"id":31907}}
       } catch (lasecApiError) {
         logger.error(`ERROR CREATING NEW ADDRESS:: ${lasecApiError}`);
@@ -504,7 +504,7 @@ const Api = {
   Company: {
     list: async (params) => {
 
-      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -517,7 +517,7 @@ const Api = {
 
     },
     getById: async (params) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -529,7 +529,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     getAddress: async (params) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -544,7 +544,7 @@ const Api = {
       try {
         logger.debug(`BEGINNING DOCUMENT UPLOAD:: ${params}`);
 
-        const apiResponse = await POST(SECONDARY_API_URLS.file_uploads, { body: { ...params } });
+        const apiResponse = await POST(SECONDARY_API_URLS.file_uploads, { body: { ...params } }).then();
         const { status, payload } = apiResponse;
         // payload - name id url
 
@@ -564,7 +564,7 @@ const Api = {
   },
   Organisation: {
     list: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.organisation.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.organisation.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -589,14 +589,14 @@ const Api = {
           return apiResponse;
         }
       } catch (lasecApiError) {
-        logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`);
+        logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`).then();
         return null;
       }
     }
   },
   Products: {
     list: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -608,7 +608,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     byId: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -623,7 +623,7 @@ const Api = {
 
     },
     warehouse_stock: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.warehouse_strock.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.warehouse_strock.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -635,7 +635,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     warehouse: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.warehouse.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.warehouse.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -647,7 +647,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     sales_orders: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -659,7 +659,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     costings: async (params) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.product_costing_get.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_costing_get.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -676,7 +676,7 @@ const Api = {
   Invoices: {
     list: async (params = defaultParams) => {
       try {
-        const invoiceResult = await FETCH(SECONDARY_API_URLS.invoices.url, { params: { ...defaultParams, ...params } });
+        const invoiceResult = await FETCH(SECONDARY_API_URLS.invoices.url, { params: { ...defaultParams, ...params } }).then();
         if (invoiceResult.status === 'success') {
           logger.debug('Invoice Results', invoiceResult);
           return invoiceResult.payload;
@@ -690,7 +690,7 @@ const Api = {
   },
   PurchaseOrders: {
     list: async (params = defaultParams) => {
-      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } });
+      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status,
         payload,
@@ -705,7 +705,7 @@ const Api = {
   },
   SalesOrders: {
     list: async (params = defaultParams) => {
-      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } });
+      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status,
         payload,
@@ -720,7 +720,7 @@ const Api = {
   },
   Quotes: {
     list: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -733,7 +733,7 @@ const Api = {
     },
 
     getLineItems: async (code) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { quote_id: code } } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { quote_id: code } } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -741,7 +741,7 @@ const Api = {
       if (status === 'success') {
         //collet the ids
         if (payload && payload.ids) {
-          const lineItemsExpanded = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: payload.ids } } })
+          const lineItemsExpanded = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: payload.ids } } }).then()
           if (lineItemsExpanded.status === 'success') {
             return lineItemsExpanded.payload;
           }
@@ -752,7 +752,7 @@ const Api = {
       return [];
     },
     get: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } });
+      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -878,7 +878,7 @@ const Api = {
     },
     createQuoteHeader: async ({ quote_id, quote_item_id, header_text }) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.quote_create_section_header, { body: { quote_id, quote_item_id, heading: header_text } });
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_create_section_header, { body: { quote_id, quote_item_id, heading: header_text } }).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -894,7 +894,7 @@ const Api = {
     },
     removeItemFromHeader: async ({ quote_id, quote_item_id, quote_heading_id }) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.quote_section_header, { body: { id: quote_heading_id, quote_id, quote_item_id } });
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_section_header, { body: { id: quote_heading_id, quote_id, quote_item_id } }).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -911,7 +911,7 @@ const Api = {
     },
     removeQuoteHeader: async ({ quote_heading_id }) => {
       try {
-        const apiResponse = await DELETE(SECONDARY_API_URLS.quote_section_header, { body: { id: quote_heading_id } });
+        const apiResponse = await DELETE(SECONDARY_API_URLS.quote_section_header, { body: { id: quote_heading_id } }).then();
         const {
           status,
         } = apiResponse;
@@ -1019,7 +1019,6 @@ const Api = {
             }
 
             let allIdResponses = await Promise.all(promises).then();
-            debugger;
             promises = [];
 
             allIdResponses.forEach((idsResponse) => {
@@ -1032,7 +1031,7 @@ const Api = {
                 }, true, false, 0));
               }
             });
-            debugger;
+
             let allItemResponse = await Promise.all(promises).then();
 
             allItemResponse.forEach((itemsResponse) => {
@@ -1041,7 +1040,7 @@ const Api = {
               }
             });
           } else {
-            debugger;
+            
             let detailResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {
               params: {
                 filter: {
@@ -1051,7 +1050,7 @@ const Api = {
             }, true, false, 0).then();
           }
 
-          debugger;
+          
           if (detailResponse.status === "success" && detailResponse.payload.items) {
             users = [...users, ...detailResponse.payload.items];
           }
@@ -1067,10 +1066,8 @@ const Api = {
 
     getUserTargets: async (ids = [], fieldName = "ids") => {
       try {
-        debugger;
         logger.debug(`LasecApi.User.getUserTargets( ids = ${ids} , fieldName = ${fieldName} )`);
         const users = await Api.User.getLasecUsers(ids, fieldName).then();
-        debugger;
         logger.debug(`Found ${users.length} results for user targets`, users);
         let total = 0;
         users.forEach(user => total += (user.target | 0));
