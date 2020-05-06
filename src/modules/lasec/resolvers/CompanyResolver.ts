@@ -572,8 +572,8 @@ const getPersonTitles = async () => {
     is_cached = true;
   } else {
     try {
-      const idsResponse = await lasecApi.Customers.GetPersonTitles({}).then();
-      logger.debug(`IDS RESULT FROM API`);
+      const idsResponse = await lasecApi.Customers.GetPersonTitles().then();
+      logger.debug(`IDS RESULT FROM API ${idsResponse}`);
       if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
         const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: { enabled: false, page_size: 100, ordering: {} } }).then();
         logger.debug(`RESULT FROM API`, details);
