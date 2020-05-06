@@ -151,17 +151,17 @@ export const getLoggedIn360User: any = async ( ) => {
 
     staff_user_id = `${lasecCreds.props.payload.user_id}`;
 
-    const hashkey = Hash(`LOGGED_IN_360_USER_${global.partner.id}_${user.id}_${staff_user_id}`);
-    debugger
-    let me360 = await getCacheItem(hashkey).then();
+    const hashkey = `LOGGED_IN_360_USER_${global.partner._id}_${user._id}_${staff_user_id}`;
+    let me360 = null //await getCacheItem(hashkey).then();
     if(!me360) {
       me360 = await lasecApi.User.getLasecUsers([staff_user_id], "ids").then();
       if(me360.length === 1) {
         me360 = me360[0];
       }
-    } 
+    }
+
     if(me360 ) {
-      setCacheItem(hashkey, me360, 60);    
+      //setCacheItem(hashkey, me360, 60);    
     }
 
     return me360;
@@ -968,7 +968,7 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
 }
 
 export const lasecGetQuoteLineItems = async (code: string) => {
-  const keyhash = Hash(`quote.${code}.lineitems`);
+  const keyhash = `quote.${code}.lineitems`;
 
   let cached = await getCacheItem(keyhash);
   if (cached) logger.debug(`Found Cached Line Items For Invoice: ${code}`);

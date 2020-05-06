@@ -1,3 +1,4 @@
+'use strict'
 import fetch from 'node-fetch';
 import om from 'object-mapper';
 import { isObject, map, find, isArray, isNil } from 'lodash';
@@ -151,17 +152,17 @@ export function PUT(url, data, auth = true) {
   return FETCH(url, args, auth);
 }
 
-export async function FETCH(url, args, auth = true, failed = false, attempt = 0) {
+export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = true, failed = false, attempt = 0) {
   // url = `${url}`;
   let absoluteUrl = `${config.SECONDARY_API_URL}/${url}`;
 
-  const kwargs = args || {};
+  const kwargs = fethArguments || {};
   if (!kwargs.headers) {
     kwargs.headers = {};
     kwargs.headers['Content-type'] = 'application/json; charset=UTF-8';
   }
 
-  if (auth === true) {
+  if (mustAuthenticate === true) {
     const token = await getStorageItem('secondary_api_token').then();
     if (token) {
       kwargs.headers.Authorization = `Token ${token}`;
@@ -214,7 +215,7 @@ export async function FETCH(url, args, auth = true, failed = false, attempt = 0)
         const retry = async function retry() {
           logger.debug('Attempting to refetch', { attempt });
           if (attempt < 3) {
-            return await FETCH(url, args, auth, true, attempt ? attempt + 1 : 1).then();
+            return await FETCH(url, fethArguments, mustAuthenticate, true, attempt ? attempt + 1 : 1).then();
           } else {
             throw new TokenExpiredException('Authentication Credentials cannot log in');
           }
@@ -356,7 +357,7 @@ const Api = {
         };
       }
     },
-    GetCustomerRoles: async (params = defaultParams) => {
+    GetCustomerRoles: async (params = {}) => {
 
       const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } }).then();
       const {
@@ -412,7 +413,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
-    GetPersonTitles: async (personTitleParams = defaultParams) => {
+    GetPersonTitles: async (personTitleParams = {}) => {
       const resp = await FETCH(SECONDARY_API_URLS.person_title.url, { params: { ...defaultParams, ...personTitleParams } }).then();
       const {
         status, payload,
@@ -968,7 +969,7 @@ const Api = {
     },
 
     getLasecUsers: async (ids = [], fieldName = "ids") => {
-      debugger;
+      
       let params = { ...defaultParams };
       let users = [];
 
@@ -979,8 +980,7 @@ const Api = {
       const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {
         params
       }, true, false, 0).then();
-
-      debugger;
+      
       if (lasecStaffUserResponse.status === "success" && lasecStaffUserResponse.payload) {
 
         if (isArray(lasecStaffUserResponse.payload.items) === true) {
