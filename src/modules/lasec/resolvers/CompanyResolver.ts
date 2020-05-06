@@ -471,9 +471,9 @@ const LASEC_ROLES_KEY = 'LASEC_CUSTOMER_ROLES';
 const getCustomerRoles = async (params) => {
 
   const cached = await getCacheItem(Hash(LASEC_ROLES_KEY)).then();
-  if (cached) return cached.items;
+  if(cached) return cached.items;
 
-  const idsResponse = await lasecApi.Customers.GetCustomerRoles().then();
+  const idsResponse = await lasecApi.Customers.GetCustomerRoles();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetCustomerRoles({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
@@ -489,11 +489,11 @@ const getCustomerRoles = async (params) => {
 
 const getCustomerRanking = async (params) => {
 
-  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_RANKING')).then();
+  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_RANKING') ).then();
 
-  if (cached && cached.items) return cached.items;
+  if(cached && cached.items) return cached.items;
 
-  const idsResponse = await lasecApi.Customers.GetCustomerRankings().then();
+  const idsResponse = await lasecApi.Customers.GetCustomerRankings();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetCustomerRankings({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
@@ -511,8 +511,8 @@ const getCustomerRanking = async (params) => {
 
 const getCustomerClass = async (params) => {
   const cached = await getCacheItem(Hash('LASEC_CUSTOMER_CLASS')).then();
-  if (cached && cached.items) return cached.items;
-  const idsResponse = await lasecApi.Customers.GetCustomerClass().then()
+  if(cached && cached.items) return cached.items;
+  const idsResponse = await lasecApi.Customers.GetCustomerClass();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetCustomerClass({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
@@ -525,23 +525,15 @@ const getCustomerClass = async (params) => {
   return [];
 };
 
-const getCustomerClassById = async (id: string) => {
+const getCustomerClassById = async (id) => {
   const customerClasses = await getCustomerClass({}).then();
   logger.debug(`Searching in ${customerClasses.length} classes for id ${id}`)
-  const found = lodash.find(customerClasses, { id: id });
+  const found = lodash.find(customerClasses, { id: id  });
   return found;
 };
 
-
-
 const getCustomerCountries = async (params) => {
-  let countries = await getCacheItem(Hash('LASEC_CUSTOMER_COUNTRIES')).then();
-  if (countries) return countries;
-
-  countries = await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country.[]': ['[].id', '[].name'] }).then();
-  setCacheItem(Hash('LASEC_CUSTOMER_COUNTRIES'), countries, 600);
-
-  return countries;
+  return await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country.[]': ['[].id', '[].name'] });
 };
 
 const getCustomerRepCodes = async (args) => {
@@ -561,61 +553,52 @@ const getCustomerRepCodes = async (args) => {
 const CLIENT_TITLES_KEY = "LasecClientTitles";
 
 const getPersonTitles = async () => {
-  logger.debug(`<<<<<<<<<<<<< CompanyResolver.getPersonTitles >>>>>>>>>>>>>\n`);
-
-  let titles: any[] = [];
-
+  logger.debug(`<<<<<<<< Fetching Client Titles >>>>>>>>>>>>>`);
   const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
-  let is_cached = false;
-  if(cached && cached.items) {
-    titles =  cached.items;
-    is_cached = true;
-  } else {
-    try {
-      const idsResponse = await lasecApi.Customers.GetPersonTitles().then();
-      logger.debug(`IDS RESULT FROM API ${idsResponse}`);
-      if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-        const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: { enabled: false, page_size: 100, ordering: {} } }).then();
-        logger.debug(`RESULT FROM API`, details);
-        if (details && details.items) {
-          setCacheItem(Hash(CLIENT_TITLES_KEY), details, 600);      
-          titles = [...details.items];
-        }
-      }    
-    } catch (err) {
-      logger.error(`ERROR FETCHING TITLES: ${err.message}\n`)
+
+  if(cached) return cached.items;
+
+  const idsResponse = await lasecApi.Customers.GetPersonTitles();
+
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: { enabled: false, page_size: 10 } });
+    if (details && details.items) {
+
+      setCacheItem(Hash(CLIENT_TITLES_KEY), details, 60);
+
+      return details.items;
     }
   }
-    
-  logger.debug(`>>>>>>>>>>>>> CompanyResolver.getPersonTitles <<<<<<<<<<<<<\n`);
-  return titles;
+
+  return [];
+
 }
 
-const getPersonTitle = async (persionSearchParams: any) => {
-  logger.debug(`Looking for title with id ${persionSearchParams.id}`)
-  const titles = await getPersonTitles({}).then();
+const getPersonTitle = async (params) => {
+  logger.debug(`Looking for title with id ${params.id}`)
+  const titles = await getPersonTitles(params).then();
 
-  if (titles.length > 0) {
-    const found = lodash.find(titles, { id: persionSearchParams.id });
+  if(titles.length > 0) {
+    const found = lodash.find(titles, { id: params.id });
     return found;
   }
 
   return null;
 };
 
-const CLIENT_JOBTYPES_KEY = "LasecClientJobTypesLookup";
+ const CLIENT_JOBTYPES_KEY = "LasecClientJobTypesLookup";
 
 const getCustomerJobTypes = async () => {
 
   const cached = await getCacheItem(Hash(CLIENT_JOBTYPES_KEY)).then();
 
-  if (cached && cached.items) return cached.items;
+  if(cached) return cached.items;
 
-  const idsResponse = await lasecApi.Customers.GetCustomerJobTypes().then();
+  const idsResponse = await lasecApi.Customers.GetCustomerJobTypes();
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetCustomerJobTypes({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
     if (details && details.items) {
-      setCacheItem(Hash(CLIENT_JOBTYPES_KEY), details, 600);
+      setCacheItem(Hash(CLIENT_JOBTYPES_KEY), details, 60);
       return details.items;
     }
   }
@@ -1258,10 +1241,10 @@ const getAddress = async (args) => {
   const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true } });
 
   let _ids = [];
-  if (isArray(addressIds.ids) === true && addressIds.length > 0) {
-    debugger
+  if (isArray(addressIds.ids) === true && addressIds.ids.length > 0) {
     _ids = [...addressIds.ids];
     const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
+
     const addresses = [...addressDetails.items];
     const formattedAddresses = addresses.map((ad) => {
       return ad.formatted_address;
@@ -1330,25 +1313,23 @@ const createNewAddress = async (args) => {
 
     const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address }).then();
 
-    logger.debug(`EXISTING ADDRESS - ${JSON.stringify(existingAddress)}`);
-
     if (existingAddress && existingAddress.length > 0) {
       return {
         success: false,
         message: 'Address already exists',
         id: 0,
+        fullAddress: ''
       };
     }
 
     const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
 
-    logger.debug(`ADDRESS CREATION RESULT - ${JSON.stringify(apiResponse)}`);
-
-    if (apiResponse) {
+    if(apiResponse) {
       return {
         success: apiResponse.status === 'success',
         message: apiResponse.status === 'success' ? 'Address added successfully' : 'Could not add new address.',
         id: apiResponse.status === 'success' ? apiResponse.payload.id : 0,
+        fullAddress: apiResponse.status === 'success' ? addressParams.map.formatted_address : ''
       };
     }
 
@@ -1356,6 +1337,7 @@ const createNewAddress = async (args) => {
       success: false,
       message: 'No Response from API',
       id: 0,
+      fullAddress: ''
     };
 
   } catch (ex) {
@@ -1497,9 +1479,9 @@ export default {
     LasecGetCustomerRanking: async (object, args) => {
       return getCustomerRanking(args);
     },
-    LasecGetCustomerRankingById: async (object, args) => {
-      logger.debug('LasecGetCustomerRankingById', args)
-      switch (args.id) {
+    LasecGetCustomerRankingById: async(object, args) => {
+     logger.debug('LasecGetCustomerRankingById', args)
+     switch(args.id) {
         case "1": return {
           id: '1',
           name: 'A - High Value'
@@ -1513,7 +1495,7 @@ export default {
           id: '3',
           name: 'C - Low Value',
         };
-      }
+     }
 
     },
     LasecGetCustomerCountries: async (object, args) => {
@@ -1575,7 +1557,7 @@ export default {
           return getLasecSalesTeamsForLookup();
         }
         case 'rep_code': {
-          return getRepCodesForFilter();
+            return getRepCodesForFilter();
         }
         default: {
           return [];
@@ -1585,7 +1567,7 @@ export default {
     LasecGetPersonTitles: async (object, args) => {
       return getPersonTitles(args);
     },
-    LasecGetPersonTitleById: async (object, args) => {
+    LasecGetPersonTitleById: async(object, args) => {
       return getPersonTitle(args);
     },
     LasecGetCustomerList: async (obj, args) => {
@@ -1594,10 +1576,10 @@ export default {
     LasecGetOrganisationList: async (obj, args) => {
       return getOrganisationList(args);
     },
-    LasecGetCustomerJobTypes: async (obj, args) => {
+    LasecGetCustomerJobTypes: async(obj, args) => {
       return getCustomerJobTypes(args);
     },
-    LasecGetCustomerJobTypeById: async (obj, args) => {
+    LasecGetCustomerJobTypeById: async(obj, args) => {
       const jobtypes = await getCustomerJobTypes().then()
 
       const lookupItem = lodash.find(jobtypes, { id: args.id });
@@ -1614,7 +1596,7 @@ export default {
         let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
         //cache this object for 12 h
         await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
-        let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
+        let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: [ 'lasec-crm::new-company::document' ] }).then();
         return { ..._newClient, clientDocuments };
       }
     },
@@ -1654,15 +1636,15 @@ export default {
         _newClient.contactDetails = { ..._newClient.contactDetails, ...newClient.contactDetails };
       }
 
-      if (isNil(newClient.jobDetails) === false) {
+      if (isNil(newClient.jobDetails)  === false) {
         _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
       }
 
-      if (isNil(newClient.customer) === false) {
+      if (isNil(newClient.customer)  === false) {
         _newClient.customer = { ..._newClient.customer, ...newClient.customer };
       }
 
-      if (isNil(newClient.organization) === false) {
+      if (isNil(newClient.organization)  === false) {
         _newClient.organization = { ..._newClient.organization, ...newClient.organization };
       }
 

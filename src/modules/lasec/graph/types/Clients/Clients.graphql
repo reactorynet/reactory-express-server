@@ -125,7 +125,7 @@ type LasecClientPersonalDetails {
   lastName: String
   country: String
   accountType: String
-  repCode: String  
+  repCode: String
 }
 
 type LasecAddress {
@@ -239,6 +239,7 @@ type NewAddressResponse {
   success: Boolean
   message: String
   id: String
+  fullAddress: String
 }
 
 type GoogleAddressDetails {
@@ -282,7 +283,7 @@ extend type Query {
   LasecGetPersonTitles: [LasecTitleLookupItem]
   LasecGetPersonTitleById(id: String): LasecTitleLookupItem
   LasecGetNewClient: LasecNewClient
-  LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation  
+  LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
   LasecGetPlaceDetails(placeId: String!): GoogleAddressDetails
   LasecGetAddress(searchTerm: String!): [String!]
 }
@@ -290,7 +291,7 @@ extend type Query {
 extend type Mutation {
   LasecUpdateClientDetails(clientInfo: ClientUpdateInput!): ClientDetailUpdateResponse
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
-  LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument  
+  LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument
   LasecDeleteNewClientDocuments(fileIds: [String]!): UXMessage
   LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
   LasecCreateNewClient(newClient: LasecNewClientInput): NewClientResponse

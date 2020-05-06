@@ -18,12 +18,12 @@ const onAddressSelectedMutationDefinition : Reactory.IReactoryFormMutation = {
       physicalAddress {
         id
         fullAddress
-        map          
+        map
       }
       deliveryAddress {
         id
         fullAddress
-        map          
+        map
       }
       billingAddress {
         id
@@ -34,7 +34,7 @@ const onAddressSelectedMutationDefinition : Reactory.IReactoryFormMutation = {
   }`,
   objectMap: true,
   updateMessage: 'Updating new client address',
-  variables: {    
+  variables: {
     'address': 'newClient.address',
   },
   refreshEvents: [
@@ -64,7 +64,7 @@ const DEFAULT_ADDRESS_PROPS = {
       countryCode
       countryName
       lat
-      long    
+      long
     }
   }`,
   // onAddressSelected: onAddressSelectedMutationDefinition,
@@ -89,7 +89,7 @@ const baseUiSchema: any =  {
       marginTop: '0',
     },
     showSubmit: false,
-    showRefresh: false,    
+    showRefresh: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -99,48 +99,6 @@ const baseUiSchema: any =  {
       billingAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
     },
   ],
-  /**
-   * example of places result of google map search
-   * this needs to be mapped back to the address object
-   * we should also ship this with the address and give it a map provider key.
-   * i.e. if we want to use bing maps instead of google.
-   * {
-      "formatted_address": "Caledon, 7230, South Africa",
-      "geometry": {
-        "location": {
-          "lat": -34.2313845,
-          "lng": 19.425233
-        },
-        "viewport": {
-          "south": -34.2615278,
-          "west": 19.3990309,
-          "north": -34.2066349,
-          "east": 19.4677109
-        }
-      },
-      "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/geocode-71.png",
-      "id": "76f93413a21c1312bbc81b243794d90506667beb",
-      "name": "Caledon",
-      "photos": [
-        {
-          "height": 658,
-          "html_attributions": [
-            "<a href=\"https://maps.google.com/maps/contrib/104455262611922207473\">Mansoor Narker</a>"
-          ],
-          "width": 1052
-        }
-      ],
-      "place_id": "ChIJqUGxCwv7zR0RekgKieocdIQ",
-      "reference": "ChIJqUGxCwv7zR0RekgKieocdIQ",
-      "types": [
-        "locality",
-        "political"
-      ],
-      "html_attributions": []
-    }
-   *
-   *
-   */
   physicalAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget',
     'ui:options': {
@@ -181,8 +139,8 @@ const editUiSchema: any = {
 };
 
 
-const readOnlySchema = { 
-  ...baseUiSchema, 
+const readOnlySchema = {
+  ...baseUiSchema,
   'ui:options': {
     componentType: "div",
     containerStyles: {
@@ -202,9 +160,9 @@ const readOnlySchema = {
       physicalAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
       deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
       billingAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
-    },    
+    },
   ],
-  
+
   physicalAddress: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -223,7 +181,7 @@ const readOnlySchema = {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      }    
+      }
     }
   },
 
@@ -245,7 +203,7 @@ const readOnlySchema = {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      }    
+      }
     }
   },
 
@@ -270,7 +228,7 @@ const readOnlySchema = {
       }
     }
   }
-  
+
 };
 
 const newUiSchema: any = {
