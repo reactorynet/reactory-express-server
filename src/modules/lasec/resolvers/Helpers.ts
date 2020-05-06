@@ -323,11 +323,12 @@ export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds
 
   switch(agentSelection) {
     case "team": {
-      filter.rep_code = teamIds;
+      filter.sales_team_id = teamIds;
       break;      
     }
     case "custom": {
       filter.staff_user_id = repIds;
+      break;
     }
     case "me": 
     default: {

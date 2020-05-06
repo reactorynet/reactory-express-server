@@ -150,7 +150,7 @@ export default {
       let _cached = await getCacheItem(`${cacheKey}`);
       let hasCachedItem = false;
       if (_cached) {
-        hasCachedItem = true;
+        hasCachedItem = false;
         logger.debug(`Found results in cache using ${cacheKey}`);
         periodLabel = `${periodLabel} [cache]`;
       }
