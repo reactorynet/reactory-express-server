@@ -259,7 +259,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
 const defaultParams = {
   filter: {},
   ordering: {},
-  pagination: { enabled: false, page_size: 10 },
+  pagination: { enabled: false, page_size: 10, current_page: null },
 };
 
 const defaultQuoteObjectMap = {
@@ -677,7 +677,7 @@ const Api = {
   Invoices: {
     list: async (params = defaultParams) => {
       try {
-        const invoiceResult = await FETCH(SECONDARY_API_URLS.invoices.url, { params: { ...defaultParams, ...params } }).then();
+        const invoiceResult = await FETCH(SECONDARY_API_URLS.invoices.url, { params: { ...defaultParams, ...params } });
         if (invoiceResult.status === 'success') {
           logger.debug('Invoice Results', invoiceResult);
           return invoiceResult.payload;

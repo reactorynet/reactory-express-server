@@ -158,8 +158,10 @@ export default {
                 
       const quotes = hasCachedItem === true ? _cached.quotes : await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug(`Fetched ${quotes.length} quote(s)`);
-      const invoices = hasCachedItem === true ? _cached.invoices : await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+      const invoices = await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug(`Fetched ${invoices.length} invoice(s)`);
+
+      invoices.forEach(i => logger.debug(`INVOICE DATE::>> ${i.id} ${i.invoice_date}`))
       
       const isos = hasCachedItem === true ? _cached.isos : await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug(`Fetched  ${isos.length} iso(s)`);
@@ -347,11 +349,15 @@ export default {
         }
       });
 
-      lodash.sortBy(invoices, [i => i.invoice_date]).forEach((invoice) => {
-        let dayIndex = dateIndex[moment(invoice.invoice_date).format('YYYY-MM-DD')];
+      invoices.forEach(($invoice) => {
+        logger.debug(`>>>>>> INVOICE DATE KEY ${$invoice.invoice_date} <<<<<<<<<<<<`,)
+        let theDate =  moment($invoice.invoice_date, 'YYYY-MM-DDTHH:mm:ssZ');
+        let _key = theDate.format('YYYY-MM-DD');
+        logger.debug(`>>>>>> INVOICE DAY KEY ${_key} for date ${theDate.format()} <<<<<<<<<<<<`,)
+        let dayIndex = dateIndex[_key];
         if (dayIndex >= 0) {
-          dashboardResult.charts.quoteStatusComposed.data[dayIndex].invoiced += (invoice.invoice_value / 100);
-          dashboardResult.charts.quoteINVPie.data[dayIndex].invoiced += (invoice.invoice_value / 100);
+          dashboardResult.charts.quoteStatusComposed.data[dayIndex].invoiced += ($invoice.invoice_value / 100);
+          dashboardResult.charts.quoteINVPie.data[dayIndex].invoiced += ($invoice.invoice_value / 100);
         }
       });
 

@@ -17,11 +17,11 @@ import { getCacheItem, setCacheItem } from '../models';
 import emails from '@reactory/server-core/emails';
 
 import {
-    Quote as LasecQuote,
-    LasecDashboardSearchParams,
-    LasecProductDashboardParams,
-    USER_FILTER_TYPE,
-    DATE_FILTER_PRESELECT
+  Quote as LasecQuote,
+  LasecDashboardSearchParams,
+  LasecProductDashboardParams,
+  USER_FILTER_TYPE,
+  DATE_FILTER_PRESELECT
 } from '../types/lasec';
 
 
@@ -38,114 +38,114 @@ const maps = { ...OBJECT_MAPS };
  * @param meta meta data to use for transformation
  */
 export const totalsFromMetaData = (meta: any) => {
-    return om.merge(meta.source, {
-        "grand_total_excl_vat_cents": "totalVATExclusive",
-        "grand_total_vat_cents": "totalVAT",
-        "grand_total_incl_vat_cents": "totalVATInclusive",
-        "grand_total_discount_cents": "totalDiscount",
-        "grand_total_discount_percent": "totalDiscountPercent",
-        "gp_percent": "GP",
-        "actual_gp_percent": "actualGP",
-    });
+  return om.merge(meta.source, {
+    "grand_total_excl_vat_cents": "totalVATExclusive",
+    "grand_total_vat_cents": "totalVAT",
+    "grand_total_incl_vat_cents": "totalVATInclusive",
+    "grand_total_discount_cents": "totalDiscount",
+    "grand_total_discount_percent": "totalDiscountPercent",
+    "gp_percent": "GP",
+    "actual_gp_percent": "actualGP",
+  });
 };
 
 
 
 
-export const synchronizeQuote = async ( quote_id: string, owner: any, source: any = null, map: any = true ) => {
-    const quoteSyncTimeout = 3;
+export const synchronizeQuote = async (quote_id: string, owner: any, source: any = null, map: any = true) => {
+  const quoteSyncTimeout = 3;
 
-    let _source = source;
-    let _quoteDoc: LasecQuote | null;
-    const _predicate = {
-      'meta.reference': quote_id,
-      'meta.owner': owner || global.partner.key,
-    }
-  
-    const now = moment();
-  
-    const _existing: LasecQuote = await Quote.findOne(_predicate).then();
-  
-    if (_source === null) {
-      _source = await lasecApi.Quotes.getByQuoteId(quote_id).then();
-    }
-  
-    if (_source === null && _existing !== null) {
-      _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
-    }
-  
-    // logger.debug(`SOURCE ${JSON.stringify(_source)}`);
-    // logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
-  
-    if (map === true && _source) {
-      const _map = {
-        ...maps.meta,
-        ...maps.company,
-        ...maps.customer,
-        ...maps.status,
-        ...maps.totals,
+  let _source = source;
+  let _quoteDoc: LasecQuote | null;
+  const _predicate = {
+    'meta.reference': quote_id,
+    'meta.owner': owner || global.partner.key,
+  }
+
+  const now = moment();
+
+  const _existing: LasecQuote = await Quote.findOne(_predicate).then();
+
+  if (_source === null) {
+    _source = await lasecApi.Quotes.getByQuoteId(quote_id).then();
+  }
+
+  if (_source === null && _existing !== null) {
+    _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
+  }
+
+  // logger.debug(`SOURCE ${JSON.stringify(_source)}`);
+  // logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
+
+  if (map === true && _source) {
+    const _map = {
+      ...maps.meta,
+      ...maps.company,
+      ...maps.customer,
+      ...maps.status,
+      ...maps.totals,
+    };
+
+    _quoteDoc = om.merge(_source, _map) as LasecQuote;
+  }
+
+  if (_source === null) return null;
+
+  try {
+    if (_existing) {
+      _existing.meta = {
+        owner,
+        reference: quote_id,
+        source: { ..._source },
+        lastSync: now.valueOf(),
+        nextSync: moment(now).add(quoteSyncTimeout, 'minutes').valueOf(),
+        mustSync: true,
       };
-  
-      _quoteDoc = om.merge(_source, _map) as LasecQuote;
-    }
-  
-    if (_source === null) return null;
-  
-    try {
-      if (_existing) {
-        _existing.meta = {
+      _existing.totals = _quoteDoc.totals;
+      _existing.modified = moment(_quoteDoc.modified || now).valueOf();
+      await _existing.save();
+      return _existing;
+    } else {
+      const _newQuote: any = new Quote({
+        ..._quoteDoc,
+        meta: {
           owner,
           reference: quote_id,
           source: { ..._source },
           lastSync: now.valueOf(),
           nextSync: moment(now).add(quoteSyncTimeout, 'minutes').valueOf(),
           mustSync: true,
-        };
-        _existing.totals = _quoteDoc.totals;
-        _existing.modified = moment(_quoteDoc.modified || now).valueOf();
-        await _existing.save();
-        return _existing;
-      } else {
-        const _newQuote: any = new Quote({
-          ..._quoteDoc,
-          meta: {
-            owner,
-            reference: quote_id,
-            source: { ..._source },
-            lastSync: now.valueOf(),
-            nextSync: moment(now).add(quoteSyncTimeout, 'minutes').valueOf(),
-            mustSync: true,
-          },
-          created: moment(_quoteDoc.created || now).valueOf(),
-          modified: moment(_quoteDoc.modified || now).valueOf(),
-        });
-  
-        await _newQuote.addTimelineEntry({
-          when: now.valueOf(),
-          what: `Initial Sync with reactory trigger by ${global.user.fullName(true)}`,
-          who: global.user._id,
-          notes: `Initial import from Lasec360 API.`
-        });
-  
-        return _newQuote;
-      }
-    } catch (createError) {
-      logger.error('Error while upserting remote document', createError);
-      throw createError;
+        },
+        created: moment(_quoteDoc.created || now).valueOf(),
+        modified: moment(_quoteDoc.modified || now).valueOf(),
+      });
+
+      await _newQuote.addTimelineEntry({
+        when: now.valueOf(),
+        what: `Initial Sync with reactory trigger by ${global.user.fullName(true)}`,
+        who: global.user._id,
+        notes: `Initial import from Lasec360 API.`
+      });
+
+      return _newQuote;
     }
+  } catch (createError) {
+    logger.error('Error while upserting remote document', createError);
+    throw createError;
+  }
 
 };
 
 
-export const getLoggedIn360User: any = async ( ) => {
+export const getLoggedIn360User: any = async () => {
   const { user } = global;
   const lasecCreds = user.getAuthentication("lasec");
-    
-  if (!lasecCreds) {     
-    throw new LasecNotAuthenticatedException();
-  } 
 
-  
+  if (!lasecCreds) {
+    throw new LasecNotAuthenticatedException();
+  }
+
+
   if (lasecCreds.props && lasecCreds.props.payload) {
     let staff_user_id: string = "";
 
@@ -153,71 +153,72 @@ export const getLoggedIn360User: any = async ( ) => {
 
     const hashkey = `LOGGED_IN_360_USER_${global.partner._id}_${user._id}_${staff_user_id}`;
     let me360 = null //await getCacheItem(hashkey).then();
-    if(!me360) {
+    if (!me360) {
       me360 = await lasecApi.User.getLasecUsers([staff_user_id], "ids").then();
-      if(me360.length === 1) {
+      if (me360.length === 1) {
         me360 = me360[0];
       }
     }
 
-    if(me360 ) {
+    if (me360) {
       //setCacheItem(hashkey, me360, 60);    
     }
 
+    logger.debug(`me360 ===> ${me360}`)
     return me360;
   }
-  
+
   throw new LasecNotAuthenticatedException();
 };
 
 
-export const getTargets = async (params: LasecDashboardSearchParams) => {  
-    const { periodStart, periodEnd, teamIds, repIds, agentSelection } = params;
-    logger.debug(`QuoteResolver.getTargets(params)`,params);
-    let userTargets: number = 0;
-    try {
-      
-      const { user } = global;
-      const lasecCreds = user.getAuthentication("lasec");
-      if (!lasecCreds) { 
-        logger.error(`agentSelection: ${agentSelection} and user has no Lasec Credentials? Should not happen`, lasecCreds);
-        return userTargets;
-      } 
-  
-      let staff_user_id = null;
-      if (lasecCreds.props && lasecCreds.props.payload) {
-        staff_user_id = lasecCreds.props.payload.user_id
-      }
-  
-      switch (agentSelection) {
-        case "team": {                  
-            logger.debug(`Finding Targets for REP_CODES `, teamIds);            
-            userTargets = await lasecApi.User.getUserTargets(teamIds, 'rep_code').then();
-          break;       
-        }
-        case "custom": {
-            logger.debug(`Finding Targets for USERS `, repIds);            
-            userTargets = await lasecApi.User.getUserTargets(repIds, 'staff_user_id').then();
-            break;
-        }
-        case "me":
-        default: {           
-          logger.debug(`Finding Targets for LOGGED IN USER `, repIds);            
-          userTargets = await lasecApi.User.getUserTargets([`${staff_user_id}`], 'ids').then();
-        }
-      }
-  
-      logger.debug('QuoteResolver.getTargets() => result', userTargets);
-      return userTargets;
-  
-    } catch (targetFetchError) {
-      logger.error(`Could not retrieve targets`, targetFetchError);
-      return 0;
-    }
-  };
-  
+export const getTargets = async (params: LasecDashboardSearchParams) => {
+  const { periodStart, periodEnd, teamIds, repIds, agentSelection } = params;
+  logger.debug(`QuoteResolver.getTargets(params)`, params);
+  let userTargets: number = 0;
+  try {
 
-  
+    const { user } = global;
+    const lasecCreds = user.getAuthentication("lasec");
+    if (!lasecCreds) {
+      logger.error(`agentSelection: ${agentSelection} and user has no Lasec Credentials? Should not happen`, lasecCreds);
+      return userTargets;
+    }
+
+    let staff_user_id = null;
+    if (lasecCreds.props && lasecCreds.props.payload) {
+      staff_user_id = lasecCreds.props.payload.user_id
+    }
+
+    switch (agentSelection) {
+      case "team": {
+        logger.debug(`Finding Targets for REP_CODES `, teamIds);
+        userTargets = await lasecApi.User.getUserTargets(teamIds, 'rep_code').then();
+        break;
+      }
+      case "custom": {
+        logger.debug(`Finding Targets for USERS `, repIds);
+        userTargets = await lasecApi.User.getUserTargets(repIds, 'staff_user_id').then();
+        break;
+      }
+      case "me":
+      default: {
+        logger.debug(`Finding Targets for LOGGED IN USER `, repIds);
+        userTargets = await lasecApi.User.getUserTargets([`${staff_user_id}`], 'ids').then();
+      }
+    }
+
+    logger.debug('QuoteResolver.getTargets() => result', userTargets);
+    return userTargets;
+
+  } catch (targetFetchError) {
+    logger.error(`Could not retrieve targets`, targetFetchError);
+    return 0;
+  }
+};
+
+
+
 /**
  * Finds and / or synchronizes a record
  * @param {String} quote_id
@@ -251,19 +252,19 @@ export const getQuotes = async (params) => {
     end_date: _params.periodEnd ? _params.periodEnd.toISOString() : moment().endOf('day')
   };
 
-  if(params.agentSelection === 'team') {
+  if (params.agentSelection === 'team') {
     apiFilter.rep_codes = params.teamIds;
   }
 
-  if(params.agentSelection === 'custom') {
+  if (params.agentSelection === 'custom') {
     apiFilter.staff_user_id = params.repIds || []
   }
 
-  if(params.agentSelection === 'me') {
+  if (params.agentSelection === 'me') {
     let me = await getLoggedIn360User().then();
-    if(me) {      
+    if (me) {
       apiFilter.rep_codes = me.rep_codes;
-    }    
+    }
   }
 
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: 10, enabled: true } }).then();
@@ -311,76 +312,100 @@ export const getQuotes = async (params) => {
 export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds = [], agentSelection = 'me' }) => {
 
   let idsQueryResults: any = null;
-  let pagePromises = [];
+  let invoice_details_promises: Promise<any>[] = [];
+  let ids_to_request: any = [];
+  //holds a list of our detail promises
   let invoice_fetch_promises = [];
   let invoice_items: any[] = [];
-  let filter: any = {    
+  let filter: any = {
     start_date: periodStart,
     end_date: periodEnd
   };
 
   const me360 = await getLoggedIn360User().then();
 
-  switch(agentSelection) {
+  switch (agentSelection) {
     case "team": {
-      filter.sales_team_id = teamIds;
-      break;      
+      filter.rep_code = teamIds;
+      break;
     }
     case "custom": {
       filter.staff_user_id = repIds;
       break;
     }
-    case "me": 
+    case "me":
     default: {
-      filter.sales_team_id = [me360.sales_team_id];
+      filter.rep_code = [me360.sales_team_id];
     }
   }
 
+  /**
+   * Collect ids and setup promises for details
+   */
   try {
     logger.debug(`QuoteResolver getInvoices({ ${periodStart}, ${periodEnd}, ${teamIds} })`);
-    idsQueryResults = await lasecApi.Invoices.list({ filter: filter, pagination: { page_size: 10, enabled: true }, ordering: { "invoice_date": "asc" } }).then();    
-    invoice_fetch_promises.push(lasecApi.Invoices.list({ filter: { ids: idsQueryResults.ids }, pagination: { enabled: false }, ordering: { "invoice_date": "asc" } }))
-  }
-  catch (e) {
-    logger.error(`Error querying Invoices ${e.message}`)
-    return [];
-  }
-
-  try {
+    idsQueryResults = await lasecApi.Invoices.list({ filter: filter, pagination: { page_size: 10, enabled: true, current_page: 1 }, ordering: { "invoice_date": "asc" } }).then();
+    if (lodash.isArray(idsQueryResults.ids) === true) {
+      ids_to_request = [...idsQueryResults.ids] //spread em
+    }
 
     if (idsQueryResults.pagination && idsQueryResults.pagination.num_pages > 1) {
-      logger.debug(`Period requires paged invoice result`)
+
+      let more_ids_promises: Promise<any>[] = []
+
       const max_pages = idsQueryResults.pagination.num_pages;
+      logger.debug(`Period requires paged invoice result fetching ${max_pages} id pages`)
       for (let pageIndex = idsQueryResults.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
-        pagePromises.push(lasecApi.Invoices.list({
-          filter: filter,
-          pagination: { ...idsQueryResults.pagination, current_page: pageIndex },
-          ordering: { "invoice_date": "asc" }
-        }));
+        more_ids_promises.push(lasecApi.Invoices.list({ filter: filter, pagination: { page_size: 10, enabled: true, current_page: pageIndex }, ordering: { "invoice_date": "asc" } }));
       }
+
+      try {
+        const all_ids_results = await Promise.all(more_ids_promises).then();
+
+        all_ids_results.forEach((ids_result: any) => {
+          logger.debug(`IDS FROM REQUEST ${ids_result.ids}`);
+          if (ids_result && lodash.isArray(ids_result.ids) === true) {
+            ids_to_request = lodash.concat(ids_to_request, ids_result.ids)
+          }
+        });
+      } catch (allPromisesFailure) {
+        logger.error(`Fetching invoice ids failed ${allPromisesFailure}`);
+      }
+
     }
 
-    if (pagePromises.length > 0) {
-      const pagedResults = await Promise.all(pagePromises).then();
-      //collect all ids
-      pagedResults.forEach((pagedResult) => {
-        invoice_fetch_promises.push(lasecApi.Invoices.list({ filter: { ids: pagedResult.ids }, pagination: { enabled: false }, ordering: { "invoice_date": "asc" } }))
-      });
+    logger.debug(`Need to fetch ${ids_to_request.length} ids`);
+
+    const max_batch_size = 10;
+    let ids_left = ids_to_request.length;
+    while (ids_left > 0) {
+      let _batch_size = max_batch_size;
+      if (ids_left < max_batch_size) _batch_size = ids_left;
+      //get the slice
+      let _ids_to_fetch = lodash.takeRight(ids_to_request, _batch_size);
+      //trim
+      ids_to_request = lodash.slice(ids_to_request, 0, ids_to_request.length - _batch_size);
+      //add invoice list with ids promise
+      invoice_details_promises.push(lasecApi.Invoices.list({ filter: { ids: _ids_to_fetch }, ordering: { "invoice_date": "asc" }, pagination: { page_size: _ids_to_fetch.length, current_page: 1, enabled: true } }));
+      ids_left = ids_to_request.length;
+      logger.debug(`Promise queued ${ids_left.length} items to batch`);
     }
+
+    logger.debug(`${invoice_details_promises.length} API.Invoices.list Promises Queued  `);
 
   } catch (e) {
-    logger.error(`Could not fetch paged results for Invoice ids query ${e.message}`);
-    return [];
+    logger.error(`Error querying Invoices ${e.message}`)  
   }
+
 
   /**Detail fetch*/
   try {
-    if (invoice_fetch_promises.length > 0) {
-      const invoice_fetch_results = await Promise.all(invoice_fetch_promises).then();
+    if (invoice_details_promises.length > 0) {
+      const invoice_fetch_results = await Promise.all(invoice_details_promises).then();
       if (invoice_fetch_results) {
         for (let idx = 0; idx < invoice_fetch_results.length; idx += 1) {
-          if (invoice_fetch_results[0].items) {
-            invoice_items = [...invoice_items, ...invoice_fetch_results[0].items]
+          if (invoice_fetch_results[idx].items) {
+            invoice_items = [...invoice_items, ...invoice_fetch_results[idx].items]
           }
         }
       }
@@ -405,7 +430,7 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
     let pagePromises = [];
     let iso_fetch_promises = [];
     let iso_items: any[] = [];
-          
+
 
     let isoQueryParams = {
       filter: { order_status: "1", start_date: periodStart, end_date: periodEnd },
@@ -414,23 +439,23 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
     };
 
     const me360 = await getLoggedIn360User().then();
-    
-    switch(agentSelection) {
+
+    switch (agentSelection) {
       case "team": {
         isoQueryParams.filter.sales_team_id = teamIds;
-        break;      
+        break;
       }
       case "custom": {
         //isoQueryParams.filter.staff_user_id = repIds;
       }
-      case "me": 
+      case "me":
       default: {
         isoQueryParams.filter.sales_team_id = me360.sales_team_id;
       }
     }
 
-    
-    
+
+
     const isoIds = await lasecApi.PurchaseOrders.list(isoQueryParams).then();
     logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} }) --> Result`);
 
@@ -459,14 +484,14 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
       //collect all ids
       pagedResults.forEach((pagedResult) => {
         iso_fetch_promises.push(lasecApi.Invoices.list({
-          filter: { ids: pagedResult.ids }, 
-          pagination: { enabled: false }, 
-          ordering: { "invoice_date": "asc" } 
+          filter: { ids: pagedResult.ids },
+          pagination: { enabled: false },
+          ordering: { "invoice_date": "asc" }
         }));
       });
     }
 
-    
+
     try {
       if (iso_fetch_promises.length > 0) {
         const iso_fetch_results = await Promise.all(iso_fetch_promises).then();
@@ -478,13 +503,13 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
           }
         }
       }
-  
+
       return iso_items;
     } catch (e) {
       logger.debug(`Error while fetching ISO detailed records ${e.message}`);
       return [];
-    }        
-    
+    }
+
   } catch (isoGetError) {
     logger.error('Error fetching ISOs for the period', isoGetError);
     return [];
