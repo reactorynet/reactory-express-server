@@ -1,7 +1,7 @@
 
 
 
-import moment, { Moment } from 'moment';
+import moment, { Moment, isDate } from 'moment';
 import lodash, { isArray, isNil, isString } from 'lodash';
 import { ObjectId } from 'mongodb';
 import gql from 'graphql-tag';
@@ -34,7 +34,8 @@ import {
   getTargets,
   getNextActionsForUser,
   groupQuotesByStatus,
-  groupQuotesByProduct
+  groupQuotesByProduct,
+  getLoggedIn360User
 } from './Helpers';
 
 
@@ -72,6 +73,7 @@ export default {
       logger.debug(`>>> LasecGetDashboard - START <<<`, dashparams);
       
       context.query_options = dashparams.options;
+      const runningAs = await getLoggedIn360User().then();
 
       let {
         period = "this-week",
@@ -172,17 +174,22 @@ export default {
       const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
       logger.debug(`User has ${nextActionsForUser.length} next actions for this period`)
       
-
+      let _resolvedTeamIds = [];
 
       switch(agentSelection) {
         case USER_FILTER_TYPE.CUSTOM: {
           //work on rep ids
         }
         case USER_FILTER_TYPE.TEAM: {
+          _resolvedTeamIds = [...teamIds];
+          break;
           //
         }
         case USER_FILTER_TYPE.ME : {
           //default setting, we display charts and data for the user
+
+          _resolvedTeamIds = [runningAs.sales_team_id];
+          break;
         }
       }
 
@@ -206,24 +213,37 @@ export default {
         key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
       };
 
+
+      
+
       const quoteISOPie = {
-        chartType: 'PIE',
+        chartType: 'LINE',
         data: isos.map((iso: any, isoIndex: number) => {
-          return {
+          let isoDate = moment(iso.order_date);
+          let dataEntry = {
             ...iso,
             "value": iso.order_value / 100,
-            "name": iso.sales_team_id || `iso_${isoIndex}`,
-            "outerRadius": 140,
-            "innerRadius": 70,
-            "fill": `#${palette[isoIndex + 1 % palette.length]}`
+            "team": iso.sales_team_id || `NO TEAM`,
+            "date": isoDate.format("YYYY-MM-DD"),
+            "year": `${isoDate.year()}`,            
           };
+
+          dataEntry[`value_${dataEntry.team}`] = dataEntry.value;
+
+          return dataEntry
         }),
         options: {
-          multiple: false,
-          outerRadius: 140,
-          innerRadius: 70,
-          fill: `#${palette[1]}`,
-          dataKey: 'value',
+          xAxis: {
+            dataKey: 'date',
+          },          
+          series:teamIds.map((teamId: string, index: number) => {
+            return {
+              dataKey: `value_${teamId}`,
+              dataLabel: `ISOs ${teamId}`,
+              name: `REP: ${teamId}`,
+              stroke: `#${palette[index + 1]}`,
+            }
+          })
         },
         key: `quote-iso/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
       };
@@ -342,18 +362,17 @@ export default {
         dashboardResult.charts.quoteINVPie.data.push(dataPoint);
       }
 
-      lodash.sortBy(quotes, [q => q.modified]).forEach((quote) => {
-        let dayIndex = dateIndex[moment(quote.modified).format('YYYY-MM-DD')];
+      lodash.sortBy(quotes, [q => q.created]).forEach((quote) => {
+        let dayIndex = dateIndex[moment(quote.created).format('YYYY-MM-DD')];
+        logger.debug(`>>>>>> QUOTE ${quote.quote_id} DATE KEY ${dayIndex} ${quote.created} <<<<<<<<<<<<`,)
         if (dayIndex >= 0) {
           dashboardResult.charts.quoteStatusComposed.data[dayIndex].quoted += (quote.totals.totalVATExclusive / 100);          
         }
       });
 
       invoices.forEach(($invoice) => {
-        logger.debug(`>>>>>> INVOICE DATE KEY ${$invoice.invoice_date} <<<<<<<<<<<<`,)
         let theDate =  moment($invoice.invoice_date, 'YYYY-MM-DDTHH:mm:ssZ');
         let _key = theDate.format('YYYY-MM-DD');
-        logger.debug(`>>>>>> INVOICE DAY KEY ${_key} for date ${theDate.format()} <<<<<<<<<<<<`,)
         let dayIndex = dateIndex[_key];
         if (dayIndex >= 0) {
           dashboardResult.charts.quoteStatusComposed.data[dayIndex].invoiced += ($invoice.invoice_value / 100);
@@ -362,10 +381,8 @@ export default {
       });
 
       lodash.sortBy(isos, [i => i.order_date]).forEach(($iso) => {
-        logger.debug(`>>>>>> ISO DATE KEY ${$iso.order_date} <<<<<<<<<<<<`,)
         let theDate =  moment($iso.order_date, 'YYYY-MM-DDTHH:mm:ssZ');
         let _key = theDate.format('YYYY-MM-DD');
-        logger.debug(`>>>>>> ISO DAY KEY ${_key} for date ${theDate.format()} <<<<<<<<<<<<`,)
 
         let dayIndex = dateIndex[moment($iso.order_date).format('YYYY-MM-DD')];
         if (dayIndex >= 0) {

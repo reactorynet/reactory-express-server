@@ -153,7 +153,32 @@ export default {
       title: 'Overview',
       properties: {
         quoteStatusPie: PieChart("Quote by Status"),
-        quoteISOPie: PieChart("ISO by Team"),
+        quoteISOPie: {
+          type: 'object',
+          title: 'ISOs by Team',
+          properties: {
+            data: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  value: {
+                    type: 'number',
+                    title: 'value',
+                  },
+                  name: {
+                    type: 'string',
+                    title: 'name'
+                  },
+                  fill: {
+                    type: 'string',
+                    title: 'fillcolor'
+                  }
+                }
+              }
+            }
+          }
+        },
         quoteINVPie: {
           type: 'object',
           title: 'Invoices by Team / Rep',

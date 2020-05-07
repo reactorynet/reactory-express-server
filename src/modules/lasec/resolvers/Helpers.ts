@@ -193,12 +193,12 @@ export const getTargets = async (params: LasecDashboardSearchParams) => {
     switch (agentSelection) {
       case "team": {
         logger.debug(`Finding Targets for REP_CODES `, teamIds);
-        userTargets = await lasecApi.User.getUserTargets(teamIds, 'rep_code').then();
+        userTargets = await lasecApi.User.getUserTargets(teamIds, 'sales_team_id').then();
         break;
       }
       case "custom": {
         logger.debug(`Finding Targets for USERS `, repIds);
-        userTargets = await lasecApi.User.getUserTargets(repIds, 'staff_user_id').then();
+        userTargets = await lasecApi.User.getUserTargets(repIds, 'ids').then();
         break;
       }
       case "me":
@@ -238,6 +238,7 @@ export const getQuotes = async (params) => {
 
   logger.debug(`Fetching Lasec Dashboard Data`, params);
 
+
   let _params = params;
 
   if (!_params) {
@@ -276,9 +277,9 @@ export const getQuotes = async (params) => {
   }
 
   const pagePromises = [];
-
+  const upperLimit = 20;
   if (quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
-    const max_pages = quoteResult.pagination.num_pages < 10 ? quoteResult.pagination.num_pages : 10;
+    const max_pages = quoteResult.pagination.num_pages < upperLimit ? quoteResult.pagination.num_pages : upperLimit;
 
     for (let pageIndex = quoteResult.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
       pagePromises.push(lasecApi.Quotes.list({ filter: apiFilter, pagination: { enabled: true, current_page: pageIndex, page_size: 10 } }));
@@ -307,6 +308,7 @@ export const getQuotes = async (params) => {
   amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
 
   return quotes;
+
 };
 
 export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds = [], agentSelection = 'me' }) => {
@@ -363,7 +365,6 @@ export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds
         const all_ids_results = await Promise.all(more_ids_promises).then();
 
         all_ids_results.forEach((ids_result: any) => {
-          logger.debug(`IDS FROM REQUEST ${ids_result.ids}`);
           if (ids_result && lodash.isArray(ids_result.ids) === true) {
             ids_to_request = lodash.concat(ids_to_request, ids_result.ids)
           }
@@ -388,7 +389,6 @@ export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds
       //add invoice list with ids promise
       invoice_details_promises.push(lasecApi.Invoices.list({ filter: { ids: _ids_to_fetch }, ordering: { "invoice_date": "asc" }, pagination: { page_size: _ids_to_fetch.length, current_page: 1, enabled: true } }));
       ids_left = ids_to_request.length;
-      logger.debug(`Promise queued ${ids_left.length} items to batch`);
     }
 
     logger.debug(`${invoice_details_promises.length} API.Invoices.list Promises Queued  `);
@@ -451,7 +451,7 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
     default: {
       isoQueryParams.filter.sales_team_id = [me360.sales_team_id];
     }
-  }  
+  }
 
   /**
    * Collect ids and setup promises for details
@@ -477,7 +477,6 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
         const all_ids_results = await Promise.all(more_ids_promises).then();
 
         all_ids_results.forEach((ids_result: any) => {
-          logger.debug(`ISO IDS FROM REQUEST ${ids_result.ids}`);
           if (ids_result && lodash.isArray(ids_result.ids) === true) {
             ids_to_request = lodash.concat(ids_to_request, ids_result.ids)
           }
@@ -502,7 +501,6 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
       //add invoice list with ids promise
       iso_fetch_promises.push(lasecApi.PurchaseOrders.list({ filter: { ids: _ids_to_fetch }, ordering: { "order_date": "asc" }, pagination: { page_size: _ids_to_fetch.length, current_page: 1, enabled: true } }));
       ids_left = ids_to_request.length;
-      logger.debug(`Promise queued ${ids_left.length} items to batch`);
     }
 
     logger.debug(`${iso_fetch_promises.length} API.PurchaseOrders.list Promises Queued  `);

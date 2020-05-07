@@ -183,10 +183,10 @@ export default {
   charts: {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
-      {
-        quoteStatusPie: { md: 4, sm: 12, xs: 12 },
-        quoteISOPie: { md: 4, sm: 12, xs: 12 },
-        quoteINVPie: { md: 4, sm: 12, xs: 12 },
+      {        
+        quoteINVPie: { md: 6, sm: 12, xs: 12 },
+        quoteISOPie: { md: 6, sm: 12, xs: 12 },        
+        quoteStatusPie: { md: 12, sm: 12, xs: 12 },
       },
       {
         quoteStatusComposed: { md: 12, sm: 12, xs: 12 }
@@ -201,19 +201,13 @@ export default {
       },
     },  
     quoteISOPie: {
-      'ui:widget': 'PieChartWidget',
+      'ui:widget': 'LineChartWidget',
       'ui:options': {
-        size: 80,
-        thickness: 5,
-        variant: 'static',
       },
     },    
     quoteINVPie: {
       'ui:widget': 'LineChartWidget',
       'ui:options': {
-        //size: 120,
-        //thickness: 5,
-        //variant: 'static',
       },
     },    
     quoteStatusComposed: {

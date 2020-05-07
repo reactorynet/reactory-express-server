@@ -34,8 +34,8 @@ import {
   LasecSendQuoteEmail,
   lasecGetProductDashboard,
   getSalesOrders,
-  getPagedQuotes
-  
+  getPagedQuotes,
+  lasecGetQuoteLineItems,
  } from './Helpers';
 
 
