@@ -311,12 +311,12 @@ export const getQuotes = async (params) => {
 
 export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds = [], agentSelection = 'me' }) => {
 
+  //holds a list of our detail promises
   let idsQueryResults: any = null;
   let invoice_details_promises: Promise<any>[] = [];
   let ids_to_request: any = [];
-  //holds a list of our detail promises
-  let invoice_fetch_promises = [];
   let invoice_items: any[] = [];
+
   let filter: any = {
     start_date: periodStart,
     end_date: periodEnd
@@ -394,7 +394,7 @@ export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds
     logger.debug(`${invoice_details_promises.length} API.Invoices.list Promises Queued  `);
 
   } catch (e) {
-    logger.error(`Error querying Invoices ${e.message}`)  
+    logger.error(`Error querying Invoices ${e.message}`)
   }
 
 
@@ -420,101 +420,116 @@ export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds
 };
 
 export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedIds = []) => {
+
+  const { periodStart, periodEnd, agentSelection, teamIds } = dashparams;
+  logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} })`);
+
+
+  let ids_to_request: any[] = [];
+  let idsQueryResults: any = null;
+  let iso_fetch_promises = [];
+  let iso_items: any[] = [];
+
+
+  let isoQueryParams = {
+    filter: { order_status: "1", start_date: periodStart, end_date: periodEnd },
+    ordering: { order_date: "desc" },
+    pagination: { enabled: true, page_size: 20 }
+  };
+
+  const me360 = await getLoggedIn360User().then();
+
+  switch (agentSelection) {
+    case "team": {
+      isoQueryParams.filter.sales_team_id = teamIds;
+      break;
+    }
+    case "custom": {
+      //isoQueryParams.filter.staff_user_id = repIds;
+    }
+    case "me":
+    default: {
+      isoQueryParams.filter.sales_team_id = [me360.sales_team_id];
+    }
+  }  
+
+  /**
+   * Collect ids and setup promises for details
+   */
   try {
-    const { periodStart, periodEnd, agentSelection, teamIds } = dashparams;
-    logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} })`);
-
-
-    let ids: any[] = [];
-    let idsQueryResults: any = null;
-    let pagePromises = [];
-    let iso_fetch_promises = [];
-    let iso_items: any[] = [];
-
-
-    let isoQueryParams = {
-      filter: { order_status: "1", start_date: periodStart, end_date: periodEnd },
-      ordering: { order_date: "desc" },
-      pagination: { enabled: true, page_size: 20 }
-    };
-
-    const me360 = await getLoggedIn360User().then();
-
-    switch (agentSelection) {
-      case "team": {
-        isoQueryParams.filter.sales_team_id = teamIds;
-        break;
-      }
-      case "custom": {
-        //isoQueryParams.filter.staff_user_id = repIds;
-      }
-      case "me":
-      default: {
-        isoQueryParams.filter.sales_team_id = me360.sales_team_id;
-      }
+    logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd}, ${teamIds} })`);
+    idsQueryResults = await lasecApi.PurchaseOrders.list({ filter: isoQueryParams.filter, pagination: { page_size: 10, enabled: true, current_page: 1 }, ordering: { order_date: "desc" } }).then();
+    if (lodash.isArray(idsQueryResults.ids) === true) {
+      ids_to_request = [...idsQueryResults.ids] //spread em
     }
 
+    if (idsQueryResults.pagination && idsQueryResults.pagination.num_pages > 1) {
 
+      let more_ids_promises: Promise<any>[] = []
 
-    const isoIds = await lasecApi.PurchaseOrders.list(isoQueryParams).then();
-    logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} }) --> Result`);
-
-    if (isArray(isoIds.ids) === true && isoIds.ids.length > 0) {
-      iso_fetch_promises.push(lasecApi.PurchaseOrders.list({
-        filter: { ids: isoIds.ids },
-        ordering: { order_date: "desc" },
-        pagination: { enabled: false },
-      }));
-    }
-
-    if (isoIds.pagination && isoIds.pagination.num_pages > 1) {
-      logger.debug(`Period requires paged invoice result`)
-      const max_pages = isoIds.pagination.num_pages;
-      for (let pageIndex = isoIds.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
-        pagePromises.push(lasecApi.PurchaseOrders.list({
-          filter: isoQueryParams.filter,
-          pagination: { ...idsQueryResults.pagination, current_page: pageIndex },
-          ordering: { "invoice_date": "asc" }
-        }));
+      const max_pages = idsQueryResults.pagination.num_pages;
+      logger.debug(`Period requires paged invoice result fetching ${max_pages} id pages`)
+      for (let pageIndex = idsQueryResults.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
+        more_ids_promises.push(lasecApi.PurchaseOrders.list({ filter: isoQueryParams.filter, pagination: { page_size: 10, enabled: true, current_page: pageIndex }, ordering: { "order_date": "asc" } }));
       }
+
+      try {
+        const all_ids_results = await Promise.all(more_ids_promises).then();
+
+        all_ids_results.forEach((ids_result: any) => {
+          logger.debug(`ISO IDS FROM REQUEST ${ids_result.ids}`);
+          if (ids_result && lodash.isArray(ids_result.ids) === true) {
+            ids_to_request = lodash.concat(ids_to_request, ids_result.ids)
+          }
+        });
+      } catch (allPromisesFailure) {
+        logger.error(`Fetching PurchaseOrders ids failed ${allPromisesFailure}`);
+      }
+
     }
 
-    if (pagePromises.length > 0) {
-      const pagedResults = await Promise.all(pagePromises).then();
-      //collect all ids
-      pagedResults.forEach((pagedResult) => {
-        iso_fetch_promises.push(lasecApi.Invoices.list({
-          filter: { ids: pagedResult.ids },
-          pagination: { enabled: false },
-          ordering: { "invoice_date": "asc" }
-        }));
-      });
+    logger.debug(`Need to fetch ${ids_to_request.length} ids`);
+
+    const max_batch_size = 10;
+    let ids_left = ids_to_request.length;
+    while (ids_left > 0) {
+      let _batch_size = max_batch_size;
+      if (ids_left < max_batch_size) _batch_size = ids_left;
+      //get the slice
+      let _ids_to_fetch = lodash.takeRight(ids_to_request, _batch_size);
+      //trim
+      ids_to_request = lodash.slice(ids_to_request, 0, ids_to_request.length - _batch_size);
+      //add invoice list with ids promise
+      iso_fetch_promises.push(lasecApi.PurchaseOrders.list({ filter: { ids: _ids_to_fetch }, ordering: { "order_date": "asc" }, pagination: { page_size: _ids_to_fetch.length, current_page: 1, enabled: true } }));
+      ids_left = ids_to_request.length;
+      logger.debug(`Promise queued ${ids_left.length} items to batch`);
     }
 
+    logger.debug(`${iso_fetch_promises.length} API.PurchaseOrders.list Promises Queued  `);
 
-    try {
-      if (iso_fetch_promises.length > 0) {
-        const iso_fetch_results = await Promise.all(iso_fetch_promises).then();
-        if (iso_fetch_results) {
-          for (let idx = 0; idx < iso_fetch_results.length; idx += 1) {
-            if (iso_fetch_results[0].items) {
-              iso_items = [...iso_items, ...iso_fetch_results[0].items]
-            }
+  } catch (e) {
+    logger.error(`Error querying Invoices ${e.message}`)
+  }
+
+
+  /**Detail fetch*/
+  try {
+    if (iso_fetch_promises.length > 0) {
+      const invoice_fetch_results = await Promise.all(iso_fetch_promises).then();
+      if (invoice_fetch_results) {
+        for (let idx = 0; idx < invoice_fetch_results.length; idx += 1) {
+          if (invoice_fetch_results[idx].items) {
+            iso_items = [...iso_items, ...invoice_fetch_results[idx].items]
           }
         }
       }
-
-      return iso_items;
-    } catch (e) {
-      logger.debug(`Error while fetching ISO detailed records ${e.message}`);
-      return [];
     }
 
-  } catch (isoGetError) {
-    logger.error('Error fetching ISOs for the period', isoGetError);
+    return iso_items;
+  } catch (e) {
+    logger.debug(`Error while fetching error invoice detailed records ${e.message}`);
     return [];
   }
-
 };
 
 //retrieves next actions for a user

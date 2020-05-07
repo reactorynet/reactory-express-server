@@ -361,10 +361,15 @@ export default {
         }
       });
 
-      lodash.sortBy(isos, [i => i.order_date]).forEach((iso) => {
-        let dayIndex = dateIndex[moment(iso.order_date).format('YYYY-MM-DD')];
+      lodash.sortBy(isos, [i => i.order_date]).forEach(($iso) => {
+        logger.debug(`>>>>>> ISO DATE KEY ${$iso.order_date} <<<<<<<<<<<<`,)
+        let theDate =  moment($iso.order_date, 'YYYY-MM-DDTHH:mm:ssZ');
+        let _key = theDate.format('YYYY-MM-DD');
+        logger.debug(`>>>>>> ISO DAY KEY ${_key} for date ${theDate.format()} <<<<<<<<<<<<`,)
+
+        let dayIndex = dateIndex[moment($iso.order_date).format('YYYY-MM-DD')];
         if (dayIndex >= 0) {
-          dashboardResult.charts.quoteStatusComposed.data[dayIndex].isos += (iso.order_value / 100);
+          dashboardResult.charts.quoteStatusComposed.data[dayIndex].isos += ($iso.order_value / 100);
         }
       });
 
