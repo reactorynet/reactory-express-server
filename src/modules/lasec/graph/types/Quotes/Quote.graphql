@@ -94,6 +94,7 @@ type Quote {
   headers: [LasecQuoteHeader]
   lineItems: [LasecQuoteItem]
   timeline: [QuoteTimeLine]
+  lastAction: QuoteTimeLine
   meta: Any
   productClass: String
   repCode: String

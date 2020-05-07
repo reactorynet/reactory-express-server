@@ -214,36 +214,48 @@ export default {
       };
 
 
-      
+      let allIsos = isos.map((iso: any, isoIndex: number) => {
+        let isoDate = moment(iso.order_date);
+        let dataEntry = {
+          ...iso,
+          "value": iso.order_value / 100,
+          "team": iso.sales_team_id || `NO TEAM`,
+          "date": isoDate.format("YYYY-MM-DD"),
+          "year": `${isoDate.year()}`,            
+        };
+
+        dataEntry[`value_${dataEntry.team}`] = dataEntry.value;
+
+        return dataEntry
+      });
+
+
+      let isoSeries = teamIds.map((teamId: string, index: number) => {
+        return {
+          dataKey: `value_${teamId}`,
+          dataLabel: `ISOs ${teamId}`,
+          name: `REP: ${teamId}`,
+          data: lodash.filter(allIsos, { team: teamId }),
+          stroke: `#${palette[palette.length - (index + 1)]}`,
+        }
+      });
+
+      isoSeries.push({
+          dataKey: `value`,
+          dataLabel: `Combined ISOs`,
+          name: `ALL ISOs`,
+          data: allIsos,
+          stroke: `#${palette[0]}`,
+        });
 
       const quoteISOPie = {
         chartType: 'LINE',
-        data: isos.map((iso: any, isoIndex: number) => {
-          let isoDate = moment(iso.order_date);
-          let dataEntry = {
-            ...iso,
-            "value": iso.order_value / 100,
-            "team": iso.sales_team_id || `NO TEAM`,
-            "date": isoDate.format("YYYY-MM-DD"),
-            "year": `${isoDate.year()}`,            
-          };
-
-          dataEntry[`value_${dataEntry.team}`] = dataEntry.value;
-
-          return dataEntry
-        }),
+        data: allIsos,
         options: {
           xAxis: {
             dataKey: 'date',
           },          
-          series:teamIds.map((teamId: string, index: number) => {
-            return {
-              dataKey: `value_${teamId}`,
-              dataLabel: `ISOs ${teamId}`,
-              name: `REP: ${teamId}`,
-              stroke: `#${palette[index + 1]}`,
-            }
-          })
+          series: isoSeries
         },
         key: `quote-iso/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
       };
@@ -364,7 +376,6 @@ export default {
 
       lodash.sortBy(quotes, [q => q.created]).forEach((quote) => {
         let dayIndex = dateIndex[moment(quote.created).format('YYYY-MM-DD')];
-        logger.debug(`>>>>>> QUOTE ${quote.quote_id} DATE KEY ${dayIndex} ${quote.created} <<<<<<<<<<<<`,)
         if (dayIndex >= 0) {
           dashboardResult.charts.quoteStatusComposed.data[dayIndex].quoted += (quote.totals.totalVATExclusive / 100);          
         }

@@ -50,6 +50,56 @@ const maps = { ...OBJECT_MAPS };
 const totalsFromMeta = totalsFromMetaData;
 
 
+const getQuoteTimeline = async (quote, args, context, info) => {
+  const { options = { bypassEmail: true } } = args;
+  logger.debug(`Getting timeline for quote "${quote.code}" >> `, options);
+
+  const { timeline, id, meta, code } = quote;
+  const _timeline: Array<any> = []; //create a virtual timeline
+
+  if (isArray(timeline) === true && timeline.length > 0) {
+    timeline.forEach(tl => _timeline.push(tl));
+  }
+
+  if (options && options.bypassEmail !== true) {
+    let mails: Array<any> = [];
+    try {
+      mails = await getQuoteEmails(quote.code).then();
+    } catch (exc) {
+      logger.error(`Could not read the user email due to an error, ${exc.message}`);
+      mails = [];
+    }
+
+    if (mails && isArray(mails) === true && mails.length > 0) {
+
+      mails.forEach((mail) => {
+        if (mail.id !== 'no-id') {
+          logger.debug('Transforming Email to timeline entry', mail);
+          const entry = om(mail, {
+            'createdAt': 'when',
+            'from': {
+              key: 'who',
+              transform: (sourceValue: String) => {
+                //user lookup
+                return User.find({ email: sourceValue }).then()
+              },
+            },
+            'message': 'notes'
+          });
+          entry.actionType = 'email',
+            entry.what = `Email Communication from ${mail.from} ${mail.to ? 'to ' + mail.to : ''}`,
+            logger.debug(`Transformed Email:\n ${JSON.stringify(mail)} \n to timeline entry \n ${entry} \n`);
+          _timeline.push(entry);
+        }
+      });
+    }
+  }
+  //create timeline from mails
+
+  return lodash.sortBy(_timeline, ['when']);
+}
+
+
 
 export default {
   QuoteReminder: {
@@ -401,54 +451,13 @@ export default {
       return null;
     },
     note: ({ note }) => (note),
-    timeline: async (quote, args, context, info) => {
-      const { options = { bypassEmail: true } } = args;
-      logger.debug(`Getting timeline for quote "${quote.code}" >> `, options);
-
-      const { timeline, id, meta, code } = quote;
-      const _timeline: Array<any> = []; //create a virtual timeline
-
-      if (isArray(timeline) === true && timeline.length > 0) {
-        timeline.forEach(tl => _timeline.push(tl));
+    timeline: getQuoteTimeline,    
+    lastAction: async (quote) => {
+      let items = await getQuoteTimeline(quote, { bypassEmail: true }, null, null).then(); 
+      if(items && items.length > 0) {
+        return items[0];
       }
-
-      if (options && options.bypassEmail !== true) {
-        let mails: Array<any> = [];
-        try {
-          mails = await getQuoteEmails(quote.code).then();
-        } catch (exc) {
-          logger.error(`Could not read the user email due to an error, ${exc.message}`);
-          mails = [];
-        }
-
-        if (mails && isArray(mails) === true && mails.length > 0) {
-
-          mails.forEach((mail) => {
-            if (mail.id !== 'no-id') {
-              logger.debug('Transforming Email to timeline entry', mail);
-              const entry = om(mail, {
-                'createdAt': 'when',
-                'from': {
-                  key: 'who',
-                  transform: (sourceValue: String) => {
-                    //user lookup
-                    return User.find({ email: sourceValue }).then()
-                  },
-                },
-                'message': 'notes'
-              });
-              entry.actionType = 'email',
-                entry.what = `Email Communication from ${mail.from} ${mail.to ? 'to ' + mail.to : ''}`,
-                logger.debug(`Transformed Email:\n ${JSON.stringify(mail)} \n to timeline entry \n ${entry} \n`);
-              _timeline.push(entry);
-            }
-          });
-        }
-      }
-      //create timeline from mails
-
-      return lodash.sortBy(_timeline, ['when']);
-    },
+    },    
     meta: (quote) => {
       return quote.meta || {}
     }

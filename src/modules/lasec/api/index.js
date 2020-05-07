@@ -1,7 +1,7 @@
 'use strict'
 import fetch from 'node-fetch';
 import om from 'object-mapper';
-import { isObject, map, find, isArray, isNil } from 'lodash';
+import { isObject, map, find, isArray, isNil, concat, uniq } from 'lodash';
 import moment from 'moment';
 // import { clearAuthentication } from '../actions/Auth';
 import SECONDARY_API_URLS from './SecondaryApiUrls';
@@ -970,27 +970,32 @@ const Api = {
 
     getLasecUsers: async (ids = [], fieldName = "ids") => {
       
-      let params = { ...defaultParams };
+      let params = { filter: {} };
       let users = [];
-
+      let user_ids_to_request = [];
       params.filter[fieldName] = ids;
 
       logger.debug(`LasecAPI.User.getLasecUsers(ids = ${ids}, fieldName = ${fieldName})`)
 
       const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {
-        params
+        params,
+        pagination: {
+          enabled: true,
+          page_size: 20,
+        }
       }, true, false, 0).then();
       
       if (lasecStaffUserResponse.status === "success" && lasecStaffUserResponse.payload) {
 
-        if (isArray(lasecStaffUserResponse.payload.items) === true) {
+        if (isArray(lasecStaffUserResponse.payload.items) === true && fieldName === "ids") {
           logger.debug(`LasecApi.getLasecUsers() =>  (${lasecStaffUserResponse.payload.items}) items response`);
           users = [...lasecStaffUserResponse.payload.items];
         }
 
-        if (isArray(lasecStaffUserResponse.payload.ids) === true) {
+        if (isArray(lasecStaffUserResponse.payload.ids) === true && lasecStaffUserResponse.payload.ids.length > 0) {
 
           const { pagination } = lasecStaffUserResponse.payload;
+          
           logger.debug(`LasecApi.getLasecUsers() =>  (${lasecStaffUserResponse.payload.ids}) ids response`);
           if (pagination && pagination.has_next_page === true) {
             /**
@@ -1007,54 +1012,51 @@ const Api = {
               },
              */
 
+            user_ids_to_request = [...lasecStaffUserResponse.payload.ids];
+
             let promises = [];
             for (let pageIndex = lasecStaffUserResponse.payload.pagination.current_page + 1; pageIndex <= pagination.num_pages; pageIndex += 1) {
               promises.push(FETCH(SECONDARY_API_URLS.staff_user_data.url, {
                 params,
                 pagination: {
+                  enabled: true,
                   current_page: pageIndex,
                   page_size: pagination.page_size,
                 }
               }, true, false, 0));
             }
 
+            
+
             let allIdResponses = await Promise.all(promises).then();
             promises = [];
 
             allIdResponses.forEach((idsResponse) => {
               if (idsResponse.status === "success" && idsResponse.payload.ids) {
-                promises.push(FETCH(SECONDARY_API_URLS.staff_user_data.url, {
-                  ...defaultParams,
-                  filter: {
-                    "ids": idsResponse.payload.ids
-                  }
-                }, true, false, 0));
+                user_ids_to_request = concat(user_ids_to_request, idsResponse.payload.ids )
               }
             });
 
-            let allItemResponse = await Promise.all(promises).then();
-
-            allItemResponse.forEach((itemsResponse) => {
-              if (itemsResponse && itemsResponse.status === "success" && itemsResponse.items) {
-                users = [...users, ...itemsResponse.items];
-              }
-            });
-          } else {
+            user_ids_to_request = uniq(user_ids_to_request);
             
-            let detailResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {
-              params: {
-                filter: {
-                  ids: lasecStaffUserResponse.payload.ids,
-                }
-              },
-            }, true, false, 0).then();
-          }
+            logger.debug(`Must Fetch Ids ${user_ids_to_request}`);
+          }                            
+        }
 
-          
-          if (detailResponse.status === "success" && detailResponse.payload.items) {
-            users = [...users, ...detailResponse.payload.items];
+        if(user_ids_to_request.length > 0) {
+          let allItemResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {            
+            params: {
+              filter: {
+                "ids": user_ids_to_request
+              },
+            }            
+          }, true, false, 0).then();
+  
+          if (allItemResponse && allItemResponse.status === "success" && allItemResponse.payload.items) {
+            users = [...users, ...allItemResponse.payload.items];
           }
         }
+        
 
       } else {
         logger.error("Could not load Lasec Users", lasecStaffUserResponse);
