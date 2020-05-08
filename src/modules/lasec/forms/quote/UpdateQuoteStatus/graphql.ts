@@ -45,10 +45,55 @@ const graphql = {
         'formData.note': 'input.note'
       },
       options: {
-        refetchQueries: ['LasecGetQuoteById($quote_id: String!)'],
-      },
-      onSuccessMethod: 'event:UpdateQuoteStatus_onMutationSuccess',
-    },
+        // refetchQueries: ['LasecGetQuoteById($quote_id: String!)'],
+      }, 
+      onSuccessEvent: {
+        name: 'lasec-crm::QuoteStatusUpdated'
+      },     
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Quote status updated.',
+        props: {
+          timeOut: 10000,
+          canDismiss: true,
+          typeKey: 'success',          
+          components: [
+            {
+              componentFqn: 'core.ConditionalIconComponent@1.0.0',
+              componentProps: {
+                conditions: [
+                  {
+                    key: 'false',
+                    icon: 'trip_origin',
+                    style: {
+                      color: 'red'
+                    },
+                    tooltip: 'Confirm that your action has been saved to your task'
+                  },
+                  {
+                    key: 'true',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#fff'
+                    },
+                    tooltip: 'A task should be in your outlook calendar'
+                  }
+
+                ]
+              },
+              style: {
+                marginRight: '8px',
+                marginTop: '8px',
+              },
+              propsMap: {
+                'formData.success': 'value',
+              },
+            }
+          ]
+        }
+      },                
+    },    
   },
 };
 

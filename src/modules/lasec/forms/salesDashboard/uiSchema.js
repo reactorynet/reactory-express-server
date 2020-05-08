@@ -343,7 +343,7 @@ export default {
             componentProps: {
               'rowData.code': ['data.quote_id', 'data.code', 'query.quote_id']
             },
-            slideDirection: 'down',
+            slideDirection: 'down',            
             buttonTitle: 'Next Actions',
             windowTitle: 'Next Actions ${rowData.code}',
             buttonIcon: 'add_alert'
