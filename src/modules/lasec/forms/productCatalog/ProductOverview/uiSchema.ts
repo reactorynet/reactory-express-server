@@ -1,5 +1,5 @@
 
-const uiSchema: any = {
+const tableUiSchema: any = {
   'ui:options': {
     componentType: "div",
     showSubmit: false,
@@ -8,7 +8,17 @@ const uiSchema: any = {
     containerStyles: {
       padding: '0px',
       margin: '0px'
-    }
+    },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'Edit',
+      activeColor: 'primary',
+      selectSchemaId: 'grid'
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
   },
   paging: {
     'ui:widget': 'HiddenWidget'
@@ -257,7 +267,7 @@ const uiSchema: any = {
   }
 };
 
-const uiSchemaGrid: any = {
+const gridUiSchemaGrid: any = {
   'ui:options': {
     componentType: "div",
     containerStyles: {
@@ -363,8 +373,8 @@ const uiSchemaGrid: any = {
 };
 
 const cardUiSchema: any = {
-  ...uiSchema,
+  ...tableUiSchema,
   products: undefined,
 }
 
-export default uiSchema;
+export { tableUiSchema, gridUiSchemaGrid };

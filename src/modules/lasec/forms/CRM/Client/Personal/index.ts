@@ -24,7 +24,7 @@ export const displayUiSchema: any = {
     style: {
       marginTop: '16px',
     },
-    showSchemaSelectorInToolbar: false,
+    showSchemaSelectorInToolbar: true,
     showSubmit: false,
     showRefresh: false,
   },
@@ -439,7 +439,7 @@ export const confirmUiSchema: any = {
       repCode: { lg: 4, md: 6, sm: 12 },
     }
   ],
-  
+
   clientTitle: {
     'ui:graphql': {
       name: 'LasecGetPersonTitleById',
@@ -470,12 +470,12 @@ export const confirmUiSchema: any = {
           color: "#9A9A9A",
         }
       },
-      bodyProps: {        
+      bodyProps: {
         style: {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      },      
+      },
     }
   },
 
@@ -498,13 +498,13 @@ export const confirmUiSchema: any = {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      },      
+      },
     }
   },
 
   firstName: {
     'ui:widget': 'LabelWidget',
-    
+
     'ui:options': {
       readOnly: true,
       format: '${formData}',
@@ -527,7 +527,7 @@ export const confirmUiSchema: any = {
   },
 
   lastName: {
-    'ui:widget': 'LabelWidget',    
+    'ui:widget': 'LabelWidget',
     'ui:options': {
       readOnly: true,
       component: "TextField",
@@ -589,12 +589,12 @@ export const confirmUiSchema: any = {
           color: "#9A9A9A",
         }
       },
-      bodyProps: {        
+      bodyProps: {
         style: {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      },     
+      },
     }
   },
 
@@ -613,12 +613,12 @@ export const confirmUiSchema: any = {
           color: "#9A9A9A",
         }
       },
-      bodyProps: {        
+      bodyProps: {
         style: {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      },     
+      },
     }
   },
 };
@@ -665,7 +665,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       key: 'new',
       description: 'Capture Personal Details',
       icon: 'view_module',
-      uiSchema: newUiSchema,      
+      uiSchema: newUiSchema,
     },
   ],
   defaultFormValue: {},

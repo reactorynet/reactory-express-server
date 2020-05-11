@@ -245,6 +245,25 @@ const getProducts = async (params) => {
       model: costing.model,
       shipmentSize: costing.shipment_size,
       exWorker: costing.exworks_factor,
+
+      freightFactor: costing.freight_factor,
+      clearingFactor: costing.clearing_factor,
+      actualCostwh10: costing.actual_cost_wh10,
+      actualCostwh20: costing.actual_cost_wh20,
+      actualCostwh21: costing.actual_cost_wh21,
+      actualCostwh31: costing.actual_cost_wh31,
+      supplierUnitPrice: costing.supplier_unit_price_cents,
+      percDiscount: costing.percentage_discount,
+      discountPrice: costing.discounted_price_cents,
+      freightPrice: costing.freight_price_cents,
+      exWorksPrice: costing.exworks_price_cents,
+      craftingFOC: costing.crating_foc_cents,
+      netFOB: costing.net_fob,
+      percDuty: costing.percentage_duty,
+      clearance: costing.clearance_cost_cents,
+      landedCost: costing.landed_cost_cents,
+      markup: costing.markup,
+      sellingPrice: costing.markup,
     }
   });
 

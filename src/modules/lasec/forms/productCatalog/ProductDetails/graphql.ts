@@ -53,6 +53,26 @@ export default {
           lastReceived
           supplyCurrency
           listCurrency
+
+          freightFactor
+          clearingFactor
+          actualCostwh10
+          actualCostwh20
+          actualCostwh21
+          actualCostwh31
+          supplierUnitPrice
+          percDiscount
+          discountPrice
+          freightPrice
+          exWorksPrice
+          craftingFOC
+          netFOB
+          percDuty
+          percDuty
+          clearance
+          landedCost
+          markup
+          sellingPrice
         }
       }
     }`,
@@ -104,6 +124,25 @@ export default {
       'products.[].lastReceived': 'products.[].lastReceived',
       'products.[].supplyCurrency': 'products.[].supplyCurrency',
       'products.[].listCurrency': 'products.[].listCurrency',
+
+      'products.[].freightFactor': 'products.[].freightFactor',
+      'products.[].clearingFactor': 'products.[].clearingFactor',
+      'products.[].actualCostwh10': 'products.[].actualCostwh10',
+      'products.[].actualCostwh20': 'products.[].actualCostwh20',
+      'products.[].actualCostwh21': 'products.[].actualCostwh21',
+      'products.[].actualCostwh31': 'products.[].actualCostwh31',
+      'products.[].supplierUnitPrice': 'products.[].supplierUnitPrice',
+      'products.[].percDiscount': 'products.[].percDiscount',
+      'products.[].discountPrice': 'products.[].discountPrice',
+      'products.[].freightPrice': 'products.[].freightPrice',
+      'products.[].exWorksPrice': 'products.[].exWorksPrice',
+      'products.[].craftingFOC': 'products.[].craftingFOC',
+      'products.[].netFOB': 'products.[].netFOB',
+      'products.[].percDuty': 'products.[].percDuty',
+      'products.[].clearance': 'products.[].clearance',
+      'products.[].landedCost': 'products.[].landedCost',
+      'products.[].markup': 'products.[].markup',
+      'products.[].sellingPrice': 'products.[].sellingPrice',
     },
     resultType: 'object',
     edit: false,
