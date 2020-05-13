@@ -157,8 +157,7 @@ export const displayUiSchema: any = {
   },
 };
 
-
-export const newConfirmSchema: any = {  
+export const newConfirmSchema: any = {
   'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
@@ -185,7 +184,7 @@ export const newConfirmSchema: any = {
     borderBottom: '2px solid #D5D5D5'
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [   
+  'ui:grid-layout': [
     {
       emailAddress: { xs: 12, sm: 12, md: 6, lg: 4 },
       alternateEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
@@ -193,7 +192,7 @@ export const newConfirmSchema: any = {
       mobileNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
       alternateNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
     }
-  ], 
+  ],
   emailAddress: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -318,7 +317,12 @@ const editUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       buttonVariant: "contained",
-      selectSchemaId: 'display'
+      selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
     },
     style: {
       marginTop: '16px',
@@ -430,7 +434,7 @@ const schema: Reactory.ISchema = {
     emailAddress: {
       type: "string",
       title: "Email Address",
-      format: "email",      
+      format: "email",
     },
     confirmEmail: {
       type: "string",
@@ -439,11 +443,11 @@ const schema: Reactory.ISchema = {
     },
     alternateEmail: {
       type: "string",
-      title: "Alternate Email",      
+      title: "Alternate Email",
     },
     confirmAlternateEmail: {
       type: "string",
-      title: "Confirm Alternate Email Address",      
+      title: "Confirm Alternate Email Address",
     },
     officeNumber: {
       type: "string",

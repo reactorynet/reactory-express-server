@@ -17,6 +17,22 @@ export const EditUiSchema: any = {
     },
     showSubmit: false,
     showRefresh: false,
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'CANCEL',
+      activeColor: 'secondary',
+      buttonVariant: "contained",
+      selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -26,7 +42,7 @@ export const EditUiSchema: any = {
     {
       id: { md: 12 },
       upload: { md: 12 },
-      uploadedDocuments: { md: 12 },      
+      uploadedDocuments: { md: 12 },
     }
   ],
   view: {
@@ -38,6 +54,10 @@ export const EditUiSchema: any = {
         position: 'relative'
       },
     }
+  },
+  id: {
+    'ui:widget': 'HiddenWidget',
+    hidden: true
   },
   documents: {
     'ui:widget': 'MaterialTableWidget',
@@ -111,7 +131,7 @@ export const LasecCRMEditClientDocuments: Reactory.IReactoryForm = {
   id: 'LasecCRMEditClientDocuments',
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [ ...defaultUiResources ],
+  uiResources: [...defaultUiResources],
   title: 'CRM Client Documents',
   tags: ['CRM Client Documents'],
   registerAsComponent: true,
@@ -129,6 +149,6 @@ export const LasecCRMEditClientDocuments: Reactory.IReactoryForm = {
       description: 'Edit Documents',
       icon: 'pencil',
       uiSchema: { ...EditUiSchema }
-    },    
-  ],  
+    },
+  ],
 };

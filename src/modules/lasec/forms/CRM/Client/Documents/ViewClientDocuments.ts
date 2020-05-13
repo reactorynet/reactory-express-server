@@ -14,7 +14,7 @@ export const ViewSchema = viewSchema;
 export const ViewUiSchema: any = {
   'ui:options': {
     componentType: 'div',
-    toolbarPosition: 'none',
+    // toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -25,8 +25,14 @@ export const ViewUiSchema: any = {
       variant: 'button',
       buttonTitle: 'Edit',
       activeColor: 'primary',
-      selectSchemaId: 'edit'
+      selectSchemaId: 'edit',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
     },
+    showSchemaSelectorInToolbar: false,
     style:{
       marginTop: '16px',
     },
@@ -37,9 +43,11 @@ export const ViewUiSchema: any = {
     borderBottom: '2px solid #D5D5D5'
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
-      view: { sm: 12, md: 12 },      
+      view: { sm: 12, md: 12 },
+    },
+    {
       uploadedDocuments: { md: 12 },
     }
   ],
@@ -55,12 +63,13 @@ export const ViewUiSchema: any = {
   },
   id: {
     'ui:widget':'HiddenWidget',
+    hidden: true
   },
   uploadedDocuments: { ...DocumentGridWidget }
 };
 
 
-export const ConfirmUiSchema: any = {  
+export const ConfirmUiSchema: any = {
   'ui:options': {
     componentType: 'div',
     toolbarPosition: 'none',
@@ -69,7 +78,7 @@ export const ConfirmUiSchema: any = {
       margin: '0px',
       marginTop: '16px',
       paddingBottom: '8px'
-    },   
+    },
     style:{
       marginTop: '16px',
     },
@@ -80,15 +89,15 @@ export const ConfirmUiSchema: any = {
     borderBottom: '2px solid #D5D5D5'
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
-    {      
+  'ui:grid-layout': [
+    {
       uploadedDocuments: { md: 12 },
     }
-  ],  
-  
+  ],
+
   uploadedDocuments: {
     ...DocumentGridWidget,
-    'ui:options': { ...DocumentGridWidget['ui:options'], query: 'PagedNewCustomerDocuments' }    
+    'ui:options': { ...DocumentGridWidget['ui:options'], query: 'PagedNewCustomerDocuments' }
   }
 };
 
@@ -123,6 +132,6 @@ export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
       description: 'Edit Documents',
       icon: 'edit',
       uiSchema: { ...EditUiSchema }
-    },        
-  ],  
+    },
+  ],
 };
