@@ -13,7 +13,6 @@ newSchema.title = 'UPLOAD DOCUMENTS';
 newSchema.description = 'Use the area below to add files for this customer.';
 export const NewSchema = newSchema;
 
-
 export const NewUiSchema: any = {
   'ui:options': {
     componentType: 'div',
@@ -24,13 +23,19 @@ export const NewUiSchema: any = {
       marginTop: '16px',
       paddingBottom: '8px'
     },
-    schemaSelector: {
-      variant: 'button',
-      buttonTitle: 'Edit',
-      activeColor: 'primary',
-      selectSchemaId: 'edit'
-    },
-    style:{
+    // schemaSelector: {
+    //   variant: 'button',
+    //   buttonTitle: 'Edit',
+    //   activeColor: 'primary',
+    //   selectSchemaId: 'edit',
+    //   style: {
+    //     position: 'absolute',
+    //     top: '-20px',
+    //     right: 0,
+    //   }
+    // },
+    // showSchemaSelectorInToolbar: false,
+    style: {
       marginTop: '16px',
     },
     showSubmit: false,
@@ -40,41 +45,43 @@ export const NewUiSchema: any = {
     borderBottom: '2px solid #D5D5D5'
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [          
+  'ui:grid-layout': [
+    // {
+    //   view: {sm: 12, md: 12}
+    // },
     {
-      //id: { md: 12, style: { height: 0, display: 'none' } },
       upload: { lg: 6, md: 6, sm: 12, },
-      uploadedDocuments: { lg: 6, md: 6, sm: 12 },      
+      uploadedDocuments: { lg: 6, md: 6, sm: 12 },
     }
-  ],  
+  ],
+
+  // view: {
+  //   'ui:widget': 'SchemaSelectorWidget',
+  //   'ui:options': {
+  //     style: {
+  //       width: '100%',
+  //       float: "right"
+  //     },
+  //   }
+  // },
 
   view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
-      },
-    }
+    'ui:widget': 'HiddenWidget',
+  },
+  id: {
+    'ui:widget': 'HiddenWidget',
   },
 
-  id: {
-    'ui:widget':'HiddenWidget',
-  },
-  
   upload: {
     'ui:widget': 'ReactoryDropZoneWidget',
     'ui:options': {
-      //main container styles
       style: {
 
       },
-      //properties for Reactory DropZone
       ReactoryDropZoneProps: {
         text: `Drop files here, or click to select files to upload`,
         accept: ['text/html', 'text/text', 'application/xml', 'application/pdf'],
-        uploadOnDrop: true,        
+        uploadOnDrop: true,
         mutation: {
           name: 'LasecUploadDocument',
           text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
@@ -91,7 +98,7 @@ export const NewUiSchema: any = {
           },
           onSuccessEvent: {
             name: 'lasec-crm::new-company::document::uploaded'
-          }            
+          }
         },
         iconProps: {
           icon: 'upload',
@@ -112,7 +119,7 @@ export const NewUiSchema: any = {
       },
     }
   },
-  
+
   uploadedDocuments: {
     ...DocumentGridWidget,
     'ui:options': {
@@ -125,7 +132,7 @@ export const NewUiSchema: any = {
       actions: [
         {
           icon: 'remove_circle',
-          tooltip: 'Remove Files',          
+          tooltip: 'Remove Files',
           iconProps: {
             color: 'error'
           },
@@ -135,13 +142,13 @@ export const NewUiSchema: any = {
             'selected[].id': 'fileIds',
           },
           resultMap: {
-            
+
           },
-          resultAction: 'refresh',                   
-        },   
+          resultAction: 'refresh',
+        },
       ]
-    }        
-  },    
+    }
+  },
 };
 
 
@@ -149,13 +156,13 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
   id: 'LasecCRMNewClientDocuments',
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [ ...defaultUiResources ],
+  uiResources: [...defaultUiResources],
   title: 'CRM Client Documents',
   tags: ['CRM Client Documents'],
   registerAsComponent: true,
   name: 'LasecCRMNewClientDocuments',
   nameSpace: 'lasec-crm',
-  version: '1.0.0',  
+  version: '1.0.0',
   schema: { ...NewSchema },
   graphql: {
     ...graphql,
@@ -166,7 +173,7 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
           paging {
             total
             page
-            pageSize          
+            pageSize
           }
           documents {
             id
@@ -174,17 +181,17 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
             mimetype
             link
             size
-          }        
-        }      
+          }
+        }
       }`,
-      variables: {      
-        'formData.paging': 'paging',      
-        'formData.uploadContexts': 'uploadContexts',           
-      },      
+      variables: {
+        'formData.paging': 'paging',
+        'formData.uploadContexts': 'uploadContexts',
+      },
     },
     mutation: {
       delete: {
-        name: 'LasecDeleteNewClientDocuments',        
+        name: 'LasecDeleteNewClientDocuments',
         text: `
           mutation LasecDeleteNewClientDocuments($fileIds: [String]!){
             LasecDeleteNewClientDocuments(fileIds: $fileIds){
@@ -195,12 +202,12 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
           }
         `,
         variables: {
-          'selected.[].id': 'fileIds'  
-        },        
-        objectMap: true,        
+          'selected.[].id': 'fileIds'
+        },
+        objectMap: true,
         onSuccessEvent: {
           name: 'lasec-crm::new-company::documents::delete'
-        },        
+        },
       }
     }
   },
@@ -213,7 +220,7 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
       description: 'Upload Document For New Client',
       icon: 'add',
       uiSchema: { ...NewUiSchema },
-    },    
+    },
   ],
   defaultFormValue: {
     id: 'new_client',
@@ -226,5 +233,5 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
     uploadContexts: [
       `lasec-crm::new-company::document`,
     ]
-  }  
+  }
 };

@@ -14,7 +14,7 @@ export const ViewSchema = viewSchema;
 export const ViewUiSchema: any = {
   'ui:options': {
     componentType: 'div',
-    // toolbarPosition: 'none',
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -33,7 +33,7 @@ export const ViewUiSchema: any = {
       }
     },
     showSchemaSelectorInToolbar: false,
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSubmit: false,
@@ -55,19 +55,17 @@ export const ViewUiSchema: any = {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
+        width: '100%',
+        float: "right"
       },
     }
   },
   id: {
-    'ui:widget':'HiddenWidget',
+    'ui:widget': 'HiddenWidget',
     hidden: true
   },
   uploadedDocuments: { ...DocumentGridWidget }
 };
-
 
 export const ConfirmUiSchema: any = {
   'ui:options': {
@@ -79,7 +77,7 @@ export const ConfirmUiSchema: any = {
       marginTop: '16px',
       paddingBottom: '8px'
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSubmit: false,
@@ -101,12 +99,11 @@ export const ConfirmUiSchema: any = {
   }
 };
 
-
 export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
   id: 'LasecCRMViewClientDocuments',
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [ ...defaultUiResources ],
+  uiResources: [...defaultUiResources],
   title: 'CRM Client Documents',
   tags: ['CRM Client Documents'],
   registerAsComponent: true,

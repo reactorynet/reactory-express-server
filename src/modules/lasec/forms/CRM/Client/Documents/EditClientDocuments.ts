@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import { DocumentSchema } from './shared/DocumentSchema';
 import graphql from './graphql';
 import { defaultUiResources } from '../../../uiResources';
+import { ViewUiSchema } from './ViewClientDocuments';
 
 export const EditSchema = cloneDeep<Reactory.ISchema>(DocumentSchema);
 //Display schema for editing
@@ -37,21 +38,20 @@ export const EditUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },
+      view: { sm: 12, md: 12 },
     },
     {
       id: { md: 12 },
       upload: { md: 12 },
-      uploadedDocuments: { md: 12 },
+      documents: { md: 12 },
     }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
+        width: '100%',
+        float: "right"
       },
     }
   },
@@ -143,12 +143,20 @@ export const LasecCRMEditClientDocuments: Reactory.IReactoryForm = {
   uiSchema: { ...EditUiSchema },
   uiSchemas: [
     {
-      id: 'edit',
+      id: 'display',
       title: 'VIEW',
-      key: 'edit',
-      description: 'Edit Documents',
-      icon: 'pencil',
-      uiSchema: { ...EditUiSchema }
+      key: 'display',
+      description: 'View Documents',
+      icon: 'list',
+      uiSchema: { ...ViewUiSchema }
     },
+    // {
+    //   id: 'edit',
+    //   title: 'EDIT',
+    //   key: 'edit',
+    //   description: 'Edit Documents',
+    //   icon: 'pencil',
+    //   uiSchema: { ...EditUiSchema }
+    // },
   ],
 };

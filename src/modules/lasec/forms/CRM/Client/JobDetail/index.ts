@@ -15,7 +15,12 @@ export const displayUiSchema: any = {
       variant: 'button',
       buttonTitle: 'Edit',
       activeColor: 'primary',
-      selectSchemaId: 'edit'
+      selectSchemaId: 'edit',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
     },
     style: {
       marginTop: '16px',
