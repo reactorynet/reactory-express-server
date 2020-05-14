@@ -23,7 +23,7 @@ const labelProps = {
 const displayUiSchema: any = {
   'ui:options': {
     componentType: "div",
-    toolbarPosition: 'none',
+    // toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',

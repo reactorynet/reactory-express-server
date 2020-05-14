@@ -103,6 +103,9 @@ const editUiSchema: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
+    style: {
+      marginTop: '16px',
+    },
     schemaSelector: {
       variant: 'button',
       buttonTitle: 'CANCEL',

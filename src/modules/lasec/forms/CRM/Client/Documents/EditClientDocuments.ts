@@ -92,6 +92,7 @@ export const EditUiSchema: any = {
         uploadOnDrop: true,
         name: 'LasecUploadDocument',
         mutation: {
+          name: 'LasecUploadDocument',
           text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
             LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
               id
@@ -104,6 +105,7 @@ export const EditUiSchema: any = {
           variables: {
             'uploadContext': 'lasec-crm::new-company::document'
           },
+          onSuccessMethod: 'refresh',
         },
         iconProps: {
           icon: 'upload',
