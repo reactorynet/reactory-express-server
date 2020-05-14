@@ -42,8 +42,8 @@ export const EditUiSchema: any = {
     },
     {
       id: { md: 12 },
-      upload: { md: 12 },
-      documents: { md: 12 },
+      upload: { xs: 12, sm: 12, md: 12, lg: 12 },
+      documents: { xs: 12, sm: 12, md: 12, lg: 12 },
     }
   ],
   view: {
@@ -92,8 +92,8 @@ export const EditUiSchema: any = {
         uploadOnDrop: true,
         name: 'LasecUploadDocument',
         mutation: {
-          text: `mutation LasecUploadDocument($id: String, $file: Upload!, $uploadContext: String){
-            LasecUploadDocument(id: $id, file: $file, uploadContext: $uploadContext) {
+          text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
+            LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
               id
               filename
               link
@@ -135,7 +135,8 @@ export const LasecCRMEditClientDocuments: Reactory.IReactoryForm = {
   title: 'CRM Client Documents',
   tags: ['CRM Client Documents'],
   registerAsComponent: true,
-  name: 'LasecCRMClientDocuments',
+  // name: 'LasecCRMClientDocuments',
+  name: 'LasecCRMEditClientDocuments',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: EditSchema,
@@ -150,13 +151,13 @@ export const LasecCRMEditClientDocuments: Reactory.IReactoryForm = {
       icon: 'list',
       uiSchema: { ...ViewUiSchema }
     },
-    // {
-    //   id: 'edit',
-    //   title: 'EDIT',
-    //   key: 'edit',
-    //   description: 'Edit Documents',
-    //   icon: 'pencil',
-    //   uiSchema: { ...EditUiSchema }
-    // },
+    {
+      id: 'edit',
+      title: 'EDIT',
+      key: 'edit',
+      description: 'Edit Documents',
+      icon: 'pencil',
+      uiSchema: { ...EditUiSchema }
+    },
   ],
 };

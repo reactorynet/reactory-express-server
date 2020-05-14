@@ -45,10 +45,10 @@ export const ViewUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { sm: 12, md: 12 },
+      view: { xs: 12, sm: 12, md: 12, lg: 12 },
     },
     {
-      uploadedDocuments: { md: 12 },
+      uploadedDocuments: { xs: 12, sm: 12, md: 12, lg: 12 },
     }
   ],
   view: {
@@ -107,7 +107,8 @@ export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
   title: 'CRM Client Documents',
   tags: ['CRM Client Documents'],
   registerAsComponent: true,
-  name: 'LasecCRMClientDocuments',
+  // name: 'LasecCRMClientDocuments',
+  name: 'LasecCRMViewClientDocuments',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: { ...ViewSchema },

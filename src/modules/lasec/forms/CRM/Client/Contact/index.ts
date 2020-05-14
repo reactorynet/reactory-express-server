@@ -34,11 +34,11 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { lg: 6, md: 12, sm: 12 },
-      alternateEmail: { lg: 6, md: 12, sm: 12 },
-      officeNumber: { lg: 6, md: 12, sm: 12 },
-      mobileNumber: { lg: 6, md: 12, sm: 12 },
-      alternateNumber: { lg: 6, md: 12, sm: 12 },
+      emailAddress: {md: 6, sm: 12 },
+      alternateEmail: {md: 6, sm: 12 },
+      officeNumber: {md: 6, sm: 12 },
+      mobileNumber: {md: 6, sm: 12 },
+      alternateNumber: {md: 6, sm: 12 },
     }
   ],
   view: {
@@ -337,10 +337,10 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { sm: 12, md: 12, lg: 12 },
-      alternateEmail: { sm: 12, md: 12, lg: 12 },
-      mobileNumber: { sm: 12, md: 12, lg: 12 },
-      alternateNumber: { sm: 12, md: 12, lg: 12 },
+      emailAddress: {md: 6, sm: 12 },
+      alternateEmail: {md: 6, sm: 12 },
+      mobileNumber: {md: 6, sm: 12 },
+      alternateNumber: {md: 6, sm: 12 },
     }
   ],
   view: {

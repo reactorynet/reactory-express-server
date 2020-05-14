@@ -200,15 +200,15 @@ const schema: Reactory.ISchema = {
 };
 schema.title = "DOCUMENTS"
 
-const LasecCRMClientDocuments: Reactory.IReactoryForm = {
-  id: 'LasecCRMClientDocuments',
+const LasecCRMClientDocumentsCopy: Reactory.IReactoryForm = {
+  id: 'LasecCRMClientDocumentsCopy',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
   title: 'CRM Client Documents',
   tags: ['CRM Client Documents'],
   registerAsComponent: true,
-  name: 'LasecCRMClientDocuments',
+  name: 'LasecCRMClientDocumentsCopy',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
@@ -245,4 +245,4 @@ const LasecCRMClientDocuments: Reactory.IReactoryForm = {
   },
 };
 
-export default LasecCRMClientDocuments;
+export default LasecCRMClientDocumentsCopy;

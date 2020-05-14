@@ -2,9 +2,6 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql, { newClientGraphQL } from './graphql';
 
-/**
- * Used for view purposes only
- */
 export const displayUiSchema: any = {
   'ui:graphql': graphql,
   'ui:options': {
@@ -37,10 +34,10 @@ export const displayUiSchema: any = {
       view: { lg: 12, sm: 12, md: 12 },
     },
     {
-      clientStatus: { lg: 4, md: 6, sm: 12 },
-      firstName: { lg: 4, md: 6, sm: 12 },
-      lastName: { lg: 4, md: 6, sm: 12 },
-      country: { lg: 4, md: 6, sm: 12 },
+      clientStatus: {md: 6, sm: 12 },
+      firstName: {md: 6, sm: 12 },
+      lastName: {md: 6, sm: 12 },
+      country: {md: 6, sm: 12 },
     }
   ],
   view: {
@@ -184,9 +181,6 @@ export const displayUiSchema: any = {
   },
 };
 
-/**
- * Used for edit view only
- */
 export const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -220,10 +214,10 @@ export const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      clientStatus: { lg: 4, md: 6, sm: 12 },
-      firstName: { lg: 4, md: 6, sm: 12 },
-      lastName: { lg: 4, md: 6, sm: 12 },
-      country: { lg: 4, md: 6, sm: 12 },
+      clientStatus: {md: 6, sm: 12 },
+      firstName: { md: 6, sm: 12 },
+      lastName: { md: 6, sm: 12 },
+      country: { md: 6, sm: 12 },
     }
   ],
   view: {

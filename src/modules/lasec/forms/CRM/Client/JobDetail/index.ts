@@ -38,12 +38,12 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
-      jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
-      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
-      ranking: { xs: 12, sm: 12, md: 6, lg: 4 }
+      accountType: {md: 6, sm: 12 },
+      repCode: {md: 6, sm: 12 },
+      jobTitle: {md: 6, sm: 12 },
+      clientDepartment: {md: 6, sm: 12 },
+      customerClass: {md: 6, sm: 12 },
+      ranking: {md: 6, sm: 12 },
     }
   ],
   view: {
@@ -488,12 +488,12 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
-      jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
-      ranking: { xs: 12, sm: 12, md: 6, lg: 4 }
+      accountType: {md: 6, sm: 12 },
+      repCode: {md: 6, sm: 12 },
+      jobType: {md: 6, sm: 12 },
+      clientDepartment: {md: 6, sm: 12 },
+      customerClass: {md: 6, sm: 12 },
+      ranking: {md: 6, sm: 12 },
     }
   ],
   view: {

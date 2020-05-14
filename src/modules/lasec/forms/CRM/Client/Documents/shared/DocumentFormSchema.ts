@@ -30,13 +30,13 @@ export const DocumentFormSchema: Reactory.ISchema = {
     id: {
       type: 'string',
       title: 'Client',
-      description: 'The client reference to use for document uploads'
+      // description: 'The client reference to use for document uploads'
     },
 
     upload: {
       type: 'string',
       title: 'File',
-      description: 'This field is used to upload the file'
+      // description: 'This field is used to upload the file'
     },
 
     uploadContext: {
