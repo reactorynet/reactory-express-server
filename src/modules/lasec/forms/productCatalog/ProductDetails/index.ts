@@ -1,6 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import $schema from './schema';
-import $uiSchema from './uiSchema';
+import { uiSchemaTable, uiSchemaGrid} from './uiSchema';
 import $graphql from './graphql';
 
 const LasecCMSProductDetail: Reactory.IReactoryForm = {
@@ -16,7 +16,25 @@ const LasecCMSProductDetail: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: $schema,
   graphql: $graphql,
-  uiSchema: $uiSchema,
+  uiSchema: uiSchemaTable,
+  uiSchemas: [
+    {
+      id: 'default',
+      title: 'TABLE',
+      key: 'default',
+      description: 'Product Details Table',
+      icon: 'list',
+      uiSchema: uiSchemaTable,
+    },
+    {
+      id: 'grid',
+      title: 'GRID',
+      key: 'grid',
+      description: 'Product Details Grid',
+      icon: 'view_module',
+      uiSchema: uiSchemaGrid,
+    }
+  ],
   defaultFormValue: {
     paging: {
       page: 1,
