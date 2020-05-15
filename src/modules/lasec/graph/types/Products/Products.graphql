@@ -43,7 +43,38 @@ type Product {
   supplier: String
   model: String
   shipmentSize: Int
+
   exWorker: Int
+  productClass: String
+  tariffCode: String
+  leadTime: String
+  validPriceUntil: String
+  lastUpdated: String
+  lastUpdatedBy: String
+  lastOrdered: String
+  lastReceived: String
+  supplyCurrency: String
+  listCurrency: String
+
+  freightFactor: String
+  clearingFactor: String
+  actualCostwh10: String
+  actualCostwh20: String
+  actualCostwh21: String
+  actualCostwh31: String
+  supplierUnitPrice: String
+  percDiscount: String
+  discountPrice: String
+  freightPrice: String
+  exWorksPrice: String
+  craftingFOC: String
+  netFOB: String
+  percDuty: String
+  clearance: String
+  landedCost: String
+  markup: String
+  sellingPrice: String
+
 }
 
 type ProductQueryDetail {

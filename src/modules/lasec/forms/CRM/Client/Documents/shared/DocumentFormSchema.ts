@@ -17,39 +17,38 @@ const commentSchema: Reactory.ISchema = {
       title: 'Link'
     },
   }
-}; 
+};
 
 export const DocumentFormSchema: Reactory.ISchema = {
   type: 'object',
   title: 'Client Documents Form (Override)',
   properties: {
     view: {
-      type: 'string',
-      title: 'View Mode',
-      description: 'View mode for the form, use this field to toggle the editing mode where supported.'
+      title: '',
+      type: 'string'
     },
     id: {
       type: 'string',
       title: 'Client',
-      description: 'The client reference to use for document uploads'
-    },   
+      // description: 'The client reference to use for document uploads'
+    },
 
     upload: {
       type: 'string',
       title: 'File',
-      description: 'This field is used to upload the file'
+      // description: 'This field is used to upload the file'
     },
-    
+
     uploadContext: {
       type: 'array',
       items: {
         type: 'string',
       }
     },
-    
+
     uploadedDocuments: {
-      type: 'array',      
-      items: { 
+      type: 'array',
+      items: {
         type: 'object',
         properties: {
           id: {
@@ -64,8 +63,8 @@ export const DocumentFormSchema: Reactory.ISchema = {
             type: 'string',
             title: 'Link'
           },
-        }  
+        }
       }
-    },    
+    },
   }
 };

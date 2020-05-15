@@ -12,13 +12,19 @@ const displayUiSchema: any = {
       marginTop: '16px',
       paddingBottom: '8px'
     },
-    schemaSelector: {
-      variant: 'button',
-      buttonTitle: 'Edit',
-      activeColor: 'primary',
-      selectSchemaId: 'edit'
-    },
-    style:{
+    // schemaSelector: {
+    //   variant: 'button',
+    //   buttonTitle: 'Edit',
+    //   activeColor: 'primary',
+    //   selectSchemaId: 'edit',
+    //   style: {
+    //     position: 'absolute',
+    //     top: '-20px',
+    //     right: 0,
+    //   }
+    // },
+    // showSchemaSelectorInToolbar: false,
+    style: {
       marginTop: '16px',
     },
     showSubmit: true,
@@ -29,24 +35,24 @@ const displayUiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
+    // {
+    //   view: { sm: 12, md: 12, lg: 12 },
+    // },
     {
-      view: { md: 12 },      
-    },
-    {
-      comments: { md: 12 },
-      newComment: { md: 12 },                
+      comments: { sm: 12, md: 12, lg: 12 },
+      newComment: { sm: 12, md: 12, lg: 12 },
     }
   ],
-  view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
-      },
-    }
-  },  
+  // view: {
+  //   'ui:widget': 'SchemaSelectorWidget',
+  //   'ui:options': {
+  //     style: {
+  //       top: '10px',
+  //       right: '10px',
+  //       position: 'relative'
+  //     },
+  //   }
+  // },
   comments: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -59,7 +65,7 @@ const displayUiSchema: any = {
         },
         {
           title: "Comment", field: "size"
-        },        
+        },
       ],
       options: {
         grouping: false,
@@ -71,10 +77,10 @@ const displayUiSchema: any = {
   },
   newComment: {
     'ui:field': 'GridLayout',
-    'ui:grid-layout': [      
+    'ui:grid-layout': [
       {
-        comment: { md: 12, sm: 12 },        
-      },      
+        comment: { md: 12, sm: 12 },
+      },
     ],
     comment: {
       'ui:options': {
@@ -83,7 +89,7 @@ const displayUiSchema: any = {
           multiline: true,
           variant: 'outlined'
         }
-      }      
+      }
     }
   },
 };
@@ -97,17 +103,33 @@ const editUiSchema: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
+    style: {
+      marginTop: '16px',
+    },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'CANCEL',
+      activeColor: 'secondary',
+      buttonVariant: "contained",
+      selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
+    },
+    showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { sm: 12, md: 12, lg: 12 },
     },
     {
       comments: { md: 12 },
-      newComment: { md: 12 },                
+      newComment: { md: 12 },
     }
   ],
   view: {
@@ -119,7 +141,7 @@ const editUiSchema: any = {
         position: 'relative'
       },
     },
-  },  
+  },
   comments: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -133,7 +155,7 @@ const editUiSchema: any = {
         },
         {
           title: "Comment", field: "size"
-        },        
+        },
       ],
       options: {
         grouping: false,
@@ -145,10 +167,10 @@ const editUiSchema: any = {
   },
   newComment: {
     'ui:field': 'GridLayout',
-    'ui:grid-layout': [      
+    'ui:grid-layout': [
       {
-        comment: { md: 12, sm: 12 },        
-      },      
+        comment: { md: 12, sm: 12 },
+      },
     ],
     comment: {
       'ui:options': {
@@ -182,13 +204,17 @@ const commentSchema: Reactory.ISchema = {
       type: "string",
       format: "date",
       title: "when"
-    },    
+    },
   }
-}; 
+};
 
 const schema: Reactory.ISchema = {
   type: "object",
   properties: {
+    // view: {
+    //   title: '',
+    //   type: 'string'
+    // },
     id: {
       type: "string",
       title: "Client ID"
@@ -235,25 +261,25 @@ const LasecCRMClientComments: Reactory.IReactoryForm = {
   graphql,
   uiSchema: displayUiSchema,
   uiSchemas: [
-    {
-      id: 'display',
-      title: 'VIEW',
-      key: 'display',
-      description: 'View Contact Details',
-      icon: 'list',
-      uiSchema: displayUiSchema,
-    },
-    {
-      id: 'edit',
-      title: 'EDIT',
-      key: 'edit',
-      description: 'Edit Contact Details',
-      icon: 'view_module',
-      uiSchema: editUiSchema,
-    },
+    // {
+    //   id: 'display',
+    //   title: 'VIEW',
+    //   key: 'display',
+    //   description: 'View Contact Details',
+    //   icon: 'list',
+    //   uiSchema: displayUiSchema,
+    // },
+    // {
+    //   id: 'edit',
+    //   title: 'EDIT',
+    //   key: 'edit',
+    //   description: 'Edit Contact Details',
+    //   icon: 'view_module',
+    //   uiSchema: editUiSchema,
+    // },
   ],
   defaultFormValue: {
-    
+
   },
 
 };

@@ -34,11 +34,11 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { lg: 6, md: 12, sm: 12 },
-      alternateEmail: { lg: 6, md: 12, sm: 12 },
-      officeNumber: { lg: 6, md: 12, sm: 12 },
-      mobileNumber: { lg: 6, md: 12, sm: 12 },
-      alternateNumber: { lg: 6, md: 12, sm: 12 },
+      emailAddress: {md: 6, sm: 12 },
+      alternateEmail: {md: 6, sm: 12 },
+      officeNumber: {md: 6, sm: 12 },
+      mobileNumber: {md: 6, sm: 12 },
+      alternateNumber: {md: 6, sm: 12 },
     }
   ],
   view: {
@@ -159,8 +159,7 @@ export const displayUiSchema: any = {
   },
 };
 
-
-export const newConfirmSchema: any = {  
+export const newConfirmSchema: any = {
   'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
@@ -187,7 +186,7 @@ export const newConfirmSchema: any = {
     borderBottom: '2px solid #D5D5D5'
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [   
+  'ui:grid-layout': [
     {
       emailAddress: { xs: 12, sm: 12, md: 6, lg: 4 },
       alternateEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
@@ -195,7 +194,7 @@ export const newConfirmSchema: any = {
       mobileNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
       alternateNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
     }
-  ], 
+  ],
   emailAddress: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -320,7 +319,12 @@ const editUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       buttonVariant: "contained",
-      selectSchemaId: 'display'
+      selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
     },
     style: {
       marginTop: '16px',
@@ -335,10 +339,10 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { sm: 12, md: 12, lg: 12 },
-      alternateEmail: { sm: 12, md: 12, lg: 12 },
-      mobileNumber: { sm: 12, md: 12, lg: 12 },
-      alternateNumber: { sm: 12, md: 12, lg: 12 },
+      emailAddress: {md: 6, sm: 12 },
+      alternateEmail: {md: 6, sm: 12 },
+      mobileNumber: {md: 6, sm: 12 },
+      alternateNumber: {md: 6, sm: 12 },
     }
   ],
   view: {
@@ -440,7 +444,7 @@ const schema: Reactory.ISchema = {
     emailAddress: {
       type: "string",
       title: "Email Address",
-      format: "email",      
+      format: "email",
     },
     confirmEmail: {
       type: "string",

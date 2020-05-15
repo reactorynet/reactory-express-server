@@ -2,9 +2,6 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql, { newClientGraphQL } from './graphql';
 
-/**
- * Used for view purposes only
- */
 export const displayUiSchema: any = {
   'ui:graphql': graphql,
   'ui:options': {
@@ -24,7 +21,7 @@ export const displayUiSchema: any = {
     style: {
       marginTop: '16px',
     },
-    showSchemaSelectorInToolbar: false,
+    showSchemaSelectorInToolbar: true,
     showSubmit: false,
     showRefresh: false,
   },
@@ -37,10 +34,10 @@ export const displayUiSchema: any = {
       view: { lg: 12, sm: 12, md: 12 },
     },
     {
-      clientStatus: { lg: 4, md: 6, sm: 12 },
-      firstName: { lg: 4, md: 6, sm: 12 },
-      lastName: { lg: 4, md: 6, sm: 12 },
-      country: { lg: 4, md: 6, sm: 12 },
+      clientStatus: {md: 6, sm: 12 },
+      firstName: {md: 6, sm: 12 },
+      lastName: {md: 6, sm: 12 },
+      country: {md: 6, sm: 12 },
     }
   ],
   view: {
@@ -184,9 +181,6 @@ export const displayUiSchema: any = {
   },
 };
 
-/**
- * Used for edit view only
- */
 export const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -200,7 +194,12 @@ export const editUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       buttonVariant: "contained",
-      selectSchemaId: 'display'
+      selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
     },
     style: {
       marginTop: '16px',
@@ -215,10 +214,10 @@ export const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      clientStatus: { lg: 4, md: 6, sm: 12 },
-      firstName: { lg: 4, md: 6, sm: 12 },
-      lastName: { lg: 4, md: 6, sm: 12 },
-      country: { lg: 4, md: 6, sm: 12 },
+      clientStatus: {md: 6, sm: 12 },
+      firstName: { md: 6, sm: 12 },
+      lastName: { md: 6, sm: 12 },
+      country: { md: 6, sm: 12 },
     }
   ],
   view: {
@@ -439,7 +438,7 @@ export const confirmUiSchema: any = {
       repCode: { lg: 4, md: 6, sm: 12 },
     }
   ],
-  
+
   clientTitle: {
     'ui:graphql': {
       name: 'LasecGetPersonTitleById',
@@ -470,12 +469,12 @@ export const confirmUiSchema: any = {
           color: "#9A9A9A",
         }
       },
-      bodyProps: {        
+      bodyProps: {
         style: {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      },      
+      },
     }
   },
 
@@ -498,13 +497,13 @@ export const confirmUiSchema: any = {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      },      
+      },
     }
   },
 
   firstName: {
     'ui:widget': 'LabelWidget',
-    
+
     'ui:options': {
       readOnly: true,
       format: '${formData}',
@@ -527,7 +526,7 @@ export const confirmUiSchema: any = {
   },
 
   lastName: {
-    'ui:widget': 'LabelWidget',    
+    'ui:widget': 'LabelWidget',
     'ui:options': {
       readOnly: true,
       component: "TextField",
@@ -589,12 +588,12 @@ export const confirmUiSchema: any = {
           color: "#9A9A9A",
         }
       },
-      bodyProps: {        
+      bodyProps: {
         style: {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      },     
+      },
     }
   },
 
@@ -613,12 +612,12 @@ export const confirmUiSchema: any = {
           color: "#9A9A9A",
         }
       },
-      bodyProps: {        
+      bodyProps: {
         style: {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      },     
+      },
     }
   },
 };
@@ -665,7 +664,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
       key: 'new',
       description: 'Capture Personal Details',
       icon: 'view_module',
-      uiSchema: newUiSchema,      
+      uiSchema: newUiSchema,
     },
   ],
   defaultFormValue: {},

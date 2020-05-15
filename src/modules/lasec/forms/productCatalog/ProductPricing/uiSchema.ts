@@ -212,6 +212,7 @@ const uiSchema: any = {
               icon: 'straighten'
             }
           ],
+          hasPricingChart: true
         },
       },
       loadingText: 'Loading Product Overview, please wait a moment',

@@ -16,26 +16,27 @@ let uiSchema : any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      clientStatus: { md: 1 },
-      fullName: { md: 3 },
-      customerStatus: { md: 1 },
-      accountNumber: { md: 1 },
-      accountType: { md: 1 },
-      customer: {md: 3 },
-      availableBalance: { md: 1 },
-      creditLimit: { md: 1},
+      clientStatus: { xs: 3, sm: 1, md: 1 },
+      fullName: { xs: 9, sm: 6, md: 3, lg: 2 },
+      customerStatus: { xs: 3, sm: 1, md: 1, lg: 1 },
+      accountNumber: { xs: 6, sm: 4, md: 3, lg: 2 },
+      accountType: { xs: 6, sm: 4, md: 3, lg: 2 },
+      customer: { xs: 6, sm: 4, md: 3, lg: 2 },
+      availableBalance: { xs: 6, sm: 2, md: 2, lg: 1 },
+      creditLimit: { xs: 6, sm: 2, md: 2, lg: 1},
     }
-  ],  
-  clientStatus: { 
+  ],
+  clientStatus: {
     'ui:options': {
       componentFqn: 'core.ConditionalIconComponent@1.0.0',
-      componentProps: {        
+      componentProps: {
+        label: 'Client Status',
         conditions: [
           {
             key: 'active',
             icon: 'trip_origin',
             style: {
-              color: '#5EB848'                  
+              color: '#5EB848'
             },
             tooltip: 'Client Active'
           },
@@ -54,7 +55,7 @@ let uiSchema : any = {
               color: '#AB1257'
             },
             tooltip: 'Client Deactivated'
-          }                  
+          }
         ]
       },
       style: {
@@ -62,9 +63,9 @@ let uiSchema : any = {
         marginTop: '8px',
       },
       propsMap: {
-        'formContext.formData.clientStatus': 'value',
+        'formData': 'value',
       },
-    }       
+    }
   },
   fullName: {
     readOnly: true,
@@ -75,24 +76,24 @@ let uiSchema : any = {
   customerStatus: {
     'ui:options': {
       componentFqn: 'core.ConditionalIconComponent@1.0.0',
-      componentProps: {        
+      componentProps: {
         conditions: [
           {
             key: 'not-on-hold',
-            icon: 'fiber_manual_record',
+            icon: 'trip_origin',
             style: {
-              color: '#5EB848'                  
+              color: '#5EB848'
             },
             tooltip: 'Not on hold'
           },
           {
             key: 'on-hold',
-            icon: 'fiber_manual_record',
+            icon: 'trip_origin',
             style: {
               color: '#FF9901'
             },
             tooltip: 'Customer is on hold'
-          },          
+          },
         ]
       },
       style: {
@@ -100,9 +101,9 @@ let uiSchema : any = {
         marginTop: '8px',
       },
       propsMap: {
-        'formContext.formData.customerStatus': 'value',
+        'formData': 'value',
       },
-    }, 
+    },
   },
   accountNumber: {
     'ui:options': {
@@ -116,7 +117,7 @@ let uiSchema : any = {
     'ui:options': {
       readOnly: true
     }
-  }, 
+  },
   availableBalance: {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {

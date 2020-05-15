@@ -23,7 +23,7 @@ const labelProps = {
 const displayUiSchema: any = {
   'ui:options': {
     componentType: "div",
-    toolbarPosition: 'none',
+    // toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -43,10 +43,11 @@ const displayUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    marginBottom: '16px'
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [   
+  'ui:grid-layout': [
     {
       currentBalance: { sm: 12, md: 12, lg: 12 },
       creditLimit: { sm: 12, md: 12, lg: 12 },
@@ -68,7 +69,7 @@ const displayUiSchema: any = {
   },
   currentBalance: {
     'ui:widget': 'LabelWidget',
-    'ui:options': {      
+    'ui:options': {
       title: 'Current Balance',
       ...labelProps
     }
@@ -76,7 +77,7 @@ const displayUiSchema: any = {
 
   creditLimit: {
     'ui:widget': 'LabelWidget',
-    'ui:options': {      
+    'ui:options': {
       title: 'Current Balance',
       ...labelProps
     }
@@ -92,33 +93,33 @@ const displayUiSchema: any = {
   balance30Days: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      readOnly: true,      
+      readOnly: true,
       title: '30 Day Invoice',
       ...labelProps
     }
   },
-  
+
   balance60Days: {
     'ui:widget': 'LabelWidget',
-    'ui:options': {      
+    'ui:options': {
       title: '60 Day Invoice',
       ...labelProps
     }
   },
-  balance90Days: { 
+  balance90Days: {
     'ui:widget': 'LabelWidget',
-    'ui:options': {      
+    'ui:options': {
       title: '90 Day Invoice',
       ...labelProps
-    } 
-  },    
-  credits: { 
+    }
+  },
+  credits: {
     'ui:widget': 'LabelWidget',
-    'ui:options': {      
+    'ui:options': {
       title: 'Credits',
       ...labelProps
     }
-  }, 
+  },
 };
 
 const editUiSchema: any = {
@@ -142,7 +143,7 @@ const editUiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       customerStatus: { sm: 12, md: 12, lg: 12 },
       registeredCompanyName: { sm: 12, md: 12, lg: 12 },
@@ -260,7 +261,7 @@ const editUiSchema: any = {
       }
     }
   },
-  description: { 
+  description: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       readOnly: true,
@@ -280,9 +281,9 @@ const editUiSchema: any = {
           justifyContent: 'flex-end'
         }
       }
-    } 
+    }
   },
-  physicalAddress: { 
+  physicalAddress: {
     //'ui:widget': 'LabelWidget',
     'ui:options': {
       /*
@@ -305,9 +306,9 @@ const editUiSchema: any = {
       }
       */
      variant: 'outlined'
-    }  
+    }
   },
-  deliveryAddress: { 
+  deliveryAddress: {
     //'ui:widget': 'LabelWidget',
     'ui:options': {
       /*
@@ -332,7 +333,7 @@ const editUiSchema: any = {
      variant: "outlined"
     }
   },
-  registrationNumber: { 
+  registrationNumber: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       readOnly: true,
@@ -413,11 +414,11 @@ const schema: Reactory.ISchema = {
     balance90Days: {
       type: 'number',
       title: '30 Day Invoice'
-    },    
+    },
     credits: {
       type: 'number',
       title: 'Credits'
-    },    
+    },
   }
 };
 

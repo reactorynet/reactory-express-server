@@ -16,9 +16,9 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: $schema,
   graphql: $graphql,
-  uiSchema: $uiSchema,  
+  uiSchema: $uiSchema,
   defaultFormValue: {
-    id: "",        
+    id: "",
     tabs: [
       {
         id: 'clients',
@@ -26,7 +26,7 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
         componentFqn: 'lasec-crm.LasecCRMPersonalInformation',
         componentProps: { mode: 'edit', uiSchemaKey: 'display' },
         componentPropsMap: {
-          'formContext.$formData.id': 'formData.id'        
+          'formContext.$formData.id': 'formData.id'
         },
         additionalComponents: [
           {
@@ -44,7 +44,7 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
             },
           },
           {
-            componentFqn: 'lasec-crm.LasecCRMClientDocuments',
+            componentFqn: 'lasec-crm.LasecCRMViewClientDocuments',
             componentProps: { mode: 'edit', uiSchemaKey: 'display' },
             componentPropsMap: {
               'formContext.$formData.id': 'formData.id'
@@ -57,8 +57,8 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
               'formContext.$formData.id': 'formData.id'
             },
           }
-        ],        
-      },      
+        ],
+      },
       {
         id: 'customer-details',
         title: 'Customer Details',
@@ -88,8 +88,8 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
             componentPropsMap: {
               'formContext.$formData.id': 'formData.id'
             },
-          },          
-        ],     
+          },
+        ],
       },
       {
         id: 'client-activity-quotes',
@@ -126,8 +126,8 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
         componentPropsMap: {
           'formContext.$formData.id': 'formData.id'
         }
-      }         
-    ]    
+      }
+    ]
   },
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },

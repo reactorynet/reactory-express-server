@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import { DocumentSchema } from './shared/DocumentSchema';
 import graphql from './graphql';
 import { defaultUiResources } from '../../../uiResources';
+import { ViewUiSchema } from './ViewClientDocuments';
 
 export const EditSchema = cloneDeep<Reactory.ISchema>(DocumentSchema);
 //Display schema for editing
@@ -17,27 +18,46 @@ export const EditUiSchema: any = {
     },
     showSubmit: false,
     showRefresh: false,
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'CANCEL',
+      activeColor: 'secondary',
+      buttonVariant: "contained",
+      selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },
+      view: { sm: 12, md: 12 },
     },
     {
       id: { md: 12 },
-      upload: { md: 12 },
-      uploadedDocuments: { md: 12 },      
+      upload: { xs: 12, sm: 12, md: 12, lg: 12 },
+      documents: { xs: 12, sm: 12, md: 12, lg: 12 },
     }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
+        width: '100%',
+        float: "right"
       },
     }
+  },
+  id: {
+    'ui:widget': 'HiddenWidget',
+    hidden: true
   },
   documents: {
     'ui:widget': 'MaterialTableWidget',
@@ -72,8 +92,9 @@ export const EditUiSchema: any = {
         uploadOnDrop: true,
         name: 'LasecUploadDocument',
         mutation: {
-          text: `mutation LasecUploadDocument($id: String, $file: Upload!, $uploadContext: String){
-            LasecUploadDocument(id: $id, file: $file, uploadContext: $uploadContext) {
+          name: 'LasecUploadDocument',
+          text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
+            LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
               id
               filename
               link
@@ -84,6 +105,7 @@ export const EditUiSchema: any = {
           variables: {
             'uploadContext': 'lasec-crm::new-company::document'
           },
+          onSuccessMethod: 'refresh',
         },
         iconProps: {
           icon: 'upload',
@@ -111,11 +133,12 @@ export const LasecCRMEditClientDocuments: Reactory.IReactoryForm = {
   id: 'LasecCRMEditClientDocuments',
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [ ...defaultUiResources ],
+  uiResources: [...defaultUiResources],
   title: 'CRM Client Documents',
   tags: ['CRM Client Documents'],
   registerAsComponent: true,
-  name: 'LasecCRMClientDocuments',
+  // name: 'LasecCRMClientDocuments',
+  name: 'LasecCRMEditClientDocuments',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: EditSchema,
@@ -123,12 +146,20 @@ export const LasecCRMEditClientDocuments: Reactory.IReactoryForm = {
   uiSchema: { ...EditUiSchema },
   uiSchemas: [
     {
-      id: 'edit',
+      id: 'display',
       title: 'VIEW',
+      key: 'display',
+      description: 'View Documents',
+      icon: 'list',
+      uiSchema: { ...ViewUiSchema }
+    },
+    {
+      id: 'edit',
+      title: 'EDIT',
       key: 'edit',
       description: 'Edit Documents',
       icon: 'pencil',
       uiSchema: { ...EditUiSchema }
-    },    
-  ],  
+    },
+  ],
 };

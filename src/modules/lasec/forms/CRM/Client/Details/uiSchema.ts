@@ -10,7 +10,7 @@ const uiSchema: any = {
     schemaSelector: {
       variant: 'icon-button',
       showTitle: false,
-      activeColor: 'secondary'
+      activeColor: 'secondary',
     },
     componentType: "div",
     container: "div",
@@ -37,13 +37,13 @@ const uiSchema: any = {
   },
   'ui:grid-layout': [
     {
-       id: { xs: 12 },
-       tabs: { xs: 12 },
-    },    
+      id: { xs: 12 },
+      tabs: { xs: 12 },
+    },
   ],
-  id: {    
+  id: {
     'ui:options': {
-      componentFqn: 'lasec-crm.LasecClientOverviewWidget@1.0.0',      
+      componentFqn: 'lasec-crm.LasecClientOverviewWidget@1.0.0',
       componentPropsMap: {
         'formContext.formData.id': 'formData.id',
       }
@@ -52,7 +52,7 @@ const uiSchema: any = {
   tabs: {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
-      activeTab: '${formContext.$route.match.params.tab}',     
+      activeTab: '${formContext.$route.match.params.tab}',
     }
   },
 };

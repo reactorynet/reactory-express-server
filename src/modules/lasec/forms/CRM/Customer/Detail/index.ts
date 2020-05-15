@@ -33,7 +33,12 @@ const displayUiSchema: any = {
       variant: 'button',
       buttonTitle: 'Edit',
       activeColor: 'primary',
-      selectSchemaId: 'edit'
+      selectSchemaId: 'edit',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
     },
     style: {
       marginTop: '16px',
@@ -165,9 +170,14 @@ const editUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       buttonVariant: "contained",
-      selectSchemaId: 'display'
+      selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSchemaSelectorInToolbar: false,
@@ -208,7 +218,6 @@ const editUiSchema: any = {
       ...labelProps
     }
   },
-
   registeredCompanyName: {},
   tradingName: {
     'ui:widget': 'LabelWidget',
@@ -325,7 +334,6 @@ const schema: Reactory.ISchema = {
     }
   }
 };
-
 
 const LasecCRMCustomerDetails: Reactory.IReactoryForm = {
   id: 'LasecCRMCustomerDetails',

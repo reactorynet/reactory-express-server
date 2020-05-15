@@ -15,7 +15,12 @@ export const displayUiSchema: any = {
       variant: 'button',
       buttonTitle: 'Edit',
       activeColor: 'primary',
-      selectSchemaId: 'edit'
+      selectSchemaId: 'edit',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
     },
     style: {
       marginTop: '16px',
@@ -33,12 +38,12 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
-      jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
-      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
-      ranking: { xs: 12, sm: 12, md: 6, lg: 4 }
+      accountType: {md: 6, sm: 12 },
+      repCode: {md: 6, sm: 12 },
+      jobTitle: {md: 6, sm: 12 },
+      clientDepartment: {md: 6, sm: 12 },
+      customerClass: {md: 6, sm: 12 },
+      ranking: {md: 6, sm: 12 },
     }
   ],
   view: {
@@ -50,7 +55,7 @@ export const displayUiSchema: any = {
       },
     }
   },
-  accountType: {    
+  accountType: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
@@ -209,7 +214,7 @@ export const ConfirmUiSchema: any = {
     borderBottom: '2px solid #D5D5D5'
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
       jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
@@ -220,8 +225,8 @@ export const ConfirmUiSchema: any = {
       clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
       ranking: { xs: 12, sm: 12, md: 6, lg: 4 },
     }
-  ],  
- 
+  ],
+
 
   jobTitle: {
     'ui:graphql': {
@@ -327,7 +332,7 @@ export const ConfirmUiSchema: any = {
       }
     }
   },
-  
+
 
   faculty: {
     'ui:widget': 'LabelWidget',
@@ -451,11 +456,9 @@ export const ConfirmUiSchema: any = {
   },
 };
 
-
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
-    // toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -466,7 +469,12 @@ const editUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       buttonVariant: "contained",
-      selectSchemaId: 'display'
+      selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        top: '-20px',
+        right: 0,
+      }
     },
     style: {
       marginTop: '16px',
@@ -481,12 +489,12 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
-      jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
-      ranking: { xs: 12, sm: 12, md: 6, lg: 4 }
+      accountType: {md: 6, sm: 12 },
+      repCode: {md: 6, sm: 12 },
+      jobType: {md: 6, sm: 12 },
+      clientDepartment: {md: 6, sm: 12 },
+      customerClass: {md: 6, sm: 12 },
+      ranking: {md: 6, sm: 12 },
     }
   ],
   view: {
@@ -669,12 +677,12 @@ const newUiSchema: any = {
     },
   },
   jobType: {
-    
+
   },
   lineManager: {
-    
+
   },
-  customerType: {   
+  customerType: {
   },
   customerClass: {
     'ui:widget': 'SelectWithDataWidget',
@@ -694,7 +702,7 @@ const newUiSchema: any = {
     },
   },
   faculty: {
-   
+
   },
   clientDepartment: {},
   ranking: {
@@ -733,6 +741,10 @@ const schema: Reactory.ISchema = {
   title: "JOB DETAILS",
   required: ['jobTitle', 'customerType', 'customerClass', 'clientDepartment', 'ranking'],
   properties: {
+    view: {
+      title: '',
+      type: 'string'
+    },
     accountType: {
       type: "string",
       title: "Account Type"
@@ -790,7 +802,6 @@ const LasecCRMClientJobDetails: Reactory.IReactoryForm = {
   schema: schema,
   graphql,
   uiSchema: displayUiSchema,
-  //uiSchema: newUiSchema,
   uiSchemas: [
     {
       id: 'display',

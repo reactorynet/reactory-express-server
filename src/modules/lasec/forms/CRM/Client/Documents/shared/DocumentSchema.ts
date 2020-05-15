@@ -5,6 +5,10 @@ export const DocumentSchema: Reactory.ISchema = {
   type: 'object',
   title: 'Document Schema (Override - Title)',
   properties: {
+    view: {
+      title: '',
+      type: 'string'
+    },
     id: {
       type: 'string',
       title: 'ID'

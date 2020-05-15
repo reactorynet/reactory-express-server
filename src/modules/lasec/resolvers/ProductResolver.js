@@ -181,6 +181,7 @@ const getProducts = async (params) => {
   let products = [...productDetails.items];
 
   logger.debug(`PRODUCT RESOLVER - PRODUCTS:: found (${products.length}) products for request`);
+  logger.debug(`PRODUCT RESOLVER - PRODUCT:: ${JSON.stringify(products[0])}`);
 
   products = products.map((prd) => {
     let productResult = {
@@ -210,6 +211,16 @@ const getProducts = async (params) => {
       packedVolume: prd.packed_volume,
       packedWeight: prd.packed_weight,
       numberOfSalesOrders: 0,
+      productClass: prd.class,
+      tariffCode: prd.tariff_code,
+      leadTime: prd.lead_time,
+      validPriceUntil: prd.valid_price_until ? moment(prd.valid_price_until).format('DD MMM YYYY') : '',
+      lastUpdated: prd.last_updated,
+      lastUpdatedBy: prd.last_updated_by,
+      lastOrdered: prd.last_ordered ? moment(prd.last_ordered).format('DD MMM YYYY') : '',
+      lastReceived: prd.last_received ? moment(prd.last_received).format('DD MMM YYYY') : '',
+      supplyCurrency: prd.supplier_currency,
+      listCurrency: prd.list_currency,
     };
 
     productResult.productPricing = [];
@@ -234,6 +245,25 @@ const getProducts = async (params) => {
       model: costing.model,
       shipmentSize: costing.shipment_size,
       exWorker: costing.exworks_factor,
+
+      freightFactor: costing.freight_factor,
+      clearingFactor: costing.clearing_factor,
+      actualCostwh10: costing.actual_cost_wh10,
+      actualCostwh20: costing.actual_cost_wh20,
+      actualCostwh21: costing.actual_cost_wh21,
+      actualCostwh31: costing.actual_cost_wh31,
+      supplierUnitPrice: costing.supplier_unit_price_cents,
+      percDiscount: costing.percentage_discount,
+      discountPrice: costing.discounted_price_cents,
+      freightPrice: costing.freight_price_cents,
+      exWorksPrice: costing.exworks_price_cents,
+      craftingFOC: costing.crating_foc_cents,
+      netFOB: costing.net_fob,
+      percDuty: costing.percentage_duty,
+      clearance: costing.clearance_cost_cents,
+      landedCost: costing.landed_cost_cents,
+      markup: costing.markup,
+      sellingPrice: costing.markup,
     }
   });
 
