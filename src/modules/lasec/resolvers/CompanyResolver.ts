@@ -1246,11 +1246,8 @@ const getAddress = async (args) => {
     const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
 
     const addresses = [...addressDetails.items];
-    const formattedAddresses = addresses.map((ad) => {
-      return ad.formatted_address;
-    });
-
-    return formattedAddresses;
+    
+    return addresses
   }
 
   return [];
@@ -1313,15 +1310,18 @@ const createNewAddress = async (args) => {
 
     const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address }).then();
 
+    logger.debug(`Found ${existingAddress.length} matches: ${ existingAddress }`);
+
     if (existingAddress && existingAddress.length > 0) {
       return {
-        success: false,
-        message: 'Address already exists',
-        id: 0,
-        fullAddress: ''
+        success: true,
+        message: 'Existing address found',
+        id: existingAddress[0].id,
+        fullAddress:  existingAddress[0].formatted_address
       };
     }
 
+    //not found create it 
     const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
 
     if(apiResponse) {
@@ -1664,19 +1664,114 @@ export default {
 
       return _newClient;
     },
-    LasecCreateNewClient: async (obj, args) => {
-      const { newClient } = args;
+    LasecCreateNewClient: async (obj, args) => {      
 
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
-      const _cached = await getCacheItem(hash).then();
+      const _newClient = await getCacheItem(hash).then();
 
       let response: NewClientResponse = {
-        client: null,
-        success: false,
+        client: _newClient,
+        success: true,
         messages: [
-
         ],
       };
+
+      const { Customers, post, URIS } = lasecApi;
+      /**
+       * 
+       * 
+       * $this->CustomerCreateInfo = array(
+        "title_id" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Title", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "first_name" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "First name", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "surname" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Surname", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "role_id" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Role", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "office_number" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Office number", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "mobile_number" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "Mobile number", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "email" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Email", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "confirm_email" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Confirm Email", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => "email"),
+        "onboarding_step_completed" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "modified" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "", "Value" => $this->DateTimeNow, "Convert" => false, "Lookup" => false, "Matches" => false),
+        "created" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "", "Value" => $this->DateTimeNow, "Convert" => false, "Lookup" => false, "Matches" => false),
+        "account_type" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Account type", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "sales_team_id" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "Customer class", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "ranking_id" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Ranking", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "department" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Department", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+        "customer_class_id" => array("Required" => "No", "MaxLength" => "150", "ErrorField" => "Department", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false)
+            );
+       * 
+       */
+
+      const _map = { 
+        'personalDetails.title': 'title_id',
+        'personalDetails.firstName': "first_name",
+        'personalDetails.lastName': "surname",
+        'jobDetails.jobTitle': 'role_id',
+        'contactDetails.officeNumber': 'office_number',
+        'contactDetails.mobileNumber': 'mobile_number',
+        'contactDetails.emailAddress': 'email',
+        'contactDetails.confirmEmail': 'confirmEmail',
+        'personalDetails.accountType': 'account_type',
+        'personalDetails.repCode': 'sales_team_id',
+        'jobDetails.ranking': 'ranking_id',
+        'jobDetails.clientDepartment': 'department',
+        'jobDetails.customerClass': 'customer_class_id'
+      };
+
+      let customerCreateResult = null;
+      let customer = null;
+
+
+      try {
+        customerCreateResult = await post(URIS.customer_create, om(_newClient, _map)).then()
+        logger.debug(`Result in creating user ${ customerCreateResult }`);
+        if(customerCreateResult.status === "success") {
+          customer = customerCreateResult.payload;
+
+          response.messages.push({ text: 'Saved new client'});                
+          setCacheItem(hash, { ...DEFAULT_NEW_CLIENT }, 60 * 60 * 12)
+        } else {
+          response.success = false;
+          response.messages.push({
+            text: 'Could not save user',
+            description: 'Could not save user'            
+          });
+        }
+      } catch (exc) {
+        logger.debug(`Exception while saving new client: ${exc.message}`, exc);
+      }                
+      
+      
+      //set addresses for the customer
+      const { deliveryAddress, physicalAddress, billingAddress } = _newClient.address;
+      let setAddressResult = null;
+      try {        
+        setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, physical_address_id: physicalAddress.id  }).then();
+        logger.debug(`Set physical address ${physicalAddress.fullAddress}`);  
+      } catch ( exc ) {
+        logger.error(`Could not save the physical address against the customer`, exc);
+      }
+
+      try {
+        setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, delivery_address_id: deliveryAddress.id  }).then();
+        logger.debug(`Set delivery address ${deliveryAddress.fullAddress}`); 
+      } catch ( exc ) { 
+        logger.error(`Could not save the delivery address against the customer`, exc);
+      }
+
+      try {
+        setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, billing_address_id: billingAddress.id  }).then();
+        logger.debug(`Set delivery address ${billingAddress.fullAddress}`);
+      } catch (exc) {
+        logger.error(`Could not save the billing address against the customer`, exc);
+      }
+        
+      try {
+        //set upload files if any and clear local cache (delete files)
+        let upload_promises = [];
+        
+      } catch ( exc ) {
+        logger.debug(`Could; not upload documents for the customer`, exc)
+      }
 
       return response;
     },

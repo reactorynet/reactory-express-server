@@ -11,20 +11,20 @@ import LasecCRMDocuments from '../Documents';
 
 const displayUiSchema: any = {
   'ui:options': {
+    submitProps: {
+      variant: 'button',
+      text: 'CONFIRM & SAVE',
+      color: 'primary',      
+      iconAlign: 'left'
+    },
     componentType: "div",
-    toolbarPosition: 'none',
+    toolbarPosition: 'bottom',
     containerStyles: {
       padding: '0px',
       margin: '0px',
       marginTop: '16px',
       paddingBottom: '8px'
-    },
-    schemaSelector: {
-      variant: 'button',
-      buttonTitle: 'CONFIRM & SAVE',
-      activeColor: 'primary',
-      selectSchemaId: 'edit'
-    },
+    },   
     style:{
       marginTop: '16px',
     },

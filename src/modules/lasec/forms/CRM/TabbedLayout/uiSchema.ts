@@ -16,7 +16,8 @@ const $toolbar: any = {
   },
   
   fabButton: {
-    'ui:widget': 'SlideOutLauncher',
+    'ui:widget': 'NewClientModal',
+    /*
     'ui:options': {
       props: {
         componentFqn: 'lasec-crm.LasecCRMNewClient@1.0.0',
@@ -43,7 +44,8 @@ const $toolbar: any = {
       style: {
         float: 'right'
       }
-    }      
+    }
+    */      
   },
   view: {
     'ui:widget': 'HiddenWidget',

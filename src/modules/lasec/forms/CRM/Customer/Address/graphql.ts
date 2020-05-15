@@ -9,18 +9,15 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         address {
           physicalAddress {
             id
-            fullAddress
-            map          
+            fullAddress                
           }
           deliveryAddress {
             id
-            fullAddress
-            map          
+            fullAddress              
           }
           billingAddress {
             id
-            fullAddress
-            map
+            fullAddress            
           }
         }        
       }
@@ -29,8 +26,8 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
     },
     resultMap: {            
       'address.physicalAddress': 'physicalAddress',
-      'address.deliveryAddress': 'physicalAddress',
-      'address.billlingAddress': 'billlingAddress',
+      'address.deliveryAddress': 'deliveryAddress',
+      'address.billingAddress': 'billingAddress',
     },
     autoQuery: true,
     queryMessage: 'Fetch New Customer Address Detail',
@@ -52,17 +49,14 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
             physicalAddress {
               id
               fullAddress
-              map          
             }
             deliveryAddress {
               id
               fullAddress
-              map          
             }
             billingAddress {
               id
               fullAddress
-              map
             }
           }          
         }

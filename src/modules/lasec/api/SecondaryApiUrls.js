@@ -62,6 +62,8 @@ export default {
   customers: { url: `api/${ENTITY_KEY__CUSTOMER}/`, allowed_methods: ['get'] },
   company: { url: `api/${ENTITY_KEY__COMPANY}/`, allowed_methods: ['get'] },
   company_address: { url: `api/${ENTITY_KEY__COMPANY_ADDRESS}/`, allowed_methods: ['get'] },
+  customer_add_address: { url: `api/${ENTITY_KEY__CUSTOMER}/add_address_to_customer/`, allowed_methods: ['post'] },
+  customer_documents: { url: customer_id => `api/${ENTITY_KEY__CUSTOMER}/${customer_id}/save_documents/`, allowed_methods: ['post'] },
   invoices: { url: `api/${ENTITY_KEY__INVOICE}/`, allowed_methods: ['get'] },
   staff_user_data: { url: `api/${ENTITY_KEY__STAFF_USER_DATA}/`, allowed_methods: ['get'] },
   staff_user_data_put: { url: `api/${ENTITY_KEY__STAFF_USER_DATA}/\\d+/`, allowed_methods: ['put'] },
@@ -84,6 +86,7 @@ export default {
   warehouse: { url: `api/${ENTITY_KEY__WAREHOUSE}/`, allowed_methods: ['get'] },
   warehouse_strock: { url: `api/${ENTITY_KEY__WAREHOUSE_STOCK}/`, allowed_methods: ['get'] },
   customer: { url: `api/${ENTITY_KEY__CUSTOMER}/\\d+/update/`, allowed_methods: ['post'] },
+  customer_create: { url: `api/${ENTITY_KEY__CUSTOMER}/create_customer/`, allowed_methods: ['post'] },
   customer_ranking: { url: `api/${ENTITY_KEY__CUSTOMER_RANKING}/`, allowed_methods: ['get'] },
   customer_roles: { url: `api/${ENTITY_KEY__CUSTOMER_ROLE}/`, allowed_methods: ['get'] },
   customer_class: { url: `api/${ENTITY_KEY__CUSTOMER_CLASS}/`, allowed_methods: ['get'] },
@@ -94,6 +97,7 @@ export default {
   createOrganisation: { url: `api/${ENTITY_KEY__ORGANISATION}/\\d+/`, allowed_methods: ['put'] },
   address: { url: `api/${ENTITY_KEY__ADDRESS}/`, allowed_methods: ['get', 'post'] },
   new_address: { url: `api/${ENTITY_KEY__ADDRESS}/`, allowed_methods: ['get', 'post'] },
+  
 
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },

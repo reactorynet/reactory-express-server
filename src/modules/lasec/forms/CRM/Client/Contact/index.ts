@@ -52,6 +52,7 @@ export const displayUiSchema: any = {
   },
   emailAddress: {
     'ui:widget': 'LabelWidget',
+    'ui:title': 'Email Address',
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
@@ -73,6 +74,7 @@ export const displayUiSchema: any = {
   },
   alternateEmail: {
     'ui:widget': 'LabelWidget',
+    'ui:title': 'Alternate Email',
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
@@ -383,10 +385,18 @@ const newUiSchema: any = {
       prefferedMethodOfContact: { xs: 12, sm: 12, md: 6, lg: 4 },
     }
   ],
-  emailAddress: {},
-  confirmEmail: {},
-  alternateEmail: {},
-  confirmAlternate: {},
+  emailAddress: {
+    'ui:title': 'Email Address',
+  },
+  confirmEmail: {
+    'ui:title': 'Confirm Email',
+  },
+  alternateEmail: {
+    'ui:title': 'Alternate Email',
+  },
+  confirmAlternate: {
+    'ui:title': 'Confirm Alt Email',
+  },
   mobileNumber: {},
   alternateMobileNumber: {},
   officeNumber: {},
@@ -440,10 +450,12 @@ const schema: Reactory.ISchema = {
     alternateEmail: {
       type: "string",
       title: "Alternate Email",      
+      format: "email",
     },
     confirmAlternateEmail: {
       type: "string",
-      title: "Confirm Alternate Email Address",      
+      title: "Confirm Alternate Email Address",
+      format: "email",
     },
     officeNumber: {
       type: "string",

@@ -35,6 +35,7 @@ export const TowerStoneLeadershipBrandConfigForm: Reactory.IReactoryForm = {
     },
   },
   graphql: $graphql,
+
 };
 
 

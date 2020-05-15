@@ -113,15 +113,15 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         title: 'CLIENT DETAILS',
         Components: [
           {
-            componentFqn: 'lasec-crm.LasecCRMPersonalInformation',
+            componentFqn: 'lasec-crm.LasecCRMPersonalInformation@1.0.0',
             ...$sharedProps
           },
           {
-            componentFqn: 'lasec-crm.LasecCRMContactInformation',
+            componentFqn: 'lasec-crm.LasecCRMContactInformation@1.0.0',
             ...$sharedProps,
           },
           {
-            componentFqn: 'lasec-crm.LasecCRMClientJobDetails',
+            componentFqn: 'lasec-crm.LasecCRMClientJobDetails@1.0.0',
             ...$sharedProps,
           },
         ],        
@@ -131,11 +131,11 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         title: 'CUSTOMER & ORGANISATION',
         Components: [
           {
-            componentFqn: 'lasec-crm.LasecCRMCustomerLookup',
+            componentFqn: 'lasec-crm.LasecCRMCustomerLookup@1.0.0',
             ...$sharedProps,
           },
           {
-            componentFqn: 'lasec-crm.LasecCRMOrganizationLookup',
+            componentFqn: 'lasec-crm.LasecCRMOrganizationLookup@1.0.0',
             ...$sharedProps,
           },
         ],
@@ -145,7 +145,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         title: 'ADDRESS',
         Components: [
           {
-            componentFqn: 'lasec-crm.LasecCRMCustomerAddress',
+            componentFqn: 'lasec-crm.LasecCRMCustomerAddress@1.0.0',
             ...$sharedProps,
           },
         ],
@@ -155,7 +155,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         title: 'DOCUMENTS',
         Components: [
           {
-            componentFqn: 'lasec-crm.LasecCRMNewClientDocuments',
+            componentFqn: 'lasec-crm.LasecCRMNewClientDocuments@1.0.0',
             ...$sharedProps,            
           },
         ],
@@ -165,13 +165,16 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         title: 'CONFIRM & SAVE',
         Components: [
           {
-            componentFqn: 'lasec-crm.LasecCRMNewCustomerConfirm',
+            componentFqn: 'lasec-crm.LasecCRMNewCustomerConfirm@1.0.0',
             ...$sharedProps,
           },
         ],
         nextButtonProps: {
           title: 'CONFIRM & SAVE',
-          color: 'primary'
+          color: 'primary',
+          style: {
+            display: 'none'
+          }
         },
       },
     ]

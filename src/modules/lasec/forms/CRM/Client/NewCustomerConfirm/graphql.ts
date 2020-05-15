@@ -103,96 +103,34 @@ const graphql: Reactory.IFormGraphDefinition = {
   },
   mutation: {
     new: {
-      name: "LasecUpdateNewClient",
-      text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
-        LasecUpdateNewClient(newClient: $newClient) {
-          id
-          confirmed
-          saved
-          createdBy {
+      name: "LasecCreateNewClient",
+      text: `mutation LasecCreateNewClient($newClient: LasecNewClientInput!){
+        LasecCreateNewClient(newClient: $newClient) {
+          client {
             id
-            firstName
-            lastName
+            personalDetails {
+              id
+              firstName
+              lastName
+            }
           }
-          personalDetails {
-            title
-            firstName
-            lastName
-            country
-            repCode
-          }
-          contactDetails {
-            emailAddress
-            confirmEmail
-            alternateEmail
-            confirmAlternateEmail
-            mobileNumber
-            alternateMobile
-            officeNumber
-            prefferedMethodOfContact
-          }
-          jobDetails {
-            jobTitle
-            jobType
-            salesTeam
-            lineManager
-            customerType
-            faculty
-            clientDepartment
-            ranking
-            customerClass
-          }
-          customer {
-            id
-            registeredName
-            tradingName
-          }
-          organization {
-            id
-            name
+          success
+          messages {
             description
-          }
-          address {
-            physicalAddress {
-              id
-              fullAddress
-              map
-            }
-            deliveryAddress {
-              id
-              fullAddress
-              map
-            }
-            billingAddress {
-              id
-              fullAddress
-              map
-            }
-          }
-          clientDocuments {
-            id
-            filename
-            link
-            mimetype
-            size
-          }
+            text
+          }          
         }
       }`,
       objectMap: true,
-      updateMessage: 'Updating Personal Content',
+      updateMessage: 'Creating New Client, Please Wait.',
       variables: {    
-        'formData': 'newClient',
-        'persist': true
+        'formData': 'newClient',        
       },
       resultType: 'object',
       resultMap: {
-        'id': 'id',
-        'personalDetails': 'personalDetails',
-        'contactDetails': 'contactDetails',
-        'jobDetails': 'jobDetails',
-        'customer': 'customer',
-        'organization': 'organization',
-        'address': 'address'
+        'client': 'client',
+        'success': 'success',
+        'saved': 'saved'
       },
     }
   },

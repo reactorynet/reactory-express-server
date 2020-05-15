@@ -301,6 +301,52 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     }
   },
+  Documents: {
+    upload: async (base_url, consumer, data, custom_headers, ...callbackParams) => {
+    
+      /*
+      const url = base_url + 'api/file_uploads/'
+      
+      let headers = {}
+      let auth_token
+      let primary_api_auth_token
+  
+      auth_token = getStorageItem('secondary_api_token')
+      primary_api_auth_token = getStorageItem('auth_token')
+      headers['Authorization'] = 'Token ' + auth_token
+      headers['X-LASEC-AUTH'] = 'Token ' + primary_api_auth_token
+  
+      const formData = new FormData();
+  
+      formData.append('files', data[0]);
+  
+      return new Promise((res, rej) => {
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', url);
+          for (var k in headers) {
+              xhr.setRequestHeader(k, headers[k]);
+          }
+          xhr.onload = (f) => {
+              try {
+                  return res(JSON.parse(f.target.responseText))
+              } catch (e) {
+                  return rej([f.target.responseText, data[0]]);
+              }
+          };
+          xhr.onerror = (e) => rej(e, data[0]);
+          if (xhr.upload && consumer) {
+              xhr.upload.onprogress = function(pe) {
+                  if (pe.lengthComputable && consumer) {
+                      consumer(pe.loaded, pe.total, pe, xhr, ...callbackParams);
+                  }
+              }
+          }
+          xhr.send(formData);
+      });
+      */
+  }
+  
+  },
   Customers: {
     list: async (params = defaultParams) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.customers.url, { params: { ...defaultParams, ...params } }).then();

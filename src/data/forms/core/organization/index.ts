@@ -1,6 +1,7 @@
 import { defaultFormProps } from '../../defs';
 import OrganizationSchema from './Organization';
 import { DefaultUiSchema, DetailedUiSchema } from './uiSchema';
+import { Reactory } from 'types/reactory';
 
 const organizationFieldsSnippted = `
 id
@@ -38,7 +39,7 @@ export const OrganizationLoginForm = {
   },
 };
 
-export default {
+const OrganizationForm : Reactory.IReactoryForm = {
   id: 'OrganizationForm',
   ...defaultFormProps,
   name: 'OrganizationForm',
@@ -126,3 +127,6 @@ export default {
     },
   ], */
 };
+
+
+export default OrganizationForm;

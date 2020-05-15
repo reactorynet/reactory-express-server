@@ -2,12 +2,20 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import $schema from './schema';
 import $uiSchema from './uiSchema';
 // import $graphql from './graphql';
+import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
 const LasecCRMTabs: Reactory.IReactoryForm = {
   id: 'LasecCRMComponent',
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [],
+  uiResources: [
+    {
+      id: 'reactory.plugin.lasec360',
+      name: 'reactory.plugin.lasec360',
+      type: 'script',
+      uri: `${ENVIRONMENT.CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
+    },
+  ],
   title: 'CRM Tabs',
   tags: ['CRM Tabs'],
   registerAsComponent: true,  
@@ -108,6 +116,10 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
       componentFqn: 'core.SlideOutLauncher@1.0.0', 
       widget: 'SlideOutLauncher' 
     },
+    {
+      componentFqn: 'lasec-crm.NewClientModal@1.0.0', 
+      widget: 'NewClientModal' 
+    }
   ],
 };
 

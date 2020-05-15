@@ -1,3 +1,5 @@
+import { Reactory } from "types/reactory";
+
 export const createBrandForOrganization = `
 mutation CreateBrandMutation($brandInput: BrandInput!, $organizationId: String!){
   createBrandForOrganization(brandInput: $brandInput, organizationId: $organizationId){
@@ -107,6 +109,46 @@ export const queryMap = {
   'formContext.organizationId': 'organizationId',
 };
 
+const NewBrandGraphQL: Reactory.IFormGraphDefinition = {
+  query: {
+    name: "TowerStoneGetNewLeadershipBrand",
+    text: `query TowerStoneGetNewLeadershipBrand($organizationId: String!){
+      TowerStoneGetNewLeaderShipBrand(organizationId: $organizationId){
+        id,
+        title
+        description
+        qualityDisplay
+        archived
+        scale {
+          id
+          key
+          title
+          min
+          max
+          entries {
+            rating
+            description
+          }
+        }
+        qualities {
+          id
+          title
+          description
+          ordinal
+          behaviours {
+            id
+            description
+            title
+            ordinal      
+          }
+        }  
+      }
+    }`,
+    variables: {
+      'formContext.query.organizationId': 'organizationId',
+    }
+  }
+};
 
 export default {
   query: {

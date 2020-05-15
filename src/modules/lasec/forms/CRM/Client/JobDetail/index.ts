@@ -224,28 +224,6 @@ export const ConfirmUiSchema: any = {
  
 
   jobTitle: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Job Title',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '200px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
-
-  jobType: {
     'ui:graphql': {
       name: 'LasecGetCustomerJobTypeById',
       text: `query LasecGetCustomerJobTypeById($id: String){
@@ -265,6 +243,29 @@ export const ConfirmUiSchema: any = {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '$LOOKUP$',
+      variant: 'subtitle1',
+      title: 'Job Title',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  jobType: {
+    
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
       variant: 'subtitle1',
       title: 'Job Type',
       titleProps: {
