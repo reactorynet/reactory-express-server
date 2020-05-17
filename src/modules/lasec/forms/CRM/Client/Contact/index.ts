@@ -449,17 +449,14 @@ const schema: Reactory.ISchema = {
     confirmEmail: {
       type: "string",
       title: "Confirm Email Address",
-      format: "email",
     },
     alternateEmail: {
       type: "string",
       title: "Alternate Email",      
-      format: "email",
     },
     confirmAlternateEmail: {
       type: "string",
       title: "Confirm Alternate Email Address",
-      format: "email",
     },
     officeNumber: {
       type: "string",

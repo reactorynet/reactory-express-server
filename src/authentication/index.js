@@ -192,7 +192,7 @@ class AuthConfig {
       secretOrKey: jwtSecret,
     }
 
-    static JwtAuth = (payload, done) => {
+    static JwtAuth = (payload, done) => {      
       logger.info('JWT Auth executing');
       if (payload.userId === '-1') {
         global.user = {
@@ -251,7 +251,7 @@ class AuthConfig {
 
       return {
         ...authOptions,
-        userId: user._id.toString(), // eslint-disable-line no-underscore-dangle
+        userId: `${user._id.toString()}`, // eslint-disable-line no-underscore-dangle
         refresh: uuid(),
         name: `${user.firstName} ${user.lastName}`,
         // memberships: user.memberships,
@@ -279,7 +279,7 @@ class AuthConfig {
         user.lastLogin = moment().valueOf(); // eslint-disable-line 
         const jwtPayload = AuthConfig.jwtTokenForUser(user);
         AuthConfig.addSession(user, jwtPayload, ip).then((savedUser) => {
-          resolve({
+          resolve({            
             firstName: savedUser.firstName,
             lastName: savedUser.lastName,
             token: AuthConfig.jwtMake(jwtPayload),

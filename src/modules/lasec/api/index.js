@@ -1,8 +1,11 @@
 'use strict'
 import fetch from 'node-fetch';
+import fs from 'fs-extra';
+import path from 'path';
 import om from 'object-mapper';
 import { isObject, map, find, isArray, isNil, concat, uniq } from 'lodash';
 import moment from 'moment';
+import axios from 'axios';
 // import { clearAuthentication } from '../actions/Auth';
 import SECONDARY_API_URLS from './SecondaryApiUrls';
 import logger from '../../../logging';
@@ -65,7 +68,7 @@ const isCredentialsValid = (authentication) => {
 
 const getStorageItem = async (key) => {
   const { user } = global;
-  logger.info(`Lookup Security Storage ${key} on ${user.firstName} ${user.lastName}`);
+  logger.debug(`Lookup Security Storage ${key} on ${user.firstName} ${user.lastName}`);
   let must_login = true;
   if (user._id) {
     const lasecAuth = user.getAuthentication('lasec');
@@ -286,11 +289,12 @@ const Api = {
     }
   },
   post: async (uri, params, shape) => {
-    const resp = await POST(uri, { params: { ...defaultParams, ...params } }).then();
+    const resp = await POST(uri,  params).then();
     const {
       status, payload,
     } = resp;
 
+    logger.debug(`API POST Response ${resp}`);
     if (status === 'success') {
       if (shape && Object.keys(shape).length > 0) {
         return om(payload, shape);
@@ -298,54 +302,97 @@ const Api = {
         return payload;
       }
     } else {
+      logger.error(`API POST was not successful ${resp}`);
       return { pagination: {}, ids: [], items: [] };
     }
   },
   Documents: {
-    upload: async (base_url, consumer, data, custom_headers, ...callbackParams) => {
-    
-      /*
-      const url = base_url + 'api/file_uploads/'
+    /**
+     * Uploads a document to the lasec API against a particular customer
+     */
+    upload: async (documentInfo, customerInfo) => {                  
+      logger.debug(`Uploading document to LasecAPI`, { documentInfo, customerInfo });
+      /**
+       * 
+        { 
+          "_id" : ObjectId("5ea98b4269577f4ca87e8f5d"), 
+          "alt" : [
+
+          ], 
+          "uploadContext" : "lasec-crm::new-company::document::5df902cd900adc04d9ab634e", 
+          "public" : false, 
+          "published" : false, 
+          "tags" : [
+
+          ], 
+          "id" : ObjectId("5ea98b424922bb4ca8872207"), 
+          "filename" : "david_spade.png", 
+          "mimetype" : "image/png", 
+          "alias" : "b9ae20dfb144db63474a0a622742fd67df8a991b.png", 
+          "partner" : ObjectId("5ea98b424922bb4ca8872208"), 
+          "owner" : ObjectId("5ea98b424922bb4ca8872209"), 
+          "uploadedBy" : ObjectId("5ea98b424922bb4ca887220a"), 
+          "size" : NumberInt(29753), 
+          "hash" : NumberInt(-1697330410), 
+          "link" : "http://localhost:4000/cdn/content/files/b9ae20dfb144db63474a0a622742fd67df8a991b.png", 
+          "path" : "content/files/", 
+          "__v" : NumberInt(0)
+        }
+       * 
+       * 
+       */
+
+
       
-      let headers = {}
-      let auth_token
-      let primary_api_auth_token
-  
-      auth_token = getStorageItem('secondary_api_token')
-      primary_api_auth_token = getStorageItem('auth_token')
-      headers['Authorization'] = 'Token ' + auth_token
-      headers['X-LASEC-AUTH'] = 'Token ' + primary_api_auth_token
-  
-      const formData = new FormData();
-  
-      formData.append('files', data[0]);
-  
-      return new Promise((res, rej) => {
-          var xhr = new XMLHttpRequest();
-          xhr.open('POST', url);
-          for (var k in headers) {
-              xhr.setRequestHeader(k, headers[k]);
+
+      const kwargs =  {};
+      if (!kwargs.headers) {
+        kwargs.headers = {};
+        kwargs.headers['Content-type'] = 'application/json; charset=UTF-8';
+      }
+    
+      
+      const token = await getStorageItem('secondary_api_token').then();
+      if (token) {
+        kwargs.headers.Authorization = `Token ${token}`;
+        kwargs.headers.Origin = 'http://localhost:3000';
+        kwargs.headers['X-LASEC-AUTH'] = `Token ${token}`;
+        kwargs.headers['X-CSRFToken'] = '';
+      }
+      // should throw an error if there is no token!          
+      if (!kwargs.credentials) {
+        kwargs.credentials = 'same-origin';
+      }
+
+      try {
+        debugger
+        let filename = path.join([ process.env.CDN_ROOT, documentInfo.path, documentInfo.alias]);
+        if(fs.existsSync(filename) === true){
+          const stream = fs.createReadStream(filename);                
+          kwargs.body = stream;
+          let absoluteUrl = `${config.SECONDARY_API_URL}/${SECONDARY_API_URLS.file_uploads.url}/`;
+          
+          const form = new FormData(); // 
+          form.append('file', stream);
+          // In Node.js environment you need to set boundary in the header field 'Content-Type' by calling method `getHeaders`
+          const formHeaders = form.getHeaders();        
+          let uploadResult = await axios.post(absoluteUrl, form, { params: { }, headers: { ...kwargs.headers, ...formHeaders } }).then();
+          logger.debug(`Uploaded document complete:\n\t ${uploadResult}`);
+
+          const fileData = uploadResult.data.payload;
+
+          if(customerInfo && customerInfo.id) {
+            debugger
+            uploadResult = await POST(`${SECONDARY_API_URLS.customer_documents}`, { document_ids: [ fileData.id ], customer_id: customerInfo.id }).then();
+            
           }
-          xhr.onload = (f) => {
-              try {
-                  return res(JSON.parse(f.target.responseText))
-              } catch (e) {
-                  return rej([f.target.responseText, data[0]]);
-              }
-          };
-          xhr.onerror = (e) => rej(e, data[0]);
-          if (xhr.upload && consumer) {
-              xhr.upload.onprogress = function(pe) {
-                  if (pe.lengthComputable && consumer) {
-                      consumer(pe.loaded, pe.total, pe, xhr, ...callbackParams);
-                  }
-              }
-          }
-          xhr.send(formData);
-      });
-      */
-  }
-  
+        
+          return uploadResult;
+        }                
+      } catch (exc) {
+        logger.debug(`Could not upload file to endpoint:\n\t Exception ${ exc }`);
+      } 
+    }                  
   },
   Customers: {
     list: async (params = defaultParams) => {

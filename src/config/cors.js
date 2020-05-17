@@ -1,4 +1,4 @@
-
+import logger from '../logging';
 
 const allowedHeadersString = 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,origin,authorization';
 const proxyHeaderString = 'X-Real-IP,X-Forwarded-For,X-Forwarded-Host,X-Forwarded-Proto';
@@ -9,7 +9,9 @@ const corsOptions = {
    * (which expects the signature err [object], allow [bool]) as the second.
    */
   origin(origin, callback) {
-    console.log('checking origin', origin);
+    //console.log('checking origin', origin);
+    const { user, partner } = global;
+    logger.debug(`Validatinging CORS:\n ORIGIN: ${origin}\n Partner => ${partner ? partner.key : 'NO PARTNER'}\n USER => ${user ? `${user.firstName} ${user.lastName}` : 'NO USER' }`);
     callback(null, true);
     /*
     if (whitelist.indexOf(origin) !== -1) {

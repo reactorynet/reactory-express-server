@@ -471,7 +471,7 @@ const LASEC_ROLES_KEY = 'LASEC_CUSTOMER_ROLES';
 const getCustomerRoles = async (params) => {
 
   const cached = await getCacheItem(Hash(LASEC_ROLES_KEY)).then();
-  if(cached) return cached.items;
+  if (cached) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetCustomerRoles();
 
@@ -489,9 +489,9 @@ const getCustomerRoles = async (params) => {
 
 const getCustomerRanking = async (params) => {
 
-  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_RANKING') ).then();
+  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_RANKING')).then();
 
-  if(cached && cached.items) return cached.items;
+  if (cached && cached.items) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetCustomerRankings();
 
@@ -511,7 +511,7 @@ const getCustomerRanking = async (params) => {
 
 const getCustomerClass = async (params) => {
   const cached = await getCacheItem(Hash('LASEC_CUSTOMER_CLASS')).then();
-  if(cached && cached.items) return cached.items;
+  if (cached && cached.items) return cached.items;
   const idsResponse = await lasecApi.Customers.GetCustomerClass();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
@@ -528,7 +528,7 @@ const getCustomerClass = async (params) => {
 const getCustomerClassById = async (id) => {
   const customerClasses = await getCustomerClass({}).then();
   logger.debug(`Searching in ${customerClasses.length} classes for id ${id}`)
-  const found = lodash.find(customerClasses, { id: id  });
+  const found = lodash.find(customerClasses, { id: id });
   return found;
 };
 
@@ -556,7 +556,7 @@ const getPersonTitles = async () => {
   logger.debug(`<<<<<<<< Fetching Client Titles >>>>>>>>>>>>>`);
   const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
 
-  if(cached) return cached.items;
+  if (cached) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetPersonTitles();
 
@@ -578,7 +578,7 @@ const getPersonTitle = async (params) => {
   logger.debug(`Looking for title with id ${params.id}`)
   const titles = await getPersonTitles(params).then();
 
-  if(titles.length > 0) {
+  if (titles.length > 0) {
     const found = lodash.find(titles, { id: params.id });
     return found;
   }
@@ -586,13 +586,13 @@ const getPersonTitle = async (params) => {
   return null;
 };
 
- const CLIENT_JOBTYPES_KEY = "LasecClientJobTypesLookup";
+const CLIENT_JOBTYPES_KEY = "LasecClientJobTypesLookup";
 
 const getCustomerJobTypes = async () => {
 
   const cached = await getCacheItem(Hash(CLIENT_JOBTYPES_KEY)).then();
 
-  if(cached) return cached.items;
+  if (cached) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetCustomerJobTypes();
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
@@ -1246,7 +1246,7 @@ const getAddress = async (args) => {
     const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
 
     const addresses = [...addressDetails.items];
-    
+
     return addresses
   }
 
@@ -1310,21 +1310,21 @@ const createNewAddress = async (args) => {
 
     const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address }).then();
 
-    logger.debug(`Found ${existingAddress.length} matches: ${ existingAddress }`);
+    logger.debug(`Found ${existingAddress.length} matches: ${existingAddress}`);
 
     if (existingAddress && existingAddress.length > 0) {
       return {
         success: true,
         message: 'Existing address found',
         id: existingAddress[0].id,
-        fullAddress:  existingAddress[0].formatted_address
+        fullAddress: existingAddress[0].formatted_address
       };
     }
 
     //not found create it 
     const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
 
-    if(apiResponse) {
+    if (apiResponse) {
       return {
         success: apiResponse.status === 'success',
         message: apiResponse.status === 'success' ? 'Address added successfully' : 'Could not add new address.',
@@ -1479,9 +1479,9 @@ export default {
     LasecGetCustomerRanking: async (object, args) => {
       return getCustomerRanking(args);
     },
-    LasecGetCustomerRankingById: async(object, args) => {
-     logger.debug('LasecGetCustomerRankingById', args)
-     switch(args.id) {
+    LasecGetCustomerRankingById: async (object, args) => {
+      logger.debug('LasecGetCustomerRankingById', args)
+      switch (args.id) {
         case "1": return {
           id: '1',
           name: 'A - High Value'
@@ -1495,7 +1495,7 @@ export default {
           id: '3',
           name: 'C - Low Value',
         };
-     }
+      }
 
     },
     LasecGetCustomerCountries: async (object, args) => {
@@ -1557,7 +1557,7 @@ export default {
           return getLasecSalesTeamsForLookup();
         }
         case 'rep_code': {
-            return getRepCodesForFilter();
+          return getRepCodesForFilter();
         }
         default: {
           return [];
@@ -1567,7 +1567,7 @@ export default {
     LasecGetPersonTitles: async (object, args) => {
       return getPersonTitles(args);
     },
-    LasecGetPersonTitleById: async(object, args) => {
+    LasecGetPersonTitleById: async (object, args) => {
       return getPersonTitle(args);
     },
     LasecGetCustomerList: async (obj, args) => {
@@ -1576,10 +1576,10 @@ export default {
     LasecGetOrganisationList: async (obj, args) => {
       return getOrganisationList(args);
     },
-    LasecGetCustomerJobTypes: async(obj, args) => {
+    LasecGetCustomerJobTypes: async (obj, args) => {
       return getCustomerJobTypes(args);
     },
-    LasecGetCustomerJobTypeById: async(obj, args) => {
+    LasecGetCustomerJobTypeById: async (obj, args) => {
       const jobtypes = await getCustomerJobTypes().then()
 
       const lookupItem = lodash.find(jobtypes, { id: args.id });
@@ -1596,7 +1596,7 @@ export default {
         let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
         //cache this object for 12 h
         await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
-        let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: [ 'lasec-crm::new-company::document' ] }).then();
+        let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
         return { ..._newClient, clientDocuments };
       }
     },
@@ -1636,15 +1636,15 @@ export default {
         _newClient.contactDetails = { ..._newClient.contactDetails, ...newClient.contactDetails };
       }
 
-      if (isNil(newClient.jobDetails)  === false) {
+      if (isNil(newClient.jobDetails) === false) {
         _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
       }
 
-      if (isNil(newClient.customer)  === false) {
+      if (isNil(newClient.customer) === false) {
         _newClient.customer = { ..._newClient.customer, ...newClient.customer };
       }
 
-      if (isNil(newClient.organization)  === false) {
+      if (isNil(newClient.organization) === false) {
         _newClient.organization = { ..._newClient.organization, ...newClient.organization };
       }
 
@@ -1664,11 +1664,10 @@ export default {
 
       return _newClient;
     },
-    LasecCreateNewClient: async (obj, args) => {      
+    LasecCreateNewClient: async (obj, args) => {
 
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
       const _newClient = await getCacheItem(hash).then();
-
       let response: NewClientResponse = {
         client: _newClient,
         success: true,
@@ -1701,7 +1700,7 @@ export default {
        * 
        */
 
-      const _map = { 
+      const _map = {
         'personalDetails.title': 'title_id',
         'personalDetails.firstName': "first_name",
         'personalDetails.lastName': "surname",
@@ -1717,62 +1716,82 @@ export default {
         'jobDetails.customerClass': 'customer_class_id'
       };
 
-      let customerCreateResult = null;
-      let customer = null;
+      let customerCreateResult: any = null;
+      let customer: any = null;
 
-
+      let customerCreated = false;
       try {
-        customerCreateResult = await post(URIS.customer_create, om(_newClient, _map)).then()
-        logger.debug(`Result in creating user ${ customerCreateResult }`);
-        if(customerCreateResult.status === "success") {
+        let inputData = om.merge(_newClient, _map);
+        logger.debug(`Create new client on LasecAPI`, inputData)
+        customerCreateResult = await post(URIS.customer_create.url, inputData).then()
+        
+        logger.debug(`Result in creating user ${customerCreateResult}`);
+        if (customerCreateResult.status === "success") {
           customer = customerCreateResult.payload;
+          customerCreated = Boolean(customer && customer.id);
+          if (customerCreated === true) {
+            response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });
+            setCacheItem(hash, { ...DEFAULT_NEW_CLIENT }, 60 * 60 * 12);
 
-          response.messages.push({ text: 'Saved new client'});                
-          setCacheItem(hash, { ...DEFAULT_NEW_CLIENT }, 60 * 60 * 12)
+            //set addresses for the customer
+            const { deliveryAddress, physicalAddress, billingAddress } = _newClient.address;
+            let setAddressResult = null;
+            try {
+              setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, physical_address_id: physicalAddress.id }).then();
+              logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
+            } catch (exc) {
+              logger.error(`Could not save the physical address against the customer`, exc);
+            }
+
+            try {
+              setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, delivery_address_id: deliveryAddress.id }).then();
+              logger.debug(`Set delivery address ${deliveryAddress.fullAddress}`);
+            } catch (exc) {
+              logger.error(`Could not save the delivery address against the customer`, exc);
+            }
+
+            try {
+              setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, billing_address_id: billingAddress.id }).then();
+              logger.debug(`Set delivery address ${billingAddress.fullAddress}`);
+            } catch (exc) {
+              logger.error(`Could not save the billing address against the customer`, exc);
+            }
+
+            try {
+              //set upload files if any and clear local cache (delete files)
+              let upload_promises = [];
+
+              let clientDocuments: any[] = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
+              if (clientDocuments.length > 0) {
+                upload_promises = clientDocuments.map((documentInfo) => {
+                  return lasecApi.Documents.upload(documentInfo, customer)
+                });
+
+                let uploadResults = await Promise.all(upload_promises).then();
+                uploadResults.forEach((uploadResult) => {
+                  logger.debug(`File upload result ${uploadResult}`)
+                });
+              }
+            } catch (exc) {
+              logger.debug(`Could; not upload documents for the customer`, exc)
+            }
+
+
+          } else {
+            response.messages.push({ text: `Could not create the new client on Lasec API`, type: 'success', inAppNotification: true });
+          }
         } else {
           response.success = false;
           response.messages.push({
             text: 'Could not save user',
-            description: 'Could not save user'            
+            description: 'Could not save user'
           });
         }
       } catch (exc) {
         logger.debug(`Exception while saving new client: ${exc.message}`, exc);
-      }                
-      
-      
-      //set addresses for the customer
-      const { deliveryAddress, physicalAddress, billingAddress } = _newClient.address;
-      let setAddressResult = null;
-      try {        
-        setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, physical_address_id: physicalAddress.id  }).then();
-        logger.debug(`Set physical address ${physicalAddress.fullAddress}`);  
-      } catch ( exc ) {
-        logger.error(`Could not save the physical address against the customer`, exc);
+        throw exc;
       }
-
-      try {
-        setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, delivery_address_id: deliveryAddress.id  }).then();
-        logger.debug(`Set delivery address ${deliveryAddress.fullAddress}`); 
-      } catch ( exc ) { 
-        logger.error(`Could not save the delivery address against the customer`, exc);
-      }
-
-      try {
-        setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, billing_address_id: billingAddress.id  }).then();
-        logger.debug(`Set delivery address ${billingAddress.fullAddress}`);
-      } catch (exc) {
-        logger.error(`Could not save the billing address against the customer`, exc);
-      }
-        
-      try {
-        //set upload files if any and clear local cache (delete files)
-        let upload_promises = [];
-        
-      } catch ( exc ) {
-        logger.debug(`Could; not upload documents for the customer`, exc)
-      }
-
+    
       return response;
     },
     LasecCreateNewAddress: async (obj, args) => {

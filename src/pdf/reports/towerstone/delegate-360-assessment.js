@@ -508,11 +508,17 @@ export const pdfmakedefinition = (data, partner, user) => {
     },
   };
 
+  let plcTitle = 'Five Essentials of\n Purposeful Leadership';
+
+  if(data.survey.title.indexOf('Purposeful') >= 0 && data.survey.title.indexOf('Communication')) {
+    plcTitle = 'Five Essentials of\n Purposeful Communication';
+  }
+
   const coverPage = [
     {
       image: isPlcReport === false ? 'partnerLogoGreyScale' : 'partnerLogo', width: 190, style: ['centerAligned'], margin: [0, 0, 0, 20],
     },
-    { text: isPlcReport === true ? '\nFive Essentials of\nPurposeful Leadership Assessment' : '360°\nLeadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },      
+    { text: isPlcReport === true ? plcTitle : '360°\nLeadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },      
     { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned'], margin: [0, 5] },
     includeAvatar === true ?
       {

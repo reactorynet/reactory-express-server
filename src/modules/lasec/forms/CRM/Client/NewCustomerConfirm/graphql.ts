@@ -108,11 +108,11 @@ const graphql: Reactory.IFormGraphDefinition = {
         LasecCreateNewClient(newClient: $newClient) {
           client {
             id
-            personalDetails {
-              id
-              firstName
-              lastName
-            }
+            clientStatus
+            firstName
+            lastName
+            fullName
+            emailAddress            
           }
           success
           messages {
@@ -124,7 +124,14 @@ const graphql: Reactory.IFormGraphDefinition = {
       objectMap: true,
       updateMessage: 'Creating New Client, Please Wait.',
       variables: {    
-        'formData': 'newClient',        
+        'formData.id': 'newClient.id',
+        'formData.personalDetails': 'newClient.personalDetails',      
+        'formData.personalDetails.title': 'newClient.personalDetails.clientTitle',      
+        'formData.contactDetails': 'newClient.contactDetails',
+        'formData.jobDetails': 'newClient.jobDetails',
+        'formData.customer': 'newClient.customer',
+        'formData.organization': 'newClient.organization',
+        'formData.address': 'newClient.address',             
       },
       resultType: 'object',
       resultMap: {
@@ -132,6 +139,14 @@ const graphql: Reactory.IFormGraphDefinition = {
         'success': 'success',
         'saved': 'saved'
       },
+      onSuccessMethod: "notification",
+      notification: {
+        title: 'Created New Customer',
+        inAppNotification: 'true',
+        props: {
+          canDismiss: true
+        }
+      }
     }
   },
   queries: {
