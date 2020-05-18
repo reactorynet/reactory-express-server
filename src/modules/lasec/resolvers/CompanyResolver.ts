@@ -17,6 +17,7 @@ import ApiError from 'exceptions';
 import { ObjectID, ObjectId } from 'mongodb';
 import { urlencoded } from 'body-parser';
 import LasecAPI from '@reactory/server-modules/lasec/api';
+import CRMClientComment from '@reactory/server-modules/lasec/models/Comment';
 
 const getClients = async (params) => {
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter } = params;
@@ -1320,7 +1321,7 @@ const createNewAddress = async (args) => {
       };
     }
 
-    //not found create it 
+    //not found create it
     const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
 
     if (apiResponse) {
@@ -1404,6 +1405,39 @@ const getRepCodesForFilter = async () => {
   }
 }
 
+const getClientComments = async (args) => {
+  logger.debug(`FIND COMMENTS:: ${JSON.stringify(args)}`);
+  const comments = await CRMClientComment.find({
+    who: args.id
+  }).exec();
+
+  logger.debug(`COMMENTS:: ${JSON.stringify(comments)}`);
+
+  return comments;
+}
+
+const saveComment = async (args) => {
+  try {
+    let newComment = new CRMClientComment({
+      who: global.user._id,
+      comment: args.comment,
+      when: new Date()
+    });
+
+    await newComment.save().then();
+
+    return {
+      success: true,
+      message: 'Comment successfully saved'
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: 'Error while saving comment'
+    }
+  }
+}
+
 export default {
   LasecCRMClient: {
     creditLimit: async (parent, obj) => {
@@ -1466,6 +1500,11 @@ export default {
     LasecGetClientDetail: async (obj, args) => {
       return getClient(args);
     },
+
+    LasecGetClientComments: async (obj, args) => {
+      return getClientComments(args);
+    },
+
     LasecGetCustomerRoles: async (obj, args) => {
       return getCustomerRoles(args);
     },
@@ -1676,8 +1715,8 @@ export default {
 
       const { Customers, post, URIS } = lasecApi;
       /**
-       * 
-       * 
+       *
+       *
        * $this->CustomerCreateInfo = array(
         "title_id" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Title", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
             "first_name" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "First name", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
@@ -1700,7 +1739,7 @@ export default {
             "country" => array("Required" => "No", "MaxLength" => "50", "ErrorField" => "Department", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
             "customer_class_id" => array("Required" => "No", "MaxLength" => "150", "ErrorField" => "Department", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false)
             );
-       * 
+       *
        */
 
       const _map = {
@@ -1749,7 +1788,7 @@ export default {
             response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });
 
             /***
-             * 
+             *
              * set addresses for the customer
              * */
             debugger
@@ -1800,7 +1839,7 @@ export default {
                 uploadResults.forEach((uploadResult) => {
                   logger.debug(`File upload result ${uploadResult}`)
 
-                  if(uploadResult.success === false) {
+                  if (uploadResult.success === false) {
                     response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading ${uploadResult.document.filename} `, type: 'warning', inAppNotification: true });
                   }
                 });
@@ -1830,6 +1869,9 @@ export default {
     },
     LasecCreateNewAddress: async (obj, args) => {
       return createNewAddress(args);
+    },
+    LasecCRMSaveComment: async (obj, args) => {
+      return saveComment(args);
     },
   },
 };

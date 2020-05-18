@@ -3,8 +3,8 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetClientComments',
-    text: `query LasecGetClientComments($id: String!, $search: String, $paging: PagingRequest){
-      LasecGetClientComments(id: $id, search: $search, paging: $paging){
+    text: `query LasecGetClientComments($id: String!, $paging: PagingRequest){
+      LasecGetClientComments(id: $id, paging: $paging){
         paging {
           total
           page
@@ -22,41 +22,42 @@ const graphql: Reactory.IFormGraphDefinition = {
             fullName
             avatar
           }
-        }                
-      }      
+        }
+      }
     }`,
     variables: {
       'formData.id': 'id',
       'formData.paging': 'paging',
-      'formData.filterBy': 'filterBy'            
     },
     resultMap: {
       'paging': 'paging',
-      'comments': 'clients',      
-    },  
-    autoQuery: true,
-    queryMessage: 'Loading customer details',
+      'comments.[].id': 'data.[].id',
+      'comments.[].who.firstName': 'comments.[].fullName',
+      'comments.[].when': 'comments.[].when',
+      'comments.[].comment': 'comments.[].comment',
+    },
+    queryMessage: 'Loading client comments',
     resultType: 'object',
     edit: false,
     new: true,
   },
   mutation: {
     new: {
-      name: "LasecAddClientComment",
-      text: `mutation LasecCreateClientComment($clientComment: ClientCommentInput!){
-        LasecUpdateClientDetails(clientComment: $clientComment) {
-          Success
+      name: "LasecCRMSaveComment",
+      text: `mutation LasecCRMSaveComment($comment: String!){
+        LasecCRMSaveComment(comment: $comment) {
+          success
+          message
         }
       }`,
       objectMap: true,
-      updateMessage: 'Updating Template Content',
+      updateMessage: 'Save client comment',
       variables: {
-        'formData.id': 'clientInfo.clientId',
-        'formData.comment': 'clientInfo.comment',                        
+        'formData.comment': 'comment',
       },
       onSuccessMethod: 'refresh'
     }
-  }  
+  }
 };
 
 export default graphql;
