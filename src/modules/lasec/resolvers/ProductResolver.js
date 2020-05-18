@@ -244,7 +244,7 @@ const getProducts = async (params) => {
       supplier: costing.supplier_name,
       model: costing.model,
       shipmentSize: costing.shipment_size,
-      exWorker: costing.exworks_factor,
+      exWorksFactor: costing.exworks_factor,
 
       freightFactor: costing.freight_factor,
       clearingFactor: costing.clearing_factor,

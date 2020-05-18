@@ -138,7 +138,7 @@ const uiSchema: any = {
         {
           id: 'product-dimensions',
           title: 'Dimension',
-          componentFqn: 'lasec-crm.LasecProductDetailTable',
+          componentFqn: 'lasec-crm.LasecProductDimensions',
           componentProps: {},
           componentPropsMap: {
             'formContext.$formData.toolbar.product': 'formData.product',
@@ -148,7 +148,7 @@ const uiSchema: any = {
         {
           id: 'product-stock',
           title: 'Stock',
-          componentFqn: 'lasec-crm.LasecProductDetailTable',
+          componentFqn: 'lasec-crm.LasecProductStock',
           componentProps: {},
           componentPropsMap: {
             'formContext.$formData.toolbar.product': 'formData.product',
@@ -164,7 +164,7 @@ const uiSchema: any = {
             'formContext.$formData.toolbar.product': 'formData.product',
             'formContext.$formData.toolbar.view': 'query.uiSchema',
           },
-        },        
+        },
         {
           id: 'product-contracts',
           title: 'Contracts',

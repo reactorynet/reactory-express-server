@@ -35,6 +35,11 @@ import TabbedProductList from './productCatalog/TabbedContainer';
 import ProductOverview from './productCatalog/ProductOverview';
 import ProductPricing from './productCatalog/ProductPricing';
 import ProductDetail from './productCatalog/ProductDetails';
+import ProductDimensions from './productCatalog/ProductDimensions';
+import ProductStock from './productCatalog/ProductStock';
+import ProductSalesOrdersTab from './productCatalog/SalesOrders';
+import ProductCostings from './productCatalog/ProductCostings';
+
 import ProductQuantities from './productCatalog/ProductQuantities';
 
 import TabbedCrmForm from './CRM/TabbedLayout';
@@ -100,6 +105,10 @@ export default [
   ProductOverview,
   ProductPricing,
   ProductDetail,
+  ProductDimensions,
+  ProductStock,
+  ProductSalesOrdersTab,
+  ProductCostings,
   ProductQuantities,
 
   TabbedCrmForm,

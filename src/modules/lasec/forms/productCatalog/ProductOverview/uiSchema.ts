@@ -366,7 +366,7 @@ const gridUiSchemaGrid: any = {
         'products.[].supplier': 'data.[].supplier',
         'products.[].model': 'data.[].model',
         'products.[].shipmentSize': 'data.[].shipmentSize',
-        'products.[].exWorker': 'data.[].exWorker',
+        'products.[].exWorksFactor': 'data.[].exWorksFactor',
       },
     },
   }
