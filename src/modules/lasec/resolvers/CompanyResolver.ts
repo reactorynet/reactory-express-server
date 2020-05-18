@@ -12,7 +12,6 @@ import { clientFor, execql } from '@reactory/server-core/graph/client';
 import ReactoryFile, { IReactoryFile } from '@reactory/server-modules/core/models/CoreFile';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { getScaleForKey } from 'data/scales';
-import FormData from 'form-data';
 import { GraphQLUpload } from 'graphql-upload';
 import ApiError from 'exceptions';
 import { ObjectID, ObjectId } from 'mongodb';
@@ -1681,39 +1680,55 @@ export default {
        * 
        * $this->CustomerCreateInfo = array(
         "title_id" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Title", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "first_name" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "First name", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "surname" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Surname", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "role_id" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Role", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "office_number" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Office number", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "mobile_number" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "Mobile number", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "email" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Email", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "confirm_email" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Confirm Email", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => "email"),
-        "onboarding_step_completed" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "modified" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "", "Value" => $this->DateTimeNow, "Convert" => false, "Lookup" => false, "Matches" => false),
-        "created" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "", "Value" => $this->DateTimeNow, "Convert" => false, "Lookup" => false, "Matches" => false),
-        "account_type" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Account type", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "sales_team_id" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "Customer class", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "ranking_id" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Ranking", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "department" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Department", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
-        "customer_class_id" => array("Required" => "No", "MaxLength" => "150", "ErrorField" => "Department", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false)
+            "first_name" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "First name", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "surname" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Surname", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "role_id" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Role", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "office_number" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Office number", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "alternate_office_number" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "Office number", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "mobile_number" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "Mobile number", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "email" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Email", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "confirm_email" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Confirm Email", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => "email"),
+            "alternate_email" => array("Required" => "No", "MaxLength" => "150", "ErrorField" => "Email", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "onboarding_step_completed" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "modified" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "", "Value" => $this->DateTimeNow, "Convert" => false, "Lookup" => false, "Matches" => false),
+            "created" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "", "Value" => $this->DateTimeNow, "Convert" => false, "Lookup" => false, "Matches" => false),
+            "account_type" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Account type", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "sales_team_id" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "Customer class", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "company" => array("Required" => "No", "MaxLength" => "45", "ErrorField" => "Company", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "ranking_id" => array("Required" => "Yes", "MaxLength" => "45", "ErrorField" => "Ranking", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "department" => array("Required" => "Yes", "MaxLength" => "150", "ErrorField" => "Department", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "country" => array("Required" => "No", "MaxLength" => "50", "ErrorField" => "Department", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false),
+            "customer_class_id" => array("Required" => "No", "MaxLength" => "150", "ErrorField" => "Department", "Value" => "", "Convert" => false, "Lookup" => false, "Matches" => false)
             );
        * 
        */
 
       const _map = {
-        'personalDetails.title': 'title_id',
+        'personalDetails.clientTitle': 'title_id',
         'personalDetails.firstName': "first_name",
         'personalDetails.lastName': "surname",
-        'jobDetails.jobTitle': 'role_id',
-        'contactDetails.officeNumber': 'office_number',
-        'contactDetails.mobileNumber': 'mobile_number',
-        'contactDetails.emailAddress': 'email',
-        'contactDetails.confirmEmail': 'confirmEmail',
+        'personalDetails.country': "country",
         'personalDetails.accountType': 'account_type',
         'personalDetails.repCode': 'sales_team_id',
-        'jobDetails.ranking': 'ranking_id',
+
+        'contactDetails.officeNumber': 'office_number',
+        'contactDetails.alternateModile': 'alternate_office_number',
+        'contactDetails.mobileNumber': 'mobile_number',
+        'contactDetails.emailAddress': 'email',
+        'contactDetails.confirmEmail': 'confirm_email',
+        'contactDetails.alternateEmail': 'alternate_email',
+
+        'jobDetails.jobTitle': 'role_id',
         'jobDetails.clientDepartment': 'department',
-        'jobDetails.customerClass': 'customer_class_id'
+        'jobDetails.ranking': 'ranking_id',
+        'jobDetails.customerClass': 'customer_class_id',
+
+        'customer.id': 'company_id',
+        'customer.registeredName': 'company',
+        'organization.id': { key: 'oranization_id', transform: (v: string) => Number.parseInt(`${v}`) },
+        'address.physicalAddress.id': 'physical_address_id',
+        'address.deliveryAddress.id': 'delivery_address_id',
+        'address.billingAddress.id': 'billing_address_id',
       };
 
       let customerCreateResult: any = null;
@@ -1721,40 +1736,54 @@ export default {
 
       let customerCreated = false;
       try {
-        let inputData = om.merge(_newClient, _map);
+        let inputData: any = om.merge(_newClient, _map);
+        inputData.onboarding_step_completed = "6";
+
         logger.debug(`Create new client on LasecAPI`, inputData)
-        customerCreateResult = await post(URIS.customer_create.url, inputData).then()
-        
-        logger.debug(`Result in creating user ${customerCreateResult}`);
-        if (customerCreateResult.status === "success") {
-          customer = customerCreateResult.payload;
+        customer = await post(URIS.customer_create.url, inputData).then()
+        logger.debug(`Result in creating user`, customer);
+        if (customer && customer.id && Number.parseInt(`${customer.id}`) > 0) {
+          customer = { ...inputData, ...customer };
           customerCreated = Boolean(customer && customer.id);
           if (customerCreated === true) {
             response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });
-            setCacheItem(hash, { ...DEFAULT_NEW_CLIENT }, 60 * 60 * 12);
 
-            //set addresses for the customer
+            /***
+             * 
+             * set addresses for the customer
+             * */
+            debugger
             const { deliveryAddress, physicalAddress, billingAddress } = _newClient.address;
             let setAddressResult = null;
-            try {
-              setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, physical_address_id: physicalAddress.id }).then();
-              logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
-            } catch (exc) {
-              logger.error(`Could not save the physical address against the customer`, exc);
+            if (Number.parseInt(physicalAddress.id) > 0) {
+              try {
+                setAddressResult = await post(URIS.customer_add_address.url, { customer_id: customer.id, physical_address_id: physicalAddress.id }).then();
+                logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
+              } catch (exc) {
+                logger.error(`Could not save the physical address against the customer`, exc);
+                response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set physical address`, type: 'warning', inAppNotification: true });
+              }
             }
 
-            try {
-              setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, delivery_address_id: deliveryAddress.id }).then();
-              logger.debug(`Set delivery address ${deliveryAddress.fullAddress}`);
-            } catch (exc) {
-              logger.error(`Could not save the delivery address against the customer`, exc);
+
+            if (Number.parseInt(deliveryAddress.id) > 0) {
+              try {
+                setAddressResult = await post(URIS.customer_add_address.url, { customer_id: customer.id, delivery_address_id: deliveryAddress.id }).then();
+                logger.debug(`Set delivery address ${deliveryAddress.fullAddress}`);
+              } catch (exc) {
+                logger.error(`Could not save the delivery address against the customer`, exc);
+                response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });
+              }
             }
 
-            try {
-              setAddressResult = await post(URIS.customer_add_address, { customer_id: customer.id, billing_address_id: billingAddress.id }).then();
-              logger.debug(`Set delivery address ${billingAddress.fullAddress}`);
-            } catch (exc) {
-              logger.error(`Could not save the billing address against the customer`, exc);
+            if (Number.parseInt(billingAddress.id) > 0) {
+              try {
+                setAddressResult = await post(URIS.customer_add_address.url, { customer_id: customer.id, billing_address_id: billingAddress.id }).then();
+                logger.debug(`Set delivery address ${billingAddress.fullAddress}`);
+              } catch (exc) {
+                logger.error(`Could not save the billing address against the customer`, exc);
+                response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set billing address`, type: 'warning', inAppNotification: true });
+              }
             }
 
             try {
@@ -1770,13 +1799,18 @@ export default {
                 let uploadResults = await Promise.all(upload_promises).then();
                 uploadResults.forEach((uploadResult) => {
                   logger.debug(`File upload result ${uploadResult}`)
+
+                  if(uploadResult.success === false) {
+                    response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading ${uploadResult.document.filename} `, type: 'warning', inAppNotification: true });
+                  }
                 });
               }
             } catch (exc) {
-              logger.debug(`Could; not upload documents for the customer`, exc)
+              logger.debug(`Could; not upload documents for the customer`, exc);
+              response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading documents`, type: 'warning', inAppNotification: true });
             }
 
-
+            setCacheItem(hash, { ...DEFAULT_NEW_CLIENT }, 60 * 60 * 12);
           } else {
             response.messages.push({ text: `Could not create the new client on Lasec API`, type: 'success', inAppNotification: true });
           }
@@ -1791,7 +1825,7 @@ export default {
         logger.debug(`Exception while saving new client: ${exc.message}`, exc);
         throw exc;
       }
-    
+
       return response;
     },
     LasecCreateNewAddress: async (obj, args) => {

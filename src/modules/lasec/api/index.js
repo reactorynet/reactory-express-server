@@ -2,6 +2,7 @@
 import fetch from 'node-fetch';
 import fs from 'fs-extra';
 import path from 'path';
+import FormData from 'form-data';
 import om from 'object-mapper';
 import { isObject, map, find, isArray, isNil, concat, uniq } from 'lodash';
 import moment from 'moment';
@@ -366,7 +367,7 @@ const Api = {
 
       try {
         debugger
-        let filename = path.join([ process.env.CDN_ROOT, documentInfo.path, documentInfo.alias]);
+        let filename = path.join(process.env.APP_DATA_ROOT, documentInfo.path, documentInfo.alias);
         if(fs.existsSync(filename) === true){
           const stream = fs.createReadStream(filename);                
           kwargs.body = stream;
@@ -378,19 +379,33 @@ const Api = {
           const formHeaders = form.getHeaders();        
           let uploadResult = await axios.post(absoluteUrl, form, { params: { }, headers: { ...kwargs.headers, ...formHeaders } }).then();
           logger.debug(`Uploaded document complete:\n\t ${uploadResult}`);
-
-          const fileData = uploadResult.data.payload;
-
-          if(customerInfo && customerInfo.id) {
-            debugger
-            uploadResult = await POST(`${SECONDARY_API_URLS.customer_documents}`, { document_ids: [ fileData.id ], customer_id: customerInfo.id }).then();
-            
-          }
-        
-          return uploadResult;
+          const { status, payload } = uploadResult.data;
+          if(status === 'sucess') {
+            const fileData = uploadResult.data.payload;
+            if(customerInfo && customerInfo.id) {
+              debugger
+              uploadResult = await POST(`${SECONDARY_API_URLS.customer_documents}`, { document_ids: [ fileData.id ], customer_id: customerInfo.id }).then();              
+            }  
+            return {
+              document: documentInfo,
+              success: true,
+              messsage: `${documentInfo.fileName}`
+            };
+          }  else {
+            return { 
+              document: documentInfo,
+              success: false,
+              message: payload
+            }
+          }                           
         }                
       } catch (exc) {
         logger.debug(`Could not upload file to endpoint:\n\t Exception ${ exc }`);
+         return { 
+              document: documentInfo,
+              success: false,
+              message: exc.message
+            }
       } 
     }                  
   },
