@@ -1,3 +1,4 @@
+// TABLE
 export const uiSchemaTable: any = {
   'ui:options': {
     componentType: "div",
@@ -26,7 +27,7 @@ export const uiSchemaTable: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     { view: { sm: 12, md: 12, lg: 12 } },
-    { products: { sm: 12, md: 12, lg: 12 }, style: { marginTop: 0} }
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0} }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
@@ -206,7 +207,7 @@ export const uiSchemaTable: any = {
   }
 };
 
-// MORE DETAILS - DETAILS GRID
+// GRID LAYOUT
 export const uiSchemaGrid: any = {
   'ui:options': {
     componentType: "div",
@@ -216,7 +217,6 @@ export const uiSchemaGrid: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
-    schemaSelectorStyle: 'icon-button',
     schemaSelector: {
       variant: 'icon-button',
       showTitle: false,
@@ -226,8 +226,26 @@ export const uiSchemaGrid: any = {
         justifyContent: 'flex-end'
       }
     },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    { view: { sm: 12, md: 12, lg: 12 } },
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0} }
+  ],
+  view: {
+    'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+      style: {
+        width: '100%',
+        float: "right"
+      },
+    }
   },
   paging: {
     'ui:widget': 'HiddenWidget'
@@ -331,7 +349,7 @@ export const uiSchemaGrid: any = {
           hasPricingChart: false
         },
       },
-      loadingText: 'Loading Product Overview, please wait a moment',
+      loadingMessage: 'Loading product details, please wait a moment',
       remoteData: true,
 
       variables: {
@@ -390,7 +408,8 @@ export const uiSchemaGrid: any = {
   }
 };
 
-//MORE DETAILS - PURCHASE ORDERS
+// PURCHASE ORDERS
+// NOT IN USE AT THE MOMENT
 const uiSchemaPurOrders: any = {
   'ui:options': {
     componentType: "div",
@@ -498,5 +517,3 @@ const uiSchemaPurOrders: any = {
     },
   }
 };
-
-// export default uiSchema;

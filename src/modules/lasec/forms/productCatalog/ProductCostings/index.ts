@@ -10,8 +10,35 @@ const uiSchemaTable: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
+    schemaSelector: {
+      variant: 'icon-button',
+      showTitle: false,
+      activeColor: 'secondary',
+      style: {
+        display: 'flex',
+        justifyContent: 'flex-end'
+      }
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    { view: { sm: 12, md: 12, lg: 12 } },
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
+  ],
+  view: {
+    'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+      style: {
+        width: '100%',
+        float: "right"
+      },
+    }
   },
   product: {
     hidden: true,
@@ -171,8 +198,35 @@ const uiSchemaGrid: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
+    schemaSelector: {
+      variant: 'icon-button',
+      showTitle: false,
+      activeColor: 'secondary',
+      style: {
+        display: 'flex',
+        justifyContent: 'flex-end'
+      }
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    { view: { xs: 12, sm: 12, md: 12, lg: 12 } },
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
+  ],
+  view: {
+    'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+      style: {
+        width: '100%',
+        float: "right"
+      },
+    }
   },
   paging: {
     'ui:widget': 'HiddenWidget'
@@ -372,7 +426,7 @@ const uiSchemaGrid: any = {
           hasPricingChart: false
         },
       },
-      loadingText: 'Loading Product Overview, please wait a moment',
+      loadingMessage: 'Loading product costings, please wait a moment',
       remoteData: true,
       variables: {
         'props.formContext.$formData.product': 'product',
@@ -470,6 +524,24 @@ const LasecProductCostings: Reactory.IReactoryForm = {
     product: "",
     products: []
   },
+  uiSchemas: [
+    {
+      id: 'default',
+      title: 'TABLE',
+      key: 'default',
+      description: 'Product Details Table',
+      icon: 'list',
+      uiSchema: uiSchemaTable,
+    },
+    {
+      id: 'grid',
+      title: 'GRID',
+      key: 'grid',
+      description: 'Product Details Grid',
+      icon: 'view_module',
+      uiSchema: uiSchemaGrid,
+    }
+  ],
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
