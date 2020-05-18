@@ -168,7 +168,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         }      
       }`,
       variables: {      
-        'formData.$uploadContexts': 'uploadContexts'            
+        'formData.$uploadContext': 'uploadContexts'
       },
       formData: {
         $uploadContext: [

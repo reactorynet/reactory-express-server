@@ -72,6 +72,12 @@ const schema: Reactory.ISchema = {
     id: {
       type: 'string',
     },
+    $uploadContext: {
+      type: 'array',
+      items: {
+        type: 'string'
+      }
+    },
     personalDetails: { ...LasecPersonalForm.schema, title: 'PERSONAL INFO' },
     contactDetails: { ...LasecContactForm.schema },
     jobDetails: LasecJobDetailForm.schema,
@@ -119,7 +125,9 @@ const LasecCRMNewCustomerConfirm: Reactory.IReactoryForm = {
   ],
   widgetMap: [
     { widget: 'LasecUserTitleWidget', componentFqn: 'lasec-crm.LasecUserTitleWidget@1.0.0' }
-  ]  
+  ],
+  defaultFormValue: {   
+  }  
 };
 
 export default LasecCRMNewCustomerConfirm;
