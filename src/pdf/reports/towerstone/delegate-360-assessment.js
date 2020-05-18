@@ -509,9 +509,10 @@ export const pdfmakedefinition = (data, partner, user) => {
   };
 
   let plcTitle = 'Five Essentials of\n Purposeful Leadership';
-
+  let plcType = 'leadership'
   if(data.survey.title.indexOf('Purposeful') >= 0 && data.survey.title.indexOf('Communication')) {
     plcTitle = 'Five Essentials of\n Purposeful Communication';
+    plcType = 'communication';
   }
 
   const coverPage = [
@@ -541,12 +542,12 @@ export const pdfmakedefinition = (data, partner, user) => {
         'These assessors include the person you report to and the nominated assessors from the list that you submitted. ',
         isPlcReport === false ?
         `You have been assessed against the ${data.organization.name} values and supporting leadership behaviours for all ${data.organization.name} employees.`:
-        'You have been assessed against the Five Essentials of Purposeful Leadership.',
+        `You have been assessed against the Five Essentials of Purposeful ${plcType === 'leadership' ? 'Leadership' : 'Communication'}.`,
       ],
       style: ['default'],
     },
     {
-      text: `${data.leadershipBrand.description.replace('\r', ' ')}`,
+      text: `${data.leadershipBrand && data.leadershipBrand.description ?  data.leadershipBrand.description.replace('\r', ' ') : 'No Brand Description' }`,
       style: ['default', 'quote', 'centerAligned'],
       margin: [5, isPlcReport === true ? 30: 5, 5, isPlcReport === true ? 30: 5],
     },
@@ -558,7 +559,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       style: ['default'],
     } : undefined,
     isPlcReport === true ? {
-      image: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/feplinfo.png`),
+      image: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/feplinfo-${plcType}.png`),
       width: 400, 
       style: ['centerAligned'], 
       margin: [0, 50, 0, 50]
@@ -882,7 +883,7 @@ export const pdfmakedefinition = (data, partner, user) => {
             margin: [20, 0, 20, 0],
           },
           {
-            text: `${data.organization.name}: ${ isPlcReport === true ? 'The Five Essentials of Purposeful Leadership' : 'Individual Leadership Brand 360°' } Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
+            text: `${data.organization.name}: ${ isPlcReport === true ? `${plcType === 'leadership'? 'The Five Essentials of Purposeful Leadership' : 'The Five Essentials of Purposeful Communication'}` : 'Individual Leadership Brand 360°' } Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
             fontSize: 8,
             alignment: 'center',
             margin: [5, 5],
