@@ -253,12 +253,7 @@ type GoogleAddressDetails {
   country: String
 }
 
-type PagedClientComments {
-  paging: PagingResult
-  comments: [ClientComment]
-}
-
-type ClientComment {
+type CRMClientComment {
   id: String
   who: User
   comment: String
@@ -280,7 +275,7 @@ extend type Query {
     filterBy: String
     iter: Int
   ): PagedCRMCustomer
-  LasecGetClientComments(id: String! paging: PagingRequest): PagedClientComments
+  LasecGetClientComments(clientId: String!): [CRMClientComment]
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecLookupItem]
   LasecGetCustomerClassById(id: String): LasecLookupItem
@@ -310,5 +305,5 @@ extend type Mutation {
   LasecCreateNewClient(newClient: LasecNewClientInput): NewClientResponse
   LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
   LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
-  LasecCRMSaveComment(comment: String!): SimpleResponse
+  LasecCRMSaveComment(clientId: String!, comment: String!): SimpleResponse
 }

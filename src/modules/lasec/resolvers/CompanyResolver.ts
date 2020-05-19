@@ -18,6 +18,7 @@ import { ObjectID, ObjectId } from 'mongodb';
 import { urlencoded } from 'body-parser';
 import LasecAPI from '@reactory/server-modules/lasec/api';
 import CRMClientComment from '@reactory/server-modules/lasec/models/Comment';
+import { User } from '@reactory/server-core/models';
 
 const getClients = async (params) => {
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter } = params;
@@ -1406,10 +1407,10 @@ const getRepCodesForFilter = async () => {
 }
 
 const getClientComments = async (args) => {
+
   logger.debug(`FIND COMMENTS:: ${JSON.stringify(args)}`);
-  const comments = await CRMClientComment.find({
-    who: args.id
-  }).exec();
+
+  const comments = await CRMClientComment.find({ client: args.clientId }).then();
 
   logger.debug(`COMMENTS:: ${JSON.stringify(comments)}`);
 
@@ -1417,9 +1418,13 @@ const getClientComments = async (args) => {
 }
 
 const saveComment = async (args) => {
+
+  logger.debug(`COMMENTS:: ${JSON.stringify(args)}`);
+
   try {
     let newComment = new CRMClientComment({
       who: global.user._id,
+      client: args.clientId,
       comment: args.comment,
       when: new Date()
     });
@@ -1439,6 +1444,14 @@ const saveComment = async (args) => {
 }
 
 export default {
+  CRMClientComment: {
+    id: ({ id, _id }) => id || _id,
+    who: async ({ who }) => {
+      if (ObjectId.isValid(who)) {
+        return User.findById(who);
+      }
+    }
+  },
   LasecCRMClient: {
     creditLimit: async (parent, obj) => {
       return 10;

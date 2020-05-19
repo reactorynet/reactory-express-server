@@ -5,9 +5,10 @@ const { ObjectId } = mongoose.Schema.Types;
 const LasecCRMCommentSchema = mongoose.Schema({
   id: ObjectId,
   who: {
-    type: ObjectId,
+    type: String,
     ref: 'User',
   },
+  client: String,
   comment: {
     type: String,
   },

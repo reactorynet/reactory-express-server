@@ -3,15 +3,8 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetClientComments',
-    text: `query LasecGetClientComments($id: String!, $paging: PagingRequest){
-      LasecGetClientComments(id: $id, paging: $paging){
-        paging {
-          total
-          page
-          hasNext
-          pageSize
-        }
-        comments {
+    text: `query LasecGetClientComments($clientId: String!){
+      LasecGetClientComments(clientId: $clientId){
           id
           comment
           when
@@ -22,30 +15,29 @@ const graphql: Reactory.IFormGraphDefinition = {
             fullName
             avatar
           }
-        }
       }
     }`,
     variables: {
-      'formData.id': 'id',
-      'formData.paging': 'paging',
+      'formData.id': 'clientId',
     },
+    resultType: 'array',
     resultMap: {
-      'paging': 'paging',
-      'comments.[].id': 'data.[].id',
-      'comments.[].who.firstName': 'comments.[].fullName',
-      'comments.[].when': 'comments.[].when',
-      'comments.[].comment': 'comments.[].comment',
+      '[].id': 'comments.[].id',
+      '[].who.fullName': 'comments.[].fullName',
+      '[].who.avatar': 'comments.[].avatar',
+      '[].when': 'comments.[].when',
+      '[].comment': 'comments.[].comment',
     },
     queryMessage: 'Loading client comments',
-    resultType: 'object',
     edit: false,
-    new: true,
+    new: false,
+    autoQuery: false,
   },
   mutation: {
     new: {
       name: "LasecCRMSaveComment",
-      text: `mutation LasecCRMSaveComment($comment: String!){
-        LasecCRMSaveComment(comment: $comment) {
+      text: `mutation LasecCRMSaveComment($clientId: String!, $comment: String!){
+        LasecCRMSaveComment(clientId: $clientId, comment: $comment) {
           success
           message
         }
@@ -53,6 +45,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       objectMap: true,
       updateMessage: 'Save client comment',
       variables: {
+        'formData.id': 'clientId',
         'formData.comment': 'comment',
       },
       onSuccessMethod: 'refresh'

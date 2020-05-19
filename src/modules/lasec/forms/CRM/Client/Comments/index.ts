@@ -33,10 +33,35 @@ const displayUiSchema: any = {
     'ui:options': {
       columns: [
         {
+          title: '', field: 'avatar',
+          component: 'core.ImageComponent@1.0.0',
+          props: {
+            'ui:options': {
+              variant: 'rounded'
+            },
+          },
+          propsMap: {
+            avatar: 'value',
+          },
+        },
+        {
           title: "Who", field: "fullName"
         },
         {
-          title: "When", field: "when"
+          title: 'When',
+          field: 'when',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.when).format(\'DD MMM YYYY HH:mm\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
         },
         {
           title: "Comment", field: "comment"
@@ -53,16 +78,14 @@ const displayUiSchema: any = {
       remoteData: true,
       query: 'query',
       variables: {
-        'props.formContext.$formData.id': 'id'
+        'props.formContext.$formData.id': 'clientId',
       },
       resultMap: {
-        'paging.page': 'page',
-        'paging.total': 'totalCount',
-        'paging.pageSize': 'pageSize',
-        'comments.[].id': 'data.[].id',
-        'comments.[].who.firstName': 'data.[].fullName',
-        'comments.[].when': 'data.[].when',
-        'comments.[].comment': 'data.[].comment',
+        '[].id': 'data.[].id',
+        '[].who.fullName': 'data.[].fullName',
+        '[].who.avatar': 'data.[].avatar',
+        '[].when': 'data.[].when',
+        '[].comment': 'data.[].comment',
       },
     }
   },
@@ -88,18 +111,22 @@ const displayUiSchema: any = {
 const commentSchema: Reactory.ISchema = {
   type: "object",
   properties: {
-    fullName: {
+    firstName: {
       type: "string",
-      title: "userName"
+      title: "First Name"
+    },
+    lastName: {
+      type: "string",
+      title: "Last Name"
     },
     comment: {
       type: "string",
       title: "comment"
     },
-    // avatar: {
-    //   type: "string",
-    //   title: "Avatar"
-    // },
+    avatar: {
+      type: "string",
+      title: "Avatar"
+    },
     when: {
       type: "string",
       format: "date",
