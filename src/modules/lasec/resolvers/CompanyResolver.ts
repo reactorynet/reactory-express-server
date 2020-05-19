@@ -1746,7 +1746,7 @@ export default {
           customer = { ...inputData, ...customer };
           customerCreated = Boolean(customer && customer.id);
           if (customerCreated === true) {
-            response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });
+            response.messages.push({ text: `Client ${customer.first_name} ${customer.surname} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });
 
             /***
              * 
