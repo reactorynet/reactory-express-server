@@ -1,7 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import $schema from './schema';
-import { tableUiSchema, gridUiSchemaGrid} from './uiSchema';
 import $graphql from './graphql';
+import { tableUiSchema, gridUiSchemaGrid} from './uiSchema';
 
 const LasecCMSProductOverview: Reactory.IReactoryForm = {
   id: 'LasecProductOverviewTable',
@@ -17,24 +17,6 @@ const LasecCMSProductOverview: Reactory.IReactoryForm = {
   schema: $schema,
   graphql: $graphql,
   uiSchema: tableUiSchema,
-  uiSchemas: [
-    {
-      id: 'table',
-      title: 'TABLE',
-      key: 'table',
-      description: 'View Product Overview Table',
-      icon: 'list',
-      uiSchema: tableUiSchema,
-    },
-    {
-      id: 'grid',
-      title: 'GRID',
-      key: 'grid',
-      description: 'View Product Overview Grid',
-      icon: 'view_comfy',
-      uiSchema: gridUiSchemaGrid,
-    }
-  ],
   defaultFormValue: {
     paging: {
       page: 1,
@@ -43,6 +25,24 @@ const LasecCMSProductOverview: Reactory.IReactoryForm = {
     product: "",
     products: []
   },
+  uiSchemas: [
+    {
+      id: 'default',
+      title: 'TABLE',
+      key: 'default',
+      description: 'Product Details Table',
+      icon: 'list',
+      uiSchema: tableUiSchema,
+    },
+    {
+      id: 'grid',
+      title: 'GRID',
+      key: 'grid',
+      description: 'Product Details Grid',
+      icon: 'view_module',
+      uiSchema: gridUiSchemaGrid,
+    }
+  ],
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },

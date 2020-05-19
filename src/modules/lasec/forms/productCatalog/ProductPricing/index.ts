@@ -1,7 +1,8 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import $schema from './schema';
-import $uiSchema from './uiSchema';
+// import $uiSchema from './uiSchema';
 import $graphql from './graphql';
+import { tableUiSchema, gridUiSchema} from './uiSchema';
 
 const LasecCMSProductPricing: Reactory.IReactoryForm = {
   id: 'LasecProductPricingTable',
@@ -16,7 +17,7 @@ const LasecCMSProductPricing: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: $schema,
   graphql: $graphql,
-  uiSchema: $uiSchema,
+  uiSchema: tableUiSchema,
   defaultFormValue: {
     paging: {
       page: 1,
@@ -25,6 +26,24 @@ const LasecCMSProductPricing: Reactory.IReactoryForm = {
     product: "",
     products: []
   },
+  uiSchemas: [
+    {
+      id: 'default',
+      title: 'TABLE',
+      key: 'default',
+      description: 'Product Details Table',
+      icon: 'list',
+      uiSchema: tableUiSchema,
+    },
+    {
+      id: 'grid',
+      title: 'GRID',
+      key: 'grid',
+      description: 'Product Details Grid',
+      icon: 'view_module',
+      uiSchema: gridUiSchema,
+    }
+  ],
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },

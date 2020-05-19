@@ -1,13 +1,41 @@
 
-const uiSchemaTable: any = {
+const tableUiSchema: any = {
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     showSubmit: false,
     showRefresh: false,
     container: "div",
     containerStyles: {
       padding: '0px',
       margin: '0px'
+    },
+    schemaSelector: {
+      variant: 'icon-button',
+      showTitle: false,
+      activeColor: 'secondary',
+      style: {
+        display: 'flex',
+        justifyContent: 'flex-end'
+      }
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    { view: { sm: 12, md: 12, lg: 12 } },
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
+  ],
+  view: {
+    'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+      style: {
+        width: '100%',
+        float: "right"
+      },
     }
   },
   product: {
@@ -134,7 +162,10 @@ const uiSchemaTable: any = {
             uiSchema: {
               'ui:options': {
                 currencySymbol: 'R',
-                region: 'en-ZA'
+                region: 'en-ZA',
+                containerStyles: {
+                  minWidth: '350px'
+                }
               }
             },
           },
@@ -180,16 +211,44 @@ const uiSchemaTable: any = {
   }
 };
 
-const uiSchema: any = {
+const gridUiSchema: any = {
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
       paddingBottom: '8px'
     },
+    schemaSelector: {
+      variant: 'icon-button',
+      showTitle: false,
+      activeColor: 'secondary',
+      style: {
+        display: 'flex',
+        justifyContent: 'flex-end'
+      }
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    { view: { xs: 12, sm: 12, md: 12, lg: 12 } },
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
+  ],
+  view: {
+    'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+      style: {
+        width: '100%',
+        float: "right"
+      },
+    }
   },
   paging: {
     'ui:widget': 'HiddenWidget'
@@ -215,7 +274,7 @@ const uiSchema: any = {
           hasPricingChart: true
         },
       },
-      loadingText: 'Loading Product Overview, please wait a moment',
+      loadingMessage: 'Loading product pricing, please wait a moment',
       remoteData: true,
 
       variables: {
@@ -262,4 +321,4 @@ const uiSchema: any = {
   }
 };
 
-export default uiSchema;
+export { tableUiSchema, gridUiSchema };

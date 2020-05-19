@@ -3,6 +3,10 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 const schema: Reactory.ISchema = {
   type: 'object',
   properties: {
+    view: {
+      title: '',
+      type: 'string'
+    },
     product: {
       type: 'string',
     },

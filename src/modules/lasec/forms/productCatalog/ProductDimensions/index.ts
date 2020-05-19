@@ -57,7 +57,7 @@ const uiSchema: any = {
           ]
         },
       },
-      loadingText: 'Loading Product Dimensions, please wait a moment',
+      loadingMessage: 'Loading product dimensions, please wait a moment',
       remoteData: true,
 
       variables: {

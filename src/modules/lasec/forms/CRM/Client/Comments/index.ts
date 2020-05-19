@@ -12,18 +12,6 @@ const displayUiSchema: any = {
       marginTop: '16px',
       paddingBottom: '8px'
     },
-    // schemaSelector: {
-    //   variant: 'button',
-    //   buttonTitle: 'Edit',
-    //   activeColor: 'primary',
-    //   selectSchemaId: 'edit',
-    //   style: {
-    //     position: 'absolute',
-    //     top: '-20px',
-    //     right: 0,
-    //   }
-    // },
-    // showSchemaSelectorInToolbar: false,
     style: {
       marginTop: '16px',
     },
@@ -35,36 +23,48 @@ const displayUiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    // {
-    //   view: { sm: 12, md: 12, lg: 12 },
-    // },
     {
       comments: { sm: 12, md: 12, lg: 12 },
       newComment: { sm: 12, md: 12, lg: 12 },
     }
   ],
-  // view: {
-  //   'ui:widget': 'SchemaSelectorWidget',
-  //   'ui:options': {
-  //     style: {
-  //       top: '10px',
-  //       right: '10px',
-  //       position: 'relative'
-  //     },
-  //   }
-  // },
   comments: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
         {
+          title: '', field: 'avatar',
+          component: 'core.ImageComponent@1.0.0',
+          props: {
+            'ui:options': {
+              variant: 'rounded'
+            },
+          },
+          propsMap: {
+            avatar: 'value',
+          },
+        },
+        {
           title: "Who", field: "fullName"
         },
         {
-          title: "When", field: "filename"
+          title: 'When',
+          field: 'when',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.when).format(\'DD MMM YYYY HH:mm\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
         },
         {
-          title: "Comment", field: "size"
+          title: "Comment", field: "comment"
         },
       ],
       options: {
@@ -72,7 +72,21 @@ const displayUiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
-      }
+        fixedColumns: { left: 5, },
+        tableLayout: 'fixed',
+      },
+      remoteData: true,
+      query: 'query',
+      variables: {
+        'props.formContext.$formData.id': 'clientId',
+      },
+      resultMap: {
+        '[].id': 'data.[].id',
+        '[].who.fullName': 'data.[].fullName',
+        '[].who.avatar': 'data.[].avatar',
+        '[].when': 'data.[].when',
+        '[].comment': 'data.[].comment',
+      },
     }
   },
   newComment: {
@@ -94,6 +108,88 @@ const displayUiSchema: any = {
   },
 };
 
+const commentSchema: Reactory.ISchema = {
+  type: "object",
+  properties: {
+    firstName: {
+      type: "string",
+      title: "First Name"
+    },
+    lastName: {
+      type: "string",
+      title: "Last Name"
+    },
+    comment: {
+      type: "string",
+      title: "comment"
+    },
+    avatar: {
+      type: "string",
+      title: "Avatar"
+    },
+    when: {
+      type: "string",
+      format: "date",
+      title: "when"
+    },
+  }
+};
+
+const schema: Reactory.ISchema = {
+  type: "object",
+  properties: {
+    id: {
+      type: "string",
+      title: "Client ID"
+    },
+    paging: {
+      type: 'object',
+      title: 'Paging',
+      properties: {
+        total: {
+          type: 'number'
+        },
+        page: {
+          type: 'number'
+        },
+        pageSize: {
+          type: 'number'
+        },
+        hasNext: {
+          type: 'boolean'
+        }
+      }
+    },
+    comments: {
+      type: "array",
+      items: { ...commentSchema }
+    },
+    newComment: { ...commentSchema }
+  }
+};
+
+schema.title = "COMMENTS"
+const LasecCRMClientComments: Reactory.IReactoryForm = {
+  id: 'LasecCRMClientComments',
+  uiFramework: 'material',
+  uiSupport: ['material'],
+  uiResources: [],
+  title: 'CRM Personal Information',
+  tags: ['CRM Personal Information'],
+  registerAsComponent: true,
+  name: 'LasecCRMClientComments',
+  nameSpace: 'lasec-crm',
+  version: '1.0.0',
+  schema: schema,
+  graphql,
+  uiSchema: displayUiSchema,
+  defaultFormValue: {},
+};
+
+export default LasecCRMClientComments;
+
+// NOT IN USE
+/*
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -183,105 +279,4 @@ const editUiSchema: any = {
     }
   },
 };
-
-
-const commentSchema: Reactory.ISchema = {
-  type: "object",
-  properties: {
-    comment: {
-      type: "string",
-      title: "comment"
-    },
-    fullName: {
-      type: "string",
-      title: "userName"
-    },
-    avatar: {
-      type: "string",
-      title: "Avatar"
-    },
-    when: {
-      type: "string",
-      format: "date",
-      title: "when"
-    },
-  }
-};
-
-const schema: Reactory.ISchema = {
-  type: "object",
-  properties: {
-    // view: {
-    //   title: '',
-    //   type: 'string'
-    // },
-    id: {
-      type: "string",
-      title: "Client ID"
-    },
-    paging: {
-      type: 'object',
-      title: 'Paging',
-      properties: {
-        total: {
-          type: 'number'
-        },
-        page: {
-          type: 'number'
-        },
-        pageSize: {
-          type: 'number'
-        },
-        hasNext: {
-          type: 'boolean'
-        }
-      }
-    },
-    comments: {
-      type: "array",
-      items: { ...commentSchema }
-    },
-    newComment: { ...commentSchema }
-  }
-};
-
-schema.title = "COMMENTS"
-const LasecCRMClientComments: Reactory.IReactoryForm = {
-  id: 'LasecCRMClientComments',
-  uiFramework: 'material',
-  uiSupport: ['material'],
-  uiResources: [],
-  title: 'CRM Personal Information',
-  tags: ['CRM Personal Information'],
-  registerAsComponent: true,
-  name: 'LasecCRMClientComments',
-  nameSpace: 'lasec-crm',
-  version: '1.0.0',
-  schema: schema,
-  graphql,
-  uiSchema: displayUiSchema,
-  uiSchemas: [
-    // {
-    //   id: 'display',
-    //   title: 'VIEW',
-    //   key: 'display',
-    //   description: 'View Contact Details',
-    //   icon: 'list',
-    //   uiSchema: displayUiSchema,
-    // },
-    // {
-    //   id: 'edit',
-    //   title: 'EDIT',
-    //   key: 'edit',
-    //   description: 'Edit Contact Details',
-    //   icon: 'view_module',
-    //   uiSchema: editUiSchema,
-    // },
-  ],
-  defaultFormValue: {
-
-  },
-
-};
-
-export default LasecCRMClientComments;
+*/

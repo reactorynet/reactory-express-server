@@ -2,6 +2,7 @@
 const tableUiSchema: any = {
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     showSubmit: false,
     showRefresh: false,
     container: "div",
@@ -10,15 +11,32 @@ const tableUiSchema: any = {
       margin: '0px'
     },
     schemaSelector: {
-      variant: 'button',
-      buttonTitle: 'Edit',
-      activeColor: 'primary',
-      selectSchemaId: 'grid'
+      variant: 'icon-button',
+      showTitle: false,
+      activeColor: 'secondary',
+      style: {
+        display: 'flex',
+        justifyContent: 'flex-end'
+      }
     },
     style: {
       marginTop: '16px',
     },
     showSchemaSelectorInToolbar: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    { view: { sm: 12, md: 12, lg: 12 } },
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
+  ],
+  view: {
+    'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+      style: {
+        width: '100%',
+        float: "right"
+      },
+    }
   },
   paging: {
     'ui:widget': 'HiddenWidget'
@@ -270,13 +288,41 @@ const tableUiSchema: any = {
 const gridUiSchemaGrid: any = {
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
       paddingBottom: '8px'
     },
+    schemaSelector: {
+      variant: 'icon-button',
+      showTitle: false,
+      activeColor: 'secondary',
+      style: {
+        display: 'flex',
+        justifyContent: 'flex-end'
+      }
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    { view: { sm: 12, md: 12, lg: 12 } },
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
+  ],
+  view: {
+    'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+      style: {
+        width: '100%',
+        float: "right"
+      },
+    }
   },
   paging: {
     'ui:widget': 'HiddenWidget'
@@ -319,13 +365,15 @@ const gridUiSchemaGrid: any = {
             {
               label: 'Price: From - ',
               value: 'price',
-              unit: '',
+              isCents: true,
+              region: 'en-ZA',
+              currency: 'ZAR',
               icon: ''
             },
           ]
         },
       },
-      loadingText: 'Loading Product Overview, please wait a moment',
+      loadingMessage: 'Loading product overview, please wait a moment',
       remoteData: true,
 
       variables: {

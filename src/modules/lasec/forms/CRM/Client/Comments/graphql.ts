@@ -3,15 +3,8 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetClientComments',
-    text: `query LasecGetClientComments($id: String!, $search: String, $paging: PagingRequest){
-      LasecGetClientComments(id: $id, search: $search, paging: $paging){
-        paging {
-          total
-          page
-          hasNext
-          pageSize
-        }
-        comments {
+    text: `query LasecGetClientComments($clientId: String!){
+      LasecGetClientComments(clientId: $clientId){
           id
           comment
           when
@@ -22,41 +15,42 @@ const graphql: Reactory.IFormGraphDefinition = {
             fullName
             avatar
           }
-        }                
-      }      
+      }
     }`,
     variables: {
-      'formData.id': 'id',
-      'formData.paging': 'paging',
-      'formData.filterBy': 'filterBy'            
+      'formData.id': 'clientId',
     },
+    resultType: 'array',
     resultMap: {
-      'paging': 'paging',
-      'comments': 'clients',      
-    },  
-    autoQuery: true,
-    queryMessage: 'Loading customer details',
-    resultType: 'object',
+      '[].id': 'comments.[].id',
+      '[].who.fullName': 'comments.[].fullName',
+      '[].who.avatar': 'comments.[].avatar',
+      '[].when': 'comments.[].when',
+      '[].comment': 'comments.[].comment',
+    },
+    queryMessage: 'Loading client comments',
     edit: false,
-    new: true,
+    new: false,
+    autoQuery: false,
   },
   mutation: {
     new: {
-      name: "LasecAddClientComment",
-      text: `mutation LasecCreateClientComment($clientComment: ClientCommentInput!){
-        LasecUpdateClientDetails(clientComment: $clientComment) {
-          Success
+      name: "LasecCRMSaveComment",
+      text: `mutation LasecCRMSaveComment($clientId: String!, $comment: String!){
+        LasecCRMSaveComment(clientId: $clientId, comment: $comment) {
+          success
+          message
         }
       }`,
       objectMap: true,
-      updateMessage: 'Updating Template Content',
+      updateMessage: 'Save client comment',
       variables: {
-        'formData.id': 'clientInfo.clientId',
-        'formData.comment': 'clientInfo.comment',                        
+        'formData.id': 'clientId',
+        'formData.comment': 'comment',
       },
       onSuccessMethod: 'refresh'
     }
-  }  
+  }
 };
 
 export default graphql;
