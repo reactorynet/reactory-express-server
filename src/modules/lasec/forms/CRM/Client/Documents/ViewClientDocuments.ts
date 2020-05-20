@@ -100,13 +100,8 @@ export const ConfirmUiSchema: any = {
       query: 'PagedNewCustomerDocuments',
       variables: {      
         'formData.paging': 'paging',              
-        'formData.$uploadContext': 'uploadContexts',
-      },
-      formData: {
-        $uploadContexts: [
-          `lasec-crm::new-company::document`,
-        ]
-      }
+        'formContext.$formData.uploadContext': 'uploadContexts',
+      },      
     }
   }
 };

@@ -1851,9 +1851,11 @@ export default {
                 let uploadResults = await Promise.all(upload_promises).then();
                 uploadResults.forEach((uploadResult) => {
                   logger.debug(`File upload result ${uploadResult}`)
+                  uploadResult.document.uploadContext = `lasec-crm::client::document::${customer.id}`;
+                  uploadResult.document.save()
 
                   if (uploadResult.success === false) {
-                    response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading ${uploadResult.document.filename} `, type: 'warning', inAppNotification: true });
+                    response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading ${uploadResult.document.filename} to Lasec API`, type: 'warning', inAppNotification: true });
                   }
                 });
               }

@@ -139,7 +139,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         'success': 'success',
         'saved': 'saved'
       },
-      onSuccessMethod: "notification",
+      onSuccessMethod: "event:LasecNewCustomerCreated",
       notification: {
         title: 'Created New Customer',
         inAppNotification: 'true',
@@ -168,12 +168,11 @@ const graphql: Reactory.IFormGraphDefinition = {
         }      
       }`,
       variables: {      
-        'formData.$uploadContext': 'uploadContexts'
+        'formData.uploadContext': 'uploadContexts'
       },
       formData: {
-        $uploadContext: [
+        uploadContext: [
           'lasec-crm::new-company::document',
-          'lasec-crm::company-document'
         ]
       },    
       autoQuery: true,

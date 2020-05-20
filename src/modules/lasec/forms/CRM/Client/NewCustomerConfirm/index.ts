@@ -126,7 +126,10 @@ const LasecCRMNewCustomerConfirm: Reactory.IReactoryForm = {
   widgetMap: [
     { widget: 'LasecUserTitleWidget', componentFqn: 'lasec-crm.LasecUserTitleWidget@1.0.0' }
   ],
-  defaultFormValue: {   
+  defaultFormValue: {      
+    uploadContext: [ 
+      'lasec-crm::new-company::document',      
+    ]    
   }  
 };
 
