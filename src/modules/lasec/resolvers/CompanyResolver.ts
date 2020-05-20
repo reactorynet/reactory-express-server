@@ -1410,7 +1410,7 @@ const getClientComments = async (args) => {
 
   logger.debug(`FIND COMMENTS:: ${JSON.stringify(args)}`);
 
-  const comments = await CRMClientComment.find({ client: args.clientId }).then();
+  const comments = await CRMClientComment.find({ client: args.clientId }).sort({ when: -1 });
 
   logger.debug(`COMMENTS:: ${JSON.stringify(comments)}`);
 
@@ -1419,7 +1419,7 @@ const getClientComments = async (args) => {
 
 const saveComment = async (args) => {
 
-  logger.debug(`COMMENTS:: ${JSON.stringify(args)}`);
+  logger.debug(`NEW COMMENT:: ${JSON.stringify(args)}`);
 
   try {
     let newComment = new CRMClientComment({
@@ -1433,12 +1433,12 @@ const saveComment = async (args) => {
 
     return {
       success: true,
-      message: 'Comment successfully saved'
+      message: 'Comment successfully saved.'
     }
   } catch (error) {
     return {
       success: false,
-      message: 'Error while saving comment'
+      message: 'Error saving comment.'
     }
   }
 }
@@ -1513,11 +1513,9 @@ export default {
     LasecGetClientDetail: async (obj, args) => {
       return getClient(args);
     },
-
     LasecGetClientComments: async (obj, args) => {
       return getClientComments(args);
     },
-
     LasecGetCustomerRoles: async (obj, args) => {
       return getCustomerRoles(args);
     },

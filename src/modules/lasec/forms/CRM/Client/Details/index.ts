@@ -38,7 +38,7 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
           },
           {
             componentFqn: 'lasec-crm.LasecCRMClientJobDetails',
-            componentProps: { mode: 'edit', uiSchemaKey: 'display' },
+            componentProps: { mode: 'new', uiSchemaKey: 'display' },
             componentPropsMap: {
               'formContext.$formData.id': 'formData.id'
             },

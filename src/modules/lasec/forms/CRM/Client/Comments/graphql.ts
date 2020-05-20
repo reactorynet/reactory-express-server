@@ -18,7 +18,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-      'formData.id': 'clientId',
+      'formContext.$ref.props.formData.id': 'clientId',
     },
     resultType: 'array',
     resultMap: {
@@ -29,9 +29,9 @@ const graphql: Reactory.IFormGraphDefinition = {
       '[].comment': 'comments.[].comment',
     },
     queryMessage: 'Loading client comments',
-    edit: false,
+    edit: true,
     new: false,
-    autoQuery: false,
+    // autoQuery: true,
   },
   mutation: {
     new: {
@@ -45,8 +45,24 @@ const graphql: Reactory.IFormGraphDefinition = {
       objectMap: true,
       updateMessage: 'Save client comment',
       variables: {
-        'formData.id': 'clientId',
-        'formData.comment': 'comment',
+        'formContext.$ref.props.formData.id': 'clientId',
+        'formData.newComment': 'comment',
+      },
+      onSuccessMethod: 'refresh'
+    },
+    edit: {
+      name: "LasecCRMSaveComment",
+      text: `mutation LasecCRMSaveComment($clientId: String!, $comment: String!){
+        LasecCRMSaveComment(clientId: $clientId, comment: $comment) {
+          success
+          message
+        }
+      }`,
+      objectMap: true,
+      updateMessage: 'Save client comment',
+      variables: {
+        'formContext.$ref.props.formData.id': 'clientId',
+        'formData.newComment': 'comment',
       },
       onSuccessMethod: 'refresh'
     }
