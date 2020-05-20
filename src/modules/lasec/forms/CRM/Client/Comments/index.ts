@@ -1,5 +1,4 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
 
 const displayUiSchema: any = {
@@ -24,8 +23,10 @@ const displayUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      comments: { sm: 12, md: 12, lg: 12 },
-      newComment: { sm: 12, md: 12, lg: 12 },
+      comments: { sm: 12, md: 12, lg: 12, style: { paddingTop: '10px' } },
+    },
+    {
+      newComment: { sm: 12, md: 12, lg: 12, style: { paddingTop: 0 } },
     }
   ],
   comments: {
@@ -75,49 +76,26 @@ const displayUiSchema: any = {
         fixedColumns: { left: 5, },
         tableLayout: 'fixed',
       },
-      remoteData: true,
-      query: 'query',
-      variables: {
-        'props.formContext.$formData.id': 'clientId',
-      },
-      resultMap: {
-        '[].id': 'data.[].id',
-        '[].who.fullName': 'data.[].fullName',
-        '[].who.avatar': 'data.[].avatar',
-        '[].when': 'data.[].when',
-        '[].comment': 'data.[].comment',
-      },
     }
   },
   newComment: {
-    'ui:field': 'GridLayout',
-    'ui:grid-layout': [
-      {
-        comment: { md: 12, sm: 12 },
-      },
-    ],
-    comment: {
-      'ui:options': {
-        component: 'TextField',
-        componentProps: {
-          multiline: true,
-          variant: 'outlined'
-        }
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        multiline: true,
+        variant: 'outlined',
+        submitOnEnter: true
       }
     }
-  },
+  }
 };
 
 const commentSchema: Reactory.ISchema = {
   type: "object",
   properties: {
-    firstName: {
+    fullName: {
       type: "string",
-      title: "First Name"
-    },
-    lastName: {
-      type: "string",
-      title: "Last Name"
+      title: "Full Name"
     },
     comment: {
       type: "string",
@@ -129,7 +107,7 @@ const commentSchema: Reactory.ISchema = {
     },
     when: {
       type: "string",
-      format: "date",
+      format: "string",
       title: "when"
     },
   }
@@ -164,7 +142,10 @@ const schema: Reactory.ISchema = {
       type: "array",
       items: { ...commentSchema }
     },
-    newComment: { ...commentSchema }
+    newComment: {
+      type: 'string',
+      title: 'New Comment'
+    }
   }
 };
 
@@ -187,96 +168,3 @@ const LasecCRMClientComments: Reactory.IReactoryForm = {
 };
 
 export default LasecCRMClientComments;
-
-// NOT IN USE
-/*
-const editUiSchema: any = {
-  'ui:options': {
-    componentType: "div",
-    toolbarPosition: 'none',
-    containerStyles: {
-      padding: '0px',
-      margin: '0px',
-      paddingBottom: '8px'
-    },
-    style: {
-      marginTop: '16px',
-    },
-    schemaSelector: {
-      variant: 'button',
-      buttonTitle: 'CANCEL',
-      activeColor: 'secondary',
-      buttonVariant: "contained",
-      selectSchemaId: 'display',
-      style: {
-        position: 'absolute',
-        top: '-20px',
-        right: 0,
-      }
-    },
-    showSchemaSelectorInToolbar: false,
-    showSubmit: false,
-    showRefresh: false,
-  },
-  'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      view: { sm: 12, md: 12, lg: 12 },
-    },
-    {
-      comments: { md: 12 },
-      newComment: { md: 12 },
-    }
-  ],
-  view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
-      },
-    },
-  },
-  comments: {
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
-      title: 'Client Comments',
-      columns: [
-        {
-          title: "Who", field: "fullName"
-        },
-        {
-          title: "When", field: "filename"
-        },
-        {
-          title: "Comment", field: "size"
-        },
-      ],
-      options: {
-        grouping: false,
-        search: false,
-        showTitle: false,
-        toolbar: false,
-      }
-    },
-  },
-  newComment: {
-    'ui:field': 'GridLayout',
-    'ui:grid-layout': [
-      {
-        comment: { md: 12, sm: 12 },
-      },
-    ],
-    comment: {
-      'ui:options': {
-        component: 'TextField',
-        componentProps: {
-          multiline: true,
-          variant: 'outlined'
-        }
-      }
-    }
-  },
-};
-*/
