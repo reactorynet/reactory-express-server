@@ -95,7 +95,19 @@ export const ConfirmUiSchema: any = {
 
   uploadedDocuments: {
     ...DocumentGridWidget,
-    'ui:options': { ...DocumentGridWidget['ui:options'], query: 'PagedNewCustomerDocuments' }
+    'ui:options': { 
+      ...DocumentGridWidget['ui:options'], 
+      query: 'PagedNewCustomerDocuments',
+      variables: {      
+        'formData.paging': 'paging',              
+        'formData.$uploadContext': 'uploadContexts',
+      },
+      formData: {
+        $uploadContexts: [
+          `lasec-crm::new-company::document`,
+        ]
+      }
+    }
   }
 };
 

@@ -272,14 +272,14 @@ const Menus = {
     {
       ordinal: 2,
       title: 'Product',
-      link: '/product-catalogue/',
+      link: '/product-catalogue/product-overview/',
       icon: 'book',
       roles: ['USER'],
       items: [
         {
           ordinal: 0,
           title: 'Catalogue',
-          link: '/product-catalogue/',
+          link: '/product-catalogue/product-overview/',
           icon: 'book',
           roles: ['USER'],
         },
@@ -839,7 +839,7 @@ const LASEC_CONFIG = {
     {
       key: 'product-catalog',
       title: 'Product Catelog',
-      path: '/product-catalogue/**',
+      path: '/product-catalogue/:tab/**',
       exact: true,
       public: false,
       roles: ['USER', 'ADMIN'],
