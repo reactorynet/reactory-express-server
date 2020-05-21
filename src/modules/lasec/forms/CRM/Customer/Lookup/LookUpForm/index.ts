@@ -68,6 +68,7 @@ const uiSchema: any = {
     'ui:options': {
       columns: [
         { title: "Name", field: "registeredName" },
+        { title: "Account Number", field: "accountNumber" },
       ],
       options: {
         grouping: false,

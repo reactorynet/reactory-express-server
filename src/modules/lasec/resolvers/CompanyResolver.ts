@@ -726,6 +726,7 @@ const getCustomerList = async (params) => {
           customers {
             id
             registeredName
+            accountNumber
           }
         }
       }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
@@ -783,6 +784,7 @@ const getCustomerList = async (params) => {
       'registered_name': 'registeredName',
       'trading_name': 'tradingName',
       'sales_team_id': 'salesTeam',
+      'account_number': 'accountNUmber'
     });
     return _customer;
   });
@@ -819,6 +821,7 @@ const getCustomerList = async (params) => {
           customers {
             id
             registeredName
+            accountNumber
           }
         }
       }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
