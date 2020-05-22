@@ -8,6 +8,7 @@ import uuid from 'uuid';
 import lasecApi, { LasecNotAuthenticatedException } from '@reactory/server-modules/lasec/api';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
+import { queryAsync as mysql } from '@reactory/server-core/database/mysql'; 
 import { Organization, User, Task } from '@reactory/server-core/models';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
@@ -15,6 +16,7 @@ import Hash from '@reactory/server-core/utils/hash';
 import { clientFor } from '@reactory/server-core/graph/client';
 import { getCacheItem, setCacheItem } from '../models';
 import emails from '@reactory/server-core/emails';
+
 
 import {
   Quote as LasecQuote,
@@ -152,7 +154,7 @@ export const getLoggedIn360User: any = async () => {
     staff_user_id = `${lasecCreds.props.payload.user_id}`;
 
     const hashkey = `LOGGED_IN_360_USER_${global.partner._id}_${user._id}_${staff_user_id}`;
-    let me360 = null //await getCacheItem(hashkey).then();
+    let me360 = await getCacheItem(hashkey).then();
     if (!me360) {
       me360 = await lasecApi.User.getLasecUsers([staff_user_id], "ids").then();
       if (me360.length === 1) {
@@ -161,10 +163,10 @@ export const getLoggedIn360User: any = async () => {
     }
 
     if (me360) {
-      //setCacheItem(hashkey, me360, 60);    
+      setCacheItem(hashkey, me360, 60);    
     }
 
-    logger.debug(`me360 ===> ${me360}`)
+    logger.debug(`me360 ===>`, me360)
     return me360;
   }
 
@@ -234,23 +236,36 @@ export const getLasecQuoteById = async (quote_id) => {
   }
 };
 
-export const getQuotes = async (params) => {
+interface QuotesFilter {
+  start_date: string;
+  end_date: string;
+  rep_codes?: string[],
+  staff_user_id?: number,  
+}
 
-  logger.debug(`Fetching Lasec Dashboard Data`, params);
+interface SalesDashboardDataResult {
+  quotes: any[],
+  invoices: any[],
+  isos: any[],
+  quotesByStatus: any[],    
+}
 
-
+export const getSalesDashboardData = async (params) => {
+  
+  let me = await getLoggedIn360User().then();
+  logger.debug(`Fetching Lasec Sales Dashboard Data as ${me.first_name} `, params, me);
   let _params = params;
 
   if (!_params) {
     _params = {
-      periodStart: moment().startOf('year'),
+      periodStart: moment().startOf('month'),
       periodEnd: moment().endOf('day')
     }
   }
 
-  let apiFilter = {
-    start_date: _params.periodStart ? _params.periodStart.toISOString() : moment().startOf('year'),
-    end_date: _params.periodEnd ? _params.periodEnd.toISOString() : moment().endOf('day')
+  let apiFilter: QuotesFilter = {
+    start_date: _params.periodStart ? _params.periodStart.toISOString() : moment().startOf('month').toISOString(),
+    end_date: _params.periodEnd ? _params.periodEnd.toISOString() : moment().endOf('day').toISOString()
   };
 
   if (params.agentSelection === 'team') {
@@ -262,12 +277,80 @@ export const getQuotes = async (params) => {
   }
 
   if (params.agentSelection === 'me') {
-    let me = await getLoggedIn360User().then();
+    
     if (me) {
       apiFilter.rep_codes = me.rep_codes;
     }
   }
 
+  const debresults: any = await mysql(`CALL LasecGetSalesDashboardData ('${moment(apiFilter.start_date).format('YYYY-MM-DD HH:mm:ss')}', '${moment(apiFilter.end_date).format('YYYY-MM-DD HH:mm:ss')}',  ${me.id}, 'me');`, 'mysql.lasec360').then()
+      
+  let quotes: any[] = debresults[1];
+  let invoices: any[] = debresults[2];
+  let isos: any[] =  debresults[3];
+  let quotesByStatus: any[] = []; //dbresults[4];  
+
+  if(apiFilter.rep_codes && apiFilter.rep_codes.length > 0) {
+    lodash.remove(quotes, (quote: any) => lodash.intersection(  apiFilter.rep_codes, [ quote.sales_team_id ] ).length === 1   );
+  }
+
+  //perform a lightweight map
+  const quoteSyncResult = await Promise.all(quotes.map((quote: any) => {
+    return synchronizeQuote(quote.id, global.partner.key, quote, true);
+  })).then();
+
+  quotes = quoteSyncResult.map(doc => doc);
+
+  // logger.debug(`QUOTES ${JSON.stringify(quotes.slice(0, 5))}`);
+
+
+  return { 
+    quotes,
+    invoices,
+    isos,
+    quotesByStatus,    
+  }; 
+
+};
+
+
+export const getQuotes = async (params) => {
+  
+  let me = await getLoggedIn360User().then();
+  logger.debug(`Fetching Lasec Dashboard Data as ${me.first_name} `, params, me);
+  let _params = params;
+
+  if (!_params) {
+    _params = {
+      periodStart: moment().startOf('month'),
+      periodEnd: moment().endOf('day')
+    }
+  }
+
+  let apiFilter: QuotesFilter = {
+    start_date: _params.periodStart ? _params.periodStart.toISOString() : moment().startOf('month').toISOString(),
+    end_date: _params.periodEnd ? _params.periodEnd.toISOString() : moment().endOf('day').toISOString()
+  };
+
+  if (params.agentSelection === 'team') {
+    apiFilter.rep_codes = params.teamIds;
+  }
+
+  if (params.agentSelection === 'custom') {
+    apiFilter.staff_user_id = params.repIds || []
+  }
+
+  if (params.agentSelection === 'me') {
+    
+    if (me) {
+      apiFilter.rep_codes = me.rep_codes;
+    }
+  }
+
+  const debresults: any = await mysql(`CALL LasecGetSalesDashboardData ('${moment(apiFilter.start_date).format('YYYY-MM-DD HH:mm:ss')}', '${moment(apiFilter.end_date).format('YYYY-MM-DD HH:mm:ss')}',  ${me.id}, 'me');`, 'mysql.lasec360').then()
+  
+
+  /*
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: 10, enabled: true } }).then();
 
   let ids = [];
@@ -294,10 +377,16 @@ export const getQuotes = async (params) => {
 
   const quotesDetails = await lasecApi.Quotes.list({ filter: { ids: ids } });
   logger.debug(`Fetched Expanded View for (${quotesDetails.items.length}) Quotes from API`);
-  let quotes = [...quotesDetails.items];
+   */
+  
+  let quotes = debresults[1];
+
+  if(apiFilter.rep_codes && apiFilter.rep_codes.length > 0) {
+    lodash.remove(quotes, (quote: any) => lodash.intersection(  apiFilter.rep_codes, [ quote.sales_team_id ] ).length === 1   );
+  }
 
   //perform a lightweight map
-  const quoteSyncResult = await Promise.all(quotes.map((quote) => {
+  const quoteSyncResult = await Promise.all(quotes.map((quote: any) => {
     return synchronizeQuote(quote.id, global.partner.key, quote, true);
   })).then();
 
@@ -308,6 +397,7 @@ export const getQuotes = async (params) => {
   amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
 
   return quotes;
+ 
 
 };
 

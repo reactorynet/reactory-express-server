@@ -1,4 +1,4 @@
-import mysql from 'mysql';
+import mysql, { MysqlError, FieldInfo } from 'mysql';
 import logger from '../logging';
 import ApiError from '../exceptions';
 import {
@@ -76,7 +76,7 @@ export const getConnection = (connectionId = 'mysql.default') => {
     connectionLimit: 100    
   }, true);
 
-  
+  logger.debug(`Creating connection with configuration`, setting.data);
   return getPoolWithObject(setting.data);    
 };
 
@@ -174,11 +174,12 @@ export const MySQLQueryStringGenerator: QueryStringGenerator = {
   },  
 };
 
-export const queryAsync = async (query, connectionId = 'mysql.default') => {
+export const queryAsync = async (query: string, connectionId: string = 'mysql.default', values?: any ) => {
   logger.debug('queryAsync', { query, connectionId });
 
   return new Promise((resolve, reject) => {
-    const resultCallback = (error, results) => {
+    const resultCallback = (error: MysqlError, results?: any, fields?: FieldInfo[]) => {
+      logger.debug(`Results from query`, { error, fields } )
       if (error === null || error === undefined) {
         resolve(results);
       } else {
@@ -187,7 +188,8 @@ export const queryAsync = async (query, connectionId = 'mysql.default') => {
     };
     const connection =  getConnection(connectionId);
     if(connection) {
-      connection.query(query, resultCallback);
+      
+      connection.query( { sql: query, values  }, resultCallback);
       
     } else {
       reject(new ApiError(`Could not establish a connection using the connection details for ${connectionId}`));

@@ -1,6 +1,3 @@
-
-
-
 import moment, { Moment, isDate } from 'moment';
 import lodash, { isArray, isNil, isString } from 'lodash';
 import { ObjectId } from 'mongodb';
@@ -17,7 +14,7 @@ import { clientFor } from '@reactory/server-core/graph/client';
 import O365 from '../../../azure/graph';
 import { getCacheItem, setCacheItem } from '../models';
 import emails from '@reactory/server-core/emails';
-
+import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { Quote as LasecQuote, 
   LasecDashboardSearchParams, 
   LasecProductDashboardParams, 
@@ -35,8 +32,11 @@ import {
   getNextActionsForUser,
   groupQuotesByStatus,
   groupQuotesByProduct,
-  getLoggedIn360User
+  getLoggedIn360User,
+  getSalesDashboardData,
 } from './Helpers';
+import { DashboardParams, ProductDashboardParams } from './QuoteResolver';
+import user from 'data/forms/core/user';
 
 
 const defaultDashboardParams: DashboardParams = {
@@ -157,15 +157,15 @@ export default {
         periodLabel = `${periodLabel} [cache]`;
       }
       
-                
-      const quotes = hasCachedItem === true ? _cached.quotes : await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
-      logger.debug(`Fetched ${quotes.length} quote(s)`);
-      const invoices = await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
-      logger.debug(`Fetched ${invoices.length} invoice(s)`);
 
-      invoices.forEach(i => logger.debug(`INVOICE DATE::>> ${i.id} ${i.invoice_date}`))
-      
-      const isos = hasCachedItem === true ? _cached.isos : await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+      const { quotes, invoices, isos }: any = await getSalesDashboardData({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+                
+      //const quotes =  SQLResults[1] //hasCachedItem === true ? _cached.quotes : await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+      logger.debug(`Fetched ${quotes.length} quote(s)`);
+      //const invoices = SQLResults[2] // await getInvoices({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+      logger.debug(`Fetched ${invoices.length} invoice(s)`);
+            
+      //const isos = hasCachedItem === true ? _cached.isos : await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
       logger.debug(`Fetched  ${isos.length} iso(s)`);
 
       const targets: number = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
@@ -218,7 +218,7 @@ export default {
         let isoDate = moment(iso.order_date);
         let dataEntry = {
           ...iso,
-          "value": iso.order_value / 100,
+          "value": Math.round(iso.order_value / 100),
           "team": iso.sales_team_id || `NO TEAM`,
           "date": isoDate.format("YYYY-MM-DD"),
           "year": `${isoDate.year()}`,            
@@ -377,7 +377,7 @@ export default {
       lodash.sortBy(quotes, [q => q.created]).forEach((quote) => {
         let dayIndex = dateIndex[moment(quote.created).format('YYYY-MM-DD')];
         if (dayIndex >= 0) {
-          dashboardResult.charts.quoteStatusComposed.data[dayIndex].quoted += (quote.totals.totalVATExclusive / 100);          
+          dashboardResult.charts.quoteStatusComposed.data[dayIndex].quoted += Math.round(quote.totals.totalVATExclusive / 100);          
         }
       });
 
@@ -386,8 +386,8 @@ export default {
         let _key = theDate.format('YYYY-MM-DD');
         let dayIndex = dateIndex[_key];
         if (dayIndex >= 0) {
-          dashboardResult.charts.quoteStatusComposed.data[dayIndex].invoiced += ($invoice.invoice_value / 100);
-          dashboardResult.charts.quoteINVPie.data[dayIndex].invoiced += ($invoice.invoice_value / 100);
+          dashboardResult.charts.quoteStatusComposed.data[dayIndex].invoiced += Math.round($invoice.invoice_value / 100);
+          dashboardResult.charts.quoteINVPie.data[dayIndex].invoiced += Math.round($invoice.invoice_value / 100);
         }
       });
 
@@ -397,7 +397,7 @@ export default {
 
         let dayIndex = dateIndex[moment($iso.order_date).format('YYYY-MM-DD')];
         if (dayIndex >= 0) {
-          dashboardResult.charts.quoteStatusComposed.data[dayIndex].isos += ($iso.order_value / 100);
+          dashboardResult.charts.quoteStatusComposed.data[dayIndex].isos += Math.round($iso.order_value / 100);
         }
       });
 
