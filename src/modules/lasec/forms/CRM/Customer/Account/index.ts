@@ -23,7 +23,7 @@ const labelProps = {
 const displayUiSchema: any = {
   'ui:options': {
     componentType: "div",
-    // toolbarPosition: 'none',
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -43,19 +43,19 @@ const displayUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5',
+    // borderBottom: '2px solid #D5D5D5',
     marginBottom: '16px'
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      currentBalance: { sm: 12, md: 12, lg: 12 },
-      creditLimit: { sm: 12, md: 12, lg: 12 },
-      currentInvoice: { sm: 12, md: 12, lg: 12 },
-      balance30Days: { sm: 12, md: 12, lg: 12 },
-      balance60Days: { sm: 12, md: 12, lg: 12 },
-      balance90Days: { sm: 12, md: 12, lg: 12 },
-      credits: { sm: 12, md: 12, lg: 12 },
+      currentBalance: { sm: 12, md: 6, lg: 4 },
+      creditLimit: { sm: 12, md: 6, lg: 4 },
+      currentInvoice: { sm: 12, md: 6, lg: 4 },
+      balance30Days: { sm: 12, md: 6, lg: 4 },
+      balance60Days: { sm: 12, md: 6, lg: 4 },
+      balance90Days: { sm: 12, md: 6, lg: 4 },
+      credits: { sm: 12, md: 6, lg: 4 },
     }
   ],
   view: {
@@ -67,58 +67,61 @@ const displayUiSchema: any = {
       },
     }
   },
+
   currentBalance: {
-    'ui:widget': 'LabelWidget',
+    'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
-      title: 'Current Balance',
-      ...labelProps
-    }
+      inlineLabel: true,
+      label:"Current Balance:"
+    },
   },
 
   creditLimit: {
-    'ui:widget': 'LabelWidget',
+    'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
-      title: 'Current Balance',
-      ...labelProps
-    }
+      inlineLabel: true,
+      label:"Credit Limit:"
+    },
   },
 
   currentInvoice: {
-    'ui:widget': 'LabelWidget',
+    'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
-      title: 'Current Invoice',
-      ...labelProps
-    }
+      inlineLabel: true,
+      label:"Current Invoice"
+    },
   },
+
   balance30Days: {
-    'ui:widget': 'LabelWidget',
+    'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
-      readOnly: true,
-      title: '30 Day Invoice',
-      ...labelProps
-    }
+      inlineLabel: true,
+      label:"30 Day Invoice"
+    },
   },
 
   balance60Days: {
-    'ui:widget': 'LabelWidget',
+    'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
-      title: '60 Day Invoice',
-      ...labelProps
-    }
+      inlineLabel: true,
+      label:"60 Day Invoice"
+    },
   },
+
   balance90Days: {
-    'ui:widget': 'LabelWidget',
+    'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
-      title: '90 Day Invoice',
-      ...labelProps
-    }
+      inlineLabel: true,
+      label:"90 Day Invoice"
+    },
   },
+
   credits: {
-    'ui:widget': 'LabelWidget',
+    'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
-      title: 'Credits',
-      ...labelProps
-    }
+      inlineLabel: true,
+      label:"Credits"
+    },
   },
 };
 
@@ -455,9 +458,11 @@ const LasecCRMCustomerAccountInfo: Reactory.IReactoryForm = {
       uiSchema: editUiSchema,
     },
   ],
-  defaultFormValue: {
-
-  },
+  defaultFormValue: {},
+  widgetMap: [
+    { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
+    { componentFqn: 'core.CurrencyLabel@1.0.0', widget: 'CurrencyWidget' },
+  ],
 };
 
 export default LasecCRMCustomerAccountInfo;

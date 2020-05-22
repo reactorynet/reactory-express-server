@@ -34,7 +34,7 @@ const maps = { ...OBJECT_MAPS };
 
 
 /**
- * Transforms meta data into totals object 
+ * Transforms meta data into totals object
  * @param meta meta data to use for transformation
  */
 export const totalsFromMetaData = (meta: any) => {
@@ -161,7 +161,7 @@ export const getLoggedIn360User: any = async () => {
     }
 
     if (me360) {
-      //setCacheItem(hashkey, me360, 60);    
+      //setCacheItem(hashkey, me360, 60);
     }
 
     logger.debug(`me360 ===> ${me360}`)
@@ -1149,6 +1149,89 @@ export const getPagedQuotes = async (params) => {
     apiFilter.start_date = moment(quoteDate).startOf('day').toISOString();
     apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
   }
+
+  const filterExample = {
+    "filter": {
+      "any_field": "cod",
+      "start_date": "2020-04-06T22:00:00.000Z",
+      "end_date": "2020-05-05T22:00:00.000Z"
+    },
+    "format": { "ids_only": true },
+    "ordering": { "quote_id": "asc" }
+  }
+
+  let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
+
+  let ids = [];
+
+  if (isArray(quoteResult.ids) === true) {
+    ids = [...quoteResult.ids];
+  }
+
+  if (quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
+    pagingResult.total = quoteResult.pagination.num_items;
+    pagingResult.pageSize = quoteResult.pagination.page_size || 10;
+    pagingResult.hasNext = quoteResult.pagination.has_next_page === true;
+    pagingResult.page = quoteResult.pagination.current_page || 1;
+  }
+
+  // logger.debug(`Loading (${ids.length}) quote ids`);
+
+  let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }).then();
+  logger.debug(`Fetched Expanded View for (${quoteDetails.items.length}) Quotes from API`);
+  let quotes = [...quoteDetails.items];
+
+
+  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
+
+  const quoteSyncResult = await Promise.all(quotes.map((quote) => {
+    return synchronizeQuote(quote.id, global.partner.key, quote, true);
+  })).then();
+
+  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
+
+  quotes = quoteSyncResult.map(doc => doc);
+
+  let result = {
+    paging: pagingResult,
+    search,
+    filterBy,
+    quotes,
+  };
+
+  return result;
+}
+
+export const getPagedClientQuotes = async (params) => {
+
+  logger.debug(`GETTING PAGED CLIENT QUOTES:: ${JSON.stringify(params)}`);
+
+  const {
+    clientId,
+    search = "",
+    filterBy = "any_field",
+    paging = { page: 1, pageSize: 10 },
+    iter = 0 } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  if (isString(search) === false || search.length < 3) return {
+    paging: pagingResult,
+    quotes: []
+  };
+
+  // NEED TO ADD CACHING
+
+  let apiFilter = {
+    [filterBy]: search,
+    start_date: moment().startOf('year'),
+    end_date: moment().endOf('day'),
+  };
 
   const filterExample = {
     "filter": {

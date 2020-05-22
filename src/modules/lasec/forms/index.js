@@ -56,6 +56,8 @@ import LasecClientDocuments from './CRM/Client/Documents';
 import NewClient from './CRM/Client/NewClient';
 import NewClientConfirmAndSave from './CRM/Client/NewCustomerConfirm';
 
+import ClientActivityQuotes from './CRM/Client/Activity/Quotes';
+
 import CustomerDetails from './CRM/Customer/Detail';
 import CustomerSpecialRequirement from './CRM/Customer/SpecialRequirements';
 import CustomerAccountInfo from './CRM/Customer/Account';
@@ -124,6 +126,8 @@ export default [
   ClientOverviewWidget,
   NewClient,
   NewClientConfirmAndSave,
+
+  ClientActivityQuotes,
 
   CustomerDetails,
   CustomerSpecialRequirement,

@@ -16,15 +16,15 @@ import { clientFor } from '@reactory/server-core/graph/client';
 import { getCacheItem, setCacheItem } from '../models';
 import emails from '@reactory/server-core/emails';
 
-import { Quote as LasecQuote, 
-  LasecDashboardSearchParams, 
-  LasecProductDashboardParams, 
-  USER_FILTER_TYPE, 
-  DATE_FILTER_PRESELECT 
+import { Quote as LasecQuote,
+  LasecDashboardSearchParams,
+  LasecProductDashboardParams,
+  USER_FILTER_TYPE,
+  DATE_FILTER_PRESELECT
 } from '../types/lasec';
 
 import CONSTANTS, { LOOKUPS, OBJECT_MAPS } from '../constants';
-import { 
+import {
   totalsFromMetaData,
   synchronizeQuote,
   getTargets,
@@ -35,6 +35,7 @@ import {
   lasecGetProductDashboard,
   getSalesOrders,
   getPagedQuotes,
+  getPagedClientQuotes,
   lasecGetQuoteLineItems,
  } from './Helpers';
 
@@ -451,13 +452,13 @@ export default {
       return null;
     },
     note: ({ note }) => (note),
-    timeline: getQuoteTimeline,    
+    timeline: getQuoteTimeline,
     lastAction: async (quote) => {
-      let items = await getQuoteTimeline(quote, { bypassEmail: true }, null, null).then(); 
+      let items = await getQuoteTimeline(quote, { bypassEmail: true }, null, null).then();
       if(items && items.length > 0) {
         return items[0];
       }
-    },    
+    },
     meta: (quote) => {
       return quote.meta || {}
     }
@@ -473,12 +474,12 @@ export default {
       period, periodStart, periodEnd, status,
     }) => {
       return `${period}.${moment(periodStart).valueOf()}.${moment(periodEnd).valueOf()}`;
-    },  
-  }, 
+    },
+  },
   Query: {
     LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes({ search });
-    },    
+    },
     LasecGetProductDashboard: async (obj, { dashparams }) => {
       return lasecGetProductDashboard(dashparams);
     },
@@ -489,6 +490,9 @@ export default {
     },
     LasecGetCRMQuoteList: async (obj, args) => {
       return getPagedQuotes(args);
+    },
+    LasecGetCRMClientQuoteList: async (obj, args) => {
+      return getPagedClientQuotes(args);
     },
     LasecGetCRMSalesOrders: async (obj, args) => {
       return getSalesOrders(args);
