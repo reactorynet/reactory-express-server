@@ -36,7 +36,7 @@ const maps = { ...OBJECT_MAPS };
 
 
 /**
- * Transforms meta data into totals object 
+ * Transforms meta data into totals object
  * @param meta meta data to use for transformation
  */
 export const totalsFromMetaData = (meta: any) => {
@@ -698,10 +698,10 @@ export const getQuoteEmails = async (quote_id) => {
   });
 };
 
-export const groupQuotesByStatus = (quotes) => {
-  const groupsByKey = {};
+export const groupQuotesByStatus = (quotes: any[]) => {
+  const groupsByKey: any = {};
   quotes.forEach((quote) => {
-    const key = quote.statusGroup || 'none';
+    const key: string = quote.statusGroup || 'none';
 
     const { totals } = quote;
 
@@ -721,7 +721,7 @@ export const groupQuotesByStatus = (quotes) => {
     /**
      * The good the bad and the ugly map
      */
-    const good_bad = {
+    const good_bad: any = {
       "1": "good",
       "2": "good",
       "3": "good",
@@ -732,8 +732,8 @@ export const groupQuotesByStatus = (quotes) => {
 
     if (Object.getOwnPropertyNames(groupsByKey).indexOf(quote.statusGroup) >= 0) {
       groupsByKey[key].quotes.push(quote);
-      groupsByKey[key].totalVAT = Math.floor(groupsByKey[key].totalVAT + (totals.totalVAT / 100));
-      groupsByKey[key].totalVATExclusive = Math.floor(groupsByKey[key].totalVATExclusive + (totals.totalVATExclusive / 100));
+      groupsByKey[key].totalVAT = groupsByKey[key].totalVAT + (totals.totalVAT / 100);
+      groupsByKey[key].totalVATExclusive = groupsByKey[key].totalVATExclusive + (totals.totalVATExclusive / 100);
       groupsByKey[key].totalVATInclusive = Math.floor(groupsByKey[key].totalVATInclusive + (totals.totalVATInclusive / 100));
       if (good_bad[key] === "good") groupsByKey[key].good += 1;
       else groupsByKey[key].naughty += 1;
@@ -745,9 +745,9 @@ export const groupQuotesByStatus = (quotes) => {
         naughty: 0,
         category: '',
         key,
-        totalVAT: Math.floor(totals.totalVAT / 100),
-        totalVATExclusive: Math.floor(totals.totalVATExclusive / 100),
-        totalVATInclusive: Math.floor(totals.totalVATInclusive / 100),
+        totalVAT: totals.totalVAT / 100,
+        totalVATExclusive: totals.totalVATExclusive / 100,
+        totalVATInclusive: totals.totalVATInclusive / 100,
         title: titleFromKey(key),
       };
 
@@ -757,7 +757,12 @@ export const groupQuotesByStatus = (quotes) => {
   });
 
   const groupedByStatus = Object.getOwnPropertyNames(groupsByKey).map((statusKey) => {
-    return groupsByKey[statusKey];
+    return { 
+      ...groupsByKey[statusKey],
+      totalVAT: Math.floor(groupsByKey[statusKey].totalVAT),
+      totalVATExclusive: Math.floor(groupsByKey[statusKey].totalVATExclusive),
+      totalVATInclusive: Math.floor(groupsByKey[statusKey].totalVATInclusive),
+    };
   });
 
   return groupedByStatus;
@@ -796,7 +801,7 @@ export const groupQuotesByProduct = async (quotes: LasecQuote[]) => {
     // logger.debug(`Found ${lineItems ? lineItems.length : ' (none) '} lineitems`)
     const { totals } = quote;
 
-    const good_bad = {
+    const good_bad: any = {
       "1": "good",
       "2": "good",
       "3": "good",
@@ -1239,6 +1244,89 @@ export const getPagedQuotes = async (params) => {
     apiFilter.start_date = moment(quoteDate).startOf('day').toISOString();
     apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
   }
+
+  const filterExample = {
+    "filter": {
+      "any_field": "cod",
+      "start_date": "2020-04-06T22:00:00.000Z",
+      "end_date": "2020-05-05T22:00:00.000Z"
+    },
+    "format": { "ids_only": true },
+    "ordering": { "quote_id": "asc" }
+  }
+
+  let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
+
+  let ids = [];
+
+  if (isArray(quoteResult.ids) === true) {
+    ids = [...quoteResult.ids];
+  }
+
+  if (quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
+    pagingResult.total = quoteResult.pagination.num_items;
+    pagingResult.pageSize = quoteResult.pagination.page_size || 10;
+    pagingResult.hasNext = quoteResult.pagination.has_next_page === true;
+    pagingResult.page = quoteResult.pagination.current_page || 1;
+  }
+
+  // logger.debug(`Loading (${ids.length}) quote ids`);
+
+  let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }).then();
+  logger.debug(`Fetched Expanded View for (${quoteDetails.items.length}) Quotes from API`);
+  let quotes = [...quoteDetails.items];
+
+
+  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
+
+  const quoteSyncResult = await Promise.all(quotes.map((quote) => {
+    return synchronizeQuote(quote.id, global.partner.key, quote, true);
+  })).then();
+
+  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
+
+  quotes = quoteSyncResult.map(doc => doc);
+
+  let result = {
+    paging: pagingResult,
+    search,
+    filterBy,
+    quotes,
+  };
+
+  return result;
+}
+
+export const getPagedClientQuotes = async (params) => {
+
+  logger.debug(`GETTING PAGED CLIENT QUOTES:: ${JSON.stringify(params)}`);
+
+  const {
+    clientId,
+    search = "",
+    filterBy = "any_field",
+    paging = { page: 1, pageSize: 10 },
+    iter = 0 } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  if (isString(search) === false || search.length < 3) return {
+    paging: pagingResult,
+    quotes: []
+  };
+
+  // NEED TO ADD CACHING
+
+  let apiFilter = {
+    [filterBy]: search,
+    start_date: moment().startOf('year'),
+    end_date: moment().endOf('day'),
+  };
 
   const filterExample = {
     "filter": {

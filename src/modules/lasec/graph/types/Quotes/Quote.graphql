@@ -311,6 +311,13 @@ extend type Query {
     quoteDate: String,
     iter: Int
   ): PagedCRMQuote
+  LasecGetCRMClientQuoteList(
+    clientId: String
+    search: String!
+    paging: PagingRequest
+    filterBy: String,
+    iter: Int
+  ): PagedCRMQuote
   LasecGetDashboard(dashparams: LasecQuoteQueryInput): LasecQuoteDashboard
   LasecGetProductDashboard(
     dashparams: LasecQuoteQueryInput
