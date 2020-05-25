@@ -90,6 +90,7 @@ const getClients = async (params) => {
   let clients = [...clientDetails.items];
 
   logger.debug(`CLIENT RESOLVER - CLIENTS:: Found (${clients.length}) for request`);
+  logger.debug(`CLIENT :: Found (${JSON.stringify(clients[0])}) for request`);
 
   clients = clients.map(client => {
     /**
@@ -1568,6 +1569,12 @@ export default {
             { id: 'activated', name: 'Active' },
             { id: 'unfinished', name: 'Unfinished' },
             { id: 'deactivated', name: 'Deactivated' },
+          ];
+        }
+        case 'quote_type': {
+          return [
+            { id: 'normal', name: 'Normal' },
+            { id: 'unknown', name: 'Unknown' },
           ];
         }
         case 'quote_status': {

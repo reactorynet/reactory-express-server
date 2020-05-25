@@ -37,6 +37,7 @@ import {
   getPagedQuotes,
   getPagedClientQuotes,
   lasecGetQuoteLineItems,
+  getClientSalesOrders
  } from './Helpers';
 
 
@@ -496,6 +497,9 @@ export default {
     },
     LasecGetCRMSalesOrders: async (obj, args) => {
       return getSalesOrders(args);
+    },
+    LasecGetCRMClientSalesOrders: async (obj, args) => {
+      return getClientSalesOrders(args);
     },
   },
   Mutation: {

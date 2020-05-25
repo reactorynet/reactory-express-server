@@ -27,6 +27,7 @@ import {
 
 import CONSTANTS, { LOOKUPS, OBJECT_MAPS } from '../constants';
 import { Reactory } from 'types/reactory';
+import { argsToArgsConfig } from 'graphql/type/definition';
 
 const lookups = CONSTANTS.LOOKUPS;
 
@@ -1204,12 +1205,18 @@ export const getPagedQuotes = async (params) => {
 
 export const getPagedClientQuotes = async (params) => {
 
+  // filter by client
+
   logger.debug(`GETTING PAGED CLIENT QUOTES:: ${JSON.stringify(params)}`);
 
   const {
     clientId,
     search = "",
+    periodStart,
+    periodEnd,
+    quoteDate,
     filterBy = "any_field",
+    filter,
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
@@ -1220,28 +1227,32 @@ export const getPagedClientQuotes = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  if (isString(search) === false || search.length < 3) return {
-    paging: pagingResult,
-    quotes: []
-  };
+  // if (isString(search) === false || search.length < 3) return {
+  //   paging: pagingResult,
+  //   quotes: []
+  // };
 
   // NEED TO ADD CACHING
 
   let apiFilter = {
+    customer_id: clientId,
+    // sales_team_id: "100",
     [filterBy]: search,
-    start_date: moment().startOf('year'),
-    end_date: moment().endOf('day'),
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
 
-  const filterExample = {
-    "filter": {
-      "any_field": "cod",
-      "start_date": "2020-04-06T22:00:00.000Z",
-      "end_date": "2020-05-05T22:00:00.000Z"
-    },
-    "format": { "ids_only": true },
-    "ordering": { "quote_id": "asc" }
+  if (quoteDate) {
+    apiFilter.start_date = moment(quoteDate).startOf('day').toISOString();
+    apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
   }
+
+  // const exampleFilter = {
+  //   "filter": {
+  //     "sales_team_id": "100",
+  //     "customer_id": "15366"
+  //   },
+  // }
 
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
 
@@ -1263,6 +1274,8 @@ export const getPagedClientQuotes = async (params) => {
   let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }).then();
   logger.debug(`Fetched Expanded View for (${quoteDetails.items.length}) Quotes from API`);
   let quotes = [...quoteDetails.items];
+
+  logger.debug(`QUOTE 1:: ${JSON.stringify(quotes)}`);
 
 
   // logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
@@ -1337,6 +1350,74 @@ export const getSalesOrders = async (params) => {
     }
 
 
+  });
+
+  let result = {
+    paging: pagingResult,
+    salesOrders,
+  };
+
+  return result;
+
+}
+
+export const getClientSalesOrders = async (params) => {
+
+  logger.debug(`GETTING PAGED CLIENT SALES ORDERS:: ${JSON.stringify(params)}`);
+
+  const {
+    clientId,
+    filter,
+    paging = { page: 1, pageSize: 10 }
+  } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  //order_status: "1"
+  const salesOrdersIds = await lasecApi.SalesOrders.list(
+    {
+      filter: {
+        // product_id: productId,
+        customer_id: clientId,
+        order_status: "1"
+      },
+      ordering: { order_date: "desc" },
+      pagination: { page_size: paging.pageSize || 10, current_page: paging.page }
+    }).then();
+
+  let ids = [];
+
+  if (isArray(salesOrdersIds.ids) === true) {
+    ids = [...salesOrdersIds.ids];
+  }
+
+  if (salesOrdersIds.pagination && salesOrdersIds.pagination.num_pages > 1) {
+    pagingResult.total = salesOrdersIds.pagination.num_items;
+    pagingResult.pageSize = salesOrdersIds.pagination.page_size || 10;
+    pagingResult.hasNext = salesOrdersIds.pagination.has_next_page === true;
+    pagingResult.page = salesOrdersIds.pagination.current_page || 1;
+  }
+
+  let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
+  let salesOrders = [...salesOrdersDetails.items];
+
+  salesOrders = salesOrders.map(order => {
+    return {
+      id: order.id,
+      orderDate: order.order_date,
+      orderType: order.order_type,
+      shippingDate: order.req_ship_date,
+      iso: order.sales_order_id,
+      customer: order.customer_name,
+      client: order.sales_team_id,
+      poNumber: order.sales_order_number,
+      value: order.order_value,
+    }
   });
 
   let result = {

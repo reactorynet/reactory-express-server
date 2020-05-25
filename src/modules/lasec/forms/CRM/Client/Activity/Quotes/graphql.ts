@@ -8,12 +8,18 @@ const graphql: Reactory.IFormGraphDefinition = {
       $search: String!,
       $paging: PagingRequest,
       $filterBy: String,
+      $periodStart: String,
+      $periodEnd: String,
+      $quoteDate: String,
       ){
         LasecGetCRMClientQuoteList(
         clientId: $clientId,
         search: $search,
         paging: $paging,
         filterBy: $filterBy,
+        periodStart: $periodStart,
+        periodEnd: $periodEnd,
+        quoteDate: $quoteDate,
         ){
         paging {
           total
@@ -45,8 +51,11 @@ const graphql: Reactory.IFormGraphDefinition = {
     variables: {
       'formData.id': 'clientId',
       'formData.search': 'search',
-      'formData.paging': 'paging',
       'formData.filterBy': 'filterBy',
+      'formData.paging': 'paging',
+      'formData.periodStart': 'periodStart',
+      'formData.periodEnd': 'periodEnd',
+      'formData.dateFilter': 'quoteDate',
     },
     resultMap: {
       'paging': 'paging',
