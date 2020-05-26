@@ -1577,6 +1577,12 @@ export default {
             { id: 'unknown', name: 'Unknown' },
           ];
         }
+        case 'order_status': {
+          return [
+            { id: '1', name: 'Normal' },
+            { id: '2', name: 'Unknown' },
+          ];
+        }
         case 'quote_status': {
           return [
             { id: 'Draft - Pending Submission', name: 'Draft - Pending Submission' },

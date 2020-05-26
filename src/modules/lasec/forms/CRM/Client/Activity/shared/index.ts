@@ -39,3 +39,39 @@ export const FilterByOptions = [
   { key: FilterByEnumsKeys.quote_type, value: FilterByEnumsKeys.quote_type, label: 'Quote Type' },
   { key: FilterByEnumsKeys.rep_code, value: FilterByEnumsKeys.rep_code, label: 'Rep Code' },
 ];
+
+export const SalesOrdersFilterByEnumsKeys = {
+  any_field: 'any_field',
+  order_date: 'order_date',
+  shipping_date: 'shipping_date',
+  iso_number: 'iso_number',
+  customer: 'customer',
+  client: 'client',
+  po_number: 'po_number',
+  order_value: 'order_value',
+  order_status: 'order_status',
+};
+
+export const SalesOrdersFilterByEnumArray: string[] = [
+  SalesOrdersFilterByEnumsKeys.any_field,
+  SalesOrdersFilterByEnumsKeys.order_date,
+  SalesOrdersFilterByEnumsKeys.shipping_date,
+  SalesOrdersFilterByEnumsKeys.iso_number,
+  SalesOrdersFilterByEnumsKeys.customer,
+  SalesOrdersFilterByEnumsKeys.client,
+  SalesOrdersFilterByEnumsKeys.po_number,
+  SalesOrdersFilterByEnumsKeys.order_value,
+  SalesOrdersFilterByEnumsKeys.order_status,
+];
+
+export const SalesOrdersFilterByOptions = [
+  { key: SalesOrdersFilterByEnumsKeys.any_field, value: SalesOrdersFilterByEnumsKeys.any_field, label: 'All Categories' },
+  { key: SalesOrdersFilterByEnumsKeys.order_status, value: SalesOrdersFilterByEnumsKeys.order_status, label: 'Order Status' },
+  { key: SalesOrdersFilterByEnumsKeys.order_date, value: SalesOrdersFilterByEnumsKeys.order_date, label: 'Order Date' },
+  { key: SalesOrdersFilterByEnumsKeys.shipping_date, value: SalesOrdersFilterByEnumsKeys.shipping_date, label: 'Shipping Date' },
+  { key: SalesOrdersFilterByEnumsKeys.iso_number, value: SalesOrdersFilterByEnumsKeys.iso_number, label: 'ISO Number' },
+  { key: SalesOrdersFilterByEnumsKeys.customer, value: SalesOrdersFilterByEnumsKeys.customer, label: 'Customer' },
+  { key: SalesOrdersFilterByEnumsKeys.client, value: SalesOrdersFilterByEnumsKeys.client, label: 'Client' },
+  { key: SalesOrdersFilterByEnumsKeys.po_number, value: SalesOrdersFilterByEnumsKeys.po_number, label: 'Purchase Order Number' },
+  { key: SalesOrdersFilterByEnumsKeys.order_value, value: SalesOrdersFilterByEnumsKeys.order_value, label: 'Order Value' },
+];

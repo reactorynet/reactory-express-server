@@ -98,36 +98,12 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'FILTER BY'
     },
-    salesOrders: {
+    invoices: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
           id: {
-            type: 'string'
-          },
-          orderDate: {
-            type: 'string'
-          },
-          orderType: {
-            type: 'string'
-          },
-          shippingDate: {
-            type: 'string'
-          },
-          iso: {
-            type: 'string'
-          },
-          customer: {
-            type: 'string'
-          },
-          client: {
-            type: 'string'
-          },
-          poNumber: {
-            type: 'string'
-          },
-          value: {
             type: 'string'
           },
         }

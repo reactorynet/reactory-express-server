@@ -295,9 +295,25 @@ type SalesOrder {
   value: Int
 }
 
+type Invoice {
+  id: String
+}
+
+type SalesHistory {
+  id: String
+}
+
 type PagedCRMSalesOrders {
   paging: PagingResult
   salesOrders: [SalesOrder]
+}
+type PagedCRMInvoices {
+  paging: PagingResult
+  invoices: [Invoice]
+}
+type PagedCRMSalesHistory {
+  paging: PagingResult
+  salesHistory: [SalesHistory]
 }
 
 extend type Query {
@@ -336,11 +352,31 @@ extend type Query {
     search: String!
     paging: PagingRequest
     filterBy: String
+    filter: String
     periodStart: String
     periodEnd: String
-    quoteDate: String
     iter: Int
   ): PagedCRMSalesOrders
+  LasecGetCRMClientInvoices(
+    clientId: String
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    filter: String
+    periodStart: String
+    periodEnd: String
+    iter: Int
+  ): PagedCRMInvoices
+  LasecGetCRMClientSalesHistory(
+    clientId: String
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    filter: String
+    periodStart: String
+    periodEnd: String
+    iter: Int
+  ): PagedCRMSalesHistory
 }
 
 extend type Mutation {

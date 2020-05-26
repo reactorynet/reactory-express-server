@@ -40,7 +40,7 @@ const uiSchema: any = {
       customer: { md: 6, xs: 12 },
     },
     {
-      salesOrders: { xs: 12 }
+      invoices: { xs: 12 }
     }
   ],
 
@@ -117,48 +117,11 @@ const uiSchema: any = {
     },
   },
 
-  salesOrders: {
+  invoices: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Order Type', field: 'orderType' },
-        {
-          title: 'Order Date',
-          field: 'orderDate',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.date': 'value',
-          }
-        },
-        {
-          title: 'Shipping Date',
-          field: 'shippingDate',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.date': 'value',
-          }
-        },
-        { title: 'ISO Number', field: 'id' },
-        { title: 'Customer', field: 'customer' },
-        { title: 'Client', field: 'client' },
-        { title: 'Purchase Order Number', field: 'poNumber' },
-        { title: 'Order Value', field: 'value' },
+        { title: 'ID', field: 'id' },
       ],
       options: {
         grouping: false,
@@ -176,36 +139,26 @@ const uiSchema: any = {
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.periodStart': 'periodStart',
         'props.formContext.$formData.periodEnd': 'periodEnd',
-        'props.formContext.$formData.dateFilter': 'quoteDate',
       },
       resultMap: {
-
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'salesOrders.[].id': 'data.[].id',
-        'salesOrders.[].orderDate': 'data.[].orderDate',
-        'salesOrders.[].orderType': 'data.[].orderType',
-        'salesOrders.[].shippingDate': 'data.[].shippingDate',
-        'salesOrders.[].iso': 'data.[].iso',
-        'salesOrders.[].customer': 'data.[].customer',
-        'salesOrders.[].client': 'data.[].client',
-        'salesOrders.[].poNumber': 'data.[].poNumber',
-        'salesOrders.[].value': 'data.[].value',
+        'invoices.[].id': 'data.[].id',
       },
     },
   }
 };
 
-const LasecCRMClientSalesOrderActivities: Reactory.IReactoryForm = {
-  id: 'LasecCRMClientSalesOrderActivities',
+const LasecCRMClienInvoiceActivities: Reactory.IReactoryForm = {
+  id: 'LasecCRMClienInvoiceActivities',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
-  title: 'CMS Client Activities Quotes',
-  tags: ['CMS Client Activities Quotes'],
+  title: 'CMS Client Activities Invoices',
+  tags: ['CMS Client Activities Invoices'],
   registerAsComponent: true,
-  name: 'LasecCRMClientSalesOrderActivities',
+  name: 'LasecCRMClienInvoiceActivities',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,
@@ -215,7 +168,7 @@ const LasecCRMClientSalesOrderActivities: Reactory.IReactoryForm = {
     paging: { page: 1, pageSize: 10 },
     search: "",
     filterBy: "any_field",
-    quotes: []
+    invoices: []
   },
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
@@ -225,4 +178,4 @@ const LasecCRMClientSalesOrderActivities: Reactory.IReactoryForm = {
   ],
 };
 
-export default LasecCRMClientSalesOrderActivities;
+export default LasecCRMClienInvoiceActivities;

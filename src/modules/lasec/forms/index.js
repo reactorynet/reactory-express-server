@@ -58,6 +58,8 @@ import NewClientConfirmAndSave from './CRM/Client/NewCustomerConfirm';
 
 import ClientActivityQuotes from './CRM/Client/Activity/Quotes';
 import ClientActivitySalesOrders from './CRM/Client/Activity/SalesOrders';
+import ClientActivityInvoices from './CRM/Client/Activity/Invoices';
+import ClientActivitySalesHistory from './CRM/Client/Activity/SalesHistory';
 
 import CustomerDetails from './CRM/Customer/Detail';
 import CustomerSpecialRequirement from './CRM/Customer/SpecialRequirements';
@@ -130,6 +132,8 @@ export default [
 
   ClientActivityQuotes,
   ClientActivitySalesOrders,
+  ClientActivityInvoices,
+  ClientActivitySalesHistory,
 
   CustomerDetails,
   CustomerSpecialRequirement,

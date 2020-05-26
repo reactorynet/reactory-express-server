@@ -104,8 +104,8 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
       },
       {
         id: 'client-activity-invoices',
-        title: 'Sales History',
-        componentFqn: 'lasec-crm.LasecCRMClienInvoicesActivity',
+        title: 'Invoices',
+        componentFqn: 'lasec-crm.LasecCRMClienInvoiceActivities',
         componentProps: { mode: 'edit', uiSchemaKey: 'display' },
         componentPropsMap: {
           'formContext.$formData.id': 'formData.id'
