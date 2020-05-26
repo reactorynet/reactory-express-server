@@ -295,9 +295,25 @@ type SalesOrder {
   value: Int
 }
 
+type Invoice {
+  id: String
+}
+
+type SalesHistory {
+  id: String
+}
+
 type PagedCRMSalesOrders {
   paging: PagingResult
   salesOrders: [SalesOrder]
+}
+type PagedCRMInvoices {
+  paging: PagingResult
+  invoices: [Invoice]
+}
+type PagedCRMSalesHistory {
+  paging: PagingResult
+  salesHistory: [SalesHistory]
 }
 
 extend type Query {
@@ -305,17 +321,20 @@ extend type Query {
   LasecGetCRMQuoteList(
     search: String!
     paging: PagingRequest
-    filterBy: String,
-    periodStart: String,
-    periodEnd: String,
-    quoteDate: String,
+    filterBy: String
+    periodStart: String
+    periodEnd: String
+    quoteDate: String
     iter: Int
   ): PagedCRMQuote
   LasecGetCRMClientQuoteList(
     clientId: String
     search: String!
     paging: PagingRequest
-    filterBy: String,
+    filterBy: String
+    periodStart: String
+    periodEnd: String
+    quoteDate: String
     iter: Int
   ): PagedCRMQuote
   LasecGetDashboard(dashparams: LasecQuoteQueryInput): LasecQuoteDashboard
@@ -324,7 +343,40 @@ extend type Query {
   ): LasecProductDashboard
   LasecGetQuoteById(quote_id: String!): Quote
   LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [Quote]
-  LasecGetCRMSalesOrders(productId: String, paging: PagingRequest): PagedCRMSalesOrders
+  LasecGetCRMSalesOrders(
+    productId: String
+    paging: PagingRequest
+  ): PagedCRMSalesOrders
+  LasecGetCRMClientSalesOrders(
+    clientId: String
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    filter: String
+    periodStart: String
+    periodEnd: String
+    iter: Int
+  ): PagedCRMSalesOrders
+  LasecGetCRMClientInvoices(
+    clientId: String
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    filter: String
+    periodStart: String
+    periodEnd: String
+    iter: Int
+  ): PagedCRMInvoices
+  LasecGetCRMClientSalesHistory(
+    clientId: String
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    filter: String
+    periodStart: String
+    periodEnd: String
+    iter: Int
+  ): PagedCRMSalesHistory
 }
 
 extend type Mutation {

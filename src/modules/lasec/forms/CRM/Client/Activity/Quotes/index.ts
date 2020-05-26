@@ -1,6 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import $graphql from './graphql';
 import $schema from './schema';
+import { FilterByOptions } from '../shared';
 
 const uiSchema: any = {
   'ui:options': {
@@ -32,6 +33,12 @@ const uiSchema: any = {
       search: { md: 4, sm: 12 },
       filterBy: { md: 4, sm: 12 },
       filter: { md: 4, sm: 12 },
+      periodStart: { md: 6, xs: 12 },
+      periodEnd: { md: 6, xs: 12 },
+      dateFilter: { md: 6, xs: 12 },
+      selectFilter: { md: 6, xs: 12 },
+      client: { md: 6, xs: 12 },
+      customer: { md: 6, xs: 12 },
     },
     {
       quotes: { sm: 12, md: 12, lg: 12 }
@@ -59,9 +66,58 @@ const uiSchema: any = {
   filterBy: {
     'ui:widget': 'SelectWidget',
     'ui:options': {
-      selectOptions: [
-        { key: 'any_field', value: 'any_field', label: 'All Categories' },
-      ],
+      selectOptions: FilterByOptions,
+    },
+  },
+  dateFilter: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  selectFilter: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
+        LasecGetCustomerFilterLookup(filterBy: $filterBy) {
+          id
+          name
+        }
+      }`,
+      propertyMap: {
+        'formContext.$formData.filterBy': 'filterBy'
+      },
+      resultItem: 'LasecGetCustomerFilterLookup',
+      resultsMap: {
+        'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerFilterLookup.[].name': '[].label',
+      },
+    },
+  },
+  periodStart: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  periodEnd: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  client: {
+    'ui:widget': 'LookupComponent',
+    'ui:options': {
+      label: 'Select a Client',
+      title: 'Search for a Client'
+    },
+    props: {
+      componentFqn: 'lasec-crm.LasecCRMClientLookupTable@1.0.0',
+      componentProps: {},
+    },
+  },
+  customer: {
+    'ui:widget': 'LookupComponent',
+    'ui:options': {
+      label: 'Select a Customer',
+      title: 'Search for a Customer'
+    },
+    props: {
+      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+      componentProps: {},
     },
   },
 
@@ -277,6 +333,14 @@ const uiSchema: any = {
                       color: '#AB1257'
                     },
                     tooltip: 'Expired - Waiting Budget'
+                  },
+                  {
+                    key: 'Expired - Submitted Quote',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#AB1257'
+                    },
+                    tooltip: 'Expired - Submitted Quote'
                   },
                   {
                     key: 'Deleted',
@@ -600,13 +664,16 @@ const uiSchema: any = {
       variables: {
         'props.formContext.$formData.id': 'clientId',
         'props.formContext.$formData.search': 'search',
+        'props.formContext.$formData.filterBy': 'filterBy',
         'props.formContext.$formData.paging': 'paging',
+        'props.formContext.$formData.periodStart': 'periodStart',
+        'props.formContext.$formData.periodEnd': 'periodEnd',
+        'props.formContext.$formData.dateFilter': 'quoteDate',
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        // 'quotes': 'data',
         'quotes[].code': 'data[].code',
         'quotes[].created': 'data[].date',
         'quotes[].statusName': 'data[].status',
@@ -616,7 +683,6 @@ const uiSchema: any = {
         'quotes[].company.code': 'data[].accountNumber',
         'quotes[].meta.source.sales_team_id': 'data[].repCode',
         'quotes[].meta.source.quote_type': 'data[].quoteType',
-
       },
     },
   }
@@ -639,6 +705,7 @@ const LasecCRMClientQuoteActivities: Reactory.IReactoryForm = {
   defaultFormValue: {
     paging: { page: 1, pageSize: 10 },
     search: "",
+    filterBy: "any_field",
     quotes: []
   },
   widgetMap: [

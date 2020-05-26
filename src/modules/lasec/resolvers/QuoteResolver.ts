@@ -37,6 +37,9 @@ import {
   getPagedQuotes,
   getPagedClientQuotes,
   lasecGetQuoteLineItems,
+  getClientSalesOrders,
+  getClientInvoices,
+  getClientSalesHistory
  } from './Helpers';
 
 
@@ -99,8 +102,6 @@ const getQuoteTimeline = async (quote, args, context, info) => {
 
   return lodash.sortBy(_timeline, ['when']);
 }
-
-
 
 export default {
   QuoteReminder: {
@@ -496,6 +497,15 @@ export default {
     },
     LasecGetCRMSalesOrders: async (obj, args) => {
       return getSalesOrders(args);
+    },
+    LasecGetCRMClientSalesOrders: async (obj, args) => {
+      return getClientSalesOrders(args);
+    },
+    LasecGetCRMClientInvoices: async (obj, args) => {
+      return getClientInvoices(args);
+    },
+    LasecGetCRMClientSalesHistory: async (obj, args) => {
+      return getClientSalesHistory(args);
     },
   },
   Mutation: {

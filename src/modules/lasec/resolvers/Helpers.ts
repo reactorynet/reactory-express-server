@@ -29,6 +29,7 @@ import {
 
 import CONSTANTS, { LOOKUPS, OBJECT_MAPS } from '../constants';
 import { Reactory } from 'types/reactory';
+import { argsToArgsConfig } from 'graphql/type/definition';
 
 const lookups = CONSTANTS.LOOKUPS;
 
@@ -1304,7 +1305,11 @@ export const getPagedClientQuotes = async (params) => {
   const {
     clientId,
     search = "",
+    periodStart,
+    periodEnd,
+    quoteDate,
     filterBy = "any_field",
+    filter,
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
@@ -1315,28 +1320,42 @@ export const getPagedClientQuotes = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  if (isString(search) === false || search.length < 3) return {
-    paging: pagingResult,
-    quotes: []
-  };
+  // if (isString(search) === false || search.length < 3) return {
+  //   paging: pagingResult,
+  //   quotes: []
+  // };
 
-  // NEED TO ADD CACHING
+  // -- POSSIBLE FILTERS --
+  // Date Range
+  // Quote Number
+  // Quote Date
+  // Quote Status
+  // Quote Value
+  // Customer
+  // Client
+  // Account Number
+  // Quote Type
+  // Rep Code
 
   let apiFilter = {
+    customer_id: clientId,
+    // sales_team_id: "100",
     [filterBy]: search,
-    start_date: moment().startOf('year'),
-    end_date: moment().endOf('day'),
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
 
-  const filterExample = {
-    "filter": {
-      "any_field": "cod",
-      "start_date": "2020-04-06T22:00:00.000Z",
-      "end_date": "2020-05-05T22:00:00.000Z"
-    },
-    "format": { "ids_only": true },
-    "ordering": { "quote_id": "asc" }
+  if (quoteDate) {
+    apiFilter.start_date = moment(quoteDate).startOf('day').toISOString();
+    apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
   }
+
+  // const exampleFilter = {
+  //   "filter": {
+  //     "sales_team_id": "100",
+  //     "customer_id": "15366"
+  //   },
+  // }
 
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
 
@@ -1353,20 +1372,13 @@ export const getPagedClientQuotes = async (params) => {
     pagingResult.page = quoteResult.pagination.current_page || 1;
   }
 
-  // logger.debug(`Loading (${ids.length}) quote ids`);
-
   let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }).then();
   logger.debug(`Fetched Expanded View for (${quoteDetails.items.length}) Quotes from API`);
   let quotes = [...quoteDetails.items];
 
-
-  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
-
   const quoteSyncResult = await Promise.all(quotes.map((quote) => {
     return synchronizeQuote(quote.id, global.partner.key, quote, true);
   })).then();
-
-  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
 
   quotes = quoteSyncResult.map(doc => doc);
 
@@ -1437,6 +1449,295 @@ export const getSalesOrders = async (params) => {
   let result = {
     paging: pagingResult,
     salesOrders,
+  };
+
+  return result;
+
+}
+
+export const getClientSalesOrders = async (params) => {
+
+  logger.debug(`GETTING PAGED CLIENT SALES ORDERS:: ${JSON.stringify(params)}`);
+
+  const {
+    clientId,
+    search = "",
+    periodStart,
+    periodEnd,
+    filterBy = "any_field",
+    filter,
+    paging = { page: 1, pageSize: 10 },
+    iter = 0 } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  // -- POSSIBLE FILTERS --
+  // Order Date
+  // Order Status
+  // Shipping Date
+  // ISO Number
+  // Customer
+  // Client
+  // Purchase Order Number
+  // Order Value
+
+  let apiFilter = {
+    customer_id: clientId,
+    [filterBy]: filter || search,
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+  };
+
+  let salesOrdersIds = await lasecApi.SalesOrders.list({
+    filter: apiFilter,
+    pagination: {
+      page_size: paging.pageSize || 10,
+      current_page: paging.page
+    }
+  }).then();
+
+  //order_status: "1"
+  // const salesOrdersIds = await lasecApi.SalesOrders.list(
+  //   {
+  //     filter: {
+  //       // product_id: productId,
+  //       customer_id: clientId,
+  //       order_status: "1"
+  //     },
+  //     ordering: { order_date: "desc" },
+  //     pagination: { page_size: paging.pageSize || 10, current_page: paging.page }
+  //   }).then();
+
+  let ids = [];
+
+  if (isArray(salesOrdersIds.ids) === true) {
+    ids = [...salesOrdersIds.ids];
+  }
+
+  if (salesOrdersIds.pagination && salesOrdersIds.pagination.num_pages > 1) {
+    pagingResult.total = salesOrdersIds.pagination.num_items;
+    pagingResult.pageSize = salesOrdersIds.pagination.page_size || 10;
+    pagingResult.hasNext = salesOrdersIds.pagination.has_next_page === true;
+    pagingResult.page = salesOrdersIds.pagination.current_page || 1;
+  }
+
+  let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
+  let salesOrders = [...salesOrdersDetails.items];
+
+  salesOrders = salesOrders.map(order => {
+    return {
+      id: order.id,
+      orderDate: order.order_date,
+      orderType: order.order_type,
+      shippingDate: order.req_ship_date,
+      iso: order.sales_order_id,
+      customer: order.customer_name,
+      client: order.sales_team_id,
+      poNumber: order.sales_order_number,
+      value: order.order_value,
+    }
+  });
+
+  let result = {
+    paging: pagingResult,
+    salesOrders,
+  };
+
+  return result;
+
+}
+
+export const getClientInvoices = async (params) => {
+
+  logger.debug(`GETTING PAGED CLIENT SALES ORDERS:: ${JSON.stringify(params)}`);
+
+  const {
+    clientId,
+    search = "",
+    periodStart,
+    periodEnd,
+    filterBy = "any_field",
+    filter,
+    paging = { page: 1, pageSize: 10 },
+    iter = 0 } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  // -- POSSIBLE FILTERS --
+  // Order Date
+  // Order Status
+  // Shipping Date
+  // ISO Number
+  // Customer
+  // Client
+  // Purchase Order Number
+  // Order Value
+
+  const exampleFilter = {
+    "filter": {
+      "sales_team_id": "100",
+      "start_date": "2019-05-26T00:00:00.000Z",
+      "end_date": "2020-05-26T00:00:00.000Z"
+    },
+    "format": { "ids_only": true },
+    "ordering": { "invoice_date": "asc" },
+    "pagination": {}
+  }
+
+  let apiFilter = {
+    sales_team_id: 100,
+    // staff_user_id: [clientId],
+    // [filterBy]: filter || search,
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+  };
+
+  // apiFilter[filterBy] = filter || search;
+
+  // const idsQueryResults = await lasecApi.Invoices.list({
+  //   filter: filter,
+  //   pagination: { page_size: 10, enabled: true, current_page: 1 },
+  //   ordering: { "invoice_date": "asc" }
+  // }).then();
+
+  const invoiceIdsResponse = await lasecApi.Invoices.list({
+    filter: apiFilter,
+    pagination: { page_size: 10, enabled: true, current_page: 1 },
+    // pagination: {
+    //   page_size: paging.pageSize || 10,
+    //   current_page: paging.page
+    // },
+    ordering: { "invoice_date": "asc" }
+  }).then();
+
+  logger.debug(`INVOICE IDS:: ${invoiceIdsResponse.ids.length}`);
+
+  let ids = [];
+
+  if (isArray(invoiceIdsResponse.ids) === true) {
+    ids = [...invoiceIdsResponse.ids];
+  }
+
+  if (invoiceIdsResponse.pagination && invoiceIdsResponse.pagination.num_pages > 1) {
+    pagingResult.total = invoiceIdsResponse.pagination.num_items;
+    pagingResult.pageSize = invoiceIdsResponse.pagination.page_size || 10;
+    pagingResult.hasNext = invoiceIdsResponse.pagination.has_next_page === true;
+    pagingResult.page = invoiceIdsResponse.pagination.current_page || 1;
+  }
+
+  let invoiceDetails = await lasecApi.Invoices.list({ filter: { ids: ids } }).then();
+  let invoices = [...invoiceDetails.items];
+
+  logger.debug(`INVOICE DETAIL:: ${JSON.stringify(invoices[0])}`);
+
+  invoices = invoices.map(order => {
+    return {
+      id: order.id,
+    }
+  });
+
+  let result = {
+    paging: pagingResult,
+    invoices,
+  };
+
+  return result;
+
+}
+
+export const getClientSalesHistory = async (params) => {
+
+  logger.debug(`GETTING PAGED CLIENT SALES HISTORY:: ${JSON.stringify(params)}`);
+
+  const {
+    clientId,
+    search = "",
+    periodStart,
+    periodEnd,
+    filterBy = "any_field",
+    filter,
+    paging = { page: 1, pageSize: 10 },
+    iter = 0 } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  // -- POSSIBLE FILTERS --
+
+
+  const exampleFilter = {
+    "filter": {
+      "order_status": 9,
+      "start_date": "2019-05-26T00:00:00.000Z",
+      "end_date": "2020-05-26T00:00:00.000Z"
+    },
+    "format": { "ids_only": true },
+    "ordering": { "orderdate": "asc" },
+    "pagination": {}
+  }
+
+  let apiFilter = {
+    client_id: clientId,
+    order_status: 9,
+    // [filterBy]: filter || search,
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+  };
+
+  // apiFilter[filterBy] = filter || search;
+
+  const saleshistoryIdsResponse = await lasecApi.Products.sales_orders({
+    filter: apiFilter,
+    pagination: {
+      page_size: paging.pageSize || 10,
+      current_page: paging.page
+    },
+    ordering: { "invoice_date": "asc" }
+  }).then();
+
+  logger.debug(`SALES HISTORY IDS:: ${saleshistoryIdsResponse.ids.length}`);
+
+  let ids = [];
+
+  if (isArray(saleshistoryIdsResponse.ids) === true) {
+    ids = [...saleshistoryIdsResponse.ids];
+  }
+
+  if (saleshistoryIdsResponse.pagination && saleshistoryIdsResponse.pagination.num_pages > 1) {
+    pagingResult.total = saleshistoryIdsResponse.pagination.num_items;
+    pagingResult.pageSize = saleshistoryIdsResponse.pagination.page_size || 10;
+    pagingResult.hasNext = saleshistoryIdsResponse.pagination.has_next_page === true;
+    pagingResult.page = saleshistoryIdsResponse.pagination.current_page || 1;
+  }
+
+  let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
+  let salesHistory = [...saleshistoryDetails.items];
+
+  logger.debug(`SALES HISTORY:: ${JSON.stringify(salesHistory[0])}`);
+
+  salesHistory = salesHistory.map(order => {
+    return {
+      id: order.id,
+    }
+  });
+
+  let result = {
+    paging: pagingResult,
+    salesHistory,
   };
 
   return result;

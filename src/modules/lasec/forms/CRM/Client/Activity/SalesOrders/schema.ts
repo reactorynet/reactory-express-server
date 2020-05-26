@@ -1,5 +1,5 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { FilterByEnumsKeys } from '../shared';
+import { SalesOrdersFilterByEnumsKeys } from '../shared';
 
 const schema: Reactory.ISchema = {
   type: 'object',
@@ -12,7 +12,8 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.date_range,
+                SalesOrdersFilterByEnumsKeys.order_date,
+                SalesOrdersFilterByEnumsKeys.shipping_date,
               ]
             },
             periodStart: {
@@ -25,33 +26,15 @@ const schema: Reactory.ISchema = {
             },
           },
         },
-        // Date
         {
           properties:
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.quote_date,
+                SalesOrdersFilterByEnumsKeys.order_status,
               ]
             },
-            dateFilter: {
-              type: 'string',
-              title: 'Quote Date'
-            }
-          },
-        },
-        // Dropdown
-        {
-          properties:
-          {
-            filterBy: {
-              enum: [
-                FilterByEnumsKeys.quote_status,
-                FilterByEnumsKeys.quote_type,
-                FilterByEnumsKeys.rep_code,
-              ]
-            },
-            selectFilter: {
+            filter: {
               type: 'string',
               title: 'Show'
             }
@@ -62,7 +45,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.client,
+                SalesOrdersFilterByEnumsKeys.client,
               ]
             },
             client: {
@@ -76,7 +59,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.customer,
+                SalesOrdersFilterByEnumsKeys.customer,
               ]
             },
             customer: {
@@ -115,22 +98,37 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'FILTER BY'
     },
-    quotes: {
+    salesOrders: {
       type: 'array',
       items: {
-        type: "object",
+        type: 'object',
         properties: {
           id: {
-            type: "string",
-            title: "Client Id"
+            type: 'string'
           },
-          code: {
-            type: "string",
-            title: "Quote Number"
+          orderDate: {
+            type: 'string'
           },
-          date: {
-            type: "string",
-            title: "Quote Date"
+          orderType: {
+            type: 'string'
+          },
+          shippingDate: {
+            type: 'string'
+          },
+          iso: {
+            type: 'string'
+          },
+          customer: {
+            type: 'string'
+          },
+          client: {
+            type: 'string'
+          },
+          poNumber: {
+            type: 'string'
+          },
+          value: {
+            type: 'string'
           },
         }
       },
