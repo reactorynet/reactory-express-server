@@ -515,26 +515,9 @@ const LASEC_CONFIG = {
     },
   ],
   users: [],
-  components: [
-    {
-      nameSpace: key,
-      name: 'Dashboard',
-      version: '1.0.0',
-      title: 'Dashboard',
-      author: 'werner.weber+reactory-sysadmin@gmail.com',
-      labels: [],
-      uri: 'embed',
-      roles: ['ADMIN', 'USER'],
-      arguments: [],
-      resources: [],
-    },
-  ],
-  menus: [
-
-  ],
+  components: [],
+  menus: [],
   routes: [
-
-
     {
       key: 'product-query',
       title: 'Product Query',
@@ -1322,6 +1305,17 @@ const LASEC_CONFIG = {
       name: 'navigation_components/DEVELOP',
       data: [
         {
+          componentFqn: "lasec-crm.DefaltNavigationComponent@1.0.0",
+          componentProps: {
+            target: 'self',
+          },
+          componentPropertyMap: {},
+          componentKey: "DefaultNavigation",
+          componentContext: {
+            contextType: "DEFAULT_NAVIGATION",
+          }
+        },
+        {
           componentFqn: "lasec-crm.ResetLasecLogin@1.0.0",
           componentProps: {
             target: 'self',
@@ -1340,7 +1334,8 @@ const LASEC_CONFIG = {
       name: 'navigation_components/PRODUCTION',
       data: [],
       componentFqn: 'core.NavigationComponentEditor@1.0.0'
-    }
+    },
+
   ],
   allowCustomTheme: true,
   auth_config: [

@@ -3,7 +3,7 @@
 const uiSchema: any = {
   submitIcon: 'refresh',
   'ui:options': {
-    toolbarPosition: 'top',
+    toolbarPosition: 'none',
     showRefresh: false,
     showSubmit: false,
     schemaSelectorStyle: 'icon-button',

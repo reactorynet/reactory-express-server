@@ -1,6 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql, { newClientGraphQL } from './graphql';
+import { AccountTypeDropdownUISchema } from 'modules/lasec/forms/widgets';
 
 export const displayUiSchema: any = {
   'ui:options': {
@@ -507,42 +508,7 @@ const editUiSchema: any = {
     }
   },
   accountType: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      FormControl: {
-        props: {
-          style: {
-            maxWidth: '400px'
-          }
-        }
-      },
-      selectOptions: [
-        {
-          key: 'account',
-          value: 'account',
-          label: 'Account',
-          icon: 'account_balance_wallet',
-          iconProps: {
-            style: {
-              color: '#FF9901',
-              marginRight: '16px',
-            },
-          }
-        },
-        {
-          key: 'cod',
-          value: 'COD',
-          label: 'COD',
-          icon: 'attach_money',
-          iconProps: {
-            style: {
-              color: '#5EB848',
-              marginRight: '16px',
-            },
-          }
-        },
-      ],
-    }
+    ...AccountTypeDropdownUISchema    
   },
   repCode: {
     'ui:widget': 'SelectWithDataWidget',

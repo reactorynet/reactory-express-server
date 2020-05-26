@@ -140,6 +140,14 @@ declare namespace Reactory {
     dependencies?: any | undefined,
   }
 
+  /**
+   * The base UISchema definition
+   */
+  export interface IUISchema {
+    'ui:widget'?: string | "null", 
+    'ui:options'? : object | "null"  
+  }
+
   export interface IObjectSchema extends ISchema {
     properties?: Object | ISchemaObjectProperties,
   }

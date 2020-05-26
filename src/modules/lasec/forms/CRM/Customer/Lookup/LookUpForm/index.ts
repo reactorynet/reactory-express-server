@@ -20,7 +20,9 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     { 
-      search: { xs: 12, sm: 12, md: 6, lg: 4 },
+      search: { xs: 12, sm: 12, md: 6, lg: 4 },      
+    },
+    {
       selected: { xs: 12, sm: 12, md: 6, lg: 4 },
     },
     { customers: { xs: 12, sm: 12, md: 12, lg: 12 } },

@@ -20,10 +20,13 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      search: { sm: 12, md: 6 },
-      addNew: { sm: 12, md: 6 },
+      search: { xs: 12, sm: 12, md: 6, lg: 6 },
+      addNew: { xs: 12, sm: 12, md: 6, lg: 6 },
+      selected: { xs: 12, sm: 12, md: 6, lg: 6 },
     },
-    { organisations: { sm: 12 } },
+    { 
+      organisations: { xs: 12, sm: 12, md: 12, lg: 12 }
+    },
   ],
   search: {
     'ui:options': {
@@ -60,6 +63,27 @@ const uiSchema: any = {
       },
       propertyMap: {},
       fullWidth:false
+    }
+  },
+  selected: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData && formData.name ? formData.name : "None"}',
+      variant: 'subtitle1',
+      title: 'Current Selected Organization',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
   paging: {
@@ -133,7 +157,10 @@ const newUiSchema: any = {
   'ui:grid-layout': [
     {
       search: { xs: 12, sm: 12, md: 6, lg: 6 },
+    },
+    {
       addNew: { sm: 12, md: 6 },
+      selected: { sm: 12, md: 6 },
     },
     { organisations: { sm: 12 } },
   ],
@@ -174,6 +201,27 @@ const newUiSchema: any = {
       fullWidth:false
     }
   },
+  selected: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData && formData.organizationName ? formData.organizationName : "None"}',
+      variant: 'subtitle1',
+      title: 'Current Selected Organization',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
   paging: {
     'ui:widget': 'HiddenWidget'
   },
@@ -203,7 +251,14 @@ const newUiSchema: any = {
           mutation: 'onSelectOrganization',
           variables: {            
             'selected': 'newClient.organization',
-          },                                 
+          },
+          event: {
+            name: 'onOrganizationSelected',
+            via: 'form', // make either "form" || "amq"
+            paramsMap: {            
+              'selected': 'formData.selected',
+            },
+          }                                 
         },   
       ],
       remoteData: true,
@@ -251,6 +306,20 @@ const schema: Reactory.ISchema = {
         hasNext: {
           type: 'boolean'
         }
+      }
+    },
+    selected: {
+      type: "object",
+      title: "Selected",
+      properties: {
+        id: {
+          type: "string",
+          title: "Organization ID"
+        },
+        name: {
+          type: "string",
+          title: "Organization Name"
+        },       
       }
     },
     organisations: {
@@ -310,6 +379,10 @@ const LasecCRMOrganisationLookupForm: Reactory.IReactoryForm = {
   defaultFormValue: {
     paging: { page: 1, pageSize: 10 },
     search: "",
+    selected: {
+      id: "0",
+      name:"Not Set"
+    },
     organisations: []
   }
 };

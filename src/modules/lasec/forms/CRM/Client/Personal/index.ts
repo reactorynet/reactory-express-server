@@ -1,5 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
+import { AccountTypeDropdownUISchema } from '../../../widgets'
 import graphql, { newClientGraphQL } from './graphql';
 
 export const displayUiSchema: any = {
@@ -367,29 +368,7 @@ export const newUiSchema: any = {
     },
   },
   accountType: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      FormControl: {
-        props: {
-          style: {
-            maxWidth: '400px'
-          }
-        }
-      },
-      selectOptions: [
-        {
-          key: 'account',
-          value: 'account',
-          label: 'Account',
-        },
-        {
-          key: 'cod',
-          value: 'cod',
-          label: 'Pre-Payment',
-        },
-
-      ],
-    },
+    ...AccountTypeDropdownUISchema
   },
   repCode: {
     'ui:widget': 'SelectWithDataWidget',

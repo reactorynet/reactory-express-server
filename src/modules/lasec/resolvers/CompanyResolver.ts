@@ -776,15 +776,14 @@ const getCustomerList = async (params) => {
   logger.debug(`Fetched Expanded View for (${companyDetails.items.length}) Companies from API`);
   let customers = [...companyDetails.items];
 
-  logger.debug(`CUSTOMER RESOLVER - CUSTOMER:: Found (${customers.length}) for request`);
+  logger.debug(`CUSTOMER RESOLVER - CUSTOMER:: Found (${customers.length}) for request`, customers);
 
   customers = customers.map(customer => {
     let _customer = om(customer, {
-      'id': 'id',
+      'id': ['id', 'accountNumber'],
       'registered_name': 'registeredName',
       'trading_name': 'tradingName',
-      'sales_team_id': 'salesTeam',
-      'account_number': 'accountNUmber'
+      'sales_team_id': 'salesTeam',    
     });
     return _customer;
   });
@@ -830,7 +829,7 @@ const getCustomerList = async (params) => {
     }
   }
 
-  // setCacheItem(cachekey, result, 60 * 10);
+  setCacheItem(cachekey, result, 60 * 10);
 
   return result;
 

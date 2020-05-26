@@ -71,7 +71,7 @@ export const newUiSchema: any = {
       modalProps: {
         fullScreen: false,        
         closeOnEvents: [
-          'CloseModal:LasecCRMCustomerLookupTable'
+          'CloseModal:LasecCRMOrganisationLookupTable'
         ]
       }
     },
@@ -79,6 +79,11 @@ export const newUiSchema: any = {
       componentFqn: 'lasec-crm.LasecCRMOrganisationLookupTable@1.0.0',
       componentProps: {
        
+      },
+      componentPropertyMap: {        
+        'LookupComponent.props.formContext.$formData': 'formData.selected',
+        'LookupComponent.props.onChange': 'onOrganizationSelected',
+        'LookupComponent.props.formContext': 'LookupComponentFormContext',
       },      
     },
   },

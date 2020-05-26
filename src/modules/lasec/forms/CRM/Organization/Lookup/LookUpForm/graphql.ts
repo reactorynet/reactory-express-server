@@ -87,7 +87,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         }
       }`,
       objectMap: true,
-      updateMessage: 'Updating Customer For Client',
+      updateMessage: 'Updating Organization For Client',
       variables: {            
         'selected': 'newClient.organization',
       },
@@ -101,8 +101,8 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         }
       ],
       resultMap: {
-        'customer.id': 'id',
-        'customer.registeredName': 'registeredName',
+        'organization.id': 'id',
+        'organization.name': 'name',
       },
     }
   },  

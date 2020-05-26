@@ -10,22 +10,26 @@ let uiSchema : any = {
     container: "div",
     containerStyles: {
       padding: '0px',
-      margin: '0px'
+      marginTop: '-20px',      
     }
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
       clientStatus: { xs: 3, sm: 1, md: 1 },
-      fullName: { xs: 9, sm: 6, md: 3, lg: 2 },
+      fullName: { xs: 9, sm: 6, md: 3, lg: 2},
       customerStatus: { xs: 3, sm: 1, md: 1, lg: 1 },
       accountNumber: { xs: 6, sm: 4, md: 3, lg: 2 },
       accountType: { xs: 6, sm: 4, md: 3, lg: 2 },
       customer: { xs: 6, sm: 4, md: 3, lg: 2 },
       availableBalance: { xs: 6, sm: 2, md: 2, lg: 1 },
-      creditLimit: { xs: 6, sm: 2, md: 2, lg: 1},
+      creditLimit: { xs: 6, sm: 2, md: 2, lg: 1},      
+      style: { padding: '20px'  }
     }
   ],
+  'ui:grid-options': {
+    spacing: 4,    
+  },
   clientStatus: {
     'ui:options': {
       componentFqn: 'core.ConditionalIconComponent@1.0.0',
