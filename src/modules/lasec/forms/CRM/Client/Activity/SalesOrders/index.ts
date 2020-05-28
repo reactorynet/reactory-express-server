@@ -121,7 +121,8 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Order Type', field: 'orderType' },
+        // { title: 'Order Type', field: 'orderType' },
+        { title: 'Sales Order Number', field: 'salesOrderNumber' },
         {
           title: 'Order Date',
           field: 'orderDate',
@@ -184,8 +185,10 @@ const uiSchema: any = {
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
         'salesOrders.[].id': 'data.[].id',
+        'salesOrders.[].salesOrderNumber': 'data.[].salesOrderNumber',
         'salesOrders.[].orderDate': 'data.[].orderDate',
         'salesOrders.[].orderType': 'data.[].orderType',
+        'salesOrders.[].orderStatus': 'data.[].orderStatus',
         'salesOrders.[].shippingDate': 'data.[].shippingDate',
         'salesOrders.[].iso': 'data.[].iso',
         'salesOrders.[].customer': 'data.[].customer',

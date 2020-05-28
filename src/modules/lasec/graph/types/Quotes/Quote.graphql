@@ -285,8 +285,10 @@ type PagedCRMQuote {
 
 type SalesOrder {
   id: String
+  salesOrderNumber: String
   orderDate: String
   orderType: String
+  orderStatus: String
   shippingDate: String
   iso: Int
   customer: String
@@ -301,6 +303,17 @@ type Invoice {
 
 type SalesHistory {
   id: String
+  orderType: String
+  quoteDate: String
+  quoteNumber: String
+  orderDate: String
+  isoNumber: String
+  dispatches: String
+  customer: String
+  client: String
+  poNumber: Int
+  value: Int
+  salesTeamId: String
 }
 
 type PagedCRMSalesOrders {

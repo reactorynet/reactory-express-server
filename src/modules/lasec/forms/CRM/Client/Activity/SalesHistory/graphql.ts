@@ -1,6 +1,6 @@
 import { Reactory } from "@reactory/server-core/types/reactory";
 
-const graphql: Reactory.IFormGraphDefinition =  {
+const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetCRMClientSalesHistory',
     text: `query LasecGetCRMClientSalesHistory(
@@ -29,6 +29,17 @@ const graphql: Reactory.IFormGraphDefinition =  {
         }
         salesHistory {
           id
+          orderType
+          quoteDate
+          quoteNumber
+          orderDate
+          isoNumber
+          dispatches
+          customer
+          client
+          poNumber
+          value
+          salesTeamId
         }
       }
     }`,
@@ -45,6 +56,17 @@ const graphql: Reactory.IFormGraphDefinition =  {
       'paging': 'paging',
       'filterBy': 'filterBy',
       'salesHistory.[].id': 'salesHistory.[].id',
+      'salesHistory.[].orderType': 'salesHistory.[].orderType',
+      'salesHistory.[].quoteDate': 'salesHistory.[].quoteDate',
+      'salesHistory.[].quoteNumber': 'salesHistory.[].quoteNumber',
+      'salesHistory.[].orderDate': 'salesHistory.[].orderDate',
+      'salesHistory.[].isoNumber': 'salesHistory.[].isoNumber',
+      'salesHistory.[].dispatches': 'salesHistory.[].dispatches',
+      'salesHistory.[].customer': 'salesHistory.[].customer',
+      'salesHistory.[].client': 'salesHistory.[].client',
+      'salesHistory.[].poNumber': 'salesHistory.[].poNumber',
+      'salesHistory.[].value': 'salesHistory.[].value',
+      'salesHistory.[].salesTeamId': 'salesHistory.[].salesTeamId',
     },
     autoQuery: false,
     resultType: 'object',

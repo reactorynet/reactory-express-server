@@ -29,8 +29,10 @@ const graphql: Reactory.IFormGraphDefinition =  {
         }
         salesOrders {
           id
+          salesOrderNumber
           orderDate
           orderType
+          orderStatus
           shippingDate
           iso
           customer
@@ -53,8 +55,10 @@ const graphql: Reactory.IFormGraphDefinition =  {
       'paging': 'paging',
       'filterBy': 'filterBy',
       'salesOrders.[].id': 'salesOrders.[].id',
+      'salesOrders.[].salesOrderNumber': 'salesOrders.[].salesOrderNumber',
       'salesOrders.[].orderDate': 'salesOrders.[].orderDate',
       'salesOrders.[].orderType': 'salesOrders.[].orderType',
+      'salesOrders.[].orderStatus': 'salesOrders.[].orderStatus',
       'salesOrders.[].shippingDate': 'salesOrders.[].shippingDate',
       'salesOrders.[].iso': 'salesOrders.[].iso',
       'salesOrders.[].customer': 'salesOrders.[].customer',

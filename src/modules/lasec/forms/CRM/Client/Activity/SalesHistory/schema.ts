@@ -106,6 +106,39 @@ const schema: Reactory.ISchema = {
           id: {
             type: 'string'
           },
+          orderType: {
+            type: 'string'
+          },
+          quoteDate: {
+            type: 'string'
+          },
+          quoteNumber: {
+            type: 'string'
+          },
+          orderDate: {
+            type: 'string'
+          },
+          isoNumber: {
+            type: 'string'
+          },
+          dispatches: {
+            type: 'string'
+          },
+          customer: {
+            type: 'string'
+          },
+          client: {
+            type: 'string'
+          },
+          poNumber: {
+            type: 'string'
+          },
+          value: {
+            type: 'string'
+          },
+          salesTeamId: {
+            type: 'string'
+          },
         }
       },
     }

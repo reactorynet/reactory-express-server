@@ -8,7 +8,7 @@ import uuid from 'uuid';
 import lasecApi, { LasecNotAuthenticatedException } from '@reactory/server-modules/lasec/api';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
-import { queryAsync as mysql } from '@reactory/server-core/database/mysql'; 
+import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { Organization, User, Task } from '@reactory/server-core/models';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
@@ -164,7 +164,7 @@ export const getLoggedIn360User: any = async () => {
     }
 
     if (me360) {
-      setCacheItem(hashkey, me360, 60);    
+      setCacheItem(hashkey, me360, 60);
     }
 
     logger.debug(`me360 ===>`, me360)
@@ -241,18 +241,18 @@ interface QuotesFilter {
   start_date: string;
   end_date: string;
   rep_codes?: string[],
-  staff_user_id?: number,  
+  staff_user_id?: number,
 }
 
 interface SalesDashboardDataResult {
   quotes: any[],
   invoices: any[],
   isos: any[],
-  quotesByStatus: any[],    
+  quotesByStatus: any[],
 }
 
 export const getSalesDashboardData = async (params) => {
-  
+
   let me = await getLoggedIn360User().then();
   logger.debug(`Fetching Lasec Sales Dashboard Data as ${me.first_name} `, params, me);
   let _params = params;
@@ -278,21 +278,21 @@ export const getSalesDashboardData = async (params) => {
   }
 
   if (params.agentSelection === 'me') {
-    
+
     if (me) {
       apiFilter.rep_codes = me.rep_codes;
     }
   }
 
   const debresults: any = await mysql(`CALL LasecGetSalesDashboardData ('${moment(apiFilter.start_date).format('YYYY-MM-DD HH:mm:ss')}', '${moment(apiFilter.end_date).format('YYYY-MM-DD HH:mm:ss')}',  ${me.id}, 'me');`, 'mysql.lasec360').then()
-      
+
   let quotes: any[] = debresults[1];
   let invoices: any[] = debresults[2];
-  let isos: any[] =  debresults[3];
-  let quotesByStatus: any[] = []; //dbresults[4];  
+  let isos: any[] = debresults[3];
+  let quotesByStatus: any[] = []; //dbresults[4];
 
-  if(apiFilter.rep_codes && apiFilter.rep_codes.length > 0) {
-    lodash.remove(quotes, (quote: any) => lodash.intersection(  apiFilter.rep_codes, [ quote.sales_team_id ] ).length === 1   );
+  if (apiFilter.rep_codes && apiFilter.rep_codes.length > 0) {
+    lodash.remove(quotes, (quote: any) => lodash.intersection(apiFilter.rep_codes, [quote.sales_team_id]).length === 1);
   }
 
   //perform a lightweight map
@@ -305,18 +305,18 @@ export const getSalesDashboardData = async (params) => {
   // logger.debug(`QUOTES ${JSON.stringify(quotes.slice(0, 5))}`);
 
 
-  return { 
+  return {
     quotes,
     invoices,
     isos,
-    quotesByStatus,    
-  }; 
+    quotesByStatus,
+  };
 
 };
 
 
 export const getQuotes = async (params) => {
-  
+
   let me = await getLoggedIn360User().then();
   logger.debug(`Fetching Lasec Dashboard Data as ${me.first_name} `, params, me);
   let _params = params;
@@ -342,14 +342,14 @@ export const getQuotes = async (params) => {
   }
 
   if (params.agentSelection === 'me') {
-    
+
     if (me) {
       apiFilter.rep_codes = me.rep_codes;
     }
   }
 
   const debresults: any = await mysql(`CALL LasecGetSalesDashboardData ('${moment(apiFilter.start_date).format('YYYY-MM-DD HH:mm:ss')}', '${moment(apiFilter.end_date).format('YYYY-MM-DD HH:mm:ss')}',  ${me.id}, 'me');`, 'mysql.lasec360').then()
-  
+
 
   /*
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: 10, enabled: true } }).then();
@@ -379,11 +379,11 @@ export const getQuotes = async (params) => {
   const quotesDetails = await lasecApi.Quotes.list({ filter: { ids: ids } });
   logger.debug(`Fetched Expanded View for (${quotesDetails.items.length}) Quotes from API`);
    */
-  
+
   let quotes = debresults[1];
 
-  if(apiFilter.rep_codes && apiFilter.rep_codes.length > 0) {
-    lodash.remove(quotes, (quote: any) => lodash.intersection(  apiFilter.rep_codes, [ quote.sales_team_id ] ).length === 1   );
+  if (apiFilter.rep_codes && apiFilter.rep_codes.length > 0) {
+    lodash.remove(quotes, (quote: any) => lodash.intersection(apiFilter.rep_codes, [quote.sales_team_id]).length === 1);
   }
 
   //perform a lightweight map
@@ -398,7 +398,7 @@ export const getQuotes = async (params) => {
   amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
 
   return quotes;
- 
+
 
 };
 
@@ -758,7 +758,7 @@ export const groupQuotesByStatus = (quotes: any[]) => {
   });
 
   const groupedByStatus = Object.getOwnPropertyNames(groupsByKey).map((statusKey) => {
-    return { 
+    return {
       ...groupsByKey[statusKey],
       totalVAT: Math.floor(groupsByKey[statusKey].totalVAT),
       totalVATExclusive: Math.floor(groupsByKey[statusKey].totalVATExclusive),
@@ -1529,15 +1529,19 @@ export const getClientSalesOrders = async (params) => {
   let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
   let salesOrders = [...salesOrdersDetails.items];
 
+  logger.debug(`SALES ORDER:: ${JSON.stringify(salesOrders[0])}`);
+
   salesOrders = salesOrders.map(order => {
     return {
       id: order.id,
+      salesOrderNumber: order.sales_order_number,
       orderDate: order.order_date,
       orderType: order.order_type,
+      orderStatus: order.order_status,
       shippingDate: order.req_ship_date,
       iso: order.sales_order_id,
-      customer: order.customer_name,
-      client: order.sales_team_id,
+      customer: order.company_trading_name,
+      client: order.customer_name,
       poNumber: order.sales_order_number,
       value: order.order_value,
     }
@@ -1691,7 +1695,7 @@ export const getClientSalesHistory = async (params) => {
   }
 
   let apiFilter = {
-    client_id: clientId,
+    // client_id: clientId,
     order_status: 9,
     // [filterBy]: filter || search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
@@ -1706,7 +1710,7 @@ export const getClientSalesHistory = async (params) => {
       page_size: paging.pageSize || 10,
       current_page: paging.page
     },
-    ordering: { "invoice_date": "asc" }
+    // ordering: { "invoice_date": "asc" }
   }).then();
 
   logger.debug(`SALES HISTORY IDS:: ${saleshistoryIdsResponse.ids.length}`);
@@ -1732,6 +1736,17 @@ export const getClientSalesHistory = async (params) => {
   salesHistory = salesHistory.map(order => {
     return {
       id: order.id,
+      orderType: order.order_type,
+      orderDate: order.order_date,
+      quoteDate: order.quote_date,
+      quoteNumber: order.quote_id || '',
+      iso: order.sales_order_id,
+      dispatches: order.dispatch_note_ids.join(', '),
+      customer: order.customer_name,
+      client: order.sales_team_id,
+      poNumber: order.sales_order_number,
+      value: order.order_value,
+      salesTeamId: order.sales_team_id
     }
   });
 
