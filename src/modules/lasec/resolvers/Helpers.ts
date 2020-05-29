@@ -1604,7 +1604,8 @@ export const getClientInvoices = async (params) => {
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
     filter: apiFilter,
-    pagination: { page_size: paging.pageSize || 10, current_page: paging.page
+    pagination: {
+      page_size: paging.pageSize || 10, current_page: paging.page
     },
     ordering: { "invoice_date": "desc" }
   }).then();
@@ -1676,7 +1677,15 @@ export const getClientSalesHistory = async (params) => {
   };
 
   // -- POSSIBLE FILTERS --
-
+  // Order Type
+  // Quote Date
+  // Quote Number
+  // Order Date
+  // ISO Number
+  // Customer
+  // Client
+  // PO Number
+  // Rep Code
 
   const exampleFilter = {
     "filter": {
