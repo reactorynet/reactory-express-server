@@ -1231,8 +1231,6 @@ export const getPagedQuotes = async (params) => {
     quotes: []
   };
 
-  // NEED TO ADD CACHING
-
   let apiFilter = {
     [filterBy]: search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
@@ -1240,7 +1238,6 @@ export const getPagedQuotes = async (params) => {
     // agentSelection: 'me',
   };
 
-  // Filter by specific date
   if (quoteDate) {
     apiFilter.start_date = moment(quoteDate).startOf('day').toISOString();
     apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
@@ -1558,7 +1555,7 @@ export const getClientSalesOrders = async (params) => {
 
 export const getClientInvoices = async (params) => {
 
-  logger.debug(`GETTING PAGED CLIENT SALES ORDERS:: ${JSON.stringify(params)}`);
+  logger.debug(`GETTING PAGED CLIENT INVOICES:: ${JSON.stringify(params)}`);
 
   const {
     clientId,
@@ -1578,53 +1575,41 @@ export const getClientInvoices = async (params) => {
   };
 
   // -- POSSIBLE FILTERS --
-  // Order Date
-  // Order Status
-  // Shipping Date
-  // ISO Number
+  // Invoice Date
+  // Quote Date
+  // Quote Number
+  // Account Number
   // Customer
   // Client
-  // Purchase Order Number
-  // Order Value
+  // Rep Code
+  // PO Number
 
-  const exampleFilter = {
-    "filter": {
-      "sales_team_id": "100",
-      "start_date": "2019-05-26T00:00:00.000Z",
-      "end_date": "2020-05-26T00:00:00.000Z"
-    },
-    "format": { "ids_only": true },
-    "ordering": { "invoice_date": "asc" },
-    "pagination": {}
-  }
+  const me3601 = await getLoggedIn360User().then();
+  let apiFilter: any = {
 
-  let apiFilter = {
-    sales_team_id: 100,
-    // staff_user_id: [clientId],
-    // [filterBy]: filter || search,
-    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    // FOR TEST PURPOSES
+    rep_code: [me3601.sales_team_id],
+
+    // HOW IT SHOULD BE - I THINK
+    // staff_user_id = [clientId],
+
+    [filterBy]: filter || search,
+
+    // TO TEST - LAST INVOICE IN 2018
+    // start_date: periodStart,
+    // end_date: periodEnd
+    // start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    // end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
-
-  // apiFilter[filterBy] = filter || search;
-
-  // const idsQueryResults = await lasecApi.Invoices.list({
-  //   filter: filter,
-  //   pagination: { page_size: 10, enabled: true, current_page: 1 },
-  //   ordering: { "invoice_date": "asc" }
-  // }).then();
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
     filter: apiFilter,
-    pagination: { page_size: 10, enabled: true, current_page: 1 },
-    // pagination: {
-    //   page_size: paging.pageSize || 10,
-    //   current_page: paging.page
-    // },
-    ordering: { "invoice_date": "asc" }
+    pagination: { page_size: paging.pageSize || 10, current_page: paging.page
+    },
+    ordering: { "invoice_date": "desc" }
   }).then();
 
-  logger.debug(`INVOICE IDS:: ${invoiceIdsResponse.ids.length}`);
+  logger.debug(`INVOICE COUNT:: ${invoiceIdsResponse.ids.length}`);
 
   let ids = [];
 
@@ -1644,9 +1629,19 @@ export const getClientInvoices = async (params) => {
 
   logger.debug(`INVOICE DETAIL:: ${JSON.stringify(invoices[0])}`);
 
-  invoices = invoices.map(order => {
+  invoices = invoices.map(invoice => {
     return {
-      id: order.id,
+      id: invoice.id,
+      invoiceDate: invoice.invoice_date,
+      quoteDate: invoice.quote_date,
+      quoteId: invoice.quote_id,
+      customer: invoice.company_name,
+      client: invoice.customer_name,
+      dispatches: invoice.dispatch_note_ids.join(', '),
+      accountNumber: invoice.account,
+      salesTeamId: invoice.sales_team_id,
+      poNumber: invoice.customer_po_number,
+      value: invoice.invoice_value,
     }
   });
 
@@ -1702,36 +1697,31 @@ export const getClientSalesHistory = async (params) => {
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
 
-  // apiFilter[filterBy] = filter || search;
-
-  const saleshistoryIdsResponse = await lasecApi.Products.sales_orders({
+  const salesHistoryResponse = await lasecApi.Products.sales_orders({
     filter: apiFilter,
     pagination: {
       page_size: paging.pageSize || 10,
       current_page: paging.page
     },
-    // ordering: { "invoice_date": "asc" }
   }).then();
 
-  logger.debug(`SALES HISTORY IDS:: ${saleshistoryIdsResponse.ids.length}`);
+  logger.debug(`SALES HISTORY COUNT:: ${salesHistoryResponse.ids.length}`);
 
   let ids = [];
 
-  if (isArray(saleshistoryIdsResponse.ids) === true) {
-    ids = [...saleshistoryIdsResponse.ids];
+  if (isArray(salesHistoryResponse.ids) === true) {
+    ids = [...salesHistoryResponse.ids];
   }
 
-  if (saleshistoryIdsResponse.pagination && saleshistoryIdsResponse.pagination.num_pages > 1) {
-    pagingResult.total = saleshistoryIdsResponse.pagination.num_items;
-    pagingResult.pageSize = saleshistoryIdsResponse.pagination.page_size || 10;
-    pagingResult.hasNext = saleshistoryIdsResponse.pagination.has_next_page === true;
-    pagingResult.page = saleshistoryIdsResponse.pagination.current_page || 1;
+  if (salesHistoryResponse.pagination && salesHistoryResponse.pagination.num_pages > 1) {
+    pagingResult.total = salesHistoryResponse.pagination.num_items;
+    pagingResult.pageSize = salesHistoryResponse.pagination.page_size || 10;
+    pagingResult.hasNext = salesHistoryResponse.pagination.has_next_page === true;
+    pagingResult.page = salesHistoryResponse.pagination.current_page || 1;
   }
 
   let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
   let salesHistory = [...saleshistoryDetails.items];
-
-  logger.debug(`SALES HISTORY:: ${JSON.stringify(salesHistory[0])}`);
 
   salesHistory = salesHistory.map(order => {
     return {
@@ -1742,8 +1732,8 @@ export const getClientSalesHistory = async (params) => {
       quoteNumber: order.quote_id || '',
       iso: order.sales_order_id,
       dispatches: order.dispatch_note_ids.join(', '),
-      customer: order.customer_name,
-      client: order.sales_team_id,
+      customer: order.company_trading_name,
+      client: order.customer_name,
       poNumber: order.sales_order_number,
       value: order.order_value,
       salesTeamId: order.sales_team_id

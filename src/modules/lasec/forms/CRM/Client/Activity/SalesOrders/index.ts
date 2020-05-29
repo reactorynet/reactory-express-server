@@ -159,7 +159,14 @@ const uiSchema: any = {
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
         { title: 'Purchase Order Number', field: 'poNumber' },
-        { title: 'Order Value', field: 'value' },
+        {
+          title: 'Order Value',
+          field: 'value',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            'rowData.value': 'value',
+          },
+        },
       ],
       options: {
         grouping: false,

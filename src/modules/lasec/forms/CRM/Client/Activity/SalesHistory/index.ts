@@ -1,7 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import $graphql from './graphql';
 import $schema from './schema';
-import { SalesOrdersFilterByOptions } from '../shared';
+import { SalesHistoryFilterByOptions } from '../shared';
 
 const uiSchema: any = {
   'ui:options': {
@@ -65,7 +65,7 @@ const uiSchema: any = {
   filterBy: {
     'ui:widget': 'SelectWidget',
     'ui:options': {
-      selectOptions: SalesOrdersFilterByOptions,
+      selectOptions: SalesHistoryFilterByOptions,
     },
   },
   filter: {
@@ -130,7 +130,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
+                format: '${rowData.quoteDate ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
           },
@@ -160,7 +160,14 @@ const uiSchema: any = {
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
         { title: 'PO Number', field: 'poNumber' },
-        { title: 'Inv Value', field: 'value' },
+        {
+          title: 'Inv Value',
+          field: 'value',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            'rowData.value': 'value',
+          },
+        },
         { title: 'Client Rep Code', field: 'salesTeamId' },
       ],
       options: {
@@ -189,7 +196,7 @@ const uiSchema: any = {
         'salesHistory.[].quoteDate': 'data.[].quoteDate',
         'salesHistory.[].quoteNumber': 'data.[].quoteNumber',
         'salesHistory.[].orderDate': 'data.[].orderDate',
-        'salesHistory.[].isoNumber': 'data.[].isoNumber',
+        'salesHistory.[].iso': 'data.[].isoNumber',
         'salesHistory.[].dispatches': 'data.[].dispatches',
         'salesHistory.[].customer': 'data.[].customer',
         'salesHistory.[].client': 'data.[].client',

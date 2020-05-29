@@ -33,7 +33,7 @@ const graphql: Reactory.IFormGraphDefinition = {
           quoteDate
           quoteNumber
           orderDate
-          isoNumber
+          iso
           dispatches
           customer
           client
@@ -60,7 +60,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'salesHistory.[].quoteDate': 'salesHistory.[].quoteDate',
       'salesHistory.[].quoteNumber': 'salesHistory.[].quoteNumber',
       'salesHistory.[].orderDate': 'salesHistory.[].orderDate',
-      'salesHistory.[].isoNumber': 'salesHistory.[].isoNumber',
+      'salesHistory.[].iso': 'salesHistory.[].isoNumber',
       'salesHistory.[].dispatches': 'salesHistory.[].dispatches',
       'salesHistory.[].customer': 'salesHistory.[].customer',
       'salesHistory.[].client': 'salesHistory.[].client',

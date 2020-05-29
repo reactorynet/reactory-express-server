@@ -299,6 +299,16 @@ type SalesOrder {
 
 type Invoice {
   id: String
+  invoiceDate: String
+  quoteDate: String
+  quoteId: String
+  customer: String
+  client: String
+  dispatches: String
+  accountNumber: String
+  salesTeamId: String
+  poNumber: String
+  value: Int
 }
 
 type SalesHistory {
@@ -307,7 +317,7 @@ type SalesHistory {
   quoteDate: String
   quoteNumber: String
   orderDate: String
-  isoNumber: String
+  iso: String
   dispatches: String
   customer: String
   client: String
