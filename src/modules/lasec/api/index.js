@@ -366,7 +366,6 @@ const Api = {
       }
 
       try {
-        debugger
         let filename = path.join(process.env.APP_DATA_ROOT, documentInfo.path, documentInfo.alias);
         if(fs.existsSync(filename) === true){
           const stream = fs.createReadStream(filename);                
@@ -383,7 +382,6 @@ const Api = {
           if(status === 'sucess') {
             const fileData = uploadResult.data.payload;
             if(customerInfo && customerInfo.id) {
-              debugger
               uploadResult = await POST(`${SECONDARY_API_URLS.customer_documents}`, { document_ids: [ fileData.id ], customer_id: customerInfo.id }).then();              
             }  
             return {

@@ -1,7 +1,20 @@
 import { Reactory } from "types/reactory";
 
-interface IUIDropDownSchema extends Reactory.IUISchema {
+interface IUIDropDownItemSchema {
+  key: string,
+  value: string, 
+  label: string,
+  icon?: string,
+  iconProps?: any
+}
 
+interface IUIDropDownUIOptions extends Object {
+  FormControl: any,
+  selectOptions: IUIDropDownItemSchema[]
+}
+interface IUIDropDownSchema extends Reactory.IUISchema {
+  'ui:widget': 'SelectWidget',
+  'ui:options': IUIDropDownUIOptions
 };
 
 export const AccountTypeDropdownUISchema: IUIDropDownSchema = {  

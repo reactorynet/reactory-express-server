@@ -1,5 +1,10 @@
+import { 
+  LasecCRMPluginForm
+} from './Global';
+
 import { default as SalesDashboard,
 } from './salesDashboard';
+
 
 import { default as ProductDashboard } from './productDashboard';
 
@@ -84,6 +89,7 @@ import ProductSalesOrders from './productCatalog/ProductDetails/SalesOrders';
 const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
 
 export default [
+  LasecCRMPluginForm,
   SalesDashboard,
   ProductDashboard,
   // ProductEnquiryForm,
