@@ -43,7 +43,7 @@ const uiSchema: any = {
   ],
   id: {
     'ui:options': {
-      componentFqn: 'lasec-crm.ClientDetailHeaderWidget@1.0.0',
+      componentFqn: 'lasec-crm.LasecClientOverviewWidget@1.0.0',
       componentPropsMap: {
         'formContext.formData.id': 'formData.id',
       }
@@ -52,7 +52,7 @@ const uiSchema: any = {
   tabs: {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
-      activeTab: '${formContext.$route.match.params.tab}',
+      activeTab: 'client-details',
     }
   },
 };

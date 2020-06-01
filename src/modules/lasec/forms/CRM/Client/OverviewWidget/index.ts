@@ -24,15 +24,18 @@ const LasecClientOverviewWidget: Reactory.IReactoryForm = {
     accountNumber: "Loading",
     customerStatus: "not-on-hold",
     customer: "Loading",
-    currency: "?",
-    availableBalance: 0,
-    creditLimit: 0,
+    currency: "ZAR",
   },
   widgetMap: [
+    {
+      componentFqn: 'lasec-crm.ClientDetailHeaderWidget@1.0.0', widget: 'ClientDetailHeaderWidget'
+    },
+    /*
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
     { componentFqn: 'core.ConditionalIconComponent@1.0.0', widget: 'ConditionalIconComponent'}    
+    */
   ],
 };
 

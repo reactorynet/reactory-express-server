@@ -9,7 +9,7 @@ schema.properties.currency = {
   title: 'Currency'
 },
 
-schema.properties.availableBalance = {
+schema.properties.currentBalance = {
   type: 'number',
   title: 'Available Balance',  
 };
