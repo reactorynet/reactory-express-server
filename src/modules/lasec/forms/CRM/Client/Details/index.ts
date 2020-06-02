@@ -21,9 +21,10 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
     id: "",
     tabs: [
       {
-        id: 'clients',
+        id: 'clientsDetails',
         title: 'Client Details',
         componentFqn: 'lasec-crm.LasecCRMPersonalInformation',
+        route: '/crm/clients/',
         componentProps: { mode: 'edit', uiSchemaKey: 'display' },
         componentPropsMap: {
           'formContext.$formData.id': 'formData.id'

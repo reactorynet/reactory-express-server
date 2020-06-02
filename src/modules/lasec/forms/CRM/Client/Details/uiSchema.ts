@@ -52,7 +52,9 @@ const uiSchema: any = {
   tabs: {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
-      activeTab: '${formContext.$route.match.params.tab}',
+      activeTab: 'clientsDetails',
+      numberOfVisibleTabs: 2,
+      tabMenuLabel: 'Client Activity'
     }
   },
 };
