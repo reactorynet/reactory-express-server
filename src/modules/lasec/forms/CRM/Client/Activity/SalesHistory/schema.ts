@@ -1,5 +1,5 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { SalesOrdersFilterByEnumsKeys } from '../shared';
+import { SalesHistoryFilterByEnumsKeys } from '../shared';
 
 const schema: Reactory.ISchema = {
   type: 'object',
@@ -12,8 +12,8 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                SalesOrdersFilterByEnumsKeys.order_date,
-                SalesOrdersFilterByEnumsKeys.shipping_date,
+                SalesHistoryFilterByEnumsKeys.order_date,
+                SalesHistoryFilterByEnumsKeys.quote_date,
               ]
             },
             periodStart: {
@@ -31,7 +31,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                SalesOrdersFilterByEnumsKeys.order_status,
+                SalesHistoryFilterByEnumsKeys.order_type,
               ]
             },
             filter: {
@@ -45,7 +45,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                SalesOrdersFilterByEnumsKeys.client,
+                SalesHistoryFilterByEnumsKeys.client,
               ]
             },
             client: {
@@ -59,7 +59,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                SalesOrdersFilterByEnumsKeys.customer,
+                SalesHistoryFilterByEnumsKeys.customer,
               ]
             },
             customer: {
@@ -104,6 +104,39 @@ const schema: Reactory.ISchema = {
         type: 'object',
         properties: {
           id: {
+            type: 'string'
+          },
+          orderType: {
+            type: 'string'
+          },
+          quoteDate: {
+            type: 'string'
+          },
+          quoteNumber: {
+            type: 'string'
+          },
+          orderDate: {
+            type: 'string'
+          },
+          isoNumber: {
+            type: 'string'
+          },
+          dispatches: {
+            type: 'string'
+          },
+          customer: {
+            type: 'string'
+          },
+          client: {
+            type: 'string'
+          },
+          poNumber: {
+            type: 'string'
+          },
+          value: {
+            type: 'string'
+          },
+          salesTeamId: {
             type: 'string'
           },
         }

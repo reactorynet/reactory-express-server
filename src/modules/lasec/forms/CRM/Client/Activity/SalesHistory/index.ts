@@ -1,7 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import $graphql from './graphql';
 import $schema from './schema';
-import { SalesOrdersFilterByOptions } from '../shared';
+import { SalesHistoryFilterByOptions } from '../shared';
 
 const uiSchema: any = {
   'ui:options': {
@@ -65,7 +65,7 @@ const uiSchema: any = {
   filterBy: {
     'ui:widget': 'SelectWidget',
     'ui:options': {
-      selectOptions: SalesOrdersFilterByOptions,
+      selectOptions: SalesHistoryFilterByOptions,
     },
   },
   filter: {
@@ -121,7 +121,54 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'ID', field: 'id' },
+        { title: 'Order Type', field: 'orderType' },
+        {
+          title: 'Quote Date',
+          field: 'quoteDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData.quoteDate ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.quoteDate': 'value',
+          }
+        },
+        { title: 'Quote Number', field: 'quoteNumber' },
+        {
+          title: 'Order Date',
+          field: 'orderDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.orderDate': 'value',
+          }
+        },
+        { title: 'ISO No.', field: 'isoNumber' },
+        { title: 'Dispatches', field: 'dispatches' },
+        { title: 'Customer', field: 'customer' },
+        { title: 'Client', field: 'client' },
+        { title: 'PO Number', field: 'poNumber' },
+        {
+          title: 'Inv Value',
+          field: 'value',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            'rowData.value': 'value',
+          },
+        },
+        { title: 'Client Rep Code', field: 'salesTeamId' },
       ],
       options: {
         grouping: false,
@@ -145,6 +192,18 @@ const uiSchema: any = {
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
         'salesHistory.[].id': 'data.[].id',
+        'salesHistory.[].orderType': 'data.[].orderType',
+        'salesHistory.[].quoteDate': 'data.[].quoteDate',
+        'salesHistory.[].quoteNumber': 'data.[].quoteNumber',
+        'salesHistory.[].orderDate': 'data.[].orderDate',
+        'salesHistory.[].iso': 'data.[].isoNumber',
+        'salesHistory.[].dispatches': 'data.[].dispatches',
+        'salesHistory.[].customer': 'data.[].customer',
+        'salesHistory.[].client': 'data.[].client',
+        'salesHistory.[].poNumber': 'data.[].poNumber',
+        'salesHistory.[].value': 'data.[].value',
+        'salesHistory.[].salesTeamId': 'data.[].salesTeamId',
+
       },
     },
   }

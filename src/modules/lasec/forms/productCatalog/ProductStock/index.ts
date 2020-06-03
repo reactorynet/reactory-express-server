@@ -17,6 +17,10 @@ import $schema from '../shared/schema';
       hidden: true,
       'ui:widget': 'HiddenWidget'
     },
+    view: {
+      hidden: true,
+      'ui:widget': 'HiddenWidget'
+    },
     products: {
       'ui:widget': 'MaterialTableWidget',
       'ui:options': {

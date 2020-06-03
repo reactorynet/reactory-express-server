@@ -10,6 +10,10 @@ const uiSchema: any = {
     hidden: true,
     'ui:widget': 'HiddenWidget'
   },
+  view: {
+    hidden: true,
+    'ui:widget': 'HiddenWidget'
+  },
   products: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {

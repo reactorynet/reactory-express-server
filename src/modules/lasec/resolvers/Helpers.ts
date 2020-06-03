@@ -8,7 +8,7 @@ import uuid from 'uuid';
 import lasecApi, { LasecNotAuthenticatedException } from '@reactory/server-modules/lasec/api';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
-import { queryAsync as mysql } from '@reactory/server-core/database/mysql'; 
+import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { Organization, User, Task } from '@reactory/server-core/models';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
@@ -164,7 +164,7 @@ export const getLoggedIn360User: any = async () => {
     }
 
     if (me360) {
-      setCacheItem(hashkey, me360, 60);    
+      setCacheItem(hashkey, me360, 60);
     }
 
     logger.debug(`me360 ===>`, me360)
@@ -241,18 +241,18 @@ interface QuotesFilter {
   start_date: string;
   end_date: string;
   rep_codes?: string[],
-  staff_user_id?: number,  
+  staff_user_id?: number,
 }
 
 interface SalesDashboardDataResult {
   quotes: any[],
   invoices: any[],
   isos: any[],
-  quotesByStatus: any[],    
+  quotesByStatus: any[],
 }
 
 export const getSalesDashboardData = async (params) => {
-  
+
   let me = await getLoggedIn360User().then();
   logger.debug(`Fetching Lasec Sales Dashboard Data as ${me.first_name} `, params, me);
   let _params = params;
@@ -278,21 +278,21 @@ export const getSalesDashboardData = async (params) => {
   }
 
   if (params.agentSelection === 'me') {
-    
+
     if (me) {
       apiFilter.rep_codes = me.rep_codes;
     }
   }
 
   const debresults: any = await mysql(`CALL LasecGetSalesDashboardData ('${moment(apiFilter.start_date).format('YYYY-MM-DD HH:mm:ss')}', '${moment(apiFilter.end_date).format('YYYY-MM-DD HH:mm:ss')}',  ${me.id}, 'me');`, 'mysql.lasec360').then()
-      
+
   let quotes: any[] = debresults[1];
   let invoices: any[] = debresults[2];
-  let isos: any[] =  debresults[3];
-  let quotesByStatus: any[] = []; //dbresults[4];  
+  let isos: any[] = debresults[3];
+  let quotesByStatus: any[] = []; //dbresults[4];
 
-  if(apiFilter.rep_codes && apiFilter.rep_codes.length > 0) {
-    lodash.remove(quotes, (quote: any) => lodash.intersection(  apiFilter.rep_codes, [ quote.sales_team_id ] ).length === 1   );
+  if (apiFilter.rep_codes && apiFilter.rep_codes.length > 0) {
+    lodash.remove(quotes, (quote: any) => lodash.intersection(apiFilter.rep_codes, [quote.sales_team_id]).length === 1);
   }
 
   //perform a lightweight map
@@ -305,18 +305,18 @@ export const getSalesDashboardData = async (params) => {
   // logger.debug(`QUOTES ${JSON.stringify(quotes.slice(0, 5))}`);
 
 
-  return { 
+  return {
     quotes,
     invoices,
     isos,
-    quotesByStatus,    
-  }; 
+    quotesByStatus,
+  };
 
 };
 
 
 export const getQuotes = async (params) => {
-  
+
   let me = await getLoggedIn360User().then();
   logger.debug(`Fetching Lasec Dashboard Data as ${me.first_name} `, params, me);
   let _params = params;
@@ -342,14 +342,14 @@ export const getQuotes = async (params) => {
   }
 
   if (params.agentSelection === 'me') {
-    
+
     if (me) {
       apiFilter.rep_codes = me.rep_codes;
     }
   }
 
   const debresults: any = await mysql(`CALL LasecGetSalesDashboardData ('${moment(apiFilter.start_date).format('YYYY-MM-DD HH:mm:ss')}', '${moment(apiFilter.end_date).format('YYYY-MM-DD HH:mm:ss')}',  ${me.id}, 'me');`, 'mysql.lasec360').then()
-  
+
 
   /*
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: 10, enabled: true } }).then();
@@ -379,11 +379,11 @@ export const getQuotes = async (params) => {
   const quotesDetails = await lasecApi.Quotes.list({ filter: { ids: ids } });
   logger.debug(`Fetched Expanded View for (${quotesDetails.items.length}) Quotes from API`);
    */
-  
+
   let quotes = debresults[1];
 
-  if(apiFilter.rep_codes && apiFilter.rep_codes.length > 0) {
-    lodash.remove(quotes, (quote: any) => lodash.intersection(  apiFilter.rep_codes, [ quote.sales_team_id ] ).length === 1   );
+  if (apiFilter.rep_codes && apiFilter.rep_codes.length > 0) {
+    lodash.remove(quotes, (quote: any) => lodash.intersection(apiFilter.rep_codes, [quote.sales_team_id]).length === 1);
   }
 
   //perform a lightweight map
@@ -398,7 +398,7 @@ export const getQuotes = async (params) => {
   amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
 
   return quotes;
- 
+
 
 };
 
@@ -758,7 +758,7 @@ export const groupQuotesByStatus = (quotes: any[]) => {
   });
 
   const groupedByStatus = Object.getOwnPropertyNames(groupsByKey).map((statusKey) => {
-    return { 
+    return {
       ...groupsByKey[statusKey],
       totalVAT: Math.floor(groupsByKey[statusKey].totalVAT),
       totalVATExclusive: Math.floor(groupsByKey[statusKey].totalVATExclusive),
@@ -1231,8 +1231,6 @@ export const getPagedQuotes = async (params) => {
     quotes: []
   };
 
-  // NEED TO ADD CACHING
-
   let apiFilter = {
     [filterBy]: search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
@@ -1240,7 +1238,6 @@ export const getPagedQuotes = async (params) => {
     // agentSelection: 'me',
   };
 
-  // Filter by specific date
   if (quoteDate) {
     apiFilter.start_date = moment(quoteDate).startOf('day').toISOString();
     apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
@@ -1529,15 +1526,19 @@ export const getClientSalesOrders = async (params) => {
   let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
   let salesOrders = [...salesOrdersDetails.items];
 
+  logger.debug(`SALES ORDER:: ${JSON.stringify(salesOrders[0])}`);
+
   salesOrders = salesOrders.map(order => {
     return {
       id: order.id,
+      salesOrderNumber: order.sales_order_number,
       orderDate: order.order_date,
       orderType: order.order_type,
+      orderStatus: order.order_status,
       shippingDate: order.req_ship_date,
       iso: order.sales_order_id,
-      customer: order.customer_name,
-      client: order.sales_team_id,
+      customer: order.company_trading_name,
+      client: order.customer_name,
       poNumber: order.sales_order_number,
       value: order.order_value,
     }
@@ -1554,7 +1555,7 @@ export const getClientSalesOrders = async (params) => {
 
 export const getClientInvoices = async (params) => {
 
-  logger.debug(`GETTING PAGED CLIENT SALES ORDERS:: ${JSON.stringify(params)}`);
+  logger.debug(`GETTING PAGED CLIENT INVOICES:: ${JSON.stringify(params)}`);
 
   const {
     clientId,
@@ -1574,53 +1575,42 @@ export const getClientInvoices = async (params) => {
   };
 
   // -- POSSIBLE FILTERS --
-  // Order Date
-  // Order Status
-  // Shipping Date
-  // ISO Number
+  // Invoice Date
+  // Quote Date
+  // Quote Number
+  // Account Number
   // Customer
   // Client
-  // Purchase Order Number
-  // Order Value
+  // Rep Code
+  // PO Number
 
-  const exampleFilter = {
-    "filter": {
-      "sales_team_id": "100",
-      "start_date": "2019-05-26T00:00:00.000Z",
-      "end_date": "2020-05-26T00:00:00.000Z"
-    },
-    "format": { "ids_only": true },
-    "ordering": { "invoice_date": "asc" },
-    "pagination": {}
-  }
+  const me3601 = await getLoggedIn360User().then();
+  let apiFilter: any = {
 
-  let apiFilter = {
-    sales_team_id: 100,
-    // staff_user_id: [clientId],
-    // [filterBy]: filter || search,
-    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    // FOR TEST PURPOSES
+    rep_code: [me3601.sales_team_id],
+
+    // HOW IT SHOULD BE - I THINK
+    // staff_user_id = [clientId],
+
+    [filterBy]: filter || search,
+
+    // TO TEST - LAST INVOICE IN 2018
+    // start_date: periodStart,
+    // end_date: periodEnd
+    // start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    // end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
-
-  // apiFilter[filterBy] = filter || search;
-
-  // const idsQueryResults = await lasecApi.Invoices.list({
-  //   filter: filter,
-  //   pagination: { page_size: 10, enabled: true, current_page: 1 },
-  //   ordering: { "invoice_date": "asc" }
-  // }).then();
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
     filter: apiFilter,
-    pagination: { page_size: 10, enabled: true, current_page: 1 },
-    // pagination: {
-    //   page_size: paging.pageSize || 10,
-    //   current_page: paging.page
-    // },
-    ordering: { "invoice_date": "asc" }
+    pagination: {
+      page_size: paging.pageSize || 10, current_page: paging.page
+    },
+    ordering: { "invoice_date": "desc" }
   }).then();
 
-  logger.debug(`INVOICE IDS:: ${invoiceIdsResponse.ids.length}`);
+  logger.debug(`INVOICE COUNT:: ${invoiceIdsResponse.ids.length}`);
 
   let ids = [];
 
@@ -1640,9 +1630,19 @@ export const getClientInvoices = async (params) => {
 
   logger.debug(`INVOICE DETAIL:: ${JSON.stringify(invoices[0])}`);
 
-  invoices = invoices.map(order => {
+  invoices = invoices.map(invoice => {
     return {
-      id: order.id,
+      id: invoice.id,
+      invoiceDate: invoice.invoice_date,
+      quoteDate: invoice.quote_date,
+      quoteId: invoice.quote_id,
+      customer: invoice.company_name,
+      client: invoice.customer_name,
+      dispatches: invoice.dispatch_note_ids.join(', '),
+      accountNumber: invoice.account,
+      salesTeamId: invoice.sales_team_id,
+      poNumber: invoice.customer_po_number,
+      value: invoice.invoice_value,
     }
   });
 
@@ -1677,7 +1677,15 @@ export const getClientSalesHistory = async (params) => {
   };
 
   // -- POSSIBLE FILTERS --
-
+  // Order Type
+  // Quote Date
+  // Quote Number
+  // Order Date
+  // ISO Number
+  // Customer
+  // Client
+  // PO Number
+  // Rep Code
 
   const exampleFilter = {
     "filter": {
@@ -1691,47 +1699,53 @@ export const getClientSalesHistory = async (params) => {
   }
 
   let apiFilter = {
-    client_id: clientId,
+    // client_id: clientId,
     order_status: 9,
     // [filterBy]: filter || search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
 
-  // apiFilter[filterBy] = filter || search;
-
-  const saleshistoryIdsResponse = await lasecApi.Products.sales_orders({
+  const salesHistoryResponse = await lasecApi.Products.sales_orders({
     filter: apiFilter,
     pagination: {
       page_size: paging.pageSize || 10,
       current_page: paging.page
     },
-    ordering: { "invoice_date": "asc" }
   }).then();
 
-  logger.debug(`SALES HISTORY IDS:: ${saleshistoryIdsResponse.ids.length}`);
+  logger.debug(`SALES HISTORY COUNT:: ${salesHistoryResponse.ids.length}`);
 
   let ids = [];
 
-  if (isArray(saleshistoryIdsResponse.ids) === true) {
-    ids = [...saleshistoryIdsResponse.ids];
+  if (isArray(salesHistoryResponse.ids) === true) {
+    ids = [...salesHistoryResponse.ids];
   }
 
-  if (saleshistoryIdsResponse.pagination && saleshistoryIdsResponse.pagination.num_pages > 1) {
-    pagingResult.total = saleshistoryIdsResponse.pagination.num_items;
-    pagingResult.pageSize = saleshistoryIdsResponse.pagination.page_size || 10;
-    pagingResult.hasNext = saleshistoryIdsResponse.pagination.has_next_page === true;
-    pagingResult.page = saleshistoryIdsResponse.pagination.current_page || 1;
+  if (salesHistoryResponse.pagination && salesHistoryResponse.pagination.num_pages > 1) {
+    pagingResult.total = salesHistoryResponse.pagination.num_items;
+    pagingResult.pageSize = salesHistoryResponse.pagination.page_size || 10;
+    pagingResult.hasNext = salesHistoryResponse.pagination.has_next_page === true;
+    pagingResult.page = salesHistoryResponse.pagination.current_page || 1;
   }
 
   let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
   let salesHistory = [...saleshistoryDetails.items];
 
-  logger.debug(`SALES HISTORY:: ${JSON.stringify(salesHistory[0])}`);
-
   salesHistory = salesHistory.map(order => {
     return {
       id: order.id,
+      orderType: order.order_type,
+      orderDate: order.order_date,
+      quoteDate: order.quote_date,
+      quoteNumber: order.quote_id || '',
+      iso: order.sales_order_id,
+      dispatches: order.dispatch_note_ids.join(', '),
+      customer: order.company_trading_name,
+      client: order.customer_name,
+      poNumber: order.sales_order_number,
+      value: order.order_value,
+      salesTeamId: order.sales_team_id
     }
   });
 

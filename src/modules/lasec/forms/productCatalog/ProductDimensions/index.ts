@@ -5,6 +5,7 @@ import $schema from '../shared/schema';
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -14,6 +15,10 @@ const uiSchema: any = {
     showRefresh: false,
   },
   product: {
+    hidden: true,
+    'ui:widget': 'HiddenWidget'
+  },
+  view: {
     hidden: true,
     'ui:widget': 'HiddenWidget'
   },

@@ -1,5 +1,5 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { SalesOrdersFilterByEnumsKeys } from '../shared';
+import { InvoiceFilterByEnumsKeys } from '../shared';
 
 const schema: Reactory.ISchema = {
   type: 'object',
@@ -12,8 +12,8 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                SalesOrdersFilterByEnumsKeys.order_date,
-                SalesOrdersFilterByEnumsKeys.shipping_date,
+                InvoiceFilterByEnumsKeys.invoice_date,
+                InvoiceFilterByEnumsKeys.quote_date,
               ]
             },
             periodStart: {
@@ -26,26 +26,26 @@ const schema: Reactory.ISchema = {
             },
           },
         },
+        // {
+        //   properties:
+        //   {
+        //     filterBy: {
+        //       enum: [
+        //         InvoiceFilterByEnumsKeys.order_status,
+        //       ]
+        //     },
+        //     filter: {
+        //       type: 'string',
+        //       title: 'Show'
+        //     }
+        //   },
+        // },
         {
           properties:
           {
             filterBy: {
               enum: [
-                SalesOrdersFilterByEnumsKeys.order_status,
-              ]
-            },
-            filter: {
-              type: 'string',
-              title: 'Show'
-            }
-          },
-        },
-        {
-          properties:
-          {
-            filterBy: {
-              enum: [
-                SalesOrdersFilterByEnumsKeys.client,
+                InvoiceFilterByEnumsKeys.client,
               ]
             },
             client: {
@@ -59,7 +59,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                SalesOrdersFilterByEnumsKeys.customer,
+                InvoiceFilterByEnumsKeys.customer,
               ]
             },
             customer: {

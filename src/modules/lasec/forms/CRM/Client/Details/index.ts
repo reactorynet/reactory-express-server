@@ -21,9 +21,10 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
     id: "",
     tabs: [
       {
-        id: 'client-details',
+        id: 'clientsDetails',
         title: 'Client Details',
         componentFqn: 'lasec-crm.LasecCRMPersonalInformation',
+        route: '/crm/clients/',
         componentProps: { mode: 'edit', uiSchemaKey: 'display' },
         componentPropsMap: {
           'formContext.$formData.id': 'formData.id'
@@ -86,7 +87,7 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
       },
       {
         id: 'client-activity-quotes',
-        title: 'Client Activity:Quotes',
+        title: 'Quotes',
         componentFqn: 'lasec-crm.LasecCRMClientQuoteActivities',
         componentProps: { mode: 'edit', uiSchemaKey: 'display' },
         componentPropsMap: {
@@ -95,7 +96,7 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
       },
       {
         id: 'client-activity-sales-orders',
-        title: 'Client Activity:Sales Orders',
+        title: 'Sales Orders',
         componentFqn: 'lasec-crm.LasecCRMClientSalesOrderActivities',
         componentProps: { mode: 'edit', uiSchemaKey: 'display' },
         componentPropsMap: {

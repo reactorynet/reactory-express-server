@@ -1,6 +1,6 @@
 import { Reactory } from "@reactory/server-core/types/reactory";
 
-const graphql: Reactory.IFormGraphDefinition =  {
+const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetCRMClientInvoices',
     text: `query LasecGetCRMClientInvoices(
@@ -29,6 +29,16 @@ const graphql: Reactory.IFormGraphDefinition =  {
         }
         invoices {
           id
+          invoiceDate
+          quoteDate
+          quoteId
+          customer
+          client
+          dispatches
+          accountNumber
+          salesTeamId
+          poNumber
+          value
         }
       }
     }`,
@@ -45,6 +55,16 @@ const graphql: Reactory.IFormGraphDefinition =  {
       'paging': 'paging',
       'filterBy': 'filterBy',
       'invoices.[].id': 'invoices.[].id',
+      'invoices.[].invoiceDate': 'invoices.[].invoiceDate',
+      'invoices.[].quoteDate': 'invoices.[].quoteDate',
+      'invoices.[].quoteId': 'invoices.[].quoteId',
+      'invoices.[].customer': 'invoices.[].customer',
+      'invoices.[].client': 'invoices.[].client',
+      'invoices.[].dispatches': 'invoices.[].dispatches',
+      'invoices.[].accountNumber': 'invoices.[].accountNumber',
+      'invoices.[].salesTeamId': 'invoices.[].salesTeamId',
+      'invoices.[].poNumber': 'invoices.[].poNumber',
+      'invoices.[].value': 'invoices.[].value',
     },
     autoQuery: false,
     resultType: 'object',
