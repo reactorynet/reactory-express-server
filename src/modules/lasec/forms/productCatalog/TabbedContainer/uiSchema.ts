@@ -104,6 +104,9 @@ const uiSchema: any = {
   tabs: {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
+      activeTab: 'product-overview',
+      numberOfVisibleTabs: 2,
+      tabMenuLabel: 'More Details',
       tabs: [
         {
           id: 'product-overview',
@@ -127,7 +130,7 @@ const uiSchema: any = {
         },
         {
           id: 'product-more-details',
-          title: 'More Details',
+          title: 'Details',
           componentFqn: 'lasec-crm.LasecProductDetailTable',
           componentProps: {},
           componentPropsMap: {
@@ -165,26 +168,26 @@ const uiSchema: any = {
             'formContext.$formData.toolbar.view': 'query.uiSchema',
           },
         },
-        {
-          id: 'product-contracts',
-          title: 'Contracts',
-          componentFqn: 'lasec-crm.LasecProductContracts',
-          componentProps: {},
-          componentPropsMap: {
-            'formContext.$formData.toolbar.product': 'formData.product',
-            'formContext.$formData.toolbar.view': 'query.uiSchema',
-          },
-        },
-        {
-          id: 'product-tenders',
-          title: 'Tenders',
-          componentFqn: 'lasec-crm.LasecProductTenders',
-          componentProps: {},
-          componentPropsMap: {
-            'formContext.$formData.toolbar.product': 'formData.product',
-            'formContext.$formData.toolbar.view': 'query.uiSchema',
-          },
-        },
+        // {
+        //   id: 'product-contracts',
+        //   title: 'Contracts',
+        //   componentFqn: 'lasec-crm.LasecProductContracts',
+        //   componentProps: {},
+        //   componentPropsMap: {
+        //     'formContext.$formData.toolbar.product': 'formData.product',
+        //     'formContext.$formData.toolbar.view': 'query.uiSchema',
+        //   },
+        // },
+        // {
+        //   id: 'product-tenders',
+        //   title: 'Tenders',
+        //   componentFqn: 'lasec-crm.LasecProductTenders',
+        //   componentProps: {},
+        //   componentPropsMap: {
+        //     'formContext.$formData.toolbar.product': 'formData.product',
+        //     'formContext.$formData.toolbar.view': 'query.uiSchema',
+        //   },
+        // },
         {
           id: 'product-costings',
           title: 'Costings',
