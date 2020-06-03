@@ -64,7 +64,9 @@ export const ViewUiSchema: any = {
     'ui:widget': 'HiddenWidget',
     hidden: true
   },
-  uploadedDocuments: { ...DocumentGridWidget }
+  uploadedDocuments: { 
+    ...DocumentGridWidget 
+  }
 };
 
 export const ConfirmUiSchema: any = {
@@ -118,7 +120,7 @@ export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
   name: 'LasecCRMViewClientDocuments',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: { ...ViewSchema },
+  schema: { ...ViewSchema, title: 'Client Documents' },
   graphql,
   uiSchema: { ...ViewUiSchema },
   uiSchemas: [
