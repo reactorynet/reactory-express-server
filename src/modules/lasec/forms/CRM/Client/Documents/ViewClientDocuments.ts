@@ -12,6 +12,63 @@ export const ViewSchema = viewSchema;
 
 //Schema for display purposes, should not support upload
 export const ViewUiSchema: any = {
+  'ui:graphql': {    
+    query: {
+      name: 'LasecGetCustomerDocuments',
+      text: `query LasecGetCustomerDocuments($uploadContexts: [String], $paging: PagingRequest){
+        LasecGetCustomerDocuments(uploadContexts: $uploadContexts, paging: $paging){
+          paging {
+            total
+            page
+            pageSize          
+          }
+          documents {
+            id
+            filename
+            link
+            size
+          }        
+        }      
+      }`,
+      variables: {      
+        'formData.$uploadContexts': 'uploadContexts'            
+      },
+      formData: {
+        $uploadContext: [
+          'lasec-crm::company-document'
+        ]
+      },    
+      autoQuery: true,
+      queryMessage: 'Loading customer documents',
+      resultType: 'object',
+      edit: false,
+      new: false,
+      refreshEvents: [
+        {name: 'lasec-crm::new-document::uploaded'}
+      ],
+    },
+    mutation: {
+      new: {
+        name: 'LasecUploadCustomerDocument',
+        text: `mutation LasecUploadCustomerDocument($id: String, $file: Upload!){
+          LasecUploadCustomerDocument(id: $id, file: $file) {
+            id
+            name
+            url
+            mimetype
+          }
+        }`,
+        notification: {
+          
+        },
+        variables: {
+  
+        },
+        objectMap: true,
+  
+      }
+    }
+  },
   'ui:options': {
     componentType: 'div',
     toolbarPosition: 'none',
@@ -120,7 +177,7 @@ export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
   name: 'LasecCRMViewClientDocuments',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: { ...ViewSchema, title: 'Client Documents' },
+  schema: { ...ViewSchema, title: 'DOCUMENTS' },
   graphql,
   uiSchema: { ...ViewUiSchema },
   uiSchemas: [
