@@ -3,8 +3,8 @@ import {
 } from '../shared';
 const uiSchema: any = {
   'ui:options': {
-    submitIcon: 'search',    
-    componentType: "form",    
+    submitIcon: 'search',
+    componentType: "form",
     showSubmit: true,
     showRefresh: false,
     container: "div",
@@ -15,17 +15,17 @@ const uiSchema: any = {
   },
   'ui:field':'GridLayout',
   'ui:grid-layout': [
-    {             
-      search: { md: 4, sm: 12 },      
-      filterBy: { md: 4, sm: 12 },      
-      filter: { md: 4, sm: 12 },      
+    {
+      search: { md: 4, sm: 12 },
+      filterBy: { md: 4, sm: 12 },
+      filter: { md: 4, sm: 12 },
     },
     {
       clients: {
-        md: 12
+        xs: 12, sm: 12, md: 12, lg: 12
       }
     }
-  ],    
+  ],
   search: {
     'ui:options': {
       showLabel: false,
@@ -44,9 +44,9 @@ const uiSchema: any = {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData && formData.length > 3 ? "Searching for `" + formData + "`" : "Enter search keyword" }',
-      variant: 'body1',      
-    } 
-    */   
+      variant: 'body1',
+    }
+    */
   },
   paging: {
     'ui:widget': 'HiddenWidget'
@@ -78,7 +78,7 @@ const uiSchema: any = {
       query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
         LasecGetCustomerFilterLookup(filterBy: $filterBy) {
           id
-          name          
+          name
         }
       }`,
       propertyMap: {
@@ -107,7 +107,7 @@ const uiSchema: any = {
                     key: 'active',
                     icon: 'trip_origin',
                     style: {
-                      color: '#5EB848'                  
+                      color: '#5EB848'
                     },
                     tooltip: 'Client Active'
                   },
@@ -126,7 +126,7 @@ const uiSchema: any = {
                       color: '#AB1257'
                     },
                     tooltip: 'Client Deactivated'
-                  }                  
+                  }
                 ]
               },
               style: {
@@ -136,16 +136,16 @@ const uiSchema: any = {
               propsMap: {
                 'rowData.clientStatus': 'value',
               },
-            }            
-          ],                  
+            }
+          ],
           propsMap: {
             'rowData.clientStatus': 'selectedKey'
           },
           breakpoint: 'xs'
 
-        },        
-        { 
-          title: 'Client Full Name', 
+        },
+        {
+          title: 'Client Full Name',
           field: 'fullName',
           component: 'core.SlideOutLauncher@1.0.0',
           props: {
@@ -168,10 +168,10 @@ const uiSchema: any = {
               }
             },
             windowTitle: 'Client details: ${rowData.fullName}',
-          }, 
+          },
           propsMap: {
             'rowData': 'rowData',
-          },          
+          },
         },
         { title: 'Email Address', field: 'emailAddress', breakpoint: 'sm' },
         {
@@ -180,8 +180,8 @@ const uiSchema: any = {
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
-              'ui:options': {     
-                variant: 'body2',                           
+              'ui:options': {
+                variant: 'body2',
                 format: '${rowData.customer && rowData.customer.tradingName ? rowData.customer.tradingName : "No Trading Name"}'
               }
             },
@@ -197,8 +197,8 @@ const uiSchema: any = {
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
-              'ui:options': {     
-                variant: 'body2',                           
+              'ui:options': {
+                variant: 'body2',
                 format: '${rowData.customer && rowData.customer.accountNumber ? rowData.customer.accountNumber : "No Account #"}'
               }
             },
@@ -206,7 +206,7 @@ const uiSchema: any = {
           propsMap: {
             'rowData': 'value',
           },
-          breakpoint: 'md',            
+          breakpoint: 'md',
         },
         {
           title: 'Customer Status',
@@ -222,7 +222,7 @@ const uiSchema: any = {
                     key: 'not-on-hold',
                     icon: 'fiber_manual_record',
                     style: {
-                      color: '#5EB848'                  
+                      color: '#5EB848'
                     },
                     tooltip: 'Not on hold'
                   },
@@ -233,7 +233,7 @@ const uiSchema: any = {
                       color: '#FF9901'
                     },
                     tooltip: 'On hold'
-                  },                  
+                  },
                 ]
               },
               style: {
@@ -242,8 +242,8 @@ const uiSchema: any = {
               propsMap: {
                 'rowData.customer.customerStatus': 'value',
               },
-            },            
-          ],                     
+            },
+          ],
           propsMap: {
             'rowData': 'value',
           }
@@ -253,12 +253,12 @@ const uiSchema: any = {
           field: 'country',
           breakpoint: 'md',
 
-        }        
+        }
       ],
       actions: [
         {
           icon: 'remove_circle',
-          tooltip: 'Deactivate Client(s)',          
+          tooltip: 'Deactivate Client(s)',
           iconProps: {
             color: 'error'
           },
@@ -270,11 +270,11 @@ const uiSchema: any = {
 
           },
           resultAction: 'refresh'
-        },             
+        },
       ],
       options: {
         grouping: false,
-        search: false,  
+        search: false,
         showTitle: false,
         toolbar: true,
         selection: true,
@@ -292,10 +292,10 @@ const uiSchema: any = {
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
-        'paging.pageSize': 'pageSize',             
-        'clients': 'data',        
+        'paging.pageSize': 'pageSize',
+        'clients': 'data',
       },
-      resultType: 'object',       
+      resultType: 'object',
     },
   }
 };

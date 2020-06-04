@@ -40,6 +40,10 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultType: 'object',
     edit: true,
     new: false,
+    onError: {
+      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+      method: 'onGraphQLQueryError',
+    },
   },
   mutation: {
     edit: {
@@ -58,7 +62,10 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.lastName': 'clientInfo.lastName',
         'formData.country': 'clientInfo.country',
       },
-      // onSuccessMethod: 'refresh'
+      onError: {
+        componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+        method: 'onGraphQLQueryError',
+      },
       onSuccessMethod: 'notification',
       notification: {
         inAppNotification: true,
@@ -100,9 +107,9 @@ const graphql: Reactory.IFormGraphDefinition = {
             }
           ]
         }
-      },            
+      },
     }
-  },  
+  },
 };
 
 
@@ -119,20 +126,20 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
           lastName
           country
           repCode
-        }         
+        }
       }
     }`,
-    variables: {    
-      
+    variables: {
+
     },
     resultMap: {
       'id': 'id',
-      'personalDetails.title': 'clientTitle',      
+      'personalDetails.title': 'clientTitle',
       'personalDetails.firstName': 'firstName',
       'personalDetails.lastName': 'lastName',
       'personalDetails.country': 'country',
       'personalDetails.accountType': 'accountType',
-      'personalDetails.repCode': 'repCode',                        
+      'personalDetails.repCode': 'repCode',
     },
     //interval: 1500,
     autoQuery: true,
@@ -154,28 +161,31 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
             lastName
             country
             repCode
-          } 
+          }
         }
       }`,
       objectMap: true,
       updateMessage: 'Updating Personal Content',
-      variables: {    
+      variables: {
         'eventData.formData': 'newClient.personalDetails',
-        'eventData.formData.clientTitle': 'newClient.personalDetails.title'    
+        'eventData.formData.clientTitle': 'newClient.personalDetails.title'
       },
-      // handledBy: 'onChange',
       resultType: 'object',
       resultMap: {
         'id': 'id',
-        'personalDetails.title': 'clientTitle',      
+        'personalDetails.title': 'clientTitle',
         'personalDetails.firstName': 'firstName',
         'personalDetails.lastName': 'lastName',
         'personalDetails.country': 'country',
         'personalDetails.accountType': 'accountType',
-        'personalDetails.repCode': 'repCode',                        
-      },                  
+        'personalDetails.repCode': 'repCode',
+      },
+      onError: {
+        componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+        method: 'onGraphQLQueryError',
+      },
     }
-  },  
+  },
 };
 
 

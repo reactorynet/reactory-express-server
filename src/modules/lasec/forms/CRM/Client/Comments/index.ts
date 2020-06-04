@@ -42,7 +42,7 @@ const displayUiSchema: any = {
             },
           },
           propsMap: {
-            avatar: 'value',
+            'rowData.avatar': 'value',
           },
         },
         {

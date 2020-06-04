@@ -8,25 +8,26 @@ const graphql: Reactory.IFormGraphDefinition = {
         paging {
           total
           page
-          pageSize          
+          pageSize
         }
         documents {
           id
           filename
           link
           size
-        }        
-      }      
+        }
+      }
     }`,
-    variables: {      
-      'formData.$uploadContexts': 'uploadContexts'            
+    variables: {
+      'formData.$uploadContexts': 'uploadContexts',
+      'formData.paging': 'paging'
     },
     formData: {
       $uploadContext: [
         'lasec-crm::new-company::document',
         'lasec-crm::company-document'
       ]
-    },    
+    },
     autoQuery: true,
     queryMessage: 'Loading customer documents',
     resultType: 'object',
@@ -48,7 +49,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         }
       }`,
       notification: {
-        
+
       },
       variables: {
 

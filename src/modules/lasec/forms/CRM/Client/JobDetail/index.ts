@@ -268,7 +268,7 @@ export const ConfirmUiSchema: any = {
   },
 
   jobType: {
-    
+
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
@@ -508,7 +508,7 @@ const editUiSchema: any = {
     }
   },
   accountType: {
-    ...AccountTypeDropdownUISchema    
+    ...AccountTypeDropdownUISchema
   },
   repCode: {
     'ui:widget': 'SelectWithDataWidget',
@@ -705,7 +705,7 @@ const newUiSchema: any = {
 const schema: Reactory.ISchema = {
   type: "object",
   title: "JOB DETAILS",
-  required: ['jobTitle', 'customerType', 'customerClass', 'clientDepartment', 'ranking'],
+  required: ['customerClass', 'clientDepartment', 'ranking'],
   properties: {
     view: {
       title: '',

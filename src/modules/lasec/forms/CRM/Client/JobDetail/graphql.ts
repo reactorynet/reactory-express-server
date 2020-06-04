@@ -21,6 +21,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'formData.id': 'id',
     },
     resultMap: {
+      'id': 'id',
       'customer.accountType': 'accountType',
       'salesTeam': 'repCode',
       'jobTitle': 'jobTitle',
@@ -53,7 +54,19 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.clientClass': 'clientInfo.clientClass',
         'formData.ranking': 'clientInfo.ranking',
       },
-      onSuccessMethod: 'refresh'
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Job details successfully updated.',
+        props: {
+          timeOut: 3000,
+          canDismiss: false,
+        }
+      },
+      onError: {
+        componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+        method: 'onGraphQLQueryError',
+      },
     }
   }
 };
@@ -78,20 +91,20 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         }
       }
     }`,
-    variables: {    
-      
+    variables: {
+
     },
     resultMap: {
       'id': 'id',
-      'jobDetails.jobTitle': 'jobTitle',      
+      'jobDetails.jobTitle': 'jobTitle',
       'jobDetails.jobType': 'jobType',
       'jobDetails.salesTeam': 'salesTeam',
       'jobDetails.lineManager': 'lineManager',
       'jobDetails.customerType': 'customerType',
-      'jobDetails.faculty': 'faculty',                        
-      'jobDetails.clientDepartment':'clientDepartment',
-      'jobDetails.ranking':'ranking',
-      'jobDetails.customerClass':'customerClass',
+      'jobDetails.faculty': 'faculty',
+      'jobDetails.clientDepartment': 'clientDepartment',
+      'jobDetails.ranking': 'ranking',
+      'jobDetails.customerClass': 'customerClass',
 
     },
     autoQuery: true,
@@ -121,25 +134,25 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       }`,
       objectMap: true,
       updateMessage: 'Updating Personal Content',
-      variables: {    
+      variables: {
         'eventData.formData': 'newClient.jobDetails',
       },
       // handledBy: 'onChange',
       resultType: 'object',
       resultMap: {
         'id': 'id',
-        'jobDetails.jobTitle': 'jobTitle',      
+        'jobDetails.jobTitle': 'jobTitle',
         'jobDetails.jobType': 'jobType',
         'jobDetails.salesTeam': 'salesTeam',
         'jobDetails.lineManager': 'lineManager',
         'jobDetails.customerType': 'customerType',
-        'jobDetails.faculty': 'faculty',                        
-        'jobDetails.clientDepartment':'clientDepartment',
-        'jobDetails.ranking':'ranking',
-        'jobDetails.customerClass':'customerClass',     
+        'jobDetails.faculty': 'faculty',
+        'jobDetails.clientDepartment': 'clientDepartment',
+        'jobDetails.ranking': 'ranking',
+        'jobDetails.customerClass': 'customerClass',
       },
     }
-  },  
+  },
 };
 
 export default graphql;

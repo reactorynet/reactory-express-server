@@ -603,7 +603,7 @@ export const confirmUiSchema: any = {
 
 
 const schema: Reactory.ISchema = { ...ClientSchema };
-schema.required = ["firstName", "lastName", "country", "accountType", "repCode"];
+schema.required = ["firstName", "lastName", "country"];
 schema.title = "PERSONAL"
 
 const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {

@@ -416,11 +416,9 @@ const getClient = async (params) => {
 };
 
 const updateCientDetail = async (args) => {
+  logger.debug(`>> >> >> UPDATE PARAMS:: `, args);
   try {
-    logger.debug(`>> >> >> UPDATE PARAMS:: `, args);
-
     const params = args.clientInfo;
-
     const preFetchClientDetails = await lasecApi.Customers.list({ filter: { ids: [params.clientId] } });
 
     let clients = [...preFetchClientDetails.items];
@@ -447,24 +445,18 @@ const updateCientDetail = async (args) => {
         customer_class_id: params.clientClass || (client.customer_class_id || ''),
         sales_team_id: params.repCode || (client.sales_team || ''),
       }
-
       const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams);
-      logger.debug(`RESOLVER UPDATE RESPONSE:: ${JSON.stringify(apiResponse)}`, apiResponse);
 
       return {
         Success: apiResponse.success,
       };
     }
 
-    return {
-      Success: false
-    }
+    throw new ApiError('Could not update client details. Please try again.');
   }
   catch (ex) {
-    logger.error(`ERROR UPDATING CLIENT DETAISL::  ${ex}`);
-    return {
-      Success: false
-    }
+    logger.error(`ERROR UPDATING CLIENT DETAILS::  ${ex}`);
+    throw new ApiError('Error updating client details. Please try again');
   }
 }
 
@@ -623,6 +615,8 @@ interface CustomerDocumentQueryParams {
 
 const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
 
+  logger.debug(`DOCUMENT PARAMS:: ${JSON.stringify(params)}`);
+
   const _docs: any[] = []
 
   if (params.id && params.id !== 'new') {
@@ -669,7 +663,11 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
 
   if (params.paging) {
 
-    let skipCount: number = params.paging.page - 1 * params.paging.pageSize;
+    let skipCount: number = (params.paging.page - 1) * params.paging.pageSize;
+
+    logger.debug(`TO FILTER :: ${params.paging.page}  ${params.paging.pageSize}   ${skipCount}`);
+    const toreturn = lodash(_docs).drop(skipCount).take(params.paging.pageSize);
+    logger.debug(`TO RETURN :: ${JSON.stringify(toreturn)}`);
 
     return {
       documents: lodash(_docs).drop(skipCount).take(params.paging.pageSize),
@@ -784,7 +782,7 @@ const getCustomerList = async (params) => {
       'id': ['id', 'accountNumber'],
       'registered_name': 'registeredName',
       'trading_name': 'tradingName',
-      'sales_team_id': 'salesTeam',    
+      'sales_team_id': 'salesTeam',
     });
     return _customer;
   });
@@ -1030,11 +1028,6 @@ function isFileValid(filename: string, mimetype: string) {
 
 
 const uploadDocument = async (args: any) => {
-
-  // NOTE
-  // This will only upload a file
-  // Need to create additional function to save file and associate to customer
-
   return new Promise(async (resolve, reject) => {
 
     const { createReadStream, filename, mimetype, encoding } = await args.file;

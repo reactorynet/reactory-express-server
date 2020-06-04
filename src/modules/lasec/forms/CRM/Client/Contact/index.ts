@@ -384,7 +384,7 @@ const newUiSchema: any = {
       alternateEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
       confirmAlternateEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
       mobileNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
-      alternateMobileNumber: { xs: 12, sm: 12, md: 6, lg: 4 },      
+      alternateMobileNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
       officeNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
       alternateNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
       prefferedMethodOfContact: { xs: 12, sm: 12, md: 6, lg: 4 },
@@ -436,7 +436,7 @@ const newUiSchema: any = {
 const schema: Reactory.ISchema = {
   type: "object",
   title: "CONTACT DETAILS",
-  required: ['emailAddress', 'confirmEmail', 'mobileNumber', 'officeNumber'],
+  required: ['emailAddress', 'mobileNumber', 'officeNumber'],
   properties: {
     view: {
       title: '',
@@ -447,13 +447,13 @@ const schema: Reactory.ISchema = {
       title: "Email Address",
       format: "email",
     },
-    confirmEmail: {
-      type: "string",
-      title: "Confirm Email Address",
-    },
+    // confirmEmail: {
+    //   type: "string",
+    //   title: "Confirm Email Address",
+    // },
     alternateEmail: {
       type: "string",
-      title: "Alternate Email",      
+      title: "Alternate Email",
     },
     confirmAlternateEmail: {
       type: "string",
