@@ -300,6 +300,9 @@ declare namespace Reactory {
     uiResources?: any[],
     title: String,
     tags?: String[],
+    display?: boolean,
+    className?: String,
+    style?: any,
     helpTopics?: String[]
     schema: ISchema | IObjectSchema | IArraySchema,
     sanitizeSchema?: ISchema | IObjectSchema | IArraySchema,

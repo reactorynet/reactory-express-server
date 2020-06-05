@@ -106,6 +106,7 @@ const uiSchema: any = {
   tabs: {
     'ui:widget': 'TabbedNavWidget',
     'ui:options': {
+      numberOfVisibleTabs: 5,
       activeTab: '${formContext.$route.params.tab}',
     }
   },

@@ -1449,12 +1449,7 @@ export default {
     }
   },
   LasecCRMClient: {
-    creditLimit: async (parent, obj) => {
-      return 10;
-    },
-    availableBalance: async (parent, obj) => {
-      return 10;
-    },
+    availableBalance: async (parent: any, { currentBalance = 0 }) => currentBalance,
   },
   LasecNewClient: {
     customer: async (parent, obj) => {
@@ -1488,13 +1483,7 @@ export default {
       }
 
       return `${code} (${symbol})`;
-    },
-    creditLimit: async (parent, obj) => {
-      return 100;
-    },
-    availableBalance: async (parent, obj) => {
-      return 100;
-    },
+    },   
     documents: async (parent, object) => {
       return getCustomerDocuments({ id: parent.id });
     },

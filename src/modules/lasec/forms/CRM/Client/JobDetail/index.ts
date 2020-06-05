@@ -1,7 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql, { newClientGraphQL } from './graphql';
-import { AccountTypeDropdownUISchema } from 'modules/lasec/forms/widgets';
+import { AccountTypeDropdownUISchema } from '@reactory/server-core/modules/lasec/forms/widgets';
 
 export const displayUiSchema: any = {
   'ui:options': {

@@ -10,6 +10,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         fullName
         emailAddress      
         country
+        accountType
         customer {
           id
           tradingName
@@ -17,7 +18,9 @@ const graphql: Reactory.IFormGraphDefinition = {
           customerStatus
           country
           creditLimit
-          availableBalance
+          currentBalance
+          currencyCode
+          currencySymbol
         }
       }      
     }`,
@@ -28,9 +31,13 @@ const graphql: Reactory.IFormGraphDefinition = {
       'id': 'id',
       'clientStatus': 'clientStatus',
       'fullName': 'fullName',
+      'accountType': 'accountType',
       'customer.customerStatus': 'customerStatus', 
       'customer.accountNumber':'accountNumber',
-      'customer.tradingName': 'customer',     
+      'customer.tradingName': 'customer',
+      'customer.currentBalance': 'currentBalance',
+      'customer.creditLimit': 'creditLimit',
+      'customer.currencyCode': 'currency',
     },
     autoQuery: true,
     queryMessage: 'Loading customer details',

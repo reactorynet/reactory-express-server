@@ -1,11 +1,12 @@
 import { Reactory } from "@reactory/server-core/types/reactory";
 
+
 let uiSchema : any = {
   'ui:options': {
     toolbarPosition: 'none',
     showSubmit: false,
     showRefresh: false,
-    showBack: true,
+    showBack: false,
     componentType: "div",
     container: "div",
     containerStyles: {
@@ -13,6 +14,11 @@ let uiSchema : any = {
       marginTop: '-20px',      
     }
   },
+  'ui:widget': 'ClientDetailHeaderWidget',
+};
+
+export default uiSchema;
+/*  
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
@@ -138,4 +144,4 @@ let uiSchema : any = {
   }
 };
 
-export default uiSchema;
+*/
