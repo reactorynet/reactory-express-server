@@ -8,7 +8,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         id
         clientStatus
         fullName
-        emailAddress      
+        emailAddress
         country
         customer {
           id
@@ -17,19 +17,23 @@ const graphql: Reactory.IFormGraphDefinition = {
           customerStatus
           country
         }
-      }      
+      }
     }`,
     variables: {
-      'formData.id': 'id',            
+      'formData.id': 'id',
     },
-    resultMap: {      
-      '.*': 'formData.*',      
+    resultMap: {
+      '.*': 'formData.*',
     },
     autoQuery: false,
     queryMessage: 'Loading customer details',
     resultType: 'object',
     edit: false,
     new: false,
+    onError: {
+      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+      method: 'onGraphQLQueryError',
+    },
   }
 };
 

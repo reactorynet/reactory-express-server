@@ -36,6 +36,10 @@ const graphql: Reactory.IFormGraphDefinition = {
     refreshEvents: [
       {name: 'lasec-crm::new-document::uploaded'}
     ],
+    onError: {
+      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+      method: 'onGraphQLQueryError',
+    },
   },
   mutation: {
     new: {

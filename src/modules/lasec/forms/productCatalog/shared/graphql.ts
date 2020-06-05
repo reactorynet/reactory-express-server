@@ -147,5 +147,9 @@ export default {
     resultType: 'object',
     edit: false,
     new: false,
+    onError: {
+      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+      method: 'onGraphQLQueryError',
+    },
   },
 };

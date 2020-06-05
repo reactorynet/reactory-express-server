@@ -5,7 +5,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     name: 'LasecGetClientDetail',
     text: `query LasecGetClientDetail($id: String!){
       LasecGetClientDetail(id: $id){
-        id        
+        id
         customer {
           id
           currencySymbol
@@ -16,30 +16,34 @@ const graphql: Reactory.IFormGraphDefinition = {
           balance60Days
           balance90Days
           balance120Days
-          creditTotal 
+          creditTotal
         }
-      }      
+      }
     }`,
     variables: {
-      'formData.id': 'id',            
+      'formData.id': 'id',
     },
-    resultMap: {      
+    resultMap: {
       'id': 'id',
-      'customer.creditLimit': 'creditLimit', 
+      'customer.creditLimit': 'creditLimit',
       'customer.currencySymbol': 'currencySymbol',
-      'customer.currentBalance': 'currentBalance', 
-      'customer.currentInvoice': 'currentInvoice', 
-      'customer.balance30Days': 'balance30Days', 
-      'customer.balance60Days': 'balance60Days', 
-      'customer.balance90Days': 'balance90Days', 
-      'customer.balance120Days': 'balance120Days', 
-      'customer.creditTotal': 'creditTotal', 
+      'customer.currentBalance': 'currentBalance',
+      'customer.currentInvoice': 'currentInvoice',
+      'customer.balance30Days': 'balance30Days',
+      'customer.balance60Days': 'balance60Days',
+      'customer.balance90Days': 'balance90Days',
+      'customer.balance120Days': 'balance120Days',
+      'customer.creditTotal': 'creditTotal',
     },
     autoQuery: true,
     queryMessage: 'Loading customer details',
     resultType: 'object',
     edit: false,
     new: false,
+    onError: {
+      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+      method: 'onGraphQLQueryError',
+    },
   }
 };
 

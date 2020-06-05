@@ -140,7 +140,23 @@ const tableUiSchema: any = {
             width: '200px'
           }
         },
-        { title: 'Stock Code', field: 'code' },
+        {
+          title: 'Stock Code',
+          field: 'code',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'p',
+                copyToClipboard: true,
+                format: '${rowData.code}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.code': 'value',
+          }
+        },
         { title: 'Description', field: 'name' },
         {
           title: 'Unit of Measure',
@@ -181,6 +197,7 @@ const tableUiSchema: any = {
         {
           title: 'Qty on Hand',
           field: 'qtyOnHand',
+          breakpoint: 'sm',
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
@@ -196,6 +213,7 @@ const tableUiSchema: any = {
         {
           title: 'Qty on PO',
           field: 'qtyOnOrder',
+          breakpoint: 'sm',
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
@@ -253,10 +271,10 @@ const tableUiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
-        fixedColumns: {
-          left: 5,
-        },
-        tableLayout: 'fixed',
+        // fixedColumns: {
+        //   left: 5,
+        // },
+        // tableLayout: 'fixed',
       },
       remoteData: true,
       query: 'query',
