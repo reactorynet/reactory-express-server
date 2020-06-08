@@ -27,6 +27,9 @@ export default {
           wh10CostPrice
           threeMonthAvePrice
           listPrice
+          onSpecial
+          currencyCode
+          specialPrice
           productPricing {
             cost_price_cents
             max_price_cents
@@ -65,6 +68,9 @@ export default {
       'products.[].threeMonthAvePrice': 'products.[].threeMonthAvePrice',
       'products.[].listPrice': 'products.[].listPrice',
       'products.[].productPricing': 'products.[].productPricing',
+      'products.[].onSpecial': 'products.[].onSpecial',
+      'products.[].currencyCode': 'products.[].currencyCode',
+      'products.[].specialPrice': 'products.[].specialPrice',
     },
     resultType: 'object',
     edit: false,

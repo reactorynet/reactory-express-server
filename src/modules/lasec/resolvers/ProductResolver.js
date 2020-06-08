@@ -221,6 +221,9 @@ const getProducts = async (params) => {
       lastReceived: prd.last_received ? moment(prd.last_received).format('DD MMM YYYY') : '',
       supplyCurrency: prd.supplier_currency,
       listCurrency: prd.list_currency,
+      onSpecial: prd.on_special,
+      specialPrice: prd.special_price_cents,
+      currencyCode: prd.currency_code,
     };
 
     productResult.productPricing = [];
@@ -236,9 +239,6 @@ const getProducts = async (params) => {
   products = products.map(async (prod) => {
     const productCostingsDetails = await lasecApi.Products.costings({ filter: { ids: [prod.id] }, pagination: { page_size: paging.pageSize } }).then();
     const costing = productCostingsDetails.items[0];
-
-    logger.debug(`COSTING ${JSON.stringify(costing)}`);
-
     return {
       ...prod,
       supplier: costing.supplier_name,
