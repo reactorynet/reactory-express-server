@@ -37,13 +37,13 @@ const graphql: Reactory.IFormGraphDefinition = {
             currency_description
             special_price_cents
           }
-        }        
+        }
       }
     }`,
     variables: {
       'formData.product': 'product',
       'formData.paging': 'paging'
-    },    
+    },
     resultMap: {
       'paging': 'paging',
       'products.[].id': 'products.[].id',
@@ -63,7 +63,11 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultType: 'object',
     edit: false,
     new: false,
+    onError: {
+      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+      method: 'onGraphQLQueryError',
+    },
   }
 };
 
-export default graphql; 
+export default graphql;

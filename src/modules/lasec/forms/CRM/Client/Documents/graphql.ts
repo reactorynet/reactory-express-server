@@ -8,25 +8,26 @@ const graphql: Reactory.IFormGraphDefinition = {
         paging {
           total
           page
-          pageSize          
+          pageSize
         }
         documents {
           id
           filename
           link
           size
-        }        
-      }      
+        }
+      }
     }`,
-    variables: {      
-      'formData.$uploadContexts': 'uploadContexts'            
+    variables: {
+      'formData.$uploadContexts': 'uploadContexts',
+      'formData.paging': 'paging'
     },
     formData: {
       $uploadContext: [
         'lasec-crm::new-company::document',
         'lasec-crm::company-document'
       ]
-    },    
+    },
     autoQuery: true,
     queryMessage: 'Loading customer documents',
     resultType: 'object',
@@ -35,6 +36,10 @@ const graphql: Reactory.IFormGraphDefinition = {
     refreshEvents: [
       {name: 'lasec-crm::new-document::uploaded'}
     ],
+    onError: {
+      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+      method: 'onGraphQLQueryError',
+    },
   },
   mutation: {
     new: {
@@ -48,7 +53,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         }
       }`,
       notification: {
-        
+
       },
       variables: {
 

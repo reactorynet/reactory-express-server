@@ -27,7 +27,7 @@ export const uiSchemaTable: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     { view: { sm: 12, md: 12, lg: 12 } },
-    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0} }
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
@@ -138,7 +138,23 @@ export const uiSchemaTable: any = {
             width: '200px'
           }
         },
-        { title: 'Stock Code', field: 'code' },
+        {
+          title: 'Stock Code',
+          field: 'code',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'p',
+                copyToClipboard: true,
+                format: '${rowData.code}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.code': 'value',
+          }
+        },
         { title: 'Description', field: 'name' },
         {
           title: 'Unit of Measure',
@@ -236,7 +252,7 @@ export const uiSchemaGrid: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     { view: { sm: 12, md: 12, lg: 12 } },
-    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0} }
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',

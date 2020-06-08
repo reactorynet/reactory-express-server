@@ -84,7 +84,23 @@ import $schema from '../shared/schema';
               'rowData.image': 'value',
             },
           },
-          { title: 'Stock Code', field: 'code' },
+          {
+            title: 'Stock Code',
+            field: 'code',
+            component: 'core.LabelComponent@1.0.0',
+            props: {
+              uiSchema: {
+                'ui:options': {
+                  variant: 'p',
+                  copyToClipboard: true,
+                  format: '${rowData.code}'
+                }
+              },
+            },
+            propsMap: {
+              'rowData.code': 'value',
+            }
+          },
           { title: 'Description', field: 'name' },
           {
             title: 'Unit of Measure',

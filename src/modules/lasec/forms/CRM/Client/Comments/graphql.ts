@@ -31,6 +31,10 @@ const graphql: Reactory.IFormGraphDefinition = {
     queryMessage: 'Loading client comments',
     edit: true,
     new: false,
+    onError: {
+      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+      method: 'onGraphQLQueryError',
+    },
     // autoQuery: true,
   },
   mutation: {

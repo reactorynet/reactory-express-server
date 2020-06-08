@@ -144,8 +144,8 @@ declare namespace Reactory {
    * The base UISchema definition
    */
   export interface IUISchema {
-    'ui:widget'?: string | "null", 
-    'ui:options'? : object | "null"  
+    'ui:widget'?: string | "null",
+    'ui:options'? : object | "null"
   }
 
   export interface IObjectSchema extends ISchema {
@@ -203,9 +203,10 @@ declare namespace Reactory {
     refreshEvents?: IReactoryEvent[] | undefined
     onSuccessUrl?: String,
     onSuccessRedirectTimeout?: number,
+    onError?: IReactoryFormQueryErrorHandlerDefinition,
     options?: any,
     notification?: any,
-    handledBy?:String | 'onChange' | 'onSubmit' 
+    handledBy?:String | 'onChange' | 'onSubmit'
   }
 
   export interface IReactoryFormMutations {
@@ -314,7 +315,7 @@ declare namespace Reactory {
     version: String,
     roles?: String[],
     components?: String[],
-    graphql?: IFormGraphDefinition,    
+    graphql?: IFormGraphDefinition,
     defaultFormValue?: any,
     defaultPdfReport?: IReactoryPdfReport,
     defaultExport?: IExport,

@@ -29,21 +29,21 @@ const displayUiSchema: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
-    schemaSelector: {
-      variant: 'button',
-      buttonTitle: 'Edit',
-      activeColor: 'primary',
-      selectSchemaId: 'edit',
-      style: {
-        position: 'absolute',
-        top: '-20px',
-        right: 0,
-      }
-    },
+    // schemaSelector: {
+    //   variant: 'button',
+    //   buttonTitle: 'Edit',
+    //   activeColor: 'primary',
+    //   selectSchemaId: 'edit',
+    //   style: {
+    //     position: 'absolute',
+    //     top: '-20px',
+    //     right: 0,
+    //   }
+    // },
     style: {
       marginTop: '16px',
     },
-    showSchemaSelectorInToolbar: false,
+    // showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
   },
@@ -52,31 +52,31 @@ const displayUiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
+    // {
+    //   view: { sm: 12, md: 12, lg: 12 },
+    // },
     {
-      view: { sm: 12, md: 12, lg: 12 },
-    },
-    {
-      customerStatus: { sm: 12, md: 12, lg: 12 },
-      registeredCompanyName: { sm: 12, md: 12, lg: 12 },
-      tradingName: { sm: 12, md: 12, lg: 12 },
-      tradingCurrency: { sm: 12, md: 12, lg: 12 },
-      description: { sm: 12, md: 12, lg: 12 },
-      physicalAddress: { sm: 12, md: 12, lg: 12 },
-      deliveryAddress: { sm: 12, md: 12, lg: 12 },
-      billingAddress: { sm: 12, md: 12, lg: 12 },
-      registrationNumber: { sm: 12, md: 12, lg: 12 },
-      taxNumber: { sm: 12, md: 12, lg: 12 }
+      customerStatus: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
+      registeredCompanyName: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
+      tradingName: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
+      tradingCurrency: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
+      description: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
+      physicalAddress: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
+      deliveryAddress: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
+      billingAddress: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
+      registrationNumber: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
+      taxNumber: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } }
     }
   ],
-  view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      style: {
-        width: '100%',
-        float: "right"
-      },
-    }
-  },
+  // view: {
+  //   'ui:widget': 'SchemaSelectorWidget',
+  //   'ui:options': {
+  //     style: {
+  //       width: '100%',
+  //       float: "right"
+  //     },
+  //   }
+  // },
   customerStatus: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -157,6 +157,7 @@ const displayUiSchema: any = {
   }
 };
 
+// NOT IN USE
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -165,30 +166,30 @@ const editUiSchema: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
-    schemaSelector: {
-      variant: 'button',
-      buttonTitle: 'CANCEL',
-      activeColor: 'secondary',
-      buttonVariant: "contained",
-      selectSchemaId: 'display',
-      style: {
-        position: 'absolute',
-        top: '-20px',
-        right: 0,
-      }
-    },
+    // schemaSelector: {
+    //   variant: 'button',
+    //   buttonTitle: 'CANCEL',
+    //   activeColor: 'secondary',
+    //   buttonVariant: "contained",
+    //   selectSchemaId: 'display',
+    //   style: {
+    //     position: 'absolute',
+    //     top: '-20px',
+    //     right: 0,
+    //   }
+    // },
     style: {
       marginTop: '16px',
     },
-    showSchemaSelectorInToolbar: false,
+    // showSchemaSelectorInToolbar: false,
     showSubmit: true,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    {
-      view: { sm: 12, md: 12, lg: 12 },
-    },
+    // {
+    //   view: { sm: 12, md: 12, lg: 12 },
+    // },
     {
       customerStatus: { sm: 12, md: 12, lg: 12 },
       registeredCompanyName: { sm: 12, md: 12, lg: 12 },
@@ -202,15 +203,15 @@ const editUiSchema: any = {
       taxNumber: { sm: 12, md: 12, lg: 12 }
     }
   ],
-  view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      style: {
-        width: '100%',
-        float: "right"
-      },
-    }
-  },
+  // view: {
+  //   'ui:widget': 'SchemaSelectorWidget',
+  //   'ui:options': {
+  //     style: {
+  //       width: '100%',
+  //       float: "right"
+  //     },
+  //   }
+  // },
   customerStatus: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -288,10 +289,10 @@ const schema: Reactory.ISchema = {
   type: 'object',
   title: "CUSTOMER DETAILS",
   properties: {
-    view: {
-      title: '',
-      type: 'string'
-    },
+    // view: {
+    //   title: '',
+    //   type: 'string'
+    // },
     customerStatus: {
       type: 'string',
       title: 'Customer Status'
