@@ -208,7 +208,7 @@ const readOnlySchema = {
   },
 
   billingAddress: {
-    'ui:widget': 'LabelWidget',
+    'ui:widget': 'HiddenWidget',
     'ui:options': {
       format: '${formData.fullAddress}',
       variant: 'subtitle1',
@@ -231,13 +231,20 @@ const readOnlySchema = {
 
 };
 
-const newUiSchema: any = {
+let newUiSchema: any = {
   'ui:graphql': newClientGraphQL,
-  ...baseUiSchema
+  ...baseUiSchema,
+  'ui:grid-layout': [
+    {
+      physicalAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+      deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+    },
+  ],
 };
 
-export const NewUiSchema = newUiSchema;
+delete newUiSchema.billingAddress;
 
+export const NewUiSchema = newUiSchema;
 
 export const ReadOnlyUiSchema = readOnlySchema;
 

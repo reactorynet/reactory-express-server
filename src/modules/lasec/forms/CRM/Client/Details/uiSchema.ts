@@ -45,7 +45,7 @@ const uiSchema: any = {
     'ui:options': {
       componentFqn: 'lasec-crm.LasecClientOverviewWidget@1.0.0',
       componentPropsMap: {
-        'formContext.formData.id': 'formData.id',
+        'formContext.$formData.id': 'formData.id',
       }
     }
   },
