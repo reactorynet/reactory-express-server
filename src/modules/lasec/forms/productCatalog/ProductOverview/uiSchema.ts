@@ -225,7 +225,63 @@ const tableUiSchema: any = {
               }
             },
           },
-        },{
+        },
+        {
+          title: 'On Special',
+          field: 'onSpecial',
+          component: 'core.ConditionalIconComponent@1.0.0',
+          props: {
+            'ui:options': {},
+            conditions: [
+              {
+                key: 'true',
+                icon: 'monetization_on',
+                style: {
+                  color: '#9AD86E'
+                },
+                tooltip: 'ON SPECIAL'
+              },
+              {
+                key: 'false',
+                icon: 'monetization_on',
+                style: {
+                  color: '#969696'
+                },
+                tooltip: 'NOT ON SPECIAL'
+              },
+            ]
+          },
+          propsMap: {
+            'rowData.onSpecial': 'value',
+          },
+        },
+        {
+          title: 'Special Price', field: 'price',
+          component: 'core.StyledCurrencyLabel@1.0.0',
+          props: {
+            displayAdditionalCurrencies: true,
+            displayPrimaryCurrency: false,
+            currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
+            region: 'en-IN',
+            uiSchema: {
+              'ui:options': {
+                prependText: '(ZAR)',
+                additionalCurrencyMapField: 'special_price_cents',
+                showZeroValues: false,
+                defaultStyle: {
+                  borderBottom: '1px solid #E1E1E4'
+                },
+                conditionalStyles: []
+              }
+            },
+          },
+          propsMap: {
+            'rowData.price': ['value', 'formData'],
+            'rowData.priceAdditionalInfo': ['condition'],
+            'rowData.productPricing': 'currencies',
+          },
+        },
+        {
           title: 'Price', field: 'price',
           component: 'core.StyledCurrencyLabel@1.0.0',
           props: {
@@ -297,6 +353,7 @@ const tableUiSchema: any = {
         'products.[].onSyspro': 'data.[].onSyspro',
         'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
         'products.[].productPricing.[]': 'data.[].productPricing.[]',
+        'products.[].onSpecial': 'data.[].onSpecial',
       },
     },
   }
@@ -387,7 +444,10 @@ const gridUiSchemaGrid: any = {
               currency: 'ZAR',
               icon: ''
             },
-          ]
+          ],
+          currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
+          showSpecialPricing: true,
+          hasPricingChart: true,
         },
       },
       loadingMessage: 'Loading product overview, please wait a moment',
@@ -432,6 +492,10 @@ const gridUiSchemaGrid: any = {
         'products.[].model': 'data.[].model',
         'products.[].shipmentSize': 'data.[].shipmentSize',
         'products.[].exWorksFactor': 'data.[].exWorksFactor',
+        'products.[].productPricing.[]': 'data.[].productPricing',
+        'products.[].onSpecial': 'data.[].onSpecial',
+        'products.[].currencyCode': 'data.[].currencyCode',
+        'products.[].specialPrice': 'data.[].specialPrice',
       },
     },
   }
