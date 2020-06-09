@@ -24,7 +24,14 @@ const graphql: Reactory.IFormGraphDefinition = {
           price
           priceAdditionalInfo
           image
+          landedPrice
+          wh10CostPrice
+          threeMonthAvePrice
+          listPrice
           onSyspro
+          onSpecial
+          currencyCode
+          specialPrice
           productPricing {
             cost_price_cents
             max_price_cents
@@ -58,7 +65,14 @@ const graphql: Reactory.IFormGraphDefinition = {
       'products.[].image': 'products.[].image',
       'products.[].onSyspro': 'products.[].onSyspro',
       'products.[].priceAdditionalInfo': 'products.[].priceAdditionalInfo',
+      'products.[].landedPrice': 'products.[].landedPrice',
+      'products.[].wh10CostPrice': 'products.[].wh10CostPrice',
+      'products.[].threeMonthAvePrice': 'products.[].threeMonthAvePrice',
+      'products.[].listPrice': 'products.[].listPrice',
       'products.[].productPricing': 'products.[].productPricing',
+      'products.[].onSpecial': 'products.[].onSpecial',
+      'products.[].currencyCode': 'products.[].currencyCode',
+      'products.[].specialPrice': 'products.[].specialPrice',
     },
     resultType: 'object',
     edit: false,
