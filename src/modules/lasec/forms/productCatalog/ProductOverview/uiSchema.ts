@@ -225,8 +225,7 @@ const tableUiSchema: any = {
               }
             },
           },
-        },
-        {
+        },{
           title: 'Price', field: 'price',
           component: 'core.StyledCurrencyLabel@1.0.0',
           props: {

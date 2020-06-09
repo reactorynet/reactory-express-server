@@ -75,6 +75,9 @@ type Product {
   markup: String
   sellingPrice: String
 
+  onSpecial: Boolean
+  currencyCode: String
+  specialPrice: Float
 }
 
 type ProductQueryDetail {
@@ -120,7 +123,11 @@ type PagedProductResult {
 }
 
 extend type Query {
-  LasecGetProductList(product: String, paging: PagingRequest, iter: Int): PagedProductResult
+  LasecGetProductList(
+    product: String
+    paging: PagingRequest
+    iter: Int
+  ): PagedProductResult
   LasecGetProductById: [Product]
   LasecGetProductQueryDetail(productId: String!): ProductQueryDetail
   LasecGetProductClassList: [ProductClass]
