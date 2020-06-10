@@ -293,8 +293,29 @@ type SalesOrder {
   iso: Int
   customer: String
   client: String
-  poNumber: Int
+  poNumber: String
   value: Int
+  quoteId: String
+  currency: String
+  deliveryAddress: String
+  warehouseNote: String
+  deliveryNote: String
+  salesTeam: String
+}
+
+type SalesOrderLineItem {
+  id: String
+  line: Int
+  productCode: String
+  productDescription: String
+  unitOfMeasure: String
+  price: Float
+  totalPrice: Float
+  orderQty: Int
+  shippedQty: Int
+  backOrderQty: Int
+  reservedQty: Int
+  comment: String
 }
 
 type Invoice {
@@ -380,6 +401,7 @@ extend type Query {
     periodEnd: String
     iter: Int
   ): PagedCRMSalesOrders
+  LasecGetISODetail(orderId: String!): [SalesOrderLineItem]
   LasecGetCRMClientInvoices(
     clientId: String
     search: String!

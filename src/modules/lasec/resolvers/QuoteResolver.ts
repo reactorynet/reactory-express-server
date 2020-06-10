@@ -38,6 +38,7 @@ import {
   getPagedClientQuotes,
   lasecGetQuoteLineItems,
   getClientSalesOrders,
+  getISODetails,
   getClientInvoices,
   getClientSalesHistory
  } from './Helpers';
@@ -500,6 +501,9 @@ export default {
     },
     LasecGetCRMClientSalesOrders: async (obj, args) => {
       return getClientSalesOrders(args);
+    },
+    LasecGetISODetail: async (obj, args) => {
+      return getISODetails(args);
     },
     LasecGetCRMClientInvoices: async (obj, args) => {
       return getClientInvoices(args);
