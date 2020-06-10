@@ -79,6 +79,7 @@ export default {
   quote_create_pdf: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/create_quote_pdf/`, allowed_methods: ['post'] },
   quote_section_header: { url: 'api/quote_heading', allowed_methods: ['post', 'put', 'delete', 'get'] },
   sales_order: { url: `api/${ENTITY_KEY__SALES_ORDER}/`, allowed_methods: ['post', 'get'] },
+  sales_order_item: { url: `api/${ENTITY_KEY__SALES_ORDER_ITEM}/`, allowed_methods: ['get'] },
   purchase_order: { url: `api/${ENTITY_KEY__PURCHASE_ORDER}/`, allowed_methods: ['get'] },
   product_get: { url: `api/${ENTITY_KEY__PRODUCT}/`, allowed_methods: ['get'] },
   product_costing_get: { url: `api/${ENTITY_KEY__PRODUCT_COSTING}/`, allowed_methods: ['get'] },
@@ -97,7 +98,7 @@ export default {
   createOrganisation: { url: `api/${ENTITY_KEY__ORGANISATION}/\\d+/`, allowed_methods: ['put'] },
   address: { url: `api/${ENTITY_KEY__ADDRESS}/`, allowed_methods: ['get', 'post'] },
   new_address: { url: `api/${ENTITY_KEY__ADDRESS}/`, allowed_methods: ['get', 'post'] },
-  
+
 
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },

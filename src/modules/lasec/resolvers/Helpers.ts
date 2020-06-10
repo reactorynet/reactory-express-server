@@ -1498,18 +1498,6 @@ export const getClientSalesOrders = async (params) => {
     }
   }).then();
 
-  //order_status: "1"
-  // const salesOrdersIds = await lasecApi.SalesOrders.list(
-  //   {
-  //     filter: {
-  //       // product_id: productId,
-  //       customer_id: clientId,
-  //       order_status: "1"
-  //     },
-  //     ordering: { order_date: "desc" },
-  //     pagination: { page_size: paging.pageSize || 10, current_page: paging.page }
-  //   }).then();
-
   let ids = [];
 
   if (isArray(salesOrdersIds.ids) === true) {
@@ -1541,7 +1529,13 @@ export const getClientSalesOrders = async (params) => {
       client: order.customer_name,
       poNumber: order.sales_order_number,
       value: order.order_value,
-      reserveValue: order.reserved_value
+      reserveValue: order.reserved_value,
+      quoteId: order.quote_id,
+      currency: order.currency,
+      deliveryAddress: order.delivery_address,
+      warehouseNote: order.warehouse_note,
+      deliveryNote: order.delivery_note,
+      salesTeam: order.sales_team_id
     }
   });
 
@@ -1552,6 +1546,50 @@ export const getClientSalesOrders = async (params) => {
 
   return result;
 
+}
+
+export const getISODetails = async (params) => {
+
+  const {
+    orderId,
+    quoteId
+  } = params;
+
+  let apiFilter = { sales_order_id: orderId };
+
+  let salesOrdersIds = await lasecApi.SalesOrders.detail({ filter: apiFilter }).then();
+
+  let ids = [];
+
+  if (isArray(salesOrdersIds.ids) === true) {
+    ids = [...salesOrdersIds.ids];
+  }
+
+  let salesOrdersDetail = await lasecApi.SalesOrders.detail({ filter: { ids: ids } }).then();
+  let salesOrders = [...salesOrdersDetail.items];
+
+  logger.debug(`SALES ORDERS:: ${JSON.stringify(salesOrders)}`);
+
+  const lineItems = salesOrders.slice(0,1).map(li => {
+    return {
+      id: li.id,
+      line: li.line,
+      productCode: li.product_code,
+      productDescription: li.product_description,
+      unitOfMeasure: li.unit_of_measure,
+      price: li.price,
+      totalPrice: li.total_price,
+      orderQty: li.order_qty,
+      shippedQty: li.shipped_qty,
+      backOrderQty: li.back_order_qty,
+      reservedQty: li.reserved_qty,
+      comment: li.comment
+    }
+  });
+
+  logger.debug(`SALES tO RETUSN :: ${JSON.stringify(lineItems)}`);
+
+  return lineItems;
 }
 
 export const getClientInvoices = async (params) => {

@@ -311,48 +311,48 @@ const Api = {
     /**
      * Uploads a document to the lasec API against a particular customer
      */
-    upload: async (documentInfo, customerInfo) => {                  
+    upload: async (documentInfo, customerInfo) => {
       logger.debug(`Uploading document to LasecAPI`, { documentInfo, customerInfo });
       /**
-       * 
-        { 
-          "_id" : ObjectId("5ea98b4269577f4ca87e8f5d"), 
+       *
+        {
+          "_id" : ObjectId("5ea98b4269577f4ca87e8f5d"),
           "alt" : [
 
-          ], 
-          "uploadContext" : "lasec-crm::new-company::document::5df902cd900adc04d9ab634e", 
-          "public" : false, 
-          "published" : false, 
+          ],
+          "uploadContext" : "lasec-crm::new-company::document::5df902cd900adc04d9ab634e",
+          "public" : false,
+          "published" : false,
           "tags" : [
 
-          ], 
-          "id" : ObjectId("5ea98b424922bb4ca8872207"), 
-          "filename" : "david_spade.png", 
-          "mimetype" : "image/png", 
-          "alias" : "b9ae20dfb144db63474a0a622742fd67df8a991b.png", 
-          "partner" : ObjectId("5ea98b424922bb4ca8872208"), 
-          "owner" : ObjectId("5ea98b424922bb4ca8872209"), 
-          "uploadedBy" : ObjectId("5ea98b424922bb4ca887220a"), 
-          "size" : NumberInt(29753), 
-          "hash" : NumberInt(-1697330410), 
-          "link" : "http://localhost:4000/cdn/content/files/b9ae20dfb144db63474a0a622742fd67df8a991b.png", 
-          "path" : "content/files/", 
+          ],
+          "id" : ObjectId("5ea98b424922bb4ca8872207"),
+          "filename" : "david_spade.png",
+          "mimetype" : "image/png",
+          "alias" : "b9ae20dfb144db63474a0a622742fd67df8a991b.png",
+          "partner" : ObjectId("5ea98b424922bb4ca8872208"),
+          "owner" : ObjectId("5ea98b424922bb4ca8872209"),
+          "uploadedBy" : ObjectId("5ea98b424922bb4ca887220a"),
+          "size" : NumberInt(29753),
+          "hash" : NumberInt(-1697330410),
+          "link" : "http://localhost:4000/cdn/content/files/b9ae20dfb144db63474a0a622742fd67df8a991b.png",
+          "path" : "content/files/",
           "__v" : NumberInt(0)
         }
-       * 
-       * 
+       *
+       *
        */
 
 
-      
+
 
       const kwargs =  {};
       if (!kwargs.headers) {
         kwargs.headers = {};
         kwargs.headers['Content-type'] = 'application/json; charset=UTF-8';
       }
-    
-      
+
+
       const token = await getStorageItem('secondary_api_token').then();
       if (token) {
         kwargs.headers.Authorization = `Token ${token}`;
@@ -360,7 +360,7 @@ const Api = {
         kwargs.headers['X-LASEC-AUTH'] = `Token ${token}`;
         kwargs.headers['X-CSRFToken'] = '';
       }
-      // should throw an error if there is no token!          
+      // should throw an error if there is no token!
       if (!kwargs.credentials) {
         kwargs.credentials = 'same-origin';
       }
@@ -368,44 +368,44 @@ const Api = {
       try {
         let filename = path.join(process.env.APP_DATA_ROOT, documentInfo.path, documentInfo.alias);
         if(fs.existsSync(filename) === true){
-          const stream = fs.createReadStream(filename);                
+          const stream = fs.createReadStream(filename);
           kwargs.body = stream;
           let absoluteUrl = `${config.SECONDARY_API_URL}/${SECONDARY_API_URLS.file_uploads.url}/`;
-          
-          const form = new FormData(); // 
+
+          const form = new FormData(); //
           form.append('file', stream);
           // In Node.js environment you need to set boundary in the header field 'Content-Type' by calling method `getHeaders`
-          const formHeaders = form.getHeaders();        
+          const formHeaders = form.getHeaders();
           let uploadResult = await axios.post(absoluteUrl, form, { params: { }, headers: { ...kwargs.headers, ...formHeaders } }).then();
           logger.debug(`Uploaded document complete:\n\t ${uploadResult}`);
           const { status, payload } = uploadResult.data;
           if(status === 'sucess') {
             const fileData = uploadResult.data.payload;
             if(customerInfo && customerInfo.id) {
-              uploadResult = await POST(`${SECONDARY_API_URLS.customer_documents}`, { document_ids: [ fileData.id ], customer_id: customerInfo.id }).then();              
-            }  
+              uploadResult = await POST(`${SECONDARY_API_URLS.customer_documents}`, { document_ids: [ fileData.id ], customer_id: customerInfo.id }).then();
+            }
             return {
               document: documentInfo,
               success: true,
               messsage: `${documentInfo.fileName}`
             };
           }  else {
-            return { 
+            return {
               document: documentInfo,
               success: false,
               message: payload
             }
-          }                           
-        }                
+          }
+        }
       } catch (exc) {
         logger.debug(`Could not upload file to endpoint:\n\t Exception ${ exc }`);
-         return { 
+         return {
               document: documentInfo,
               success: false,
               message: exc.message
             }
-      } 
-    }                  
+      }
+    }
   },
   Customers: {
     list: async (params = defaultParams) => {
@@ -528,12 +528,12 @@ const Api = {
       if (status === 'success') {
         return payload;
       } else {
-        
+
         logger.error(LASEC_API_ERROR_FORMAT(`COULD NOT FETCH TITLES: ${status}`));
         return { pagination: {}, ids: [], items: [], status };
       }
 
-      
+
     },
     GetCustomerJobTypes: async (params = defaultParams) => {
       const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } }).then();
@@ -805,7 +805,7 @@ const Api = {
 
       if (status === 'success') {
         return payload;
-      } 
+      }
 
       return { pagination: {}, ids: [], items: [] };
     }
@@ -813,6 +813,19 @@ const Api = {
   SalesOrders: {
     list: async (params = defaultParams) => {
       const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status,
+        payload,
+      } = isoResult;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+    detail: async (params = defaultParams) => {
+      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order_item.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status,
         payload,
@@ -1075,7 +1088,7 @@ const Api = {
     },
 
     getLasecUsers: async (ids = [], fieldName = "ids") => {
-      
+
       let params = { filter: {} };
       let users = [];
       let user_ids_to_request = [];
@@ -1090,7 +1103,7 @@ const Api = {
           page_size: 20,
         }
       }, true, false, 0).then();
-      
+
       if (lasecStaffUserResponse.status === "success" && lasecStaffUserResponse.payload) {
 
         if (isArray(lasecStaffUserResponse.payload.items) === true && fieldName === "ids") {
@@ -1101,11 +1114,11 @@ const Api = {
         if (isArray(lasecStaffUserResponse.payload.ids) === true && lasecStaffUserResponse.payload.ids.length > 0) {
 
           const { pagination } = lasecStaffUserResponse.payload;
-          
+
           logger.debug(`LasecApi.getLasecUsers() =>  (${lasecStaffUserResponse.payload.ids}) ids response`);
           if (pagination && pagination.has_next_page === true) {
             /**
-             * 
+             *
               "pagination": {
                 "num_items": 313,
                 "has_prev_page": false,
@@ -1132,7 +1145,7 @@ const Api = {
               }, true, false, 0));
             }
 
-            
+
 
             let allIdResponses = await Promise.all(promises).then();
             promises = [];
@@ -1144,25 +1157,25 @@ const Api = {
             });
 
             user_ids_to_request = uniq(user_ids_to_request);
-            
+
             logger.debug(`Must Fetch Ids ${user_ids_to_request}`);
-          }                            
+          }
         }
 
         if(user_ids_to_request.length > 0) {
-          let allItemResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {            
+          let allItemResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {
             params: {
               filter: {
                 "ids": user_ids_to_request
               },
-            }            
+            }
           }, true, false, 0).then();
-  
+
           if (allItemResponse && allItemResponse.status === "success" && allItemResponse.payload.items) {
             users = [...users, ...allItemResponse.payload.items];
           }
         }
-        
+
 
       } else {
         logger.error("Could not load Lasec Users", lasecStaffUserResponse);
