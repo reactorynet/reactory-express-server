@@ -1541,6 +1541,7 @@ export const getClientSalesOrders = async (params) => {
       client: order.customer_name,
       poNumber: order.sales_order_number,
       value: order.order_value,
+      reserveValue: order.reserved_value
     }
   });
 

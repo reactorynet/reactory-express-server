@@ -295,6 +295,7 @@ type SalesOrder {
   client: String
   poNumber: Int
   value: Int
+  reserveValue: Int
 }
 
 type Invoice {

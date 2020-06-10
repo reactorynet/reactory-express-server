@@ -39,6 +39,7 @@ const graphql: Reactory.IFormGraphDefinition =  {
           client
           poNumber
           value
+          reserveValue
         }
       }
     }`,
@@ -65,6 +66,7 @@ const graphql: Reactory.IFormGraphDefinition =  {
       'salesOrders.[].client': 'salesOrders.[].client',
       'salesOrders.[].poNumber': 'salesOrders.[].poNumber',
       'salesOrders.[].value': 'salesOrders.[].value',
+      'salesOrders.[].reserveValue': 'salesOrders.[].reserveValue',
     },
     autoQuery: false,
     resultType: 'object',

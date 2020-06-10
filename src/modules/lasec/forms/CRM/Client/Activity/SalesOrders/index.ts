@@ -121,8 +121,8 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        // { title: 'Order Type', field: 'orderType' },
-        { title: 'Sales Order Number', field: 'salesOrderNumber' },
+        { title: 'Order Type', field: 'orderType' },
+        // { title: 'Sales Order Number', field: 'salesOrderNumber' },
         {
           title: 'Order Date',
           field: 'orderDate',
@@ -156,15 +156,23 @@ const uiSchema: any = {
           }
         },
         { title: 'ISO Number', field: 'id' },
-        { title: 'Customer', field: 'customer' },
-        { title: 'Client', field: 'client' },
         { title: 'Purchase Order Number', field: 'poNumber' },
+        { title: 'Customer', field: 'customer' },
+        { title: 'Client', field: 'client' },        
         {
           title: 'Order Value',
           field: 'value',
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {
             'rowData.value': 'value',
+          },
+        },
+        {
+          title: 'Reserve Value',
+          field: 'reserveValue',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            'rowData.reserveValue': 'value',
           },
         },
       ],

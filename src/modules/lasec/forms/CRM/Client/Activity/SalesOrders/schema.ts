@@ -130,6 +130,9 @@ const schema: Reactory.ISchema = {
           value: {
             type: 'string'
           },
+          reserveValue: {
+            type: 'string'
+          },
         }
       },
     }
