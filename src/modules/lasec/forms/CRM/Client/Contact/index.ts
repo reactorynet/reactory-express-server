@@ -436,7 +436,7 @@ const newUiSchema: any = {
 const schema: Reactory.ISchema = {
   type: "object",
   title: "CONTACT DETAILS",
-  required: ['emailAddress', 'mobileNumber', 'officeNumber'],
+  required: ['emailAddress', 'confirmEmail', 'mobileNumber', 'officeNumber'],
   properties: {
     view: {
       title: '',
@@ -447,10 +447,10 @@ const schema: Reactory.ISchema = {
       title: "Email Address",
       format: "email",
     },
-    // confirmEmail: {
-    //   type: "string",
-    //   title: "Confirm Email Address",
-    // },
+    confirmEmail: {
+       type: "string",
+       title: "Confirm Email Address",
+    },
     alternateEmail: {
       type: "string",
       title: "Alternate Email",

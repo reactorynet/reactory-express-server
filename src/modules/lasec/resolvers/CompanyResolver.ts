@@ -1698,7 +1698,7 @@ export default {
         _newClient.address = {
           physicalAddress: { ..._newClient.address.physicalAddress, ...newClient.address.physicalAddress },
           deliveryAddress: { ..._newClient.address.deliveryAddress, ...newClient.address.deliveryAddress },
-          billingAddress: { ..._newClient.address.billingAddress, ...newClient.address.billingAddress },
+          // billingAddress: { ..._newClient.address.billingAddress, ...newClient.address.billingAddress },
         };
       }
 
@@ -1710,6 +1710,9 @@ export default {
 
       return _newClient;
     },
+    /**
+     * Creates a new Company Client
+     */
     LasecCreateNewClient: async (obj, args) => {
 
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
@@ -1774,8 +1777,7 @@ export default {
         'customer.registeredName': 'company',
         'organization.id': { key: 'oranization_id', transform: (v: string) => Number.parseInt(`${v}`) },
         'address.physicalAddress.id': 'physical_address_id',
-        'address.deliveryAddress.id': 'delivery_address_id',
-        'address.billingAddress.id': 'billing_address_id',
+        'address.deliveryAddress.id': 'delivery_address_id',        
       };
 
       let customerCreateResult: any = null;
@@ -1785,6 +1787,7 @@ export default {
       try {
         let inputData: any = om.merge(_newClient, _map);
         inputData.onboarding_step_completed = "6";
+        inputData.activity_status = 'active';
 
         logger.debug(`Create new client on LasecAPI`, inputData)
         customer = await post(URIS.customer_create.url, inputData).then()
@@ -1795,12 +1798,10 @@ export default {
           if (customerCreated === true) {
             response.messages.push({ text: `Client ${customer.first_name} ${customer.surname} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });
 
-            /***
-             *
+            /***             
              * set addresses for the customer
-             * */
-            debugger
-            const { deliveryAddress, physicalAddress, billingAddress } = _newClient.address;
+             * */            
+            const { deliveryAddress, physicalAddress } = _newClient.address;
             let setAddressResult = null;
             if (Number.parseInt(physicalAddress.id) > 0) {
               try {
@@ -1821,17 +1822,7 @@ export default {
                 logger.error(`Could not save the delivery address against the customer`, exc);
                 response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });
               }
-            }
-
-            if (Number.parseInt(billingAddress.id) > 0) {
-              try {
-                setAddressResult = await post(URIS.customer_add_address.url, { customer_id: customer.id, billing_address_id: billingAddress.id }).then();
-                logger.debug(`Set delivery address ${billingAddress.fullAddress}`);
-              } catch (exc) {
-                logger.error(`Could not save the billing address against the customer`, exc);
-                response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set billing address`, type: 'warning', inAppNotification: true });
-              }
-            }
+            }           
 
             try {
               //set upload files if any and clear local cache (delete files)
