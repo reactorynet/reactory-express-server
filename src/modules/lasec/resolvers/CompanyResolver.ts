@@ -318,8 +318,9 @@ const getClient = async (params) => {
       'currency_symbol': 'customer.currencySymbol',
       'physical_address_id': 'customer.physicalAddressId',
       'physical_address': 'customer.physicalAddress',
-      'delivery_address': 'customer.deliveryAddressId',
+      'delivery_address_id': 'customer.deliveryAddressId',
       'delivery_address': 'customer.deliveryAddress',
+      'billing_address': "customer.billingAddress",
       'country': ['country', 'customer.country']
     });
 
