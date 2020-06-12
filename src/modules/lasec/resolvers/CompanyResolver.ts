@@ -506,7 +506,7 @@ const getCustomerRanking = async (params) => {
 
 const getCustomerClass = async (params) => {
   const cached = await getCacheItem(Hash('LASEC_CUSTOMER_CLASS')).then();
-  if (cached && cached.items) return cached.items;
+  //if (cached && cached.items) return cached.items;
   const idsResponse = await lasecApi.Customers.GetCustomerClass();
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
@@ -549,9 +549,9 @@ const CLIENT_TITLES_KEY = "LasecClientTitles";
 
 const getPersonTitles = async () => {
   logger.debug(`<<<<<<<< Fetching Client Titles >>>>>>>>>>>>>`);
-  const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
+  //const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
 
-  if (cached) return cached.items;
+  //if (cached) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetPersonTitles();
 
@@ -585,9 +585,9 @@ const CLIENT_JOBTYPES_KEY = "LasecClientJobTypesLookup";
 
 const getCustomerJobTypes = async () => {
 
-  const cached = await getCacheItem(Hash(CLIENT_JOBTYPES_KEY)).then();
+  //const cached = await getCacheItem(Hash(CLIENT_JOBTYPES_KEY)).then();
 
-  if (cached) return cached.items;
+  //if (cached) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetCustomerJobTypes();
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {

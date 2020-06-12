@@ -68,11 +68,7 @@ const ReactoryClientSchema = new mongoose.Schema({
     {
       provider: String,
       enabled: Boolean,
-      successCallbackUrl: String,
-      failedCallbackUrl: String,
-      apikey: String,
-      apipass: String,
-      scopes: [String],
+      properties: { },
     },
   ],
   settings: [
