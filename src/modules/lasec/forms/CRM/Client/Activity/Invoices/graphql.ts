@@ -5,6 +5,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     name: 'LasecGetCRMClientInvoices',
     text: `query LasecGetCRMClientInvoices(
       $clientId: String!,
+      $salesTeamId: String!,
       $search: String!,
       $paging: PagingRequest,
       $filterBy: String,
@@ -14,6 +15,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     ){
       LasecGetCRMClientInvoices(
         clientId: $clientId,
+        salesTeamId: $salesTeamId,
         search: $search,
         paging: $paging,
         filterBy: $filterBy,
@@ -44,6 +46,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     }`,
     variables: {
       'formData.id': 'clientId',
+      'formData.salesTeam': 'salesTeamId',
       'formData.search': 'search',
       'formData.filterBy': 'filterBy',
       'formData.filter': 'filter',

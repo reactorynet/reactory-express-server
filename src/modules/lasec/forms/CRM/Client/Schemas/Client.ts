@@ -11,9 +11,13 @@ const ClientSchema: Reactory.ISchema = {
       type: "string",
       title: "Client Id"
     },
+    salesTeam: {
+      type: "string",
+      title: "Sales Team"
+    },
     clientStatus: {
       type: "string",
-      title: "Client Status"      
+      title: "Client Status"
     },
     clientTitle: {
       type: "string",
@@ -23,11 +27,11 @@ const ClientSchema: Reactory.ISchema = {
     firstName: {
       type: "string",
       title: "Firstname",
-      minLength: 2    
+      minLength: 2
     },
     lastName: {
       type: "string",
-      title: "Lastname",      
+      title: "Lastname",
       minLength: 2
     },
     fullName: {

@@ -19,6 +19,7 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
   uiSchema: $uiSchema,
   defaultFormValue: {
     id: "",
+    salesTeam: "",
     tabs: [
       {
         id: 'clientsDetails',
@@ -27,7 +28,8 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
         route: '/crm/clients/',
         componentProps: { mode: 'edit', uiSchemaKey: 'display' },
         componentPropsMap: {
-          'formContext.$formData.id': 'formData.id'
+          'formContext.$formData.id': 'formData.id',
+          'formContext.$formData.salesTeam': 'formData.salesTeam'
         },
         additionalComponents: [
           {
@@ -109,7 +111,8 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
         componentFqn: 'lasec-crm.LasecCRMClienInvoiceActivities',
         componentProps: { mode: 'edit', uiSchemaKey: 'display' },
         componentPropsMap: {
-          'formContext.$formData.id': 'formData.id'
+          'formContext.$formData.id': 'formData.id',
+          'formContext.$formData.salesTeam': 'formData.salesTeam'
         }
       },
       {
@@ -127,7 +130,7 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
-    { componentFqn: 'lasec-crm.LasecClientOverviewWidget@1.0.0', widget: 'LasecClientOverviewWidget'},
+    { componentFqn: 'lasec-crm.LasecClientOverviewWidget@1.0.0', widget: 'LasecClientOverviewWidget' },
     { componentFqn: 'core.TabbedNavigation@1.0.0', widget: 'TabbedNavWidget' },
   ],
 };

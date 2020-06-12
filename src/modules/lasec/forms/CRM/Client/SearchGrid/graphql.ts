@@ -16,8 +16,9 @@ const graphql: Reactory.IFormGraphDefinition = {
           id
           clientStatus
           fullName
-          emailAddress      
+          emailAddress
           country
+          salesTeam
           customer {
             id
             tradingName
@@ -25,7 +26,7 @@ const graphql: Reactory.IFormGraphDefinition = {
             customerStatus
             country
           }
-        }        
+        }
       }
     }`,
     variables: {
@@ -36,7 +37,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultMap: {
       'paging': 'paging',
       'filterBy': 'filterBy',
-      'clients': 'clients',      
+      'clients': 'clients',
     },
     autoQuery: false,
     queryMessage: 'Search for client',

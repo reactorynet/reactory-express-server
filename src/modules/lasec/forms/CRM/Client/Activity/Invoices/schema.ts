@@ -72,6 +72,10 @@ const schema: Reactory.ISchema = {
     },
   },
   properties: {
+    salesTeam: {
+      type: 'string',
+      title: 'Sales Team'
+    },
     paging: {
       type: 'object',
       title: 'Paging',

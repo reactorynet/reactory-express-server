@@ -151,7 +151,8 @@ const uiSchema: any = {
           props: {
             componentFqn: 'lasec-crm.LasecCRMClientDetail@1.0.0',
             componentProps: {
-              'rowData.id': 'formData.id'
+              'rowData.id': 'formData.id',
+              'rowData.salesTeam': 'formData.salesTeam',
             },
             childProps: {
               mode: 'view',

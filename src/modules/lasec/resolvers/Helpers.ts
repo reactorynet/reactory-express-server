@@ -1569,7 +1569,7 @@ export const getISODetails = async (params) => {
 
   logger.debug(`SALES ORDERS:: ${JSON.stringify(salesOrders)}`);
 
-  const lineItems = salesOrders.slice(0,1).map(li => {
+  const lineItems = salesOrders.slice(0, 1).map(li => {
     return {
       id: li.id,
       line: li.line,
@@ -1597,6 +1597,7 @@ export const getClientInvoices = async (params) => {
 
   const {
     clientId,
+    salesTeamId,
     search = "",
     periodStart,
     periodEnd,
@@ -1622,22 +1623,31 @@ export const getClientInvoices = async (params) => {
   // Rep Code
   // PO Number
 
+  const sampleFilter = {
+    filter: {
+      sales_team_id: 100,
+      start_date: "2019-06-12T00:00:00.000Z",
+      end_date: "2020-06-12T00:00:00.000Z"
+    },
+    ordering: {
+      invoice_date: "asc"
+    },
+    pagination: {}
+  }
+
   const me3601 = await getLoggedIn360User().then();
+
+  console.log(`360USER:: ${JSON.stringify(me3601)}`);
+
   let apiFilter: any = {
 
-    // FOR TEST PURPOSES
-    rep_code: [me3601.sales_team_id],
-
-    // HOW IT SHOULD BE - I THINK
-    // staff_user_id = [clientId],
-
+    rep_code: [salesTeamId],
+    // rep_code: [me3601.sales_team_id],
+    // sales_team_id: salesTeamId,
+    // staff_user_id: [clientId],
     [filterBy]: filter || search,
-
-    // TO TEST - LAST INVOICE IN 2018
-    // start_date: periodStart,
-    // end_date: periodEnd
-    // start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    // end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({

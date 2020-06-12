@@ -143,6 +143,7 @@ const getClients = async (params) => {
         "transform": (sourceValue, sourceObject, destinationObject, destinationKey) => `${sourceValue} ${sourceObject.surname}`,
       }, "firstName"],
       'surname': 'lastName',
+      'sales_team_id': 'salesTeam',
       'activity_status': { key: 'clientStatus', transform: (sourceValue) => `${sourceValue}`.toLowerCase() },
       'email': 'emailAddress',
       'company_id': 'customer.id',
@@ -1483,7 +1484,7 @@ export default {
       }
 
       return `${code} (${symbol})`;
-    },   
+    },
     documents: async (parent, object) => {
       return getCustomerDocuments({ id: parent.id });
     },
