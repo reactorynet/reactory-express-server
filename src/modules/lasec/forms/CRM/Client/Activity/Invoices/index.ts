@@ -109,11 +109,22 @@ const uiSchema: any = {
     'ui:widget': 'LookupComponent',
     'ui:options': {
       label: 'Select a Customer',
-      title: 'Search for a Customer'
+      title: 'Search for a Customer',
+      modalProps: {
+        fullScreen: false,
+        closeOnEvents: [
+          'CloseModal:LasecCRMCustomerLookupTable'
+        ]
+      }
     },
     props: {
       componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
       componentProps: {},
+      componentPropertyMap: {
+        'LookupComponent.props.formContext.$formData': 'formData.selected',
+        'LookupComponent.props.onChange': 'onCustomerSelect',
+        'LookupComponent.props.formContext': 'LookupComponentFormContext',
+      },
     },
   },
 
@@ -179,6 +190,7 @@ const uiSchema: any = {
       query: 'query',
       variables: {
         'props.formContext.$formData.id': 'clientId',
+        'props.formContext.$formData.salesTeam': 'salesTeamId',
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.filter': 'filter',
         'props.formContext.$formData.filterBy': 'filterBy',

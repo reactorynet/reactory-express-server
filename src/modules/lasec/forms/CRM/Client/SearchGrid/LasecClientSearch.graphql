@@ -11,15 +11,16 @@ query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy){
       id
       clientStatus
       fullName
-      emailAddress      
+      salesTeam
+      emailAddress
       country
       customer {
         id
         tradingName
         accountNumber
         customerStatus
-        country      
+        country
       }
-    }        
+    }
   }
 }

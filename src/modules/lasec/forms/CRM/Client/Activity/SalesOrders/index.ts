@@ -191,8 +191,32 @@ const uiSchema: any = {
             'rowData.date': 'value',
           }
         },
-        { title: 'ISO Number', field: 'id' },
-        { title: 'Quote Number', field: 'quoteId' },
+        { title: 'ISO Number', field: 'id' },        
+        {
+          title: 'Quote Number',
+          field: 'quoteId',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.QuoteDetail@1.0.0',
+            componentProps: {
+              'rowData.quoteId': ['data.quote_id', 'data.code', 'query.quote_id']
+            },
+            slideDirection: 'down',
+            buttonTitle: '${rowData.quoteId}',
+            windowTitle: 'Details view for ${rowData.quoteId}',
+            buttonVariant: 'Typography',
+            buttonProps: {
+              style: {
+                'textDecoration': 'underline',
+                'cursor': 'pointer',
+                'color': 'black'
+              }
+            },
+          },
+          propsMap: {
+            'rowData': 'rowData'
+          }
+        },
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
         { title: 'Purchase Order Number', field: 'poNumber' },

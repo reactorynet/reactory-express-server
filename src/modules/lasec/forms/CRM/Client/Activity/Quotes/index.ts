@@ -125,7 +125,32 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Quote Number', field: 'code' },
+        // { title: 'Quote Number', field: 'code' },
+        {
+          title: 'Quote Number',
+          field: 'code',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.QuoteDetail@1.0.0',
+            componentProps: {
+              'rowData.code': ['data.quote_id', 'data.code', 'query.quote_id']
+            },
+            slideDirection: 'down',
+            buttonTitle: '${rowData.code}',
+            windowTitle: 'Details view for ${rowData.code}',
+            buttonVariant: 'Typography',
+            buttonProps: {
+              style: {
+                'textDecoration': 'underline',
+                'cursor': 'pointer',
+                'color': 'black'
+              }
+            },
+          },
+          propsMap: {
+            'rowData': 'rowData'
+          }
+        },
         {
           title: 'Quote Date',
           field: 'date',
