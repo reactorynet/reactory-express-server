@@ -7,9 +7,11 @@ import { TowerStoneSurveyTemplatesForm } from './SurveyTemplates';
 import { CopyLeadershipBrand } from './CopyLeadershipBrand';
 import { QualityFormWidget } from './LeadershipBrand/QualityFormWidget';
 import { BehaviourFormWidget } from './LeadershipBrand/BehaviourFormWidget';
+import MoresPluginForm from './Global/MoresPlugin';
 
 
 const Forms: Reactory.IReactoryForm[] = [
+  MoresPluginForm,
   BehaviourFormWidget,
   QualityFormWidget,
   CopyLeadershipBrand,
