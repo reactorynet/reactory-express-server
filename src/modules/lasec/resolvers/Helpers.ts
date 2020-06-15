@@ -1452,9 +1452,90 @@ export const getSalesOrders = async (params) => {
 
 }
 
+export const getPagedSalesOrders = async (params) => {
+
+  logger.debug(`GETTING PAGED SALES ORDERS:: ${JSON.stringify(params)}`);
+
+  const { paging, apiFilter } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  let salesOrdersIds = await lasecApi.SalesOrders.list({
+    filter: apiFilter,
+    ordering: { order_date: "desc" },
+    pagination: {
+      page_size: paging.pageSize || 10,
+      current_page: paging.page
+    }
+  }).then();
+
+  let ids = [];
+
+  if (isArray(salesOrdersIds.ids) === true) {
+    ids = [...salesOrdersIds.ids];
+  }
+
+  if (salesOrdersIds.pagination && salesOrdersIds.pagination.num_pages > 1) {
+    pagingResult.total = salesOrdersIds.pagination.num_items;
+    pagingResult.pageSize = salesOrdersIds.pagination.page_size || 10;
+    pagingResult.hasNext = salesOrdersIds.pagination.has_next_page === true;
+    pagingResult.page = salesOrdersIds.pagination.current_page || 1;
+  }
+
+  let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
+  let salesOrders = [...salesOrdersDetails.items];
+
+  logger.debug(`SALES ORDER:: ${JSON.stringify(salesOrders[0])}`);
+
+  salesOrders = salesOrders.map(order => {
+    return {
+      id: order.id,
+      salesOrderNumber: order.sales_order_number,
+      orderDate: order.order_date,
+      orderType: order.order_type,
+      orderStatus: order.order_status,
+      shippingDate: order.req_ship_date,
+      iso: order.sales_order_id,
+      customer: order.company_trading_name,
+      client: order.customer_name,
+      poNumber: order.sales_order_number,
+      value: order.order_value,
+      quoteId: order.quote_id,
+      currency: order.currency,
+      deliveryAddress: order.delivery_address,
+      warehouseNote: order.warehouse_note,
+      deliveryNote: order.delivery_note,
+      salesTeam: order.sales_team_id
+    }
+  });
+
+  let result = {
+    paging: pagingResult,
+    salesOrders,
+  };
+
+  return result;
+
+}
+
 export const getClientSalesOrders = async (params) => {
 
-  logger.debug(`GETTING PAGED CLIENT SALES ORDERS:: ${JSON.stringify(params)}`);
+  logger.debug(` -- GETTING CLIENT SALES ORDERS --  ${JSON.stringify(params)}`);
+
+  // -- POSSIBLE FILTERS --
+  // Order Date
+  // Order Status
+  // Shipping Date
+  // ISO Number
+  // Customer
+  // Client
+  // Purchase Order Number
+  // Order Value
 
   const {
     clientId,
@@ -1473,22 +1554,16 @@ export const getClientSalesOrders = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  // -- POSSIBLE FILTERS --
-  // Order Date
-  // Order Status
-  // Shipping Date
-  // ISO Number
-  // Customer
-  // Client
-  // Purchase Order Number
-  // Order Value
-
   let apiFilter = {
     customer_id: clientId,
     [filterBy]: filter || search,
+    ordering: { order_date: "desc" },
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
+
+  // const result = await getPagedSalesOrders({ paging, apiFilter });
+  // return result;
 
   let salesOrdersIds = await lasecApi.SalesOrders.list({
     filter: apiFilter,
@@ -1542,6 +1617,42 @@ export const getClientSalesOrders = async (params) => {
     paging: pagingResult,
     salesOrders,
   };
+
+  return result;
+
+}
+
+export const getCRMSalesOrders = async (params) => {
+
+  // -- POSSIBLE FILTERS --
+  // Order Date
+  // Order Status
+  // Shipping Date
+  // ISO Number
+  // Customer
+  // Client
+  // Purchase Order Number
+  // Order Value
+
+  logger.debug(` -- GETTING CRM SALES ORDERS --  ${JSON.stringify(params)}`);
+
+  const {
+    search = "",
+    periodStart,
+    periodEnd,
+    filterBy = "any_field",
+    filter,
+    paging = { page: 1, pageSize: 10 },
+    iter = 0 } = params;
+
+  let apiFilter = {
+    order_status: 1,
+    [filterBy]: filter || search,
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+  };
+
+  const result = await getPagedSalesOrders({ paging, apiFilter });
 
   return result;
 
@@ -1635,14 +1746,9 @@ export const getClientInvoices = async (params) => {
     pagination: {}
   }
 
-  const me3601 = await getLoggedIn360User().then();
-
-  console.log(`360USER:: ${JSON.stringify(me3601)}`);
-
   let apiFilter: any = {
 
     rep_code: [salesTeamId],
-    // rep_code: [me3601.sales_team_id],
     // sales_team_id: salesTeamId,
     // staff_user_id: [clientId],
     [filterBy]: filter || search,

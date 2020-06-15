@@ -132,6 +132,7 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
+        { title: 'Invoice Number', field: 'id' },
         {
           title: 'Invoice Date',
           field: 'invoiceDate',
@@ -148,6 +149,7 @@ const uiSchema: any = {
             'rowData.invoiceDate': 'value',
           }
         },
+        { title: 'Quote Number', field: 'quoteId' },
         {
           title: 'Quote Date',
           field: 'quoteDate',
@@ -164,7 +166,6 @@ const uiSchema: any = {
             'rowData.quoteDate': 'value',
           }
         },
-        { title: 'Quote Number', field: 'quoteId' },
         { title: 'Account Number', field: 'accountNumber' },
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
