@@ -6,7 +6,7 @@ import LasecContactForm, { newConfirmSchema as ContactDisplayUISchema } from '..
 import LasecJobDetailForm, { ConfirmUiSchema as JobDetailUISchema } from '../JobDetail';
 import LasecCRMCustomerLookupForm, { CustomerConfirmUISchema  } from '../../Customer/Lookup';
 import LasecCRMOrganizationLookupForm, { ConfirmNewUISchema as OrganizationConfirmUISchema  } from '../../Organization/Lookup';
-import LasecCRMCustomerAddress, {  ReadOnlyUiSchema as CustomerAddressUISchema } from '../../Customer/Address';
+import LasecCRMCustomerAddress, { AddressSchemaObject,  ReadOnlyUiSchema as CustomerAddressUISchema } from '../../Customer/Address';
 import LasecCRMDocuments from '../Documents';
 
 const displayUiSchema: any = {
@@ -73,8 +73,7 @@ const displayUiSchema: any = {
     'ui:grid-layout': [
       {
         physicalAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
-        deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
-        billingAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+        deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },        
       },
     ],
   
@@ -120,41 +119,17 @@ const displayUiSchema: any = {
           }
         }
       }
-    },
-
-    billingAddress: {
-      'ui:widget': 'LabelWidget',
-      'ui:options': {
-        format: 'ADDED VIA SYSPRO',
-        variant: 'subtitle1',
-        title: 'Billing Address',
-        titleProps: {
-          style: {
-            display: 'content',
-            minWidth: '200px',
-            color: "#9A9A9A",
-          }
-        },
-        bodyProps: {
-          style: {
-            display: 'flex',
-            justifyContent: 'flex-end'
-          }
-        }
-      }
-    }
+    }    
   
   },
   customer: CustomerConfirmUISchema,
   organization: OrganizationConfirmUISchema,
-  uploadedDocuments: { 
-    ...LasecCRMDocuments.ConfirmUiSchema,    
+  uploadedDocuments: {
+    ...LasecCRMDocuments.ConfirmUiSchema,
   },
 };
 
-
 displayUiSchema.uploadedDocuments.query = 'PagedNewCustomerDocuments';
-
 
 const schema: Reactory.ISchema = {
   type: "object",
@@ -179,7 +154,14 @@ const schema: Reactory.ISchema = {
       ...LasecCRMOrganizationLookupForm.schema,
       title: 'SELECTED ORGANIZATION'
     },
-    address: LasecCRMCustomerAddress.schema,
+    address: {
+      type: 'object',
+      title: "Address Details",
+      properties: {
+        physicalAddress: { ...AddressSchemaObject, title: 'Physical Address' },
+        deliveryAddress: { ...AddressSchemaObject, title: 'Delivery Address' },        
+      }
+    },
     uploadedDocuments: { 
       ...LasecCRMDocuments.DocumentFormSchema,
       title: 'FILES TO ATTACH TO CLIENT',      
