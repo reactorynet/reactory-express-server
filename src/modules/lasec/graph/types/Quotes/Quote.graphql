@@ -295,6 +295,7 @@ type SalesOrder {
   client: String
   poNumber: String
   value: Int
+  reserveValue: Int
   quoteId: String
   currency: String
   deliveryAddress: String
