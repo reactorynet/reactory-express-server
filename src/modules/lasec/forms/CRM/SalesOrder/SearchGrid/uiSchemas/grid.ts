@@ -1,4 +1,4 @@
-import { FilterByOptions } from '../shared';
+import { FilterByOptions, FilterOptions } from '../shared';
 
 const uiSchema: any = {
   'ui:options': {
@@ -15,9 +15,13 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      search: { md: 4, sm: 12 },
-      filterBy: { md: 4, sm: 12 },
-      filter: { md: 4, sm: 12 },
+      search: { md: 4, sm: 12, xs: 12 },
+      filter: { md: 4, sm: 6, xs: 12 },
+      filterBy: { md: 4, sm: 6, xs: 12 },
+      periodStart: { md: 6, sm: 6, xs: 12 },
+      periodEnd: { md: 6, sm: 6, xs: 12 },
+      client: { md: 6, xs: 12 },
+      customer: { md: 6, xs: 12 },
     },
     {
       salesOrders: {
@@ -71,23 +75,57 @@ const uiSchema: any = {
     },
   },
   filter: {
-    'ui:widget': 'SelectWithDataWidget',
+    'ui:widget': 'SelectWidget',
     'ui:options': {
-      multiSelect: false,
-      query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
-        LasecGetCustomerFilterLookup(filterBy: $filterBy) {
-          id
-          name
-        }
-      }`,
-      propertyMap: {
-        'formContext.$formData.filterBy': 'filterBy'
-      },
-      resultItem: 'LasecGetCustomerFilterLookup',
-      resultsMap: {
-        'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
-        'LasecGetCustomerFilterLookup.[].name': '[].label',
-      },
+      selectOptions: FilterOptions,
+    },
+  },
+  // filter: {
+  //   'ui:widget': 'SelectWithDataWidget',
+  //   'ui:options': {
+  //     multiSelect: false,
+  //     query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
+  //       LasecGetCustomerFilterLookup(filterBy: $filterBy) {
+  //         id
+  //         name
+  //       }
+  //     }`,
+  //     propertyMap: {
+  //       'formContext.$formData.filterBy': 'filterBy'
+  //     },
+  //     resultItem: 'LasecGetCustomerFilterLookup',
+  //     resultsMap: {
+  //       'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
+  //       'LasecGetCustomerFilterLookup.[].name': '[].label',
+  //     },
+  //   },
+  // },
+  periodStart: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  periodEnd: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  client: {
+    'ui:widget': 'LookupComponent',
+    'ui:options': {
+      label: 'Select a Client',
+      title: 'Search for a Client'
+    },
+    props: {
+      componentFqn: 'lasec-crm.LasecCRMClientLookupTable@1.0.0',
+      componentProps: {},
+    },
+  },
+  customer: {
+    'ui:widget': 'LookupComponent',
+    'ui:options': {
+      label: 'Select a Customer',
+      title: 'Search for a Customer'
+    },
+    props: {
+      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+      componentProps: {},
     },
   },
   salesOrders: {
