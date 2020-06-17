@@ -1646,13 +1646,21 @@ export const getCRMSalesOrders = async (params) => {
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
-  // let _filterBy = filterBy == 'order_status' ? 'any_field' : filterBy;
+
+
 
   let apiFilter = {
-    [filterBy]: filter || search,
+    // order_status: filter || '',
+    // [filterBy]: search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
+
+  if (filterBy == 'order_status') apiFilter['order_status'] = filter;
+  if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'customer' || filterBy == 'client' || filterBy == 'po_number' || filterBy == 'order_value') apiFilter[filterBy] = search;
+  if (filterBy == 'order_status') apiFilter['order_status'] = filter;
+  if (filterBy == 'order_date') apiFilter['order_date'] = '';
+  if (filterBy == 'shipping_date') apiFilter['shipping_date'] = '';
 
   const result = await getPagedSalesOrders({ paging, apiFilter });
 
