@@ -1646,21 +1646,25 @@ export const getCRMSalesOrders = async (params) => {
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
-
-
-
   let apiFilter = {
-    // order_status: filter || '',
+    order_status: filter,
     // [filterBy]: search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
 
-  if (filterBy == 'order_status') apiFilter['order_status'] = filter;
   if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'customer' || filterBy == 'client' || filterBy == 'po_number' || filterBy == 'order_value') apiFilter[filterBy] = search;
   if (filterBy == 'order_status') apiFilter['order_status'] = filter;
-  if (filterBy == 'order_date') apiFilter['order_date'] = '';
-  if (filterBy == 'shipping_date') apiFilter['shipping_date'] = '';
+
+  if (filterBy == 'order_date') {
+    apiFilter['using'] = 'order_date';
+    apiFilter['order_status'] = filter;
+  }
+
+  if (filterBy == 'shipping_date') {
+    apiFilter['using'] = 'shipping_date';
+    apiFilter['order_status'] = filter;
+  }
 
   const result = await getPagedSalesOrders({ paging, apiFilter });
 
@@ -1757,14 +1761,21 @@ export const getClientInvoices = async (params) => {
   }
 
   let apiFilter: any = {
-
     rep_code: [salesTeamId],
     // sales_team_id: salesTeamId,
     // staff_user_id: [clientId],
-    [filterBy]: filter || search,
+    // [filterBy]: filter || search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
+
+  if (filterBy == 'invoice_date' || filterBy == 'quote_date')
+    apiFilter['any_field'] = search;
+  else
+    apiFilter[filterBy] = search;
+
+  if (filterBy == 'invoice_date') apiFilter['using'] = 'invoice_date';
+  if (filterBy == 'quote_date') apiFilter['using'] = 'quote_date';
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
     filter: apiFilter,

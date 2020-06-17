@@ -24,7 +24,7 @@ export const FilterByEnumArray: string[] = [
 
 export const FilterByOptions = [
   { key: FilterByEnumsKeys.any_field, value: FilterByEnumsKeys.any_field, label: 'All Categories' },
-  { key: FilterByEnumsKeys.order_status, value: FilterByEnumsKeys.order_status, label: 'Order Status' },
+  // { key: FilterByEnumsKeys.order_status, value: FilterByEnumsKeys.order_status, label: 'Order Status' },
   { key: FilterByEnumsKeys.order_date, value: FilterByEnumsKeys.order_date, label: 'Order Date' },
   { key: FilterByEnumsKeys.shipping_date, value: FilterByEnumsKeys.shipping_date, label: 'Shipping Date' },
   { key: FilterByEnumsKeys.iso_number, value: FilterByEnumsKeys.iso_number, label: 'ISO Number' },
@@ -32,4 +32,14 @@ export const FilterByOptions = [
   { key: FilterByEnumsKeys.client, value: FilterByEnumsKeys.client, label: 'Client' },
   { key: FilterByEnumsKeys.po_number, value: FilterByEnumsKeys.po_number, label: 'Purchase Order Number' },
   { key: FilterByEnumsKeys.order_value, value: FilterByEnumsKeys.order_value, label: 'Order Value' },
+];
+
+export const FilterOptions = [
+  { key: '1', value: '1', label: 'Open Order' },
+  { key: '2', value: '2', label: 'Open Back Order' },
+  { key: '3', value: '3', label: 'Released Back Order' },
+  { key: '4', value: '4', label: 'In Warehouse' },
+  { key: '5', value: '9', label: 'Completed' },
+  { key: '6', value: '\\', label: 'Cancelled' },
+  { key: '7', value: 'S', label: 'Suspended' },
 ];

@@ -26,20 +26,20 @@ const schema: Reactory.ISchema = {
             },
           },
         },
-        {
-          properties:
-          {
-            filterBy: {
-              enum: [
-                FilterByEnumsKeys.order_status,
-              ]
-            },
-            filter: {
-              type: 'string',
-              title: 'ORDER STATUS'
-            }
-          },
-        },
+        // {
+        //   properties:
+        //   {
+        //     filterBy: {
+        //       enum: [
+        //         FilterByEnumsKeys.order_status,
+        //       ]
+        //     },
+        //     filter: {
+        //       type: 'string',
+        //       title: 'ORDER STATUS'
+        //     }
+        //   },
+        // },
         {
           properties:
           {
@@ -109,6 +109,10 @@ const schema: Reactory.ISchema = {
     filterBy: {
       type: 'string',
       title: 'FILTER BY'
+    },
+    filter: {
+      type: 'string',
+      title: 'ORDER STATUS'
     },
     salesOrders: {
       type: 'array',
