@@ -160,7 +160,7 @@ const getClients = async (params) => {
     });
 
     //_client.fullName = `${client.firstName}`
-    
+
     return _client;
   });
 
@@ -1564,8 +1564,13 @@ export default {
         }
         case 'order_status': {
           return [
-            { id: '1', name: 'Normal' },
-            { id: '2', name: 'Unknown' },
+            { id: '1', name: 'Open Order' },
+            { id: '2', name: 'Open Back Order' },
+            { id: '3', name: 'Released Back Order' },
+            { id: '4', name: 'In Warehouse' },
+            { id: '9', name: 'Completed' },
+            { id: '\\', name: 'Cancelled' },
+            { id: 'S', name: 'Suspended' },
           ];
         }
         case 'quote_status': {
@@ -1780,7 +1785,7 @@ export default {
         'customer.registeredName': 'company',
         'organization.id': { key: 'oranization_id', transform: (v: string) => Number.parseInt(`${v}`) },
         'address.physicalAddress.id': 'physical_address_id',
-        'address.deliveryAddress.id': 'delivery_address_id',        
+        'address.deliveryAddress.id': 'delivery_address_id',
       };
 
       let customerCreateResult: any = null;
@@ -1801,9 +1806,9 @@ export default {
           if (customerCreated === true) {
             response.messages.push({ text: `Client ${customer.first_name} ${customer.surname} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });
 
-            /***             
+            /***
              * set addresses for the customer
-             * */            
+             * */
             const { deliveryAddress, physicalAddress } = _newClient.address;
             let setAddressResult = null;
             if (Number.parseInt(physicalAddress.id) > 0) {
@@ -1825,7 +1830,7 @@ export default {
                 logger.error(`Could not save the delivery address against the customer`, exc);
                 response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });
               }
-            }           
+            }
 
             try {
               //set upload files if any and clear local cache (delete files)

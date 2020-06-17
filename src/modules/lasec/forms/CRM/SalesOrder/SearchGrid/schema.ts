@@ -12,14 +12,59 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.activity_status,
-                FilterByEnumsKeys.company_on_hold,
-                FilterByEnumsKeys.country,
+                FilterByEnumsKeys.order_date,
+                FilterByEnumsKeys.shipping_date,
+              ]
+            },
+            periodStart: {
+              type: 'string',
+              title: 'Period Start',
+            },
+            periodEnd: {
+              type: 'string',
+              title: 'Period End',
+            },
+          },
+        },
+        {
+          properties:
+          {
+            filterBy: {
+              enum: [
+                FilterByEnumsKeys.order_status,
               ]
             },
             filter: {
               type: 'string',
-              title: 'SHOW'
+              title: 'ORDER STATUS'
+            }
+          },
+        },
+        {
+          properties:
+          {
+            filterBy: {
+              enum: [
+                FilterByEnumsKeys.client,
+              ]
+            },
+            client: {
+              type: 'string',
+              title: 'Show'
+            }
+          },
+        },
+        {
+          properties:
+          {
+            filterBy: {
+              enum: [
+                FilterByEnumsKeys.customer,
+              ]
+            },
+            customer: {
+              type: 'string',
+              title: 'Show'
             }
           },
         },

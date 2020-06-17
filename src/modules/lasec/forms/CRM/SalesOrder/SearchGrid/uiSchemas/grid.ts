@@ -18,6 +18,10 @@ const uiSchema: any = {
       search: { md: 4, sm: 12 },
       filterBy: { md: 4, sm: 12 },
       filter: { md: 4, sm: 12 },
+      periodStart: { md: 6, xs: 12 },
+      periodEnd: { md: 6, xs: 12 },
+      client: { md: 6, xs: 12 },
+      customer: { md: 6, xs: 12 },
     },
     {
       salesOrders: {
@@ -88,6 +92,34 @@ const uiSchema: any = {
         'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
         'LasecGetCustomerFilterLookup.[].name': '[].label',
       },
+    },
+  },
+  periodStart: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  periodEnd: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  client: {
+    'ui:widget': 'LookupComponent',
+    'ui:options': {
+      label: 'Select a Client',
+      title: 'Search for a Client'
+    },
+    props: {
+      componentFqn: 'lasec-crm.LasecCRMClientLookupTable@1.0.0',
+      componentProps: {},
+    },
+  },
+  customer: {
+    'ui:widget': 'LookupComponent',
+    'ui:options': {
+      label: 'Select a Customer',
+      title: 'Search for a Customer'
+    },
+    props: {
+      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+      componentProps: {},
     },
   },
   salesOrders: {

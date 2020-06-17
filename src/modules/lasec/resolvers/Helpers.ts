@@ -1646,8 +1646,9 @@ export const getCRMSalesOrders = async (params) => {
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
+  // let _filterBy = filterBy == 'order_status' ? 'any_field' : filterBy;
+
   let apiFilter = {
-    order_status: 1,
     [filterBy]: filter || search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
