@@ -18,7 +18,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
   ],
   title: 'CRM Tabs',
   tags: ['CRM Tabs'],
-  registerAsComponent: true,  
+  registerAsComponent: true,
   name: 'LasecCRMComponent',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
@@ -37,7 +37,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
         componentProps: {},
         componentPropsMap: {
           'formContext.$formData.toolbar.search': 'formData.search'
-        }        
+        }
       },
       {
         id: 'quotes',
@@ -78,8 +78,8 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
         componentPropsMap: {
           'formContext.$formData.toolbar.search': 'formData.search'
         }
-      }      
-    ]    
+      }
+    ]
   },
   uiSchemas: [
     {
@@ -103,7 +103,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
     {
       componentFqn: 'core.MaterialInput@1.0.0',
       widget: 'InputWidget',
-    },    
+    },
     {
       componentFqn: 'core.FormSubmissionComponent@1.0.0',
       widget: 'FormSubmitWidget',
@@ -112,13 +112,13 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
       componentFqn: 'core.TabbedNavigation@1.0.0',
       widget: 'TabbedNavWidget',
     },
-    { 
-      componentFqn: 'core.SlideOutLauncher@1.0.0', 
-      widget: 'SlideOutLauncher' 
+    {
+      componentFqn: 'core.SlideOutLauncher@1.0.0',
+      widget: 'SlideOutLauncher'
     },
     {
-      componentFqn: 'lasec-crm.NewClientModal@1.0.0', 
-      widget: 'NewClientModal' 
+      componentFqn: 'lasec-crm.NewClientModal@1.0.0',
+      widget: 'NewClientModal'
     }
   ],
 };

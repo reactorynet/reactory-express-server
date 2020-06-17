@@ -402,6 +402,15 @@ extend type Query {
     periodEnd: String
     iter: Int
   ): PagedCRMSalesOrders
+  LasecGetPagedCRMSalesOrders(
+    search: String!
+    paging: PagingRequest
+    filterBy: String
+    filter: String
+    periodStart: String
+    periodEnd: String
+    iter: Int
+  ): PagedCRMSalesOrders
   LasecGetISODetail(orderId: String!): [SalesOrderLineItem]
   LasecGetCRMClientInvoices(
     clientId: String

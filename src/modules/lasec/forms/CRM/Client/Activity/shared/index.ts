@@ -85,6 +85,7 @@ export const SalesOrdersFilterByOptions = [
 export const InvoiceFilterByEnumsKeys = {
   any_field: 'any_field',
   invoice_date: 'invoice_date',
+  invoice_number: 'invoice_number',
   quote_date: 'quote_date',
   quote_number: 'quote_number',
   account_number: 'account_number',
@@ -96,6 +97,7 @@ export const InvoiceFilterByEnumsKeys = {
 
 export const InvoiceFilterByEnumArray: string[] = [
   InvoiceFilterByEnumsKeys.any_field,
+  InvoiceFilterByEnumsKeys.invoice_number,
   InvoiceFilterByEnumsKeys.invoice_date,
   InvoiceFilterByEnumsKeys.quote_date,
   InvoiceFilterByEnumsKeys.quote_number,
@@ -108,6 +110,7 @@ export const InvoiceFilterByEnumArray: string[] = [
 
 export const InvoiceFilterByOptions = [
   { key: InvoiceFilterByEnumsKeys.any_field, value: InvoiceFilterByEnumsKeys.any_field, label: 'All Categories' },
+  { key: InvoiceFilterByEnumsKeys.invoice_number, value: InvoiceFilterByEnumsKeys.invoice_number, label: 'Invoice Number' },
   { key: InvoiceFilterByEnumsKeys.invoice_date, value: InvoiceFilterByEnumsKeys.invoice_date, label: 'Invoice Date' },
   { key: InvoiceFilterByEnumsKeys.quote_date, value: InvoiceFilterByEnumsKeys.quote_date, label: 'Quote Date' },
   { key: InvoiceFilterByEnumsKeys.quote_number, value: InvoiceFilterByEnumsKeys.quote_number, label: 'Quote Number' },

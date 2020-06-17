@@ -87,6 +87,8 @@ import QuoteGrid from './CRM/Quote/SearchGrid';
 import ClientLookup from './CRM/Client/Lookup';
 import ClientLookupForm from './CRM/Client/Lookup/LookUpForm';
 
+import SalesOrderGrid from './CRM/SalesOrder/SearchGrid';
+
 import ProductSalesOrders from './productCatalog/ProductDetails/SalesOrders';
 
 const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
@@ -160,6 +162,8 @@ export default [
   QuoteGrid,
   ClientLookup,
   ClientLookupForm,
+
+  SalesOrderGrid,
 
   ProductSalesOrders,
   ISODetail,
