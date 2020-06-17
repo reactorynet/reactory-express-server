@@ -9,11 +9,13 @@ import { QualityFormWidget } from './LeadershipBrand/QualityFormWidget';
 import { BehaviourFormWidget } from './LeadershipBrand/BehaviourFormWidget';
 import MoresPluginForm from './Global/MoresPlugin';
 import  { MoresUserDashboard } from './Dashboards/UserDashboard';
+import MoresOrganizationAdminDashboard from './Dashboards/OrganizationAdminDashboard';
 
 
 const Forms: Reactory.IReactoryForm[] = [
   MoresPluginForm,
   MoresUserDashboard,
+  MoresOrganizationAdminDashboard,
   BehaviourFormWidget,
   QualityFormWidget,
   CopyLeadershipBrand,
