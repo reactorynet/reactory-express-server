@@ -6,7 +6,7 @@ import LasecContactForm, { newConfirmSchema as ContactDisplayUISchema } from '..
 import LasecJobDetailForm, { ConfirmUiSchema as JobDetailUISchema } from '../JobDetail';
 import LasecCRMCustomerLookupForm, { CustomerConfirmUISchema  } from '../../Customer/Lookup';
 import LasecCRMOrganizationLookupForm, { ConfirmNewUISchema as OrganizationConfirmUISchema  } from '../../Organization/Lookup';
-import LasecCRMCustomerAddress, {  ReadOnlyUiSchema as CustomerAddressUISchema } from '../../Customer/Address';
+import LasecCRMCustomerAddress, { AddressSchemaObject,  ReadOnlyUiSchema as CustomerAddressUISchema } from '../../Customer/Address';
 import LasecCRMDocuments from '../Documents';
 
 const displayUiSchema: any = {
@@ -55,16 +55,81 @@ const displayUiSchema: any = {
   personalDetails: PersonalDisplayUISchema,
   contactDetails: ContactDisplayUISchema,
   jobDetails: JobDetailUISchema,  
-  address: CustomerAddressUISchema,
+  address: {    
+    'ui:options': {
+      componentType: "div",
+      containerStyles: {
+        padding: '0px',
+        margin: '0px',
+        paddingBottom: '16px'
+      },
+      style: {
+        marginTop: '0',
+      },
+      showSubmit: false,
+      showRefresh: false,
+    },
+    'ui:field': 'GridLayout',
+    'ui:grid-layout': [
+      {
+        physicalAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+        deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },        
+      },
+    ],
+  
+    physicalAddress: {
+      'ui:widget': 'LabelWidget',
+      'ui:options': {
+        format: '${formData.fullAddress}',
+        variant: 'subtitle1',
+        title: 'Physical Address',
+        titleProps: {
+          style: {
+            display: 'content',
+            minWidth: '200px',
+            color: "#9A9A9A",
+          }
+        },
+        bodyProps: {
+          style: {
+            display: 'flex',
+            justifyContent: 'flex-end'
+          }
+        }
+      }
+    },
+  
+    deliveryAddress: {
+      'ui:widget': 'LabelWidget',
+      'ui:options': {
+        format: '${formData.fullAddress}',
+        variant: 'subtitle1',
+        title: 'Delivery Address',
+        titleProps: {
+          style: {
+            display: 'content',
+            minWidth: '200px',
+            color: "#9A9A9A",
+          }
+        },
+        bodyProps: {
+          style: {
+            display: 'flex',
+            justifyContent: 'flex-end'
+          }
+        }
+      }
+    }    
+  
+  },
   customer: CustomerConfirmUISchema,
   organization: OrganizationConfirmUISchema,
-  uploadedDocuments: { 
-    ...LasecCRMDocuments.ConfirmUiSchema,    
+  uploadedDocuments: {
+    ...LasecCRMDocuments.ConfirmUiSchema,
   },
 };
 
 displayUiSchema.uploadedDocuments.query = 'PagedNewCustomerDocuments';
-
 
 const schema: Reactory.ISchema = {
   type: "object",
@@ -89,7 +154,14 @@ const schema: Reactory.ISchema = {
       ...LasecCRMOrganizationLookupForm.schema,
       title: 'SELECTED ORGANIZATION'
     },
-    address: LasecCRMCustomerAddress.schema,
+    address: {
+      type: 'object',
+      title: "Address Details",
+      properties: {
+        physicalAddress: { ...AddressSchemaObject, title: 'Physical Address' },
+        deliveryAddress: { ...AddressSchemaObject, title: 'Delivery Address' },        
+      }
+    },
     uploadedDocuments: { 
       ...LasecCRMDocuments.DocumentFormSchema,
       title: 'FILES TO ATTACH TO CLIENT',      
@@ -98,6 +170,7 @@ const schema: Reactory.ISchema = {
 };
 
 schema.title = "CONFIRM & SAVE"
+delete schema.properties.address.billingAddress;
 
 const LasecCRMNewCustomerConfirm: Reactory.IReactoryForm = {
   id: 'LasecCRMNewCustomerConfirm',

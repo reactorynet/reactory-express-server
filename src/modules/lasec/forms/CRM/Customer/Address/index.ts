@@ -10,6 +10,8 @@ const GOOGLE_PLACE_TO_ADDRESS_MAP = {
   'placeId': 'map.place_id'
 };
 
+export const AddressSchemaObject = AddressSchema;
+
 const onAddressSelectedMutationDefinition : Reactory.IReactoryFormMutation = {
   name: "LasecUpdateNewClient",
   text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){

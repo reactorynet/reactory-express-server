@@ -160,6 +160,7 @@ const getClients = async (params) => {
     });
 
     //_client.fullName = `${client.firstName}`
+    
     return _client;
   });
 
@@ -1850,6 +1851,13 @@ export default {
             } catch (exc) {
               logger.debug(`Could; not upload documents for the customer`, exc);
               response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading documents`, type: 'warning', inAppNotification: true });
+            }
+
+            try {
+              await lasecApi.Customers.UpdateClientDetails(customer.id, { activity_status: 'active'}).then();
+            } catch(setStatusException) {
+              logger.error(`Could set the client status`, setStatusException);
+              response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while setting activity status`, type: 'warning', inAppNotification: true });
             }
 
             setCacheItem(hash, { ...DEFAULT_NEW_CLIENT }, 60 * 60 * 12);

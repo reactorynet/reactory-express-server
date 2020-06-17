@@ -2,7 +2,7 @@ import path from 'path';
 import logger from '../logging';
 
 const available = require('./available.json');
-const enabled = require('./enabled.json');
+const enabled = require(`./${process.env.MODULES_ENABLED || 'enabled'}.json`);
 
 const resolved = [];
 const failed = [];
