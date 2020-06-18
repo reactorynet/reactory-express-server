@@ -5,6 +5,7 @@ import { fileAsString } from '@reactory/server-core/utils/io';
 const typeDefs = [];
 
 [
+  'Charts/ReactoryCharts',
   'System/Scalars',
   'System/Enums',
   'System/Directives',

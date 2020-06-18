@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { ObjectId as ObjectID } from 'mongodb';
-import logger from '../../logging';
+import logger from '../../../logging';
 
 const { ObjectId } = mongoose.Schema.Types;
 const AssessmentSchema = mongoose.Schema({

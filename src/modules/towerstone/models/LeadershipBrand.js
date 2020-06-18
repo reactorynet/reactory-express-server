@@ -18,13 +18,34 @@ const LeadershipBrandSchema = mongoose.Schema({
   qualities: [
     {
       title: String,
-      legacyId: String,
       description: String,
+
+      delegate_title: String,
+      delegate_description: String,
+
+      assessor_title: String,
+      assessor_description: String,
+
+      chart_title: String,
+      chart_color: String,
+
+      legacyId: String,      
       ordinal: Number,
+      
       behaviours: [
         {
           title: String,
           description: String,
+          
+          delegate_title: String,
+          delegate_description: String,
+
+          assessor_title: String,
+          assessor_description: String,
+
+          chart_title: String,
+          chart_color: String,
+
           legacyId: String,
           ordinal: Number,
         },

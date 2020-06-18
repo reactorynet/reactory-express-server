@@ -54,6 +54,7 @@ type SurveyReportForUser {
 extend type Query {
     assessmentWithId(id: String): Assessment
     userSurveys(id: String): [Assessment]
+    MoresUserSurvey(id: String): [Assessment]
     userReports(id: String): [SurveyReportForUser]
     reportDetailForUser(userId: String, surveyId: String): SurveyReportForUser    
 }

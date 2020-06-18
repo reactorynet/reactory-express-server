@@ -5,7 +5,8 @@ import { fileAsString } from '@reactory/server-core/utils/io';
 const graphTypes: any[] = [];
 [
  'types/Survey/Assessment',
- 'types/Survey/Survey' 
+ 'types/Survey/Survey',
+ 'types/Mores/Dashboards' 
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;

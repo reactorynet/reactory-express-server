@@ -1,0 +1,21 @@
+
+type MoresPeriodFilter {
+  period: String
+  periodStart: Date
+  periodEnd: Date  
+}
+
+input MoresOrganizationDashboardInput {
+  period: String!
+  periodStart: Date
+  periodEnd: Date  
+}
+
+type MoresOrganizationDashboard {
+  toolbar: MoresPeriodFilter
+  
+}
+
+extend type Query {
+  MoresGetOrganizationAdminDashboard(organizationDashboardFilter: MoresOrganizationDashboardInput): MoresOrganizationDashboard 
+}

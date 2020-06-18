@@ -35,6 +35,7 @@ const userAssessments = async (id) => {
   if (findUser && findUser._id) {
     logger.info(`Fetching assessments for user ${user.firstName} [${user.email}] - for partner key: ${partner.key}`);
     const assessmentTypes = ['custom'];
+
     if (partner.key === 'plc') {
       assessmentTypes.push('plc');
     } else {
@@ -55,6 +56,76 @@ const userAssessments = async (id) => {
     }
 
     return [];
+  }
+
+  throw new RecordNotFoundError('No user matching id');
+};
+
+const MoresAssessmentsForUser = async (userId, status = ['ready']) => {
+  const { user, partner } = global;
+  const findUser = isNil(userId) === true ? await User.findById(userId).then() : user;
+  if (findUser && findUser._id) {
+    logger.info(`Fetching assessments for user ${user.firstName} [${user.email}] - for partner key: ${partner.key}`);
+    const assessmentTypes = [];
+    
+    switch(partner.key) {
+      case 'plc': {
+        assessmentTypes.push('plc');
+        break;
+      }
+      case 'towerstone': {
+        assessmentTypes.push('180');
+        assessmentTypes.push('360');
+        break;
+      }
+      case 'mores': {
+        assessmentTypes.push('I360');
+        assessmentTypes.push('L360');
+        assessmentTypes.push('TEAM180');
+        assessmentTypes.push('CULTURE');
+        break;
+      }
+    }
+
+    /**
+     * db.surveys.find({
+	endDate: {
+        $gte: ISODate("2019-01-29T00:00:00.000Z"),
+        $lt: ISODate("2020-05-01T00:00:00.000Z")
+    },
+    status: {
+      $in: ['ready']
+    },
+    mode: 'live',  
+    delegates: {
+    	$elemMatch: { delegate: ObjectId('5c9dfd003be7b20726261b83') }
+    }
+})
+     */
+    const surveys = await Survey.find({
+      mode: { $in: ['live'] },
+      endDate: {
+        $gt: moment().subtract(1, 'month').startOf('month').toDate(),
+        $lt: moment().toDate()
+      },
+      delegates: {
+        $elemMatch: { delegate: ObjectId(userId) }
+      },
+      surveyType: {
+        $in: assessmentTypes
+      }      
+    }).then();
+    
+    logger.debug(`Found (${surveys.length}) surveys for user`)
+
+    const assessments = await Assessment.find({ assessor: findUser._id, deleted: false, survey: { $in: surveys.map(survey => survey._id) } })
+      .populate('assessor')
+      .populate('delegate')
+      .populate('survey')
+      .then();
+
+
+    return assessments;
   }
 
   throw new RecordNotFoundError('No user matching id');
@@ -354,6 +425,9 @@ const userResolvers = {
     userSurveys(obj, { id, sort }, context, info) {
       logger.info(`Finding surveys for user ${id}, ${sort}`);
       return userAssessments(id);
+    },
+    MoresUserSurvey(obj, { id }, context, info) {
+      return MoresAssessmentsForUser(id);
     },
     userReports(obj, { id, sort }, context, info) {
       return new Promise((resolve, reject) => {
