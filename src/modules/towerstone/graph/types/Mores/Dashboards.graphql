@@ -13,6 +13,7 @@ input MoresOrganizationDashboardInput {
 
 type MoresOrganizationDashboard {
   toolbar: MoresPeriodFilter
+  
 }
 
 extend type Query {
