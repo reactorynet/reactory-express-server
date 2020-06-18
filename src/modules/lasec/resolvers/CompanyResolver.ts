@@ -19,6 +19,7 @@ import { urlencoded } from 'body-parser';
 import LasecAPI from '@reactory/server-modules/lasec/api';
 import CRMClientComment from '@reactory/server-modules/lasec/models/Comment';
 import { User } from '@reactory/server-core/models';
+import { LasecApiResponse } from '../types/lasec';
 
 const getClients = async (params) => {
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter } = params;
@@ -1800,6 +1801,18 @@ export default {
         logger.debug(`Create new client on LasecAPI`, inputData)
         customer = await post(URIS.customer_create.url, inputData).then()
         logger.debug(`Result in creating user`, customer);
+
+        try {
+          const setting_status_result: LasecApiResponse = await post(URIS.customer, { customer_id: customer.id, onboarding_step_completed: 6 }).then();          
+          if(setting_status_result.status === 'success') {
+            logger.debug('Customer Activity Status Successfully Updated', setting_status_result.payload)
+          } else {
+            logger.warn(`Could not update customer activity for ${inputData.email}`)
+          }
+        } catch(setStatusError) {
+          logger.error("Error Setting The Status Result", setStatusError)
+        }
+        
         if (customer && customer.id && Number.parseInt(`${customer.id}`) > 0) {
           customer = { ...inputData, ...customer };
           customerCreated = Boolean(customer && customer.id);

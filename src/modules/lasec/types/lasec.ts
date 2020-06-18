@@ -87,3 +87,24 @@ export interface LasecDashboardSearchParams {
 export interface LasecProductDashboardParams extends LasecDashboardSearchParams {
   productClass: any[],
 };
+
+export interface LasecApiResponse {
+  payload?: {
+    ids?: string[] | number[],
+    items?: any[],
+    pagination?: {
+      current_page: number,
+      first_item_index: number,
+      has_next_page: boolean,
+      has_prev_page: boolean,
+      last_item_index: number,
+      num_items: number,
+      num_pages: number,
+      page_size: number,
+    }
+  },
+  status: string | 'success' | 'failed',
+  pagination?: {
+    enabled: boolean
+  },  
+};
