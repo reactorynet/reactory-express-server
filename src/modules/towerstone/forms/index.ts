@@ -10,6 +10,8 @@ import { BehaviourFormWidget } from './LeadershipBrand/BehaviourFormWidget';
 import MoresPluginForm from './Global/MoresPlugin';
 import  { MoresUserDashboard } from './Dashboards/UserDashboard';
 import MoresOrganizationAdminDashboard from './Dashboards/OrganizationAdminDashboard';
+import MyPersonalDemographics from './MyPersonalDemographics';
+
 
 
 const Forms: Reactory.IReactoryForm[] = [
@@ -24,6 +26,7 @@ const Forms: Reactory.IReactoryForm[] = [
   TowerStoneSurveyDelegateConfig,
   TowerStoneSurveySettings,
   TowerStoneSurveyTemplatesForm,
+  MyPersonalDemographics
 ];
 
 export default Forms;
