@@ -427,7 +427,16 @@ const userResolvers = {
       return userAssessments(id);
     },
     MoresUserSurvey(obj, { id }, context, info) {
-      return MoresAssessmentsForUser(id);
+      const { partner } = global;
+      switch(partner.key) {
+        case 'mores': {
+          return MoresAssessmentsForUser(id);
+        } 
+        default: {
+          return userAssessments(id);
+        }
+      }
+      
     },
     userReports(obj, { id, sort }, context, info) {
       return new Promise((resolve, reject) => {
