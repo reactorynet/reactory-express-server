@@ -67,7 +67,7 @@ const MoresAssessmentsForUser = async (userId, status = ['ready']) => {
   if (findUser && findUser._id) {
     logger.info(`Fetching assessments for user ${user.firstName} [${user.email}] - for partner key: ${partner.key}`);
     const assessmentTypes = [];
-    
+
     switch(partner.key) {
       case 'plc': {
         assessmentTypes.push('plc');
@@ -96,7 +96,7 @@ const MoresAssessmentsForUser = async (userId, status = ['ready']) => {
     status: {
       $in: ['ready']
     },
-    mode: 'live',  
+    mode: 'live',
     delegates: {
     	$elemMatch: { delegate: ObjectId('5c9dfd003be7b20726261b83') }
     }
@@ -113,9 +113,9 @@ const MoresAssessmentsForUser = async (userId, status = ['ready']) => {
       },
       surveyType: {
         $in: assessmentTypes
-      }      
+      }
     }).then();
-    
+
     logger.debug(`Found (${surveys.length}) surveys for user`)
 
     const assessments = await Assessment.find({ assessor: findUser._id, deleted: false, survey: { $in: surveys.map(survey => survey._id) } })
@@ -130,7 +130,6 @@ const MoresAssessmentsForUser = async (userId, status = ['ready']) => {
 
   throw new RecordNotFoundError('No user matching id');
 };
-
 
 const userResolvers = {
   Task: {
@@ -636,7 +635,7 @@ const userResolvers = {
         logger.error(`Error processing email promises ${emailError.message}`, emailError);
       }
       await userOrganigram.save().then();
-      
+
       return Organigram.findById(userOrganigram._id);
     },
     async removePeer(obj, { id, peer, organization }) {
@@ -948,7 +947,7 @@ const userResolvers = {
           throw new ApiError('Not Implemented Yet');
         }
       }
-    }
+    },
   },
 };
 

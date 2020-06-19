@@ -3,7 +3,7 @@ import "isomorphic-fetch";
 import { isNil, isString } from 'lodash';
 import refresh from 'passport-oauth2-refresh';
 import FormData from 'form-data';
-import { User } from '@reactory/server-core/models';
+import { User, PersonalDemographic } from '@reactory/server-core/models';
 import MSGraph from '@reactory/server-core/azure/graph';
 import { updateUserProfileImage } from '@reactory/server-core/application/admin/User';
 import logger from '@reactory/server-core/logging';
@@ -23,16 +23,16 @@ const refreshMicrosoftToken = async (msauth) => {
     scope=[SCOPE]&
     redirect_uri=[REDIRECT URI]
     */
-  if(msauth && msauth.props.oauthToken) {
+  if (msauth && msauth.props.oauthToken) {
 
-    refresh.requestNewAccessToken('facebook', 'some_refresh_token', function(err, accessToken, refreshToken) {
-  // You have a new access token, store it in the user object,
-  // or use it to make a new request.
-  // `refreshToken` may or may not exist, depending on the strategy you are using.
-  // You probably don't need it anyway, as according to the OAuth 2.0 spec,
-  // it should be the same as the initial refresh token.
+    refresh.requestNewAccessToken('facebook', 'some_refresh_token', function (err, accessToken, refreshToken) {
+      // You have a new access token, store it in the user object,
+      // or use it to make a new request.
+      // `refreshToken` may or may not exist, depending on the strategy you are using.
+      // You probably don't need it anyway, as according to the OAuth 2.0 spec,
+      // it should be the same as the initial refresh token.
 
-});
+    });
     const postbody = new FormData();
     postbody.append('grant_type', 'refresh_token');
     postbody.append('refresh_token', msauth.props.oauthToken.token.refresh_token);
@@ -58,10 +58,10 @@ const refreshMicrosoftToken = async (msauth) => {
       body: postbody // body data type must match "Content-Type" header
     });
 
-    
-    if(response.status === 200 || response.status === 201) {
+
+    if (response.status === 200 || response.status === 201) {
       const refreshResult = await response.json();
-      
+
       /*
       {
         "access_token": "eyJ0eXAiOiJKV1QiLCJ...",
@@ -71,18 +71,18 @@ const refreshMicrosoftToken = async (msauth) => {
         "refresh_token": "OAAABAAAAiL9Kn2Z27...",
       }
       **/
-      
-      if(refreshResult && refreshResult.access_token) {
+
+      if (refreshResult && refreshResult.access_token) {
         msauth.props.oauthToken.token.access_token = refreshResult.access_token;
         msauth.props.accessToken = refreshResult.access_token;
         msauth.props.oauthToken.token.refresh_token = refreshResult.refresh_token;
-        msauth.props.oauthToken.token.expires_at = moment().add(refreshResult.expires_in || 3599, 'seconds').toDate();        
+        msauth.props.oauthToken.token.expires_at = moment().add(refreshResult.expires_in || 3599, 'seconds').toDate();
         return msauth;
       }
     } else {
-      logger.debug(`Failed request from MS Graph: \n\tstatus: ${response.status}\n\ttext: ${ response.statusText}]`);
-      throw new ApiError("oauth token is invalid, please login again via login page.");      
-    }    
+      logger.debug(`Failed request from MS Graph: \n\tstatus: ${response.status}\n\ttext: ${response.statusText}]`);
+      throw new ApiError("oauth token is invalid, please login again via login page.");
+    }
   } else {
     throw new ApiError("oauth token is invalid, please login again via login page.");
   }
@@ -91,14 +91,14 @@ const refreshMicrosoftToken = async (msauth) => {
 /**
  * A method to check if our current microsoft authentication token is valid.
  * If the expiry is within 5 min we, do a refresh of the token.
- * @param {*} msauth 
- * @param {*} refresh 
+ * @param {*} msauth
+ * @param {*} refresh
  * @param {*} userToCheck
  */
 const isTokenValid = async (msauth, refresh = true, userToCheck = null) => {
 
-  if(isNil(msauth)) throw new ApiError('Invalid Null Parameter input for msauth', { parameter: 'msauth', 'method': 'isTokenValid', 'source': 'modules.core.resolvers.User.ProfileResolver' });
-  if(isNil(msauth.props) || isNil(msauth.provider) || isNil(msauth.lastLogin)) throw new ApiError('Invalid Parameter Shape for msauth', { parameter: 'msauth', 'method': 'isTokenValid', 'source': 'modules.core.resolvers.User.ProfileResolver' });
+  if (isNil(msauth)) throw new ApiError('Invalid Null Parameter input for msauth', { parameter: 'msauth', 'method': 'isTokenValid', 'source': 'modules.core.resolvers.User.ProfileResolver' });
+  if (isNil(msauth.props) || isNil(msauth.provider) || isNil(msauth.lastLogin)) throw new ApiError('Invalid Parameter Shape for msauth', { parameter: 'msauth', 'method': 'isTokenValid', 'source': 'modules.core.resolvers.User.ProfileResolver' });
   logger.debug(`Checking if Microsoft Authentication token for ${user.fullName(true)} is valid`);
   const {
     expires_at,
@@ -106,18 +106,18 @@ const isTokenValid = async (msauth, refresh = true, userToCheck = null) => {
     access_token
   } = msauth.props.oauthToken.token;
 
-  const  hasToken = isString(access_token) && isString(refresh_token);  
+  const hasToken = isString(access_token) && isString(refresh_token);
   logger.debug(`Microsoft token looks ${hasToken ? 'good, checking dates' : 'bad, user must login'}`);
-  if(hasToken === true) {
+  if (hasToken === true) {
     const now = moment();
-    let expiresWhen = null;  
-    
+    let expiresWhen = null;
+
     expiresWhen = moment(expires_at);
-    
-    if(expiresWhen.isValid() === true) {    
+
+    if (expiresWhen.isValid() === true) {
       logger.debug(`Checking if token has expired or about to expire ${expiresWhen.format('YYYY-MM-dd HH:mm:ss')}`);
       const expiresInMinutes = expiresWhen.diff(now, "minute")
-      if(expiresInMinutes <= 0) {
+      if (expiresInMinutes <= 0) {
         logger.debug(`Token already expired ${Math.abs(expiresInMinutes)} minutes ago. Use must login`);
         return {
           valid: false,
@@ -126,13 +126,13 @@ const isTokenValid = async (msauth, refresh = true, userToCheck = null) => {
         };
       }
 
-      if( expiresInMinutes <= 5 && refresh === true && userToCheck && userToCheck.setAuthentication) {
+      if (expiresInMinutes <= 5 && refresh === true && userToCheck && userToCheck.setAuthentication) {
         logger.debug(`The token expires in (${now.diff(expiresWhen, "minute")}) minutes. Will try a refresh using refresh token.`)
-        try {          
-          const _auth = await refreshMicrosoftToken(msauth);                    
+        try {
+          const _auth = await refreshMicrosoftToken(msauth);
           await userToCheck.setAuthentication(_auth);
-          
-         // await userToCheck.save();
+
+          // await userToCheck.save();
           return {
             valid: true,
             msauth: _auth,
@@ -145,10 +145,10 @@ const isTokenValid = async (msauth, refresh = true, userToCheck = null) => {
             msauth,
             message: `Your Microsoft refresh token has failed, please login using your Microsoft Account in order to keep using Microsoft Features`
           };
-        }        
+        }
       }
-      
-      if(expiresInMinutes > 5) {
+
+      if (expiresInMinutes > 5) {
         logger.debug(`The token is valid and expires in ${expiresInMinutes} minutes`);
         return {
           valid: true,
@@ -156,29 +156,65 @@ const isTokenValid = async (msauth, refresh = true, userToCheck = null) => {
           message: `Your Microsoft token expires in ${expiresInMinutes} minutes`
         };
       }
-    }    
+    }
   }
   logger.warn(`The given token does not appear to have a reasonable microsoft token shape. It requires properties 'props.oauthToken.token.expires_at' and 'props.oauthToken.token.refresh_token'`, { msauth });
   return {
     valid: false,
     msauth,
-  };  
-}; 
+  };
+};
+
+const SetPersonalDemographics = async (args) => {
+  logger.debug(`SAVE MY PERSONAL DEMOGRAPHICS :: ${JSON.stringify(args)}`);
+
+  // 1. look for demographic by client/user id , demographic id or organisation id
+  // 2. If exists update. Else create new one
+
+  const { clientId, race, age, gender, position, region, operationalGroup, businessUnit, team } = args;
+
+  try {
+    // const existingDemographic = await PersonalDemographic.findById(clientId);
+
+    const response = await PersonalDemographic.findByIdAndUpdate(
+      { clientId },
+      { clientId, race, age, gender, position, region, operationalGroup, businessUnit, team },
+      { new: true, upsert: true }
+    ).exec();
+
+    logger.debug(`PERSONAL DEMOGRAPHIC SAVE REPONSE:: ${JSON.stringify(response)}`);
+
+    return {
+      success: true,
+      message: 'Your personal demographics have been saved successfully.'
+    };
+
+  } catch (error) {
+    throw new ApiError(`Error ${clientId != '' ? 'updating ' : 'saving '} personal demographics`);
+  }
+};
+
+const getPersonalDemographics = async (args) => {
+  logger.debug(`GET PERSONAL DEMOGRAPHICS :: ${JSON.stringify(args)}`);
+
+  const demographics = await PersonalDemographic.findOne({ clientId: args.clientId });
+  return demographics;
+};
 
 export default {
   Query: {
     refreshProfileData: async (parent, { id, skipImage = true }) => {
       let userToRefresh = global.user;
       const uxmessages = [];
-      if(id && typeof id === 'string') {
-        userToRefresh = await User.findById(id);        
+      if (id && typeof id === 'string') {
+        userToRefresh = await User.findById(id);
       }
 
-      //for each available external provider we fetch the profile and 
-      //do an image fetch.  The skip image parameter will tell 
+      //for each available external provider we fetch the profile and
+      //do an image fetch.  The skip image parameter will tell
       //the api whether or not to update the user profile.
-      let msauth = userToRefresh.getAuthentication("microsoft");                       
-      if(msauth && msauth.props) {      
+      let msauth = userToRefresh.getAuthentication("microsoft");
+      if (msauth && msauth.props) {
         /**
          * we have an oauth value, we can proceed
          * msauth.props.oauthToken
@@ -195,16 +231,16 @@ export default {
                 "$date": "2019-10-19T06:12:29.755+0000"
               }
             }
-          }        
+          }
         */
-       let msuser = null;      
-       //check if the token is valid, do a refresh if needed
+        let msuser = null;
+        //check if the token is valid, do a refresh if needed
         const tokenValidation = await isTokenValid(msauth, true, userToRefresh);
-        if(tokenValidation.valid === true){
-          //our token is valid and we possibly refreshed the refresh and access tokens.          
-          try {                      
+        if (tokenValidation.valid === true) {
+          //our token is valid and we possibly refreshed the refresh and access tokens.
+          try {
             msuser = await MSGraph.getUserDetails(msauth.props.accessToken, { imageSize: '120x120', profileImage: skipImage === false });
-            logger.debug('microsoft user response received', msuser);     
+            logger.debug('microsoft user response received', msuser);
             uxmessage.push({
               title: 'Microsoft Authentication',
               text: 'Login valid',
@@ -212,7 +248,7 @@ export default {
               via: 'notification'
             });
           } catch (microsoftGraphError) {
-            logger.error(`${microsoftGraphError.message}`, microsoftGraphError);            
+            logger.error(`${microsoftGraphError.message}`, microsoftGraphError);
             /**
              * If our error is due to an expire accessToken we can try to do a refresh
              * {
@@ -227,15 +263,15 @@ export default {
               }
             */
 
-            if(microsoftGraphError && microsoftGraphError.meta && microsoftGraphError.meta.MicrosoftError) {
+            if (microsoftGraphError && microsoftGraphError.meta && microsoftGraphError.meta.MicrosoftError) {
               const { MicrosoftError } = microsoftGraphError.meta;
-              if(MicrosoftError.code) {
-                switch(MicrosoftError.code) {
+              if (MicrosoftError.code) {
+                switch (MicrosoftError.code) {
                   case "InvalidAuthenticationToken": {
-                    logger.debug('Invalid Authentication Token Received, trying refresh');                  
-                    msauth = await refreshMicrosoftToken(msauth);                    
+                    logger.debug('Invalid Authentication Token Received, trying refresh');
+                    msauth = await refreshMicrosoftToken(msauth);
                     msuser = await MSGraph.getUserDetails(msauth.props.accessToken);
-                    
+
                     break;
                   }
                   default: {
@@ -243,41 +279,48 @@ export default {
                   }
                 }
               }
-            }                    
+            }
           }
         } else {
           const now = moment().valueOf();
           uxmessages.push({
             id: `ms-auth-expired-${now}`,
-            title: 'Login Expired',            
+            title: 'Login Expired',
             text: tokenValidation.message || 'Your Microsoft Login has expired, please login again in order to resume Office 365 features.',
             data: {
               status: 'warning'
             },
             actions: [
-              { 
-                id: `ms-auth-login-${now}`, 
+              {
+                id: `ms-auth-login-${now}`,
                 title: 'Re-Authenticate',
                 action: `${process.env.API_URI_ROOT}/auth/microsoft/openid/${global.partner.key}?x-client-key=${global.partner.key}&x-reactory-pass=${global.partner.password}+${global.partner.salt}`,
               }
-            ],            
+            ],
             via: 'notification',
             reqiuresInteraction: true,
-            timestamp: now                        
-          });          
+            timestamp: now
+          });
         }
 
-        if(msuser && msuser.avatar && skipImage === false) {          
+        if (msuser && msuser.avatar && skipImage === false) {
           userToRefresh.avatar = updateUserProfileImage(userToRefresh, msuser.avatar, false, false);
-        }        
+        }
       }
 
       return {
         user: userToRefresh,
         messages: uxmessages,
-      };      
-    
-    },
+      };
 
+    },
+    GetPersonalDemographics: async (obj, args) => {
+      return getPersonalDemographics(args);
+    }
+  },
+  Mutation: {
+    async CoreSetPersonalDemographics(obj, args) {
+      return SetPersonalDemographics(args);
+    }
   }
 };

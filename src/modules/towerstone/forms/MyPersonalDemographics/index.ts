@@ -17,7 +17,9 @@ const MoresMyPersonalDemographics: Reactory.IReactoryForm = {
   schema: $schema,
   graphql: $graphql,
   uiSchema: $uiSchema,
-  defaultFormValue: {},
+  defaultFormValue: {
+    id: '',
+  },
   widgetMap: [],
 };
 

@@ -1,6 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 const schema: Reactory.ISchema = {
   type: 'object',
+  title: 'My Personal Demographics',
   properties: {
     id: {
       type: 'string',
@@ -17,6 +18,26 @@ const schema: Reactory.ISchema = {
     gender: {
       type: 'string',
       title: 'Gender'
+    },
+    position: {
+      type: 'string',
+      title: 'Position'
+    },
+    region: {
+      type: 'string',
+      title: 'Region'
+    },
+    operationalGroup: {
+      type: 'string',
+      title: 'Operational Group/Brand'
+    },
+    businessUnit: {
+      type: 'string',
+      title: 'Business Unit'
+    },
+    team: {
+      type: 'string',
+      title: 'Team'
     },
   }
 };

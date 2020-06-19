@@ -152,6 +152,7 @@ extend type Query {
   surveysList: [Survey]
   surveyDetail(surveyId: String!): Survey
   getDemographicLookup(lookupType: String!): [MoresLookupItem]
+
 }
 
 extend type Mutation {

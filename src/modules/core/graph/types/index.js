@@ -16,6 +16,7 @@ const typeDefs = [];
   'System/UX',
   'User/User',
   'User/Team',
+  'User/Profile',
   'Project/Project',
   'Project/Task',
   'Organization/Organization',
