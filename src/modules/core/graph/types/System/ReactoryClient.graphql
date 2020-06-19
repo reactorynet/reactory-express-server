@@ -107,6 +107,7 @@ type ApiStatus {
     businessUnit: BusinessUnit
     id: String
     roles: [String]
+    alt_roles: [String]
     menus: [Menu]
     routes: [ClientRoute]
     memberships: [UserMembership]

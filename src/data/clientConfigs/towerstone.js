@@ -372,6 +372,15 @@ export default {
         enabled: false,
       },
     },
+    {
+      name: 'login_partner_keys',
+      data: {
+        partner_keys: ['plc', 'towerstone', 'mores', 'thinklead', 'reactory'],
+        defaultAction: 'add_default_membership',
+        organization_excludes: [],
+        organization_includes: [],
+      },
+    }
   ],
   allowCustomTheme: true,
   auth_config: [
