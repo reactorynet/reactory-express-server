@@ -101,7 +101,7 @@ ReactoryClientSchema.methods.getDefaultUserRoles = function getDefaultUserRoles(
 
 // eslint-disable-next-line max-len
 ReactoryClientSchema.methods.getSetting = function getSetting(name, defaultValue = null, create = false, componentFqn = null) {
-  logger.info(`Looking up setting ${name}`, { defaultValue, create });
+  logger.debug(`Looking up setting ${name} ${defaultValue ? ' with default value ' : ' without a default value' }`);
   if (isArray(this.settings)) {
     const found = find(this.settings, { name });
     if (found) return found;

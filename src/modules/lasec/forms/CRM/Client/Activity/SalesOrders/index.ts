@@ -124,7 +124,7 @@ const uiSchema: any = {
         { title: 'Order Type', field: 'orderType' },
         {
           title: 'Sales Order Number',
-          field: 'quoteId',
+          field: 'salesOrderNumber',
           component: 'core.SlideOutLauncher@1.0.0',
           props: {
             componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
@@ -191,7 +191,7 @@ const uiSchema: any = {
             'rowData.date': 'value',
           }
         },
-        { title: 'ISO Number', field: 'id' },        
+        // { title: 'ISO Number', field: 'id' },
         {
           title: 'Quote Number',
           field: 'quoteId',
@@ -221,7 +221,7 @@ const uiSchema: any = {
         { title: 'Client', field: 'client' },
         { title: 'Purchase Order Number', field: 'poNumber' },
         { title: 'Customer', field: 'customer' },
-        { title: 'Client', field: 'client' },        
+        { title: 'Client', field: 'client' },
         {
           title: 'Order Value',
           field: 'value',
