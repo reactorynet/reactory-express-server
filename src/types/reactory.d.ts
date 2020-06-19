@@ -365,7 +365,7 @@ declare namespace Reactory {
     workflows?: IWorkflow[],
     forms?: IReactoryForm[],
     services?: IReactoryServiceDefinition[],
-    clientPlugins: Client.IReactoryPluginDefinition
+    clientPlugins?: Client.IReactoryPluginDefinition
   }
 
   export interface IReactoryServiceResult<T> {

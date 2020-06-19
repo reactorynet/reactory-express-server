@@ -3,7 +3,7 @@ import co from 'co';
 import { ObjectId } from 'mongodb';
 import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
-import { merge, isNil, isArray, sortBy } from 'lodash';
+import { merge, isNil, isArray, sortBy, filter } from 'lodash';
 import moment from 'moment';
 
 import { execql } from '@reactory/server-core/graph/client';
@@ -15,7 +15,7 @@ import reactoryClientResolver from './ReactoryClient';
 import leadershipBrandResolver from './LeadershipBrandResolver';
 import projectResolver from './ProjectResolver';
 import scaleResolver from './ScaleResolver';
-import { MenuItem, Menu, ClientComponent, User } from '../../../models';
+import { MenuItem, Menu, ClientComponent, User, ReactoryClient } from '../../../models';
 import logger from '../../../logging';
 import { UserValidationError } from '../../../exceptions';
 
@@ -86,6 +86,10 @@ const resolvers = {
       let isAnon = false;
       let uxmessages = [];
 
+      const roles = [];
+      const alt_roles = [];
+      const memberships = isArray(user.memberships) === true ? user.memberships : [];
+
       if(user.anon === true) {
         skipResfresh = true;
         isAnon = true;
@@ -142,26 +146,64 @@ const resolvers = {
         }                        
       }
       
+      if(isAnon === false) {
 
-      const roles = [];
-      if (isArray(user.memberships)) {
-        user.memberships.map((membership) => {
+        const login_partner_keys_setting = partner.getSetting("login_partner_keys", {
+          partner_keys: [partner.key, 'reactory'],
+          defaultAction: 'add_default_membership',
+          organization_excludes: [],
+          organization_includes: [],
+        }, true, "core.ReactoryPartnerKeysConfig");
+  
+        const login_partner_keys = login_partner_keys_setting.data; 
+  
+        logger.debug(`Partner has Keys (${login_partner_keys.partner_keys.length})`);
+        //get a list of all partner / cross partner logins allowed
+        const partnerLogins = await ReactoryClient.find({ key: { $in: [ ...login_partner_keys.partner_keys ] } }).then();
+      
+        let root_partner_memberships = filter(memberships, { clientId: partner._id });
+        logger.debug(`${user.firstName} has (${root_partner_memberships.length})`);
+                
+        root_partner_memberships.forEach((membership) => {        
           if (isArray(membership.roles)) {
             membership.roles.forEach((r) => { roles.push(r); });
-          }
-          return membership;
+          }        
+        });       
+        
+  
+        partnerLogins.forEach((alt_partner) => {
+          const alt_partner_memberships = filter(memberships, { clientId: alt_partner._id });
+          
+          alt_partner_memberships.forEach((alt_partner_membership) => {
+            if (isArray(alt_partner_membership.roles)) {
+              
+              if(roles.length === 0) {
+                logger.debug(`${user.fullName} did not have a membership for ${partner.name} - assigning default roles`);
+                //we have no roles in the primary partner, 
+                //but we have one or more roles on the alt_partner
+                //so we create our OWN PARTNER default role for the user and add the membership.
+                let _default_roles = partner.getSetting('new_user_roles', ['USER'], true, 'core.SecurityNewUserRolesForReactoryClient');
+                roles.push(_default_roles);
+                _default_roles.data.forEach(r => user.addRole(partner._id,r, null, null ));              
+              }
+  
+              alt_partner_membership.roles.forEach((r) => { 
+                alt_roles.push(`${r}\\${alt_partner._id.toString()}\\${alt_partner_membership.clientId}\\${alt_partner_membership.organizationId || '*'}\\${alt_partner_membership.organizationId || '*'}`);           
+              });
+            }
+          });        
         });
-      }
 
+      }      
+      
       let navigationComponents = [];
       const settingKey = `navigation_components/${process.env.MODE}`;
-      const navigationComponentsSetting = partner.getSetting(settingKey, [], false);
-      //logger.debug(`>>>>> FOUND navigationComponentSettings <<<<<`, navigationComponentsSetting);
+      const navigationComponentsSetting = partner.getSetting(settingKey, [], false);      
 
       if(navigationComponentsSetting && navigationComponentsSetting.data) {
         navigationComponents = [ ...navigationComponentsSetting.data ];
       }
-
+      
       return {
         when: moment(),
         status: 'API OK',
@@ -170,7 +212,8 @@ const resolvers = {
         avatar: isNil(user) === false ? user.avatar : null,
         email: isNil(user) === false ? user.email : null,
         id: isNil(user) === false ? user._id : null,
-        roles: isNil(user) === false && isArray(user.memberships) && user.memberships.length > 0 ? roles : ['ANON'],
+        roles,
+        alt_roles,
         memberships: isNil(user) === false && isArray(user.memberships) ? user.memberships : [],
         organization: user.organization,
         routes: partner.routes || [],
