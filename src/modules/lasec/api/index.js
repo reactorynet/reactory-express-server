@@ -138,7 +138,8 @@ const getStorageItem = async (key) => {
     }
   }
   // no global user - return null, no authentication
-  throw new Error('How?');
+  //throw new Error('How?');
+  return null;
 };
 
 export async function POST(url, data, auth = true) {

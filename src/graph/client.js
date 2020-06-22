@@ -7,7 +7,7 @@ import gql from 'graphql-tag';
 import AuthConfig from '../authentication';
 
 const httpLink = createHttpLink({
-  uri: `${process.env.API_URI_ROOT}/api`,
+  uri: `${process.env.API_URI_ROOT}${process.env.API_URI_ROOT.endsWith('/') ? 'api' : '/api'}`,
   fetch: fetch 
 });
 

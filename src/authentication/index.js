@@ -291,7 +291,10 @@ class AuthConfig {
     static BasicAuth = (req, username, password, done) => {
       logger.info(`Authenticating User: ${username}`);
       User.findOne({ email: username }).then((userResult) => {
-        if (userResult === null) done(null, false, 'username not found');
+        if (userResult === null || userResult === undefined) { 
+          done(null, false, { message: 'Incorrect Credentials Supplied' });
+          return;
+        }
         if (userResult.validatePassword(password) === true) {
           AuthConfig.generateLoginToken(userResult).then((loginToken) => {
             logger.info('User logged in and session added');
@@ -299,11 +302,11 @@ class AuthConfig {
             done(null, loginToken);
           });
         } else {
-          done(null, false, 'Could not authenticate the account');
+          done(null, false, { message: 'Incorrect Credentials Supplied, If you have forgotten your password, use the forgot password link' });
         }
       }).catch((error) => {
-        logger.error('Authentication Error', error);
-        done(null, false, 'System is unable to authenticate user due to an error');
+        logger.error(`Authentication Error ${error.message}`);
+        done(error);
       });
     };
 }

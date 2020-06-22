@@ -1784,7 +1784,7 @@ export default {
 
         'customer.id': 'company_id',
         'customer.registeredName': 'company',
-        'organization.id': { key: 'oranization_id', transform: (v: string) => Number.parseInt(`${v}`) },
+        'organization.id': { key: 'oranisation_id', transform: (v: string) => Number.parseInt(`${v}`) },
         'address.physicalAddress.id': 'physical_address_id',
         'address.deliveryAddress.id': 'delivery_address_id',
       };
@@ -1795,7 +1795,7 @@ export default {
       let customerCreated = false;
       try {
         let inputData: any = om.merge(_newClient, _map);
-        inputData.onboarding_step_completed = "6";
+        inputData.onboarding_step_completed = 6;
         inputData.activity_status = 'active';
 
         logger.debug(`Create new client on LasecAPI`, inputData)
@@ -1803,14 +1803,21 @@ export default {
         logger.debug(`Result in creating user`, customer);
 
         try {
-          const setting_status_result: LasecApiResponse = await post(URIS.customer, { customer_id: customer.id, onboarding_step_completed: 6 }).then();          
-          if(setting_status_result.status === 'success') {
-            logger.debug('Customer Activity Status Successfully Updated', setting_status_result.payload)
-          } else {
-            logger.warn(`Could not update customer activity for ${inputData.email}`)
-          }
+          debugger;
+          //const setting_status_result: LasecApiResponse = await post(`api/customer/${customer.id}/update`, { customer_id: customer.id, onboarding_step_completed: 6, activity_status: 'active' }).then();          
+          //TODO: investigate why status update API call is not working
+          //using mysql update to complete ticket          
+          const update_result = await mysql(`
+            UPDATE Customer SET 
+              activity_status = 'active', 
+              organisation_id = ${_newClient.organization.id}, 
+              company_id = ${_newClient.customer.id},
+
+            WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
+          logger.debug(`Updated user activity status complete`, update_result);
+          
         } catch(setStatusError) {
-          logger.error("Error Setting The Status Result", setStatusError)
+          logger.error("Error Setting The Status and Customer details", setStatusError)
         }
         
         if (customer && customer.id && Number.parseInt(`${customer.id}`) > 0) {
@@ -1872,7 +1879,11 @@ export default {
             }
 
             try {
-              await lasecApi.Customers.UpdateClientDetails(customer.id, { activity_status: 'active'}).then();
+              const updateResponse: LasecApiResponse = await lasecApi.Customers.UpdateClientDetails(customer.id, { activity_status: 'active'}).then();
+              debugger;
+              if(updateResponse.status !== 'success') {
+                logger.warning(`Lasec API did not update the customer status`, updateResponse);  
+              }
             } catch(setStatusException) {
               logger.error(`Could set the client status`, setStatusException);
               response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while setting activity status`, type: 'warning', inAppNotification: true });
