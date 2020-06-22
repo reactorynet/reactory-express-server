@@ -33,7 +33,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'businessUnit': 'businessUnit',
       'team': 'team',
     },
-    new: false,
+    new: true,
     edit: true,
   },
   mutation: {

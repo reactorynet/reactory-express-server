@@ -27,8 +27,6 @@ const uiSchema: any = {
       gender: { xs: 12, sm: 6, md: 4 },
       position: { xs: 12, sm: 6, md: 4 },
       region: { xs: 12, sm: 6, md: 4 },
-    },
-    {
       operationalGroup: { xs: 12, sm: 6 },
       businessUnit: { xs: 12, sm: 6 },
       team: { xs: 12, sm: 6 },
@@ -54,7 +52,7 @@ const uiSchema: any = {
         }
       }`,
       //propertyMap: {
-        // 'formContext.$formData.organisationId': 'orgId'
+      // 'formContext.$formData.organisationId': 'orgId'
       //},
       resultItem: 'getDemographicLookup',
       resultsMap: {
@@ -74,7 +72,7 @@ const uiSchema: any = {
         }
       }`,
       //propertyMap: {
-        // 'formContext.$formData.organisationId': 'orgId'
+      // 'formContext.$formData.organisationId': 'orgId'
       //},
       resultItem: 'getDemographicLookup',
       resultsMap: {
@@ -94,7 +92,7 @@ const uiSchema: any = {
         }
       }`,
       //propertyMap: {
-        // 'formContext.$formData.organisationId': 'orgId'
+      // 'formContext.$formData.organisationId': 'orgId'
       //},
       resultItem: 'getDemographicLookup',
       resultsMap: {
@@ -114,7 +112,7 @@ const uiSchema: any = {
         }
       }`,
       //propertyMap: {
-        // 'formContext.$formData.organisationId': 'orgId'
+      // 'formContext.$formData.organisationId': 'orgId'
       //},
       resultItem: 'getDemographicLookup',
       resultsMap: {
@@ -134,7 +132,7 @@ const uiSchema: any = {
         }
       }`,
       //propertyMap: {
-        // 'formContext.$formData.organisationId': 'orgId'
+      // 'formContext.$formData.organisationId': 'orgId'
       //},
       resultItem: 'getDemographicLookup',
       resultsMap: {
@@ -154,7 +152,7 @@ const uiSchema: any = {
         }
       }`,
       //propertyMap: {
-        // 'formContext.$formData.organisationId': 'orgId'
+      // 'formContext.$formData.organisationId': 'orgId'
       //},
       resultItem: 'getDemographicLookup',
       resultsMap: {
@@ -174,7 +172,7 @@ const uiSchema: any = {
         }
       }`,
       //propertyMap: {
-        // 'formContext.$formData.organisationId': 'orgId'
+      // 'formContext.$formData.organisationId': 'orgId'
       //},
       resultItem: 'getDemographicLookup',
       resultsMap: {
@@ -194,7 +192,7 @@ const uiSchema: any = {
         }
       }`,
       //propertyMap: {
-        // 'formContext.$formData.organisationId': 'orgId'
+      // 'formContext.$formData.organisationId': 'orgId'
       //},
       resultItem: 'getDemographicLookup',
       resultsMap: {

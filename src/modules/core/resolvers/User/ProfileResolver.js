@@ -171,12 +171,10 @@ const SetPersonalDemographics = async (args) => {
   // 1. look for demographic by client/user id , demographic id or organisation id
   // 2. If exists update. Else create new one
 
-  const { clientId, race, age, gender, position, region, operationalGroup, businessUnit, team } = args;
+  const { clientId, race, age, gender, position, region, operationalGroup, businessUnit, team } = args.personalDemographics;
 
   try {
-    // const existingDemographic = await PersonalDemographic.findById(clientId);
-
-    const response = await PersonalDemographic.findByIdAndUpdate(
+    const response = await PersonalDemographic.findOneAndUpdate(
       { clientId },
       { clientId, race, age, gender, position, region, operationalGroup, businessUnit, team },
       { new: true, upsert: true }
@@ -186,11 +184,15 @@ const SetPersonalDemographics = async (args) => {
 
     return {
       success: true,
-      message: 'Your personal demographics have been saved successfully.'
+      message: 'Your personal demographics have been saved successfully.',
     };
 
   } catch (error) {
+
+    logger.debug(`ERROR SAVING PERSONAL DEMOGRAPHICS:: ${JSON.stringify(error)}`);
+
     throw new ApiError(`Error ${clientId != '' ? 'updating ' : 'saving '} personal demographics`);
+
   }
 };
 
