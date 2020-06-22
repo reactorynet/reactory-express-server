@@ -24,6 +24,7 @@ import CommentModel from './schema/Comment';
 
 // DREW
 import ContentModel from './schema/Content';
+import PersonalDemographicModel from './schema/PersonalDemographic';
 
 import { Cache } from '../modules/core/models';
 
@@ -52,6 +53,7 @@ export const Board = BoardModel;
 
 // DREW
 export const Content = ContentModel;
+export const PersonalDemographic = PersonalDemographicModel;
 
 const models = {
   Cache,
@@ -76,7 +78,6 @@ const models = {
   Template,
   User,
   Task,
-  Content
 };
 
 export default models;
