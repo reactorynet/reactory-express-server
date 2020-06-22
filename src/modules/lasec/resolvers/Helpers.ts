@@ -1528,14 +1528,26 @@ export const getClientSalesOrders = async (params) => {
   logger.debug(` -- GETTING CLIENT SALES ORDERS --  ${JSON.stringify(params)}`);
 
   // -- POSSIBLE FILTERS --
-  // Order Date
-  // Order Status
-  // Shipping Date
-  // ISO Number
-  // Customer
-  // Client
-  // Purchase Order Number
-  // Order Value
+  // any_field - done
+  // date_range - done
+  // order_date - done
+  // shipping_date - done
+  // quote_date - done
+  // order_type - done
+  // order_status - done
+  // iso_number - done
+  // po_number - done
+  // quote_number - done
+  // rep_code - done
+  // order_value - done
+  // reserve_value - done
+  // ship_value - done
+  // backorder_value - done
+
+  // customer
+  // client
+
+  // dispatches - to be implemented
 
   const {
     clientId,
@@ -1544,6 +1556,7 @@ export const getClientSalesOrders = async (params) => {
     periodEnd,
     filterBy = "any_field",
     filter,
+    dateFilter,
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
@@ -1556,14 +1569,25 @@ export const getClientSalesOrders = async (params) => {
 
   let apiFilter = {
     customer_id: clientId,
-    [filterBy]: filter || search,
-    ordering: { order_date: "desc" },
+    // [filterBy]: filter || search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    ordering: { order_date: "desc" },
   };
 
-  // const result = await getPagedSalesOrders({ paging, apiFilter });
-  // return result;
+  if (filterBy == 'order_date' || filterBy == 'shipping_date' || filterBy == 'quote_date') {
+    apiFilter.using = filterBy;
+    apiFilter.start_date = moment(dateFilter).startOf('day');
+    apiFilter.end_date = moment(dateFilter).endOf('day');
+  }
+
+  if (filterBy == 'order_type' || filterBy == 'order_status')
+    apiFilter[filterBy] = filter;
+
+  if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id' || filterBy == 'sales_team_id') {
+    // if (search || search != '') apiFilter[filterBy] = search;
+    apiFilter[filterBy] = search;
+  }
 
   let salesOrdersIds = await lasecApi.SalesOrders.list({
     filter: apiFilter,
@@ -1596,21 +1620,24 @@ export const getClientSalesOrders = async (params) => {
       id: order.id,
       salesOrderNumber: order.sales_order_number,
       orderDate: order.order_date,
+      shippingDate: order.req_ship_date,
+      quoteDate: order.quote_date,
       orderType: order.order_type,
       orderStatus: order.order_status,
-      shippingDate: order.req_ship_date,
       iso: order.sales_order_id,
       customer: order.company_trading_name,
       client: order.customer_name,
       poNumber: order.customerponumber,
-      value: order.order_value,
-      reserveValue: order.reserved_value,
       quoteId: order.quote_id,
       currency: order.currency,
       deliveryAddress: order.delivery_address,
       warehouseNote: order.warehouse_note,
       deliveryNote: order.delivery_note,
-      salesTeam: order.sales_team_id
+      salesTeam: order.sales_team_id,
+      value: order.order_value,
+      reserveValue: order.reserved_value,
+      shipValue: order.shipped_value,
+      backorderValue: order.back_order_value
     }
   });
 

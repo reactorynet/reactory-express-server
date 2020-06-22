@@ -1,6 +1,6 @@
 import { Reactory } from "@reactory/server-core/types/reactory";
 
-const graphql: Reactory.IFormGraphDefinition =  {
+const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetCRMClientSalesOrders',
     text: `query LasecGetCRMClientSalesOrders(
@@ -11,6 +11,7 @@ const graphql: Reactory.IFormGraphDefinition =  {
       $filter: String
       $periodStart: String,
       $periodEnd: String,
+      $dateFilter: String,
     ){
       LasecGetCRMClientSalesOrders(
         clientId: $clientId,
@@ -20,6 +21,7 @@ const graphql: Reactory.IFormGraphDefinition =  {
         filter: $filter,
         periodStart: $periodStart,
         periodEnd: $periodEnd,
+        dateFilter: $dateFilter,
       ){
         paging {
           total
@@ -31,21 +33,25 @@ const graphql: Reactory.IFormGraphDefinition =  {
           id
           salesOrderNumber
           orderDate
+          shippingDate
+          quoteDate
           orderType
           orderStatus
-          shippingDate
           iso
           customer
           client
           poNumber
-          reserveValue
-          value,
           quoteId,
           currency
           deliveryAddress
           warehouseNote
           deliveryNote
           salesTeam
+
+          value,
+          reserveValue
+          shipValue
+          backorderValue
         }
       }
     }`,
@@ -57,6 +63,7 @@ const graphql: Reactory.IFormGraphDefinition =  {
       'formData.paging': 'paging',
       'formData.periodStart': 'periodStart',
       'formData.periodEnd': 'periodEnd',
+      'formData.dateFilter': 'dateFilter',
     },
     resultMap: {
       'paging': 'paging',
@@ -64,21 +71,25 @@ const graphql: Reactory.IFormGraphDefinition =  {
       'salesOrders.[].id': 'salesOrders.[].id',
       'salesOrders.[].salesOrderNumber': 'salesOrders.[].salesOrderNumber',
       'salesOrders.[].orderDate': 'salesOrders.[].orderDate',
+      'salesOrders.[].shippingDate': 'salesOrders.[].shippingDate',
+      'salesOrders.[].quoteDate': 'salesOrders.[].quoteDate',
       'salesOrders.[].orderType': 'salesOrders.[].orderType',
       'salesOrders.[].orderStatus': 'salesOrders.[].orderStatus',
-      'salesOrders.[].shippingDate': 'salesOrders.[].shippingDate',
       'salesOrders.[].iso': 'salesOrders.[].iso',
       'salesOrders.[].customer': 'salesOrders.[].customer',
       'salesOrders.[].client': 'salesOrders.[].client',
       'salesOrders.[].poNumber': 'salesOrders.[].poNumber',
-      'salesOrders.[].value': 'salesOrders.[].value',
-      'salesOrders.[].reserveValue': 'salesOrders.[].reserveValue',
       'salesOrders.[].quoteId': 'salesOrders.[].quoteId',
       'salesOrders.[].currency': 'salesOrders.[].currency',
       'salesOrders.[].deliveryAddress': 'salesOrders.[].deliveryAddress',
       'salesOrders.[].warehouseNote': 'salesOrders.[].warehouseNote',
       'salesOrders.[].deliveryNote': 'salesOrders.[].deliveryNote',
       'salesOrders.[].salesTeam': 'salesOrders.[].salesTeam',
+
+      'salesOrders.[].value': 'salesOrders.[].value',
+      'salesOrders.[].reserveValue': 'salesOrders.[].reserveValue',
+      'salesOrders.[].shipValue': 'salesOrders.[].shipValue',
+      'salesOrders.[].backorderValue': 'salesOrders.[].backorderValue',
     },
     autoQuery: false,
     resultType: 'object',

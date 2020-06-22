@@ -12,8 +12,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                SalesOrdersFilterByEnumsKeys.order_date,
-                SalesOrdersFilterByEnumsKeys.shipping_date,
+                SalesOrdersFilterByEnumsKeys.date_range,
               ]
             },
             periodStart: {
@@ -31,7 +30,24 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
+                SalesOrdersFilterByEnumsKeys.order_date,
+                SalesOrdersFilterByEnumsKeys.shipping_date,
+                SalesOrdersFilterByEnumsKeys.quote_date,
+              ]
+            },
+            dateFilter: {
+              type: 'string',
+              title: 'Date',
+            },
+          },
+        },
+        {
+          properties:
+          {
+            filterBy: {
+              enum: [
                 SalesOrdersFilterByEnumsKeys.order_status,
+                SalesOrdersFilterByEnumsKeys.order_type,
               ]
             },
             filter: {

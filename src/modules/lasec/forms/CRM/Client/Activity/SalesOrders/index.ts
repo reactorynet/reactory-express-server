@@ -35,7 +35,7 @@ const uiSchema: any = {
       filter: { md: 4, sm: 12 },
       periodStart: { md: 6, xs: 12 },
       periodEnd: { md: 6, xs: 12 },
-      // dateFilter: { md: 6, xs: 12 },
+      dateFilter: { md: 6, xs: 12 },
       client: { md: 6, xs: 12 },
       customer: { md: 6, xs: 12 },
     },
@@ -94,6 +94,9 @@ const uiSchema: any = {
   periodEnd: {
     'ui:widget': 'DateSelectorWidget',
   },
+  dateFilter: {
+    'ui:widget': 'DateSelectorWidget',
+  },
   client: {
     'ui:widget': 'LookupComponent',
     'ui:options': {
@@ -122,6 +125,7 @@ const uiSchema: any = {
     'ui:options': {
       columns: [
         { title: 'Order Type', field: 'orderType' },
+        { title: 'Order Status', field: 'orderStatus' },
         {
           title: 'Sales Order Number',
           field: 'salesOrderNumber',
@@ -191,7 +195,22 @@ const uiSchema: any = {
             'rowData.date': 'value',
           }
         },
-        // { title: 'ISO Number', field: 'id' },
+        {
+          title: 'Quote Date',
+          field: 'quoteDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
         {
           title: 'Quote Number',
           field: 'quoteId',
@@ -219,9 +238,8 @@ const uiSchema: any = {
         },
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
+        { title: 'Rep Code', field: 'salesTeam' },
         { title: 'Purchase Order Number', field: 'poNumber' },
-        { title: 'Customer', field: 'customer' },
-        { title: 'Client', field: 'client' },
         {
           title: 'Order Value',
           field: 'value',
@@ -236,6 +254,22 @@ const uiSchema: any = {
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {
             'rowData.reserveValue': 'value',
+          },
+        },
+        {
+          title: 'Ship Value',
+          field: 'shipValue',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            'rowData.shipValue': 'value',
+          },
+        },
+        {
+          title: 'Back Order Value',
+          field: 'backorderValue',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            'rowData.backorderValue': 'value',
           },
         },
       ],
@@ -255,7 +289,7 @@ const uiSchema: any = {
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.periodStart': 'periodStart',
         'props.formContext.$formData.periodEnd': 'periodEnd',
-        'props.formContext.$formData.dateFilter': 'quoteDate',
+        'props.formContext.$formData.dateFilter': 'dateFilter',
       },
       resultMap: {
         'paging.page': 'page',
@@ -264,20 +298,24 @@ const uiSchema: any = {
         'salesOrders.[].id': 'data.[].id',
         'salesOrders.[].salesOrderNumber': 'data.[].salesOrderNumber',
         'salesOrders.[].orderDate': 'data.[].orderDate',
+        'salesOrders.[].shippingDate': 'data.[].shippingDate',
+        'salesOrders.[].quoteDate': 'data.[].quoteDate',
         'salesOrders.[].orderType': 'data.[].orderType',
         'salesOrders.[].orderStatus': 'data.[].orderStatus',
-        'salesOrders.[].shippingDate': 'data.[].shippingDate',
         'salesOrders.[].iso': 'data.[].iso',
         'salesOrders.[].customer': 'data.[].customer',
         'salesOrders.[].client': 'data.[].client',
         'salesOrders.[].poNumber': 'data.[].poNumber',
-        'salesOrders.[].value': 'data.[].value',
         'salesOrders.[].quoteId': 'data.[].quoteId',
         'salesOrders.[].currency': 'data.[].currency',
         'salesOrders.[].deliveryAddress': 'data.[].deliveryAddress',
         'salesOrders.[].warehouseNote': 'data.[].warehouseNote',
         'salesOrders.[].deliveryNote': 'data.[].deliveryNote',
         'salesOrders.[].salesTeam': 'data.[].salesTeam',
+        'salesOrders.[].value': 'data.[].value',
+        'salesOrders.[].reserveValue': 'data.[].reserveValue',
+        'salesOrders.[].shipValue': 'data.[].shipValue',
+        'salesOrders.[].backorderValue': 'data.[].backorderValue',
       },
     },
   }

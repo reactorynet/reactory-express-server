@@ -1570,7 +1570,7 @@ export default {
             { id: '4', name: 'In Warehouse' },
             { id: '9', name: 'Completed' },
             { id: '\\', name: 'Cancelled' },
-            { id: 'S', name: 'Suspended' },
+            { id: 'S', name: 'Suspense' },
           ];
         }
         case 'quote_status': {
@@ -1607,6 +1607,18 @@ export default {
             { id: 'Deleted', name: 'Deleted' },
           ];
         }
+
+        case 'order_type': {
+          return [
+            { id: 'Normal', name: 'Normal' },
+            { id: 'Appro', name: 'Appro' },
+            { id: 'Standing Order 3', name: 'Standing Order 3' },
+            { id: 'Standing Order 4', name: 'Standing Order 4' },
+            { id: 'DNPS', name: 'DNPS' },
+            { id: 'Consolidation', name: 'Consolidation' },
+          ];
+        }
+
         case 'company_sales_team': {
           return getLasecSalesTeamsForLookup();
         }
