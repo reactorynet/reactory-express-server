@@ -1503,14 +1503,15 @@ export const getPagedSalesOrders = async (params) => {
       iso: order.sales_order_id,
       customer: order.company_trading_name,
       client: order.customer_name,
-      poNumber: order.sales_order_number,
-      value: order.order_value,
+      poNumber: order.customerponumber,
       quoteId: order.quote_id,
       currency: order.currency,
       deliveryAddress: order.delivery_address,
       warehouseNote: order.warehouse_note,
       deliveryNote: order.delivery_note,
-      salesTeam: order.sales_team_id
+      salesTeam: order.sales_team_id,
+      value: order.order_value,
+      reserveValue: order.reserved_value,
     }
   });
 
@@ -1681,6 +1682,7 @@ export const getCRMSalesOrders = async (params) => {
   };
 
   if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'customer' || filterBy == 'client' || filterBy == 'po_number' || filterBy == 'order_value') apiFilter[filterBy] = search;
+
   if (filterBy == 'order_status') apiFilter['order_status'] = filter;
 
   if (filterBy == 'order_date') {
@@ -1749,10 +1751,10 @@ export const getClientInvoices = async (params) => {
 
   const {
     clientId,
-    salesTeamId,
     search = "",
     periodStart,
     periodEnd,
+    dateFilter,
     filterBy = "any_field",
     filter,
     paging = { page: 1, pageSize: 10 },
@@ -1766,43 +1768,46 @@ export const getClientInvoices = async (params) => {
   };
 
   // -- POSSIBLE FILTERS --
-  // Invoice Date
-  // Quote Date
-  // Quote Number
-  // Account Number
-  // Customer
-  // Client
-  // Rep Code
-  // PO Number
+  // any_field
+  // date_range
+  // invoice_date
+  // invoice_number
+  // po_number
+  // invoice_value
+  // dispatch_number
+  // iso_number
+  // quote_number
+  // sales_team_id
+  // customer
+  // client
+  // customer_account_number
 
-  const sampleFilter = {
-    filter: {
-      sales_team_id: 100,
-      start_date: "2019-06-12T00:00:00.000Z",
-      end_date: "2020-06-12T00:00:00.000Z"
-    },
-    ordering: {
-      invoice_date: "asc"
-    },
-    pagination: {}
-  }
+  // company_id
+  // account_number
+  // quote_number
+  // quote_date
+  // customer_name
+  // company_trading_name
+
+
 
   let apiFilter: any = {
-    rep_code: [salesTeamId],
-    // sales_team_id: salesTeamId,
-    // staff_user_id: [clientId],
-    // [filterBy]: filter || search,
+    customer_id: clientId,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
 
-  if (filterBy == 'invoice_date' || filterBy == 'quote_date')
-    apiFilter['any_field'] = search;
-  else
-    apiFilter[filterBy] = search;
+  if (filterBy == 'invoice_date') {
+    apiFilter.using = filterBy;
+    apiFilter.start_date = moment(dateFilter).startOf('day');
+    apiFilter.end_date = moment(dateFilter).endOf('day');
+  }
 
-  if (filterBy == 'invoice_date') apiFilter['using'] = 'invoice_date';
-  if (filterBy == 'quote_date') apiFilter['using'] = 'quote_date';
+  if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
+    // if (search || search != '') apiFilter[filterBy] = search;
+    apiFilter[filterBy] = search;
+  }
+
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
     filter: apiFilter,
@@ -1844,6 +1849,7 @@ export const getClientInvoices = async (params) => {
       accountNumber: invoice.account,
       salesTeamId: invoice.sales_team_id,
       poNumber: invoice.customer_po_number,
+      value: invoice.invoice_value,
       value: invoice.invoice_value,
     }
   });

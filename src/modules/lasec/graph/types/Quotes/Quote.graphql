@@ -425,6 +425,7 @@ extend type Query {
     filter: String
     periodStart: String
     periodEnd: String
+    dateFilter: String
     iter: Int
   ): PagedCRMInvoices
   LasecGetCRMClientSalesHistory(

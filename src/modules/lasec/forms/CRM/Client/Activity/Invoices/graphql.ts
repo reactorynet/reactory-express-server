@@ -12,6 +12,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       $filter: String
       $periodStart: String,
       $periodEnd: String,
+      $dateFilter: String,
     ){
       LasecGetCRMClientInvoices(
         clientId: $clientId,
@@ -22,6 +23,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         filter: $filter,
         periodStart: $periodStart,
         periodEnd: $periodEnd,
+        dateFilter: $dateFilter,
       ){
         paging {
           total
@@ -53,6 +55,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'formData.paging': 'paging',
       'formData.periodStart': 'periodStart',
       'formData.periodEnd': 'periodEnd',
+      'formData.dateFilter': 'dateFilter',
     },
     resultMap: {
       'paging': 'paging',

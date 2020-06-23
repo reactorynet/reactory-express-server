@@ -133,9 +133,43 @@ const uiSchema: any = {
     'ui:options': {
       columns: [
         // { title: 'Sales Order Number', field: 'salesOrderNumber' },
+        { title: 'Order Type', field: 'orderType' },
+        { title: 'Order Status', field: 'orderStatus' },
         {
-          title: 'Sales Order Number',
-          field: 'quoteId',
+          title: 'Order Date',
+          field: 'orderDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
+        {
+          title: 'Shipping Date',
+          field: 'shippingDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
+        {
+          title: 'ISO Number',
+          field: 'salesOrderNumber',
           component: 'core.SlideOutLauncher@1.0.0',
           props: {
             componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
@@ -170,38 +204,7 @@ const uiSchema: any = {
             'rowData': 'rowData'
           }
         },
-        {
-          title: 'Order Date',
-          field: 'orderDate',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.date': 'value',
-          }
-        },
-        {
-          title: 'Shipping Date',
-          field: 'shippingDate',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.date': 'value',
-          }
-        },
+        { title: 'Purchase Order Number', field: 'poNumber' },
         {
           title: 'Quote Number',
           field: 'quoteId',
@@ -229,13 +232,20 @@ const uiSchema: any = {
         },
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
-        { title: 'Purchase Order Number', field: 'poNumber' },
         {
           title: 'Order Value',
           field: 'value',
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {
             'rowData.value': 'value',
+          },
+        },
+        {
+          title: 'Reserve Value',
+          field: 'reserveValue',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            'rowData.reserveValue': 'value',
           },
         },
       ],
@@ -290,6 +300,7 @@ const uiSchema: any = {
         'salesOrders.[].client': 'data.[].client',
         'salesOrders.[].poNumber': 'data.[].poNumber',
         'salesOrders.[].value': 'data.[].value',
+        'salesOrders.[].reserveValue': 'data.[].reserveValue',
         'salesOrders.[].quoteId': 'data.[].quoteId',
         'salesOrders.[].currency': 'data.[].currency',
         'salesOrders.[].deliveryAddress': 'data.[].deliveryAddress',
