@@ -46,14 +46,23 @@ export const FilterByOptions = [
 
 export const SalesOrdersFilterByEnumsKeys = {
   any_field: 'any_field',
+  date_range: 'date_range',
+  order_type: 'order_type',
   order_date: 'order_date',
+  order_status: 'order_status',
   shipping_date: 'shipping_date',
   iso_number: 'iso_number',
+  po_number: 'po_number',
   customer: 'customer',
   client: 'client',
-  po_number: 'po_number',
+  dispatches: 'dispatches',
+  quote_id: 'quote_id',
+  quote_date: 'quote_date',
+  sales_team_id: 'sales_team_id',
   order_value: 'order_value',
-  order_status: 'order_status',
+  reserved_value: 'reserved_value',
+  ship_value: 'shipped_value',
+  backorder_value: 'back_order_value',
 };
 
 export const SalesOrdersFilterByEnumArray: string[] = [
@@ -70,14 +79,23 @@ export const SalesOrdersFilterByEnumArray: string[] = [
 
 export const SalesOrdersFilterByOptions = [
   { key: SalesOrdersFilterByEnumsKeys.any_field, value: SalesOrdersFilterByEnumsKeys.any_field, label: 'All Categories' },
-  { key: SalesOrdersFilterByEnumsKeys.order_status, value: SalesOrdersFilterByEnumsKeys.order_status, label: 'Order Status' },
+  { key: SalesOrdersFilterByEnumsKeys.date_range, value: SalesOrdersFilterByEnumsKeys.date_range, label: 'Date Range' },
+  { key: SalesOrdersFilterByEnumsKeys.order_type, value: SalesOrdersFilterByEnumsKeys.order_type, label: 'Order Type' },
   { key: SalesOrdersFilterByEnumsKeys.order_date, value: SalesOrdersFilterByEnumsKeys.order_date, label: 'Order Date' },
-  { key: SalesOrdersFilterByEnumsKeys.shipping_date, value: SalesOrdersFilterByEnumsKeys.shipping_date, label: 'Shipping Date' },
+  { key: SalesOrdersFilterByEnumsKeys.order_status, value: SalesOrdersFilterByEnumsKeys.order_status, label: 'Order Status' },
+  { key: SalesOrdersFilterByEnumsKeys.shipping_date, value: SalesOrdersFilterByEnumsKeys.shipping_date, label: 'Req. Ship Date' },
   { key: SalesOrdersFilterByEnumsKeys.iso_number, value: SalesOrdersFilterByEnumsKeys.iso_number, label: 'ISO Number' },
+  { key: SalesOrdersFilterByEnumsKeys.po_number, value: SalesOrdersFilterByEnumsKeys.po_number, label: 'PO Number' },
   { key: SalesOrdersFilterByEnumsKeys.customer, value: SalesOrdersFilterByEnumsKeys.customer, label: 'Customer' },
-  { key: SalesOrdersFilterByEnumsKeys.client, value: SalesOrdersFilterByEnumsKeys.client, label: 'Client' },
-  { key: SalesOrdersFilterByEnumsKeys.po_number, value: SalesOrdersFilterByEnumsKeys.po_number, label: 'Purchase Order Number' },
+  { key: SalesOrdersFilterByEnumsKeys.client, value: SalesOrdersFilterByEnumsKeys.client, label: 'Client Name' },
+  { key: SalesOrdersFilterByEnumsKeys.dispatches, value: SalesOrdersFilterByEnumsKeys.dispatches, label: 'Dispatches' },
+  { key: SalesOrdersFilterByEnumsKeys.quote_id, value: SalesOrdersFilterByEnumsKeys.quote_id, label: 'Quote Number' },
+  { key: SalesOrdersFilterByEnumsKeys.quote_date, value: SalesOrdersFilterByEnumsKeys.quote_date, label: 'Quote Date' },
+  { key: SalesOrdersFilterByEnumsKeys.sales_team_id, value: SalesOrdersFilterByEnumsKeys.sales_team_id, label: 'Rep Code' },
   { key: SalesOrdersFilterByEnumsKeys.order_value, value: SalesOrdersFilterByEnumsKeys.order_value, label: 'Order Value' },
+  { key: SalesOrdersFilterByEnumsKeys.ship_value, value: SalesOrdersFilterByEnumsKeys.ship_value, label: 'Shipped Value' },
+  { key: SalesOrdersFilterByEnumsKeys.backorder_value, value: SalesOrdersFilterByEnumsKeys.backorder_value, label: 'Backorder Value' },
+  { key: SalesOrdersFilterByEnumsKeys.reserved_value, value: SalesOrdersFilterByEnumsKeys.reserved_value, label: 'Reserved Value' },
 ];
 
 // INVOICES
@@ -120,7 +138,6 @@ export const InvoiceFilterByOptions = [
   { key: InvoiceFilterByEnumsKeys.rep_code, value: InvoiceFilterByEnumsKeys.rep_code, label: 'Rep Code' },
   { key: InvoiceFilterByEnumsKeys.po_number, value: InvoiceFilterByEnumsKeys.po_number, label: 'PO Number' },
 ];
-
 
 // SALES HISTORY
 

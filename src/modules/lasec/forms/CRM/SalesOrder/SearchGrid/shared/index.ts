@@ -41,5 +41,5 @@ export const FilterOptions = [
   { key: '4', value: '4', label: 'In Warehouse' },
   { key: '5', value: '9', label: 'Completed' },
   { key: '6', value: '\\', label: 'Cancelled' },
-  { key: '7', value: 'S', label: 'Suspended' },
+  { key: '7', value: 'S', label: 'Suspense' },
 ];

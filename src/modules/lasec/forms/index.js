@@ -91,6 +91,9 @@ import SalesOrderGrid from './CRM/SalesOrder/SearchGrid';
 
 import ProductSalesOrders from './productCatalog/ProductDetails/SalesOrders';
 
+import ClientActivityCustomerLookUpForm from './CRM/Client/Activity/shared/CustomerLookup';
+
+
 const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
 
 export default [
@@ -167,4 +170,6 @@ export default [
 
   ProductSalesOrders,
   ISODetail,
+
+  ClientActivityCustomerLookUpForm,
 ];

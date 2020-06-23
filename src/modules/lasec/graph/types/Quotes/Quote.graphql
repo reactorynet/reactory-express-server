@@ -287,21 +287,24 @@ type SalesOrder {
   id: String
   salesOrderNumber: String
   orderDate: String
+  shippingDate: String
+  quoteDate: String
   orderType: String
   orderStatus: String
-  shippingDate: String
   iso: Int
   customer: String
   client: String
   poNumber: String
-  value: Int
-  reserveValue: Int
   quoteId: String
   currency: String
   deliveryAddress: String
   warehouseNote: String
   deliveryNote: String
   salesTeam: String
+  value: Int
+  reserveValue: Int
+  shipValue: Int
+  backorderValue: Int
 }
 
 type SalesOrderLineItem {
@@ -400,6 +403,7 @@ extend type Query {
     filter: String
     periodStart: String
     periodEnd: String
+    dateFilter: String
     iter: Int
   ): PagedCRMSalesOrders
   LasecGetPagedCRMSalesOrders(
