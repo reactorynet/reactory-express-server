@@ -108,15 +108,31 @@ const uiSchema: any = {
       componentProps: {},
     },
   },
+  // customer: {
+  //   'ui:widget': 'LookupComponent',
+  //   'ui:options': {
+  //     label: 'Select a Customer',
+  //     title: 'Search for a Customer'
+  //   },
+  //   props: {
+  //     componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+  //     componentProps: {},
+  //   },
+  // },
   customer: {
-    'ui:widget': 'LookupComponent',
+    'ui:widget': 'CustomerLookupComponent',
     'ui:options': {
       label: 'Select a Customer',
       title: 'Search for a Customer'
     },
     props: {
-      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+      componentFqn: 'lasec-crm.LasecCRMClientActivityCustomerLookupTable@1.0.0',
       componentProps: {},
+      componentPropertyMap: {
+        'LookupComponent.props.onChange': 'onCustomerSelect',
+        // 'LookupComponent.props.formContext.$formData': 'formData.selected',
+        // 'LookupComponent.props.formContext': 'LookupComponentFormContext',
+      },
     },
   },
 
@@ -345,7 +361,8 @@ const LasecCRMClientSalesOrderActivities: Reactory.IReactoryForm = {
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
-    { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
+    // { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
+    { componentFqn: 'lasec-crm.CustomerLookupModal@1.0.0', widget: 'CustomerLookupComponent' }
   ],
 };
 
