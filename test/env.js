@@ -15,4 +15,4 @@ const $environment = {
   REACTORY_ANON_TOKEN: process.env.REACTORY_ANON_TOKEN
 };
 
-module.exports = $environment;
+export default $environment;

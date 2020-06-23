@@ -11,4 +11,4 @@
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
 echo "Environment: ./config/${1:-reactory}/${2:-local} "
-NODE_PATH=./ env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx mocha ${3:-**/**/*.spec.js}
+NODE_PATH=./ env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx mocha -r ts-node/register ${3:-**/**/*.spec.*s}

@@ -141,8 +141,9 @@ type DelegateRemoveResponse {
 }
 
 
-type MoresLookupItem {
+type TowerStoneLookupItem {
   id: String
+  lookupType: String
   name: String
   description: String
 }
@@ -151,8 +152,7 @@ extend type Query {
   surveysForOrganization(organizationId: String!): [Survey]
   surveysList: [Survey]
   surveyDetail(surveyId: String!): Survey
-  getDemographicLookup(lookupType: String!): [MoresLookupItem]
-
+  TowerStoneGetDemographicLookup(lookupType: String!): [TowerStoneLookupItem]
 }
 
 extend type Mutation {

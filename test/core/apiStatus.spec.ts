@@ -1,5 +1,6 @@
-const chai = require('chai');
-const env = require('../env');
+import chai from 'chai';
+import env from '../env';
+//do not use import with BTOA as it does not exports the default function
 const btoa = require('btoa');
 const {
   API_URI_ROOT,
@@ -145,12 +146,13 @@ query status {
 }`;
 
 describe('Reactory API', () => {  
+  
   it('Should return an unauthorized access status code', (done) => {
     request.post('/api')
     .set('Accept', 'application/json')
     .send({ query: apiStatusQuery })
     .expect(401)
-      .end((err, res) => {        
+      .end((err: Error, res: Response) => {        
         if(err) done(err);                
         else done();
       });
@@ -164,7 +166,7 @@ describe('Reactory API', () => {
           .set('Authorization', `Bearer ${REACTORY_ANON_TOKEN}`)
           .send({ query: apiStatusQuery })
             .expect(200)
-            .end((err, res) => {        
+            .end((err: Error, res: Response) => {        
               if(err) done(err);                
               else done();
             });
@@ -179,7 +181,7 @@ describe('Reactory API', () => {
       .set('Authorization', `Basic ${token}`)
       .send()
       .expect(401)
-      .end((err, res) => {        
+      .end((err: Error, res: Response) => {        
         if(err) done(err);
         else done();
       });
@@ -194,7 +196,7 @@ describe('Reactory API', () => {
       .set('Authorization', `Basic ${token}`)
       .send()
       .expect(200)
-      .end((err, res) => {
+      .end((err: Error, res: any) => {
         if(err) done (err);
         else {        
           request.post('api')
@@ -204,8 +206,8 @@ describe('Reactory API', () => {
           .set('Authorization', `Bearer ${res.body.user.token}`)
           .send({ query: apiStatusQuery })
             .expect(200)
-            .end((err, res) => {        
-              if(err) done(err);                
+            .end((err: Error, res: Response) => {        
+              if(err) done(err);            
               else done();
             });
         }        

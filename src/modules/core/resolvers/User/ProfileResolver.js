@@ -197,7 +197,7 @@ const SetPersonalDemographics = async (args) => {
 };
 
 const getPersonalDemographics = async (args) => {
-  logger.debug(`GET PERSONAL DEMOGRAPHICS :: ${JSON.stringify(args)}`);
+  logger.debug(`GET PERSONAL DEMOGRAPHICS`, args);
 
   const demographics = await PersonalDemographic.findOne({ clientId: args.clientId });
   return demographics;

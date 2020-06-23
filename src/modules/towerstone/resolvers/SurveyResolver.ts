@@ -38,7 +38,7 @@ function getSurveyService(): TowerStone.ITowerStoneSurveyService {
   return TowerStoneServicesMap["towerstone.SurveyService@1.0.0"].service({ user, partner });
 }
 
-const getDemographicLookup = async (args) => {
+const TowerStoneGetDemographicLookup = async (args) => {
 
   logger.debug(`GET DEMOGRAPHIC LOOKUP :: ${JSON.stringify(args)}`);
 
@@ -266,8 +266,8 @@ export default {
       }
       return survey;
     },
-    async getDemographicLookup(obj, args) {
-      return getDemographicLookup(args);
+    async TowerStoneGetDemographicLookup(obj, args) {
+      return TowerStoneGetDemographicLookup(args);
     },
   },
   Mutation: {

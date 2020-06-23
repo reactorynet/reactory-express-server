@@ -22,24 +22,20 @@ const uiSchema: any = {
       id: { xs: 12 },
     },
     {
-      race: { xs: 12, sm: 6, md: 4 },
       age: { xs: 12, sm: 6, md: 4 },
       gender: { xs: 12, sm: 6, md: 4 },
+      race: { xs: 12, sm: 6, md: 4 },            
+    },
+    {
       position: { xs: 12, sm: 6, md: 4 },
       region: { xs: 12, sm: 6, md: 4 },
       operationalGroup: { xs: 12, sm: 6 },
       businessUnit: { xs: 12, sm: 6 },
       team: { xs: 12, sm: 6 },
-    },
+    }
   ],
   id: {
-    'ui:widget': 'HiddenWidget',
-    // 'ui:options': {
-    //   componentFqn: 'lasec-crm.LasecClientOverviewWidget@1.0.0',
-    //   componentPropsMap: {
-    //     'formContext.$formData.id': 'formData.id',
-    //   }
-    // }
+    'ui:widget': 'HiddenWidget',    
   },
   race: {
     'ui:widget': 'SelectWithDataWidget',
@@ -65,15 +61,15 @@ const uiSchema: any = {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
-      query: `query getDemographicLookup {
-        getDemographicLookup(lookupType: "age") {
+      query: `query TowerStoneGetDemographicLookup {
+        TowerStoneGetDemographicLookup(lookupType: "age") {
           id
           name
         }
       }`,
-      //propertyMap: {
+      propertyMap: {
       // 'formContext.$formData.organisationId': 'orgId'
-      //},
+      },
       resultItem: 'getDemographicLookup',
       resultsMap: {
         'getDemographicLookup.[].id': ['[].key', '[].value'],
@@ -85,8 +81,8 @@ const uiSchema: any = {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
-      query: `query getDemographicLookup {
-        getDemographicLookup(lookupType: "gender") {
+      query: `query TowerStoneGetDemographicLookup {
+        TowerStoneGetDemographicLookup(lookupType: "gender") {
           id
           name
         }
@@ -94,7 +90,7 @@ const uiSchema: any = {
       //propertyMap: {
       // 'formContext.$formData.organisationId': 'orgId'
       //},
-      resultItem: 'getDemographicLookup',
+      resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
         'getDemographicLookup.[].id': ['[].key', '[].value'],
         'getDemographicLookup.[].name': '[].label',
@@ -105,8 +101,8 @@ const uiSchema: any = {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
-      query: `query getDemographicLookup {
-        getDemographicLookup(lookupType: "position") {
+      query: `query TowerStoneGetDemographicLookup {
+        TowerStoneGetDemographicLookup(lookupType: "position") {
           id
           name
         }
@@ -114,7 +110,7 @@ const uiSchema: any = {
       //propertyMap: {
       // 'formContext.$formData.organisationId': 'orgId'
       //},
-      resultItem: 'getDemographicLookup',
+      resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
         'getDemographicLookup.[].id': ['[].key', '[].value'],
         'getDemographicLookup.[].name': '[].label',
@@ -125,8 +121,8 @@ const uiSchema: any = {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
-      query: `query getDemographicLookup {
-        getDemographicLookup(lookupType: "region") {
+      query: `query TowerStoneGetDemographicLookup {
+        TowerStoneGetDemographicLookup(lookupType: "region") {
           id
           name
         }
@@ -134,10 +130,10 @@ const uiSchema: any = {
       //propertyMap: {
       // 'formContext.$formData.organisationId': 'orgId'
       //},
-      resultItem: 'getDemographicLookup',
+      resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
-        'getDemographicLookup.[].id': ['[].key', '[].value'],
-        'getDemographicLookup.[].name': '[].label',
+        'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],
+        'TowerStoneGetDemographicLookup.[].name': '[].label',
       },
     },
   },
@@ -145,8 +141,8 @@ const uiSchema: any = {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
-      query: `query getDemographicLookup {
-        getDemographicLookup(lookupType: "operational_group") {
+      query: `query TowerStoneGetDemographicLookup {
+        TowerStoneGetDemographicLookup(lookupType: "operational_group") {
           id
           name
         }
@@ -154,10 +150,10 @@ const uiSchema: any = {
       //propertyMap: {
       // 'formContext.$formData.organisationId': 'orgId'
       //},
-      resultItem: 'getDemographicLookup',
+      resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
-        'getDemographicLookup.[].id': ['[].key', '[].value'],
-        'getDemographicLookup.[].name': '[].label',
+        'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],
+        'TowerStoneGetDemographicLookup.[].name': '[].label',
       },
     },
   },
@@ -165,8 +161,8 @@ const uiSchema: any = {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
-      query: `query getDemographicLookup {
-        getDemographicLookup(lookupType: "business_unit") {
+      query: `query TowerStoneGetDemographicLookup {
+        TowerStoneGetDemographicLookup(lookupType: "business_unit") {
           id
           name
         }
@@ -174,10 +170,10 @@ const uiSchema: any = {
       //propertyMap: {
       // 'formContext.$formData.organisationId': 'orgId'
       //},
-      resultItem: 'getDemographicLookup',
+      resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
-        'getDemographicLookup.[].id': ['[].key', '[].value'],
-        'getDemographicLookup.[].name': '[].label',
+        'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],
+        'TowerStoneGetDemographicLookup.[].name': '[].label',
       },
     },
   },
@@ -185,19 +181,16 @@ const uiSchema: any = {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
-      query: `query getDemographicLookup {
-        getDemographicLookup(lookupType: "team") {
+      query: `query TowerStoneGetDemographicLookup {
+        TowerStoneGetDemographicLookup(lookupType: "team") {
           id
           name
         }
-      }`,
-      //propertyMap: {
-      // 'formContext.$formData.organisationId': 'orgId'
-      //},
-      resultItem: 'getDemographicLookup',
+      }`,      
+      resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
-        'getDemographicLookup.[].id': ['[].key', '[].value'],
-        'getDemographicLookup.[].name': '[].label',
+        'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],
+        'TowerStoneGetDemographicLookup.[].name': '[].label',
       },
     },
   },

@@ -4,9 +4,9 @@ const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'GetPersonalDemographics',
     text: `
-        query GetPersonalDemographics($clientId: String!){
-          GetPersonalDemographics(clientId: $clientId){
-            clientId
+        query GetPersonalDemographics($userId: String!){
+          GetPersonalDemographics(userId: $userId){
+            userId
             race
             age
             gender
@@ -19,11 +19,11 @@ const graphql: Reactory.IFormGraphDefinition = {
         }
       `,
     variables: {
-      'formData.id': 'clientId',
+      'formData.id': 'userId',
 
     },
     resultMap: {
-      'clientId': 'id',
+      'userId': 'id',
       'age': 'age',
       'race': 'race',
       'gender': 'gender',
@@ -82,7 +82,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       `,
       objectMap: true,
       variables: {
-        'formData.id': 'personalDemographics.clientId',
+        'formData.id': 'personalDemographics.userId',
         'formData.race': 'personalDemographics.race',
         'formData.age': 'personalDemographics.age',
         'formData.gender': 'personalDemographics.gender',
