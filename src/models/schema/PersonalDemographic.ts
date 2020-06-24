@@ -8,30 +8,31 @@ const PersonalDemographicSchema = new mongoose.Schema({
     type: ObjectId,
     ref: 'User'
   },
-  race: String,
-  age: String,
-  gender: String,
-  position: String,
-  region: String,
-  operationalGroup: String,
-  businessUnit: String,
-  team: String,
+  race: Number,
+  age: Number,
+  gender: Number,
+  position: Number,
+  region: {
+    type: ObjectId,
+    ref: 'Region',
+  },
+  operationalGroup: {
+    type: ObjectId,
+    ref: 'Organization'
+  },
+  businessUnit: {
+    type: ObjectId,
+    ref: 'BusinessUnit'
+  },
+  team: {
+    type: ObjectId,
+    ref: 'Team'
+  },
 });
 
-PersonalDemographicSchema.statics.GetLoggedInUserDemograpics = async function GetLoggedInUserDemograpics() {
+PersonalDemographicSchema.statics.GetLoggedInUserDemograpics = async () : Promise<any> => {  
   const { user, partner } = global;
   return await this.findOne({ userId: user._id });
-};
-
-PersonalDemographicSchema.statics.SetLoggedInUserDemograpics = async function SetLoggedInUserDemograpics(args) {
-  const { user, partner } = global;
-  const { race, age, gender, position, region, operationalGroup, businessUnit, team } = args
-
-  return await this.findOneAndUpdate(
-    { userId },
-    { userId: user._id, race, age, gender, position, region, operationalGroup, businessUnit, team },
-    { new: true, upsert: true }
-  ).exec();
 };
 
 const PersonalDemographicModel = mongoose.model('PersonalDemographic', PersonalDemographicSchema);
