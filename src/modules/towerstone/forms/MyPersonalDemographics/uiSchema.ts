@@ -41,8 +41,8 @@ const uiSchema: any = {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
-      query: `query getDemographicLookup {
-        getDemographicLookup(lookupType: "race") {
+      query: `query TowerStoneGetDemographicLookup {
+        TowerStoneGetDemographicLookup(lookupType: "race") {
           id
           name
         }
@@ -50,10 +50,10 @@ const uiSchema: any = {
       //propertyMap: {
       // 'formContext.$formData.organisationId': 'orgId'
       //},
-      resultItem: 'getDemographicLookup',
+      resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
-        'getDemographicLookup.[].id': ['[].key', '[].value'],
-        'getDemographicLookup.[].name': '[].label',
+        'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],
+        'TowerStoneGetDemographicLookup.[].name': '[].label',
       },
     },
   },
@@ -70,10 +70,10 @@ const uiSchema: any = {
       propertyMap: {
       // 'formContext.$formData.organisationId': 'orgId'
       },
-      resultItem: 'getDemographicLookup',
+      resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
-        'getDemographicLookup.[].id': ['[].key', '[].value'],
-        'getDemographicLookup.[].name': '[].label',
+        'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],
+        'TowerStoneGetDemographicLookup.[].name': '[].label',
       },
     },
   },
@@ -92,8 +92,8 @@ const uiSchema: any = {
       //},
       resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
-        'getDemographicLookup.[].id': ['[].key', '[].value'],
-        'getDemographicLookup.[].name': '[].label',
+        'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],
+        'TowerStoneGetDemographicLookup.[].name': '[].label',
       },
     },
   },
@@ -112,8 +112,8 @@ const uiSchema: any = {
       //},
       resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
-        'getDemographicLookup.[].id': ['[].key', '[].value'],
-        'getDemographicLookup.[].name': '[].label',
+        'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],
+        'TowerStoneGetDemographicLookup.[].name': '[].label',
       },
     },
   },

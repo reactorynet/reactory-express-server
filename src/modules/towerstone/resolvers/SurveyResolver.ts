@@ -40,71 +40,71 @@ function getSurveyService(): TowerStone.ITowerStoneSurveyService {
 
 const TowerStoneGetDemographicLookup = async (args) => {
 
-  logger.debug(`GET DEMOGRAPHIC LOOKUP :: ${JSON.stringify(args)}`);
+  logger.debug(`GET DEMOGRAPHIC LOOKUP :: ${JSON.stringify(args)}`, args);
 
   switch (args.lookupType) {
 
     case 'race': {
       return [
-        { id: '1', name: 'Black' },
-        { id: '2', name: 'White' },
-        { id: '3', name: 'Asian' },
-        { id: '4', name: 'Colored' },
+        { id: 'race.1', name: 'Black', },
+        { id: 'race.2', name: 'White', },
+        { id: 'race.3', name: 'Asian', },
+        { id: 'race.4', name: 'Colored', },
       ];
     }
     case 'age': {
       return [
-        { id: '1', name: '18 - 30' },
-        { id: '2', name: '31 - 40' },
-        { id: '3', name: '41 - 50' },
-        { id: '4', name: '>50' },
+        { id: 'age.1', name: '18 - 30' },
+        { id: 'age.2', name: '31 - 40' },
+        { id: 'age.3', name: '41 - 50' },
+        { id: 'age.4', name: '>50' },
       ];
     }
     case 'gender': {
       return [
-        { id: '1', name: 'M' },
-        { id: '2', name: 'F' },
-        { id: '3', name: 'No specified' },
+        { id: 'gender.1', name: 'M' },
+        { id: 'gender.2', name: 'F' },
+        { id: 'gender.3', name: 'No specified' },
       ];
     }
     case 'position': {
       return [
-        { id: '1', name: 'Exco (Group)' },
-        { id: '2', name: 'Exco (Division/Brand)' },
-        { id: '3', name: 'Senior Management' },
-        { id: '4', name: 'Middle Management' },
-        { id: '5', name: 'Junior Management' },
-        { id: '6', name: 'Supervisory/Team Lead' },
-        { id: '7', name: 'Employee' },
-        { id: '8', name: 'Specialist' },
+        { id: 'position.1', name: 'Exco (Group)' },
+        { id: 'position.2', name: 'Exco (Division/Brand)' },
+        { id: 'position3', name: 'Senior Management' },
+        { id: 'position4', name: 'Middle Management' },
+        { id: 'position5', name: 'Junior Management' },
+        { id: 'position6', name: 'Supervisory/Team Lead' },
+        { id: 'position7', name: 'Employee' },
+        { id: 'position8', name: 'Specialist' },
       ];
     }
     case 'region': {
       return [
-        { id: '1', name: 'City' },
-        { id: '2', name: 'Province' },
-        { id: '3', name: 'Country' },
-        { id: '4', name: 'Territory' },
+        { id: 'region.1', name: 'City' },
+        { id: 'region.2', name: 'Province' },
+        { id: 'region.3', name: 'Country' },
+        { id: 'region.4', name: 'Territory' },
       ];
     }
     case 'operational_group': {
       return [
-        { id: '1', name: 'Group 1' },
-        { id: '2', name: 'Group 2' },
+        { id: 'region.1', name: 'Group 1' },
+        { id: 'region.2', name: 'Group 2' },
       ];
     }
     case 'business_unit': {
       return [
-        { id: '1', name: 'Sales' },
-        { id: '2', name: 'Engineering' },
+        { id: 'business_unit.1', name: 'Sales' },
+        { id: 'business_unit.2', name: 'Engineering' },
       ];
     }
     case 'team': {
       return [
-        { id: '1', name: 'Back-end development' },
-        { id: '2', name: 'Front-end development' },
-        { id: '2', name: 'Technical support' },
-        { id: '2', name: 'Architecture' },
+        { id: 'business_unit.1', name: 'Back-end development' },
+        { id: 'business_unit.2', name: 'Front-end development' },
+        { id: 'business_unit.3', name: 'Technical support' },
+        { id: 'business_unit.4', name: 'Architecture' },
       ];
     }
 

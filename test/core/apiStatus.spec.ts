@@ -11,146 +11,16 @@ const {
   REACTORY_ANON_TOKEN
 } = env;
 
+import queries from './queries';
 
 const request = require('supertest')(API_URI_ROOT);
-const $api = () => {
-  return request.post('/api')
-  .set('Accept', 'application/json')
-  .set('x-client-key', REACTORY_CLIENT_KEY)
-  .set('x-client-pwd', REACTORY_CLIENT_PWD);
-};
-
-const apiStatusQuery = `
-query status {
-    apiStatus {
-    applicationName
-    applicationAvatar
-    when
-    status
-    firstName
-    lastName
-    email
-    avatar
-    roles
-    organization {
-      id
-      name
-      logo
-    }
-    businessUnit {
-      id
-      name
-      avatar
-    }
-    memberships {
-      client {
-        id          
-        name
-      }
-      organization {
-        id
-        name
-        logo
-      }
-      businessUnit {
-        id
-        name
-        avatar
-      }
-      roles
-    }
-    id
-    theme
-    themeOptions
-    colorSchemes
-    routes {
-      id
-      path
-      public
-      roles
-      componentFqn
-      exact
-      args {
-        key
-        value
-      }
-      component {
-        nameSpace
-        name
-        version
-        args {
-          key
-          value
-        }
-        title
-        description
-        roles
-      }
-    }
-    menus {
-      id
-      key
-      name
-      target
-      roles
-      entries {
-        id
-        ordinal
-        title
-        link
-        external
-        icon
-        roles
-        items {
-          id
-          ordinal
-          title
-          link
-          external
-          icon
-          roles            
-        }
-      }
-      
-    }     
-    messages {
-      id
-      title
-      text
-      data
-      via
-      icon
-      image
-      requireInteraction
-      silent
-      timestamp
-      actions {
-        id
-        action
-        icon
-        componentFqn
-        componentProps
-        modal
-        modalSize
-        priority
-      }
-    }
-    navigationComponents {				
-      componentFqn
-      componentProps
-      componentPropertyMap
-      componentKey
-      componentContext
-    }
-  }
-}`;
 
 describe('Reactory API', () => {  
   
   it('Should return an unauthorized access status code', (done) => {
     request.post('/api')
     .set('Accept', 'application/json')
-    .send({ query: apiStatusQuery })
+    .send({ query: queries.apiStatusQuery })
     .expect(401)
       .end((err: Error, res: Response) => {        
         if(err) done(err);                
