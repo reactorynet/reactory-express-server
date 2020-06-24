@@ -173,12 +173,11 @@ const SetPersonalDemographics = async (args) => {
 
   const { clientId, race, age, gender, position, region, operationalGroup, businessUnit, team } = args.personalDemographics;
 
+  // Get logged in user
+
   try {
-    const response = await PersonalDemographic.findOneAndUpdate(
-      { clientId },
-      { clientId, race, age, gender, position, region, operationalGroup, businessUnit, team },
-      { new: true, upsert: true }
-    ).exec();
+
+    const response = await PersonalDemographic.SetLoggedInUserDemograpics(args.personalDemographics);
 
     logger.debug(`PERSONAL DEMOGRAPHIC SAVE REPONSE:: ${JSON.stringify(response)}`);
 
@@ -191,16 +190,21 @@ const SetPersonalDemographics = async (args) => {
 
     logger.debug(`ERROR SAVING PERSONAL DEMOGRAPHICS:: ${JSON.stringify(error)}`);
 
-    throw new ApiError(`Error ${clientId != '' ? 'updating ' : 'saving '} personal demographics`);
+    throw new ApiError('Error saving personal demographics');
 
   }
 };
 
 const getPersonalDemographics = async (args) => {
-  logger.debug(`GET PERSONAL DEMOGRAPHICS`, args);
 
-  const demographics = await PersonalDemographic.findOne({ clientId: args.clientId });
-  return demographics;
+  logger.debug(`GETTING PERSONAL DEMOGRAPHICS FOR:: `, args);
+
+  // const demographics = await PersonalDemographic.findOne({ clientId: args.clientId });
+  const personalDemographics = await PersonalDemographic.GetLoggedInUserDemograpics();
+
+  logger.debug(`PERSONAL DEMOGRAPHICS`, personalDemographics);
+
+  return personalDemographics;
 };
 
 export default {

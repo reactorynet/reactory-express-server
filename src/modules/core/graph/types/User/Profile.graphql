@@ -5,7 +5,7 @@ type CoreSimpleResponse {
 }
 
 type PersonalDemographics {
-  clientId: String
+  userId: String
   race: String
   age: String
   gender: String
@@ -17,7 +17,6 @@ type PersonalDemographics {
 }
 
 input PersonalDemographicsInput {
-  clientId: String!
   race: String!
   age: String!
   gender: String!
@@ -29,7 +28,7 @@ input PersonalDemographicsInput {
 }
 
 extend type Query {
-  GetPersonalDemographics(clientId: String!): PersonalDemographics
+  GetPersonalDemographics: PersonalDemographics
 }
 
 extend type Mutation {
