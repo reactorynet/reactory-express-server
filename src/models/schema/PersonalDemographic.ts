@@ -12,6 +12,7 @@ const PersonalDemographicSchema = new mongoose.Schema({
   race: String,
   age: String,
   gender: String,
+  pronoun: String,
   position: String,
   region: {
     type: ObjectId,

@@ -24,7 +24,7 @@ const uiSchema: any = {
     {
       age: { xs: 12, sm: 6, md: 4 },
       gender: { xs: 12, sm: 6, md: 4 },
-      race: { xs: 12, sm: 6, md: 4 },            
+      race: { xs: 12, sm: 6, md: 4 },
     },
     {
       position: { xs: 12, sm: 6, md: 4 },
@@ -35,7 +35,7 @@ const uiSchema: any = {
     }
   ],
   id: {
-    'ui:widget': 'HiddenWidget',    
+    'ui:widget': 'HiddenWidget',
   },
   race: {
     'ui:widget': 'SelectWithDataWidget',
@@ -83,6 +83,26 @@ const uiSchema: any = {
       multiSelect: false,
       query: `query TowerStoneGetDemographicLookup {
         TowerStoneGetDemographicLookup(lookupType: "gender") {
+          id
+          name
+        }
+      }`,
+      //propertyMap: {
+      // 'formContext.$formData.organisationId': 'orgId'
+      //},
+      resultItem: 'TowerStoneGetDemographicLookup',
+      resultsMap: {
+        'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],
+        'TowerStoneGetDemographicLookup.[].name': '[].label',
+      },
+    },
+  },
+  pronoun: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query TowerStoneGetDemographicLookup {
+        TowerStoneGetDemographicLookup(lookupType: "pronoun") {
           id
           name
         }
@@ -186,7 +206,7 @@ const uiSchema: any = {
           id
           name
         }
-      }`,      
+      }`,
       resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
         'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],

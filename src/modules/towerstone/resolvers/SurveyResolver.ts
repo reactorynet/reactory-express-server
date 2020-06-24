@@ -72,6 +72,13 @@ const TowerStoneGetDemographicLookup = async (args) => {
         { id: 'ns', name: 'No specified' },
       ];
     }
+    case 'pronoun': {
+      return [
+        { id: 'he', name: 'he/his' },
+        { id: 'her', name: 'her/she' },
+        { id: 'they', name: 'they/them' },
+      ];
+    }
     case 'position': {
       return [
         { id: 'exco_g', name: 'Exco (Group)' },
@@ -127,6 +134,22 @@ const TowerStoneGetDemographicLookup = async (args) => {
     }
   }
 
+}
+
+const GetOrganisationLookupData = async (args) => {
+  return {
+    regions: [{ id: '123', name: 'region 1' }],
+    operationalGroups: [{ id: '123', name: 'op group 1' }],
+    businessUnit: [{ id: '123', name: 'business unit 1' }],
+    team: [{ id: '123', name: 'team 1' }],
+  }
+}
+
+const SetOrganisationLookupData = async (args) => {
+  return {
+    success: true,
+    message: 'Lookup data successfully updated.'
+  }
 }
 
 export default {
@@ -283,6 +306,9 @@ export default {
     async TowerStoneGetDemographicLookup(obj, args) {
       return TowerStoneGetDemographicLookup(args);
     },
+    async GetOrganisationLookupData(obj, args) {
+      return GetOrganisationLookupData(args);
+    }
   },
   Mutation: {
     updateSurvey(obj, { id, surveyData }) {
@@ -796,6 +822,10 @@ export default {
         logger.error(`An error occured while cloning the leadership brand ==> ${error.message}`, error);
         throw error;
       }
+    },
+
+    async SetOrganisationLookupData(obj, args) {
+     return SetOrganisationLookupData(args);
     }
   }
 

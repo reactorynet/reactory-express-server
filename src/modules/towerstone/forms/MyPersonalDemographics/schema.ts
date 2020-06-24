@@ -19,6 +19,10 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'Gender'
     },
+    pronoun: {
+      type: 'string',
+      title: 'Pronoun Group'
+    },
     position: {
       type: 'string',
       title: 'Position'
