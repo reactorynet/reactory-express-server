@@ -1,0 +1,37 @@
+
+type CoreSimpleResponse {
+  success: Boolean
+  message: String
+}
+
+type PersonalDemographics {
+  clientId: String
+  race: String
+  age: String
+  gender: String
+  position: String
+  region: String
+  operationalGroup: String
+  businessUnit: String
+  team: String
+}
+
+input PersonalDemographicsInput {
+  clientId: String!
+  race: String!
+  age: String!
+  gender: String!
+  position: String!
+  region: String!
+  operationalGroup: String
+  businessUnit: String
+  team: String
+}
+
+extend type Query {
+  GetPersonalDemographics(clientId: String!): PersonalDemographics
+}
+
+extend type Mutation {
+  CoreSetPersonalDemographics(personalDemographics: PersonalDemographicsInput!): CoreSimpleResponse
+}

@@ -10,7 +10,7 @@ const TeamSchema = mongoose.Schema({
       ref: 'User',
     },
   ],
-  createdAt: Date,
+  createdAt: Date,  
 });
 
 const TeamModel = mongoose.model('Team', TeamSchema);

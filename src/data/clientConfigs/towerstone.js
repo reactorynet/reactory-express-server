@@ -159,7 +159,7 @@ export default {
           value: {
             type: 'bool',
             authlist: [
-              'local',              
+              'local',
             ],
           },
         },

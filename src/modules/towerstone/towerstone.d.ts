@@ -1,6 +1,8 @@
 
 import { ObjectID } from "bson";
 import Mongoose from "mongoose";
+import { ObjectId } from "mongodb";
+import { Moment } from "moment";
 
 declare namespace TowerStone {
 
@@ -16,12 +18,13 @@ declare namespace TowerStone {
     entries: Array<IRatingScaleEntry>
   }
   
-  export interface ILeadershipBrand {
-    id: string
+  export interface ILeadershipBrand {    
     title: string
     description: string,
-    ratingScale?: IRatingScale
+    ratingScale?: IRatingScale,    
   }
+
+  export interface ILeadershipBrandDocument extends Mongoose.Document, ILeadershipBrand { }
 
   export interface CopyLeadershipBrandParams {
     targetOrganizationId: string

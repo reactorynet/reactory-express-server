@@ -16,11 +16,11 @@ import {
 import { ObjectId } from 'mongodb';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
 import logger from '@reactory/server-core/logging';
-import { 
-  launchSurveyForDelegate, 
-  sendSurveyEmail, 
-  EmailTypesForSurvey, 
-  sendSurveyClosed 
+import {
+  launchSurveyForDelegate,
+  sendSurveyEmail,
+  EmailTypesForSurvey,
+  sendSurveyClosed
 } from '@reactory/server-core/application/admin/Survey';
 import { TowerStone } from '../towerstone';
 import { TowerStoneServicesMap } from "../services";
@@ -28,17 +28,92 @@ import AuthConfig from 'authentication';
 
 const { findIndex, pullAt } = lodash;
 
-function getMailService(survey: TowerStone.ISurvey, action: String = 'default')  {
+function getMailService(survey: TowerStone.ISurvey, action: String = 'default') {
   const emailServiceProvider: TowerStone.ITowerStoneEmailServiceProvider = TowerStoneServicesMap["towerstone.EmailService@1.0.0"].service as TowerStone.ITowerStoneEmailServiceProvider;
   const mailService = emailServiceProvider({ partner, user }, { action: action, survey: survey });
   return mailService;
 }
 
-function getSurveyService(): TowerStone.ITowerStoneSurveyService  {
+function getSurveyService(): TowerStone.ITowerStoneSurveyService {
   return TowerStoneServicesMap["towerstone.SurveyService@1.0.0"].service({ user, partner });
 }
 
+const TowerStoneGetDemographicLookup = async (args) => {
 
+  logger.debug(`GET DEMOGRAPHIC LOOKUP :: ${JSON.stringify(args)}`, args);
+
+  switch (args.lookupType) {
+
+    case 'race': {
+      return [
+        { id: 'race.1', name: 'Black', },
+        { id: 'race.2', name: 'White', },
+        { id: 'race.3', name: 'Asian', },
+        { id: 'race.4', name: 'Colored', },
+      ];
+    }
+    case 'age': {
+      return [
+        { id: 'age.1', name: '18 - 30' },
+        { id: 'age.2', name: '31 - 40' },
+        { id: 'age.3', name: '41 - 50' },
+        { id: 'age.4', name: '>50' },
+      ];
+    }
+    case 'gender': {
+      return [
+        { id: 'gender.1', name: 'M' },
+        { id: 'gender.2', name: 'F' },
+        { id: 'gender.3', name: 'No specified' },
+      ];
+    }
+    case 'position': {
+      return [
+        { id: 'position.1', name: 'Exco (Group)' },
+        { id: 'position.2', name: 'Exco (Division/Brand)' },
+        { id: 'position3', name: 'Senior Management' },
+        { id: 'position4', name: 'Middle Management' },
+        { id: 'position5', name: 'Junior Management' },
+        { id: 'position6', name: 'Supervisory/Team Lead' },
+        { id: 'position7', name: 'Employee' },
+        { id: 'position8', name: 'Specialist' },
+      ];
+    }
+    case 'region': {
+      return [
+        { id: 'region.1', name: 'City' },
+        { id: 'region.2', name: 'Province' },
+        { id: 'region.3', name: 'Country' },
+        { id: 'region.4', name: 'Territory' },
+      ];
+    }
+    case 'operational_group': {
+      return [
+        { id: 'region.1', name: 'Group 1' },
+        { id: 'region.2', name: 'Group 2' },
+      ];
+    }
+    case 'business_unit': {
+      return [
+        { id: 'business_unit.1', name: 'Sales' },
+        { id: 'business_unit.2', name: 'Engineering' },
+      ];
+    }
+    case 'team': {
+      return [
+        { id: 'business_unit.1', name: 'Back-end development' },
+        { id: 'business_unit.2', name: 'Front-end development' },
+        { id: 'business_unit.3', name: 'Technical support' },
+        { id: 'business_unit.4', name: 'Architecture' },
+      ];
+    }
+
+    default: {
+      return [];
+    }
+  }
+
+}
 
 export default {
   SurveyCalendarEntry: {
@@ -128,8 +203,8 @@ export default {
   },
   Survey: {
     id(survey: TowerStone.ISurvey) {
-      if(survey && survey._id)
-      return survey._id.toString();
+      if (survey && survey._id)
+        return survey._id.toString();
     },
     leadershipBrand(survey: TowerStone.ISurvey) {
       if (survey.leadershipBrand) return LeadershipBrand.findById(survey.leadershipBrand);
@@ -143,7 +218,7 @@ export default {
       if (survey.startDate) return moment(survey.startDate);
       return null;
     },
-    endDate(survey: TowerStone.ISurvey ) {
+    endDate(survey: TowerStone.ISurvey) {
       if (survey.endDate) return moment(survey.endDate);
       return null;
     },
@@ -153,7 +228,7 @@ export default {
     calendar(survey: TowerStone.ISurvey) {
       return survey.calendar;
     },
-    delegates(survey: TowerStone.ISurvey) {            
+    delegates(survey: TowerStone.ISurvey) {
       return survey.delegates;
     },
     assessments(survey: TowerStone.ISurvey) {
@@ -171,7 +246,7 @@ export default {
 
       return statistics;
     },
-    templates(survey: TowerStone.ISurvey){
+    templates(survey: TowerStone.ISurvey) {
       logger.debug('Survey.templates(survey: TowerSTone.ISurvey)', { survey });
       const mailService = getMailService(survey, 'Survey.templates()');
       return mailService.templates(survey);
@@ -191,6 +266,9 @@ export default {
       }
       return survey;
     },
+    async TowerStoneGetDemographicLookup(obj, args) {
+      return TowerStoneGetDemographicLookup(args);
+    },
   },
   Mutation: {
     updateSurvey(obj, { id, surveyData }) {
@@ -201,6 +279,7 @@ export default {
       logger.info('Update Survey Options', { id, options });
       return Survey.findByIdAndUpdate(ObjectId(id), { options });
     },
+    
     createSurvey(obj, { id, surveyData }) {
       return co.wrap(function* createSurveyGenerator(organization, survey) {
         const found = yield Organization.findById(organization).then();
@@ -295,7 +374,7 @@ export default {
       const { user, partner } = global;
 
       const mailService = getMailService(survey, 'Survey.templates()');
-      
+
       const surveyModel = await Survey.findById(survey).populate('delegates.delegate', 'delegates.assessments').then();
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
@@ -335,27 +414,27 @@ export default {
             assessments: [],
             launched: false,
             complete: false,
-            removed: false,            
+            removed: false,
             message: `Added ${delegateModel.firstName} ${delegateModel.lastName} to survey ${surveyModel.title}`,
             lastAction: 'added',
             status: 'new',
             actions: [{
               action: 'added',
               when: moment().valueOf(),
-              result: `Added ${delegateModel.firstName} ${delegateModel.lastName} to survey ${surveyModel.title} as ${surveyModel.surveyType === '180'? (inputData.team || surveyModel.delegateTeamName) + ' team member' : 'delegate'}`,
+              result: `Added ${delegateModel.firstName} ${delegateModel.lastName} to survey ${surveyModel.title} as ${surveyModel.surveyType === '180' ? (inputData.team || surveyModel.delegateTeamName) + ' team member' : 'delegate'}`,
               who: user._id,
             }],
             updatedAt: moment().valueOf(),
             createdAt: moment().valueOf(),
           };
 
-          if((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') {
-            if(typeof inputData.userAddType === 'string') {
-              if(inputData.userAddType === 'delegate') {
-                entryData.entry.team = (surveyModel as TowerStone.ISurveyDocument).delegateTeamName;                
+          if ((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') {
+            if (typeof inputData.userAddType === 'string') {
+              if (inputData.userAddType === 'delegate') {
+                entryData.entry.team = (surveyModel as TowerStone.ISurveyDocument).delegateTeamName;
                 entryData.entry.status = 'new-delegate'
               }
-              if(inputData.userAddType === 'assessor') {
+              if (inputData.userAddType === 'assessor') {
                 entryData.entry.team = (surveyModel as TowerStone.ISurveyDocument).assessorTeamName;
                 entryData.entry.status = 'new-assessor'
               }
@@ -389,9 +468,9 @@ export default {
           }
 
           entryData.entry.delegate = delegateModel;
-          logger.info(`Performing "${action}" action:\n 
-            \tOrganigram model: ${organigramModel ? organigramModel._id.toString() : 'No Organigram'}\n 
-            \tDelegateEntry: ${entryData.entry._id} at index ${entryData.entryIdx}\n 
+          logger.info(`Performing "${action}" action:\n
+            \tOrganigram model: ${organigramModel ? organigramModel._id.toString() : 'No Organigram'}\n
+            \tDelegateEntry: ${entryData.entry._id} at index ${entryData.entryIdx}\n
             \tDelegate: ${entryData.entry.delegate.email}
             \tAssessments: ${entryData.entry.assessments}`);
 
@@ -410,32 +489,32 @@ export default {
               });
               break;
             }
-            case 'launch': {              
-              if((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') {
-                
+            case 'launch': {
+              if ((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') {
+
                 const relaunch = inputData.relaunch === true;
                 const launchResult = await launchSurveyForDelegate(surveyModel as TowerStone.ISurveyDocument, entryData.entry, organigramModel, relaunch);
-                  
+
                 entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
                 if (launchResult.assessments) {
                   entryData.entry.assessments = launchResult.assessments.map(a => a._id);
                 }
 
-                const isAssessorTeam = entryData.entry.team === (surveyModel as TowerStone.ISurveyDocument).assessorTeamName;                  
-                if(launchResult.success === true) {
+                const isAssessorTeam = entryData.entry.team === (surveyModel as TowerStone.ISurveyDocument).assessorTeamName;
+                if (launchResult.success === true) {
                   logger.debug(`:::Launch For 180 LaunchResult`, launchResult);
                   let assessment = launchResult.assessments[0]
-                  const mailSendResult = await mailService.send((surveyModel as TowerStone.ISurveyDocument), 'launch', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate], 
-                  { 
-                    user: entryData.entry.delegate as Reactory.IUserDocument,
-                    assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(entryData.entry.delegate, { exp: moment((surveyModel as TowerStone.ISurveyDocument).endDate).valueOf() }))}`,
-                  });
-                  logger.debug('Sent mails for 180 launch', {mailSendResult})
+                  const mailSendResult = await mailService.send((surveyModel as TowerStone.ISurveyDocument), 'launch', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate],
+                    {
+                      user: entryData.entry.delegate as Reactory.IUserDocument,
+                      assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(entryData.entry.delegate, { exp: moment((surveyModel as TowerStone.ISurveyDocument).endDate).valueOf() }))}`,
+                    });
+                  logger.debug('Sent mails for 180 launch', { mailSendResult })
                 }
 
                 entryData.patch = true;
-                entryData.entry.status = launchResult.success ? `launched-${isAssessorTeam === true ? 'assessor' : 'delegate' }` : entryData.entry.status;
-                entryData.entry.lastAction = launchResult.success ? `launched-${isAssessorTeam === true ? 'assessor' : 'delegate' }` : 'launch-fail';
+                entryData.entry.status = launchResult.success ? `launched-${isAssessorTeam === true ? 'assessor' : 'delegate'}` : entryData.entry.status;
+                entryData.entry.lastAction = launchResult.success ? `launched-${isAssessorTeam === true ? 'assessor' : 'delegate'}` : 'launch-fail';
                 entryData.entry.launched = launchResult.success === true;
                 entryData.entry.actions.push({
                   action: launchResult.success ? 'launched' : 'launch-fail',
@@ -443,8 +522,8 @@ export default {
                   result: launchResult.message,
                   who: user._id,
                 });
-                
-                await (surveyModel as TowerStone.ISurveyDocument).addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();                  
+
+                await (surveyModel as TowerStone.ISurveyDocument).addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();
 
               } else {
 
@@ -471,32 +550,32 @@ export default {
                   entryData.patch = true;
                   entryData.entry.status = 'new';
                   entryData.entry.lastAction = 'launch';
-  
+
                   entryData.entry.actions.push({
                     action: 'launch',
                     when: new Date(),
                     result: entryData.entry.message,
                     who: user._id,
                   });
-                }              
-              }  
-              break;                
+                }
+              }
+              break;
             }
             case 'send-reminder': {
 
-              if((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') { 
-                const isAssessorTeam = entryData.entry.team === (surveyModel as TowerStone.ISurveyDocument).assessorTeamName;       
-                let assessment : any = null;
-                if(lodash.isArray(entryData.entry.assessments) === true && entryData.entry.assessments.length === 1) {
+              if ((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') {
+                const isAssessorTeam = entryData.entry.team === (surveyModel as TowerStone.ISurveyDocument).assessorTeamName;
+                let assessment: any = null;
+                if (lodash.isArray(entryData.entry.assessments) === true && entryData.entry.assessments.length === 1) {
                   assessment = entryData.entry.assessments[0];
                 }
-                
-                if(assessment !== null) {
-                  const mailSendResult = await mailService.send((surveyModel as TowerStone.ISurveyDocument), 'reminder', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate], { 
+
+                if (assessment !== null) {
+                  const mailSendResult = await mailService.send((surveyModel as TowerStone.ISurveyDocument), 'reminder', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate], {
                     user: entryData.entry.delegate as Reactory.IUserDocument,
                     assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(entryData.entry.delegate, { exp: moment((surveyModel as TowerStone.ISurveyDocument).endDate).valueOf() }))}`,
                   });
-  
+
                   entryData.entry.message = mailSendResult.sent === 1 ? 'Sent reminder to delegate for 180' : 'Could not send reminder';
                   entryData.patch = true;
                   entryData.entry.lastAction = 'reminder';
@@ -507,8 +586,8 @@ export default {
                     result: mailSendResult.sent === 1 ? 'Sent reminder to delegate for 180' : 'Could not send reminder',
                     who: user._id,
                   });
-                  logger.debug('Sent mails for 180 launch', {mailSendResult})
-                }                                      
+                  logger.debug('Sent mails for 180 launch', { mailSendResult })
+                }
               } else {
                 const reminderResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
                 entryData.entry.message = reminderResult.message;
@@ -521,10 +600,10 @@ export default {
                   result: reminderResult.message,
                   who: user._id,
                 });
-  
+
               }
 
-              
+
               break;
             }
             case 'send-closed': {
@@ -632,21 +711,21 @@ export default {
           }
 
           return entryData.entry;
-        }        
+        }
       } catch (error) {
         // console.log(error);
         logger.error(error.message, error);
-      }      
+      }
     },
-    async TowerStoneSurveySetTemplates(parent: any, params: TowerStone.ITowerStoneSetTemplatesParameters ) {
-      const { id, templates } = params;      
+    async TowerStoneSurveySetTemplates(parent: any, params: TowerStone.ITowerStoneSetTemplatesParameters) {
+      const { id, templates } = params;
       const survey = await getSurveyService().get(id).then();
       logger.debug(`Patching Templates For Survey ${survey.title}`)
       const mailService = getMailService(survey, 'TowerStoneSurveySetTemplates');
       mailService.patchTemplates(survey, templates);
     },
     async TowerStoneLeadershipBrandCopy(parent: any, params: TowerStone.ICopyLeadershipBrandParams) {
-      
+
       const { input } = params;
       const { targetOrganizationId, sourceLeadershipBrandId, targetTitle } = input;
 
@@ -657,37 +736,37 @@ export default {
 
       try {
 
-        if(leadershipbrand === null || leadershipbrand === undefined) throw new ApiError(`No Leadership Brand with the ID ${sourceLeadershipBrandId} available`);
-        if(organization === null || organization === undefined) throw new ApiError(`No organization with the ID ${targetOrganizationId} available`);
+        if (leadershipbrand === null || leadershipbrand === undefined) throw new ApiError(`No Leadership Brand with the ID ${sourceLeadershipBrandId} available`);
+        if (organization === null || organization === undefined) throw new ApiError(`No organization with the ID ${targetOrganizationId} available`);
 
         const _clone = new LeadershipBrand();
-        
+
         _clone.organization = organization;
         _clone.title = leadershipbrand.title;
         _clone.description = leadershipbrand.description;
         _clone.scale = leadershipbrand.scale;
-        
+
         leadershipbrand.qualities.forEach((quality, index) => {
-            _clone.qualities = [];
-            const _quality = {
-              title: quality.title,
-              description: quality.description,
-              ordinal: quality.ordinal || index,
-              behaviours: [], 
+          _clone.qualities = [];
+          const _quality = {
+            title: quality.title,
+            description: quality.description,
+            ordinal: quality.ordinal || index,
+            behaviours: [],
+          };
+          //
+          quality.behaviours.forEach((behaviour, index) => {
+            const _behaviour = {
+              title: behaviour.title,
+              description: behaviour.description,
+              ordinal: behaviour.ordinal || index
             };
-            // 
-            quality.behaviours.forEach((behaviour, index) => {
-              const _behaviour = {
-                title: behaviour.title,
-                description: behaviour.description,
-                ordinal: behaviour.ordinal || index
-              };
-              _quality.behaviours.push(_behaviour);
-            });
-            // 
-            _clone.qualities.push(_quality);
+            _quality.behaviours.push(_behaviour);
+          });
+          //
+          _clone.qualities.push(_quality);
         });
-        
+
         _clone.createdAt = new Date();
         _clone.updatedAt = new Date();
 
@@ -703,9 +782,8 @@ export default {
         logger.error(`An error occured while cloning the leadership brand ==> ${error.message}`, error);
         throw error;
       }
-    }    
-  },
+    }
+  }
+
 };
-
-
 

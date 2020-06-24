@@ -3,7 +3,7 @@ import co from 'co';
 import { ObjectId } from 'mongodb';
 import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
-import { merge, isNil, isArray, sortBy, filter } from 'lodash';
+import { merge, isNil, isArray, sortBy, filter, intersection } from 'lodash';
 import moment from 'moment';
 
 import { execql } from '@reactory/server-core/graph/client';
@@ -93,6 +93,7 @@ const resolvers = {
       if(user.anon === true) {
         skipResfresh = true;
         isAnon = true;
+        roles.push('ANON')
       }
 
       
@@ -216,7 +217,10 @@ const resolvers = {
         alt_roles,
         memberships: isNil(user) === false && isArray(user.memberships) ? user.memberships : [],
         organization: user.organization,
-        routes: partner.routes || [],
+        routes: (partner.routes || []).map((route) => {
+          if(!route.roles) return route;          
+          if(intersection(route.roles, route.roles).length > 0) return route;
+        }),
         applicationAvatar: partner.avatar,
         applicationName: partner.name,
         menus: partner._id,

@@ -13,7 +13,7 @@ type TimelineEntry {
   when: Date!
   eventType: String
   eventDetail: String
-  who: User  
+  who: User
 }
 
 type DelegateEntry {
@@ -25,7 +25,7 @@ type DelegateEntry {
   notifications: [Notification]
   assessments: [Assessment]
   launched: Boolean
-  complete: Boolean 
+  complete: Boolean
   removed: Boolean
   message: String
   updatedAt: Date
@@ -83,7 +83,7 @@ type Survey {
   statistics: Any
   options: Any
   delegates: [DelegateEntry]
-  assessments: [Assessment]  
+  assessments: [Assessment]
   calendar: [SurveyCalendarEntry]
   timeline: [TimelineEntry]
   templates: TowerStoneSurveyTemplates
@@ -97,23 +97,33 @@ input SurveyInput {
   id: String
   leadershipBrand: String!
   organization: String!
-  title: String!  
+  title: String!
   surveyType: String!
   delegateTeamName: String,
   assessorTeamName: String,
   startDate: Date
   endDate: Date
   mode: String
-  status: String  
+  status: String
 }
+
+
+input MoresSurveyCreateInput {    
+  organizationId: String!
+  title: String!
+  surveyType: String!  
+  startDate: Date
+  endDate: Date  
+}
+
 
 input DelegateInput {
   id: String
   delegate: String!
-  status: String  
+  status: String
   launched: Boolean
   complete: Boolean
-  removed: Boolean  
+  removed: Boolean
 }
 
 input SurveyLaunchOptions {
@@ -140,19 +150,30 @@ type DelegateRemoveResponse {
   user: User
 }
 
+
+type TowerStoneLookupItem {
+  id: String
+  lookupType: String
+  name: String
+  description: String
+}
+
 extend type Query {
   surveysForOrganization(organizationId: String!): [Survey]
   surveysList: [Survey]
   surveyDetail(surveyId: String!): Survey
+  TowerStoneGetDemographicLookup(lookupType: String!): [TowerStoneLookupItem]
 }
 
 extend type Mutation {
   createSurvey(id: String!, surveyData: SurveyInput): Survey
+  MoresAssessementsCreateSurvey(moresSurveyCreateArgs: MoresSurveyCreateInput!): Survey
+  MoresAssessmentsDeleteSurvey(id: String!, hard: Boolean): Survey
   updateSurvey(id: String!, surveyData: SurveyInput!): UpdateResponse
   updateSurveyOptions(id: String!, options: Any): Any
   launchSurvey(id: String!, options: SurveyLaunchOptions): UpdateResponse
   startDelegateSurveyWorkflow(id: String!, delegateEntryId: String!, workflowId: String!): Any
-  addDelegateToSurvey(surveyId: String!, delegateId: String!): DelegateAddResponse  
+  addDelegateToSurvey(surveyId: String!, delegateId: String!): DelegateAddResponse
   removeDelegateFromSurvey(surveyId: String!, delegateId: String!): DelegateRemoveResponse
   setDelegatesForSurvey(id: String!, delegates: [DelegateInput], replace: Boolean): Survey
   postRemidners(id: String, options: ReminderOptions): UpdateResponse

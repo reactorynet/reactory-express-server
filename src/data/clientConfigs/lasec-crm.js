@@ -567,6 +567,7 @@ const LASEC_CONFIG = {
       title: 'Login Alt',
       path: '/login_alt',
       public: true,
+      exact: true,
       roles: ['ANON'],
       componentFqn: 'core.Login@1.0.0',
       background: {
@@ -577,7 +578,7 @@ const LASEC_CONFIG = {
           key: 'magicLink',
           value: {
             type: 'bool',
-            magicLink: false,
+            magicLink: true,
           },
         },
         {
@@ -1104,22 +1105,49 @@ const LASEC_CONFIG = {
     type: 'material',
     palette: {
       primary1Color: '#5fb848',
+      grey: {
+        light: '#757575',
+        main: '#5fb848',
+        dark: '#298717',
+        contrastText: '#222732',
+      },      
+      error: {
+        light: '#C7212D',
+        main: '#C7212D',
+        dark: '#C7212D',
+        contrastText: '#C7212D',
+      },      
+      success: {
+        light: '#6DB84A',
+        main: '#6DB84A',
+        dark: '#6DB84A',
+        contrastText: '#222732',
+      },
+      warning: {
+        light: '#F6950F',
+        main: '#F6950F',
+        dark: '#F6950F',
+        contrastText: '#F6950F',
+      },      
+      info: {
+        light: '#49B4D4',
+        main: '#49B4D4',
+        dark: '#49B4D4',
+        contrastText: '#222732',
+      },
       primary: {
         light: '#92eb77',
         main: '#5fb848',
         dark: '#298717',
-        contrastText: '#222732',
+        contrastText: '#222732',        
       },
       secondary: {
         light: '#62b4b8',
         main: '#2d8488',
         dark: '#00575b',
         contrastText: '#222732',
-      },
-      report: {
-        empty: '#89ee8e',
-        fill: '#ff8c63',
-      },
+        default: '#757575',
+      },    
     },
     provider: {
       material: {

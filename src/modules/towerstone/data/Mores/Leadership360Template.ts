@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb";
+import { ObjectID } from "mongodb";
 import moment from "moment";
 
 const MORES_ASSESSMENT_LEADERSHIP360_BRAND_TITLE = "Leadership 360";
@@ -6,23 +6,23 @@ const MORES_ASSESSMENT_INDIVIDUAL360_BRAND_TITLE = "Individual 360";
 const MORES_ASSESSMENT_CULTURE_BRAND_TITLE = "Culture Survey";
 const MORES_ASSESSMENT_TEAM180_BRAND_TITLE = "Team 180";
 
-export const Indvidual360Template = (organizationId: string | ObjectId, scaleId: string | ObjectId) => ({
-  "_id": ObjectId.generate(),
-  "organization": new ObjectId(organizationId),
+export const Indvidual360Template = (organizationId: string | ObjectID, scaleId: string | ObjectID) => ({
+  "_id": new ObjectID(),
+  "organization": new ObjectID(organizationId),
   "title": MORES_ASSESSMENT_INDIVIDUAL360_BRAND_TITLE,
   "description": "",
-  "scale": new ObjectId(scaleId),
+  "scale": new ObjectID(scaleId),
   "createdAt": moment(),
   "updatedAt": moment(),
   "qualities": [
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "My Space",
       "description": "",
       "ordinal": 0,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -38,7 +38,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -54,7 +54,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -72,7 +72,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "My Team",
       "description": "",
 
@@ -88,7 +88,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
       "ordinal": 1,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -104,7 +104,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -120,7 +120,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -138,13 +138,13 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Culture",
       "description": "Logic and Reason",
       "ordinal": 2,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -160,7 +160,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -176,7 +176,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -194,7 +194,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Results",
       "description": "Make your message believable",
 
@@ -210,7 +210,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
       "ordinal": 3,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",          
           "description": "${employee.firstName}",
 
@@ -226,7 +226,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -242,7 +242,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -260,7 +260,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Growth",
       "description": "Touch their hearts",
 
@@ -276,7 +276,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
       "ordinal": 4,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -292,7 +292,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -308,7 +308,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -326,7 +326,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Purpose",
       "description": "Touch their hearts",
 
@@ -342,7 +342,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
       "ordinal": 4,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -358,7 +358,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -374,7 +374,7 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -393,17 +393,17 @@ export const Indvidual360Template = (organizationId: string | ObjectId, scaleId:
     }],
 });
 
-export const Leadership360Template = (organizationId: string | ObjectId, scaleId: string | ObjectId) => ({
-  "_id": ObjectId.generate(),
-  "organization": new ObjectId(organizationId),
+export const Leadership360Template = (organizationId: string | ObjectID, scaleId: string | ObjectID) => ({
+  "_id": new ObjectID(),
+  "organization": new ObjectID(organizationId),
   "title": MORES_ASSESSMENT_LEADERSHIP360_BRAND_TITLE,
   "description": "",
-  "scale": new ObjectId(scaleId),
+  "scale": new ObjectID(scaleId),
   "createdAt": moment(),
   "updatedAt": moment(),
   "qualities": [
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "My Space",
       "description": "",
 
@@ -420,7 +420,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
 
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -436,7 +436,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -452,7 +452,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -470,7 +470,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "My Team",
       "description": "",
 
@@ -486,7 +486,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
       "ordinal": 3,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -502,7 +502,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -518,7 +518,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -536,13 +536,13 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Culture",
       "description": "Logic and Reason",
       "ordinal": 4,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -558,7 +558,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -574,7 +574,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -592,7 +592,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Results",
       "description": "Make your message believable",
 
@@ -608,7 +608,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
       "ordinal": 5,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",          
           "description": "${employee.firstName}",
 
@@ -624,7 +624,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -640,7 +640,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -658,7 +658,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Growth",
       "description": "Touch their hearts",
 
@@ -674,7 +674,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
       "ordinal": 6,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -690,7 +690,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -706,7 +706,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -724,7 +724,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Purpose",
       "description": "Touch their hearts",
 
@@ -740,7 +740,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
       "ordinal": 4,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -756,7 +756,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -772,7 +772,7 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -793,23 +793,23 @@ export const Leadership360Template = (organizationId: string | ObjectId, scaleId
 
 
 
-export const CultureLeadershipTemplate = (organizationId: string | ObjectId, scaleId: string | ObjectId) => ({
-  "_id": ObjectId.generate(),
-  "organization": new ObjectId(organizationId),
+export const CultureLeadershipTemplate = (organizationId: string | ObjectID, scaleId: string | ObjectID) => ({
+  "_id": new ObjectID(),
+  "organization": new ObjectID(organizationId),
   "title": MORES_ASSESSMENT_CULTURE_BRAND_TITLE,
   "description": "",
-  "scale": new ObjectId(scaleId),
+  "scale": new ObjectID(scaleId),
   "createdAt": moment(),
   "updatedAt": moment(),
   "qualities": [
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "My Space",
       "description": "",
       "ordinal": 0,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -825,7 +825,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -841,7 +841,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -859,7 +859,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "My Team",
       "description": "",
 
@@ -875,7 +875,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
       "ordinal": 1,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -891,7 +891,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -907,7 +907,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -925,13 +925,13 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Culture",
       "description": "Logic and Reason",
       "ordinal": 2,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -947,7 +947,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -963,7 +963,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -981,7 +981,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Results",
       "description": "Make your message believable",
 
@@ -997,7 +997,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
       "ordinal": 3,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",          
           "description": "${employee.firstName}",
 
@@ -1013,7 +1013,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1029,7 +1029,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1047,7 +1047,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Growth",
       "description": "Touch their hearts",
 
@@ -1063,7 +1063,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
       "ordinal": 4,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1079,7 +1079,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1095,7 +1095,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1113,7 +1113,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Purpose",
       "description": "Touch their hearts",
 
@@ -1129,7 +1129,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
       "ordinal": 4,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1145,7 +1145,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1161,7 +1161,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1180,21 +1180,21 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectId, sca
     }],
 });
 
-export const TeamLeadership180Template = (organizationId: string | ObjectId, scaleId: string | ObjectId) => ({
-  "_id": ObjectId.generate(),
-  "organization": new ObjectId(organizationId),
+export const TeamLeadership180Template = (organizationId: string | ObjectID, scaleId: string | ObjectID) => ({
+  "_id": new ObjectID(),
+  "organization": new ObjectID(organizationId),
   "title": MORES_ASSESSMENT_TEAM180_BRAND_TITLE,
   "description": "",
-  "scale": new ObjectId(scaleId),
+  "scale": new ObjectID(scaleId),
   "qualities": [
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "My Space",
       "description": "",
       "ordinal": 0,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1210,7 +1210,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1226,7 +1226,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1244,7 +1244,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "My Team",
       "description": "",
 
@@ -1260,7 +1260,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
       "ordinal": 1,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1276,7 +1276,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1292,7 +1292,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1310,13 +1310,13 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Culture",
       "description": "Logic and Reason",
       "ordinal": 2,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1332,7 +1332,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1348,7 +1348,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1366,7 +1366,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Results",
       "description": "Make your message believable",
 
@@ -1382,7 +1382,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
       "ordinal": 3,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",          
           "description": "${employee.firstName}",
 
@@ -1398,7 +1398,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1414,7 +1414,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1432,7 +1432,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Growth",
       "description": "Touch their hearts",
 
@@ -1448,7 +1448,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
       "ordinal": 4,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1464,7 +1464,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1480,7 +1480,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1498,7 +1498,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
       ]
     },
     {
-      "_id": ObjectId.generate(),
+      "_id": new ObjectID(),
       "title": "Our Purpose",
       "description": "Touch their hearts",
 
@@ -1514,7 +1514,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
       "ordinal": 4,
       "behaviours": [
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1530,7 +1530,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 0
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
@@ -1546,7 +1546,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectId, sca
           "ordinal": 1
         },
         {
-          "_id": ObjectId.generate(),
+          "_id": new ObjectID(),
           "title": "${employee.firstName}",
           "description": "${employee.firstName}",
 
