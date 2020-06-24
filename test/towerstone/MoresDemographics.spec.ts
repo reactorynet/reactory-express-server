@@ -13,6 +13,7 @@ const {
 } = env;
 
 
+
 const request = require('supertest')(API_URI_ROOT);
 
 const GetPersonalDemographics = `
@@ -53,16 +54,10 @@ const GetDemographicsLookupQuery = (demographicType: string, variables = {}) => 
 
 };
 
-interface LoggedInUser {
-  token: string,
-  firstName: string,
-  lastName: string,
-  email: string,
-  [key: string]: any
-}
 
-describe('TowerStone Demographics Module', () => {  
-  let logged_in_user: LoggedInUser = null;
+
+describe('Mores Assessments Demographics Module', () => {  
+  let logged_in_user: any = null;
   let lookupTypes = ['race', 'age', 'gender', 'position', 'region', 'operational_group', 'business_unit', 'team']
 
   before((done) => {
@@ -78,7 +73,6 @@ describe('TowerStone Demographics Module', () => {
         if(err) done (err);
         else {        
           logged_in_user = res.body.user;
-
           request.post('api')
           .set('Accept', 'application/json')
           .set('x-client-key', REACTORY_CLIENT_KEY)
@@ -93,13 +87,13 @@ describe('TowerStone Demographics Module', () => {
                 done();
               }
             });                             
-        }        
+        }
       });
   });
 
 
   lookupTypes.forEach(( demographic: string ) => {
-    it(`It should respond with a list of organization specific ${demographic} lookups for ${REACTORY_TEST_USER} ${REACTORY_TEST_USER_PWD}`, (done) => {
+    it(`It should respond with a list of organization specific ${demographic} lookups for ${REACTORY_TEST_USER}`, (done) => {
       const query = GetDemographicsLookupQuery(demographic);
       request.post('api')
         .set('Accept', 'application/json')
@@ -110,14 +104,12 @@ describe('TowerStone Demographics Module', () => {
         .expect(200)
         .end((err: Error, res: any) => {        
           if(err) done(err);
-          else {
-            console.log(`The ${demographic} lookups for user ${logged_in_user.email}\n`, res.body.data);
+          else {            
             done();
           }                
         });
     });      
   });
-
 
   after('Loggin out user', (done) => {
     done()

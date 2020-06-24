@@ -279,6 +279,7 @@ export default {
       logger.info('Update Survey Options', { id, options });
       return Survey.findByIdAndUpdate(ObjectId(id), { options });
     },
+    
     createSurvey(obj, { id, surveyData }) {
       return co.wrap(function* createSurveyGenerator(organization, survey) {
         const found = yield Organization.findById(organization).then();

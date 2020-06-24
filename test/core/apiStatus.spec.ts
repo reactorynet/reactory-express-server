@@ -34,7 +34,7 @@ describe('Reactory API', () => {
           .set('x-client-key', REACTORY_CLIENT_KEY)
           .set('x-client-pwd', REACTORY_CLIENT_PWD)
           .set('Authorization', `Bearer ${REACTORY_ANON_TOKEN}`)
-          .send({ query: apiStatusQuery })
+          .send({ query: queries.apiStatusQuery })
             .expect(200)
             .end((err: Error, res: Response) => {        
               if(err) done(err);                
@@ -74,7 +74,7 @@ describe('Reactory API', () => {
           .set('x-client-key', REACTORY_CLIENT_KEY)
           .set('x-client-pwd', REACTORY_CLIENT_PWD)
           .set('Authorization', `Bearer ${res.body.user.token}`)
-          .send({ query: apiStatusQuery })
+          .send({ query: queries.apiStatusQuery })
             .expect(200)
             .end((err: Error, res: Response) => {        
               if(err) done(err);            

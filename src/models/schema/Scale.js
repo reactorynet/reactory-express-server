@@ -6,8 +6,10 @@ const Scale = mongoose.Schema({
   legacyId: String,
   key: String,
   title: String,
+  description: String,
   entries: [
     {
+      id: ObjectId,
       rating: Number,
       description: String,
     },

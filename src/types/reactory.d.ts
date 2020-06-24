@@ -110,6 +110,12 @@ declare namespace Reactory {
     roles: [String]
   }
 
+  export interface IReactoryLoginResponse {
+    token: string,
+    firstName: string,
+    lastName: string,
+  }
+
   export interface IUser {
     email: string
     firstName: string
@@ -120,7 +126,7 @@ declare namespace Reactory {
     removeRole(clientId: string, role: string, organizationId: string): IMemberShip[],
     removeAuthentication(provider: string): boolean
     getAuthentication(provider: string): IAuthentication
-  }
+  }    
 
   export interface IUserDocument extends Mongoose.Document, IUser {
 
