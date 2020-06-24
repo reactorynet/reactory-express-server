@@ -10,8 +10,12 @@ const TeamSchema = mongoose.Schema({
       ref: 'User',
     },
   ],
-  createdAt: Date,  
+  createdAt: Date,
 });
+
+TeamSchema.statics.GetAllTeams = async function GetAllTeams() {
+  return await this.find();
+};
 
 const TeamModel = mongoose.model('Team', TeamSchema);
 export default TeamModel;
