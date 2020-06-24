@@ -12,15 +12,27 @@ const PersonalDemographicSchema = new mongoose.Schema({
   age: Number,
   gender: Number,
   position: Number,
-  region: Number,
-  operationalGroup: Number,
-  businessUnit: Number,
-  team: Number,
+  region: {
+    type: ObjectId,
+    ref: 'Region',
+  },
+  operationalGroup: {
+    type: ObjectId,
+    ref: 'Organization'
+  },
+  businessUnit: {
+    type: ObjectId,
+    ref: 'BusinessUnit'
+  },
+  team: {
+    type: ObjectId,
+    ref: 'Team'
+  },
 });
 
-PersonalDemographicSchema.statics.GetLoggedInUserDemograpics = async () => {  
+PersonalDemographicSchema.statics.GetLoggedInUserDemograpics = async () : Promise<any> => {  
   const { user, partner } = global;
-  return await self.findOne({ userId: user._id });
+  return await this.findOne({ userId: user._id });
 };
 
 const PersonalDemographicModel = mongoose.model('PersonalDemographic', PersonalDemographicSchema);
