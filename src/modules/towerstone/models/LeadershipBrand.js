@@ -11,6 +11,7 @@ const LeadershipBrandSchema = mongoose.Schema({
   legacyId: String,
   title: String,
   description: String,
+  key: String,
   scale: {
     type: ObjectId,
     ref: 'Scale',
@@ -52,8 +53,12 @@ const LeadershipBrandSchema = mongoose.Schema({
       ],
     },
   ],
-  createdAt: Date,
+  createdAt: Date,  
   updatedAt: Date,
+  createdBy: {
+    type: ObjectId,
+    ref: 'User',
+  }
 });
 
 const LeadershipBrandModel = mongoose.model('LeadershipBrand', LeadershipBrandSchema);

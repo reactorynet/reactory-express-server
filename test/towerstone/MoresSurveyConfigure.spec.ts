@@ -17,31 +17,34 @@ const {
 const request = require('supertest')(API_URI_ROOT);
 
 const CreateMoresSurvey = `
-mutation MoresSurvey($moresSurveyCreateArgs: MoresSurveyCreateInput!){
+mutation MoresAssessementsCreateSurvey($moresSurveyCreateArgs: MoresSurveyCreateInput!){
   MoresAssessementsCreateSurvey(moresSurveyCreateArgs: $moresSurveyCreateArgs){
-    id
-    title         
-  }
-}`;
-
-
-const DelelteMoresSurvey = `
-mutation MoresSurvey($id: String!, $hard: Boolean){
-  MoresAssessmentsDeleteSurvey(id: $id, $hard: $hard){
     id
     title
     status 
+    surveyType
+    startDate
+    endDate         
   }
 }`;
 
 
-
-
-
+const DeleteMoresSurvey = `
+mutation MoresAssessmentsDeleteSurvey($id: String!, $hard: Boolean){
+  MoresAssessmentsDeleteSurvey(id: $id, hard: $hard){
+    id
+    title
+    status
+    surveyType
+    startDate
+    endDate      
+  }
+}`;
 
 describe('Mores Survey Configration Module', () => {  
+ 
   let logged_in_user: any = null;  
-  let active_survey: any = null;
+
   before((done) => {
     let token = btoa(`${REACTORY_TEST_USER}:${REACTORY_TEST_USER_PWD}`);
     request.post('login')
@@ -73,80 +76,86 @@ describe('Mores Survey Configration Module', () => {
       });
   });
 
+  ['i360', 'l360', 'culture', 'team180'].forEach((surveyType: string) => {
 
-  it(`Should return a newly created survey in test mode`, (done) => {
+    
+    let active_survey: any = null;
 
-    request.post('api')
-        .set('Accept', 'application/json')
-        .set('x-client-key', REACTORY_CLIENT_KEY)
-        .set('x-client-pwd', REACTORY_CLIENT_PWD)
-        .set('Authorization', `Bearer ${logged_in_user.token}`)
-        .send( { 
-          operationName: "MoresSurvey",
-          query: CreateMoresSurvey, 
-          variables: { 
-            moresSurveyCreateArgs: {
-              title: 'Mores Assessments Survey Test Create',
-              surveyType: 'l360',
-              organizationId: '5c6aabd42380bf1151d963eb'
+    it(`Should return a newly created survey type in test mode using a "${surveyType}" template`, (done) => {
+
+      request.post('api')
+          .set('Accept', 'application/json')
+          .set('x-client-key', REACTORY_CLIENT_KEY)
+          .set('x-client-pwd', REACTORY_CLIENT_PWD)
+          .set('Authorization', `Bearer ${logged_in_user.token}`)
+          .send( { 
+            
+            query: CreateMoresSurvey, 
+            variables: { 
+              moresSurveyCreateArgs: {
+                title: 'Mores Assessments Survey Test Create',
+                surveyType: surveyType,
+                organizationId: '5c6aabd42380bf1151d963eb'
+              }
             }
-          }
-        })
-        .expect(200)
-        .end((err: Error, res: any) => {        
-          if(err) {         
-            console.error({ res, err });
-            done(err);
-          }
-          else {
-            console.log(res.body)
-            if(res.body.errors) {
-              done(JSON.stringify(res.body.errors))  
-            } else {
-              active_survey = res.body.data.MoresSurvey;
+          })
+          .expect(200)
+          .end((err: Error, res: any) => {        
+            if(err) {         
+              console.error({ res, err });
+              done(err);
+            }
+            else {
+              console.log(res.body)
+              if(res.body.errors) {
+                done(JSON.stringify(res.body.errors))  
+              } else {
+                active_survey = res.body.data.MoresAssessementsCreateSurvey;
+                done();
+              }            
+            }
+          });    
+    });
+  
+    
+    it(`Should hard delete the newly created survey`, (done) => {
+  
+      if(active_survey !== null) {
+        request.post('api')
+          .set('Accept', 'application/json')
+          .set('x-client-key', REACTORY_CLIENT_KEY)
+          .set('x-client-pwd', REACTORY_CLIENT_PWD)
+          .set('Authorization', `Bearer ${logged_in_user.token}`)
+          .send( {           
+            query: DeleteMoresSurvey, 
+            variables: { 
+              id: active_survey.id,
+              hard: true
+            }
+          })
+          .expect(200)
+          .end((err: Error, res: any) => {        
+            if(err) {         
+              console.error({ res, err });
+              done(err);
+            }
+            else {    
+              console.log(`Survey Response`, res.body)
               done();
-            }            
-          }
-        });    
+            }                
+          });   
+      } else {
+        done('Active Survey not available, cannot execute test')
+      }
+       
+    });  
+
+
   });
 
   
-  it(`Should hard delete the newly created survey`, (done) => {
 
-    if(active_survey !== null) {
-      request.post('api')
-        .set('Accept', 'application/json')
-        .set('x-client-key', REACTORY_CLIENT_KEY)
-        .set('x-client-pwd', REACTORY_CLIENT_PWD)
-        .set('Authorization', `Bearer ${logged_in_user.token}`)
-        .send( { 
-          operationName: "MoresSurvey",
-          query: DelelteMoresSurvey, 
-          variables: { 
-            id: active_survey.id,
-            hard: true
-          }
-        })
-        .expect(200)
-        .end((err: Error, res: any) => {        
-          if(err) {         
-            console.error({ res, err });
-            done(err);
-          }
-          else {    
-            console.log(`Survey Response`, res.body)        
-            done();
-          }                
-        });   
-    } else {
-      done('Active Survey not available, cannot execute test')
-    }
-     
-  });
-
-
-
-  after('Loggin out user', (done) => {
+  after('Logout user', (done) => {
     done()
   });
 

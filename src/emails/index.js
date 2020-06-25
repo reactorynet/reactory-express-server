@@ -12,7 +12,6 @@ import { Template, ReactoryClient, EmailQueue, User, Organization } from '../mod
 import defaultEmailTemplates from './defaultEmailTemplates';
 import AuthConfig from '../authentication';
 import logger from '../logging';
-import { isArray } from 'util';
 
 const TemplateViews = {
   ActivationEmail: 'activation-email',
@@ -233,7 +232,7 @@ String.prototype.replaceAll = function (search, replacement) {
 
 export const renderTemplate = (template, properties) => {
   if (template && typeof template.content === 'string') {
-    if (template.content.toString().indexOf('$ref://') === 0) {
+    if (template.content.toString().indexOf('$ref://') >= 0) {
       const filename = `${APP_DATA_ROOT}/templates/email/${template.content.replace('$ref://', '')}`;
       logger.info(`Loading template filename: ${filename}`);
       let templateString = readFileSync(filename).toString('utf8');
@@ -949,7 +948,7 @@ export const organigramEmails = {
           sgMail.send(msg);
           emailResult.sent = true;
           logger.info(`Email sent to ${msg.to}`);
-          if (organigramModel && isArray(organigramModel.peers) === true && peerIndex >= 0) {
+          if (organigramModel && lodash.isArray(organigramModel.peers) === true && peerIndex >= 0) {
             organigramModel.peers[peerIndex].inviteSent = true; //eslint-disable-line
             organigramModel.peers[peerIndex].confirmed = true; //eslint-disable-line
             organigramModel.peers[peerIndex].confirmedAt = new Date().valueOf(); //eslint-disable-line

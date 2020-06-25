@@ -20,6 +20,7 @@ declare namespace TowerStone {
   
   export interface ILeadershipBrand {    
     title: string
+    key: string
     description: string,
     ratingScale?: IRatingScale,    
   }
@@ -62,6 +63,7 @@ declare namespace TowerStone {
     leadershipBrand?: ILeadershipBrand 
     assessorTeamName?: string,
     delegateTeamName?: string,
+    mode?: String,
     startDate: Date,
     endDate: Date,
     timeline: any[],
