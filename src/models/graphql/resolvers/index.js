@@ -93,7 +93,7 @@ const resolvers = {
       if(user.anon === true) {
         skipResfresh = true;
         isAnon = true;
-        roles.push('ANON')
+        roles.push('ANON');
       }
 
       
@@ -167,7 +167,9 @@ const resolvers = {
                 
         root_partner_memberships.forEach((membership) => {        
           if (isArray(membership.roles)) {
-            membership.roles.forEach((r) => { roles.push(r); });
+            membership.roles.forEach((r) => { 
+              roles.push(r); 
+            });
           }        
         });       
         

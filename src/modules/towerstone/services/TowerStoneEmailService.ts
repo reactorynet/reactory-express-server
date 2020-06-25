@@ -225,24 +225,28 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     body: `No Template`,
     engine: 'ejs'
   },
+ 
+ 
   {
     id: ``,
     key: ``,
     surveyType: 'team180', 
     activity: 'invite', 
     target: 'delegate',
-    subject: 'No Subject',
+    subject: 'Invitation: Team 180° Leadership assessment between ${survey.delegateTeamName} and ${survey.assessorTeamName}',
     body: `No Template`,
     engine: 'ejs'
   },
+
+
   {
     id: ``,
     key: ``,
     surveyType: 'team180', 
     activity: 'launch', 
     target: 'assessor',
-    subject: 'No Subject',
-    body: `No Template`,
+    subject: 'Launch: Team 180° Leadership assessment between ${survey.delegateTeamName} and ${survey.delegateTeamName}',
+    body: `This message will be setn to the assessor team member(s)`,
     engine: 'ejs'
   },
   {
@@ -251,8 +255,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     surveyType: 'team180', 
     activity: 'launch', 
     target: 'delegate',
-    subject: 'No Subject',
-    body: `No Template`,
+    subject: 'Launch: Team 180° Leadership assessment between ${survey.delegateTeamName} and ${survey.delegateTeamName}',
+    body: `This message will be sent to the delegate team member(s)`,
     engine: 'ejs'
   },
   {
@@ -276,6 +280,17 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     engine: 'ejs'
   },
 
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'team180', 
+    activity: 'survey-closed', 
+    target: 'delegate',
+    subject: '<%=survey.title%> is now closed. Thank you for your participation',
+    body: `This is the mail sent to the delegates with a thank you note.`,
+    engine: 'ejs'
+  },
+
   // culture survey types    
   {
     id: ``,
@@ -283,8 +298,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     surveyType: 'culture', 
     activity: 'invite', 
     target: 'delegate',
-    subject: 'No Subject',
-    body: `No Template`,
+    subject: 'Invitation: <%=survey.organization.name%> Culture Survey',
+    body: `Invite: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
     engine: 'ejs',
     description: 'Sent to a delegate when the administrator sends the invitation to participate',
   },
@@ -329,25 +344,103 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     engine: 'ejs'
   },
 
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'culture', 
+    activity: 'survey-closed', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+
   //i360 email types
+  
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'i360', 
+    activity: 'invite', 
+    target: 'delegate',
+    subject: 'Invite: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
+    body: `Invite: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'i360', 
+    activity: 'launch', 
+    target: 'assessor',
+    subject: 'Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
+    body: `Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'i360', 
+    activity: 'launch', 
+    target: 'delegate',
+    subject: 'Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
+    body: `Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'i360', 
+    activity: 'reminder', 
+    target: 'delegate',
+    subject: 'Reminder: Individual 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
+    body: `Reminder: Individual 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'i360', 
+    activity: 'reminder', 
+    target: 'assessor',
+    subject: 'Reminder: Individual 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
+    body: `Reminder: Individual 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
+    engine: 'ejs'
+  },
+
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'i360', 
+    activity: 'survey-closed', 
+    target: 'delegate',
+    subject: '<%=survey.title%> is now closed. Thank you for your participation',
+    body: `This is the mail sent to the delegate with their PDF report when the assessment ends.`,
+    engine: 'ejs'
+  },
+
+  //template types for leadership 360
+
+  /*
   {
     id: ``,
     key: ``, 
     surveyType: 'l360', 
     activity: 'invite', 
     target: 'assessor',
-    subject: 'No Subject',
+    subject: '*** NOT SENT ***',
     body: `No Template`,
     engine: 'ejs'
   },
+  */
   {
     id: ``,
     key: ``,
     surveyType: 'l360', 
     activity: 'invite', 
     target: 'delegate',
-    subject: 'No Subject',
-    body: `No Template`,
+    subject: 'Invite: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
+    body: `Invite: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
     engine: 'ejs'
   },
   {
@@ -356,8 +449,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     surveyType: 'l360', 
     activity: 'launch', 
     target: 'assessor',
-    subject: 'No Subject',
-    body: `No Template`,
+    subject: 'Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
+    body: `Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
     engine: 'ejs'
   },
   {
@@ -366,8 +459,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     surveyType: 'l360', 
     activity: 'launch', 
     target: 'delegate',
-    subject: 'No Subject',
-    body: `No Template`,
+    subject: 'Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
+    body: `Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
     engine: 'ejs'
   },
   {
@@ -376,8 +469,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     surveyType: 'l360', 
     activity: 'reminder', 
     target: 'delegate',
-    subject: 'No Subject',
-    body: `No Template`,
+    subject: 'Reminder: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
+    body: `Reminder: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
     engine: 'ejs'
   },
   {
@@ -386,70 +479,19 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     surveyType: 'l360', 
     activity: 'reminder', 
     target: 'assessor',
-    subject: 'No Subject',
-    body: `No Template`,
+    subject: 'Reminder: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
+    body: `Reminder: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
     engine: 'ejs'
   },
 
-
-  {
-    id: ``,
-    key: ``, 
-    surveyType: 'l360', 
-    activity: 'invite', 
-    target: 'assessor',
-    subject: 'No Subject',
-    body: `No Template`,
-    engine: 'ejs'
-  },
   {
     id: ``,
     key: ``,
     surveyType: 'l360', 
-    activity: 'invite', 
+    activity: 'survey-closed', 
     target: 'delegate',
-    subject: 'No Subject',
-    body: `No Template`,
-    engine: 'ejs'
-  },
-  {
-    id: ``,
-    key: ``,
-    surveyType: 'l360', 
-    activity: 'launch', 
-    target: 'assessor',
-    subject: 'No Subject',
-    body: `No Template`,
-    engine: 'ejs'
-  },
-  {
-    id: ``,
-    key: ``,
-    surveyType: 'l360', 
-    activity: 'launch', 
-    target: 'delegate',
-    subject: 'No Subject',
-    body: `No Template`,
-    engine: 'ejs'
-  },
-  {
-    id: ``,
-    key: ``,
-    surveyType: 'l360', 
-    activity: 'reminder', 
-    target: 'delegate',
-    subject: 'No Subject',
-    body: `No Template`,
-    engine: 'ejs'
-  },
-  {
-    id: ``,
-    key: ``,
-    surveyType: 'l360', 
-    activity: 'reminder', 
-    target: 'assessor',
-    subject: 'No Subject',
-    body: `No Template`,
+    subject: '<%=survey.title%> is now closed. Thank you for your participation',
+    body: `This is the mail sent to the delegate with their PDF report when the assessment ends.`,
     engine: 'ejs'
   },
 

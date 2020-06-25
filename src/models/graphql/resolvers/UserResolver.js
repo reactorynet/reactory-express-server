@@ -79,10 +79,10 @@ const MoresAssessmentsForUser = async (userId, status = ['ready']) => {
         break;
       }
       case 'mores': {
-        assessmentTypes.push('I360');
-        assessmentTypes.push('L360');
-        assessmentTypes.push('TEAM180');
-        assessmentTypes.push('CULTURE');
+        assessmentTypes.push('i360');
+        assessmentTypes.push('l360');
+        assessmentTypes.push('team180');
+        assessmentTypes.push('culture');
         break;
       }
     }
@@ -102,18 +102,22 @@ const MoresAssessmentsForUser = async (userId, status = ['ready']) => {
     }
 })
      */
+
+    let modeFilters = ['live'];
+    if(user.hasRole(partner, 'DEVELOPER') === true || user.hasRole(partner, 'ADMIN') === true || user.hasRole(partner, 'ORGANIZATION_ADMIN') === true)  modeFilters.push('test');
+
     const surveys = await Survey.find({
-      mode: { $in: ['live'] },
-      endDate: {
-        $gt: moment().subtract(1, 'month').startOf('month').toDate(),
-        $lt: moment().toDate()
-      },
       delegates: {
         $elemMatch: { delegate: ObjectId(userId) }
       },
       surveyType: {
         $in: assessmentTypes
-      }
+      },
+      //mode: { $any: modeFilters },
+      
+      endDate: {
+        $gte: moment().subtract(1, 'month').startOf('month').toDate()        
+      },
     }).then();
 
     logger.debug(`Found (${surveys.length}) surveys for user`)

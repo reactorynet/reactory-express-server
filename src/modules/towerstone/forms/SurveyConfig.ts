@@ -22,7 +22,7 @@ export const schema = {
         {
           properties: {
             surveyType: {
-              enum: ["180"]
+              enum: ["180", 'team180']
             },
             delegateTeamName: {
               type: 'string',
@@ -80,7 +80,11 @@ export const schema = {
       enum: [
         'plc',
         '180',
-        '360'
+        '360',
+        'i360',
+        'l360',
+        'culture',
+        'team180'
       ],
       default: '360',
     },
@@ -361,8 +365,12 @@ export const uiSchema = {
     'ui:options': {
       selectOptions: [
         { key: 'plc', value: 'plc', label: 'Purposeful Leadership Company' },
-        { key: '180', value: '180', label: '180 Team Assessment' },
-        { key: '360', value: '360', label: '360 Personal Assessment' },
+        { key: '180', value: '180', label: 'TowerStone 180 Team Assessment' },
+        { key: '360', value: '360', label: 'TowerStone 360 Personal Assessment' },
+        { key: 'i360', value: 'i360', label: 'Mores Individual 360' },
+        { key: 'l360', value: 'l360', label: 'Mores Leadership 360' },
+        { key: 'culture', value: 'culture', label: 'Mores Culture Survey' },
+        { key: 'team180', value: 'team180', label: 'Mores Team 180' },
       ],
     },
   },
