@@ -42,6 +42,7 @@ const graphql: Reactory.IFormGraphDefinition = {
           accountNumber
           salesTeamId
           poNumber
+          isoNumber
           value
         }
       }
@@ -70,6 +71,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'invoices.[].accountNumber': 'invoices.[].accountNumber',
       'invoices.[].salesTeamId': 'invoices.[].salesTeamId',
       'invoices.[].poNumber': 'invoices.[].poNumber',
+      'invoices.[].isoNumber': 'invoices.[].isoNumber',
       'invoices.[].value': 'invoices.[].value',
     },
     autoQuery: false,

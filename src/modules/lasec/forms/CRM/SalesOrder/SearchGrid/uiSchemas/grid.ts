@@ -128,6 +128,29 @@ const uiSchema: any = {
       componentProps: {},
     },
   },
+  // teamFilter: {
+  //   'ui:widget': 'SelectWithDataWidget',
+  //   'ui:options': {
+  //     multiSelect: true,
+  //     inputProps: {
+  //       variant: 'outline'
+  //     },
+  //     query: `query LasecSalesTeams {
+  //       LasecSalesTeams {
+  //         id
+  //         title
+  //         meta  {
+  //           reference
+  //         }
+  //       }
+  //     }`,
+  //     resultItem: 'LasecSalesTeams',
+  //     resultsMap: {
+  //       'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
+  //       'LasecSalesTeams.[].title': '[].label',
+  //     },
+  //   },
+  // },
   salesOrders: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {

@@ -99,6 +99,8 @@ export default {
   address: { url: `api/${ENTITY_KEY__ADDRESS}/`, allowed_methods: ['get', 'post'] },
   new_address: { url: `api/${ENTITY_KEY__ADDRESS}/`, allowed_methods: ['get', 'post'] },
 
+  upload_file: { url: `api/${ENTITY_KEY__UPLOAD_FILE}/`, allowed_methods: ['get'] },
+
 
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },

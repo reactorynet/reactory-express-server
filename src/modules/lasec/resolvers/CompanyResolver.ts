@@ -1406,6 +1406,15 @@ const getRepCodesForFilter = async () => {
   }
 }
 
+const getUsersRepCodes = async () => {
+
+  const { user } = global;
+
+  logger.debug(`LOGGED IN USER DATA ${JSON.stringify(user)}`);
+  return [];
+
+}
+
 const getClientComments = async (args) => {
 
   logger.debug(`FIND COMMENTS:: ${JSON.stringify(args)}`);
@@ -1623,9 +1632,15 @@ export default {
         case 'company_sales_team': {
           return getLasecSalesTeamsForLookup();
         }
+
         case 'rep_code': {
           return getRepCodesForFilter();
         }
+
+        case 'users_repcodes': {
+          return getUsersRepCodes();
+        }
+
         default: {
           return [];
         }
@@ -1816,22 +1831,22 @@ export default {
 
         try {
           debugger;
-          //const setting_status_result: LasecApiResponse = await post(`api/customer/${customer.id}/update`, { customer_id: customer.id, onboarding_step_completed: 6, activity_status: 'active' }).then();          
+          //const setting_status_result: LasecApiResponse = await post(`api/customer/${customer.id}/update`, { customer_id: customer.id, onboarding_step_completed: 6, activity_status: 'active' }).then();
           //TODO: investigate why status update API call is not working
-          //using mysql update to complete ticket          
+          //using mysql update to complete ticket
           const update_result = await mysql(`
-            UPDATE Customer SET 
-              activity_status = 'active', 
-              organisation_id = ${_newClient.organization.id}, 
+            UPDATE Customer SET
+              activity_status = 'active',
+              organisation_id = ${_newClient.organization.id},
               company_id = ${_newClient.customer.id},
 
             WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
           logger.debug(`Updated user activity status complete`, update_result);
-          
-        } catch(setStatusError) {
+
+        } catch (setStatusError) {
           logger.error("Error Setting The Status and Customer details", setStatusError)
         }
-        
+
         if (customer && customer.id && Number.parseInt(`${customer.id}`) > 0) {
           customer = { ...inputData, ...customer };
           customerCreated = Boolean(customer && customer.id);
@@ -1891,12 +1906,12 @@ export default {
             }
 
             try {
-              const updateResponse: LasecApiResponse = await lasecApi.Customers.UpdateClientDetails(customer.id, { activity_status: 'active'}).then();
+              const updateResponse: LasecApiResponse = await lasecApi.Customers.UpdateClientDetails(customer.id, { activity_status: 'active' }).then();
               debugger;
-              if(updateResponse.status !== 'success') {
-                logger.warning(`Lasec API did not update the customer status`, updateResponse);  
+              if (updateResponse.status !== 'success') {
+                logger.warning(`Lasec API did not update the customer status`, updateResponse);
               }
-            } catch(setStatusException) {
+            } catch (setStatusException) {
               logger.error(`Could set the client status`, setStatusException);
               response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while setting activity status`, type: 'warning', inAppNotification: true });
             }

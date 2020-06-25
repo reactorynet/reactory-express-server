@@ -174,6 +174,7 @@ const uiSchema: any = {
         { title: 'Dispatches', field: 'dispatches' },
         { title: 'Client Rep Code', field: 'salesTeamId' },
         { title: 'PO Number', field: 'poNumber' },
+        { title: 'ISO Number', field: 'isoNumber' },
         {
           title: 'Inv Value',
           field: 'value',
@@ -216,6 +217,7 @@ const uiSchema: any = {
         'invoices.[].accountNumber': 'data.[].accountNumber',
         'invoices.[].salesTeamId': 'data.[].salesTeamId',
         'invoices.[].poNumber': 'data.[].poNumber',
+        'invoices.[].isoNumber': 'data.[].isoNumber',
         'invoices.[].value': 'data.[].value',
       },
     },

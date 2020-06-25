@@ -837,6 +837,15 @@ const Api = {
       }
 
       return { pagination: {}, ids: [], items: [] };
+    },
+
+    documents: async (params) => {
+      const documentResult = await FETCH(SECONDARY_API_URLS.file_upload.url, { params: { ...defaultParams, ...params } }).then();
+      const { status, payload } = documentResult;
+
+      if (status === 'success') return payload;
+
+      return { pagination: {}, ids: [], items: [] };
     }
   },
   Quotes: {

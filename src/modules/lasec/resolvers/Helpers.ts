@@ -1638,7 +1638,8 @@ export const getClientSalesOrders = async (params) => {
       value: order.order_value,
       reserveValue: order.reserved_value,
       shipValue: order.shipped_value,
-      backorderValue: order.back_order_value
+      backorderValue: order.back_order_value,
+      documentIds: order.document_ids
     }
   });
 
@@ -1695,10 +1696,38 @@ export const getCRMSalesOrders = async (params) => {
     apiFilter['order_status'] = filter;
   }
 
+  let me = await getLoggedIn360User().then();
+  logger.debug(`LOGGED IN USER:: ${JSON.stringify(me)}`);
+
+  apiFilter.rep_codes = me.sales_team_ids;
+
   const result = await getPagedSalesOrders({ paging, apiFilter });
 
   return result;
 
+}
+
+export const getSODocuments = async (args) => {
+  logger.debug(`GETTING DOCUMENTS:: ${JSON.stringify(args)}`)
+
+  const { ids } = args;
+
+  if (ids && ids.length > 0) {
+
+    let documents = await lasecApi.SalesOrders.documents({ filter: { ids: ids } }).then();
+    documents = [...documents.items];
+    documents = documents.map(doc => {
+      return {
+        id: doc.id,
+        name: doc.name,
+        url: doc.url,
+      }
+    });
+
+    return documents;
+  }
+
+  return [];
 }
 
 export const getISODetails = async (params) => {
@@ -1723,22 +1752,45 @@ export const getISODetails = async (params) => {
 
   logger.debug(`SALES ORDERS:: ${JSON.stringify(salesOrders)}`);
 
-  const lineItems = salesOrders.slice(0, 1).map(li => {
-    return {
-      id: li.id,
-      line: li.line,
-      productCode: li.product_code,
-      productDescription: li.product_description,
-      unitOfMeasure: li.unit_of_measure,
-      price: li.price,
-      totalPrice: li.total_price,
-      orderQty: li.order_qty,
-      shippedQty: li.shipped_qty,
-      backOrderQty: li.back_order_qty,
-      reservedQty: li.reserved_qty,
-      comment: li.comment
+  let lineItems = [];
+  salesOrders.forEach(so => {
+
+    if (so.product_code != '') {
+      const item = {
+        id: so.id,
+        line: so.line,
+        productCode: so.product_code,
+        productDescription: so.product_description,
+        unitOfMeasure: so.unit_of_measure,
+        price: so.price,
+        totalPrice: so.total_price,
+        orderQty: so.order_qty,
+        shippedQty: so.shipped_qty,
+        backOrderQty: so.back_order_qty,
+        reservedQty: so.reserved_qty,
+        comment: so.comment
+      }
+
+      lineItems.push(item);
     }
-  });
+  })
+
+  // const lineItems = salesOrders.slice(0, 1).map(li => {
+  //   return {
+  //     id: li.id,
+  //     line: li.line,
+  //     productCode: li.product_code,
+  //     productDescription: li.product_description,
+  //     unitOfMeasure: li.unit_of_measure,
+  //     price: li.price,
+  //     totalPrice: li.total_price,
+  //     orderQty: li.order_qty,
+  //     shippedQty: li.shipped_qty,
+  //     backOrderQty: li.back_order_qty,
+  //     reservedQty: li.reserved_qty,
+  //     comment: li.comment
+  //   }
+  // });
 
   logger.debug(`SALES tO RETUSN :: ${JSON.stringify(lineItems)}`);
 
@@ -1768,26 +1820,27 @@ export const getClientInvoices = async (params) => {
   };
 
   // -- POSSIBLE FILTERS --
-  // any_field
-  // date_range
-  // invoice_date
-  // invoice_number
-  // po_number
-  // invoice_value
-  // dispatch_number
-  // iso_number
-  // quote_number
-  // sales_team_id
+  // any_field - done
+  // date_range - done
+  // invoice_date - done
+  // invoice_number - done
+  // po_number - done
+  // quote_number - done
+  // sales_team_id - done
+
+  // iso_number - ERROR
+  // account_number - ERROR
+  // dispatch_number ???
+  // invoice_value ???
+
   // customer
   // client
-  // customer_account_number
 
-  // company_id
-  // account_number
-  // quote_number
-  // quote_date
-  // customer_name
-  // company_trading_name
+
+  // TODO- Still Outstanding
+  // 1. Broken fields - invoice_value, dispatches, iso_number, account_number
+  // 2. Waiting on Werner to finish - loopkup plugins, so I can filter by client and customer
+
 
 
 
@@ -1803,7 +1856,7 @@ export const getClientInvoices = async (params) => {
     apiFilter.end_date = moment(dateFilter).endOf('day');
   }
 
-  if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
+  if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'sales_order' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
     // if (search || search != '') apiFilter[filterBy] = search;
     apiFilter[filterBy] = search;
   }
@@ -1850,7 +1903,7 @@ export const getClientInvoices = async (params) => {
       salesTeamId: invoice.sales_team_id,
       poNumber: invoice.customer_po_number,
       value: invoice.invoice_value,
-      value: invoice.invoice_value,
+      isoNumber: invoice.sales_order_id
     }
   });
 

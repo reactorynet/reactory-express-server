@@ -114,6 +114,14 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'ORDER STATUS'
     },
+    // teamFilter: {
+    //   title: 'Team Filter',
+    //   type: 'array',
+    //   items: {
+    //     type: 'string',
+    //     title: 'Team Id'
+    //   },
+    // },
     salesOrders: {
       type: 'array',
       items: {
