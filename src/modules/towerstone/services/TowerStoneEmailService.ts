@@ -208,6 +208,251 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     body: `No Template`,
     engine: 'ejs'
   },
+
+
+  /**
+   * Mores types added here   
+   */
+
+   // team180 assessment types
+  {
+    id: ``,
+    key: ``, 
+    surveyType: 'team180', 
+    activity: 'invite', 
+    target: 'assessor',
+    subject: 'Invitation: Team 180° Leadership assessment between ${survey.delegateTeamName} and ${survey.delegateTeamName}',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'team180', 
+    activity: 'invite', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'team180', 
+    activity: 'launch', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'team180', 
+    activity: 'launch', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'team180', 
+    activity: 'reminder', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'team180', 
+    activity: 'reminder', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+
+  // culture survey types    
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'culture', 
+    activity: 'invite', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs',
+    description: 'Sent to a delegate when the administrator sends the invitation to participate',
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'culture', 
+    activity: 'launch', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'culture', 
+    activity: 'launch', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'culture', 
+    activity: 'reminder', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'culture', 
+    activity: 'reminder', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+
+  //i360 email types
+  {
+    id: ``,
+    key: ``, 
+    surveyType: 'l360', 
+    activity: 'invite', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'l360', 
+    activity: 'invite', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'l360', 
+    activity: 'launch', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'l360', 
+    activity: 'launch', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'l360', 
+    activity: 'reminder', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'l360', 
+    activity: 'reminder', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+
+
+  {
+    id: ``,
+    key: ``, 
+    surveyType: 'l360', 
+    activity: 'invite', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'l360', 
+    activity: 'invite', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'l360', 
+    activity: 'launch', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'l360', 
+    activity: 'launch', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'l360', 
+    activity: 'reminder', 
+    target: 'delegate',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+  {
+    id: ``,
+    key: ``,
+    surveyType: 'l360', 
+    activity: 'reminder', 
+    target: 'assessor',
+    subject: 'No Subject',
+    body: `No Template`,
+    engine: 'ejs'
+  },
+
 ]
 
 const DefaultQueueOptions: any = {
@@ -301,6 +546,7 @@ const hydrateContent = async (template: TowerStone.ISurveyEmailTemplate, survey:
       }
 
       if(element.view.endsWith("/body")) {
+        
         _template.body = element.content;
       }
     })
@@ -473,7 +719,7 @@ const patchTemplate = async ( template: TowerStone.ISurveyEmailTemplate, organiz
       _bodyTemplate._id = new ObjectId();
       _bodyTemplate.client = client._id;
       _bodyTemplate.organization = organization._id
-      _bodyTemplate.kind = TemplateType.content
+      _bodyTemplate.kind = TemplateType.email
       _bodyTemplate.view = `${template.key}/body`
       _bodyTemplate.format = "html"
       _bodyTemplate.enabled = true
@@ -499,7 +745,7 @@ const patchTemplate = async ( template: TowerStone.ISurveyEmailTemplate, organiz
 
       _subjectTemplate._id = new ObjectId();
       _subjectTemplate.client = client._id;
-      _subjectTemplate.kind = TemplateType.content;
+      _subjectTemplate.kind = TemplateType.email;
       _subjectTemplate.organization = organization._id
       _subjectTemplate.view = `${template.key}/subject`
       _subjectTemplate.format = "text"

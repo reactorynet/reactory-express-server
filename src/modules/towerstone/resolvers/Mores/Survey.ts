@@ -50,27 +50,27 @@ const MoresAssessmentSurveyResolver = {
     MoresAssessementsCreateSurvey: async (obj: any, args: any, context: any, info: any): Promise<TowerStone.ISurvey> => {
       
       const moresSurveyCreateArgs: MoresAssessmentsCreateInput  = args.moresSurveyCreateArgs;
-      
+
       let surveyItem: TowerStone.ISurveyDocument = new Survey(moresSurveyCreateArgs) as TowerStone.ISurveyDocument;
-      surveyItem.leadershipBrand = await LeadershipBrandFactory(moresSurveyCreateArgs.organizationId).then();
+      surveyItem.leadershipBrand = await LeadershipBrandFactory(moresSurveyCreateArgs.organizationId, moresSurveyCreateArgs.surveyType).then();
       surveyItem.startDate = moment().startOf('day').toDate()
       surveyItem.endDate = moment().add(1, 'month').endOf('day').toDate();
+      surveyItem.status = 'new';
+      surveyItem.mode = 'test';
+      surveyItem.organization = await Organization.findById(moresSurveyCreateArgs.organizationId).then();
       await surveyItem.save().then();
       return surveyItem;
     },
     MoresAssessmentsDeleteSurvey: async (obj: any, args: any, context: any, info: any): Promise<TowerStone.ISurvey> => {
-
-
       let surveyItem: TowerStone.ISurveyDocument = await Survey.findById(args.id as string).then() as TowerStone.ISurveyDocument;
       
-
       if(surveyItem) { 
         if(args.hard === true) {
           surveyItem.status = 'hard-deleted'
-          surveyItem.remove();          
+          surveyItem.remove();
         } else {
           surveyItem.status = 'soft-deleted'
-          surveyItem.save()
+          surveyItem.save().then()
         }
       } else {
         throw new RecordNotFoundError(`Could not locate the survey with the id ${args.id}`, 'Survey')

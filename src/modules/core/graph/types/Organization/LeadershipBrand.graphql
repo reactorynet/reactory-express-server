@@ -30,6 +30,7 @@ type Quality {
 type LeadershipBrand {
     id: ObjID!,
     description: String!
+    key: String
     title: String!
     scale: Scale!
     qualityDisplay: String

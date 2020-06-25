@@ -24,7 +24,7 @@ const SurveySchema = new mongoose.Schema({
   surveyType: {
     type: String,
     lowercase: true,
-    enum: ['180', '360', 'plc', 'custom'],
+    enum: ['180', '360', 'plc', 'custom', 'l360', 'i360', 'culture', 'team180', 'other'],
     required: true,
   },
   delegateTeamName: {

@@ -108,7 +108,7 @@ const $schema: Reactory.IObjectSchema = {
     surveyType: {
       type: "string",
       title: "Survey Type",
-      enum: ['180', '360',  'plc'],
+      enum: ['180', '360',  'plc', 'l360', 'i360', 'culture', 'team180'],
       readOnly: true,
     },
     templates: {
@@ -144,10 +144,7 @@ const $schema: Reactory.IObjectSchema = {
 
 const $uiSchema: Object = { 
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-        surveyType: { md: 12 },
-    },
+  'ui:grid-layout': [    
     {
         templates: { md: 12 },
     }

@@ -75,6 +75,7 @@ declare namespace Reactory {
     locale?: string
     elements: Array<ITemplateDocument>
     parameters: Array<ITemplateParam>
+    contentFromFile(): string
   }
 
   export interface ITemplateDocument extends Mongoose.Document, ITemplate {}
