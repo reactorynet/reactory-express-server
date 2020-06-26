@@ -198,6 +198,7 @@ startup().then((startResult) => {
   logger.info(asciilogo);
   logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
   logger.info('System Initialized/Ready, enabling app');
+  global.REACTORY_SERVER_STARTUP = new Date();
   amq.raiseSystemEvent('server.startup.complete');
 
 });

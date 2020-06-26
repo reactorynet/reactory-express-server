@@ -74,6 +74,7 @@ type ReactoryClient {
   id: ObjID
   name: String
   clientKey: String
+  siteUrl: String
   username: String
   email: String
   salt: String
@@ -95,9 +96,21 @@ type NavigationComponentDefinition {
   componentContext: Any
 }
 
+type ReactoryServer {
+  version: String
+  started: Date
+  license: String
+  access: String
+  administrator: String 
+  contact: String
+  mode: String
+  clients: [ReactoryClient]
+}
+
 type ApiStatus {
     when: Date!
     status: String!
+    server: ReactoryServer
     firstName: String
     lastName: String
     avatar: String
@@ -114,6 +127,7 @@ type ApiStatus {
     applicationAvatar: String
     applicationName: String
     theme: String
+    themes: [Any]
     themeOptions: Any
     colorSchemes: Any
     messages: [ReactoryUXMessage]        

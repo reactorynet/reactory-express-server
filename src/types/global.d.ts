@@ -8,6 +8,7 @@ declare namespace NodeJS {
   export interface Global {
       user: Reactory.IUser;
       partner: Reactory.IPartner;
+      REACTORY_SERVER_STARTUP: Date;
   }  
 
 declare var user: Reactory.IUser;

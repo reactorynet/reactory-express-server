@@ -21,6 +21,8 @@ import { UserValidationError } from '../../../exceptions';
 
 import modules from '../../../modules';
 
+const packageJson = require('../../../../package.json');
+
 const getComponentWithFqn = (fqn) => {
   const parts = fqn.split('@');
   const v = parts[1];
@@ -77,6 +79,19 @@ const resolvers = {
       logger.debug('Getting menus');
       return Menu.find({ client: ObjectId(status.menus) });
     },
+    server: (status) => {
+
+      return {
+        version:  packageJson.version,
+        started:  global.REACTORY_SERVER_STARTUP,
+        license: packageJson.license || 'NONE',
+        access: 'open',
+        administrator: process.env.REACTORY_ADMIN || 'none',
+        contact: process.env.REACTORY_ADMIN_CONTANCT || 'none',
+        mode: process.env.MODE,
+        clients: ReactoryClient.find({ _id: { $in: global.user.memberships.map((m) => m.clientId) }}).then()
+      }
+    }
   },
   Query: {
     apiStatus: async (obj, args, context, info) => {
@@ -209,7 +224,7 @@ const resolvers = {
       
       return {
         when: moment(),
-        status: 'API OK',
+        status: 'API OK',        
         firstName: isNil(user) === false ? user.firstName : 'An',
         lastName: isNil(user) === false ? user.lastName : 'Anon',
         avatar: isNil(user) === false ? user.avatar : null,
@@ -228,6 +243,7 @@ const resolvers = {
         menus: partner._id,
         theme: partner.theme,
         themeOptions: partner.themeOptions || {},
+        themes: [],
         colorSchemes: {
           primary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
           secondary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
