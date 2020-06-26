@@ -1548,8 +1548,6 @@ export const getClientSalesOrders = async (params) => {
   // customer
   // client
 
-  // dispatches - to be implemented
-
   const {
     clientId,
     search = "",
@@ -1655,14 +1653,23 @@ export const getClientSalesOrders = async (params) => {
 export const getCRMSalesOrders = async (params) => {
 
   // -- POSSIBLE FILTERS --
-  // Order Date
-  // Order Status
-  // Shipping Date
-  // ISO Number
-  // Customer
-  // Client
-  // Purchase Order Number
-  // Order Value
+  // any_field
+  // date_range
+  // order_date
+  // shipping_date
+  // quote_date
+  // order_type
+  // order_status
+  // iso_number
+  // po_number
+  // quote_number
+  // rep_code
+  // order_value
+  // reserve_value
+  // ship_value
+  // backorder_value
+  // customer
+  // client
 
   logger.debug(` -- GETTING CRM SALES ORDERS --  ${JSON.stringify(params)}`);
 
@@ -1675,31 +1682,53 @@ export const getCRMSalesOrders = async (params) => {
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
+  // let apiFilter = {
+  //   order_status: filter,
+  //   // [filterBy]: search,
+  //   start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+  //   end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+  // };
+
+  // if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'customer' || filterBy == 'client' || filterBy == 'po_number' || filterBy == 'order_value') apiFilter[filterBy] = search;
+
+  // if (filterBy == 'order_status') apiFilter['order_status'] = filter;
+
+  // if (filterBy == 'order_date') {
+  //   apiFilter['using'] = 'order_date';
+  //   apiFilter['order_status'] = filter;
+  // }
+
+  // if (filterBy == 'shipping_date') {
+  //   apiFilter['using'] = 'shipping_date';
+  //   apiFilter['order_status'] = filter;
+  // }
+
   let apiFilter = {
-    order_status: filter,
-    // [filterBy]: search,
+    // customer_id: clientId,
+    // [filterBy]: filter || search,
+    order_status: 1,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    ordering: { order_date: "desc" },
   };
 
-  if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'customer' || filterBy == 'client' || filterBy == 'po_number' || filterBy == 'order_value') apiFilter[filterBy] = search;
-
-  if (filterBy == 'order_status') apiFilter['order_status'] = filter;
-
-  if (filterBy == 'order_date') {
-    apiFilter['using'] = 'order_date';
-    apiFilter['order_status'] = filter;
+  if (filterBy == 'order_date' || filterBy == 'shipping_date' || filterBy == 'quote_date') {
+    apiFilter.using = filterBy;
+    apiFilter.start_date = moment(dateFilter).startOf('day');
+    apiFilter.end_date = moment(dateFilter).endOf('day');
   }
 
-  if (filterBy == 'shipping_date') {
-    apiFilter['using'] = 'shipping_date';
-    apiFilter['order_status'] = filter;
+  if (filterBy == 'order_type' || filterBy == 'order_status')
+    apiFilter[filterBy] = filter;
+
+  if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id' || filterBy == 'sales_team_id') {
+    apiFilter[filterBy] = search;
   }
 
   let me = await getLoggedIn360User().then();
   logger.debug(`LOGGED IN USER:: ${JSON.stringify(me)}`);
 
-  apiFilter.rep_codes = me.sales_team_ids;
+  // apiFilter.rep_codes = me.sales_team_ids;
 
   const result = await getPagedSalesOrders({ paging, apiFilter });
 
@@ -1827,11 +1856,11 @@ export const getClientInvoices = async (params) => {
   // po_number - done
   // quote_number - done
   // sales_team_id - done
+  // iso_number - done
+  // account_number - done
 
-  // iso_number - ERROR
-  // account_number - ERROR
+  // invoice_value -  Error
   // dispatch_number ???
-  // invoice_value ???
 
   // customer
   // client
@@ -1856,11 +1885,10 @@ export const getClientInvoices = async (params) => {
     apiFilter.end_date = moment(dateFilter).endOf('day');
   }
 
-  if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'sales_order' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
+  if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
     // if (search || search != '') apiFilter[filterBy] = search;
     apiFilter[filterBy] = search;
   }
-
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
     filter: apiFilter,
