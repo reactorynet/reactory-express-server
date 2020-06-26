@@ -386,8 +386,9 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
 
   const { surveyType } = survey;
 
-  const is180 = surveyType === '180';
-  const is360 = surveyType === '360';
+  const is180 = surveyType.endsWith('180') === true || surveyType === 'culture';
+  const is360 = surveyType.endsWith('360') === true;
+
   const isPLC = surveyType === 'plc';
   
   try {

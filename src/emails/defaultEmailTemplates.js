@@ -12,7 +12,7 @@ export default [
       {
         enabled: true,
         view: 'activation-email/subject',
-        kind: 'content',
+        kind: 'email',
         format: 'text',
         content: 'Welcome to <%= applicationTitle %> <%= user.firstName %>, please confirm your account',
         parameters: [
@@ -30,7 +30,7 @@ export default [
       {
         enabled: true,
         view: 'activation-email/body',
-        kind: 'content',
+        kind: 'email',
         format: 'html',
         content: '$ref://defaults/activation/activation-email-body-html.ejs',
         parameters: [
@@ -60,7 +60,7 @@ export default [
       {
         enabled: true,
         view: 'forgot-password-email/subject',
-        kind: 'content',
+        kind: 'email',
         format: 'text',
         content: 'Follow the steps below to reset your password for <%= applicationTitle %>.',
         parameters: [
@@ -74,7 +74,7 @@ export default [
       {
         enabled: true,
         view: 'forgot-password-email/body',
-        kind: 'content',
+        kind: 'email',
         format: 'html',
         content: '$ref://defaults/forgot/forgot-password-body-html.ejs',
         parameters: [
@@ -108,7 +108,7 @@ export default [
       {
         enabled: true,
         view: 'towerstone.survey-invite-email/subject',
-        kind: 'content',
+        kind: 'email',
         format: 'text',
         content: 'You have been invited to participate in the survey <%= survey.title %> on the <%= applicationTitle %> assessment platform.',
         parameters: [
@@ -134,7 +134,7 @@ export default [
       {
         enabled: true,
         view: 'towerstone.survey-invite-email/body',
-        kind: 'content',
+        kind: 'email',
         format: 'html',
         content: '$ref://towerstone/survey/survey-invite-body-html.ejs',
         parameters: [
@@ -172,7 +172,7 @@ export default [
       {
         enabled: true,
         view: 'towerstone.peer-invite-email/subject',
-        kind: 'content',
+        kind: 'email',
         format: 'text',
         content: 'You have been nominated as a peer for <%= employee.firstName %> on the <%= applicationTitle %> assessment platform.',
         parameters: [
@@ -198,7 +198,7 @@ export default [
       {
         enabled: true,
         view: 'towerstone.peer-invite-email/body',
-        kind: 'content',
+        kind: 'email',
         format: 'html',
         content: '$ref://towerstone/user/peer-invite-body-html.ejs',
         parameters: [
@@ -236,7 +236,7 @@ export default [
       {
         enabled: true,
         view: 'towerstone.survey-launch-email/subject',
-        kind: 'content',
+        kind: 'email',
         format: 'text',
         content: '<% if(!isSelfAssessment) { %>You have been confirmed as an assessor for <%= delegate.firstName %> on the <%= applicationTitle %> assessment platform <% } else { %> Please complete your self-assessment on the <%= applicationTitle %> assessment platform <% } %>',
         parameters: [
@@ -262,7 +262,7 @@ export default [
       {
         enabled: true,
         view: 'towerstone.survey-launch-email/body',
-        kind: 'content',
+        kind: 'email',
         format: 'html',
         content: '$ref://towerstone/survey/survey-launch-email-html.ejs',
         parameters: [
@@ -300,7 +300,7 @@ export default [
       {
         enabled: true,
         view: 'towerstone.survey-reminder-email/subject',
-        kind: 'content',
+        kind: 'email',
         format: 'text',
         content: '<% if(!isSelfAssessment) { %>Reminder to complete the assessment for <%= delegate.firstName %> on the <%=applicationTitle%> Assessment Platform <% } else { %>Reminder to complete your self-assessment on the <%=applicationTitle %> Assessment Platform <% } %>',
         parameters: [
@@ -326,7 +326,7 @@ export default [
       {
         enabled: true,
         view: 'towerstone.survey-reminder-email/body',
-        kind: 'content',
+        kind: 'email',
         format: 'html',
         content: '$ref://towerstone/survey/survey-reminder-email-html.ejs',
         parameters: [

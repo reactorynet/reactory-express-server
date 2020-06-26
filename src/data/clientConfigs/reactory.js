@@ -82,6 +82,11 @@ const REACTORY_CONFIG = {
   resetEmailRoute: '/reset-password',
   avatar: `${CDN_ROOT}themes/reactory/images/avatar.png`,
   applicationRoles: ['USER', 'ADMIN', 'ANON'],
+  users: [
+    {
+      email: 'werner.weber@gmail.com', roles: ['ADMIN', 'USER', 'DEVELOPER'], firstName: 'Werner', lastName: 'Weber',
+    },
+  ],
   billingType: 'partner',
   components: [
     {
@@ -118,7 +123,7 @@ const REACTORY_CONFIG = {
       roles: ['USER'],
       entries: [        
         {
-          ordinal: 1, title: 'My Applications', link: '/applications', icon: 'dashboard', roles: ['USER', 'ADMIN'],
+          ordinal: 1, title: 'My Applications', link: '/', icon: 'dashboard', roles: ['USER', 'ADMIN'],
         },
         {
           ordinal: 2, title: 'Reactory Clients', link: '/reactory-clients/', icon: 'check_circle', roles: ['SYS-ADMIN'],
@@ -273,27 +278,28 @@ const REACTORY_CONFIG = {
       componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
     },    
   ],
-  theme: 'reactory',
+  theme: 'reactory',  
   themeOptions: {
     typography: {
       useNextVariants: true,
     },
     type: 'material',
     palette: {
-      primary1Color: '#424242',
+      type: 'light',
+      primary1Color: '#10012b',
       primary: {
-        light: '#6d6d6d',
-        main: '#424242',
-        dark: '#1b1b1b',
+        light: '#352c54',
+        main: '#10012b',
+        dark: '#000001',
         contrastText: '#ffffff',
       },
       secondary: {
-        light: '#ff9e40',
-        main: '#ff6d00',
-        dark: '#c43c00',
-        contrastText: '#fff',
+        light: '#a5392a',
+        main: '#700000',
+        dark: '#430000',
+        contrastText: '#ffffff',
       },
-    },
+    },    
     assets: {
       featureImage: `${CDN_ROOT}/themes/reactory/images/phoenix.png`,
       logo: `${CDN_ROOT}/themes/reactory/images/logo.png`,

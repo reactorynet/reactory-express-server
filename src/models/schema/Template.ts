@@ -90,7 +90,7 @@ TemplateSchema.methods.contentFromFile = function(templateType: string) {
   if (`${this.content}`.indexOf('$ref://') >= 0) {
     logger.debug(`${this._id} has FILE reference, loading.`)
     this.original = this.content;
-    const filename = `${APP_DATA_ROOT}/templates/${templateType || this.kind}/${this.content.replace('$ref://', '')}`;
+    const filename = `${APP_DATA_ROOT}/templates/${templateType || 'email'}/${this.content.replace('$ref://', '')}`;
     logger.info(`Loading template filename: ${filename}`);    
     if (existsSync(filename) === true) {
       let templateString = readFileSync(filename).toString('utf8');
