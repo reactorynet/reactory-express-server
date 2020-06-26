@@ -125,7 +125,7 @@ export const sendParticipationInivitationForDelegate = async (survey, delegateEn
  * @param {*} delegateEntry
  * @param {*} organigram
  */
-export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organigram, propertyBag = { assessments: [] }) => {
+export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organigram, propertyBag = { assessments: [], relaunch: false }) => {
   logger.info('Sending launch emails for delegate', { assessmentCount: propertyBag.assessments.length });
   let { delegate } = delegateEntry;
 
@@ -133,12 +133,12 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
     delegate = await User.findById(delegate).then();
   }
 
-  let organization = null;
+  let organization: any = null;
   if (ObjectId.isValid(survey.organization)) {
     organization = await Organization.findById(survey.organization).then();
   } else if (lodash.isObject(survey.organization)) organization = survey.organization;
 
-  const emailPromises = [];
+  const emailPromises: any = [];
   if (lodash.isArray(propertyBag.assessments) === true) {
     propertyBag.assessments.forEach((assessment) => {
       const { assessor } = assessment;
@@ -404,15 +404,15 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
     }
     
 
-    const maximumAssessments = 5;
+    const maximumAssessments = 10;
     const minimumAssessments = 3;
 
-    
+    let assessments: any[] = [];
+    let leadershipBrand: any = await LeadershipBrand.findById(survey.leadershipBrand);
+    let templateRatings: any[] = [];
 
     if(is180 === true) {
-      const assessments = [];
-      const leadershipBrand = await LeadershipBrand.findById(survey.leadershipBrand);
-      const templateRatings: any[] = [];
+      
       logger.info(`Building Ratings template for Leadership Brand: ${leadershipBrand.title}`);
       leadershipBrand.qualities.map((quality, qi) => {
         quality.behaviours.map((behaviour, bi) => {
@@ -472,23 +472,23 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
       if (organigram.peers && organigram.peers.length > 0 && (is360 === true || isPLC === true)) {
         if (organigram.peers.length < options.minimumPeers) return result(`Delegate does not have the minimum of ${options.minimumPeers} peers for this survey (${organigram.peers})`);
   
-        const assessmentsPomises = [];
+        //const assessmentsPomises = [];
         if (delegateEntry.assessments.length === 0) {
           for (let ai = 0; ai < delegateEntry.assessments.length; ai += 1) {
-            assessmentsPomises.push(Assessment.findById(delegateEntry.assessments[ai]));
+            assessments.push(delegateEntry.assessments[ai]);
+            //assessmentsPomises.push(Assessment.findById(delegateEntry.assessments[ai]));
           }
         }
-  
-        const assessments: any[] = [];
+        
+        /*
         const assessmentPromiseResult = await Promise.all(assessmentsPomises).then();
         logger.info(`Delegate has ${assessmentPromiseResult.length} assessments`);
-        for (let ri = 0; ri <= assessmentPromiseResult.length; ri += 1) {
+        for (let ri = 0; ri <= assessmentPromiseResult.length; ri += 1) {      
           const _assessment = assessmentPromiseResult[ri];
           assessments.push({ ..._assessment });
         }
-  
-        const leadershipBrand = await LeadershipBrand.findById(survey.leadershipBrand);
-        const templateRatings: any[] = [];
+        */
+        
         logger.info(`Building Ratings template for Leadership Brand: ${leadershipBrand.title}`);
         leadershipBrand.qualities.map((quality, qi) => {
           quality.behaviours.map((behaviour, bi) => {
@@ -540,13 +540,12 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
           });
           await selfAssessment.save().then();
           assessments.push(selfAssessment);
-        }
-  
+        }        
         // send emails
         logger.info(`(${assessments.length}) Assessments Created / Loaded, sending emails to delegates and assessor`);
         let emailResults = null;
         try {
-          emailResults = await sendSurveyEmail(survey, delegateEntry, organigram, EmailTypesForSurvey.SurveyLaunch, { assessments, relaunch });
+          emailResults = await sendSurveyEmail(survey, delegateEntry, organigram, EmailTypesForSurvey.SurveyLaunch, { assessments, relaunch }).then();
           logger.info('Email results from sending Survey Emails', emailResults);
           if (emailResults.success === true) {
             return result(`Successfully created ${assessments.length} assessments for delegate and emails sent ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);

@@ -390,8 +390,8 @@ export default {
 
 
       const organigramModel = await Organigram.findOne({
-        user: ObjectId(delegateModel._id),
-        organization: ObjectId(surveyModel.organization),
+        user: new ObjectId(delegateModel._id),
+        organization: new ObjectId(surveyModel.organization),
       }).then();
 
 
@@ -490,7 +490,7 @@ export default {
               break;
             }
             case 'launch': {
-              if ((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') {
+              if ((surveyModel as TowerStone.ISurveyDocument).surveyType.endsWith('180')) {
 
                 const relaunch = inputData.relaunch === true;
                 const launchResult = await launchSurveyForDelegate(surveyModel as TowerStone.ISurveyDocument, entryData.entry, organigramModel, relaunch);
@@ -529,7 +529,7 @@ export default {
 
                 if (organigramModel && organigramModel.confirmedAt) {
                   const relaunch = inputData.relaunch === true;
-                  const launchResult = await launchSurveyForDelegate(surveyModel, entryData.entry, organigramModel, relaunch);
+                  const launchResult = await launchSurveyForDelegate(surveyModel, entryData.entry, organigramModel, relaunch).then();
                   entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
                   if (launchResult.assessments) {
                     entryData.entry.assessments = launchResult.assessments.map(a => a._id);
