@@ -257,7 +257,6 @@ const uiSchema: any = {
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
         { title: 'Rep Code', field: 'salesTeam' },
-
         {
           title: 'Order Value',
           field: 'value',

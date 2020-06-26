@@ -42,7 +42,8 @@ import {
   getISODetails,
   getClientInvoices,
   getClientSalesHistory,
-  getSODocuments
+  getSODocuments,
+  deleteSalesOrdersDocument
  } from './Helpers';
 
 
@@ -838,6 +839,10 @@ export default {
     },
     LasecSendQuoteEmail: async (obj, args) => {
       return LasecSendQuoteEmail(args);
-    }
+    },
+
+    LasecDeleteSaleOrderDocument: async (obj, args) => {
+      return deleteSalesOrdersDocument(args);
+    },
   }
 };

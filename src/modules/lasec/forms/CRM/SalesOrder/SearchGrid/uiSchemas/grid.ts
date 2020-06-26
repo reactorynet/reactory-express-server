@@ -16,10 +16,12 @@ const uiSchema: any = {
   'ui:grid-layout': [
     {
       search: { md: 4, sm: 12, xs: 12 },
-      filter: { md: 4, sm: 6, xs: 12 },
+      orderStatus: { md: 4, sm: 6, xs: 12 },
       filterBy: { md: 4, sm: 6, xs: 12 },
+      filter: { md: 4, sm: 6, xs: 12 },
       periodStart: { md: 6, sm: 6, xs: 12 },
       periodEnd: { md: 6, sm: 6, xs: 12 },
+      dateFilter: { md: 6, xs: 12 },
       client: { md: 6, xs: 12 },
       customer: { md: 6, xs: 12 },
     },
@@ -74,36 +76,39 @@ const uiSchema: any = {
       selectOptions: FilterByOptions,
     },
   },
-  filter: {
+  orderStatus: {
     'ui:widget': 'SelectWidget',
     'ui:options': {
       selectOptions: FilterOptions,
     },
   },
-  // filter: {
-  //   'ui:widget': 'SelectWithDataWidget',
-  //   'ui:options': {
-  //     multiSelect: false,
-  //     query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
-  //       LasecGetCustomerFilterLookup(filterBy: $filterBy) {
-  //         id
-  //         name
-  //       }
-  //     }`,
-  //     propertyMap: {
-  //       'formContext.$formData.filterBy': 'filterBy'
-  //     },
-  //     resultItem: 'LasecGetCustomerFilterLookup',
-  //     resultsMap: {
-  //       'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
-  //       'LasecGetCustomerFilterLookup.[].name': '[].label',
-  //     },
-  //   },
-  // },
+  filter: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
+        LasecGetCustomerFilterLookup(filterBy: $filterBy) {
+          id
+          name
+        }
+      }`,
+      propertyMap: {
+        'formContext.$formData.filterBy': 'filterBy'
+      },
+      resultItem: 'LasecGetCustomerFilterLookup',
+      resultsMap: {
+        'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerFilterLookup.[].name': '[].label',
+      },
+    },
+  },
   periodStart: {
     'ui:widget': 'DateSelectorWidget',
   },
   periodEnd: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  dateFilter: {
     'ui:widget': 'DateSelectorWidget',
   },
   client: {
@@ -191,6 +196,22 @@ const uiSchema: any = {
           }
         },
         {
+          title: 'Quote Date',
+          field: 'quoteDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
+        {
           title: 'ISO Number',
           field: 'salesOrderNumber',
           component: 'core.SlideOutLauncher@1.0.0',
@@ -255,6 +276,7 @@ const uiSchema: any = {
         },
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
+        { title: 'Rep Code', field: 'salesTeam' },
         {
           title: 'Order Value',
           field: 'value',
@@ -269,6 +291,22 @@ const uiSchema: any = {
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {
             'rowData.reserveValue': 'value',
+          },
+        },
+        {
+          title: 'Shipped Value',
+          field: 'shipValue',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            'rowData.shipValue': 'value',
+          },
+        },
+        {
+          title: 'Back Order Value',
+          field: 'backorderValue',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            'rowData.backorderValue': 'value',
           },
         },
       ],
@@ -305,8 +343,10 @@ const uiSchema: any = {
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.filterBy': 'filterBy',
         'props.formContext.$formData.filter': 'filter',
+        'props.formContext.$formData.orderStatus': 'orderStatus',
         'props.formContext.$formData.periodStart': 'periodStart',
         'props.formContext.$formData.periodEnd': 'periodEnd',
+        'props.formContext.$formData.dateFilter': 'dateFilter',
       },
       resultMap: {
         'paging.page': 'page',
@@ -314,10 +354,11 @@ const uiSchema: any = {
         'paging.pageSize': 'pageSize',
         'salesOrders.[].id': 'data.[].id',
         'salesOrders.[].salesOrderNumber': 'data.[].salesOrderNumber',
-        'salesOrders.[].orderDate': 'data.[].orderDate',
         'salesOrders.[].orderType': 'data.[].orderType',
         'salesOrders.[].orderStatus': 'data.[].orderStatus',
+        'salesOrders.[].orderDate': 'data.[].orderDate',
         'salesOrders.[].shippingDate': 'data.[].shippingDate',
+        'salesOrders.[].quoteDate': 'data.[].quoteDate',
         'salesOrders.[].iso': 'data.[].iso',
         'salesOrders.[].customer': 'data.[].customer',
         'salesOrders.[].client': 'data.[].client',
@@ -330,6 +371,8 @@ const uiSchema: any = {
         'salesOrders.[].warehouseNote': 'data.[].warehouseNote',
         'salesOrders.[].deliveryNote': 'data.[].deliveryNote',
         'salesOrders.[].salesTeam': 'data.[].salesTeam',
+        'salesOrders.[].shipValue': 'data.[].shipValue',
+        'salesOrders.[].backorderValue': 'data.[].backorderValue',
       },
       resultType: 'object',
     },

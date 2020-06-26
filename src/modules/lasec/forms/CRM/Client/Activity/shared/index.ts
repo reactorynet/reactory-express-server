@@ -113,7 +113,7 @@ export const InvoiceFilterByEnumsKeys = {
   customer: 'customer',
   client: 'client',
   dispatch_number: 'dispatch_number',
-  sales_order: 'sales_order',
+  iso_number: 'iso_number',
   quote_number: 'quote_number',
   sales_team_id: 'sales_team_id',
 };
@@ -131,7 +131,7 @@ export const InvoiceFilterByEnumArray: string[] = [
   InvoiceFilterByEnumsKeys.customer,
   InvoiceFilterByEnumsKeys.client,
   InvoiceFilterByEnumsKeys.dispatch_number,
-  InvoiceFilterByEnumsKeys.sales_order,
+  InvoiceFilterByEnumsKeys.iso_number,
   InvoiceFilterByEnumsKeys.quote_number,
   InvoiceFilterByEnumsKeys.sales_team_id,
 ];
@@ -149,7 +149,7 @@ export const InvoiceFilterByOptions = [
   { key: InvoiceFilterByEnumsKeys.customer, value: InvoiceFilterByEnumsKeys.customer, label: 'Customer' },
   { key: InvoiceFilterByEnumsKeys.client, value: InvoiceFilterByEnumsKeys.client, label: 'Client Name' },
   { key: InvoiceFilterByEnumsKeys.dispatch_number, value: InvoiceFilterByEnumsKeys.dispatch_number, label: 'Dispatch Number' },
-  { key: InvoiceFilterByEnumsKeys.sales_order, value: InvoiceFilterByEnumsKeys.sales_order, label: 'ISO Number' },
+  { key: InvoiceFilterByEnumsKeys.iso_number, value: InvoiceFilterByEnumsKeys.iso_number, label: 'ISO Number' },
   { key: InvoiceFilterByEnumsKeys.quote_number, value: InvoiceFilterByEnumsKeys.quote_number, label: 'Quote Number' },
   { key: InvoiceFilterByEnumsKeys.sales_team_id, value: InvoiceFilterByEnumsKeys.sales_team_id, label: 'Rep Code' },
 ];
