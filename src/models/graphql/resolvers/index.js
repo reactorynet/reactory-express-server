@@ -186,7 +186,7 @@ const resolvers = {
                 //but we have one or more roles on the alt_partner
                 //so we create our OWN PARTNER default role for the user and add the membership.
                 let _default_roles = partner.getSetting('new_user_roles', ['USER'], true, 'core.SecurityNewUserRolesForReactoryClient');
-                roles.push(_default_roles);
+                roles.push(_default_roles || 'USER');
                 _default_roles.data.forEach(r => user.addRole(partner._id,r, null, null ));              
               }
   
