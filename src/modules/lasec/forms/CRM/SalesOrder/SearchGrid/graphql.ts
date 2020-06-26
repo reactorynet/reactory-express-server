@@ -8,16 +8,20 @@ const graphql: Reactory.IFormGraphDefinition =  {
       $paging: PagingRequest,
       $filterBy: String,
       $filter: String
+      $orderStatus: String
       $periodStart: String,
       $periodEnd: String,
+      $dateFilter: String,
     ){
       LasecGetPagedCRMSalesOrders(
         search: $search,
         paging: $paging,
         filterBy: $filterBy,
         filter: $filter,
+        orderStatus: $orderStatus,
         periodStart: $periodStart,
         periodEnd: $periodEnd,
+        dateFilter: $dateFilter,
       ){
         paging {
           total
@@ -31,9 +35,10 @@ const graphql: Reactory.IFormGraphDefinition =  {
           orderStatus
           salesOrderNumber
           orderDate
+          shippingDate
+          quoteDate
           orderType
           orderStatus
-          shippingDate
           iso
           customer
           client
@@ -46,6 +51,8 @@ const graphql: Reactory.IFormGraphDefinition =  {
           warehouseNote
           deliveryNote
           salesTeam
+          shipValue
+          backorderValue
         }
       }
     }`,
@@ -53,19 +60,22 @@ const graphql: Reactory.IFormGraphDefinition =  {
       'formData.search': 'search',
       'formData.filterBy': 'filterBy',
       'formData.filter': 'filter',
+      'formData.orderStatus': 'orderStatus',
       'formData.paging': 'paging',
       'formData.periodStart': 'periodStart',
       'formData.periodEnd': 'periodEnd',
+      'formData.dateFilter': 'dateFilter',
     },
     resultMap: {
       'paging': 'paging',
       'filterBy': 'filterBy',
       'salesOrders.[].id': 'salesOrders.[].id',
       'salesOrders.[].salesOrderNumber': 'salesOrders.[].salesOrderNumber',
-      'salesOrders.[].orderDate': 'salesOrders.[].orderDate',
       'salesOrders.[].orderType': 'salesOrders.[].orderType',
       'salesOrders.[].orderStatus': 'salesOrders.[].orderStatus',
+      'salesOrders.[].orderDate': 'salesOrders.[].orderDate',
       'salesOrders.[].shippingDate': 'salesOrders.[].shippingDate',
+      'salesOrders.[].quoteDate': 'salesOrders.[].quoteDate',
       'salesOrders.[].iso': 'salesOrders.[].iso',
       'salesOrders.[].customer': 'salesOrders.[].customer',
       'salesOrders.[].client': 'salesOrders.[].client',
@@ -78,6 +88,8 @@ const graphql: Reactory.IFormGraphDefinition =  {
       'salesOrders.[].warehouseNote': 'salesOrders.[].warehouseNote',
       'salesOrders.[].deliveryNote': 'salesOrders.[].deliveryNote',
       'salesOrders.[].salesTeam': 'salesOrders.[].salesTeam',
+      'salesOrders.[].shipValue': 'salesOrders.[].shipValue',
+      'salesOrders.[].backorderValue': 'salesOrders.[].backorderValue',
     },
     autoQuery: false,
     resultType: 'object',

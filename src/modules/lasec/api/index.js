@@ -846,6 +846,18 @@ const Api = {
       if (status === 'success') return payload;
 
       return { pagination: {}, ids: [], items: [] };
+    },
+    deleteDocument: async (params) => {
+
+      // TODO to be implemented
+
+      const deleteDocumentResult = await DELETE(SECONDARY_API_URLS.file_upload.url, { params: { ...defaultParams, ...params } }).then();
+
+      const { status, payload } = deleteDocumentResult;
+
+      if (status === 'success') return payload;
+
+      return { pagination: {}, ids: [], items: [] };
     }
   },
   Quotes: {

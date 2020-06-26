@@ -30,7 +30,7 @@ const LasecSalesOrderGrid: Reactory.IReactoryForm = {
     paging: { page: 1, pageSize: 10 },
     search: "",
     filterBy: "any_field",
-    // filter: "1",
+    orderStatus: "1",
     salesOrders: []
   },
   widgetMap: [

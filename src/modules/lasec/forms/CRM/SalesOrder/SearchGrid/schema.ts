@@ -12,8 +12,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.order_date,
-                FilterByEnumsKeys.shipping_date,
+                FilterByEnumsKeys.date_range,
               ]
             },
             periodStart: {
@@ -26,20 +25,36 @@ const schema: Reactory.ISchema = {
             },
           },
         },
-        // {
-        //   properties:
-        //   {
-        //     filterBy: {
-        //       enum: [
-        //         FilterByEnumsKeys.order_status,
-        //       ]
-        //     },
-        //     filter: {
-        //       type: 'string',
-        //       title: 'ORDER STATUS'
-        //     }
-        //   },
-        // },
+        {
+          properties:
+          {
+            filterBy: {
+              enum: [
+                FilterByEnumsKeys.order_date,
+                FilterByEnumsKeys.shipping_date,
+                FilterByEnumsKeys.quote_date,
+              ]
+            },
+            dateFilter: {
+              type: 'string',
+              title: 'Date',
+            },
+          },
+        },
+        {
+          properties:
+          {
+            filterBy: {
+              enum: [
+                FilterByEnumsKeys.order_type,
+              ]
+            },
+            filter: {
+              type: 'string',
+              title: 'Show'
+            }
+          },
+        },
         {
           properties:
           {
@@ -67,14 +82,6 @@ const schema: Reactory.ISchema = {
               title: 'Show'
             }
           },
-        },
-        {
-          properties:
-          {
-            filterBy: {
-              enum: [FilterByEnumsKeys.any_field],
-            },
-          }
         },
       ]
     },
@@ -110,7 +117,7 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'FILTER BY'
     },
-    filter: {
+    orderStatus: {
       type: 'string',
       title: 'ORDER STATUS'
     },

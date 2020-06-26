@@ -1496,10 +1496,11 @@ export const getPagedSalesOrders = async (params) => {
     return {
       id: order.id,
       salesOrderNumber: order.sales_order_number,
-      orderDate: order.order_date,
       orderType: order.order_type,
       orderStatus: order.order_status,
+      orderDate: order.order_date,
       shippingDate: order.req_ship_date,
+      quoteDate: order.quote_date,
       iso: order.sales_order_id,
       customer: order.company_trading_name,
       client: order.customer_name,
@@ -1512,6 +1513,8 @@ export const getPagedSalesOrders = async (params) => {
       salesTeam: order.sales_team_id,
       value: order.order_value,
       reserveValue: order.reserved_value,
+      shipValue: order.shipped_value,
+      backorderValue: order.back_order_value,
     }
   });
 
@@ -1653,21 +1656,22 @@ export const getClientSalesOrders = async (params) => {
 export const getCRMSalesOrders = async (params) => {
 
   // -- POSSIBLE FILTERS --
-  // any_field
-  // date_range
-  // order_date
-  // shipping_date
-  // quote_date
-  // order_type
-  // order_status
-  // iso_number
-  // po_number
-  // quote_number
-  // rep_code
-  // order_value
-  // reserve_value
-  // ship_value
-  // backorder_value
+  // any_field - done
+  // date_range - done
+  // order_date - done
+  // shipping_date - done
+  // quote_date - done
+  // order_type - done
+  // order_status - done
+  // iso_number - done
+  // po_number - done
+  // quote_number - done
+  // rep_code - done
+  // order_value - done
+  // reserve_value - done
+  // ship_value - done
+  // backorder_value - 3428.00
+
   // customer
   // client
 
@@ -1679,34 +1683,16 @@ export const getCRMSalesOrders = async (params) => {
     periodEnd,
     filterBy = "any_field",
     filter,
+    orderStatus,
+    dateFilter,
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
-  // let apiFilter = {
-  //   order_status: filter,
-  //   // [filterBy]: search,
-  //   start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-  //   end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
-  // };
-
-  // if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'customer' || filterBy == 'client' || filterBy == 'po_number' || filterBy == 'order_value') apiFilter[filterBy] = search;
-
-  // if (filterBy == 'order_status') apiFilter['order_status'] = filter;
-
-  // if (filterBy == 'order_date') {
-  //   apiFilter['using'] = 'order_date';
-  //   apiFilter['order_status'] = filter;
-  // }
-
-  // if (filterBy == 'shipping_date') {
-  //   apiFilter['using'] = 'shipping_date';
-  //   apiFilter['order_status'] = filter;
-  // }
+  let me = await getLoggedIn360User().then();
 
   let apiFilter = {
-    // customer_id: clientId,
-    // [filterBy]: filter || search,
-    order_status: 1,
+    customer_id: me.id,
+    order_status: orderStatus,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
     ordering: { order_date: "desc" },
@@ -1718,16 +1704,14 @@ export const getCRMSalesOrders = async (params) => {
     apiFilter.end_date = moment(dateFilter).endOf('day');
   }
 
-  if (filterBy == 'order_type' || filterBy == 'order_status')
+  if (filterBy == 'order_type')
     apiFilter[filterBy] = filter;
 
   if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id' || filterBy == 'sales_team_id') {
     apiFilter[filterBy] = search;
   }
 
-  let me = await getLoggedIn360User().then();
-  logger.debug(`LOGGED IN USER:: ${JSON.stringify(me)}`);
-
+  // TODO Filter by sales team
   // apiFilter.rep_codes = me.sales_team_ids;
 
   const result = await getPagedSalesOrders({ paging, apiFilter });
@@ -1757,6 +1741,16 @@ export const getSODocuments = async (args) => {
   }
 
   return [];
+}
+
+export const deleteSalesOrdersDocument = async (args) => {
+
+  const { id } = args;
+
+  return {
+    success: true,
+    message: 'Document deleted successfully'
+  }
 }
 
 export const getISODetails = async (params) => {

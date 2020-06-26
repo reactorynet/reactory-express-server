@@ -357,6 +357,12 @@ const uiSchema: any = {
           url
         }
       }`,
+      mutation: `mutation LasecDeleteSaleOrderDocument($id: String) {
+        LasecDeleteSaleOrderDocument(id: $id) {
+          success
+          message
+        }
+      }`,
       propertyMap: {
         'formContext.$formData.documentIds': 'ids'
       },

@@ -3,7 +3,7 @@ export const FilterByEnumsKeys = {
   date_range: 'date_range',
   order_type: 'order_type',
   order_date: 'order_date',
-  order_status: 'order_status',
+  // order_status: 'order_status',
   shipping_date: 'shipping_date',
   iso_number: 'iso_number',
   po_number: 'po_number',
@@ -28,7 +28,7 @@ export const FilterByEnumArray: string[] = [
   FilterByEnumsKeys.client,
   FilterByEnumsKeys.po_number,
   FilterByEnumsKeys.order_value,
-  FilterByEnumsKeys.order_status,
+  // FilterByEnumsKeys.order_status,
 ];
 
 export const FilterByOptions = [
@@ -36,7 +36,7 @@ export const FilterByOptions = [
   { key: FilterByEnumsKeys.date_range, value: FilterByEnumsKeys.date_range, label: 'Date Range' },
   { key: FilterByEnumsKeys.order_type, value: FilterByEnumsKeys.order_type, label: 'Order Type' },
   { key: FilterByEnumsKeys.order_date, value: FilterByEnumsKeys.order_date, label: 'Order Date' },
-  { key: FilterByEnumsKeys.order_status, value: FilterByEnumsKeys.order_status, label: 'Order Status' },
+  // { key: FilterByEnumsKeys.order_status, value: FilterByEnumsKeys.order_status, label: 'Order Status' },
   { key: FilterByEnumsKeys.shipping_date, value: FilterByEnumsKeys.shipping_date, label: 'Req. Ship Date' },
   { key: FilterByEnumsKeys.iso_number, value: FilterByEnumsKeys.iso_number, label: 'ISO Number' },
   { key: FilterByEnumsKeys.po_number, value: FilterByEnumsKeys.po_number, label: 'PO Number' },
