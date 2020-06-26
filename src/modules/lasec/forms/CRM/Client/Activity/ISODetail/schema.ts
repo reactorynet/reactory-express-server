@@ -12,6 +12,10 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'Quote #'
     },
+    documentIds: {
+      type: 'string',
+      title: 'Document IDs',
+    },
     poNumber: {
       type: 'string',
       title: 'Purchase Order #'

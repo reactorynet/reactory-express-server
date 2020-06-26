@@ -43,6 +43,9 @@ const uiSchema: any = {
       deliveryNote: { xs: 12 },
     },
     {
+      documentIds: { xs: 12 },
+    },
+    {
       lineItems: { xs: 12 },
     },
   ],
@@ -341,6 +344,28 @@ const uiSchema: any = {
           justifyContent: 'flex-end'
         }
       }
+    },
+  },
+  documentIds: {
+    'ui:widget': 'DocumentListWidget',
+    'ui:options': {
+      label: 'Sales Order Documents',
+      query: `query LasecGetSaleOrderDocument($ids: [String]) {
+        LasecGetSaleOrderDocument(ids: $ids) {
+          id
+          name
+          url
+        }
+      }`,
+      propertyMap: {
+        'formContext.$formData.documentIds': 'ids'
+      },
+      resultItem: 'LasecGetSaleOrderDocument',
+      resultsMap: {
+        'LasecGetSaleOrderDocument.[].id': '[].id',
+        'LasecGetSaleOrderDocument.[].name': '[].name',
+        'LasecGetSaleOrderDocument.[].url': '[].url',
+      },
     },
   },
 

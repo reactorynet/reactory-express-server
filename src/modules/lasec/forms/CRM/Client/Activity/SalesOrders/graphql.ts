@@ -52,6 +52,8 @@ const graphql: Reactory.IFormGraphDefinition = {
           reserveValue
           shipValue
           backorderValue
+
+          documentIds
         }
       }
     }`,
@@ -90,6 +92,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       'salesOrders.[].reserveValue': 'salesOrders.[].reserveValue',
       'salesOrders.[].shipValue': 'salesOrders.[].shipValue',
       'salesOrders.[].backorderValue': 'salesOrders.[].backorderValue',
+
+      'salesOrders.[].documentIds': 'salesOrders.[].documentIds',
     },
     autoQuery: false,
     resultType: 'object',

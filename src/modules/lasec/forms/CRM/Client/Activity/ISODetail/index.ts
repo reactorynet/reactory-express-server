@@ -21,6 +21,7 @@ const LasecCRMISODetail: Reactory.IReactoryForm = {
   defaultFormValue: {},
   widgetMap: [
     // { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
+    { componentFqn: 'core.DocumentListComponent@1.0.0', widget: 'DocumentListWidget' },
   ],
 };
 

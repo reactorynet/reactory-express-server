@@ -143,43 +143,6 @@ const uiSchema: any = {
         { title: 'Order Type', field: 'orderType' },
         { title: 'Order Status', field: 'orderStatus' },
         {
-          title: 'Sales Order Number',
-          field: 'salesOrderNumber',
-          component: 'core.SlideOutLauncher@1.0.0',
-          props: {
-            componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
-            componentProps: {
-              'rowData.quoteId': ['data.quoteId', 'data.quoteId', 'query.quoteId'],
-              'rowData.salesOrderNumber': ['data.orderId', 'data.orderId', 'query.orderId'],
-              'rowData.poNumber': ['data.poNumber', 'data.poNumber', 'query.poNumber'],
-              'rowData.orderDate': ['data.orderDate', 'data.orderDate', 'query.orderDate'],
-              'rowData.customer': ['data.customer', 'data.customer', 'query.customer'],
-              'rowData.client': ['data.client', 'data.client', 'query.client'],
-              'rowData.orderStatus': ['data.orderStatus', 'data.orderStatus', 'query.orderStatus'],
-              'rowData.currency': ['data.currency', 'data.currency', 'query.currency'],
-              'rowData.orderType': ['data.orderType', 'data.orderType', 'query.orderType'],
-              'rowData.deliveryAddress': ['data.deliveryAddress', 'data.deliveryAddress', 'query.deliveryAddress'],
-              'rowData.warehouseNote': ['data.warehouseNote', 'data.warehouseNote', 'query.warehouseNote'],
-              'rowData.deliveryNote': ['data.deliveryNote', 'data.deliveryNote', 'query.deliveryNote'],
-              'rowData.salesTeam': ['data.salesTeam', 'data.salesTeam', 'query.salesTeam'],
-            },
-            slideDirection: 'down',
-            buttonTitle: '${rowData.salesOrderNumber}',
-            buttonVariant: 'Typography',
-            buttonProps: {
-              style: {
-                'textDecoration': 'underline',
-                'cursor': 'pointer',
-                'color': 'black'
-              }
-            },
-            windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
-          },
-          propsMap: {
-            'rowData': 'rowData'
-          }
-        },
-        {
           title: 'Order Date',
           field: 'orderDate',
           component: 'core.LabelComponent@1.0.0',
@@ -228,6 +191,45 @@ const uiSchema: any = {
           }
         },
         {
+          title: 'Sales Order Number',
+          field: 'salesOrderNumber',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
+            componentProps: {
+              'rowData.quoteId': ['data.quoteId', 'query.quoteId'],
+              'rowData.salesOrderNumber': ['data.orderId', 'query.orderId'],
+              'rowData.documentIds': ['data.documentIds', 'query.documentIds'],
+              'rowData.poNumber': ['data.poNumber', 'query.poNumber'],
+              'rowData.orderDate': ['data.orderDate', 'query.orderDate'],
+              'rowData.customer': ['data.customer', 'query.customer'],
+              'rowData.client': ['data.client', 'query.client'],
+              'rowData.orderStatus': ['data.orderStatus', 'query.orderStatus'],
+              'rowData.currency': ['data.currency', 'query.currency'],
+              'rowData.orderType': ['data.orderType', 'query.orderType'],
+              'rowData.deliveryAddress': ['data.deliveryAddress', 'query.deliveryAddress'],
+              'rowData.warehouseNote': ['data.warehouseNote', 'query.warehouseNote'],
+              'rowData.deliveryNote': ['data.deliveryNote', 'query.deliveryNote'],
+              'rowData.salesTeam': ['data.salesTeam', 'query.salesTeam'],
+            },
+            slideDirection: 'down',
+            buttonTitle: '${rowData.salesOrderNumber}',
+            buttonVariant: 'Typography',
+            buttonProps: {
+              style: {
+                'textDecoration': 'underline',
+                'cursor': 'pointer',
+                'color': 'black'
+              }
+            },
+            windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
+          },
+          propsMap: {
+            'rowData': 'rowData'
+          }
+        },
+        { title: 'Purchase Order Number', field: 'poNumber' },
+        {
           title: 'Quote Number',
           field: 'quoteId',
           component: 'core.SlideOutLauncher@1.0.0',
@@ -255,7 +257,7 @@ const uiSchema: any = {
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
         { title: 'Rep Code', field: 'salesTeam' },
-        { title: 'Purchase Order Number', field: 'poNumber' },
+
         {
           title: 'Order Value',
           field: 'value',
@@ -332,6 +334,7 @@ const uiSchema: any = {
         'salesOrders.[].reserveValue': 'data.[].reserveValue',
         'salesOrders.[].shipValue': 'data.[].shipValue',
         'salesOrders.[].backorderValue': 'data.[].backorderValue',
+        'salesOrders.[].documentIds': 'data.[].documentIds',
       },
     },
   }
@@ -361,7 +364,7 @@ const LasecCRMClientSalesOrderActivities: Reactory.IReactoryForm = {
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
-    // { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
+    { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
     { componentFqn: 'lasec-crm.CustomerLookupModal@1.0.0', widget: 'CustomerLookupComponent' }
   ],
 };

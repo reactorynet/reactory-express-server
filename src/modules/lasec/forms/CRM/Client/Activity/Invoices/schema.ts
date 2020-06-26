@@ -12,8 +12,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                InvoiceFilterByEnumsKeys.invoice_date,
-                InvoiceFilterByEnumsKeys.quote_date,
+                InvoiceFilterByEnumsKeys.date_range,
               ]
             },
             periodStart: {
@@ -26,20 +25,20 @@ const schema: Reactory.ISchema = {
             },
           },
         },
-        // {
-        //   properties:
-        //   {
-        //     filterBy: {
-        //       enum: [
-        //         InvoiceFilterByEnumsKeys.order_status,
-        //       ]
-        //     },
-        //     filter: {
-        //       type: 'string',
-        //       title: 'Show'
-        //     }
-        //   },
-        // },
+        {
+          properties:
+          {
+            filterBy: {
+              enum: [
+                InvoiceFilterByEnumsKeys.invoice_date,
+              ]
+            },
+            dateFilter: {
+              type: 'string',
+              title: 'Date',
+            },
+          },
+        },
         {
           properties:
           {

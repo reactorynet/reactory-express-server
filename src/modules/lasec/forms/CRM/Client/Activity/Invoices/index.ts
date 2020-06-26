@@ -35,7 +35,7 @@ const uiSchema: any = {
       // filter: { md: 4, sm: 12 },
       periodStart: { md: 6, xs: 12 },
       periodEnd: { md: 6, xs: 12 },
-      // dateFilter: { md: 6, xs: 12 },
+      dateFilter: { md: 6, xs: 12 },
       client: { md: 6, xs: 12 },
       customer: { md: 6, xs: 12 },
     },
@@ -94,6 +94,9 @@ const uiSchema: any = {
   periodEnd: {
     'ui:widget': 'DateSelectorWidget',
   },
+  dateFilter: {
+    'ui:widget': 'DateSelectorWidget',
+  },
   client: {
     'ui:widget': 'LookupComponent',
     'ui:options': {
@@ -127,7 +130,6 @@ const uiSchema: any = {
       },
     },
   },
-
   invoices: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -172,6 +174,7 @@ const uiSchema: any = {
         { title: 'Dispatches', field: 'dispatches' },
         { title: 'Client Rep Code', field: 'salesTeamId' },
         { title: 'PO Number', field: 'poNumber' },
+        { title: 'ISO Number', field: 'isoNumber' },
         {
           title: 'Inv Value',
           field: 'value',
@@ -198,6 +201,7 @@ const uiSchema: any = {
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.periodStart': 'periodStart',
         'props.formContext.$formData.periodEnd': 'periodEnd',
+        'props.formContext.$formData.dateFilter': 'dateFilter',
       },
       resultMap: {
         'paging.page': 'page',
@@ -213,6 +217,7 @@ const uiSchema: any = {
         'invoices.[].accountNumber': 'data.[].accountNumber',
         'invoices.[].salesTeamId': 'data.[].salesTeamId',
         'invoices.[].poNumber': 'data.[].poNumber',
+        'invoices.[].isoNumber': 'data.[].isoNumber',
         'invoices.[].value': 'data.[].value',
       },
     },

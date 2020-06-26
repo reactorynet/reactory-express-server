@@ -27,6 +27,8 @@ const graphql: Reactory.IFormGraphDefinition =  {
         }
         salesOrders {
           id
+          orderType
+          orderStatus
           salesOrderNumber
           orderDate
           orderType
@@ -37,6 +39,7 @@ const graphql: Reactory.IFormGraphDefinition =  {
           client
           poNumber
           value,
+          reserveValue
           quoteId,
           currency
           deliveryAddress
@@ -68,6 +71,7 @@ const graphql: Reactory.IFormGraphDefinition =  {
       'salesOrders.[].client': 'salesOrders.[].client',
       'salesOrders.[].poNumber': 'salesOrders.[].customerponumber',
       'salesOrders.[].value': 'salesOrders.[].value',
+      'salesOrders.[].reserveValue': 'salesOrders.[].reserveValue',
       'salesOrders.[].quoteId': 'salesOrders.[].quoteId',
       'salesOrders.[].currency': 'salesOrders.[].currency',
       'salesOrders.[].deliveryAddress': 'salesOrders.[].deliveryAddress',

@@ -305,6 +305,7 @@ type SalesOrder {
   reserveValue: Int
   shipValue: Int
   backorderValue: Int
+  documentIds: [String]
 }
 
 type SalesOrderLineItem {
@@ -334,6 +335,7 @@ type Invoice {
   salesTeamId: String
   poNumber: String
   value: Int
+  isoNumber: String
 }
 
 type SalesHistory {
@@ -362,6 +364,12 @@ type PagedCRMInvoices {
 type PagedCRMSalesHistory {
   paging: PagingResult
   salesHistory: [SalesHistory]
+}
+
+type SalesOrderDocuments {
+  id: String
+  name: String
+  url: String
 }
 
 extend type Query {
@@ -406,6 +414,9 @@ extend type Query {
     dateFilter: String
     iter: Int
   ): PagedCRMSalesOrders
+
+  LasecGetSaleOrderDocument(ids: [String]): [SalesOrderDocuments]
+
   LasecGetPagedCRMSalesOrders(
     search: String!
     paging: PagingRequest
@@ -425,6 +436,7 @@ extend type Query {
     filter: String
     periodStart: String
     periodEnd: String
+    dateFilter: String
     iter: Int
   ): PagedCRMInvoices
   LasecGetCRMClientSalesHistory(
