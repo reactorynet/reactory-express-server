@@ -93,6 +93,12 @@ import ProductSalesOrders from './productCatalog/ProductDetails/SalesOrders';
 
 import ClientActivityCustomerLookUpForm from './CRM/Client/Activity/shared/CustomerLookup';
 
+import LasecCRMISODetailHeader from './CRM/Client/Activity/ISODetail/sections/header';
+import LasecCRMISODetailDeliveryDetails from './CRM/Client/Activity/ISODetail/sections/deliveryDetails';
+import LasecCRMISODetailOrderSummary from './CRM/Client/Activity/ISODetail/sections/orderSummary';
+import LasecCRMISODetailDocuments from './CRM/Client/Activity/ISODetail/sections/documents';
+import LasecCRMISODetailLineItems from './CRM/Client/Activity/ISODetail/sections/lineItems';
+
 
 const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
 
@@ -172,4 +178,9 @@ export default [
   ISODetail,
 
   ClientActivityCustomerLookUpForm,
+  LasecCRMISODetailHeader,
+  LasecCRMISODetailDeliveryDetails,
+  LasecCRMISODetailOrderSummary,
+  LasecCRMISODetailDocuments,
+  LasecCRMISODetailLineItems,
 ];

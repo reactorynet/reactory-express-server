@@ -2,112 +2,69 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 
 const schema: Reactory.ISchema = {
   type: 'object',
-  required: ['filterBy', 'search'],
   properties: {
-    orderId: {
-      type: 'string',
-      title: 'Sales Order #'
-    },
-    quoteId: {
-      type: 'string',
-      title: 'Quote #'
-    },
-    documentIds: {
-      type: 'string',
-      title: 'Document IDs',
-    },
-    poNumber: {
-      type: 'string',
-      title: 'Purchase Order #'
-    },
-    orderDate: {
-      type: 'string',
-      title: 'Order Date'
-    },
-    customer: {
-      type: 'string',
-      title: 'Customer'
-    },
-    client: {
-      type: 'string',
-      title: 'Client'
-    },
-    orderStatus: {
-      type: 'string',
-      title: 'Order Status'
-    },
-    currency: {
-      type: 'string',
-      title: 'Currency'
-    },
-    orderType: {
-      type: 'string',
-      title: 'Order Type'
-    },
-    salesPerson: {
-      type: 'string',
-      title: 'Sales Person'
-    },
-    deliveryAddress: {
-      type: 'string',
-      title: 'Delivery Address'
-    },
-    warehouseNote: {
-      type: 'string',
-      title: 'Warehouse Note'
-    },
-    deliveryNote: {
-      type: 'string',
-      title: 'Delivery Note'
-    },
-    salesTeam: {
-      type: 'string',
-      title: 'Sales Team'
-    },
+    header: {
+      type: 'object',
+      title: 'Header',
+      properties: {
+        orderDate: {
+          type: 'string'
+        },
+        customer: {
+          type: 'string'
+        },
+        client: {
+          type: 'string'
+        },
+        currency: {
+          type: 'string'
+        },
 
-    lineItems: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          id: {
-            type: 'string'
-          },
-          line: {
-            type: 'string'
-          },
-          productCode: {
-            type: 'string'
-          },
-          productDescription: {
-            type: 'string'
-          },
-          unitOfMeasure: {
-            type: 'string'
-          },
-          price: {
-            type: 'string'
-          },
-          totalPrice: {
-            type: 'string'
-          },
-          orderQty: {
-            type: 'string'
-          },
-          shippedQty: {
-            type: 'string'
-          },
-          backOrderQty: {
-            type: 'string'
-          },
-          reservedQty: {
-            type: 'string'
-          },
-          comment: {
-            type: 'string'
-          },
+      }
+    },
+    deliveryDetails: {
+      type: 'object',
+      title: 'Delivery Details',
+      properties: {
+        deliveryAddress: {
+          type: 'string'
+        },
+        deliveryNote: {
+          type: 'string'
+        },
+        warehouseNote: {
+          type: 'string'
         }
-      },
+      }
+    },
+    orderSummary: {
+      type: 'object',
+      title: 'Order Summary',
+      properties: {
+        orderId: {
+          type: 'string'
+        },
+        orderType: {
+          type: 'string'
+        },
+        poNumber: {
+          type: 'string'
+        },
+        salesPerson: {
+          type: 'string'
+        },
+        quoteNumber: {
+          type: 'string'
+        }
+      }
+    },
+    documents: {
+      type: 'string',
+      title: 'Documents',
+    },
+    lineItems: {
+      type: 'string',
+      title: 'Line Items',
     }
   }
 };

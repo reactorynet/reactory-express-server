@@ -197,8 +197,10 @@ const uiSchema: any = {
           props: {
             componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
             componentProps: {
+              'rowData.id': ['data.id', 'query.id'],
               'rowData.quoteId': ['data.quoteId', 'query.quoteId'],
               'rowData.salesOrderNumber': ['data.orderId', 'query.orderId'],
+              'rowData.iso': ['data.iso', 'query.iso'],
               'rowData.documentIds': ['data.documentIds', 'query.documentIds'],
               'rowData.poNumber': ['data.poNumber', 'query.poNumber'],
               'rowData.orderDate': ['data.orderDate', 'query.orderDate'],

@@ -1666,12 +1666,12 @@ export const getCRMSalesOrders = async (params) => {
   // iso_number - done
   // po_number - done
   // quote_number - done
-  // rep_code - done
   // order_value - done
   // reserve_value - done
   // ship_value - done
-  // backorder_value - 3428.00
+  // backorder_value - 3427.00
 
+  // rep_code
   // customer
   // client
 
@@ -1707,12 +1707,13 @@ export const getCRMSalesOrders = async (params) => {
   if (filterBy == 'order_type')
     apiFilter[filterBy] = filter;
 
-  if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id' || filterBy == 'sales_team_id') {
+  if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id') {
     apiFilter[filterBy] = search;
   }
 
-  // TODO Filter by sales team
-  // apiFilter.rep_codes = me.sales_team_ids;
+  if (filterBy == 'user_sales_team_id')
+    apiFilter.sales_team_id = filter; // NOTE - this works, there is a discrepancy between user teams and sales orders
+  // apiFilter.sales_team_id = 'LAB103';
 
   const result = await getPagedSalesOrders({ paging, apiFilter });
 
@@ -1853,19 +1854,11 @@ export const getClientInvoices = async (params) => {
   // iso_number - done
   // account_number - done
 
-  // invoice_value -  Error
-  // dispatch_number ???
+  // invoice_value -  1028.70 - not working
+  // dispatch_number - not being implemented
 
   // customer
   // client
-
-
-  // TODO- Still Outstanding
-  // 1. Broken fields - invoice_value, dispatches, iso_number, account_number
-  // 2. Waiting on Werner to finish - loopkup plugins, so I can filter by client and customer
-
-
-
 
   let apiFilter: any = {
     customer_id: clientId,
