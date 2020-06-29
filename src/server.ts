@@ -165,16 +165,7 @@ if(apolloServer) {
 startup().then((startResult) => {
   logger.debug('Startup Generator Done.');
   amq.raiseSystemEvent('server.startup.begin');
-  AuthConfig.Configure(app);
-  /*
-  app.use(
-    queryRoot,
-    passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
-    bodyParser.json({ limit: '10mb' }),
-    //apolloServer({ schema: apolloServer, debug: true }),
-  );
-  */
-  //app.use(graphiql, graphiqlExpress({ endpointURL: queryRoot }));
+  AuthConfig.Configure(app); 
   app.use(userAccountRouter);
   app.use('/reactory', reactory);
   app.use('/froala', froala);

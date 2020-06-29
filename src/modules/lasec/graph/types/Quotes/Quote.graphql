@@ -293,6 +293,7 @@ type SalesOrder {
   orderStatus: String
   iso: Int
   customer: String
+  crmCustomer: LasecCRMCustomer
   client: String
   poNumber: String
   quoteId: String

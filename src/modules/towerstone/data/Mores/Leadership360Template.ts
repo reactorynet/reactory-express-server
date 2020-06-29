@@ -36,7 +36,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} listens to and respects others’ needs and opinions.",
-          "description": "${employee.firstName} listens to and respects others’ needs and opinions.",
+          "description": "${employee.firstName} cares about ${employeeDemographics.pronoun || 'their'} colleagues.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -52,7 +52,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} continually looks to build new skills and learn from others.",
-          "description": "${employee.firstName} continually looks to build new skills and learn from others.",
+          "description": "${employee.firstName} wants to learn.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -68,7 +68,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} is committed to ${employeeDemographics.pronoun || 'their'} roles, responsibilities and career path.",
-          "description": "${employee.firstName} is committed to ${employeeDemographics.pronoun || 'their'} roles, responsibilities and career path.",
+          "description": "${employee.firstName} wants to grow.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -102,7 +102,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} sets clear expectations and feedback lines with ${employeeDemographics.pronoun || 'their'} colleagues.",
-          "description": "${employee.firstName} sets clear expectations and feedback lines with ${employeeDemographics.pronoun || 'their'} colleagues.",
+          "description": "${employee.firstName}'s colleagues value ${employeeDemographics.pronoun || 'their'} communication skills.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -118,7 +118,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} makes time to support and encourage ${employeeDemographics.pronoun || 'their'} team members. ",
-          "description": "${employee.firstName} makes time to support and encourage ${employeeDemographics.pronoun || 'their'} team members. ",
+          "description": "${employee.firstName} is a trusted team member. ",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -134,7 +134,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} deals with conflict quickly, openly and respectfully.",
-          "description": "${employee.firstName} deals with conflict quickly, openly and respectfully.",
+          "description": "${employee.firstName} respects others' differences.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -157,8 +157,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} is proud to be a Brand Ambassador for ${survey.organization.name}.",
-          "description": "${employee.firstName} is proud to be a Brand Ambassador for ${survey.organization.name}.",
+          "title": "${employee.firstName} is a proud ambassador of the ${survey.organization.name} brand.",
+          "description": "${employee.firstName}'s passion inspires me.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -174,7 +174,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName}’s daily actions uphold the values and behaviours expected of all ${survey.organization.name} employees.",
-          "description": "${employee.firstName}’s daily actions uphold the values and behaviours expected of all ${survey.organization.name} employees.",
+          "description": "${employee.firstName} sets an example for us.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -190,7 +190,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} respects and recognises the time and efforts of ${employeeDemographics.pronoun || 'their'} colleagues.",
-          "description": "${employee.firstName} respects and recognises the time and efforts of ${employeeDemographics.pronoun || 'their'} colleagues.",
+          "description": "${employee.firstName} appreciates my efforts.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -224,7 +224,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} is goal-driven, professional and efficient. ",          
-          "description": "${employee.firstName} is goal-driven, professional and efficient. ",
+          "description": "${employee.firstName} cares about quality results. ",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -240,7 +240,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} is professional, disciplined and takes ownership of ${employeeDemographics.pronoun || 'their'} commitments. ",
-          "description": "${employee.firstName} is professional, disciplined and takes ownership of ${employeeDemographics.pronoun || 'their'} commitments. ",
+          "description": "${employee.firstName} delivers on ${employeeDemographics.pronoun || 'their'} promises. ",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -256,7 +256,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} delivers beyond expectations to get the job done.",
-          "description": "${employee.firstName} delivers beyond expectations to get the job done.",
+          "description": "${employee.firstName} goes the extra mile.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -290,7 +290,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} speaks up when there is a red flag.",
-          "description": "${employee.firstName} speaks up when there is a red flag.",
+          "description": "${employee.firstName} challenges the status quo.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -306,7 +306,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} responds to new opportunities proactively and quickly.",
-          "description": "${employee.firstName} responds to new opportunities proactively and quickly.",
+          "description": "${employee.firstName} loves a new challenge.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -322,7 +322,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} is not afraid to try a new risky idea.",
-          "description": "${employee.firstName} is not afraid to try a new risky idea.",
+          "description": "${employee.firstName} learns from ${employeeDemographics.pronoun || 'their'} mistakes.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -355,8 +355,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} understands the vision, values and strategic goals of ${survey.organization.name}. ",
-          "description": "${employee.firstName} understands the vision, values and strategic goals of ${survey.organization.name}. ",
+          "title": "${employee.firstName} contributes to the vision, values and strategic goals of ${survey.organization.name}. ",
+          "description": "${employee.firstName} plays ${employeeDemographics.pronoun || 'their'} part in ${survey.organization.name}'s future. ",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -372,7 +372,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName}’s personal purpose and values are aligned to ${survey.organization.name}’s purpose and brand promise.",
-          "description": "${employee.firstName}’s personal purpose and values are aligned to ${survey.organization.name}’s purpose and brand promise.",
+          "description": "${employee.firstName}’s loves what ${employeeDemographics.pronoun || 'they'} does.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -388,7 +388,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName}’s contribution to ${survey.organization.name} enhances our standing as a responsible corporate citizen. ",
-          "description": "${employee.firstName}’s contribution to ${survey.organization.name} enhances our standing as a responsible corporate citizen. ",
+          "description": "${employee.firstName} helps us make a difference. ",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -434,7 +434,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} regularly checks in with ${employeeDemographics.pronoun || 'their'} people to ensure their needs are addressed. ",
-          "description": "${employee.firstName} regularly checks in with ${employeeDemographics.pronoun || 'their'} people to ensure their needs are addressed. ",
+          "description": "${employee.firstName} cares for ${employeeDemographics.pronoun || 'their'} people. ",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -450,7 +450,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} makes time to coach, mentor and encourage ongoing training for ${employeeDemographics.pronoun || 'their'} people.",
-          "description": "${employee.firstName} makes time to coach, mentor and encourage ongoing training for ${employeeDemographics.pronoun || 'their'} people.",
+          "description": "${employee.firstName} helps ${employeeDemographics.pronoun || 'their'} people invest in their future.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -466,7 +466,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} ensures role clarity and a well-defined career path for ${employeeDemographics.pronoun || 'their'} people.",
-          "description": "${employee.firstName} ensures role clarity and a well-defined career path for ${employeeDemographics.pronoun || 'their'} people.",
+          "description": "${employee.firstName} wants ${employeeDemographics.pronoun || 'their'} people to be excited about the opportunities tht lie ahead.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -500,7 +500,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} is rigorous about communication within and between ${employeeDemographics.pronoun || 'their'} teams, ensuring everyone knows how to support each other.",
-          "description": "${employee.firstName} is rigorous about communication within and between ${employeeDemographics.pronoun || 'their'} teams, ensuring everyone knows how to support each other.",
+          "description": "There is no confusion about who does what.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -515,8 +515,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         },
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} openly communicates ${employeeDemographics.pronoun || 'their'} expectations and faith in people’s ability to deliver.",
-          "description": "${employee.firstName} openly communicates ${employeeDemographics.pronoun || 'their'} expectations and faith in people’s ability to deliver.",
+          "title": "${employee.firstName} expresses ${employeeDemographics.pronoun || 'their'} expectations and faith in people’s ability.",
+          "description": "${employee.firstName} trusts and believes in ${employeeDemographics.pronoun || 'their'} people.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -532,7 +532,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} deals with conflict quickly, openly and respectfully.",
-          "description": "${employee.firstName} deals with conflict quickly, openly and respectfully.",
+          "description": "${employee.firstName} respects and values our input.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -556,7 +556,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} is passionate about ${survey.organization.name}.",
-          "description": "${employee.firstName} is passionate about ${survey.organization.name}.",
+          "description": "${employee.firstName} inspires us.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -572,7 +572,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} upholds the values and behaviours expected of all ${survey.organization.name} employees.",
-          "description": "${employee.firstName} upholds the values and behaviours expected of all ${survey.organization.name} employees.",
+          "description": "${employee.firstName} leads by example.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -587,8 +587,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         },
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} is relentless in driving the actions needed to achieve our goals.",
-          "description": "${employee.firstName} is quick to recognise and praise great work.",
+          "title": "${employee.firstName} is quick to recognise and praise great work.",
+          "description": "${employee.firstName} brings us along for the journey.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -621,8 +621,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} shows consistent discipline with meetings, feedback and following up.",          
-          "description": "${employee.firstName} shows consistent discipline with meetings, feedback and following up.",
+          "title": "${employee.firstName} is relentless in driving the actions needed to achieve our goals.",          
+          "description": "${employee.firstName} achieves results.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -637,8 +637,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         },
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} tackles challenges head-on, always looking for better solutions.",
-          "description": "${employee.firstName} tackles challenges head-on, always looking for better solutions.",
+          "title": "${employee.firstName} shows consistent discipline in meetings, feedback and following up on commitments.",
+          "description": "${employee.firstName} holds self and others to their promises.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -653,8 +653,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         },
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} delivers beyond expectations to get the job done.",
-          "description": "${employee.firstName} delivers beyond expectations to get the job done.",
+          "title": "${employee.firstName} tackles challenges head-on, always looking for better solutions.",
+          "description": "${employee.firstName} does whatever it takes to get the job done.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -688,7 +688,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} regularly reads, does market research and shares new information.",
-          "description": "${employee.firstName} regularly reads, does market research and shares new information.",
+          "description": "${employee.firstName} stays ahead of the game.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -704,7 +704,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} is quick to identify and respond to new opportunities.",
-          "description": "${employee.firstName} is quick to identify and respond to new opportunities.",
+          "description": "${employee.firstName} is an innovator.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -719,8 +719,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         },
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} is not afraid to try a new risky idea.",
-          "description": "${employee.firstName} is not afraid to try a new risky idea.",
+          "title": "${employee.firstName} is driven by opportunity and is not afraid to make mistakes.",
+          "description": "${employee.firstName} takes smart risks.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -753,8 +753,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} understands the vision, values and strategic goals of ${survey.organization.name}. ",
-          "description": "${employee.firstName} understands the vision, values and strategic goals of ${survey.organization.name}. ",
+          "title": "${employee.firstName} sets clear direction, always communicating where we are and where we are going. ",
+          "description": "${employee.firstName} leads us to a better future. ",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -770,7 +770,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName}’s personal essence and contribution are in sync with ${survey.organization.name}’s purpose and vision.",
-          "description": "${employee.firstName}’s personal essence and contribution are in sync with ${survey.organization.name}’s purpose and vision.",
+          "description": "${employee.firstName}’s loves what ${employeeDemographics.pronoun || 'they'} does.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -786,7 +786,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} believes in leading ${survey.organization.name} as an active participant in the future of our society and planet.",
-          "description": "${employee.firstName} believes in leading ${survey.organization.name} as an active participant in the future of our society and planet.",
+          "description": "${employee.firstName} makes a difference.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -832,8 +832,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "My personal needs and opinions are heard and respected",
-          "description": "My personal needs and opinions are heard and respected",
+          "title": "My personal needs and opinions are heard and respected.",
+          "description": "I feel cared for.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -849,7 +849,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "Training and personal development is encouraged.",
-          "description": "Training and personal development is encouraged.",
+          "description": "I have opportunity to learn.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -865,7 +865,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "I clearly understand my role and career path.",
-          "description": "I clearly understand my role and career path.",
+          "description": "I have opportunity to grow.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -898,8 +898,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} deals with conflict quickly, openly and respectfully.",
-          "description": "${employee.firstName} deals with conflict quickly, openly and respectfully.",
+          "title": "Team communication and role clarity is effective.",
+          "description": "We all know who is doing what.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -915,7 +915,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "My colleagues trust and encourage me to do my best for the business.",
-          "description": "My colleagues trust and encourage me to do my best for the business.",
+          "description": "We have each other's backs.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -931,7 +931,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "We encourage healthy conflict through open and honest dialogue.",
-          "description": "We encourage healthy conflict through open and honest dialogue.",
+          "description": "We respect each other's differences.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -954,8 +954,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "We are proud to be part of ${survey.organization.name}.",
-          "description": "We are proud to be part of ${survey.organization.name}.",
+          "title": "We are proud ambassadors of the ${survey.organization.name} brand.",
+          "description": "We love our brand.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -971,7 +971,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "Our daily actions uphold ${survey.organization.name}’s values, brand and stakeholder promises.",
-          "description": "Our daily actions uphold ${survey.organization.name}’s values, brand and stakeholder promises.",
+          "description": "Our culture is alive and healthy.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -986,8 +986,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         },
         {
           "_id": new ObjectID(),
-          "title": "We are goal-driven, professional and efficient.",
-          "description": "We are goal-driven, professional and efficient.",
+          "title": "We respect and appreciate the time and efforts of others.",
+          "description": "Our culture is inclusive; it belongs to all of us.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1021,7 +1021,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "We are goal-driven, professional and efficient.",          
-          "description": "We are goal-driven, professional and efficient.",
+          "description": "We care about quality results.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1036,8 +1036,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         },
         {
           "_id": new ObjectID(),
-          "title": "We hold ourselves and each other accountable",
-          "description": "We hold ourselves and each other accountable",
+          "title": "We hold ourselves and each other accountable.",
+          "description": "We stick to our promises and deadlines.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1053,7 +1053,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "We take initiative to get things done.",
-          "description": "We take initiative to get things done.",
+          "description": "We go the extra mile.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1086,8 +1086,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "We proactively share information and red flags",
-          "description": "We proactively share information and red flags",
+          "title": "We proactively address red flags.",
+          "description": "We speak up when something is wrong and needs to change.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1102,8 +1102,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         },
         {
           "_id": new ObjectID(),
-          "title": "We are agile and relevant",
-          "description": "We are agile and relevant",
+          "title": "We respond quickly to challenges and opportunities.",
+          "description": "We love a new challenge.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1119,7 +1119,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "We encourage new ideas, even if they are risky.",
-          "description": "We encourage new ideas, even if they are risky.",
+          "description": "We are not afraid to learn from our mistakes.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1152,8 +1152,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "${survey.organization.name}’s vision, values and strategic goals are clearly communicated to all.",
-          "description": "${survey.organization.name}’s vision, values and strategic goals are clearly communicated to all. ",
+          "title": "I know how to contribute to ${survey.organization.name}’s vision, values and strategy.",
+          "description": "I believe in ${survey.organization.name}’s future. ",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1169,7 +1169,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "I am inspired by ${survey.organization.name}’s purpose, brand and promise to our stakeholders.",
-          "description": "I am inspired by ${survey.organization.name}’s purpose, brand and promise to our stakeholders.",
+          "description": "I love working at ${survey.organization.name}.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1185,7 +1185,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "Organisation] is a responsible corporate citizen, making a positive contribution to society and the planet.",
-          "description": "Organisation] is a responsible corporate citizen, making a positive contribution to society and the planet.",
+          "description": "We make a difference.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1229,7 +1229,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} listens to and respects our needs and opinions.",
-          "description": "The ${survey.delegateTeamName} listens to and respects our needs and opinions.",
+          "description": "They care for others.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1245,7 +1245,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} actively shares knowledge and teaches us as needed.",
-          "description": "The ${survey.delegateTeamName} actively shares knowledge and teaches us as needed.",
+          "description": "They encourage learning.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1261,7 +1261,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} brings value and new opportunities to us.",
-          "description": "The ${survey.delegateTeamName} brings value and new opportunities to us.",
+          "description": "They enable other teams to contribute and grow.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1295,7 +1295,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "We clearly understand roles and communication lines between our two teams.",
-          "description": "We clearly understand roles and communication lines between our two teams.",
+          "description": "Our two teams work as one.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1311,7 +1311,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} supports us to do our best.",
-          "description": "The ${survey.delegateTeamName} supports us to do our best.",
+          "description": "They trust us.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1326,8 +1326,8 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         },
         {
           "_id": new ObjectID(),
-          "title": "The ${survey.delegateTeamName} encourages healthy debate to air and resolve our differences.",
-          "description": "The ${survey.delegateTeamName} encourages healthy debate to air and resolve our differences.",
+          "title": "The ${survey.delegateTeamName} encourages mutual respect and healthy debate to resolve our differences.",
+          "description": "They respect and value our input.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1351,7 +1351,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "We are proud to be colleagues of the ${survey.delegateTeamName}.",
-          "description": "We are proud to be colleagues of the ${survey.delegateTeamName}.",
+          "description": "They are dedicated to ${survey.organization.name}'s brand.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1367,7 +1367,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} sets the standard for how we live ${survey.organization.name}’s brand. ",
-          "description": "The ${survey.delegateTeamName} sets the standard for how we live ${survey.organization.name}’s brand.",
+          "description": "They are a shining example for us to follow.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1383,7 +1383,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} recognises and praises our efforts.",
-          "description": "The ${survey.delegateTeamName} recognises and praises our efforts.",
+          "description": "We win together.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1417,7 +1417,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} has a focused and professional work ethic, driven by clear goals and targets.",          
-          "description": "The ${survey.delegateTeamName} has a focused and professional work ethic, driven by clear goals and targets.",
+          "description": "They deliver results.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1433,7 +1433,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} honours their commitments professionally and timeously.",
-          "description": "The ${survey.delegateTeamName} honours their commitments professionally and timeously.",
+          "description": "They deliver on their promises.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1449,7 +1449,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} supports us without being asked.",
-          "description": "The ${survey.delegateTeamName} supports us without being asked.",
+          "description": "They take initiative.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1483,7 +1483,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} is quick to spot a challenge and find a solution.",
-          "description": "The ${survey.delegateTeamName} is quick to spot a challenge and find a solution.",
+          "description": "They speak up to set things right.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1499,7 +1499,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} takes on new initiatives with energy and speed.",
-          "description": "The ${survey.delegateTeamName} takes on new initiatives with energy and speed.",
+          "description": "They love a new challenge.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1515,7 +1515,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} dedicates time to creative thinking and brainstorming.",
-          "description": "The ${survey.delegateTeamName} dedicates time to creative thinking and brainstorming.",
+          "description": "They believe that 'good enough' is not good enough.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1549,7 +1549,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} is clear about their contribution to ${survey.organization.name}’s vision, values and strategy.",
-          "description": "The ${survey.delegateTeamName} is clear about their contribution to ${survey.organization.name}’s vision, values and strategy.",
+          "description": "They believe in our future.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1565,7 +1565,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName} is inspired by their contribution to ${survey.organization.name}’s future.",
-          "description": "The ${survey.delegateTeamName} is inspired by their contribution to ${survey.organization.name}’s future.",
+          "description": "They love what they do.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1581,7 +1581,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "The ${survey.delegateTeamName}’s contribution to ${survey.organization.name} enhances our standing as a responsible corporate citizen.",
-          "description": "The ${survey.delegateTeamName}’s contribution to ${survey.organization.name} enhances our standing as a responsible corporate citizen.",
+          "description": "They make a difference.",
 
           "assessor_title": "",
           "assessor_description": "",

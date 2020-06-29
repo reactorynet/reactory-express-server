@@ -5,9 +5,12 @@ type Lasec360User {
   firstName: String
   lastName: String
   email: String
+  activeCompany: String
   roles: [ String ]
   target: Float
   targetPercent: Float
+  repCodes: [ String ]
+  signature: String
 }
 
 input Lasec360UserSearch {
@@ -44,6 +47,7 @@ type LasecNextAction {
 }
 
 extend type Query {
+  LasecLoggedInUser: Lasec360User
   LasecGetRemoteUsers(search: Lasec360UserSearch): [ Lasec360User ]
   LasecGetRemoteUser(search: Lasec360UserSearch): Lasec360User
   LasecGetUserNextActions(id: String): [ LasecNextAction  ]

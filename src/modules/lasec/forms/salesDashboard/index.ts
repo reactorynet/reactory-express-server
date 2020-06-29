@@ -38,6 +38,9 @@ const SalesDashboard: Reactory.IReactoryForm = {
   helpTopics: ['sales-dashboard'],
   uiSchema: $uiSchema,
   graphql: $graphql,
+  widgetMap: [
+    { componentFqn: 'lasec-crm.RepCodeFilter@1.0.0', widget: 'RepCodeFilter' },
+  ],
   refresh: {
     onChange: [
       'period',

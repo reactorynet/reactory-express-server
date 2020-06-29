@@ -2,7 +2,7 @@ import om from 'object-mapper';
 import { ObjectId } from 'mongodb';
 import LasecAPI from '@reactory/server-modules/lasec/api';
 import logger from '@reactory/server-core/logging';
-export default {  
+export default {    
   Query: {
     LasecSalesTeams: async () => {
       logger.debug(`TeamResolver.LasecSalesTeams()`);
@@ -26,7 +26,7 @@ export default {
       }
       
       return [];      
-    }
+    },    
   },
   Mutation: {
 

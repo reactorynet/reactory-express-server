@@ -206,6 +206,8 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
       logger.error("JSON Error", jsonError);
       apiResponse.text().then(text => {
         logger.error(`Error Source: ${text}`);
+
+        
       });
     }
   } else {

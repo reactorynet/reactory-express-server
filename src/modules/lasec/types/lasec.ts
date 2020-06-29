@@ -108,3 +108,33 @@ export interface LasecApiResponse {
     enabled: boolean
   },  
 };
+
+
+export interface Lasec360User {
+  id: String
+  code: String
+  repId: String
+  firstName: String
+  lastName: String
+  email: String
+  company: String | 'LasecSA' | 'LasecInternational' | 'LasecEducation'
+  roles: [ String ]
+  target: Number
+  targetPercent: Number
+}
+
+export interface Lasec360UserSearch {
+  repIds: [ String ]
+  emails: [ String ]
+}
+
+export interface DateRange {
+  startDate: Date
+  endDate: Date
+}
+
+export interface LasecNextActionsFilter {
+  dateRange?: DateRange
+  actioned?: Boolean
+  actionType: String  
+}

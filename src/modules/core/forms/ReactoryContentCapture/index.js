@@ -1,6 +1,6 @@
 
 import schema from './schema';
-import DefaultUiSchema from './uiSchema';
+import DefaultUiSchema, { minimalEdit } from './uiSchema';
 import $graphql from './graphql.js';
 
 
@@ -25,6 +25,24 @@ const ContentCapture = {
   registerAsComponent: true,
   schema,
   uiSchema: DefaultUiSchema,
+  uiSchemas: [
+    {
+      id: 'default',
+      title: 'Default',
+      key: 'default',
+      description: 'Default Content Edit View',
+      icon: 'edit',
+      uiSchema: DefaultUiSchema,
+    },
+    { 
+      id: 'minimal',
+      title: 'Minmal',
+      key: 'minimal',
+      description: 'Minimal Content Edit View',
+      icon: 'edit',
+      uiSchema: minimalEdit,
+    }       
+  ],
   defaultFormValue: {
     slug: ''
   },
