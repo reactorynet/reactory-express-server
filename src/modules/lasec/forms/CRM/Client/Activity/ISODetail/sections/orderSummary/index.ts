@@ -70,7 +70,7 @@ const uiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '130px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -91,7 +91,7 @@ const uiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '130px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -112,7 +112,7 @@ const uiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '130px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -133,7 +133,7 @@ const uiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '130px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -154,7 +154,7 @@ const uiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '130px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },

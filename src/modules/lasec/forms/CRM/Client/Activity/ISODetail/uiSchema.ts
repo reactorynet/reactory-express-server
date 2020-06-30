@@ -4,11 +4,17 @@ const uiSchema: any = {
     componentType: "div",
     toolbarPosition: 'none',
     containerStyles: {
+      backgroundColor: '#F6F6F6',
+      border: 'none',
+      boxShadow: 'none',
       padding: 0,
       margin: 0,
       paddingBottom: 0
     },
     style: {
+      backgroundColor: '#F6F6F6',
+      border: 'none',
+      boxShadow: 'none',
       marginTop: 0,
       marginRight: 0,
       marginLeft: 0,
@@ -18,6 +24,9 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+  },
   'ui:grid-layout': [
     {
       header: { xs: 12 },
@@ -33,6 +42,9 @@ const uiSchema: any = {
     },
     {
       lineItems: { xs: 12 },
+    },
+    {
+      comments: { xs: 12 },
     },
   ],
 
@@ -85,7 +97,15 @@ const uiSchema: any = {
         'formContext.$formData.lineItems': 'formData.lineItems',
       }
     }
-  }
+  },
+  comments: {
+    'ui:options': {
+      componentFqn: 'lasec-crm.LasecCRMISODetailComments@1.0.0',
+      componentPropsMap: {
+        'formContext.$formData.comments': 'formData.comments',
+      }
+    }
+  },
 
   // orderStatus: {
   //   'ui:widget': 'LabelWidget',

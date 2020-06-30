@@ -322,6 +322,16 @@ type SalesOrderLineItem {
   backOrderQty: Int
   reservedQty: Int
   comment: String
+  image: String
+}
+
+type SalesOrderComment {
+  comment: String
+}
+
+type SalsOrderDetails {
+  lineItems: [SalesOrderLineItem]
+  comments: [SalesOrderComment]
 }
 
 type Invoice {
@@ -429,7 +439,7 @@ extend type Query {
     dateFilter: String
     iter: Int
   ): PagedCRMSalesOrders
-  LasecGetISODetail(orderId: String!): [SalesOrderLineItem]
+  LasecGetISODetail(orderId: String!): SalsOrderDetails
   LasecGetCRMClientInvoices(
     clientId: String
     salesTeamId: String

@@ -141,7 +141,7 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 };
 
 
-export const getLoggedIn360User: Function = async function(): Promise<Lasec360User> {
+export const getLoggedIn360User: Function = async function (): Promise<Lasec360User> {
   const { user } = global;
   const lasecCreds = user.getAuthentication("lasec");
 
@@ -1778,10 +1778,11 @@ export const getISODetails = async (params) => {
 
   logger.debug(`SALES ORDERS:: ${JSON.stringify(salesOrders)}`);
 
+  let comments = [];
   let lineItems = [];
   salesOrders.forEach(so => {
-
     if (so.product_code != '') {
+
       const item = {
         id: so.id,
         line: so.line,
@@ -1794,33 +1795,24 @@ export const getISODetails = async (params) => {
         shippedQty: so.shipped_qty,
         backOrderQty: so.back_order_qty,
         reservedQty: so.reserved_qty,
-        comment: so.comment
+        comment: so.comment,
+        image: so.image_url
       }
 
       lineItems.push(item);
     }
-  })
 
-  // const lineItems = salesOrders.slice(0, 1).map(li => {
-  //   return {
-  //     id: li.id,
-  //     line: li.line,
-  //     productCode: li.product_code,
-  //     productDescription: li.product_description,
-  //     unitOfMeasure: li.unit_of_measure,
-  //     price: li.price,
-  //     totalPrice: li.total_price,
-  //     orderQty: li.order_qty,
-  //     shippedQty: li.shipped_qty,
-  //     backOrderQty: li.back_order_qty,
-  //     reservedQty: li.reserved_qty,
-  //     comment: li.comment
-  //   }
-  // });
+    if (so.comment != '')
+    comments.push({ comment: so.comment });
+
+  })
 
   logger.debug(`SALES tO RETUSN :: ${JSON.stringify(lineItems)}`);
 
-  return lineItems;
+  return {
+    lineItems,
+    comments
+  };
 }
 
 export const getClientInvoices = async (params) => {

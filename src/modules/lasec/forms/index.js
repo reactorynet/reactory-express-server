@@ -98,6 +98,7 @@ import LasecCRMISODetailDeliveryDetails from './CRM/Client/Activity/ISODetail/se
 import LasecCRMISODetailOrderSummary from './CRM/Client/Activity/ISODetail/sections/orderSummary';
 import LasecCRMISODetailDocuments from './CRM/Client/Activity/ISODetail/sections/documents';
 import LasecCRMISODetailLineItems from './CRM/Client/Activity/ISODetail/sections/lineItems';
+import LasecCRMISODetailComments from './CRM/Client/Activity/ISODetail/sections/comments';
 
 
 const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
@@ -183,4 +184,5 @@ export default [
   LasecCRMISODetailOrderSummary,
   LasecCRMISODetailDocuments,
   LasecCRMISODetailLineItems,
+  LasecCRMISODetailComments
 ];

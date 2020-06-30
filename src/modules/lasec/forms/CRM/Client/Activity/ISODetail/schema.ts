@@ -65,6 +65,9 @@ const schema: Reactory.ISchema = {
     lineItems: {
       type: 'string',
       title: 'Line Items',
+    },
+    comments: {
+      type: 'string'
     }
   }
 };

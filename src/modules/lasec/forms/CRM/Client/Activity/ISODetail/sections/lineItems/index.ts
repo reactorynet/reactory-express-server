@@ -45,6 +45,9 @@ const schema: Reactory.ISchema = {
           comment: {
             type: 'string'
           },
+          image: {
+            type: 'string'
+          },
         }
       },
       title: 'Line Items',
@@ -86,6 +89,30 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
+        {
+          title: '', field: 'image',
+          width: '200px',
+          component: 'core.ImageComponent@1.0.0',
+          props: {
+            'ui:options': {
+              variant: 'rounded',
+              style: {
+                marginLeft: '16px'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.image': 'value',
+          },
+          cellStyle: {
+            maxWidth: '200px',
+            width: '200px'
+          },
+          headerStyles: {
+            maxWidth: '200px',
+            width: '200px'
+          }
+        },
         { title: 'Stock Code', field: 'productCode' },
         { title: 'Product Description', field: 'productDescription' },
         { title: 'Unit of Measure', field: 'unitOfMeasure' },
@@ -106,9 +133,9 @@ const uiSchema: any = {
           },
         },
         { title: 'Order Qty', field: 'orderQty' },
+        { title: 'Reserved Qty', field: 'reservedQty' },
         { title: 'Shipped Qty', field: 'shippedQty' },
         { title: 'Back Order', field: 'backOrderQty' },
-        { title: 'Comment', field: 'comment' },
       ],
       options: {
         grouping: false,
@@ -135,7 +162,9 @@ const LasecCRMISODetailLineItems: Reactory.IReactoryForm = {
   schema: schema,
   uiSchema: uiSchema,
   defaultFormValue: {},
-  widgetMap: [],
+  widgetMap: [
+    { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
+  ],
 };
 
 export default LasecCRMISODetailLineItems;

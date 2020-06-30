@@ -2,11 +2,15 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 
 const schema: Reactory.ISchema = {
   type: 'object',
+  title: 'Document',
   properties: {
     documentIds: {
       type: 'string',
       title: 'Documents'
     },
+    upload: {
+      type: 'string'
+    }
   }
 };
 
@@ -38,6 +42,9 @@ const uiSchema: any = {
     {
       documentIds: { xs: 12 },
     },
+    {
+      upload: { xs: 12 },
+    },
   ],
 
   documentIds: {
@@ -67,6 +74,14 @@ const uiSchema: any = {
       },
     },
   },
+  upload: {
+    'ui:widget': 'DocumentUploadWidget',
+    'ui:options': {
+      propertyMap: {
+        'formContext.$formData.documentIds': 'ids'
+      },
+    },
+  },
 
 };
 
@@ -86,6 +101,7 @@ const LasecCRMISODetailDocuments: Reactory.IReactoryForm = {
   defaultFormValue: {},
   widgetMap: [
     { componentFqn: 'core.DocumentListComponent@1.0.0', widget: 'DocumentListWidget' },
+    { componentFqn: 'core.DocumentUploadComponent@1.0.0', widget: 'DocumentUploadWidget' },
   ],
 };
 

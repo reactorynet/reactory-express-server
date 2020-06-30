@@ -5,37 +5,45 @@ const graphql: Reactory.IFormGraphDefinition = {
     name: 'LasecGetISODetail',
     text: `query LasecGetISODetail($orderId: String!) {
       LasecGetISODetail(orderId: $orderId) {
-        id
-        line
-        productCode
-        productDescription
-        unitOfMeasure
-        price
-        totalPrice
-        orderQty
-        shippedQty
-        backOrderQty
-        reservedQty
-        comment
+        lineItems {
+          id
+          line
+          productCode
+          productDescription
+          unitOfMeasure
+          price
+          totalPrice
+          orderQty
+          shippedQty
+          backOrderQty
+          reservedQty
+          comment
+          image
+        }
+        comments {
+          comment
+        }
       }
     }`,
     variables: {
       'formData.orderId': 'orderId',
     },
-    resultType: 'array',
+    resultType: 'object',
     resultMap: {
-      '[].id': 'lineItems[].id',
-      '[].line': 'lineItems[].line',
-      '[].productCode': 'lineItems[].productCode',
-      '[].productDescription': 'lineItems[].productDescription',
-      '[].unitOfMeasure': 'lineItems[].unitOfMeasure',
-      '[].price': 'lineItems[].price',
-      '[].totalPrice': 'lineItems[].totalPrice',
-      '[].orderQty': 'lineItems[].orderQty',
-      '[].shippedQty': 'lineItems[].shippedQty',
-      '[].backOrderQty': 'lineItems[].backOrderQty',
-      '[].reservedQty': 'lineItems[].reservedQty',
-      '[].comment': 'lineItems[].comment',
+      'lineItems[].id': 'lineItems[].id',
+      'lineItems[].line': 'lineItems[].line',
+      'lineItems[].productCode': 'lineItems[].productCode',
+      'lineItems[].productDescription': 'lineItems[].productDescription',
+      'lineItems[].unitOfMeasure': 'lineItems[].unitOfMeasure',
+      'lineItems[].price': 'lineItems[].price',
+      'lineItems[].totalPrice': 'lineItems[].totalPrice',
+      'lineItems[].orderQty': 'lineItems[].orderQty',
+      'lineItems[].shippedQty': 'lineItems[].shippedQty',
+      'lineItems[].backOrderQty': 'lineItems[].backOrderQty',
+      'lineItems[].reservedQty': 'lineItems[].reservedQty',
+      'lineItems[].comment': 'lineItems[].comment',
+      'lineItems[].image': 'lineItems[].image',
+      'comments[].comment': 'comments.[].comment'
     },
     // autoQuery: true,
     edit: false,
