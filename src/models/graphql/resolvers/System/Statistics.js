@@ -1,6 +1,6 @@
 import { ObjectID } from 'mongodb';
 import logger from '../../../../logging';
-import UserModel from '../../../schema/User';
+import ReactoryUserModel from '../../../schema/User';
 
 export default {
   Statistic: {
@@ -10,7 +10,7 @@ export default {
   },
   StatisticEntry: {
     user: (statisticEntry) => {
-      if (ObjectID.isValid(statisticEntry.user)) return UserModel.findById(statisticEntry.user);
+      if (ObjectID.isValid(statisticEntry.user)) return ReactoryUserModel.findById(statisticEntry.user);
       if (statisticEntry.user && statisticEntry.user._id) return statisticEntry.user;
 
       return null;

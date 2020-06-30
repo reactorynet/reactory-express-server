@@ -5,36 +5,44 @@ import { IObjectSchema } from '@reactory/server/core/schema';
 import LasecApi from '@reactory/server-modules/lasec/api';
 import { User } from "@reactory/server-core/models";
 import { Quote, QuoteReminder } from '../schema/Quote';
+import { getLoggedIn360User } from './Helpers';
+import { Lasec360User } from '../types/lasec';
+import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 
-interface Lasec360User {
-  id: String
-  code: String
-  repId: String
-  firstName: String
-  lastName: String
-  email: String
-  roles: [ String ]
-  target: Number
-  targetPercent: Number
-}
 
-interface Lasec360UserSearch {
-  repIds: [ String ]
-  emails: [ String ]
-}
 
-interface DateRange {
-  startDate: Date
-  endDate: Date
-}
 
-interface LasecNextActionsFilter {
-  dateRange?: DateRange
-  actioned?: Boolean
-  actionType: String  
-}
 
-export default {  
+export default {
+  Lasec360User: {
+    /**
+     * "signature":null,
+     * "username":"werner.weber@gmail.com",
+     * "first_name":"Werner",
+     * "surname":"Weber",
+     * "email":"werner.weber@gmail.com",
+     * "skype_handle":"werner.weber@gmail.com",
+     * "direct_number":"",
+     * "mobile_number":"",
+     * "sales_team_ids":["100"],
+     * "sales_team_id":"100",
+     * "target":0,
+     * "job_title":"Developer",
+     * "department":"IT",
+     * "id":"335",
+     * "user_type":"lasec_sa",
+     * "group_ids":[1],
+     * "group_names":["default"]
+     */
+    firstName: (usr: any) => usr.first_name,
+    lastName: (usr: any) => usr.first_name,
+    repId: (lasec360User: any) => lasec360User.sales_team_id,
+    activeCompany: (lasec360User: any) => lasec360User.user_type,
+    repCodes: (lasec360User: any) => {
+      return lasec360User.sales_team_ids || []
+    },
+
+  },  
   Query: {
     LasecGetRemoteUsers: async (pbj: any, params: Lasec360UserSearch) => {
       logger.debug(`LasecGetRemoteUsers() ${global.user.fullName()}`);
@@ -52,12 +60,14 @@ export default {
       const id: String = params.id;
       const filter: LasecNextActionsFilter = params.filter || { actioned: false };
       return QuoteReminder.find({}).then()      
+    },
+    LasecLoggedInUser: async( obj, params: any): Promise<Lasec360User> => {     
+      return getLoggedIn360User();
     }
   },
   Mutation: {
     LasecSyncRemoteUserData: async ({ search: Lasec360UserSearch }) => {
 
-      
     },
     LasecReset360Credentials: async (object: any, params: any ): Promise<boolean> => {
       logger.debug(`Resetting credetials`, { params })

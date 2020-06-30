@@ -23,7 +23,8 @@ import {
   LasecDashboardSearchParams,
   LasecProductDashboardParams,
   USER_FILTER_TYPE,
-  DATE_FILTER_PRESELECT
+  DATE_FILTER_PRESELECT,
+  Lasec360User
 } from '../types/lasec';
 
 
@@ -140,7 +141,7 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 };
 
 
-export const getLoggedIn360User: any = async () => {
+export const getLoggedIn360User: Function = async function(): Promise<Lasec360User> {
   const { user } = global;
   const lasecCreds = user.getAuthentication("lasec");
 
@@ -160,6 +161,7 @@ export const getLoggedIn360User: any = async () => {
       me360 = await lasecApi.User.getLasecUsers([staff_user_id], "ids").then();
       if (me360.length === 1) {
         me360 = me360[0];
+        //fetch any other data that may be required for the data fetch
       }
     }
 

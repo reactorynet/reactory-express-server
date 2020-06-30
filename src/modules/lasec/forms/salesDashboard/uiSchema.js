@@ -101,7 +101,7 @@ export default {
     },
 
     teamFilter: {
-      'ui:widget': 'SelectWithDataWidget',
+      'ui:widget': 'RepCodeFilter',
       'ui:options': {
         multiSelect: true,
         inputProps: {

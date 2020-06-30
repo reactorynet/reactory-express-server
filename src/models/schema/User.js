@@ -428,6 +428,8 @@ UserSchema.statics.parse = (inputString) => {
   return {};
 };
 
+export const ReactoryUserSchema = UserSchema;
 
-const UserModel = mongoose.model('User', UserSchema);
-export default UserModel;
+
+const ReactoryUserModel = mongoose.model('User', UserSchema);
+export default ReactoryUserModel;

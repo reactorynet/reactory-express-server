@@ -1,5 +1,4 @@
 /* eslint-disable no-await-in-loop */
-import co from 'co';
 import lodash, { isArray } from 'lodash';
 import ReactoryApi from '../application';
 import { Application, User, ReactoryClient, Menu, ClientComponent } from '../models';

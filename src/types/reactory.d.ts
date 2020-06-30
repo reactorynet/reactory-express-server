@@ -388,7 +388,7 @@ declare namespace Reactory {
     priority: number,
     graphDefinitions?: IGraphDefinitions,
     workflows?: IWorkflow[],
-    forms?: IReactoryForm[],
+    forms?: IReactoryForm[],    
     services?: IReactoryServiceDefinition[],
     clientPlugins?: Client.IReactoryPluginDefinition
   }
