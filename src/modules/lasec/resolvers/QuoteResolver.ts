@@ -43,7 +43,9 @@ import {
   getClientInvoices,
   getClientSalesHistory,
   getSODocuments,
-  deleteSalesOrdersDocument
+  deleteSalesOrdersDocument,
+  getSalesOrderComments,
+  saveSalesOrderComment
  } from './Helpers';
 
 
@@ -110,6 +112,14 @@ const getQuoteTimeline = async (quote, args, context, info) => {
 
 
 export default {
+  CRMSaleOrderComment: {
+    id: ({ id, _id }) => id || _id,
+    who: async ({ who }) => {
+      if (ObjectId.isValid(who)) {
+        return User.findById(who);
+      }
+    }
+  },
   QuoteReminder: {
     id: ({ id, _id }) => id || _id,
     who: ({ id, who = [] }) => {
@@ -524,6 +534,10 @@ export default {
     LasecGetCRMClientSalesHistory: async (obj, args) => {
       return getClientSalesHistory(args);
     },
+
+    LasecGetSaleOrderComments: async (obj, args) => {
+      return getSalesOrderComments(args);
+    }
   },
   Mutation: {
     LasecSetQuoteHeader: async (parent, { quote_id, input }) => {
@@ -843,6 +857,10 @@ export default {
 
     LasecDeleteSaleOrderDocument: async (obj, args) => {
       return deleteSalesOrdersDocument(args);
+    },
+
+    LasecCRMSaveSaleOrderComment: async (obj, args) => {
+      return saveSalesOrderComment(args);
     },
   }
 };

@@ -10,6 +10,7 @@ import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { Organization, User, Task } from '@reactory/server-core/models';
+import LasecSalesOrderComment from '@reactory/server-modules/lasec/models/LasecSalesOrderComment';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
 import Hash from '@reactory/server-core/utils/hash';
@@ -1803,7 +1804,7 @@ export const getISODetails = async (params) => {
     }
 
     if (so.comment != '')
-    comments.push({ comment: so.comment });
+      comments.push({ comment: so.comment });
 
   })
 
@@ -2027,3 +2028,48 @@ export const getClientSalesHistory = async (params) => {
   return result;
 
 }
+
+export const getSalesOrderComments = async (args) => {
+
+  logger.debug(`FIND COMMENTS:: ${JSON.stringify(args)}`);
+
+  const { orderId } = args;
+
+  const comments = await LasecSalesOrderComment.find({ salesOrderId: orderId }).sort({ when: -1 });
+
+  logger.debug(`COMMENTS:: ${JSON.stringify(comments)}`);
+
+  return {
+    orderId,
+    comments
+  };
+}
+
+export const saveSalesOrderComment = async (args) => {
+
+  logger.debug(`NEW COMMENT:: ${JSON.stringify(args)}`);
+
+  try {
+
+    const { orderId, comment } = args;
+
+    let newComment = new LasecSalesOrderComment({
+      who: global.user._id,
+      salesOrderId: orderId,
+      comment: comment,
+      when: new Date()
+    });
+
+    const response = await newComment.save().then();
+
+    logger.debug(`COMMENT SAVE RESPONSE:: ${JSON.stringify(response)}`);
+
+    return {
+      success: true,
+      message: 'Comment successfully saved.'
+    }
+  } catch (error) {
+    throw new ApiError(`Error saving comment. ${error}`);
+  }
+}
+

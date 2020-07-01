@@ -4,12 +4,17 @@ const schema: Reactory.ISchema = {
   type: 'object',
   title: 'Document',
   properties: {
+    orderId: {
+      type: 'string',
+      title: 'OrderId'
+    },
     documentIds: {
       type: 'string',
       title: 'Documents'
     },
     upload: {
-      type: 'string'
+      type: 'string',
+      title: 'Additional Documents'
     }
   }
 };
@@ -47,6 +52,10 @@ const uiSchema: any = {
     },
   ],
 
+  orderId: {
+    'ui:widget': 'HiddenWidget',
+  },
+
   documentIds: {
     'ui:widget': 'DocumentListWidget',
     'ui:options': {
@@ -77,8 +86,16 @@ const uiSchema: any = {
   upload: {
     'ui:widget': 'DocumentUploadWidget',
     'ui:options': {
+      props: {
+        slug: 'salesorder_${orderId}',
+        title: 'Upload new documents for this Sales Order',
+        mode: 'editing',
+        helpTopics: ['Sales Order Document Upload'],
+        helpTitle: 'Sales Order Document Upload',
+        placeHolder: 'Capture a comment or upload a document for this Sales Order',
+      },
       propertyMap: {
-        'formContext.$formData.documentIds': 'ids'
+        'formContext.$formData.orderId': 'orderId'
       },
     },
   },
@@ -101,6 +118,7 @@ const LasecCRMISODetailDocuments: Reactory.IReactoryForm = {
   defaultFormValue: {},
   widgetMap: [
     { componentFqn: 'core.DocumentListComponent@1.0.0', widget: 'DocumentListWidget' },
+    // { componentFqn: 'core.StaticContent@1.0.0', widget: 'StaticContent' },
     { componentFqn: 'core.DocumentUploadComponent@1.0.0', widget: 'DocumentUploadWidget' },
   ],
 };

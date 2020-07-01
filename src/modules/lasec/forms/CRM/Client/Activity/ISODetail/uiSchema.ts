@@ -86,6 +86,7 @@ const uiSchema: any = {
     'ui:options': {
       componentFqn: 'lasec-crm.LasecCRMISODetailDocuments@1.0.0',
       componentPropsMap: {
+        'formContext.$formData.orderId': 'formData.orderId',
         'formContext.$formData.documentIds': 'formData.documentIds',
       }
     }
@@ -102,7 +103,8 @@ const uiSchema: any = {
     'ui:options': {
       componentFqn: 'lasec-crm.LasecCRMISODetailComments@1.0.0',
       componentPropsMap: {
-        'formContext.$formData.comments': 'formData.comments',
+        'formContext.$formData.orderId': 'formData.orderId',
+        // 'formContext.$formData.comments': 'formData.comments',
       }
     }
   },
