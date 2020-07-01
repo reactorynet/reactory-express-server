@@ -42,7 +42,7 @@ const graphql: Reactory.IFormGraphDefinition =  {
           iso
           customer
           client
-          crmClient {
+          crmCustomer {
             id
             registeredName
             customerStatus 

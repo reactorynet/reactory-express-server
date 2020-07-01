@@ -1,7 +1,10 @@
-import chai from 'chai';
+import chai, { assert } from 'chai';
 import env from '../../env';
+const moment = require('moment');
 //do not use import with BTOA as it does not exports the default function
 const btoa = require('btoa');
+
+
 const {
   API_URI_ROOT,
   REACTORY_CLIENT_KEY,
@@ -14,13 +17,41 @@ const {
 import { apiStatusQuery } from '../../core/queries';
 
 import logger from '../../logger';
+import { Context } from 'mocha';
+import ApiError from '../../../src/exceptions';
+import { isArray } from 'lodash';
 
 const request = require('supertest')(API_URI_ROOT);
 
+const ttcBadge = (ttc: number) => {
+  let ttcBadge = '🎖'
+  if(ttc < 2000) {
+    ttcBadge = '🥉'
+  }
+
+  if(ttc < 1000) {
+    ttcBadge = '🥈'
+  }
+
+  if(ttc < 500) {
+    ttcBadge = '🥇'
+  }
+
+  if(ttc < 200) {
+    ttcBadge = '🏆'
+  }
+
+  if(ttc < 150) {
+    ttcBadge = '🏆🏆'
+  }
+
+  return ttcBadge;
+}
+
 describe('Lasec CRM Sales Orders', () => {  
   let logged_in_user: any = null;  
-
-  before((done) => {
+  const started = moment.utc();
+  before(`Should log in the user and set our auth token`, (done) => {
     let token = btoa(`${REACTORY_TEST_USER}:${REACTORY_TEST_USER_PWD}`);
     request.post('login')
       .set('Accept', 'application/json')
@@ -30,6 +61,7 @@ describe('Lasec CRM Sales Orders', () => {
       .send()
       .expect(200)
       .end((err: Error, res: any) => {
+        const ttc = moment.utc().diff(started, 'millisecond')
         if(err) done (err);
         else {        
           logged_in_user = res.body.user;
@@ -37,13 +69,14 @@ describe('Lasec CRM Sales Orders', () => {
           .set('Accept', 'application/json')
           .set('x-client-key', REACTORY_CLIENT_KEY)
           .set('x-client-pwd', REACTORY_CLIENT_PWD)
-          .set('Authorization', `Bearer ${res.body.user.token}`)
+          .set('Authorization', `Bearer ${logged_in_user.token}`)
           .send({ query: apiStatusQuery })
             .expect(200)
             .end((err: Error, res: any) => {        
               if(err) done(err);                    
-              else {
-                logged_in_user = {...logged_in_user, ...res.body.data.status}
+              else {                
+                logged_in_user = {...logged_in_user, ...res.body.data.apiStatus, logged_in_at: moment.utc()}
+                logger.debug(`${ttcBadge(ttc)} ( ${ttc} ms ): User ${logged_in_user.firstName} ${logged_in_user.lastName} logged into ${logged_in_user.applicationName}  ` );
                 done();
               }
             });                             
@@ -52,8 +85,11 @@ describe('Lasec CRM Sales Orders', () => {
   });
 
 
-  it(`Should return a list of sales orders ${REACTORY_TEST_USER}`, (done) => {
+  it(`Should return a list of sales orders for lasec user account ${REACTORY_TEST_USER}`, async function () {
 
+    const self: Context = this;
+    self.timeout(20000);
+    
     let pagedQuery = `query LasecGetPagedCRMSalesOrders(
       $search: String!,
       $paging: PagingRequest,
@@ -92,16 +128,16 @@ describe('Lasec CRM Sales Orders', () => {
           orderStatus
           iso
           customer
-          client
-          crmClient {
+          crmCustomer {
             id
             registeredName
-            customerStatus 
+            customerStatus
           }
+          client          
           poNumber
-          value,
+          value
           reserveValue
-          quoteId,
+          quoteId
           currency
           deliveryAddress
           warehouseNote
@@ -112,7 +148,7 @@ describe('Lasec CRM Sales Orders', () => {
         }
       }
     }`;
-    
+    const started = moment.utc();
     request.post('api')
       .set('Accept', 'application/json')
       .set('x-client-key', REACTORY_CLIENT_KEY)
@@ -126,25 +162,29 @@ describe('Lasec CRM Sales Orders', () => {
       } })
       .expect(200)
       .end((err: Error, res: any) => {        
-        if(err) {
-          logger.error(err);
-          done(err);
+        const ttc = moment.utc().diff(started, 'millisecond')
+        if(err) {          
+          logger.error(`Error executing graphql query`, { err, body: res.body });          
+          throw err;
         } 
         else {
-          if(res.body && res.body.data) {
-            const { LasecLoggedInUser } = res.body.data;
-            logger.debug(`${JSON.stringify(res.body.data)}`);
+          if(res.body && res.body) {
+            const { data, errors } = res.body;
+            const { LasecGetPagedCRMSalesOrders } = data;
+
+            if(errors && errors.length) {
+              throw new ApiError(`The response has errors`, errors);
+            }            
             
-            if(LasecLoggedInUser) {
-
-            }
-
-            done();
+            assert.exists(LasecGetPagedCRMSalesOrders, 'LasecGetPagedCRMSalesOrders does not exist');
+            assert.exists(LasecGetPagedCRMSalesOrders.paging && LasecGetPagedCRMSalesOrders.paging.total, 'LasecGetPagedCRMSalesOrders does not have paging information');
+            assert.exists(LasecGetPagedCRMSalesOrders.paging && LasecGetPagedCRMSalesOrders.salesOrders && isArray(LasecGetPagedCRMSalesOrders.salesOrders) === true, 'LasecGetPagedCRMSalesOrders does not have salesOrders information');
+                        
+            logger.debug(`${ttcBadge(ttc)} ( ${ttc} ms ): Found (${LasecGetPagedCRMSalesOrders.salesOrders.length}) SALES ORDERS  ` );                        
+            
           } else {
-            done(new Error('No Data Element on Response'));
-          }
-          
-          
+            throw new Error('No Data Element on Response');
+          }                    
         }                
       });
   });      

@@ -15,10 +15,10 @@ let _forms = [];
 const getModuleForms = () => {
   _forms = [];
   modules.enabled.forEach( ( module ) => {
-    logger.debug(`Loading Forms for module ${module.name}`);
+    logger.debug(`🗄 ${module.name}  `);
     if(isArray(module.forms) === true) {
       module.forms.forEach((form) => {
-        logger.debug(`Validating and Loading Form ${form.id}`);
+        logger.debug(`♻ ${form.nameSpace}.${form.name}@${form.version}  `);
         _forms.push(form);
       });
     }

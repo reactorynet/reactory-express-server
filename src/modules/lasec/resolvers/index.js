@@ -6,6 +6,7 @@ import ProductResolver from './ProductResolver';
 import CompanyResolver from './CompanyResolver';
 import LasecUserResolver from './LasecUserResolver';
 import CategoryResolver from './CategoryResolver';
+import SalesOrderRevolver from './SalesOrderResolver';
 
 const toMerge = [
   DashboardReolver,
@@ -15,7 +16,8 @@ const toMerge = [
   ProductResolver,
   CompanyResolver,
   LasecUserResolver,
-  CategoryResolver
+  CategoryResolver, 
+  SalesOrderRevolver
 ];
 
 let resolvers = {

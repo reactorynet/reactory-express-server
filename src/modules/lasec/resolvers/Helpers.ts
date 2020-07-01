@@ -57,7 +57,9 @@ export const totalsFromMetaData = (meta: any) => {
 
 
 export const synchronizeQuote = async (quote_id: string, owner: any, source: any = null, map: any = true) => {
+  logger.debug(`synchronizeQuote called ${quote_id}`)
   const quoteSyncTimeout = 3;
+  
 
   let _source = source;
   let _quoteDoc: LasecQuote | null;
@@ -1396,7 +1398,8 @@ export const getSalesOrders = async (params) => {
 
   const {
     productId,
-    filter,
+    filterBy,
+    search,
     paging = { page: 1, pageSize: 10 }
   } = params;
 
@@ -1693,7 +1696,7 @@ export const getCRMSalesOrders = async (params) => {
   let me = await getLoggedIn360User().then();
 
   let apiFilter = {
-    customer_id: me.id,
+    //customer_id: me.id,
     order_status: orderStatus,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),

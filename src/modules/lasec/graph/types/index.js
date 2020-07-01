@@ -10,13 +10,14 @@ const typeDefs = [];
   'SalesTeams/SalesTeams',
   'Quotes/Quote',
   'Products/Products',
+  'SalesOrder/SalesOrder',
   'Clients/Clients',
   'Category/Category',
   'CategoryFilter/CategoryFilter',
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;
-    logger.debug(`Loading ${fileName} - Graph definitions`);
+    logger.debug(`Adding [lasec-crm][${fileName}`);
     const source = fileAsString(require.resolve(fileName));
     typeDefs.push(`${source}`);
   } catch (e) {

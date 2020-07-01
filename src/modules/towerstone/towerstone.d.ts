@@ -17,12 +17,51 @@ declare namespace TowerStone {
     title: string
     entries: Array<IRatingScaleEntry>
   }
+
+  export interface IBehaviour {
+    id: string | ObjectID
+    title: string
+    description: string
+    ordinal: number
+
+    assessor_title: string
+    assessor_description: string
+    
+    delegate_title: string
+    delegate_description: string
+
+    chart_title: string
+    chart_color: string    
+    options?: any
+  }
+
+  export interface IQuality {
+    id: string | ObjectID
+    title: string
+    description: string
+    ordinal: number
+
+    assessor_title: string
+    assessor_description: string
+    
+    delegate_title: string
+    delegate_description: string
+
+    chart_title: string
+    chart_color: string
+
+    behaviours: Array<IBehaviour>
+    
+    options?: any
+  }
   
   export interface ILeadershipBrand {    
     title: string
     key: string
-    description: string,
-    ratingScale?: IRatingScale,    
+    description: string
+    organization: any
+    ratingScale?: IRatingScale
+    qualities: Array<IQuality>
   }
 
   export interface ILeadershipBrandDocument extends Mongoose.Document, ILeadershipBrand { }

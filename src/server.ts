@@ -106,6 +106,8 @@ const publicFolder = path.join(__dirname, 'public');
 mongoose.connect(MONGOOSE, { useNewUrlParser: true });
 
 let apolloServer: ApolloServer = null;
+let graphcompiled: boolean = false;
+let graphError: String = '';
 
 const app = express();
 app.use('*', cors(corsOptions));
@@ -128,13 +130,16 @@ try {
   };
   apolloServer = new ApolloServer(expressConfig);
   //schema = makeExecutableSchema({ typeDefs, resolvers });
+  graphcompiled = true;
   logger.info('Graph Schema Compiled, starting express');
 } catch (schemaCompilationError) {
   if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`)) {
     const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { enocding: 'utf-8' });    
     logger.error(`\n\n${error}`);
   }    
-  logger.error(`Error compiling the graphql schema ${schemaCompilationError.message}`);
+
+  graphError = `Error compiling the graphql schema ${schemaCompilationError.message}`;
+  logger.error(graphError);
 }
 
 
@@ -187,8 +192,9 @@ startup().then((startResult) => {
   app.use(flash());
   // logger.info(`Bots server using ${bots.name}`);
   logger.info(asciilogo);
-  logger.info(`Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
-  logger.info('System Initialized/Ready, enabling app');
+  if(graphcompiled === true) logger.info(`✅ Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
+  else logger.info(`🩺 GraphQL API not available - ${graphError}`);
+  logger.info(`✅ System Initialized/Ready, enabling app`);
   global.REACTORY_SERVER_STARTUP = new Date();
   amq.raiseSystemEvent('server.startup.complete');
 

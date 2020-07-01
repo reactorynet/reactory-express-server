@@ -283,32 +283,6 @@ type PagedCRMQuote {
   quotes: [Quote]
 }
 
-type SalesOrder {
-  id: String
-  salesOrderNumber: String
-  orderDate: String
-  shippingDate: String
-  quoteDate: String
-  orderType: String
-  orderStatus: String
-  iso: Int
-  customer: String
-  crmCustomer: LasecCRMCustomer
-  client: String
-  poNumber: String
-  quoteId: String
-  currency: String
-  deliveryAddress: String
-  warehouseNote: String
-  deliveryNote: String
-  salesTeam: String
-  value: Int
-  reserveValue: Int
-  shipValue: Int
-  backorderValue: Int
-  documentIds: [String]
-}
-
 type SalesOrderLineItem {
   id: String
   line: Int
