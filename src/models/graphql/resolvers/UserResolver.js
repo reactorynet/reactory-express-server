@@ -86,34 +86,15 @@ const MoresAssessmentsForUser = async (userId, status = ['ready']) => {
         break;
       }
     }
-
-    /**
-     * db.surveys.find({
-	endDate: {
-        $gte: ISODate("2019-01-29T00:00:00.000Z"),
-        $lt: ISODate("2020-05-01T00:00:00.000Z")
-    },
-    status: {
-      $in: ['ready']
-    },
-    mode: 'live',
-    delegates: {
-    	$elemMatch: { delegate: ObjectId('5c9dfd003be7b20726261b83') }
-    }
-})
-     */
-
+ 
     let modeFilters = ['live'];
-    if(user.hasRole(partner, 'DEVELOPER') === true || user.hasRole(partner, 'ADMIN') === true || user.hasRole(partner, 'ORGANIZATION_ADMIN') === true)  modeFilters.push('test');
+    if(user.hasRole(partner._id, 'DEVELOPER') === true || user.hasRole(partner._id, 'ADMIN') === true || user.hasRole(partner._id, 'ORGANIZATION_ADMIN') === true)  modeFilters.push('test');
 
-    const surveys = await Survey.find({
-      delegates: {
-        $elemMatch: { delegate: ObjectId(userId) }
-      },
+    const surveys = await Survey.find({      
       surveyType: {
         $in: assessmentTypes
       },
-      //mode: { $any: modeFilters },
+      mode: { $in: modeFilters },
       
       endDate: {
         $gte: moment().subtract(1, 'month').startOf('month').toDate()        
@@ -127,7 +108,6 @@ const MoresAssessmentsForUser = async (userId, status = ['ready']) => {
       .populate('delegate')
       .populate('survey')
       .then();
-
 
     return assessments;
   }
