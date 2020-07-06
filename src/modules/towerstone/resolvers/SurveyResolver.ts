@@ -1,3 +1,4 @@
+import { schema } from './../../lasec/forms/CRM/Organization/Lookup/index';
 import moment from 'moment';
 import co from 'co';
 import lodash from 'lodash';
@@ -12,6 +13,10 @@ import {
   Notification,
   Organigram,
   Template,
+  Region,
+  OperationalGroup,
+  BusinessUnit,
+  Team
 } from '@reactory/server-core/models';
 import { ObjectId } from 'mongodb';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
@@ -46,66 +51,82 @@ const TowerStoneGetDemographicLookup = async (args) => {
 
     case 'race': {
       return [
-        { id: 'race.1', name: 'Black', },
-        { id: 'race.2', name: 'White', },
-        { id: 'race.3', name: 'Asian', },
-        { id: 'race.4', name: 'Colored', },
+        { id: 'black', name: 'Black', },
+        { id: 'white', name: 'White', },
+        { id: 'asian', name: 'Asian', },
+        { id: 'colored', name: 'Colored', },
       ];
     }
     case 'age': {
       return [
-        { id: 'age.1', name: '18 - 30' },
-        { id: 'age.2', name: '31 - 40' },
-        { id: 'age.3', name: '41 - 50' },
-        { id: 'age.4', name: '>50' },
+        { id: '18', name: '18 - 30' },
+        { id: '31', name: '31 - 40' },
+        { id: '41', name: '41 - 50' },
+        { id: '50', name: '>50' },
       ];
     }
     case 'gender': {
       return [
-        { id: 'gender.1', name: 'M' },
-        { id: 'gender.2', name: 'F' },
-        { id: 'gender.3', name: 'No specified' },
+        { id: 'm', name: 'M' },
+        { id: 'f', name: 'F' },
+        { id: 'ns', name: 'No specified' },
+      ];
+    }
+    case 'pronoun': {
+      return [
+        { id: 'he', name: 'he/his' },
+        { id: 'her', name: 'her/she' },
+        { id: 'they', name: 'they/them' },
       ];
     }
     case 'position': {
       return [
-        { id: 'position.1', name: 'Exco (Group)' },
-        { id: 'position.2', name: 'Exco (Division/Brand)' },
-        { id: 'position3', name: 'Senior Management' },
-        { id: 'position4', name: 'Middle Management' },
-        { id: 'position5', name: 'Junior Management' },
-        { id: 'position6', name: 'Supervisory/Team Lead' },
-        { id: 'position7', name: 'Employee' },
-        { id: 'position8', name: 'Specialist' },
+        { id: 'exco_g', name: 'Exco (Group)' },
+        { id: 'exco_d', name: 'Exco (Division/Brand)' },
+        { id: 'senm', name: 'Senior Management' },
+        { id: 'midm', name: 'Middle Management' },
+        { id: 'junm', name: 'Junior Management' },
+        { id: 'sup', name: 'Supervisory/Team Lead' },
+        { id: 'emp', name: 'Employee' },
+        { id: 'spec', name: 'Specialist' },
       ];
     }
     case 'region': {
-      return [
-        { id: 'region.1', name: 'City' },
-        { id: 'region.2', name: 'Province' },
-        { id: 'region.3', name: 'Country' },
-        { id: 'region.4', name: 'Territory' },
-      ];
+      const regions = await Region.GetRegions();
+      return regions.map(reg => {
+        return {
+          id: reg._id,
+          name: reg.title
+        }
+      });
     }
     case 'operational_group': {
-      return [
-        { id: 'region.1', name: 'Group 1' },
-        { id: 'region.2', name: 'Group 2' },
-      ];
+      const regions = await OperationalGroup.GetOperationalGroups();
+      return regions.map(opg => {
+        return {
+          id: opg._id,
+          name: opg.title
+        }
+      });
     }
     case 'business_unit': {
-      return [
-        { id: 'business_unit.1', name: 'Sales' },
-        { id: 'business_unit.2', name: 'Engineering' },
-      ];
+      const regions = await BusinessUnit.GetBusinessUnits();
+      return regions.map(bu => {
+        return {
+          id: bu._id,
+          name: bu.name
+        }
+      });
     }
     case 'team': {
-      return [
-        { id: 'business_unit.1', name: 'Back-end development' },
-        { id: 'business_unit.2', name: 'Front-end development' },
-        { id: 'business_unit.3', name: 'Technical support' },
-        { id: 'business_unit.4', name: 'Architecture' },
-      ];
+      const regions = await Team.GetAllTeams();
+      return regions.map(team => {
+        return {
+          id: team._id,
+          name: team.title
+        }
+      });
+
     }
 
     default: {
@@ -113,6 +134,22 @@ const TowerStoneGetDemographicLookup = async (args) => {
     }
   }
 
+}
+
+const GetOrganisationLookupData = async (args) => {
+  return {
+    regions: [{ id: '123', name: 'region 1' }],
+    operationalGroups: [{ id: '123', name: 'op group 1' }],
+    businessUnit: [{ id: '123', name: 'business unit 1' }],
+    team: [{ id: '123', name: 'team 1' }],
+  }
+}
+
+const SetOrganisationLookupData = async (args) => {
+  return {
+    success: true,
+    message: 'Lookup data successfully updated.'
+  }
 }
 
 export default {
@@ -269,6 +306,9 @@ export default {
     async TowerStoneGetDemographicLookup(obj, args) {
       return TowerStoneGetDemographicLookup(args);
     },
+    async GetOrganisationLookupData(obj, args) {
+      return GetOrganisationLookupData(args);
+    }
   },
   Mutation: {
     updateSurvey(obj, { id, surveyData }) {
@@ -279,7 +319,7 @@ export default {
       logger.info('Update Survey Options', { id, options });
       return Survey.findByIdAndUpdate(ObjectId(id), { options });
     },
-    
+
     createSurvey(obj, { id, surveyData }) {
       return co.wrap(function* createSurveyGenerator(organization, survey) {
         const found = yield Organization.findById(organization).then();
@@ -782,6 +822,10 @@ export default {
         logger.error(`An error occured while cloning the leadership brand ==> ${error.message}`, error);
         throw error;
       }
+    },
+
+    async SetOrganisationLookupData(obj, args) {
+     return SetOrganisationLookupData(args);
     }
   }
 

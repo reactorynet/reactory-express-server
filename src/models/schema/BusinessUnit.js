@@ -24,5 +24,9 @@ const BusinessUnitSchema = mongoose.Schema({
   },
 });
 
+BusinessUnitSchema.statics.GetBusinessUnits = async function GetBusinessUnits() {
+  return await this.find();
+};
+
 const BusinessUnitModel = mongoose.model('BusinessUnit', BusinessUnitSchema);
 export default BusinessUnitModel;

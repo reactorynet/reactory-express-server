@@ -17,9 +17,9 @@ const {
 const request = require('supertest')(API_URI_ROOT);
 
 const GetPersonalDemographics = `
-query GetPersonalDemographics($clientId: String!){
-  GetPersonalDemographics(clientId: $clientId){
-    clientId
+query GetPersonalDemographics{
+  GetPersonalDemographics{
+    userId
     race
     age
     gender
@@ -45,7 +45,7 @@ const GetDemographicsLookupQuery = (demographicType: string, variables = {}) => 
         }
       }
     `,
-    variables: 
+    variables:
     {
       lookupType: demographicType,
       ...variables
@@ -56,7 +56,7 @@ const GetDemographicsLookupQuery = (demographicType: string, variables = {}) => 
 
 
 
-describe('Mores Assessments Demographics Module', () => {  
+describe('Mores Assessments Demographics Module', () => {
   let logged_in_user: any = null;
   let lookupTypes = ['race', 'age', 'gender', 'position', 'region', 'operational_group', 'business_unit', 'team']
 
@@ -71,7 +71,7 @@ describe('Mores Assessments Demographics Module', () => {
       .expect(200)
       .end((err: Error, res: any) => {
         if(err) done (err);
-        else {        
+        else {
           logged_in_user = res.body.user;
           request.post('api')
           .set('Accept', 'application/json')
@@ -80,13 +80,13 @@ describe('Mores Assessments Demographics Module', () => {
           .set('Authorization', `Bearer ${res.body.user.token}`)
           .send({ query: apiStatusQuery })
             .expect(200)
-            .end((err: Error, res: any) => {        
-              if(err) done(err);                    
+            .end((err: Error, res: any) => {
+              if(err) done(err);
               else {
                 logged_in_user = {...logged_in_user, ...res.body.data.status}
                 done();
               }
-            });                             
+            });
         }
       });
   });
@@ -102,13 +102,13 @@ describe('Mores Assessments Demographics Module', () => {
         .set('Authorization', `Bearer ${logged_in_user.token}`)
         .send( query )
         .expect(200)
-        .end((err: Error, res: any) => {        
+        .end((err: Error, res: any) => {
           if(err) done(err);
-          else {            
+          else {
             done();
-          }                
+          }
         });
-    });      
+    });
   });
 
   after('Loggin out user', (done) => {

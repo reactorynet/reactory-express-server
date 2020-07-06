@@ -1,6 +1,6 @@
 type CorsWhiteList {
   key: String!,
-  host: String!    
+  host: String!
 }
 
 type Tennant {
@@ -16,7 +16,7 @@ type Tennant {
 input CreateTennantInput {
   key: String!
   title: String
-  theme: String  
+  theme: String
 }
 
 type Organization {
@@ -29,7 +29,7 @@ type Organization {
   logo: String
   avatar: String
   businessUnits: [BusinessUnit]
-  legacyId: Int      
+  legacyId: Int
   createdAt: Date
   updatedAt: Date
 }
@@ -92,12 +92,38 @@ type CoreMigrationResult {
   organizationMigrateResults: [MigrationResult]
 }
 
+type OrganizationLookup {
+  id: String
+  name: String
+}
+
+type OrganizationLookupData {
+  regions: [OrganizationLookup]
+  operationalGroups: [OrganizationLookup]
+  businessUnit: [OrganizationLookup]
+  team: [OrganizationLookup]
+}
+
+input OrganizationLookupDataInput {
+  regions: [Any]
+  operationalGroups: [Any]
+  businessUnit: [Any]
+  team: [Any]
+}
+
+type OrganizationLookupDataCaptureResponse {
+  success: Boolean
+  message: String
+}
+
 extend type Query {
   allTennants: [Tennant]
   allOrganizations(legacy: Boolean): [Organization]
   organizationsForUser(id: String!): [Organization]
-  organizationWithId(id: String!): Organization 
-  usersForOrganizationWithId(id: String!, searchString: String): [User] 
+  organizationWithId(id: String!): Organization
+  usersForOrganizationWithId(id: String!, searchString: String): [User]
+
+  GetOrganisationLookupData(orgId: String!): OrganizationLookupData
 }
 
 extend type Mutation {
@@ -105,4 +131,6 @@ extend type Mutation {
   updateOrganization(id: String!, input: UpdateOrganizationInput!): Organization
   migrateOrganization(id: String!, options: MigrationOrganizationOptions!): MigrationResult
   migrateCore(options: CoreMigrationOptions): CoreMigrationResult
+
+  SetOrganisationLookupData(lookupData: OrganizationLookupDataInput!): OrganizationLookupData
 }

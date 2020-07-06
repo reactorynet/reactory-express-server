@@ -112,8 +112,8 @@ declare namespace Reactory {
   }
 
   export interface IRegion {
-    title: String,    
-    organization?: IOrganization,      
+    title: String,
+    organization?: IOrganization,
     locations?: [
       {
         title: String,
@@ -125,9 +125,12 @@ declare namespace Reactory {
     ]
   }
 
-  export interface IRegionDocument extends Mongoose.Document, IRegion {
-
+  export interface IOperationalGroup {
+    title: String,
   }
+
+  export interface IRegionDocument extends Mongoose.Document, IRegion {}
+  export interface IOperationalGroupDocument extends Mongoose.Document, IRegion {}
 
   export interface IReactoryLoginResponse {
     token: string,
