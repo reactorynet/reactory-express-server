@@ -207,7 +207,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
       apiResponse.text().then(text => {
         logger.error(`Error Source: ${text}`);
 
-        
+
       });
     }
   } else {
@@ -293,7 +293,7 @@ const Api = {
     }
   },
   post: async (uri, params, shape) => {
-    const resp = await POST(uri,  params).then();
+    const resp = await POST(uri, params).then();
     const {
       status, payload,
     } = resp;
@@ -349,7 +349,7 @@ const Api = {
 
 
 
-      const kwargs =  {};
+      const kwargs = {};
       if (!kwargs.headers) {
         kwargs.headers = {};
         kwargs.headers['Content-type'] = 'application/json; charset=UTF-8';
@@ -370,7 +370,7 @@ const Api = {
 
       try {
         let filename = path.join(process.env.APP_DATA_ROOT, documentInfo.path, documentInfo.alias);
-        if(fs.existsSync(filename) === true){
+        if (fs.existsSync(filename) === true) {
           const stream = fs.createReadStream(filename);
           kwargs.body = stream;
           let absoluteUrl = `${config.SECONDARY_API_URL}/${SECONDARY_API_URLS.file_uploads.url}/`;
@@ -379,20 +379,20 @@ const Api = {
           form.append('file', stream);
           // In Node.js environment you need to set boundary in the header field 'Content-Type' by calling method `getHeaders`
           const formHeaders = form.getHeaders();
-          let uploadResult = await axios.post(absoluteUrl, form, { params: { }, headers: { ...kwargs.headers, ...formHeaders } }).then();
+          let uploadResult = await axios.post(absoluteUrl, form, { params: {}, headers: { ...kwargs.headers, ...formHeaders } }).then();
           logger.debug(`Uploaded document complete:\n\t ${uploadResult}`);
           const { status, payload } = uploadResult.data;
-          if(status === 'sucess') {
+          if (status === 'sucess') {
             const fileData = uploadResult.data.payload;
-            if(customerInfo && customerInfo.id) {
-              uploadResult = await POST(`${SECONDARY_API_URLS.customer_documents}`, { document_ids: [ fileData.id ], customer_id: customerInfo.id }).then();
+            if (customerInfo && customerInfo.id) {
+              uploadResult = await POST(`${SECONDARY_API_URLS.customer_documents}`, { document_ids: [fileData.id], customer_id: customerInfo.id }).then();
             }
             return {
               document: documentInfo,
               success: true,
               messsage: `${documentInfo.fileName}`
             };
-          }  else {
+          } else {
             return {
               document: documentInfo,
               success: false,
@@ -401,12 +401,12 @@ const Api = {
           }
         }
       } catch (exc) {
-        logger.debug(`Could not upload file to endpoint:\n\t Exception ${ exc }`);
-         return {
-              document: documentInfo,
-              success: false,
-              message: exc.message
-            }
+        logger.debug(`Could not upload file to endpoint:\n\t Exception ${exc}`);
+        return {
+          document: documentInfo,
+          success: false,
+          message: exc.message
+        }
       }
     }
   },
@@ -840,7 +840,6 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-
     documents: async (params) => {
       const documentResult = await FETCH(SECONDARY_API_URLS.file_upload.url, { params: { ...defaultParams, ...params } }).then();
       const { status, payload } = documentResult;
@@ -850,16 +849,8 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     deleteDocument: async (params) => {
-
-      // TODO to be implemented
-
-      const deleteDocumentResult = await DELETE(SECONDARY_API_URLS.file_upload.url, { params: { ...defaultParams, ...params } }).then();
-
-      const { status, payload } = deleteDocumentResult;
-
-      if (status === 'success') return payload;
-
-      return { pagination: {}, ids: [], items: [] };
+      const deleteDocumentResult = await DELETE(SECONDARY_API_URLS.file_upload.url + params.id, {}).then();
+      return deleteDocumentResult;
     }
   },
   Quotes: {
@@ -1176,7 +1167,7 @@ const Api = {
 
             allIdResponses.forEach((idsResponse) => {
               if (idsResponse.status === "success" && idsResponse.payload.ids) {
-                user_ids_to_request = concat(user_ids_to_request, idsResponse.payload.ids )
+                user_ids_to_request = concat(user_ids_to_request, idsResponse.payload.ids)
               }
             });
 
@@ -1186,7 +1177,7 @@ const Api = {
           }
         }
 
-        if(user_ids_to_request.length > 0) {
+        if (user_ids_to_request.length > 0) {
           let allItemResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {
             params: {
               filter: {

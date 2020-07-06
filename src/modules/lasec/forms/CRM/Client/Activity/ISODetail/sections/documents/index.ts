@@ -59,19 +59,25 @@ const uiSchema: any = {
   documentIds: {
     'ui:widget': 'DocumentListWidget',
     'ui:options': {
-      query: `query LasecGetSaleOrderDocument($ids: [String]) {
-        LasecGetSaleOrderDocument(ids: $ids) {
-          id
-          name
-          url
-        }
-      }`,
-      mutation: `mutation LasecDeleteSaleOrderDocument($id: String) {
-        LasecDeleteSaleOrderDocument(id: $id) {
-          success
-          message
-        }
-      }`,
+      query: {
+        name: 'LasecGetSaleOrderDocument',
+        text: `query LasecGetSaleOrderDocument($ids: [String]) {
+          LasecGetSaleOrderDocument(ids: $ids) {
+            id
+            name
+            url
+          }
+        }`
+      } ,
+      mutation: {
+        name: 'LasecDeleteSaleOrderDocument',
+        text: `mutation LasecDeleteSaleOrderDocument($id: String) {
+          LasecDeleteSaleOrderDocument(id: $id) {
+            success
+            message
+          }
+        }`
+      },
       propertyMap: {
         'formContext.$formData.documentIds': 'ids'
       },

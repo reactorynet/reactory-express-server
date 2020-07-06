@@ -149,7 +149,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -165,7 +165,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -181,7 +181,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -221,7 +221,8 @@ const uiSchema: any = {
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
-                'color': 'black'
+                'color': 'black',
+                'fontSize': '1rem'
               }
             },
             windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
@@ -248,7 +249,8 @@ const uiSchema: any = {
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
-                'color': 'black'
+                'color': 'black',
+                'fontSize': '1rem'
               }
             },
           },

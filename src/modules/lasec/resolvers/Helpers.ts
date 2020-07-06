@@ -60,7 +60,7 @@ export const totalsFromMetaData = (meta: any) => {
 export const synchronizeQuote = async (quote_id: string, owner: any, source: any = null, map: any = true) => {
   logger.debug(`synchronizeQuote called ${quote_id}`)
   const quoteSyncTimeout = 3;
-  
+
 
   let _source = source;
   let _quoteDoc: LasecQuote | null;
@@ -1751,12 +1751,17 @@ export const getSODocuments = async (args) => {
 }
 
 export const deleteSalesOrdersDocument = async (args) => {
-
   const { id } = args;
 
-  return {
-    success: true,
-    message: 'Document deleted successfully'
+  try {
+    let deleteResponse = await lasecApi.SalesOrders.deleteDocument({ id: id }).then();
+    logger.debug(`DOCUMENT DELETE RESPONSE:: ${JSON.stringify(deleteResponse)}`);
+    return {
+      success: deleteResponse.status == 'success',
+      message: deleteResponse.payload
+    }
+  } catch (error) {
+    throw new ApiError('Error deleting this document');
   }
 }
 
