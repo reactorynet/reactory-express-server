@@ -47,12 +47,21 @@ const MoresAssessmentSurveyResolver = {
 
   },
   Mutation: {
+    MoresAssessmentsPatchGeneratedLeadershipBrand: async (obj: any, args: any, info: any): Promise<TowerStone.ILeadershipBrand> => {
+      const { moresLeadershipPatchArgs } = args;
+      const { leadershipbrand_id, survey_type } = moresLeadershipPatchArgs;
+      
+      let brand: TowerStone.ILeadershipBrand = await LeadershipBrand.findById(leadershipbrand_id).then()
+
+
+      return await LeadershipBrandFactory(brand.organization, survey_type , true).then();
+    }, 
     MoresAssessementsCreateSurvey: async (obj: any, args: any, context: any, info: any): Promise<TowerStone.ISurvey> => {
       
       const moresSurveyCreateArgs: MoresAssessmentsCreateInput  = args.moresSurveyCreateArgs;
 
       let surveyItem: TowerStone.ISurveyDocument = new Survey(moresSurveyCreateArgs) as TowerStone.ISurveyDocument;
-      surveyItem.leadershipBrand = await LeadershipBrandFactory(moresSurveyCreateArgs.organizationId, moresSurveyCreateArgs.surveyType).then();
+      surveyItem.leadershipBrand = await LeadershipBrandFactory(moresSurveyCreateArgs.organizationId, moresSurveyCreateArgs.surveyType, true).then();
       surveyItem.startDate = moment().startOf('day').toDate()
       surveyItem.endDate = moment().add(1, 'month').endOf('day').toDate();
       surveyItem.status = 'new';

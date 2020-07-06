@@ -84,14 +84,17 @@ describe('Lasec CRM Logged In User', () => {
         } 
         else {
           if(res.body && res.body.data) {
-            const { LasecLoggedInUser } = res.body.data;
-            logger.debug(`${JSON.stringify(res.body.data)}`);
             
+            logger.debug(`${JSON.stringify(res.body)}`);
+            const { LasecLoggedInUser } = res.body.data;
+
             if(LasecLoggedInUser) {
-
-            }
-
-            done();
+              done();
+            } else {
+              if(res.body.errors && res.body.errors.length > 0) {
+                done(res.body.errors)
+              }              
+            }                        
           } else {
             done(new Error('No Data Element on Response'));
           }

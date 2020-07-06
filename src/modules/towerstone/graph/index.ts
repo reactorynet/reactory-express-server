@@ -10,7 +10,7 @@ const graphTypes: any[] = [];
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;
-    logger.debug(`Loading ${fileName} - Graph definitions For TowerStone`);
+    logger.debug(`Adding [towerstone][${fileName}]`);
     const source = fileAsString(require.resolve(fileName));
     graphTypes.push(`${source}`);
   } catch (e) {

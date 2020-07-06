@@ -158,6 +158,11 @@ type TowerStoneLookupItem {
   description: String
 }
 
+input MoresLeadershipBrandPatchArgs {
+  leadershipbrand_id: String
+  survey_type: String
+}
+
 extend type Query {
   surveysForOrganization(organizationId: String!): [Survey]
   surveysList: [Survey]
@@ -168,6 +173,7 @@ extend type Query {
 extend type Mutation {
   createSurvey(id: String!, surveyData: SurveyInput): Survey
   MoresAssessementsCreateSurvey(moresSurveyCreateArgs: MoresSurveyCreateInput!): Survey
+  MoresAssessmentsPatchGeneratedLeadershipBrand(moresLeadershipPatchArgs: MoresLeadershipBrandPatchArgs!): LeadershipBrand
   MoresAssessmentsDeleteSurvey(id: String!, hard: Boolean): Survey
   updateSurvey(id: String!, surveyData: SurveyInput!): UpdateResponse
   updateSurveyOptions(id: String!, options: Any): Any

@@ -523,7 +523,13 @@ export default {
     },
 
     LasecGetPagedCRMSalesOrders: async (obj, args) => {
-      return getCRMSalesOrders(args);
+      try {
+        return getCRMSalesOrders(args);
+      } catch(err) {
+        logger.error(`Error Fetching CRM SalesOrders`)
+        throw new ApiError('Could not fetch sales order data', { error: err, displayInAppNotification: true });
+      }
+      
     },
     LasecGetISODetail: async (obj, args) => {
       return getISODetails(args);
