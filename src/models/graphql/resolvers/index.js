@@ -8,7 +8,6 @@ import moment from 'moment';
 
 import { execql } from '@reactory/server-core/graph/client';
 
-import userResolvers from './UserResolver';
 import orgnizationResolvers from './OrganizationResolver';
 import assessmentResolvers from './AssessmentResolver';
 import reactoryClientResolver from './ReactoryClient';
@@ -331,8 +330,7 @@ modules.enabled.forEach((installedModule) => {
 
 
 merge(
-  resolvers,
-  userResolvers,
+  resolvers,  
   orgnizationResolvers,
   assessmentResolvers,
   reactoryClientResolver,
