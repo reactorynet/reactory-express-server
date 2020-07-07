@@ -166,41 +166,23 @@ const isTokenValid = async (msauth, refresh = true, userToCheck = null) => {
 };
 
 const SetPersonalDemographics = async (args) => {
-  logger.debug(`SAVE MY PERSONAL DEMOGRAPHICS :: ${JSON.stringify(args)}`);
-
-  // 1. look for demographic by client/user id , demographic id or organisation id
-  // 2. If exists update. Else create new one
-
-  const { clientId, race, age, gender, position, region, operationalGroup, businessUnit, team } = args.personalDemographics;
+  logger.debug(`SAVING MY PERSONAL DEMOGRAPHICS :: ${JSON.stringify(args)}`);
 
   try {
-    const response = await PersonalDemographic.findOneAndUpdate(
-      { clientId },
-      { clientId, race, age, gender, position, region, operationalGroup, businessUnit, team },
-      { new: true, upsert: true }
-    ).exec();
-
-    logger.debug(`PERSONAL DEMOGRAPHIC SAVE REPONSE:: ${JSON.stringify(response)}`);
-
+    await PersonalDemographic.SetLoggedInUserDemograpics(args.personalDemographics);
     return {
       success: true,
       message: 'Your personal demographics have been saved successfully.',
     };
-
   } catch (error) {
-
     logger.debug(`ERROR SAVING PERSONAL DEMOGRAPHICS:: ${JSON.stringify(error)}`);
-
-    throw new ApiError(`Error ${clientId != '' ? 'updating ' : 'saving '} personal demographics`);
-
+    throw new ApiError('Error saving personal demographics');
   }
 };
 
 const getPersonalDemographics = async (args) => {
-  logger.debug(`GET PERSONAL DEMOGRAPHICS`, args);
-
-  const demographics = await PersonalDemographic.findOne({ clientId: args.clientId });
-  return demographics;
+  logger.debug('GETTING PERSONAL DEMOGRAPHICS FOR::', args);
+  return PersonalDemographic.GetLoggedInUserDemograpics();
 };
 
 export default {

@@ -152,6 +152,20 @@ const schema: Reactory.ISchema = {
           },
           customer: {
             type: 'string'
+          },          
+          crmCustomer: {
+            type: 'object',
+            properties: {
+              id: {
+                type: 'string',                
+              },
+              registeredName: {
+                type: 'string',                
+              },
+              customerStatus: {
+                type: 'string',                
+              }
+            }
           },
           client: {
             type: 'string'

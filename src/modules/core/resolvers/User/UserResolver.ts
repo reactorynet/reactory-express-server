@@ -3,7 +3,7 @@ import co from 'co';
 import moment from 'moment';
 import lodash, { isNil, find } from 'lodash';
 import om from 'object-mapper';
-import Admin from '../../../application/admin';
+import Admin from '@reactory/server-core/application/admin';
 import {
   Organization,
   EmailQueue,
@@ -15,21 +15,18 @@ import {
   Task,
   ReactoryClient,
   BusinessUnit,
-} from '../../index';
-import O365 from '../../../azure/graph';
+} from '@reactory/server-core/models/index';
+import O365 from '@reactory/server-core/azure/graph';
 
-import { organigramEmails } from '../../../emails';
-import ApiError, { RecordNotFoundError } from '../../../exceptions';
-import AuthConfig from '../../../authentication';
-import logger from '../../../logging';
-import iz from '../../../utils/validators';
-import TaskModel from '../../schema/Task';
+import { organigramEmails } from '@reactory/server-core/emails';
+import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
+import logger from '@reactory/server-core/logging';
+
 import { isObject, isNull } from 'util';
-import { execml } from 'graph/client';
-
+import { Reactory } from 'types/reactory';
 const uuid = require('uuid');
 
-const userAssessments = async (id) => {
+const userAssessments = async (id: any) => {
   const { user, partner } = global;
   const findUser = isNil(id) === true ? await User.findById(id).then() : user;
   if (findUser && findUser._id) {
@@ -61,7 +58,7 @@ const userAssessments = async (id) => {
   throw new RecordNotFoundError('No user matching id');
 };
 
-const MoresAssessmentsForUser = async (userId, status = ['ready']) => {
+const MoresAssessmentsForUser = async (userId: any, status = ['ready']) => {
   const { user, partner } = global;
   const findUser = isNil(userId) === true ? await User.findById(userId).then() : user;
   if (findUser && findUser._id) {
@@ -117,34 +114,34 @@ const MoresAssessmentsForUser = async (userId, status = ['ready']) => {
 
 const userResolvers = {
   Task: {
-    id(task) {
+    id(task: { _id: any; }) {
       return task._id;
     },
-    description(task) {
+    description(task: { description: any; }) {
       return task.description || 'not set';
     },
-    user(task) {
+    user(task: { user: any; }) {
       return User.findById(task.user);
     },
     comments() {
       return [];
     },
-    dueDate: task => task.dueDate || null,
-    startDate: task => task.startDate || null,
-    createdAt(task) {
+    dueDate: (task: { dueDate: any; }) => task.dueDate || null,
+    startDate: (task: { startDate: any; }) => task.startDate || null,
+    createdAt(task: { createdAt: any; }) {
       return task.createdAt || moment().valueOf();
     },
-    updatedAt(task) {
+    updatedAt(task: { updatedAt: any; }) {
       return task.updatedAt || moment().valueOf();
     },
   },
   Email: {
-    id(email) {
+    id(email: { _id: any; id: any; }) {
       if (email._id) return email._id;
       if (email.id) return email.id;
       return 'no-id';
     },
-    user(obj) {
+    user(obj: { user: any; }) {
       try {
         if (obj.user) return User.findById(obj.user);
         return null;
@@ -153,7 +150,7 @@ const userResolvers = {
         throw findErr;
       }
     },
-    survey(obj) {
+    survey(obj: { survey: any; }) {
       try {
         if (obj.survey) return Survey.findById(obj.survey);
         return null;
@@ -164,33 +161,33 @@ const userResolvers = {
     },
   },
   SurveyReportForUser: {
-    overall(sr) {
+    overall(sr: any) {
       return 0;
     },
-    status(sr) {
+    status(sr: any) {
       return 'READY';
     },
-    survey(sr) {
+    survey(sr: { survey: any; }) {
       return sr.survey;
     },
-    user(sr) {
+    user(sr: { user: any; }) {
       return sr.user;
     },
-    assessments(sr) {
+    assessments(sr: { assessments: any; }) {
       return sr.assessments || [];
     },
-    tasks(sr) {
+    tasks(sr: { tasks: any; }) {
       return sr.tasks || [];
     },
-    comments(sr) {
+    comments(sr: { comments: any; }) {
       return sr.comments || [];
     },
   },
   Rating: {
-    id(obj) {
+    id(obj: { _id: any; }) {
       return obj._id || null;
     },
-    async quality(rating) {
+    async quality(rating: { qualityId: any; }) {
       const lb = await LeadershipBrand.findOne({ 'qualities._id': ObjectId(rating.qualityId) }).then();
       if (lb) {
         return lb.qualities.id(rating.qualityId);
@@ -198,7 +195,7 @@ const userResolvers = {
 
       return null;
     },
-    async behaviour(rating) {
+    async behaviour(rating: { custom: boolean; behaviourId: any; behaviourText: any; qualityId: any; }) {
       if (rating.custom === true && lodash.isNil(rating.behaviourId)) {
         return {
           id: ObjectId(),
@@ -214,36 +211,36 @@ const userResolvers = {
 
       return null;
     },
-    rating(rating) {
+    rating(rating: { rating: any; }) {
       return rating.rating || 0;
     },
-    comment(rating) {
+    comment(rating: { comment: any; }) {
       return rating.comment || '';
     },
   },
   Assessment: {
-    id(o) {
+    id(o: { _id: any; }) {
       return o._id || null;
     },
-    assessor(o) {
+    assessor(o: { assessor: { _id: any; }; }) {
       if (o.assessor && o.assessor._id) return o.assessor;
       return User.findById(o.assessor);
     },
-    delegate(o) {
+    delegate(o: { delegate: { _id: any; }; }) {
       if (o.delegate && o.delegate._id) return o.delegate;
       return User.findById(o.delegate);
     },
-    survey(o) {
+    survey(o: { survey: { _id: any; }; }) {
       if (o.survey && o.survey._id) return o.survey;
       return Survey.findById(o.survey);
     },
-    assessmentType(o) {
+    assessmentType(o: { assessmentType: any; }) {
       return o.assessmentType || 'CUSTOM';
     },
-    complete(o) {
+    complete(o: { complete: boolean; }) {
       return o.complete === true;
     },
-    selfAssessment(assessment) {
+    selfAssessment(assessment: { assessor: any; delegate: any; }) {
       const { assessor, delegate } = assessment;
 
       if (ObjectId.isValid(assessor) === true && ObjectId.isValid(delegate) === true) {
@@ -256,7 +253,7 @@ const userResolvers = {
 
       return assessor === delegate;
     },
-    async overdue(obj) {
+    async overdue(obj: { complete?: any; survey: any; }) {
       if (obj.complete === true) return false;
       const { survey } = obj;
       const now = moment();
@@ -273,20 +270,20 @@ const userResolvers = {
       if (status === 'closed') return false;
       return now.isAfter(end) === true;
     },
-    ratings(assessment) {
+    ratings(assessment: { ratings: any; }) {
       return assessment.ratings;
     },
   },
   UserPeers: {
-    id(obj) {
+    id(obj: { id: { toString: () => any; }; }) {
       return obj.id ? obj.id.toString() : '';
     },
-    allowEdit(obj) {
+    allowEdit(obj: { allowEdit: boolean; }) {
       return obj.allowEdit === true;
     },
-    async peers(obj) {
+    async peers(obj: { peers: any[]; }) {
       // const peers = [];
-      return obj.peers.map((peer) => {
+      return obj.peers.map((peer: { user: any; relationship: any; isInternal: boolean; inviteSent: boolean; confirmed: boolean; confirmedAt: any; }) => {
         return {
           user: Admin.User.userWithId(peer.user),
           relationship: peer.relationship || 'PEER',
@@ -297,39 +294,39 @@ const userResolvers = {
         };
       });
     },
-    organization(obj) {
+    organization(obj: { organization: any; }) {
       return Admin.Organization.findById(obj.organization);
     },
-    user(o) { return Admin.User.userWithId(o.user); },
+    user(o: { user: any; }) { return Admin.User.userWithId(o.user); },
   },
   User: {
-    id(obj) {
+    id(obj: { _id: any; }) {
       return obj._id;
     },
-    fullName(user) {
+    fullName(user: { fullName: () => any; firstName: any; lastName: any; }) {
       if (!user) return 'null-user';
       if (typeof user.fullName === 'function') return user.fullName();
 
       return `${user.firstName} ${user.lastName}`;
     },
-    fullNameWithEmail(user) {
+    fullNameWithEmail(user: { firstName: any; lastName: any; email: any; }) {
       const { firstName, lastName, email } = user;
       return `${firstName} ${lastName}<${email}>`;
     },
-    username(obj) {
+    username(obj: { username: any; }) {
       return obj.username;
     },
-    peers(usr) {
+    peers(usr: { _id: any; memberships: { organizationId: any; }[]; }) {
       return Organigram.findOne({ user: usr._id, organization: usr.memberships[0].organizationId });
     },
-    memberships(usr) {
+    memberships(usr: { memberships: any; }) {
       if (lodash.isArray(usr.memberships)) {
         return lodash.filter(usr.memberships, { clientId: global.partner._id });
       }
 
       return [];
     },
-    deleted(user) {
+    deleted(user: { deleted: any; }) {
       return user.deleted || false;
     },
   },
@@ -345,24 +342,29 @@ const userResolvers = {
     },
   },
   Query: {
-    allUsers(obj, args, context, info) {
+    allUsers(obj: any, args: any, context: any, info: any) {
       return Admin.User.listAll().then();
     },
-    async userWithId(obj, { id }, context, info) {
+    async userWithId(obj: any, { id }: any, context: any, info: any) {
       const user = await User.findById(id).then();
 
       return user;
     },
-    async userPeers(obj, { id, organizationId }) {
-      const user = await User.findById(id).then();
-      const organization = await Organization.findById(organizationId).then();
+    async userPeers(obj: any, { id, organizationId }: any) {
+
+      if(!organizationId) {
+        return []
+      }
+
+      const user = await User.findById(id).then();      
+      const organization = await Organization.findById(organizationId).then();       
       const orgId = organization._id ? organization._id : user.memberships[0].organizationId;
       return Organigram.findOne({ user: user._id, organization: orgId }).then();
     },
-    authenticatedUser(obj, args, context, info) {
+    authenticatedUser(obj: any, args: any, context: any, info: any) {
       return global.user;
     },
-    async userInbox(obj, { id, sort, via = 'local' }, context, info) {
+    async userInbox(obj: any, { id, sort, via = 'local' }: any, context: any, info: any) {
       const { user } = global;
       if (isNil(user) === true) throw new ApiError('Not Authorized');
       const userId = isNil(id) ? user._id : ObjectId(id);
@@ -405,11 +407,11 @@ const userResolvers = {
         }
       }
     },
-    userSurveys(obj, { id, sort }, context, info) {
+    userSurveys(obj: any, { id, sort }: any, context: any, info: any) {
       logger.info(`Finding surveys for user ${id}, ${sort}`);
       return userAssessments(id);
     },
-    MoresUserSurvey(obj, { id }, context, info) {
+    MoresUserSurvey(obj: any, { id }: any, context: any, info: any) {
       const { partner } = global;
       switch(partner.key) {
         case 'mores': {
@@ -421,13 +423,13 @@ const userResolvers = {
       }
       
     },
-    userReports(obj, { id, sort }, context, info) {
+    userReports(obj: any, { id, sort }: any, context: any, info: any) {
       return new Promise((resolve, reject) => {
         const { user } = global;
         Admin.User.surveysForUser(id).then((userSurveys) => {
           if (userSurveys && userSurveys.length === 0) resolve([]);
           const surveyReports = [];
-          const promises = userSurveys.map((userSurvey) => {
+          const promises = userSurveys.map((userSurvey: any) => {
             const resolveData = co.wrap(function* resolveDataGenerator(userId, survey) {
               const assessments = yield Admin.User.assessmentForUserInSurvey(userId, survey._id).then();
               const tasks = yield Admin.User.tasksForUserRelatedToSurvey(userId, survey._id).then();
@@ -452,7 +454,7 @@ const userResolvers = {
         });
       });
     },
-    async reportDetailForUser(object, { userId, surveyId }, context, info) {
+    async reportDetailForUser(object: any, { userId, surveyId }: any, context: any, info: any) {
       const { user } = global;
       const reportResult = {
         overall: 0,
@@ -488,7 +490,7 @@ const userResolvers = {
 
       return reportResult;
     },
-    async assessmentWithId(obj, { id }, context, info) {
+    async assessmentWithId(obj: any, { id }: any, context: any, info: any) {
       logger.info('Finding Assessment with Id', { id });
       return Assessment.findById(id)
         .populate('survey')
@@ -496,17 +498,17 @@ const userResolvers = {
         .populate('assessor')
         .then();
     },
-    userTasks(obj, { id, status }) {
+    userTasks(obj: any, { id, status }: any) {
       return Task.find({ user: ObjectId(id || global.user._id), status }).then();
     },
-    taskDetail(parent, { id }) {
+    taskDetail(parent: any, { id }: any) {
       logger.info(`Finding Task For Id ${id}`);
       return Task.findById(id).then();
     },
-    async searchUser(parent, { searchString, sort = 'email' }) {
+    async searchUser(parent: any, { searchString, sort = 'email' }: any) {
       return User.find({ email: `/${searchString}/i` }).sort(`-${sort}`).then();
     },
-    async getUserCredentials(parent, { provider }) {
+    async getUserCredentials(parent: any, { provider }: any) {
       logger.info(`Getting user credentials for ${global.user.fullName(true)}`);
       if (global.user) {
         return global.user.getAuthentication(provider);
@@ -515,12 +517,23 @@ const userResolvers = {
     },
   },
   Mutation: {
-    createUser: async (obj, { input, organizationId, password }, context, info) => {
+    createUser: async (obj: any, { input, organizationId, password }: any, context: any, info: any) => {
+      const { partner, user } = global;
+      
       logger.info(`Create user mutation called ${input.email}`);
-      const existing = await User.findOne({ email: input.email }).then();
-      logger.info(`Checked user with email address ${input.email} result: ${isNil(existing) === false ? `Found [${existing._id.toString()}]` : 'Not Found'}`);
+      const existing: Reactory.IUserDocument = await User.findOne({ email: input.email }).then();
+      
+      logger.info(`Checked user with email address ${input.email} result: ${isNil(existing) === false ? `Found [${existing._id.toString()}]` : 'Not Found'}`);      
+      const organization = await Organization.findById(organizationId);
 
-      if (isNil(existing) === false) return existing;
+      if (isNil(existing) === false && organization) {
+        /** Checking if user has role */
+        if(existing.hasAnyRole(partner._id, organization._id) === false) {
+          await existing.addRole(partner._id, 'USER', organization._id);
+        }
+
+        return existing;
+      }
 
       if (isNil(organizationId) === false && isNil(input) === false) {
         const organization = await Organization.findById(organizationId);
@@ -529,7 +542,7 @@ const userResolvers = {
       }
       throw new Error('Organization Id is required');
     },
-    setOrganizationForUser: async (obj, { id, organizationId }) => {
+    setOrganizationForUser: async (obj: any, { id, organizationId }: any) => {
       const user = await User.findById(id);
       const organization = await Organization.findById(organizationId);
       user.organization = organization;
@@ -537,24 +550,24 @@ const userResolvers = {
 
       return true;
     },
-    updateUser(obj, { id, profileData }) {
+    updateUser(obj: any, { id, profileData }: any) {
       logger.info('Update user mutation called', { id, profileData });
       return Admin.User.updateProfile(id, profileData);
     },
-    setPassword(obj, { input: { password, confirmPassword, authToken } }) {
+    setPassword(obj: any, { input: { password, confirmPassword, authToken } }: any) {
       return new Promise((resolve, reject) => {
         const { user } = global;
         if (typeof password !== 'string') reject(new ApiError('password expects string input'));
         if (password === confirmPassword && user) {
           logger.info(`Setting user password ${user.email}, ${authToken}`);
           user.setPassword(password);
-          user.save().then(updateUser => resolve(updateUser));
+          user.save().then((updateUser: unknown) => resolve(updateUser));
         } else {
           reject(new ApiError('Passwords do not match'));
         }
       });
     },
-    createTask(obj, { id, taskInput }) {
+    createTask(obj: any, { id, taskInput }: any) {
       const { _id } = global.user;
       return co.wrap(function* createTaskGenerator(userId, task) {
         const created = yield new Task({
@@ -566,7 +579,7 @@ const userResolvers = {
         return created;
       })(id || _id.toString(), taskInput);
     },
-    async confirmPeers(obj, { id, organization, surveyId }) {
+    async confirmPeers(obj: any, { id, organization, surveyId }: any) {
       const userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
         organization: ObjectId(organization),
@@ -631,7 +644,7 @@ const userResolvers = {
 
       return Organigram.findById(userOrganigram._id);
     },
-    async removePeer(obj, { id, peer, organization }) {
+    async removePeer(obj: any, { id, peer, organization }: any) {
       const userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
         organization: ObjectId(organization),
@@ -639,7 +652,7 @@ const userResolvers = {
 
       let modified = false;
       if (userOrganigram) {
-        userOrganigram.peers.forEach((peerEntry) => {
+        userOrganigram.peers.forEach((peerEntry: { user: { toString: () => any; }; remove: () => void; }) => {
           logger.info(`Checking peer ${peerEntry.user} => ${peer}: match: ${peerEntry.user.toString() === peer}`);
           if (peerEntry.user.toString() === peer) {
             logger.info('Matched, deleting peerEntry');
@@ -658,9 +671,9 @@ const userResolvers = {
 
       return null;
     },
-    async setPeerRelationShip(obj, {
+    async setPeerRelationShip(obj: any, {
       id, peer, organization, relationship,
-    }) {
+    }: any) {
       let userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
         organization: ObjectId(organization),
@@ -688,7 +701,7 @@ const userResolvers = {
       }
 
       let updated = false;
-      userOrganigram.peers.forEach((p) => {
+      userOrganigram.peers.forEach((p: { user: { toString: () => any; }; relationship: any; }) => {
         if (p.user.toString() === peer) {
           logger.info('Matching peer found, updating relationship status', relationship);
           p.relationship = relationship;
@@ -713,9 +726,9 @@ const userResolvers = {
 
       return userOrganigram;
     },
-    async removeUserRole(obj, {
+    async removeUserRole(obj: any, {
       id, email, organization, role, clientId,
-    }) {
+    }: any) {
       const { user, partner } = global;
       let clientToUse = partner; // use the default partner
       let userToUpdate = null;
@@ -749,9 +762,9 @@ const userResolvers = {
 
       return userToUpdate.memberships;
     },
-    async addUserRole(obj, {
+    async addUserRole(obj: any, {
       id, email, organization, role, clientId,
-    }) {
+    }: any) {
       const { user, partner } = global;
       logger.info(`Adding role => EMAIL: ${email}  ROLE: ${role} ORG: ${organization} CLIENT: ${clientId}`);
       let clientToUse = partner; // use the default partner
@@ -789,30 +802,30 @@ const userResolvers = {
 
       return userToUpdate.memberships;
     },
-    async deleteUser(parent, { id }) {
+    async deleteUser(parent: any, { id }: any) {
       const user = await User.findById(id).then();
       if (isNil(user) === true) throw new RecordNotFoundError(`Could not locate the user with the id ${id}`);
       user.deleted = true;
       await user.save().then();
       return true;
     },
-    async addUserCredentials(parent, {
+    async addUserCredentials(parent: any, {
       provider, props,
-    }) {
+    }: any) {
       return global.user.setAuthentication({
         provider,
         props,
         lastLogin: new Date().valueOf(),
       });
     },
-    async removeUserCredentials(parent, { provider }) {
+    async removeUserCredentials(parent: any, { provider }: any) {
       if (global.user) {
         await global.user.removeAuthentication(provider);
         return true;
       }
       return false;
     },
-    async sendMail(parent, { message }) {
+    async sendMail(parent: any, { message }: any) {
       const { id, via, subject, contentType, content, recipients, ccRecipients, saveToSentItems } = message;
       const { user } = global;
       if (isNil(user) === true) throw new ApiError('Not Authorized');
@@ -854,7 +867,7 @@ const userResolvers = {
         }
       }
     },
-    async createOutlookTask(parent, { task }) {
+    async createOutlookTask(parent: any, { task }: any) {
       const { id, via, subject, startDate, dueDate, timeZone } = task;
       const { user } = global;
       if (isNil(user) === true) throw new ApiError('Not Authorized');
@@ -899,7 +912,7 @@ const userResolvers = {
         }
       }
     },
-    async deleteOutlookTask(parent, { task }) {
+    async deleteOutlookTask(parent: any, { task }: any) {
       const { id, via, taskId } = task;
       const { user } = global;
       if (isNil(user) === true) throw new ApiError('Not Authorized');

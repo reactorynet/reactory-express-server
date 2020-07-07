@@ -83,7 +83,7 @@ const graphql: Reactory.IFormGraphDefinition =  {
       'salesOrders.[].quoteDate': 'salesOrders.[].quoteDate',
       'salesOrders.[].iso': 'salesOrders.[].iso',
       'salesOrders.[].customer': 'salesOrders.[].customer',
-      'salesOrders.[].crmCustomer': 'salesOrders.[].crmCustomer',
+      'salesOrders.[].crmCustomer': 'salesOrders.[].crmCustomer',      
       'salesOrders.[].client': 'salesOrders.[].client',
       'salesOrders.[].poNumber': 'salesOrders.[].customerponumber',
       'salesOrders.[].value': 'salesOrders.[].value',

@@ -25,6 +25,8 @@ import CommentModel from './schema/Comment';
 // DREW
 import ContentModel from './schema/Content';
 import PersonalDemographicModel from './schema/PersonalDemographic';
+import RegionModel from './schema/Region';
+import OperationalGroupModel from './schema/OperationalGroup';
 
 import { Cache } from '../modules/core/models';
 
@@ -54,6 +56,8 @@ export const Board = BoardModel;
 // DREW
 export const Content = ContentModel;
 export const PersonalDemographic = PersonalDemographicModel;
+export const Region = RegionModel;
+export const OperationalGroup = OperationalGroupModel;
 
 const models = {
   Cache,

@@ -177,6 +177,7 @@ UserSchema.methods.hasRole = function hasRole(clientId, role = 'USER', organizat
 
   if (isArray(matches) === true && matches.length > 0) {
     logger.debug(`Matched ${matches.length} memberships for user ${this.email}`);
+
     const matched = lodash.filter(
       matches,
       membership => isArray(membership.roles) === true
@@ -190,6 +191,54 @@ UserSchema.methods.hasRole = function hasRole(clientId, role = 'USER', organizat
 
   return false;
 };
+
+UserSchema.methods.hasAnyRole = function(clientId, organizationId, businessUnitId) {
+  logger.info(`User.hasAnyRole 
+    ReactoryClient:[${clientId}]     
+    Organization: [${organizationId || '**'}]
+    BusinessUnit: [${businessUnitId || '**'}]`);
+  if (this.memberships.length === 0) return false;
+
+  let matches = [];
+
+  if (ObjectIdFunc.isValid(clientId) === false) {
+    logger.warn('clientId parameter is supposed to be ObjectId');
+    return false;
+  }
+
+  matches = filter(this.memberships, (membership) => {
+    return ObjectIdFunc(membership.clientId).equals(ObjectIdFunc(clientId));
+  });
+
+  if (ObjectIdFunc.isValid(organizationId) === true) {
+    logger.info('Filtering by organization');
+    matches = filter(
+      matches,
+      membership => ObjectIdFunc(membership.organizationId).equals(ObjectIdFunc(organizationId)),
+    );
+  } else {
+    matches = filter(
+      matches,
+      membership => lodash.isNil(membership.organizationId) === true,
+    );
+  }
+
+  if (ObjectIdFunc.isValid(businessUnitId)) {
+    logger.info('Filtering by business unit id');
+    matches = filter(
+      matches,
+      membership => ObjectIdFunc(membership.businessUnitId).equals(ObjectIdFunc(businessUnitId)),
+    );
+  } else {
+    matches = filter(
+      matches,
+      membership => lodash.isNil(membership.businessUnitId) === true,
+    );
+  }
+
+  return (isArray(matches) === true && matches.length > 0) === true;
+};
+
 
 UserSchema.methods.fullName = function fullName(email = false) {
   return `${this.firstName} ${this.lastName}${email ? '<'+this.email+'>' : ''}`.trim();

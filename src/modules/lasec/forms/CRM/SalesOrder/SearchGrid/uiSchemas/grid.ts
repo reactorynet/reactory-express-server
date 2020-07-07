@@ -277,7 +277,19 @@ const uiSchema: any = {
             'rowData': 'rowData'
           }
         },
-        { title: 'Customer', field: 'customer' },
+        { 
+          title: 'Customer', 
+          field: 'customer',
+          component: 'lasec-crm.CustomerLabel@1.0.0',
+          props: {
+            context: 'sales-order-grid'
+          },
+          propsMap: {
+            'rowData.crmCustomer': 'customer',            
+            'rowData': 'data',
+          } 
+
+        },
         { title: 'Client', field: 'client' },
         { title: 'Rep Code', field: 'salesTeam' },
         {
@@ -364,6 +376,7 @@ const uiSchema: any = {
         'salesOrders.[].quoteDate': 'data.[].quoteDate',
         'salesOrders.[].iso': 'data.[].iso',
         'salesOrders.[].customer': 'data.[].customer',
+        'salesOrders.[].crmCustomer': 'data.[].crmCustomer',  
         'salesOrders.[].client': 'data.[].client',
         'salesOrders.[].poNumber': 'data.[].poNumber',
         'salesOrders.[].value': 'data.[].value',

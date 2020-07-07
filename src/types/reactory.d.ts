@@ -112,8 +112,8 @@ declare namespace Reactory {
   }
 
   export interface IRegion {
-    title: String,    
-    organization?: IOrganization,      
+    title: String,
+    organization?: IOrganization,
     locations?: [
       {
         title: String,
@@ -125,9 +125,12 @@ declare namespace Reactory {
     ]
   }
 
-  export interface IRegionDocument extends Mongoose.Document, IRegion {
-
+  export interface IOperationalGroup {
+    title: String,
   }
+
+  export interface IRegionDocument extends Mongoose.Document, IRegion {}
+  export interface IOperationalGroupDocument extends Mongoose.Document, IRegion {}
 
   export interface IReactoryLoginResponse {
     token: string,
@@ -140,11 +143,14 @@ declare namespace Reactory {
     firstName: string
     lastName: string
     fullName(email: boolean): string
-    authentications: any[]
-    addRole(clientId: string, role: string, organizationId: string, businessUnitId: string): boolean
+    authentications: any[],
+    hasAnyRole(clientId: string, organizationId?: string, businessUnitId?: string): boolean,
+    hasRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean,
+    addRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean
     removeRole(clientId: string, role: string, organizationId: string): IMemberShip[],
     removeAuthentication(provider: string): boolean
     getAuthentication(provider: string): IAuthentication
+    [key: string]: any
   }    
 
   export interface IUserDocument extends Mongoose.Document, IUser {
