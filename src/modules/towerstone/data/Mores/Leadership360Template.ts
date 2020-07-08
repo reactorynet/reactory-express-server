@@ -372,7 +372,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName}’s personal purpose and values are aligned to ${survey.organization.name}’s purpose and brand promise.",
-          "description": "${employee.firstName}’s loves what ${employeeDemographics.pronoun || 'they'} does.",
+          "description": "${employee.firstName} loves what ${employeeDemographics.pronoun || 'they'} does.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -466,7 +466,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} ensures role clarity and a well-defined career path for ${employeeDemographics.pronoun || 'their'} people.",
-          "description": "${employee.firstName} wants ${employeeDemographics.pronoun || 'their'} people to be excited about the opportunities tht lie ahead.",
+          "description": "${employee.firstName} wants ${employeeDemographics.pronoun || 'their'} people to be excited about the opportunities that lie ahead.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1087,7 +1087,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         {
           "_id": new ObjectID(),
           "title": "We proactively address red flags.",
-          "description": "We speak up when something is wrong and needs to change.",
+          "description": "We speak up when something needs to change.",
 
           "assessor_title": "",
           "assessor_description": "",
@@ -1184,7 +1184,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
         },
         {
           "_id": new ObjectID(),
-          "title": "Organisation] is a responsible corporate citizen, making a positive contribution to society and the planet.",
+          "title": "${survey.organization.name} is a responsible corporate citizen, making a positive contribution to society and the planet.",
           "description": "We make a difference.",
 
           "assessor_title": "",

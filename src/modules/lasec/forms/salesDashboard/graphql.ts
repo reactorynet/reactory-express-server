@@ -62,6 +62,7 @@ export default {
       target: 'target',
       targetPercent: 'targetPercent',
       totalBad: 'totalBad',
+      totalInvoiced: 'totalInvoiced',
       charts: 'charts',
       'quotes[].code': ['quotes[].quote_id', 'quotes[].code'],
       'quotes[].customer.fullName': 'quotes[].customerName',

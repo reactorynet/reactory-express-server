@@ -328,6 +328,7 @@ export default {
         statusSummary: new Array<any>(),
         quotes,
         invoices,
+        totalInvoiced: 0,
         isos,
         charts: {
           quoteStatusFunnel,
@@ -338,8 +339,11 @@ export default {
         }
       };
 
+      const quoteStatusSummary = groupQuotesByStatus(dashboardResult.quotes);
+      const naughties = lodash.find(quoteStatusSummary, { key: "5"} )
       dashboardResult.totalQuotes = quotes.length;
-      dashboardResult.statusSummary = groupQuotesByStatus(dashboardResult.quotes);
+      dashboardResult.statusSummary = quoteStatusSummary;
+      dashboardResult.totalBad = naughties && naughties.naughty  ?  naughties.naughty : 0;
       dashboardResult.charts.quoteStatusFunnel.data = [];
       dashboardResult.charts.quoteStatusPie.data = [];
       dashboardResult.charts.quoteStatusComposed.data = [];
@@ -416,7 +420,8 @@ export default {
       }
 
       if (isNaN(dashboardResult.target) === false && isNaN(invoicesTotal) === false && dashboardResult.target > 0 && invoicesTotal > 0) {
-        dashboardResult.targetPercent = dashboardResult.target * 100 / invoicesTotal;
+        dashboardResult.targetPercent = dashboardResult.target * 100 / (invoicesTotal / 100);
+        dashboardResult.totalInvoiced = invoicesTotal;
       }
 
       dashboardResult.charts.quoteStatusFunnel.data = lodash.reverse(dashboardResult.charts.quoteStatusFunnel.data);
