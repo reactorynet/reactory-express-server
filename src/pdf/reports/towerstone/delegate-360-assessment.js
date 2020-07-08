@@ -193,14 +193,13 @@ const resolveData = async ({ surveyId, delegateId }) => {
       logger.error('Error occured colating data', err);
     }
 
-    const maxScore =  
 
     reportData.assessors = lodash.filter(lodash.flatMap(reportData.assessments, assessment => assessment.assessor), assessor => !assessor._id.equals(reportData.delegate._id));
     logger.debug(`Assessors are ${reportData.assessors.map(a => `${a.firstName} `)}`);
     if (reportData.ratings.length === 0) {
       reportData.score = -1;
     } else {
-      const totalAllRatings = lodash.sumBy(reportData.ratings, r => r.rating);
+      const totalAllRatings = lodash.sumBy(reportData.ratingsExcludingSelf, r => r.rating);
       reportData.score = Math.floor((totalAllRatings * 100) / (reportData.ratings.length * maxRating));
     }
 
