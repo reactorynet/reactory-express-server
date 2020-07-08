@@ -200,7 +200,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
       reportData.score = -1;
     } else {
       const totalAllRatings = lodash.sumBy(reportData.ratingsExcludingSelf, r => r.rating);
-      reportData.score = Math.floor((totalAllRatings * 100) / (reportData.ratings.length * maxRating));
+      reportData.score = Math.floor((totalAllRatings * 100) / (reportData.ratingsExcludingSelf.length * maxRating));
     }
 
 
