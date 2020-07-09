@@ -153,7 +153,7 @@ export default {
   target: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: 'Target: R ${formData}',
+      format: 'Target: R ${api.utils.humanNumber(formData)}',
       variant: 'h4',
       // title: 'Target:'
     }
@@ -162,7 +162,7 @@ export default {
   targetPercent: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: 'Target: ${Math.floor(formData)}%',
+      format: 'Target: ${Math.floor(formData)}% (${api.utils.humanNumber(Math.floor(formContext.$formData.totalInvoiced / 100))})',
       variant: 'h4',
       // title: 'Target %:'
     }

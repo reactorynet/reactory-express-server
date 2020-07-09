@@ -9,6 +9,7 @@ query LasecGetDashboard($dashparams: LasecQuoteQueryInput){
     repIds
     totalQuotes
     totalBad
+    totalInvoiced
     target
     targetPercent
     statusSummary {

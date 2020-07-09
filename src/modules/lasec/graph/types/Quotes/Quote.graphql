@@ -180,7 +180,9 @@ type LasecQuoteDashboard {
   target: Float
   targetPercent: Float
   totalQuotes: Int
+  totalInvoiced: Float
   totalBad: Int
+  LasecGetDashboard: Float
   statusSummary: [LasecQuoteDashboardSummary]
   quotes: [Quote]
   nextActions: LasecUserNextActions

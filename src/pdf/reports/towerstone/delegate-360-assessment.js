@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { ObjectId } from 'mongodb';
 import fs from 'fs';
+import { resolve as resolvePath } from 'path';
 import { readFileSync, existsSync } from 'fs';
 import { PNG } from 'pngjs';
 import imageType from 'image-type';
@@ -28,6 +29,8 @@ const { APP_DATA_ROOT } = process.env;
 
 const debug_report = true;
 
+const badref = './src/pdf/badref.png';
+
 const pdfpng = (path) => {
   let buffer = null;
   let returnpath = path;
@@ -35,8 +38,8 @@ const pdfpng = (path) => {
     buffer = readFileSync(path);
   } catch (fileError) {
     logger.error(`🚩 Error reading file ${path}`, fileError);
-    buffer = readFileSync('./badref.png');
-    returnpath = './badref';
+    returnpath = resolvePath(badref);
+    buffer = readFileSync(returnpath);        
   }
   
   try {
@@ -50,7 +53,7 @@ const pdfpng = (path) => {
     }
   } catch (buffErr) {
     logger.error(`🚩 Error processing image ${path}`, fileError);
-    returnpath = './badref';    
+    returnpath = badref;    
   }
   
 
@@ -125,6 +128,8 @@ const resolveData = async ({ surveyId, delegateId }) => {
       },
     };
 
+    let maxRating = 5;
+
     try {
       reportData.delegate = await User.findById(reportData.survey.delegates.id(delegateId).delegate).then();
       reportData.employee = reportData.delegate;
@@ -133,6 +138,14 @@ const resolveData = async ({ surveyId, delegateId }) => {
       reportData.leadershipBrand = reportData.survey.leadershipBrand;
       reportData.qualities = reportData.survey.leadershipBrand.qualities;
       reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
+
+      try {
+        maxRating = reportData.scale.max();
+      } catch (err) {
+        //could not get max via scale
+        logger.error('Could not get max rating from scale', err);
+      }
+      
       reportData.assessments = await Assessment.find({
         delegate: reportData.delegate._id,
         survey: ObjectId(surveyId),
@@ -186,8 +199,8 @@ const resolveData = async ({ surveyId, delegateId }) => {
     if (reportData.ratings.length === 0) {
       reportData.score = -1;
     } else {
-      const totalAllRatings = lodash.sumBy(reportData.ratings, r => r.rating);
-      reportData.score = Math.floor((totalAllRatings * 100) / (reportData.ratings.length * 5));
+      const totalAllRatings = lodash.sumBy(reportData.ratingsExcludingSelf, r => r.rating);
+      reportData.score = Math.floor((totalAllRatings * 100) / (reportData.ratingsExcludingSelf.length * maxRating));
     }
 
 
