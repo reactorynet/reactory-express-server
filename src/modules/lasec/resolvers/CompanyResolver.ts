@@ -21,6 +21,8 @@ import CRMClientComment from '@reactory/server-modules/lasec/models/Comment';
 import { User } from '@reactory/server-core/models';
 import { LasecApiResponse } from '../types/lasec';
 
+import { getLoggedIn360User } from './Helpers';
+
 const getClients = async (params) => {
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter } = params;
 
@@ -504,8 +506,6 @@ const getCustomerRanking = async (params) => {
   return [];
 
 };
-
-
 
 const getCustomerClass = async (params) => {
   const cached = await getCacheItem(Hash('LASEC_CUSTOMER_CLASS')).then();
@@ -1435,11 +1435,28 @@ const getRepCodesForFilter = async () => {
   }
 }
 
+const getRepCodesForLoggedInUser = async () => {
+
+  let me = await getLoggedIn360User().then();
+
+  logger.debug(`LOGGED IN USER DATA ${JSON.stringify(me)}`);
+
+  const teams = me.sales_team_ids.map((team: any) => {
+    return {
+      id: team,
+      name: team,
+    };
+  });
+
+  return teams;
+}
+
 const getUsersRepCodes = async () => {
 
   const { user } = global;
 
   logger.debug(`LOGGED IN USER DATA ${JSON.stringify(user)}`);
+
   return [];
 
 }
@@ -1646,7 +1663,6 @@ export default {
             { id: 'Deleted', name: 'Deleted' },
           ];
         }
-
         case 'order_type': {
           return [
             { id: 'Normal', name: 'Normal' },
@@ -1657,19 +1673,18 @@ export default {
             { id: 'Consolidation', name: 'Consolidation' },
           ];
         }
-
         case 'company_sales_team': {
           return getLasecSalesTeamsForLookup();
         }
-
         case 'rep_code': {
           return getRepCodesForFilter();
         }
-
+        case 'user_sales_team_id': {
+          return getRepCodesForLoggedInUser();
+        }
         case 'users_repcodes': {
           return getUsersRepCodes();
         }
-
         default: {
           return [];
         }

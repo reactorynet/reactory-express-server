@@ -47,6 +47,7 @@ const schema: Reactory.ISchema = {
             filterBy: {
               enum: [
                 FilterByEnumsKeys.order_type,
+                FilterByEnumsKeys.user_sales_team_id,
               ]
             },
             filter: {

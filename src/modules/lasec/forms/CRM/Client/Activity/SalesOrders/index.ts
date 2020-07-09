@@ -149,7 +149,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -165,7 +165,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -181,7 +181,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -197,8 +197,10 @@ const uiSchema: any = {
           props: {
             componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
             componentProps: {
+              'rowData.id': ['data.id', 'query.id'],
               'rowData.quoteId': ['data.quoteId', 'query.quoteId'],
               'rowData.salesOrderNumber': ['data.orderId', 'query.orderId'],
+              'rowData.iso': ['data.iso', 'query.iso'],
               'rowData.documentIds': ['data.documentIds', 'query.documentIds'],
               'rowData.poNumber': ['data.poNumber', 'query.poNumber'],
               'rowData.orderDate': ['data.orderDate', 'query.orderDate'],
@@ -219,7 +221,8 @@ const uiSchema: any = {
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
-                'color': 'black'
+                'color': 'black',
+                'fontSize': '1rem'
               }
             },
             windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
@@ -246,7 +249,8 @@ const uiSchema: any = {
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
-                'color': 'black'
+                'color': 'black',
+                'fontSize': '1rem'
               }
             },
           },

@@ -9,7 +9,10 @@ const uiSchema: any = {
     container: "div",
     containerStyles: {
       padding: '0px',
-      margin: '0px'
+      marginTop: '16px'
+    },
+    style: {
+      marginTop: '16px'
     }
   },
   'ui:field': 'GridLayout',

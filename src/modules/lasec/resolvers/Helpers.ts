@@ -10,6 +10,7 @@ import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { Organization, User, Task } from '@reactory/server-core/models';
+import LasecSalesOrderComment from '@reactory/server-modules/lasec/models/LasecSalesOrderComment';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
 import Hash from '@reactory/server-core/utils/hash';
@@ -59,7 +60,7 @@ export const totalsFromMetaData = (meta: any) => {
 export const synchronizeQuote = async (quote_id: string, owner: any, source: any = null, map: any = true) => {
   logger.debug(`synchronizeQuote called ${quote_id}`)
   const quoteSyncTimeout = 3;
-  
+
 
   let _source = source;
   let _quoteDoc: LasecQuote | null;
@@ -143,7 +144,7 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 };
 
 
-export const getLoggedIn360User: Function = async function(): Promise<Lasec360User> {
+export const getLoggedIn360User: Function = async function (): Promise<Lasec360User> {
   const { user } = global;
   const lasecCreds = user.getAuthentication("lasec");
 
@@ -1677,12 +1678,12 @@ export const getCRMSalesOrders = async (params) => {
   // iso_number - done
   // po_number - done
   // quote_number - done
-  // rep_code - done
   // order_value - done
   // reserve_value - done
   // ship_value - done
-  // backorder_value - 3428.00
+  // backorder_value - 3427.00
 
+  // rep_code
   // customer
   // client
 
@@ -1703,7 +1704,7 @@ export const getCRMSalesOrders = async (params) => {
 
   let me = await getLoggedIn360User().then();
 
-  let apiFilter = {
+  let apiFilter: any = {
     //customer_id: me.id,
     order_status: orderStatus,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
@@ -1720,7 +1721,7 @@ export const getCRMSalesOrders = async (params) => {
   if (filterBy == 'order_type')
     apiFilter[filterBy] = filter;
 
-  if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id' || filterBy == 'sales_team_id') {
+  if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id') {
     apiFilter[filterBy] = search;
   }
 
@@ -1734,6 +1735,9 @@ export const getCRMSalesOrders = async (params) => {
 
   // TODO Filter by sales team
   // apiFilter.rep_codes = me.sales_team_ids;
+  if (filterBy == 'user_sales_team_id')
+    apiFilter.sales_team_id = filter; // NOTE - this works, there is a discrepancy between user teams and sales orders
+  // apiFilter.sales_team_id = 'LAB103';
 
   const result = await getPagedSalesOrders({ paging, apiFilter });
 
@@ -1765,14 +1769,54 @@ export const getSODocuments = async (args) => {
 }
 
 export const deleteSalesOrdersDocument = async (args) => {
-
   const { id } = args;
 
-  return {
-    success: true,
-    message: 'Document deleted successfully'
+  try {
+    let deleteResponse = await lasecApi.SalesOrders.deleteDocument({ id: id }).then();
+    logger.debug(`DOCUMENT DELETE RESPONSE:: ${JSON.stringify(deleteResponse)}`);
+    return {
+      success: deleteResponse.status == 'success',
+      message: deleteResponse.payload
+    }
+  } catch (error) {
+    throw new ApiError('Error deleting this document');
   }
 }
+
+export const getSalesOrderDocBySlug = (args) => {
+
+  // NOT IN USE
+
+  const { slug } = args;
+  // logger.debug(`Fetching Content For ${slug}`, parent);
+  // const result = await Content.findOne({ slug }).then();
+  // logger.debug(`Fetching Content Result: ${result}`);
+  // if (lodash.isArray(result) === true && result.length === 1) {
+  //   return result[0];
+  // }
+
+  // return result;
+}
+
+export const uploadSalesOrderDoc = (args) => {
+
+  // NOT IN USE
+
+  const { createInput } = args;
+  // try {
+  //   logger.debug('Reactory Create Content Starting: ', args);
+  //   return await Content.findOneAndUpdate({ slug: args.createInput.slug }, {
+  //     ...createInput,
+  //     createdAt: new Date().valueOf(),
+  //     updatedAt: new Date().valueOf(),
+  //     createdBy: global.user._id,
+  //     updatedBy: global.user._id
+  //   }, { upsert: true }).then();
+  // } catch (error) {
+  //   logger.debug('Reactory Create Content Error: ', error);
+  // }
+}
+
 
 export const getISODetails = async (params) => {
 
@@ -1796,10 +1840,11 @@ export const getISODetails = async (params) => {
 
   logger.debug(`SALES ORDERS:: ${JSON.stringify(salesOrders)}`);
 
+  let comments = [];
   let lineItems = [];
   salesOrders.forEach(so => {
-
     if (so.product_code != '') {
+
       const item = {
         id: so.id,
         line: so.line,
@@ -1812,33 +1857,24 @@ export const getISODetails = async (params) => {
         shippedQty: so.shipped_qty,
         backOrderQty: so.back_order_qty,
         reservedQty: so.reserved_qty,
-        comment: so.comment
+        comment: so.comment,
+        image: so.image_url
       }
 
       lineItems.push(item);
     }
-  })
 
-  // const lineItems = salesOrders.slice(0, 1).map(li => {
-  //   return {
-  //     id: li.id,
-  //     line: li.line,
-  //     productCode: li.product_code,
-  //     productDescription: li.product_description,
-  //     unitOfMeasure: li.unit_of_measure,
-  //     price: li.price,
-  //     totalPrice: li.total_price,
-  //     orderQty: li.order_qty,
-  //     shippedQty: li.shipped_qty,
-  //     backOrderQty: li.back_order_qty,
-  //     reservedQty: li.reserved_qty,
-  //     comment: li.comment
-  //   }
-  // });
+    if (so.comment != '')
+      comments.push({ comment: so.comment });
+
+  })
 
   logger.debug(`SALES tO RETUSN :: ${JSON.stringify(lineItems)}`);
 
-  return lineItems;
+  return {
+    lineItems,
+    comments
+  };
 }
 
 export const getClientInvoices = async (params) => {
@@ -1874,19 +1910,11 @@ export const getClientInvoices = async (params) => {
   // iso_number - done
   // account_number - done
 
-  // invoice_value -  Error
-  // dispatch_number ???
+  // invoice_value -  1028.70 - not working
+  // dispatch_number - not being implemented
 
   // customer
   // client
-
-
-  // TODO- Still Outstanding
-  // 1. Broken fields - invoice_value, dispatches, iso_number, account_number
-  // 2. Waiting on Werner to finish - loopkup plugins, so I can filter by client and customer
-
-
-
 
   let apiFilter: any = {
     customer_id: clientId,
@@ -2061,3 +2089,48 @@ export const getClientSalesHistory = async (params) => {
   return result;
 
 }
+
+export const getSalesOrderComments = async (args) => {
+
+  logger.debug(`FIND COMMENTS:: ${JSON.stringify(args)}`);
+
+  const { orderId } = args;
+
+  const comments = await LasecSalesOrderComment.find({ salesOrderId: orderId }).sort({ when: -1 });
+
+  logger.debug(`COMMENTS:: ${JSON.stringify(comments)}`);
+
+  return {
+    orderId,
+    comments
+  };
+}
+
+export const saveSalesOrderComment = async (args) => {
+
+  logger.debug(`NEW COMMENT:: ${JSON.stringify(args)}`);
+
+  try {
+
+    const { orderId, comment } = args;
+
+    let newComment = new LasecSalesOrderComment({
+      who: global.user._id,
+      salesOrderId: orderId,
+      comment: comment,
+      when: new Date()
+    });
+
+    const response = await newComment.save().then();
+
+    logger.debug(`COMMENT SAVE RESPONSE:: ${JSON.stringify(response)}`);
+
+    return {
+      success: true,
+      message: 'Comment successfully saved.'
+    }
+  } catch (error) {
+    throw new ApiError(`Error saving comment. ${error}`);
+  }
+}
+

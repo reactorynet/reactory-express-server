@@ -43,7 +43,11 @@ import {
   getClientInvoices,
   getClientSalesHistory,
   getSODocuments,
-  deleteSalesOrdersDocument
+  deleteSalesOrdersDocument,
+  getSalesOrderComments,
+  saveSalesOrderComment,
+  getSalesOrderDocBySlug,
+  uploadSalesOrderDoc,
  } from './Helpers';
 
 
@@ -110,6 +114,14 @@ const getQuoteTimeline = async (quote, args, context, info) => {
 
 
 export default {
+  CRMSaleOrderComment: {
+    id: ({ id, _id }) => id || _id,
+    who: async ({ who }) => {
+      if (ObjectId.isValid(who)) {
+        return User.findById(who);
+      }
+    }
+  },
   QuoteReminder: {
     id: ({ id, _id }) => id || _id,
     who: ({ id, who = [] }) => {
@@ -519,7 +531,7 @@ export default {
         logger.error(`Error Fetching CRM SalesOrders`)
         throw new ApiError('Could not fetch sales order data', { error: err, displayInAppNotification: true });
       }
-      
+
     },
     LasecGetISODetail: async (obj, args) => {
       return getISODetails(args);
@@ -529,6 +541,12 @@ export default {
     },
     LasecGetCRMClientSalesHistory: async (obj, args) => {
       return getClientSalesHistory(args);
+    },
+    LasecGetSaleOrderComments: async (obj, args) => {
+      return getSalesOrderComments(args);
+    },
+    LasecGetSalesOrderDocumentBySlug: async (obj, args) => {
+      return getSalesOrderDocBySlug(args);
     },
   },
   Mutation: {
@@ -846,9 +864,14 @@ export default {
     LasecSendQuoteEmail: async (obj, args) => {
       return LasecSendQuoteEmail(args);
     },
-
     LasecDeleteSaleOrderDocument: async (obj, args) => {
       return deleteSalesOrdersDocument(args);
+    },
+    LasecUploadSaleOrderDocument: async (obj, args) => {
+      return uploadSalesOrderDoc(args);
+    },
+    LasecCRMSaveSaleOrderComment: async (obj, args) => {
+      return saveSalesOrderComment(args);
     },
   }
 };

@@ -298,6 +298,16 @@ type SalesOrderLineItem {
   backOrderQty: Int
   reservedQty: Int
   comment: String
+  image: String
+}
+
+type SalesOrderComment {
+  comment: String
+}
+
+type SalsOrderDetails {
+  lineItems: [SalesOrderLineItem]
+  comments: [SalesOrderComment]
 }
 
 type Invoice {
@@ -349,6 +359,44 @@ type SalesOrderDocuments {
   url: String
 }
 
+type SalesOrderCommentResponse {
+  orderId: String
+  comments: [CRMSaleOrderComment]
+}
+
+type CRMSaleOrderComment {
+  id: String
+  who: User
+  comment: String
+  when: Date
+}
+
+type SalesOrderDocumentContent {
+  id: ObjID
+  slug: String!
+  topics: [ String ]
+  title: String!
+  content: String!
+  createdAt: Date
+  updatedAt: Date
+  createdBy: User!
+  updatedBy: User!
+  published: Boolean
+  comments: [ Comment ]
+}
+
+input SalesOrderContentInput {
+  slug: String!
+  topics: [ String ]
+  title: String!
+  content: String!
+  createdAt: Date
+  updatedAt: Date
+  createdBy: ObjID
+  updatedBy: ObjID
+  published: Boolean
+}
+
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetCRMQuoteList(
@@ -392,7 +440,12 @@ extend type Query {
     iter: Int
   ): PagedCRMSalesOrders
 
+
+
+  LasecGetSaleOrderComments(orderId: String!): SalesOrderCommentResponse
   LasecGetSaleOrderDocument(ids: [String]): [SalesOrderDocuments]
+
+  LasecGetSalesOrderDocumentBySlug(slug: String!): SalesOrderDocumentContent
 
   LasecGetPagedCRMSalesOrders(
     search: String!
@@ -407,7 +460,7 @@ extend type Query {
     dateFilter: String
     iter: Int
   ): PagedCRMSalesOrders
-  LasecGetISODetail(orderId: String!): [SalesOrderLineItem]
+  LasecGetISODetail(orderId: String!): SalsOrderDetails
   LasecGetCRMClientInvoices(
     clientId: String
     salesTeamId: String
@@ -450,6 +503,8 @@ extend type Mutation {
     subject: String!
     message: String!
   ): SimpleResponse
-
   LasecDeleteSaleOrderDocument(id: String): SimpleResponse
+  LasecCRMSaveSaleOrderComment(orderId: String!, comment: String!): SimpleResponse
+
+  LasecUploadSaleOrderDocument(createInput: SalesOrderContentInput!): SalesOrderDocumentContent
 }

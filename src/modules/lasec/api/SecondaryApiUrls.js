@@ -54,7 +54,7 @@ export default {
   logout_user: { url: 'api/user/logout_lasec_user/', allowed_methods: ['post'] },
   login_lasec_user: { url: 'api/user/login_lasec_user/', allowed_methods: ['post'] },
   create_user: { url: 'api/user/', allowed_methods: ['post'] },
-  file_upload: { url: `api/${ENTITY_KEY__UPLOAD_FILE}/`, allowed_methods: ['get'] },
+  file_upload: { url: `api/${ENTITY_KEY__UPLOAD_FILE}/`, allowed_methods: ['get', 'delete'] },
   file_uploads: { url: `api/${ENTITY_KEY__FILE_UPLOADS}/`, allowed_methods: ['post'] },
   release_notes: { url: `api/${ENTITY_KEY__RELEASE_NOTE}/`, allowed_methods: ['get'] },
   release_notes_seen: { url: `api/${ENTITY_KEY__RELEASE_NOTE_SEEN}/`, allowed_methods: ['post'] },

@@ -66,7 +66,6 @@ import ClientActivitySalesOrders from './CRM/Client/Activity/SalesOrders';
 import ClientActivityInvoices from './CRM/Client/Activity/Invoices';
 import ClientActivitySalesHistory from './CRM/Client/Activity/SalesHistory';
 
-
 import ISODetail from './CRM/Client/Activity/ISODetail';
 
 import CustomerDetails from './CRM/Customer/Detail';
@@ -92,6 +91,14 @@ import SalesOrderGrid from './CRM/SalesOrder/SearchGrid';
 import ProductSalesOrders from './productCatalog/ProductDetails/SalesOrders';
 
 import ClientActivityCustomerLookUpForm from './CRM/Client/Activity/shared/CustomerLookup';
+
+import LasecCRMISODetailHeader from './CRM/Client/Activity/ISODetail/sections/header';
+import LasecCRMISODetailDeliveryDetails from './CRM/Client/Activity/ISODetail/sections/deliveryDetails';
+import LasecCRMISODetailOrderSummary from './CRM/Client/Activity/ISODetail/sections/orderSummary';
+import LasecCRMISODetailDocuments from './CRM/Client/Activity/ISODetail/sections/documents';
+import LasecCRMISODetailDocumentUpload from './CRM/Client/Activity/ISODetail/sections/documents/upload';
+import LasecCRMISODetailLineItems from './CRM/Client/Activity/ISODetail/sections/lineItems';
+import LasecCRMISODetailComments from './CRM/Client/Activity/ISODetail/sections/comments';
 
 
 const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
@@ -172,4 +179,11 @@ export default [
   ISODetail,
 
   ClientActivityCustomerLookUpForm,
+  LasecCRMISODetailHeader,
+  LasecCRMISODetailDeliveryDetails,
+  LasecCRMISODetailOrderSummary,
+  LasecCRMISODetailDocuments,
+  LasecCRMISODetailDocumentUpload,
+  LasecCRMISODetailLineItems,
+  LasecCRMISODetailComments,
 ];
