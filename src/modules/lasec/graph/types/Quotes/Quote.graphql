@@ -369,6 +369,32 @@ type CRMSaleOrderComment {
   when: Date
 }
 
+type SalesOrderDocumentContent {
+  id: ObjID
+  slug: String!
+  topics: [ String ]
+  title: String!
+  content: String!
+  createdAt: Date
+  updatedAt: Date
+  createdBy: User!
+  updatedBy: User!
+  published: Boolean
+  comments: [ Comment ]
+}
+
+input SalesOrderContentInput {
+  slug: String!
+  topics: [ String ]
+  title: String!
+  content: String!
+  createdAt: Date
+  updatedAt: Date
+  createdBy: ObjID
+  updatedBy: ObjID
+  published: Boolean
+}
+
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetCRMQuoteList(
@@ -412,8 +438,12 @@ extend type Query {
     iter: Int
   ): PagedCRMSalesOrders
 
+
+
   LasecGetSaleOrderComments(orderId: String!): SalesOrderCommentResponse
   LasecGetSaleOrderDocument(ids: [String]): [SalesOrderDocuments]
+
+  LasecGetSalesOrderDocumentBySlug(slug: String!): SalesOrderDocumentContent
 
   LasecGetPagedCRMSalesOrders(
     search: String!
@@ -471,4 +501,6 @@ extend type Mutation {
   ): SimpleResponse
   LasecDeleteSaleOrderDocument(id: String): SimpleResponse
   LasecCRMSaveSaleOrderComment(orderId: String!, comment: String!): SimpleResponse
+
+  LasecUploadSaleOrderDocument(createInput: SalesOrderContentInput!): SalesOrderDocumentContent
 }

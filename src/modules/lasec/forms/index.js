@@ -66,7 +66,6 @@ import ClientActivitySalesOrders from './CRM/Client/Activity/SalesOrders';
 import ClientActivityInvoices from './CRM/Client/Activity/Invoices';
 import ClientActivitySalesHistory from './CRM/Client/Activity/SalesHistory';
 
-
 import ISODetail from './CRM/Client/Activity/ISODetail';
 
 import CustomerDetails from './CRM/Customer/Detail';
@@ -97,6 +96,7 @@ import LasecCRMISODetailHeader from './CRM/Client/Activity/ISODetail/sections/he
 import LasecCRMISODetailDeliveryDetails from './CRM/Client/Activity/ISODetail/sections/deliveryDetails';
 import LasecCRMISODetailOrderSummary from './CRM/Client/Activity/ISODetail/sections/orderSummary';
 import LasecCRMISODetailDocuments from './CRM/Client/Activity/ISODetail/sections/documents';
+import LasecCRMISODetailDocumentUpload from './CRM/Client/Activity/ISODetail/sections/documents/upload';
 import LasecCRMISODetailLineItems from './CRM/Client/Activity/ISODetail/sections/lineItems';
 import LasecCRMISODetailComments from './CRM/Client/Activity/ISODetail/sections/comments';
 
@@ -183,6 +183,7 @@ export default [
   LasecCRMISODetailDeliveryDetails,
   LasecCRMISODetailOrderSummary,
   LasecCRMISODetailDocuments,
+  LasecCRMISODetailDocumentUpload,
   LasecCRMISODetailLineItems,
-  LasecCRMISODetailComments
+  LasecCRMISODetailComments,
 ];

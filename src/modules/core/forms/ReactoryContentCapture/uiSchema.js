@@ -2,7 +2,7 @@
 const froalaOptions = {
   key: 'SDB17hB8E7F6D3eMRPYa1c1REe1BGQOQIc1CDBREJImD6F5E4G3E1A9D7C3B4B4==',
   imageManagerLoadMethod: 'GET',
-  toolbarInline: false,    
+  toolbarInline: false,
   toolbarVisibleWithoutSelection: false,
   imageDefaultWidth: 300,
   imageDefaultDisplay: 'inline',
@@ -19,7 +19,7 @@ const froalaOptions = {
 const minmalOptions = {
   key: 'SDB17hB8E7F6D3eMRPYa1c1REe1BGQOQIc1CDBREJImD6F5E4G3E1A9D7C3B4B4==',
   imageManagerLoadMethod: 'GET',
-  toolbarInline: false,    
+  toolbarInline: false,
   toolbarVisibleWithoutSelection: false,
   imageDefaultWidth: 300,
   imageDefaultDisplay: 'inline',
@@ -30,7 +30,10 @@ const minmalOptions = {
     },
     'moreParagraph': {
       'buttons': ['alignLeft', 'alignCenter', 'formatOLSimple', 'alignRight', 'alignJustify', 'formatOL', 'formatUL', 'paragraphFormat', 'paragraphStyle', 'lineHeight', 'outdent', 'indent', 'quote']
-    },    
+    },
+    'moreRich': {
+      'buttons': ['insertFile', 'insertLink', 'insertImage', 'insertVideo']
+    },
   },
   fileUploadURL: '${formContext.api.API_ROOT}/froala/upload/file',
   videoUploadURL: '${formContext.api.API_ROOT}/froala/upload/video',
@@ -39,7 +42,7 @@ const minmalOptions = {
     'x-client-key': '${formContext.api.CLIENT_KEY}',
     'x-client-pwd': '${formContext.api.CLIENT_PWD}',
   },
-  quickInsertEnabled: false, 
+  quickInsertEnabled: false,
 };
 
 
@@ -69,7 +72,7 @@ export const minimalEdit = {
       }
     }
   },
-  slug: {    
+  slug: {
     'ui:widget': 'HiddenWidget',
     'ui:options': {
       style: {
@@ -108,7 +111,7 @@ export const minimalEdit = {
   },
   topics: {
   'ui:widget': 'HiddenWidget',
-  'ui:options': {    
+  'ui:options': {
     container: 'core.BasicContainer',
     style: {
       display: 'none',

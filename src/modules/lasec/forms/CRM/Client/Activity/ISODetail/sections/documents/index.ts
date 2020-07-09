@@ -2,7 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 
 const schema: Reactory.ISchema = {
   type: 'object',
-  title: 'Document',
+  title: 'Documents',
   properties: {
     orderId: {
       type: 'string',
@@ -93,7 +93,7 @@ const uiSchema: any = {
     'ui:widget': 'DocumentUploadWidget',
     'ui:options': {
       props: {
-        slug: 'salesorder_${orderId}',
+        slug: 'laseccrm_salesorder_${orderId}',
         title: 'Upload new documents for this Sales Order',
         mode: 'editing',
         helpTopics: ['Sales Order Document Upload'],

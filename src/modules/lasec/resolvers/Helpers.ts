@@ -1765,6 +1765,41 @@ export const deleteSalesOrdersDocument = async (args) => {
   }
 }
 
+export const getSalesOrderDocBySlug = (args) => {
+
+  // NOT IN USE
+
+  const { slug } = args;
+  // logger.debug(`Fetching Content For ${slug}`, parent);
+  // const result = await Content.findOne({ slug }).then();
+  // logger.debug(`Fetching Content Result: ${result}`);
+  // if (lodash.isArray(result) === true && result.length === 1) {
+  //   return result[0];
+  // }
+
+  // return result;
+}
+
+export const uploadSalesOrderDoc = (args) => {
+
+  // NOT IN USE
+
+  const { createInput } = args;
+  // try {
+  //   logger.debug('Reactory Create Content Starting: ', args);
+  //   return await Content.findOneAndUpdate({ slug: args.createInput.slug }, {
+  //     ...createInput,
+  //     createdAt: new Date().valueOf(),
+  //     updatedAt: new Date().valueOf(),
+  //     createdBy: global.user._id,
+  //     updatedBy: global.user._id
+  //   }, { upsert: true }).then();
+  // } catch (error) {
+  //   logger.debug('Reactory Create Content Error: ', error);
+  // }
+}
+
+
 export const getISODetails = async (params) => {
 
   const {
