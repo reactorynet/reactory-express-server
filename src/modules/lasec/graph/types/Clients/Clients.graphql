@@ -22,6 +22,7 @@ type LasecCRMCustomer {
   currencyDisplay: String
   registrationNumber: String
   taxNumber: String
+  importVATNumber: String
   creditLimit: Float
   currentBalance: Float
   currentInvoice: Float

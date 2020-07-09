@@ -2,13 +2,14 @@ import co from 'co';
 import * as dotenv from 'dotenv';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import pngToJpeg from 'png-to-jpeg';
-import { ObjectId } from 'mongodb';
+import { ObjectId, ObjectID } from 'mongodb';
 import moment from 'moment';
 import { isNil, isEmpty, union, isFunction } from 'lodash';
 import { User, Organization, Organigram, Assessment, Survey, Task } from '../../models';
 import ApiError, { UserExistsError, UserValidationError, UserNotFoundException, RecordNotFoundError } from '../../exceptions';
 import emails from '../../emails';
 import logger from '../../logging';
+import { Reactory } from 'types/reactory';
 
 dotenv.config();
 
@@ -135,32 +136,45 @@ export const listAll = () => {
   });
 };
 
-export const listAllForOrganization = (organizationId, searchString = '') => {
-  return new Promise((resolve, reject) => {
-    Organization.findOne({ _id: ObjectId(organizationId) }).then((organization) => {
-      if (organization) {
-        const query = { 'memberships.organizationId': { $eq: organization._id }, $or: [{ deleted: false }, { deleted: { $exists: false } }] };
-        if (searchString.length > 0) {
-          if (searchString.indexOf('@') > 0) {
-            query.email = new RegExp(`${searchString}`, 'g');
-          } else if (searchString.indexOf(' ') > 0) {
-            query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'g');
-            query.lastName = new RegExp(`${searchString.split(' ')[1]}`, 'g');
-          } else {
-            query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'g');
-          }
-        }
-        User.find(query).sort('firstName lastName').then((users) => {
-          resolve(users);
-        }).catch((err) => {
-          reject(err);
-        });
-      } else {
-        logger.warn('No Org with id ', organizationId);
-        resolve([]);
+
+export const listAllForOrganization = async (organizationId: string | ObjectID,
+  searchString = '',
+  excludeSelf = false,
+  showDeleted: boolean = false,
+  paging: Reactory.IPagingRequest = null): Promise<Reactory.IUserDocument[] | Reactory.IPagedResponse<Reactory.IUserDocument>> => {
+
+  const organization = await Organization.findOne({ _id: new ObjectID(organizationId) }).then();
+
+  let users: Reactory.IUserDocument[] = [];
+
+  try {
+
+    if (organization) {
+      const query: any = { 'memberships.organizationId': { $eq: organization._id } };
+
+      if (showDeleted === false) {
+        query.$or = [{ deleted: false }, { deleted: { $exists: false } }]
       }
-    });
-  });
+
+      if (searchString.length > 0) {
+        if (searchString.indexOf('@') > 0) {
+          query.email = new RegExp(`${searchString}`, 'g');
+        } else if (searchString.indexOf(' ') > 0) {
+          query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'g');
+          query.lastName = new RegExp(`${searchString.split(' ')[1]}`, 'g');
+        } else {
+          query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'g');
+        }
+      }
+
+      users = await User.find(query).sort('firstName lastName').then();
+    }
+  } catch (userListError) {
+
+  }
+
+  return users;
+
 };
 
 export const registerUser = (user) => {
@@ -219,14 +233,14 @@ export const updateUserProfileImage = (user, imageData, isBuffer = false, isPng 
   if (!existsSync(path)) mkdirSync(path);
   const filename = `${APP_DATA_ROOT}/profiles/${user._id}/profile_${user._id}_default.jpeg`;
 
-  if(isBuffer === false && typeof imageData === 'string') {
+  if (isBuffer === false && typeof imageData === 'string') {
     if (imageData.startsWith('data:image/png' && isPng === true)) {
       pngToJpeg({ quality: 90 })(buffer).then(output => writeFileSync(filename, output));
     } else writeFileSync(filename, buffer);
   } else {
     writeFileSync(filename, buffer);
   }
-  
+
 
   return `profile_${user._id}_default.jpeg`;
 };

@@ -1492,43 +1492,49 @@ export const getPagedSalesOrders = async (params) => {
     pagingResult.page = salesOrdersIds.pagination.current_page || 1;
   }
 
-  let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
-  let salesOrders = [...salesOrdersDetails.items];
+  try {
+    let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
 
-  logger.debug(`SALES ORDER:: ${JSON.stringify(salesOrders[0])}`);
-
-  salesOrders = salesOrders.map(order => {
-    return {
-      id: order.id,
-      salesOrderNumber: order.sales_order_number,
-      orderType: order.order_type,
-      orderStatus: order.order_status,
-      orderDate: order.order_date,
-      shippingDate: order.req_ship_date,
-      quoteDate: order.quote_date,
-      iso: order.sales_order_id,
-      customer: order.company_trading_name,
-      client: order.customer_name,
-      poNumber: order.customerponumber,
-      quoteId: order.quote_id,
-      currency: order.currency,
-      deliveryAddress: order.delivery_address,
-      warehouseNote: order.warehouse_note,
-      deliveryNote: order.delivery_note,
-      salesTeam: order.sales_team_id,
-      value: order.order_value,
-      reserveValue: order.reserved_value,
-      shipValue: order.shipped_value,
-      backorderValue: order.back_order_value,
-    }
-  });
-
-  let result = {
-    paging: pagingResult,
-    salesOrders,
-  };
-
-  return result;
+    let salesOrders = salesOrdersDetails && salesOrdersDetails.items ? [...salesOrdersDetails.items] : [];
+  
+    logger.debug(`SALES ORDER:: ${JSON.stringify(salesOrders[0])}`);
+  
+    salesOrders = salesOrders.map(order => {
+      return {
+        id: order.id,
+        salesOrderNumber: order.sales_order_number,
+        orderType: order.order_type,
+        orderStatus: order.order_status,
+        orderDate: order.order_date,
+        shippingDate: order.req_ship_date,
+        quoteDate: order.quote_date,
+        iso: order.sales_order_id,
+        customer: order.company_trading_name,
+        client: order.customer_name,
+        poNumber: order.customerponumber,
+        quoteId: order.quote_id,
+        currency: order.currency,
+        deliveryAddress: order.delivery_address,
+        warehouseNote: order.warehouse_note,
+        deliveryNote: order.delivery_note,
+        salesTeam: order.sales_team_id,
+        value: order.order_value,
+        reserveValue: order.reserved_value,
+        shipValue: order.shipped_value,
+        backorderValue: order.back_order_value,
+      }
+    });
+  
+    let result = {
+      paging: pagingResult,
+      salesOrders,
+    };
+    
+    return result;
+  } catch (fetchRecordsError) {
+    logger.error(`Error fetching sales orders - ${fetchRecordsError}`)
+    throw fetchRecordsError
+  }  
 
 }
 
@@ -1688,6 +1694,8 @@ export const getCRMSalesOrders = async (params) => {
     periodEnd,
     filterBy = "any_field",
     filter,
+    customer = [],
+    client = [],
     orderStatus,
     dateFilter,
     paging = { page: 1, pageSize: 10 },
@@ -1714,6 +1722,14 @@ export const getCRMSalesOrders = async (params) => {
 
   if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id' || filterBy == 'sales_team_id') {
     apiFilter[filterBy] = search;
+  }
+
+  if(filterBy === 'customer') {
+    apiFilter.customer_id = customer;
+  }
+
+  if(filterBy === 'client') {
+    apiFilter.client_id = client
   }
 
   // TODO Filter by sales team

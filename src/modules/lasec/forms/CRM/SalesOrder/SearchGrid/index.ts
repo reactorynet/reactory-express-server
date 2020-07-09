@@ -37,7 +37,8 @@ const LasecSalesOrderGrid: Reactory.IReactoryForm = {
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
-    { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
+    { componentFqn: 'lasec-crm.CustomerFilter@1.0.0', widget: 'CustomerFilter' },
+    { componentFqn: 'lasec-crm.ClientFilter@1.0.0', widget: 'ClientFilter' },
   ],
 };
 
