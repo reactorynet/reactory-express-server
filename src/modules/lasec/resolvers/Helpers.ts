@@ -59,7 +59,7 @@ export const totalsFromMetaData = (meta: any) => {
 export const synchronizeQuote = async (quote_id: string, owner: any, source: any = null, map: any = true) => {
   logger.debug(`synchronizeQuote called ${quote_id}`)
   const quoteSyncTimeout = 3;
-  
+
 
   let _source = source;
   let _quoteDoc: LasecQuote | null;
@@ -143,7 +143,7 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 };
 
 
-export const getLoggedIn360User: Function = async function(): Promise<Lasec360User> {
+export const getLoggedIn360User: Function = async function (): Promise<Lasec360User> {
   const { user } = global;
   const lasecCreds = user.getAuthentication("lasec");
 
@@ -1496,9 +1496,9 @@ export const getPagedSalesOrders = async (params) => {
     let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
 
     let salesOrders = salesOrdersDetails && salesOrdersDetails.items ? [...salesOrdersDetails.items] : [];
-  
+
     logger.debug(`SALES ORDER:: ${JSON.stringify(salesOrders[0])}`);
-  
+
     salesOrders = salesOrders.map(order => {
       return {
         id: order.id,
@@ -1524,17 +1524,17 @@ export const getPagedSalesOrders = async (params) => {
         backorderValue: order.back_order_value,
       }
     });
-  
+
     let result = {
       paging: pagingResult,
       salesOrders,
     };
-    
+
     return result;
   } catch (fetchRecordsError) {
     logger.error(`Error fetching sales orders - ${fetchRecordsError}`)
     throw fetchRecordsError
-  }  
+  }
 
 }
 
@@ -1720,25 +1720,24 @@ export const getCRMSalesOrders = async (params) => {
   if (filterBy == 'order_type')
     apiFilter[filterBy] = filter;
 
-  if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id' || filterBy == 'sales_team_id') {
+  if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id') {
     apiFilter[filterBy] = search;
   }
 
-  if(filterBy === 'customer') {
+  if (filterBy === 'customer') {
     apiFilter.customer_id = customer;
   }
 
-  if(filterBy === 'client') {
+  if (filterBy === 'client') {
     apiFilter.client_id = client
   }
 
-  // TODO Filter by sales team
-  // apiFilter.rep_codes = me.sales_team_ids;
+  if (filterBy == 'sales_team_id') {
+    apiFilter[filterBy] = filter;
+  }
 
   const result = await getPagedSalesOrders({ paging, apiFilter });
-
   return result;
-
 }
 
 export const getSODocuments = async (args) => {
@@ -1875,18 +1874,8 @@ export const getClientInvoices = async (params) => {
   // account_number - done
 
   // invoice_value -  Error
-  // dispatch_number ???
-
   // customer
   // client
-
-
-  // TODO- Still Outstanding
-  // 1. Broken fields - invoice_value, dispatches, iso_number, account_number
-  // 2. Waiting on Werner to finish - loopkup plugins, so I can filter by client and customer
-
-
-
 
   let apiFilter: any = {
     customer_id: clientId,
@@ -1901,7 +1890,6 @@ export const getClientInvoices = async (params) => {
   }
 
   if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
-    // if (search || search != '') apiFilter[filterBy] = search;
     apiFilter[filterBy] = search;
   }
 
