@@ -787,6 +787,35 @@ const getCustomerList = async (params) => {
       'registered_name': 'registeredName',
       'trading_name': 'tradingName',
       'sales_team_id': 'salesTeam',
+      'account_terms': 'accountType',
+      'customer_class_id': 'customerClass',
+      'company_on_hold': { key: 'customerStatus',  transform: ( company_on_hold: boolean )=>  (company_on_hold === true ? 'ON HOLD' : 'NOT ON HOLD')  },
+      'credit_limit_total_cents': { key: 'availableBalance', transform: ( limit: string | number  ) => { 
+        let _limit = 0;
+        if(typeof limit === 'number' && limit > 0) _limit = limit;
+        if(typeof limit === 'string') {
+          if(limit.indexOf("." ) > 0) {
+            try {
+              _limit = parseFloat(limit)
+            } catch(parseError) {
+              logger.error(`Could not parse credit_limit_total "${limit}" as float`);
+            }
+          } else {
+            try {
+              _limit = parseInt(limit)
+            } catch(parseError) {
+              logger.error(`Could not parse credit_limit_total "${limit}" as number`);
+            }
+          }
+        }
+
+        if(_limit > 0) return Math.fround(_limit / 100);
+
+        return _limit;
+
+      }},
+      'currency_symbol': 'currencySymbol',      
+      'vat_number': ['taxNumber', 'vatNumber'],
     });
     return _customer;
   });

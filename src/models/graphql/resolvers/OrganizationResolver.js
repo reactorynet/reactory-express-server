@@ -50,8 +50,9 @@ const organizationResolver = {
     organizationWithId(obj, args, context, info) {
       return Organization.findOne({ _id: args.id }).then();
     },
-    usersForOrganizationWithId(obj, { id, searchString }, context, info) {
-      return UserService.listAllForOrganization(id, searchString);
+    CoreUsersForOrganization(obj, { id, searchString, excludeSelf = false, showDeleted = false, paging = null }, context, info) {
+      logger.debug(`Users for Organizations Called`, {id, searchString, excludeSelf, showDeleted, paging});
+      return UserService.listAllForOrganization(id, searchString, excludeSelf, showDeleted, paging).then();
     },
     organizationsForUser: async (obj, { id }) => {
       const user = await User.findById(id);

@@ -452,6 +452,8 @@ extend type Query {
     paging: PagingRequest
     filterBy: String
     filter: String
+    customer: [String]
+    client: [String]
     orderStatus: String
     periodStart: String
     periodEnd: String

@@ -7,8 +7,10 @@ const graphql: Reactory.IFormGraphDefinition =  {
       $search: String!,
       $paging: PagingRequest,
       $filterBy: String,
-      $filter: String
-      $orderStatus: String
+      $filter: String,
+      $customer: [String],
+      $client: [String],
+      $orderStatus: String,
       $periodStart: String,
       $periodEnd: String,
       $dateFilter: String,
@@ -22,6 +24,8 @@ const graphql: Reactory.IFormGraphDefinition =  {
         periodStart: $periodStart,
         periodEnd: $periodEnd,
         dateFilter: $dateFilter,
+        customer: $customer,
+        client: $client,
       ){
         paging {
           total
@@ -63,6 +67,8 @@ const graphql: Reactory.IFormGraphDefinition =  {
     }`,
     variables: {
       'formData.search': 'search',
+      'formData.customer': 'customer',
+      'formData.client': 'client',
       'formData.filterBy': 'filterBy',
       'formData.filter': 'filter',
       'formData.orderStatus': 'orderStatus',

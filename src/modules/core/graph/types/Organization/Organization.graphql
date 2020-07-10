@@ -121,7 +121,7 @@ extend type Query {
   allOrganizations(legacy: Boolean): [Organization]
   organizationsForUser(id: String!): [Organization]
   organizationWithId(id: String!): Organization
-  usersForOrganizationWithId(id: String!, searchString: String): [User]
+  CoreUsersForOrganization(id: String!, searchString: String): [User]
 
   GetOrganisationLookupData(orgId: String!): OrganizationLookupData
 }

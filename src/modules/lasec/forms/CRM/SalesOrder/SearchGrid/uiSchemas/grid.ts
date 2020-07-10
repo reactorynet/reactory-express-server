@@ -115,50 +115,28 @@ const uiSchema: any = {
     'ui:widget': 'DateSelectorWidget',
   },
   client: {
-    'ui:widget': 'LookupComponent',
+    'ui:widget': 'ClientFilter',
     'ui:options': {
       label: 'Select a Client',
       title: 'Search for a Client'
     },
     props: {
-      componentFqn: 'lasec-crm.LasecCRMClientLookupTable@1.0.0',
+      componentFqn: 'lasec-crm.ClientFilter@1.0.0',
       componentProps: {},
     },
   },
   customer: {
-    'ui:widget': 'LookupComponent',
+    'ui:widget': 'CustomerFilter',
     'ui:options': {
       label: 'Select a Customer',
       title: 'Search for a Customer'
     },
     props: {
-      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
-      componentProps: {},
+      label: 'Select a Customer',
+      //componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+      //componentProps: {},
     },
-  },
-  // teamFilter: {
-  //   'ui:widget': 'SelectWithDataWidget',
-  //   'ui:options': {
-  //     multiSelect: true,
-  //     inputProps: {
-  //       variant: 'outline'
-  //     },
-  //     query: `query LasecSalesTeams {
-  //       LasecSalesTeams {
-  //         id
-  //         title
-  //         meta  {
-  //           reference
-  //         }
-  //       }
-  //     }`,
-  //     resultItem: 'LasecSalesTeams',
-  //     resultsMap: {
-  //       'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
-  //       'LasecSalesTeams.[].title': '[].label',
-  //     },
-  //   },
-  // },
+  }, 
   salesOrders: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -355,6 +333,8 @@ const uiSchema: any = {
       query: 'query',
       variables: {
         'props.formContext.$formData.search': 'search',
+        'props.formContext.$formData.customer': 'customer',
+        'props.formContext.$formData.client': 'client',
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.filterBy': 'filterBy',
         'props.formContext.$formData.filter': 'filter',
