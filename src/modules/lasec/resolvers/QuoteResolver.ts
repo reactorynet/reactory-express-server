@@ -48,6 +48,7 @@ import {
   saveSalesOrderComment,
   getSalesOrderDocBySlug,
   uploadSalesOrderDoc,
+  getCRMInvoices
  } from './Helpers';
 
 
@@ -519,11 +520,9 @@ export default {
     LasecGetCRMClientSalesOrders: async (obj, args) => {
       return getClientSalesOrders(args);
     },
-
     LasecGetSaleOrderDocument: async (obj, args) => {
       return getSODocuments(args);
     },
-
     LasecGetPagedCRMSalesOrders: async (obj, args) => {
       try {
         return getCRMSalesOrders(args);
@@ -538,6 +537,9 @@ export default {
     },
     LasecGetCRMClientInvoices: async (obj, args) => {
       return getClientInvoices(args);
+    },
+    LasecGetCRMInvoices: async (obj, args) => {
+      return getCRMInvoices(args);
     },
     LasecGetCRMClientSalesHistory: async (obj, args) => {
       return getClientSalesHistory(args);

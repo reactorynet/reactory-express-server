@@ -62,7 +62,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
       {
         id: 'invoices',
         title: 'Invoices',
-        componentFqn: 'lasec-crm.LasecInvoicesGrid',
+        componentFqn: 'lasec-crm.LasecCRMInvoiceGrid',
         componentProps: {},
         route: '/crm/invoices/',
         componentPropsMap: {

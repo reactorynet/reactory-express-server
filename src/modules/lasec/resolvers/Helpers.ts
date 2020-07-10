@@ -37,7 +37,6 @@ const lookups = CONSTANTS.LOOKUPS;
 
 const maps = { ...OBJECT_MAPS };
 
-
 /**
  * Transforms meta data into totals object
  * @param meta meta data to use for transformation
@@ -53,9 +52,6 @@ export const totalsFromMetaData = (meta: any) => {
     "actual_gp_percent": "actualGP",
   });
 };
-
-
-
 
 export const synchronizeQuote = async (quote_id: string, owner: any, source: any = null, map: any = true) => {
   logger.debug(`synchronizeQuote called ${quote_id}`)
@@ -143,7 +139,6 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 
 };
 
-
 export const getLoggedIn360User: Function = async function (): Promise<Lasec360User> {
   const { user } = global;
   const lasecCreds = user.getAuthentication("lasec");
@@ -178,7 +173,6 @@ export const getLoggedIn360User: Function = async function (): Promise<Lasec360U
 
   throw new LasecNotAuthenticatedException();
 };
-
 
 export const getTargets = async (params: LasecDashboardSearchParams) => {
   const { periodStart, periodEnd, teamIds, repIds, agentSelection } = params;
@@ -224,8 +218,6 @@ export const getTargets = async (params: LasecDashboardSearchParams) => {
     return 0;
   }
 };
-
-
 
 /**
  * Finds and / or synchronizes a record
@@ -1497,9 +1489,9 @@ export const getPagedSalesOrders = async (params) => {
     let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
 
     let salesOrders = salesOrdersDetails && salesOrdersDetails.items ? [...salesOrdersDetails.items] : [];
-  
+
     logger.debug(`SALES ORDER:: ${JSON.stringify(salesOrders[0])}`);
-  
+
     salesOrders = salesOrders.map(order => {
       return {
         id: order.id,
@@ -1525,17 +1517,17 @@ export const getPagedSalesOrders = async (params) => {
         backorderValue: order.back_order_value,
       }
     });
-  
+
     let result = {
       paging: pagingResult,
       salesOrders,
     };
-    
+
     return result;
   } catch (fetchRecordsError) {
     logger.error(`Error fetching sales orders - ${fetchRecordsError}`)
     throw fetchRecordsError
-  }  
+  }
 
 }
 
@@ -1918,6 +1910,114 @@ export const getClientInvoices = async (params) => {
 
   let apiFilter: any = {
     customer_id: clientId,
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+  };
+
+  if (filterBy == 'invoice_date') {
+    apiFilter.using = filterBy;
+    apiFilter.start_date = moment(dateFilter).startOf('day');
+    apiFilter.end_date = moment(dateFilter).endOf('day');
+  }
+
+  if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
+    // if (search || search != '') apiFilter[filterBy] = search;
+    apiFilter[filterBy] = search;
+  }
+
+  const invoiceIdsResponse = await lasecApi.Invoices.list({
+    filter: apiFilter,
+    pagination: {
+      page_size: paging.pageSize || 10, current_page: paging.page
+    },
+    ordering: { "invoice_date": "desc" }
+  }).then();
+
+  logger.debug(`INVOICE COUNT:: ${invoiceIdsResponse.ids.length}`);
+
+  let ids = [];
+
+  if (isArray(invoiceIdsResponse.ids) === true) {
+    ids = [...invoiceIdsResponse.ids];
+  }
+
+  if (invoiceIdsResponse.pagination && invoiceIdsResponse.pagination.num_pages > 1) {
+    pagingResult.total = invoiceIdsResponse.pagination.num_items;
+    pagingResult.pageSize = invoiceIdsResponse.pagination.page_size || 10;
+    pagingResult.hasNext = invoiceIdsResponse.pagination.has_next_page === true;
+    pagingResult.page = invoiceIdsResponse.pagination.current_page || 1;
+  }
+
+  let invoiceDetails = await lasecApi.Invoices.list({ filter: { ids: ids } }).then();
+  let invoices = [...invoiceDetails.items];
+
+  logger.debug(`INVOICE DETAIL:: ${JSON.stringify(invoices[0])}`);
+
+  invoices = invoices.map(invoice => {
+    return {
+      id: invoice.id,
+      invoiceDate: invoice.invoice_date,
+      quoteDate: invoice.quote_date,
+      quoteId: invoice.quote_id,
+      customer: invoice.company_name,
+      client: invoice.customer_name,
+      dispatches: invoice.dispatch_note_ids.join(', '),
+      accountNumber: invoice.account,
+      salesTeamId: invoice.sales_team_id,
+      poNumber: invoice.customer_po_number,
+      value: invoice.invoice_value,
+      isoNumber: invoice.sales_order_id
+    }
+  });
+
+  let result = {
+    paging: pagingResult,
+    invoices,
+  };
+
+  return result;
+
+}
+
+export const getCRMInvoices = async (params) => {
+
+  logger.debug(`GETTING PAGED CRM INVOICES:: ${JSON.stringify(params)}`);
+
+  const {
+    search = "",
+    periodStart,
+    periodEnd,
+    dateFilter,
+    filterBy = "any_field",
+    filter,
+    paging = { page: 1, pageSize: 10 },
+    iter = 0 } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  // -- POSSIBLE FILTERS --
+  // any_field
+  // date_range
+  // invoice_date
+  // invoice_number
+  // po_number
+  // quote_number
+  // sales_team_id
+  // iso_number
+  // account_number
+  // invoice_value
+  // customer
+  // client
+
+  let me = await getLoggedIn360User().then();
+
+  let apiFilter: any = {
+    customer_id: me.id,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
