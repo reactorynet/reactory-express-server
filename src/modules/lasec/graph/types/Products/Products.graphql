@@ -30,7 +30,9 @@ type Product {
   listPrice: Int
   productPricing: [LasecProductPricing]
   buyer: String
+  buyerEmail: String
   planner: String
+  plannerEmail: String
   isHazardous: String
   siteEvaluationRequired: String
   packedLength: Float
@@ -135,7 +137,7 @@ extend type Query {
 }
 extend type Mutation {
   LasecSendProductQuery(
-    buyerEmail: String!
+    toEmail: String!    
     subject: String!
     message: String!
   ): SimpleResponse

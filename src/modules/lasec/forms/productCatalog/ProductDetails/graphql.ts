@@ -28,7 +28,9 @@ export default {
           threeMonthAvePrice
           listPrice
           buyer
+          buyerEmail
           planner
+          plannerEmail
           isHazardous
           siteEvaluationRequired
           packedLength
@@ -99,7 +101,9 @@ export default {
       'products.[].threeMonthAvePrice': 'products.[].threeMonthAvePrice',
       'products.[].listPrice': 'products.[].listPrice',
       'products.[].buyer': 'products.[].buyer',
+      'products.[].buyerEmail': 'products.[].buyerEmail',
       'products.[].planner': 'products.[].planner',
+      'products.[].plannerEmail': 'products.[].plannerEmail',
       'products.[].isHazardous': 'products.[].isHazardous',
       'products.[].siteEvaluationRequired': 'products.[].siteEvaluationRequired',
       'products.[].packedLength': 'products.[].packedLength',

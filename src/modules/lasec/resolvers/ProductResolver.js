@@ -202,7 +202,9 @@ const getProducts = async (params) => {
       threeMonthAvePrice: prd.three_month_ave_price_cents,
       listPrice: prd.list_price_cents,
       buyer: prd.buyer,
+      buyerEmail: prd.buyer_email || 'allbuyers@lasec.com',
       planner: prd.planner,
+      plannerEmail: prd.planner_email || 'allplanners@lasec.com',
       isHazardous: prd.is_hazardous ? 'Yes' : 'No',
       siteEvaluationRequired: prd.site_evaluation_required ? 'Yes' : 'No',
       packedLength: prd.packed_length,
@@ -388,7 +390,7 @@ const getWarehouseStockLevels = async (params) => {
   };
 }
 
-const LasecGetProductQueryDetail = async ({ productId }) => {
+const LasecGetProductQueryDetail = async ({ productId, context = 'buyer' }) => {
   const { user } = global;
 
   const productResult = await lasecApi.Products.byId({ filter: { ids: [productId] } }).then();
@@ -402,8 +404,8 @@ const LasecGetProductQueryDetail = async ({ productId }) => {
     productName: product.name,
     productDescription: product.description,
     from: user.email,
-    buyer: product.buyer,
-    buyerEmail: product.buyer_email,
+    to: product[context],
+    toEmail: product[`${context}_email`],
     subject: `Product query regarding: ${product.name} (${product.code})`,
     message: `
     Product query from ${user.firstName} ${user.lastName}, regards the following product:
@@ -422,9 +424,15 @@ const getProductClasses = async (params) => {
 };
 
 const sendProductQuery = async (params) => {
-  const { buyerEmail, subject, message } = params;
+  const { toEmail, subject, message } = params;
   const { user } = global;
   let mailResponse = { success: true, message: `Product Query sent successfully!` };
+
+  logger.debug(`Sending a product inquiry ${JSON.stringify({
+    toEmail,
+    subject,
+    message
+  })}`);
 
   if (user.getAuthentication("microsoft") !== null) {
     await clientFor(user, global.partner).mutate({
@@ -440,7 +448,7 @@ const sendProductQuery = async (params) => {
           "via": "microsoft",
           "subject": subject,
           "content": message,
-          "recipients": [buyerEmail],
+          "recipients": [toEmail],
           'contentType': 'html'
         }
       }

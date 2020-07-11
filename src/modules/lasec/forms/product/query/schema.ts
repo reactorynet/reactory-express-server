@@ -22,11 +22,11 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'From'
     },
-    buyer: {
+    to: {
       type: 'string',
       title: 'Buyer'
     },
-    buyerEmail: {
+    toEmail: {
       type: 'string',
       title: 'Buyer Email'
     },

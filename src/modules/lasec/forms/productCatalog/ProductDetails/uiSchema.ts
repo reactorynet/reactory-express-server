@@ -171,8 +171,68 @@ export const uiSchemaTable: any = {
             },
           },
         },
-        { title: 'Buyer', field: 'buyer' },
-        { title: 'Planner', field: 'planner' },
+        { 
+          title: 'Buyer', 
+          field: 'buyer',  
+          components: [
+            {
+              component: 'core.SlideOutLauncher@1.0.0',
+              props: {
+                componentFqn: 'lasec-crm.ProductInquiryWrapper@1.0.0',
+                componentProps: {
+                  'rowData': 'formData',
+                  'api': 'api',
+                },
+                childProps: {
+                  context: 'buyer'
+                },
+                slideDirection: 'down',          
+                buttonTitle: '${rowData.buyer}',
+                buttonProps: {
+                  color: "#23A06A",
+                  size: 'small',
+                  style: {
+                    marginLeft: '16px',
+                    backgroundColor: "#23A06A"
+                  }
+                },
+                buttonIcon: 'email',
+                windowTitle: 'Send email to ${rowData.buyer || "all buyers"} (Buyer) re: ${rowData.code}',
+              },
+            },
+          ],
+        },
+        { 
+          title: 'Planner', 
+          field: 'planner',
+          components: [
+            {
+              component: 'core.SlideOutLauncher@1.0.0',
+              props: {
+                componentFqn: 'lasec-crm.ProductInquiryWrapper@1.0.0',
+                componentProps: {
+                  'rowData': 'formData',                  
+                  'api': 'api',
+                },
+                childProps: {
+                  context: 'planner'
+                },
+                slideDirection: 'down',          
+                buttonTitle: '${rowData.planner}',
+                buttonProps: {
+                  color: "#23A06A",
+                  size: 'small',
+                  style: {
+                    marginLeft: '16px',
+                    backgroundColor: "#23A06A"
+                  }
+                },
+                buttonIcon: 'email',
+                windowTitle: 'Send email to ${rowData.planner || "all planners"} (Planner) re: ${rowData.code}',
+              },
+            },
+          ],
+        },
         { title: 'Is Hazardous', field: 'isHazardous' },
         { title: 'Site Evaluation', field: 'siteEvaluationRequired' },
       ],
@@ -208,7 +268,9 @@ export const uiSchemaTable: any = {
         'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
         'products.[].listPrice': 'data.[].listPrice',
         'products.[].buyer': 'data.[].buyer',
+        'products.[].buyerEmail': 'data.[].buyerEmail',
         'products.[].planner': 'data.[].planner',
+        'products.[].plannerEmail': 'data.[].plannerEmail',
         'products.[].isHazardous': 'data.[].isHazardous',
         'products.[].siteEvaluationRequired': 'data.[].siteEvaluationRequired',
         'products.[].packedLength': 'data.[].packedLength',
@@ -393,7 +455,9 @@ export const uiSchemaGrid: any = {
         'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
         'products.[].listPrice': 'data.[].listPrice',
         'products.[].buyer': 'data.[].buyer',
+        'products.[].buyerEmail': 'data.[].buyerEmail',
         'products.[].planner': 'data.[].planner',
+        'products.[].plannerEmail': 'data.[].plannerEmail',
         'products.[].isHazardous': 'data.[].isHazardous',
         'products.[].siteEvaluationRequired': 'data.[].siteEvaluationRequired',
         'products.[].packedLength': 'data.[].packedLength',

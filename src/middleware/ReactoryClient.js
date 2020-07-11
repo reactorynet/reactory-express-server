@@ -1,8 +1,13 @@
 import { isNil } from 'lodash';
 import { ReactoryClient } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
+
 const bypassUri = [
-  '/cdn/',
+  '/cdn/plugins/',  
+  '/cdn/profiles/',
+  '/cdn/organization/',
+  '/cdn/themes/',
+  '/cdn/ui/',  
   '/favicon.ico',
   '/auth/microsoft/openid',
 ];
@@ -22,7 +27,7 @@ const ReactoryClientAuthenticationMiddleware = (req, res, next) => {
   if(isNil(clientPwd) === true) clientPwd = query.secret;  
   if(isNil(clientPwd) === true) clientPwd = query['x-client-pwd'];
 
-  logger.debug(`ReactoryClientAuthenticationMiddleware:: Client key: [${clientId}], Client Token: [${clientPwd}], Original Url: ${req.originalUrl}`, {query: req.query, params: req.params});
+  logger.debug(`ReactoryClientAuthenticationMiddleware:: Client key: [${clientId}], Client Token: [${clientPwd}], Original Url: ${req.originalUrl}`, {query: req.query, params: req.params, method: req.method });
 
   let bypass = false;
   if (req.originalUrl) {

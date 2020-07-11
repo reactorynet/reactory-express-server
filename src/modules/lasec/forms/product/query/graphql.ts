@@ -1,47 +1,17 @@
 export default {
-  query: {
-    name: 'LasecGetProductQueryDetail',
-    text: `query LasecGetProductQueryDetail($productId: String!){
-      LasecGetProductQueryDetail(productId: $productId){
-        id        
-        productCode
-        productName
-        productDescription
-        from
-        buyer
-        buyerEmail
-        subject
-        message
-      }
-    }`,
-    variables: {
-      'formData.id': 'productId',
-    },
-    resultMap: {
-      'productCode': 'code',
-      'productName': 'name',
-      'productDescription': 'description',
-      'from': 'from',
-      'buyer': 'buyer',
-      'buyerEmail': 'buyerEmail',
-      'subject': 'subject',
-      'message': 'message'
-    },    
-    edit: true,
-    new: true,
-  },
+ 
   mutation: {
     new: {
       name: 'LasecSendProductQuery',
-      text: `mutation LasecSendProductQuery($buyerEmail: String!, $subject: String!, $message: String!){
-        LasecSendProductQuery(buyerEmail: $buyerEmail, subject: $subject, message: $message){
+      text: `mutation LasecSendProductQuery($toEmail: String!, $subject: String!, $message: String!){
+        LasecSendProductQuery(toEmail: $toEmail, subject: $subject, message: $message){
           success
           message
         }
       }`,
       updateMessage: 'Sending Product Query for ${formData.name}',
       variables: {
-        'formData.buyerEmail': 'buyerEmail',
+        'formData.toEmail': 'toEmail',
         'formData.subject': 'subject',
         'formData.message': 'message',
       },
@@ -50,6 +20,15 @@ export default {
         '*': '*',
       },
       options: {},
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Product inquiry sent',
+        props: {
+          timeOut: 3000,
+          canDismiss: true,          
+        }
+      },
     },
   },
 };

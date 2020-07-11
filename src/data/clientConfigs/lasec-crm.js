@@ -1077,7 +1077,11 @@ const LASEC_CONFIG = {
       MuiAppBar: {
         colorPrimary: {
           color: '#222732',
-          backgroundColor: "#fff"
+          backgroundColor: "#fff",
+          '@media (prefers-color-scheme: dark)': {
+            color: '#fff',
+            backgroundColor: "#424242",
+          }
         }
       },
       MuiToolbar: {
