@@ -67,6 +67,20 @@ const schema: Reactory.ISchema = {
             }
           },
         },
+        {
+          properties:
+          {
+            filterBy: {
+              enum: [
+                InvoiceFilterByEnumsKeys.sales_team_id,
+              ]
+            },
+            filter: {
+              type: 'string',
+              title: 'Show'
+            }
+          },
+        },
       ]
     },
   },

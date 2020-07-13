@@ -134,7 +134,6 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Invoice Number', field: 'id' },
         {
           title: 'Invoice Date',
           field: 'invoiceDate',
@@ -150,6 +149,98 @@ const uiSchema: any = {
           propsMap: {
             'rowData.invoiceDate': 'value',
           }
+        },
+        // { title: 'Invoice Number', field: 'id' },
+        {
+          title: 'Invoice Number',
+          field: 'isoNumber',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
+            componentProps: {
+              'rowData.id': ['data.id', 'query.id'],
+              'rowData.quoteId': ['data.quoteId', 'query.quoteId'],
+              'rowData.isoNumber': ['data.orderId', 'query.orderId'],
+              'rowData.iso': ['data.iso', 'query.iso'],
+              'rowData.documentIds': ['data.documentIds', 'query.documentIds'],
+              'rowData.poNumber': ['data.poNumber', 'query.poNumber'],
+              'rowData.orderDate': ['data.orderDate', 'query.orderDate'],
+              'rowData.customer': ['data.customer', 'query.customer'],
+              'rowData.client': ['data.client', 'query.client'],
+              'rowData.orderStatus': ['data.orderStatus', 'query.orderStatus'],
+              'rowData.currency': ['data.currency', 'query.currency'],
+              'rowData.orderType': ['data.orderType', 'query.orderType'],
+              'rowData.deliveryAddress': ['data.deliveryAddress', 'query.deliveryAddress'],
+              'rowData.warehouseNote': ['data.warehouseNote', 'query.warehouseNote'],
+              'rowData.deliveryNote': ['data.deliveryNote', 'query.deliveryNote'],
+              'rowData.salesTeam': ['data.salesTeam', 'query.salesTeam'],
+            },
+            slideDirection: 'down',
+            buttonTitle: '${rowData.id}',
+            buttonVariant: 'Typography',
+            buttonProps: {
+              style: {
+                'textDecoration': 'underline',
+                'cursor': 'pointer',
+                'color': 'black',
+                'fontSize': '1rem'
+              }
+            },
+            windowTitle: 'Details view for Invoice # ${rowData.id}',
+          },
+          propsMap: {
+            'rowData': 'rowData'
+          }
+        },
+        { title: 'PO Number', field: 'poNumber' },
+        {
+          title: 'Sales Order Number',
+          field: 'isoNumber',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
+            componentProps: {
+              'rowData.id': ['data.id', 'query.id'],
+              'rowData.quoteId': ['data.quoteId', 'query.quoteId'],
+              'rowData.isoNumber': ['data.orderId', 'query.orderId'],
+              'rowData.iso': ['data.iso', 'query.iso'],
+              'rowData.documentIds': ['data.documentIds', 'query.documentIds'],
+              'rowData.poNumber': ['data.poNumber', 'query.poNumber'],
+              'rowData.orderDate': ['data.orderDate', 'query.orderDate'],
+              'rowData.customer': ['data.customer', 'query.customer'],
+              'rowData.client': ['data.client', 'query.client'],
+              'rowData.orderStatus': ['data.orderStatus', 'query.orderStatus'],
+              'rowData.currency': ['data.currency', 'query.currency'],
+              'rowData.orderType': ['data.orderType', 'query.orderType'],
+              'rowData.deliveryAddress': ['data.deliveryAddress', 'query.deliveryAddress'],
+              'rowData.warehouseNote': ['data.warehouseNote', 'query.warehouseNote'],
+              'rowData.deliveryNote': ['data.deliveryNote', 'query.deliveryNote'],
+              'rowData.salesTeam': ['data.salesTeam', 'query.salesTeam'],
+            },
+            slideDirection: 'down',
+            buttonTitle: '${rowData.isoNumber}',
+            buttonVariant: 'Typography',
+            buttonProps: {
+              style: {
+                'textDecoration': 'underline',
+                'cursor': 'pointer',
+                'color': 'black',
+                'fontSize': '1rem'
+              }
+            },
+            windowTitle: 'Details view for Order # ${rowData.isoNumber}',
+          },
+          propsMap: {
+            'rowData': 'rowData'
+          }
+        },
+        {
+          title: 'Inv Value',
+          field: 'value',
+          component: 'core.CurrencyLabel@1.0.0',
+          propsMap: {
+            'rowData.value': 'value',
+          },
         },
         { title: 'Quote Number', field: 'quoteId' },
         {
@@ -171,18 +262,11 @@ const uiSchema: any = {
         { title: 'Account Number', field: 'accountNumber' },
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
-        { title: 'Dispatches', field: 'dispatches' },
+        // { title: 'Dispatches', field: 'dispatches' },
         { title: 'Client Rep Code', field: 'salesTeamId' },
         { title: 'PO Number', field: 'poNumber' },
-        { title: 'ISO Number', field: 'isoNumber' },
-        {
-          title: 'Inv Value',
-          field: 'value',
-          component: 'core.CurrencyLabel@1.0.0',
-          propsMap: {
-            'rowData.value': 'value',
-          },
-        },
+        // { title: 'ISO Number', field: 'isoNumber' },
+
       ],
       options: {
         grouping: false,

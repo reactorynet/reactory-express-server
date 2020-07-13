@@ -1716,11 +1716,7 @@ export const getCRMSalesOrders = async (params) => {
     apiFilter[filterBy] = search;
   }
 
-<<<<<<< HEAD
-  if(filterBy === 'customer') {
-=======
   if (filterBy === 'customer') {
->>>>>>> feature/ClientCleanUpAndFeatures
     apiFilter.customer_id = customer;
   }
 
@@ -1728,17 +1724,9 @@ export const getCRMSalesOrders = async (params) => {
     apiFilter.client_id = client
   }
 
-<<<<<<< HEAD
-  // TODO Filter by sales team
-  // apiFilter.rep_codes = me.sales_team_ids;
-  if (filterBy == 'user_sales_team_id')
-    apiFilter.sales_team_id = filter; // NOTE - this works, there is a discrepancy between user teams and sales orders
-  // apiFilter.sales_team_id = 'LAB103';
-=======
   if (filterBy == 'sales_team_id') {
     apiFilter[filterBy] = filter;
   }
->>>>>>> feature/ClientCleanUpAndFeatures
 
   const result = await getPagedSalesOrders({ paging, apiFilter });
   return result;
@@ -1975,7 +1963,7 @@ export const getCRMInvoices = async (params) => {
   let me = await getLoggedIn360User().then();
 
   let apiFilter: any = {
-    // customer_id: me.id,
+    customer_id: me.id,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
@@ -1986,8 +1974,12 @@ export const getCRMInvoices = async (params) => {
     apiFilter.end_date = moment(dateFilter).endOf('day');
   }
 
-  if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
+  if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number') {
     apiFilter[filterBy] = search;
+  }
+
+  if (filterBy == 'sales_team_id') {
+    apiFilter[filterBy] = filter;
   }
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
@@ -2063,30 +2055,8 @@ export const getClientSalesHistory = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  // -- POSSIBLE FILTERS --
-  // Order Type
-  // Quote Date
-  // Quote Number
-  // Order Date
-  // ISO Number
-  // Customer
-  // Client
-  // PO Number
-  // Rep Code
-
-  const exampleFilter = {
-    "filter": {
-      "order_status": 9,
-      "start_date": "2019-05-26T00:00:00.000Z",
-      "end_date": "2020-05-26T00:00:00.000Z"
-    },
-    "format": { "ids_only": true },
-    "ordering": { "orderdate": "asc" },
-    "pagination": {}
-  }
-
   let apiFilter = {
-    // client_id: clientId,
+    customer_id: clientId,
     order_status: 9,
     // [filterBy]: filter || search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
@@ -2118,6 +2088,104 @@ export const getClientSalesHistory = async (params) => {
 
   let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
   let salesHistory = [...saleshistoryDetails.items];
+
+  salesHistory = salesHistory.map(order => {
+    return {
+      id: order.id,
+      orderType: order.order_type,
+      orderDate: order.order_date,
+      quoteDate: order.quote_date,
+      quoteNumber: order.quote_id || '',
+      iso: order.sales_order_id,
+      dispatches: order.dispatch_note_ids.join(', '),
+      customer: order.company_trading_name,
+      client: order.customer_name,
+      poNumber: order.sales_order_number,
+      value: order.order_value,
+      salesTeamId: order.sales_team_id
+    }
+  });
+
+  let result = {
+    paging: pagingResult,
+    salesHistory,
+  };
+
+  return result;
+
+}
+
+export const getCRMSalesHistory = async (params) => {
+
+  logger.debug(`GETTING PAGED CRM SALES HISTORY:: ${JSON.stringify(params)}`);
+
+  const {
+    search = "",
+    periodStart,
+    periodEnd,
+    filterBy = "any_field",
+    filter,
+    paging = { page: 1, pageSize: 10 },
+    iter = 0 } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  let me = await getLoggedIn360User().then();
+
+  let apiFilter = {
+    // customer_id: me.id,
+    order_status: 9,
+    // [filterBy]: filter || search,
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+  };
+
+  // if (filterBy == 'invoice_date') {
+  //   apiFilter.using = filterBy;
+  //   apiFilter.start_date = moment(dateFilter).startOf('day');
+  //   apiFilter.end_date = moment(dateFilter).endOf('day');
+  // }
+
+  // if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number') {
+  //   apiFilter[filterBy] = search;
+  // }
+
+  if (filterBy == 'order_type') {
+    apiFilter[filterBy] = filter;
+  }
+
+  const salesHistoryResponse = await lasecApi.Products.sales_orders({
+    filter: apiFilter,
+    pagination: {
+      page_size: paging.pageSize || 10,
+      current_page: paging.page
+    },
+  }).then();
+
+  logger.debug(`SALES HISTORY COUNT:: ${salesHistoryResponse.ids.length}`);
+
+  let ids = [];
+
+  if (isArray(salesHistoryResponse.ids) === true) {
+    ids = [...salesHistoryResponse.ids];
+  }
+
+  if (salesHistoryResponse.pagination && salesHistoryResponse.pagination.num_pages > 1) {
+    pagingResult.total = salesHistoryResponse.pagination.num_items;
+    pagingResult.pageSize = salesHistoryResponse.pagination.page_size || 10;
+    pagingResult.hasNext = salesHistoryResponse.pagination.has_next_page === true;
+    pagingResult.page = salesHistoryResponse.pagination.current_page || 1;
+  }
+
+  let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
+  let salesHistory = [...saleshistoryDetails.items];
+
+  logger.debug(`SH RESULT:: ${JSON.stringify(salesHistory[0])}`);
 
   salesHistory = salesHistory.map(order => {
     return {

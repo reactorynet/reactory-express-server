@@ -42,6 +42,7 @@ import {
   getISODetails,
   getClientInvoices,
   getClientSalesHistory,
+  getCRMSalesHistory,
   getSODocuments,
   deleteSalesOrdersDocument,
   getSalesOrderComments,
@@ -543,6 +544,9 @@ export default {
     },
     LasecGetCRMClientSalesHistory: async (obj, args) => {
       return getClientSalesHistory(args);
+    },
+    LasecGetCRMSalesHistory: async (obj, args) => {
+      return getCRMSalesHistory(args);
     },
     LasecGetSaleOrderComments: async (obj, args) => {
       return getSalesOrderComments(args);

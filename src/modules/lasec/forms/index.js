@@ -100,6 +100,7 @@ import LasecCRMISODetailDocumentUpload from './CRM/Client/Activity/ISODetail/sec
 import LasecCRMISODetailLineItems from './CRM/Client/Activity/ISODetail/sections/lineItems';
 import LasecCRMISODetailComments from './CRM/Client/Activity/ISODetail/sections/comments';
 import LasecCRMInvoiceGrid from './CRM/Invoice/SearchGrid';
+import LasecCRMSalesHistoryGrid from './CRM/SalesHistory/SearchGrid';
 
 
 const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
@@ -188,4 +189,5 @@ export default [
   LasecCRMISODetailLineItems,
   LasecCRMISODetailComments,
   LasecCRMInvoiceGrid,
+  LasecCRMSalesHistoryGrid,
 ];

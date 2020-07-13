@@ -17,8 +17,8 @@ const LasecSalesHistoryGrid: Reactory.IReactoryForm = {
       uri: `${ENVIRONMENT.CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
     },
   ],
-  title: 'CMS Sales Order Grid',
-  tags: ['CMS Sales Order Grid'],
+  title: 'CMS Sales History Grid',
+  tags: ['CMS Sales History Grid'],
   registerAsComponent: true,
   name: 'LasecSalesHistoryGrid',
   nameSpace: 'lasec-crm',
@@ -37,8 +37,7 @@ const LasecSalesHistoryGrid: Reactory.IReactoryForm = {
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
-    { componentFqn: 'lasec-crm.CustomerFilter@1.0.0', widget: 'CustomerFilter' },
-    { componentFqn: 'lasec-crm.ClientFilter@1.0.0', widget: 'ClientFilter' },
+    { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
   ],
 };
 
