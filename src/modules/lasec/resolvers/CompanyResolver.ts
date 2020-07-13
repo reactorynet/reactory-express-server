@@ -790,7 +790,7 @@ const getCustomerList = async (params) => {
       'account_terms': 'accountType',
       'customer_class_id': 'customerClass',
       'company_on_hold': { key: 'customerStatus',  transform: ( company_on_hold: boolean )=>  (company_on_hold === true ? 'ON HOLD' : 'NOT ON HOLD')  },
-      'credit_limit_total_cents': { key: 'availableBalance', transform: ( limit: string | number  ) => { 
+      'credit_limit_total_cents': { key: 'availableBalance', transform: ( limit: string | number  ) => {
         let _limit = 0;
         if(typeof limit === 'number' && limit > 0) _limit = limit;
         if(typeof limit === 'string') {
@@ -814,7 +814,7 @@ const getCustomerList = async (params) => {
         return _limit;
 
       }},
-      'currency_symbol': 'currencySymbol',      
+      'currency_symbol': 'currencySymbol',
       'vat_number': ['taxNumber', 'vatNumber'],
     });
     return _customer;

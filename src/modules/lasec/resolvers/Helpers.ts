@@ -1697,7 +1697,7 @@ export const getCRMSalesOrders = async (params) => {
   let me = await getLoggedIn360User().then();
 
   let apiFilter: any = {
-    //customer_id: me.id,
+    customer_id: me.id,
     order_status: orderStatus,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
@@ -2000,24 +2000,10 @@ export const getCRMInvoices = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  // -- POSSIBLE FILTERS --
-  // any_field
-  // date_range
-  // invoice_date
-  // invoice_number
-  // po_number
-  // quote_number
-  // sales_team_id
-  // iso_number
-  // account_number
-  // invoice_value
-  // customer
-  // client
-
   let me = await getLoggedIn360User().then();
 
   let apiFilter: any = {
-    customer_id: me.id,
+    // customer_id: me.id,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
@@ -2029,7 +2015,6 @@ export const getCRMInvoices = async (params) => {
   }
 
   if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
-    // if (search || search != '') apiFilter[filterBy] = search;
     apiFilter[filterBy] = search;
   }
 
@@ -2058,8 +2043,6 @@ export const getCRMInvoices = async (params) => {
 
   let invoiceDetails = await lasecApi.Invoices.list({ filter: { ids: ids } }).then();
   let invoices = [...invoiceDetails.items];
-
-  logger.debug(`INVOICE DETAIL:: ${JSON.stringify(invoices[0])}`);
 
   invoices = invoices.map(invoice => {
     return {

@@ -65,26 +65,26 @@ const uiSchema: any = {
       selectOptions: InvoiceFilterByOptions,
     },
   },
-  // filter: {
-  //   'ui:widget': 'SelectWithDataWidget',
-  //   'ui:options': {
-  //     multiSelect: false,
-  //     query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
-  //       LasecGetCustomerFilterLookup(filterBy: $filterBy) {
-  //         id
-  //         name
-  //       }
-  //     }`,
-  //     propertyMap: {
-  //       'formContext.$formData.filterBy': 'filterBy'
-  //     },
-  //     resultItem: 'LasecGetCustomerFilterLookup',
-  //     resultsMap: {
-  //       'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
-  //       'LasecGetCustomerFilterLookup.[].name': '[].label',
-  //     },
-  //   },
-  // },
+  filter: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
+        LasecGetCustomerFilterLookup(filterBy: $filterBy) {
+          id
+          name
+        }
+      }`,
+      propertyMap: {
+        'formContext.$formData.filterBy': 'filterBy'
+      },
+      resultItem: 'LasecGetCustomerFilterLookup',
+      resultsMap: {
+        'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerFilterLookup.[].name': '[].label',
+      },
+    },
+  },
   periodStart: {
     'ui:widget': 'DateSelectorWidget',
   },
@@ -139,7 +139,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${rowData.invoiceDate ? api.utils.moment(rowData.invoiceDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
@@ -156,7 +156,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${rowData.quoteDate ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
