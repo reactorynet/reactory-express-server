@@ -47,7 +47,8 @@ const schema: Reactory.ISchema = {
             filterBy: {
               enum: [
                 FilterByEnumsKeys.order_type,
-                FilterByEnumsKeys.user_sales_team_id,
+                FilterByEnumsKeys.sales_team_id,
+                // FilterByEnumsKeys.user_sales_team_id,
               ]
             },
             filter: {
@@ -152,18 +153,18 @@ const schema: Reactory.ISchema = {
           },
           customer: {
             type: 'string'
-          },          
+          },
           crmCustomer: {
             type: 'object',
             properties: {
               id: {
-                type: 'string',                
+                type: 'string',
               },
               registeredName: {
-                type: 'string',                
+                type: 'string',
               },
               customerStatus: {
-                type: 'string',                
+                type: 'string',
               }
             }
           },

@@ -1679,6 +1679,9 @@ export default {
         case 'rep_code': {
           return getRepCodesForFilter();
         }
+        case 'sales_team_id': {
+          return getRepCodesForLoggedInUser();
+        }
         case 'user_sales_team_id': {
           return getRepCodesForLoggedInUser();
         }
