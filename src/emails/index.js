@@ -179,7 +179,7 @@ const DefaultQueueOptions = {
   client: null,
 };
 
-const queueMail = co.wrap(function* queueMail(user, msg, options = DefaultQueueOptions) {
+const queueMail = async (user, msg, options = DefaultQueueOptions) => {
   const {
     sent,
     sentAt,
@@ -218,12 +218,12 @@ const queueMail = co.wrap(function* queueMail(user, msg, options = DefaultQueueO
   };
 
   try {
-    return yield new EmailQueue(emailQueueInput).save();
+    return await new EmailQueue(emailQueueInput).save().then();
   } catch (newError) {
     logger.error('::Error creating new Email Queue::', newError);
     throw newError;
   }
-});
+};
 
 String.prototype.replaceAll = function (search, replacement) {
   var target = this;

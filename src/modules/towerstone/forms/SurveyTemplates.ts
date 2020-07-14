@@ -208,7 +208,15 @@ const $graphql: Reactory.IFormGraphDefinition = {
         'formData.templates' : 'templates',
         'formContext.surveyId'  : 'id'
       },
-      onSuccessMethod: 'refresh'
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Survey templates updated',
+        props: {
+          timeOut: 3000,
+          canDismiss: true,          
+        }
+      },
     }
   } 
 };

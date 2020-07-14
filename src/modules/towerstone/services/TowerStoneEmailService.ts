@@ -845,7 +845,7 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
   return {
     send: async (survey: TowerStone.ISurveyDocument, activity: string, target: string, users: Reactory.IUser[], properties: any = {} ) => {  
       logger.debug(`Sending email for Survey ${survey.title} for ${activity} action targeting ${target} with ${users.length} user(s)`);      
-      if(survey.surveyType === '180' || survey.surveyType === 'plc') {
+      //if(survey.surveyType === '180' || survey.surveyType === 'plc') {
         const surveyTemplate = getTowerStoneSurveyEmailTemplate(survey.surveyType, activity, target);        
         const _template = await getReactoryTemplate(surveyTemplate.key, survey.organization, partner);
         
@@ -934,9 +934,9 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
           failed: 0,
           sent: 0
         };
-      } else {
-        throw new ApiError('Not support yet here');
-      }      
+      //} else {
+      //  throw new ApiError('Not support yet here');
+      //}      
     },
     templates: async (survey: TowerStone.ISurveyDocument) => {
       logger.debug(`Fetching email templates for ${survey.title} via service ref`);

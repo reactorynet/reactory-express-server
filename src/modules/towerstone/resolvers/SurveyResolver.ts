@@ -762,7 +762,7 @@ export default {
       const survey = await getSurveyService().get(id).then();
       logger.debug(`Patching Templates For Survey ${survey.title}`)
       const mailService = getMailService(survey, 'TowerStoneSurveySetTemplates');
-      mailService.patchTemplates(survey, templates);
+      return await mailService.patchTemplates(survey, templates).then();
     },
     async TowerStoneLeadershipBrandCopy(parent: any, params: TowerStone.ICopyLeadershipBrandParams) {
 
