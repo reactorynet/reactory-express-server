@@ -362,7 +362,7 @@ export default {
       name: 'email_redirect/DEVELOP',
       data: {
         email: 'werner.weber+twredirect@gmail.com',
-        enabled: false,
+        enabled: true,
       },
     },
     {

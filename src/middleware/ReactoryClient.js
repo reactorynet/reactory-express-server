@@ -3,6 +3,7 @@ import { ReactoryClient } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
 
 const bypassUri = [
+  '/cdn/content/',
   '/cdn/plugins/',  
   '/cdn/profiles/',
   '/cdn/organization/',
