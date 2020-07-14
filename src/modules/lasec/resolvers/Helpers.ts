@@ -10,7 +10,6 @@ import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { Organization, User, Task } from '@reactory/server-core/models';
-import LasecSalesOrderComment from '@reactory/server-modules/lasec/models/LasecSalesOrderComment';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
 import Hash from '@reactory/server-core/utils/hash';
@@ -37,7 +36,6 @@ const lookups = CONSTANTS.LOOKUPS;
 
 const maps = { ...OBJECT_MAPS };
 
-
 /**
  * Transforms meta data into totals object
  * @param meta meta data to use for transformation
@@ -53,9 +51,6 @@ export const totalsFromMetaData = (meta: any) => {
     "actual_gp_percent": "actualGP",
   });
 };
-
-
-
 
 export const synchronizeQuote = async (quote_id: string, owner: any, source: any = null, map: any = true) => {
   logger.debug(`synchronizeQuote called ${quote_id}`)
@@ -143,7 +138,6 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 
 };
 
-
 export const getLoggedIn360User: Function = async function (): Promise<Lasec360User> {
   const { user } = global;
   const lasecCreds = user.getAuthentication("lasec");
@@ -178,7 +172,6 @@ export const getLoggedIn360User: Function = async function (): Promise<Lasec360U
 
   throw new LasecNotAuthenticatedException();
 };
-
 
 export const getTargets = async (params: LasecDashboardSearchParams) => {
   const { periodStart, periodEnd, teamIds, repIds, agentSelection } = params;
@@ -224,8 +217,6 @@ export const getTargets = async (params: LasecDashboardSearchParams) => {
     return 0;
   }
 };
-
-
 
 /**
  * Finds and / or synchronizes a record
@@ -1497,9 +1488,9 @@ export const getPagedSalesOrders = async (params) => {
     let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
 
     let salesOrders = salesOrdersDetails && salesOrdersDetails.items ? [...salesOrdersDetails.items] : [];
-  
+
     logger.debug(`SALES ORDER:: ${JSON.stringify(salesOrders[0])}`);
-  
+
     salesOrders = salesOrders.map(order => {
       return {
         id: order.id,
@@ -1525,17 +1516,17 @@ export const getPagedSalesOrders = async (params) => {
         backorderValue: order.back_order_value,
       }
     });
-  
+
     let result = {
       paging: pagingResult,
       salesOrders,
     };
-    
+
     return result;
   } catch (fetchRecordsError) {
     logger.error(`Error fetching sales orders - ${fetchRecordsError}`)
     throw fetchRecordsError
-  }  
+  }
 
 }
 
@@ -1678,12 +1669,12 @@ export const getCRMSalesOrders = async (params) => {
   // iso_number - done
   // po_number - done
   // quote_number - done
+  // rep_code - done
   // order_value - done
   // reserve_value - done
   // ship_value - done
-  // backorder_value - 3427.00
+  // backorder_value - 3428.00
 
-  // rep_code
   // customer
   // client
 
@@ -1705,7 +1696,7 @@ export const getCRMSalesOrders = async (params) => {
   let me = await getLoggedIn360User().then();
 
   let apiFilter: any = {
-    //customer_id: me.id,
+    customer_id: me.id,
     order_status: orderStatus,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
@@ -1725,24 +1716,20 @@ export const getCRMSalesOrders = async (params) => {
     apiFilter[filterBy] = search;
   }
 
-  if(filterBy === 'customer') {
+  if (filterBy === 'customer') {
     apiFilter.customer_id = customer;
   }
 
-  if(filterBy === 'client') {
+  if (filterBy === 'client') {
     apiFilter.client_id = client
   }
 
-  // TODO Filter by sales team
-  // apiFilter.rep_codes = me.sales_team_ids;
-  if (filterBy == 'user_sales_team_id')
-    apiFilter.sales_team_id = filter; // NOTE - this works, there is a discrepancy between user teams and sales orders
-  // apiFilter.sales_team_id = 'LAB103';
+  if (filterBy == 'sales_team_id') {
+    apiFilter[filterBy] = filter;
+  }
 
   const result = await getPagedSalesOrders({ paging, apiFilter });
-
   return result;
-
 }
 
 export const getSODocuments = async (args) => {
@@ -1769,54 +1756,14 @@ export const getSODocuments = async (args) => {
 }
 
 export const deleteSalesOrdersDocument = async (args) => {
+
   const { id } = args;
 
-  try {
-    let deleteResponse = await lasecApi.SalesOrders.deleteDocument({ id: id }).then();
-    logger.debug(`DOCUMENT DELETE RESPONSE:: ${JSON.stringify(deleteResponse)}`);
-    return {
-      success: deleteResponse.status == 'success',
-      message: deleteResponse.payload
-    }
-  } catch (error) {
-    throw new ApiError('Error deleting this document');
+  return {
+    success: true,
+    message: 'Document deleted successfully'
   }
 }
-
-export const getSalesOrderDocBySlug = (args) => {
-
-  // NOT IN USE
-
-  const { slug } = args;
-  // logger.debug(`Fetching Content For ${slug}`, parent);
-  // const result = await Content.findOne({ slug }).then();
-  // logger.debug(`Fetching Content Result: ${result}`);
-  // if (lodash.isArray(result) === true && result.length === 1) {
-  //   return result[0];
-  // }
-
-  // return result;
-}
-
-export const uploadSalesOrderDoc = (args) => {
-
-  // NOT IN USE
-
-  const { createInput } = args;
-  // try {
-  //   logger.debug('Reactory Create Content Starting: ', args);
-  //   return await Content.findOneAndUpdate({ slug: args.createInput.slug }, {
-  //     ...createInput,
-  //     createdAt: new Date().valueOf(),
-  //     updatedAt: new Date().valueOf(),
-  //     createdBy: global.user._id,
-  //     updatedBy: global.user._id
-  //   }, { upsert: true }).then();
-  // } catch (error) {
-  //   logger.debug('Reactory Create Content Error: ', error);
-  // }
-}
-
 
 export const getISODetails = async (params) => {
 
@@ -1840,11 +1787,10 @@ export const getISODetails = async (params) => {
 
   logger.debug(`SALES ORDERS:: ${JSON.stringify(salesOrders)}`);
 
-  let comments = [];
   let lineItems = [];
   salesOrders.forEach(so => {
-    if (so.product_code != '') {
 
+    if (so.product_code != '') {
       const item = {
         id: so.id,
         line: so.line,
@@ -1857,24 +1803,33 @@ export const getISODetails = async (params) => {
         shippedQty: so.shipped_qty,
         backOrderQty: so.back_order_qty,
         reservedQty: so.reserved_qty,
-        comment: so.comment,
-        image: so.image_url
+        comment: so.comment
       }
 
       lineItems.push(item);
     }
-
-    if (so.comment != '')
-      comments.push({ comment: so.comment });
-
   })
+
+  // const lineItems = salesOrders.slice(0, 1).map(li => {
+  //   return {
+  //     id: li.id,
+  //     line: li.line,
+  //     productCode: li.product_code,
+  //     productDescription: li.product_description,
+  //     unitOfMeasure: li.unit_of_measure,
+  //     price: li.price,
+  //     totalPrice: li.total_price,
+  //     orderQty: li.order_qty,
+  //     shippedQty: li.shipped_qty,
+  //     backOrderQty: li.back_order_qty,
+  //     reservedQty: li.reserved_qty,
+  //     comment: li.comment
+  //   }
+  // });
 
   logger.debug(`SALES tO RETUSN :: ${JSON.stringify(lineItems)}`);
 
-  return {
-    lineItems,
-    comments
-  };
+  return lineItems;
 }
 
 export const getClientInvoices = async (params) => {
@@ -1910,9 +1865,7 @@ export const getClientInvoices = async (params) => {
   // iso_number - done
   // account_number - done
 
-  // invoice_value -  1028.70 - not working
-  // dispatch_number - not being implemented
-
+  // invoice_value -  Error
   // customer
   // client
 
@@ -1929,7 +1882,6 @@ export const getClientInvoices = async (params) => {
   }
 
   if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
-    // if (search || search != '') apiFilter[filterBy] = search;
     apiFilter[filterBy] = search;
   }
 
@@ -1987,6 +1939,101 @@ export const getClientInvoices = async (params) => {
 
 }
 
+export const getCRMInvoices = async (params) => {
+
+  logger.debug(`GETTING PAGED CRM INVOICES:: ${JSON.stringify(params)}`);
+
+  const {
+    search = "",
+    periodStart,
+    periodEnd,
+    dateFilter,
+    filterBy = "any_field",
+    filter,
+    paging = { page: 1, pageSize: 10 },
+    iter = 0 } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  let me = await getLoggedIn360User().then();
+
+  let apiFilter: any = {
+    customer_id: me.id,
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+  };
+
+  if (filterBy == 'invoice_date') {
+    apiFilter.using = filterBy;
+    apiFilter.start_date = moment(dateFilter).startOf('day');
+    apiFilter.end_date = moment(dateFilter).endOf('day');
+  }
+
+  if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number') {
+    apiFilter[filterBy] = search;
+  }
+
+  if (filterBy == 'sales_team_id') {
+    apiFilter[filterBy] = filter;
+  }
+
+  const invoiceIdsResponse = await lasecApi.Invoices.list({
+    filter: apiFilter,
+    pagination: {
+      page_size: paging.pageSize || 10, current_page: paging.page
+    },
+    ordering: { "invoice_date": "desc" }
+  }).then();
+
+  logger.debug(`INVOICE COUNT:: ${invoiceIdsResponse.ids.length}`);
+
+  let ids = [];
+
+  if (isArray(invoiceIdsResponse.ids) === true) {
+    ids = [...invoiceIdsResponse.ids];
+  }
+
+  if (invoiceIdsResponse.pagination && invoiceIdsResponse.pagination.num_pages > 1) {
+    pagingResult.total = invoiceIdsResponse.pagination.num_items;
+    pagingResult.pageSize = invoiceIdsResponse.pagination.page_size || 10;
+    pagingResult.hasNext = invoiceIdsResponse.pagination.has_next_page === true;
+    pagingResult.page = invoiceIdsResponse.pagination.current_page || 1;
+  }
+
+  let invoiceDetails = await lasecApi.Invoices.list({ filter: { ids: ids } }).then();
+  let invoices = [...invoiceDetails.items];
+
+  invoices = invoices.map(invoice => {
+    return {
+      id: invoice.id,
+      invoiceDate: invoice.invoice_date,
+      quoteDate: invoice.quote_date,
+      quoteId: invoice.quote_id,
+      customer: invoice.company_name,
+      client: invoice.customer_name,
+      dispatches: invoice.dispatch_note_ids.join(', '),
+      accountNumber: invoice.account,
+      salesTeamId: invoice.sales_team_id,
+      poNumber: invoice.customer_po_number,
+      value: invoice.invoice_value,
+      isoNumber: invoice.sales_order_id
+    }
+  });
+
+  let result = {
+    paging: pagingResult,
+    invoices,
+  };
+
+  return result;
+
+}
+
 export const getClientSalesHistory = async (params) => {
 
   logger.debug(`GETTING PAGED CLIENT SALES HISTORY:: ${JSON.stringify(params)}`);
@@ -2008,30 +2055,8 @@ export const getClientSalesHistory = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  // -- POSSIBLE FILTERS --
-  // Order Type
-  // Quote Date
-  // Quote Number
-  // Order Date
-  // ISO Number
-  // Customer
-  // Client
-  // PO Number
-  // Rep Code
-
-  const exampleFilter = {
-    "filter": {
-      "order_status": 9,
-      "start_date": "2019-05-26T00:00:00.000Z",
-      "end_date": "2020-05-26T00:00:00.000Z"
-    },
-    "format": { "ids_only": true },
-    "ordering": { "orderdate": "asc" },
-    "pagination": {}
-  }
-
   let apiFilter = {
-    // client_id: clientId,
+    customer_id: clientId,
     order_status: 9,
     // [filterBy]: filter || search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
@@ -2090,47 +2115,100 @@ export const getClientSalesHistory = async (params) => {
 
 }
 
-export const getSalesOrderComments = async (args) => {
+export const getCRMSalesHistory = async (params) => {
 
-  logger.debug(`FIND COMMENTS:: ${JSON.stringify(args)}`);
+  logger.debug(`GETTING PAGED CRM SALES HISTORY:: ${JSON.stringify(params)}`);
 
-  const { orderId } = args;
+  const {
+    search = "",
+    periodStart,
+    periodEnd,
+    filterBy = "any_field",
+    filter,
+    paging = { page: 1, pageSize: 10 },
+    iter = 0 } = params;
 
-  const comments = await LasecSalesOrderComment.find({ salesOrderId: orderId }).sort({ when: -1 });
-
-  logger.debug(`COMMENTS:: ${JSON.stringify(comments)}`);
-
-  return {
-    orderId,
-    comments
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
   };
-}
 
-export const saveSalesOrderComment = async (args) => {
+  let me = await getLoggedIn360User().then();
 
-  logger.debug(`NEW COMMENT:: ${JSON.stringify(args)}`);
+  let apiFilter = {
+    // customer_id: me.id,
+    order_status: 9,
+    // [filterBy]: filter || search,
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+  };
 
-  try {
+  // if (filterBy == 'invoice_date') {
+  //   apiFilter.using = filterBy;
+  //   apiFilter.start_date = moment(dateFilter).startOf('day');
+  //   apiFilter.end_date = moment(dateFilter).endOf('day');
+  // }
 
-    const { orderId, comment } = args;
+  // if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number') {
+  //   apiFilter[filterBy] = search;
+  // }
 
-    let newComment = new LasecSalesOrderComment({
-      who: global.user._id,
-      salesOrderId: orderId,
-      comment: comment,
-      when: new Date()
-    });
-
-    const response = await newComment.save().then();
-
-    logger.debug(`COMMENT SAVE RESPONSE:: ${JSON.stringify(response)}`);
-
-    return {
-      success: true,
-      message: 'Comment successfully saved.'
-    }
-  } catch (error) {
-    throw new ApiError(`Error saving comment. ${error}`);
+  if (filterBy == 'order_type') {
+    apiFilter[filterBy] = filter;
   }
-}
 
+  const salesHistoryResponse = await lasecApi.Products.sales_orders({
+    filter: apiFilter,
+    pagination: {
+      page_size: paging.pageSize || 10,
+      current_page: paging.page
+    },
+  }).then();
+
+  logger.debug(`SALES HISTORY COUNT:: ${salesHistoryResponse.ids.length}`);
+
+  let ids = [];
+
+  if (isArray(salesHistoryResponse.ids) === true) {
+    ids = [...salesHistoryResponse.ids];
+  }
+
+  if (salesHistoryResponse.pagination && salesHistoryResponse.pagination.num_pages > 1) {
+    pagingResult.total = salesHistoryResponse.pagination.num_items;
+    pagingResult.pageSize = salesHistoryResponse.pagination.page_size || 10;
+    pagingResult.hasNext = salesHistoryResponse.pagination.has_next_page === true;
+    pagingResult.page = salesHistoryResponse.pagination.current_page || 1;
+  }
+
+  let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
+  let salesHistory = [...saleshistoryDetails.items];
+
+  logger.debug(`SH RESULT:: ${JSON.stringify(salesHistory[0])}`);
+
+  salesHistory = salesHistory.map(order => {
+    return {
+      id: order.id,
+      orderType: order.order_type,
+      orderDate: order.order_date,
+      quoteDate: order.quote_date,
+      quoteNumber: order.quote_id || '',
+      iso: order.sales_order_id,
+      dispatches: order.dispatch_note_ids.join(', '),
+      customer: order.company_trading_name,
+      client: order.customer_name,
+      poNumber: order.sales_order_number,
+      value: order.order_value,
+      salesTeamId: order.sales_team_id
+    }
+  });
+
+  let result = {
+    paging: pagingResult,
+    salesHistory,
+  };
+
+  return result;
+
+}

@@ -1,5 +1,5 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { FilterByEnumArray, FilterByEnumsKeys } from './shared';
+import { InvoiceFilterByEnumsKeys } from '../shared';
 
 const schema: Reactory.ISchema = {
   type: 'object',
@@ -12,7 +12,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.date_range,
+                InvoiceFilterByEnumsKeys.date_range,
               ]
             },
             periodStart: {
@@ -30,9 +30,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.order_date,
-                FilterByEnumsKeys.shipping_date,
-                FilterByEnumsKeys.quote_date,
+                InvoiceFilterByEnumsKeys.invoice_date,
               ]
             },
             dateFilter: {
@@ -46,23 +44,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.order_type,
-                FilterByEnumsKeys.sales_team_id,
-                // FilterByEnumsKeys.user_sales_team_id,
-              ]
-            },
-            filter: {
-              type: 'string',
-              title: 'Show'
-            }
-          },
-        },
-        {
-          properties:
-          {
-            filterBy: {
-              enum: [
-                FilterByEnumsKeys.client,
+                InvoiceFilterByEnumsKeys.client,
               ]
             },
             client: {
@@ -76,10 +58,24 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.customer,
+                InvoiceFilterByEnumsKeys.customer,
               ]
             },
             customer: {
+              type: 'string',
+              title: 'Show'
+            }
+          },
+        },
+        {
+          properties:
+          {
+            filterBy: {
+              enum: [
+                InvoiceFilterByEnumsKeys.sales_team_id,
+              ]
+            },
+            filter: {
               type: 'string',
               title: 'Show'
             }
@@ -89,14 +85,6 @@ const schema: Reactory.ISchema = {
     },
   },
   properties: {
-    actions: {
-      type: 'string',
-      title: 'ACTIONS',
-    },
-    search: {
-      type: 'string',
-      title: 'Search'
-    },
     paging: {
       type: 'object',
       title: 'Paging',
@@ -115,66 +103,20 @@ const schema: Reactory.ISchema = {
         }
       }
     },
+    search: {
+      type: 'string',
+      title: 'Search'
+    },
     filterBy: {
       type: 'string',
       title: 'FILTER BY'
     },
-    orderStatus: {
-      type: 'string',
-      title: 'ORDER STATUS'
-    },
-    // teamFilter: {
-    //   title: 'Team Filter',
-    //   type: 'array',
-    //   items: {
-    //     type: 'string',
-    //     title: 'Team Id'
-    //   },
-    // },
-    salesOrders: {
+    invoices: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
           id: {
-            type: 'string'
-          },
-          orderDate: {
-            type: 'string'
-          },
-          orderType: {
-            type: 'string'
-          },
-          shippingDate: {
-            type: 'string'
-          },
-          iso: {
-            type: 'string'
-          },
-          customer: {
-            type: 'string'
-          },
-          crmCustomer: {
-            type: 'object',
-            properties: {
-              id: {
-                type: 'string',
-              },
-              registeredName: {
-                type: 'string',
-              },
-              customerStatus: {
-                type: 'string',
-              }
-            }
-          },
-          client: {
-            type: 'string'
-          },
-          poNumber: {
-            type: 'string'
-          },
-          value: {
             type: 'string'
           },
         }

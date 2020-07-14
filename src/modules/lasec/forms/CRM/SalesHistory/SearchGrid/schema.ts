@@ -1,5 +1,5 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { FilterByEnumArray, FilterByEnumsKeys } from './shared';
+import { SalesHistoryFilterByEnumsKeys } from '../shared';
 
 const schema: Reactory.ISchema = {
   type: 'object',
@@ -12,7 +12,8 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.date_range,
+                SalesHistoryFilterByEnumsKeys.order_date,
+                SalesHistoryFilterByEnumsKeys.quote_date,
               ]
             },
             periodStart: {
@@ -30,25 +31,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.order_date,
-                FilterByEnumsKeys.shipping_date,
-                FilterByEnumsKeys.quote_date,
-              ]
-            },
-            dateFilter: {
-              type: 'string',
-              title: 'Date',
-            },
-          },
-        },
-        {
-          properties:
-          {
-            filterBy: {
-              enum: [
-                FilterByEnumsKeys.order_type,
-                FilterByEnumsKeys.sales_team_id,
-                // FilterByEnumsKeys.user_sales_team_id,
+                SalesHistoryFilterByEnumsKeys.order_type,
               ]
             },
             filter: {
@@ -62,7 +45,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.client,
+                SalesHistoryFilterByEnumsKeys.client,
               ]
             },
             client: {
@@ -76,7 +59,7 @@ const schema: Reactory.ISchema = {
           {
             filterBy: {
               enum: [
-                FilterByEnumsKeys.customer,
+                SalesHistoryFilterByEnumsKeys.customer,
               ]
             },
             customer: {
@@ -89,14 +72,6 @@ const schema: Reactory.ISchema = {
     },
   },
   properties: {
-    actions: {
-      type: 'string',
-      title: 'ACTIONS',
-    },
-    search: {
-      type: 'string',
-      title: 'Search'
-    },
     paging: {
       type: 'object',
       title: 'Paging',
@@ -115,23 +90,15 @@ const schema: Reactory.ISchema = {
         }
       }
     },
+    search: {
+      type: 'string',
+      title: 'Search'
+    },
     filterBy: {
       type: 'string',
       title: 'FILTER BY'
     },
-    orderStatus: {
-      type: 'string',
-      title: 'ORDER STATUS'
-    },
-    // teamFilter: {
-    //   title: 'Team Filter',
-    //   type: 'array',
-    //   items: {
-    //     type: 'string',
-    //     title: 'Team Id'
-    //   },
-    // },
-    salesOrders: {
+    salesHistory: {
       type: 'array',
       items: {
         type: 'object',
@@ -139,34 +106,26 @@ const schema: Reactory.ISchema = {
           id: {
             type: 'string'
           },
-          orderDate: {
-            type: 'string'
-          },
           orderType: {
             type: 'string'
           },
-          shippingDate: {
+          quoteDate: {
             type: 'string'
           },
-          iso: {
+          quoteNumber: {
+            type: 'string'
+          },
+          orderDate: {
+            type: 'string'
+          },
+          isoNumber: {
+            type: 'string'
+          },
+          dispatches: {
             type: 'string'
           },
           customer: {
             type: 'string'
-          },
-          crmCustomer: {
-            type: 'object',
-            properties: {
-              id: {
-                type: 'string',
-              },
-              registeredName: {
-                type: 'string',
-              },
-              customerStatus: {
-                type: 'string',
-              }
-            }
           },
           client: {
             type: 'string'
@@ -175,6 +134,9 @@ const schema: Reactory.ISchema = {
             type: 'string'
           },
           value: {
+            type: 'string'
+          },
+          salesTeamId: {
             type: 'string'
           },
         }

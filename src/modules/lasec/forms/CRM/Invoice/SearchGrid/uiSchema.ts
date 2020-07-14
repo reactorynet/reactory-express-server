@@ -1,6 +1,3 @@
-import { Reactory } from '@reactory/server-core/types/reactory'
-import $graphql from './graphql';
-import $schema from './schema';
 import { InvoiceFilterByOptions } from '../shared';
 
 const uiSchema: any = {
@@ -32,12 +29,12 @@ const uiSchema: any = {
     {
       search: { md: 4, sm: 12 },
       filterBy: { md: 4, sm: 12 },
-      // filter: { md: 4, sm: 12 },
+      filter: { md: 4, sm: 12 },
       periodStart: { md: 6, xs: 12 },
       periodEnd: { md: 6, xs: 12 },
       dateFilter: { md: 6, xs: 12 },
-      client: { md: 6, xs: 12 },
-      customer: { md: 6, xs: 12 },
+      // client: { md: 6, xs: 12 },
+      // customer: { md: 6, xs: 12 },
     },
     {
       invoices: { xs: 12 }
@@ -68,26 +65,26 @@ const uiSchema: any = {
       selectOptions: InvoiceFilterByOptions,
     },
   },
-  // filter: {
-  //   'ui:widget': 'SelectWithDataWidget',
-  //   'ui:options': {
-  //     multiSelect: false,
-  //     query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
-  //       LasecGetCustomerFilterLookup(filterBy: $filterBy) {
-  //         id
-  //         name
-  //       }
-  //     }`,
-  //     propertyMap: {
-  //       'formContext.$formData.filterBy': 'filterBy'
-  //     },
-  //     resultItem: 'LasecGetCustomerFilterLookup',
-  //     resultsMap: {
-  //       'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
-  //       'LasecGetCustomerFilterLookup.[].name': '[].label',
-  //     },
-  //   },
-  // },
+  filter: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
+        LasecGetCustomerFilterLookup(filterBy: $filterBy) {
+          id
+          name
+        }
+      }`,
+      propertyMap: {
+        'formContext.$formData.filterBy': 'filterBy'
+      },
+      resultItem: 'LasecGetCustomerFilterLookup',
+      resultsMap: {
+        'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerFilterLookup.[].name': '[].label',
+      },
+    },
+  },
   periodStart: {
     'ui:widget': 'DateSelectorWidget',
   },
@@ -97,39 +94,39 @@ const uiSchema: any = {
   dateFilter: {
     'ui:widget': 'DateSelectorWidget',
   },
-  client: {
-    'ui:widget': 'LookupComponent',
-    'ui:options': {
-      label: 'Select a Client',
-      title: 'Search for a Client'
-    },
-    props: {
-      componentFqn: 'lasec-crm.LasecCRMClientLookupTable@1.0.0',
-      componentProps: {},
-    },
-  },
-  customer: {
-    'ui:widget': 'LookupComponent',
-    'ui:options': {
-      label: 'Select a Customer',
-      title: 'Search for a Customer',
-      modalProps: {
-        fullScreen: false,
-        closeOnEvents: [
-          'CloseModal:LasecCRMCustomerLookupTable'
-        ]
-      }
-    },
-    props: {
-      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
-      componentProps: {},
-      componentPropertyMap: {
-        'LookupComponent.props.formContext.$formData': 'formData.selected',
-        'LookupComponent.props.onChange': 'onCustomerSelect',
-        'LookupComponent.props.formContext': 'LookupComponentFormContext',
-      },
-    },
-  },
+  // client: {
+  //   'ui:widget': 'LookupComponent',
+  //   'ui:options': {
+  //     label: 'Select a Client',
+  //     title: 'Search for a Client'
+  //   },
+  //   props: {
+  //     componentFqn: 'lasec-crm.LasecCRMClientLookupTable@1.0.0',
+  //     componentProps: {},
+  //   },
+  // },
+  // customer: {
+  //   'ui:widget': 'LookupComponent',
+  //   'ui:options': {
+  //     label: 'Select a Customer',
+  //     title: 'Search for a Customer',
+  //     modalProps: {
+  //       fullScreen: false,
+  //       closeOnEvents: [
+  //         'CloseModal:LasecCRMCustomerLookupTable'
+  //       ]
+  //     }
+  //   },
+  //   props: {
+  //     componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+  //     componentProps: {},
+  //     componentPropertyMap: {
+  //       'LookupComponent.props.formContext.$formData': 'formData.selected',
+  //       'LookupComponent.props.onChange': 'onCustomerSelect',
+  //       'LookupComponent.props.formContext': 'LookupComponentFormContext',
+  //     },
+  //   },
+  // },
   invoices: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -264,8 +261,8 @@ const uiSchema: any = {
         { title: 'Client', field: 'client' },
         // { title: 'Dispatches', field: 'dispatches' },
         { title: 'Client Rep Code', field: 'salesTeamId' },
-        { title: 'PO Number', field: 'poNumber' },
         // { title: 'ISO Number', field: 'isoNumber' },
+
 
       ],
       options: {
@@ -277,8 +274,6 @@ const uiSchema: any = {
       remoteData: true,
       query: 'query',
       variables: {
-        'props.formContext.$formData.id': 'clientId',
-        'props.formContext.$formData.salesTeam': 'salesTeamId',
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.filter': 'filter',
         'props.formContext.$formData.filterBy': 'filterBy',
@@ -308,32 +303,4 @@ const uiSchema: any = {
   }
 };
 
-const LasecCRMClienInvoiceActivities: Reactory.IReactoryForm = {
-  id: 'LasecCRMClienInvoiceActivities',
-  uiFramework: 'material',
-  uiSupport: ['material'],
-  uiResources: [],
-  title: 'CMS Client Activities Invoices',
-  tags: ['CMS Client Activities Invoices'],
-  registerAsComponent: true,
-  name: 'LasecCRMClienInvoiceActivities',
-  nameSpace: 'lasec-crm',
-  version: '1.0.0',
-  schema: $schema,
-  graphql: $graphql,
-  uiSchema: uiSchema,
-  defaultFormValue: {
-    paging: { page: 1, pageSize: 10 },
-    search: "",
-    filterBy: "any_field",
-    invoices: []
-  },
-  widgetMap: [
-    { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
-    { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
-    { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
-    { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
-  ],
-};
-
-export default LasecCRMClienInvoiceActivities;
+export default uiSchema;
