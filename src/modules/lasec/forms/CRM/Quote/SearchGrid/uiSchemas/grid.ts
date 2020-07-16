@@ -126,6 +126,34 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
+
+        {
+          title: 'Freight Request Quote',
+          field: 'code',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.LasecFreightRequestQuote@1.0.0',
+            componentProps: {
+              'rowData.code': ['data.code', 'query.code'],
+            },
+            slideDirection: 'down',
+            buttonTitle: '${rowData.code}',
+            buttonVariant: 'Typography',
+            buttonProps: {
+              style: {
+                'textDecoration': 'underline',
+                'cursor': 'pointer',
+                'color': 'black',
+                'fontSize': '1rem'
+              }
+            },
+            windowTitle: 'Freight Request Quote',
+          },
+          propsMap: {
+            'rowData': 'rowData'
+          }
+        },
+
         { title: 'Quote Number', field: 'code' },
         {
           title: 'Quote Date',
