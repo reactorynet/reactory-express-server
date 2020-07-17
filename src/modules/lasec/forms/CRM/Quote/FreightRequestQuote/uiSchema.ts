@@ -16,21 +16,36 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      code: { md: 6, xs: 12 },
+      email: { md: 6, xs: 12 },
+      // communicationOptions: { md: 6, xs: 12 },
+    },
+    {
       options: { md: 6, xs: 12 },
     },
   ],
-  code: {},
+  code: {
+    'ui:widget': 'HiddenWidget',
+  },
+  email: {},
+  // communicationOptions: {},
   options: {
     'ui:widget': 'FreightRequestWidget',
     'ui:options': {
-      label: 'Select a Customer',
-      title: 'Search for a Customer'
+      props: {
+        componentFqn: 'lasec-crm.LasecFreightRequestOptionForm@1.0.0',
+        componentProps: {},
+      },
+      componentPropsMap: {
+        'formContext.$formData.options': 'formData.options',
+        'formData': 'formData.options',
+      },
+      propsMap: {
+        'formData': 'formData.options',
+      }
     },
-    props: {
-      // componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
-      // componentProps: {},
-    },
+    // propsMap: {
+    //   'formData': 'options',
+    // }
   },
 };
 

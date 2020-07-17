@@ -103,6 +103,7 @@ import LasecCRMInvoiceGrid from './CRM/Invoice/SearchGrid';
 import LasecCRMSalesHistoryGrid from './CRM/SalesHistory/SearchGrid';
 
 import LasecCRMFreightRequestQuote from './CRM/Quote/FreightRequestQuote';
+import LasecFreightRequestOptionForm from './CRM/Quote/FreightRequestQuote/form';
 
 
 const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
@@ -193,4 +194,5 @@ export default [
   LasecCRMInvoiceGrid,
   LasecCRMSalesHistoryGrid,
   LasecCRMFreightRequestQuote,
+  LasecFreightRequestOptionForm,
 ];
