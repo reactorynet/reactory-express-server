@@ -17,7 +17,7 @@ const uiSchema: any = {
   'ui:grid-layout': [
     {
       email: { md: 6, xs: 12 },
-      // communicationOptions: { md: 6, xs: 12 },
+      communicationOptions: { md: 6, xs: 12 },
     },
     {
       options: { md: 6, xs: 12 },
@@ -27,7 +27,7 @@ const uiSchema: any = {
     'ui:widget': 'HiddenWidget',
   },
   email: {},
-  // communicationOptions: {},
+  communicationOptions: {},
   options: {
     'ui:widget': 'FreightRequestWidget',
     'ui:options': {
@@ -43,9 +43,6 @@ const uiSchema: any = {
         'formData': 'formData.options',
       }
     },
-    // propsMap: {
-    //   'formData': 'options',
-    // }
   },
 };
 
