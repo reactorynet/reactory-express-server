@@ -31,55 +31,16 @@ const LasecFreightRequestQuote: Reactory.IReactoryForm = {
         companyName: 'Company 1',
         streetAddress: 'Test street addres',
         suburb: 'Test suburb',
-        city: 'Cape Town'
-      },
-      {
-        id: '34',
-        title: 'Option 2',
-        transportMode: 'Mode 2',
-        incoTerm: 'Term 1',
-        namedPlace: 'Place 1',
-        vatExempt: false,
-        fromSA: true,
-        totalValue: '123.00',
-        companyName: 'Company 1',
-        streetAddress: 'Test street addres',
-        suburb: 'Test suburb',
-        city: 'Cape Town'
-      },
-      {
-        id: '56',
-        title: 'Option 3',
-        transportMode: 'Mode 3',
-        incoTerm: 'Term 1',
-        namedPlace: 'Place 1',
-        vatExempt: false,
-        fromSA: true,
-        totalValue: '123.00',
-        companyName: 'Company 1',
-        streetAddress: 'Test street addres',
-        suburb: 'Test suburb',
-        city: 'Cape Town'
-      },
-      {
-        id: '78',
-        title: 'Option 4',
-        transportMode: 'Mode 4',
-        incoTerm: 'Term 1',
-        namedPlace: 'Place 1',
-        vatExempt: false,
-        fromSA: true,
-        totalValue: '123.00',
-        companyName: 'Company 1',
-        streetAddress: 'Test street addres',
-        suburb: 'Test suburb',
-        city: 'Cape Town'
+        city: 'Cape Town',
+        province: 'Wester Cape',
+        country: 'South Africa'
       },
     ]
 
   },
   widgetMap: [
     { componentFqn: 'lasec.FreightRequestQuoteComponent@1.0.0', widget: 'FreightRequestWidget' },
+    { componentFqn: 'core.RadioGroupComponent@1.0.0', widget: 'RadioGroupComponent' },
   ],
 };
 

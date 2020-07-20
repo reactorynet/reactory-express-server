@@ -2,13 +2,10 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 
 const schema: Reactory.ISchema = {
   type: 'object',
+  title: 'Quote Option Details',
   properties: {
     id: {
       type: 'string'
-    },
-    title: {
-      type: 'string',
-      title: 'Title'
     },
     transportMode: {
       type: 'string',
@@ -34,89 +31,30 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'Total Value of Order'
     },
-    companyName: {
-      type: 'string',
-      title: 'Company Name'
-    },
-    streetAddress: {
-      type: 'string',
-      title: 'Street Address'
-    },
-    suburb: {
-      type: 'string',
-      title: 'Street Address'
-    },
-    city: {
-      type: 'string',
-      title: 'City'
-    },
-    // province: {
-    //   type: 'string',
-    //   title: 'Province'
-    // },
-    // country: {
-    //   type: 'string',
-    //   title: 'Country'
-    // },
-    // freightFoe: {
-    //   type: 'array',
-    //   title: 'Request Freight for:',
-    //   items: {
-    //     type: 'object',
-    //     properties: {
-    //       id: {
-    //         type: 'string'
-    //       },
-    //       text: {
-    //         type: 'string'
-    //       }
-    //     }
-    //   }
-    // },
-    // offloadRequired: {
-    //   type: 'boolean',
-    //   title: 'Offloading Reuired?'
-    // },
-    // hazardous: {
-    //   type: 'boolean',
-    //   title: 'Hazardous?'
-    // },
-    // refrigerationRequired: {
-    //   type: 'boolean',
-    //   title: 'Refrigeration Required?'
-    // },
-    // containsLithium: {
-    //   type: 'boolean',
-    //   title: 'Contains Lithium Batteries?'
-    // },
-    // sample: {
-    //   type: 'string',
-    //   title: 'Sample/Repair'
-    // },
-    // additionalDetails: {
-    //   type: 'string',
-    //   title: 'Additional Delivery Details'
-    // },
-    // productDetails: {
-    //   type: 'string',
-    //   title: 'Product Details'
-    // },
   }
 }
 
 const uiSchema: any = {
   'ui:options': {
+    toolbarPosition: 'none',
     componentType: "div",
-    showSubmit: true,
-    showRefresh: false,
     container: "div",
+    showSubmit: false,
+    showRefresh: false,
     containerStyles: {
       padding: '0px',
-      marginTop: '16px'
+      marginTop: '16px',
+      boxShadow: 'none'
     },
     style: {
-      marginTop: '16px'
+      marginTop: '16px',
+      boxShadow: 'none'
     }
+  },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    marginBottom: '1.5rem',
+    paddingBottom: '0.3rem'
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -128,10 +66,7 @@ const uiSchema: any = {
       vatExempt: { sm: 6, xs: 12 },
       fromSA: { sm: 6, xs: 12 },
       totalValue: { sm: 6, xs: 12 },
-      // companyName: { md: 6, xs: 12 },
-      // streetAddress: { md: 6, xs: 12 },
-      // suburb: { md: 6, xs: 12 },
-      // city: { md: 6, xs: 12 },
+
     },
   ],
   id: {},
@@ -159,10 +94,6 @@ const uiSchema: any = {
   vatExempt: {},
   fromSA: {},
   totalValue: {},
-  companyName: {},
-  streetAddress: {},
-  suburb: {},
-  city: {},
 };
 
 const LasecFreightRequestOptionForm: Reactory.IReactoryForm = {

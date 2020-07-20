@@ -2,7 +2,7 @@
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
-    showSubmit: true,
+    showSubmit: false,
     showRefresh: false,
     container: "div",
     containerStyles: {
@@ -16,8 +16,8 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      email: { md: 6, xs: 12 },
-      communicationOptions: { md: 6, xs: 12 },
+      email: { sm: 6, xs: 12 },
+      communicationMethod: { sm: 6, xs: 12 },
     },
     {
       options: { md: 6, xs: 12 },
@@ -27,13 +27,39 @@ const uiSchema: any = {
     'ui:widget': 'HiddenWidget',
   },
   email: {},
-  communicationOptions: {},
+  // communicationMethod: {},
+  communicationMethod: {
+    'ui:widget': 'RadioGroupComponent',
+    'ui:options': {
+      label: 'How would you like to send Quote Options?',
+      radioOptions: [
+        {
+          key: 'link_360',
+          value: 'link_360',
+          label: 'Link to 360',
+        },
+        {
+          key: 'attach_pdf',
+          value: 'attach_pdf',
+          label: 'Attach as PDF',
+        },
+      ]
+    },
+    propsMap: {
+      'formData': 'formData',
+      'formContext.$formData.communicationMethod': 'formData',
+    },
+  },
   options: {
     'ui:widget': 'FreightRequestWidget',
     'ui:options': {
       props: {
-        componentFqn: 'lasec-crm.LasecFreightRequestOptionForm@1.0.0',
-        componentProps: {},
+        components: [
+          { componentFqn: 'lasec-crm.LasecFreightRequestOptionForm' },
+          { componentFqn: 'lasec-crm.LasecFreightRequestCosigneeForm' },
+          { componentFqn: 'lasec-crm.LasecFreightRequestConsignmentForm' },
+        ]
+
       },
       componentPropsMap: {
         'formContext.$formData.options': 'formData.options',

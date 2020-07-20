@@ -837,7 +837,7 @@ export const groupQuotesByProduct = async (quotes: LasecQuote[]) => {
   return groupedByProduct;
 };
 
-export const lasecGetProductDashboard = async (dashparams = defaultProductDashboardParams, ) => {
+export const lasecGetProductDashboard = async (dashparams = defaultProductDashboardParams,) => {
 
   logger.debug(`GET PRODUCT DASHBOARD QUERIED: ${JSON.stringify(dashparams)}`);
   let {
@@ -2211,4 +2211,62 @@ export const getCRMSalesHistory = async (params) => {
 
   return result;
 
+}
+
+export const getFreightRequetQuoteDetails = async (params) => {
+
+  logger.debug(`FREIGHT REqUEST PARAMS:: ${JSON.stringify(params)}`);
+
+  const options = [{
+    id: '12',
+    transportMode: 'Mode 1',
+    incoTerm: 'Term 1',
+    namedPlace: 'Place 1',
+    vatExempt: false,
+    fromSA: true,
+    totalValue: '123.00',
+    companyName: 'Company 1',
+    streetAddress: 'Test street addres',
+    suburb: 'Test suburb',
+    city: 'Cape Town',
+    province: 'Wester Cape',
+    country: 'South Africa',
+    freightFor: 'line-item',
+    offloadRequired: false,
+    hazardous: false,
+    refrigerationRequired: false,
+    containsLithium: false,
+    sample: 1,
+    additionalDetails: 'Progressively negotiate turnkey customer service rather than quality partnerships. Compellingly engage inexpensive.',
+    // productDetails: Any
+  },
+  {
+    id: '34',
+    transportMode: '1',
+    incoTerm: '1',
+    namedPlace: 'Place 1',
+    vatExempt: false,
+    fromSA: true,
+    totalValue: '123.00',
+    companyName: 'Company 2',
+    streetAddress: 'Test street addres',
+    suburb: 'Test suburb',
+    city: 'Cape Town',
+    province: 'Wester Cape',
+    country: 'South Africa',
+    freightFor: 'line-item',
+    offloadRequired: false,
+    hazardous: false,
+    refrigerationRequired: false,
+    containsLithium: false,
+    sample: '1',
+    additionalDetails: 'Progressively negotiate turnkey customer service rather than quality partnerships. Compellingly engage inexpensive.',
+    // productDetails: Any
+  }];
+
+  return {
+    email: 'drewmurphyza@gmail.com',
+    communicationMethod: 'attach_pdf',
+    options
+  };
 }

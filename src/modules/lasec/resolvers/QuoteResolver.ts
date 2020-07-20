@@ -16,7 +16,8 @@ import { clientFor } from '@reactory/server-core/graph/client';
 import { getCacheItem, setCacheItem } from '../models';
 import emails from '@reactory/server-core/emails';
 
-import { Quote as LasecQuote,
+import {
+  Quote as LasecQuote,
   LasecDashboardSearchParams,
   LasecProductDashboardParams,
   USER_FILTER_TYPE,
@@ -49,13 +50,14 @@ import {
   saveSalesOrderComment,
   getSalesOrderDocBySlug,
   uploadSalesOrderDoc,
-  getCRMInvoices
- } from './Helpers';
+  getCRMInvoices,
+  getFreightRequetQuoteDetails
+} from './Helpers';
 
 
-export interface DashboardParams extends LasecDashboardSearchParams {};
+export interface DashboardParams extends LasecDashboardSearchParams { };
 
-export interface ProductDashboardParams extends LasecProductDashboardParams {};
+export interface ProductDashboardParams extends LasecProductDashboardParams { };
 
 const lookups = CONSTANTS.LOOKUPS;
 
@@ -476,7 +478,7 @@ export default {
     timeline: getQuoteTimeline,
     lastAction: async (quote) => {
       let items = await getQuoteTimeline(quote, { bypassEmail: true }, null, null).then();
-      if(items && items.length > 0) {
+      if (items && items.length > 0) {
         return items[0];
       }
     },
@@ -527,7 +529,7 @@ export default {
     LasecGetPagedCRMSalesOrders: async (obj, args) => {
       try {
         return getCRMSalesOrders(args);
-      } catch(err) {
+      } catch (err) {
         logger.error(`Error Fetching CRM SalesOrders`)
         throw new ApiError('Could not fetch sales order data', { error: err, displayInAppNotification: true });
       }
@@ -554,6 +556,11 @@ export default {
     LasecGetSalesOrderDocumentBySlug: async (obj, args) => {
       return getSalesOrderDocBySlug(args);
     },
+
+    LasecGetFreightRequestQuoteDetail: async (obj, args) => {
+      return getFreightRequetQuoteDetails(args);
+    }
+
   },
   Mutation: {
     LasecSetQuoteHeader: async (parent, { quote_id, input }) => {

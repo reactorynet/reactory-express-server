@@ -11,10 +11,10 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Email Address"
     },
-    // communicationOptions: {
-    //   type: "array",
-    //   title: "How would you like to send Quote Options?"
-    // },
+    communicationMethod: {
+      type: "string",
+      title: "How would you like to send Quote Options?"
+    },
     options: {
       type: 'string',
     },
