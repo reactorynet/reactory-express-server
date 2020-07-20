@@ -94,18 +94,27 @@ const assessmentResolver = {
 
       throw new ApiError('Should have returned already');
     },
-    setAssessmentComplete: async (obj, { id }) => {
+    setAssessmentComplete: async (obj, { id, complete = true }) => {
       const assessment = await Assessment.findById(id).populate('assessor').populate('delegate').then();
       const surveyDoc = await Survey.findById(assessment.survey).then();
-      assessment.complete = true;
+      assessment.complete = complete;
       await assessment.save().then();
       const { user } = global;
 
-      if (user._id.equals(assessment.assessor._id) === true) {
-        surveyDoc.addTimelineEntry('Assessment Completed', `${user.fullName()} completed assessment for ${assessment.delegate.fullName()}`, user._id, true);
+      if(complete === true) {
+        if (user._id.equals(assessment.assessor._id) === true) {
+          surveyDoc.addTimelineEntry('Assessment Completed', `${user.fullName()} completed assessment for ${assessment.delegate.fullName()}`, user._id, true);
+        } else {
+          surveyDoc.addTimelineEntry('Assessment Completed', `${user.fullName()} completed assessment for ${assessment.delegate.fullName()} on behalf of ${assessment.assessor.fullName()}`, user._id, true);
+        }
       } else {
-        surveyDoc.addTimelineEntry('Assessment Completed', `${user.fullName()} completed assessment for ${assessment.delegate.fullName()} on behalf of ${assessment.assessor.fullName()}`, user._id, true);
+        if (user._id.equals(assessment.assessor._id) === true) {
+          surveyDoc.addTimelineEntry('Assessment re-opened', `${user.fullName()} re-opened assessment for ${assessment.delegate.fullName()}`, user._id, true);
+        } else {
+          surveyDoc.addTimelineEntry('Assessment re-opened', `${user.fullName()} re-opened assessment for ${assessment.assessor.fullName()}`, user._id, true);
+        }
       }
+      
       return assessment;
     },
     /**

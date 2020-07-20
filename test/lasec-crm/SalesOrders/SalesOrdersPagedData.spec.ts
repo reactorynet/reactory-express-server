@@ -14,39 +14,14 @@ const {
   REACTORY_ANON_TOKEN
 } = env;
 
-import { apiStatusQuery } from '../../core/queries';
-
-import logger from '../../logger';
+import { apiStatusQuery } from 'test/core/queries';
+import logger from 'test/logger';
 import { Context } from 'mocha';
-import ApiError from '../../../src/exceptions';
+import ApiError from '@reactory/server-core/exceptions';
 import { isArray } from 'lodash';
+import { ttcBadge } from 'test/shared/utils';
 
 const request = require('supertest')(API_URI_ROOT);
-
-const ttcBadge = (ttc: number) => {
-  let ttcBadge = '🎖'
-  if(ttc < 2000) {
-    ttcBadge = '🥉'
-  }
-
-  if(ttc < 1000) {
-    ttcBadge = '🥈'
-  }
-
-  if(ttc < 500) {
-    ttcBadge = '🥇'
-  }
-
-  if(ttc < 200) {
-    ttcBadge = '🏆'
-  }
-
-  if(ttc < 150) {
-    ttcBadge = '🏆🏆'
-  }
-
-  return ttcBadge;
-}
 
 describe('Lasec CRM Sales Orders', () => {  
   let logged_in_user: any = null;  
