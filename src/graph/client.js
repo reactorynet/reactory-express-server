@@ -50,8 +50,8 @@ export const clientFor = (user, partner) => {
 
 export const ql = gql;
 
-export const execql = async (query, variables = {}, options = {}) => {  
-  return await clientFor(global.user, global.partner).query({
+export const execql = async (query, variables = {}, options = {}, user = global.user, partner = global.partner) => {  
+  return await clientFor(user, partner).query({
     query: gql(query), 
     variables
   }).then();

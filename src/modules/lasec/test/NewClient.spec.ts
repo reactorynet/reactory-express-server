@@ -1,10 +1,11 @@
-import env from '../env';
+import env from './env';
 import { assert } from 'chai';
 
 import { apiStatusQuery } from 'test/core/queries';
 import logger from 'test/logger';
 import { Context } from 'mocha';
-import ApiError from '../../src/exceptions';
+import ApiError from '../../../exceptions';
+// import { execml, execql } from '../../../graph/client'
 import { isArray } from 'lodash';
 import { ttcBadge } from 'test/shared/utils';
 import { 
@@ -14,9 +15,15 @@ import {
   LasecGetNewClientQuery,
 } from './queries';
 
+import {
+  LasecGetPersonTitleById,
+  LasecUserTitleList,
+} from '../graph/queries';
+
 
 const moment = require('moment');
 //do not use import with BTOA as it does not export the default function
+
 const btoa = require('btoa');
 const {
   API_URI_ROOT,
@@ -35,6 +42,9 @@ describe('Lasec CRM Client', () => {
   let logged_in_user: any = null;
   let new_client_object: any = null;
   let titles: any[] = [];  
+  
+  let userObject: any = null;
+  let partnerObject: any = null;
 
 
   before(`Should log in the user and set our auth token`, (done) => {
@@ -72,9 +82,7 @@ describe('Lasec CRM Client', () => {
   });
 
   it('Should return a list of available titles per the LASEC API', async function(){
-
-
-
+    
   });
 
 

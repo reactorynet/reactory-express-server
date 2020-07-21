@@ -567,7 +567,25 @@ export default {
 
               } else {
 
-                if (organigramModel && organigramModel.confirmedAt) {
+
+                let requires_peersConfirmed = true;
+                if((surveyModel as TowerStone.ISurveyDocument).surveyType === 'culture') {
+                  requires_peersConfirmed = false;
+                }
+                
+                if(requires_peersConfirmed === true && organigramModel && lodash.isNil(organigramModel.confirmedAt) ) {
+                  entryData.entry.message = `Please set user organigram / peers. ${delegateModel.firstName} ${delegateModel.lastName}`;
+                  entryData.patch = true;
+                  entryData.entry.status = 'new';
+                  entryData.entry.lastAction = 'launch';
+
+                  entryData.entry.actions.push({
+                    action: 'launch',
+                    when: new Date(),
+                    result: entryData.entry.message,
+                    who: user._id,
+                  });
+                }  else {
                   const relaunch = inputData.relaunch === true;
                   const launchResult = await launchSurveyForDelegate(surveyModel, entryData.entry, organigramModel, relaunch).then();
                   entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
@@ -584,20 +602,7 @@ export default {
                     result: launchResult.message,
                     who: user._id,
                   });
-                } else {
-                  // //console.log('No Organigram Model', organigramModel);
-                  entryData.entry.message = `Please set user organigram / peers. ${delegateModel.firstName} ${delegateModel.lastName}`;
-                  entryData.patch = true;
-                  entryData.entry.status = 'new';
-                  entryData.entry.lastAction = 'launch';
-
-                  entryData.entry.actions.push({
-                    action: 'launch',
-                    when: new Date(),
-                    result: entryData.entry.message,
-                    who: user._id,
-                  });
-                }
+                }                               
               }
               break;
             }
