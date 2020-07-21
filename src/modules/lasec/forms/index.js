@@ -107,6 +107,7 @@ import LasecCRMFreightRequestQuote from './CRM/Quote/FreightRequestQuote';
 import LasecFreightRequestOptionForm from './CRM/Quote/FreightRequestQuote/forms/quoteOption';
 import LasecFreightRequestCosigneeForm from './CRM/Quote/FreightRequestQuote/forms/cosigneeDetail';
 import LasecFreightRequestConsignmentForm from './CRM/Quote/FreightRequestQuote/forms/consignmentDetail';
+import LasecFreightRequestProductDetail from './CRM/Quote/FreightRequestQuote/forms/productDetail';
 
 
 const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
@@ -200,4 +201,5 @@ export default [
   LasecFreightRequestOptionForm,
   LasecFreightRequestCosigneeForm,
   LasecFreightRequestConsignmentForm,
+  LasecFreightRequestProductDetail,
 ];

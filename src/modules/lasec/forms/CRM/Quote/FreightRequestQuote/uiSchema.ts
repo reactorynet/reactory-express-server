@@ -22,12 +22,14 @@ const uiSchema: any = {
     {
       options: { md: 6, xs: 12 },
     },
+    {
+      productDetails: { md: 6, xs: 12 },
+    },
   ],
   code: {
     'ui:widget': 'HiddenWidget',
   },
   email: {},
-  // communicationMethod: {},
   communicationMethod: {
     'ui:widget': 'RadioGroupComponent',
     'ui:options': {
@@ -58,18 +60,32 @@ const uiSchema: any = {
           { componentFqn: 'lasec-crm.LasecFreightRequestOptionForm' },
           { componentFqn: 'lasec-crm.LasecFreightRequestCosigneeForm' },
           { componentFqn: 'lasec-crm.LasecFreightRequestConsignmentForm' },
+          { componentFqn: 'lasec-crm.LasecFreightRequestProductDetail' },
         ]
 
       },
-      componentPropsMap: {
-        'formContext.$formData.options': 'formData.options',
-        'formData': 'formData.options',
-      },
-      propsMap: {
-        'formData': 'formData.options',
-      }
+      // componentPropsMap: {
+      //   'formContext.$formData.options': 'formData.options',
+      //   'formData': 'formData.options',
+      // },
+      // propsMap: {
+      //   'formData': 'formData.options',
+      // }
     },
   },
+  // productDetails: {
+  //   'ui:widget': 'ProductDetailWidget',
+  //   'ui:options': {
+  //     props: {},
+  //     componentPropsMap: {
+  //       'formContext.$formData.productDetails': 'formData.productDetails',
+  //       'formData': 'formData.productDetails',
+  //     },
+  //     propsMap: {
+  //       'formData': 'formData.productDetails',
+  //     }
+  //   }
+  // }
 };
 
 export default uiSchema;

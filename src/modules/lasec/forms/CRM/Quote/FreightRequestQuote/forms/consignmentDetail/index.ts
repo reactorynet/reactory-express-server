@@ -9,25 +9,14 @@ const schema: Reactory.ISchema = {
     },
     freightFor: {
       type: 'string',
-      // title: 'Request Freight for:',
-      // items: {
-      //   type: 'object',
-      //   properties: {
-      //     id: {
-      //       type: 'string'
-      //     },
-      //     text: {
-      //       type: 'string'
-      //     }
-      //   }
-      // }
+      title: 'Requet Freight for:'
     },
     offloadRequired: {
       type: 'boolean',
       title: 'Offloading Reuired?'
     },
     hazardous: {
-      type: 'boolean',
+      type: 'string',
       title: 'Hazardous?'
     },
     refrigerationRequired: {
@@ -87,7 +76,6 @@ const uiSchema: any = {
     },
   ],
   id: {},
-  // freightFor: {},
   freightFor: {
     'ui:widget': 'RadioGroupComponent',
     'ui:options': {
@@ -95,7 +83,7 @@ const uiSchema: any = {
       radioOptions: [
         {
           key: 'line-item',
-          value: 'lint-item',
+          value: 'line-item',
           label: 'Line Item',
         },
         {
@@ -111,7 +99,28 @@ const uiSchema: any = {
     },
   },
   offloadRequired: {},
-  hazardous: {},
+  hazardous: {
+    'ui:widget': 'RadioGroupComponent',
+    'ui:options': {
+      label: 'Hazardous?',
+      radioOptions: [
+        {
+          key: 'hazardous',
+          value: 'hazardous',
+          label: 'Hazardous',
+        },
+        {
+          key: 'non-hazardous',
+          value: 'non-hazardous',
+          label: 'Non Hazardous',
+        },
+      ]
+    },
+    propsMap: {
+      'formData': 'formData',
+      'formContext.$formData.hazardous': 'formData',
+    },
+  },
   refrigerationRequired: {},
   containsLithium: {},
   sample: {

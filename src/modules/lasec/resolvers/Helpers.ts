@@ -2233,7 +2233,7 @@ export const getFreightRequetQuoteDetails = async (params) => {
     country: 'South Africa',
     freightFor: 'line-item',
     offloadRequired: false,
-    hazardous: false,
+    hazardous: 'hazardous',
     refrigerationRequired: false,
     containsLithium: false,
     sample: 1,
@@ -2256,7 +2256,7 @@ export const getFreightRequetQuoteDetails = async (params) => {
     country: 'South Africa',
     freightFor: 'line-item',
     offloadRequired: false,
-    hazardous: false,
+    hazardous: 'non-hazardous',
     refrigerationRequired: false,
     containsLithium: false,
     sample: '1',
@@ -2264,9 +2264,49 @@ export const getFreightRequetQuoteDetails = async (params) => {
     // productDetails: Any
   }];
 
+  // let quoteResult = await lasecApi.Quotes.getByQuoteId(params.quoteId).then();
+  // logger.debug(`GET QUOTE RESULT:: ${JSON.stringify(quoteResult)}`);
+
+  const productDetails = [
+    {
+      code: '12314',
+      description: 'This is a description',
+      unitOfMeasure: '10',
+      sellingPrice: 12300,
+      qty: 10,
+      length: 12.33,
+      width: 13.33,
+      height: 26.33,
+      volume: 12
+    },
+    {
+      code: '639864',
+      description: 'This is a description number 2',
+      unitOfMeasure: '10',
+      sellingPrice: 12300,
+      qty: 10,
+      length: 12.33,
+      width: 13.33,
+      height: 26.33,
+      volume: 12
+    }
+  ];
+
   return {
     email: 'drewmurphyza@gmail.com',
     communicationMethod: 'attach_pdf',
-    options
+    options,
+    productDetails
   };
+}
+
+export const updateFreightRequesyDetails = (params) => {
+
+  logger.debug(`UPDATE FREIGHT REQUEST DETAILS :: ${JSON.stringify(params)}`);
+
+  return {
+    success: true,
+    message: 'Save success'
+  }
+
 }

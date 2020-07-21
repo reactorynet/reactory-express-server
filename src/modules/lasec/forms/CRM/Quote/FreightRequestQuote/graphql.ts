@@ -28,7 +28,17 @@ const graphql: Reactory.IFormGraphDefinition = {
             containsLithium
             sample
             additionalDetails
-            productDetails
+          }
+          productDetails {
+            code
+            description
+            unitOfMeasure
+            sellingPrice
+            qty
+            length
+            width
+            height
+            volume
           }
       }
     }`,
@@ -38,6 +48,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultMap: {
       'email': 'email',
       'communicationMethod': 'communicationMethod',
+      'productDetails': 'productDetails',
       'options[].transportMode': 'options[].transportMode',
       'options[].incoTerm': 'options[].incoTerm',
       'options[].namedPlace': 'options[].namedPlace',
@@ -57,18 +68,86 @@ const graphql: Reactory.IFormGraphDefinition = {
       'options[].containsLithium': 'options[].containsLithium',
       'options[].sample': 'options[].sample',
       'options[].additionalDetails': 'options[].additionalDetails',
-      'options[].productDetails': 'options[].productDetails',
+      'productDetails[].code': 'productDetails[].code',
+      'productDetails[].description': 'productDetails[].description',
+      'productDetails[].unitOfMeasure': 'productDetails[].unitOfMeasure',
+      'productDetails[].sellingPrice': 'productDetails[].sellingPrice',
+      'productDetails[].qty': 'productDetails[].qty',
+      'productDetails[].length': 'productDetails[].length',
+      'productDetails[].width': 'productDetails[].width',
+      'productDetails[].height': 'productDetails[].height',
+      'productDetails[].volume': 'productDetails[].volume',
     },
     autoQuery: true,
     queryMessage: 'Retrieving freight request quote details',
     resultType: 'object',
-    edit: false,
-    new: false,
+    edit: true,
+    new: true,
     onError: {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
-  }
+  },
+  mutation: {
+    edit: {
+      name: "LasecCRMUpdateFreightRequestDetails",
+      text: `mutation LasecCRMUpdateFreightRequestDetails($freightRequestDetailInput: FreightReqestDetailInput!){
+        LasecCRMUpdateFreightRequestDetails(freightRequestDetailInput: $freightRequestDetailInput) {
+          success
+          message
+        }
+      }`,
+      objectMap: true,
+      updateMessage: 'Updating freight request quote',
+      variables: {
+        'formData.email': 'freightRequestDetailInput.email',
+        'formData.communicationMethod': 'freightRequestDetailInput.communicationMethod',
+        'formData.options': 'freightRequestDetailInput.options',
+      },
+      onError: {
+        componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+        method: 'onGraphQLQueryError',
+      },
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Freight request quote details successfully updated.',
+        props: {
+          timeOut: 5000,
+          canDismiss: false,
+        }
+      },
+    },
+    new: {
+      name: "LasecCRMUpdateFreightRequestDetails",
+      text: `mutation LasecCRMUpdateFreightRequestDetails($freightRequestDetailInput: FreightReqestDetailInput!){
+        LasecCRMUpdateFreightRequestDetails(freightRequestDetailInput: $freightRequestDetailInput) {
+          success
+          message
+        }
+      }`,
+      objectMap: true,
+      updateMessage: 'Updating freight request quote',
+      variables: {
+        'formData.email': 'freightRequestDetailInput.email',
+        'formData.communicationMethod': 'freightRequestDetailInput.communicationMethod',
+        'formData.options': 'freightRequestDetailInput.options',
+      },
+      onError: {
+        componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+        method: 'onGraphQLQueryError',
+      },
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Freight request quote details successfully updated.',
+        props: {
+          timeOut: 5000,
+          canDismiss: false,
+        }
+      },
+    },
+  },
 };
 
 export default graphql;

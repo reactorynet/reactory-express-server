@@ -51,7 +51,8 @@ import {
   getSalesOrderDocBySlug,
   uploadSalesOrderDoc,
   getCRMInvoices,
-  getFreightRequetQuoteDetails
+  getFreightRequetQuoteDetails,
+  updateFreightRequesyDetails
 } from './Helpers';
 
 
@@ -556,11 +557,9 @@ export default {
     LasecGetSalesOrderDocumentBySlug: async (obj, args) => {
       return getSalesOrderDocBySlug(args);
     },
-
     LasecGetFreightRequestQuoteDetail: async (obj, args) => {
       return getFreightRequetQuoteDetails(args);
     }
-
   },
   Mutation: {
     LasecSetQuoteHeader: async (parent, { quote_id, input }) => {
@@ -886,5 +885,8 @@ export default {
     LasecCRMSaveSaleOrderComment: async (obj, args) => {
       return saveSalesOrderComment(args);
     },
+    LasecCRMUpdateFreightRequestDetails: async (obj, args) => {
+      return updateFreightRequesyDetails(args);
+    }
   }
 };

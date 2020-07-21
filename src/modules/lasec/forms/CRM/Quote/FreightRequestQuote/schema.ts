@@ -16,7 +16,26 @@ const schema: Reactory.ISchema = {
       title: "How would you like to send Quote Options?"
     },
     options: {
-      type: 'string',
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          transportMode: {
+            type: 'string'
+          },
+        },
+      },
+    },
+    productDetails: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          code: {
+            type: 'string'
+          },
+        },
+      },
     },
   }
 };

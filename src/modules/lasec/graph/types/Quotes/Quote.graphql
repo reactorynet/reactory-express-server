@@ -397,11 +397,24 @@ input SalesOrderContentInput {
   published: Boolean
 }
 
+type FreightRequestProductDetail {
+  code: String
+  description: String
+  unitOfMeasure: String
+  sellingPrice: Float
+  qty: Int
+  length: Float
+  width: Float
+  height: Float
+  volume: Float
+}
+
 type FreightRequestQuoteDetail {
   id: String
   email: String
   communicationMethod: String
   options: [FreightRequestOption]
+  productDetails: [FreightRequestProductDetail]
 }
 
 type FreightRequestOption {
@@ -419,7 +432,29 @@ type FreightRequestOption {
   country: String
   freightFor: String
   offloadRequired: Boolean
-  hazardous: Boolean
+  hazardous: String
+  refrigerationRequired: Boolean
+  containsLithium: Boolean
+  sample: String
+  additionalDetails: String
+}
+
+input FreightRequestOptionInput {
+  transportMode: String
+  incoTerm: String
+  namedPlace: String
+  vatExempt: Boolean
+  fromSA: Boolean
+  totalValue: String
+  companyName: String
+  streetAddress: String
+  suburb: String
+  city: String
+  province: String
+  country: String
+  freightFor: String
+  offloadRequired: Boolean
+  hazardous: String
   refrigerationRequired: Boolean
   containsLithium: Boolean
   sample: String
@@ -427,7 +462,11 @@ type FreightRequestOption {
   productDetails: Any
 }
 
-
+input FreightReqestDetailInput {
+  email: String
+  communicationMethod: String
+  options: [FreightRequestOptionInput]
+}
 
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
@@ -471,12 +510,9 @@ extend type Query {
     dateFilter: String
     iter: Int
   ): PagedCRMSalesOrders
-
   LasecGetSaleOrderComments(orderId: String!): SalesOrderCommentResponse
   LasecGetSaleOrderDocument(ids: [String]): [SalesOrderDocuments]
-
   LasecGetSalesOrderDocumentBySlug(slug: String!): SalesOrderDocumentContent
-
   LasecGetPagedCRMSalesOrders(
     search: String!
     paging: PagingRequest
@@ -533,7 +569,6 @@ extend type Query {
     periodEnd: String
     iter: Int
   ): PagedCRMSalesHistory
-
   LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
 }
 
@@ -560,8 +595,10 @@ extend type Mutation {
     orderId: String!
     comment: String!
   ): SimpleResponse
-
   LasecUploadSaleOrderDocument(
     createInput: SalesOrderContentInput!
   ): SalesOrderDocumentContent
+  LasecCRMUpdateFreightRequestDetails(
+    freightRequestDetailInput: FreightReqestDetailInput!
+  ): SimpleResponse
 }

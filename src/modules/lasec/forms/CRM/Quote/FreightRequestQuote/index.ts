@@ -18,25 +18,8 @@ const LasecFreightRequestQuote: Reactory.IReactoryForm = {
   graphql: $graphql,
   uiSchema: $uiSchema,
   defaultFormValue: {
-    options: [
-      {
-        id: '12',
-        title: 'Option 1',
-        transportMode: 'Mode 1',
-        incoTerm: 'Term 1',
-        namedPlace: 'Place 1',
-        vatExempt: false,
-        fromSA: true,
-        totalValue: '123.00',
-        companyName: 'Company 1',
-        streetAddress: 'Test street addres',
-        suburb: 'Test suburb',
-        city: 'Cape Town',
-        province: 'Wester Cape',
-        country: 'South Africa'
-      },
-    ]
-
+    options: [],
+    productDetails: []
   },
   widgetMap: [
     { componentFqn: 'lasec.FreightRequestQuoteComponent@1.0.0', widget: 'FreightRequestWidget' },
