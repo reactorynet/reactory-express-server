@@ -65,6 +65,6 @@ extend type Mutation {
         rating: Int, comment: String, 
         qualityId: String, behaviourId: String,
         custom: Boolean, behaviourText: String, deleteRating: Boolean) : Rating
-    setAssessmentComplete(id: String!): Assessment
+    setAssessmentComplete(id: String!, complete: Boolean): Assessment
     deleteAssessment(id: String!, remove: Boolean): Any    
 }

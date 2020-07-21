@@ -449,7 +449,15 @@ export const TowerStoneSurveyConfigForm : Reactory.IReactoryForm = {
         options: {
           refetchQueries: [],
         },
-        onSuccessMethod: 'redirect',
+        onSuccessMethod: 'notification',
+        notification: {
+          inAppNotification: true,
+          title: 'Survey Created',
+          props: {
+            timeOut: 3000,
+            canDismiss: true,          
+          }
+        },
         onSuccessUrl: 'admin/org/${formData.organization}/surveys/${createSurvey.id}',
         onSuccessRedirectTimeout: 1000,
       },
@@ -461,7 +469,15 @@ export const TowerStoneSurveyConfigForm : Reactory.IReactoryForm = {
         options: {
           refetchQueries: [],
         },
-        onSuccessMethod: 'refresh',
+        onSuccessMethod: 'notification',
+        notification: {
+          inAppNotification: true,
+          title: 'Survey updated',
+          props: {
+            timeOut: 3000,
+            canDismiss: true,          
+          }
+        },
       },
     },
   },
