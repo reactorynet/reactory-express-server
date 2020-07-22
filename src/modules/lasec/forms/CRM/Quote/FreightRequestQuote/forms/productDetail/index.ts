@@ -2,7 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 
 const schema: Reactory.ISchema = {
   type: 'object',
-  title: 'Quote Option Details',
+  title: 'Product Details',
   properties: {
     productDetails: {
       type: 'string'
@@ -46,9 +46,6 @@ const uiSchema: any = {
         'formContext.$formData.productDetails': 'formData.productDetails',
         'formData': 'formData.productDetails',
       },
-      propsMap: {
-        'formData': 'formData.productDetails',
-      }
     }
   }
 

@@ -48,7 +48,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultMap: {
       'email': 'email',
       'communicationMethod': 'communicationMethod',
-      'productDetails': 'productDetails',
+
       'options[].transportMode': 'options[].transportMode',
       'options[].incoTerm': 'options[].incoTerm',
       'options[].namedPlace': 'options[].namedPlace',
@@ -68,6 +68,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       'options[].containsLithium': 'options[].containsLithium',
       'options[].sample': 'options[].sample',
       'options[].additionalDetails': 'options[].additionalDetails',
+
+      'productDetails': 'productDetails',
       'productDetails[].code': 'productDetails[].code',
       'productDetails[].description': 'productDetails[].description',
       'productDetails[].unitOfMeasure': 'productDetails[].unitOfMeasure',
@@ -103,6 +105,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.email': 'freightRequestDetailInput.email',
         'formData.communicationMethod': 'freightRequestDetailInput.communicationMethod',
         'formData.options': 'freightRequestDetailInput.options',
+        'formData.productDetails': 'freightRequestDetailInput.productDetails',
       },
       onError: {
         componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
@@ -132,6 +135,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.email': 'freightRequestDetailInput.email',
         'formData.communicationMethod': 'freightRequestDetailInput.communicationMethod',
         'formData.options': 'freightRequestDetailInput.options',
+        'formData.productDetails': 'freightRequestDetailInput.productDetails',
       },
       onError: {
         componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',

@@ -462,10 +462,23 @@ input FreightRequestOptionInput {
   productDetails: Any
 }
 
+input FreightRequestProductDetailInput {
+  code: String
+  description: String
+  unitOfMeasure: String
+  sellingPrice: Float
+  qty: Int
+  length: Float
+  width: Float
+  height: Float
+  volume: Float
+}
+
 input FreightReqestDetailInput {
   email: String
   communicationMethod: String
   options: [FreightRequestOptionInput]
+  productDetails: [FreightRequestProductDetailInput]
 }
 
 extend type Query {
@@ -598,6 +611,7 @@ extend type Mutation {
   LasecUploadSaleOrderDocument(
     createInput: SalesOrderContentInput!
   ): SalesOrderDocumentContent
+
   LasecCRMUpdateFreightRequestDetails(
     freightRequestDetailInput: FreightReqestDetailInput!
   ): SimpleResponse
