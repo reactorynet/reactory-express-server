@@ -3,6 +3,7 @@ import { ObjectID } from "bson";
 import Mongoose from "mongoose";
 import { ObjectId } from "mongodb";
 import { Moment } from "moment";
+import { Reactory } from "@reactory/server-core/types/reactory";
 
 declare namespace TowerStone {
 
@@ -64,6 +65,31 @@ declare namespace TowerStone {
     qualities: Array<IQuality>
   }
 
+  export interface IRatingEntry {
+    qualityId: ObjectId,
+    quality?: IQuality,
+    behaviourId: ObjectId,
+    behaviour?: IBehaviour,
+    ordinal: Number,
+    comment: String,
+    custom: Boolean,
+    behaviourText: String,
+    behaviourDescription: String,
+    updatedAt: Date
+  }
+
+  export interface IAssessment {
+    organization: Reactory.IOrganization,
+    client: Reactory.IReactoryClient,
+    delegate: Reactory.IUserDocument,
+    team?: String,
+    assessor: Reactory.IUserDocument,
+    survey: ISurveyDocument,
+    deleted: boolean,
+    complete: boolean,
+    ratings: IRatingEntry[]
+  }
+
   export interface ILeadershipBrandDocument extends Mongoose.Document, ILeadershipBrand { }
 
   export interface CopyLeadershipBrandParams {
@@ -94,12 +120,50 @@ declare namespace TowerStone {
     generalTemplates?:  Array<ISurveyEmailTemplate>
   }
 
+ 
+
+  export interface ISurveyDelegateEntry extends Mongoose.Document {
+    delegate: Reactory.IUserDocument,
+    notifications: Reactory.INotification[],
+    assessments: IAssessment[],
+    launched: Boolean,
+    complete: Boolean,
+    removed: Boolean,
+    message: String,
+    team?: String,
+    lastAction: String,
+    status: String,
+    updatedAt: Date | Number,
+    createdAt: Date | Number,
+    actions: [
+      {
+        action: String,
+        when: Date | Number,
+        result: String,
+        who: Reactory.IUserDocument
+      },
+    ],
+  }
+
+  export interface IDelegateEntryDataStruct {
+    entryData: { id: ObjectID; delegate: Reactory.IUserDocument; notifications: any[]; assessments: any[]; launched: boolean; complete: boolean; removed: boolean; message: string; lastAction: string; status: string; actions: [...]; updatedAt: number; createdAt: number; };
+    complete: boolean;
+    entry: ISurveyDelegateEntry,
+    entryIdx: number,
+    message: String,
+    error: boolean,
+    success: boolean,
+    patch: boolean
+  }
+
   export interface ISurvey {
+    _id: ISurvey;
+    id: string | number | ObjectId;
     title: string,
     status: string,
-    surveyType: string,
-    organization: Reactory.IOrganization,
-    leadershipBrand?: ILeadershipBrand 
+    surveyType: string | '180'| '360' | 'plc' | 'custom' | 'l360' | 'i360' | 'culture' | 'team180' | 'other',
+    organization: Reactory.IOrganizationDocument,
+    leadershipBrand?: TowerStone.ILeadershipBrand,
     assessorTeamName?: string,
     delegateTeamName?: string,
     mode?: String,
@@ -108,9 +172,12 @@ declare namespace TowerStone {
     timeline: any[],
     calendar: any[],
     delegates: any[],
-    templates: ISurveyTemplates
+    templates: TowerStone.ISurveyTemplates
     addTimelineEntry( eventType: string, eventDetail: string, who: ObjectID, save: boolean): Promise<void> 
   }
+
+
+
 
   export interface ISurveyDocument extends Mongoose.Document, ISurvey { }
 
@@ -131,13 +198,13 @@ declare namespace TowerStone {
 
   export interface ITowerStoneSetTemplatesParameters {
     id: string
-    templates: ISurveyTemplates
+    templates: TowerStone.ISurveyTemplates
   }
   
   export interface ITowerStoneEmailService {
     send: (survey: ISurvey, activity: string, target: string, users: Reactory.IUser[], properties: any ) => Promise<IEmailSendResult>
-    templates: (survey: ISurvey) => Promise<ISurveyTemplates>
-    patchTemplates: (survey: ISurvey, templates: ISurveyTemplates) => Promise<ISurveyTemplates>  
+    templates: (survey: ISurvey) => Promise<TowerStone.ISurveyTemplates>
+    patchTemplates: (survey: ISurvey, templates:  TowerStone.ISurveyTemplates) => Promise<TowerStone.ISurveyTemplates>  
   }
 
   export interface ITowerStoneEmailServiceProvider {

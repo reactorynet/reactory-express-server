@@ -46,6 +46,33 @@ declare namespace Reactory {
     }
   }
 
+  export interface IReactoryClient {
+    key: String,
+    name: String,
+    username: String,
+    email: String,
+    salt: String,
+    siteUrl: String,
+    emailSendVia: String,
+    emailApiKey: String,
+    resetEmailRoute: String,
+    password: String,
+    avatar: String, // application avatar
+    theme: String, // theme title
+    mode: String,
+    themeOptions: any,
+    applicationRoles: String[],
+    billingType: String,
+    modules: any[],
+    menus: any[],
+    routes: any[],
+    auth_config: any[],
+    settings: any[],
+    whitelist: string[]
+    createdAt: Date,
+    updatedAt: Date
+  }
+
   export interface IMongoDocument {
     _id: ObjectId
     id: string
@@ -86,13 +113,14 @@ declare namespace Reactory {
     getSetting: (key: String) => any
   }
 
-  export interface IOrganization extends IMongoDocument {
-    id: string
+  export interface IOrganization {    
     name: string
     code: string
     logo: string
     businessUnits: Array<IBusinessUnit>
   }
+
+  export interface IOrganizationDocument extends Mongoose.Document, IOrganization { }
 
   export interface IBusinessUnit {
     id: string
@@ -109,6 +137,17 @@ declare namespace Reactory {
     providerId: string
     lastLogin: Date
     roles: [String]
+  }
+
+  export interface INotification {
+    id: ObjectId,
+    user: IUserDocument,
+    title: String,
+    text: String,
+    link: String,
+    createdAt: Date,
+    read: Boolean,
+    details: { },
   }
 
   export interface IRegion {

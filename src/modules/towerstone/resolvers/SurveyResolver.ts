@@ -1,7 +1,7 @@
 import { schema } from './../../lasec/forms/CRM/Organization/Lookup/index';
 import moment from 'moment';
 import co from 'co';
-import lodash from 'lodash';
+import lodash, { endsWith } from 'lodash';
 import Admin from '@reactory/server-core/application/admin';
 import { queueSurveyEmails } from '@reactory/server-core/emails';
 import {
@@ -18,7 +18,7 @@ import {
   BusinessUnit,
   Team
 } from '@reactory/server-core/models';
-import { ObjectId } from 'mongodb';
+import { ObjectId, ObjectID } from 'mongodb';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
 import logger from '@reactory/server-core/logging';
 import {
@@ -30,8 +30,17 @@ import {
 import { TowerStone } from '../towerstone';
 import { TowerStoneServicesMap } from "../services";
 import AuthConfig from 'authentication';
+import { Reactory } from 'types/reactory';
 
 const { findIndex, pullAt } = lodash;
+
+interface SurveyDelegateActionParams {
+  entryId: string,
+  survey: string,
+  delegate: string,
+  action: string,
+  inputData: any
+};
 
 function getMailService(survey: TowerStone.ISurvey, action: String = 'default') {
   const emailServiceProvider: TowerStone.ITowerStoneEmailServiceProvider = TowerStoneServicesMap["towerstone.EmailService@1.0.0"].service as TowerStone.ITowerStoneEmailServiceProvider;
@@ -404,38 +413,39 @@ export default {
         } throw new ApiError('Survey not found!');
       })(surveyId, delegateId);
     },
-    async surveyDelegateAction(obj, {
-      entryId, survey, delegate, action, inputData,
-    }) {
-      logger.debug(`Executing action for delegate entry:\n ${JSON.stringify({
+    async surveyDelegateAction(obj, params: SurveyDelegateActionParams) {
+      
+      const {
         entryId, survey, delegate, action, inputData,
-      }, null, 1)}`);
+      } = params;
 
+      
       const { user, partner } = global;
-
       const mailService = getMailService(survey, 'Survey.templates()');
-
-      const surveyModel = await Survey.findById(survey).populate('delegates.delegate', 'delegates.assessments').then();
+      const surveyModel : TowerStone.ISurveyDocument  = await Survey.findById(survey)
+        .populate('delegates.delegate')
+        .populate('delegates.assessments')
+        .populate('organization')
+        .then();
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
 
-      const delegateModel = await User.findById(delegate).then();
-
+      const delegateModel : Reactory.IUserDocument = await User.findById(delegate).then();
       if (!delegateModel) throw new RecordNotFoundError('Could not find the user item', 'User');
 
       // make sure the delegate has minimum permissions for this flow
-      if (delegateModel.hasRole(partner._id, 'USER', surveyModel.organization) === false) {
-        delegateModel.addRole(partner._id, 'USER', surveyModel.organization);
+      if (delegateModel.hasRole(partner._id, 'USER', `${surveyModel.organization._id}`) === false) {
+        delegateModel.addRole(partner._id, 'USER', `${surveyModel.organization._id}`);
       }
-
-
-      const organigramModel = await Organigram.findOne({
+      
+      logger.debug(`Executing ${action} for ${delegateModel.firstName} ${delegateModel.lastName} as part of ${surveyModel.title}`);
+ 
+      const organigramModel: any = await Organigram.findOne({
         user: new ObjectId(delegateModel._id),
-        organization: new ObjectId(surveyModel.organization),
-      }).then();
+        organization: new ObjectId(surveyModel.organization.id),
+      }).then();      
 
-
-      const entryData = {
+      const entryData: TowerStone.IDelegateEntryDataStruct = {
         entry: null,
         entryIdx: -1,
         message: 'Awaiting instruction',
@@ -445,7 +455,7 @@ export default {
       };
 
       try {
-        logger.info(`Survey Model has ${(surveyModel as TowerStone.ISurveyDocument).delegates.length} delegates, finding ${entryId}`);
+        logger.info(`Survey Model has ${surveyModel.delegates.length} delegates, finding ${entryId}`);
         if (entryId === '' && action === 'add') {
           entryData.entry = {
             id: new ObjectId(),
@@ -468,7 +478,7 @@ export default {
             createdAt: moment().valueOf(),
           };
 
-          if ((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') {
+          if ((surveyModel as TowerStone.ISurveyDocument).surveyType.endsWith('180') === true) {
             if (typeof inputData.userAddType === 'string') {
               if (inputData.userAddType === 'delegate') {
                 entryData.entry.team = (surveyModel as TowerStone.ISurveyDocument).delegateTeamName;
@@ -486,7 +496,7 @@ export default {
           // TODO: Figure out why this is throwing a mongoose error now
           // record is inserted, but on return it fails
           try {
-            // surveyModel.addTimelineEntry('Added Delegate', `${user.firstName} added ${delegateModel.firstName} ${delegateModel.lastName} to Survey`, user.id, true);
+            surveyModel.addTimelineEntry('Added Delegate', `${user.firstName} added ${delegateModel.firstName} ${delegateModel.lastName} to Survey`, user.id, true);
           } catch (e) {
             logger.error(e.message, e);
           }
@@ -494,6 +504,7 @@ export default {
           entryData.patch = false;
 
           return entryData.entry;
+
         } else {
           // not a new entry, find it!
           entryData.entry = (surveyModel as TowerStone.ISurveyDocument).delegates.id(entryId);
@@ -515,6 +526,10 @@ export default {
             \tAssessments: ${entryData.entry.assessments}`);
 
           switch (action) {
+            
+            /**
+             * SEND INVITATION FLOW
+             */
             case 'send-invite': {
               const inviteResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.ParticipationInvite);
               entryData.entry.message = `${inviteResult.message} @ ${moment().format('YYYY-MM-DD HH:mm:ss')}`;
@@ -529,6 +544,10 @@ export default {
               });
               break;
             }
+
+            /**
+             * SEND LAUNCH INSTRUCTIONS AND CREATE ASSESSMENTS
+             */
             case 'launch': {
               if ((surveyModel as TowerStone.ISurveyDocument).surveyType.endsWith('180')) {
 
@@ -563,13 +582,13 @@ export default {
                   who: user._id,
                 });
 
-                await (surveyModel as TowerStone.ISurveyDocument).addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();
+                await surveyModel.addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();
 
               } else {
 
 
                 let requires_peersConfirmed = true;
-                if((surveyModel as TowerStone.ISurveyDocument).surveyType === 'culture') {
+                if(surveyModel.surveyType === 'culture') {
                   requires_peersConfirmed = false;
                 }
                 
@@ -606,9 +625,13 @@ export default {
               }
               break;
             }
+
+            /**
+             * SEND REMINDER FOR ENTRY
+             */
             case 'send-reminder': {
 
-              if ((surveyModel as TowerStone.ISurveyDocument).surveyType === '180') {
+              if ((surveyModel as TowerStone.ISurveyDocument).surveyType.endsWith('180') === true) {
                 const isAssessorTeam = entryData.entry.team === (surveyModel as TowerStone.ISurveyDocument).assessorTeamName;
                 let assessment: any = null;
                 if (lodash.isArray(entryData.entry.assessments) === true && entryData.entry.assessments.length === 1) {
@@ -619,6 +642,7 @@ export default {
                   const mailSendResult = await mailService.send((surveyModel as TowerStone.ISurveyDocument), 'reminder', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate], {
                     user: entryData.entry.delegate as Reactory.IUserDocument,
                     assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(entryData.entry.delegate, { exp: moment((surveyModel as TowerStone.ISurveyDocument).endDate).valueOf() }))}`,
+                    link: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(entryData.entry.delegate, { exp: moment((surveyModel as TowerStone.ISurveyDocument).endDate).valueOf() }))}`,
                   });
 
                   entryData.entry.message = mailSendResult.sent === 1 ? 'Sent reminder to delegate for 180' : 'Could not send reminder';
@@ -651,6 +675,10 @@ export default {
 
               break;
             }
+
+            /**
+             * Send Closing Email Instruction
+             */
             case 'send-closed': {
               const closeResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyClose);
               entryData.entry.message = closeResult.message;
@@ -666,6 +694,10 @@ export default {
               });
               break;
             }
+            
+            /**
+             * Remove a delegate from the survey
+             */
             case 'remove': {
               entryData.entry.message = `Removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
               if (!entryData.entry.removed) {
@@ -695,6 +727,10 @@ export default {
               }
               break;
             }
+            
+            /**
+             * re-enable / add the delegate back to the survey
+             */
             case 'enable': {
               entryData.entry.message = `Re-enabled delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
               entryData.entry.removed = false;
@@ -711,6 +747,10 @@ export default {
 
               break;
             }
+            
+            /**
+             * Remove Assessor
+             */
             case 'remove-assessor': {
               // used when we remove an assessor from a particular delegate
               try {
@@ -741,6 +781,7 @@ export default {
               }
               break;
             }
+            // catch all
             default: {
               entryData.message = 'Default action taken, none';
               break;
@@ -752,7 +793,7 @@ export default {
             entryData.entry.lastAction = action;
             entryData.entry.updatedAt = moment().valueOf();
             surveyModel.delegates.set(entryData.entryIdx, entryData.entry);
-            await surveyModel.save().then();
+            surveyModel.save().then();
           }
 
           return entryData.entry;

@@ -215,7 +215,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
    */
 
    // team180 assessment types
-  {
+ /*
+   {
     id: ``,
     key: ``, 
     surveyType: 'team180', 
@@ -238,6 +239,7 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     engine: 'ejs'
   },
 
+*/
 
   {
     id: ``,
@@ -292,6 +294,7 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   },
 
   // culture survey types    
+  /*
   {
     id: ``,
     key: ``,
@@ -303,6 +306,7 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     engine: 'ejs',
     description: 'Sent to a delegate when the administrator sends the invitation to participate',
   },
+  
   {
     id: ``,
     key: ``,
@@ -313,6 +317,7 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     body: `No Template`,
     engine: 'ejs'
   },
+  */
   {
     id: ``,
     key: ``,
@@ -333,6 +338,7 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     body: `No Template`,
     engine: 'ejs'
   },
+  /*
   {
     id: ``,
     key: ``,
@@ -343,7 +349,7 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
     body: `No Template`,
     engine: 'ejs'
   },
-
+  */
   {
     id: ``,
     key: ``,
