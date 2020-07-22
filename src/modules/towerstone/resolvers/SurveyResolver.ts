@@ -640,7 +640,10 @@ export default {
 
                 if (assessment !== null) {
                   const mailSendResult = await mailService.send((surveyModel as TowerStone.ISurveyDocument), 'reminder', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate], {
-                    user: entryData.entry.delegate as Reactory.IUserDocument,
+                    user: entryData.entry.delegate as Reactory.IUserDocument,      
+                    delegate: entryData.entry.delegate,
+                    assessment: assessment,
+                    survey: surveyModel,
                     assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(entryData.entry.delegate, { exp: moment((surveyModel as TowerStone.ISurveyDocument).endDate).valueOf() }))}`,
                     link: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(entryData.entry.delegate, { exp: moment((surveyModel as TowerStone.ISurveyDocument).endDate).valueOf() }))}`,
                   });

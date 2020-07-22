@@ -169,7 +169,7 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
  * @param {*} delegateEntry
  * @param {*} organigram
  */
-export const sendSurveyRemindersForDelegate = async (survey, delegateEntry, organigram) => {
+export const sendSurveyRemindersForDelegate = async (survey, delegateEntry: TowerStone.ISurveyDelegateEntry, organigram) => {
   const result = (message, success = false) => {
     return {
       message,
@@ -181,9 +181,9 @@ export const sendSurveyRemindersForDelegate = async (survey, delegateEntry, orga
   if (lodash.isNil(delegateEntry) === true) return result('Cannot have a null delegateEntry element');
 
   let { delegate } = delegateEntry;
-  let assessments = [];
-  if (delegateEntry._doc && lodash.isArray(delegateEntry._doc.assessments)) {
-    assessments = delegateEntry._doc.assessments; //eslint-disable-line
+  let assessments: any[] = [];
+  if (delegateEntry && lodash.isArray(delegateEntry.assessments)) {
+    assessments = delegateEntry.assessments; //eslint-disable-line
   }
 
   if (lodash.isNil(delegate) === true) return result('Delegate Entry has no delegate model');
@@ -317,7 +317,7 @@ export const sendSurveyEmail = async (survey: TowerStone.ISurveyDocument, delega
     ...delegateEntry, delegate,
   };
 
-  logger.debug(`application.admin.Survey.js{ sendSurveyEmail( ${survey.title}, ${delegateEntry.delegate.fullName}, organigram, ${emailType}, propertyBag:${JSON.stringify(propertyBag)})`);
+  logger.debug(`application.admin.Survey.js{ sendSurveyEmail( ${survey.title}, ${delegateEntry.delegate.fullName()}, organigram, ${emailType}, propertyBag:${JSON.stringify(propertyBag)})`);
 
   try {
     switch (emailType) {
