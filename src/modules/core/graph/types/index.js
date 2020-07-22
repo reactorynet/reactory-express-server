@@ -12,6 +12,7 @@ const typeDefs = [];
   'System/Menu',
   'System/ReactoryClient',
   'System/Workflow',
+  'System/Cache',
   'Forms/Form',
   'System/UX',
   'User/User',

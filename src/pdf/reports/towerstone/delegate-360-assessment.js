@@ -140,7 +140,8 @@ const resolveData = async ({ surveyId, delegateId }) => {
       reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
 
       try {
-        maxRating = reportData.scale.max();
+        maxRating = reportData.scale.maxRating();
+        logger.debug(`Max Rating ==> ${maxRating}`)
       } catch (err) {
         //could not get max via scale
         logger.error('Could not get max rating from scale', err);

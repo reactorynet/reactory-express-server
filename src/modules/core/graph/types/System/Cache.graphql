@@ -1,0 +1,9 @@
+type CachedItem {
+    key: String
+    item: Any
+    ttl: Int
+}
+
+extend type Query {
+    ReactoryGetCachedItem(key: String!): CachedItem
+}
