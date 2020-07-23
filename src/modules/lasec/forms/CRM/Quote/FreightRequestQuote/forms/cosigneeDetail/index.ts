@@ -17,7 +17,7 @@ const schema: Reactory.ISchema = {
     },
     suburb: {
       type: 'string',
-      title: 'Street Address'
+      title: 'Suburb'
     },
     city: {
       type: 'string',

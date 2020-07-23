@@ -16,11 +16,11 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      email: { sm: 6, xs: 12 },
-      communicationMethod: { sm: 6, xs: 12 },
+      email: { xs: 12, sm: 6, md: 6, lg: 6 },
+      communicationMethod: { xs: 12, sm: 6, md: 6,  lg: 6 },
     },
     {
-      details: { md: 6, xs: 12 },
+      details: { xs: 12, sm: 12, md: 12, lg: 12 },
     },
   ],
   code: {

@@ -10,6 +10,7 @@ import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { Organization, User, Task } from '@reactory/server-core/models';
+import FreightRequest from '@reactory/server-modules/lasec/models/LasecFreightRequest';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
 import Hash from '@reactory/server-core/utils/hash';
@@ -1271,13 +1272,13 @@ export const getPagedQuotes = async (params) => {
   let quotes = [...quoteDetails.items];
 
 
-  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
+  logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
 
   const quoteSyncResult = await Promise.all(quotes.map((quote) => {
     return synchronizeQuote(quote.id, global.partner.key, quote, true);
   })).then();
 
-  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
+  logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
 
   quotes = quoteSyncResult.map(doc => doc);
 
@@ -2214,8 +2215,11 @@ export const getCRMSalesHistory = async (params) => {
 }
 
 export const getFreightRequetQuoteDetails = async (params) => {
+  logger.debug(`FREIGHT REQUEST PARAMS:: ${JSON.stringify(params)}`);
 
-  logger.debug(`FREIGHT REqUEST PARAMS:: ${JSON.stringify(params)}`);
+  const { quoteId } = params;
+  const feightRequest = await FreightRequest.find({ quoteId: quoteId });
+  logger.debug(`FREIGHT REQUEST :: ${JSON.stringify(feightRequest)}`);
 
   const options = [{
     id: '12',
@@ -2238,7 +2242,6 @@ export const getFreightRequetQuoteDetails = async (params) => {
     containsLithium: false,
     sample: 1,
     additionalDetails: 'Progressively negotiate turnkey customer service rather than quality partnerships. Compellingly engage inexpensive.',
-    // productDetails: Any
   },
   {
     id: '34',
@@ -2261,36 +2264,22 @@ export const getFreightRequetQuoteDetails = async (params) => {
     containsLithium: false,
     sample: '1',
     additionalDetails: 'Progressively negotiate turnkey customer service rather than quality partnerships. Compellingly engage inexpensive.',
-    // productDetails: Any
   }];
 
-  // let quoteResult = await lasecApi.Quotes.getByQuoteId(params.quoteId).then();
-  // logger.debug(`GET QUOTE RESULT:: ${JSON.stringify(quoteResult)}`);
-
-  const productDetails = [
-    {
-      code: '12314',
-      description: 'This is a description',
-      unitOfMeasure: '10',
-      sellingPrice: 12300,
-      qty: 10,
-      length: 12.33,
-      width: 13.33,
-      height: 26.33,
-      volume: 12
-    },
-    {
-      code: '639864',
-      description: 'This is a description number 2',
-      unitOfMeasure: '10',
-      sellingPrice: 12300,
-      qty: 10,
-      length: 12.33,
-      width: 13.33,
-      height: 26.33,
-      volume: 12
+  let quoteLineItems = await lasecGetQuoteLineItems(params.quoteId);
+  const productDetails = quoteLineItems.map(li => {
+    return {
+      code: li.code,
+      description: li.title,
+      sellingPrice: li.price,
+      qty: li.quantity,
+      unitOfMeasure: '', // to be added
+      length: 0, // to be added
+      width: 0, // to be added
+      height: 0, // to be added
+      volume: 0 // to be added
     }
-  ];
+  });
 
   return {
     email: 'drewmurphyza@gmail.com',
@@ -2300,13 +2289,21 @@ export const getFreightRequetQuoteDetails = async (params) => {
   };
 }
 
-export const updateFreightRequesyDetails = (params) => {
-
+export const updateFreightRequesyDetails = async (params) => {
   logger.debug(`UPDATE FREIGHT REQUEST DETAILS :: ${JSON.stringify(params)}`);
-
-  return {
-    success: true,
-    message: 'Save success'
+  const { quoteId, email, communicationMethod, options, productDetails } = params.freightRequestDetailInput;
+  try {
+    const freightRequestUpdate = await FreightRequest.findOneAndUpdate({ quoteId: quoteId }, params.freightRequestDetailInput, { new: true, upsert: true }).exec();
+    logger.debug(`SAVED FREIGHT REQUEST: ${JSON.stringify(freightRequestUpdate)}`);
+    return {
+      success: true,
+      message: 'Save success'
+    }
+  } catch (error) {
+    logger.debug(`ERROR UPDATING FREIGHT REQUEST:: ${JSON.stringify(error)}`);
+    return {
+      success: false,
+      message: `Error updating freight request. ${error}`
+    }
   }
-
 }

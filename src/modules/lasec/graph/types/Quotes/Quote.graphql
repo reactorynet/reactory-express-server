@@ -475,6 +475,7 @@ input FreightRequestProductDetailInput {
 }
 
 input FreightReqestDetailInput {
+  quoteId: String
   email: String
   communicationMethod: String
   options: [FreightRequestOptionInput]

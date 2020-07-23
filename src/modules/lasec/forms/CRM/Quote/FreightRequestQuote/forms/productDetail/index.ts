@@ -35,7 +35,7 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      productDetails: { md: 6, xs: 12 },
+      productDetails: { xs: 12, sm: 12, md: 12, lg: 12, },
     },
   ],
   productDetails: {

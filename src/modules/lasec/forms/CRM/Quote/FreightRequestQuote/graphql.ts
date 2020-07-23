@@ -102,6 +102,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       objectMap: true,
       updateMessage: 'Updating freight request quote',
       variables: {
+        'formData.code': 'freightRequestDetailInput.quoteId',
         'formData.email': 'freightRequestDetailInput.email',
         'formData.communicationMethod': 'freightRequestDetailInput.communicationMethod',
         'formData.options': 'freightRequestDetailInput.options',
@@ -132,6 +133,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       objectMap: true,
       updateMessage: 'Updating freight request quote',
       variables: {
+        'formData.code': 'freightRequestDetailInput.quoteId',
         'formData.email': 'freightRequestDetailInput.email',
         'formData.communicationMethod': 'freightRequestDetailInput.communicationMethod',
         'formData.options': 'freightRequestDetailInput.options',
