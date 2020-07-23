@@ -577,6 +577,7 @@ export const surveyEmails = {
   },
   reminder: async (assessor, delegate, survey, assessment, organization, surveyoptions = null) => {
     // final object item to return
+    logger.debug(`Sending Reminder Email`, {assessor, delegate, survey, assessment, organization, surveyoptions})
     if (lodash.isNil(assessor)) throw new ApiError('assessor parameter for delegateInvite cannot be null / undefined');
     if (lodash.isNil(survey)) throw new ApiError('survey parameter for delegateInvite cannot be null / undefined');
 
@@ -627,6 +628,7 @@ export const surveyEmails = {
         timeEnd: moment(survey.endDate).format('HH:mm'),
         dateEnd: moment(survey.endDate).format('YYYY-MM-DD'),
         assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
+        link: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
       };
 
       let bodyTemplate = null;

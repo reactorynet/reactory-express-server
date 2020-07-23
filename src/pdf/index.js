@@ -311,7 +311,7 @@ router.get('/', (req, res) => {
   const partnerLogo = `${partner.themeOptions.assets.logo.replace(process.env.CDN_ROOT, `${process.env.APP_DATA_ROOT}/`)}`;
   logger.info(`Partner logo resolved to: ${partnerLogo}`);
 
-  doc.image(partnerLogo, 160, 30, {
+  doc.image(pdfpng(partnerLogo), 160, 30, {
     height: 130,
     align: 'center',
     valign: 'center',
