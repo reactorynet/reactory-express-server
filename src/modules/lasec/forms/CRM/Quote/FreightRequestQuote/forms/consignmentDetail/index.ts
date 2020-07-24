@@ -128,8 +128,8 @@ const uiSchema: any = {
     'ui:options': {
       renderAsOptions: true,
       selectOptions: [
-        { key: 'task', value: 'task', label: 'Task' },
-        { key: 'milestone', value: 'milestone', label: 'Milestone Task' },
+        { key: 'sample', value: 'sample', label: 'Sample' },
+        { key: 'repair', value: 'repair', label: 'Repair' },
       ],
     },
   },

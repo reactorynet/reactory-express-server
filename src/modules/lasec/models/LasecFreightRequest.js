@@ -8,6 +8,7 @@ const LasecFreightRequestSchema = mongoose.Schema({
   options: [
     {
       id: String,
+      name: String,
       transportMode: String,
       incoTerm: String,
       place: String,
@@ -34,6 +35,7 @@ const LasecFreightRequestSchema = mongoose.Schema({
       id: mongoose.Schema.Types.ObjectId,
       qty: Number,
       code: String,
+      description: String,
       length: Number,
       width: Number,
       height: Number,

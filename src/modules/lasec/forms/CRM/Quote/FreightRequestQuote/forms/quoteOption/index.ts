@@ -74,8 +74,9 @@ const uiSchema: any = {
     'ui:options': {
       renderAsOptions: true,
       selectOptions: [
-        { key: 'task', value: 'task', label: 'Task' },
-        { key: 'milestone', value: 'milestone', label: 'Milestone Task' },
+        { key: 'road', value: 'road', label: 'Road' },
+        { key: 'rail', value: 'rail', label: 'Rail' },
+        { key: 'air', value: 'air', label: 'Air' },
       ],
     },
   },
@@ -84,8 +85,10 @@ const uiSchema: any = {
     'ui:options': {
       renderAsOptions: true,
       selectOptions: [
-        { key: 'task', value: 'task', label: 'Task' },
-        { key: 'milestone', value: 'milestone', label: 'Milestone Task' },
+        { key: '1', value: '1', label: 'Option 1' },
+        { key: '2', value: '2', label: 'Option 2' },
+        { key: '3', value: '3', label: 'Option 3' },
+        { key: '4', value: '4', label: 'Option 4' },
       ],
     },
   },

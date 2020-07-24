@@ -2219,12 +2219,14 @@ export const getFreightRequetQuoteDetails = async (params) => {
   const { quoteId } = params;
   let quoteDetail = await lasecApi.Quotes.getByQuoteId(quoteId).then();
   let options = [];
+  let productDetails = [];
   const freightRequest = await FreightRequest.findOne({ quoteId: quoteId });
   logger.debug(`FREIGHT REQUEST :: ${JSON.stringify(freightRequest)}`);
 
   if (freightRequest) {
     logger.debug(`----------  GOT A FREIGHT OPTION ----------`);
     options = freightRequest.options;
+    productDetails = freightRequest.productDetails;
   } else {
     options = quoteDetail.quote_option_ids.map(async (optionId) => {
       let quoteOption = await lasecApi.Quotes.getQuoteOption(optionId);
@@ -2253,22 +2255,22 @@ export const getFreightRequetQuoteDetails = async (params) => {
         additionalDetails: quoteOption.special_comment || '',
       }
     });
-  }
 
-  let quoteLineItems = await lasecGetQuoteLineItems(params.quoteId);
-  const productDetails = quoteLineItems.map(li => {
-    return {
-      code: li.code,
-      description: li.title,
-      sellingPrice: li.price,
-      qty: li.quantity,
-      unitOfMeasure: '', // to be added
-      length: 0, // to be added
-      width: 0, // to be added
-      height: 0, // to be added
-      volume: 0 // to be added
-    }
-  });
+    let quoteLineItems = await lasecGetQuoteLineItems(params.quoteId);
+    productDetails = quoteLineItems.map(li => {
+      return {
+        code: li.code,
+        description: li.title,
+        sellingPrice: li.price,
+        qty: li.quantity,
+        unitOfMeasure: '',
+        length: 0,
+        width: 0,
+        height: 0,
+        volume: 0
+      }
+    });
+  }
 
   return {
     email: 'drewmurphyza@gmail.com',

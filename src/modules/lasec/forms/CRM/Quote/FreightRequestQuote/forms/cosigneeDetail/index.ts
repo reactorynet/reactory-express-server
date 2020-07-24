@@ -74,15 +74,32 @@ const uiSchema: any = {
   city: {},
   province: {},
   country: {
-    'ui:widget': 'SelectWidget',
+    'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
-      renderAsOptions: true,
-      selectOptions: [
-        { key: 'task', value: 'task', label: 'Country 1' },
-        { key: 'milestone', value: 'milestone', label: 'Country 2' },
-      ],
+      multiSelect: false,
+      query: `query LasecGetCustomerCountries {
+        LasecGetCustomerCountries {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetCustomerCountries',
+      resultsMap: {
+        'LasecGetCustomerCountries.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerCountries.[].name': '[].label',
+      },
     },
   },
+  // country: {
+  //   'ui:widget': 'SelectWidget',
+  //   'ui:options': {
+  //     renderAsOptions: true,
+  //     selectOptions: [
+  //       { key: 'task', value: 'task', label: 'Country 1' },
+  //       { key: 'milestone', value: 'milestone', label: 'Country 2' },
+  //     ],
+  //   },
+  // },
 };
 
 const LasecFreightRequestCosigneeForm: Reactory.IReactoryForm = {
