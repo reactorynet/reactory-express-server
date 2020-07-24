@@ -9,6 +9,7 @@ const graphql: Reactory.IFormGraphDefinition = {
           email
           communicationMethod
           options {
+            name
             transportMode
             incoTerm
             namedPlace
@@ -49,12 +50,13 @@ const graphql: Reactory.IFormGraphDefinition = {
       'email': 'email',
       'communicationMethod': 'communicationMethod',
 
+      'options[].name': 'options[].name',
       'options[].transportMode': 'options[].transportMode',
       'options[].incoTerm': 'options[].incoTerm',
       'options[].namedPlace': 'options[].namedPlace',
       'options[].vatExempt': 'options[].vatExempt',
       'options[].fromSA': 'options[].fromSA',
-      'options[].totalValue': 'options[].totalValue',
+      'options[].totalValue': ['options[].totalValue'],
       'options[].companyName': 'options[].companyName',
       'options[].streetAddress': 'options[].streetAddress',
       'options[].suburb': 'options[].suburb',

@@ -66,7 +66,6 @@ const uiSchema: any = {
       vatExempt: { sm: 6, xs: 12 },
       fromSA: { sm: 6, xs: 12 },
       totalValue: { sm: 6, xs: 12 },
-
     },
   ],
   id: {},
@@ -93,7 +92,12 @@ const uiSchema: any = {
   namedPlace: {},
   vatExempt: {},
   fromSA: {},
-  totalValue: {},
+  totalValue: {
+    'ui:options': {
+      readOnly: true,
+    },
+  },
+
 };
 
 const LasecFreightRequestOptionForm: Reactory.IReactoryForm = {
@@ -110,7 +114,9 @@ const LasecFreightRequestOptionForm: Reactory.IReactoryForm = {
   schema: schema,
   uiSchema: uiSchema,
   defaultFormValue: {},
-  widgetMap: [],
+  widgetMap: [
+    { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
+  ],
 };
 
 export default LasecFreightRequestOptionForm;

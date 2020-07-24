@@ -2216,55 +2216,44 @@ export const getCRMSalesHistory = async (params) => {
 
 export const getFreightRequetQuoteDetails = async (params) => {
   logger.debug(`FREIGHT REQUEST PARAMS:: ${JSON.stringify(params)}`);
-
   const { quoteId } = params;
-  const feightRequest = await FreightRequest.find({ quoteId: quoteId });
-  logger.debug(`FREIGHT REQUEST :: ${JSON.stringify(feightRequest)}`);
+  let quoteDetail = await lasecApi.Quotes.getByQuoteId(quoteId).then();
+  let options = [];
+  const freightRequest = await FreightRequest.findOne({ quoteId: quoteId });
+  logger.debug(`FREIGHT REQUEST :: ${JSON.stringify(freightRequest)}`);
 
-  const options = [{
-    id: '12',
-    transportMode: 'Mode 1',
-    incoTerm: 'Term 1',
-    namedPlace: 'Place 1',
-    vatExempt: false,
-    fromSA: true,
-    totalValue: '123.00',
-    companyName: 'Company 1',
-    streetAddress: 'Test street addres',
-    suburb: 'Test suburb',
-    city: 'Cape Town',
-    province: 'Wester Cape',
-    country: 'South Africa',
-    freightFor: 'line-item',
-    offloadRequired: false,
-    hazardous: 'hazardous',
-    refrigerationRequired: false,
-    containsLithium: false,
-    sample: 1,
-    additionalDetails: 'Progressively negotiate turnkey customer service rather than quality partnerships. Compellingly engage inexpensive.',
-  },
-  {
-    id: '34',
-    transportMode: '1',
-    incoTerm: '1',
-    namedPlace: 'Place 1',
-    vatExempt: false,
-    fromSA: true,
-    totalValue: '123.00',
-    companyName: 'Company 2',
-    streetAddress: 'Test street addres',
-    suburb: 'Test suburb',
-    city: 'Cape Town',
-    province: 'Wester Cape',
-    country: 'South Africa',
-    freightFor: 'line-item',
-    offloadRequired: false,
-    hazardous: 'non-hazardous',
-    refrigerationRequired: false,
-    containsLithium: false,
-    sample: '1',
-    additionalDetails: 'Progressively negotiate turnkey customer service rather than quality partnerships. Compellingly engage inexpensive.',
-  }];
+  if (freightRequest) {
+    logger.debug(`----------  GOT A FREIGHT OPTION ----------`);
+    options = freightRequest.options;
+  } else {
+    options = quoteDetail.quote_option_ids.map(async (optionId) => {
+      let quoteOption = await lasecApi.Quotes.getQuoteOption(optionId);
+      quoteOption = quoteOption.items[0];
+      return {
+        id: quoteOption.id,
+        name: quoteOption.name,
+        transportMode: '',
+        incoTerm: quoteOption.inco_terms || '',
+        namedPlace: quoteOption.named_place || '',
+        vatExempt: false,
+        fromSA: false,
+        totalValue: quoteOption.grand_total_incl_vat_cents,
+        companyName: '',
+        streetAddress: '',
+        suburb: '',
+        city: '',
+        province: '',
+        country: '',
+        freightFor: '',
+        offloadRequired: false,
+        hazardous: 'non-hazardous',
+        refrigerationRequired: false,
+        containsLithium: false,
+        sample: '',
+        additionalDetails: quoteOption.special_comment || '',
+      }
+    });
+  }
 
   let quoteLineItems = await lasecGetQuoteLineItems(params.quoteId);
   const productDetails = quoteLineItems.map(li => {
@@ -2293,7 +2282,10 @@ export const updateFreightRequesyDetails = async (params) => {
   logger.debug(`UPDATE FREIGHT REQUEST DETAILS :: ${JSON.stringify(params)}`);
   const { quoteId, email, communicationMethod, options, productDetails } = params.freightRequestDetailInput;
   try {
-    const freightRequestUpdate = await FreightRequest.findOneAndUpdate({ quoteId: quoteId }, params.freightRequestDetailInput, { new: true, upsert: true }).exec();
+    const freightRequestUpdate = await FreightRequest.findOneAndUpdate(
+      { quoteId: quoteId },
+      params.freightRequestDetailInput,
+      { new: true, upsert: true }).exec();
     logger.debug(`SAVED FREIGHT REQUEST: ${JSON.stringify(freightRequestUpdate)}`);
     return {
       success: true,

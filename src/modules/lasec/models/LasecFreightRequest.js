@@ -32,7 +32,14 @@ const LasecFreightRequestSchema = mongoose.Schema({
   productDetails: [
     {
       id: mongoose.Schema.Types.ObjectId,
-      quantity: Number,
+      qty: Number,
+      code: String,
+      length: Number,
+      width: Number,
+      height: Number,
+      volumne: Number,
+      sellingPrice: Number,
+      unitOfMeasure: String,
     },
   ],
 });

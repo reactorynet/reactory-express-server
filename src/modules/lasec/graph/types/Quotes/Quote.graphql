@@ -418,6 +418,7 @@ type FreightRequestQuoteDetail {
 }
 
 type FreightRequestOption {
+  name: String
   transportMode: String
   incoTerm: String
   namedPlace: String
@@ -440,6 +441,7 @@ type FreightRequestOption {
 }
 
 input FreightRequestOptionInput {
+  name: String
   transportMode: String
   incoTerm: String
   namedPlace: String

@@ -938,6 +938,23 @@ const Api = {
         throw quoteFetchError;
       }
     },
+    getQuoteOption: async (optionId) => {
+      try {
+        const apiResponse = await FETCH(SECONDARY_API_URLS.quote_option.url, { params: { filter: { ids: [optionId] } } }).then();
+        const {
+          status, payload,
+        } = apiResponse;
+
+        if (status === 'success') {
+          return payload;
+        }
+
+        return { pagination: {}, ids: [], items: [] };
+      } catch (error) {
+        logger.error(`An error occured while fetching the quote document ${optionId}`, error);
+        throw error;
+      }
+    },
     createQuoteHeader: async ({ quote_id, quote_item_id, header_text }) => {
       try {
         const apiResponse = await POST(SECONDARY_API_URLS.quote_create_section_header, { body: { quote_id, quote_item_id, heading: header_text } }).then();
