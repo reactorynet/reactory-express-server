@@ -838,6 +838,7 @@ const LASEC_CONFIG = {
         }
       ],
     },
+    
     {
       key: 'crm-client',
       title: 'Lasec CRM',

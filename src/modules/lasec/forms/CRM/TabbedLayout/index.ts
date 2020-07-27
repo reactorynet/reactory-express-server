@@ -51,7 +51,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
         title: 'Sales Orders',
         componentFqn: 'lasec-crm.LasecSalesOrderGrid',
         componentProps: {},
-        route: '/crm/sales-order/',
+        route: '/crm/sales-orders/',
         componentPropsMap: {
           'formContext.$formData.toolbar.search': 'formData.search'
         }
