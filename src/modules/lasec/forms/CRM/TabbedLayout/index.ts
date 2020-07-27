@@ -24,10 +24,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: $schema,
   uiSchema: $uiSchema,
-  defaultFormValue: {
-    toolbar: {
-      search: ""
-    },
+  defaultFormValue: {   
     tabs: [
       {
         id: 'clients',
@@ -54,7 +51,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
         title: 'Sales Orders',
         componentFqn: 'lasec-crm.LasecSalesOrderGrid',
         componentProps: {},
-        route: '/crm/sales-order/',
+        route: '/crm/sales-orders/',
         componentPropsMap: {
           'formContext.$formData.toolbar.search': 'formData.search'
         }
@@ -119,6 +116,10 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
     {
       componentFqn: 'lasec-crm.NewClientModal@1.0.0',
       widget: 'NewClientModal'
+    },
+    {
+      componentFqn: 'lasec-crm.CRMToolbar@1.0.0',
+      widget: 'CRMToolbar'
     }
   ],
 };
