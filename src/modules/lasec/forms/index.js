@@ -2,7 +2,8 @@ import {
   LasecCRMPluginForm
 } from './Global';
 
-import { default as SalesDashboard,
+import {
+  default as SalesDashboard,
 } from './salesDashboard';
 
 
@@ -18,7 +19,7 @@ import TabbedQuoteList from './salesConfigurator/TabbedQuoteList'
 
 import {
   QuoteIdInputForm,
-  UpdateQuoteStatusForm ,
+  UpdateQuoteStatusForm,
   QuoteDetailForm,
   QuoteListForm,
   QuoteEmail,
@@ -101,6 +102,12 @@ import LasecCRMISODetailLineItems from './CRM/Client/Activity/ISODetail/sections
 import LasecCRMISODetailComments from './CRM/Client/Activity/ISODetail/sections/comments';
 import LasecCRMInvoiceGrid from './CRM/Invoice/SearchGrid';
 import LasecCRMSalesHistoryGrid from './CRM/SalesHistory/SearchGrid';
+
+import LasecCRMFreightRequestQuote from './CRM/Quote/FreightRequestQuote';
+import LasecFreightRequestOptionForm from './CRM/Quote/FreightRequestQuote/forms/quoteOption';
+import LasecFreightRequestCosigneeForm from './CRM/Quote/FreightRequestQuote/forms/cosigneeDetail';
+import LasecFreightRequestConsignmentForm from './CRM/Quote/FreightRequestQuote/forms/consignmentDetail';
+import LasecFreightRequestProductDetail from './CRM/Quote/FreightRequestQuote/forms/productDetail';
 
 
 const { LasecCRMEditClientDocuments, LasecCRMNewClientDocuments, LasecCRMViewClientDocuments } = LasecClientDocuments;
@@ -190,4 +197,9 @@ export default [
   LasecCRMISODetailComments,
   LasecCRMInvoiceGrid,
   LasecCRMSalesHistoryGrid,
+  LasecCRMFreightRequestQuote,
+  LasecFreightRequestOptionForm,
+  LasecFreightRequestCosigneeForm,
+  LasecFreightRequestConsignmentForm,
+  LasecFreightRequestProductDetail,
 ];

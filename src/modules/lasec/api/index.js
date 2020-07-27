@@ -901,79 +901,7 @@ const Api = {
     getByQuoteId: async (quote_id, objectMap = defaultQuoteObjectMap) => {
       try {
         const payload = await Api.Quotes.get({ filter: { ids: [quote_id] } }).then();
-        /**
-         * Sample payload
-         * {
-            "items": [
-              {
-                "id": "1906-101019000",
-                "customer_id": "14729",
-                "name": null,
-                "number_of_items": 0,
-                "description": null,
-                "status": "Draft - Pending Submission",
-                "status_id": "1-1",
-                "substatus_id": "1",
-                "status_name": "Draft - Pending Submission",
-                "allowed_status_ids": [
-                  "1-1",
-                  "6-25"
-                ],
-                "organisation_id": null,
-                "grand_total_excl_vat_cents": 259484,
-                "grand_total_vat_cents": 38923,
-                "grand_total_incl_vat_cents": 298407,
-                "grand_total_discount_cents": 13900,
-                "grand_total_discount_percent": 5,
-                "gp_percent": 41,
-                "actual_gp_percent": 99,
-                "date_sent": null,
-                "created": "2019-06-19T13:04:43.000000Z",
-                "modified": "2019-09-25T15:17:47.000000Z",
-                "expiration_date": "2019-10-25T00:00:00.000000Z",
-                "note": null,
-                "quote_option_ids": [
-                  "46956"
-                ],
-                "site_inspection_status": false,
-                "site_evaluation_required": false,
-                "transportation_evaluation_required": false,
-                "show_quote_totals": false,
-                "valid_until": null,
-                "primary_api_staff_user_id": "19",
-                "secondary_api_staff_user_id": "19",
-                "sales_team_id": "LAB101",
-                "cc_self": false,
-                "expired": false,
-                "email": null,
-                "email_recipient_ids": [
-                  ""
-                ],
-                "eta_of_order": null,
-                "can_create_salesorder": true,
-                "quote_type": "Normal",
-                "requires_authorisation": false,
-                "emailed_as_staff_user_id": "19",
-                "last_updated_as_staff_user_id": "19",
-                "authorisation_status": "",
-                "authorisation_requested_date": null,
-                "on_hold": "N",
-                "has_requested_authorisation": false,
-                "is_quote_authorised": false,
-                "is_quote_locked": false,
-                "approvers_note": null,
-                "request_auth_note": null,
-                "company_id": "11503",
-                "customer_full_name": "Zola Ngqabe",
-                "company_trading_name": "CITY OF CAPE TOWN",
-                "authorisation_requested_by_staff_user": null,
-                "staff_user_full_name": "Admin User"
-              }
-            ]
-          }
-         */
         if (payload) {
-
           logger.debug(`Api Response successful fetching quote id ${quote_id}`, payload);
           const quotes = payload.items || [];
           if (isArray(quotes) === true && quotes.length >= 1) {
@@ -993,7 +921,6 @@ const Api = {
 
             });
             */
-            //mappedQuote = { ...quotes[0], ...mappedQuote }
             return quotes[0];
           }
           if (quotes.length === 0) {
@@ -1009,6 +936,23 @@ const Api = {
       } catch (quoteFetchError) {
         logger.error(`An error occured while fetching the quote document ${quote_id}`, quoteFetchError);
         throw quoteFetchError;
+      }
+    },
+    getQuoteOption: async (optionId) => {
+      try {
+        const apiResponse = await FETCH(SECONDARY_API_URLS.quote_option.url, { params: { filter: { ids: [optionId] } } }).then();
+        const {
+          status, payload,
+        } = apiResponse;
+
+        if (status === 'success') {
+          return payload;
+        }
+
+        return { pagination: {}, ids: [], items: [] };
+      } catch (error) {
+        logger.error(`An error occured while fetching the quote document ${optionId}`, error);
+        throw error;
       }
     },
     createQuoteHeader: async ({ quote_id, quote_item_id, header_text }) => {

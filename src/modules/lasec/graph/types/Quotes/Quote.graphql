@@ -374,7 +374,7 @@ type CRMSaleOrderComment {
 type SalesOrderDocumentContent {
   id: ObjID
   slug: String!
-  topics: [ String ]
+  topics: [String]
   title: String!
   content: String!
   createdAt: Date
@@ -382,12 +382,12 @@ type SalesOrderDocumentContent {
   createdBy: User!
   updatedBy: User!
   published: Boolean
-  comments: [ Comment ]
+  comments: [Comment]
 }
 
 input SalesOrderContentInput {
   slug: String!
-  topics: [ String ]
+  topics: [String]
   title: String!
   content: String!
   createdAt: Date
@@ -395,6 +395,93 @@ input SalesOrderContentInput {
   createdBy: ObjID
   updatedBy: ObjID
   published: Boolean
+}
+
+type FreightRequestProductDetail {
+  code: String
+  description: String
+  unitOfMeasure: String
+  sellingPrice: Float
+  qty: Int
+  length: Float
+  width: Float
+  height: Float
+  volume: Float
+}
+
+type FreightRequestQuoteDetail {
+  id: String
+  email: String
+  communicationMethod: String
+  options: [FreightRequestOption]
+  productDetails: [FreightRequestProductDetail]
+}
+
+type FreightRequestOption {
+  name: String
+  transportMode: String
+  incoTerm: String
+  namedPlace: String
+  vatExempt: Boolean
+  fromSA: Boolean
+  totalValue: String
+  companyName: String
+  streetAddress: String
+  suburb: String
+  city: String
+  province: String
+  country: String
+  freightFor: String
+  offloadRequired: Boolean
+  hazardous: String
+  refrigerationRequired: Boolean
+  containsLithium: Boolean
+  sample: String
+  additionalDetails: String
+}
+
+input FreightRequestOptionInput {
+  name: String
+  transportMode: String
+  incoTerm: String
+  namedPlace: String
+  vatExempt: Boolean
+  fromSA: Boolean
+  totalValue: String
+  companyName: String
+  streetAddress: String
+  suburb: String
+  city: String
+  province: String
+  country: String
+  freightFor: String
+  offloadRequired: Boolean
+  hazardous: String
+  refrigerationRequired: Boolean
+  containsLithium: Boolean
+  sample: String
+  additionalDetails: String
+  productDetails: Any
+}
+
+input FreightRequestProductDetailInput {
+  code: String
+  description: String
+  unitOfMeasure: String
+  sellingPrice: Float
+  qty: Int
+  length: Float
+  width: Float
+  height: Float
+  volume: Float
+}
+
+input FreightReqestDetailInput {
+  quoteId: String
+  email: String
+  communicationMethod: String
+  options: [FreightRequestOptionInput]
+  productDetails: [FreightRequestProductDetailInput]
 }
 
 extend type Query {
@@ -439,14 +526,9 @@ extend type Query {
     dateFilter: String
     iter: Int
   ): PagedCRMSalesOrders
-
-
-
   LasecGetSaleOrderComments(orderId: String!): SalesOrderCommentResponse
   LasecGetSaleOrderDocument(ids: [String]): [SalesOrderDocuments]
-
   LasecGetSalesOrderDocumentBySlug(slug: String!): SalesOrderDocumentContent
-
   LasecGetPagedCRMSalesOrders(
     search: String!
     paging: PagingRequest
@@ -503,6 +585,7 @@ extend type Query {
     periodEnd: String
     iter: Int
   ): PagedCRMSalesHistory
+  LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
 }
 
 extend type Mutation {
@@ -524,7 +607,15 @@ extend type Mutation {
     message: String!
   ): SimpleResponse
   LasecDeleteSaleOrderDocument(id: String): SimpleResponse
-  LasecCRMSaveSaleOrderComment(orderId: String!, comment: String!): SimpleResponse
+  LasecCRMSaveSaleOrderComment(
+    orderId: String!
+    comment: String!
+  ): SimpleResponse
+  LasecUploadSaleOrderDocument(
+    createInput: SalesOrderContentInput!
+  ): SalesOrderDocumentContent
 
-  LasecUploadSaleOrderDocument(createInput: SalesOrderContentInput!): SalesOrderDocumentContent
+  LasecCRMUpdateFreightRequestDetails(
+    freightRequestDetailInput: FreightReqestDetailInput!
+  ): SimpleResponse
 }

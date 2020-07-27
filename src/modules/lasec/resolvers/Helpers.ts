@@ -10,6 +10,7 @@ import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { Organization, User, Task } from '@reactory/server-core/models';
+import FreightRequest from '@reactory/server-modules/lasec/models/LasecFreightRequest';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
 import Hash from '@reactory/server-core/utils/hash';
@@ -837,7 +838,7 @@ export const groupQuotesByProduct = async (quotes: LasecQuote[]) => {
   return groupedByProduct;
 };
 
-export const lasecGetProductDashboard = async (dashparams = defaultProductDashboardParams, ) => {
+export const lasecGetProductDashboard = async (dashparams = defaultProductDashboardParams,) => {
 
   logger.debug(`GET PRODUCT DASHBOARD QUERIED: ${JSON.stringify(dashparams)}`);
   let {
@@ -1271,13 +1272,13 @@ export const getPagedQuotes = async (params) => {
   let quotes = [...quoteDetails.items];
 
 
-  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
+  logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
 
   const quoteSyncResult = await Promise.all(quotes.map((quote) => {
     return synchronizeQuote(quote.id, global.partner.key, quote, true);
   })).then();
 
-  // logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
+  logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
 
   quotes = quoteSyncResult.map(doc => doc);
 
@@ -2211,4 +2212,92 @@ export const getCRMSalesHistory = async (params) => {
 
   return result;
 
+}
+
+export const getFreightRequetQuoteDetails = async (params) => {
+  logger.debug(`FREIGHT REQUEST PARAMS:: ${JSON.stringify(params)}`);
+  const { quoteId } = params;
+  let quoteDetail = await lasecApi.Quotes.getByQuoteId(quoteId).then();
+  let options = [];
+  let productDetails = [];
+  const freightRequest = await FreightRequest.findOne({ quoteId: quoteId });
+  logger.debug(`FREIGHT REQUEST :: ${JSON.stringify(freightRequest)}`);
+
+  if (freightRequest) {
+    logger.debug(`----------  GOT A FREIGHT OPTION ----------`);
+    options = freightRequest.options;
+    productDetails = freightRequest.productDetails;
+  } else {
+    options = quoteDetail.quote_option_ids.map(async (optionId) => {
+      let quoteOption = await lasecApi.Quotes.getQuoteOption(optionId);
+      quoteOption = quoteOption.items[0];
+      return {
+        id: quoteOption.id,
+        name: quoteOption.name,
+        transportMode: '',
+        incoTerm: quoteOption.inco_terms || '',
+        namedPlace: quoteOption.named_place || '',
+        vatExempt: false,
+        fromSA: false,
+        totalValue: quoteOption.grand_total_incl_vat_cents,
+        companyName: '',
+        streetAddress: '',
+        suburb: '',
+        city: '',
+        province: '',
+        country: '',
+        freightFor: '',
+        offloadRequired: false,
+        hazardous: 'non-hazardous',
+        refrigerationRequired: false,
+        containsLithium: false,
+        sample: '',
+        additionalDetails: quoteOption.special_comment || '',
+      }
+    });
+
+    let quoteLineItems = await lasecGetQuoteLineItems(params.quoteId);
+    productDetails = quoteLineItems.map(li => {
+      return {
+        code: li.code,
+        description: li.title,
+        sellingPrice: li.price,
+        qty: li.quantity,
+        unitOfMeasure: '',
+        length: 0,
+        width: 0,
+        height: 0,
+        volume: 0
+      }
+    });
+  }
+
+  return {
+    email: 'drewmurphyza@gmail.com',
+    communicationMethod: 'attach_pdf',
+    options,
+    productDetails
+  };
+}
+
+export const updateFreightRequesyDetails = async (params) => {
+  logger.debug(`UPDATE FREIGHT REQUEST DETAILS :: ${JSON.stringify(params)}`);
+  const { quoteId, email, communicationMethod, options, productDetails } = params.freightRequestDetailInput;
+  try {
+    const freightRequestUpdate = await FreightRequest.findOneAndUpdate(
+      { quoteId: quoteId },
+      params.freightRequestDetailInput,
+      { new: true, upsert: true }).exec();
+    logger.debug(`SAVED FREIGHT REQUEST: ${JSON.stringify(freightRequestUpdate)}`);
+    return {
+      success: true,
+      message: 'Save success'
+    }
+  } catch (error) {
+    logger.debug(`ERROR UPDATING FREIGHT REQUEST:: ${JSON.stringify(error)}`);
+    return {
+      success: false,
+      message: `Error updating freight request. ${error}`
+    }
+  }
 }

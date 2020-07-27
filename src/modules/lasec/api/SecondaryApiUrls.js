@@ -98,8 +98,9 @@ export default {
   createOrganisation: { url: `api/${ENTITY_KEY__ORGANISATION}/\\d+/`, allowed_methods: ['put'] },
   address: { url: `api/${ENTITY_KEY__ADDRESS}/`, allowed_methods: ['get', 'post'] },
   new_address: { url: `api/${ENTITY_KEY__ADDRESS}/`, allowed_methods: ['get', 'post'] },
-
   upload_file: { url: `api/${ENTITY_KEY__UPLOAD_FILE}/`, allowed_methods: ['get'] },
+
+  quote_option: { url: `api/${ENTITY_KEY__QUOTE_OPTION}/`, allowed_methods: ['get', 'post'] },
 
 
   /*
