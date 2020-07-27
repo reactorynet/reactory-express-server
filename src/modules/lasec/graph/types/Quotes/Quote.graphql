@@ -422,8 +422,8 @@ type FreightRequestOption {
   transportMode: String
   incoTerm: String
   place: String
-  vatExempt: Boolean
   fromSA: Boolean
+  vatExempt: Boolean
   totalValue: String
   companyName: String
   streetAddress: String
