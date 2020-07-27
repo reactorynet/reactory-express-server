@@ -16,7 +16,7 @@ const $toolbar: any = {
   },
   
   fabButton: {
-    'ui:widget': 'NewClientModal',
+    'ui:widget': 'CRMToolbar',
     /*
     'ui:options': {
       props: {
@@ -94,10 +94,7 @@ const uiSchema: any = {
     }
 
   },
-  'ui:grid-layout': [
-    {
-       toolbar: { xs: 12 },
-    },
+  'ui:grid-layout': [   
     {
       tabs: { xs: 12 },
     },
@@ -108,6 +105,9 @@ const uiSchema: any = {
     'ui:options': {
       numberOfVisibleTabs: 5,
       activeTab: '${formContext.$route.params.tab}',
+      buttons: [
+        'lasec-crm.CRMToolbar@1.0.0'
+      ]      
     }
   },
 
