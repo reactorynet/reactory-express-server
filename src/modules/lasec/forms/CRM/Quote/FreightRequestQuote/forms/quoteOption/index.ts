@@ -96,10 +96,17 @@ const uiSchema: any = {
   vatExempt: {},
   fromSA: {},
   totalValue: {
+    'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
-      readOnly: true,
+      inlineLabel: false,
+      label:"Total Value:"
     },
   },
+  // totalValue: {
+  //   'ui:options': {
+  //     readOnly: true,
+  //   },
+  // },
 
 };
 
