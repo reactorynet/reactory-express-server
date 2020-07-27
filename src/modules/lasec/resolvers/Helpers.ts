@@ -2232,11 +2232,10 @@ export const getFreightRequetQuoteDetails = async (params) => {
       let quoteOption = await lasecApi.Quotes.getQuoteOption(optionId);
       quoteOption = quoteOption.items[0];
       return {
-        id: quoteOption.id,
         name: quoteOption.name,
         transportMode: '',
         incoTerm: quoteOption.inco_terms || '',
-        namedPlace: quoteOption.named_place || '',
+        place: quoteOption.named_place || '',
         vatExempt: false,
         fromSA: false,
         totalValue: quoteOption.grand_total_incl_vat_cents,

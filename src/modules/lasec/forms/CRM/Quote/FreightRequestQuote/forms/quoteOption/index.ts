@@ -4,9 +4,6 @@ const schema: Reactory.ISchema = {
   type: 'object',
   title: 'Quote Option Details',
   properties: {
-    id: {
-      type: 'string'
-    },
     transportMode: {
       type: 'string',
       title: 'Transport Mode'
@@ -15,7 +12,7 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'Incoterm'
     },
-    namedPlace: {
+    place: {
       type: 'string',
       title: 'Named Place'
     },

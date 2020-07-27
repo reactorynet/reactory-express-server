@@ -4,9 +4,6 @@ const schema: Reactory.ISchema = {
   type: 'object',
   title: 'Consignment Details',
   properties: {
-    id: {
-      type: 'string'
-    },
     freightFor: {
       type: 'string',
       title: 'Requet Freight for:'
@@ -35,10 +32,6 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'Additional Delivery Details'
     },
-    // productDetails: {
-    //   type: 'string',
-    //   title: 'Product Details'
-    // },
   }
 }
 
