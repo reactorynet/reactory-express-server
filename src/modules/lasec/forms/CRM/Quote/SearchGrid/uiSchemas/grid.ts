@@ -4,7 +4,7 @@ import {
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
-    showSubmit: true,
+    showSubmit: false,
     showRefresh: false,
     container: "div",
     containerStyles: {
@@ -128,33 +128,18 @@ const uiSchema: any = {
       columns: [
 
         {
-          title: 'Freight Request Quote',
+          title: 'Quote Number',
           field: 'code',
-          component: 'core.SlideOutLauncher@1.0.0',
-          props: {
-            componentFqn: 'lasec-crm.LasecFreightRequestQuote@1.0.0',
-            componentProps: {
-              'rowData.code': ['data.code', 'query.code'],
-            },
-            slideDirection: 'down',
-            buttonTitle: '${rowData.code}',
-            buttonVariant: 'Typography',
-            buttonProps: {
-              style: {
-                'textDecoration': 'underline',
-                'cursor': 'pointer',
-                'color': 'black',
-                'fontSize': '1rem'
-              }
-            },
-            windowTitle: 'Freight Request Quote',
+          width: '220px',
+          component: 'lasec-crm.QuoteActionButton',
+          props: {            
+            variant: 'body1',            
           },
           propsMap: {
-            'rowData': 'rowData'
+            'rowData.code': 'quote_id',
+            'rowData': 'formData'
           }
         },
-
-        { title: 'Quote Number', field: 'code' },
         {
           title: 'Quote Date',
           field: 'date',
