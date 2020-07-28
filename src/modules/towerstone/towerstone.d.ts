@@ -7,6 +7,11 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 
 declare namespace TowerStone {
 
+export interface ISimpleResponse {
+  success: boolean,
+  message: String
+}
+
   export interface IRatingScaleEntry {
     rating: number,
     description: string

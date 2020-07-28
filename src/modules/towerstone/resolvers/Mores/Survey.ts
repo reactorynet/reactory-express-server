@@ -56,6 +56,38 @@ const MoresAssessmentSurveyResolver = {
 
       return await LeadershipBrandFactory(brand.organization, survey_type , true).then();
     }, 
+    MoresUpdateQuestionLibrary: async (obj: any, args: any, info: any): Promise<TowerStone.ISimpleResponse> => {
+
+      const survey_types = ['i360', 'l360', 'team180', 'culture'];
+      const { organization_id } = args;
+
+      if(!organization_id) {
+        return {
+          success: false,
+          message: 'No organization id provided',
+        }
+      }
+
+      const organization = await Organization.findById( organization_id ).then();
+
+      if(!organization) {
+        return {
+          success: false,
+          message: 'No organization found with that id',
+        }
+      }
+
+
+      await LeadershipBrandFactory(organization._id, 'i360' , true).then();
+      await LeadershipBrandFactory(organization._id, 'l360' , true).then();
+      await LeadershipBrandFactory(organization._id, 'team180' , true).then();
+      await LeadershipBrandFactory(organization._id, 'culture' , true).then();
+
+      return {
+        success: true,
+        message: `Mores Question Library Has been updated for ${organization.name}`, 
+      };
+    },
     MoresAssessementsCreateSurvey: async (obj: any, args: any, context: any, info: any): Promise<TowerStone.ISurvey> => {
       
       const moresSurveyCreateArgs: MoresAssessmentsCreateInput  = args.moresSurveyCreateArgs;
