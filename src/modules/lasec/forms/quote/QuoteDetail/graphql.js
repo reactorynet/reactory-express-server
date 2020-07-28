@@ -6,7 +6,7 @@ export default {
     text: fileAsString(require.resolve('./LasecGetQuoteById.graphql')),
     variables: {
       //'formData.code': 'quote_id',
-      'formContext.query.quote_id': 'quote_id',
+      'formContext.quote_id': 'quote_id',
     },    
     resultMap: {
       id: 'id',
