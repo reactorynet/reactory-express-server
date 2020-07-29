@@ -234,7 +234,14 @@ const graphql = {
       options: {
         refetchQueries: [],
       },
-      onSuccessMethod: 'refresh',
+      notification: {
+        inAppNotification: true,
+        title: 'Survey updated',
+        props: {
+          timeOut: 3000,
+          canDismiss: true,          
+        }
+      },
     },
   },
 };
