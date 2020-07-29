@@ -23,6 +23,7 @@ import {
   QuoteDetailForm,
   QuoteListForm,
   QuoteEmail,
+  QuoteDuplicate
 } from './quote';
 
 import QuoteList from './salesConfigurator/QuoteList';
@@ -121,6 +122,7 @@ export default [
   QuoteIdInputForm,
   QuoteListForm,
   QuoteEmail,
+  QuoteDuplicate,
   QuoteDetailForm,
   UpdateQuoteStatusForm,
   TabbedQuoteList,

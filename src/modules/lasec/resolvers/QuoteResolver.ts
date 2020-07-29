@@ -559,6 +559,39 @@ export default {
     },
     LasecGetFreightRequestQuoteDetail: async (obj, args) => {
       return getFreightRequetQuoteDetails(args);
+    },
+
+    LasecGetCRMQuoteClients: async (obj, args) => {
+      return [
+        {
+          id: '1234',
+          clientStatus: 'active',
+          clientName: 'Bob Nob',
+          customerName: 'Tom Bom',
+          repCode: 'Lab102'
+        },
+        {
+          id: '1234',
+          clientStatus: 'active',
+          clientName: 'Bob Nob',
+          customerName: 'Tom Bom',
+          repCode: 'Lab102'
+        },
+        {
+          id: '1234',
+          clientStatus: 'active',
+          clientName: 'Bob Nob',
+          customerName: 'Tom Bom',
+          repCode: 'Lab102'
+        },
+        {
+          id: '1234',
+          clientStatus: 'active',
+          clientName: 'Bob Nob',
+          customerName: 'Tom Bom',
+          repCode: 'Lab102'
+        },
+      ]
     }
   },
   Mutation: {

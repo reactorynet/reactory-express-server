@@ -484,6 +484,14 @@ input FreightReqestDetailInput {
   productDetails: [FreightRequestProductDetailInput]
 }
 
+type QuoteClients {
+  id: String
+  clientStatus: String
+  clientName: String
+  customerName: String
+  repCode: String
+}
+
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetCRMQuoteList(
@@ -586,6 +594,8 @@ extend type Query {
     iter: Int
   ): PagedCRMSalesHistory
   LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
+
+  LasecGetCRMQuoteClients(search: String, repCode: String): QuoteClients
 }
 
 extend type Mutation {

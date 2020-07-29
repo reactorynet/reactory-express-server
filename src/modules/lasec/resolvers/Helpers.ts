@@ -77,8 +77,8 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
     _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
   }
 
-  // logger.debug(`SOURCE ${JSON.stringify(_source)}`);
-  // logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
+  logger.debug(`SOURCE ${JSON.stringify(_source)}`);
+  logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
 
   if (map === true && _source) {
     const _map = {
