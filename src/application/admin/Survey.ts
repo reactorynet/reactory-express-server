@@ -399,9 +399,9 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
     if (iz.nil(delegateEntry)) throw new Error('delegate parameter cannot be empty');
     if(is180 === false) {
       //skip organigram and peer checks when doing 180 work
-      if (iz.nil(organigram)) result(`The user does not have an organigram for ${survey.organization}`, false, []);
-      if (iz.nil(organigram.confirmedAt)) return result('Peers have not yet been confirmed', false, []);
-      if (iz.nil(organigram.peers)) return result('User has no peers defined', false, []);
+      if (iz.nil(organigram) === true) result(`The user does not have an organigram for ${survey.organization}`, false, []);
+      if (iz.nil(organigram.confirmedAt) === true) return result('Peers have not yet been confirmed', false, []);
+      if (iz.nil(organigram.peers) === true) return result('User has no peers defined', false, []);
     }
     
 

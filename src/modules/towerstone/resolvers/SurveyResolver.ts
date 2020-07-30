@@ -588,11 +588,16 @@ export default {
 
 
                 let requires_peersConfirmed = true;
+                let organigramInvalid = false;
+
                 if(surveyModel.surveyType === 'culture') {
                   requires_peersConfirmed = false;
+                } else {
+                  organigramInvalid = lodash.isNil(organigramModel) === false  || lodash.isNil(organigramModel.confirmedAt)
                 }
+
                 
-                if(requires_peersConfirmed === true && organigramModel && lodash.isNil(organigramModel.confirmedAt) ) {
+                if(requires_peersConfirmed === true && organigramInvalid === true) {
                   entryData.entry.message = `Please set user organigram / peers. ${delegateModel.firstName} ${delegateModel.lastName}`;
                   entryData.patch = true;
                   entryData.entry.status = 'new';

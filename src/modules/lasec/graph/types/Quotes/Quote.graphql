@@ -484,6 +484,17 @@ input FreightReqestDetailInput {
   productDetails: [FreightRequestProductDetailInput]
 }
 
+input LasecNewQuoteInput {
+  clientId: String
+  repCode: String
+}
+
+type LasecNewQuoteResponse {
+  success: Boolean
+  message: String
+  quoteId: String
+}
+
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetCRMQuoteList(
@@ -618,4 +629,6 @@ extend type Mutation {
   LasecCRMUpdateFreightRequestDetails(
     freightRequestDetailInput: FreightReqestDetailInput!
   ): SimpleResponse
+
+  LasecCreateNewQuoteForClient(newQuoteInput: LasecNewQuoteInput): LasecNewQuoteResponse
 }

@@ -138,3 +138,18 @@ export interface LasecNextActionsFilter {
   actioned?: Boolean
   actionType: String  
 }
+
+export interface LasecNewQuoteInput {
+  clientId: String
+  repCode: String  
+}
+
+export interface LasecNewQuoteInputArgs {
+  newQuoteInput: LasecNewQuoteInput
+}
+
+export interface LasecNewQuoteResult {
+  quoteId: String
+  success:Boolean
+  message: String
+}

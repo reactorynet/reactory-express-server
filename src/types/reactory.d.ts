@@ -259,6 +259,13 @@ declare namespace Reactory {
     refreshEvents?: IReactoryEvent[] | undefined
   }
 
+  export interface IReactoryNotification extends NotificationOptions {
+    inAppNotification?: boolean,
+    title?: string,
+    type?: string | "success" | "warning" | "danger" | "info",
+    props?: any,
+  }
+
   export interface IReactoryFormMutation {
     name: String,
     text: String,
@@ -275,7 +282,7 @@ declare namespace Reactory {
     onSuccessRedirectTimeout?: number,
     onError?: IReactoryFormQueryErrorHandlerDefinition,
     options?: any,
-    notification?: any,
+    notification?: IReactoryNotification,
     handledBy?:String | 'onChange' | 'onSubmit'
   }
 

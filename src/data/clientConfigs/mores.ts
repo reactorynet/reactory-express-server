@@ -222,6 +222,7 @@ const Menus = {
       ],
       roles: ['USER'],
     },
+    /*
     {
       ordinal: 1,
       title: 'Assessments',
@@ -247,6 +248,7 @@ const Menus = {
         },
       ]
     },
+    */
     {
       ordinal: 2,
       title: 'Profile',
@@ -408,9 +410,16 @@ const routes = [
     public: false,
     exact: true,
     roles: ['USER'],
-    componentFqn: `${key}.DashboardUserHOC@1.0.0`,
+    componentFqn: `towerstone.Surveys@1.0.0`,
+    args: [
+      {
+        key: 'view',
+        value: {
+          view: 'current'
+        }
+      }
+    ]
   },
-
   {
     key: 'dashboard-organization',
     title: 'Dashboard Organization',

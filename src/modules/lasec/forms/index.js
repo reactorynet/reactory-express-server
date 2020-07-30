@@ -23,6 +23,7 @@ import {
   QuoteDetailForm,
   QuoteListForm,
   QuoteEmail,
+  NewQuoteClientSelector,
 } from './quote';
 
 import QuoteList from './salesConfigurator/QuoteList';
@@ -181,7 +182,8 @@ export default [
   QuoteGrid,
   ClientLookup,
   ClientLookupForm,
-
+  NewQuoteClientSelector,
+  
   SalesOrderGrid,
 
   ProductSalesOrders,
