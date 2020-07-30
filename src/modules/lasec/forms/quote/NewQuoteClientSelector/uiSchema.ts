@@ -4,6 +4,8 @@ const uiSchema: any = {
   'ui:options': {
     showRefresh: false,
     submitIcon: 'check',
+    showSubmit: false,
+    toolbarPosition: 'none',
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -23,7 +25,7 @@ const uiSchema: any = {
     'ui:widget': 'RepCodeFilter',
     'ui:options': {
       props: {
-        multi: false
+        multiple: false
       }
     }   
   },
@@ -130,7 +132,24 @@ const uiSchema: any = {
             'rowData': 'value',
           },
           breakpoint: 'md',
-        },               
+        },
+        {
+          title: 'Sales Team',
+          field: 'salesTeam',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData.salesTeam}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData': 'value',
+          },
+          breakpoint: 'md',
+        },                    
       ],
       actions: [
         {
@@ -152,7 +171,8 @@ const uiSchema: any = {
         toolbar: true,
         selection: false,
         toolbarButtonAlignment: 'left',
-        actionsColumnIndex: -1
+        actionsColumnIndex: -1,
+        searchText: '${props.formContext.$formData.repCode}',
       },
       remoteData: true,
       query: 'query',
@@ -161,6 +181,7 @@ const uiSchema: any = {
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.filterBy': 'filterBy',
         'props.formContext.$formData.filter': 'filter',
+        'props.formCOntext.$formData.repCode': 'repCode'
       },
       resultMap: {
         'paging.page': 'page',
@@ -172,7 +193,7 @@ const uiSchema: any = {
     },
   },
   selectedClient: {
-    'ui:widget': 'LasecClientLabel',
+    'ui:widget': 'HiddenWidget',
   }, 
 };
 

@@ -30,7 +30,7 @@ const LasecNewQuoteClientSelector: Reactory.IReactoryForm = {
       },
       filterBy: "any_field",
       search: "",
-      clients: []
+      clients: [],      
   }
 };
 
