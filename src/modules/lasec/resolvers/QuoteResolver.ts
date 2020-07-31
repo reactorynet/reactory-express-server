@@ -52,7 +52,9 @@ import {
   uploadSalesOrderDoc,
   getCRMInvoices,
   getFreightRequetQuoteDetails,
-  updateFreightRequesyDetails
+  updateFreightRequesyDetails,
+  getClientsForQuoteDuplicate,
+  duplicateQuote
 } from './Helpers';
 
 
@@ -560,38 +562,8 @@ export default {
     LasecGetFreightRequestQuoteDetail: async (obj, args) => {
       return getFreightRequetQuoteDetails(args);
     },
-
     LasecGetCRMQuoteClients: async (obj, args) => {
-      return [
-        {
-          id: '1234',
-          clientStatus: 'active',
-          clientName: 'Bob Nob',
-          customerName: 'Tom Bom',
-          repCode: 'Lab102'
-        },
-        {
-          id: '1234',
-          clientStatus: 'active',
-          clientName: 'Bob Nob',
-          customerName: 'Tom Bom',
-          repCode: 'Lab102'
-        },
-        {
-          id: '1234',
-          clientStatus: 'active',
-          clientName: 'Bob Nob',
-          customerName: 'Tom Bom',
-          repCode: 'Lab102'
-        },
-        {
-          id: '1234',
-          clientStatus: 'active',
-          clientName: 'Bob Nob',
-          customerName: 'Tom Bom',
-          repCode: 'Lab102'
-        },
-      ]
+      return getClientsForQuoteDuplicate(args);
     }
   },
   Mutation: {
@@ -920,6 +892,9 @@ export default {
     },
     LasecCRMUpdateFreightRequestDetails: async (obj, args) => {
       return updateFreightRequesyDetails(args);
+    },
+    LasecCRMDuplicateQuote: async (obj, args) => {
+      return duplicateQuote(args);
     }
   }
 };

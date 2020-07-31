@@ -492,6 +492,13 @@ type QuoteClients {
   repCode: String
 }
 
+type PagedQuoteClients {
+  search: String
+  repCode: String
+  paging: PagingResult
+  clients: [QuoteClients]
+}
+
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetCRMQuoteList(
@@ -595,7 +602,7 @@ extend type Query {
   ): PagedCRMSalesHistory
   LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
 
-  LasecGetCRMQuoteClients(search: String, repCode: String): QuoteClients
+  LasecGetCRMQuoteClients(search: String, repCode: String): [PagedQuoteClients]
 }
 
 extend type Mutation {
@@ -628,4 +635,6 @@ extend type Mutation {
   LasecCRMUpdateFreightRequestDetails(
     freightRequestDetailInput: FreightReqestDetailInput!
   ): SimpleResponse
+
+  LasecCRMDuplicateQuote(quoteId: String!): SimpleResponse
 }
