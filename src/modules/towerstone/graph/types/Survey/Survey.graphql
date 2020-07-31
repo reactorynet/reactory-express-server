@@ -150,6 +150,11 @@ type DelegateRemoveResponse {
   user: User
 }
 
+type MoresUpdateQuestionLibraryResponse {
+  success: Boolean
+  message: String
+}
+
 
 type TowerStoneLookupItem {
   id: String
@@ -173,6 +178,7 @@ extend type Query {
 extend type Mutation {
   createSurvey(id: String!, surveyData: SurveyInput): Survey
   MoresAssessementsCreateSurvey(moresSurveyCreateArgs: MoresSurveyCreateInput!): Survey
+  MoresUpdateQuestionLibrary(organization_id: String!): MoresUpdateQuestionLibraryResponse
   MoresAssessmentsPatchGeneratedLeadershipBrand(moresLeadershipPatchArgs: MoresLeadershipBrandPatchArgs!): LeadershipBrand
   MoresAssessmentsDeleteSurvey(id: String!, hard: Boolean): Survey
   updateSurvey(id: String!, surveyData: SurveyInput!): UpdateResponse

@@ -497,6 +497,15 @@ type PagedQuoteClients {
   repCode: String
   paging: PagingResult
   clients: [QuoteClients]
+input LasecNewQuoteInput {
+  clientId: String
+  repCode: String
+}
+
+type LasecNewQuoteResponse {
+  success: Boolean
+  message: String
+  quoteId: String
 }
 
 extend type Query {
@@ -636,5 +645,9 @@ extend type Mutation {
     freightRequestDetailInput: FreightReqestDetailInput!
   ): SimpleResponse
 
+<<<<<<< HEAD
   LasecCRMDuplicateQuote(quoteId: String!): SimpleResponse
+=======
+  LasecCreateNewQuoteForClient(newQuoteInput: LasecNewQuoteInput): LasecNewQuoteResponse
+>>>>>>> 5136bb5b907f198baaa6e961e482d46f1f9db689
 }

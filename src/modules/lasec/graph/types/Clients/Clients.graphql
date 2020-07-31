@@ -268,6 +268,7 @@ extend type Query {
     filterBy: String
     iter: Int
     filter: String
+    repCode: String
   ): PagedCRMClient
   LasecGetClientDetail(id: String!): LasecCRMClient
   LasecGetCustomerList(

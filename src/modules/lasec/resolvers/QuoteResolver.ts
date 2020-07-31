@@ -21,7 +21,9 @@ import {
   LasecDashboardSearchParams,
   LasecProductDashboardParams,
   USER_FILTER_TYPE,
-  DATE_FILTER_PRESELECT
+  DATE_FILTER_PRESELECT,
+  LasecNewQuoteInputArgs,
+  LasecNewQuoteResult
 } from '../types/lasec';
 
 import CONSTANTS, { LOOKUPS, OBJECT_MAPS } from '../constants';
@@ -895,6 +897,43 @@ export default {
     },
     LasecCRMDuplicateQuote: async (obj, args) => {
       return duplicateQuote(args);
+    },
+    LasecCreateNewQuoteForClient: async(obj: any, args: LasecNewQuoteInputArgs): Promise<LasecNewQuoteResult> => {
+
+      const { newQuoteInput } = args;
+      const { clientId, repCode } = newQuoteInput;
+
+      logger.debug(`LasecCreateNewQuoteForClient()`, newQuoteInput);
+
+      try {
+
+        const lasecClient = await lasecApi.Customers.list({ filter: { ids: [clientId] }, ordering: {}, pagination: {
+          enabled: false,
+          current_page: 0,
+          page_size: 10
+        } }).then()
+
+        if(lasecClient) {
+          logger.debug(`lasecClient api response`, lasecClient);
+        } else {
+          logger.error(`No Response for Client Filter`);
+        }
+
+        return {
+          success: true,
+          quoteId: `2323-${repCode}-${clientId}`,
+          message: `This indicates a success ${repCode}`
+        };
+
+      } catch (err) {
+
+        return {
+          success: false,
+          quoteId: 'RANDOM',
+          message: `This indicates a failure`
+        };
+
+      }
     }
   }
 };

@@ -440,11 +440,15 @@ export default {
       
       logger.debug(`Executing ${action} for ${delegateModel.firstName} ${delegateModel.lastName} as part of ${surveyModel.title}`);
  
+      
       const organigramModel: any = await Organigram.findOne({
         user: new ObjectId(delegateModel._id),
-        organization: new ObjectId(surveyModel.organization.id),
+        organization: new ObjectId(surveyModel.organization._id),
       }).then();      
 
+      debugger
+      logger.debug(`${organigramModel ? `${delegateModel.firstName} ${delegateModel.lastName} has no Organigram for this organization` :  `${delegateModel.firstName} ${delegateModel.lastName} has Organigram for this organization` }`);
+      
       const entryData: TowerStone.IDelegateEntryDataStruct = {
         entry: null,
         entryIdx: -1,
@@ -586,16 +590,22 @@ export default {
 
               } else {
 
+                debugger;
 
                 let requires_peersConfirmed = true;
+                let organigramInvalid = false;
+
                 if(surveyModel.surveyType === 'culture') {
                   requires_peersConfirmed = false;
+                } else {
+                  organigramInvalid = lodash.isNil(organigramModel) === true  || lodash.isNil(organigramModel.confirmedAt) === true
                 }
+
                 
-                if(requires_peersConfirmed === true && organigramModel && lodash.isNil(organigramModel.confirmedAt) ) {
+                if(requires_peersConfirmed === true && organigramInvalid === true) {
                   entryData.entry.message = `Please set user organigram / peers. ${delegateModel.firstName} ${delegateModel.lastName}`;
                   entryData.patch = true;
-                  entryData.entry.status = 'new';
+                  entryData.entry.status = 'invite-sent';
                   entryData.entry.lastAction = 'launch';
 
                   entryData.entry.actions.push({

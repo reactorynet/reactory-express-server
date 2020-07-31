@@ -24,9 +24,9 @@ import { LasecApiResponse } from '../types/lasec';
 import { getLoggedIn360User } from './Helpers';
 
 const getClients = async (params) => {
-  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter } = params;
+  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter, repCode = undefined } = params;
 
-  logger.debug(`Getting Clients using search ${search}`, { search, paging, filterBy, iter });
+  logger.debug(`Getting Clients using search ${search}`, { search, paging, filterBy, iter, repCode });
 
   let pagingResult = {
     total: 0,
@@ -35,9 +35,17 @@ const getClients = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  let _filter = {};
+  let _filter: any = {};
 
   _filter[filterBy] = filter || search;
+
+  if(typeof repCode === 'string') {
+    _filter.sales_team_ids = [repCode]; 
+  }
+
+  if(typeof repCode === 'array' && repCode.length > 0) {
+    _filter.sales_team_ids = repCode; 
+  }
 
   if (isString(search) === false || search.length < 3 && filter === undefined) return {
     paging: pagingResult,

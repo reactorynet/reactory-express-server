@@ -17,7 +17,7 @@ const LasecClientGrid: Reactory.IReactoryForm = {
       uri: `${ENVIRONMENT.CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
     },
   ],
-  title: 'CMS Product Pricing',
+  title: 'Lasec Client Search Grid',
   tags: ['CMS Product Pricing'],
   registerAsComponent: true,
   name: 'LasecClientGrid',

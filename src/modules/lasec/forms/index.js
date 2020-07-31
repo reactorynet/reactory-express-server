@@ -23,7 +23,8 @@ import {
   QuoteDetailForm,
   QuoteListForm,
   QuoteEmail,
-  QuoteDuplicate
+  QuoteDuplicate,
+  NewQuoteClientSelector,
 } from './quote';
 
 import QuoteList from './salesConfigurator/QuoteList';
@@ -117,7 +118,6 @@ export default [
   LasecCRMPluginForm,
   SalesDashboard,
   ProductDashboard,
-  // ProductEnquiryForm,
   ProductQuery,
   QuoteIdInputForm,
   QuoteListForm,
@@ -183,6 +183,7 @@ export default [
   QuoteGrid,
   ClientLookup,
   ClientLookupForm,
+  NewQuoteClientSelector,
 
   SalesOrderGrid,
 
