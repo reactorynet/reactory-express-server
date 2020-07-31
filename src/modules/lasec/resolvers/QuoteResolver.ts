@@ -55,8 +55,7 @@ import {
   getCRMInvoices,
   getFreightRequetQuoteDetails,
   updateFreightRequesyDetails,
-  getClientsForQuoteDuplicate,
-  duplicateQuote
+  duplicateQuoteForClient
 } from './Helpers';
 
 
@@ -564,9 +563,6 @@ export default {
     LasecGetFreightRequestQuoteDetail: async (obj, args) => {
       return getFreightRequetQuoteDetails(args);
     },
-    LasecGetCRMQuoteClients: async (obj, args) => {
-      return getClientsForQuoteDuplicate(args);
-    }
   },
   Mutation: {
     LasecSetQuoteHeader: async (parent, { quote_id, input }) => {
@@ -895,10 +891,10 @@ export default {
     LasecCRMUpdateFreightRequestDetails: async (obj, args) => {
       return updateFreightRequesyDetails(args);
     },
-    LasecCRMDuplicateQuote: async (obj, args) => {
-      return duplicateQuote(args);
+    LasecCRMDuplicateQuoteForClient: async (obj, args) => {
+      return duplicateQuoteForClient(args);
     },
-    LasecCreateNewQuoteForClient: async(obj: any, args: LasecNewQuoteInputArgs): Promise<LasecNewQuoteResult> => {
+    LasecCreateNewQuoteForClient: async (obj: any, args: LasecNewQuoteInputArgs): Promise<LasecNewQuoteResult> => {
 
       const { newQuoteInput } = args;
       const { clientId, repCode } = newQuoteInput;
@@ -907,13 +903,15 @@ export default {
 
       try {
 
-        const lasecClient = await lasecApi.Customers.list({ filter: { ids: [clientId] }, ordering: {}, pagination: {
-          enabled: false,
-          current_page: 0,
-          page_size: 10
-        } }).then()
+        const lasecClient = await lasecApi.Customers.list({
+          filter: { ids: [clientId] }, ordering: {}, pagination: {
+            enabled: false,
+            current_page: 0,
+            page_size: 10
+          }
+        }).then()
 
-        if(lasecClient) {
+        if (lasecClient) {
           logger.debug(`lasecClient api response`, lasecClient);
         } else {
           logger.error(`No Response for Client Filter`);

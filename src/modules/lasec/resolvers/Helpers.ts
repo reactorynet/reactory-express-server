@@ -2301,108 +2301,46 @@ export const updateFreightRequesyDetails = async (params) => {
   }
 }
 
-export const getClientsForQuoteDuplicate = async (params) => {
-
-  logger.debug(`RETURNING QUOTE CLIENTS:: ${JSON.stringify(params)}`);
-
-  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field", iter = 0, filter } = params;
-
-  let pagingResult = {
-    total: 0,
-    page: paging.page || 1,
-    hasNext: false,
-    pageSize: paging.pageSize || 10
-  };
-
-  let _filter = {};
-
-  _filter[filterBy] = filter || search;
-
-  if (isString(search) === false || search.length < 3 && filter === undefined) return {
-    paging: pagingResult,
-    clients: []
-  };
-
-  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
-
-  let ids = [];
-
-  if (isArray(clientResult.ids) === true) {
-    ids = [...clientResult.ids];
-  }
-
-  if (clientResult.pagination && clientResult.pagination.num_pages > 1) {
-    logger.debug('Paged Result From Lasec API', { pagination: clientResult.pagination });
-    pagingResult.total = clientResult.pagination.num_items;
-    pagingResult.pageSize = clientResult.pagination.page_size || 10;
-    pagingResult.hasNext = clientResult.pagination.has_next_page === true;
-    pagingResult.page = clientResult.pagination.current_page || 1;
-  }
-
-  logger.debug(`Loading (${ids.length}) client ids`);
-
-  const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids } });
-  logger.debug(`Fetched Expanded View for (${clientDetails.items.length}) Clients from API`);
-  let clients = [...clientDetails.items];
-
-  clients = clients.map(client => {
-    return {
-      id: client.id,
-      clientStatus: client.activity_status,
-      clientName: client.first_name + ' ' + client.surname,
-      customerName: client.company_trading_name,
-      repCode: client.sales_team_id
-    }
-  });
-
-  let result = {
-    paging: pagingResult,
-    search,
-    filterBy,
-    clients,
-  };
-
-  return result;
-
-  // return [
-  //   {
-  //     id: '1234',
-  //     clientStatus: 'active',
-  //     clientName: 'Bob Nob',
-  //     customerName: 'Tom Bom',
-  //     repCode: 'Lab102'
-  //   },
-  //   {
-  //     id: '1234',
-  //     clientStatus: 'active',
-  //     clientName: 'Bob Nob',
-  //     customerName: 'Tom Bom',
-  //     repCode: 'Lab102'
-  //   },
-  //   {
-  //     id: '1234',
-  //     clientStatus: 'active',
-  //     clientName: 'Bob Nob',
-  //     customerName: 'Tom Bom',
-  //     repCode: 'Lab102'
-  //   },
-  //   {
-  //     id: '1234',
-  //     clientStatus: 'active',
-  //     clientName: 'Bob Nob',
-  //     customerName: 'Tom Bom',
-  //     repCode: 'Lab102'
-  //   },
-  // ]
-}
-
-export const duplicateQuote = async (params) => {
+export const duplicateQuoteForClient = async (params) => {
 
   logger.debug(`DUPLICATING QUOTE:: ${JSON.stringify(params)}`);
 
-  return {
-    success: true,
-    message: 'Quote successfully duplicated'
+  // 1. get quote
+  // 2. copy details
+  // 3. create new quote
+
+  try {
+
+    const { quoteId, clientId } = params;
+
+    const lasecClient = await lasecApi.Customers.list({
+      filter: { ids: [clientId] }, ordering: {}, pagination: {
+        enabled: false,
+        current_page: 0,
+        page_size: 10
+      }
+    }).then()
+
+    if (lasecClient) {
+      logger.debug(`lasecClient api response`, lasecClient);
+    } else {
+      logger.error(`No Response for Client Filter`);
+    }
+
+    return {
+      success: true,
+      quoteId: `2323-${clientId}`,
+      message: `This indicates a success`
+    };
+
+  } catch (err) {
+
+    return {
+      success: false,
+      quoteId: 'RANDOM',
+      message: `This indicates a failure`
+    };
+
   }
 
 }

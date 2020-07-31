@@ -24,6 +24,7 @@ import {
   QuoteListForm,
   QuoteEmail,
   QuoteDuplicate,
+  QuoteDuplicateClientSelector,
   NewQuoteClientSelector,
 } from './quote';
 
@@ -184,6 +185,7 @@ export default [
   ClientLookup,
   ClientLookupForm,
   NewQuoteClientSelector,
+  QuoteDuplicateClientSelector,
 
   SalesOrderGrid,
 

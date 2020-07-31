@@ -32,7 +32,6 @@ export default {
             componentFqn: 'lasec-crm.QuoteDuplicate',
             componentProps: {
               'formData.code': 'formData.code',
-              'formData.code': 'formData.code',
             }
         }
       }
