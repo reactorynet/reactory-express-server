@@ -48,12 +48,33 @@ const schema: Reactory.IObjectSchema = {
 
 const uiSchema: any = {
   'ui:options': {
+    toolbarPosition: 'none',
+    componentType: "div",
+    container: "div",
     showRefresh: false,
     submitIcon: 'check',
     showSubmit: false,
-    toolbarPosition: 'none',
+    containerStyles: {
+      marginTop: '16px',
+      padding: 0,
+      boxShadow: 'none',
+      border: 'none'
+    },
+    style: {
+      padding: 0,
+      margin: 0,
+      boxShadow: 'none',
+      border: 'none',
+    }
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+    containerStyle: {
+      padding: 0,
+      margin: 0
+    }
+  },
   'ui:grid-layout': [
     {
       repCode: { lg: 6, md: 6, sm: 6, xs: 12 },
@@ -339,12 +360,12 @@ const LasecQuoteDuplicateClientSelectorForm: Reactory.IReactoryForm = {
   uiSchema: uiSchema,
   defaultFormValue: {
     paging: {
-        page: 1,
-        pageSize: 10,
-      },
-      filterBy: "any_field",
-      search: "",
-      clients: [],
+      page: 1,
+      pageSize: 10,
+    },
+    filterBy: "any_field",
+    search: "",
+    clients: [],
   }
 };
 

@@ -47,6 +47,7 @@ import {
   ENTITY_KEY__PERMISSION,
   COLLECTION_KEY__PERMISSION,
   ENTITY_KEY__COMPANY_ADDRESS,
+  CREATE_QUOTE
 } from './constants';
 
 export default {
@@ -102,6 +103,7 @@ export default {
 
   quote_option: { url: `api/${ENTITY_KEY__QUOTE_OPTION}/`, allowed_methods: ['get', 'post'] },
 
+  create_quote: { url: `api/${CREATE_QUOTE}/`, allowed_methods: ['post'] },
 
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },
@@ -112,7 +114,10 @@ export default {
   { url: `api/${ENTITY_KEY__SALES_ORDER_TYPE}/\\d+/`, allowed_methods: ['get'] },
   { url: `api/${ENTITY_KEY__SALES_ORDER_ITEM}/`, allowed_methods: ['get'] },
   { url: `api/${ENTITY_KEY__BACK_ORDER}/`, allowed_methods: ['get'] },
+
   { url: 'api/create_quote/', allowed_methods: ['post'] },
+  { url: 'api/create_quote/', allowed_methods: ['post'] },
+
   { url: `api/${ENTITY_KEY__QUOTE_OPTION}/`, allowed_methods: ['get', 'post'] },
   { url: `api/${ENTITY_KEY__QUOTE_OPTION}/\\d+/`, allowed_methods: ['put'] },
   { url: `api/${ENTITY_KEY__QUOTE_OPTION}/\\d+/`, allowed_methods: ['delete'] },

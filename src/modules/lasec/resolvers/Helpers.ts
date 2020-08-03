@@ -2302,15 +2302,7 @@ export const updateFreightRequesyDetails = async (params) => {
 }
 
 export const duplicateQuoteForClient = async (params) => {
-
-  logger.debug(`DUPLICATING QUOTE:: ${JSON.stringify(params)}`);
-
-  // 1. get quote
-  // 2. copy details
-  // 3. create new quote
-
   try {
-
     const { quoteId, clientId } = params;
 
     const lasecClient = await lasecApi.Customers.list({
@@ -2321,24 +2313,26 @@ export const duplicateQuoteForClient = async (params) => {
       }
     }).then()
 
-    if (lasecClient) {
-      logger.debug(`lasecClient api response`, lasecClient);
-    } else {
-      logger.error(`No Response for Client Filter`);
+    if (!lasecClient) {
+      logger.error(`No Client found`);
+      throw new ApiError('Error copying quote. No client found.')
     }
+
+    const copiedQuoteResponse = await lasecApi.Quotes.copyQuoteToCustomer({ quote_id: quoteId, customer_id: clientId }).then();
+    if (!copiedQuoteResponse || copiedQuoteResponse.status != 'success') throw new ApiError('Error copying quote.');
 
     return {
       success: true,
-      quoteId: `2323-${clientId}`,
-      message: `This indicates a success`
+      quoteId: copiedQuoteResponse.payload.id,
+      message: `Quote successfully copied.`
     };
 
-  } catch (err) {
+  } catch (error) {
 
     return {
       success: false,
-      quoteId: 'RANDOM',
-      message: `This indicates a failure`
+      quoteId: '',
+      message: error
     };
 
   }
