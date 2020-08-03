@@ -25,7 +25,7 @@ const uiSchema: any = {
     'ui:widget': 'RepCodeFilter',
     'ui:options': {
       props: {
-        multiple: false
+        multiple: false,        
       }
     }   
   },
@@ -172,7 +172,6 @@ const uiSchema: any = {
         selection: false,
         toolbarButtonAlignment: 'left',
         actionsColumnIndex: -1,
-        searchText: '${props.formContext.$formData.repCode}',
       },
       remoteData: true,
       query: 'query',
@@ -181,7 +180,7 @@ const uiSchema: any = {
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.filterBy': 'filterBy',
         'props.formContext.$formData.filter': 'filter',
-        'props.formCOntext.$formData.repCode': 'repCode'
+        'props.formContext.$formData.repCode.value': 'repCode'
       },
       resultMap: {
         'paging.page': 'page',
@@ -192,8 +191,24 @@ const uiSchema: any = {
       resultType: 'object',
     },
   },
-  selectedClient: {
-    'ui:widget': 'HiddenWidget',
+  selectedClient: {    
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData.id !== undefined ? "Click continue below to create a new quote for " + formData.fullName : "Select a client from the grid" }',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      containerProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }
+      }
+    },
   }, 
 };
 
