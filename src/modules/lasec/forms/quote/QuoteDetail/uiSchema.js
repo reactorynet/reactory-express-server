@@ -19,6 +19,21 @@ export default {
               'formData.customer.email': 'formData.customerEmail'
             },
         },
+      },
+      {
+        command: 'quoteDuplicate',
+        id: 'sendQuoteEmail',
+        color: 'primary',
+        icon: 'content_copy',
+        tooltip: 'Duplicate Quote.',
+        action: 'component',
+        title: 'Duplicate Quote',
+        component: {
+            componentFqn: 'lasec-crm.QuoteDuplicate',
+            componentProps: {
+              'formData.code': 'formData.code',
+            }
+        }
       }
     ]
   },

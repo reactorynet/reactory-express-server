@@ -77,8 +77,8 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
     _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
   }
 
-  // logger.debug(`SOURCE ${JSON.stringify(_source)}`);
-  // logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
+  logger.debug(`SOURCE ${JSON.stringify(_source)}`);
+  logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
 
   if (map === true && _source) {
     const _map = {
@@ -2232,13 +2232,12 @@ export const getFreightRequetQuoteDetails = async (params) => {
       let quoteOption = await lasecApi.Quotes.getQuoteOption(optionId);
       quoteOption = quoteOption.items[0];
       return {
-        id: quoteOption.id,
         name: quoteOption.name,
         transportMode: '',
         incoTerm: quoteOption.inco_terms || '',
-        namedPlace: quoteOption.named_place || '',
-        vatExempt: false,
+        place: quoteOption.named_place || '',
         fromSA: false,
+        vatExempt: false,
         totalValue: quoteOption.grand_total_incl_vat_cents,
         companyName: '',
         streetAddress: '',
@@ -2300,4 +2299,48 @@ export const updateFreightRequesyDetails = async (params) => {
       message: `Error updating freight request. ${error}`
     }
   }
+}
+
+export const duplicateQuoteForClient = async (params) => {
+
+  logger.debug(`DUPLICATING QUOTE:: ${JSON.stringify(params)}`);
+
+  // 1. get quote
+  // 2. copy details
+  // 3. create new quote
+
+  try {
+
+    const { quoteId, clientId } = params;
+
+    const lasecClient = await lasecApi.Customers.list({
+      filter: { ids: [clientId] }, ordering: {}, pagination: {
+        enabled: false,
+        current_page: 0,
+        page_size: 10
+      }
+    }).then()
+
+    if (lasecClient) {
+      logger.debug(`lasecClient api response`, lasecClient);
+    } else {
+      logger.error(`No Response for Client Filter`);
+    }
+
+    return {
+      success: true,
+      quoteId: `2323-${clientId}`,
+      message: `This indicates a success`
+    };
+
+  } catch (err) {
+
+    return {
+      success: false,
+      quoteId: 'RANDOM',
+      message: `This indicates a failure`
+    };
+
+  }
+
 }

@@ -12,8 +12,8 @@ const graphql: Reactory.IFormGraphDefinition = {
             name
             transportMode
             incoTerm
-            namedPlace
             vatExempt
+            place
             fromSA
             totalValue
             companyName
@@ -53,9 +53,11 @@ const graphql: Reactory.IFormGraphDefinition = {
       'options[].name': 'options[].name',
       'options[].transportMode': 'options[].transportMode',
       'options[].incoTerm': 'options[].incoTerm',
-      'options[].namedPlace': 'options[].namedPlace',
       'options[].vatExempt': 'options[].vatExempt',
+
+      'options[].place': 'options[].place',
       'options[].fromSA': 'options[].fromSA',
+
       'options[].totalValue': ['options[].totalValue'],
       'options[].companyName': 'options[].companyName',
       'options[].streetAddress': 'options[].streetAddress',

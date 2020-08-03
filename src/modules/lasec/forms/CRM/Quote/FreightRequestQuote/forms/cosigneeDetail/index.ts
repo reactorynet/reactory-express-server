@@ -4,9 +4,6 @@ const schema: Reactory.ISchema = {
   type: 'object',
   title: 'Consignee Details',
   properties: {
-    id: {
-      type: 'string'
-    },
     companyName: {
       type: 'string',
       title: 'Company Name'

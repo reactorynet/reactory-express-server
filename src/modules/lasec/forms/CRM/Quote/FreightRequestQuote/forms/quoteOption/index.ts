@@ -4,9 +4,6 @@ const schema: Reactory.ISchema = {
   type: 'object',
   title: 'Quote Option Details',
   properties: {
-    id: {
-      type: 'string'
-    },
     transportMode: {
       type: 'string',
       title: 'Transport Mode'
@@ -15,7 +12,7 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'Incoterm'
     },
-    namedPlace: {
+    place: {
       type: 'string',
       title: 'Named Place'
     },
@@ -96,10 +93,17 @@ const uiSchema: any = {
   vatExempt: {},
   fromSA: {},
   totalValue: {
+    'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
-      readOnly: true,
+      inlineLabel: false,
+      label:"Total Value:"
     },
   },
+  // totalValue: {
+  //   'ui:options': {
+  //     readOnly: true,
+  //   },
+  // },
 
 };
 

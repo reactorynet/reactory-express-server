@@ -19,8 +19,8 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    { 
-      search: { xs: 12, sm: 12, md: 6, lg: 4 },      
+    {
+      search: { xs: 12, sm: 12, md: 6, lg: 4 },
     },
     {
       selected: { xs: 12, sm: 12, md: 6, lg: 4 },
@@ -32,7 +32,7 @@ const uiSchema: any = {
       showLabel: false,
       icon: 'search',
       component: "TextField",
-      componentProps: {        
+      componentProps: {
         variant: "outlined",
         type: 'search',
         style: {
@@ -77,44 +77,44 @@ const uiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
-        //selection: true,
+        selection: true,
         //multiSelect: false,
-        toolbarButtonAlignment: 'left',
-        actionsColumnIndex: -1
+        // toolbarButtonAlignment: 'left',
+        // actionsColumnIndex: -1
       },
       actions: [
         {
           icon: 'done_outline',
-          tooltip: 'Select Customer',     
-          id: 'select_customer',     
+          tooltip: 'Select Customer',
+          id: 'select_customer',
           iconProps: {
             color: '#5fb848'
           },
           mutation: 'onSelectCustomer',
-          variables: {            
+          variables: {
             'selected': 'newClient.customer',
           },
           event: {
             name: 'onCustomerSelect',
             via: 'form', // make either "form" || "amq"
-            paramsMap: {            
+            paramsMap: {
               'selected': 'formData.selected',
             },
-          }                                 
-        },   
+          }
+        },
       ],
       remoteData: true,
-      query: 'query',     
+      query: 'query',
       variables: {
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.paging': 'paging',
-      }, 
+      },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
         'customers': 'data',
-      },      
+      },
     }
   },
 };
@@ -156,7 +156,7 @@ const schema: Reactory.ISchema = {
         registeredName: {
           type: "string",
           title: "Registered Name"
-        },       
+        },
       }
     },
     customers: {
@@ -171,8 +171,8 @@ const schema: Reactory.ISchema = {
           registeredName: {
             type: "string",
             title: "Registered Name"
-          },        
-        }        
+          },
+        }
       },
     }
   }
@@ -190,7 +190,7 @@ const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
-  uiSchema: uiSchema,  
+  uiSchema: uiSchema,
   uiSchemas: [
     {
       id: 'display',
@@ -209,7 +209,7 @@ const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
       description: ''
     },
   ],
-  graphql: $graphql,  
+  graphql: $graphql,
   widgetMap: [],
   defaultFormValue: {
     paging: { page: 1, pageSize: 10 },

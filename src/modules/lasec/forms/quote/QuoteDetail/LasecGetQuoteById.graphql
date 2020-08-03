@@ -18,10 +18,13 @@ query LasecGetQuote($quote_id: String!) {
       email
       avatar
     }
+    salesTeam {
+      title
+    }
     status
     statusGroup
     statusName
-    note    
+    note
     lineItems {
       id
       quote_item_id
@@ -68,9 +71,9 @@ query LasecGetQuote($quote_id: String!) {
           customer {
             fullName
           }
-        }        
-        who {          
-          fullName          
+        }
+        who {
+          fullName
         }
         via
         text

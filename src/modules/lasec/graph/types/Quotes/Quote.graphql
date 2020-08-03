@@ -421,9 +421,9 @@ type FreightRequestOption {
   name: String
   transportMode: String
   incoTerm: String
-  namedPlace: String
-  vatExempt: Boolean
+  place: String
   fromSA: Boolean
+  vatExempt: Boolean
   totalValue: String
   companyName: String
   streetAddress: String
@@ -484,6 +484,21 @@ input FreightReqestDetailInput {
   productDetails: [FreightRequestProductDetailInput]
 }
 
+type QuoteClients {
+  id: String
+  clientStatus: String
+  clientName: String
+  customerName: String
+  repCode: String
+}
+
+type PagedQuoteClients {
+  search: String
+  repCode: String
+  paging: PagingResult
+  clients: [QuoteClients]
+}
+
 input LasecNewQuoteInput {
   clientId: String
   repCode: String
@@ -491,6 +506,12 @@ input LasecNewQuoteInput {
 
 type LasecNewQuoteResponse {
   success: Boolean
+  message: String
+  quoteId: String
+}
+
+type QuoteDuplicateResponse {
+  success: Boolean,
   message: String
   quoteId: String
 }
@@ -630,5 +651,9 @@ extend type Mutation {
     freightRequestDetailInput: FreightReqestDetailInput!
   ): SimpleResponse
 
-  LasecCreateNewQuoteForClient(newQuoteInput: LasecNewQuoteInput): LasecNewQuoteResponse
+  LasecCRMDuplicateQuoteForClient(quoteId: String!, clientId: String!): QuoteDuplicateResponse
+
+  LasecCreateNewQuoteForClient(
+    newQuoteInput: LasecNewQuoteInput
+  ): LasecNewQuoteResponse
 }
