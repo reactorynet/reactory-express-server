@@ -5,7 +5,7 @@ const uiSchema: any = {
   'ui:options': {
     submitIcon: 'search',
     componentType: "form",
-    showSubmit: true,
+    showSubmit: false,
     showRefresh: false,
     container: "div",
     containerStyles: {

@@ -32,7 +32,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'formData.search': 'search',
       'formData.paging': 'paging',
       'formData.filterBy': 'filterBy',
-      'formData.repCode': 'repCode'
+      'formData.repCode.value': 'repCode'
     },
     resultMap: {
       'paging': 'paging',
@@ -55,8 +55,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       updateMessage: 'Creating new quote',
       
       variables: {
-        'formData.selectedClient': 'newQuoteInput.client_id',
-        'formData.repCode': 'newQuoteInput.rep_code',
+        'formData.selectedClient.id': 'newQuoteInput.client_id',
+        'formData.repCode.value': 'newQuoteInput.rep_code',
       },
       options: {},
       resultMap: {

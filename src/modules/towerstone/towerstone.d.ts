@@ -176,7 +176,7 @@ export interface ISimpleResponse {
     endDate: Date,
     timeline: any[],
     calendar: any[],
-    delegates: any[],
+    delegates: any,
     templates: TowerStone.ISurveyTemplates
     addTimelineEntry( eventType: string, eventDetail: string, who: ObjectID, save: boolean): Promise<void> 
   }

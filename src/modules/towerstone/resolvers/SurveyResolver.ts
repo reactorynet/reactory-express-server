@@ -446,7 +446,7 @@ export default {
         organization: new ObjectId(surveyModel.organization._id),
       }).then();      
 
-      debugger
+      
       logger.debug(`${organigramModel ? `${delegateModel.firstName} ${delegateModel.lastName} has no Organigram for this organization` :  `${delegateModel.firstName} ${delegateModel.lastName} has Organigram for this organization` }`);
       
       const entryData: TowerStone.IDelegateEntryDataStruct = {
@@ -527,7 +527,7 @@ export default {
             \tOrganigram model: ${organigramModel ? organigramModel._id.toString() : 'No Organigram'}\n
             \tDelegateEntry: ${entryData.entry._id} at index ${entryData.entryIdx}\n
             \tDelegate: ${entryData.entry.delegate.email}
-            \tAssessments: ${entryData.entry.assessments}`);
+            \tAssessments: ${entryData.entry.assessments.length}`);
 
           switch (action) {
             
@@ -589,8 +589,7 @@ export default {
                 await surveyModel.addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();
 
               } else {
-
-                debugger;
+                
 
                 let requires_peersConfirmed = true;
                 let organigramInvalid = false;
@@ -618,7 +617,7 @@ export default {
                   const relaunch = inputData.relaunch === true;
                   const launchResult = await launchSurveyForDelegate(surveyModel, entryData.entry, organigramModel, relaunch).then();
                   entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
-                  if (launchResult.assessments) {
+                  if (launchResult.assessments && relaunch === false) {
                     entryData.entry.assessments = launchResult.assessments.map(a => a._id);
                   }
                   entryData.patch = true;
@@ -671,6 +670,9 @@ export default {
                   logger.debug('Sent mails for 180 launch', { mailSendResult })
                 }
               } else {
+
+                debugger
+
                 const reminderResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
                 entryData.entry.message = reminderResult.message;
                 entryData.patch = true;

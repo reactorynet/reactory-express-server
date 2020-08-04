@@ -169,7 +169,7 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
  * @param {*} delegateEntry
  * @param {*} organigram
  */
-export const sendSurveyRemindersForDelegate = async (survey, delegateEntry: TowerStone.ISurveyDelegateEntry, organigram) => {
+export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyDocument, delegateEntry: any) => {
   const result = (message, success = false) => {
     return {
       message,
@@ -177,18 +177,25 @@ export const sendSurveyRemindersForDelegate = async (survey, delegateEntry: Towe
     };
   };
 
+
+  logger.debug('Survey.ts -> sendSurveyRemindersForDelegate(survey, delegateEntry)' );
+
   if (lodash.isNil(survey) === true) return result('Cannot have a nill survey element');
   if (lodash.isNil(delegateEntry) === true) return result('Cannot have a null delegateEntry element');
 
+  debugger;
+
   let { delegate } = delegateEntry;
   let assessments: any[] = [];
-  if (delegateEntry && lodash.isArray(delegateEntry.assessments)) {
+  if (delegateEntry && delegateEntry.assessments && lodash.isArray(delegateEntry.assessments) === true) {
     assessments = delegateEntry.assessments; //eslint-disable-line
+  } else {
+    return result('Delegate has no assessments, no reminders to send.');
   }
 
   if (lodash.isNil(delegate) === true) return result('Delegate Entry has no delegate model');
-  if (lodash.isNil(assessments) === true) {
-    logger.debug(`Object ${assessments} should be an array`, delegateEntry);
+  if (lodash.isNil(assessments) === true || assessments.length === 0) {
+    logger.debug(`Object ${assessments} should be an array with more than 0 entries`);
     return result('Delegate has no assessments, no reminders to send.');
   }
 
@@ -197,7 +204,7 @@ export const sendSurveyRemindersForDelegate = async (survey, delegateEntry: Towe
     delegate = await User.findById(delegate).then();
   }
 
-  logger.info(`Sending Reminders to for ${delegate.firstName} ${delegate.lastName} for survey ${survey.title}`);
+  logger.info(`Sending Reminders for ${delegate.firstName} ${delegate.lastName} for survey ${survey.title}`);
 
   try {
     const options = { ...defaultLaunchOptions, ...survey.options };
@@ -205,25 +212,43 @@ export const sendSurveyRemindersForDelegate = async (survey, delegateEntry: Towe
     if (lodash.isString(organization)) {
       logger.debug(`Resolving organization with id (${organization})`);
       organization = await Organization.findById(organization).then();
+    } else {
+      logger.debug(`Resolving organization ==> object (${organization.name})`);
     }
-    const emailPromises = [];
-    const assessmentPromises = [];
+
+    interface ISurveyReminderMailResult {
+      sent: boolean,
+      error: Error
+    } 
+
+    const emailPromises: Promise<ISurveyReminderMailResult>[] = [];
+    const assessmentPromises: Promise<any>[] = [];
 
     for (let aidx = 0; aidx < assessments.length; aidx += 1) {
-      if (lodash.isNil(assessments[aidx]) === false) {
+      if (lodash.isNil(assessments[aidx]) === false && assessments[aidx] !== undefined) {
         assessmentPromises.push(new Promise((resolve, reject) => {
+
           const assessment = assessments[aidx];
-          Assessment.findById(assessment._id)
+            Assessment.findById(assessment._id)
+            .populate('assessor')
+            .populate('delegate')
             .then(assessmentFindResult => resolve(assessmentFindResult))
-            .catch(err => reject(err));
+            .catch(err => { 
+              logger.error(`Error while loading Assessment with id ${assessment._id}`)
+              reject(err) 
+            });          
         }));
       }
     }
 
     const assessmentResults = await Promise.all(assessmentPromises).then();
+
+    logger.debug(`Found ${assessmentResults.length} assessments for ${delegate.fullName()}`)
+
     assessmentResults.forEach((assessment) => {
       const { assessor } = assessment;
       if (assessment.complete !== true) {
+        logger.debug(`Creating Reminder for ${assessor.fullName()}`)
         emailPromises.push(emails.surveyEmails.reminder(assessor, delegate, survey, assessment, organization, options));
       }
     });
@@ -295,7 +320,7 @@ export const sendReportOverview = async (survey, delegateEntry, organigram) => {
  * @param {*} emailType
  * @param {*} propertyBag
  */
-export const sendSurveyEmail = async (survey: TowerStone.ISurveyDocument, delegateEntry: TowerStone.ISurveyDelegateEntry, organigram: any, emailType: any = 'none', propertyBag: any = {}) => {
+export const sendSurveyEmail = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, emailType: any = 'none', propertyBag: any = {}) => {
   const result = (message: string, success: boolean = false) => {
     return {
       message,
@@ -310,31 +335,30 @@ export const sendSurveyEmail = async (survey: TowerStone.ISurveyDocument, delega
 
   if (lodash.isString(delegate)) {
     delegate = await User.findById(delegate).then();
+    delegateEntry.delegate = delegate;
   }
 
   // console.log(`Sending Survey Email[${emailType}]: ${survey.title} for delegate ${firstName} ${lastName}`);
-  const _delegateEntry = {
-    ...delegateEntry, delegate,
-  };
+  
 
   logger.debug(`application.admin.Survey.js{ sendSurveyEmail( ${survey.title}, ${delegateEntry.delegate.fullName()}, organigram, ${emailType}, propertyBag:${JSON.stringify(propertyBag)})`);
 
   try {
     switch (emailType) {
       case EmailTypesForSurvey.ParticipationInvite: {
-        return sendParticipationInivitationForDelegate(survey, _delegateEntry, organigram);
+        return sendParticipationInivitationForDelegate(survey, delegateEntry, organigram);
       }
       case EmailTypesForSurvey.SurveyLaunch: {
-        return sendSurveyLaunchedForDelegate(survey, _delegateEntry, organigram, propertyBag);
+        return sendSurveyLaunchedForDelegate(survey, delegateEntry, organigram, propertyBag);
       }
       case EmailTypesForSurvey.SurveyReminder: {
-        return sendSurveyRemindersForDelegate(survey, _delegateEntry, organigram);
+        return sendSurveyRemindersForDelegate(survey, delegateEntry);
       }
       case EmailTypesForSurvey.SurveyClose: {
-        return sendSurveyClosed(survey, _delegateEntry, organigram);
+        return sendSurveyClosed(survey, delegateEntry, organigram);
       }
       case EmailTypesForSurvey.SurveyReport: {
-        return sendReportOverview(survey, _delegateEntry, organigram);
+        return sendReportOverview(survey, delegateEntry, organigram);
       }
       default: {
         return result(`Invalid Email Type For Survey, ${emailType}`);
@@ -376,7 +400,7 @@ export const sendPeerNominationNotifications = async (user, organigram) => {
  */
 export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, relaunch: boolean = false) => {
   // options for the launch
-  logger.info(`Launching Survey: ${survey.title} for delegate ${delegateEntry.delegate.firstName} (is-relaunch: ${relaunch})`);
+  logger.info(`Launching Survey: ${survey.title} for delegate ${delegateEntry.delegate.fullName} (is-relaunch: ${relaunch})`);
   const result = (message: string, success = false, assessments: any[]) => ({
     launched: success,
     success,
@@ -411,6 +435,13 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
     let assessments: any[] = [];
     let leadershipBrand: any = await LeadershipBrand.findById(survey.leadershipBrand);
     let templateRatings: any[] = [];
+
+    if (delegateEntry.assessments.length === 0) {
+      for (let ai = 0; ai < delegateEntry.assessments.length; ai += 1) {
+        assessments.push(delegateEntry.assessments[ai]);
+        //assessmentsPomises.push(Assessment.findById(delegateEntry.assessments[ai]));
+      }
+    }
 
     if(is180 === true) {
       
@@ -490,24 +521,7 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
     } else {
       if (organigram.peers && organigram.peers.length > 0 && (is360 === true || isPLC === true)) {
         if (organigram.peers.length < options.minimumPeers) return result(`Delegate does not have the minimum of ${options.minimumPeers} peers for this survey (${organigram.peers})`, false, []);
-  
-        //const assessmentsPomises = [];
-        if (delegateEntry.assessments.length === 0) {
-          for (let ai = 0; ai < delegateEntry.assessments.length; ai += 1) {
-            assessments.push(delegateEntry.assessments[ai]);
-            //assessmentsPomises.push(Assessment.findById(delegateEntry.assessments[ai]));
-          }
-        }
-        
-        /*
-        const assessmentPromiseResult = await Promise.all(assessmentsPomises).then();
-        logger.info(`Delegate has ${assessmentPromiseResult.length} assessments`);
-        for (let ri = 0; ri <= assessmentPromiseResult.length; ri += 1) {      
-          const _assessment = assessmentPromiseResult[ri];
-          assessments.push({ ..._assessment });
-        }
-        */
-        
+                 
         logger.info(`Building Ratings template for Leadership Brand: ${leadershipBrand.title}`);
         leadershipBrand.qualities.map((quality, qi) => {
           quality.behaviours.map((behaviour, bi) => {
@@ -519,14 +533,34 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
               comment: '',
             });
           });
-        });
+        });        
   
         if (relaunch === false) {
           organigram.peers.forEach((peer) => {
-            const peerhasAssessment = lodash.has(assessments, (assessment: any) => assessment.assessor === peer.user);
+            debugger;
+
+            const peerhasAssessment = lodash.indexOf(assessments, (assessment: any) => { 
+              if(typeof assessment.assessor === 'string') {
+                return new ObjectId(peer.user).equals(new ObjectId(assessment.assessor));
+              }
+              
+              if(assessment.assessor._id) {
+                return new ObjectId(peer.user).equals(new ObjectId(assessment.assessor._id))
+              }
+
+              if(assessment.assessor.id) {
+                return new ObjectId(peer.user).equals(new ObjectId(assessment.assessor.id))
+              }
+
+              return false;
+              
+            }) >= 0;
+
+            debugger
+
             if (!peerhasAssessment) {
               const assessment = new Assessment({
-                id: ObjectId(),
+                id: new ObjectId(),
                 organization: new ObjectId(survey.organization._id),
                 client: new ObjectId(global.partner._id),
                 delegate: new ObjectId(delegateEntry.delegate._id),
@@ -567,7 +601,12 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
           emailResults = await sendSurveyEmail(survey, delegateEntry, organigram, EmailTypesForSurvey.SurveyLaunch, { assessments, relaunch }).then();
           logger.info('Email results from sending Survey Emails', emailResults);
           if (emailResults.success === true) {
-            return result(`Successfully created ${assessments.length} assessments for delegate and emails sent ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
+            if(relaunch === true) {
+              return result(`Successfully sent reminder emails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
+            } else {
+              return result(`Successfully created ${assessments.length} assessments for delegate and emails sent ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
+            }
+            
           }
           return result(`Assessments created but could not send the mails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
         } catch (ex) {

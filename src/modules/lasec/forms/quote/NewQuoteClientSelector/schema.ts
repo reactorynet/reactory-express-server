@@ -6,8 +6,18 @@ const schema: Reactory.IObjectSchema = {
   type: 'object',
   properties: {
     repCode: {
-      type: 'string',
+      type: 'object',
       title: 'Rep Code',
+      properties: {
+        title: {
+          type: 'string',
+          title: 'Rep Code Title',          
+        },
+        value: {
+          type: 'string',
+          title: 'Rep Code Value'
+        }
+      }
     },
     search: {
       type: 'string',

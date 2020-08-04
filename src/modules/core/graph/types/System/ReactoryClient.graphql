@@ -94,6 +94,7 @@ type NavigationComponentDefinition {
   componentPropertyMap: Any
   componentKey: String
   componentContext: Any
+  contextType: String
 }
 
 type ReactoryServer {

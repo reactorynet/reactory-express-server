@@ -40,7 +40,7 @@ const getClients = async (params) => {
   _filter[filterBy] = filter || search;
 
   if(typeof repCode === 'string') {
-    _filter.sales_team_ids = [repCode]; 
+    _filter.sales_team_id = repCode; 
   }
 
   if(typeof repCode === 'array' && repCode.length > 0) {
@@ -60,8 +60,8 @@ const getClients = async (params) => {
 
     if (iter === 0) {
       //client request and we have a cache so we fire off the next fetch anyway
-      execql(`query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int, $filter: String){
-        LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter, filter: $filter){
+      execql(`query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int, $filter: String, $repCode: String){
+        LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter, filter: $filter, repCode: $repCode){
           paging {
             total
             page
@@ -72,12 +72,13 @@ const getClients = async (params) => {
             id
           }
         }
-      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1, filter }).then();
+      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1, filter, repCode }).then();
     }
     logger.debug(`Returning cached item ${cachekey}`);
     return _cachedResults;
   }
 
+  logger.debug(`Sending query to lasec API with filter`, { filter: _filter }  )
   const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
 
   let ids = [];
@@ -99,10 +100,6 @@ const getClients = async (params) => {
   const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids } });
   logger.debug(`Fetched Expanded View for (${clientDetails.items.length}) Clients from API`);
   let clients = [...clientDetails.items];
-
-  logger.debug(`CLIENT RESOLVER - CLIENTS:: Found (${clients.length}) for request`);
-  logger.debug(`CLIENT :: Found (${JSON.stringify(clients[0])}) for request`);
-
   clients = clients.map(client => {
     /**
     * id: "15237"
