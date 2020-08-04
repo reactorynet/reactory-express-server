@@ -5,6 +5,10 @@ const schema: Reactory.IObjectSchema = {
   title: '',
   type: 'object',
   properties: {
+    newQuoteId: {
+      type: 'string',
+      title: 'New Quote Id',
+    },
     repCode: {
       type: 'string',
       title: 'Rep Code',
@@ -307,33 +311,32 @@ const graphql: Reactory.IFormGraphDefinition = {
   mutation: {
     new: {
       name: 'LasecCreateNewQuoteForClient',
-      text: `mutation LasecCreateNewQuoteForClient($newQuoteInput: LasecNewQuoteInput!){
-        LasecCreateNewQuoteForClient(newQuoteInput: $newQuoteInput){
+      text: `mutation LasecCRMDuplicateQuoteForClient ($quoteId: String!, $clientId: String!) {
+        LasecCRMDuplicateQuoteForClient (quoteId: $quoteId, clientId: $clientId) {
           success
           message
-          quote_id
+          quoteId
         }
       }`,
       objectMap: true,
-      updateMessage: 'Creating new quote',
+      updateMessage: 'Duplicate quote',
 
       variables: {
-        'formData.selectedClient': 'newQuoteInput.client_id',
-        'formData.repCode': 'newQuoteInput.rep_code',
+        'formData.code': 'quoteId',
+        'formData.selectedClient.id': 'clientId',
       },
       options: {},
       resultMap: {
         'success': 'formData.success',
-        'quote_id': 'formData.quote_id',
-        'message': 'formData.message'
+        'message': 'formData.message',
+        'quoteId': 'formData.newQuoteId',
       },
       resultType: "object",
       onSuccessMethod: 'notification',
       notification: {
         inAppNotification: true,
         type: "success",
-        title: 'New quote created',
-
+        title: 'New quote created ${formData.newQuoteId}',
       }
     },
   },
