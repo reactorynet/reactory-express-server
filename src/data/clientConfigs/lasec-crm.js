@@ -1338,28 +1338,14 @@ const LASEC_CONFIG = {
       name: 'navigation_components/DEVELOP',
       data: [
         {
-          componentFqn: "lasec-crm.DefaltNavigationComponent@1.0.0",
+          componentFqn: "lasec-crm.LasecUserProfileWidget@1.0.0",
           componentProps: {
             target: 'self',
           },
           componentPropertyMap: {},
-          componentKey: "DefaultNavigation",
-          componentContext: {
-            contextType: "DEFAULT_NAVIGATION",
-          }
-        },
-        {
-          componentFqn: "lasec-crm.ResetLasecLogin@1.0.0",
-          componentProps: {
-            target: 'self',
-          },
-          componentPropertyMap: {},
-          componentKey: "",
-          componentContext: {
-            contextType: "profile",
-            rendersAs: "button"
-          }
-        }
+          componentKey: "LasecUserProfileWidget",          
+          contextType: "DEFAULT_HEADER_AVATAR",
+        },        
       ],
       componentFqn: 'core.NavigationComponentEditor@1.0.0'
     },

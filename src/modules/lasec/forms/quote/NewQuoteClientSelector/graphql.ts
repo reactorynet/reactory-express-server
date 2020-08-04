@@ -55,8 +55,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       updateMessage: 'Creating new quote',
       
       variables: {
-        'formData.selectedClient': 'newQuoteInput.client_id',
-        'formData.repCode': 'newQuoteInput.rep_code',
+        'formData.selectedClient.id': 'newQuoteInput.client_id',
+        'formData.repCode.value': 'newQuoteInput.rep_code',
       },
       options: {},
       resultMap: {

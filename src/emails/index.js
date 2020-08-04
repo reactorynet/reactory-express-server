@@ -577,21 +577,31 @@ export const surveyEmails = {
   },
   reminder: async (assessor, delegate, survey, assessment, organization, surveyoptions = null) => {
     // final object item to return
-    logger.debug(`Sending Reminder Email`, {assessor, delegate, survey, assessment, organization, surveyoptions})
     if (lodash.isNil(assessor)) throw new ApiError('assessor parameter for delegateInvite cannot be null / undefined');
     if (lodash.isNil(survey)) throw new ApiError('survey parameter for delegateInvite cannot be null / undefined');
+    logger.debug(`Sending Reminder Email`)
 
     let assessorModel = null;
-    if (ObjectId.isValid(assessor)) {
+    if (ObjectId.isValid(assessor) === true) {
       assessorModel = await User.findById(assessor).then();
-    } else if (assessor.id || assessor._id) assessorModel = await User.findById(assessor).then();
-
-    if (lodash.isNil(assessorModel)) throw new ApiError('assessor parameter has to be a valid ObjectId');
+    } else  {
+      if(!assessor.firstName || !assessor.lastName || !assessor.email) {
+        if(ObjectId.isValid(assessor.id) || ObjectId.isValid(assessor._id)) 
+        assessorModel = await User.findById(assessor._id).then();
+      } else {
+        assessorModel = assessor;
+      }      
+    }
 
     const emailResult = {
       sent: false,
       error: null,
     };
+
+    if (assessorModel === true) {
+      throw new ApiError('assessor parameter has to be a valid ObjectId or valid assessor document');
+    }
+
 
     try {
       const { partner } = global;
