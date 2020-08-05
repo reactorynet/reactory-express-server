@@ -516,7 +516,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
         {
           "_id": new ObjectID(),
           "title": "${employee.firstName} consistently expresses faith in team members’ abilities.",
-          "description": "${employee.firstName} trusts and believes in ${employeeDemographics.pronoun || 'their'} people.",
+          "description": "${employee.firstName} trusts and believes in us.",
 
           "assessor_title": "",
           "assessor_description": "",

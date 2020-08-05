@@ -2,6 +2,8 @@ import { ObjectID, ObjectId } from "mongodb";
 import logger from "@reactory/server-core/logging";
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import LasecApi from '../api';
+import ApiError from "exceptions";
+import { getCRMSalesOrders } from "./Helpers";
 
 const SalesOrderResolver = {
 
@@ -38,7 +40,15 @@ const SalesOrderResolver = {
     }
   },
   Query: {
+    LasecGetPagedCRMSalesOrders: async (obj, args) => {
+      try {        
+        return getCRMSalesOrders(args);
+      } catch (err) {
+        logger.error(`Error Fetching CRM SalesOrders`)
+        throw new ApiError('Could not fetch sales order data', { error: err, displayInAppNotification: true });
+      }
 
+    },
   },
   Mutation: {
 

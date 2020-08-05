@@ -5,6 +5,8 @@ import $schema from '../shared/schema';
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
+    showSubmit: false,
+    showRefresh: false,
   },
   product: {
     hidden: true,

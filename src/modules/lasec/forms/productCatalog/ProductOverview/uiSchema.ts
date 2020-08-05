@@ -143,19 +143,44 @@ const tableUiSchema: any = {
         {
           title: 'Stock Code',
           field: 'code',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'p',
-                copyToClipboard: true,
-                format: '${rowData.code}'
+          components: [
+            {
+              component: 'core.LabelComponent@1.0.0',
+              props: {
+                uiSchema: {
+                  'ui:options': {
+                    variant: 'p',
+                    copyToClipboard: true,
+                    format: '${rowData.code}'
+                  }
+                },
+              },
+              propsMap: {
+                'rowData.code': 'value',
               }
             },
-          },
-          propsMap: {
-            'rowData.code': 'value',
-          }
+            {
+              component: 'core.SlideOutLauncher@1.0.0',
+              props: {
+                componentFqn: 'lasec-crm.LasecProductDetails@1.0.0',
+                componentProps: {
+                  'rowData': 'formData'
+                },
+                slideDirection: 'down',
+                buttonVariant: 'Fab',
+                buttonProps: {
+                  color: "#23A06A",
+                  size: 'small',
+                  style: {
+                    marginLeft: '16px',
+                    backgroundColor: "#23A06A"
+                  }
+                },
+                buttonIcon: 'launch',
+                windowTitle: 'Viewing Product Details ${rowData.code}',
+              },
+            }
+          ],          
         },
         { title: 'Description', field: 'name' },
         {

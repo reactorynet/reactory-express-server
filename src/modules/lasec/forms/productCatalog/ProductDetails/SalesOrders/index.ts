@@ -16,13 +16,27 @@ const graphql = {
         salesOrders {
           id
           orderDate
-          orderType
+          salesOrderNumber,          
           shippingDate
-          iso
+          quoteId
+          quoteDate
+          orderType
+          orderStatus
+          iso          
           customer
           client
           poNumber
+          currency
           value
+          deliveryAddress
+          warehouseNote
+          deliveryNote
+          salesTeam
+          reserveValue
+          shipValue
+          backorderValue
+          dispatchCount
+          invoiceCount
         }
       }
     }`,
@@ -37,6 +51,9 @@ const graphql = {
       'salesOrders.[].orderType': 'salesOrders.[].orderType',
       'salesOrders.[].shippingDate': 'salesOrders.[].shippingDate',
       'salesOrders.[].iso': 'salesOrders.[].iso',
+      'salesOrders.[].quoteId': 'salesOrders.[].quoteId',
+      'salesOrders.[].quoteDate': 'salesOrders.[].quoteDate',
+      'salesOrders.[].dispatchCount': 'salesOrders.[].dispatchCount',
       'salesOrders.[].customer': 'salesOrders.[].customer',
       'salesOrders.[].client': 'salesOrders.[].client',
       'salesOrders.[].poNumber': 'salesOrders.[].poNumber',
@@ -90,6 +107,15 @@ const schema: Reactory.ISchema = {
           iso: {
             type: 'string'
           },
+          quoteId: {
+            type: 'string'
+          },
+          quoteDate: {
+            type: 'string'
+          },
+          dispatchCount: {
+            type: 'number',
+          },          
           customer: {
             type: 'string'
           },
@@ -224,10 +250,10 @@ const uiSchema: any = {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       readOnly: true,
-      format: '<strong>From:</strong> R ${formData}',
+      format: '<strong>From:</strong> R ${ ((formData * 1) / 100 ).toFixed(2)}',
       variant: 'body2',
       renderHtml: true,
-      title: 'Stock Code',
+      title: 'Stock Price',
       titleProps: {
         style: {
           display: 'content',
@@ -280,10 +306,23 @@ const uiSchema: any = {
           }
         },
         { title: 'ISO Number', field: 'id' },
-        { title: 'Customer', field: 'customer' },
-        { title: 'Client', field: 'client' },
+        { title: 'Quote', field: 'quoteId' },
+        { title: 'Quote Date', field: 'quoteDate' },
+        { title: 'Dispatches', field: 'dispatchCount' },
+        { title: 'Customer', field: 'customer' },        
+        { title: 'Client', field: 'client' },        
         { title: 'Purchase Order Number', field: 'poNumber' },
-        { title: 'Order Value', field: 'value' },
+        { title: 'Order Value', 
+          field: 'value', 
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-ZA',
+            currency: 'ZAR'
+          },
+          propsMap: {
+            'rowData.value': 'value',
+          }, 
+        }, 
       ],
       options: {
         grouping: false,
@@ -303,6 +342,9 @@ const uiSchema: any = {
         'salesOrders.[].id': 'data.[].id',
         'salesOrders.[].orderDate': 'data.[].orderDate',
         'salesOrders.[].orderType': 'data.[].orderType',
+        'salesOrders.[].quoteId': 'data.[].quoteId',
+        'salesOrders.[].quoteDate': 'data.[].quoteDate',
+        'salesOrders.[].dispatchCount': 'data.[].dispatchCount',
         'salesOrders.[].shippingDate': 'data.[].shippingDate',
         'salesOrders.[].iso': 'data.[].iso',
         'salesOrders.[].customer': 'data.[].customer',

@@ -1423,19 +1423,67 @@ export const getSalesOrders = async (params) => {
   let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
   logger.debug(`GOT DETAILS:: ${JSON.stringify(salesOrdersDetails.items[0])}`);
   let salesOrders = [...salesOrdersDetails.items];
-
+  /**
+   * 
+   * 
+   * {
+  "id": "497780-RLAS1GL011-0000M",
+  "document_ids": [
+    "42004"
+  ],
+  "order_date": "2020-06-30T00:00:00Z",
+  "order_type": "Normal",
+  "req_ship_date": "2020-06-30T00:00:00Z",
+  "order_status": "Open Order",
+  "sales_order_number": "497780",
+  "sales_order_id": "497780",
+  "company_trading_name": "CAPE PEN UNIVERSITY OF TECH",
+  "sales_team_id": "LAB106",
+  "currency": "R",
+  "quote_id": "2006-106331047",
+  "quote_date": "2020-06-26T08:17:57Z",
+  "order_value": 1062000,
+  "back_order_value": 675000,
+  "reserved_value": 387000,
+  "shipped_value": 0,
+  "delivery_address": "Room A113,  Floor 1,  CPUT,  Bellville,Campus,  Symphony Way,  Bellville,  7530",
+  "customer_name": "Fadia Alexander",
+  "customerponumber": "CP265392",
+  "dispatch_note_ids": [],
+  "invoice_ids": [],
+  "warehouse_note": "",
+  "delivery_note": ""
+}
+   * 
+   * 
+   */
 
   salesOrders = salesOrders.map(order => {
     return {
       id: order.id,
-      orderDate: order.order_date,
-      orderType: order.order_type,
+      orderDate: moment(order.order_date).toDate(),
+      salesOrderNumber: order.sales_order,
       shippingDate: order.req_ship_date,
+      quoteId: order.quote_id || 'none',
+      quoteDate: order.quote_date,
+      orderType: order.order_type,
+      orderStatus: order.order_status,
       iso: order.sales_order_id,
-      customer: order.customer_name,
-      client: order.sales_team_id,
-      poNumber: order.sales_order_number,
+      salesTeam: order.sales_team_id,
+      customer: order.company_trading_name,
+      client: order.customer_name,      
+      poNumber: order.customerponumber,
+      currency: order.currency,
+      deliveryAddress: order.delivery_address,
+      warehouseNote: order.warehouse_note,
+      shipValue: order.shipped_value,
       value: order.order_value,
+      reserveValue: order.reserved_value,
+      backorderValue: order.back_order_value,
+      dispatchCount: (order.dispatch_note_ids || []).length,
+      invoiceCount: (order.invoices || []).length,
+      dispatches: order.dispatch_note_ids || [],
+      invoices: order.dispatch_invoices || []
     }
 
 
@@ -1696,8 +1744,8 @@ export const getCRMSalesOrders = async (params) => {
 
   let me = await getLoggedIn360User().then();
 
-  let apiFilter: any = {
-    customer_id: me.id,
+  let apiFilter: any = {    
+    customer_id: customer,
     order_status: orderStatus,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),

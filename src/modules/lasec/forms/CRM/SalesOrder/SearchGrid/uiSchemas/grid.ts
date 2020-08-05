@@ -18,8 +18,7 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      search: { md: 4, sm: 12, xs: 12 },
-      orderStatus: { md: 4, sm: 6, xs: 12 },
+      search: { md: 4, sm: 12, xs: 12 },      
       filterBy: { md: 4, sm: 6, xs: 12 },
       filter: { md: 4, sm: 6, xs: 12 },
       periodStart: { md: 6, sm: 6, xs: 12 },
@@ -48,13 +47,6 @@ const uiSchema: any = {
         }
       }
     }
-    /*
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData && formData.length > 3 ? "Searching for `" + formData + "`" : "Enter search keyword" }',
-      variant: 'body1',
-    }
-    */
   },
   paging: {
     'ui:widget': 'HiddenWidget'
@@ -199,19 +191,19 @@ const uiSchema: any = {
           props: {
             componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
             componentProps: {
-              'rowData.quoteId': ['data.quoteId', 'data.quoteId', 'query.quoteId'],
-              'rowData.salesOrderNumber': ['data.orderId', 'data.orderId', 'query.orderId'],
-              'rowData.poNumber': ['data.poNumber', 'data.poNumber', 'query.poNumber'],
-              'rowData.orderDate': ['data.orderDate', 'data.orderDate', 'query.orderDate'],
-              'rowData.customer': ['data.customer', 'data.customer', 'query.customer'],
-              'rowData.client': ['data.client', 'data.client', 'query.client'],
-              'rowData.orderStatus': ['data.orderStatus', 'data.orderStatus', 'query.orderStatus'],
-              'rowData.currency': ['data.currency', 'data.currency', 'query.currency'],
-              'rowData.orderType': ['data.orderType', 'data.orderType', 'query.orderType'],
-              'rowData.deliveryAddress': ['data.deliveryAddress', 'data.deliveryAddress', 'query.deliveryAddress'],
-              'rowData.warehouseNote': ['data.warehouseNote', 'data.warehouseNote', 'query.warehouseNote'],
-              'rowData.deliveryNote': ['data.deliveryNote', 'data.deliveryNote', 'query.deliveryNote'],
-              'rowData.salesTeam': ['data.salesTeam', 'data.salesTeam', 'query.salesTeam'],
+              'rowData.quoteId': ['formData.quoteId', 'query.quoteId'],
+              'rowData.salesOrderNumber': ['formData.orderId', 'query.orderId'],
+              'rowData.poNumber': ['formData.poNumber', 'query.poNumber'],
+              'rowData.orderDate': [ 'formData.orderDate', 'query.orderDate'],
+              'rowData.customer': ['formData.customer', 'query.customer'],
+              'rowData.client': ['formData.header.client', 'query.client'],
+              'rowData.orderStatus': ['formData.orderStatus',  'query.orderStatus'],
+              'rowData.currency': ['formData.currency',  'query.currency'],
+              'rowData.orderType': ['formData.orderType', 'query.orderType'],
+              'rowData.deliveryAddress': ['formData.deliveryAddress', 'query.deliveryAddress'],
+              'rowData.warehouseNote': ['formData.warehouseNote',  'query.warehouseNote'],
+              'rowData.deliveryNote': ['formData.deliveryNote',  'query.deliveryNote'],
+              'rowData.salesTeam': ['formData.salesTeam', 'query.salesTeam'],
             },
             slideDirection: 'down',
             buttonTitle: '${rowData.salesOrderNumber}',
