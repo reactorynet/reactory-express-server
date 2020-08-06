@@ -166,8 +166,8 @@ const tableUiSchema: any = {
                 componentProps: {
                   'rowData': 'formData'
                 },
-                slideDirection: 'down',
-                buttonVariant: 'Fab',
+                slideDirection: 'left',
+                buttonVariant: 'button',
                 buttonProps: {
                   color: "#23A06A",
                   size: 'small',
