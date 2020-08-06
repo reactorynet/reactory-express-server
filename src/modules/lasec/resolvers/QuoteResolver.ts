@@ -55,7 +55,8 @@ import {
   getCRMInvoices,
   getFreightRequetQuoteDetails,
   updateFreightRequesyDetails,
-  duplicateQuoteForClient
+  duplicateQuoteForClient,
+  saveQuoteComment
 } from './Helpers';
 
 
@@ -503,6 +504,14 @@ export default {
       return `${period}.${moment(periodStart).valueOf()}.${moment(periodEnd).valueOf()}`;
     },
   },
+  LasecQuoteComment: {
+    id: ({ id, _id }) => id || _id,
+    who: async ({ who }) => {
+      if (ObjectId.isValid(who)) {
+        return User.findById(who);
+      }
+    }
+  },
   Query: {
     LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes({ search });
@@ -932,6 +941,9 @@ export default {
         };
 
       }
+    },
+    LasecSaveQuoteComment: async (obj, args) => {
+      return saveQuoteComment(args);
     }
   }
 };

@@ -371,6 +371,13 @@ type CRMSaleOrderComment {
   when: Date
 }
 
+type LasecQuoteComment {
+  id: String
+  who: User
+  comment: String
+  when: Date
+}
+
 type SalesOrderDocumentContent {
   id: ObjID
   slug: String!
@@ -646,14 +653,13 @@ extend type Mutation {
   LasecUploadSaleOrderDocument(
     createInput: SalesOrderContentInput!
   ): SalesOrderDocumentContent
-
   LasecCRMUpdateFreightRequestDetails(
     freightRequestDetailInput: FreightReqestDetailInput!
   ): SimpleResponse
-
   LasecCRMDuplicateQuoteForClient(quoteId: String!, clientId: String!): QuoteDuplicateResponse
-
   LasecCreateNewQuoteForClient(
     newQuoteInput: LasecNewQuoteInput
   ): LasecNewQuoteResponse
+
+  LasecSaveQuoteComment(quoteId: String!, comment: String!): SimpleResponse
 }

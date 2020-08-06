@@ -17,6 +17,7 @@ import Hash from '@reactory/server-core/utils/hash';
 import { clientFor } from '@reactory/server-core/graph/client';
 import { getCacheItem, setCacheItem } from '../models';
 import emails from '@reactory/server-core/emails';
+import LasecQuoteComment from '@reactory/server-modules/lasec/models/LasecQuoteComment';
 
 
 import {
@@ -227,6 +228,9 @@ export const getLasecQuoteById = async (quote_id) => {
   try {
     const owner = global.partner.key;
     let quote = await synchronizeQuote(quote_id, owner, null, true).then();
+
+    logger.debug(`QUOTE RESULT:: ${JSON.stringify(quote)}`);
+
     return quote;
   } catch (quoteFetchError) {
     logger.error(`Could not fetch Quote with Quote Id ${quote_id} - ${quoteFetchError.message}`);
@@ -2337,4 +2341,23 @@ export const duplicateQuoteForClient = async (params) => {
 
   }
 
+}
+
+export const saveQuoteComment = async (params) => {
+
+  logger.debug(`Save Comment Params:: ${JSON.stringify(params)}`);
+
+  const newComment = await new LasecQuoteComment({
+    who: global.user._id,
+    client: params.quoteId,
+    comment: params.comment,
+    when: new Date()
+  }).save({ })
+
+  logger.debug(`Comment Saved:: ${JSON.stringify(newComment)}`);
+
+  return {
+    success: true,
+    message: 'Saved successfully'
+  }
 }
