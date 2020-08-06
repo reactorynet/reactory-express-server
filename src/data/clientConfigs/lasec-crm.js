@@ -1351,6 +1351,21 @@ const LASEC_CONFIG = {
     },
     {
       name: 'navigation_components/PRODUCTION',
+      data: [
+        {
+          componentFqn: "lasec-crm.LasecUserProfileWidget@1.0.0",
+          componentProps: {
+            target: 'self',
+          },
+          componentPropertyMap: {},
+          componentKey: "LasecUserProfileWidget",          
+          contextType: "DEFAULT_HEADER_AVATAR",
+        },        
+      ],
+      componentFqn: 'core.NavigationComponentEditor@1.0.0'
+    },
+    {
+      name: 'navigation_components/PRODUCTION',
       data: [],
       componentFqn: 'core.NavigationComponentEditor@1.0.0'
     },
