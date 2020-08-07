@@ -183,55 +183,55 @@ const getProducts = async (params) => {
   logger.debug(`PRODUCT RESOLVER - PRODUCTS:: found (${products.length}) products for request`);
   logger.debug(`PRODUCT RESOLVER - PRODUCT:: ${JSON.stringify(products[0])}`);
 
-  products = products.map((prd) => {
+  products = products.map((product) => {
     let productResult = {
-      id: prd.id,
-      name: prd.name,
-      code: prd.code,
-      description: prd.description,
-      qtyAvailable: prd.QtyAvailable,
-      qtyOnHand: prd.QtyOnHand,
-      qtyOnOrder: prd.QtyOnOrder,
-      unitOfMeasure: prd.pack_size,
-      price: prd.list_price_cents,
-      priceAdditionalInfo: prd.price_is_expired ? 'EXPIRED' : (prd.on_special ? 'ON_SPECIAL' : ''),
-      image: prd.image_url,
-      onSyspro: prd.is_in_syspro,
-      landedPrice: prd.cost_price_cents,
-      wh10CostPrice: prd.actual_cost_wh10,
-      threeMonthAvePrice: prd.three_month_ave_price_cents,
-      listPrice: prd.list_price_cents,
-      buyer: prd.buyer,
-      buyerEmail: prd.buyer_email || 'allbuyers@lasec.com',
-      planner: prd.planner,
-      plannerEmail: prd.planner_email || 'allplanners@lasec.com',
-      isHazardous: prd.is_hazardous ? 'Yes' : 'No',
-      siteEvaluationRequired: prd.site_evaluation_required ? 'Yes' : 'No',
-      packedLength: prd.packed_length,
-      packedWidth: prd.packed_width,
-      packedHeight: prd.packed_height,
-      packedVolume: prd.packed_volume,
-      packedWeight: prd.packed_weight,
-      numberOfSalesOrders: prd.no_of_salesorder || 0,
-      productClass: prd.class,
-      tariffCode: prd.tariff_code,
-      leadTime: prd.lead_time,
-      validPriceUntil: prd.valid_price_until ? moment(prd.valid_price_until).format('DD MMM YYYY') : '',
-      lastUpdated: prd.last_updated,
-      lastUpdatedBy: prd.last_updated_by,
-      lastOrdered: prd.last_ordered ? moment(prd.last_ordered).format('DD MMM YYYY') : '',
-      lastReceived: prd.last_received ? moment(prd.last_received).format('DD MMM YYYY') : '',
-      supplyCurrency: prd.supplier_currency,
-      listCurrency: prd.list_currency,
-      onSpecial: prd.on_special,
-      specialPrice: prd.special_price_cents,
-      currencyCode: prd.currency_code,
+      id: product.id,
+      name: product.name,
+      code: product.code,
+      description: product.description,
+      qtyAvailable: product.QtyAvailable,
+      qtyOnHand: product.QtyOnHand,
+      qtyOnOrder: product.QtyOnOrder,
+      unitOfMeasure: product.pack_size,
+      price: product.list_price_cents,
+      priceAdditionalInfo: product.price_is_expired ? 'EXPIRED' : (product.on_special ? 'ON_SPECIAL' : ''),
+      image: product.image_url,
+      onSyspro: product.is_in_syspro,
+      landedPrice: product.cost_price_cents,
+      wh10CostPrice: product.actual_cost_wh10,
+      threeMonthAvePrice: product.three_month_ave_price_cents,
+      listPrice: product.list_price_cents,
+      buyer: product.buyer,
+      buyerEmail: product.buyer_email || 'allbuyers@lasec.com',
+      planner: product.planner,
+      plannerEmail: product.planner_email || 'allplanners@lasec.com',
+      isHazardous: product.is_hazardous ? 'Yes' : 'No',
+      siteEvaluationRequired: product.site_evaluation_required ? 'Yes' : 'No',
+      packedLength: product.packed_length,
+      packedWidth: product.packed_width,
+      packedHeight: product.packed_height,
+      packedVolume: product.packed_volume,
+      packedWeight: product.packed_weight,
+      numberOfSalesOrders: product.no_of_salesorder || 0,
+      productClass: product.class,
+      tariffCode: product.tariff_code,
+      leadTime: product.lead_time,
+      validPriceUntil: product.valid_price_until ? moment(product.valid_price_until).format('DD MMM YYYY') : '',
+      lastUpdated: product.last_updated,
+      lastUpdatedBy: product.last_updated_by,
+      lastOrdered: product.last_ordered ? moment(product.last_ordered).format('DD MMM YYYY') : '',
+      lastReceived: product.last_received ? moment(product.last_received).format('DD MMM YYYY') : '',
+      supplyCurrency: product.supplier_currency,
+      listCurrency: product.list_currency,
+      onSpecial: product.on_special,
+      specialPrice: product.special_price_cents,
+      currencyCode: product.currency_code,
     };
 
     productResult.productPricing = [];
 
-    if (prd.currency_pricing && Object.keys(prd.currency_pricing).length > 0) {
-      productResult.productPricing = Object.keys(prd.currency_pricing).map((key) => prd.currency_pricing[key]);
+    if (product.currency_pricing && Object.keys(product.currency_pricing).length > 0) {
+      productResult.productPricing = Object.keys(product.currency_pricing).map((key) => product.currency_pricing[key]);
     }
 
     return productResult;
@@ -306,6 +306,89 @@ const getProducts = async (params) => {
   setCacheItem(cachekey, result, 60);
 
   return result;
+}
+
+const getProductById = async (params) => {
+  const { productId } = params;
+  const productResult = await lasecApi.Products.list({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
+  
+
+  if(productResult && productResult.items) {
+    if(productResult.items.length === 1) {
+      let product = productResult.items[0]
+      const costing = await lasecApi.Products.costings({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
+      product = {
+        id: product.id,
+        name: product.name,
+        code: product.code,
+        description: product.description,
+        qtyAvailable: product.QtyAvailable,
+        qtyOnHand: product.QtyOnHand,
+        qtyOnOrder: product.QtyOnOrder,
+        unitOfMeasure: product.pack_size,
+        price: product.list_price_cents,
+        priceAdditionalInfo: product.price_is_expired ? 'EXPIRED' : (product.on_special ? 'ON_SPECIAL' : ''),
+        image: product.image_url,
+        onSyspro: product.is_in_syspro,
+        landedPrice: product.cost_price_cents,
+        wh10CostPrice: product.actual_cost_wh10,
+        threeMonthAvePrice: product.three_month_ave_price_cents,
+        listPrice: product.list_price_cents,
+        buyer: product.buyer,
+        buyerEmail: product.buyer_email || 'allbuyers@lasec.com',
+        planner: product.planner,
+        plannerEmail: product.planner_email || 'allplanners@lasec.com',
+        isHazardous: product.is_hazardous ? 'Yes' : 'No',
+        siteEvaluationRequired: product.site_evaluation_required ? 'Yes' : 'No',
+        packedLength: product.packed_length,
+        packedWidth: product.packed_width,
+        packedHeight: product.packed_height,
+        packedVolume: product.packed_volume,
+        packedWeight: product.packed_weight,
+        numberOfSalesOrders: product.no_of_salesorder || 0,
+        productClass: product.class,
+        tariffCode: product.tariff_code,
+        leadTime: product.lead_time,
+        validPriceUntil: product.valid_price_until ? moment(product.valid_price_until).format('DD MMM YYYY') : '',
+        lastUpdated: product.last_updated,
+        lastUpdatedBy: product.last_updated_by,
+        lastOrdered: product.last_ordered ? moment(product.last_ordered).format('DD MMM YYYY') : '',
+        lastReceived: product.last_received ? moment(product.last_received).format('DD MMM YYYY') : '',
+        supplyCurrency: product.supplier_currency,
+        listCurrency: product.list_currency,
+        onSpecial: product.on_special,
+        specialPrice: product.special_price_cents,
+        currencyCode: product.currency_code,
+        supplier: costing.supplier_name,
+        model: costing.model,
+        shipmentSize: costing.shipment_size,
+        exWorksFactor: costing.exworks_factor,
+        freightFactor: costing.freight_factor,
+        clearingFactor: costing.clearing_factor,
+        actualCostwh10: costing.actual_cost_wh10,
+        actualCostwh20: costing.actual_cost_wh20,
+        actualCostwh21: costing.actual_cost_wh21,
+        actualCostwh31: costing.actual_cost_wh31,
+        supplierUnitPrice: costing.supplier_unit_price_cents,
+        percDiscount: costing.percentage_discount,
+        discountPrice: costing.discounted_price_cents,
+        freightPrice: costing.freight_price_cents,
+        exWorksPrice: costing.exworks_price_cents,
+        craftingFOC: costing.crating_foc_cents,
+        netFOB: costing.net_fob,
+        percDuty: costing.percentage_duty,
+        clearance: costing.clearance_cost_cents,
+        landedCost: costing.landed_cost_cents,
+        markup: costing.markup,
+        sellingPrice: costing.markup,
+      };
+
+      logger.debug(`Found Product Result for product id ${productId}`, { product });
+      return product;
+    }
+  }
+
+  return null;
 }
 
 const getWarehouseStockLevels = async (params) => {
@@ -485,6 +568,9 @@ export default {
     LasecGetProductList: async (obj, args) => {
       return getProducts(args);
     },
+    LasecGetProductById: async (obj, args) => {
+      return getProductById(args);
+    },    
     LasecGetProductQueryDetail: async (obj, args) => {
       return LasecGetProductQueryDetail(args);
     },

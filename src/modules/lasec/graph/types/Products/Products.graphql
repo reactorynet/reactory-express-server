@@ -130,7 +130,7 @@ extend type Query {
     paging: PagingRequest
     iter: Int
   ): PagedProductResult
-  LasecGetProductById: [Product]
+  LasecGetProductById(productId: String!): Product
   LasecGetProductQueryDetail(productId: String!): ProductQueryDetail
   LasecGetProductClassList: [ProductClass]
   LasecGetWarehouseStockLevels(productId: String): WarehouseStockDetails
