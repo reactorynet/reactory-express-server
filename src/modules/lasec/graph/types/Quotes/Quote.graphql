@@ -344,6 +344,30 @@ type PagedCRMSalesOrders {
   paging: PagingResult
   salesOrders: [SalesOrder]
 }
+
+type PurchaseOrder {
+  id: String
+  dueDate: Date
+  entryDate: Date
+  lastUpdateDate: Date
+  poNumber: String
+  shipInfo: String
+  orderQuantity: String
+  receiptedQuantity: Int
+}
+
+type PagedCRMPurchaseOrders {
+  paging: PagingResult
+  purchaseOrders: [PurchaseOrder]
+}
+
+type PurchaseOrderItem {
+  code: String
+  description: String
+  orderQty: String
+  etaDate: Date
+}
+
 type PagedCRMInvoices {
   paging: PagingResult
   invoices: [Invoice]
@@ -511,7 +535,7 @@ type LasecNewQuoteResponse {
 }
 
 type QuoteDuplicateResponse {
-  success: Boolean,
+  success: Boolean
   message: String
   quoteId: String
 }
@@ -543,10 +567,23 @@ extend type Query {
   ): LasecProductDashboard
   LasecGetQuoteById(quote_id: String!): Quote
   LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [Quote]
+
   LasecGetCRMSalesOrders(
     productId: String
     paging: PagingRequest
   ): PagedCRMSalesOrders
+
+  # PURCHASE ORDERS
+
+  LasecGetCRMPurchaseOrders(
+    productId: String
+    paging: PagingRequest
+  ): PagedCRMPurchaseOrders
+
+  LasecGetCRMPurchaseOrderDetail(orderId: String!): [PurchaseOrderItem]
+
+  #
+
   LasecGetCRMClientSalesOrders(
     clientId: String
     search: String!
@@ -651,7 +688,10 @@ extend type Mutation {
     freightRequestDetailInput: FreightReqestDetailInput!
   ): SimpleResponse
 
-  LasecCRMDuplicateQuoteForClient(quoteId: String!, clientId: String!): QuoteDuplicateResponse
+  LasecCRMDuplicateQuoteForClient(
+    quoteId: String!
+    clientId: String!
+  ): QuoteDuplicateResponse
 
   LasecCreateNewQuoteForClient(
     newQuoteInput: LasecNewQuoteInput

@@ -212,7 +212,10 @@ const getProducts = async (params) => {
       packedHeight: prd.packed_height,
       packedVolume: prd.packed_volume,
       packedWeight: prd.packed_weight,
-      numberOfSalesOrders: prd.no_of_salesorder || 0,
+
+      numberOfSalesOrders: prd.number_of_salesorders || 0, // THESE FIELDS DO NOT EXIST - DAWID IS IMPLEMENTING
+      numberOfPurchaseOrders: prd.number_of_purchaseorders || 0, // THESE FIELDS DO NOT EXIST - DAWID IS IMPLEMENTING
+
       productClass: prd.class,
       tariffCode: prd.tariff_code,
       leadTime: prd.lead_time,

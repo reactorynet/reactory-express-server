@@ -36,8 +36,10 @@ export default {
           packedHeight
           packedVolume
           packedWeight
+
           numberOfSalesOrders
           numberOfPurchaseOrders
+
           supplier
           model
           shipmentSize
