@@ -518,7 +518,7 @@ type LasecNewQuoteResponse {
 }
 
 type QuoteDuplicateResponse {
-  success: Boolean,
+  success: Boolean
   message: String
   quoteId: String
 }
@@ -549,6 +549,9 @@ extend type Query {
     dashparams: LasecQuoteQueryInput
   ): LasecProductDashboard
   LasecGetQuoteById(quote_id: String!): Quote
+
+  LasecGetQuoteComments(quote_id: String!): [LasecQuoteComment]
+
   LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [Quote]
   LasecGetCRMSalesOrders(
     productId: String
@@ -656,10 +659,13 @@ extend type Mutation {
   LasecCRMUpdateFreightRequestDetails(
     freightRequestDetailInput: FreightReqestDetailInput!
   ): SimpleResponse
-  LasecCRMDuplicateQuoteForClient(quoteId: String!, clientId: String!): QuoteDuplicateResponse
+  LasecCRMDuplicateQuoteForClient(
+    quoteId: String!
+    clientId: String!
+  ): QuoteDuplicateResponse
   LasecCreateNewQuoteForClient(
     newQuoteInput: LasecNewQuoteInput
   ): LasecNewQuoteResponse
 
-  LasecSaveQuoteComment(quoteId: String!, comment: String!): SimpleResponse
+  LasecSaveQuoteComment(quoteId: String!, comment: String!, commentId: String): SimpleResponse
 }

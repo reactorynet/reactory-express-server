@@ -56,7 +56,8 @@ import {
   getFreightRequetQuoteDetails,
   updateFreightRequesyDetails,
   duplicateQuoteForClient,
-  saveQuoteComment
+  saveQuoteComment,
+  getQuoteComments
 } from './Helpers';
 
 
@@ -522,8 +523,16 @@ export default {
     LasecGetQuoteById: async (obj, { quote_id }) => {
       if (isNil(quote_id) === true) throw new ApiError('This method requies a quote id to work');
       const result = await getLasecQuoteById(quote_id).then();
+
+      logger.debug(`QUOTE RESULT:: ${JSON.stringify(result)}`);
+
       return result;
     },
+
+    LasecGetQuoteComments: async (obj, params) => {
+      return getQuoteComments(params);
+    },
+
     LasecGetCRMQuoteList: async (obj, args) => {
       return getPagedQuotes(args);
     },

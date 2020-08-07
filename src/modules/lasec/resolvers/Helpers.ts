@@ -2343,21 +2343,46 @@ export const duplicateQuoteForClient = async (params) => {
 
 }
 
+export const getQuoteComments = async (params) => {
+  return await LasecQuoteComment.find({ quoteId: params.quote_id }).exec();
+}
+
 export const saveQuoteComment = async (params) => {
 
-  logger.debug(`Save Comment Params:: ${JSON.stringify(params)}`);
+  logger.debug(`NEW COMMENT :: ${JSON.stringify(params)}`);
 
-  const newComment = await new LasecQuoteComment({
-    who: global.user._id,
-    client: params.quoteId,
-    comment: params.comment,
-    when: new Date()
-  }).save({ })
+  try {
 
-  logger.debug(`Comment Saved:: ${JSON.stringify(newComment)}`);
+    let saveResult;
 
-  return {
-    success: true,
-    message: 'Saved successfully'
+    if (params.commentId) {
+      saveResult = await LasecQuoteComment.findByIdAndUpdate(params.commentId, {
+        comment: params.comment
+      }).exec();
+
+      logger.debug(`COMMENT UPDATE RESPONSE :: ${JSON.stringify(saveResult)}`);
+
+    } else {
+
+      saveResult = await new LasecQuoteComment({
+        who: global.user._id,
+        quoteId: params.quoteId,
+        comment: params.comment,
+        when: new Date()
+      }).save({});
+
+      logger.debug(`NEW COMMENT SAVED :: ${JSON.stringify(saveResult)}`);
+    }
+
+    return {
+      success: true,
+      message: 'Saved successfully'
+    }
+
+  } catch (error) {
+    logger.debug(`ERROR UPDATING COMMENT. ${error}`);
+    throw new ApiError(`Error updating comment. ${error}`);
   }
 }
+
+

@@ -6,7 +6,7 @@ const LasecQuoteCommentSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
-  QuoteId: String,
+  quoteId: String,
   comment: {
     type: String,
   },
