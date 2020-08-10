@@ -55,7 +55,9 @@ import {
   getCRMInvoices,
   getFreightRequetQuoteDetails,
   updateFreightRequesyDetails,
-  duplicateQuoteForClient
+  duplicateQuoteForClient,
+  saveQuoteComment,
+  getQuoteComments
 } from './Helpers';
 
 
@@ -503,6 +505,14 @@ export default {
       return `${period}.${moment(periodStart).valueOf()}.${moment(periodEnd).valueOf()}`;
     },
   },
+  LasecQuoteComment: {
+    id: ({ id, _id }) => id || _id,
+    who: async ({ who }) => {
+      if (ObjectId.isValid(who)) {
+        return User.findById(who);
+      }
+    }
+  },
   Query: {
     LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes({ search });
@@ -513,8 +523,16 @@ export default {
     LasecGetQuoteById: async (obj, { quote_id }) => {
       if (isNil(quote_id) === true) throw new ApiError('This method requies a quote id to work');
       const result = await getLasecQuoteById(quote_id).then();
+
+      logger.debug(`QUOTE RESULT:: ${JSON.stringify(result)}`);
+
       return result;
     },
+
+    LasecGetQuoteComments: async (obj, params) => {
+      return getQuoteComments(params);
+    },
+
     LasecGetCRMQuoteList: async (obj, args) => {
       return getPagedQuotes(args);
     },
@@ -923,6 +941,9 @@ export default {
         };
 
       }
+    },
+    LasecSaveQuoteComment: async (obj, args) => {
+      return saveQuoteComment(args);
     }
   }
 };

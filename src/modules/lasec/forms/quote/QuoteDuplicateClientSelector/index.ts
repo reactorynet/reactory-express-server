@@ -5,6 +5,10 @@ const schema: Reactory.IObjectSchema = {
   title: '',
   type: 'object',
   properties: {
+    newQuoteId: {
+      type: 'string',
+      title: 'New Quote Id',
+    },
     repCode: {
       type: 'string',
       title: 'Rep Code',
@@ -48,12 +52,33 @@ const schema: Reactory.IObjectSchema = {
 
 const uiSchema: any = {
   'ui:options': {
+    toolbarPosition: 'none',
+    componentType: "div",
+    container: "div",
     showRefresh: false,
     submitIcon: 'check',
     showSubmit: false,
-    toolbarPosition: 'none',
+    containerStyles: {
+      marginTop: '16px',
+      padding: 0,
+      boxShadow: 'none',
+      border: 'none'
+    },
+    style: {
+      padding: 0,
+      margin: 0,
+      boxShadow: 'none',
+      border: 'none',
+    }
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+    containerStyle: {
+      padding: 0,
+      margin: 0
+    }
+  },
   'ui:grid-layout': [
     {
       repCode: { lg: 6, md: 6, sm: 6, xs: 12 },
@@ -286,33 +311,32 @@ const graphql: Reactory.IFormGraphDefinition = {
   mutation: {
     new: {
       name: 'LasecCreateNewQuoteForClient',
-      text: `mutation LasecCreateNewQuoteForClient($newQuoteInput: LasecNewQuoteInput!){
-        LasecCreateNewQuoteForClient(newQuoteInput: $newQuoteInput){
+      text: `mutation LasecCRMDuplicateQuoteForClient ($quoteId: String!, $clientId: String!) {
+        LasecCRMDuplicateQuoteForClient (quoteId: $quoteId, clientId: $clientId) {
           success
           message
-          quote_id
+          quoteId
         }
       }`,
       objectMap: true,
-      updateMessage: 'Creating new quote',
+      updateMessage: 'Duplicate quote',
 
       variables: {
-        'formData.selectedClient': 'newQuoteInput.client_id',
-        'formData.repCode': 'newQuoteInput.rep_code',
+        'formData.code': 'quoteId',
+        'formData.selectedClient.id': 'clientId',
       },
       options: {},
       resultMap: {
         'success': 'formData.success',
-        'quote_id': 'formData.quote_id',
-        'message': 'formData.message'
+        'message': 'formData.message',
+        'quoteId': 'formData.newQuoteId',
       },
       resultType: "object",
       onSuccessMethod: 'notification',
       notification: {
         inAppNotification: true,
         type: "success",
-        title: 'New quote created',
-
+        title: 'New quote created ${formData.newQuoteId}',
       }
     },
   },
@@ -339,12 +363,12 @@ const LasecQuoteDuplicateClientSelectorForm: Reactory.IReactoryForm = {
   uiSchema: uiSchema,
   defaultFormValue: {
     paging: {
-        page: 1,
-        pageSize: 10,
-      },
-      filterBy: "any_field",
-      search: "",
-      clients: [],
+      page: 1,
+      pageSize: 10,
+    },
+    filterBy: "any_field",
+    search: "",
+    clients: [],
   }
 };
 

@@ -371,6 +371,13 @@ type CRMSaleOrderComment {
   when: Date
 }
 
+type LasecQuoteComment {
+  id: String
+  who: User
+  comment: String
+  when: Date
+}
+
 type SalesOrderDocumentContent {
   id: ObjID
   slug: String!
@@ -511,7 +518,7 @@ type LasecNewQuoteResponse {
 }
 
 type QuoteDuplicateResponse {
-  success: Boolean,
+  success: Boolean
   message: String
   quoteId: String
 }
@@ -542,6 +549,9 @@ extend type Query {
     dashparams: LasecQuoteQueryInput
   ): LasecProductDashboard
   LasecGetQuoteById(quote_id: String!): Quote
+
+  LasecGetQuoteComments(quote_id: String!): [LasecQuoteComment]
+
   LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [Quote]
   LasecGetCRMSalesOrders(
     productId: String
@@ -646,14 +656,16 @@ extend type Mutation {
   LasecUploadSaleOrderDocument(
     createInput: SalesOrderContentInput!
   ): SalesOrderDocumentContent
-
   LasecCRMUpdateFreightRequestDetails(
     freightRequestDetailInput: FreightReqestDetailInput!
   ): SimpleResponse
-
-  LasecCRMDuplicateQuoteForClient(quoteId: String!, clientId: String!): QuoteDuplicateResponse
-
+  LasecCRMDuplicateQuoteForClient(
+    quoteId: String!
+    clientId: String!
+  ): QuoteDuplicateResponse
   LasecCreateNewQuoteForClient(
     newQuoteInput: LasecNewQuoteInput
   ): LasecNewQuoteResponse
+
+  LasecSaveQuoteComment(quoteId: String!, comment: String!, commentId: String): SimpleResponse
 }

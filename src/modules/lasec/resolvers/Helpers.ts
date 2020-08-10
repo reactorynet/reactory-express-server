@@ -17,6 +17,7 @@ import Hash from '@reactory/server-core/utils/hash';
 import { clientFor } from '@reactory/server-core/graph/client';
 import { getCacheItem, setCacheItem } from '../models';
 import emails from '@reactory/server-core/emails';
+import LasecQuoteComment from '@reactory/server-modules/lasec/models/LasecQuoteComment';
 
 
 import {
@@ -227,6 +228,9 @@ export const getLasecQuoteById = async (quote_id) => {
   try {
     const owner = global.partner.key;
     let quote = await synchronizeQuote(quote_id, owner, null, true).then();
+
+    logger.debug(`QUOTE RESULT:: ${JSON.stringify(quote)}`);
+
     return quote;
   } catch (quoteFetchError) {
     logger.error(`Could not fetch Quote with Quote Id ${quote_id} - ${quoteFetchError.message}`);
@@ -2350,15 +2354,7 @@ export const updateFreightRequesyDetails = async (params) => {
 }
 
 export const duplicateQuoteForClient = async (params) => {
-
-  logger.debug(`DUPLICATING QUOTE:: ${JSON.stringify(params)}`);
-
-  // 1. get quote
-  // 2. copy details
-  // 3. create new quote
-
   try {
-
     const { quoteId, clientId } = params;
 
     const lasecClient = await lasecApi.Customers.list({
@@ -2369,26 +2365,72 @@ export const duplicateQuoteForClient = async (params) => {
       }
     }).then()
 
-    if (lasecClient) {
-      logger.debug(`lasecClient api response`, lasecClient);
-    } else {
-      logger.error(`No Response for Client Filter`);
+    if (!lasecClient) {
+      logger.error(`No Client found`);
+      throw new ApiError('Error copying quote. No client found.')
     }
+
+    const copiedQuoteResponse = await lasecApi.Quotes.copyQuoteToCustomer({ quote_id: quoteId, customer_id: clientId }).then();
+    if (!copiedQuoteResponse || copiedQuoteResponse.status != 'success') throw new ApiError('Error copying quote.');
 
     return {
       success: true,
-      quoteId: `2323-${clientId}`,
-      message: `This indicates a success`
+      quoteId: copiedQuoteResponse.payload.id,
+      message: `Quote successfully copied.`
     };
 
-  } catch (err) {
+  } catch (error) {
 
     return {
       success: false,
-      quoteId: 'RANDOM',
-      message: `This indicates a failure`
+      quoteId: '',
+      message: error
     };
 
   }
 
 }
+
+export const getQuoteComments = async (params) => {
+  return await LasecQuoteComment.find({ quoteId: params.quote_id }).exec();
+}
+
+export const saveQuoteComment = async (params) => {
+
+  logger.debug(`NEW COMMENT :: ${JSON.stringify(params)}`);
+
+  try {
+
+    let saveResult;
+
+    if (params.commentId) {
+      saveResult = await LasecQuoteComment.findByIdAndUpdate(params.commentId, {
+        comment: params.comment
+      }).exec();
+
+      logger.debug(`COMMENT UPDATE RESPONSE :: ${JSON.stringify(saveResult)}`);
+
+    } else {
+
+      saveResult = await new LasecQuoteComment({
+        who: global.user._id,
+        quoteId: params.quoteId,
+        comment: params.comment,
+        when: new Date()
+      }).save({});
+
+      logger.debug(`NEW COMMENT SAVED :: ${JSON.stringify(saveResult)}`);
+    }
+
+    return {
+      success: true,
+      message: 'Saved successfully'
+    }
+
+  } catch (error) {
+    logger.debug(`ERROR UPDATING COMMENT. ${error}`);
+    throw new ApiError(`Error updating comment. ${error}`);
+  }
+}
+
+

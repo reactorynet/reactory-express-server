@@ -866,7 +866,6 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-
     getLineItems: async (code) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { quote_id: code } } }).then();
       const {
@@ -1005,6 +1004,26 @@ const Api = {
         throw lasecApiError;
       }
     },
+    copyQuoteToCustomer: async (params) => {
+
+      try {
+        // api/quote/2008-104335000/copy_quote_to_customer/
+        const url = `api/quote/${params.quoteId}/copy_quote_to_customer/`;
+        const apiResponse = await POST(url, { ...params }); // {quote_id: "2008-104335000", customer_id: "14826"}
+
+        logger.debug(`COPY QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
+        const { status } = apiResponse;
+
+        if (status === 'success') {
+          return apiResponse;
+        }
+
+      } catch (lasecApiError) {
+        logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`).then();
+        return null;
+      }
+    }
   },
   Teams: {
     list: async () => {
