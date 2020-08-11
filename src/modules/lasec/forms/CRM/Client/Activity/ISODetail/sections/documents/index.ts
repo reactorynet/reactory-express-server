@@ -67,7 +67,7 @@ const uiSchema: any = {
             name
             url
           }
-        }`
+        }`,
       } ,
       mutation: {
         name: 'LasecDeleteSaleOrderDocument',

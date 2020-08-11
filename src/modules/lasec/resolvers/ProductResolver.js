@@ -212,7 +212,7 @@ const getProducts = async (params) => {
       packedHeight: prd.packed_height,
       packedVolume: prd.packed_volume,
       packedWeight: prd.packed_weight,
-      numberOfSalesOrders: 0,
+      numberOfSalesOrders: prd.no_of_salesorder || 0,
       productClass: prd.class,
       tariffCode: prd.tariff_code,
       leadTime: prd.lead_time,

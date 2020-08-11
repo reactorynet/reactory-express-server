@@ -30,6 +30,10 @@ const graphql: Reactory.IFormGraphDefinition = {
     },
     resultType: 'object',
     resultMap: {
+      'header': 'header',
+      'deliveryDetails': 'deliveryDetails',
+      'orderSummary': 'orderSummary',
+      'documents': 'documents',
       'lineItems[].id': 'lineItems[].id',
       'lineItems[].line': 'lineItems[].line',
       'lineItems[].productCode': 'lineItems[].productCode',

@@ -21,6 +21,12 @@ const LasecCRMISODetail: Reactory.IReactoryForm = {
   defaultFormValue: {},
   widgetMap: [
     { componentFqn: 'core.DocumentListComponent@1.0.0', widget: 'DocumentListWidget' },
+    { componentFqn: 'lasec-crm.LasecCRMISODetailHeader@1.0.0', widget: 'LasecCRMISODetailHeader' },
+    { componentFqn: 'lasec-crm.LasecCRMISODetailDeliveryDetails@1.0.0', widget: 'LasecCRMISODetailDeliveryDetails' },
+    { componentFqn: 'lasec-crm.LasecCRMISODetailOrderSummary@1.0.0', widget: 'LasecCRMISODetailOrderSummary' },
+    { componentFqn: 'lasec-crm.LasecCRMISODetailDocuments@1.0.0', widget: 'LasecCRMISODetailDocuments' },
+    { componentFqn: 'lasec-crm.LasecCRMISODetailComments@1.0.0', widget: 'LasecCRMISODetailComments' },
+    { componentFqn: 'lasec-crm.LasecCRMISODetailLineItems@1.0.0', widget: 'LasecCRMISODetailLineItems' },
   ],
 };
 
