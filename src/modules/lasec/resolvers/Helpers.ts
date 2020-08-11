@@ -78,8 +78,8 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
     _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
   }
 
-  logger.debug(`SOURCE ${JSON.stringify(_source)}`);
-  logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
+  // logger.debug(`SOURCE ${JSON.stringify(_source)}`);
+  // logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
 
   if (map === true && _source) {
     const _map = {
@@ -1428,8 +1428,8 @@ export const getSalesOrders = async (params) => {
   logger.debug(`GOT DETAILS:: ${JSON.stringify(salesOrdersDetails.items[0])}`);
   let salesOrders = [...salesOrdersDetails.items];
   /**
-   * 
-   * 
+   *
+   *
    * {
   "id": "497780-RLAS1GL011-0000M",
   "document_ids": [
@@ -1458,8 +1458,8 @@ export const getSalesOrders = async (params) => {
   "warehouse_note": "",
   "delivery_note": ""
 }
-   * 
-   * 
+   *
+   *
    */
 
   salesOrders = salesOrders.map(order => {
@@ -1475,7 +1475,7 @@ export const getSalesOrders = async (params) => {
       iso: order.sales_order_id,
       salesTeam: order.sales_team_id,
       customer: order.company_trading_name,
-      client: order.customer_name,      
+      client: order.customer_name,
       poNumber: order.customerponumber,
       currency: order.currency,
       deliveryAddress: order.delivery_address,
@@ -1748,7 +1748,7 @@ export const getCRMSalesOrders = async (params) => {
 
   let me = await getLoggedIn360User().then();
 
-  let apiFilter: any = {    
+  let apiFilter: any = {
     customer_id: customer,
     order_status: orderStatus,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
@@ -2430,6 +2430,23 @@ export const saveQuoteComment = async (params) => {
   } catch (error) {
     logger.debug(`ERROR UPDATING COMMENT. ${error}`);
     throw new ApiError(`Error updating comment. ${error}`);
+  }
+}
+
+export const deleteQuoteComment =  async (params) => {
+  try {
+    await LasecQuoteComment.findByIdAndRemove(params.commentId);
+
+    return {
+      success: true,
+      message: 'Comment successfully deleted.'
+    }
+
+  } catch (error) {
+      return {
+        success: false,
+        message: `Error deleting comment. ${error}`
+      }
   }
 }
 

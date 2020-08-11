@@ -549,7 +549,6 @@ extend type Query {
     dashparams: LasecQuoteQueryInput
   ): LasecProductDashboard
   LasecGetQuoteById(quote_id: String!): Quote
-
   LasecGetQuoteComments(quote_id: String!): [LasecQuoteComment]
 
   LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [Quote]
@@ -668,4 +667,5 @@ extend type Mutation {
   ): LasecNewQuoteResponse
 
   LasecSaveQuoteComment(quoteId: String!, comment: String!, commentId: String): SimpleResponse
+  LasecDeleteQuoteComment(commentId: String): SimpleResponse
 }

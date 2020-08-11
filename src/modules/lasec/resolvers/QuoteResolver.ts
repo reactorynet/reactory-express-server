@@ -57,7 +57,8 @@ import {
   updateFreightRequesyDetails,
   duplicateQuoteForClient,
   saveQuoteComment,
-  getQuoteComments
+  getQuoteComments,
+  deleteQuoteComment
 } from './Helpers';
 
 
@@ -520,6 +521,7 @@ export default {
     LasecGetProductDashboard: async (obj, { dashparams }) => {
       return lasecGetProductDashboard(dashparams);
     },
+
     LasecGetQuoteById: async (obj, { quote_id }) => {
       if (isNil(quote_id) === true) throw new ApiError('This method requies a quote id to work');
       const result = await getLasecQuoteById(quote_id).then();
@@ -547,7 +549,7 @@ export default {
     },
     LasecGetSaleOrderDocument: async (obj, args) => {
       return getSODocuments(args);
-    },    
+    },
     LasecGetISODetail: async (obj, args) => {
       return getISODetails(args);
     },
@@ -944,6 +946,9 @@ export default {
     },
     LasecSaveQuoteComment: async (obj, args) => {
       return saveQuoteComment(args);
+    },
+    LasecDeleteQuoteComment: async (obj, args) => {
+      return deleteQuoteComment(args);
     }
   }
 };
