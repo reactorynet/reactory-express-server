@@ -1107,12 +1107,12 @@ export const lasecGetQuoteLineItems = async (code: string) => {
   const keyhash = `quote.${code}.lineitems`;
 
   let cached = await getCacheItem(keyhash);
-  if (cached) logger.debug(`Found Cached Line Items For Invoice: ${code}`);
+  if (cached) logger.debug(`Found Cached Line Items For Quote: ${code}`);
   if (lodash.isNil(cached) === true) {
     const lineItems = await lasecApi.Quotes.getLineItems(code).then();
     logger.debug(`Found line items for quote ${code}`, lineItems);
 
-    cached = om(lineItems, {
+    cached = om.merge(lineItems, {
       'items.[].id': [
         '[].quote_item_id',
         '[].meta.reference',
@@ -1524,6 +1524,7 @@ export const getPurchaseOrders = async (params) => {
     {
       filter: { product_id: productId },
       ordering: {},
+      format: { ids_only: true },
       pagination: paging
     }).then();
 

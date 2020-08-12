@@ -10,7 +10,7 @@ import axios from 'axios';
 // import { clearAuthentication } from '../actions/Auth';
 import SECONDARY_API_URLS from './SecondaryApiUrls';
 import logger from '../../../logging';
-import ApiError from '../../../exceptions';
+import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import AuthenticationSchema from '../schema/Authentication';
 import { jzon } from '../../../utils/validators';
 
@@ -251,6 +251,15 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
         }
 
         break;
+      }
+      case 404: {
+        throw new RecordNotFoundError(`Could not fetch record for at ${absoluteUrl}`, 'LASEC_API', {
+          url, 
+          fethArguments, 
+          mustAuthenticate,
+          failed, 
+          attempt
+        })
       }
       default: {
         await execml(`mutation LasecReset360Credentials {
@@ -770,6 +779,34 @@ const Api = {
     },
     costings: async (params) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.product_costing_get.url, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status, payload,
+      } = apiResponse;
+
+      // logger.debug(`PRODUCT COSTINGS RESPONSE::  ${JSON.stringify(apiResponse)}`);
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+    contracts: async (params) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_contracts_get.url, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status, payload,
+      } = apiResponse;
+
+      // logger.debug(`PRODUCT COSTINGS RESPONSE::  ${JSON.stringify(apiResponse)}`);
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+    tenders: async (params) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_tenders_get.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
       } = apiResponse;

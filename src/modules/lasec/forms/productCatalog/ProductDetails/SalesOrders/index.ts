@@ -160,7 +160,7 @@ const uiSchema: any = {
       price: { xs: 6, md: 2 },
     },
     {
-      salesOrders: { xs: 12 }
+      salesOrders: { xs: 12, lg: 12 }
     }
   ],
   product: {
@@ -356,6 +356,220 @@ const uiSchema: any = {
   }
 };
 
+const GridOnlyUISchema : any = {
+  'ui:options': {
+    componentType: "div",
+    showSubmit: false,
+    showRefresh: false,
+    toolbarPosition: 'none',
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      // paddingBottom: '8px'
+    },
+    style: {
+      // marginTop: '16px',
+    },
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [    
+    {
+      salesOrders: { xs: 12 }
+    }
+  ],
+  product: {
+    hidden: true,
+    'ui:widget': 'HiddenWidget'
+  },
+  image: {
+    'ui:widget': 'HiddenWidget',
+    props: {
+      'ui:options': {
+        variant: 'rounded',
+        style: {
+          marginLeft: '16px'
+        }
+      },
+    },
+    propsMap: {
+      'formData.image': 'value',
+    },
+  },
+  code: {
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'body2',
+      title: 'Stock Code',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
+  },
+  description: {
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'body2',
+      title: 'Description',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
+  },
+  unitOfMeasure: {
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'body2',
+      title: 'Unit of Measure',
+      icon: 'square_foot',
+      iconPosition: 'inline',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
+  },
+  price: {
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '<strong>From:</strong> R ${ ((formData * 1) / 100 ).toFixed(2)}',
+      variant: 'body2',
+      renderHtml: true,
+      title: 'Stock Price',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
+  },
+  salesOrders: {
+    'ui:widget': 'MaterialTableWidget',
+    'ui:options': {
+      columns: [
+        { title: 'Order Type', field: 'orderType' },
+        {
+          title: 'Order Date',
+          field: 'orderDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
+        {
+          title: 'Shipping Date',
+          field: 'shippingDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
+        { title: 'ISO Number', field: 'id' },
+        { title: 'Quote', field: 'quoteId' },
+        { title: 'Quote Date', field: 'quoteDate' },
+        { title: 'Dispatches', field: 'dispatchCount' },
+        { title: 'Customer', field: 'customer' },        
+        { title: 'Client', field: 'client' },        
+        { title: 'Purchase Order Number', field: 'poNumber' },
+        { title: 'Order Value', 
+          field: 'value', 
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-ZA',
+            currency: 'ZAR'
+          },
+          propsMap: {
+            'rowData.value': 'value',
+          }, 
+        }, 
+      ],
+      options: {
+        grouping: false,
+        search: false,
+        showTitle: false,
+        toolbar: false,
+      },
+      remoteData: true,
+      query: 'query',
+      variables: {
+        'props.formContext.$formData.id': 'productId'
+      },
+      resultMap: {
+        'paging.page': 'page',
+        'paging.total': 'totalCount',
+        'paging.pageSize': 'pageSize',
+        'salesOrders.[].id': 'data.[].id',
+        'salesOrders.[].orderDate': 'data.[].orderDate',
+        'salesOrders.[].orderType': 'data.[].orderType',
+        'salesOrders.[].quoteId': 'data.[].quoteId',
+        'salesOrders.[].quoteDate': 'data.[].quoteDate',
+        'salesOrders.[].dispatchCount': 'data.[].dispatchCount',
+        'salesOrders.[].shippingDate': 'data.[].shippingDate',
+        'salesOrders.[].iso': 'data.[].iso',
+        'salesOrders.[].customer': 'data.[].customer',
+        'salesOrders.[].client': 'data.[].client',
+        'salesOrders.[].poNumber': 'data.[].poNumber',
+        'salesOrders.[].value': 'data.[].value',
+      },
+    },
+  }
+};
+
 const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
   id: 'LasecCMSProductSalesOrdersTable',
   uiFramework: 'material',
@@ -370,6 +584,24 @@ const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
   schema: schema,
   graphql: graphql,
   uiSchema: uiSchema,
+  uiSchemas: [
+    {
+      id: 'default',
+      key: 'default',
+      description: 'Default SALES PRODUCT SALES ORDER VIEW',
+      icon: 'view_quilt',
+      title: 'Default View',
+      uiSchema: uiSchema,      
+    },
+    {
+      id: 'grid_only',
+      key: 'grid_only',
+      description: 'GRID ONLY SALES PRODUCT SALES ORDER VIEW',
+      icon: 'view_quilt',
+      title: 'Grid Only',
+      uiSchema: GridOnlyUISchema,      
+    }
+  ],
   defaultFormValue: {
     paging: {
       page: 1,

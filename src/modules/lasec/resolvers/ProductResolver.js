@@ -1,5 +1,6 @@
 import lasecApi from '../api';
 import moment from 'moment';
+import unfluff from 'unfluff';
 import om from 'object-mapper';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import LasecDatabase from '@reactory/server-modules/lasec/database';
@@ -212,8 +213,8 @@ const getProducts = async (params) => {
       packedHeight: product.packed_height,
       packedVolume: product.packed_volume,
       packedWeight: product.packed_weight,
-      numberOfSalesOrders: prd.number_of_salesorders || 0, // THESE FIELDS DO NOT EXIST - DAWID IS IMPLEMENTING
-      numberOfPurchaseOrders: prd.number_of_purchaseorders || 0, // THESE FIELDS DO NOT EXIST - DAWID IS IMPLEMENTING
+      numberOfSalesOrders: product.number_of_salesorders || 0, // THESE FIELDS DO NOT EXIST - DAWID IS IMPLEMENTING
+      numberOfPurchaseOrders: product.number_of_purchaseorders || 0, // THESE FIELDS DO NOT EXIST - DAWID IS IMPLEMENTING
       productClass: product.class,
       tariffCode: product.tariff_code,
       leadTime: product.lead_time,
@@ -317,7 +318,11 @@ const getProductById = async (params) => {
   if(productResult && productResult.items) {
     if(productResult.items.length === 1) {
       let product = productResult.items[0]
-      const costing = await lasecApi.Products.costings({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
+      const costingResults = await lasecApi.Products.costings({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
+      const costing = costingResults.items[0] || {}
+
+      
+
       product = {
         id: product.id,
         name: product.name,
@@ -364,6 +369,7 @@ const getProductById = async (params) => {
         model: costing.model,
         shipmentSize: costing.shipment_size,
         exWorksFactor: costing.exworks_factor,
+
         freightFactor: costing.freight_factor,
         clearingFactor: costing.clearing_factor,
         actualCostwh10: costing.actual_cost_wh10,
@@ -381,15 +387,62 @@ const getProductById = async (params) => {
         clearance: costing.clearance_cost_cents,
         landedCost: costing.landed_cost_cents,
         markup: costing.markup,
-        sellingPrice: costing.markup,
-      };
+        sellingPrice: costing.selling_price_cents,
 
-      logger.debug(`Found Product Result for product id ${productId}`, { product });
+        notes: ''
+      };        
+      
       return product;
     }
   }
 
   return null;
+}
+
+const getProductTenders = async(product = null, params) => {
+  logger.debug(`Getting Product Tenders For Product ${product.id || params.product_id}`, {product, params});  
+
+  const { ids } =  await  lasecApi.Products.tenders({
+    filter: { product_id: product.id || params.product_id  },
+    format: { ids_only: true },
+    ordering: { },
+    pagination: { current_page: 1, page_size: 25  }
+  }).then();
+
+  const { items } = await lasecApi.Products.tenders({
+    filter: { ids },
+    pagination: { enabled: false }
+  }).then()
+
+  if(items && isArray(items) === true) {
+    return items;
+  } else {
+    return []
+  }
+}
+
+const getProductContracts = async(product = null, params) => {
+  
+  logger.debug(`Getting Product Contracts For Product ${product.id || params.product_id}`, {product, params});  
+
+  
+  const { ids } =  await  lasecApi.Products.contracts({
+    filter: { product_id: product.id || params.product_id  },
+    format: { ids_only: true },
+    ordering: { },
+    pagination: { current_page: 1, page_size: 25  }
+  }).then();
+
+  const { items } = await lasecApi.Products.contracts({
+    filter: { ids },
+    pagination: { enabled: false }
+  }).then()
+
+  if(items && isArray(items) === true) {
+    return items;
+  } else {
+    return []
+  }
 }
 
 const getWarehouseStockLevels = async (params) => {
@@ -565,6 +618,45 @@ const sendProductQuery = async (params) => {
 }
 
 export default {
+  Product: {
+    contracts: async (product, args) => {
+      logger.debug(`PRODUCT resolving contracts for product`, { product, args });
+      return getProductContracts(product, args)      
+    },
+    tenders: async (product, args) => {
+      logger.debug(`PRODUCT resolving renders for product`, { product, args });      
+      return getProductTenders(product, args)      
+    },
+    notes: async(product, args) => {
+      try {
+        const productNotes = await mysql(`SELECT notes FROM Product WHERE productid = ${product.id};`, 'mysql.lasec360').then()
+        logger.debug(`Product.notes --> Checking Notes for Product Id ${product.id} - ${product.code}`, productNotes)
+        if(productNotes) {
+          if(isArray(productNotes) === true && productNotes.length === 1) {
+            //return productNotes[0].notes;
+            const html = `
+              <html>
+                <head>
+                  <title>Product Notes unfluff wrapper for ${product.code}</title>
+                </head>
+                <body>
+                  <p>${productNotes[0].notes || 'No note'}</p>
+                </body>
+              </html>`;
+            const cleared = unfluff(html, 'en');
+            
+            logger.debug(`Unfluffed Notes For Product ${product.code}`, {cleared, original: productNotes[0].notes})
+            return cleared.text;
+          }
+        }  
+        logger.debug(`Found Product Result for product id ${productId}`, { product });        
+      } catch(ex) {
+        logger.error(`Could not retrieve product note due to ${ex.message}`);
+      } 
+
+      return product.notes;
+    }
+  },
   Query: {
     LasecGetProductList: async (obj, args) => {
       return getProducts(args);

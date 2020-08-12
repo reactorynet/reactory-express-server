@@ -11,6 +11,28 @@ type LasecProductPricing {
   special_price_cents: Int
 }
 
+type LasecProductTender {
+  id: String
+  company_id: String
+  description: String
+  expiry_date: Date
+  grand_total_excl_vat_cents: Int
+  name: String
+  reference: String
+  unif_of_measure: String
+}
+
+type LasecProductContract {
+  id: String
+  company_id: String
+  description: String
+  expiry_date: Date
+  grand_total_excl_vat_cents: Int
+  name: String
+  reference: String
+  unif_of_measure: String  
+}
+
 type Product {
   id: String
   name: String
@@ -29,6 +51,8 @@ type Product {
   threeMonthAvePrice: Int
   listPrice: Int
   productPricing: [LasecProductPricing]
+  tenders: [LasecProductTender]
+  contracts: [LasecProductContract]
   buyer: String
   buyerEmail: String
   planner: String
@@ -80,6 +104,8 @@ type Product {
   onSpecial: Boolean
   currencyCode: String
   specialPrice: Float
+
+  notes: String
 }
 
 type ProductQueryDetail {

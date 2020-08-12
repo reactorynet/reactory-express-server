@@ -48,6 +48,9 @@ import ProductStock from './productCatalog/ProductStock';
 import ProductSalesOrdersTab from './productCatalog/SalesOrders';
 import ProductPurchaseOrdersTab from './productCatalog/PurchaseOrders';
 import ProductCostings from './productCatalog/ProductCostings';
+import ProductTenders from './productCatalog/ProductTenders';
+import ProductContracts from './productCatalog/ProductContracts';
+
 
 import ProductQuantities from './productCatalog/ProductQuantities';
 
@@ -150,6 +153,8 @@ export default [
   ProductPurchaseOrdersTab,
   ProductCostings,
   ProductQuantities,
+  ProductTenders,
+  ProductContracts,
 
   TabbedCrmForm,
   ClientPersonalInformation,

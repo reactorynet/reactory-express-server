@@ -317,6 +317,235 @@ const uiSchema: any = {
   }
 };
 
+const GridOnlyUISchema: any = {
+  'ui:options': {
+    componentType: "div",
+    showSubmit: false,
+    showRefresh: false,
+    toolbarPosition: 'none',
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      // paddingBottom: '8px'
+    },
+    style: {
+      // marginTop: '16px',
+    },
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [    
+    {
+      purchaseOrders: { xs: 12, lg: 12 }
+    }
+  ],
+  product: {
+    hidden: true,
+    'ui:widget': 'HiddenWidget'
+  },
+  image: {
+    'ui:widget': 'HiddenWidget',
+    props: {
+      'ui:options': {
+        variant: 'rounded',
+        style: {
+          marginLeft: '16px'
+        }
+      },
+    },
+    propsMap: {
+      'formData.image': 'value',
+    },
+  },
+  code: {
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'body2',
+      title: 'Stock Code',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
+  },
+  description: {
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'body2',
+      title: 'Description',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
+  },
+  unitOfMeasure: {
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'body2',
+      title: 'Unit of Measure',
+      icon: 'square_foot',
+      iconPosition: 'inline',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
+  },
+  price: {
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '<strong>From:</strong> R ${ ((formData * 1) / 100 ).toFixed(2)}',
+      variant: 'body2',
+      renderHtml: true,
+      title: 'Stock Price',
+      titleProps: {
+        style: {
+          display: 'content',
+          color: "#a8a8a8",
+          fontSize: "0.7rem",
+        }
+      },
+      bodyProps: {
+        style: {
+          fontSize: "0.9rem"
+        }
+      },
+    },
+  },
+  purchaseOrders: {
+    'ui:widget': 'MaterialTableWidget',
+    'ui:options': {
+      columns: [
+        {
+          title: 'Entry Date',
+          field: 'entryDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.entryDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.entryDate': 'value',
+          }
+        },
+        {
+          title: 'Due Date',
+          field: 'dueDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.dueDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.dueDate': 'value',
+          }
+        },
+        {
+          title: 'Last Updates',
+          field: 'lastUpdateDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.lastUpdateDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.lastUpdateDate': 'value',
+          }
+        },
+        {
+          title: 'Order Number',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.LasecCMSProductPurchaseOrderItemsTable@1.0.0',
+            componentProps: {
+              'rowData.poNumber': 'formData.orderId',
+            },
+            slideDirection: 'down',
+            buttonVariant: 'Typography',
+            buttonProps: {
+              color: "#000000",
+              style: { color: "#000000", textDecoration: 'underline' }
+            },
+            buttonTitle: '${rowData.poNumber}',
+            windowTitle: 'Purchase Order',
+          },
+        },
+        // { title: 'Order Number', field: 'poNumber' },
+        { title: 'Ship Info', field: 'shipInfo' },
+        { title: 'Order', field: 'orderQuantity' },
+        { title: 'Rec', field: 'receiptedQuantity' },
+      ],
+      options: {
+        grouping: false,
+        search: false,
+        showTitle: false,
+        toolbar: false,
+      },
+      remoteData: true,
+      query: 'query',
+      variables: {
+        'props.formContext.$formData.id': 'productId'
+      },
+      resultMap: {
+        'paging.page': 'page',
+        'paging.total': 'totalCount',
+        'paging.pageSize': 'pageSize',
+        'purchaseOrders.[].id': 'data.[].id',
+        'purchaseOrders.[].dueDate': 'data.[].dueDate',
+        'purchaseOrders.[].entryDate': 'data.[].entryDate',
+        'purchaseOrders.[].lastUpdateDate': 'data.[].lastUpdateDate',
+        'purchaseOrders.[].poNumber': 'data.[].poNumber',
+        'purchaseOrders.[].shipInfo': 'data.[].shipInfo',
+        'purchaseOrders.[].orderQuantity': 'data.[].orderQuantity',
+        'purchaseOrders.[].receiptedQuantity': 'data.[].receiptedQuantity',
+      },
+    },
+  }
+};
+
 const LasecCMSProductPurchaseOrders: Reactory.IReactoryForm = {
   id: 'LasecCMSProductPurchaseOrdersTable',
   uiFramework: 'material',
@@ -331,6 +560,24 @@ const LasecCMSProductPurchaseOrders: Reactory.IReactoryForm = {
   schema: schema,
   graphql: graphql,
   uiSchema: uiSchema,
+  uiSchemas: [
+    {
+      id: 'default',
+      key: 'default',
+      description: 'Default SALES PRODUCT SALES ORDER VIEW',
+      icon: 'view_quilt',
+      title: 'Default View',
+      uiSchema: uiSchema,      
+    },
+    {
+      id: 'grid_only',
+      key: 'grid_only',
+      description: 'GRID ONLY SALES PRODUCT SALES ORDER VIEW',
+      icon: 'view_quilt',
+      title: 'Grid Only',
+      uiSchema: GridOnlyUISchema,      
+    }
+  ],
   defaultFormValue: {
     paging: {
       page: 1,
