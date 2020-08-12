@@ -37,6 +37,8 @@ import {
   LasecSendQuoteEmail,
   lasecGetProductDashboard,
   getSalesOrders,
+  getPurchaseOrders,
+  getPurchaseOrderDetails,
   getPagedQuotes,
   getPagedClientQuotes,
   lasecGetQuoteLineItems,
@@ -539,15 +541,30 @@ export default {
     LasecGetCRMClientQuoteList: async (obj, args) => {
       return getPagedClientQuotes(args);
     },
+
+
     LasecGetCRMSalesOrders: async (obj, args) => {
       return getSalesOrders(args);
     },
+
+    //  PURCHASE ORDER
+
+    LasecGetCRMPurchaseOrders: async (obj, args) => {
+      return getPurchaseOrders(args);
+    },
+
+    LasecGetCRMPurchaseOrderDetail: async (obj, args) => {
+      return getPurchaseOrderDetails(args)
+    },
+
+    ////
+
     LasecGetCRMClientSalesOrders: async (obj, args) => {
       return getClientSalesOrders(args);
     },
     LasecGetSaleOrderDocument: async (obj, args) => {
       return getSODocuments(args);
-    },    
+    },
     LasecGetISODetail: async (obj, args) => {
       return getISODetails(args);
     },

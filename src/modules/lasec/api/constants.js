@@ -117,6 +117,7 @@ export const ENTITY_KEY__SALES_ORDER = 'sales_order';
 export const ENTITY_KEY__SALES_ORDER_ITEM = 'sales_order_item';
 export const ENTITY_KEY__BACK_ORDER = 'back_order';
 export const ENTITY_KEY__PURCHASE_ORDER = 'purchase_order';
+export const ENTITY_KEY__PURCHASE_ORDER__ITEM = 'purchase_order_item';
 export const ENTITY_KEY__PRODUCT = 'product';
 export const ENTITY_KEY__OPTION_LIST = 'option_list';
 export const ENTITY_KEY__USER_TITLE = 'user_title';

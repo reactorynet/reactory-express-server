@@ -46,6 +46,7 @@ import ProductDetail from './productCatalog/ProductDetails';
 import ProductDimensions from './productCatalog/ProductDimensions';
 import ProductStock from './productCatalog/ProductStock';
 import ProductSalesOrdersTab from './productCatalog/SalesOrders';
+import ProductPurchaseOrdersTab from './productCatalog/PurchaseOrders';
 import ProductCostings from './productCatalog/ProductCostings';
 
 import ProductQuantities from './productCatalog/ProductQuantities';
@@ -92,6 +93,8 @@ import ClientLookupForm from './CRM/Client/Lookup/LookUpForm';
 import SalesOrderGrid from './CRM/SalesOrder/SearchGrid';
 
 import ProductSalesOrders from './productCatalog/ProductDetails/SalesOrders';
+import ProductPurchaseOrders from './productCatalog/ProductDetails/PurchaseOrders';
+import ProductPurchaseOrderItems from './productCatalog/ProductDetails/PurchaseOrders/OrderItems';
 
 import ClientActivityCustomerLookUpForm from './CRM/Client/Activity/shared/CustomerLookup';
 
@@ -144,6 +147,7 @@ export default [
   ProductDimensions,
   ProductStock,
   ProductSalesOrdersTab,
+  ProductPurchaseOrdersTab,
   ProductCostings,
   ProductQuantities,
 
@@ -188,6 +192,8 @@ export default [
   SalesOrderGrid,
 
   ProductSalesOrders,
+  ProductPurchaseOrders,
+  ProductPurchaseOrderItems,
   ISODetail,
 
   ClientActivityCustomerLookUpForm,

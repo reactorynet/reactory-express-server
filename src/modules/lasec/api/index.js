@@ -800,7 +800,20 @@ const Api = {
   },
   PurchaseOrders: {
     list: async (params = defaultParams) => {
-      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } }).then();
+      const poResult = await FETCH(SECONDARY_API_URLS.purchase_order.url, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status,
+        payload,
+      } = poResult;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+    detail: async (params = defaultParams) => {
+      const isoResult = await FETCH(SECONDARY_API_URLS.purchase_order_item.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status,
         payload,
@@ -811,7 +824,7 @@ const Api = {
       }
 
       return { pagination: {}, ids: [], items: [] };
-    }
+    },
   },
   SalesOrders: {
     list: async (params = defaultParams) => {
