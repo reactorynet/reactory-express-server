@@ -1,3 +1,4 @@
+// import { updateQuoteLineItems } from './Helpers';
 
 import om from 'object-mapper';
 import moment, { Moment } from 'moment';
@@ -33,6 +34,7 @@ import {
 import CONSTANTS, { LOOKUPS, OBJECT_MAPS } from '../constants';
 import { Reactory } from 'types/reactory';
 import { argsToArgsConfig } from 'graphql/type/definition';
+import Api from '@reactory/server-modules/lasec/api';
 
 const lookups = CONSTANTS.LOOKUPS;
 
@@ -2433,7 +2435,7 @@ export const saveQuoteComment = async (params) => {
   }
 }
 
-export const deleteQuoteComment =  async (params) => {
+export const deleteQuoteComment = async (params) => {
   try {
     await LasecQuoteComment.findByIdAndRemove(params.commentId);
 
@@ -2443,11 +2445,51 @@ export const deleteQuoteComment =  async (params) => {
     }
 
   } catch (error) {
-      return {
-        success: false,
-        message: `Error deleting comment. ${error}`
-      }
+    return {
+      success: false,
+      message: `Error deleting comment. ${error}`
+    }
   }
 }
+
+export const updateQuoteLineItems = async (params) => {
+
+  logger.debug(`UPDATING QUOTE LINE ITEMS:: ${JSON.stringify(params)}`);
+
+  try {
+    const { LineItemIds, GP, MUP, AgentCom, Freight } = params;
+
+    await Promise.all(LineItemIds.map((id: string) => {
+      const updateParams = {
+        item_id: id,
+        values: {
+          // quantity: 1,
+          // unit_price_cents: 1,
+          // total_price_cents: 1
+          gp_percent: GP,
+          mark_up: MUP,
+          agent_commission: AgentCom,
+          freight: Freight
+        }
+      }
+      return lasecApi.Quotes.updateQuoteItems(updateParams);
+    }))
+      .then(async result => {
+        logger.debug(`All promises complete :: ${JSON.stringify(result)}`);
+        const quote = await getLasecQuoteById(params.quoteId).then();
+        return quote;
+      })
+      .catch(error => {
+        logger.debug(`Error running all promises:: ${JSON.stringify(error)}`);
+        throw new ApiError(`Error running all promises :: ${error}`)
+      });
+
+  } catch (error) {
+    throw new ApiError(`Error updating quote lineitems. ${error}`);
+  }
+
+
+}
+
 
 

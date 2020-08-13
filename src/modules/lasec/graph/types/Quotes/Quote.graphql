@@ -28,6 +28,20 @@ type LasecQuoteItem {
   content: Any
 }
 
+input LasecQuoteItemInput {
+  id: ObjID
+  price: Float
+  discount: Float
+  subtotal: Float
+  totalVATExclusive: Float
+  totalVATInclusive: Float
+  VATRate: Float
+  GP: Float
+  MUP: Float
+  note: String
+  content: Any
+}
+
 type LasecQuoteHeader {
   id: ObjID
   headerId: String
@@ -523,6 +537,10 @@ type QuoteDuplicateResponse {
   quoteId: String
 }
 
+input QuoteUpdateLineItemsInput {
+
+}
+
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetCRMQuoteList(
@@ -665,7 +683,8 @@ extend type Mutation {
   LasecCreateNewQuoteForClient(
     newQuoteInput: LasecNewQuoteInput
   ): LasecNewQuoteResponse
-
   LasecSaveQuoteComment(quoteId: String!, comment: String!, commentId: String): SimpleResponse
   LasecDeleteQuoteComment(commentId: String): SimpleResponse
+
+  LasecUpdateQuoteLineItems(LineItemIds: [String], GP: Float, MUP: Float, AgentCom: Float, Freight: Float): Quote
 }

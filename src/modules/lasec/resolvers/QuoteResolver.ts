@@ -58,7 +58,8 @@ import {
   duplicateQuoteForClient,
   saveQuoteComment,
   getQuoteComments,
-  deleteQuoteComment
+  deleteQuoteComment,
+  updateQuoteLineItems
 } from './Helpers';
 
 
@@ -949,6 +950,11 @@ export default {
     },
     LasecDeleteQuoteComment: async (obj, args) => {
       return deleteQuoteComment(args);
-    }
+    },
+
+
+    LasecUpdateQuoteLineItems: async (obj, args) => {
+      return updateQuoteLineItems(args);
+    },
   }
 };
