@@ -2457,19 +2457,19 @@ export const updateQuoteLineItems = async (params) => {
   logger.debug(`UPDATING QUOTE LINE ITEMS:: ${JSON.stringify(params)}`);
 
   try {
-    const { LineItemIds, GP, MUP, AgentCom, Freight } = params;
+    const { lineItemIds, gp, mup, agentCom, freight } = params;
 
-    await Promise.all(LineItemIds.map((id: string) => {
+    await Promise.all(lineItemIds.map((id: string) => {
       const updateParams = {
         item_id: id,
         values: {
           // quantity: 1,
           // unit_price_cents: 1,
           // total_price_cents: 1
-          gp_percent: GP,
-          mark_up: MUP,
-          agent_commission: AgentCom,
-          freight: Freight
+          gp_percent: gp,
+          mark_up: gp,
+          agent_commission: gp,
+          freight: freight     //// FREIGHT IS A SEPERATE LINE ITEM - UPDATE unit_price_cents AND SUBMIT
         }
       }
       return lasecApi.Quotes.updateQuoteItems(updateParams);

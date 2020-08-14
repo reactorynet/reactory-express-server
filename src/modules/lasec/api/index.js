@@ -1026,13 +1026,12 @@ const Api = {
     },
     updateQuoteItems: async (params) => {
       try {
-        const url = `api/quote_item/${params.itemId}`;
-
+        // expected params
         // {item_id: "2008", values: { quantity: 1, unit_price_cents: 123, gp_percent: 2, mark_up: 20, total_price_cents: 100 }}
-
+        logger.debug(`CALLING WITH PARAMS:: ${JSON.stringify(params)}`);
+        const url = `api/quote_item/${params.item_id}`;
         const apiResponse = await POST(url, { ...params });
-
-        logger.debug(`COPY QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
+        logger.debug(`UPDATE LINEITEMS RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
         const { status } = apiResponse;
 
@@ -1041,7 +1040,7 @@ const Api = {
         }
 
       } catch (lasecApiError) {
-        logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`).then();
+        logger.error(`Error updating quote lineitems:: ${JSON.stringify(lasecApiError)}`).then();
         return null;
       }
     }

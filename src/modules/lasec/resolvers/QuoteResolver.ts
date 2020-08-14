@@ -951,8 +951,6 @@ export default {
     LasecDeleteQuoteComment: async (obj, args) => {
       return deleteQuoteComment(args);
     },
-
-
     LasecUpdateQuoteLineItems: async (obj, args) => {
       return updateQuoteLineItems(args);
     },

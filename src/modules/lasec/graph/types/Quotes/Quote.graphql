@@ -537,10 +537,6 @@ type QuoteDuplicateResponse {
   quoteId: String
 }
 
-input QuoteUpdateLineItemsInput {
-
-}
-
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetCRMQuoteList(
@@ -686,5 +682,5 @@ extend type Mutation {
   LasecSaveQuoteComment(quoteId: String!, comment: String!, commentId: String): SimpleResponse
   LasecDeleteQuoteComment(commentId: String): SimpleResponse
 
-  LasecUpdateQuoteLineItems(LineItemIds: [String], GP: Float, MUP: Float, AgentCom: Float, Freight: Float): Quote
+  LasecUpdateQuoteLineItems(lineItemIds: [String], gp: Float, mup: Float, agentCom: Float, freight: Float): Quote
 }
