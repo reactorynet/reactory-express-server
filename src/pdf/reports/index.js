@@ -1,5 +1,5 @@
 // report definitions
-import TowerStone360AsssessmentReport from './towerstone/delegate-360-assessment';
+import TowerStone360AsssessmentReport from '../../modules/towerstone/pdf/towerstone/delegate-360-assessment';
 
 const reports = {
   towerstone: {

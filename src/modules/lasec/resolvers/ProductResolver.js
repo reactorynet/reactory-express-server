@@ -391,6 +391,10 @@ const getProductById = async (params) => {
 
         notes: ''
       };        
+
+      if (product.currency_pricing && Object.keys(product.currency_pricing).length > 0) {
+        productResult.productPricing = Object.keys(product.currency_pricing).map((key) => product.currency_pricing[key]);
+      }
       
       return product;
     }
@@ -644,7 +648,7 @@ export default {
                 </body>
               </html>`;
             const cleared = unfluff(html, 'en');
-            
+
             logger.debug(`Unfluffed Notes For Product ${product.code}`, {cleared, original: productNotes[0].notes})
             return cleared.text;
           }

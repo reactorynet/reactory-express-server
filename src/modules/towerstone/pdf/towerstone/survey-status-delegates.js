@@ -1,28 +1,33 @@
+
 import moment from 'moment';
 import { ObjectId } from 'mongodb';
 import fs from 'fs';
+import { resolve as resolvePath } from 'path';
 import { readFileSync, existsSync } from 'fs';
 import { PNG } from 'pngjs';
 import imageType from 'image-type';
-import path from 'path';
 import lodash from 'lodash';
-import { hex2RGBA } from '../../../utils/colors';
+import { hex2RGBA } from '@reactory/server-core/utils/colors';
 import om from 'object-mapper';
-import logger from '../../../logging';
+import logger from '@reactory/server-core/logging';
 
-import { DefaultBarChart } from '../../../charts/barcharts';
-import { DefaultRadarChart } from '../../../charts/radialcharts';
-import { DefaultPieChart } from '../../../charts/pie';
+import { DefaultBarChart } from '@reactory/server-core/charts/barcharts';
+import { DefaultRadarChart } from '@reactory/server-core/charts/radialcharts';
+import { DefaultPieChart } from '@reactory/server-core/charts/pie';
 
 import {
+  Cache,
   Assessment,
   Survey,
   User,
   Scale,
-} from '../../../models';
-import { isArray } from 'util';
+} from '@reactory/server-core/models';
 
 const { APP_DATA_ROOT } = process.env;
+
+const debug_report = true;
+
+const badref = './badref.png';
 
 const pdfpng = (path) => {
   let buffer = readFileSync(path);

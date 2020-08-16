@@ -140,19 +140,42 @@ const tableUiSchema: any = {
         {
           title: 'Stock Code',
           field: 'code',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'p',
-                copyToClipboard: true,
-                format: '${rowData.code}'
-              }
+          components: [
+            {
+              component: 'core.SlideOutLauncher@1.0.0',
+              props: {
+                componentFqn: 'lasec-crm.LasecProductDetails@1.0.0',
+                componentProps: {
+                  'rowData': 'formData',                  
+                },
+                slideDirection: 'left',
+                buttonVariant: 'button',
+                buttonProps: {                  
+                  size: 'small',                  
+                },
+                buttonIcon: 'launch',
+                windowTitle: '${rowData.code} ${rowData.name}',
+              },
             },
-          },
-          propsMap: {
-            'rowData.code': 'value',
-          }
+            {
+              component: 'core.LabelComponent@1.0.0',
+              props: {
+                uiSchema: {
+                  'ui:options': {
+                    variant: 'p',
+                    copyToClipboard: true,
+                    format: '${rowData.code}',                   
+                    bodyProps: {
+                                            
+                    }
+                  }
+                },
+              },
+              propsMap: {
+                'rowData.code': 'value',
+              }
+            },           
+          ],          
         },
         { title: 'Description', field: 'name' },
         {
@@ -169,36 +192,7 @@ const tableUiSchema: any = {
               }
             },
           },
-        },
-        {
-          title: 'On Special',
-          field: 'onSpecial',
-          component: 'core.ConditionalIconComponent@1.0.0',
-          props: {
-            'ui:options': {},
-            conditions: [
-              {
-                key: 'true',
-                icon: 'monetization_on',
-                style: {
-                  color: '#9AD86E'
-                },
-                tooltip: 'ON SPECIAL'
-              },
-              {
-                key: 'false',
-                icon: 'monetization_on',
-                style: {
-                  color: '#969696'
-                },
-                tooltip: 'NOT ON SPECIAL'
-              },
-            ]
-          },
-          propsMap: {
-            'rowData.onSpecial': 'value',
-          },
-        },
+        },       
         {
           title: 'Special Price', field: 'price',
           component: 'core.StyledCurrencyLabel@1.0.0',

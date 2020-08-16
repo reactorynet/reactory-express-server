@@ -149,20 +149,15 @@ const tableUiSchema: any = {
               props: {
                 componentFqn: 'lasec-crm.LasecProductDetails@1.0.0',
                 componentProps: {
-                  'rowData': 'formData'
+                  'rowData': 'formData',                  
                 },
                 slideDirection: 'left',
                 buttonVariant: 'button',
-                buttonProps: {
-                  color: "#23A06A",
-                  size: 'small',
-                  style: {
-                    marginLeft: '16px',
-                    backgroundColor: "#23A06A"
-                  }
+                buttonProps: {                  
+                  size: 'small',                  
                 },
                 buttonIcon: 'launch',
-                windowTitle: 'Viewing Product Details ${rowData.code}',
+                windowTitle: '${rowData.code} ${rowData.name}',
               },
             },
             {
