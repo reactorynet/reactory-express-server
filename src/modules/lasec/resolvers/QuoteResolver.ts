@@ -71,7 +71,7 @@ import {
   updateQuoteLineItems,
   updateQuote
 } from './Helpers';
-import { queryAsync } from 'database/mysql';
+import { queryAsync } from '@reactory/server-core/database/mysql';
 
 
 
