@@ -2557,23 +2557,20 @@ export const updateQuote = async (params) => {
 
   try {
     const { item_id, quote_type, rep_code, client_id, valid_date } = params;
-
-    const updateParams = {
-      item_id,
-      values: {
-        quote_type,
-        rep_code,
-        client_id,
-        valid_date
-      }
-    }
+    const updateParams = { item_id, values: { quote_type } };
+    if (rep_code) updateParams.values.sales_team_id = rep_code[0];
+    if (client_id) updateParams.values.customer_id = client_id;
+    if (valid_date) updateParams.values.modified = valid_date;
 
     const updateResult = await lasecApi.Quotes.updateQuote(updateParams);
 
     logger.debug(`UPDATING QUOTE RESULT:: ${JSON.stringify(updateResult)}`);
 
-    const quote = await getLasecQuoteById(params.quoteId).then();
-    return quote;
+    // const quote = await getLasecQuoteById(params.quoteId).then();
+    return {
+      success: true,
+      message: 'Quote successfully updated.'
+    };
 
   } catch (error) {
     throw new ApiError(`Error updating quote lineitems. ${error}`);

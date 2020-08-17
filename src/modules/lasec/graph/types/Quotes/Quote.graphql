@@ -773,7 +773,7 @@ extend type Mutation {
   LasecSaveQuoteComment(quoteId: String!, comment: String!, commentId: String): SimpleResponse
   LasecDeleteQuoteComment(commentId: String): SimpleResponse
 
-  LasecUpdateQuote(item_id: String, quote_type: String, rep_code: String, client_id: String, valid_date: String): SimpleResponse
+  LasecUpdateQuote(item_id: String, quote_type: String, rep_code: [String], client_id: String, valid_date: String): SimpleResponse
 
   LasecUpdateQuoteLineItems(lineItemIds: [String], gp: Float, mup: Float, agentCom: Float, freight: Float): Quote
 }

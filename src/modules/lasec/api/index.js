@@ -919,7 +919,7 @@ const Api = {
     getLineItems: async (code, active_option) => {
 
       let filter = { quote_id: code }
-      if(typeof active_option === 'string') {
+      if (typeof active_option === 'string') {
         filter.quote_option_id = active_option
         delete filter.quote_id;
       }
@@ -928,7 +928,8 @@ const Api = {
         params: {
           ...defaultParams,
           filter
-        } }).then();
+        }
+      }).then();
       const {
         status, payload,
       } = apiResponse;
@@ -1088,11 +1089,13 @@ const Api = {
 
     updateQuote: async (params) => {
       try {
-        // expected params
+
         // {"item_id":"2008-335010","values":{"quote_type":"Normal"}}
         logger.debug(`CALLING WITH PARAMS:: ${JSON.stringify(params)}`);
         const url = `api/quote/${params.item_id}`;
-        const apiResponse = await POST(url, { ...params });
+        // const apiResponse = await POST(url, { ...params });
+        const apiResponse = await PUT(url, { ...params });
+
         logger.debug(`UPDATE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
         const { status } = apiResponse;
