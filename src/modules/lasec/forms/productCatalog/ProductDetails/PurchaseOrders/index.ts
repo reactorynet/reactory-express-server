@@ -1,42 +1,25 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
-// import $uiSchema from './uiSchema';
-// import $graphql from './graphql';
 
 const graphql = {
   query: {
-    name: 'LasecGetCRMSalesOrders',
-    text: `query LasecGetCRMSalesOrders($productId: String, $paging: PagingRequest){
-      LasecGetCRMSalesOrders(productId: $productId, paging: $paging){
+    name: 'LasecGetCRMPurchaseOrders',
+    text: `query LasecGetCRMPurchaseOrders($productId: String, $paging: PagingRequest){
+      LasecGetCRMPurchaseOrders(productId: $productId, paging: $paging){
         paging {
           total
           page
           hasNext
           pageSize
         }
-        salesOrders {
+        purchaseOrders {
           id
-          orderDate
-          salesOrderNumber,          
-          shippingDate
-          quoteId
-          quoteDate
-          orderType
-          orderStatus
-          iso          
-          customer
-          client
+          dueDate
+          entryDate
+          lastUpdateDate
           poNumber
-          currency
-          value
-          deliveryAddress
-          warehouseNote
-          deliveryNote
-          salesTeam
-          reserveValue
-          shipValue
-          backorderValue
-          dispatchCount
-          invoiceCount
+          shipInfo
+          orderQuantity
+          receiptedQuantity
         }
       }
     }`,
@@ -46,18 +29,14 @@ const graphql = {
     },
     resultMap: {
       'paging': 'paging',
-      'salesOrders.[].id': 'salesOrders.[].id',
-      'salesOrders.[].orderDate': 'salesOrders.[].orderDate',
-      'salesOrders.[].orderType': 'salesOrders.[].orderType',
-      'salesOrders.[].shippingDate': 'salesOrders.[].shippingDate',
-      'salesOrders.[].iso': 'salesOrders.[].iso',
-      'salesOrders.[].quoteId': 'salesOrders.[].quoteId',
-      'salesOrders.[].quoteDate': 'salesOrders.[].quoteDate',
-      'salesOrders.[].dispatchCount': 'salesOrders.[].dispatchCount',
-      'salesOrders.[].customer': 'salesOrders.[].customer',
-      'salesOrders.[].client': 'salesOrders.[].client',
-      'salesOrders.[].poNumber': 'salesOrders.[].poNumber',
-      'salesOrders.[].value': 'salesOrders.[].value',
+      'purchaseOrders.[].id': 'purchaseOrders.[].id',
+      'purchaseOrders.[].dueDate': 'purchaseOrders.[].dueDate',
+      'purchaseOrders.[].entryDate': 'purchaseOrders.[].entryDate',
+      'purchaseOrders.[].lastUpdateDate': 'purchaseOrders.[].lastUpdateDate',
+      'purchaseOrders.[].poNumber': 'purchaseOrders.[].poNumber',
+      'purchaseOrders.[].shipInfo': 'purchaseOrders.[].shipInfo',
+      'purchaseOrders.[].orderQuantity': 'purchaseOrders.[].orderQuantity',
+      'purchaseOrders.[].receiptedQuantity': 'purchaseOrders.[].receiptedQuantity',
     },
     autoQuery: false,
     resultType: 'object',
@@ -87,45 +66,12 @@ const schema: Reactory.ISchema = {
     price: {
       type: 'string',
     },
-    salesOrders: {
+    purchaseOrders: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
           id: {
-            type: 'string'
-          },
-          orderDate: {
-            type: 'string'
-          },
-          orderType: {
-            type: 'string'
-          },
-          shippingDate: {
-            type: 'string'
-          },
-          iso: {
-            type: 'string'
-          },
-          quoteId: {
-            type: 'string'
-          },
-          quoteDate: {
-            type: 'string'
-          },
-          dispatchCount: {
-            type: 'number',
-          },          
-          customer: {
-            type: 'string'
-          },
-          client: {
-            type: 'string'
-          },
-          poNumber: {
-            type: 'string'
-          },
-          value: {
             type: 'string'
           },
         }
@@ -160,7 +106,7 @@ const uiSchema: any = {
       price: { xs: 6, md: 2 },
     },
     {
-      salesOrders: { xs: 12, lg: 12 }
+      purchaseOrders: { xs: 12 }
     }
   ],
   product: {
@@ -268,61 +214,80 @@ const uiSchema: any = {
       },
     },
   },
-  salesOrders: {
+  purchaseOrders: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Order Type', field: 'orderType' },
         {
-          title: 'Order Date',
-          field: 'orderDate',
+          title: 'Entry Date',
+          field: 'entryDate',
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
+                format: '${api.utils.moment(rowData.entryDate).format(\'DD MMM YYYY\')}'
               }
             },
           },
           propsMap: {
-            'rowData.date': 'value',
+            'rowData.entryDate': 'value',
           }
         },
         {
-          title: 'Shipping Date',
-          field: 'shippingDate',
+          title: 'Due Date',
+          field: 'dueDate',
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
+                format: '${api.utils.moment(rowData.dueDate).format(\'DD MMM YYYY\')}'
               }
             },
           },
           propsMap: {
-            'rowData.date': 'value',
+            'rowData.dueDate': 'value',
           }
         },
-        { title: 'ISO Number', field: 'id' },
-        { title: 'Quote', field: 'quoteId' },
-        { title: 'Quote Date', field: 'quoteDate' },
-        { title: 'Dispatches', field: 'dispatchCount' },
-        { title: 'Customer', field: 'customer' },        
-        { title: 'Client', field: 'client' },        
-        { title: 'Purchase Order Number', field: 'poNumber' },
-        { title: 'Order Value', 
-          field: 'value', 
-          component: 'core.CurrencyLabel@1.0.0',
+        {
+          title: 'Last Updates',
+          field: 'lastUpdateDate',
+          component: 'core.LabelComponent@1.0.0',
           props: {
-            region: 'en-ZA',
-            currency: 'ZAR'
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.lastUpdateDate).format(\'DD MMM YYYY\')}'
+              }
+            },
           },
           propsMap: {
-            'rowData.value': 'value',
-          }, 
-        }, 
+            'rowData.lastUpdateDate': 'value',
+          }
+        },
+        {
+          title: 'Order Number',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.LasecCMSProductPurchaseOrderItemsTable@1.0.0',
+            componentProps: {
+              'rowData.poNumber': 'formData.orderId',
+            },
+            slideDirection: 'down',
+            buttonVariant: 'Typography',
+            buttonProps: {
+              color: "#000000",
+              style: { color: "#000000", textDecoration: 'underline' }
+            },
+            buttonTitle: '${rowData.poNumber}',
+            windowTitle: 'Purchase Order',
+          },
+        },
+        // { title: 'Order Number', field: 'poNumber' },
+        { title: 'Ship Info', field: 'shipInfo' },
+        { title: 'Order', field: 'orderQuantity' },
+        { title: 'Rec', field: 'receiptedQuantity' },
       ],
       options: {
         grouping: false,
@@ -339,24 +304,20 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'salesOrders.[].id': 'data.[].id',
-        'salesOrders.[].orderDate': 'data.[].orderDate',
-        'salesOrders.[].orderType': 'data.[].orderType',
-        'salesOrders.[].quoteId': 'data.[].quoteId',
-        'salesOrders.[].quoteDate': 'data.[].quoteDate',
-        'salesOrders.[].dispatchCount': 'data.[].dispatchCount',
-        'salesOrders.[].shippingDate': 'data.[].shippingDate',
-        'salesOrders.[].iso': 'data.[].iso',
-        'salesOrders.[].customer': 'data.[].customer',
-        'salesOrders.[].client': 'data.[].client',
-        'salesOrders.[].poNumber': 'data.[].poNumber',
-        'salesOrders.[].value': 'data.[].value',
+        'purchaseOrders.[].id': 'data.[].id',
+        'purchaseOrders.[].dueDate': 'data.[].dueDate',
+        'purchaseOrders.[].entryDate': 'data.[].entryDate',
+        'purchaseOrders.[].lastUpdateDate': 'data.[].lastUpdateDate',
+        'purchaseOrders.[].poNumber': 'data.[].poNumber',
+        'purchaseOrders.[].shipInfo': 'data.[].shipInfo',
+        'purchaseOrders.[].orderQuantity': 'data.[].orderQuantity',
+        'purchaseOrders.[].receiptedQuantity': 'data.[].receiptedQuantity',
       },
     },
   }
 };
 
-const GridOnlyUISchema : any = {
+const GridOnlyUISchema: any = {
   'ui:options': {
     componentType: "div",
     showSubmit: false,
@@ -374,7 +335,7 @@ const GridOnlyUISchema : any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [    
     {
-      salesOrders: { xs: 12 }
+      purchaseOrders: { xs: 12, lg: 12 }
     }
   ],
   product: {
@@ -482,61 +443,80 @@ const GridOnlyUISchema : any = {
       },
     },
   },
-  salesOrders: {
+  purchaseOrders: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Order Type', field: 'orderType' },
         {
-          title: 'Order Date',
-          field: 'orderDate',
+          title: 'Entry Date',
+          field: 'entryDate',
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
+                format: '${api.utils.moment(rowData.entryDate).format(\'DD MMM YYYY\')}'
               }
             },
           },
           propsMap: {
-            'rowData.date': 'value',
+            'rowData.entryDate': 'value',
           }
         },
         {
-          title: 'Shipping Date',
-          field: 'shippingDate',
+          title: 'Due Date',
+          field: 'dueDate',
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
+                format: '${api.utils.moment(rowData.dueDate).format(\'DD MMM YYYY\')}'
               }
             },
           },
           propsMap: {
-            'rowData.date': 'value',
+            'rowData.dueDate': 'value',
           }
         },
-        { title: 'ISO Number', field: 'id' },
-        { title: 'Quote', field: 'quoteId' },
-        { title: 'Quote Date', field: 'quoteDate' },
-        { title: 'Dispatches', field: 'dispatchCount' },
-        { title: 'Customer', field: 'customer' },        
-        { title: 'Client', field: 'client' },        
-        { title: 'Purchase Order Number', field: 'poNumber' },
-        { title: 'Order Value', 
-          field: 'value', 
-          component: 'core.CurrencyLabel@1.0.0',
+        {
+          title: 'Last Updates',
+          field: 'lastUpdateDate',
+          component: 'core.LabelComponent@1.0.0',
           props: {
-            region: 'en-ZA',
-            currency: 'ZAR'
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.lastUpdateDate).format(\'DD MMM YYYY\')}'
+              }
+            },
           },
           propsMap: {
-            'rowData.value': 'value',
-          }, 
-        }, 
+            'rowData.lastUpdateDate': 'value',
+          }
+        },
+        {
+          title: 'Order Number',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.LasecCMSProductPurchaseOrderItemsTable@1.0.0',
+            componentProps: {
+              'rowData.poNumber': 'formData.orderId',
+            },
+            slideDirection: 'down',
+            buttonVariant: 'Typography',
+            buttonProps: {
+              color: "#000000",
+              style: { color: "#000000", textDecoration: 'underline' }
+            },
+            buttonTitle: '${rowData.poNumber}',
+            windowTitle: 'Purchase Order',
+          },
+        },
+        // { title: 'Order Number', field: 'poNumber' },
+        { title: 'Ship Info', field: 'shipInfo' },
+        { title: 'Order', field: 'orderQuantity' },
+        { title: 'Rec', field: 'receiptedQuantity' },
       ],
       options: {
         grouping: false,
@@ -553,32 +533,28 @@ const GridOnlyUISchema : any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'salesOrders.[].id': 'data.[].id',
-        'salesOrders.[].orderDate': 'data.[].orderDate',
-        'salesOrders.[].orderType': 'data.[].orderType',
-        'salesOrders.[].quoteId': 'data.[].quoteId',
-        'salesOrders.[].quoteDate': 'data.[].quoteDate',
-        'salesOrders.[].dispatchCount': 'data.[].dispatchCount',
-        'salesOrders.[].shippingDate': 'data.[].shippingDate',
-        'salesOrders.[].iso': 'data.[].iso',
-        'salesOrders.[].customer': 'data.[].customer',
-        'salesOrders.[].client': 'data.[].client',
-        'salesOrders.[].poNumber': 'data.[].poNumber',
-        'salesOrders.[].value': 'data.[].value',
+        'purchaseOrders.[].id': 'data.[].id',
+        'purchaseOrders.[].dueDate': 'data.[].dueDate',
+        'purchaseOrders.[].entryDate': 'data.[].entryDate',
+        'purchaseOrders.[].lastUpdateDate': 'data.[].lastUpdateDate',
+        'purchaseOrders.[].poNumber': 'data.[].poNumber',
+        'purchaseOrders.[].shipInfo': 'data.[].shipInfo',
+        'purchaseOrders.[].orderQuantity': 'data.[].orderQuantity',
+        'purchaseOrders.[].receiptedQuantity': 'data.[].receiptedQuantity',
       },
     },
   }
 };
 
-const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
-  id: 'LasecCMSProductSalesOrdersTable',
+const LasecCMSProductPurchaseOrders: Reactory.IReactoryForm = {
+  id: 'LasecCMSProductPurchaseOrdersTable',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
-  title: 'CMS Product Sales Orders',
-  tags: ['CMS Product Sales Orders'],
+  title: 'CMS Product Purchase Orders Table',
+  tags: ['CMS Product Purchase Orders Table'],
   registerAsComponent: true,
-  name: 'LasecCMSProductSalesOrdersTable',
+  name: 'LasecCMSProductPurchaseOrdersTable',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
@@ -617,4 +593,4 @@ const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
   ],
 };
 
-export default LasecCMSProductSalesOrders;
+export default LasecCMSProductPurchaseOrders;

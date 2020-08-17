@@ -135,11 +135,11 @@ const uiSchema: any = {
             },
           },
         },
-        { title: 'No. of Sales Orders', field: 'numberOfSalesOrders' },
+        { title: 'No. of Purchase Orders', field: 'numberOfPurchaseOrders' },
         {
           component: 'core.SlideOutLauncher@1.0.0',
           props: {
-            componentFqn: 'lasec-crm.LasecCMSProductSalesOrdersTable@1.0.0',
+            componentFqn: 'lasec-crm.LasecCMSProductPurchaseOrdersTable@1.0.0',
             componentProps: {
               'rowData.id': 'formData.id',
               'rowData.image': 'formData.image',
@@ -154,8 +154,8 @@ const uiSchema: any = {
               color: "#000000",
               style: { color: "#000000", textDecoration: 'underline' }
             },
-            buttonTitle: 'View Sales Orders',
-            windowTitle: 'Sales Orders',
+            buttonTitle: 'View Purchase Orders',
+            windowTitle: 'Purchase Orders',
           },
         }
       ],
@@ -206,15 +206,15 @@ const uiSchema: any = {
   }
 };
 
-const LasecProductSalesOrders: Reactory.IReactoryForm = {
-  id: 'LasecProductSalesOrders',
+const LasecProductPurchaseOrders: Reactory.IReactoryForm = {
+  id: 'LasecProductPurchaseOrders',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
-  title: 'CMS Product Sales Orders',
-  tags: ['CMS Product Sales Orders'],
+  title: 'CMS Product Purchase Orders',
+  tags: ['CMS Product Purchase Orders'],
   registerAsComponent: true,
-  name: 'LasecProductSalesOrders',
+  name: 'LasecProductPurchaseOrders',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,
@@ -236,4 +236,4 @@ const LasecProductSalesOrders: Reactory.IReactoryForm = {
   ],
 };
 
-export default LasecProductSalesOrders;
+export default LasecProductPurchaseOrders;

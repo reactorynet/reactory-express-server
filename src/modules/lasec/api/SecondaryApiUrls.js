@@ -47,7 +47,8 @@ import {
   ENTITY_KEY__PERMISSION,
   COLLECTION_KEY__PERMISSION,
   ENTITY_KEY__COMPANY_ADDRESS,
-  CREATE_QUOTE
+  CREATE_QUOTE,
+  ENTITY_KEY__PURCHASE_ORDER__ITEM,
 } from './constants';
 
 export default {
@@ -82,9 +83,11 @@ export default {
   sales_order: { url: `api/${ENTITY_KEY__SALES_ORDER}/`, allowed_methods: ['post', 'get'] },
   sales_order_item: { url: `api/${ENTITY_KEY__SALES_ORDER_ITEM}/`, allowed_methods: ['get'] },
   purchase_order: { url: `api/${ENTITY_KEY__PURCHASE_ORDER}/`, allowed_methods: ['get'] },
+  purchase_order_item: { url: `api/${ENTITY_KEY__PURCHASE_ORDER__ITEM}/`, allowed_methods: ['get'] },
   product_get: { url: `api/${ENTITY_KEY__PRODUCT}/`, allowed_methods: ['get'] },
   product_costing_get: { url: `api/${ENTITY_KEY__PRODUCT_COSTING}/`, allowed_methods: ['get'] },
-  groups: { url: `api/${ENTITY_KEY__REP_CODE}/`, allowed_methods: ['get'] },
+  product_contracts_get: { url: `api/${ENTITY_KEY__CONTRACT}/`, allowed_methods: ['get'] },
+  product_tenders_get: { url: `api/${ENTITY_KEY__TENDER}/`, allowed_methods: ['get'] },
   warehouse: { url: `api/${ENTITY_KEY__WAREHOUSE}/`, allowed_methods: ['get'] },
   warehouse_strock: { url: `api/${ENTITY_KEY__WAREHOUSE_STOCK}/`, allowed_methods: ['get'] },
   customer: { url: `api/${ENTITY_KEY__CUSTOMER}/\\d+/update/`, allowed_methods: ['post'] },

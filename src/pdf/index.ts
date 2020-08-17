@@ -1,4 +1,8 @@
 import * as dotenv from 'dotenv';
+import logger from '@reactory/server-core/logging';
+import modules from '@reactory/server-core/modules';
+import { Reactory } from '@reactory/server-core/types/reactory';
+
 import express from 'express';
 import path from 'path';
 import { readFileSync, existsSync } from 'fs';
@@ -7,8 +11,7 @@ import PDFDocument from 'pdfkit';
 import { PNG } from 'pngjs';
 import imageType from 'image-type';
 import { isArray } from 'util';
-import _ from 'lodash';
-import logger from '../logging';
+import _, { find } from 'lodash';
 import ApiError, { RecordNotFoundError } from '../exceptions';
 import { forInStatement } from 'babel-types';
 
@@ -23,6 +26,22 @@ const {
   APP_SYSTEM_FONTS,
   APP_DATA_ROOT,
 } = process.env;
+
+
+const PdfComponents: Reactory.IReactoryPdfComponent[] = [];
+modules.enabled.forEach((installedModule: Reactory.IReactoryModule) => {
+  try {
+    if (installedModule.pdfs) {
+      logger.debug(`♻ Adding PDF Report Generators for ${installedModule.name}`);
+      installedModule.pdfs.forEach((pdfDef) => {
+        PdfComponents.push(pdfDef);
+      });
+      logger.debug(`✔ Adding PDF Report Generators for ${installedModule.name} Done`);
+    }
+  } catch (moduleLoadError) {
+    logger.error(`Could not load one or more PDF Generators for module ${installedModule.name}`);
+  }
+});
 
 
 function createPdfBinary(pdfDoc, res, req) {
@@ -51,7 +70,7 @@ function createPdfBinary(pdfDoc, res, req) {
 
   logger.debug('Loading font descriptions', fontDescriptors);
   const printer = new PdfPrinter(fontDescriptors);
-  const tableLayouts = pdfDoc.tableLayouts || { };
+  const tableLayouts = pdfDoc.tableLayouts || {};
   const doc = printer.createPdfKitDocument(pdfDoc, { tableLayouts });
   res.set({
     'Content-Disposition': `${req.query.view || 'attachment'}; filename="${pdfDoc.filename}"`,
@@ -129,7 +148,7 @@ const generate = async (props, res, usepdfkit = false, req) => {
       res.status(503).send(error.message);
     }
   } else {
-    logger.debug('Generating Document using PDFkit');
+    logger.ERROR('Generating Document using PDFkit --- DEPRECATE');
     const doc = new PDFDocument();
 
     if (definition.props.fonts) {
@@ -251,30 +270,57 @@ router.options('/', (req, res) => {
   res.status(203).send('');
 });
 
-router.post('/:folder/:report', (req, res) => {  
-  try {
-    const reportPath = `./reports/${req.params.folder || 'core'}/${req.params.report || 'api-status'}.js`;
-    const reportSchema = require(reportPath).default; // eslint-disable-line;
-    if (reportSchema) {
-      try {
-        generate({ data: { ...req.params, ...req.body }, definition: reportSchema, debug: true }, res, false, req);
-      } catch (reportError) {
-        console.error(reportError);
-        res.status(503).send(new ApiError(reportError.message, reportError));
-      }
-    } else {
-      res.status(404).send(new RecordNotFoundError(`The report ${req.params.report}, was not found, please make sure you specified the correct report name`));
-    }
-  } catch (schemaLoadError) {
-    res.status(403).send(new ApiError(schemaLoadError.message));
-  }
+router.post('/:nameSpace/:name', async (req: any, res: any) => {
+
+  let reportPdfComponent: Reactory.IReactoryPdfComponent = find(PdfComponents, { nameSpace: req.params.nameSpace, name: req.params.name });
   
+  if(reportPdfComponent && reportPdfComponent.component) {
+    try {
+      generate({ data: { ...req.params, ...req.body }, definition: reportPdfComponent.component, debug: true }, res, false, req);
+    } catch (pdfError) {
+      logger.debug(`Error Generating The PDF ${pdfError.message}`, { pdfError })
+      res.status(503).send(new ApiError(pdfError.message, pdfError));
+    }    
+  } else {
+    res.status(404).send(new RecordNotFoundError(`The report ${req.params.report}, was not found, please make sure you specified the correct report name`));
+  }
+
+  /*
+  const reportPath = `./reports/${req.params.nameSpace || 'core'}/${req.params.name || 'api-status'}.js`;
+  const reportSchema = require(reportPath).default; // eslint-disable-line;
+  if (reportSchema) {
+    try {
+      generate({ data: { ...req.params, ...req.body }, definition: reportSchema, debug: true }, res, false, req);
+    } catch (reportError) {
+      console.error(reportError);
+      res.status(503).send(new ApiError(reportError.message, reportError));
+    }
+  } else {
+    res.status(404).send(new RecordNotFoundError(`The report ${req.params.report}, was not found, please make sure you specified the correct report name`));
+  }
+  */
 });
 
-router.get('/:folder/:report', async (req, res) => {
-  const reportPath = `./reports/${req.params.folder || 'core'}/${req.params.report || 'api-status'}.js`;
+router.get('/:nameSpace/:name', async (req, res) => {
+  // const reportPath = `./reports/${req.params.nameSpace || 'core'}/${req.params.report || 'api-status'}.js`;
+
+
+    let reportPdfComponent: Reactory.IReactoryPdfComponent = find(PdfComponents, { nameSpace: req.params.nameSpace, name: req.params.name });
     
-  try {
+    if(reportPdfComponent && reportPdfComponent.component) {
+      try {
+        const resolvedData = await reportPdfComponent.component.resolver(req.query).then();
+        generate({ data: resolvedData, definition: reportPdfComponent.component }, res, false, req);
+      } catch (pdfError) {
+        logger.debug(`Error Generating The PDF ${pdfError.message}`, { pdfError });
+        res.status(503).send(new ApiError(pdfError.message, pdfError));
+      }    
+    } else {
+      
+      res.status(404).send(new RecordNotFoundError(`The report ${req.params.nameSpace}.${req.params.name}, was not found, please make sure you specified the correct report name`));
+    }
+
+    /*
     const reportSchema = require(reportPath).default; // eslint-disable-line;
     if (reportSchema) {
       try {
@@ -291,10 +337,7 @@ router.get('/:folder/:report', async (req, res) => {
     } else {
       res.status(404).send(new RecordNotFoundError(`The report ${reportPath}, has no valid schema, please make sure you specified the correct report name or that the report is correctly configured`));
     }
-
-  } catch (schemaLoadError) {
-    res.status(403).send(new ApiError(schemaLoadError.message));
-  }      
+    */ 
 });
 
 router.get('/', (req, res) => {
@@ -321,7 +364,7 @@ router.get('/', (req, res) => {
     .text('Welcome to the PDF Lab', 100, 200);
 
 
-  doc.fontSize(10).text('This endpoint supports POST only, pass your request /pdf/{template-id || template-key}/');
+  doc.fontSize(10).text('This endpoint supports POST only, pass your request /pdf/:nameSpace/:name/:?version');
   // Finalize PDF file
   doc.end();
 });

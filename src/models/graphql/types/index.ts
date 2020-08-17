@@ -1,6 +1,6 @@
 
 import logger from '@reactory/server-core/logging';
-import modules from '@reactory/server-modules';
+import modules from '@reactory/server-core/modules';
 
 const typeDefs: any[] = [];
 modules.enabled.forEach((installedModule) => {
@@ -14,12 +14,14 @@ modules.enabled.forEach((installedModule) => {
     "shop": "https://reactory.net/shop/modules/0c22819f-bca0-4947-b662-9190063c8277/"
  */
   if (installedModule.graphDefinitions) {
-    logger.debug(`Extending Reactory Graph Types ${installedModule.name}`);
+    
+    logger.debug(`♻ Adding Reactory Graph Types ${installedModule.name}`);
     if (installedModule.graphDefinitions.Types) {
       installedModule.graphDefinitions.Types.forEach((typeDef) => {
         typeDefs.push(typeDef);
       });
-    }
+    }      
+    logger.debug(`✔ Adding Reactory Graph Types ${installedModule.name} - Done`);
   }
 });
 

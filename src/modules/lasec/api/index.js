@@ -10,7 +10,7 @@ import axios from 'axios';
 // import { clearAuthentication } from '../actions/Auth';
 import SECONDARY_API_URLS from './SecondaryApiUrls';
 import logger from '../../../logging';
-import ApiError from '../../../exceptions';
+import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import AuthenticationSchema from '../schema/Authentication';
 import { jzon } from '../../../utils/validators';
 
@@ -251,6 +251,15 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
         }
 
         break;
+      }
+      case 404: {
+        throw new RecordNotFoundError(`Could not fetch record for at ${absoluteUrl}`, 'LASEC_API', {
+          url, 
+          fethArguments, 
+          mustAuthenticate,
+          failed, 
+          attempt
+        })
       }
       default: {
         await execml(`mutation LasecReset360Credentials {
@@ -781,6 +790,34 @@ const Api = {
       }
 
       return { pagination: {}, ids: [], items: [] };
+    },
+    contracts: async (params) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_contracts_get.url, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status, payload,
+      } = apiResponse;
+
+      // logger.debug(`PRODUCT COSTINGS RESPONSE::  ${JSON.stringify(apiResponse)}`);
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+    tenders: async (params) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_tenders_get.url, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status, payload,
+      } = apiResponse;
+
+      // logger.debug(`PRODUCT COSTINGS RESPONSE::  ${JSON.stringify(apiResponse)}`);
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
     }
   },
   Invoices: {
@@ -800,7 +837,20 @@ const Api = {
   },
   PurchaseOrders: {
     list: async (params = defaultParams) => {
-      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } }).then();
+      const poResult = await FETCH(SECONDARY_API_URLS.purchase_order.url, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status,
+        payload,
+      } = poResult;
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+    detail: async (params = defaultParams) => {
+      const isoResult = await FETCH(SECONDARY_API_URLS.purchase_order_item.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status,
         payload,
@@ -811,7 +861,7 @@ const Api = {
       }
 
       return { pagination: {}, ids: [], items: [] };
-    }
+    },
   },
   SalesOrders: {
     list: async (params = defaultParams) => {
@@ -866,8 +916,19 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    getLineItems: async (code) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { quote_id: code } } }).then();
+    getLineItems: async (code, active_option) => {
+
+      let filter = { quote_id: code }
+      if(typeof active_option === 'string') {
+        filter.quote_option_id = active_option
+        delete filter.quote_id;
+      }
+
+      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, { 
+        params: { 
+          ...defaultParams, 
+          filter
+        } }).then();
       const {
         status, payload,
       } = apiResponse;

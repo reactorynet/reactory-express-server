@@ -432,6 +432,37 @@ declare namespace Reactory {
     props?: any
   }
 
+  export interface IReactoryPdGenerator {
+    enabled: boolean
+    key: String
+    name: String
+    description: String
+    content: (params: any) => Promise<any>
+    resolver: (params: any) => Promise<any>,
+    props: {
+      meta: {
+        title: String
+        author: String
+        [key: string]: any,
+      },
+      fonts: {
+        [key: string]: {
+          normal: String,
+          bold: String,
+        }
+      },
+      defaultFont: String
+      fontSize: number
+    }
+  }
+
+  export interface IReactoryPdfComponent {
+    nameSpace: string
+    name: string
+    version: string
+    component: IReactoryPdGenerator
+  }
+
   export interface IReactoryModule {
     nameSpace: string
     name: string
@@ -440,7 +471,8 @@ declare namespace Reactory {
     priority: number,
     graphDefinitions?: IGraphDefinitions,
     workflows?: IWorkflow[],
-    forms?: IReactoryForm[],    
+    forms?: IReactoryForm[],
+    pdfs?: IReactoryPdfComponent[]    
     services?: IReactoryServiceDefinition[],
     clientPlugins?: Client.IReactoryPluginDefinition
   }

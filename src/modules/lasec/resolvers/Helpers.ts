@@ -226,7 +226,7 @@ export const getTargets = async (params: LasecDashboardSearchParams) => {
  * Finds and / or synchronizes a record
  * @param {String} quote_id
  */
-export const getLasecQuoteById = async (quote_id) => {
+export const getLasecQuoteById = async (quote_id: string) => {
   try {
     const owner = global.partner.key;
     let quote = await synchronizeQuote(quote_id, owner, null, true).then();
@@ -1105,16 +1105,17 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
 
 }
 
-export const lasecGetQuoteLineItems = async (code: string) => {
-  const keyhash = `quote.${code}.lineitems`;
+export const lasecGetQuoteLineItems = async (code: string, active_option: String = 'all') => {
+  const keyhash = `quote.${code}-${active_option}.lineitems`;
 
   let cached = await getCacheItem(keyhash);
-  if (cached) logger.debug(`Found Cached Line Items For Invoice: ${code}`);
+  if (cached) logger.debug(`Found Cached Line Items For Quote: ${code}`);
   if (lodash.isNil(cached) === true) {
-    const lineItems = await lasecApi.Quotes.getLineItems(code).then();
+    const lineItems = await lasecApi.Quotes.getLineItems(code, active_option).then();
     logger.debug(`Found line items for quote ${code}`, lineItems);
 
-    cached = om(lineItems, {
+    cached = om.merge(lineItems, {
+      'items.[]': '[].meta.source',
       'items.[].id': [
         '[].quote_item_id',
         '[].meta.reference',
@@ -1125,7 +1126,7 @@ export const lasecGetQuoteLineItems = async (code: string) => {
         {
           key: '[].quoteId', transform: () => (code)
         }
-      ],
+      ],      
       'items.[].code': '[].code',
       'items.[].description': '[].title',
       'items.[].quantity': '[].quantity',
@@ -1502,6 +1503,104 @@ export const getSalesOrders = async (params) => {
 
   return result;
 
+}
+
+export const getPurchaseOrders = async (params) => {
+
+  logger.debug(`GETTING PAGED PURCHASE ORDERS:: ${JSON.stringify(params)}`);
+
+  const {
+    productId,
+    filterBy,
+    search,
+    paging = { page: 1, pageSize: 10 }
+  } = params;
+
+  let pagingResult = {
+    total: 0,
+    page: paging.page || 1,
+    hasNext: false,
+    pageSize: paging.pageSize || 10
+  };
+
+  const purchaseOrdersIds = await lasecApi.PurchaseOrders.list(
+    {
+      filter: { product_id: productId },
+      ordering: {},
+      format: { ids_only: true },
+      pagination: paging
+    }).then();
+
+  logger.debug(`GOT PO IDS:: ${purchaseOrdersIds.ids.length}`);
+
+  let ids = [];
+
+  if (isArray(purchaseOrdersIds.ids) === true) {
+    ids = [...purchaseOrdersIds.ids];
+  }
+
+  let purchaseOrdersDetails = await lasecApi.PurchaseOrders.list({ filter: { ids: ids } }).then();
+  logger.debug(`GOT PO DETAILS:: ${JSON.stringify(purchaseOrdersDetails.items[0])}`);
+  let purchaseOrders = [...purchaseOrdersDetails.items];
+
+  purchaseOrders = purchaseOrders.map(order => {
+    return {
+      id: order.id,
+      dueDate: moment(order.due_date).toDate(),
+      entryDate: moment(order.entry_date).toDate(),
+      lastUpdateDate: moment(order.last_updated).toDate(),
+      poNumber: order.purchase_order_number,
+      shipInfo: order.ship_information,
+      orderQuantity: order.order_quantity,
+      receiptedQuantity: order.receipted_quantity
+    }
+  });
+
+  let result = {
+    paging: pagingResult,
+    purchaseOrders,
+  };
+
+  return result;
+}
+
+export const getPurchaseOrderDetails = async (params) => {
+
+  const {
+    orderId,
+    quoteId
+  } = params;
+
+  let apiFilter = { purchase_order_id: orderId };
+
+  let purchaseOrdersIds = await lasecApi.PurchaseOrders.detail({ filter: apiFilter }).then();
+
+  let ids = [];
+
+  if (isArray(purchaseOrdersIds.ids) === true) {
+    ids = [...purchaseOrdersIds.ids];
+  }
+
+  let purchaseOrdersDetail = await lasecApi.PurchaseOrders.detail({ filter: { ids: ids } }).then();
+  let purchaseOrderItems = [...purchaseOrdersDetail.items];
+
+  logger.debug(`PURCHASE ORDERS:: ${JSON.stringify(purchaseOrderItems)}`);
+  // logger.debug(`PURCHASE ORDERS:: ${JSON.stringify(salesOrders[0])}`);
+
+  // NEEEEED TO CHECK THIS IS CORRECT
+  // DAWID IS STILL DEVELOPING THIS ENDPOINT
+  purchaseOrderItems = purchaseOrderItems.map(item => {
+    return {
+      code: item.code, // CHECK THIS
+      description: item.description, // CHECK
+      orderQty: item.order_quantity, // CHECK
+      etaDate: moment(item.eta_date).toDate(), // CHECK
+    }
+  })
+
+  logger.debug(`PO ITEMS TO RETURN :: ${JSON.stringify(purchaseOrderItems)}`);
+
+  return purchaseOrderItems;
 }
 
 export const getPagedSalesOrders = async (params) => {

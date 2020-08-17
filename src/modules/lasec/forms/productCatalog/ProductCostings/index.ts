@@ -110,19 +110,42 @@ const uiSchemaTable: any = {
         {
           title: 'Stock Code',
           field: 'code',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'p',
-                copyToClipboard: true,
-                format: '${rowData.code}'
-              }
+          components: [
+            {
+              component: 'core.SlideOutLauncher@1.0.0',
+              props: {
+                componentFqn: 'lasec-crm.LasecProductDetails@1.0.0',
+                componentProps: {
+                  'rowData': 'formData',                  
+                },
+                slideDirection: 'left',
+                buttonVariant: 'button',
+                buttonProps: {                  
+                  size: 'small',                  
+                },
+                buttonIcon: 'launch',
+                windowTitle: '${rowData.code} ${rowData.name}',
+              },
             },
-          },
-          propsMap: {
-            'rowData.code': 'value',
-          }
+            {
+              component: 'core.LabelComponent@1.0.0',
+              props: {
+                uiSchema: {
+                  'ui:options': {
+                    variant: 'p',
+                    copyToClipboard: true,
+                    format: '${rowData.code}',                   
+                    bodyProps: {
+                                            
+                    }
+                  }
+                },
+              },
+              propsMap: {
+                'rowData.code': 'value',
+              }
+            },           
+          ],          
         },
         { title: 'Description', field: 'name' },
         {

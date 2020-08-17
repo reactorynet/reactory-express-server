@@ -5,7 +5,7 @@ import logger from '../../logging';
 
 const ChartjsNode = require('chartjs-node');
 
-const defaultData = {
+const defaultData = () => ({
   datasets: [{
     data: [82, 18],
   }],
@@ -19,7 +19,7 @@ const defaultData = {
     `${global.partner.themeOptions.palette.primary.main}`,
     'rgba(0,0,0,0)',
   ],
-};
+});
 
 const defaultOptions = {
   cutoutPercentage: 50,
@@ -35,7 +35,7 @@ export const DefaultPieChart = (props) => {
     const chartNode = new ChartjsNode(width || 250, height || 250);
     chartNode.drawChart({
       type: 'pie',
-      data: data || defaultData,
+      data: data || defaultData(),
       options: options || defaultOptions,
     }).then(() => {
       // chart is created

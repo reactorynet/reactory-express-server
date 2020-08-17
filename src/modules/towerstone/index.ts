@@ -3,6 +3,7 @@ import graphTypes from './graph';
 import workflows from './workflow';
 import forms from './forms';
 import services from './services';
+import pdfs from './pdf';
 import { Reactory } from 'types/reactory';
 
 export const TowerStoneModule: Reactory.IReactoryModule = {
@@ -18,6 +19,7 @@ export const TowerStoneModule: Reactory.IReactoryModule = {
   workflows: [...workflows],
   forms: [ ...forms ],
   services: [ ...services ],
+  pdfs: [...pdfs] 
 };
 
 export default TowerStoneModule;

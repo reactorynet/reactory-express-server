@@ -6,540 +6,484 @@ import { readFileSync, existsSync } from 'fs';
 import { PNG } from 'pngjs';
 import imageType from 'image-type';
 import lodash from 'lodash';
-import { hex2RGBA } from '../../../utils/colors';
+import { hex2RGBA } from '@reactory/server-core/utils/colors';
 import om from 'object-mapper';
-import logger from '../../../logging';
+import logger from '@reactory/server-core/logging';
 
-import { DefaultBarChart } from '../../../charts/barcharts';
-import { DefaultRadarChart } from '../../../charts/radialcharts';
-import { DefaultPieChart } from '../../../charts/pie';
+import { DefaultBarChart } from '@reactory/server-core/charts/barcharts';
+import { DefaultRadarChart } from '@reactory/server-core/charts/radialcharts';
+import { DefaultPieChart } from '@reactory/server-core/charts/pie';
 
 import {
   Assessment,
   Survey,
   User,
   Scale,
-} from '../../../models';
+} from '@reactory/server-core/models';
 
 import {
   Cache
-} from '../../../modules/core/models';
+} from '@reactory/server-core/modules/core/models'
+
+
+const badref = '../badref.png';
 
 const { APP_DATA_ROOT } = process.env;
 
 const debug_report = true;
 
-const badref = './src/pdf/badref.png';
-
 const pdfpng = (path) => {
-  let buffer = null;
-  let returnpath = path;
-  try {
-    buffer = readFileSync(path);
-  } catch (fileError) {
-    logger.error(`🚩 Error reading file ${path}`, fileError);
-    returnpath = resolvePath(badref);
-    buffer = readFileSync(returnpath);        
-  }
-  
-  try {
-    const { mime } = imageType(buffer);
-    if (mime === 'image/png') {
-      const png = PNG.sync.read(buffer);
-      if (png.interlace) {
-        buffer = PNG.sync.write(png, { interlace: false });
-      }
-      return buffer;
+  let buffer = readFileSync(path);
+  const { mime } = imageType(buffer);
+  if (mime === 'image/png') {
+    const png = PNG.sync.read(buffer);
+    if (png.interlace) {
+      buffer = PNG.sync.write(png, { interlace: false });
     }
-  } catch (buffErr) {
-    logger.error(`🚩 Error processing image ${path}`, fileError);
-    returnpath = badref;    
+    return buffer;
   }
-  
 
-  return returnpath;
+  return path;
 };
 
 const greyscalePng = (path, outpath) => {
   fs.createReadStream(path)
     .pipe(new PNG({
-      colorType: 0
+        colorType: 0
     }))
-    .on('parsed', function () {
-      this.pack().pipe(fs.createWriteStream(outpath));
+    .on('parsed', function() {          
+        this.pack().pipe(fs.createWriteStream(outpath));
     });
 };
 
-/**
- * TODO: This data resolver needs to be split up into smaller segments with more precise error handling
- * @param {*} param0 
- */
 const resolveData = async ({ surveyId, delegateId }) => {
-  logger.info(`Resolving data for delegate-360-assessment Survey: ${surveyId}  DelegateEntry: ${delegateId}`);
+  logger.info(`Resolving data for delegate-360-assessment Survey: ${surveyId}  DelegateEntry: ${delegateId} - DOES NOT MATTER`);
   // const assessment = await Assessment.findById(assessment_id).then();
+  const { partner, user } = global;
+
+  const survey = await Survey.findById(surveyId)
+    .populate('organization')
+    .populate('leadershipBrand')
+    .then();
+
+
+  const reportData = {
+    meta: {
+      author: `${partner.name}`,
+      when: moment(),
+      user,
+      includeAvatar: false,
+      partner,
+      palette: partner.themeOptions.palette,
+      colorSchemes: {
+        primary: [ '0A2D51', 'E6A70F', '58595B', '83257C', '3C6899', '3C6899', ...partner.colorScheme() ], 
+        secondary: partner.colorScheme(partner.themeOptions.palette.secondary.main),        
+      },
+    },
+    key: `towerstone.survey@${surveyId}/${delegateId}`,
+    delegateTeamName: survey.delegateTeamName || '',
+    assessorTeamName: survey.assessorTeamName || '',
+    delegate: {},
+    employee: {}, //alias for delegate
+    assessors: [],
+    assessments: [],
+    survey,
+    score: 0,
+    organization: {},
+    leadershipBrand: {},
+    scale: { entries: [] },
+    qualities: [],
+    behaviours: [],
+    developmentPlan: [],
+    comments: [],
+    ratings: [],
+    charts: {
+      individualRadar: null,
+      avgRadar: null,
+      behavourcharts: {
+
+      },
+      overallchart: null,
+    },
+  };
 
   try {
-    const { partner, user } = global;
-
-    const survey = await Survey.findById(surveyId)
-      .populate('organization')
-      .populate('leadershipBrand')
-      .then();
-
-
-    if (!survey) return null;
-
-
-    const reportData = {
-      meta: {
-        author: `${partner.name}`,
-        when: moment(),
-        user,
-        includeAvatar: false,
-        partner,
-        palette: partner.themeOptions.palette,
-        colorSchemes: {
-          primary: ['0A2D51', 'E6A70F', '58595B', '83257C', '3C6899', '3C6899', ...partner.colorScheme()],
-          secondary: partner.colorScheme(partner.themeOptions.palette.secondary.main),
-        },
-      },
-      key: `towerstone.survey@${surveyId}/${delegateId}`,
-      delegate: {},
-      employee: {}, //alias for delegate
-      assessors: [],
-      assessments: [],
-      survey,
-      score: 0,
-      organization: {},
-      leadershipBrand: {},
-      scale: { entries: [] },
-      qualities: [],
-      behaviours: [],
-      developmentPlan: [],
-      comments: [],
-      ratings: [],
-      charts: {
-        individualRadar: null,
-        avgRadar: null,
-        behavourcharts: {
-
-        },
-        overallchart: null,
-      },
+    reportData.delegate = await User.findById(reportData.survey.delegates.id(delegateId).delegate).then();
+    reportData.employee = reportData.delegate;
+    logger.debug(`Found delegate ${reportData.delegate._id}`);
+    reportData.organization = reportData.survey.organization;
+    reportData.leadershipBrand = reportData.survey.leadershipBrand;
+    reportData.qualities = reportData.survey.leadershipBrand.qualities;
+    reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
+    reportData.assessments = await Assessment.find({       
+      survey: ObjectId(surveyId),      
+      complete: true,
+      deleted: false,
+      _id: { 
+        $in: reportData.survey.delegates.map((d) => d.assessments) 
+      },       
+    }).populate('assessor')
+    .populate('delegate').then();
+    logger.debug(`Found (${reportData.assessments.length}) assessments`);
+    lodash.remove(reportData.assessments, a => a === null || a.complete === false);
+    logger.debug(`(${reportData.assessments.length}) assessments after clean`);
+    reportData.lowratings = (quality, bar = 2) => {
+      return lodash.filter(reportData.ratings, (rating) => { return rating.qualityId.equals(quality._id) && rating.rating <= bar; });
     };
 
-    let maxRating = 5;
-
-    try {
-      reportData.delegate = await User.findById(reportData.survey.delegates.id(delegateId).delegate).then();
-      reportData.employee = reportData.delegate;
-      logger.debug(`Found delegate ${reportData.delegate._id}`);
-      reportData.organization = reportData.survey.organization;
-      reportData.leadershipBrand = reportData.survey.leadershipBrand;
-      reportData.qualities = reportData.survey.leadershipBrand.qualities;
-      reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
-
-      try {
-        maxRating = reportData.scale.maxRating();
-        logger.debug(`Max Rating ==> ${maxRating}`)
-      } catch (err) {
-        //could not get max via scale
-        logger.error('Could not get max rating from scale', err);
-      }
-      
-      reportData.assessments = await Assessment.find({
-        delegate: reportData.delegate._id,
-        survey: ObjectId(surveyId),
-        _id: {
-          $in: reportData.survey.delegates.id(delegateId).assessments
-        },
-        complete: true,
-      }).populate('assessor')
-        .populate('delegate').then();
-      logger.debug(`Found (${reportData.assessments.length}) assessments`);
-      lodash.remove(reportData.assessments, a => a === null || a.complete === false);
-      logger.debug(`(${reportData.assessments.length}) assessments after clean`);
-      reportData.lowratings = (quality, bar = 2) => {
-        return lodash.filter(reportData.ratings, (rating) => { return rating.qualityId.equals(quality._id) && rating.rating <= bar; });
-      };
-
-      reportData.ratings = lodash.flatMap(reportData.assessments, assessment => {
-        return assessment.ratings.map((rating) => {
-          rating.assessor = assessment.assessor;
+    reportData.ratings = lodash.flatMap(reportData.assessments, assessment => {      
+      return assessment.ratings.map((rating) => {        
+          rating.assessor = assessment.assessor;          
           return rating;
-        });
-      });
-      const otherassessments = lodash.filter(
-        reportData.assessments,
-        assessment => assessment.delegate._id.equals(assessment.assessor._id) === false,
-      );
-
-      reportData.ratingsExcludingSelf = lodash.flatMap(
-        otherassessments,
-        (assessment) => {
-          return assessment.ratings.map((rating) => {
-            rating.assessor = assessment.assessor;
-            return rating;
-          })
-        });
-
-      reportData.ratingsSelf = lodash.flatMap(
-        lodash.filter(
-          reportData.assessments,
-          assessment => assessment.delegate._id.equals(assessment.assessor._id) === true,
-        ),
-        assessment => assessment.ratings,
-      );
-    } catch (err) {
-      logger.error('Error occured colating data', err);
-    }
-
-
-    reportData.assessors = lodash.filter(lodash.flatMap(reportData.assessments, assessment => assessment.assessor), assessor => !assessor._id.equals(reportData.delegate._id));
-    logger.debug(`Assessors are ${reportData.assessors.map(a => `${a.firstName} `)}`);
-    if (reportData.ratings.length === 0) {
-      reportData.score = -1;
-    } else {
-      const totalAllRatings = lodash.sumBy(reportData.ratingsExcludingSelf, r => r.rating);
-      reportData.score = Math.floor((totalAllRatings * 100) / (reportData.ratingsExcludingSelf.length * maxRating));
-    }
-
-
-    // render the charts
-    const chartsFolder = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/charts/`;
-    if (fs.existsSync(chartsFolder) === false) {
-      fs.mkdirSync(chartsFolder, { recursive: true });
-    }
-
-    let chartResult = null;
-
-    const { colorSchemes, palette } = reportData.meta;
-    const qualitiesMap = reportData.qualities.map((quality, qi) => {
-      const behaviourScores = quality.behaviours.map((behaviour, bi) => {
-        logger.debug(`Calculating behaviour score ${quality.title} ==> ${lodash.template(behaviour.description)(reportData)}`);
-        let scoreSelf = 0;
-        let scoreAvgAll = 0;
-        let scoreAvgOthers = 0;
-        let behaviorRatings = [];
-        const individualScores = [];
-        try {
-
-          // get the score for all ratings (including self and others)
-          logger.debug('Filtering ratings by quality and behaviour id');
-          behaviorRatings = lodash.filter(
-            reportData.ratings,
-            rating => (
-              rating.custom !== true &&
-              quality._id.equals(rating.qualityId) &&
-              behaviour._id.equals(rating.behaviourId)),
-          );
-
-
-          logger.debug('Summing ratings');
-          behaviorRatings.forEach((rating) => {
-            logger.debug(`Adding rating by ${rating.assessor.firstName}`);
-            scoreAvgAll += rating.rating;
-            individualScores.push(rating.rating);
-          });
-
-          // get the avg
-          scoreAvgAll /= behaviorRatings.length;
-          logger.debug(`Average for all calculated ${scoreAvgAll}`);
-
-          // collect ratings excluding self
-          logger.debug('Filtering for average for peers');
-          behaviorRatings = lodash.filter(
-            reportData.ratingsExcludingSelf,
-            rating => (
-              rating.custom !== true &&
-              quality._id.equals(rating.qualityId) &&
-              behaviour._id.equals(rating.behaviourId)),
-          );
-
-          behaviorRatings.forEach((rating, ri) => {
-            scoreAvgOthers += rating.rating;
-          });
-
-          scoreAvgOthers = scoreAvgOthers / behaviorRatings.length;
-          logger.debug(`Average for all peers ${scoreAvgOthers}`);
-
-          const selfRating = lodash.filter(
-            reportData.ratingsSelf,
-            rating => (
-              rating.custom !== true &&
-              quality._id.equals(rating.qualityId) &&
-              behaviour._id.equals(rating.behaviourId)),
-          );
-
-          scoreSelf = lodash.isArray(selfRating) === true && selfRating.length >= 1 ? selfRating[0].rating : 0;
-          logger.debug(`Score for self ${scoreSelf}`);
-
-          return {
-            behaviourIndex: bi + 1,
-            behaviour,
-            scoreSelf,
-            scoreAvgAll,
-            scoreAvgOthers,
-            individualScores,
-          };
-        } catch (calcError) {
-          logger.error(`Error calculating score "${calcError.message}"`, calcError);
-
-          return {
-            behaviourIndex: bi + 1,
-            behaviour,
-            scoreSelf: 0,
-            scoreAvgAll: 0,
-            scoreAvgOthers: 0,
-            individualScores: [],
-          };
-        }
-      });
-
-      const ratings = {
-        all: lodash.filter(reportData.ratings, rating => quality._id.equals(rating.qualityId) && rating.custom !== true),
-        self: lodash.filter(reportData.ratingsSelf, rating => quality._id.equals(rating.qualityId) && rating.custom !== true),
-        others: lodash.filter(reportData.ratingsExcludingSelf, rating => quality._id.equals(rating.qualityId) && rating.custom !== true),
-        low: reportData.lowratings(quality, 2),
-        high: lodash.filter(reportData.ratings, rating => quality._id.equals(rating.qualityId) && rating.custom !== true && rating.rating >= 3),
-        custom: lodash.filter(reportData.ratings, rating => quality._id.equals(rating.qualityId) && rating.custom === true),
-      };
-
-      const scoreByAssessor = (assessor) => {
-        logger.debug(`Calculating Score ${assessor.firstName}`);
-        const assessment = lodash.find(reportData.assessments, a => assessor._id.equals(a.assessor._id));
-        if (assessment) {
-          const assessorRatingsForQuality = lodash.filter(
-            assessment.ratings,
-            r => r.custom !== true && quality._id.equals(r.qualityId),
-          );
-
-          if (assessorRatingsForQuality) {
-            let totalForQuality = 0;
-            assessorRatingsForQuality.forEach((rating) => {
-              totalForQuality += rating.rating;
-            });
-
-            totalForQuality /= assessorRatingsForQuality.length;
-            logger.debug(`Calculating Score by assessor ${assessor.firstName} ${assessor.lastName} => ${totalForQuality}`);
-            return totalForQuality;
-          }
-        }
-
-        return -1;
-      };
-
-
-      return {
-        index: qi,
-        model: quality,
-        behaviours: quality.behaviours,
-        ordinal: quality.ordinal,
-        color: colorSchemes.primary[colorSchemes.primary.length % (qi === 0 ? 1 : qi)],
-        behaviourScores,
-        avg: {
-          self: lodash.sumBy(ratings.self, r => r.rating) / ratings.self.length,
-          all: lodash.sumBy(ratings.all, r => r.rating) / ratings.all.length,
-          others: lodash.sumBy(ratings.others, r => r.rating) / ratings.others.length,
-        },
-        ratings,
-        scoreByAssessor: scoreByAssessor.bind(this),
-      };
+      });            
     });
 
+    const otherassessments = reportData.assessments;
+      
+    reportData.ratingsExcludingSelf = lodash.flatMap(
+      otherassessments,
+      ( assessment ) => {
+        return assessment.ratings.map((rating) => {        
+          rating.assessor = assessment.assessor;
+          return rating;        
+      })});
 
-    chartResult = await DefaultRadarChart({
-      folder: chartsFolder,
-      file: `spider-chart-all-${reportData.survey._id}.png`,
-      canvas: true,
-      height: 800,
-      width: 800,
-      mime: 'application/pdf',
-      options: {
-        scale: {
-          // Hides the scale
-          display: true,
-        },
-        title: {
-          display: true,
-          text: 'Individual Ratings',
-        },
+    reportData.ratingsSelf = [];
+  } catch (err) {
+    logger.error('Error occured colating data', err);
+  }
+
+
+  reportData.assessors = lodash.flatMap(reportData.assessments, assessment => assessment.assessor);
+  logger.debug(`Assessors are ${reportData.assessors.map(a => `${a.firstName} `)}`);
+  if (reportData.ratings.length === 0) {
+    reportData.score = -1;
+  } else {
+    const totalAllRatings = lodash.sumBy(reportData.ratings, r => r.rating);
+    reportData.score = Math.floor((totalAllRatings * 100) / (reportData.ratings.length * 5));
+  }
+
+
+  // render the charts
+  const chartsFolder = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/charts/`;
+  if (fs.existsSync(chartsFolder) === false) {
+    fs.mkdirSync(chartsFolder, { recursive: true });
+  }
+
+  let chartResult = null;
+
+  const { colorSchemes, palette } = reportData.meta;
+  const qualitiesMap = reportData.qualities.map((quality, qi) => {
+    const behaviourScores = quality.behaviours.map((behaviour, bi) => {
+      logger.debug(`Calculating behaviour score ${quality.title} ==> ${lodash.template(behaviour.description)(reportData)}`);
+      let scoreSelf = 0;
+      let scoreAvgAll = 0;
+      let scoreAvgOthers = 0;
+      let behaviorRatings = [];
+      const individualScores = [];
+      try {
+        
+        // get the score for all ratings (including self and others)
+        logger.debug('Filtering ratings by quality and behaviour id');
+        behaviorRatings = lodash.filter(
+          reportData.ratings,
+          rating => (
+            rating.custom !== true &&
+          quality._id.equals(rating.qualityId) &&
+          behaviour._id.equals(rating.behaviourId)),
+        );
+
+
+        logger.debug('Summing ratings');
+        behaviorRatings.forEach((rating) => {
+          logger.debug(`Adding rating by ${rating.assessor.firstName}`);
+          scoreAvgAll += rating.rating;
+          individualScores.push(rating.rating);
+        });
+
+        // get the avg
+        scoreAvgAll /= behaviorRatings.length;
+        logger.debug(`Average for all calculated ${scoreAvgAll}`);
+
+        // collect ratings excluding self
+        logger.debug('Filtering for average for peers');
+        behaviorRatings = lodash.filter(
+          reportData.ratingsExcludingSelf,
+          rating => (
+            rating.custom !== true &&
+          quality._id.equals(rating.qualityId) &&
+          behaviour._id.equals(rating.behaviourId)),
+        );
+
+        behaviorRatings.forEach((rating, ri) => {
+          scoreAvgOthers += rating.rating;
+        });
+
+        scoreAvgOthers = scoreAvgOthers / behaviorRatings.length;
+        logger.debug(`Average for all peers ${scoreAvgOthers}`);
+
+        const selfRating = lodash.filter(
+          reportData.ratingsSelf,
+          rating => (
+            rating.custom !== true &&
+          quality._id.equals(rating.qualityId) &&
+          behaviour._id.equals(rating.behaviourId)),
+        );
+
+        scoreSelf = lodash.isArray(selfRating) === true && selfRating.length >= 1 ? selfRating[0].rating : 0;
+        logger.debug(`Score for self ${scoreSelf}`);
+            
+        return {
+          behaviourIndex: bi + 1,
+          behaviour,
+          scoreSelf,
+          scoreAvgAll,
+          scoreAvgOthers,
+          individualScores,
+        };
+      } catch (calcError) {
+        logger.error(`Error calculating score "${calcError.message}"`, calcError);
+
+        return {
+          behaviourIndex: bi + 1,
+          behaviour,
+          scoreSelf: 0,
+          scoreAvgAll: 0,
+          scoreAvgOthers: 0,
+          individualScores: [],
+        };
+      }
+    });
+
+    const ratings = {
+      all: lodash.filter(reportData.ratings, rating => quality._id.equals(rating.qualityId) && rating.custom !== true),
+      self: lodash.filter(reportData.ratingsSelf, rating => quality._id.equals(rating.qualityId) && rating.custom !== true),
+      others: lodash.filter(reportData.ratingsExcludingSelf, rating => quality._id.equals(rating.qualityId) && rating.custom !== true),
+      low: reportData.lowratings(quality, 2),
+      high: lodash.filter(reportData.ratings, rating => quality._id.equals(rating.qualityId) && rating.custom !== true && rating.rating >= 3),
+      custom: lodash.filter(reportData.ratings, rating => quality._id.equals(rating.qualityId) && rating.custom === true),
+    };
+
+    const scoreByAssessor = (assessor) => {
+      logger.debug(`Calculating Score ${assessor.firstName}`);
+      const assessment = lodash.find(reportData.assessments, a => assessor._id.equals(a.assessor._id));
+      if (assessment) {
+        const assessorRatingsForQuality = lodash.filter(
+          assessment.ratings,
+          r => r.custom !== true && quality._id.equals(r.qualityId),
+        );
+
+        if (assessorRatingsForQuality) {
+          let totalForQuality = 0;
+          assessorRatingsForQuality.forEach((rating) => {
+            totalForQuality += rating.rating;
+          });
+
+          totalForQuality /= assessorRatingsForQuality.length;
+          logger.debug(`Calculating Score by assessor ${assessor.firstName} ${assessor.lastName} => ${totalForQuality}`);
+          return totalForQuality;
+        }
+      }
+
+      return -1;
+    };
+
+
+    return {
+      index: qi,
+      model: quality,
+      behaviours: quality.behaviours,
+      ordinal: quality.ordinal,
+      color: colorSchemes.primary[colorSchemes.primary.length % (qi === 0 ? 1 : qi)],
+      behaviourScores,
+      avg: {
+        self: lodash.sumBy(ratings.self, r => r.rating) / ratings.self.length,
+        all: lodash.sumBy(ratings.all, r => r.rating) / ratings.all.length,
+        others: lodash.sumBy(ratings.others, r => r.rating) / ratings.others.length,
       },
-      data: {
-        labels: qualitiesMap.map(q => q.model.title),
-        datasets: lodash.filter(
-          reportData.assessors,
-          (assessor) => {
-            return assessor._id.equals(reportData.delegate._id) === false;
-          },
-        ).map((assessor, ai) => {
-          logger.debug(`Creating Data Set Entry ${ai} -> ${assessor.firstName}`, colorSchemes);
-          return {
-            label: `Assessor ${ai + 1}`,
-            data: qualitiesMap.map(q => q.scoreByAssessor(assessor)),
-            backgroundColor: hex2RGBA(`#${colorSchemes.primary[ai]}`, 0.1),
-            lineTension: 0.1,
-            borderColor: `#${colorSchemes.primary[ai]}`,
-            borderWidth: 2,
-          };
-        }),
+      ratings,
+      scoreByAssessor: scoreByAssessor.bind(this),
+    };
+  });
+
+
+  chartResult = await DefaultRadarChart({
+    folder: chartsFolder,
+    file: `spider-chart-all-${reportData.survey._id}.png`,
+    canvas: true,
+    height: 800,
+    width: 800,
+    mime: 'application/pdf',
+    options: {
+      scale: {
+        // Hides the scale
+        display: true,
+        ticks: {
+          max: 5,
+          min: 0,
+          stepSize: 0.5
+        }
       },
-    }).then();
-    logger.debug(`Radar Chart All Created: ${chartResult.file} `);
-
-    chartResult = await DefaultRadarChart({
-      folder: chartsFolder,
-      file: `spider-chart-avg-${reportData.survey._id}.png`,
-      width: 800,
-      height: 800,
-      canvas: false,
-      mime: 'application/pdf',
-      options: {
-        scale: {
-          // Hides the scale
-          display: true,
-          fontSize: 16,
-        },
-        title: {
-          display: true,
-          text: 'Self vs Peers',
-        },
-        legend: {
-          labels: {
-            // This more specific font property overrides the global property
-            fontSize: 14,
-          },
-        },
+      title: {
+        display: true,
+        text: 'Individual Ratings',
       },
-      data: {
-        labels: qualitiesMap.map(q => q.model.title),
-        datasets: [{
-          label: 'Self',
-          data: qualitiesMap.map(q => q.scoreByAssessor(reportData.delegate)),
-          lineTension: 0.1,
-          backgroundColor: hex2RGBA(palette.primary.main, 0.1),
-          borderColor: palette.primary.main,
-          borderWidth: 2,
-        },
-        {
-          label: 'Peers Average',
-          labels: qualitiesMap.map(q => q.model.title),
-          data: qualitiesMap.map(q => q.avg.others),
-          backgroundColor: hex2RGBA(palette.secondary.main, 0.1),
-          lineTension: 0.1,
-          borderColor: palette.secondary.main,
-          borderWidth: 1,
-        }],
-      },
-    }).then();
-    logger.debug(`Radar Chart Avg Created: ${chartResult.file}`);
-
-
-    const barchartPromises = qualitiesMap.map((quality) => {
-
-      const datasets = reportData.assessors.map((assessor, ai) => {
-        const qualityratings = quality.ratings.others;
+    },
+    data: {
+      labels: qualitiesMap.map(q => q.model.title),
+      datasets: reportData.assessors.map((assessor, ai) => {
+        logger.debug(`Creating Data Set Entry ${ai} -> ${assessor.firstName}`, colorSchemes);
         return {
           label: `Assessor ${ai + 1}`,
-          data: lodash.sortBy(lodash.filter(qualityratings, rating => rating.assessor._id === assessor._id), 'ordinal').map(r => r.rating),
-          backgroundColor: hex2RGBA(`#${colorSchemes.primary[ai % colorSchemes.primary.length]}`, 0.4),
-          borderColor: hex2RGBA(`#${colorSchemes.primary[ai % colorSchemes.primary.length]}`, 1),
+          data: qualitiesMap.map(q => q.scoreByAssessor(assessor)),
+          backgroundColor: hex2RGBA(`#${colorSchemes.primary[ai]}`, 0.1),
+          lineTension: 0.1,
+          borderColor: `#${colorSchemes.primary[ai]}`,
           borderWidth: 2,
         };
-      });
+      }),
+    },
+  }).then();
+  logger.debug(`Radar Chart All Created: ${chartResult.file} `);
 
-      const selfQualityratings = lodash.filter(reportData.ratingsSelf, r => r.custom !== true && quality.model._id.equals(r.qualityId));
-
-      datasets.push({
-        data: selfQualityratings.map(rating => rating.rating),
-        label: 'Self',
-        type: 'line',
-        borderColor: reportData.meta.palette.primary.main,
-        lineTension: 0,
-      });
-
-
-      datasets.push({
-        data: quality.behaviourScores.map(behaviourScore => {
-          return behaviourScore.scoreAvgOthers
-        }),
-        label: 'Avg. Peers',
-        type: 'line',
-        borderColor: "#000",
-        lineTension: 0,
-      });
-
-
-      return DefaultBarChart({
-        folder: chartsFolder,
-        file: `bar-chart-${reportData.survey._id}-${quality.model._id}.png`,
-        width: 1200,
-        height: 400,
-        mime: 'application/pdf',
-        options: {
-          title: {
-            display: true,
-            text: quality.model.title,
-          },
+  chartResult = await DefaultRadarChart({
+    folder: chartsFolder,
+    file: `spider-chart-avg-${reportData.survey._id}.png`,
+    width: 800,
+    height: 800,
+    canvas: false,
+    mime: 'application/pdf',
+    options: {
+      scale: {
+        // Hides the scale
+        display: true,
+        fontSize: 16,
+        ticks: {
+          max: 5,
+          min: 0,
+          stepSize: 0.5
+        }
+      },
+      title: {
+        display: true,
+        text: 'Average for all ratings',
+      },
+      legend: {
+        labels: {
+          // This more specific font property overrides the global property
+          fontSize: 14,
         },
-        data: {
-          labels: quality.behaviours.map((b, bi) => `B${bi + 1}`),
-          datasets,
-        },
-      });
+      },
+    },
+    data: {
+      labels: qualitiesMap.map(q => q.model.title),
+      datasets: [
+      {
+        label: 'Average',
+        labels: qualitiesMap.map(q => q.model.title),
+        data: qualitiesMap.map(q => q.avg.others),
+        backgroundColor: hex2RGBA(palette.secondary.main, 0.1),
+        lineTension: 0.1,
+        borderColor: palette.secondary.main,
+        borderWidth: 1,
+      }],
+    },
+  }).then();
+  logger.debug(`Radar Chart Avg Created: ${chartResult.file}`);
+
+
+  const barchartPromises = qualitiesMap.map((quality) => {
+
+    const datasets = reportData.assessors.map((assessor, ai) => {
+      const qualityratings = quality.ratings.others;
+      return {
+        label: `Assessor ${ai + 1}`,
+        data: lodash.sortBy(lodash.filter(qualityratings, rating => rating.assessor._id === assessor._id), 'ordinal').map(r => r.rating),
+        backgroundColor: hex2RGBA(`#${colorSchemes.primary[ai % colorSchemes.primary.length]}`, 0.4),
+        borderColor: hex2RGBA(`#${colorSchemes.primary[ai % colorSchemes.primary.length]}`, 1),
+        borderWidth: 2,
+      };
+    });
+    
+    const selfQualityratings = lodash.filter(reportData.ratingsSelf, r => r.custom !== true && quality.model._id.equals(r.qualityId));
+        
+    datasets.push({
+      data: quality.behaviourScores.map(behaviourScore =>  {
+        return behaviourScore.scoreAvgOthers
+      }),
+      label: 'Avg.',
+      type: 'line',
+      borderColor: "#000",
+      lineTension: 0,
     });
 
-    const barchartResults = await Promise.all(barchartPromises).then();
-    barchartResults.map(result => logger.debug(`Bar Chart ${result.file} created`));
-
-
-    chartResult = await DefaultPieChart({
+  
+    return DefaultBarChart({
       folder: chartsFolder,
-      file: `overall-score-card-${reportData.survey._id}.png`,
-      width: 800,
-      height: 800,
+      file: `bar-chart-${reportData.survey._id}-${quality.model._id}.png`,
+      width: 1200,
+      height: 400,
       mime: 'application/pdf',
-      data: {
-        datasets: [{
-          data: [reportData.score, 100 - reportData.score],
-          backgroundColor: [
-            hex2RGBA(`${partner.themeOptions.palette.primary.main}`, 0.5),
-            'rgba(255,255,255,0)',
-          ],
-          borderColor: [
-            `${partner.themeOptions.palette.primary.main}`,
-            'rgba(255,255,255,0)',
-          ],
-          borderWidth: [
-            1, 0,
-          ],
-        }],
+      options: {
+        title: {
+          display: true,
+          text: quality.model.title,
+        },
       },
-    }).then();
-    logger.debug(`Overall Score Chart Created: ${chartResult.file}`, chartResult);
+      data: {
+        labels: quality.behaviours.map((b, bi) => `B${bi + 1}`),
+        datasets,
+      },
+    });
+  });
 
-    logger.debug(`PDF::Report Data Generated:\n ${JSON.stringify(reportData.assessors, null, 2)}`);
+  const barchartResults = await Promise.all(barchartPromises).then();
+  barchartResults.map(result => logger.debug(`Bar Chart ${result.file} created`));
 
-    Cache.setItem(reportData.key, reportData, 60);
 
-    return reportData;
-  } catch (unhandledException) {
-    logger.error(`An unhandled error occured processing the PDF ${unhandledException.message}`, unhandledException);
-    return null;
-  }
+  chartResult = await DefaultPieChart({
+    folder: chartsFolder,
+    file: `overall-score-card-${reportData.survey._id}.png`,
+    width: 800,
+    height: 800,
+    mime: 'application/pdf',
+    data: {
+      datasets: [{
+        data: [reportData.score, 100 - reportData.score],
+        backgroundColor: [
+          hex2RGBA(`${partner.themeOptions.palette.primary.main}`, 0.5),
+          'rgba(255,255,255,0)',
+        ],
+        borderColor: [
+          `${partner.themeOptions.palette.primary.main}`,
+          'rgba(255,255,255,0)',
+        ],
+        borderWidth: [
+          1, 0,
+        ],
+      }],
+    },
+  }).then();
+  logger.debug(`Overall Score Chart Created: ${chartResult.file}`, chartResult);
+
+  logger.debug(`PDF::Report Data Generated:\n ${JSON.stringify(reportData.assessors, null, 2)}`);
+
+  Cache.setItem(reportData.key, reportData, 60);
+
+  return reportData;
 };
 
 
 export const pdfmakedefinition = (data, partner, user) => {
   logger.debug('Generating PDF definition');
-
-  const scaleSegments = [];
+  
+  const scaleSegments = [   ];
   const isPlcReport = data.survey.surveyType === 'plc';
 
   data.scale.entries.forEach((scale) => {
-    if (scale.rating > 0) {
+    if(scale.rating > 0) {
       scaleSegments.push({ text: `${scale.rating} - ${scale.description}`, style: ['default'] });
-    }
+    }    
   });
 
   const { palette, includeAvatar = false } = data.meta;
@@ -551,19 +495,12 @@ export const pdfmakedefinition = (data, partner, user) => {
     },
   };
 
-  let plcTitle = 'Five Essentials of\n Purposeful Leadership';
-  let plcType = 'leadership'
-  if (data.survey.title.indexOf('Purposeful') >= 0 && data.survey.title.indexOf('Communication') > 0) {
-    plcTitle = 'Five Essentials of\n Purposeful Communication';
-    plcType = 'communication';
-  }
-
   const coverPage = [
     {
-      image: isPlcReport === false ? 'partnerLogoGreyScale' : 'partnerLogo', width: 190, style: ['centerAligned'], margin: [0, 0, 0, 20],
+      image:'partnerLogo', width: 190, style: ['centerAligned'], margin: [0, 0, 0, 20],
     },
-    { text: isPlcReport === true ? plcTitle : '360°\nLeadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
-    { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned'], margin: [0, 5] },
+    { text: '180°\nTeam Leadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },      
+    { text: `Executive Team (Exco)`, style: ['header', 'centerAligned'], margin: [0, 5] },
     includeAvatar === true ?
       {
         image: 'delegateAvatar', width: 120, style: ['centerAligned'], margin: [0, 15],
@@ -574,48 +511,54 @@ export const pdfmakedefinition = (data, partner, user) => {
     },
   ]
 
-
+  const valuesText = () => {
+    let text = '';
+    data.qualities.forEach((quality,qi)=>{ 
+      text=`${text}${quality.title}${qi === data.qualities.length - 2 ? ' and ' : ', ' }`;
+    });
+    text = text.trim();
+    text = text.substr(0, text.length - 1);
+    return text;
+  }
+  
   const introductionSection = [
     {
       text: '1. Introduction', newPage: 'before', style: ['header', 'primary'], pageBreak: 'before',
     },
     {
       text: [
-        `${data.delegate.firstName}, this report compares the results of your self-assessment with those of the colleagues who assessed you.\n\n`,
-        'These assessors include the person you report to and the nominated assessors from the list that you submitted. ',
-        isPlcReport === false ?
-          `You have been assessed against the ${data.organization.name} values and supporting leadership behaviours for all ${data.organization.name} employees.` :
-          `You have been assessed against the Five Essentials of Purposeful ${plcType === 'leadership' ? 'Leadership' : 'Communication'}.`,
+        `This report shows the aggregate and detailed results of the 180° Team Leadership Brand Assessment for the ${data.organization.name} ${data.delegateTeamName} team as completed by Senior Leadership team members.\n\n`,        
+        `You have been assessed against the ${data.organization.name} values of ${valuesText()} as well as the supporting leadership behaviours for all ${data.organization.name} employees as articulated in the Leadership Brand statement of:`
       ],
       style: ['default'],
     },
     {
-      text: `${data.leadershipBrand && data.leadershipBrand.description ? data.leadershipBrand.description.replace('\r', ' ') : 'No Brand Description'}`,
+      text: `${data.leadershipBrand.description.replace('\r', ' ')}`,
       style: ['default', 'quote', 'centerAligned'],
-      margin: [5, isPlcReport === true ? 30 : 5, 5, isPlcReport === true ? 30 : 5],
+      margin: [5, isPlcReport === true ? 30: 5, 5, isPlcReport === true ? 30: 5],
     },
     isPlcReport === false ? {
       text: [
-        `These values form the foundation of our desired culture at ${data.organization.name} and in order to build this culture, we as leaders must`,
-        `intentionally live the values by displaying the supporting behaviours. In this way, we will align our people to the purpose and strategy of ${data.organization.name}.`,
+        `These values form the foundation of the desired culture at ${data.organization.name}. In order to build this culture, leaders must`,
+        `intentionally live the values by displaying the supporting behaviours. This will enhance the alignment of the greater organisation to the purpose and strategy of ${data.organization.name}.`,
       ],
       style: ['default'],
     } : undefined,
     isPlcReport === true ? {
-      image: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/feplinfo-${plcType}.png`),
-      width: 400,
-      style: ['centerAligned'],
+      image: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/feplinfo.png`),
+      width: 400, 
+      style: ['centerAligned'], 
       margin: [0, 50, 0, 50]
     } :
-      {
-        text: '"You cannot manage what you cannot measure"',
-        style: ['default', 'quote', 'centerAligned'],
-        margin: [5, 5],
-      },
+    {
+      text: '"You cannot manage what you cannot measure"',
+      style: ['default', 'quote', 'centerAligned'],
+      margin: [5, 5],
+    },
     isPlcReport === false ? {
-      text: [`The ${isPlcReport === true ? 'Purposeful Leadership ' : 'TowerStone Leadership Brand 360°'} Assessment is a tool that provides insight to track your behavioural growth as you seek `,
-      `to align yourself with the ${data.organization.name} values. It is now your responsibility to use this feedback to improve your ability `,
-      `to (a) model these behaviours and (b) coach the next levels of leadership to align to the ${data.organization.name} values.  Please `,
+      text: [`The TowerStone Leadership Brand 180° Assessment is a tool that provides insight to track your  behavioural growth as you seek `,
+        `to align yourselves collectively with the ${data.organization.name} values. It is now your responsibility to use this feedback to improve your ability `,
+        `to (a) model these behaviours and (b) coach the next levels of leadership to align to the ${data.organization.name} values.  Please `,
         'consider the feedback carefully before completing the development plan that follows the assessment',
         ' results.'],
       style: ['default'],
@@ -623,11 +566,11 @@ export const pdfmakedefinition = (data, partner, user) => {
   ];
 
   const scaleSection = [
-    {
+    { 
       newPage: 'before',
-      text: '2. Rating Scale',
-      style: ['header', 'primary'],
-      margin: [0, 30, 0, 30]
+      text: '2. Rating Scale', 
+      style: ['header', 'primary'], 
+      margin: [0, 30, 0, 30] 
     },
     { text: 'The feedback that you have received is in the context of the following rating scale:', style: ['default'] },
     ...scaleSegments
@@ -637,7 +580,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     { text: '3. Qualities', style: ['header', 'primary'], pageBreak: 'before' },
     { text: 'The ratings for your different leadership behaviours have been combined to achieve an average rating for each value.', style: ['default'] },
     { text: '3.1 Individual Ratings', style: ['subheader', 'primary'] },
-    { text: 'The chart below indicates the ratings submitted by the individual assessors. Please pay attention to the graph scale as it is spread according to your average per quality and not scale from 1 to 5.', style: ['default'] },
+    { text: 'The chart below indicates the ratings submitted by the individual assessors.', style: ['default'] },
     {
       image: 'spiderChartAll',
       width: 400,
@@ -646,7 +589,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       margin: [0, 40],
     },
     { text: '3.2 Aggregate Ratings', style: ['subheader', 'primary'], pageBreak: 'before' },
-    { text: 'The chart below indicates the combined ratings from all assessors.  Please pay attention to the graph scale as it is spread according to your average per quality and not scale from 1 to 5.', style: ['default'] },
+    { text: 'The chart below indicates the combined ratings from all assessors.', style: ['default'] },
     {
       image: 'spiderChartAvg',
       width: 400,
@@ -681,8 +624,8 @@ export const pdfmakedefinition = (data, partner, user) => {
 
     if (lodash.isArray(lowratingsForQuality) === true && lowratingsForQuality.length > 0) {
       behaviourSection.push({ text: 'Start Behaviours', style: ['default', 'primary'], margin: [0, 10, 0, 5], bold: true });
-      behaviourSection.push({ text: 'You received low ratings for the behaviours below which means that your colleagues are not noticing these behaviours in the way you show up.', style: ['default'], margin: [0, 5] });
-      behaviourSection.push({ text: 'Pay special attention to developing and displaying these behaviours on a daily basis.\n\n', style: ['default'] });
+      behaviourSection.push({ text: 'You received low ratings for the behaviours below which means that your colleagues are not noticing these behaviours in the way you show up as a collective.', style: ['default'], margin: [0, 5] });
+      behaviourSection.push({ text: 'Pay special attention to developing and displaying these behaviours on a daily basis.\n\n',  style: ['default'] });
 
       quality.behaviours.forEach((behaviour) => {
         const lowratingsForBehaviour = lodash.filter(lowratingsForQuality, r => r.custom !== true && behaviour._id.equals(r.behaviourId));
@@ -707,13 +650,13 @@ export const pdfmakedefinition = (data, partner, user) => {
       });
     }
 
-    const customLowRatingsForQuality = lodash.filter(data.lowratings(quality, 5), rating => rating.custom && lodash.isEmpty(rating.behaviourText) === false);
-    if (customLowRatingsForQuality.length > 0) {
-      behaviourSection.push({ text: 'Additional Comments', style: ['default', 'primary'], bold: true, margin: [0, 0, 0, 10], pageBreak: 'before' });
-      behaviourSection.push({ text: `The assessors have provided some the following additional behaviour${customLowRatingsForQuality.length > 1 ? 's' : ''} and how it impacts others (them).`, style: ['default'], margin: [0, 0, 0, 15] });
-
+    const customLowRatingsForQuality = lodash.filter(data.lowratings(quality, 5), rating => rating.custom && lodash.isEmpty(rating.behaviourText) === false );
+    if(customLowRatingsForQuality.length > 0) {
+      behaviourSection.push({ text: 'Additional Comments', style: ['default', 'primary'], bold: true, margin: [0, 0, 0, 10],  pageBreak: 'before' });
+      behaviourSection.push({ text: `The assessors have provided some the following additional behaviour${customLowRatingsForQuality.length > 1 ? 's': ''} and how it impacts others (them).`, style: ['default'], margin: [0, 0, 0, 15] });
+      
       let customRowEntries = customLowRatingsForQuality.map(custom => [{ text: custom.behaviourText, style: ['default'] }, { text: custom.rating === 0 ? 'N/A' : custom.rating, style: ['default'] }, { text: custom.comment || '(No comment provided)', style: ['default'] }]);
-      if (customRowEntries.length > 0) {
+      if(customRowEntries.length > 0) {
 
       }
       behaviourSection.push({
@@ -749,15 +692,15 @@ export const pdfmakedefinition = (data, partner, user) => {
           ],
         },
       });
-    }
+    }              
   });
 
 
   const overallSection = [
     { text: '5 Overall', pageBreak: 'before', style: ['header', 'primary'] },
-    { text: 'This is the result of averaging the behaviours within all the values as per the ratings from each assessor, excluding your self-assessment.', style: ['default'] },
+    { text: 'This is the result of averaging the behaviours within all the values as per the ratings from each assessor.', style: ['default'] },
     {
-      text: ['Your overall score for this assessment is'], style: ['subheader'], alignment: 'center', margin: [0, 40],
+      text: [`Your overall score for living the ${data.organization.name} is`], style: ['subheader'], alignment: 'center', margin: [0, 40],
     },
     { text: `${data.score}%`, style: ['header', 'primary'], alignment: 'center' },
     {
@@ -779,7 +722,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     '1. How aligned are your expectations to the feedback that you received from your assessors, and why?',
     '2. How intentional are you about leading by example?',
     `3. How does this feedback help you in your leadership capacity to support the ${data.organization.name} strategic objectives?`,
-    `4. What is your contribution to ${data.organization.name}?`,
+    `4. What is your real contribution to ${data.organization.name}?`,
     '5. What can you do to build stronger trust relationships with others?',
   ].forEach((question) => {
     developmentPlan.push({ text: question, style: ['default'] });
@@ -791,18 +734,18 @@ export const pdfmakedefinition = (data, partner, user) => {
   const nextactions = [
     { text: '6.2 Next Actions', style: ['subheader', 'primary'], pageBreak: 'before' },
     {
-      text: ['Your development as a brand ambassador requires that you commit to specific actions that will make our values more visible in your ',
+      text: ['Your development as brand ambassadors requires that you commit to specific actions that will make our values more visible in your ',
         `behaviour so that your colleagues see you modelling the ${data.organization.name} Leadership Brand.`],
       style: ['default'],
     },
     // { text: 'Start', style: ['subheader', 'primary'] },
     // { text: 'These are the leadership behaviours your assessors have said you are not currently displaying:', style: ['default'] },
 
-    { text: 'Use the table below to plan the actions you will put in place to address the feedback you received:', style: ['default'], margin: [0, 15] },
+    { text: 'Use the table below to plan the actions you will put in place to address the feedback that you received:', style: ['default'], margin: [0, 15] },
     {
       table: {
-        // headers are automatically repeated if the table spans over multiple pages
-        // you can declare how many rows should be treated as headers
+      // headers are automatically repeated if the table spans over multiple pages
+      // you can declare how many rows should be treated as headers
         headerRows: 1,
         widths: ['*', 150, 150],
         layout: 'towerstone',
@@ -835,9 +778,9 @@ export const pdfmakedefinition = (data, partner, user) => {
 
   const acceptance = [
     { text: '7 Acceptance and Commitment', style: ['subheader', 'primary'], pageBreak: 'before' },
-    { text: 'I accept and commit to addressing the feedback presented in this assessment by taking the actions listed within the agreed timeframes.', style: ['default'], margin: [0, 20] },
-    { text: 'Signed: ................................     Date: ...................................................... ', margin: [0, 20], style: ['default'] },
-    { text: 'Manager: ...............................     Date: ...................................................... ', margin: [0, 20], style: ['default'] },
+    { text: 'We accept and commit to addressing the feedback presented in this assessment by taking the actions listed within the agreed timeframes.', style: ['default'],  margin: [0, 20] },
+    { text: 'Signed: ................................     Date: ...................................................... ', margin: [0, 50], style: ['default'] },
+    { text: `(On behalf of ${data.delegateTeamName})`, margin: [0, 20], style: ['default'] },
   ];
 
   const facilitatornotes = [
@@ -850,31 +793,31 @@ export const pdfmakedefinition = (data, partner, user) => {
 
 
   greyscalePng(
-    `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`,
+    `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`, 
     `${APP_DATA_ROOT}/organization/${data.organization._id}/greyscale_${data.organization.logo}`
-  );
+    );
 
 
   const partnerGreyScaleLogoPath = `${APP_DATA_ROOT}/themes/${partner.key}/images/greyscale_logo.png`;
-
-  if (fs.existsSync(partnerGreyScaleLogoPath) === false) {
+  
+  if(fs.existsSync(partnerGreyScaleLogoPath) === false) {
     greyscalePng(
       `${APP_DATA_ROOT}/themes/${partner.key}/images/logo.png`,
       partnerGreyScaleLogoPath
-    );
+    );  
   }
 
   return {
-    filename: `${isPlcReport === true ? 'Purposeful' : '360° '} Leadership Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}.pdf`,
+    filename: `180° Leadership Assessment Report - ${data.delegateTeamName}.pdf`,
     info: {
-      title: `${isPlcReport === true ? 'Purposeful' : '360° '} LeadershipAssessment Report - ${data.delegate.firstName} ${data.delegate.lastName}`,
+      title: `180° Leadership Assessment Report - ${data.delegateTeamName}`,
       author: partner.name,
-      subject: isPlcReport === true ? 'Purposeful Leadership Company - Purposeful Leadership Assessment Report' : 'TowerStone Leadership Centre - 360° Leadership Assessment Report',
+      subject: 'TowerStone Leadership Centre - 180° Leadership Assessment Report',
       keywords: 'Leadership Training Personal Growth',
     },
     content: [
-      ...coverPage,
-      ...introductionSection,
+      ...coverPage,      
+      ...introductionSection,      
       ...scaleSection,
       ...qualitiesSection,
       ...behaviourSection,
@@ -907,7 +850,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       if (currentPage > 1) {
         return [
           {
-            image: 'partnerAvatar', alignment: 'right', width: 25, margin: [0, 5, 15, 0],
+            image: 'partnerAvatar', alignment: 'right', width: 25, margin: [0, 15, 15, 0],
           },
         ];
       }
@@ -919,14 +862,14 @@ export const pdfmakedefinition = (data, partner, user) => {
         return [
           {
             text: [
-              isPlcReport === true ? '©Purposeful Leadership Company' : '©TowerStone Engage',
+              '©TowerStone Engage',
             ],
             alignment: 'center',
             fontSize: 8,
             margin: [20, 0, 20, 0],
           },
           {
-            text: `${data.organization.name}: ${isPlcReport === true ? `${plcType === 'leadership' ? 'The Five Essentials of Purposeful Leadership' : 'The Five Essentials of Purposeful Communication'}` : 'Individual Leadership Brand 360°'} Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
+            text: `${data.organization.name}: '180° Team Leadership Brand Assessment for the ${data.delegateTeamName} team - ${data.meta.when.format('DD MMMM YYYY')}`,
             fontSize: 8,
             alignment: 'center',
             margin: [5, 5],
