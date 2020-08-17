@@ -51,19 +51,19 @@ input LasecQuoteItemInput {
   quote_option_id: String
 }
 
-input LasecQuoteItemInput {
-  id: ObjID
-  price: Float
-  discount: Float
-  subtotal: Float
-  totalVATExclusive: Float
-  totalVATInclusive: Float
-  VATRate: Float
-  GP: Float
-  MUP: Float
-  note: String
-  content: Any
-}
+# input LasecQuoteItemInput {
+#   id: ObjID
+#   price: Float
+#   discount: Float
+#   subtotal: Float
+#   totalVATExclusive: Float
+#   totalVATInclusive: Float
+#   VATRate: Float
+#   GP: Float
+#   MUP: Float
+#   note: String
+#   content: Any
+# }
 
 type LasecQuoteHeader {
   id: ObjID
@@ -725,10 +725,7 @@ extend type Mutation {
     quote_id: String!
     input: LasecQuoteHeaderInput
   ): LasecQuoteHeader
-  LasecUpdateQuoteStatus(
-    quote_id: String!
-    input: LasecQuoteStatusUpdate
-  ): LasecQuoteStatusUpdateResult
+  LasecUpdateQuoteStatus(quote_id: String! input: LasecQuoteStatusUpdate): LasecQuoteStatusUpdateResult
   LasecCreateClientEnquiry(customerId: String!): LasecCustomerEnquiry
   SynchronizeNextActionsToOutloook(nextActions: Any!): OutlookSyncResponse
   LasecMarkNextActionAsActioned(id: String!): SimpleResponse
@@ -775,6 +772,8 @@ extend type Mutation {
 
   LasecSaveQuoteComment(quoteId: String!, comment: String!, commentId: String): SimpleResponse
   LasecDeleteQuoteComment(commentId: String): SimpleResponse
+
+  LasecUpdateQuote(item_id: String, quote_type: String, rep_code: String, client_id: String, valid_date: String): SimpleResponse
 
   LasecUpdateQuoteLineItems(lineItemIds: [String], gp: Float, mup: Float, agentCom: Float, freight: Float): Quote
 }

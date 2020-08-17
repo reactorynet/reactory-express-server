@@ -68,7 +68,8 @@ import {
   saveQuoteComment,
   getQuoteComments,
   deleteQuoteComment,
-  updateQuoteLineItems
+  updateQuoteLineItems,
+  updateQuote
 } from './Helpers';
 
 
@@ -173,8 +174,8 @@ export default {
     id: ({ id, _id }) => (id || _id),
     product: async (line_item: LasecQuoteItem): Promise<LasecProduct> => {
       logger.debug('Resolving Product for Line Item', line_item)
-      if(line_item.meta.source.product_id) {
-        let result = await getProductById({ productId: line_item.meta.source.product_id} ).then()
+      if (line_item.meta.source.product_id) {
+        let result = await getProductById({ productId: line_item.meta.source.product_id }).then()
         return result;
       }
     }
@@ -507,12 +508,12 @@ export default {
       return quote.meta || {}
     },
     active_option: (quote: LasecQuote): String => {
-      if(typeof quote.active_option === 'string') {
+      if (typeof quote.active_option === 'string') {
         return quote.active_option
       }
 
-      if(quote.meta && quote.meta.source && quote.meta.source.quote_options) {
-        if(isArray(quote.meta.source.quote_options) === true && quote.meta.source.quote_options.length > 0) {
+      if (quote.meta && quote.meta.source && quote.meta.source.quote_options) {
+        if (isArray(quote.meta.source.quote_options) === true && quote.meta.source.quote_options.length > 0) {
           return quote.meta.source.quote_options[0]
         }
       }
@@ -522,9 +523,9 @@ export default {
     options: async (quote: LasecQuote): Promise<LasecQuoteOption[]> => {
       let result: LasecQuoteOption[] = [];
 
-      if(quote.options && isArray(quote.options) === true) {
+      if (quote.options && isArray(quote.options) === true) {
         result = quote.options.map((option: String | LasecQuoteOption): LasecQuoteOption => {
-          if(typeof option === 'string') {
+          if (typeof option === 'string') {
             return {
               id: option,
               quote_id: quote.id,
@@ -535,7 +536,7 @@ export default {
           } else return option as LasecQuoteOption;
         })
       } else {
-        if(quote.meta && quote.meta.source && quote.meta.source.quote_option_ids) {
+        if (quote.meta && quote.meta.source && quote.meta.source.quote_option_ids) {
 
           result = quote.meta.source.quote_option_ids.map((id) => ({
             id,
@@ -790,6 +791,11 @@ export default {
         message: `Quote status updated${_message}`
       };
     },
+
+    LasecUpdateQuote: async (parent, args) => {
+      return updateQuote(args);
+    },
+
     LasecCreateClientEnquiry: async (parent, params) => {
       const { customerId: String } = params;
 
@@ -1012,14 +1018,13 @@ export default {
     LasecUpdateQuoteLineItems: async (obj, args) => {
       return updateQuoteLineItems(args);
     },
-
     LasecDuplicateQuoteOption: async (obj: any, params: LasecDuplicateQuoteOptionArgs): Promise<LasecQuoteOption> => {
       let result: LasecQuoteOption = null;
-      const { quote_id, option_id} = params
+      const { quote_id, option_id } = params
 
       return result;
     },
-    LasecQuoteCreateSectionHeader: async (obj: any, params: LasecCreateSectionHeaderArgs ): Promise<LasecQuoteHeader> => {
+    LasecQuoteCreateSectionHeader: async (obj: any, params: LasecCreateSectionHeaderArgs): Promise<LasecQuoteHeader> => {
       let result: LasecQuoteHeader = null;
       const { quote_id, header } = params
 
@@ -1044,7 +1049,7 @@ export default {
 
       return result;
     },
-    LasecQuoteItemUpdate: async(obj: any, params: any): Promise<LasecQuoteItem> => {
+    LasecQuoteItemUpdate: async (obj: any, params: any): Promise<LasecQuoteItem> => {
       let result: LasecQuoteItem = null;
 
       return result;

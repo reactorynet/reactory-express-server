@@ -1126,7 +1126,7 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: String
         {
           key: '[].quoteId', transform: () => (code)
         }
-      ],      
+      ],
       'items.[].code': '[].code',
       'items.[].description': '[].title',
       'items.[].quantity': '[].quantity',
@@ -2549,6 +2549,36 @@ export const deleteQuoteComment = async (params) => {
       message: `Error deleting comment. ${error}`
     }
   }
+}
+
+export const updateQuote = async (params) => {
+
+  logger.debug(`UPDATING QUOTE:: ${JSON.stringify(params)}`);
+
+  try {
+    const { item_id, quote_type, rep_code, client_id, valid_date } = params;
+
+    const updateParams = {
+      item_id,
+      values: {
+        quote_type,
+        rep_code,
+        client_id,
+        valid_date
+      }
+    }
+
+    const updateResult = await lasecApi.Quotes.updateQuote(updateParams);
+
+    logger.debug(`UPDATING QUOTE RESULT:: ${JSON.stringify(updateResult)}`);
+
+    const quote = await getLasecQuoteById(params.quoteId).then();
+    return quote;
+
+  } catch (error) {
+    throw new ApiError(`Error updating quote lineitems. ${error}`);
+  }
+
 }
 
 export const updateQuoteLineItems = async (params) => {

@@ -254,10 +254,10 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
       }
       case 404: {
         throw new RecordNotFoundError(`Could not fetch record for at ${absoluteUrl}`, 'LASEC_API', {
-          url, 
-          fethArguments, 
+          url,
+          fethArguments,
           mustAuthenticate,
-          failed, 
+          failed,
           attempt
         })
       }
@@ -924,9 +924,9 @@ const Api = {
         delete filter.quote_id;
       }
 
-      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, { 
-        params: { 
-          ...defaultParams, 
+      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, {
+        params: {
+          ...defaultParams,
           filter
         } }).then();
       const {
@@ -1085,6 +1085,28 @@ const Api = {
         return null;
       }
     },
+
+    updateQuote: async (params) => {
+      try {
+        // expected params
+        // {"item_id":"2008-335010","values":{"quote_type":"Normal"}}
+        logger.debug(`CALLING WITH PARAMS:: ${JSON.stringify(params)}`);
+        const url = `api/quote/${params.item_id}`;
+        const apiResponse = await POST(url, { ...params });
+        logger.debug(`UPDATE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
+        const { status } = apiResponse;
+
+        if (status === 'success') {
+          return apiResponse;
+        }
+
+      } catch (lasecApiError) {
+        logger.error(`Error updating quote:: ${JSON.stringify(lasecApiError)}`).then();
+        return null;
+      }
+    },
+
     updateQuoteItems: async (params) => {
       try {
         // expected params
