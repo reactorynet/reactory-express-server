@@ -11,6 +11,168 @@ export interface Meta {
   owner: String;
 }
 
+export interface SimpleResponse {
+  sucess: String
+  message: String
+}
+
+export interface DashboardParams extends LasecDashboardSearchParams { };
+
+export interface ProductDashboardParams extends LasecProductDashboardParams { };
+
+export interface LasecCreateSectionHeaderArgs {
+  [key: string]: any
+}
+
+
+export interface LasecQuoteUpdateSectionHeaderArgs {
+  quote_id: String,
+  header_id: String,
+  header: String
+}
+export interface LasecDeleteSectionHeaderArgs {
+  quote_id: String,
+  header_id: String
+}
+
+export interface LasecDuplicateQuoteOptionArgs {
+  quote_id: String,
+  option_id: String
+}
+
+export interface LasecCreateSectionHeaderArgs {
+  quote_id: String,
+  header: String
+}
+
+export interface LasecAddProductToQuoteArgs {
+  quote_id: String
+  product_id: String
+  option_id: String
+}
+
+export interface LasecQuoteItemUpdate {
+  quote_id: String
+  quote_item_id: String
+  quote_item: LasecQuoteItem
+}
+
+export interface LasecQuoteOption {
+  [key: string]: any
+  id: String
+  quote_option_id: String
+  quote_id: String
+  option_name?: String
+  incoterm?: String
+  named_place?: String
+  transport_mode?: String
+  currency?: String
+  active?: Boolean
+  lineItems?: [LasecQuoteItem]
+}
+
+export interface LasecQuoteHeader {
+  [key: string]: any
+}
+
+export interface LasecProduct {
+  [key: string]: any
+  id: String
+  name: String
+  code: String
+  description: String
+  qtyAvailable: number
+  qtyOnHand: number
+  qtyOnOrder: number
+  unitOfMeasure: String
+  price: number
+  priceAdditionalInfo: String
+  image: String
+  onSyspro: String
+  landedPrice: number
+  wh10CostPrice: number
+  threeMonthAvePrice: number
+  listPrice: number
+  productPricing: any[]
+  tenders: any[]
+  contracts: any[]
+  buyer: String
+  buyerEmail: String
+  planner: String
+  plannerEmail: String
+  isHazardous: String
+  siteEvaluationRequired: String
+  packedLength: number
+  packedWidth: number
+  packedHeight: number
+  packedVolume: number
+  packedWeight: number
+  numberOfSalesOrders: number
+  numberOfPurchaseOrders: number
+  supplier: String
+  model: String
+  shipmentSize: number
+
+  exWorksFactor: number
+  productClass: String
+  tariffCode: String
+  leadTime: String
+  validPriceUntil: String
+  lastUpdated: String
+  lastUpdatedBy: String
+  lastOrdered: String
+  lastReceived: String
+  supplyCurrency: String
+  listCurrency: String
+
+  freightFactor: String
+  clearingFactor: String
+  actualCostwh10: String
+  actualCostwh20: String
+  actualCostwh21: String
+  actualCostwh31: String
+  supplierUnitPrice: String
+  percDiscount: String
+  discountPrice: String
+  freightPrice: String
+  exWorksPrice: String
+  craftingFOC: String
+  netFOB: String
+  percDuty: String
+  clearance: String
+  landedCost: String
+  markup: String
+  sellingPrice: String
+
+  onSpecial: Boolean
+  currencyCode: String
+  specialPrice: number
+
+  notes: String
+}
+
+export interface LasecQuoteItem {
+  [key: string]: any
+  quote_item_id: String
+  code: String
+  title: String
+  productClass: String
+  productClassDescription: String
+  quantity: Number
+  price: Number
+  discount: Number
+  subtotal: Number
+  totalVATExclusive: Number
+  totalVATInclusive: Number
+  VATRate: Number
+  GP: Number
+  header: LasecQuoteHeader
+  note: String
+  quote_option_id: String
+  content: any
+  product: LasecProduct
+}
+
 export interface Quote {
   id: string
   code: string

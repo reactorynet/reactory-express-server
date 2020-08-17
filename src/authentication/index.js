@@ -16,6 +16,7 @@ import logger from '../logging';
 import graph from '../azure/graph';
 import { createUserForOrganization, updateUserProfileImage } from '../application/admin/User';
 import amq from '../amq';
+import { urlencoded } from 'body-parser';
 
 const jwtSecret = process.env.SECRET_SAUCE;
 
@@ -175,7 +176,7 @@ class AuthConfig {
             'azuread-openidconnect',
             {
               response: res,
-              failureRedirect: '/auth/microsoft/openid/failed',
+              failureRedirect: `/auth/microsoft/openid/failed?x-client-key=${ req.params.clientKey}`,
               failureFlash: false,
             },
           )(req, res, next);
@@ -185,6 +186,14 @@ class AuthConfig {
           res.redirect(`${global.partner.siteUrl}/?auth_token=${token}`);
         },
       );
+
+      app.get('/auth/microsoft/openid/failed', async (req, res, next) => {
+        
+        global.partner = await ReactoryClient.findOne({ key: req.query['x-client-key'] }).then();
+        logger.debug(`Received Failed Microsoft Login for ${req.query['x-client-key']}`);
+
+        res.redirect(`${global.partner.siteUrl}/login?auth_token=&message=Could not login via MS`);
+      })
     };
 
     static JwtOptions = {

@@ -11,10 +11,33 @@ type LasecCustomer {
 type LasecQuoteItem {
   id: ObjID
   quote_item_id: String
+  product_id: String
   code: String
   title: String
   productClass: String
   productClassDescription: String
+  quantity: Float
+  price: Float
+  unit_price: Float
+  discount: Float
+  subtotal: Float
+  totalVATExclusive: Float
+  totalVATInclusive: Float
+  product: Product
+  VATRate: Float
+  GP: Float
+  header: LasecQuoteHeader
+  note: String
+  quote_option_id: String  
+  content: Any
+  meta: Any
+}
+
+input LasecQuoteItemInput {
+  id: ObjID
+  quote_item_id: String
+  code: String
+  title: String
   quantity: Float
   price: Float
   discount: Float
@@ -23,9 +46,9 @@ type LasecQuoteItem {
   totalVATInclusive: Float
   VATRate: Float
   GP: Float
-  header: LasecQuoteHeader
+  header_id: String 
   note: String
-  content: Any
+  quote_option_id: String
 }
 
 type LasecQuoteHeader {
@@ -69,6 +92,19 @@ type QuoteTotals {
   actualGP: Float
 }
 
+type LasecQuoteOption {
+  id: String
+  quote_option_id: String
+  quote_id: String
+  option_name: String
+  incoterm: String
+  named_place: String
+  transport_mode: String
+  currency: String
+  active: Boolean
+  lineItems: [LasecQuoteItem]
+}
+
 type Quote {
   id: String
   code: String
@@ -79,7 +115,7 @@ type Quote {
   salesRep: User
   salesTeam: Team
   allowedStatus: [String]
-  customer: User
+  customer: User  
   company: Organization
   totals: QuoteTotals
   totalVATExclusive: Float
@@ -91,6 +127,8 @@ type Quote {
   modified: Date
   expirationDate: Date
   note: String
+  active_option: String
+  options: [LasecQuoteOption]
   headers: [LasecQuoteHeader]
   lineItems: [LasecQuoteItem]
   timeline: [QuoteTimeLine]
@@ -572,7 +610,8 @@ extend type Query {
   LasecGetProductDashboard(
     dashparams: LasecQuoteQueryInput
   ): LasecProductDashboard
-  LasecGetQuoteById(quote_id: String!): Quote
+
+  LasecGetQuoteById(quote_id: String!, option_id: String): Quote
 
   LasecGetQuoteComments(quote_id: String!): [LasecQuoteComment]
 
@@ -705,6 +744,20 @@ extend type Mutation {
   LasecCreateNewQuoteForClient(
     newQuoteInput: LasecNewQuoteInput
   ): LasecNewQuoteResponse
+
+  LasecDuplicateQuoteOption(quote_id: String, option_id: String): LasecQuoteOption
+
+  LasecQuoteCreateSectionHeader(quote_id: String, header: String): LasecQuoteHeader
+
+  LasecQuoteUpdateSectionHeader(quote_id: String, header_id: String, header: String): LasecQuoteHeader
+
+  LasecQuoteDeleteSectionHeader(quote_id: String, header_id: String): SimpleResponse
+
+  LasecQuoteAddProductToQuote(quote_id: String, product_id: String, option_id: String): LasecQuoteItem
+
+  LasecQuoteItemUpdate(quote_id: String, quote_item_id: String, qoute_item_input: LasecQuoteItemInput): LasecQuoteItem
+
+  LasecQuoteDeleteQuoteItem(quote_item_id: String): SimpleResponse
 
   LasecSaveQuoteComment(quoteId: String!, comment: String!, commentId: String): SimpleResponse
 }

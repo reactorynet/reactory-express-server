@@ -916,8 +916,19 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    getLineItems: async (code) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { quote_id: code } } }).then();
+    getLineItems: async (code, active_option) => {
+
+      let filter = { quote_id: code }
+      if(typeof active_option === 'string') {
+        filter.quote_option_id = active_option
+        delete filter.quote_id;
+      }
+
+      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, { 
+        params: { 
+          ...defaultParams, 
+          filter
+        } }).then();
       const {
         status, payload,
       } = apiResponse;

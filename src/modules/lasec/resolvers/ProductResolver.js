@@ -310,7 +310,7 @@ const getProducts = async (params) => {
   return result;
 }
 
-const getProductById = async (params) => {
+export const getProductById = async (params) => {
   const { productId } = params;
   const productResult = await lasecApi.Products.list({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
   

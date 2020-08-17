@@ -224,7 +224,7 @@ export const getTargets = async (params: LasecDashboardSearchParams) => {
  * Finds and / or synchronizes a record
  * @param {String} quote_id
  */
-export const getLasecQuoteById = async (quote_id) => {
+export const getLasecQuoteById = async (quote_id: string) => {
   try {
     const owner = global.partner.key;
     let quote = await synchronizeQuote(quote_id, owner, null, true).then();
@@ -1103,16 +1103,17 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
 
 }
 
-export const lasecGetQuoteLineItems = async (code: string) => {
-  const keyhash = `quote.${code}.lineitems`;
+export const lasecGetQuoteLineItems = async (code: string, active_option: String = 'all') => {
+  const keyhash = `quote.${code}-${active_option}.lineitems`;
 
   let cached = await getCacheItem(keyhash);
   if (cached) logger.debug(`Found Cached Line Items For Quote: ${code}`);
   if (lodash.isNil(cached) === true) {
-    const lineItems = await lasecApi.Quotes.getLineItems(code).then();
+    const lineItems = await lasecApi.Quotes.getLineItems(code, active_option).then();
     logger.debug(`Found line items for quote ${code}`, lineItems);
 
     cached = om.merge(lineItems, {
+      'items.[]': '[].meta.source',
       'items.[].id': [
         '[].quote_item_id',
         '[].meta.reference',
@@ -1123,7 +1124,7 @@ export const lasecGetQuoteLineItems = async (code: string) => {
         {
           key: '[].quoteId', transform: () => (code)
         }
-      ],
+      ],      
       'items.[].code': '[].code',
       'items.[].description': '[].title',
       'items.[].quantity': '[].quantity',
