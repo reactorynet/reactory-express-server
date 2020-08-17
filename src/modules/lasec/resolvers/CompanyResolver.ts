@@ -40,11 +40,11 @@ const getClients = async (params) => {
   _filter[filterBy] = filter || search;
 
   if(typeof repCode === 'string') {
-    _filter.sales_team_id = repCode; 
+    _filter.sales_team_id = repCode;
   }
 
   if(typeof repCode === 'array' && repCode.length > 0) {
-    _filter.sales_team_ids = repCode; 
+    _filter.sales_team_ids = repCode;
   }
 
   if (isString(search) === false || search.length < 3 && filter === undefined) return {
@@ -609,7 +609,22 @@ const getCustomerJobTypes = async () => {
 }
 
 const getLasecSalesTeamsForLookup = async () => {
-  const salesTeamsResults = await lasecApi.get(lasecApi.URIS.groups, undefined).then();
+  logger.debug(`GETTING SALES TEAMS`);
+  // const salesTeamsResults = await lasecApi.get(lasecApi.URIS.groups, undefined).then();
+  const teamsPayload = await LasecAPI.Teams.list().then();
+  logger.debug(`SALES TEAM PAYLOAD :: ${JSON.stringify(teamsPayload)}`);
+  if (teamsPayload.status === "success") {
+    const { items } = teamsPayload.payload || [];
+    logger.debug(`SALES TEAM:: ${JSON.stringify(items[0])}`);
+    const teams = items.map((sales_team) => {
+      return {
+        id: sales_team.id,
+        name: sales_team.sales_team_id,
+      };
+    });
+
+    return teams;
+  }
   logger.debug('SalesTeamsLookupResult >> ', salesTeamsResults);
 }
 
@@ -1604,6 +1619,11 @@ export default {
     },
     LasecGetCustomerDocuments: async (object, args) => {
       return getCustomerDocuments(args);
+    },
+    LasecSalesTeams: async (obj, args) => {
+      // return getLasecSalesTeamsForLookup();
+      // return getRepCodesForFilter();
+      return getRepCodesForLoggedInUser();
     },
     LasecGetCustomerFilterLookup: async (object, args) => {
       switch (args.filterBy) {

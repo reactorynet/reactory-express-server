@@ -1,3 +1,4 @@
+// import { updateQuoteLineItems } from './Helpers';
 
 import om from 'object-mapper';
 import moment, { Moment } from 'moment';
@@ -33,6 +34,7 @@ import {
 import CONSTANTS, { LOOKUPS, OBJECT_MAPS } from '../constants';
 import { Reactory } from 'types/reactory';
 import { argsToArgsConfig } from 'graphql/type/definition';
+import Api from '@reactory/server-modules/lasec/api';
 
 const lookups = CONSTANTS.LOOKUPS;
 
@@ -78,8 +80,8 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
     _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
   }
 
-  logger.debug(`SOURCE ${JSON.stringify(_source)}`);
-  logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
+  // logger.debug(`SOURCE ${JSON.stringify(_source)}`);
+  // logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
 
   if (map === true && _source) {
     const _map = {
@@ -1124,7 +1126,7 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: String
         {
           key: '[].quoteId', transform: () => (code)
         }
-      ],      
+      ],
       'items.[].code': '[].code',
       'items.[].description': '[].title',
       'items.[].quantity': '[].quantity',
@@ -2531,5 +2533,92 @@ export const saveQuoteComment = async (params) => {
     throw new ApiError(`Error updating comment. ${error}`);
   }
 }
+
+export const deleteQuoteComment = async (params) => {
+  try {
+    await LasecQuoteComment.findByIdAndRemove(params.commentId);
+
+    return {
+      success: true,
+      message: 'Comment successfully deleted.'
+    }
+
+  } catch (error) {
+    return {
+      success: false,
+      message: `Error deleting comment. ${error}`
+    }
+  }
+}
+
+export const updateQuote = async (params) => {
+
+  logger.debug(`UPDATING QUOTE:: ${JSON.stringify(params)}`);
+
+  try {
+    const { item_id, quote_type, rep_code, client_id, valid_date } = params;
+
+    const updateParams = {
+      item_id,
+      values: {
+        quote_type,
+        rep_code,
+        client_id,
+        valid_date
+      }
+    }
+
+    const updateResult = await lasecApi.Quotes.updateQuote(updateParams);
+
+    logger.debug(`UPDATING QUOTE RESULT:: ${JSON.stringify(updateResult)}`);
+
+    const quote = await getLasecQuoteById(params.quoteId).then();
+    return quote;
+
+  } catch (error) {
+    throw new ApiError(`Error updating quote lineitems. ${error}`);
+  }
+
+}
+
+export const updateQuoteLineItems = async (params) => {
+
+  logger.debug(`UPDATING QUOTE LINE ITEMS:: ${JSON.stringify(params)}`);
+
+  try {
+    const { lineItemIds, gp, mup, agentCom, freight } = params;
+
+    await Promise.all(lineItemIds.map((id: string) => {
+      const updateParams = {
+        item_id: id,
+        values: {
+          // quantity: 1,
+          // unit_price_cents: 1,
+          // total_price_cents: 1
+          gp_percent: gp,
+          mark_up: gp,
+          agent_commission: gp,
+          freight: freight     //// FREIGHT IS A SEPERATE LINE ITEM - UPDATE unit_price_cents AND SUBMIT
+        }
+      }
+      return lasecApi.Quotes.updateQuoteItems(updateParams);
+    }))
+      .then(async result => {
+        logger.debug(`All promises complete :: ${JSON.stringify(result)}`);
+        const quote = await getLasecQuoteById(params.quoteId).then();
+        return quote;
+      })
+      .catch(error => {
+        logger.debug(`Error running all promises:: ${JSON.stringify(error)}`);
+        throw new ApiError(`Error running all promises :: ${error}`)
+      });
+
+  } catch (error) {
+    throw new ApiError(`Error updating quote lineitems. ${error}`);
+  }
+
+
+}
+
 
 
