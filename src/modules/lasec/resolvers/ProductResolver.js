@@ -10,7 +10,6 @@ import lodash, { isArray, isNil, isString } from 'lodash';
 import { getCacheItem, setCacheItem } from '../models';
 import { clientFor, execql } from '@reactory/server-core/graph/client';
 import gql from 'graphql-tag';
-import { ENVIRONMENT } from 'types/constants';
 import emails from '@reactory/server-core/emails';
 import Hash from '@reactory/server-core/utils/hash';
 import PageTemplateConfigForm from 'data/forms/boxcommerce/pageTemplateConfig';

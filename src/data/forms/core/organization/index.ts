@@ -1,7 +1,7 @@
 import { defaultFormProps } from '../../defs';
 import OrganizationSchema from './Organization';
 import { DefaultUiSchema, DetailedUiSchema } from './uiSchema';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 const organizationFieldsSnippted = `
 id

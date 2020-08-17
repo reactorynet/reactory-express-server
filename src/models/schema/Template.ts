@@ -3,7 +3,7 @@ import mongoose, { MongooseDocument } from 'mongoose';
 import * as lodash from 'lodash';
 import { readFileSync, existsSync } from 'fs';
 import logger from '../../logging';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 import { RecordNotFoundError } from 'exceptions';
 import { Template } from 'models';
 

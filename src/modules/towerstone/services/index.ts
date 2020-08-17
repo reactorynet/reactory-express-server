@@ -4,7 +4,7 @@ import TowerStoneEmailService from './TowerStoneEmailService';
 import TowerStoneSurveyService from './TowerStoneSurveyService';
 
 import { FormNameSpace } from "../constants";
-import { Reactory } from "types/reactory";
+import { Reactory } from "@reactory/server-core/types/reactory";
 import { TowerStone } from "../towerstone";
 //custom services to be expressed here
 

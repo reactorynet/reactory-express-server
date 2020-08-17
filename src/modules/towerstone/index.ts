@@ -4,7 +4,7 @@ import workflows from './workflow';
 import forms from './forms';
 import services from './services';
 import pdfs from './pdf';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 export const TowerStoneModule: Reactory.IReactoryModule = {
   nameSpace: 'towerstone',

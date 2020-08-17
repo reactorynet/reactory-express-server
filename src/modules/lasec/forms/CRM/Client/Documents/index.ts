@@ -5,7 +5,7 @@ import { DocumentFormSchema } from './shared/DocumentFormSchema';
 import { ViewSchema, ViewUiSchema, ConfirmUiSchema, LasecCRMViewClientDocuments } from './ViewClientDocuments';
 import { EditSchema, EditUiSchema, LasecCRMEditClientDocuments } from './EditClientDocuments';
 import { NewSchema, NewUiSchema, LasecCRMNewClientDocuments } from './NewClientDocuments';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 //Display for schema for new document uploads
 export interface LasecClientDocumentExport {

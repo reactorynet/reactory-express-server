@@ -4,7 +4,7 @@ import moment from 'moment';
 
 import logger from '../../../logging';
 import { ObjectID } from 'mongodb';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 import Hash from 'utils/hash';
 
 

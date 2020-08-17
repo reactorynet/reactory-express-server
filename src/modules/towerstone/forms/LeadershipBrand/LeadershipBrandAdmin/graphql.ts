@@ -1,4 +1,4 @@
-import { Reactory } from "types/reactory";
+import { Reactory } from "@reactory/server-core/types/reactory";
 
 export const createBrandForOrganization = `
 mutation CreateBrandMutation($brandInput: BrandInput!, $organizationId: String!){

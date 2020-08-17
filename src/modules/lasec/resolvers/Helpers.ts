@@ -32,7 +32,7 @@ import {
 
 
 import CONSTANTS, { LOOKUPS, OBJECT_MAPS } from '../constants';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 import { argsToArgsConfig } from 'graphql/type/definition';
 import Api from '@reactory/server-modules/lasec/api';
 

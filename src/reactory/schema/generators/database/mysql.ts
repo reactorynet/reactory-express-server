@@ -4,7 +4,7 @@ import {
   queryAsync as mysql,   
 } from '../../../../database/mysql'; 
 import logger from '../../../../logging';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 import { 
   GeneratorConfig, 
   GeneratorTableDefinition, 

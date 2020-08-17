@@ -33,23 +33,11 @@ import { fileAsString } from 'utils/io';
 
 const { APP_DATA_ROOT } = process.env;
 
-const debug_report = true;
-
 const badref = `${APP_DATA_ROOT}/themes/mores/images/badref.png`;
 const oneview_svg = `${APP_DATA_ROOT}/themes/mores/images/one_view_l360.svg`;
-const oneview_png = `${APP_DATA_ROOT}/themes/mores/images/one_view_l360.png`;
+const oneview_png_folder = `${APP_DATA_ROOT}/themes/mores/images/`;
+const oneview_png = `${oneview_png_folder}one_view_l360.png`;
 
-if(existsSync(oneview_png) === false) {
-  if(existsSync(oneview_svg) === true) {
-    svg_to_png.convert(oneview_svg, oneview_png, { defaultWidth: '400px', defaultHeight: '400px' }).then((result) => {
-      logger.info(`Converted one view sample`)
-    }).catch((convertErr) => {
-      logger.error(`Could not convert ${oneview_svg}`, convertErr)
-    })      
-  } else {
-    logger.warn(`⚠ FILE: ${oneview_svg}, not found, please make sure it exists`);
-  }  
-}
 
 const pdfpng = (path) => {
   let buffer = null;
@@ -123,6 +111,9 @@ const resolveData = async ({ surveyId, delegateId }) => {
           palette: partner.themeOptions.palette,
         },
       },
+      employeeDemographics: {
+        pronoun: null
+      },
       key: `mores.survey@${surveyId}/${delegateId}/report-data`,
       delegate: {},
       employee: {}, //alias for delegate
@@ -150,7 +141,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
       },
     };
 
-    let maxRating = 5;
+    let maxRating = 5;   
 
     try {
       reportData.delegate = await User.findById(reportData.survey.delegates.id(delegateId).delegate).then();
@@ -259,14 +250,15 @@ const resolveData = async ({ surveyId, delegateId }) => {
     let chartResult = null;
 
     const { colorSchemes, palette } = reportData.meta;
-    const qualitiesMap = reportData.qualities.map((quality, qi) => {
-      const behaviourScores = quality.behaviours.map((behaviour, bi) => {
+    const qualitiesMap: any[] = [];
+    reportData.qualities.forEach((quality, qi) => {
+      const behaviourScores = quality.behaviours.map((behaviour: TowerStone.IBehaviour, bi: number) => {
         logger.debug(`Calculating behaviour score ${quality.title} ==> ${lodash.template(behaviour.description)(reportData)}`);
         let scoreSelf = 0;
         let scoreAvgAll = 0;
         let scoreAvgOthers = 0;
         let behaviorRatings = [];
-        const individualScores = [];
+        const individualScores: any[] = [];
         try {
 
           // get the score for all ratings (including self and others)
@@ -340,7 +332,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
           };
         }
       });
-
+      
       const ratings = {
         all: lodash.filter(reportData.ratings, rating => quality._id.equals(rating.qualityId) && rating.custom !== true),
         self: lodash.filter(reportData.ratingsSelf, rating => quality._id.equals(rating.qualityId) && rating.custom !== true),
@@ -377,9 +369,8 @@ const resolveData = async ({ surveyId, delegateId }) => {
       const scoreByBehaviour = (behaviour: TowerStone.IBehaviour) => {
         return 3.2
       };
-            
-
-      return {
+         
+      qualitiesMap.push({
         index: qi,
         model: quality,        
         behaviours: quality.behaviours,
@@ -394,85 +385,10 @@ const resolveData = async ({ surveyId, delegateId }) => {
         ratings,
         scoreByAssessor: scoreByAssessor.bind(this),
         scoreByBehaviour: scoreByBehaviour.bind(this),
-      };
+      });      
     });
-
-    let polarDataSetAverage = {
-      //backgroundColor: hex2RGBA(`#${colorSchemes.primary[0]}`, 0.1),
-      backgroundColor: [
-        hex2RGBA(`#${colorSchemes.primary[0]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[0]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[0]}`, 0.8),
-
-        hex2RGBA(`#${colorSchemes.primary[1]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[1]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[1]}`, 0.8),
-
-        hex2RGBA(`#${colorSchemes.primary[2]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[2]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[2]}`, 0.8),
-
-        hex2RGBA(`#${colorSchemes.primary[3]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[3]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[3]}`, 0.8),
-
-        hex2RGBA(`#${colorSchemes.primary[4]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[4]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[4]}`, 0.8),
-
-        hex2RGBA(`#${colorSchemes.primary[5]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[5]}`, 0.8),
-        hex2RGBA(`#${colorSchemes.primary[5]}`, 0.8),
-      ],          
-      data: [ 
-        3.1, 4.2, 4.1, 
-        4.2, 4.1, 4.1,
-        3.3, 3.2, 3.8,
-        4.1, 4.2, 4.1,
-        4.2, 4.2, 4.1,
-        4.2, 4.2, 4.1
-      ]
-    };
-
-    let polarDataSetSelf = {
-      //backgroundColor: hex2RGBA(`#${colorSchemes.primary[0]}`, 0.1),
-                
-      data: [ 
-        3, 3, 4, 
-        3, 3, 4,
-        3, 3, 4,
-        3, 3, 4,
-        3, 3, 4,
-        3, 3, 4,
-      ]
-    };
-
-
-
-    chartResult = await DefaultPolarAreaChart({
-      folder: chartsFolder,
-      file: `spider-chart-all-${reportData.survey._id}.png`,
-      canvas: true,
-      height: 800,
-      width: 800,
-      mime: 'application/pdf',
-      options: {
-        scale: {
-          // Hides the scale
-          display: true,
-        },
-        title: {
-          display: true,
-          text: 'Individual Ratings',
-        },
-      },
-      data: {
-        label: 'One View',
-        labels: ['red', 'green', 'blue'],
-        datasets: [polarDataSetAverage, polarDataSetSelf]                   
-      },
-    }).then();
-    logger.debug(`Radar Chart All Created: ${chartResult.file} `);
+  
+    logger.debug(`qualitiesMap created`);
 
     chartResult = await DefaultRadarChart({
       folder: chartsFolder,
@@ -503,16 +419,14 @@ const resolveData = async ({ surveyId, delegateId }) => {
         datasets: [{
           label: 'Self',
           data: qualitiesMap.map(q => q.scoreByAssessor(reportData.delegate)),
-          lineTension: 0,
-          //backgroundColor: hex2RGBA(palette.primary.main, 0.1),
+          lineTension: 0,          
           borderColor: palette.primary.main,
           borderWidth: 2,
         },
         {
           label: 'Peers Average',
           labels: qualitiesMap.map(q => q.model.title),
-          data: qualitiesMap.map(q => q.avg.others),
-          // backgroundColor: hex2RGBA(palette.secondary.main, 0.1),
+          data: qualitiesMap.map(q => q.avg.others),          
           lineTension: 0,
           borderColor: palette.secondary.main,
           borderWidth: 2,
@@ -610,9 +524,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
       },
     }).then();
     logger.debug(`Overall Score Chart Created: ${chartResult.file}`, chartResult);
-
-    logger.debug(`PDF::Report Data Generated:\n ${JSON.stringify(reportData.assessors, null, 2)}`);
-
+    
     Cache.setItem(reportData.key, reportData, 60);
 
     return reportData;
@@ -624,7 +536,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
 
 
 const definition = (data, partner, user) => {
-  logger.debug('Generating PDF definition For Mores Assessment Individual 360 Report');
+  logger.debug('Generating PDF definition For Mores Assessment Leadership 360 Report');
 
 
   const scaleSegments = [];
@@ -650,11 +562,11 @@ const definition = (data, partner, user) => {
     {
       image: 'partnerLogo', width: 250, style: ['centerAligned'], margin: [0, 0, 0, 20],
     },
-    { text: 'Individual 360° Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
+    { text: 'Leadership 360° Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
     { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned', 'secondary'], margin: [0, 5] },
     { text: `${data.organization.name}`, style: ['header', 'centerAligned', 'secondary'] },
     {
-      image: 'organizationLogo', width: 240, style: ['centerAligned'], margin: [0, 30, 0, 100],
+      image: 'organizationLogo', width: 150, style: ['centerAligned'], margin: [0, 30, 0, 30],
     },
     {
       toc: {
@@ -692,7 +604,7 @@ const definition = (data, partner, user) => {
     },
     {
       text: [
-        'The Mores Individual 360° Assessment provides insight to help you grow and model behaviours that will best serve your leadership needs.\n',
+        'The Mores Leadership 360° Assessment provides insight to help you grow and model behaviours that will best serve your leadership needs.\n',
         'This report consists of the following sections:\n'
       ],
       style: ['default'],
@@ -807,19 +719,12 @@ const definition = (data, partner, user) => {
       style: ['default']
     },
     {
-      image: 'individualHoneycomb', width: 500, style: ['centerAligned'], margin: [0, 30, 0, 50],
-    },
-    {
       text: `Average ratings for the 18 questions are mapped across the six elements with a summary score per element as per the sample below.`,
       style: ['default']
     },
     {
-      image: 'spiderChartAll',
-      width: 400,
-      height: 400,
-      style: ['centerAligned'],
-      margin: [0, 20],
-    },
+      image: 'individualHoneycomb', width: 350, style: ['centerAligned'], margin: [0, 30, 0, 50],
+    },       
   ];
 
   const scaleSection: any[] = [
@@ -844,7 +749,7 @@ const definition = (data, partner, user) => {
         text: [
           { text: `${rating.id}.  `, style: ['default', 'bold'], margin: [10, 10, 5, 0] },
           { text: rating.title, style: ['default', 'bold'] },
-          { text: rating.heart, style: ['default', 'italic', 'secondary'], margin: [20, 10, 5, 0] },
+          { text: rating.heart, style: ['default', 'italic', 'secondary'], margin: [40, 10, 5, 0] },
         ]
       });
 
@@ -857,7 +762,12 @@ const definition = (data, partner, user) => {
   scaleSection.push({
     text: 'Consider the following when reviewing the results:',
     style: ['default']
-  })
+  });
+
+  scaleSection.push({
+    image: 'ratingScale', 
+    width: 150, aligntment: 'right', margin: [0, 30, 0, 50]
+  });
 
   scaleSection.push({
     text: [
@@ -883,8 +793,8 @@ const definition = (data, partner, user) => {
     style: ['default']
   });
 
-  const dashboardChartSize = 100;
-  const dashboardChartMargin = 10;
+  const dashboardChartSize = 60;
+  const dashboardChartMargin = 5;
 
   /*
         {
@@ -1000,8 +910,8 @@ const definition = (data, partner, user) => {
             },              
             {
               image: 'spiderChartAvg',
-              height: 250,
-              width: 250,
+              height: 200,
+              width: 200,
               margin: [20, dashboardChartMargin, 20, dashboardChartMargin],
               alignment: 'center',
               border: [false, false, false, false]
@@ -1016,9 +926,10 @@ const definition = (data, partner, user) => {
       margin: [0, -20, 0, 0]
     },
     {
-      image: 'spiderChartAvg',
-      height: 300,
-      width: 300,
+      image: 'individualHoneycomb',
+      height: 350,
+      width: 350,
+      style: ['centerAligned'],
       margin: [20, 10, 20, 10],
     },
     {
@@ -1277,10 +1188,7 @@ const definition = (data, partner, user) => {
     {
       text: ['Your overall score for this assessment is'], style: ['subheader'], alignment: 'center', margin: [0, 40],
     },
-    { text: `${data.score}%`, style: ['header', 'primary'], alignment: 'center' },
-    {
-      image: 'overallScoreChart', width: 350, height: 350, alignment: 'center', margin: [20, 40, 20, 40],
-    },
+    { text: `${data.score}%`, style: ['header', 'primary'], alignment: 'center' },    
   ];
 
 
@@ -1420,11 +1328,11 @@ const definition = (data, partner, user) => {
   }
 
   return {
-    filename: `Mores Individual 360° Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}.pdf`,
+    filename: `Mores Leadership 360° Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}.pdf`,
     info: {
-      title: `Mores Individual 360° Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}`,
+      title: `Mores Leadership 360° Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}`,
       author: partner.name,
-      subject: 'Mores Assessment - Individual 360° Assessment Report',
+      subject: 'Mores Assessment - Leadership 360° Assessment Report',
       keywords: 'Leadership Training Personal Growth',
     },
     content: [
@@ -1478,7 +1386,7 @@ const definition = (data, partner, user) => {
             margin: [20, 0, 20, 0],
           },
           {
-            text: `${data.organization.name}: Individual Leadership Brand 360° Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
+            text: `${data.organization.name}: Individual 360° Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
             fontSize: 8,
             alignment: 'center',
             margin: [5, 5],
@@ -1505,7 +1413,8 @@ const definition = (data, partner, user) => {
       personalBrand: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/personal-brand.png`),
       personalBrandEmpty: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/personal-brand-empty.png`),
       sectionOverview: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/section-overview.png`),
-      individualHoneycomb: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/one_view.png`),
+      ratingScale: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/rating_scale.png`),
+      individualHoneycomb: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/one_view_l360.png`),
       delegateAvatar: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/profile_${data.delegate._id}_default.jpeg`) === true ? `${APP_DATA_ROOT}/profiles/${data.delegate._id}/profile_${data.delegate._id}_default.jpeg` : pdfpng(`${APP_DATA_ROOT}/profiles/default/default.png`),
       spiderChartAll: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-all-${data.survey._id}.png`) === true ? pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-all-${data.survey._id}.png`) : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/spider-chart-all.png`),
       spiderChartAvg: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-avg-${data.survey._id}.png`) === true ? (`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-avg-${data.survey._id}.png`) : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/spider-chart-avg.png`),
@@ -1580,10 +1489,10 @@ const definition = (data, partner, user) => {
 
 const component = {
   enabled: true,
-  view: 'MoresIndividual360',
+  view: 'MoresLeadership360',
   kind: 'pdf',
   format: 'pdf',
-  name: 'Mores Assessment Individual 360 Report',
+  name: 'Mores Assessment Leadership 360 Report',
   content: definition,
   resolver: resolveData,
   props: {

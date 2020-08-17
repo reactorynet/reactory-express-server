@@ -1,5 +1,5 @@
 import { fileAsString } from '../../../../utils/io';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 
 export const LasecUserLookupQuery: Reactory.IReactoryFormQuery = {

@@ -30,7 +30,7 @@ import {
 import { TowerStone } from '../towerstone';
 import { TowerStoneServicesMap } from "../services";
 import AuthConfig from 'authentication';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 const { findIndex, pullAt } = lodash;
 

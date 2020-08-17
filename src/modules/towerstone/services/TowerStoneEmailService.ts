@@ -10,7 +10,7 @@ import { TowerStone } from '../towerstone';
 import { FormNameSpace } from '../constants';
 import { TemplateType } from '@reactory/server-core/types/constants';
 import ApiError, { RecordNotFoundError } from 'exceptions';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 import moment from 'moment';
 import { IEmailQueueDocument } from 'models/schema/EmailQueue';

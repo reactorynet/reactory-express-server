@@ -15,7 +15,7 @@ import allSchemas from './schema';
 import generators from './schema/generators';
 import logger from '../logging';
 import { isArray } from 'util';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 import * as ReactorySchemaTypes from './types';
 import { ICacheStatic } from 'modules/core/models/CoreCache';
 

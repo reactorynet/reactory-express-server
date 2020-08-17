@@ -23,7 +23,7 @@ import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions'
 import logger from '@reactory/server-core/logging';
 
 import { isObject, isNull } from 'util';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 const uuid = require('uuid');
 
 const userAssessments = async (id: any) => {
