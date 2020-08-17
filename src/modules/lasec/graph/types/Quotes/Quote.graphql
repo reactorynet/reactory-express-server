@@ -8,6 +8,15 @@ type LasecCustomer {
   fullName: String
 }
 
+type LasecCurrency {
+  id: String
+  code: String
+  name: String
+  symbol: String
+  spot_rate: Float
+  web_rate: Float
+}
+
 type LasecQuoteItem {
   id: ObjID
   quote_item_id: String
@@ -131,6 +140,7 @@ type Quote {
   options: [LasecQuoteOption]
   headers: [LasecQuoteHeader]
   lineItems: [LasecQuoteItem]
+  currencies: [LasecCurrency]
   timeline: [QuoteTimeLine]
   lastAction: QuoteTimeLine
   meta: Any
@@ -760,4 +770,6 @@ extend type Mutation {
   LasecQuoteDeleteQuoteItem(quote_item_id: String): SimpleResponse
 
   LasecSaveQuoteComment(quoteId: String!, comment: String!, commentId: String): SimpleResponse
+
+  LasecGetCurrencies: [LasecCurrency]
 }
