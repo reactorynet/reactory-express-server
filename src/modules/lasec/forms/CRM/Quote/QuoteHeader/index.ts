@@ -94,7 +94,7 @@ const uiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      code: { xs: 12, sm: 6, },
+      // code: { xs: 12, sm: 6, },
       client: { xs: 12, sm: 6, },
       repCode: { xs: 12, sm: 6, },
       quoteType: { xs: 12, sm: 6, },
