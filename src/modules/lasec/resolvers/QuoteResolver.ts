@@ -71,6 +71,7 @@ import {
   updateQuoteLineItems,
   updateQuote
 } from './Helpers';
+import { queryAsync } from 'database/mysql';
 
 
 
@@ -183,6 +184,13 @@ export default {
   Quote: {
     id: ({ _id }) => {
       return `${_id}`;
+    },
+    currencies: async () => {
+      try {
+        return await  queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+      } catch ( err ) {
+        return []
+      }
     },
     code: (quote) => {
       const { meta, code } = quote;
@@ -1077,6 +1085,16 @@ export default {
           throw new ApiError(`The ${input.action} action is not supported`);
         }
       }
+    }, 
+    LasecGetCurrencies: async (parent, params)   => {
+
+      try {
+        return await  queryAsync(`SELECT currencyid, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+      } catch ( err ) {
+        return []
+      }
+      
+
     },
   }
 };
