@@ -94,11 +94,11 @@ const uiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      // code: { xs: 12, sm: 6, },
       client: { xs: 12, sm: 6, },
+      validDate: { xs: 12, sm: 6, },
       repCode: { xs: 12, sm: 6, },
       quoteType: { xs: 12, sm: 6, },
-      validDate: { xs: 12, sm: 6, },
+
     },
   ],
 
@@ -116,31 +116,18 @@ const uiSchema: any = {
       componentProps: {},
     },
   },
-
   repCode: {
     'ui:widget': 'RepCodeFilter',
     'ui:options': {
+      props: {
+        multiple: false,
+        selectedValueMap: 'repCode',
+      },
       multiSelect: false,
-      inputProps: {
-        // variant: 'outline'
-      },
-      query: `query LasecSalesTeams {
-        LasecSalesTeams {
-          id
-          title
-          meta  {
-            reference
-          }
-        }
-      }`,
+      inputProps: {},
       resultItem: 'LasecSalesTeams',
-      resultsMap: {
-        'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
-        'LasecSalesTeams.[].title': '[].label',
-      },
     },
   },
-
   quoteType: {
     'ui:widget': 'SelectWidget',
     'ui:options': {
@@ -152,7 +139,6 @@ const uiSchema: any = {
       ],
     },
   },
-
   validDate: {
     'ui:widget': 'DateSelectorWidget',
   },

@@ -728,6 +728,8 @@ extend type Query {
     iter: Int
   ): PagedCRMSalesHistory
   LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
+
+  LasecGetCompanyDetailsforQuote(id: String!): LasecCRMCustomer
 }
 
 extend type Mutation {
@@ -735,7 +737,10 @@ extend type Mutation {
     quote_id: String!
     input: LasecQuoteHeaderInput
   ): LasecQuoteHeader
-  LasecUpdateQuoteStatus(quote_id: String! input: LasecQuoteStatusUpdate): LasecQuoteStatusUpdateResult
+  LasecUpdateQuoteStatus(
+    quote_id: String!
+    input: LasecQuoteStatusUpdate
+  ): LasecQuoteStatusUpdateResult
   LasecCreateClientEnquiry(customerId: String!): LasecCustomerEnquiry
   SynchronizeNextActionsToOutloook(nextActions: Any!): OutlookSyncResponse
   LasecMarkNextActionAsActioned(id: String!): SimpleResponse
@@ -765,28 +770,55 @@ extend type Mutation {
   LasecCreateNewQuoteForClient(
     newQuoteInput: LasecNewQuoteInput
   ): LasecNewQuoteResponse
-
-  LasecDuplicateQuoteOption(quote_id: String, option_id: String): LasecQuoteOption
-
-  LasecQuoteCreateSectionHeader(quote_id: String, header: String): LasecQuoteHeader
-
-  LasecQuoteUpdateSectionHeader(quote_id: String, header_id: String, header: String): LasecQuoteHeader
-
-  LasecQuoteDeleteSectionHeader(quote_id: String, header_id: String): SimpleResponse
-
-  LasecQuoteAddProductToQuote(quote_id: String, product_id: String, option_id: String): LasecQuoteItem
-
-  LasecQuoteItemUpdate(quote_id: String, quote_item_id: String, qoute_item_input: LasecQuoteItemInput): LasecQuoteItem
-
+  LasecDuplicateQuoteOption(
+    quote_id: String
+    option_id: String
+  ): LasecQuoteOption
+  LasecQuoteCreateSectionHeader(
+    quote_id: String
+    header: String
+  ): LasecQuoteHeader
+  LasecQuoteUpdateSectionHeader(
+    quote_id: String
+    header_id: String
+    header: String
+  ): LasecQuoteHeader
+  LasecQuoteDeleteSectionHeader(
+    quote_id: String
+    header_id: String
+  ): SimpleResponse
+  LasecQuoteAddProductToQuote(
+    quote_id: String
+    product_id: String
+    option_id: String
+  ): LasecQuoteItem
+  LasecQuoteItemUpdate(
+    quote_id: String
+    quote_item_id: String
+    qoute_item_input: LasecQuoteItemInput
+  ): LasecQuoteItem
   LasecQuoteDeleteQuoteItem(quote_item_id: String): SimpleResponse
-
-  LasecSaveQuoteComment(quoteId: String!, comment: String!, commentId: String): SimpleResponse
-
+  LasecSaveQuoteComment(
+    quoteId: String!
+    comment: String!
+    commentId: String
+  ): SimpleResponse
   LasecGetCurrencies: [LasecCurrency]
-  
   LasecDeleteQuoteComment(commentId: String): SimpleResponse
+  LasecUpdateQuote(
+    item_id: String
+    quote_type: String
+    rep_code: [String]
+    client_id: String
+    valid_date: String
+  ): SimpleResponse
+  LasecUpdateQuoteLineItems(
+    lineItemIds: [String]
+    gp: Float
+    mup: Float
+    agentCom: Float
+    freight: Float
+  ): Quote
 
-  LasecUpdateQuote(item_id: String, quote_type: String, rep_code: [String], client_id: String, valid_date: String): SimpleResponse
-
-  LasecUpdateQuoteLineItems(lineItemIds: [String], gp: Float, mup: Float, agentCom: Float, freight: Float): Quote
+  LasecDeleteQuote(id: String): SimpleResponse
 }

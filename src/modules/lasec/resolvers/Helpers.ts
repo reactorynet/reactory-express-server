@@ -1,9 +1,7 @@
-// import { updateQuoteLineItems } from './Helpers';
-
-import om from 'object-mapper';
 import moment, { Moment } from 'moment';
 import lodash, { isArray, isNil, isString } from 'lodash';
 import { ObjectId } from 'mongodb';
+import om from 'object-mapper';
 import gql from 'graphql-tag';
 import uuid from 'uuid';
 import lasecApi, { LasecNotAuthenticatedException } from '@reactory/server-modules/lasec/api';
@@ -80,7 +78,7 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
     _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
   }
 
-  // logger.debug(`SOURCE ${JSON.stringify(_source)}`);
+  logger.debug(`SOURCE ${JSON.stringify(_source)}`);
   // logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
 
   if (map === true && _source) {
@@ -2562,7 +2560,7 @@ export const updateQuote = async (params) => {
     if (client_id) updateParams.values.customer_id = client_id;
     if (valid_date) updateParams.values.modified = valid_date;
 
-    const updateResult = await lasecApi.Quotes.updateQuote(updateParams);
+    const updateResult = await lasecApi.Quotes.updateQuote(updateParams).then();
 
     logger.debug(`UPDATING QUOTE RESULT:: ${JSON.stringify(updateResult)}`);
 
@@ -2613,7 +2611,59 @@ export const updateQuoteLineItems = async (params) => {
   } catch (error) {
     throw new ApiError(`Error updating quote lineitems. ${error}`);
   }
+}
 
+export const getCompanyDetails = async (params) => {
+  try {
+    let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [params.id] } }).then();
+    let customerObject = {};
+    if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
+      customerObject = {
+        ...om(companyPayloadResponse.items[0], {
+          'company_id': 'id',
+          'registered_name': 'registeredName',
+          'description': 'description',
+          'trading_name': 'tradingName',
+          "registration_number": 'registrationNumber',
+          "vat_number": "taxNumber",
+          'organization_id': 'organizationId',
+          'currency_code': 'currencyCode',
+          'currency_symbol': 'currencySymbol',
+          'currency_description': 'currencyDescription',
+          "credit_limit_total_cents": "creditLimit",
+          "current_balance_total_cents": "currentBalance",
+          "current_invoice_total_cents": "currentInvoice",
+          "30_day_invoice_total_cents": "balance30Days",
+          "60_day_invoice_total_cents": "balance60Days",
+          "90_day_invoice_total_cents": "balance90Days",
+          "120_day_invoice_total_cents": "balance120Days",
+          "credit_invoice_total_cents": "creditTotal"
+        })
+      };
+    }
+
+    return customerObject;
+
+  } catch (error) {
+    throw new ApiError(`Error getting customer details:: ${error}`);
+  }
+}
+
+export const deleteQuote = async (params) => {
+
+  try {
+    let companyPayloadResponse = await lasecApi.Quotes.deleteQuote(params.id).then();
+
+    if (!companyPayloadResponse) throw new ApiError(`Error deleting quote!`);
+
+    return {
+      success: true,
+      message: 'Quote successfully deleted!'
+    }
+
+  } catch (error) {
+    throw new ApiError(`Error deleting quote:: ${error}`);
+  }
 
 }
 

@@ -1086,30 +1086,22 @@ const Api = {
         return null;
       }
     },
-
     updateQuote: async (params) => {
       try {
-
         // {"item_id":"2008-335010","values":{"quote_type":"Normal"}}
         logger.debug(`CALLING WITH PARAMS:: ${JSON.stringify(params)}`);
         const url = `api/quote/${params.item_id}`;
-        // const apiResponse = await POST(url, { ...params });
         const apiResponse = await PUT(url, { ...params });
-
         logger.debug(`UPDATE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
-
         const { status } = apiResponse;
-
         if (status === 'success') {
           return apiResponse;
         }
-
       } catch (lasecApiError) {
         logger.error(`Error updating quote:: ${JSON.stringify(lasecApiError)}`).then();
         return null;
       }
     },
-
     updateQuoteItems: async (params) => {
       try {
         // expected params
@@ -1129,7 +1121,26 @@ const Api = {
         logger.error(`Error updating quote lineitems:: ${JSON.stringify(lasecApiError)}`).then();
         return null;
       }
-    }
+    },
+    deleteQuote: async (id) => {
+      try {
+        logger.debug(`DELETE WITH PARAMS:: ${JSON.stringify(id)}`);
+        const url = `api/quote/${id}/`;
+        const apiResponse = await DELETE(url).then();
+
+        logger.debug(`DELETE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
+        const { status } = apiResponse;
+
+        if (status === 'success') {
+          return apiResponse;
+        }
+
+      } catch (lasecApiError) {
+        logger.error(`Error deleting quote:: ${JSON.stringify(lasecApiError)}`).then();
+        return null;
+      }
+    },
   },
   Teams: {
     list: async () => {
