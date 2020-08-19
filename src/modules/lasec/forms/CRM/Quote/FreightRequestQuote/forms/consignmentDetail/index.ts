@@ -57,6 +57,10 @@ const uiSchema: any = {
     paddingBottom: '0.3rem'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+    containerStyle: {}
+  },
   'ui:grid-layout': [
     {
       freightFor: { sm: 4, xs: 12 },

@@ -1108,9 +1108,14 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: String
 
   let cached = await getCacheItem(keyhash);
   if (cached) logger.debug(`Found Cached Line Items For Quote: ${code}`);
+
   if (lodash.isNil(cached) === true) {
+
     const lineItems = await lasecApi.Quotes.getLineItems(code, active_option).then();
-    logger.debug(`Found line items for quote ${code}`, lineItems);
+
+    logger.debug(`Found line items for quote ${code}:: ${lineItems.length}`);
+
+    if (lineItems.length == 0) return [];
 
     cached = om.merge(lineItems, {
       'items.[]': '[].meta.source',
@@ -1150,7 +1155,7 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: String
       'items.[].product_class_description': '[].productClassDescription',
     });
 
-    setCacheItem(keyhash, cached, 60);
+    await setCacheItem(keyhash, cached, 60).then();
   }
 
   return cached;
@@ -1563,42 +1568,27 @@ export const getPurchaseOrders = async (params) => {
 }
 
 export const getPurchaseOrderDetails = async (params) => {
+  try {
+    const { orderId, quoteId } = params;
+    let apiFilter = { purchase_order_id: orderId };
+    let purchaseOrdersItems = await lasecApi.PurchaseOrders.detail({ filter: apiFilter }).then();
+    let purchaseOrderItems = [...purchaseOrdersItems.items];
 
-  const {
-    orderId,
-    quoteId
-  } = params;
+    purchaseOrderItems = purchaseOrderItems.map(item => {
+      return {
+        code: item.product_code,
+        description: item.product_description,
+        orderQty: item.order_qty,
+        etaDate: item.eta_date ? moment(item.eta_date).toDate() : '',
+      }
+    })
 
-  let apiFilter = { purchase_order_id: orderId };
+    return purchaseOrderItems;
 
-  let purchaseOrdersIds = await lasecApi.PurchaseOrders.detail({ filter: apiFilter }).then();
-
-  let ids = [];
-
-  if (isArray(purchaseOrdersIds.ids) === true) {
-    ids = [...purchaseOrdersIds.ids];
+  } catch (error) {
+    throw new ApiError(`Error getting purchase order items: ${error}`);
   }
 
-  let purchaseOrdersDetail = await lasecApi.PurchaseOrders.detail({ filter: { ids: ids } }).then();
-  let purchaseOrderItems = [...purchaseOrdersDetail.items];
-
-  logger.debug(`PURCHASE ORDERS:: ${JSON.stringify(purchaseOrderItems)}`);
-  // logger.debug(`PURCHASE ORDERS:: ${JSON.stringify(salesOrders[0])}`);
-
-  // NEEEEED TO CHECK THIS IS CORRECT
-  // DAWID IS STILL DEVELOPING THIS ENDPOINT
-  purchaseOrderItems = purchaseOrderItems.map(item => {
-    return {
-      code: item.code, // CHECK THIS
-      description: item.description, // CHECK
-      orderQty: item.order_quantity, // CHECK
-      etaDate: moment(item.eta_date).toDate(), // CHECK
-    }
-  })
-
-  logger.debug(`PO ITEMS TO RETURN :: ${JSON.stringify(purchaseOrderItems)}`);
-
-  return purchaseOrderItems;
 }
 
 export const getPagedSalesOrders = async (params) => {
@@ -2368,20 +2358,35 @@ export const getCRMSalesHistory = async (params) => {
 export const getFreightRequetQuoteDetails = async (params) => {
   logger.debug(`FREIGHT REQUEST PARAMS:: ${JSON.stringify(params)}`);
   const { quoteId } = params;
+
   let quoteDetail = await lasecApi.Quotes.getByQuoteId(quoteId).then();
+
+  logger.debug(`QUOTE DETAIL:: ${JSON.stringify(quoteDetail)}`);
+
+
   let options = [];
   let productDetails = [];
   const freightRequest = await FreightRequest.findOne({ quoteId: quoteId });
+
   logger.debug(`FREIGHT REQUEST :: ${JSON.stringify(freightRequest)}`);
 
   if (freightRequest) {
+
     logger.debug(`----------  GOT A FREIGHT OPTION ----------`);
+
     options = freightRequest.options;
     productDetails = freightRequest.productDetails;
+
   } else {
+
+    logger.debug(`----------  GETTING OPTIONS FROM API ----------`);
+
     options = quoteDetail.quote_option_ids.map(async (optionId) => {
-      let quoteOption = await lasecApi.Quotes.getQuoteOption(optionId);
+
+      let quoteOption = await lasecApi.Quotes.getQuoteOption(optionId).then();
+
       quoteOption = quoteOption.items[0];
+
       return {
         name: quoteOption.name,
         transportMode: '',
@@ -2404,29 +2409,37 @@ export const getFreightRequetQuoteDetails = async (params) => {
         sample: '',
         additionalDetails: quoteOption.special_comment || '',
       }
+
     });
 
-    let quoteLineItems = await lasecGetQuoteLineItems(params.quoteId);
-    productDetails = quoteLineItems.map(li => {
-      return {
-        code: li.code,
-        description: li.title,
-        sellingPrice: li.price,
-        qty: li.quantity,
-        unitOfMeasure: '',
-        length: 0,
-        width: 0,
-        height: 0,
-        volume: 0
-      }
-    });
+    const quoteLineItems = await lasecApi.Quotes.getLineItems(params.quoteId, 'All').then();
+
+    logger.debug(`Found line items for quote ${params.quoteId}:: ${JSON.stringify(quoteLineItems)}`);
+
+    if (quoteLineItems.length > 0) {
+
+      productDetails = quoteLineItems.map(li => {
+        return {
+          code: li.code,
+          description: li.title,
+          sellingPrice: li.price,
+          qty: li.quantity,
+          unitOfMeasure: '',
+          length: 0,
+          width: 0,
+          height: 0,
+          volume: 0
+        }
+      });
+
+    }
   }
 
   return {
     email: 'drewmurphyza@gmail.com',
     communicationMethod: 'attach_pdf',
     options,
-    productDetails
+    productDetails: []
   };
 }
 
@@ -2556,22 +2569,24 @@ export const updateQuote = async (params) => {
   try {
     const { item_id, quote_type, rep_code, client_id, valid_date } = params;
     const updateParams = { item_id, values: { quote_type } };
-    if (rep_code) updateParams.values.sales_team_id = rep_code[0];
+    if (rep_code && rep_code.length > 0 && rep_code[0] != '') updateParams.values.sales_team_id = rep_code[0];
     if (client_id) updateParams.values.customer_id = client_id;
-    if (valid_date) updateParams.values.modified = valid_date;
+    if (valid_date) updateParams.values.modified = moment(valid_date).toISOString();
 
     const updateResult = await lasecApi.Quotes.updateQuote(updateParams).then();
 
+    if (!updateResult)
+      throw new ApiError(`Error updating quote. Error from api.`);
+
     logger.debug(`UPDATING QUOTE RESULT:: ${JSON.stringify(updateResult)}`);
 
-    // const quote = await getLasecQuoteById(params.quoteId).then();
     return {
       success: true,
       message: 'Quote successfully updated.'
     };
 
   } catch (error) {
-    throw new ApiError(`Error updating quote lineitems. ${error}`);
+    throw new ApiError(`Error updating quote. ${error}`);
   }
 
 }
@@ -2583,21 +2598,31 @@ export const updateQuoteLineItems = async (params) => {
   try {
     const { lineItemIds, gp, mup, agentCom, freight } = params;
 
-    await Promise.all(lineItemIds.map((id: string) => {
+    if (gp > 100)
+      throw new ApiError('GP Percent must be less than 100%');
+
+    const itemPromises = lineItemIds.map((id: string) => {
       const updateParams = {
         item_id: id,
         values: {
-          // quantity: 1,
-          // unit_price_cents: 1,
-          // total_price_cents: 1
           gp_percent: gp,
-          mark_up: gp,
-          agent_commission: gp,
-          freight: freight     //// FREIGHT IS A SEPERATE LINE ITEM - UPDATE unit_price_cents AND SUBMIT
+          mark_up: mup,
+          agent_commission: agentCom,
         }
       }
       return lasecApi.Quotes.updateQuoteItems(updateParams);
-    }))
+    });
+
+    // const freightParams = {
+    //   item_id: 'NLSCFREIGHT ',
+    //   values: {
+    //     unit_price_cents: freight * 100
+    //   }
+    // }
+    // const freightItemPromise = lasecApi.Quotes.updateQuoteItems(freightParams);
+    // itemPromises.push(freightItemPromise);
+
+    await Promise.all(itemPromises)
       .then(async result => {
         logger.debug(`All promises complete :: ${JSON.stringify(result)}`);
         const quote = await getLasecQuoteById(params.quoteId).then();

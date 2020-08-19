@@ -851,6 +851,7 @@ const Api = {
     },
     detail: async (params = defaultParams) => {
       const isoResult = await FETCH(SECONDARY_API_URLS.purchase_order_item.url, { params: { ...defaultParams, ...params } }).then();
+
       const {
         status,
         payload,
@@ -924,12 +925,17 @@ const Api = {
         delete filter.quote_id;
       }
 
+
       const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, {
+
         params: {
           ...defaultParams,
           filter
         }
       }).then();
+
+      logger.debug(`QUOTE ITEM IDS RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
       const {
         status, payload,
       } = apiResponse;
@@ -938,6 +944,9 @@ const Api = {
         //collet the ids
         if (payload && payload.ids) {
           const lineItemsExpanded = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: payload.ids } } }).then()
+
+          logger.debug(`QUOTE ITEM PAYLOAD RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
           if (lineItemsExpanded.status === 'success') {
             return lineItemsExpanded.payload;
           }
@@ -1089,7 +1098,6 @@ const Api = {
     updateQuote: async (params) => {
       try {
         // {"item_id":"2008-335010","values":{"quote_type":"Normal"}}
-        logger.debug(`CALLING WITH PARAMS:: ${JSON.stringify(params)}`);
         const url = `api/quote/${params.item_id}`;
         const apiResponse = await PUT(url, { ...params });
         logger.debug(`UPDATE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
@@ -1097,6 +1105,7 @@ const Api = {
         if (status === 'success') {
           return apiResponse;
         }
+        return null;
       } catch (lasecApiError) {
         logger.error(`Error updating quote:: ${JSON.stringify(lasecApiError)}`).then();
         return null;
@@ -1108,7 +1117,7 @@ const Api = {
         // {item_id: "2008", values: { quantity: 1, unit_price_cents: 123, gp_percent: 2, mark_up: 20, total_price_cents: 100 }}
         logger.debug(`CALLING WITH PARAMS:: ${JSON.stringify(params)}`);
         const url = `api/quote_item/${params.item_id}`;
-        const apiResponse = await POST(url, { ...params });
+        const apiResponse = await PUT(url, { ...params });
         logger.debug(`UPDATE LINEITEMS RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
         const { status } = apiResponse;

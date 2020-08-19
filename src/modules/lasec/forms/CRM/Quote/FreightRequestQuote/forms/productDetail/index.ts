@@ -33,6 +33,10 @@ const uiSchema: any = {
     paddingBottom: '0.3rem'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+    containerStyle: {}
+  },
   'ui:grid-layout': [
     {
       productDetails: { xs: 12, sm: 12, md: 12, lg: 12, },
