@@ -2356,7 +2356,9 @@ export const getCRMSalesHistory = async (params) => {
 }
 
 export const getFreightRequetQuoteDetails = async (params) => {
+
   logger.debug(`FREIGHT REQUEST PARAMS:: ${JSON.stringify(params)}`);
+
   const { quoteId } = params;
 
   let quoteDetail = await lasecApi.Quotes.getByQuoteId(quoteId).then();
@@ -2366,63 +2368,41 @@ export const getFreightRequetQuoteDetails = async (params) => {
 
   let options = [];
   let productDetails = [];
-  const freightRequest = await FreightRequest.findOne({ quoteId: quoteId });
 
-  logger.debug(`FREIGHT REQUEST :: ${JSON.stringify(freightRequest)}`);
+  // const freightRequest = await FreightRequest.findOne({ quoteId: quoteId });
 
-  if (freightRequest) {
+  // logger.debug(`FREIGHT REQUEST :: ${JSON.stringify(freightRequest)}`);
 
-    logger.debug(`----------  GOT A FREIGHT OPTION ----------`);
+  // if (freightRequest) {
 
-    options = freightRequest.options;
-    productDetails = freightRequest.productDetails;
+  //   logger.debug(`----------  GOT A FREIGHT OPTION ----------`);
 
-  } else {
+  //   options = freightRequest.options;
+  //   productDetails = freightRequest.productDetails;
 
-    logger.debug(`----------  GETTING OPTIONS FROM API ----------`);
+  // } else {
 
-    options = quoteDetail.quote_option_ids.map(async (optionId) => {
+  logger.debug(`----------  GETTING OPTIONS FROM API ----------`);
 
-      let quoteOption = await lasecApi.Quotes.getQuoteOption(optionId).then();
+  options = quoteDetail.quote_option_ids.map(async (optionId) => {
 
-      quoteOption = quoteOption.items[0];
+    let quoteOptionResponse = await lasecApi.Quotes.getQuoteOption(optionId).then();
 
-      return {
-        name: quoteOption.name,
-        transportMode: '',
-        incoTerm: quoteOption.inco_terms || '',
-        place: quoteOption.named_place || '',
-        fromSA: false,
-        vatExempt: false,
-        totalValue: quoteOption.grand_total_incl_vat_cents,
-        companyName: '',
-        streetAddress: '',
-        suburb: '',
-        city: '',
-        province: '',
-        country: '',
-        freightFor: '',
-        offloadRequired: false,
-        hazardous: 'non-hazardous',
-        refrigerationRequired: false,
-        containsLithium: false,
-        sample: '',
-        additionalDetails: quoteOption.special_comment || '',
-      }
+    logger.debug(`QUOTE OPTIONS ${quoteId}:: ${JSON.stringify(quoteOptionResponse)}`);
 
-    });
+    quoteOptionResponse = quoteOptionResponse.items[0];
 
-    const quoteLineItems = await lasecApi.Quotes.getLineItems(params.quoteId, 'All').then();
+    const optionLineItems = await lasecApi.Quotes.getLineItems(quoteOptionResponse.quote_id).then();
 
-    logger.debug(`Found line items for quote ${params.quoteId}:: ${JSON.stringify(quoteLineItems)}`);
+    logger.debug(`OPTION LINE ITEMS ${quoteOptionResponse.quote_id}:: ${JSON.stringify(optionLineItems)}`);
 
-    if (quoteLineItems.length > 0) {
-
-      productDetails = quoteLineItems.map(li => {
+    let optionItemDetails = [];
+    if (optionLineItems.items.length > 0) {
+      optionItemDetails = optionLineItems.items.map(li => {
         return {
           code: li.code,
-          description: li.title,
-          sellingPrice: li.price,
+          description: li.description,
+          sellingPrice: li.total_price_cents,
           qty: li.quantity,
           unitOfMeasure: '',
           length: 0,
@@ -2431,15 +2411,40 @@ export const getFreightRequetQuoteDetails = async (params) => {
           volume: 0
         }
       });
-
     }
-  }
+
+    return {
+      name: quoteOptionResponse.name,
+      transportMode: '',
+      incoTerm: quoteOptionResponse.inco_terms || '',
+      place: quoteOptionResponse.named_place || '',
+      fromSA: false,
+      vatExempt: false,
+      totalValue: quoteOptionResponse.grand_total_incl_vat_cents,
+      companyName: '',
+      streetAddress: '',
+      suburb: '',
+      city: '',
+      province: '',
+      country: '',
+      freightFor: '',
+      offloadRequired: false,
+      hazardous: 'non-hazardous',
+      refrigerationRequired: false,
+      containsLithium: false,
+      sample: '',
+      additionalDetails: quoteOptionResponse.special_comment || '',
+      productDetails: optionItemDetails
+    }
+
+  });
+
+  // }
 
   return {
     email: 'drewmurphyza@gmail.com',
     communicationMethod: 'attach_pdf',
-    options,
-    productDetails: []
+    options
   };
 }
 
@@ -2596,7 +2601,7 @@ export const updateQuoteLineItems = async (params) => {
   logger.debug(`UPDATING QUOTE LINE ITEMS:: ${JSON.stringify(params)}`);
 
   try {
-    const { lineItemIds, gp, mup, agentCom, freight } = params;
+    const { quote_id, lineItemIds, gp, mup, agentCom, freight } = params;
 
     if (gp > 100)
       throw new ApiError('GP Percent must be less than 100%');
@@ -2613,25 +2618,27 @@ export const updateQuoteLineItems = async (params) => {
       return lasecApi.Quotes.updateQuoteItems(updateParams);
     });
 
-    // const freightParams = {
-    //   item_id: 'NLSCFREIGHT ',
-    //   values: {
-    //     unit_price_cents: freight * 100
-    //   }
-    // }
-    // const freightItemPromise = lasecApi.Quotes.updateQuoteItems(freightParams);
-    // itemPromises.push(freightItemPromise);
+    const freightParams = {
+      item_id: 'NLSCFREIGHT ',
+      values: {
+        unit_price_cents: freight * 100
+      }
+    }
+    const freightItemPromise = lasecApi.Quotes.updateQuoteItems(freightParams);
+    itemPromises.push(freightItemPromise);
 
     await Promise.all(itemPromises)
-      .then(async result => {
-        logger.debug(`All promises complete :: ${JSON.stringify(result)}`);
-        const quote = await getLasecQuoteById(params.quoteId).then();
-        return quote;
-      })
+      .then(async result => logger.debug(`All promises complete :: ${JSON.stringify(result)}`) )
       .catch(error => {
         logger.debug(`Error running all promises:: ${JSON.stringify(error)}`);
         throw new ApiError(`Error running all promises :: ${error}`)
       });
+
+      return {
+        success: true,
+        message: 'Quote line items updated successully.'
+      }
+
 
   } catch (error) {
     throw new ApiError(`Error updating quote lineitems. ${error}`);

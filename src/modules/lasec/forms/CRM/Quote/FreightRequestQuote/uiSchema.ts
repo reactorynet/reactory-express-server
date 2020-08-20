@@ -17,7 +17,7 @@ const uiSchema: any = {
   'ui:grid-layout': [
     {
       email: { xs: 12, sm: 6, md: 6, lg: 6 },
-      communicationMethod: { xs: 12, sm: 6, md: 6,  lg: 6 },
+      communicationMethod: { xs: 12, sm: 6, md: 6, lg: 6 },
     },
     {
       details: { xs: 12, sm: 12, md: 12, lg: 12 },
@@ -56,11 +56,9 @@ const uiSchema: any = {
         optionsComponents: [
           { componentFqn: 'lasec-crm.LasecFreightRequestOptionForm' },
           { componentFqn: 'lasec-crm.LasecFreightRequestCosigneeForm' },
-          { componentFqn: 'lasec-crm.LasecFreightRequestConsignmentForm' }
+          { componentFqn: 'lasec-crm.LasecFreightRequestConsignmentForm' },
+          { componentFqn: 'lasec-crm.LasecFreightRequestProductDetail' }
         ],
-        productComponent: {
-          componentFqn: 'lasec-crm.LasecFreightRequestProductDetail',
-        }
       },
       propsMap: {
         'formContext.$formData': 'formData',

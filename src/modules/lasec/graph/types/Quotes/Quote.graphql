@@ -507,7 +507,6 @@ type FreightRequestQuoteDetail {
   email: String
   communicationMethod: String
   options: [FreightRequestOption]
-  productDetails: [FreightRequestProductDetail]
 }
 
 type FreightRequestOption {
@@ -531,6 +530,7 @@ type FreightRequestOption {
   containsLithium: Boolean
   sample: String
   additionalDetails: String
+  productDetails: [FreightRequestProductDetail]
 }
 
 input FreightRequestOptionInput {
@@ -813,12 +813,13 @@ extend type Mutation {
     valid_date: String
   ): SimpleResponse
   LasecUpdateQuoteLineItems(
+    quote_id: String
     lineItemIds: [String]
     gp: Float
     mup: Float
     agentCom: Float
     freight: Float
-  ): Quote
+  ): SimpleResponse
 
   LasecDeleteQuote(id: String): SimpleResponse
 }

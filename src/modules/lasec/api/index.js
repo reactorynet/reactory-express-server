@@ -201,13 +201,14 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   const apiResponse = await fetch(absoluteUrl, kwargs).then();
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
     try {
+
+    //  apiResponse.text().then(response => logger.debug(`RESPONSE FROM API:: -  ${response}`));
+
       return apiResponse.json();
     } catch (jsonError) {
       logger.error("JSON Error", jsonError);
       apiResponse.text().then(text => {
         logger.error(`Error Source: ${text}`);
-
-
       });
     }
   } else {
