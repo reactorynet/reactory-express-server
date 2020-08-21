@@ -607,31 +607,21 @@ export default {
     LasecGetQuoteComments: async (obj, params) => {
       return getQuoteComments(params);
     },
-
     LasecGetCRMQuoteList: async (obj, args) => {
       return getPagedQuotes(args);
     },
     LasecGetCRMClientQuoteList: async (obj, args) => {
       return getPagedClientQuotes(args);
     },
-
-
     LasecGetCRMSalesOrders: async (obj, args) => {
       return getSalesOrders(args);
     },
-
-    //  PURCHASE ORDER
-
     LasecGetCRMPurchaseOrders: async (obj, args) => {
       return getPurchaseOrders(args);
     },
-
     LasecGetCRMPurchaseOrderDetail: async (obj, args) => {
       return getPurchaseOrderDetails(args)
     },
-
-    ////
-
     LasecGetCRMClientSalesOrders: async (obj, args) => {
       return getClientSalesOrders(args);
     },

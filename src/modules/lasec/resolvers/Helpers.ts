@@ -2392,17 +2392,18 @@ export const getFreightRequetQuoteDetails = async (params) => {
 
     quoteOptionResponse = quoteOptionResponse.items[0];
 
-    const optionLineItems = await lasecApi.Quotes.getLineItems(quoteOptionResponse.quote_id).then();
+    // const optionLineItems = await lasecApi.Quotes.getLineItems(quoteOptionResponse.quote_id).then();
+    const lineItems = await lasecGetQuoteLineItems(quoteId, optionId).then();
 
-    logger.debug(`OPTION LINE ITEMS ${quoteOptionResponse.quote_id}:: ${JSON.stringify(optionLineItems)}`);
+    logger.debug(`OPTION LINE ITEMS FOR::  ${quoteId} ${optionId}:: ${JSON.stringify(lineItems)}`);
 
     let optionItemDetails = [];
-    if (optionLineItems.items.length > 0) {
-      optionItemDetails = optionLineItems.items.map(li => {
+    if (lineItems.length > 0) {
+      optionItemDetails = lineItems.map(li => {
         return {
           code: li.code,
-          description: li.description,
-          sellingPrice: li.total_price_cents,
+          description: li.title,
+          sellingPrice: li.totalVATExclusive,
           qty: li.quantity,
           unitOfMeasure: '',
           length: 0,
@@ -2433,7 +2434,7 @@ export const getFreightRequetQuoteDetails = async (params) => {
       refrigerationRequired: false,
       containsLithium: false,
       sample: '',
-      additionalDetails: quoteOptionResponse.special_comment || '',
+      // additionalDetails: quoteOptionResponse.special_comment || '',
       productDetails: optionItemDetails
     }
 
@@ -2450,6 +2451,7 @@ export const getFreightRequetQuoteDetails = async (params) => {
 
 export const updateFreightRequesyDetails = async (params) => {
   logger.debug(`UPDATE FREIGHT REQUEST DETAILS :: ${JSON.stringify(params)}`);
+
   const { quoteId, email, communicationMethod, options, productDetails } = params.freightRequestDetailInput;
   try {
     const freightRequestUpdate = await FreightRequest.findOneAndUpdate(
@@ -2628,16 +2630,16 @@ export const updateQuoteLineItems = async (params) => {
     itemPromises.push(freightItemPromise);
 
     await Promise.all(itemPromises)
-      .then(async result => logger.debug(`All promises complete :: ${JSON.stringify(result)}`) )
+      .then(async result => logger.debug(`All promises complete :: ${JSON.stringify(result)}`))
       .catch(error => {
         logger.debug(`Error running all promises:: ${JSON.stringify(error)}`);
         throw new ApiError(`Error running all promises :: ${error}`)
       });
 
-      return {
-        success: true,
-        message: 'Quote line items updated successully.'
-      }
+    return {
+      success: true,
+      message: 'Quote line items updated successully.'
+    }
 
 
   } catch (error) {

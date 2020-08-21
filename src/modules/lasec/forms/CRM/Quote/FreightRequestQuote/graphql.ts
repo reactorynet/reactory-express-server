@@ -28,7 +28,7 @@ const graphql: Reactory.IFormGraphDefinition = {
             refrigerationRequired
             containsLithium
             sample
-            additionalDetails
+
             productDetails {
               code
               description
@@ -43,6 +43,7 @@ const graphql: Reactory.IFormGraphDefinition = {
           }
       }
     }`,
+    // additionalDetails
     variables: {
       'formData.code': 'quoteId',
     },
@@ -71,7 +72,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'options[].refrigerationRequired': 'options[].refrigerationRequired',
       'options[].containsLithium': 'options[].containsLithium',
       'options[].sample': 'options[].sample',
-      'options[].additionalDetails': 'options[].additionalDetails',
+      // 'options[].additionalDetails': 'options[].additionalDetails',
 
       'options[].productDetails': 'options[].productDetails',
       'options[].productDetails[].code': 'options[].productDetails[].code',

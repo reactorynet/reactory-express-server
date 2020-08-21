@@ -529,7 +529,7 @@ type FreightRequestOption {
   refrigerationRequired: Boolean
   containsLithium: Boolean
   sample: String
-  additionalDetails: String
+  # additionalDetails: String
   productDetails: [FreightRequestProductDetail]
 }
 
