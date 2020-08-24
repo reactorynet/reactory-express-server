@@ -19,7 +19,7 @@ import { urlencoded } from 'body-parser';
 import LasecAPI from '@reactory/server-modules/lasec/api';
 import CRMClientComment from '@reactory/server-modules/lasec/models/Comment';
 import { User } from '@reactory/server-core/models';
-import { LasecApiResponse } from '../types/lasec';
+import { LasecApiResponse, SimpleResponse } from '../types/lasec';
 
 import { getLoggedIn360User } from './Helpers';
 
@@ -54,7 +54,7 @@ const getClients = async (params) => {
 
   const cachekey = Hash(`client_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
-  let _cachedResults = await getCacheItem(cachekey);
+  let _cachedResults = false; //await getCacheItem(cachekey);
 
   if (_cachedResults) {
 
@@ -158,6 +158,8 @@ const getClients = async (params) => {
       'company_account_number': 'customer.accountNumber',
       'company_trading_name': 'customer.tradingName',
       'company_sales_team': 'customer.salesTeam',
+      'duplicate_name_flag': { key: 'isNameDuplicate', transform: (src) => src == true },
+      'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
       'company_on_hold': {
         'key': 'customer.customerStatus',
         'transform': (val) => (`${val === true ? 'on-hold' : 'not-on-hold'}`)
@@ -214,7 +216,7 @@ const getClients = async (params) => {
     }
   }
 
-  setCacheItem(cachekey, result, 60 * 10);
+  // setCacheItem(cachekey, result, 60 * 10);
 
   return result;
 }
@@ -290,6 +292,8 @@ const getClient = async (params) => {
       'alternate_office_number': 'alternateOfficeNumber',
       'special_notes': 'note',
       'sales_team_id': 'salesTeam',
+      'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src) => src == true },
+      'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
       'department': ['department', 'jobTitle'],
       'ranking_id': ['customer.rankingId',
         {
@@ -426,7 +430,7 @@ const getClient = async (params) => {
   return null;
 };
 
-const updateCientDetail = async (args) => {
+const updateClientDetail = async (args) => {
   logger.debug(`>> >> >> UPDATE PARAMS:: `, args);
   try {
     const params = args.clientInfo;
@@ -1764,7 +1768,7 @@ export default {
   Mutation: {
     LasecUpdateClientDetails: async (obj, args) => {
       logger.debug(`UPDATING CLIENT DETAILS WITH ARGS ${args}`);
-      return updateCientDetail(args);
+      return updateClientDetail(args);
     },
     LasecCreateNewOrganisation: async (onj, args) => {
       return createNewOrganisation(args);
@@ -2012,5 +2016,53 @@ export default {
     LasecCRMSaveComment: async (obj, args) => {
       return saveComment(args);
     },
+    LasecDeactivateClients: async (obj: any, params: { clientIds: string[]  }): Promise<SimpleResponse> => {
+      
+      let response: SimpleResponse = {
+        message: `Deactivated ${params.clientIds.length} clients`,
+        success: true
+      };
+
+      const deactivation_promises: Promise<any>[] = params.clientIds.map((clientId: string) => {
+
+        const args = {
+          clientInfo: {
+            clientId,
+            clientStatus: 'deactivated'
+          },                    
+        }
+
+        return updateClientDetail(args);
+
+      });
+
+      try {
+        const results = await Promise.all(deactivation_promises).then();
+        let successCount: number, failCount: number = 0;
+
+        results.forEach((patchResult) => {
+          if(patchResult.Success === true) successCount += 1;
+          else failCount += 1;
+        });
+
+        if(failCount > 0) {
+          if(successCount > 0) {
+            response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;            
+          } else {
+            response.message = ` 😣 Could not deactivate any client accounts.`;
+            response.success = false;
+          }
+        } else {
+          if( successCount === deactivation_promises.length) {
+            response.message = `🥇 Deactivated all ${successCount} clients.`
+          }
+        }
+      } catch(err) {
+        response.message = `😬 An error occurred while changing the client status. [${err.nessage}]`;
+        logger.error(`🧨 Error deactivating the client account`, err)
+      } 
+            
+      return response;
+    }
   },
 };

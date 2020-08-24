@@ -62,7 +62,8 @@ export default {
       return QuoteReminder.find({}).then()      
     },
     LasecLoggedInUser: async( obj, params: any): Promise<Lasec360User> => {     
-      return getLoggedIn360User();
+      logger.debug('Query LasecLoggedInUser Called')
+      return await getLoggedIn360User().then();
     }
   },
   Mutation: {

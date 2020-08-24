@@ -50,13 +50,23 @@ export const displayUiSchema: any = {
       },
     }
   },
-  clientStatus: {
-    'ui:widget': 'LabelWidget',
+  clientStatus: {        
+    'ui:widget': 'LabelWidget',    
     'ui:options': {
       readOnly: true,
-      format: '${formData}',
+      format: '${formData ? formData.toUpperCase() : "Loading"}',
       variant: 'subtitle1',
       title: 'Client Status',
+      icon: 'trip_origin',
+      iconPosition: 'inline',
+      iconProps: {
+        style: {
+          color: '#FF9901',
+          margingRight: '4px'
+        },
+
+      },
+      $iconProps: 'lasec-crm.ClientStatusIconFormatFunction@1.0.0',
       titleProps: {
         style: {
           display: 'content',
@@ -69,48 +79,9 @@ export const displayUiSchema: any = {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      },
-      /*
-      componentFqn: 'core.ConditionalIconComponent@1.0.0',
-      componentProps: {
-        conditions: [
-          {
-            key: 'active',
-            icon: 'trip_origin',
-            style: {
-              color: '#5EB848'
-            },
-            tooltip: 'Client Active'
-          },
-          {
-            key: 'unfinished',
-            icon: 'trip_origin',
-            style: {
-              color: '#FF9901'
-            },
-            tooltip: 'Client Unfinished'
-          },
-          {
-            key: 'deactivated',
-            icon: 'trip_origin',
-            style: {
-              color: '#AB1257'
-            },
-            tooltip: 'Client Deactivated'
-          }
-        ]
-      },
-      style: {
-        marginRight: '8px',
-        marginTop: '8px',
-      },
-      componentPropsMap: {
-        'formData': 'value',
-      },
-      */
-    }
-  },
-
+      }, 
+    } 
+  },      
   firstName: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -619,6 +590,12 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: schema,
   graphql,
+  widgetMap: [
+    { 
+      componentFqn: 'core.ConditionalIconComponent',
+      widget: 'ConditionalIcon'
+    }
+  ],
   uiSchema: displayUiSchema,
   uiSchemas: [
     {

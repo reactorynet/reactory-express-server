@@ -7,6 +7,12 @@ const MoresPluginForm: Reactory.IReactoryForm = {
   uiSupport: ['material'],  
   uiResources: [
     {
+      id: 'd3.core.v5',
+      name: 'd3.core.v5',
+      type: 'script',
+      uri: 'https://d3js.org/d3.v5.min.js',
+    },
+    {
       id: 'reactory.plugin.mores',
       name: 'reactory.plugin.mores',
       type: 'script',

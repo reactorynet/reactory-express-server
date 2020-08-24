@@ -19,6 +19,9 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
   uiSchema: $uiSchema,
   defaultFormValue: {
     id: "",
+    client: {
+      id: ""
+    },
     salesTeam: "",
     tabs: [
       {
@@ -130,7 +133,10 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
-    { componentFqn: 'lasec-crm.LasecClientOverviewWidget@1.0.0', widget: 'LasecClientOverviewWidget' },
+    { componentFqn: 'lasec-crm.LasecClientOverviewHeaderForm@1.0.0', widget: 'LasecClientOverviewHeaderForm' },
+    {
+      componentFqn: 'lasec-crm.ClientDetailHeaderWidget@1.0.0', widget: 'ClientDetailHeaderWidget'
+    },
     { componentFqn: 'core.TabbedNavigation@1.0.0', widget: 'TabbedNavWidget' },
   ],
 };

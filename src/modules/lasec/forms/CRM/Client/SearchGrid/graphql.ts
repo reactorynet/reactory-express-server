@@ -19,6 +19,8 @@ const graphql: Reactory.IFormGraphDefinition = {
           emailAddress
           country
           salesTeam
+          isEmailDuplicate
+          isNameDuplicate
           customer {
             id
             tradingName
@@ -48,6 +50,29 @@ const graphql: Reactory.IFormGraphDefinition = {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
+  },
+  mutation: {
+    deactivate: {
+      name: 'LasecDeactivateClients',
+      text: `mutation LasecDeactivateClients($clientIds: [String]!){
+        LasecDeactivateClients(clientIds: $clientIds) {
+          success
+          message
+        }
+      }`,
+      variables: {
+        'selected[].id': 'clientIds' 
+      },
+      objectMap: true,
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Successfully deactivated ${selected.length} ${selected.length > 1 ? "clients" : "client"}',        
+      },
+      refreshEvents: [ 
+        { name: 'LasecCustomerDeactivated' }
+       ]
+    }
   }
 };
 

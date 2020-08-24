@@ -23,7 +23,7 @@ export const getCacheItem = async (cacheKey) => {
  * @param {*} item 
  * @param {*} ttl - number of seconds
  */
-export const setCacheItem = async (cacheKey, item, ttl) => {
+export const setCacheItem = async (cacheKey, item, ttl = 60) => {
   let cached = await LasecCache.findOne({ key: cacheKey, partner: global.partner._id }).then();
 
   if(cached) {

@@ -4,6 +4,7 @@ import path from 'path';
 import logger from '../../logging';
 
 const ChartjsNode = require('chartjs-node');
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 // 600x600 canvas size
 export const DefaultBarChart = (props) => {
@@ -19,6 +20,7 @@ export const DefaultBarChart = (props) => {
     chartNode.drawChart({
       type: 'bar',
       data,
+      plugins: [ChartDataLabels],
       options: {
         scales: {
           yAxes: [{

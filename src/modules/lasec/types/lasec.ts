@@ -12,7 +12,7 @@ export interface Meta {
 }
 
 export interface SimpleResponse {
-  sucess: String
+  success: boolean
   message: String
 }
 

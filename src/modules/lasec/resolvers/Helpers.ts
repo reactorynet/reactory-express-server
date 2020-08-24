@@ -144,6 +144,8 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 
 export const getLoggedIn360User: Function = async function (): Promise<Lasec360User> {
   const { user } = global;
+
+  if(user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
   const lasecCreds = user.getAuthentication("lasec");
 
   if (!lasecCreds) {

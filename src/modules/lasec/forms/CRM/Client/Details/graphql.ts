@@ -20,11 +20,14 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-      'formData.id': 'id',
+      'formData.client.id': 'id',
     },
     resultMap: {
       '.*': 'formData.*',
     },
+    refreshEvents: [
+      { name: 'LasecClientDeactivated' }
+    ],
     autoQuery: false,
     queryMessage: 'Loading customer details',
     resultType: 'object',

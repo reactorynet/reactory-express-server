@@ -46,6 +46,8 @@ type LasecCRMClient {
   emailAddress: String
   alternateEmail: String
   accountType: String
+  isEmailDuplicate: Boolean
+  isNameDuplicate: Boolean
   customer: LasecCRMCustomer
   fullName: String
   firstName: String
@@ -308,4 +310,5 @@ extend type Mutation {
   LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
   LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
   LasecCRMSaveComment(clientId: String!, comment: String!): SimpleResponse
+  LasecDeactivateClients(clientIds: [String]!): SimpleResponse
 }

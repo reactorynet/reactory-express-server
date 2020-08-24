@@ -4,14 +4,14 @@ import $uiSchema from './uiSchema';
 import $graphql from './graphql';
 
 const LasecClientOverviewWidget: Reactory.IReactoryForm = {
-  id: 'LasecClientOverviewWidget',
+  id: 'LasecClientOverviewHeaderForm',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
   title: 'CMS Product Pricing',
   tags: ['CMS Product Pricing'],
   registerAsComponent: true,
-  name: 'LasecClientOverviewWidget',
+  name: 'LasecClientOverviewHeaderForm',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,
@@ -30,12 +30,6 @@ const LasecClientOverviewWidget: Reactory.IReactoryForm = {
     {
       componentFqn: 'lasec-crm.ClientDetailHeaderWidget@1.0.0', widget: 'ClientDetailHeaderWidget'
     },
-    /*
-    { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
-    { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
-    { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
-    { componentFqn: 'core.ConditionalIconComponent@1.0.0', widget: 'ConditionalIconComponent'}    
-    */
   ],
 };
 

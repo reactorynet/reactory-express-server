@@ -37,17 +37,12 @@ const uiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      id: { xs: 12 },
+      client: { xs: 12 },
       tabs: { xs: 12 },
     },
   ],
-  id: {
-    'ui:options': {
-      componentFqn: 'lasec-crm.LasecClientOverviewWidget@1.0.0',
-      componentPropsMap: {
-        'formContext.$formData.id': 'formData.id',
-      }
-    }
+  client: {
+    'ui:widget': 'LasecClientOverviewHeaderForm',    
   },
   tabs: {
     'ui:widget': 'TabbedNavWidget',

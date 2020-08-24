@@ -61,7 +61,15 @@ const ClientSchema: Reactory.ISchema = {
     repCode: {
       type: "string",
       title: "Rep Code"
-    }
+    },
+    isNameDuplicate: {
+      type: "boolean",
+      title: "Duplicate Name"
+    },
+    isEmailDuplicate: {
+      type: "boolean",
+      title: "Duplicate Email"
+    },
   }
 };
 

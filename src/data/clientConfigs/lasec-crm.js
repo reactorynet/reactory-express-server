@@ -1241,6 +1241,9 @@ const LASEC_CONFIG = {
       },
       altRowStyle: {
         backgroundColor: '#FAFAFA'
+      },
+      selectedRowStyle: {
+        backgroundColor: '#DFF1FF'
       }
     },
     MaterialTextField: {

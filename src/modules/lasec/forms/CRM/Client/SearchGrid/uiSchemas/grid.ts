@@ -98,6 +98,7 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
+        /*
         {
           title: 'Client Status', field: 'clientStatus',
           components: [
@@ -144,17 +145,19 @@ const uiSchema: any = {
           propsMap: {
             'rowData.clientStatus': 'selectedKey'
           },
-          breakpoint: 'xs'
+          breakpoint: 'xs',
 
-        },
+
+        }, */
         {
           title: 'Client Full Name',
           field: 'fullName',
-          component: 'core.SlideOutLauncher@1.0.0',
+          component: 'lasec-crm.LasecClientLabel@1.0.0',
           props: {
-            componentFqn: 'lasec-crm.LasecCRMClientDetail@1.0.0',
+            //componentFqn: 'lasec-crm.LasecCRMClientDetail@1.0.0',
+            /*
             componentProps: {
-              'rowData.id': 'formData.id',
+              'rowData.id': ['formData.id', 'formData.client.id'],              
               'rowData.salesTeam': 'formData.salesTeam',
             },
             childProps: {
@@ -172,9 +175,10 @@ const uiSchema: any = {
               }
             },
             windowTitle: 'Client details: ${rowData.fullName}',
+            */
           },
           propsMap: {
-            'rowData': 'rowData',
+            'rowData': 'formData',
           },
         },
         { title: 'Email Address', field: 'emailAddress', breakpoint: 'sm' },
@@ -258,22 +262,21 @@ const uiSchema: any = {
           breakpoint: 'md',
 
         }
-      ],
+      ],      
       actions: [
         {
           icon: 'remove_circle',
-          tooltip: 'Deactivate Client(s)',
+          tooltip: 'Deactivate Client(s)',          
+          confirmation: {
+            message: 'Are you sure you want to deactivate (${selected.length}) ${selected.length === 1 ? "client" : "clients"}?',
+            acceptTitle: 'Yes',
+            confirmColor: 'danger',
+            cancelTitle: 'No'
+          },
           iconProps: {
             color: 'error'
           },
-          mutation: 'deactivate',
-          variables: {
-
-          },
-          resultMap: {
-
-          },
-          resultAction: 'refresh'
+          mutation: 'deactivate',          
         },
       ],
       options: {

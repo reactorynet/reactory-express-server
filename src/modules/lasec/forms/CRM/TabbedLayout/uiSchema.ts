@@ -74,14 +74,12 @@ const uiSchema: any = {
       activeColor: 'secondary'
     },
     style: {
-      backgroundColor: "#F6F6F6",
+      // backgroundColor: "#F6F6F6",
       position: "absolute",
       top: "54px",
       left: "0",
       right: "0",
-      bottom: "0",
-      paddingLeft: "16px",
-      paddingRight: "16px"
+      bottom: "0",      
     }
   },
   'ui:field': 'GridLayout',
