@@ -28,10 +28,10 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'Sample/Repair'
     },
-    additionalDetails: {
-      type: 'string',
-      title: 'Additional Delivery Details'
-    },
+    // additionalDetails: {
+    //   type: 'string',
+    //   title: 'Additional Delivery Details'
+    // },
   }
 }
 
@@ -57,6 +57,10 @@ const uiSchema: any = {
     paddingBottom: '0.3rem'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+    containerStyle: {}
+  },
   'ui:grid-layout': [
     {
       freightFor: { sm: 4, xs: 12 },
@@ -65,7 +69,7 @@ const uiSchema: any = {
       refrigerationRequired: { sm: 4, xs: 12 },
       containsLithium: { sm: 4, xs: 12 },
       sample: { sm: 4, xs: 12 },
-      additionalDetails: { xs: 12 },
+      // additionalDetails: { xs: 12 },
     },
   ],
   id: {},
@@ -126,7 +130,7 @@ const uiSchema: any = {
       ],
     },
   },
-  additionalDetails: {},
+  // additionalDetails: {},
 };
 
 const LasecFreightRequestConsignmentForm: Reactory.IReactoryForm = {

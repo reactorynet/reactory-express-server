@@ -54,6 +54,10 @@ const uiSchema: any = {
     paddingBottom: '0.3rem'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+    containerStyle: {}
+  },
   'ui:grid-layout': [
     {
       // id: { md: 6, xs: 12 },
@@ -96,7 +100,7 @@ const uiSchema: any = {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
       inlineLabel: false,
-      label:"Total Value:"
+      label: "Total Value:"
     },
   },
   // totalValue: {

@@ -28,21 +28,22 @@ const graphql: Reactory.IFormGraphDefinition = {
             refrigerationRequired
             containsLithium
             sample
-            additionalDetails
-          }
-          productDetails {
-            code
-            description
-            unitOfMeasure
-            sellingPrice
-            qty
-            length
-            width
-            height
-            volume
+
+            productDetails {
+              code
+              description
+              unitOfMeasure
+              sellingPrice
+              qty
+              length
+              width
+              height
+              volume
+            }
           }
       }
     }`,
+    // additionalDetails
     variables: {
       'formData.code': 'quoteId',
     },
@@ -71,18 +72,18 @@ const graphql: Reactory.IFormGraphDefinition = {
       'options[].refrigerationRequired': 'options[].refrigerationRequired',
       'options[].containsLithium': 'options[].containsLithium',
       'options[].sample': 'options[].sample',
-      'options[].additionalDetails': 'options[].additionalDetails',
+      // 'options[].additionalDetails': 'options[].additionalDetails',
 
-      'productDetails': 'productDetails',
-      'productDetails[].code': 'productDetails[].code',
-      'productDetails[].description': 'productDetails[].description',
-      'productDetails[].unitOfMeasure': 'productDetails[].unitOfMeasure',
-      'productDetails[].sellingPrice': 'productDetails[].sellingPrice',
-      'productDetails[].qty': 'productDetails[].qty',
-      'productDetails[].length': 'productDetails[].length',
-      'productDetails[].width': 'productDetails[].width',
-      'productDetails[].height': 'productDetails[].height',
-      'productDetails[].volume': 'productDetails[].volume',
+      'options[].productDetails': 'options[].productDetails',
+      'options[].productDetails[].code': 'options[].productDetails[].code',
+      'options[].productDetails[].description': 'options[].productDetails[].description',
+      'options[].productDetails[].unitOfMeasure': 'options[].productDetails[].unitOfMeasure',
+      'options[].productDetails[].sellingPrice': 'options[].productDetails[].sellingPrice',
+      'options[].productDetails[].qty': 'options[].productDetails[].qty',
+      'options[].productDetails[].length': 'options[].productDetails[].length',
+      'options[].productDetails[].width': 'options[].productDetails[].width',
+      'options[].productDetails[].height': 'options[].productDetails[].height',
+      'options[].productDetails[].volume': 'options[].productDetails[].volume',
     },
     autoQuery: true,
     queryMessage: 'Retrieving freight request quote details',

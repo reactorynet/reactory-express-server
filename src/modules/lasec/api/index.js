@@ -201,13 +201,14 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   const apiResponse = await fetch(absoluteUrl, kwargs).then();
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
     try {
+
+    //  apiResponse.text().then(response => logger.debug(`RESPONSE FROM API:: -  ${response}`));
+
       return apiResponse.json();
     } catch (jsonError) {
       logger.error("JSON Error", jsonError);
       apiResponse.text().then(text => {
         logger.error(`Error Source: ${text}`);
-
-
       });
     }
   } else {
@@ -851,6 +852,7 @@ const Api = {
     },
     detail: async (params = defaultParams) => {
       const isoResult = await FETCH(SECONDARY_API_URLS.purchase_order_item.url, { params: { ...defaultParams, ...params } }).then();
+
       const {
         status,
         payload,
@@ -919,16 +921,22 @@ const Api = {
     getLineItems: async (code, active_option) => {
 
       let filter = { quote_id: code }
-      if(typeof active_option === 'string') {
+      if (typeof active_option === 'string') {
         filter.quote_option_id = active_option
         delete filter.quote_id;
       }
 
+
       const apiResponse = await FETCH(SECONDARY_API_URLS.quote_items.url, {
+
         params: {
           ...defaultParams,
           filter
-        } }).then();
+        }
+      }).then();
+
+      logger.debug(`QUOTE ITEM IDS RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
       const {
         status, payload,
       } = apiResponse;
@@ -937,6 +945,9 @@ const Api = {
         //collet the ids
         if (payload && payload.ids) {
           const lineItemsExpanded = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: payload.ids } } }).then()
+
+          logger.debug(`QUOTE ITEM PAYLOAD RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
           if (lineItemsExpanded.status === 'success') {
             return lineItemsExpanded.payload;
           }
@@ -1085,35 +1096,29 @@ const Api = {
         return null;
       }
     },
-
     updateQuote: async (params) => {
       try {
-        // expected params
         // {"item_id":"2008-335010","values":{"quote_type":"Normal"}}
-        logger.debug(`CALLING WITH PARAMS:: ${JSON.stringify(params)}`);
         const url = `api/quote/${params.item_id}`;
-        const apiResponse = await POST(url, { ...params });
+        const apiResponse = await PUT(url, { ...params });
         logger.debug(`UPDATE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
-
         const { status } = apiResponse;
-
         if (status === 'success') {
           return apiResponse;
         }
-
+        return null;
       } catch (lasecApiError) {
         logger.error(`Error updating quote:: ${JSON.stringify(lasecApiError)}`).then();
         return null;
       }
     },
-
     updateQuoteItems: async (params) => {
       try {
         // expected params
         // {item_id: "2008", values: { quantity: 1, unit_price_cents: 123, gp_percent: 2, mark_up: 20, total_price_cents: 100 }}
         logger.debug(`CALLING WITH PARAMS:: ${JSON.stringify(params)}`);
         const url = `api/quote_item/${params.item_id}`;
-        const apiResponse = await POST(url, { ...params });
+        const apiResponse = await PUT(url, { ...params });
         logger.debug(`UPDATE LINEITEMS RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
         const { status } = apiResponse;
@@ -1126,7 +1131,26 @@ const Api = {
         logger.error(`Error updating quote lineitems:: ${JSON.stringify(lasecApiError)}`).then();
         return null;
       }
-    }
+    },
+    deleteQuote: async (id) => {
+      try {
+        logger.debug(`DELETE WITH PARAMS:: ${JSON.stringify(id)}`);
+        const url = `api/quote/${id}/`;
+        const apiResponse = await DELETE(url).then();
+
+        logger.debug(`DELETE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
+        const { status } = apiResponse;
+
+        if (status === 'success') {
+          return apiResponse;
+        }
+
+      } catch (lasecApiError) {
+        logger.error(`Error deleting quote:: ${JSON.stringify(lasecApiError)}`).then();
+        return null;
+      }
+    },
   },
   Teams: {
     list: async () => {

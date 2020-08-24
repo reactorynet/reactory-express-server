@@ -1,9 +1,7 @@
-// import { updateQuoteLineItems } from './Helpers';
-
-import om from 'object-mapper';
 import moment, { Moment } from 'moment';
 import lodash, { isArray, isNil, isString } from 'lodash';
 import { ObjectId } from 'mongodb';
+import om from 'object-mapper';
 import gql from 'graphql-tag';
 import uuid from 'uuid';
 import lasecApi, { LasecNotAuthenticatedException } from '@reactory/server-modules/lasec/api';
@@ -80,7 +78,7 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
     _source = _existing.meta && _existing.meta.source ? _existing.meta.source : {};
   }
 
-  // logger.debug(`SOURCE ${JSON.stringify(_source)}`);
+  logger.debug(`SOURCE ${JSON.stringify(_source)}`);
   // logger.debug(`EXISTING ${JSON.stringify(_existing)}`);
 
   if (map === true && _source) {
@@ -1112,9 +1110,14 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: String
 
   let cached = await getCacheItem(keyhash);
   if (cached) logger.debug(`Found Cached Line Items For Quote: ${code}`);
+
   if (lodash.isNil(cached) === true) {
+
     const lineItems = await lasecApi.Quotes.getLineItems(code, active_option).then();
-    logger.debug(`Found line items for quote ${code}`, lineItems);
+
+    logger.debug(`Found line items for quote ${code}:: ${lineItems.length}`);
+
+    if (lineItems.length == 0) return [];
 
     cached = om.merge(lineItems, {
       'items.[]': '[].meta.source',
@@ -1154,7 +1157,7 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: String
       'items.[].product_class_description': '[].productClassDescription',
     });
 
-    setCacheItem(keyhash, cached, 60);
+    await setCacheItem(keyhash, cached, 60).then();
   }
 
   return cached;
@@ -1567,42 +1570,27 @@ export const getPurchaseOrders = async (params) => {
 }
 
 export const getPurchaseOrderDetails = async (params) => {
+  try {
+    const { orderId, quoteId } = params;
+    let apiFilter = { purchase_order_id: orderId };
+    let purchaseOrdersItems = await lasecApi.PurchaseOrders.detail({ filter: apiFilter }).then();
+    let purchaseOrderItems = [...purchaseOrdersItems.items];
 
-  const {
-    orderId,
-    quoteId
-  } = params;
+    purchaseOrderItems = purchaseOrderItems.map(item => {
+      return {
+        code: item.product_code,
+        description: item.product_description,
+        orderQty: item.order_qty,
+        etaDate: item.eta_date ? moment(item.eta_date).toDate() : '',
+      }
+    })
 
-  let apiFilter = { purchase_order_id: orderId };
+    return purchaseOrderItems;
 
-  let purchaseOrdersIds = await lasecApi.PurchaseOrders.detail({ filter: apiFilter }).then();
-
-  let ids = [];
-
-  if (isArray(purchaseOrdersIds.ids) === true) {
-    ids = [...purchaseOrdersIds.ids];
+  } catch (error) {
+    throw new ApiError(`Error getting purchase order items: ${error}`);
   }
 
-  let purchaseOrdersDetail = await lasecApi.PurchaseOrders.detail({ filter: { ids: ids } }).then();
-  let purchaseOrderItems = [...purchaseOrdersDetail.items];
-
-  logger.debug(`PURCHASE ORDERS:: ${JSON.stringify(purchaseOrderItems)}`);
-  // logger.debug(`PURCHASE ORDERS:: ${JSON.stringify(salesOrders[0])}`);
-
-  // NEEEEED TO CHECK THIS IS CORRECT
-  // DAWID IS STILL DEVELOPING THIS ENDPOINT
-  purchaseOrderItems = purchaseOrderItems.map(item => {
-    return {
-      code: item.code, // CHECK THIS
-      description: item.description, // CHECK
-      orderQty: item.order_quantity, // CHECK
-      etaDate: moment(item.eta_date).toDate(), // CHECK
-    }
-  })
-
-  logger.debug(`PO ITEMS TO RETURN :: ${JSON.stringify(purchaseOrderItems)}`);
-
-  return purchaseOrderItems;
 }
 
 export const getPagedSalesOrders = async (params) => {
@@ -2370,72 +2358,102 @@ export const getCRMSalesHistory = async (params) => {
 }
 
 export const getFreightRequetQuoteDetails = async (params) => {
+
   logger.debug(`FREIGHT REQUEST PARAMS:: ${JSON.stringify(params)}`);
+
   const { quoteId } = params;
+
   let quoteDetail = await lasecApi.Quotes.getByQuoteId(quoteId).then();
+
+  logger.debug(`QUOTE DETAIL:: ${JSON.stringify(quoteDetail)}`);
+
+
   let options = [];
   let productDetails = [];
-  const freightRequest = await FreightRequest.findOne({ quoteId: quoteId });
-  logger.debug(`FREIGHT REQUEST :: ${JSON.stringify(freightRequest)}`);
 
-  if (freightRequest) {
-    logger.debug(`----------  GOT A FREIGHT OPTION ----------`);
-    options = freightRequest.options;
-    productDetails = freightRequest.productDetails;
-  } else {
-    options = quoteDetail.quote_option_ids.map(async (optionId) => {
-      let quoteOption = await lasecApi.Quotes.getQuoteOption(optionId);
-      quoteOption = quoteOption.items[0];
-      return {
-        name: quoteOption.name,
-        transportMode: '',
-        incoTerm: quoteOption.inco_terms || '',
-        place: quoteOption.named_place || '',
-        fromSA: false,
-        vatExempt: false,
-        totalValue: quoteOption.grand_total_incl_vat_cents,
-        companyName: '',
-        streetAddress: '',
-        suburb: '',
-        city: '',
-        province: '',
-        country: '',
-        freightFor: '',
-        offloadRequired: false,
-        hazardous: 'non-hazardous',
-        refrigerationRequired: false,
-        containsLithium: false,
-        sample: '',
-        additionalDetails: quoteOption.special_comment || '',
-      }
-    });
+  // const freightRequest = await FreightRequest.findOne({ quoteId: quoteId });
 
-    let quoteLineItems = await lasecGetQuoteLineItems(params.quoteId);
-    productDetails = quoteLineItems.map(li => {
-      return {
-        code: li.code,
-        description: li.title,
-        sellingPrice: li.price,
-        qty: li.quantity,
-        unitOfMeasure: '',
-        length: 0,
-        width: 0,
-        height: 0,
-        volume: 0
-      }
-    });
-  }
+  // logger.debug(`FREIGHT REQUEST :: ${JSON.stringify(freightRequest)}`);
+
+  // if (freightRequest) {
+
+  //   logger.debug(`----------  GOT A FREIGHT OPTION ----------`);
+
+  //   options = freightRequest.options;
+  //   productDetails = freightRequest.productDetails;
+
+  // } else {
+
+  logger.debug(`----------  GETTING OPTIONS FROM API ----------`);
+
+  options = quoteDetail.quote_option_ids.map(async (optionId) => {
+
+    let quoteOptionResponse = await lasecApi.Quotes.getQuoteOption(optionId).then();
+
+    logger.debug(`QUOTE OPTIONS ${quoteId}:: ${JSON.stringify(quoteOptionResponse)}`);
+
+    quoteOptionResponse = quoteOptionResponse.items[0];
+
+    // const optionLineItems = await lasecApi.Quotes.getLineItems(quoteOptionResponse.quote_id).then();
+    const lineItems = await lasecGetQuoteLineItems(quoteId, optionId).then();
+
+    logger.debug(`OPTION LINE ITEMS FOR::  ${quoteId} ${optionId}:: ${JSON.stringify(lineItems)}`);
+
+    let optionItemDetails = [];
+    if (lineItems.length > 0) {
+      optionItemDetails = lineItems.map(li => {
+        return {
+          code: li.code,
+          description: li.title,
+          sellingPrice: li.totalVATExclusive,
+          qty: li.quantity,
+          unitOfMeasure: '',
+          length: 0,
+          width: 0,
+          height: 0,
+          volume: 0
+        }
+      });
+    }
+
+    return {
+      name: quoteOptionResponse.name,
+      transportMode: '',
+      incoTerm: quoteOptionResponse.inco_terms || '',
+      place: quoteOptionResponse.named_place || '',
+      fromSA: false,
+      vatExempt: false,
+      totalValue: quoteOptionResponse.grand_total_incl_vat_cents,
+      companyName: '',
+      streetAddress: '',
+      suburb: '',
+      city: '',
+      province: '',
+      country: '',
+      freightFor: '',
+      offloadRequired: false,
+      hazardous: 'non-hazardous',
+      refrigerationRequired: false,
+      containsLithium: false,
+      sample: '',
+      // additionalDetails: quoteOptionResponse.special_comment || '',
+      productDetails: optionItemDetails
+    }
+
+  });
+
+  // }
 
   return {
     email: 'drewmurphyza@gmail.com',
     communicationMethod: 'attach_pdf',
-    options,
-    productDetails
+    options
   };
 }
 
 export const updateFreightRequesyDetails = async (params) => {
   logger.debug(`UPDATE FREIGHT REQUEST DETAILS :: ${JSON.stringify(params)}`);
+
   const { quoteId, email, communicationMethod, options, productDetails } = params.freightRequestDetailInput;
   try {
     const freightRequestUpdate = await FreightRequest.findOneAndUpdate(
@@ -2559,26 +2577,25 @@ export const updateQuote = async (params) => {
 
   try {
     const { item_id, quote_type, rep_code, client_id, valid_date } = params;
+    const updateParams = { item_id, values: { quote_type } };
+    if (rep_code && rep_code.length > 0 && rep_code[0] != '') updateParams.values.sales_team_id = rep_code[0];
+    if (client_id) updateParams.values.customer_id = client_id;
+    if (valid_date) updateParams.values.modified = moment(valid_date).toISOString();
 
-    const updateParams = {
-      item_id,
-      values: {
-        quote_type,
-        rep_code,
-        client_id,
-        valid_date
-      }
-    }
+    const updateResult = await lasecApi.Quotes.updateQuote(updateParams).then();
 
-    const updateResult = await lasecApi.Quotes.updateQuote(updateParams);
+    if (!updateResult)
+      throw new ApiError(`Error updating quote. Error from api.`);
 
     logger.debug(`UPDATING QUOTE RESULT:: ${JSON.stringify(updateResult)}`);
 
-    const quote = await getLasecQuoteById(params.quoteId).then();
-    return quote;
+    return {
+      success: true,
+      message: 'Quote successfully updated.'
+    };
 
   } catch (error) {
-    throw new ApiError(`Error updating quote lineitems. ${error}`);
+    throw new ApiError(`Error updating quote. ${error}`);
   }
 
 }
@@ -2588,37 +2605,101 @@ export const updateQuoteLineItems = async (params) => {
   logger.debug(`UPDATING QUOTE LINE ITEMS:: ${JSON.stringify(params)}`);
 
   try {
-    const { lineItemIds, gp, mup, agentCom, freight } = params;
+    const { quote_id, lineItemIds, gp, mup, agentCom, freight } = params;
 
-    await Promise.all(lineItemIds.map((id: string) => {
+    if (gp > 100)
+      throw new ApiError('GP Percent must be less than 100%');
+
+    const itemPromises = lineItemIds.map((id: string) => {
       const updateParams = {
         item_id: id,
         values: {
-          // quantity: 1,
-          // unit_price_cents: 1,
-          // total_price_cents: 1
           gp_percent: gp,
-          mark_up: gp,
-          agent_commission: gp,
-          freight: freight     //// FREIGHT IS A SEPERATE LINE ITEM - UPDATE unit_price_cents AND SUBMIT
+          mark_up: mup,
+          agent_commission: agentCom,
         }
       }
       return lasecApi.Quotes.updateQuoteItems(updateParams);
-    }))
-      .then(async result => {
-        logger.debug(`All promises complete :: ${JSON.stringify(result)}`);
-        const quote = await getLasecQuoteById(params.quoteId).then();
-        return quote;
-      })
+    });
+
+    const freightParams = {
+      item_id: 'NLSCFREIGHT ',
+      values: {
+        unit_price_cents: freight * 100
+      }
+    }
+    const freightItemPromise = lasecApi.Quotes.updateQuoteItems(freightParams);
+    itemPromises.push(freightItemPromise);
+
+    await Promise.all(itemPromises)
+      .then(async result => logger.debug(`All promises complete :: ${JSON.stringify(result)}`))
       .catch(error => {
         logger.debug(`Error running all promises:: ${JSON.stringify(error)}`);
         throw new ApiError(`Error running all promises :: ${error}`)
       });
 
+    return {
+      success: true,
+      message: 'Quote line items updated successully.'
+    }
+
+
   } catch (error) {
     throw new ApiError(`Error updating quote lineitems. ${error}`);
   }
+}
 
+export const getCompanyDetails = async (params) => {
+  try {
+    let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [params.id] } }).then();
+    let customerObject = {};
+    if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
+      customerObject = {
+        ...om(companyPayloadResponse.items[0], {
+          'company_id': 'id',
+          'registered_name': 'registeredName',
+          'description': 'description',
+          'trading_name': 'tradingName',
+          "registration_number": 'registrationNumber',
+          "vat_number": "taxNumber",
+          'organization_id': 'organizationId',
+          'currency_code': 'currencyCode',
+          'currency_symbol': 'currencySymbol',
+          'currency_description': 'currencyDescription',
+          "credit_limit_total_cents": "creditLimit",
+          "current_balance_total_cents": "currentBalance",
+          "current_invoice_total_cents": "currentInvoice",
+          "30_day_invoice_total_cents": "balance30Days",
+          "60_day_invoice_total_cents": "balance60Days",
+          "90_day_invoice_total_cents": "balance90Days",
+          "120_day_invoice_total_cents": "balance120Days",
+          "credit_invoice_total_cents": "creditTotal"
+        })
+      };
+    }
+
+    return customerObject;
+
+  } catch (error) {
+    throw new ApiError(`Error getting customer details:: ${error}`);
+  }
+}
+
+export const deleteQuote = async (params) => {
+
+  try {
+    let companyPayloadResponse = await lasecApi.Quotes.deleteQuote(params.id).then();
+
+    if (!companyPayloadResponse) throw new ApiError(`Error deleting quote!`);
+
+    return {
+      success: true,
+      message: 'Quote successfully deleted!'
+    }
+
+  } catch (error) {
+    throw new ApiError(`Error deleting quote:: ${error}`);
+  }
 
 }
 

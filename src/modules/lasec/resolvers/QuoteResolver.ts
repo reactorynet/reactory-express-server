@@ -69,7 +69,9 @@ import {
   getQuoteComments,
   deleteQuoteComment,
   updateQuoteLineItems,
-  updateQuote
+  updateQuote,
+  getCompanyDetails,
+  deleteQuote
 } from './Helpers';
 import { queryAsync } from '@reactory/server-core/database/mysql';
 
@@ -187,8 +189,8 @@ export default {
     },
     currencies: async () => {
       try {
-        return await  queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
-      } catch ( err ) {
+        return await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+      } catch (err) {
         return []
       }
     },
@@ -605,31 +607,21 @@ export default {
     LasecGetQuoteComments: async (obj, params) => {
       return getQuoteComments(params);
     },
-
     LasecGetCRMQuoteList: async (obj, args) => {
       return getPagedQuotes(args);
     },
     LasecGetCRMClientQuoteList: async (obj, args) => {
       return getPagedClientQuotes(args);
     },
-
-
     LasecGetCRMSalesOrders: async (obj, args) => {
       return getSalesOrders(args);
     },
-
-    //  PURCHASE ORDER
-
     LasecGetCRMPurchaseOrders: async (obj, args) => {
       return getPurchaseOrders(args);
     },
-
     LasecGetCRMPurchaseOrderDetail: async (obj, args) => {
       return getPurchaseOrderDetails(args)
     },
-
-    ////
-
     LasecGetCRMClientSalesOrders: async (obj, args) => {
       return getClientSalesOrders(args);
     },
@@ -660,6 +652,9 @@ export default {
     LasecGetFreightRequestQuoteDetail: async (obj, args) => {
       return getFreightRequetQuoteDetails(args);
     },
+    LasecGetCompanyDetailsforQuote: async (obj, args) => {
+      return getCompanyDetails(args);
+    }
   },
   Mutation: {
 
@@ -1085,16 +1080,20 @@ export default {
           throw new ApiError(`The ${input.action} action is not supported`);
         }
       }
-    }, 
-    LasecGetCurrencies: async (parent, params)   => {
+    },
+    LasecGetCurrencies: async (parent, params) => {
 
       try {
-        return await  queryAsync(`SELECT currencyid, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
-      } catch ( err ) {
+        return await queryAsync(`SELECT currencyid, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+      } catch (err) {
         return []
       }
-      
+
 
     },
+
+    LasecDeleteQuote: async (parent, params) => {
+      return deleteQuote(params);
+    }
   }
 };
