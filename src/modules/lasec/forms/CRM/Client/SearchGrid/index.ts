@@ -35,6 +35,9 @@ const LasecClientGrid: Reactory.IReactoryForm = {
     search: "",
     clients: []
   },
+  refresh: [
+    { name: 'LasecCustomerDeactivated' }
+  ],
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
