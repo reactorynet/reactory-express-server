@@ -81,7 +81,33 @@ const displayUiSchema: any = {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       title: 'Customer Status',
-      ...labelProps
+      readOnly: true,
+      format: '${formData}',
+      variant: 'subtitle1',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '220px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      },
+      icon: 'fiber_manual_record',
+      iconPosition: 'inline',
+      iconProps: {
+        style: {
+          color: '#FF9901',
+          margingRight: '4px'
+        },
+
+      },
+      $iconProps: 'lasec-crm.CustomerStatusIconFormatFunction@1.0.0',
+      
     }
   },
 

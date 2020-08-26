@@ -1,3 +1,9 @@
+type LasecSalesTeam {
+  id: String
+  name: String
+  title: String
+}
+
 extend type Query {
-  LasecSalesTeams: [Team]
+  LasecSalesTeams: [LasecSalesTeam]
 }

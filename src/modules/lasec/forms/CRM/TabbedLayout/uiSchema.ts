@@ -74,7 +74,6 @@ const uiSchema: any = {
       activeColor: 'secondary'
     },
     style: {
-      // backgroundColor: "#F6F6F6",
       position: "absolute",
       top: "54px",
       left: "0",
@@ -84,11 +83,11 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
-    spacing: 4,
+    spacing: 0,
     containerStyles: {
-      backgroundColor: "#F6F6F6",
       border: "none",
-      boxShadow: "none"
+      boxShadow: "none",
+      padding: '8px'
     }
 
   },

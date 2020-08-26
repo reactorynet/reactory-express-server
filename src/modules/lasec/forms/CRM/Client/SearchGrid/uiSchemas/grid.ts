@@ -17,12 +17,7 @@ const uiSchema: any = {
     }
   },
   'ui:field':'GridLayout',
-  'ui:grid-layout': [
-    {
-      search: { md: 4, sm: 12 },
-      filterBy: { md: 4, sm: 12 },
-      filter: { md: 4, sm: 12 },
-    },
+  'ui:grid-layout': [    
     {
       clients: {
         xs: 12, sm: 12, md: 12, lg: 12
@@ -30,6 +25,7 @@ const uiSchema: any = {
     }
   ],
   search: {
+    'ui:widget': 'HiddenWidget',
     'ui:options': {
       showLabel: false,
       icon: 'search',
@@ -55,7 +51,7 @@ const uiSchema: any = {
     'ui:widget': 'HiddenWidget'
   },
   submit: {
-    'ui:widget': 'FormSubmitWidget',
+    'ui:widget': 'HiddenWidget',
     'ui:options': {
       text: 'SEARCH',
       color: 'default',
@@ -69,13 +65,13 @@ const uiSchema: any = {
     }
   },
   filterBy: {
-    'ui:widget': 'SelectWidget',
+    'ui:widget': 'HiddenWidget',
     'ui:options': {
       selectOptions: FilterByOptions,
     },
   },
   filter: {
-    'ui:widget': 'SelectWithDataWidget',
+    'ui:widget': 'HiddenWidget',
     'ui:options': {
       multiSelect: false,
       query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
@@ -181,21 +177,32 @@ const uiSchema: any = {
             'rowData': 'formData',
           },
         },
-        { title: 'Email Address', field: 'emailAddress', breakpoint: 'sm' },
+        { title: 'Email Address', 
+          field: 'emailAddress',
+          breakpoint: 'sm',
+          component: 'lasec-crm.LasecClientLabel@1.0.0', 
+          props: {
+            dataLabelField: 'emailAddress',
+            displayIcon: false
+          },
+          propsMap: {
+            'rowData': 'formData',
+          },
+        },
         {
           title: 'Customer',
           field: 'customer',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
+          component: 'lasec-crm.CustomerLabel@1.0.0',
+          /*props: {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
                 format: '${rowData.customer && rowData.customer.tradingName ? rowData.customer.tradingName : "No Trading Name"}'
               }
             },
-          },
+          },*/
           propsMap: {
-            'rowData': 'value',
+            'rowData.customer': 'customer',
           },
           breakpoint: 'md',
         },
@@ -215,47 +222,7 @@ const uiSchema: any = {
             'rowData': 'value',
           },
           breakpoint: 'md',
-        },
-        {
-          title: 'Customer Status',
-          field: 'customer',
-          breakpoint: 'xs',
-          components: [
-            {
-              component: 'core.ConditionalIconComponent@1.0.0',
-              props: {
-                'ui:options': {},
-                conditions: [
-                  {
-                    key: 'not-on-hold',
-                    icon: 'fiber_manual_record',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'Not on hold'
-                  },
-                  {
-                    key: 'on-hold',
-                    icon: 'fiber_manual_record',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'On hold'
-                  },
-                ]
-              },
-              style: {
-                marginRight: '8px',
-              },
-              propsMap: {
-                'rowData.customer.customerStatus': 'value',
-              },
-            },
-          ],
-          propsMap: {
-            'rowData': 'value',
-          }
-        },
+        },        
         {
           title: 'Country',
           field: 'country',
@@ -266,27 +233,52 @@ const uiSchema: any = {
       actions: [
         {
           icon: 'remove_circle',
-          tooltip: 'Deactivate Client(s)',          
+          tooltip: 'Deactivate Client(s)',
+          key: 'deactivate',          
           confirmation: {
-            message: 'Are you sure you want to deactivate (${selected.length}) ${selected.length === 1 ? "client" : "clients"}?',
-            acceptTitle: 'Yes',
+            title: 'Are you sure you want to deactivate ${selected.length === 1 ? "this client" : "these clients"}?',
+            titleProps: {
+              style: {
+                fontWeight: 'bold'
+              }
+            },
+            content: 'Once a client is deactivated you will no longer be able to acces the client information', 
+            contentProps: {
+              style:{
+                color: '#BCBCBC'
+              }
+            },
+            acceptTitle: 'DEACTIVATE CLIENT',
+            confirmProps: {
+              variant: 'contained',
+              style: {
+                backgroundColor: '#D22D2C',
+                color: '#FFF'
+              }
+            },
             confirmColor: 'danger',
-            cancelTitle: 'No'
+            cancelTitle: 'CANCEL',
+            cancelProps: {
+              variant: 'text'
+            }
           },
           iconProps: {
             color: 'error'
-          },
+          },      
           mutation: 'deactivate',          
         },
       ],
       options: {
         grouping: false,
-        search: false,
+        search: true,        
         showTitle: false,
         toolbar: true,
         selection: true,
         toolbarButtonAlignment: 'left',
         actionsColumnIndex: -1
+      },
+      componentMap: {
+        Toolbar: 'lasec-crm.ClientGridToolbar@1.0.0'
       },
       remoteData: true,
       query: 'query',

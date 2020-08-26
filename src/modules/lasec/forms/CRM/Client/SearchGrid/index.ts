@@ -32,6 +32,7 @@ const LasecClientGrid: Reactory.IReactoryForm = {
       pageSize: 10,      
     },
     filterBy: "any_field",
+    filter: "",
     search: "",
     clients: []
   },

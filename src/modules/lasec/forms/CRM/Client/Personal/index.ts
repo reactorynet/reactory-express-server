@@ -314,6 +314,7 @@ export const newUiSchema: any = {
         'LasecGetPersonTitles.[].title': '[].label',
       },
     },
+    'ui:description': "Select the client title",
   },
   firstName: {
     'ui:description': "Please provide the client first name",
@@ -348,15 +349,14 @@ export const newUiSchema: any = {
       query: `query LasecSalesTeams {
         LasecSalesTeams {
           id
+          name
           title
-          meta  {
-            reference
-          }
         }
       }`,
       resultItem: 'LasecSalesTeams',
       resultsMap: {
-        'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
+        'LasecSalesTeams.[].id': '[].id',
+        'LasecSalesTeams.[].name': ['[].key', '[].value'],
         'LasecSalesTeams.[].title': '[].label',
       },
     },

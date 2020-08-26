@@ -181,12 +181,12 @@ const Menus = {
       items: [
         {
           ordinal: 0,
-          title: 'Clients (NEW)',
+          title: 'Clients',
           link: '/crm/clients/',
           icon: 'accessible',
           roles: ['USER'],
         },
-        
+        /*
         {
           ordinal: 0,
           title: 'Clients (360)',
@@ -194,15 +194,15 @@ const Menus = {
           icon: 'accessible',
           roles: ['USER'],
         },
-        
+        */
         {
           ordinal: 0,
-          title: 'Quotes (NEW)',
+          title: 'Quotes',
           link: '/crm/quotes/',
           icon: 'add_shopping_cart',
           roles: ['USER'],
         },
-        
+        /*
         {
           ordinal: 0,
           title: 'Quotes (360)',
@@ -210,7 +210,7 @@ const Menus = {
           icon: 'add_shopping_cart',
           roles: ['USER'],
         },
-        
+        */
         {
           ordinal: 3,
           title: 'ISO',
@@ -218,7 +218,7 @@ const Menus = {
           icon: 'shopping_cart',
           roles: ['USER'],
         },
-        
+        /*
         {
           ordinal: 3,
           title: 'ISO (360)',
@@ -226,15 +226,16 @@ const Menus = {
           icon: 'shopping_cart',
           roles: ['USER'],
         },
-        
+        */
         {
           ordinal: 3,
-          title: 'Invoices (NEW)',
+          title: 'Invoices',
           link: '/crm/invoices/',
           icon: 'attach_money',
           roles: ['USER'],
         },
 
+        /*
         {
           ordinal: 3,
           title: 'Invoices (360)',
@@ -242,15 +243,17 @@ const Menus = {
           icon: 'attach_money',
           roles: ['USER'],
         },
-        
+        */
+
         {
           ordinal: 3,
-          title: 'Sales History (NEW)',
+          title: 'Sales History',
           link: '/crm/sales-history/',
           icon: 'history',
           roles: ['USER'],
         },
 
+        /*
         {
           ordinal: 3,
           title: 'Sales History (360)',
@@ -258,7 +261,7 @@ const Menus = {
           icon: 'history',
           roles: ['USER'],
         },
-       
+      
        
         {
           ordinal: 5,
@@ -267,6 +270,7 @@ const Menus = {
           icon: 'speed',
           roles: ['USER'],
         },
+         */
       ]
     },
     {
@@ -1105,10 +1109,11 @@ const LASEC_CONFIG = {
           padding: '0px',
           paddingTop: '8px'
         }
-      }
+      },      
     },
     type: 'material',
     palette: {
+      type: 'light',
       primary1Color: '#5fb848',
       grey: {
         light: '#757575',
@@ -1152,7 +1157,19 @@ const LASEC_CONFIG = {
         dark: '#00575b',
         contrastText: '#222732',
         default: '#757575',
-      },    
+      },
+      background: {
+        Paper: '#f6f6f6',
+        default: '#d3d3d3',
+        light: {
+          Paper: '#f6f6f6',
+          default: '#d3d3d3',
+        },
+        dark: {
+          Paper: '#f6f6f6',
+          default: '#d3d3d3',
+        }
+      }          
     },
     provider: {
       material: {

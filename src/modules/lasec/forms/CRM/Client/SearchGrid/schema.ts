@@ -64,6 +64,10 @@ const schema: Reactory.ISchema = {
     filterBy: {
       type: 'string',
       title: 'FILTER BY'
+    },
+    filter: {
+      type: 'string',
+      title: 'FILTER'
     },    
     clients: {
       type: 'array',

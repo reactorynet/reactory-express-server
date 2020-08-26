@@ -34,7 +34,8 @@ const graphql: Reactory.IFormGraphDefinition = {
     variables: {
       'formData.search': 'search',
       'formData.paging': 'paging',
-      'formData.filterBy': 'filterBy'
+      'formData.filterBy': 'filterBy',
+      'formData.filter': 'filter'
     },
     resultMap: {
       'paging': 'paging',
