@@ -93,86 +93,12 @@ const uiSchema: any = {
   clients: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      columns: [
-        /*
-        {
-          title: 'Client Status', field: 'clientStatus',
-          components: [
-            {
-              component: 'core.ConditionalIconComponent@1.0.0',
-              props: {
-                'ui:options': {},
-                conditions: [
-                  {
-                    key: 'active',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'Client Active'
-                  },
-                  {
-                    key: 'unfinished',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'Client Unfinished'
-                  },
-                  {
-                    key: 'deactivated',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#AB1257'
-                    },
-                    tooltip: 'Client Deactivated'
-                  }
-                ]
-              },
-              style: {
-                marginRight: '8px',
-                marginTop: '8px',
-              },
-              propsMap: {
-                'rowData.clientStatus': 'value',
-              },
-            }
-          ],
-          propsMap: {
-            'rowData.clientStatus': 'selectedKey'
-          },
-          breakpoint: 'xs',
-
-
-        }, */
+      columns: [       
         {
           title: 'Client Full Name',
           field: 'fullName',
           component: 'lasec-crm.LasecClientLabel@1.0.0',
-          props: {
-            //componentFqn: 'lasec-crm.LasecCRMClientDetail@1.0.0',
-            /*
-            componentProps: {
-              'rowData.id': ['formData.id', 'formData.client.id'],              
-              'rowData.salesTeam': 'formData.salesTeam',
-            },
-            childProps: {
-              mode: 'view',
-              uiSchemaKey: 'view'
-            },
-            slideDirection: 'down',
-            buttonTitle: '${rowData.fullName}',
-            buttonVariant: 'Typography',
-            buttonProps: {
-              style: {
-                'textDecoration': 'underline',
-                'cursor': 'pointer',
-                'color': 'black'
-              }
-            },
-            windowTitle: 'Client details: ${rowData.fullName}',
-            */
-          },
+          props: {},
           propsMap: {
             'rowData': 'formData',
           },
@@ -189,22 +115,46 @@ const uiSchema: any = {
             'rowData': 'formData',
           },
         },
-        {
-          title: 'Customer',
-          field: 'customer',
-          component: 'lasec-crm.CustomerLabel@1.0.0',
-          /*props: {
+        { title: 'Client Rep Code', 
+          field: 'salesTeam',
+          breakpoint: 'sm',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${rowData.customer && rowData.customer.tradingName ? rowData.customer.tradingName : "No Trading Name"}'
+                format: '${rowData && rowData.salesTeam ? rowData.salesTeam : "No Rep Code"}'
               }
             },
-          },*/
+          },
+          propsMap: {
+            'rowData': 'formData',
+          },     
+        },
+        {
+          title: 'Customer',
+          field: 'customer',
+          component: 'lasec-crm.CustomerLabel@1.0.0',          
           propsMap: {
             'rowData.customer': 'customer',
           },
           breakpoint: 'md',
+        },
+        { title: 'Customer Rep Code', 
+          field: 'company_rep_code',
+          breakpoint: 'md',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData.customer && rowData.customer.salesTeam ? rowData.customer.salesTeam : "No Rep Code"}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData': 'formData',
+          },          
         },
         {
           title: 'Account Number',
@@ -287,12 +237,15 @@ const uiSchema: any = {
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.filterBy': 'filterBy',
         'props.formContext.$formData.filter': 'filter',
+        'query.orderBy.field': 'orderBy',
+        'query.orderDirection': 'orderDirection'
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
         'clients': 'data',
+        'clients[].customer.salesTeam': 'data[].company_rep_code'
       },
       resultType: 'object',
     },

@@ -17,18 +17,18 @@ const assessmentResolver = {
       qualityId, behaviourId,
       custom, behaviourText,
       deleteRating = false,
-    }) => {
-      logger.info(`Setting Rating ${ratingId} for Assessment ${id}`);
+    }) => {      
       const assessment = await Assessment.findById(id).then();
-      const isNew = lodash.isString(ratingId) === true && ratingId === 'NEW';
-
+      const isNew = lodash.isString(ratingId) === true && ratingId === 'NEW';      
 
       if (assessment && ratingId && isNew === false) {
+        logger.info(`Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${global.user.fullName()} `);
         const ratingDoc = assessment.ratings.id(ratingId);
         if (ratingDoc && deleteRating === false) {
           ratingDoc.rating = rating;
           ratingDoc.comment = comment;
           ratingDoc.updatedAt = new Date().valueOf();
+          ratingDoc.updateBy = global.user._id;                    
         }
 
         if (ratingDoc && deleteRating === true) {
@@ -36,7 +36,9 @@ const assessmentResolver = {
         }
 
         assessment.updatedAt = new Date().valueOf();
+        assessment.updateBy = global.user._id;
         await assessment.save().then();
+        logger.info(`Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${global.user.fullName()} ✅ `);
         return ratingDoc;
       }
 

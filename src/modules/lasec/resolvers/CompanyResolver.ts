@@ -23,10 +23,47 @@ import { LasecApiResponse, SimpleResponse } from '../types/lasec';
 
 import { getLoggedIn360User } from './Helpers';
 
-const getClients = async (params) => {
-  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "any_field",  iter = 0, filter, repCode = undefined } = params;
+const fieldMaps: any = {
+  "fullName": "first_name",
+  "firstName": "first_name",
+  "lastName": "surname",
+  "emailAddress": "email",
+  "salesTeam": "sales_team_id",
+  "accountNumber": "account_number",
+  "customer": "company_trading_name",
+  "company_rep_code": "company_sales_tema", 
+  "country": "country"
+};
 
-  logger.debug(`Getting Clients using search ${search}`, { filter, search, paging, filterBy, iter, repCode });
+const getClients = async (params) => {
+  const { 
+    search = "", 
+    paging = { page: 1, pageSize: 10 }, 
+    filterBy = "any_field",
+    orderBy = "fullName",  
+    orderDirection = "asc",
+    iter = 0, 
+    filter, 
+    repCode = undefined 
+  } = params;
+
+  logger.debug(`Getting Clients using search ${search}`, { 
+    filter, 
+    search, 
+    paging,
+    filterBy, 
+    iter, 
+    repCode,
+    orderBy,
+    orderDirection
+   });
+
+  let ordering: { [key: string]: string } = {}
+
+  if(orderBy) {
+    let fieldKey: string = fieldMaps[orderBy];
+    ordering[fieldKey] = orderDirection
+  }
 
   let pagingResult = {
     total: 0,
@@ -73,7 +110,7 @@ const getClients = async (params) => {
 
   if (_cachedResults) {
 
-    if (iter === 0) {
+    if (iter === -99) {
       //client request and we have a cache so we fire off the next fetch anyway
       execql(`query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $iter: Int, $filter: String, $repCode: String){
         LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy iter: $iter, filter: $filter, repCode: $repCode){
@@ -93,8 +130,11 @@ const getClients = async (params) => {
     return _cachedResults;
   }
 
+  
+  
+
   logger.debug(`Sending query to lasec API with filter`, { filter: _filter }  )
-  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
+  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page }, ordering }).then();
 
   let ids = [];
 
@@ -189,7 +229,7 @@ const getClients = async (params) => {
     return _client;
   });
 
-  clients = orderBy(clients, ['fullName', ['asc']]);
+  //clients = orderBy(clients, ['fullName', ['asc']]);
 
   let result = {
     paging: pagingResult,

@@ -55,10 +55,18 @@ const AssessmentSchema = mongoose.Schema({
       custom: Boolean,
       behaviourText: String,
       updatedAt: Date,
+      updatedBy: {
+        type: ObjectId,
+        ref: 'User'
+      }
     },
   ],
   createdAt: Date,
   updatedAt: Date,
+  updatedBy: {
+    type: ObjectId,
+    ref: 'User'
+  }
 });
 
 AssessmentSchema.methods.isSelfAssessment = function isSelfAssessment() {
