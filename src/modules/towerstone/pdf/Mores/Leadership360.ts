@@ -65,6 +65,16 @@ const graph_label_color = [
   '#000000',
 ]
 
+
+interface ChartJSDataLabelContext {
+  active: boolean,
+  chart: any,
+  dataIndex: number,
+  dataset: any,
+  datasetIndex: number
+
+}
+
 const graph_red = '#841F27'
 const graph_green = '#7D983C'
 
@@ -488,6 +498,20 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
 
     reportData.qualitiesMap = qualitiesMap;
     logger.debug(`qualitiesMap created`);
+
+    let labels = qualitiesMap.map(q => q.model.title)
+    let personalScores = qualitiesMap.map(q => parseFloat(q.scoreByAssessor(reportData.delegate).toFixed(2)));
+    let othersScores = qualitiesMap.map(q => parseFloat(q.avg.others).toFixed(2));
+
+    let taken = lodash.pullAt(labels, [0, 1])
+    labels = [...labels, ...taken];
+
+    taken = lodash.pullAt(personalScores, [0, 1])
+    personalScores = [...personalScores, ...taken];
+
+    taken = lodash.pullAt(othersScores, [0, 1])
+    othersScores = [...othersScores, ...taken];
+
     reportData.all_behaviour_scores = all_behaviour_scores;
     chartResult = await DefaultRadarChart({
       folder: chartsFolder,
@@ -529,25 +553,39 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
         },
       },
       data: {
-        labels: qualitiesMap.map(q => q.model.title),
+        labels: labels,
         datasets: [{
           label: 'Self',
           fontSize: 28,
-          data: qualitiesMap.map(q => parseFloat(q.scoreByAssessor(reportData.delegate).toFixed(2))),
+          data: personalScores,
           lineTension: 0,
           borderColor: '#587444',
           fill: false,
           borderWidth: 5,
+          datalabels: {
+            color: '#587444',
+            display: false,
+            font: {
+              size: 24
+            }
+          }
         },
         {
           label: `Raters' Average`,
-          labels: qualitiesMap.map(q => q.model.title),
-          data: qualitiesMap.map(q => parseFloat(q.avg.others).toFixed(2)),
+          labels: labels,
+          data: othersScores,
           fontSize: 28,
           fill: false,
           lineTension: 0,
           borderColor: '#9A0000',
           borderWidth: 5,
+          datalabels: {
+            display: false,
+            color: '#9A0000',
+            font: {
+              size: 24
+            }
+          }
         }],
       },
     }).then();
@@ -659,22 +697,28 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
 
       let datasets: any[] = [];
       quality.behaviourScores.forEach((behaviourScore: any, bidx: number) => {
+        logger.debug(`Color Selection For ${behaviourScore.key}, COUNT: ${behaviourScore.countByScore}, COLOR: ${behaviourScore.countByScore === 0 ? "#000000" : behaviourScore.color}`)
         datasets.push({
           data: behaviourScore.countByScore,
           label: behaviourScore.key,
           borderWidth: 2,
           lineTension: 0,
           fontSize: 28,
-          
           backgroundColor: behaviourScore.backgroundColor || '#FFCC33',
           datalabels: {
             clamp: true,
             align: 'top',
             anchor: 'center',
-            color: behaviourScore.countByScore === 0 ? "#000000" : behaviourScore.color,
+            color: (context: ChartJSDataLabelContext) => {
+              var index = context.dataIndex;
+              var value = context.dataset.data[index];
+              return value <= 0 ? '#000000' : behaviourScore.color
+
+            },
             offset: 1,
             font: {
-              size: 24
+              size: 24,
+              style: 'bold'
             }
           }
         })
@@ -700,6 +744,9 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
                 display: true,
                 labelString: 'Count',
                 fontSize: 24,
+                ticks: {
+                  stepSize: 1,
+                }
               },
             }],
             xAxes: [{
@@ -1168,7 +1215,7 @@ const definition = (data, partner, user) => {
                   ],
                   [
                     {
-                      text: [ { text: `${((data.score / 100) * 5).toFixed(2)}`, fontSize: 9 }, { text: '/5', fontSize: 7 } ],
+                      text: [{ text: `${((data.score / 100) * 5).toFixed(2)}`, fontSize: 9 }, { text: '/5', fontSize: 7 }],
                       margin: [2, -50, 0, 0],
                       alignment: 'center',
                       border: [false, false, false, false]
@@ -1195,7 +1242,7 @@ const definition = (data, partner, user) => {
                   ],
                   [
                     {
-                      text: [ { text: `${((data.scoreSelf / 100) * 5).toFixed(2)}`, fontSize: 9 }, { text: '/5', fontSize: 7 } ],
+                      text: [{ text: `${((data.scoreSelf / 100) * 5).toFixed(2)}`, fontSize: 9 }, { text: '/5', fontSize: 7 }],
                       margin: [2, -50, 0, 0],
                       alignment: 'center',
                       border: [false, false, false, false]
@@ -1278,9 +1325,9 @@ const definition = (data, partner, user) => {
                     return [
                       {
                         text: [
-                          { text: `${entry.behaviour.key}\n`, alignment: 'left', margin: [5, 5, 15, 5], bold: true },
+                          { text: `${entry.behaviour.key}\n`, alignment: 'left', margin: [5, 5, 5, 15], bold: true },
                           { text: `${entry.behaviour.title}\n`, style: ['primary'], alignment: 'left', margin: [5, 5, 15, 5] },
-                          { text: `${entry.behaviour.description}\n`, style: ['secondary'], alignment: 'left', margin: [25, 5, 15, 5], italics: true },
+                          { text: `${entry.behaviour.description}\n\n`, style: ['secondary'], alignment: 'left', margin: [25, 5, 15, 10], italics: true },
                         ],
                         border: [false, false, false, false],
                       }
@@ -1299,9 +1346,9 @@ const definition = (data, partner, user) => {
                     return [
                       {
                         text: [
-                          { text: `${entry.behaviour.key}\n`, alignment: 'left', margin: [5, 5, 15, 5], bold: true },
-                          { text: `${entry.behaviour.title}\n`, style: ['primary'], alignment: 'left', margin: [5, 5, 15, 5] },
-                          { text: `${entry.behaviour.description}\n`, style: ['secondary'], alignment: 'left', margin: [25, 5, 15, 5], italics: true },
+                          { text: `${entry.behaviour.key}\n`, alignment: 'left', margin: [5, 5, 5, 15], bold: true },
+                          { text: `${entry.behaviour.title}\n`, style: ['primary'], alignment: 'left', margin: [5, 5, 5, 5] },
+                          { text: `${entry.behaviour.description}\n\n`, style: ['secondary'], alignment: 'left', margin: [25, 5, 5, 10], italics: true },
                         ],
                         border: [false, false, false, false],
                       }
@@ -1323,7 +1370,7 @@ const definition = (data, partner, user) => {
       tocStyle: { italics: false, fontSize: 10 },
       tocMargin: [0, 10, 0, 0],
       tocNumberStyle: { italics: true, fontSize: 10 },
-      margin: [0, 10, 0, 0]
+      margin: [0, 10, 0, 10]
     },
   ];
 
@@ -1331,15 +1378,23 @@ const definition = (data, partner, user) => {
 
 
   data.qualities.forEach((quality: TowerStone.IQuality, qi: number) => {
-    behaviourSection.push({ text: `${quality.title}`, style: ['subheader', 'primary'], margin: [0, 10, 0, 0], pageBreak: qi === 0 ? 'auto' : 'before' });
-    behaviourSection.push({ text: `${sectionIndex[qi]}. ${quality.title} - Comparison per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [20, 10, 20, 10] })
+    behaviourSection.push(
+      {
+        text: [
+          { text: `${sectionIndex[qi]}. ${quality.description}`, style: ['subheader', 'primary'], italics: true }
+        ],
+        pageBreak: qi === 0 ? 'auto' : 'before'
+      });
+
+    behaviourSection.push({ text: `Comparison per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [20, 10, 20, 10] })
 
     behaviourSection.push({
       image: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) === true ?
         pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) :
         pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/bar_chart.png`),
-      width: 500,
+      width: 400,
       height: 200,
+      alignment: 'center'
     });
 
     quality.behaviours.forEach((behaviour: TowerStone.IBehaviour, bi: number) => {
@@ -1348,16 +1403,16 @@ const definition = (data, partner, user) => {
     });
 
 
-    behaviourSection.push({ text: `${sectionIndex[qi]}. ${quality.title} - Count of ratings per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [20, 10, 20, 10], border: [false, false, false, false] });
+    behaviourSection.push({ text: `Count of ratings per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [20, 10, 20, 10], border: [false, false, false, false] });
     behaviourSection.push({
       image: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}-counts.png`) === true ?
         pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}-counts.png`) :
         pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/bar_chart.png`),
       width: 400,
-      alignment: 'center'      
+      alignment: 'center'
     });
 
-    
+
 
     behaviourSection.push({ text: 'What They Said About You', style: ['secondary', 'subheader'], italics: true, pageBreak: 'before' });
 
@@ -1369,33 +1424,73 @@ const definition = (data, partner, user) => {
       }
     });
 
-    if (sectionComments.length > 0) {      
-      behaviourSection.push(...sectionComments);      
+    if (sectionComments.length > 0) {
+      behaviourSection.push(...sectionComments);
     } else {
-      behaviourSection.push(`You received no custom comments for ${quality.title}`)
+      behaviourSection.push(`No comments.`)
     }
 
-    
 
     behaviourSection.push(
       {
         table: {
-          widths: ['auto'],
+          widths: ['*'],
           body: [
             [
               { text: 'Notes (Next Actions and new Habits for My Growth Plan)', color: palette.secondary.main, border: [false, false, false, false] }
             ],
             ...[1, 2, 3, 4, 5, 6, 7, 8].map((i) => [
-              { text: '\n', border: [false, false, false, true] }
+              { text: '\n\n', border: [false, false, false, true] }
             ]),
           ]
         },
-        border: [false, false, false, false]
+        border: [false, false, false, false],
+        margin: [0, 50, 0, 10]
       }
     );
 
+
   });
 
+
+  let recommendation_rows: any[] = [];
+
+  data.qualities.forEach((quality, qi) => {
+
+    let next_habits = { text: '' };
+    let next_actions = { text: '' };
+
+    const convertTextToListOrText = (content: any): any => {
+
+      return { text: content, style: ['default'] }
+    }
+
+    const quality_recommendation = lodash.find(data.recommendations, { quality: quality.id });
+    if (quality_recommendation && quality_recommendation.recommendation && quality_recommendation.recommendation.content) {
+      let working_str = quality_recommendation.recommendation.content;
+      if (`${working_str}`.trim() !== "") {
+        if (working_str.indexOf("\n==\n") >= 0) {
+          let habits_actions = working_str.split("\n==\n");
+          if (habits_actions.length === 2) {
+            next_habits = convertTextToListOrText(habits_actions[0]);
+            next_actions = convertTextToListOrText(habits_actions[1]);
+          } else {
+            next_habits = convertTextToListOrText(habits_actions);
+          }
+
+          const row = [
+            { text: quality.title, fillColor: '#7D993C', color: '#FFF' },
+            next_habits,
+            next_actions
+          ]
+
+          recommendation_rows.push(row);
+          //return row;
+
+        }
+      }
+    }
+  })
 
   const overallSection = [
     {
@@ -1405,7 +1500,12 @@ const definition = (data, partner, user) => {
       tocMargin: [0, 10, 0, 0],
       tocNumberStyle: { italics: true, fontSize: 10 },
     },
-    {      
+    {
+      text: [{ text: 'Note:', italics: true }, 'Suggestions are for lowest rated behaviours listed in Section B.'],
+      style: ['primary'],
+      fontSize: 8
+    },
+    {
       table: {
         body: [
           [
@@ -1413,60 +1513,7 @@ const definition = (data, partner, user) => {
             { text: 'New Habits to consider', fillColor: '#52687B', color: '#FFF', bold: true },
             { text: 'New Actions to consider', fillColor: '#52687B', color: '#FFF', bold: true }
           ],
-          ...data.qualities.map((quality, qi) => {
-
-            let next_habits = { text: '' };
-            let next_actions = { text: '' };
-
-            const convertTextToListOrText = (content: any): any => {
-
-              return { text: content, style: ['default'] }
-
-              /*
-              if(content.indexOf("*") < 0) {
-                return { text: content, style: ['default'] }
-              } else {
-                let node = { ul: [] };
-                let items = content.split("*");
-
-                items.forEach((list_item_text) => {
-                  if(list_item_text.indexOf("++") < 0) {
-                    node.ul.push(list_item_text)
-                  } else {
-
-                    let sub_node = { ul: [] }
-                    list_item_text.split("++").forEach((sub_item, sub_idx) => {
-                      if(sub_idx === 0) node.ul.push(sub_item)
-                      sub_node.ul.push(sub_item)
-                    });
-                    node.ul.push(sub_node);                    
-                  }
-                })
-              } 
-              */
-            }
-
-            const quality_recommendation = lodash.find(data.recommendations, { quality: quality.id });
-            if (quality_recommendation && quality_recommendation.recommendation && quality_recommendation.recommendation.content) {
-              let working_str = quality_recommendation.recommendation.content;
-              if (working_str.indexOf("\n==\n") >= 0) {
-                let habits_actions = working_str.split("\n==\n");
-                if (habits_actions.length === 2) {
-                  next_habits = convertTextToListOrText(habits_actions[0]);
-                  next_actions = convertTextToListOrText(habits_actions[1]);
-                }
-
-              }
-            }
-
-            const row = [
-              { text: quality.title, fillColor: '#7D993C', color: '#FFF' },
-              next_habits,
-              next_actions
-            ]
-
-            return row;
-          })
+          ...recommendation_rows,
         ]
       }
     }
@@ -1486,7 +1533,7 @@ const definition = (data, partner, user) => {
       image: 'personalBrand', width: 500, alignment: 'center', margin: [20, 40, 20, 40],
     },
     {
-      text: 'Complete yours below or by using our app.'
+      text: 'Complete yours on the next page.'
     },
 
     {
@@ -1497,7 +1544,7 @@ const definition = (data, partner, user) => {
       text: 'My New Habits', style: ['subheader', 'primary']
     },
     {
-      text: 'Tips:\n', bold: true, italics: true
+      text: 'Tips:\n\n', bold: true, italics: true
     },
     {
       ul: [
@@ -1506,10 +1553,11 @@ const definition = (data, partner, user) => {
         `Set yourself daily reminders to reflect on the new habit:`,
         {
           ul: [
-            `Morning: “What do I need to do differently today?”`,
-            `Midday: “How am I doing so far?”`,
-            `Evening: “How did I do today?”`,
-          ]
+            `- Morning: “What do I need to do differently today?”`,
+            `- Midday: “How am I doing so far?”`,
+            `- Evening: “How did I do today?”`,
+          ],
+          type: 'none'
         },
         `Ask for feedback on progress before deciding to move on to the next habit.`
       ],
@@ -1553,12 +1601,13 @@ const definition = (data, partner, user) => {
     {
       text: [
         {
-          text: 'Tips:\n', bold: true, italics: true
+          text: 'Tips:\n\n', bold: true, italics: true
         },
         `● Keep to SMART principles: specific, measurable and realistic with deadlines.\n`,
         `● Consider feedback before deciding to cross a task off.\n`,
       ],
-      style: ['default']
+      style: ['default'],
+      margin: [0, 10, 0, 20]
     },
 
     {
@@ -1596,39 +1645,64 @@ const definition = (data, partner, user) => {
 
   ];
 
+  const cellprops = {
+    style: ['default'], fontSize: 8
+  }
 
   const debug_section = [
-    { text: 'Appendix A - Score Data', style: ['subheader'], pageBreak: 'before' },
+    { text: 'Appendix A - Score Data', style: ['subheader', 'secondary'], pageBreak: 'before' },
     {
       table: {
         body: [
-          ['Section', 'Scores', 'Avg Other', 'Avg All', 'Avg Self',],
+          [
+            { text: 'Section', ...cellprops },
+            { text: 'Scores', ...cellprops },
+            { text: 'Avg Other', ...cellprops },
+            { text: 'Avg All', ...cellprops },
+            { text: 'Avg Self', ...cellprops }
+          ],
           ...data.qualitiesMap.map((q, qi) => [
-            { text: `Section: ${q.model.title}` },
+            { text: `Section: ${q.model.title}`, ...cellprops },
             {
               table:
               {
                 body: [
-                  ['Key', 'Avg Others', 'Avg All', 'Self'],
+                  [
+                    {text: 'Key',...cellprops}, 
+                    {text:'Avg Others',...cellprops}, 
+                    {text:'Avg All',...cellprops}, 
+                    {text:'Self',...cellprops},
+                    {text: '1s', ...cellprops },
+                    {text: '2s', ...cellprops },
+                    {text: '3s', ...cellprops },
+                    {text: '4s', ...cellprops },
+                    {text: '5s', ...cellprops },
+                  ],
                   ...q.behaviourScores.map((b, bi) => [
-                    { text: b.key },
-                    { text: parseFloat(b.scoreAvgOthers).toFixed(2) },
-                    { text: parseFloat(b.scoreAvgAll).toFixed(2) },
-                    { text: parseFloat(b.scoreSelf).toFixed(2) }
+                    { text: b.key, ...cellprops },
+                    { text: parseFloat(b.scoreAvgOthers).toFixed(2), ...cellprops },
+                    { text: parseFloat(b.scoreAvgAll).toFixed(2), ...cellprops },
+                    { text: parseFloat(b.scoreSelf).toFixed(2), ...cellprops },
+                    { text: `${b.countByScore[0]}`, ...cellprops },
+                    { text: `${b.countByScore[1]}`, ...cellprops },
+                    { text: `${b.countByScore[2]}`, ...cellprops },
+                    { text: `${b.countByScore[3]}`, ...cellprops },
+                    { text: `${b.countByScore[4]}`, ...cellprops }
+
                   ])
                 ]
               }
             },
-            { text: parseFloat(q.avg.others).toFixed(2) },
-            { text: parseFloat(q.avg.all).toFixed(2) },
-            { text: parseFloat(q.avg.self).toFixed(2) },
+            { text: parseFloat(q.avg.others).toFixed(2), ...cellprops },
+            { text: parseFloat(q.avg.all).toFixed(2), ...cellprops },
+            { text: parseFloat(q.avg.self).toFixed(2), ...cellprops },
           ]),
           [
-            '',
-            'Totals',
-            `Avg Others ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => { q.avg.others })) / data.qualitiesMap.length).toFixed(2)}`,
-            `Avg All ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => { q.avg.all })) / data.qualitiesMap.length).toFixed(2)}`,
-            `Avg Self ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => { q.avg.self })) / data.qualitiesMap.length).toFixed(2)}`
+            { text: '', ...cellprops },
+            { text: 'Totals', ...cellprops },
+            { text: `Avg Others ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.others)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
+            { text: `Avg All ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.all)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
+            { text: `Avg Self ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.self)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
           ]
         ]
       }
