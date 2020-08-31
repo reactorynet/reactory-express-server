@@ -130,9 +130,6 @@ const getClients = async (params) => {
     return _cachedResults;
   }
 
-  
-  
-
   logger.debug(`Sending query to lasec API with filter`, { filter: _filter }  )
   const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page }, ordering }).then();
 

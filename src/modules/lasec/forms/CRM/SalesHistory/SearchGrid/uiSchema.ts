@@ -26,18 +26,18 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
+    // {
+    //   search: { md: 4, sm: 12 },
+    //   filterBy: { md: 4, sm: 12 },
+    //   filter: { md: 4, sm: 12 },
+    //   periodStart: { md: 6, xs: 12 },
+    //   periodEnd: { md: 6, xs: 12 },
+    //   // dateFilter: { md: 6, xs: 12 },
+    //   client: { md: 6, xs: 12 },
+    //   customer: { md: 6, xs: 12 },
+    // },
     {
-      search: { md: 4, sm: 12 },
-      filterBy: { md: 4, sm: 12 },
-      filter: { md: 4, sm: 12 },
-      periodStart: { md: 6, xs: 12 },
-      periodEnd: { md: 6, xs: 12 },
-      // dateFilter: { md: 6, xs: 12 },
-      client: { md: 6, xs: 12 },
-      customer: { md: 6, xs: 12 },
-    },
-    {
-      salesHistory: { xs: 12 }
+      salesHistory: { xs: 12, sm: 12, md: 12, lg: 12 }
     }
   ],
 
@@ -167,10 +167,20 @@ const uiSchema: any = {
         { title: 'Client Rep Code', field: 'salesTeamId' },
       ],
       options: {
+        // grouping: false,
+        // search: false,
+        // showTitle: false,
+        // toolbar: false,
         grouping: false,
-        search: false,
+        search: true,
         showTitle: false,
-        toolbar: false,
+        toolbar: true,
+        selection: true,
+        toolbarButtonAlignment: 'left',
+        actionsColumnIndex: -1
+      },
+      componentMap: {
+        Toolbar: 'lasec-crm.SalesHistoryGridToolbar@1.0.0'
       },
       remoteData: true,
       query: 'query',

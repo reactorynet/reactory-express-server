@@ -143,7 +143,7 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 export const getLoggedIn360User: Function = async function (): Promise<Lasec360User> {
   const { user } = global;
 
-  if(user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
+  if (user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
   const lasecCreds = user.getAuthentication("lasec");
 
   if (!lasecCreds) {
@@ -2259,18 +2259,42 @@ export const getClientSalesHistory = async (params) => {
 
 }
 
-export const getCRMSalesHistory = async (params) => {
+const fieldMaps: any = {
+  "fullName": "first_name",
+  "customer": "company_trading_name",
+};
 
-  logger.debug(`GETTING PAGED CRM SALES HISTORY:: ${JSON.stringify(params)}`);
+export const getCRMSalesHistory = async (params) => {
 
   const {
     search = "",
+    paging = { page: 1, pageSize: 10 },
+    filterBy = "any_field",
+    orderBy = "fullName",
+    orderDirection = "asc",
     periodStart,
     periodEnd,
-    filterBy = "any_field",
+    iter = 0,
     filter,
-    paging = { page: 1, pageSize: 10 },
-    iter = 0 } = params;
+  } = params;
+
+  logger.debug(`GETTING SALES HISTORY USING SEARCH ${search}`, {
+    filter,
+    search,
+    paging,
+    filterBy,
+    periodStart,
+    periodEnd,
+    iter,
+    orderBy,
+    orderDirection
+  });
+
+  let ordering: { [key: string]: string } = {}
+  if (orderBy) {
+    let fieldKey: string = fieldMaps[orderBy];
+    ordering[fieldKey] = orderDirection
+  }
 
   let pagingResult = {
     total: 0,
@@ -2279,39 +2303,23 @@ export const getCRMSalesHistory = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  let me = await getLoggedIn360User().then();
-
-  let apiFilter = {
-    // customer_id: me.id,
+  let _filter: any = {
     order_status: 9,
-    // [filterBy]: filter || search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
+  _filter[filterBy] = search;
 
-  // if (filterBy == 'invoice_date') {
-  //   apiFilter.using = filterBy;
-  //   apiFilter.start_date = moment(dateFilter).startOf('day');
-  //   apiFilter.end_date = moment(dateFilter).endOf('day');
-  // }
-
-  // if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number') {
-  //   apiFilter[filterBy] = search;
-  // }
-
-  if (filterBy == 'order_type') {
-    apiFilter[filterBy] = filter;
-  }
+  if (isString(search) === false || search.length < 3 && filter === undefined) return {
+    paging: pagingResult,
+    salesHistory: []
+  };
 
   const salesHistoryResponse = await lasecApi.Products.sales_orders({
-    filter: apiFilter,
-    pagination: {
-      page_size: paging.pageSize || 10,
-      current_page: paging.page
-    },
+    filter: _filter,
+    pagination: { page_size: paging.pageSize || 10, current_page: paging.page },
+    // ordering,
   }).then();
-
-  logger.debug(`SALES HISTORY COUNT:: ${salesHistoryResponse.ids.length}`);
 
   let ids = [];
 
@@ -2329,7 +2337,7 @@ export const getCRMSalesHistory = async (params) => {
   let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
   let salesHistory = [...saleshistoryDetails.items];
 
-  logger.debug(`SH RESULT:: ${JSON.stringify(salesHistory[0])}`);
+  logger.debug(`SALES HISTORY RESULT:: ${JSON.stringify(salesHistory[0])}`);
 
   salesHistory = salesHistory.map(order => {
     return {
