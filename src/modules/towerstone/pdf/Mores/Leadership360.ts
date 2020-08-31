@@ -307,6 +307,19 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
     }
 
 
+    const user_folder = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/`;
+
+    if(fs.existsSync(user_folder) === false) {
+      fs.mkdirSync(user_folder);
+    }
+
+
+    const user_charts_folder = `${user_folder}charts/`
+    if(fs.existsSync(user_charts_folder) === false) {
+      fs.mkdirSync(user_charts_folder);
+    }
+
+
     let user_one_view_svg = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/charts/one_view_${reportData.survey._id}.svg`;
     let user_one_view_path = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/charts/`;
     let user_one_view_png = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/charts/one_view_${reportData.survey._id}.png`;
