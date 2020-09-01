@@ -118,24 +118,12 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Order Type', field: 'orderType' },
-        {
-          title: 'Quote Date',
-          field: 'quoteDate',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${rowData.quoteDate ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.quoteDate': 'value',
-          }
-        },
-        { title: 'Quote Number', field: 'quoteNumber' },
+        { title: 'Account Number', field: 'quoteNumber' },
+        { title: 'Customer', field: 'customer' },
+        { title: 'Client Full Name', field: 'client' },
+        { title: 'Invoice Number', field: 'client' },
+        { title: 'ISO No.', field: 'isoNumber' },
+        { title: 'PO Number', field: 'poNumber' },
         {
           title: 'Order Date',
           field: 'orderDate',
@@ -152,19 +140,6 @@ const uiSchema: any = {
             'rowData.orderDate': 'value',
           }
         },
-        { title: 'ISO No.', field: 'isoNumber' },
-        { title: 'Customer', field: 'customer' },
-        { title: 'Client', field: 'client' },
-        { title: 'PO Number', field: 'poNumber' },
-        {
-          title: 'Inv Value',
-          field: 'value',
-          component: 'core.CurrencyLabel@1.0.0',
-          propsMap: {
-            'rowData.value': 'value',
-          },
-        },
-        { title: 'Client Rep Code', field: 'salesTeamId' },
       ],
       options: {
         // grouping: false,
@@ -189,6 +164,8 @@ const uiSchema: any = {
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.filter': 'filter',
         'props.formContext.$formData.filterBy': 'filterBy',
+        'props.formContext.$formData.year': 'year',
+        'props.formContext.$formData.month': 'month',
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.periodStart': 'periodStart',
         'props.formContext.$formData.periodEnd': 'periodEnd',

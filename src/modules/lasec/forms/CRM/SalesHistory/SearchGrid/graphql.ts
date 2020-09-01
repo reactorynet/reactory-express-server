@@ -10,6 +10,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       $filter: String
       $periodStart: String,
       $periodEnd: String,
+      $year: Int,
+      $month: Int,
     ){
       LasecGetCRMSalesHistory(
         search: $search,
@@ -18,6 +20,8 @@ const graphql: Reactory.IFormGraphDefinition = {
         filter: $filter,
         periodStart: $periodStart,
         periodEnd: $periodEnd,
+        year: $year,
+        month: $month,
       ){
         paging {
           total
@@ -25,6 +29,8 @@ const graphql: Reactory.IFormGraphDefinition = {
           hasNext
           pageSize
         }
+        year
+        month
         salesHistory {
           id
           orderType
@@ -51,6 +57,8 @@ const graphql: Reactory.IFormGraphDefinition = {
     },
     resultMap: {
       'paging': 'paging',
+      'year': 'year',
+      'month': 'month',
       'filterBy': 'filterBy',
       'salesHistory.[].id': 'salesHistory.[].id',
       'salesHistory.[].orderType': 'salesHistory.[].orderType',

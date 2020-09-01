@@ -2266,29 +2266,22 @@ const fieldMaps: any = {
 
 export const getCRMSalesHistory = async (params) => {
 
+  let periodStart;
+  let periodEnd;
+
   const {
     search = "",
     paging = { page: 1, pageSize: 10 },
     filterBy = "any_field",
     orderBy = "fullName",
     orderDirection = "asc",
-    periodStart,
-    periodEnd,
+    year,
+    month,
     iter = 0,
     filter,
   } = params;
 
-  logger.debug(`GETTING SALES HISTORY USING SEARCH ${search}`, {
-    filter,
-    search,
-    paging,
-    filterBy,
-    periodStart,
-    periodEnd,
-    iter,
-    orderBy,
-    orderDirection
-  });
+  logger.debug(`GETTING SALES HISTORY USING SEARCH ${JSON.stringify(params)}`);
 
   let ordering: { [key: string]: string } = {}
   if (orderBy) {
@@ -2303,23 +2296,37 @@ export const getCRMSalesHistory = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  let _filter: any = {
-    order_status: 9,
-    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
-  };
-  _filter[filterBy] = search;
-
   if (isString(search) === false || search.length < 3 && filter === undefined) return {
     paging: pagingResult,
     salesHistory: []
   };
+
+  let _filter: any = {
+    order_status: 9,
+    start_date: moment().startOf('year').toISOString(),
+    end_date: moment().endOf('day').toISOString(),
+  };
+
+  _filter[filterBy] = search;
+
+  if (year) {
+    _filter.start_date = moment([year]).startOf('year').toISOString();
+    _filter.end_date = moment([year]).endOf('year').toISOString();
+  }
+
+  if (month) {
+    let _year = year || moment().year();
+    _filter.start_date = moment([_year, month]).startOf('month').toISOString();
+    _filter.end_date = moment([_year, month]).endOf('month').toISOString();
+  }
 
   const salesHistoryResponse = await lasecApi.Products.sales_orders({
     filter: _filter,
     pagination: { page_size: paging.pageSize || 10, current_page: paging.page },
     // ordering,
   }).then();
+
+  // logger.debug(`SALES HISTORY RESPONSE:: ${JSON.stringify(salesHistoryResponse)}`);
 
   let ids = [];
 
@@ -2335,29 +2342,31 @@ export const getCRMSalesHistory = async (params) => {
   }
 
   let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
+
+  // logger.debug(`SALES HISTORY DETAILS:: ${JSON.stringify(saleshistoryDetails)}`);
+
   let salesHistory = [...saleshistoryDetails.items];
 
   logger.debug(`SALES HISTORY RESULT:: ${JSON.stringify(salesHistory[0])}`);
 
+
   salesHistory = salesHistory.map(order => {
     return {
       id: order.id,
-      orderType: order.order_type,
-      orderDate: order.order_date,
-      quoteDate: order.quote_date,
-      quoteNumber: order.quote_id || '',
-      iso: order.sales_order_id,
-      dispatches: order.dispatch_note_ids.join(', '),
+      // accountNumber: 'jhdhd', // TO ADD
       customer: order.company_trading_name,
       client: order.customer_name,
-      poNumber: order.sales_order_number,
-      value: order.order_value,
-      salesTeamId: order.sales_team_id
+      // invoiceNumber: 'toAdd', // TO ADD
+      iso: order.sales_order_id,
+      poNumber: order.customerponumber,
+      orderDate: order.order_date,
     }
   });
 
   let result = {
     paging: pagingResult,
+    year,
+    month,
     salesHistory,
   };
 

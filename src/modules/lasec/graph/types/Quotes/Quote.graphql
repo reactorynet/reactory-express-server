@@ -436,6 +436,8 @@ type PagedCRMInvoices {
 }
 type PagedCRMSalesHistory {
   paging: PagingResult
+  year: Int
+  month: Int
   salesHistory: [SalesHistory]
 }
 
@@ -725,6 +727,8 @@ extend type Query {
     filter: String
     periodStart: String
     periodEnd: String
+    year: Int
+    month: Int
     iter: Int
   ): PagedCRMSalesHistory
   LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
