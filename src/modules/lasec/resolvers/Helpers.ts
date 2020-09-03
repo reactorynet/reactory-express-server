@@ -2395,9 +2395,12 @@ export const getCRMSalesHistory = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  if (isString(search) === false || search.length < 3 && filter === undefined) return {
+  if (isString(search) === false || search.length < 3 || year == null) return {
     paging: pagingResult,
-    salesHistory: []
+    salesHistory: [],
+    year,
+    month,
+    years,
   };
 
   let _filter: any = {
