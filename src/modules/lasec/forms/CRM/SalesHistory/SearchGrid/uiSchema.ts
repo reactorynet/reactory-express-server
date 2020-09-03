@@ -155,7 +155,8 @@ const uiSchema: any = {
         actionsColumnIndex: -1
       },
       componentMap: {
-        Toolbar: 'lasec-crm.SalesHistoryGridToolbar@1.0.0'
+        Toolbar: 'lasec-crm.SalesHistoryGridToolbar@1.0.0',
+        DetailsPanel: 'lasec-crm.salesHistoryTableDetailPanel@1.0.0'
       },
       remoteData: true,
       query: 'query',

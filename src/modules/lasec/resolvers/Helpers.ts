@@ -2407,6 +2407,7 @@ export const getCRMSalesHistory = async (params) => {
     order_status: 9,
     start_date: moment().startOf('year').toISOString(),
     end_date: moment().endOf('day').toISOString(),
+    totals: false
   };
 
   _filter[filterBy] = search;
