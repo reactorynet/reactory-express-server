@@ -71,7 +71,8 @@ import {
   updateQuoteLineItems,
   updateQuote,
   getCompanyDetails,
-  deleteQuote
+  deleteQuote,
+  getSalesHistoryMonthlyCount
 } from './Helpers';
 import { queryAsync } from '@reactory/server-core/database/mysql';
 
@@ -643,6 +644,11 @@ export default {
     LasecGetCRMSalesHistory: async (obj, args) => {
       return getCRMSalesHistory(args);
     },
+
+    LasecGetSalesHistoryMonthCount: async (obj, args) => {
+      return getSalesHistoryMonthlyCount(args);
+    },
+
     LasecGetSaleOrderComments: async (obj, args) => {
       return getSalesOrderComments(args);
     },

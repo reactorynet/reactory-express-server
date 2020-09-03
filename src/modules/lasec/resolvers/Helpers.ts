@@ -2259,6 +2259,104 @@ export const getClientSalesHistory = async (params) => {
 
 }
 
+export const getSalesHistoryMonthlyCount = async (params) => {
+
+  logger.debug(`GET TOTALS PARAMS:: ${JSON.stringify(params)}`);
+
+  return [
+    {
+      month: 0,
+      year: 2020,
+      total: 1350
+    },
+    {
+      month: 1,
+      year: 2020,
+      total: 1350
+    },
+    {
+      month: 2,
+      year: 2020,
+      total: 2301
+    },
+    {
+      month: 3,
+      year: 2020,
+      total: 1350
+    },
+    {
+      month: 4,
+      year: 2020,
+      total: 1220
+    },
+    {
+      month: 0,
+      year: 2019,
+      total: 1350
+    },
+    {
+      month: 1,
+      year: 2019,
+      total: 1350
+    },
+    {
+      month: 2,
+      year: 2018,
+      total: 2301
+    },
+    {
+      month: 3,
+      year: 2018,
+      total: 1350
+    },
+    {
+      month: 4,
+      year: 2017,
+      total: 1220
+    },
+    {
+      month: 5,
+      year: 2016,
+      total: 1220
+    },
+    {
+      month: 1,
+      year: 2015,
+      total: 1220
+    },
+    {
+      month: 2,
+      year: 2014,
+      total: 1220
+    },
+    {
+      month: 3,
+      year: 2014,
+      total: 1220
+    },
+    {
+      month: 2,
+      year: 2013,
+      total: 2000
+    },
+    {
+      month: 3,
+      year: 2012,
+      total: 456
+    },
+    {
+      month: 3,
+      year: 2011,
+      total: 1456
+    },
+    {
+      month: 6,
+      year: 2010,
+      total: 200
+    },
+  ]
+}
+
 const fieldMaps: any = {
   "fullName": "first_name",
   "customer": "company_trading_name",
@@ -2277,6 +2375,7 @@ export const getCRMSalesHistory = async (params) => {
     orderDirection = "asc",
     year,
     month,
+    years,
     iter = 0,
     filter,
   } = params;
@@ -2314,7 +2413,8 @@ export const getCRMSalesHistory = async (params) => {
     _filter.end_date = moment([year]).endOf('year').toISOString();
   }
 
-  if (month) {
+  if (month != undefined) {
+    logger.debug(`SETTING DATES PER MONTH:: ${month}`);
     let _year = year || moment().year();
     _filter.start_date = moment([_year, month]).startOf('month').toISOString();
     _filter.end_date = moment([_year, month]).endOf('month').toISOString();
@@ -2349,14 +2449,13 @@ export const getCRMSalesHistory = async (params) => {
 
   logger.debug(`SALES HISTORY RESULT:: ${JSON.stringify(salesHistory[0])}`);
 
-
   salesHistory = salesHistory.map(order => {
     return {
       id: order.id,
-      // accountNumber: 'jhdhd', // TO ADD
+      accountNumber: order.account_number,
       customer: order.company_trading_name,
       client: order.customer_name,
-      // invoiceNumber: 'toAdd', // TO ADD
+      invoiceNumber: order.invoice_ids.length > 0 ? order.invoice_ids[0] : '', // THESE ARE IDS AND CAN BE MULTIPLE
       iso: order.sales_order_id,
       poNumber: order.customerponumber,
       orderDate: order.order_date,
@@ -2367,6 +2466,7 @@ export const getCRMSalesHistory = async (params) => {
     paging: pagingResult,
     year,
     month,
+    years,
     salesHistory,
   };
 

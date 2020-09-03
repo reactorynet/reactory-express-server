@@ -12,6 +12,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       $periodEnd: String,
       $year: Int,
       $month: Int,
+      $years: [Any],
     ){
       LasecGetCRMSalesHistory(
         search: $search,
@@ -22,6 +23,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         periodEnd: $periodEnd,
         year: $year,
         month: $month,
+        years: $years,
       ){
         paging {
           total
@@ -31,19 +33,16 @@ const graphql: Reactory.IFormGraphDefinition = {
         }
         year
         month
+        years
         salesHistory {
           id
-          orderType
-          quoteDate
-          quoteNumber
-          orderDate
-          iso
-          dispatches
+          accountNumber
           customer
           client
+          invoiceNumber
+          iso
           poNumber
-          value
-          salesTeamId
+          orderDate
         }
       }
     }`,
@@ -59,19 +58,16 @@ const graphql: Reactory.IFormGraphDefinition = {
       'paging': 'paging',
       'year': 'year',
       'month': 'month',
+      'years': 'years',
       'filterBy': 'filterBy',
       'salesHistory.[].id': 'salesHistory.[].id',
-      'salesHistory.[].orderType': 'salesHistory.[].orderType',
-      'salesHistory.[].quoteDate': 'salesHistory.[].quoteDate',
-      'salesHistory.[].quoteNumber': 'salesHistory.[].quoteNumber',
-      'salesHistory.[].orderDate': 'salesHistory.[].orderDate',
-      'salesHistory.[].iso': 'salesHistory.[].isoNumber',
-      'salesHistory.[].dispatches': 'salesHistory.[].dispatches',
+      'salesHistory.[].accountNumber': 'salesHistory.[].accountNumber',
       'salesHistory.[].customer': 'salesHistory.[].customer',
       'salesHistory.[].client': 'salesHistory.[].client',
+      'salesHistory.[].invoiceNumber': 'salesHistory.[].invoiceNumber',
+      'salesHistory.[].iso': 'salesHistory.[].isoNumber',
       'salesHistory.[].poNumber': 'salesHistory.[].poNumber',
-      'salesHistory.[].value': 'salesHistory.[].value',
-      'salesHistory.[].salesTeamId': 'salesHistory.[].salesTeamId',
+      'salesHistory.[].orderDate': 'salesHistory.[].orderDate',
     },
     autoQuery: false,
     resultType: 'object',

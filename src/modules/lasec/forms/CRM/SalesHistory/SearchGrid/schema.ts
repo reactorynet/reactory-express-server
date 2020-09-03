@@ -106,6 +106,10 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'FILTER BY YEAR'
     },
+    years: {
+      type: 'array',
+      title: 'FILTER BY YEAR'
+    },
     salesHistory: {
       type: 'array',
       items: {

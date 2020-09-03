@@ -397,9 +397,11 @@ type SalesHistory {
   dispatches: String
   customer: String
   client: String
-  poNumber: Int
+  poNumber: String
   value: Int
   salesTeamId: String
+  accountNumber: String
+  invoiceNumber: String
 }
 
 type PagedCRMSalesOrders {
@@ -434,11 +436,19 @@ type PagedCRMInvoices {
   paging: PagingResult
   invoices: [Invoice]
 }
+
 type PagedCRMSalesHistory {
   paging: PagingResult
   year: Int
   month: Int
+  years: [Any]
   salesHistory: [SalesHistory]
+}
+
+type SalesHistoryMonthlyCount {
+  month: Int
+  year: Int
+  total: Int
 }
 
 type SalesOrderDocuments {
@@ -729,11 +739,14 @@ extend type Query {
     periodEnd: String
     year: Int
     month: Int
+    years: [Any]
     iter: Int
   ): PagedCRMSalesHistory
   LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
 
   LasecGetCompanyDetailsforQuote(id: String!): LasecCRMCustomer
+
+  LasecGetSalesHistoryMonthCount(clientId: String, search: String!, filterBy: String): [SalesHistoryMonthlyCount]
 }
 
 extend type Mutation {
