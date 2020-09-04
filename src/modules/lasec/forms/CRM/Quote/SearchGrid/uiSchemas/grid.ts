@@ -16,17 +16,7 @@ const uiSchema: any = {
     }
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      search: { md: 8, sm: 12 },
-      filterBy: { md: 4, sm: 12 },
-      periodStart: { md: 6, xs: 12 },
-      periodEnd: { md: 6, xs: 12 },
-      dateFilter: { md: 6, xs: 12 },
-      selectFilter: { md: 6, xs: 12 },
-      client: { md: 6, xs: 12 },
-      customer: { md: 6, xs: 12 },
-    },
+  'ui:grid-layout': [    
     {
       quotes: {
         md: 12
@@ -34,37 +24,24 @@ const uiSchema: any = {
     }
   ],
   search: {
-    'ui:options': {
-      showLabel: false,
-      icon: 'search',
-      component: "TextField",
-      componentProps: {
-        placeholder: 'Search',
-        variant: "outlined",
-        type: 'search',
-        style: {
-          minWidth: '180px'
-        }
-      }
-    }
+    'ui:widget': 'HiddenWidget',
+    // 'ui:options': {
+    //   showLabel: false,
+    //   icon: 'search',
+    //   component: "TextField",
+    //   componentProps: {
+    //     placeholder: 'Search',
+    //     variant: "outlined",
+    //     type: 'search',
+    //     style: {
+    //       minWidth: '180px'
+    //     }
+    //   }
+    // }
   },
   paging: {
     'ui:widget': 'HiddenWidget'
-  },
-  submit: {
-    'ui:widget': 'FormSubmitWidget',
-    'ui:options': {
-      text: 'SEARCH',
-      color: 'default',
-      props: {
-        color: 'default',
-        style: {
-          maxWidth: '180px',
-          width: '180px'
-        }
-      }
-    }
-  },
+  },  
   filterBy: {
     'ui:widget': 'SelectWidget',
     'ui:options': {
@@ -142,7 +119,7 @@ const uiSchema: any = {
         },
         {
           title: 'Quote Date',
-          field: 'date',
+          field: 'created',
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
@@ -663,15 +640,19 @@ const uiSchema: any = {
         grouping: false,
         search: false,
         showTitle: false,
-        toolbar: false,
+        toolbar: true,
         selection: true
       },
       remoteData: true,
       query: 'query',
+      componentMap: {
+        Toolbar: 'lasec-crm.QuoteGridToolbar@1.0.0'
+      },
       variables: {
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.filterBy': 'filterBy',
+        'props.formContext.$formData.filter': 'filter',
         'props.formContext.$formData.periodStart': 'periodStart',
         'props.formContext.$formData.periodEnd': 'periodEnd',
         'props.formContext.$formData.dateFilter': 'quoteDate',

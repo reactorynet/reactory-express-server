@@ -38,6 +38,20 @@ const lookups = CONSTANTS.LOOKUPS;
 
 const maps = { ...OBJECT_MAPS };
 
+
+const QuoteFieldNameMaps: any = {
+  "fullName": "first_name",
+  "firstName": "first_name",
+  "lastName": "surname",
+  "emailAddress": "email",
+  "salesTeam": "sales_team_id",
+  "accountNumber": "account_number",
+  "customer": "company_trading_name",
+  "company_rep_code": "company_sales_tema",
+  "country": "country"
+};
+
+
 /**
  * Transforms meta data into totals object
  * @param meta meta data to use for transformation
@@ -143,7 +157,7 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 export const getLoggedIn360User: Function = async function (): Promise<Lasec360User> {
   const { user } = global;
 
-  if(user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
+  if (user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
   const lasecCreds = user.getAuthentication("lasec");
 
   if (!lasecCreds) {
@@ -1216,8 +1230,6 @@ export const LasecSendQuoteEmail = async (params) => {
 
 export const getPagedQuotes = async (params) => {
 
-  logger.debug(`GETTING PAGED QUOTES:: ${JSON.stringify(params)}`);
-
   const {
     search = "",
     periodStart,
@@ -1226,7 +1238,11 @@ export const getPagedQuotes = async (params) => {
     filterBy = "any_field",
     filter,
     paging = { page: 1, pageSize: 10 },
+    orderBy = 'id',
+    orderDirection = 'asc',
     iter = 0 } = params;
+
+  logger.debug(`getPagedQuotes(${JSON.stringify(params)})`);
 
   let pagingResult = {
     total: 0,
@@ -1235,17 +1251,86 @@ export const getPagedQuotes = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  if (isString(search) === false || search.length < 3 && filter === undefined) return {
-    paging: pagingResult,
-    quotes: []
+  let apiFilter: any = {
+    [filterBy]: search,
   };
 
-  let apiFilter = {
-    [filterBy]: search,
-    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
-    // agentSelection: 'me',
-  };
+  
+
+  switch (filterBy) {
+    case "any_field": {
+      //make sure we have a search value
+      delete apiFilter.start_date
+      delete apiFilter.end_date
+      if (isString(search) === false || search.length < 3 && filter === undefined) {
+        return {
+          paging: pagingResult,          
+          quotes: []
+        };
+      }
+
+      break;
+    }
+    case "date_range": {
+      delete apiFilter.date_range;
+      apiFilter.start_date = periodStart ? moment(periodStart).toISOString() : moment().startOf('year');
+      apiFilter.end_date = periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day');
+      break;
+    }
+    case "quote_number": {
+
+      if (isString(search) === false || search.length < 3 && filter === undefined) {
+        return {
+          paging: pagingResult,
+          quotes: []
+        };
+      }
+
+      break;
+    }
+    case "quote_date": {      
+      
+      break;
+    }
+    case "quote_status": {
+
+
+      break;
+    }
+    case "total_value": {
+      let total_value: number = parseInt(parseFloat(filter || "100").toFixed(2)) * 10;
+      apiFilter.total_value = total_value
+      break;
+    }
+    case "client": {
+
+      break;
+    }
+    case "customer": {
+
+      break;
+    }
+    case "account_number": {
+
+      apiFilter.start_date = moment(filter).startOf('day').toISOString();
+      apiFilter.end_date = moment(filter).endOf('day').toISOString(); 
+      break;
+    }
+    case "quote_type": {
+
+      apiFilter.start_date = moment(filter).startOf('day').toISOString();
+      apiFilter.end_date = moment(filter).endOf('day').toISOString(); 
+      break;
+    }
+    case "rep_code": {
+
+      apiFilter.start_date = moment(filter).startOf('day').toISOString();
+      apiFilter.end_date = moment(filter).endOf('day').toISOString(); 
+      break;
+    }
+  }
+
+
 
   if (quoteDate) {
     apiFilter.start_date = moment(quoteDate).startOf('day').toISOString();
@@ -1262,7 +1347,10 @@ export const getPagedQuotes = async (params) => {
     "ordering": { "quote_id": "asc" }
   }
 
-  let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
+  let quoteResult = await lasecApi.Quotes.list({
+    filter: apiFilter,
+    pagination: { page_size: paging.pageSize || 10, current_page: paging.page }
+  }).then();
 
   let ids = [];
 

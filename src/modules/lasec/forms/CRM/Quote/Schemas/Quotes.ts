@@ -2,20 +2,16 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 
 const QuoteSchema: Reactory.ISchema = {
   type: "object",
-  properties: {
-    // view: {
-    //   title: '',
-    //   type: 'string'
-    // },
+  properties: {    
     id: {
       type: "string",
-      title: "Client Id"
+      title: "Quote Id"
     },
     code: {
       type: "string",
       title: "Quote Number"
     },
-    date: {
+    created: {
       type: "string",
       title: "Quote Date"
     },
@@ -23,9 +19,34 @@ const QuoteSchema: Reactory.ISchema = {
       type: "string",
       title: "Quote Status"
     },
-    total: {
+    
+    totalVATInclusive: {
+      type: "number",
+      title: 'Totla Quote Value'
+    },
+    client: {
+      type: "String",
+      title: "Client"
+    },
+
+    companyTradingName: {
+      type: "String",
+      title: "Company Trading Name"
+    },
+    
+    totalVATExclusive: {
+      type: "number",
+      title: 'Totla Quote Value'
+    },
+
+    quoteType: {
+      type: 'string',
+      title: "Quote Type"
+    },
+
+    repCode: {
       type: "string",
-      title: "Quote Total"
+      title: "Quote Status"
     },
 
   }

@@ -1,4 +1,3 @@
-
 import moment from 'moment';
 import { ObjectId } from 'mongodb';
 import fs from 'fs';
@@ -29,6 +28,8 @@ import {
   Cache
 } from '@reactory/server-modules/core/models';
 import { TowerStone } from '@reactory/server-modules/towerstone/towerstone';
+import ApiError from 'exceptions';
+import { reporters } from 'mocha';
 
 const { APP_DATA_ROOT } = process.env;
 
@@ -120,14 +121,18 @@ const greyscalePng = (path, outpath) => {
 };
 
 
-const resolveData = async ({ surveyId, delegateId, print_scores }) => {
-  logger.info(`Resolving data for MoresIndividual360 Survey: ${surveyId}  DelegateEntry: ${delegateId} Print SCores ${print_scores}`);
+const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = false, selectionTitle = '', selectionDescription = '', }) => {
+  logger.info(`Resolving data for MoresCulture Survey: ${surveyId}
+    DelegateEntry Ids: ${delegateIds} 
+    Print Scores ${print_scores}
+    Selection Title ${selectionTitle}
+    Selection Description ${selectionDescription}`);
   // const assessment = await Assessment.findById(assessment_id).then();
-
+  if (surveyId === null) throw new ApiError(`surveyId cannot be null`)
   try {
     const { partner, user } = global;
 
-    const survey = await Survey.findById(surveyId)
+    const survey: TowerStone.ISurveyDocument = await Survey.findById(surveyId)
       .populate('organization')
       .populate('leadershipBrand')
       .then();
@@ -154,9 +159,11 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
       employeeDemographics: {
         pronoun: null
       },
-      key: `mores.survey@${surveyId}/${delegateId}/report-data`,
-      delegate: {},
-      employee: {}, //alias for delegate
+      key: `mores.survey@${surveyId}/${selectionTitle}/report-data`,
+      delegates: [],
+      selectionTitle,
+      selectionDescription,
+      employees: [],
       assessors: [],
       assessments: [],
       qualityComments: [],
@@ -186,9 +193,9 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
     let maxRating = 5;
 
     try {
-      reportData.delegate = await User.findById(reportData.survey.delegates.id(delegateId).delegate).then();
-      reportData.employee = reportData.delegate;
-      logger.debug(`Found delegate ${reportData.delegate._id}`);
+
+      //reportData.delegate = await User.findById(reportData.survey.delegates.id(delegateId).delegate).then();
+      //reportData.employee = reportData.delegate;
       reportData.organization = reportData.survey.organization;
       reportData.leadershipBrand = reportData.survey.leadershipBrand;
       reportData.qualities = reportData.survey.leadershipBrand.qualities;
@@ -202,16 +209,22 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
         logger.error('Could not get max rating from scale', err);
       }
 
+
       reportData.assessments = await Assessment.find({
-        delegate: reportData.delegate._id,
-        survey: ObjectId(surveyId),
-        _id: {
-          $in: reportData.survey.delegates.id(delegateId).assessments
+        delegate: {
+          $in: delegateIds
         },
+        survey: survey._id,
         complete: true,
       }).populate('assessor')
         .populate('delegate').then();
 
+
+
+      reportData.delegates = reportData.assessments.map((assessment) => assessment.delegate);
+      reportData.employees = reportData.delegates;
+
+      logger.debug(`Collated delegates (${reportData.delegates.length}) and assessments (${reportData.assessments.length})`)
       let comments: any = [];
       let recommendations: any[] = [];
 
@@ -269,62 +282,50 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           return rating;
         });
       });
-      const otherassessments = lodash.filter(
-        reportData.assessments,
-        assessment => assessment.delegate._id.equals(assessment.assessor._id) === false,
-      );
+      const otherassessments = reportData.assessments;
 
       reportData.ratingsExcludingSelf = lodash.flatMap(
         otherassessments,
         (assessment) => {
           return assessment.ratings.map((rating) => {
-            rating.assessor = assessment.assessor;
             return rating;
           })
         });
 
-      reportData.ratingsSelf = lodash.flatMap(
-        lodash.filter(
-          reportData.assessments,
-          assessment => assessment.delegate._id.equals(assessment.assessor._id) === true,
-        ),
-        assessment => assessment.ratings,
-      );
     } catch (err) {
       logger.error('Error occured colating data', err);
     }
 
 
-    reportData.assessors = lodash.filter(lodash.flatMap(reportData.assessments, assessment => assessment.assessor), assessor => !assessor._id.equals(reportData.delegate._id));
-    logger.debug(`Assessors are ${reportData.assessors.map(a => `${a.firstName} `)}`);
+    reportData.assessors = lodash.flatMap(reportData.assessments, assessment => assessment.assessor);
+    logger.debug(`Selected Assessors are ${reportData.assessors.map(a => `${a.firstName} ${a.lastName}`)}`);
     if (reportData.ratings.length === 0) {
       reportData.score = -1;
     } else {
       const totalAllRatings = lodash.sumBy(reportData.ratingsExcludingSelf, r => r.rating);
-      const totalSelfRatings = lodash.sumBy(reportData.ratingsSelf, r => r.rating);
       reportData.score = Math.floor((totalAllRatings * 100) / (reportData.ratingsExcludingSelf.length * maxRating));
-      reportData.scoreSelf = Math.floor((totalSelfRatings * 100) / (reportData.ratingsSelf.length * maxRating));
     }
 
-    
-    const user_folder = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/`;
 
-    if(fs.existsSync(user_folder) === false) {
+    const user_folder = `${APP_DATA_ROOT}/organization/${reportData.organization._id}/`;
+
+    if (fs.existsSync(user_folder) === false) {
       fs.mkdirSync(user_folder);
     }
 
 
     const user_charts_folder = `${user_folder}charts/`
-    if(fs.existsSync(user_charts_folder) === false) {
+    if (fs.existsSync(user_charts_folder) === false) {
       fs.mkdirSync(user_charts_folder);
     }
 
-    let user_one_view_svg = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/charts/one_view_${reportData.survey._id}.svg`;
-    let user_one_view_path = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/charts/`;
-    let user_one_view_png = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/charts/one_view_${reportData.survey._id}.png`;
+
+    let user_one_view_svg = `${APP_DATA_ROOT}/organization/${reportData.organization._id}/charts/one_view_${reportData.survey._id}.svg`;
+    let user_one_view_path = `${APP_DATA_ROOT}/organization/${reportData.organization._id}/charts/`;
+    let user_one_view_png = `${APP_DATA_ROOT}/organization/${reportData.organization._id}/charts/one_view_${reportData.survey._id}.png`;
     //1. copy template svg to user profile
     if (fs.existsSync(oneview_svg) === true && fs.existsSync(user_one_view_svg) === false) {
-      //`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/one_view_${data.survey._id}.png`
+      //`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/one_view_${data.survey._id}.png`
       fs.copyFileSync(oneview_svg, user_one_view_svg);
     }
 
@@ -339,7 +340,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
 
 
     // render the charts
-    const chartsFolder = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/charts/`;
+    const chartsFolder = `${APP_DATA_ROOT}/organization/${reportData.organization._id}/charts/`;
     if (fs.existsSync(chartsFolder) === false) {
       fs.mkdirSync(chartsFolder, { recursive: true });
     }
@@ -463,6 +464,11 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
       };
 
       const scoreByAssessor = (assessor) => {
+        if (!assessor) {
+          logger.warn(`Assessor Parameter is empty / undefined`)
+          return 0;
+        }
+
         logger.debug(`Calculating Score ${assessor.firstName}`);
         const assessment = lodash.find(reportData.assessments, a => assessor._id.equals(a.assessor._id));
         if (assessment) {
@@ -609,29 +615,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
       const datasets = []
 
       const selfQualityratings = lodash.filter(reportData.ratingsSelf, r => r.custom !== true && quality.model._id.equals(r.qualityId));
-
-      datasets.push({
-        data: selfQualityratings.map(rating => rating.rating),
-        label: 'Self',
-        fontSize: 16,
-        //type: 'line',
-        backgroundColor: graph_green,
-        borderColor: graph_green,
-        borderWidth: 2,
-        datalabels: {
-          anchor: 'center',
-          clamp: true,
-          align: 'top',
-          color: '#fff',
-          offset: 0,
-          font: {
-            size: 24,
-            style: 'bold'
-          }
-        }
-      });
-
-
+     
       datasets.push({
         data: quality.behaviourScores.map(behaviourScore => {
           return parseFloat(behaviourScore.scoreAvgOthers).toFixed(2)
@@ -844,7 +828,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
 
 
 const definition = (data, partner, user) => {
-  logger.debug('Generating PDF definition For Mores Assessment Leadership 360 Report');
+  logger.debug('Generating PDF definition For Mores Assessment Leadership 360 Report', {print_scores: data.print_scores});
 
 
   const scaleSegments = [];
@@ -870,9 +854,9 @@ const definition = (data, partner, user) => {
     {
       image: 'organizationLogo', width: 120, style: ['centerAligned'], margin: [0, 30, 0, 30],
     },
-    { text: 'Leadership 360° Assessment Report', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
-    { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned', 'secondary'], margin: [0, 5] },
-    { text: `${data.organization.name}`, style: ['header', 'centerAligned', 'secondary'], margin: [0, 20, 0, 370] },
+    { text: 'Culture Survey 360° Assessment Report', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
+    { text: `${data.organization.name} ${data.selectionTitle}`.trim(), style: ['header', 'centerAligned', 'secondary'], margin: [0, 5] },
+    { text: `${moment().format("MMMM YYYY")}`, style: ['header', 'centerAligned', 'secondary'], margin: [0, 20, 0, 370] },
     {
       image: 'partnerLogo', width: 120, margin: [0, 0, 0, 20],
     },
@@ -925,7 +909,7 @@ const definition = (data, partner, user) => {
       tocNumberStyle: { italics: true, fontSize: 10 },
     },
     {
-      text: `${data.delegate.firstName}, this report presents the results of your individual self-assessment compared with the feedback from ${numberWords[data.assessors.length] || data.assessors.length} nominated ${data.survey.organization.name} colleagues who assessed you.\n`,
+      text: `This report presents the results of the ${data.organization.name} organisational culture assessment completed on ${moment().format('MMMM YYYY')} for all employees in the Overall Group.\n`,
       style: ['default'],
     },
     {
@@ -1155,7 +1139,7 @@ const definition = (data, partner, user) => {
       behaviour: {
         key: sorted_scores[idx].key,
         title: sorted_scores[idx].titleContent,
-        description: `${sorted_scores[idx].descriptionContent} (${sorted_scores[idx].scoreAvgAll})`
+        description: `${sorted_scores[idx].descriptionContent} (${parseFloat(sorted_scores[idx].scoreAvgAll).toFixed(1)})`
       }
     });
 
@@ -1169,7 +1153,7 @@ const definition = (data, partner, user) => {
       behaviour: {
         key: sorted_scores[idx].key,
         title: sorted_scores[idx].titleContent,
-        description: `${sorted_scores[idx].descriptionContent} (${sorted_scores[idx].scoreAvgAll})`
+        description: `${sorted_scores[idx].descriptionContent} (${parseFloat(sorted_scores[idx].scoreAvgAll).toFixed(1)})`
       }
     })
   }
@@ -1401,8 +1385,8 @@ const definition = (data, partner, user) => {
     behaviourSection.push({ text: `Comparison per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [20, 10, 20, 10] })
 
     behaviourSection.push({
-      image: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) === true ?
-        pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) :
+      image: existsSync(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) === true ?
+        pdfpng(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) :
         pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/bar_chart.png`),
       width: 400,
       height: 200,
@@ -1417,8 +1401,8 @@ const definition = (data, partner, user) => {
 
     behaviourSection.push({ text: `Count of ratings per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [20, 10, 20, 10], border: [false, false, false, false] });
     behaviourSection.push({
-      image: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}-counts.png`) === true ?
-        pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}-counts.png`) :
+      image: existsSync(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/bar-chart-${data.survey._id}-${quality._id}-counts.png`) === true ?
+        pdfpng(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/bar-chart-${data.survey._id}-${quality._id}-counts.png`) :
         pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/bar_chart.png`),
       width: 400,
       alignment: 'center'
@@ -1515,7 +1499,8 @@ const definition = (data, partner, user) => {
     {
       text: [{ text: 'Note:', italics: true }, 'Suggestions are for lowest rated behaviours listed in Section B.'],
       style: ['primary'],
-      fontSize: 8
+      fontSize: 8,
+      margin: [0, 10, 0, 10]
     },
     {
       table: {
@@ -1534,47 +1519,65 @@ const definition = (data, partner, user) => {
 
   const developmentPlan = [
     {
-      text: 'Section E: My Growth Plan', pageBreak: 'before', style: ['header', 'primary'],
+      text: 'Section E: Action Plan', pageBreak: 'before', style: ['header', 'secondary'],
       tocItem: true,
       tocStyle: { italics: false, fontSize: 10 },
       tocMargin: [0, 10, 0, 0],
       tocNumberStyle: { italics: true, fontSize: 10 },
     },
-    { text: 'My Personal Brand', style: ['subheader', 'primary'] },
     {
-      image: 'personalBrand', width: 500, alignment: 'center', margin: [20, 40, 20, 40],
+      text: 'Priority Behavhiours', style: ['subheader', 'primary'],
+      margin: [0, 5, 0, 10]
     },
     {
-      text: 'Complete yours on the next page.'
-    },
-
-    {
-      image: 'personalBrandEmpty', width: 500, alignment: 'center', margin: [20, 40, 20, 40],
+      text: `List priority behaviours that require organisational action. Note that these do not always have to be the lowest rated behaviours e.g. there may be high-ranked behaviours that require ongoing coaching or communication.`,
+      style: ['default']
     },
 
     {
-      text: 'My New Habits', style: ['subheader', 'primary']
+      table: {
+        widths: [250, 250],
+        body: [
+          [
+            { text: 'Priority Behaviours', fillColor: palette.secondary.main, color: '#FFF', bold: true, margin: [10, 10, 10, 10] },
+            { text: `How will this help ${data.organization.name}`, fillColor: palette.secondary.main, color: '#FFF', bold: true, margin: [10, 10, 10, 10] }
+          ],
+          [{ text: '\n\n', margin: [10, 10, 10, 10] }, { text: '\n\n', margin: [10, 10, 10, 10] }],
+          [{ text: '\n\n', margin: [10, 10, 10, 10] }, { text: '\n\n', margin: [10, 10, 10, 10] }],
+          [{ text: '\n\n', margin: [10, 10, 10, 10] }, { text: '\n\n', margin: [10, 10, 10, 10] }],
+          [{ text: '\n\n', margin: [10, 10, 10, 10] }, { text: '\n\n', margin: [10, 10, 10, 10] }],
+          [{ text: '\n\n', margin: [10, 10, 10, 10] }, { text: '\n\n', margin: [10, 10, 10, 10] }],
+          [{ text: '\n\n', margin: [10, 10, 10, 10] }, { text: '\n\n', margin: [10, 10, 10, 10] }],
+          [{ text: '\n\n', margin: [10, 10, 10, 10] }, { text: '\n\n', margin: [10, 10, 10, 10] }],
+          [{ text: '\n\n', margin: [10, 10, 10, 10] }, { text: '\n\n', margin: [10, 10, 10, 10] }],
+          [{ text: '\n\n', margin: [10, 10, 10, 10] }, { text: '\n\n', margin: [10, 10, 10, 10] }],
+        ]
+      }
     },
+
+    { text: 'Next Action', style: ['subheader', 'primary'], pageBreak: "before" },
+
     {
       text: 'Tips:\n\n', bold: true, italics: true
     },
     {
       ul: [
-        `List all the behaviours you want to change in line with the Personal brand you envisioned for yourself.`,
-        `Choose the ONE that is the most important for now and practice it for at least three weeks until it becomes a subconscious habit.`,
-        `Set yourself daily reminders to reflect on the new habit:`,
+        `Document the actions and programmes needed across three timeframes`,
         {
           ul: [
-            `- Morning: “What do I need to do differently today?”`,
-            `- Midday: “How am I doing so far?”`,
-            `- Evening: “How did I do today?”`,
+            `- Immediate/Urgent: 1-3 months.`,
+            `- Mid-term: 3-6 months.`,
+            `- Long-term: 6-12 months.`,
           ],
           type: 'none'
         },
-        `Ask for feedback on progress before deciding to move on to the next habit.`
+        `Consider focusing on no more than five actions per timeframe.`,
+        `Keep to SMART principles: specific, measurable and realistic with deadlines.`,        
+        `Check in with the executive sponsor and other stakeholders for approval.`,
+        `Decide who needs feedback for approval before deciding to cross a task off.`
       ],
       style: ['default'],
-      pageBreak: 'after',
+      margin: [0, 5, 0, 15],      
     },
 
     {
@@ -1582,147 +1585,127 @@ const definition = (data, partner, user) => {
         // headers are automatically repeated if the table spans over multiple pages
         // you can declare how many rows should be treated as headers        
         headerRows: 1,
-        widths: [250, 250],
-        layout: 'towerstone',
-        body: [
-          [
-            {
-              text: 'New Habit', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true,
-            },
-            {
-              text: 'How will this help me?', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true,
-            },
-          ],
-          ['\n\n', ''],
-          ['\n\n', ''],
-          ['\n\n', ''],
-          ['\n\n', ''],
-          ['\n\n', ''],
-          ['\n\n', ''],
-          ['\n\n', ''],
-          ['\n\n', ''],
-          ['\n\n', ''],
-          ['\n\n', ''],
-        ],
-      },
-    },
-    {
-      text: 'Next Actions', style: ['subheader', 'primary'],
-      pageBreak: 'before'
-    },
-    {
-      text: [
-        {
-          text: 'Tips:\n\n', bold: true, italics: true
-        },
-        `● Keep to SMART principles: specific, measurable and realistic with deadlines.\n`,
-        `● Consider feedback before deciding to cross a task off.\n`,
-      ],
-      style: ['default'],
-      margin: [0, 10, 0, 20]
-    },
-
-    {
-      table: {
-        // headers are automatically repeated if the table spans over multiple pages
-        // you can declare how many rows should be treated as headers
-        headerRows: 1,
-        widths: ['*', 150, 150],
+        widths: ['*', 80, 80],
         layout: 'towerstone',
         body: [
           [
             {
               text: 'Action', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true,
+              margin: [10, 10, 10, 10]
             },
             {
               text: 'Who?', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true,
+              margin: [10, 10, 10, 10]
             },
             {
               text: 'When?', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true,
+              margin: [10, 10, 10, 10]
             },
           ],
-          ['\n\n\n', '', ''],
-          ['\n\n\n', '', ''],
-          ['\n\n\n', '', ''],
-          ['\n\n\n', '', ''],
-          ['\n\n\n', '', ''],
-          ['\n\n\n', '', ''],
-          ['\n\n\n', '', ''],
-          ['\n\n\n', '', ''],
-          ['\n\n\n', '', ''],
-          ['\n\n\n', '', ''],
+          [ 
+            { text: '1 - 3 Months', fillColor: '#D9D9D9', border: [true, true, false, true] }, 
+            { text: '', fillColor: '#D9D9D9', border: [false, true, false, true] },  
+            { text: '', fillColor: '#D9D9D9', border: [false, true, true, true] },   
+          ],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
+          [ 
+            { text: '3 - 6 Months', fillColor: '#D9D9D9', border: [true, true, false, true] }, 
+            { text: '', fillColor: '#D9D9D9', border: [false, true, false, true] },  
+            { text: '', fillColor: '#D9D9D9', border: [false, true, true, true] },   
+          ],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
+          [ 
+            { text: '6 - 12 Months', fillColor: '#D9D9D9', border: [true, true, false, true], pageBreak: 'before' }, 
+            { text: '', fillColor: '#D9D9D9', border: [false, true, false, true] },  
+            { text: '', fillColor: '#D9D9D9', border: [false, true, true, true] },   
+          ],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
+          ['\n\n', '', ''],
         ],
       },
-    },
-
+    },    
   ];
 
   const cellprops = {
     style: ['default'], fontSize: 8
   }
 
-  const debug_section = [
-    { text: 'Appendix A - Score Data', style: ['subheader', 'secondary'], pageBreak: 'before' },
-    {
-      table: {
-        body: [
-          [
-            { text: 'Section', ...cellprops },
-            { text: 'Scores', ...cellprops },
-            { text: 'Avg Other', ...cellprops },
-            { text: 'Avg All', ...cellprops },
-            { text: 'Avg Self', ...cellprops }
-          ],
-          ...data.qualitiesMap.map((q, qi) => [
-            { text: `Section: ${q.model.title}`, ...cellprops },
-            {
-              table:
+  let debug_section: any[] = [];
+
+  if (data.print_scores == true || data.print_scores == 'true') {
+
+    debug_section = [
+      { text: 'Appendix A - Score Data', style: ['subheader', 'secondary'], pageBreak: 'before' },
+      {
+        table: {
+          body: [
+            [
+              { text: 'Section', ...cellprops },
+              { text: 'Scores', ...cellprops },
+              { text: 'Avg Other', ...cellprops },
+              { text: 'Avg All', ...cellprops },
+              { text: 'Avg Self', ...cellprops }
+            ],
+            ...data.qualitiesMap.map((q, qi) => [
+              { text: `Section: ${q.model.title}`, ...cellprops },
               {
-                body: [
-                  [
-                    {text: 'Key',...cellprops}, 
-                    {text:'Avg Others',...cellprops}, 
-                    {text:'Avg All',...cellprops}, 
-                    {text:'Self',...cellprops},
-                    {text: '1s', ...cellprops },
-                    {text: '2s', ...cellprops },
-                    {text: '3s', ...cellprops },
-                    {text: '4s', ...cellprops },
-                    {text: '5s', ...cellprops },
-                  ],
-                  ...q.behaviourScores.map((b, bi) => [
-                    { text: b.key, ...cellprops },
-                    { text: parseFloat(b.scoreAvgOthers).toFixed(2), ...cellprops },
-                    { text: parseFloat(b.scoreAvgAll).toFixed(2), ...cellprops },
-                    { text: parseFloat(b.scoreSelf).toFixed(2), ...cellprops },
-                    { text: `${b.countByScore[0]}`, ...cellprops },
-                    { text: `${b.countByScore[1]}`, ...cellprops },
-                    { text: `${b.countByScore[2]}`, ...cellprops },
-                    { text: `${b.countByScore[3]}`, ...cellprops },
-                    { text: `${b.countByScore[4]}`, ...cellprops }
+                table:
+                {
+                  body: [
+                    [
+                      { text: 'Key', ...cellprops },
+                      { text: 'Avg Others', ...cellprops },
+                      { text: 'Avg All', ...cellprops },
+                      { text: 'Self', ...cellprops },
+                      { text: '1s', ...cellprops },
+                      { text: '2s', ...cellprops },
+                      { text: '3s', ...cellprops },
+                      { text: '4s', ...cellprops },
+                      { text: '5s', ...cellprops },
+                    ],
+                    ...q.behaviourScores.map((b, bi) => [
+                      { text: b.key, ...cellprops },
+                      { text: parseFloat(b.scoreAvgOthers).toFixed(2), ...cellprops },
+                      { text: parseFloat(b.scoreAvgAll).toFixed(2), ...cellprops },
+                      { text: parseFloat(b.scoreSelf).toFixed(2), ...cellprops },
+                      { text: `${b.countByScore[0]}`, ...cellprops },
+                      { text: `${b.countByScore[1]}`, ...cellprops },
+                      { text: `${b.countByScore[2]}`, ...cellprops },
+                      { text: `${b.countByScore[3]}`, ...cellprops },
+                      { text: `${b.countByScore[4]}`, ...cellprops }
 
-                  ])
-                ]
-              }
-            },
-            { text: parseFloat(q.avg.others).toFixed(2), ...cellprops },
-            { text: parseFloat(q.avg.all).toFixed(2), ...cellprops },
-            { text: parseFloat(q.avg.self).toFixed(2), ...cellprops },
-          ]),
-          [
-            { text: '', ...cellprops },
-            { text: 'Totals', ...cellprops },
-            { text: `Avg Others ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.others)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
-            { text: `Avg All ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.all)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
-            { text: `Avg Self ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.self)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
+                    ])
+                  ]
+                }
+              },
+              { text: parseFloat(q.avg.others).toFixed(2), ...cellprops },
+              { text: parseFloat(q.avg.all).toFixed(2), ...cellprops },
+              { text: parseFloat(q.avg.self).toFixed(2), ...cellprops },
+            ]),
+            [
+              { text: '', ...cellprops },
+              { text: 'Totals', ...cellprops },
+              { text: `Avg Others ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.others)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
+              { text: `Avg All ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.all)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
+              { text: `Avg Self ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.self)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
+            ]
           ]
-        ]
+        }
       }
-    }
-  ]
+    ]
 
-
-
+  }
 
   greyscalePng(
     `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`,
@@ -1740,9 +1723,9 @@ const definition = (data, partner, user) => {
   }
 
   return {
-    filename: `Mores Leadership 360° Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}.pdf`,
+    filename: `Mores Leadership 360° Assessment Report - ${data.organization.name} - ${data.selectionTitle}.pdf`,
     info: {
-      title: `Mores Leadership 360° Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}`,
+      title: `Mores Leadership 360° Assessment Report - ${data.organization.name}  - ${data.selectionTitle}`,
       author: partner.name,
       subject: 'Mores Assessment - Leadership 360° Assessment Report',
       keywords: 'Leadership Training Personal Growth',
@@ -1757,7 +1740,7 @@ const definition = (data, partner, user) => {
       ...developmentPlan,
       ...debug_section
       /*{
-        qr: `${partner.siteUrl}/reports/towerstone/delegate-360-assessment/${data.survey._id}/${data.delegate._id}`,
+        qr: `${partner.siteUrl}/reports/towerstone/delegate-360-assessment/${data.survey._id}/${data.organization._id}`,
         fit: '180',
         alignment: 'center',
         foreground: palette.primary.main,
@@ -1767,7 +1750,7 @@ const definition = (data, partner, user) => {
       {
         text: [
           'To view an online / updated version of this report,',
-          { text: ' click on the link', link: `${partner.siteUrl}/reports/towerstone/delegate-360-assessment/${data.survey._id}/${data.delegate._id}`, bold: true },
+          { text: ' click on the link', link: `${partner.siteUrl}/reports/towerstone/delegate-360-assessment/${data.survey._id}/${data.organization._id}`, bold: true },
           ' or scan the QR code above with your mobile device.'],
         italics: true,
         color: palette.primary.main,
@@ -1799,7 +1782,7 @@ const definition = (data, partner, user) => {
             margin: [20, 0, 20, 0],
           },
           {
-            text: `${data.organization.name}: Leadership 360° Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
+            text: `Culture Assessment for ${data.organization.name} - ${data.selectionTitle}  - ${data.meta.when.format('DD MMMM YYYY')}`,
             fontSize: 8,
             alignment: 'center',
             margin: [5, 5],
@@ -1828,14 +1811,14 @@ const definition = (data, partner, user) => {
       personalBrandEmpty: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/personal-brand-empty.png`),
       sectionOverview: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/section-overview.png`),
       ratingScale: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/rating_scale.png`),
-      moresHoneycomb: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/individual360_honeycomb.png`),
-      individualHoneycomb: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/one_view_l360.png`),
-      oneViewUser: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/one_view_${data.survey._id}.png`) === true ? pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/one_view_${data.survey._id}.png`) : pdfpng(`${APP_DATA_ROOT}/theme/mores/one_view_l360_sample.png`),
-      delegateAvatar: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/profile_${data.delegate._id}_default.jpeg`) === true ? `${APP_DATA_ROOT}/profiles/${data.delegate._id}/profile_${data.delegate._id}_default.jpeg` : pdfpng(`${APP_DATA_ROOT}/profiles/default/default.png`),
-      spiderChartAll: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-all-${data.survey._id}.png`) === true ? pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-all-${data.survey._id}.png`) : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/spider-chart-all.png`),
-      spiderChartAvg: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-avg-${data.survey._id}.png`) === true ? (`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/spider-chart-avg-${data.survey._id}.png`) : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/spider-chart-avg.png`),
-      overallScoreChart: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/overall-score-${data.survey._id}-others.png`) === true ? `${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/overall-score-${data.survey._id}-others.png` : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/overall-score-chart.png`),
-      overallScoreSelf: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/overall-score-${data.survey._id}-self.png`) === true ? `${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/overall-score-${data.survey._id}-self.png` : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/overall-score-chart.png`),
+      moresHoneycomb: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/culture_survey_honeycomb.png`),
+      individualHoneycomb: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/one_view_culture_sample.png`),
+      oneViewUser: existsSync(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/one_view_${data.survey._id}.png`) === true ? pdfpng(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/one_view_${data.survey._id}.png`) : pdfpng(`${APP_DATA_ROOT}/theme/mores/one_view_l360_sample.png`),
+      delegateAvatar: existsSync(`${APP_DATA_ROOT}/organization/${data.organization._id}/profile_${data.organization._id}_default.jpeg`) === true ? `${APP_DATA_ROOT}/organization/${data.organization._id}/profile_${data.organization._id}_default.jpeg` : pdfpng(`${APP_DATA_ROOT}/organization/default/default.png`),
+      spiderChartAll: existsSync(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/spider-chart-all-${data.survey._id}.png`) === true ? pdfpng(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/spider-chart-all-${data.survey._id}.png`) : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/spider-chart-all.png`),
+      spiderChartAvg: existsSync(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/spider-chart-avg-${data.survey._id}.png`) === true ? (`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/spider-chart-avg-${data.survey._id}.png`) : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/spider-chart-avg.png`),
+      overallScoreChart: existsSync(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/overall-score-${data.survey._id}-others.png`) === true ? `${APP_DATA_ROOT}/organization/${data.organization._id}/charts/overall-score-${data.survey._id}-others.png` : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/overall-score-chart.png`),
+      overallScoreSelf: existsSync(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/overall-score-${data.survey._id}-self.png`) === true ? `${APP_DATA_ROOT}/organization/${data.organization._id}/charts/overall-score-${data.survey._id}-self.png` : pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/overall-score-chart.png`),
     },
     pageMargins: [40, 60, 40, 60],
     /**
@@ -1917,7 +1900,7 @@ const component = {
   resolver: resolveData,
   props: {
     meta: {
-      title: '${data.delegate.firstName} ${data.delegate.lastName} ${data.survey.title} Report',
+      title: '${data.organization.name} ${data.survey.title} Report',
       author: '${data.applicationTitle}',
     },
     fonts: {
