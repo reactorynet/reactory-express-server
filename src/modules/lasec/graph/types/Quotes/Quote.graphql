@@ -350,6 +350,7 @@ type PagedCRMQuote {
 type SalesOrderLineItem {
   id: String
   line: Int
+  productId: String
   productCode: String
   productDescription: String
   unitOfMeasure: String
@@ -445,10 +446,22 @@ type PagedCRMSalesHistory {
   salesHistory: [SalesHistory]
 }
 
+# CAN REMOVE THIS EVENTUALLY
 type SalesHistoryMonthlyCount {
   month: Int
   year: Int
   total: Int
+}
+
+type SalesHistoryMonths {
+  month: Int
+  total: Int
+}
+
+type SalesHistoryYearlyCount {
+  year: Int
+  total: Int
+  months: [SalesHistoryMonths]
 }
 
 type SalesOrderDocuments {
@@ -657,18 +670,11 @@ extend type Query {
     productId: String
     paging: PagingRequest
   ): PagedCRMSalesOrders
-
-  # PURCHASE ORDERS
-
   LasecGetCRMPurchaseOrders(
     productId: String
     paging: PagingRequest
   ): PagedCRMPurchaseOrders
-
   LasecGetCRMPurchaseOrderDetail(orderId: String!): [PurchaseOrderItem]
-
-  #
-
   LasecGetCRMClientSalesOrders(
     clientId: String
     search: String!
@@ -696,7 +702,9 @@ extend type Query {
     dateFilter: String
     iter: Int
   ): PagedCRMSalesOrders
+
   LasecGetISODetail(orderId: String!): SalsOrderDetails
+
   LasecGetCRMClientInvoices(
     clientId: String
     salesTeamId: String
@@ -743,10 +751,10 @@ extend type Query {
     iter: Int
   ): PagedCRMSalesHistory
   LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
-
   LasecGetCompanyDetailsforQuote(id: String!): LasecCRMCustomer
 
-  LasecGetSalesHistoryMonthCount(clientId: String, search: String!, filterBy: String): [SalesHistoryMonthlyCount]
+  # LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryMonthlyCount]
+  LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryYearlyCount]
 }
 
 extend type Mutation {

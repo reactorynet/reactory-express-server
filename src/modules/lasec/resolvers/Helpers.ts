@@ -1938,6 +1938,7 @@ export const getISODetails = async (params) => {
       const item = {
         id: so.id,
         line: so.line,
+        productId: so.product_id,
         productCode: so.product_code,
         productDescription: so.product_description,
         unitOfMeasure: so.unit_of_measure,
@@ -1954,26 +1955,13 @@ export const getISODetails = async (params) => {
     }
   })
 
-  // const lineItems = salesOrders.slice(0, 1).map(li => {
-  //   return {
-  //     id: li.id,
-  //     line: li.line,
-  //     productCode: li.product_code,
-  //     productDescription: li.product_description,
-  //     unitOfMeasure: li.unit_of_measure,
-  //     price: li.price,
-  //     totalPrice: li.total_price,
-  //     orderQty: li.order_qty,
-  //     shippedQty: li.shipped_qty,
-  //     backOrderQty: li.back_order_qty,
-  //     reservedQty: li.reserved_qty,
-  //     comment: li.comment
-  //   }
-  // });
+  logger.debug(`LINE ITEMS TO RETURN :: ${JSON.stringify(lineItems)}`);
 
-  logger.debug(`SALES tO RETUSN :: ${JSON.stringify(lineItems)}`);
-
-  return lineItems;
+  // return lineItems;/
+  return {
+    lineItems,
+    comments: []
+  };
 }
 
 export const getClientInvoices = async (params) => {
@@ -2263,98 +2251,138 @@ export const getSalesHistoryMonthlyCount = async (params) => {
 
   logger.debug(`GET TOTALS PARAMS:: ${JSON.stringify(params)}`);
 
-  return [
-    {
-      month: 0,
-      year: 2020,
-      total: 1350
-    },
-    {
-      month: 1,
-      year: 2020,
-      total: 1350
-    },
-    {
-      month: 2,
-      year: 2020,
-      total: 2301
-    },
-    {
-      month: 3,
-      year: 2020,
-      total: 1350
-    },
-    {
-      month: 4,
-      year: 2020,
-      total: 1220
-    },
-    {
-      month: 0,
-      year: 2019,
-      total: 1350
-    },
-    {
-      month: 1,
-      year: 2019,
-      total: 1350
-    },
-    {
-      month: 2,
-      year: 2018,
-      total: 2301
-    },
-    {
-      month: 3,
-      year: 2018,
-      total: 1350
-    },
-    {
-      month: 4,
-      year: 2017,
-      total: 1220
-    },
-    {
-      month: 5,
-      year: 2016,
-      total: 1220
-    },
-    {
-      month: 1,
-      year: 2015,
-      total: 1220
-    },
-    {
-      month: 2,
-      year: 2014,
-      total: 1220
-    },
-    {
-      month: 3,
-      year: 2014,
-      total: 1220
-    },
-    {
-      month: 2,
-      year: 2013,
-      total: 2000
-    },
-    {
-      month: 3,
-      year: 2012,
-      total: 456
-    },
-    {
-      month: 3,
-      year: 2011,
-      total: 1456
-    },
-    {
-      month: 6,
-      year: 2010,
-      total: 200
-    },
-  ]
+  const {
+    search = "",
+    filterBy = "any_field",
+  } = params;
+
+  let _filter: any = {
+    order_status: 9,
+    start_date: moment().startOf('year').toISOString(),
+    end_date: moment().endOf('day').toISOString(),
+    totals: true
+  };
+
+  _filter[filterBy] = search;
+
+  const salesHistoryResponse = await lasecApi.Products.sales_orders({
+    filter: _filter,
+    pagination: { page: 1, pageSize: 50 },
+  }).then();
+
+  logger.debug(`SALES HISTORY TOTALS:: ${JSON.stringify(salesHistoryResponse)}`);
+
+  let years;
+  years = Object.keys(salesHistoryResponse).map(_year => {
+    return {
+      year: +_year,
+      total: salesHistoryResponse[_year].total,
+      months: Object.keys(salesHistoryResponse[_year].month).map(_month => {
+        return {
+          month: +_month,
+          total: salesHistoryResponse[_year].month[_month],
+        }
+      })
+    }
+  });
+
+
+  logger.debug(`TO RETURN :: ${JSON.stringify(years)}`);
+
+  return years;
+
+  // return [
+  //   {
+  //     month: 0,
+  //     year: 2020,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 1,
+  //     year: 2020,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 2,
+  //     year: 2020,
+  //     total: 2301
+  //   },
+  //   {
+  //     month: 3,
+  //     year: 2020,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 4,
+  //     year: 2020,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 0,
+  //     year: 2019,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 1,
+  //     year: 2019,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 2,
+  //     year: 2018,
+  //     total: 2301
+  //   },
+  //   {
+  //     month: 3,
+  //     year: 2018,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 4,
+  //     year: 2017,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 5,
+  //     year: 2016,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 1,
+  //     year: 2015,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 2,
+  //     year: 2014,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 3,
+  //     year: 2014,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 2,
+  //     year: 2013,
+  //     total: 2000
+  //   },
+  //   {
+  //     month: 3,
+  //     year: 2012,
+  //     total: 456
+  //   },
+  //   {
+  //     month: 3,
+  //     year: 2011,
+  //     total: 1456
+  //   },
+  //   {
+  //     month: 6,
+  //     year: 2010,
+  //     total: 200
+  //   },
+  // ]
 }
 
 const fieldMaps: any = {

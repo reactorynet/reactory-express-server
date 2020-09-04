@@ -644,11 +644,9 @@ export default {
     LasecGetCRMSalesHistory: async (obj, args) => {
       return getCRMSalesHistory(args);
     },
-
-    LasecGetSalesHistoryMonthCount: async (obj, args) => {
+    LasecGetSalesHistoryMonthTotals: async (obj, args) => {
       return getSalesHistoryMonthlyCount(args);
     },
-
     LasecGetSaleOrderComments: async (obj, args) => {
       return getSalesOrderComments(args);
     },
