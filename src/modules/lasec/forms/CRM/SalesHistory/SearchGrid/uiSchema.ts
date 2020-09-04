@@ -26,18 +26,18 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
+    // {
+    //   search: { md: 4, sm: 12 },
+    //   filterBy: { md: 4, sm: 12 },
+    //   filter: { md: 4, sm: 12 },
+    //   periodStart: { md: 6, xs: 12 },
+    //   periodEnd: { md: 6, xs: 12 },
+    //   // dateFilter: { md: 6, xs: 12 },
+    //   client: { md: 6, xs: 12 },
+    //   customer: { md: 6, xs: 12 },
+    // },
     {
-      search: { md: 4, sm: 12 },
-      filterBy: { md: 4, sm: 12 },
-      filter: { md: 4, sm: 12 },
-      periodStart: { md: 6, xs: 12 },
-      periodEnd: { md: 6, xs: 12 },
-      // dateFilter: { md: 6, xs: 12 },
-      client: { md: 6, xs: 12 },
-      customer: { md: 6, xs: 12 },
-    },
-    {
-      salesHistory: { xs: 12 }
+      salesHistory: { xs: 12, sm: 12, md: 12, lg: 12 }
     }
   ],
 
@@ -118,24 +118,12 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Order Type', field: 'orderType' },
-        {
-          title: 'Quote Date',
-          field: 'quoteDate',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${rowData.quoteDate ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.quoteDate': 'value',
-          }
-        },
-        { title: 'Quote Number', field: 'quoteNumber' },
+        { title: 'Account Number', field: 'accountNumber' },
+        { title: 'Customer', field: 'customer' },
+        { title: 'Client Full Name', field: 'client' },
+        { title: 'Invoice Number', field: 'invoiceNumber' },
+        { title: 'ISO No.', field: 'isoNumber' },
+        { title: 'PO Number', field: 'poNumber' },
         {
           title: 'Order Date',
           field: 'orderDate',
@@ -152,25 +140,23 @@ const uiSchema: any = {
             'rowData.orderDate': 'value',
           }
         },
-        { title: 'ISO No.', field: 'isoNumber' },
-        { title: 'Customer', field: 'customer' },
-        { title: 'Client', field: 'client' },
-        { title: 'PO Number', field: 'poNumber' },
-        {
-          title: 'Inv Value',
-          field: 'value',
-          component: 'core.CurrencyLabel@1.0.0',
-          propsMap: {
-            'rowData.value': 'value',
-          },
-        },
-        { title: 'Client Rep Code', field: 'salesTeamId' },
       ],
       options: {
+        // grouping: false,
+        // search: false,
+        // showTitle: false,
+        // toolbar: false,
         grouping: false,
-        search: false,
+        search: true,
         showTitle: false,
-        toolbar: false,
+        toolbar: true,
+        selection: true,
+        toolbarButtonAlignment: 'left',
+        actionsColumnIndex: -1
+      },
+      componentMap: {
+        Toolbar: 'lasec-crm.SalesHistoryGridToolbar@1.0.0',
+        DetailsPanel: 'lasec-crm.salesHistoryTableDetailPanel@1.0.0'
       },
       remoteData: true,
       query: 'query',
@@ -179,6 +165,9 @@ const uiSchema: any = {
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.filter': 'filter',
         'props.formContext.$formData.filterBy': 'filterBy',
+        'props.formContext.$formData.year': 'year',
+        'props.formContext.$formData.month': 'month',
+        'props.formContext.$formData.years': 'years',
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.periodStart': 'periodStart',
         'props.formContext.$formData.periodEnd': 'periodEnd',
@@ -187,19 +176,17 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
+        'year': 'year',
+        'month': 'month',
+        'years': 'years',
         'salesHistory.[].id': 'data.[].id',
-        'salesHistory.[].orderType': 'data.[].orderType',
-        'salesHistory.[].quoteDate': 'data.[].quoteDate',
-        'salesHistory.[].quoteNumber': 'data.[].quoteNumber',
-        'salesHistory.[].orderDate': 'data.[].orderDate',
-        'salesHistory.[].iso': 'data.[].isoNumber',
-        'salesHistory.[].dispatches': 'data.[].dispatches',
+        'salesHistory.[].accountNumber': 'data.[].accountNumber',
         'salesHistory.[].customer': 'data.[].customer',
         'salesHistory.[].client': 'data.[].client',
+        'salesHistory.[].invoiceNumber': 'data.[].invoiceNumber',
+        'salesHistory.[].iso': 'data.[].isoNumber',
         'salesHistory.[].poNumber': 'data.[].poNumber',
-        'salesHistory.[].value': 'data.[].value',
-        'salesHistory.[].salesTeamId': 'data.[].salesTeamId',
-
+        'salesHistory.[].orderDate': 'data.[].orderDate',
       },
     },
   }

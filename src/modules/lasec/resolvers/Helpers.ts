@@ -2026,6 +2026,7 @@ export const getISODetails = async (params) => {
       const item = {
         id: so.id,
         line: so.line,
+        productId: so.product_id,
         productCode: so.product_code,
         productDescription: so.product_description,
         unitOfMeasure: so.unit_of_measure,
@@ -2042,26 +2043,13 @@ export const getISODetails = async (params) => {
     }
   })
 
-  // const lineItems = salesOrders.slice(0, 1).map(li => {
-  //   return {
-  //     id: li.id,
-  //     line: li.line,
-  //     productCode: li.product_code,
-  //     productDescription: li.product_description,
-  //     unitOfMeasure: li.unit_of_measure,
-  //     price: li.price,
-  //     totalPrice: li.total_price,
-  //     orderQty: li.order_qty,
-  //     shippedQty: li.shipped_qty,
-  //     backOrderQty: li.back_order_qty,
-  //     reservedQty: li.reserved_qty,
-  //     comment: li.comment
-  //   }
-  // });
+  logger.debug(`LINE ITEMS TO RETURN :: ${JSON.stringify(lineItems)}`);
 
-  logger.debug(`SALES tO RETUSN :: ${JSON.stringify(lineItems)}`);
-
-  return lineItems;
+  // return lineItems;/
+  return {
+    lineItems,
+    comments: []
+  };
 }
 
 export const getClientInvoices = async (params) => {
@@ -2347,18 +2335,174 @@ export const getClientSalesHistory = async (params) => {
 
 }
 
-export const getCRMSalesHistory = async (params) => {
+export const getSalesHistoryMonthlyCount = async (params) => {
 
-  logger.debug(`GETTING PAGED CRM SALES HISTORY:: ${JSON.stringify(params)}`);
+  logger.debug(`GET TOTALS PARAMS:: ${JSON.stringify(params)}`);
 
   const {
     search = "",
-    periodStart,
-    periodEnd,
     filterBy = "any_field",
-    filter,
+  } = params;
+
+  let _filter: any = {
+    order_status: 9,
+    start_date: moment().startOf('year').toISOString(),
+    end_date: moment().endOf('day').toISOString(),
+    totals: true
+  };
+
+  _filter[filterBy] = search;
+
+  const salesHistoryResponse = await lasecApi.Products.sales_orders({
+    filter: _filter,
+    pagination: { page: 1, pageSize: 50 },
+  }).then();
+
+  logger.debug(`SALES HISTORY TOTALS:: ${JSON.stringify(salesHistoryResponse)}`);
+
+  let years;
+  years = Object.keys(salesHistoryResponse).map(_year => {
+    return {
+      year: +_year,
+      total: salesHistoryResponse[_year].total,
+      months: Object.keys(salesHistoryResponse[_year].month).map(_month => {
+        return {
+          month: +_month,
+          total: salesHistoryResponse[_year].month[_month],
+        }
+      })
+    }
+  });
+
+
+  logger.debug(`TO RETURN :: ${JSON.stringify(years)}`);
+
+  return years;
+
+  // return [
+  //   {
+  //     month: 0,
+  //     year: 2020,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 1,
+  //     year: 2020,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 2,
+  //     year: 2020,
+  //     total: 2301
+  //   },
+  //   {
+  //     month: 3,
+  //     year: 2020,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 4,
+  //     year: 2020,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 0,
+  //     year: 2019,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 1,
+  //     year: 2019,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 2,
+  //     year: 2018,
+  //     total: 2301
+  //   },
+  //   {
+  //     month: 3,
+  //     year: 2018,
+  //     total: 1350
+  //   },
+  //   {
+  //     month: 4,
+  //     year: 2017,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 5,
+  //     year: 2016,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 1,
+  //     year: 2015,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 2,
+  //     year: 2014,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 3,
+  //     year: 2014,
+  //     total: 1220
+  //   },
+  //   {
+  //     month: 2,
+  //     year: 2013,
+  //     total: 2000
+  //   },
+  //   {
+  //     month: 3,
+  //     year: 2012,
+  //     total: 456
+  //   },
+  //   {
+  //     month: 3,
+  //     year: 2011,
+  //     total: 1456
+  //   },
+  //   {
+  //     month: 6,
+  //     year: 2010,
+  //     total: 200
+  //   },
+  // ]
+}
+
+const fieldMaps: any = {
+  "fullName": "first_name",
+  "customer": "company_trading_name",
+};
+
+export const getCRMSalesHistory = async (params) => {
+
+  let periodStart;
+  let periodEnd;
+
+  const {
+    search = "",
     paging = { page: 1, pageSize: 10 },
-    iter = 0 } = params;
+    filterBy = "any_field",
+    orderBy = "fullName",
+    orderDirection = "asc",
+    year,
+    month,
+    years,
+    iter = 0,
+    filter,
+  } = params;
+
+  logger.debug(`GETTING SALES HISTORY USING SEARCH ${JSON.stringify(params)}`);
+
+  let ordering: { [key: string]: string } = {}
+  if (orderBy) {
+    let fieldKey: string = fieldMaps[orderBy];
+    ordering[fieldKey] = orderDirection
+  }
 
   let pagingResult = {
     total: 0,
@@ -2367,39 +2511,42 @@ export const getCRMSalesHistory = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  let me = await getLoggedIn360User().then();
-
-  let apiFilter = {
-    // customer_id: me.id,
-    order_status: 9,
-    // [filterBy]: filter || search,
-    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+  if (isString(search) === false || search.length < 3 || year == null) return {
+    paging: pagingResult,
+    salesHistory: [],
+    year,
+    month,
+    years,
   };
 
-  // if (filterBy == 'invoice_date') {
-  //   apiFilter.using = filterBy;
-  //   apiFilter.start_date = moment(dateFilter).startOf('day');
-  //   apiFilter.end_date = moment(dateFilter).endOf('day');
-  // }
+  let _filter: any = {
+    order_status: 9,
+    start_date: moment().startOf('year').toISOString(),
+    end_date: moment().endOf('day').toISOString(),
+    totals: false
+  };
 
-  // if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number') {
-  //   apiFilter[filterBy] = search;
-  // }
+  _filter[filterBy] = search;
 
-  if (filterBy == 'order_type') {
-    apiFilter[filterBy] = filter;
+  if (year) {
+    _filter.start_date = moment([year]).startOf('year').toISOString();
+    _filter.end_date = moment([year]).endOf('year').toISOString();
+  }
+
+  if (month != undefined) {
+    logger.debug(`SETTING DATES PER MONTH:: ${month}`);
+    let _year = year || moment().year();
+    _filter.start_date = moment([_year, month]).startOf('month').toISOString();
+    _filter.end_date = moment([_year, month]).endOf('month').toISOString();
   }
 
   const salesHistoryResponse = await lasecApi.Products.sales_orders({
-    filter: apiFilter,
-    pagination: {
-      page_size: paging.pageSize || 10,
-      current_page: paging.page
-    },
+    filter: _filter,
+    pagination: { page_size: paging.pageSize || 10, current_page: paging.page },
+    // ordering,
   }).then();
 
-  logger.debug(`SALES HISTORY COUNT:: ${salesHistoryResponse.ids.length}`);
+  // logger.debug(`SALES HISTORY RESPONSE:: ${JSON.stringify(salesHistoryResponse)}`);
 
   let ids = [];
 
@@ -2415,29 +2562,31 @@ export const getCRMSalesHistory = async (params) => {
   }
 
   let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
+
+  // logger.debug(`SALES HISTORY DETAILS:: ${JSON.stringify(saleshistoryDetails)}`);
+
   let salesHistory = [...saleshistoryDetails.items];
 
-  logger.debug(`SH RESULT:: ${JSON.stringify(salesHistory[0])}`);
+  logger.debug(`SALES HISTORY RESULT:: ${JSON.stringify(salesHistory[0])}`);
 
   salesHistory = salesHistory.map(order => {
     return {
       id: order.id,
-      orderType: order.order_type,
-      orderDate: order.order_date,
-      quoteDate: order.quote_date,
-      quoteNumber: order.quote_id || '',
-      iso: order.sales_order_id,
-      dispatches: order.dispatch_note_ids.join(', '),
+      accountNumber: order.account_number,
       customer: order.company_trading_name,
       client: order.customer_name,
-      poNumber: order.sales_order_number,
-      value: order.order_value,
-      salesTeamId: order.sales_team_id
+      invoiceNumber: order.invoice_ids.length > 0 ? order.invoice_ids[0] : '', // THESE ARE IDS AND CAN BE MULTIPLE
+      iso: order.sales_order_id,
+      poNumber: order.customerponumber,
+      orderDate: order.order_date,
     }
   });
 
   let result = {
     paging: pagingResult,
+    year,
+    month,
+    years,
     salesHistory,
   };
 
