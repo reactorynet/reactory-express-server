@@ -1255,7 +1255,7 @@ export const getPagedQuotes = async (params) => {
     [filterBy]: search,
   };
 
-  
+
 
   switch (filterBy) {
     case "any_field": {
@@ -1264,7 +1264,7 @@ export const getPagedQuotes = async (params) => {
       delete apiFilter.end_date
       if (isString(search) === false || search.length < 3 && filter === undefined) {
         return {
-          paging: pagingResult,          
+          paging: pagingResult,
           quotes: []
         };
       }
@@ -1288,8 +1288,8 @@ export const getPagedQuotes = async (params) => {
 
       break;
     }
-    case "quote_date": {      
-      
+    case "quote_date": {
+
       break;
     }
     case "quote_status": {
@@ -1313,19 +1313,19 @@ export const getPagedQuotes = async (params) => {
     case "account_number": {
 
       apiFilter.start_date = moment(filter).startOf('day').toISOString();
-      apiFilter.end_date = moment(filter).endOf('day').toISOString(); 
+      apiFilter.end_date = moment(filter).endOf('day').toISOString();
       break;
     }
     case "quote_type": {
 
       apiFilter.start_date = moment(filter).startOf('day').toISOString();
-      apiFilter.end_date = moment(filter).endOf('day').toISOString(); 
+      apiFilter.end_date = moment(filter).endOf('day').toISOString();
       break;
     }
     case "rep_code": {
 
       apiFilter.start_date = moment(filter).startOf('day').toISOString();
-      apiFilter.end_date = moment(filter).endOf('day').toISOString(); 
+      apiFilter.end_date = moment(filter).endOf('day').toISOString();
       break;
     }
   }
@@ -2339,138 +2339,50 @@ export const getSalesHistoryMonthlyCount = async (params) => {
 
   logger.debug(`GET TOTALS PARAMS:: ${JSON.stringify(params)}`);
 
-  const {
-    search = "",
-    filterBy = "any_field",
-  } = params;
+  try {
 
-  let _filter: any = {
-    order_status: 9,
-    start_date: moment().startOf('year').toISOString(),
-    end_date: moment().endOf('day').toISOString(),
-    totals: true
-  };
+    const {
+      search = "",
+      filterBy = "any_field",
+    } = params;
 
-  _filter[filterBy] = search;
+    let _filter: any = {
+      order_status: 9,
+      start_date: moment().startOf('year').toISOString(),
+      end_date: moment().endOf('day').toISOString(),
+      totals: true
+    };
 
-  const salesHistoryResponse = await lasecApi.Products.sales_orders({
-    filter: _filter,
-    pagination: { page: 1, pageSize: 50 },
-  }).then();
+    _filter[filterBy] = search;
 
-  logger.debug(`SALES HISTORY TOTALS:: ${JSON.stringify(salesHistoryResponse)}`);
+    const salesHistoryResponse = await lasecApi.Products.sales_orders({
+      filter: _filter,
+      pagination: { page: 1, pageSize: 50 },
+    }).then();
 
-  let years;
-  years = Object.keys(salesHistoryResponse).map(_year => {
-    return {
-      year: +_year,
-      total: salesHistoryResponse[_year].total,
-      months: Object.keys(salesHistoryResponse[_year].month).map(_month => {
-        return {
-          month: +_month,
-          total: salesHistoryResponse[_year].month[_month],
-        }
-      })
-    }
-  });
+    logger.debug(`SALES HISTORY TOTALS:: ${JSON.stringify(salesHistoryResponse)}`);
 
+    let years;
+    years = Object.keys(salesHistoryResponse).map(_year => {
+      return {
+        year: +_year,
+        total: salesHistoryResponse[_year].total,
+        months: Object.keys(salesHistoryResponse[_year].month).map(_month => {
+          return {
+            month: +_month,
+            total: salesHistoryResponse[_year].month[_month],
+          }
+        })
+      }
+    });
 
-  logger.debug(`TO RETURN :: ${JSON.stringify(years)}`);
+    return years;
 
-  return years;
+  } catch (error) {
 
-  // return [
-  //   {
-  //     month: 0,
-  //     year: 2020,
-  //     total: 1350
-  //   },
-  //   {
-  //     month: 1,
-  //     year: 2020,
-  //     total: 1350
-  //   },
-  //   {
-  //     month: 2,
-  //     year: 2020,
-  //     total: 2301
-  //   },
-  //   {
-  //     month: 3,
-  //     year: 2020,
-  //     total: 1350
-  //   },
-  //   {
-  //     month: 4,
-  //     year: 2020,
-  //     total: 1220
-  //   },
-  //   {
-  //     month: 0,
-  //     year: 2019,
-  //     total: 1350
-  //   },
-  //   {
-  //     month: 1,
-  //     year: 2019,
-  //     total: 1350
-  //   },
-  //   {
-  //     month: 2,
-  //     year: 2018,
-  //     total: 2301
-  //   },
-  //   {
-  //     month: 3,
-  //     year: 2018,
-  //     total: 1350
-  //   },
-  //   {
-  //     month: 4,
-  //     year: 2017,
-  //     total: 1220
-  //   },
-  //   {
-  //     month: 5,
-  //     year: 2016,
-  //     total: 1220
-  //   },
-  //   {
-  //     month: 1,
-  //     year: 2015,
-  //     total: 1220
-  //   },
-  //   {
-  //     month: 2,
-  //     year: 2014,
-  //     total: 1220
-  //   },
-  //   {
-  //     month: 3,
-  //     year: 2014,
-  //     total: 1220
-  //   },
-  //   {
-  //     month: 2,
-  //     year: 2013,
-  //     total: 2000
-  //   },
-  //   {
-  //     month: 3,
-  //     year: 2012,
-  //     total: 456
-  //   },
-  //   {
-  //     month: 3,
-  //     year: 2011,
-  //     total: 1456
-  //   },
-  //   {
-  //     month: 6,
-  //     year: 2010,
-  //     total: 200
-  //   },
-  // ]
+    return [];
+
+  }
 }
 
 const fieldMaps: any = {
