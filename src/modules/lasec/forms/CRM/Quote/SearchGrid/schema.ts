@@ -119,6 +119,11 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'Filter By'
     },
+
+    filter: {
+      type: 'string',
+      title: 'Filter'
+    },
     // client: {
     //   type: 'string',
     //   title: 'Show'

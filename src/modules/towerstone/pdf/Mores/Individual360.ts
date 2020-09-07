@@ -137,6 +137,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
 
 
     const reportData = {
+      id: new ObjectId(),
       print_scores,
       meta: {
         author: `${partner.name}`,
@@ -842,9 +843,10 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
   }
 };
 
+export const MoresIndidvidual360DataResolver = resolveData;
 
 const definition = (data, partner, user) => {
-  logger.debug('Generating PDF definition For Mores Assessment Leadership 360 Report');
+  logger.debug('Generating PDF definition For Mores Assessment Individual 360 Report');
 
 
   const scaleSegments = [];
@@ -870,7 +872,7 @@ const definition = (data, partner, user) => {
     {
       image: 'organizationLogo', width: 120, style: ['centerAligned'], margin: [0, 30, 0, 30],
     },
-    { text: 'Leadership 360° Assessment Report', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
+    { text: 'Individual 360° Assessment Report', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
     { text: `${data.delegate.firstName} ${data.delegate.lastName}`, style: ['header', 'centerAligned', 'secondary'], margin: [0, 5] },
     { text: `${data.organization.name}`, style: ['header', 'centerAligned', 'secondary'], margin: [0, 20, 0, 370] },
     {
@@ -934,7 +936,7 @@ const definition = (data, partner, user) => {
     },
     {
       text: [
-        'The Mores Leadership 360° Assessment provides insight to help you grow and model behaviours that will best serve your leadership needs.',
+        'The Mores Individual 360° Assessment provides insight to help you grow and model behaviours that will best serve your leadership needs.',
         'This report consists of the following sections:\n'
       ],
       style: ['default'],
@@ -1155,7 +1157,7 @@ const definition = (data, partner, user) => {
       behaviour: {
         key: sorted_scores[idx].key,
         title: sorted_scores[idx].titleContent,
-        description: `${sorted_scores[idx].descriptionContent} (${sorted_scores[idx].scoreAvgAll})`
+        description: `${sorted_scores[idx].descriptionContent} (${parseFloat(sorted_scores[idx].scoreAvgAll).toFixed(2)})`
       }
     });
 
@@ -1169,7 +1171,7 @@ const definition = (data, partner, user) => {
       behaviour: {
         key: sorted_scores[idx].key,
         title: sorted_scores[idx].titleContent,
-        description: `${sorted_scores[idx].descriptionContent} (${sorted_scores[idx].scoreAvgAll})`
+        description: `${sorted_scores[idx].descriptionContent} (${parseFloat(sorted_scores[idx].scoreAvgAll).toFixed(2)})`
       }
     })
   }
@@ -1432,7 +1434,7 @@ const definition = (data, partner, user) => {
 
     data.comments.forEach((comment) => {
       if (comment.quality === quality.id) {
-        sectionComments.push({ text: `"${comment.content.content}"`, style: ['default'] })
+        sectionComments.push({ text: `\`${comment.content.content}\``, italics: true, style: ['default'], margin: [5, 10, 5, 10] })
       }
     });
 
@@ -1740,11 +1742,11 @@ const definition = (data, partner, user) => {
   }
 
   return {
-    filename: `Mores Leadership 360° Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}.pdf`,
+    filename: `Mores Individual 360° Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}.pdf`,
     info: {
-      title: `Mores Leadership 360° Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}`,
+      title: `Mores Individual 360° Assessment Report - ${data.delegate.firstName} ${data.delegate.lastName}`,
       author: partner.name,
-      subject: 'Mores Assessment - Leadership 360° Assessment Report',
+      subject: 'Mores Assessment - Individual 360° Assessment Report',
       keywords: 'Leadership Training Personal Growth',
     },
     content: [
@@ -1799,7 +1801,7 @@ const definition = (data, partner, user) => {
             margin: [20, 0, 20, 0],
           },
           {
-            text: `${data.organization.name}: Leadership 360° Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
+            text: `${data.organization.name}: Individual 360° Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
             fontSize: 8,
             alignment: 'center',
             margin: [5, 5],
@@ -1909,10 +1911,10 @@ const definition = (data, partner, user) => {
 
 const component = {
   enabled: true,
-  view: 'MoresLeadership360',
+  view: 'MoresIndividual360',
   kind: 'pdf',
   format: 'pdf',
-  name: 'Mores Assessment Leadership 360 Report',
+  name: 'Mores Assessment Individual 360 Report',
   content: definition,
   resolver: resolveData,
   props: {

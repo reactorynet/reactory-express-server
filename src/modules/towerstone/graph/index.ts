@@ -6,7 +6,8 @@ const graphTypes: any[] = [];
 [
  'types/Survey/Assessment',
  'types/Survey/Survey',
- 'types/Mores/Dashboards' 
+ 'types/Mores/Dashboards',
+ 'types/Mores/Reports/MoresIndividual360'
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;

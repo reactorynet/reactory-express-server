@@ -163,6 +163,8 @@ const graphql = {
         assessorTeamName
         surveyType
         status
+        startDate
+        endDate
         delegates {
           id          
           delegate {
@@ -230,6 +232,9 @@ const graphql = {
     },
     resultMap: {
       id: 'id',
+      'status': 'status',
+      'startDate': 'startDate',
+      'endDate': 'endDate',
       'surveyType': 'surveyType',
       'statistics.launched': 'launched',
       'statistics.peersPending': 'peersPending',

@@ -1,0 +1,47 @@
+type MoresReportMeta {
+    author: String
+    when: Date
+    user: User
+    includeAvatar: Boolean,
+    partner: Any
+    palette: Any
+    colorSchemes: Any
+}
+
+type MoresIndividual360Charts {
+    individualRadar: Any
+    avgRadar: Any
+    behaviourCharts: Any
+    overallChart: Any
+    oneviewChart: Any
+}
+
+type MoresIndividual360ReportData {
+    id: ObjID   
+    print_scores: Boolean
+    meta: MoresReportMeta
+    employeeDemographics: Any
+    key: String
+    delegate: Any
+    assessors: [Any]
+    assessments: [Any]
+    qualityComments: [Any]
+    qualityActions: [Any]
+    survey: Any
+    score: Int
+    organization: Any
+    leadershipBrand: Any
+    scale: Any
+    qualities: [Any]
+    qualitiesMap: [Any]
+    behaviours: [Any]
+    developmentPlan: [Any]
+    comments: [Any]
+    recommentdations: [Any]
+    ratings: [Any]
+    charts: MoresIndividual360Charts
+}
+
+extend type Query {
+    MoresIndividual360ReportData(surveyId: String, delegateId: String): MoresIndividual360ReportData
+}

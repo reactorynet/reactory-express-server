@@ -643,6 +643,8 @@ extend type Query {
     periodStart: String
     periodEnd: String
     quoteDate: String
+    orderBy: String
+    orderDirection: String
     iter: Int
   ): PagedCRMQuote
   LasecGetCRMClientQuoteList(
