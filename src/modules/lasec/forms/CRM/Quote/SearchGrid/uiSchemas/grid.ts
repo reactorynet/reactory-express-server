@@ -643,6 +643,44 @@ const uiSchema: any = {
         toolbar: true,
         selection: true
       },
+      actions: [
+        {
+          icon: 'remove_circle',
+          tooltip: 'Deactivate Client(s)',
+          key: 'deactivate',          
+          confirmation: {
+            title: 'Are you sure you want to delete ${selected.length === 1 ? "this quote" : "these quotes"}?',
+            titleProps: {
+              style: {
+                fontWeight: 'bold'
+              }
+            },
+            content: 'Once a quote is deleted you will no longer be able to acces the quote information', 
+            contentProps: {
+              style:{
+                color: '#BCBCBC'
+              }
+            },
+            acceptTitle: 'DELETE ALL',
+            confirmProps: {
+              variant: 'contained',
+              style: {
+                backgroundColor: '#D22D2C',
+                color: '#FFF'
+              }
+            },
+            confirmColor: 'danger',
+            cancelTitle: 'CANCEL',
+            cancelProps: {
+              variant: 'text'
+            }
+          },
+          iconProps: {
+            color: 'error'
+          },      
+          mutation: 'deactivate',          
+        },
+      ],
       remoteData: true,
       query: 'query',
       componentMap: {
@@ -656,6 +694,8 @@ const uiSchema: any = {
         'props.formContext.$formData.periodStart': 'periodStart',
         'props.formContext.$formData.periodEnd': 'periodEnd',
         'props.formContext.$formData.dateFilter': 'quoteDate',
+        'query.orderBy.field': 'orderBy',
+        'query.orderDirection': 'orderDirection'
       },
       resultMap: {
         'paging.page': 'page',

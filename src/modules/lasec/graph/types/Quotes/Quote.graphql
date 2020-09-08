@@ -849,4 +849,6 @@ extend type Mutation {
   ): SimpleResponse
 
   LasecDeleteQuote(id: String): SimpleResponse
+
+  LasecDeleteQuotes(quoteIds: [String]): SimpleResponse
 }

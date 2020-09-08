@@ -39,19 +39,6 @@ const lookups = CONSTANTS.LOOKUPS;
 const maps = { ...OBJECT_MAPS };
 
 
-const QuoteFieldNameMaps: any = {
-  "fullName": "first_name",
-  "firstName": "first_name",
-  "lastName": "surname",
-  "emailAddress": "email",
-  "salesTeam": "sales_team_id",
-  "accountNumber": "account_number",
-  "customer": "company_trading_name",
-  "company_rep_code": "company_sales_tema",
-  "country": "country"
-};
-
-
 /**
  * Transforms meta data into totals object
  * @param meta meta data to use for transformation
@@ -1228,6 +1215,17 @@ export const LasecSendQuoteEmail = async (params) => {
   }
 }
 
+const quote_field_maps: any = {
+  "code": "id",
+  "created": "created",
+  "status": "quote_status_id",
+  "total": "grand_total_excl_vat_cents",
+  "companyTradingName": "organisation_id",
+  "accountNumber": "account_number",
+  "customer": "company_trading_name",
+  "repCode": "company_sales_team",  
+};
+
 export const getPagedQuotes = async (params) => {
 
   const {
@@ -1243,6 +1241,13 @@ export const getPagedQuotes = async (params) => {
     iter = 0 } = params;
 
   logger.debug(`getPagedQuotes(${JSON.stringify(params)})`);
+
+  let ordering: { [key: string]: string } = {}
+
+  if(orderBy) {
+    let fieldKey: string = quote_field_maps[orderBy];
+    ordering[fieldKey] = orderDirection
+  }
 
   let pagingResult = {
     total: 0,
@@ -1330,8 +1335,6 @@ export const getPagedQuotes = async (params) => {
     }
   }
 
-
-
   if (quoteDate) {
     apiFilter.start_date = moment(quoteDate).startOf('day').toISOString();
     apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
@@ -1349,7 +1352,9 @@ export const getPagedQuotes = async (params) => {
 
   let quoteResult = await lasecApi.Quotes.list({
     filter: apiFilter,
-    pagination: { page_size: paging.pageSize || 10, current_page: paging.page }
+    pagination: { page_size: paging.pageSize || 10, current_page: paging.page },
+    ordering,
+    format: { "ids_only": true },
   }).then();
 
   let ids = [];

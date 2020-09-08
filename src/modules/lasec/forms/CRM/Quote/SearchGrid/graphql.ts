@@ -81,6 +81,29 @@ const graphql: Reactory.IFormGraphDefinition = {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
+  },
+  mutation: {
+    deactivate: {
+      name: 'LasecDeleteQuotes',
+      text: `mutation LasecDeleteQuotes($quoteIds: [String]!){
+        LasecDeleteQuotes(quoteIds: $quoteIds) {
+          success
+          message
+        }
+      }`,
+      variables: {
+        'selected[].code': 'quoteIds' 
+      },
+      objectMap: true,
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Successfully deleted ${selected.length} ${selected.length > 1 ? "quotes" : "quote"}',        
+      },
+      refreshEvents: [ 
+        { name: 'LasecQuotesDeleted' }
+       ]
+    }
   }
 };
 

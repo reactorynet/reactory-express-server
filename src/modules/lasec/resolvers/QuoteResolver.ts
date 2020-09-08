@@ -1098,6 +1098,45 @@ export default {
 
     LasecDeleteQuote: async (parent, params) => {
       return deleteQuote(params);
+    },
+
+    LasecDeleteQuotes: async(parent, params) => {
+      const { quoteIds } = params;
+
+      
+      let response: SimpleResponse = {
+        message: `Deactivated ${params.quoteIds.length} quotes`,
+        success: true
+      };
+
+      try {
+        const promises = quoteIds.map((id: string) => deleteQuote({ id }))
+        const results = await Promise.all(promises).then();
+        let successCount: number, failCount: number = 0;
+
+        results.forEach((patchResult) => {
+          if(patchResult.success === true) successCount += 1;
+          else failCount += 1;
+        });
+
+        if(failCount > 0) {
+          if(successCount > 0) {
+            response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;            
+          } else {
+            response.message = ` 😣 Could not deactivate any client accounts.`;
+            response.success = false;
+          }
+        } else {
+          if( successCount === deactivation_promises.length) {
+            response.message = `🥇 Deactivated all ${successCount} clients.`
+          }
+        }
+      } catch(err) {
+        response.message = `😬 An error occurred while changing the client status. [${err.nessage}]`;
+        logger.error(`🧨 Error deactivating the client account`, err)
+      } 
+
+      
     }
   }
 };
