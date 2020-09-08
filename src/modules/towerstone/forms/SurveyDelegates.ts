@@ -103,7 +103,7 @@ export const SurveyDelegatesSchema = {
 export const SurveyDelegatesUISchema = {
   submitIcon: 'check_circle_outline',
   'ui:options': {
-    showSubmit: false,        
+    showSubmit: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -144,10 +144,10 @@ export const SurveyDelegatesUISchema = {
     },
   },
   total: {
-    'ui:widget': 'LabelWidget',    
+    'ui:widget': 'LabelWidget',
   },
   delegates: {
-    'ui:widget': 'SurveyDelegatesWidget',    
+    'ui:widget': 'SurveyDelegatesWidget',
   },
 };
 
@@ -166,7 +166,7 @@ const graphql = {
         startDate
         endDate
         delegates {
-          id          
+          id
           delegate {
             id
             email
@@ -185,7 +185,7 @@ const graphql = {
           organization {
               id
               name
-              avatar                        
+              avatar
           },
           peers {
               user {
@@ -199,19 +199,19 @@ const graphql = {
               inviteSent
               confirmed
               confirmedAt
-              relationship                        
+              relationship
           }
           allowEdit
           confirmedAt
           createdAt
-          updatedAt            
+          updatedAt
           }
           message
           launched
           complete
-          removed    
+          removed
           lastAction
-          nextAction              
+          nextAction
           assessments {
             id
             assessor {
@@ -224,7 +224,7 @@ const graphql = {
             complete
             createdAt
           }
-        }        
+        }
       }
     }`,
     variables: {
@@ -252,7 +252,7 @@ const graphql = {
       name: 'setDelegatesForSurvey',
       text: `mutation SetDelegatesForSurvey($id: String!, $delegates: [DelegateInput]){
         setDelegatesForSurvey(id: $id, delegates: $delegates){
-          id                                    
+          id
         }
       }`,
       objectMap: true,
@@ -295,11 +295,9 @@ const Survey180Report : Reactory.IReactoryPdfReport = {
   waitingText: 'Please wait loading status report',
   dataMap: {
     'id': 'surveyId',
-    'delegates[0].id': 'delegateId' 
+    'delegates[0].id': 'delegateId'
   }
 };
-
-
 
 export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
   id: 'TowerStoneSurveyDelegateConfig',
@@ -308,7 +306,7 @@ export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
   uiResources: [],
   title: 'Survey Delegate Management',
   tags: ['Survey Settings Editor', 'Forms'],
-  schema: SurveyDelegatesSchema,  
+  schema: SurveyDelegatesSchema,
   registerAsComponent: true,
   name: 'TowerStoneSurveyDelegateConfig',
   nameSpace: FormNameSpace,
@@ -324,7 +322,7 @@ export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
     Survey180Report
   ],
   defaultExport: $defaultExport,
-  uiSchema: SurveyDelegatesUISchema,  
+  uiSchema: SurveyDelegatesUISchema,
   defaultFormValue: {
     launched: 0,
     complete: 0,
