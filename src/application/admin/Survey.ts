@@ -48,7 +48,7 @@ export const EmailTypesForSurvey = {
 const getSurveysForOrganization = (organization) => {
   return new Promise((resolve, reject) => {
     if (!organization) reject(new Error('Organization is null'));
-    Survey.find({ organization }).then((surveys) => {
+    Survey.find({ organization, status: { $ne: 'deleted' } }).then((surveys) => {
       // console.log(`Found ${surveys.length} surveys for organization`);
       resolve(surveys);
     }).catch((findErr) => {
@@ -57,7 +57,10 @@ const getSurveysForOrganization = (organization) => {
   });
 };
 
-const getSurveys = () => Survey.find();
+const getSurveys = async () => {
+  const result = Survey.find({ status: { $ne: 'deleted' } }).exec();
+  return result;
+}
 
 const createSurvey = (survey) => {
   return new Survey(survey).save();
@@ -178,7 +181,7 @@ export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyD
   };
 
 
-  logger.debug('Survey.ts -> sendSurveyRemindersForDelegate(survey, delegateEntry)' );
+  logger.debug('Survey.ts -> sendSurveyRemindersForDelegate(survey, delegateEntry)');
 
   if (lodash.isNil(survey) === true) return result('Cannot have a nill survey element');
   if (lodash.isNil(delegateEntry) === true) return result('Cannot have a null delegateEntry element');
@@ -219,7 +222,7 @@ export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyD
     interface ISurveyReminderMailResult {
       sent: boolean,
       error: Error
-    } 
+    }
 
     const emailPromises: Promise<ISurveyReminderMailResult>[] = [];
     const assessmentPromises: Promise<any>[] = [];
@@ -229,14 +232,14 @@ export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyD
         assessmentPromises.push(new Promise((resolve, reject) => {
 
           const assessment = assessments[aidx];
-            Assessment.findById(assessment._id)
+          Assessment.findById(assessment._id)
             .populate('assessor')
             .populate('delegate')
             .then(assessmentFindResult => resolve(assessmentFindResult))
-            .catch(err => { 
+            .catch(err => {
               logger.error(`Error while loading Assessment with id ${assessment._id}`)
-              reject(err) 
-            });          
+              reject(err)
+            });
         }));
       }
     }
@@ -339,7 +342,7 @@ export const sendSurveyEmail = async (survey: TowerStone.ISurveyDocument, delega
   }
 
   // console.log(`Sending Survey Email[${emailType}]: ${survey.title} for delegate ${firstName} ${lastName}`);
-  
+
 
   logger.debug(`application.admin.Survey.js{ sendSurveyEmail( ${survey.title}, ${delegateEntry.delegate.fullName()}, organigram, ${emailType}, propertyBag:${JSON.stringify(propertyBag)})`);
 
@@ -398,7 +401,7 @@ export const sendPeerNominationNotifications = async (user, organigram) => {
  * @param {UserModel} delegateEntry
  * @param {OrganigramModel} organigram
  */
-export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, relaunch: boolean = false) => {
+export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, relaunch: boolean = false) => {
   // options for the launch
   logger.info(`Launching Survey: ${survey.title} for delegate ${delegateEntry.delegate.fullName} (is-relaunch: ${relaunch})`);
   const result = (message: string, success = false, assessments: any[]) => ({
@@ -415,19 +418,19 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
   const isCulture = surveyType === 'culture';
 
   const isPLC = surveyType === 'plc';
-  
+
   try {
     const options = { ...defaultLaunchOptions, ...survey.options };
 
     if (iz.nil(survey)) throw new Error('survey parameter cannot be empty');
     if (iz.nil(delegateEntry)) throw new Error('delegate parameter cannot be empty');
-    if(is180 === false) {
+    if (is180 === false) {
       //skip organigram and peer checks when doing 180 work
       if (iz.nil(organigram) === true) result(`The user does not have an organigram for ${survey.organization}`, false, []);
       if (iz.nil(organigram.confirmedAt) === true) return result('Peers have not yet been confirmed', false, []);
       if (iz.nil(organigram.peers) === true) return result('User has no peers defined', false, []);
     }
-    
+
 
     const maximumAssessments = 10;
     const minimumAssessments = 3;
@@ -443,8 +446,8 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
       }
     }
 
-    if(is180 === true) {
-      
+    if (is180 === true) {
+
       logger.info(`Building Ratings template for Leadership Brand: ${leadershipBrand.title}`);
       leadershipBrand.qualities.map((quality, qi) => {
         quality.behaviours.map((behaviour, bi) => {
@@ -459,38 +462,38 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
       });
 
       let team = '';
-      if(!isCulture) {
-        if(delegateEntry.team === survey.assessorTeamName) {
-          //delegate is on assessor team      
+      if (!isCulture) {
+        if (delegateEntry.team === survey.assessorTeamName) {
+          //delegate is on assessor team
           team = 'assessors';
         }
-  
-  
-        if(delegateEntry.team === survey.delegateTeamName) {
+
+
+        if (delegateEntry.team === survey.delegateTeamName) {
           //delegate is on delegates team
           //self assessment
           team = 'delegates';
         }
-      }  else {
+      } else {
         team = 'Culture'
       }
-      
+
 
       logger.debug(`Checking if user has existing assessment.`)
 
-      const existingAssessment = await Assessment.find({ 
-        survey: survey._id, 
-        delegate: delegateEntry.delegate._id, 
-        assessor: delegateEntry.delegate._id   
+      const existingAssessment = await Assessment.find({
+        survey: survey._id,
+        delegate: delegateEntry.delegate._id,
+        assessor: delegateEntry.delegate._id
       }).then()
 
 
 
-      if( existingAssessment.length === 1 ) {
+      if (existingAssessment.length === 1) {
         logger.debug('Delegate / Assessor already have assessment asigned')
-        const emailResults = await sendSurveyEmail(survey, delegateEntry, organigram, EmailTypesForSurvey.SurveyLaunch, { assessments: existingAssessment, relaunch: true }).then();          
+        const emailResults = await sendSurveyEmail(survey, delegateEntry, organigram, EmailTypesForSurvey.SurveyLaunch, { assessments: existingAssessment, relaunch: true }).then();
         return result(`Re-Sent ${assessments.length} ${isCulture === true ? 'Culture' : 'Team 180'}  assessment(s) for ${delegateEntry.delegate.firstName} ${delegateEntry.delegate.lastName}. Email result: ${emailResults.message}`, true, existingAssessment);
-        
+
       } else {
         const assessment = new Assessment({
           id: new ObjectId(),
@@ -509,19 +512,19 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
 
         try {
           const emailResults = await sendSurveyEmail(survey, delegateEntry, organigram, EmailTypesForSurvey.SurveyLaunch, { assessments: [assessment], relaunch }).then();
-          
+
           return result(`Created ${assessments.length} ${isCulture === true ? 'Culture' : 'Team 180'}  assessment(s) for ${delegateEntry.delegate.firstName} ${delegateEntry.delegate.lastName}. Email result: ${emailResults.message}`, true, [assessment]);
-        } catch(teamCultureEmailSendError) {
+        } catch (teamCultureEmailSendError) {
 
         }
-        
-        
+
+
       }
-      
+
     } else {
       if (organigram.peers && organigram.peers.length > 0 && (is360 === true || isPLC === true)) {
         if (organigram.peers.length < options.minimumPeers) return result(`Delegate does not have the minimum of ${options.minimumPeers} peers for this survey (${organigram.peers})`, false, []);
-                 
+
         logger.info(`Building Ratings template for Leadership Brand: ${leadershipBrand.title}`);
         leadershipBrand.qualities.map((quality, qi) => {
           quality.behaviours.map((behaviour, bi) => {
@@ -533,27 +536,27 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
               comment: '',
             });
           });
-        });        
-  
+        });
+
         if (relaunch === false) {
           organigram.peers.forEach((peer) => {
             debugger;
 
-            const peerhasAssessment = lodash.indexOf(assessments, (assessment: any) => { 
-              if(typeof assessment.assessor === 'string') {
+            const peerhasAssessment = lodash.indexOf(assessments, (assessment: any) => {
+              if (typeof assessment.assessor === 'string') {
                 return new ObjectId(peer.user).equals(new ObjectId(assessment.assessor));
               }
-              
-              if(assessment.assessor._id) {
+
+              if (assessment.assessor._id) {
                 return new ObjectId(peer.user).equals(new ObjectId(assessment.assessor._id))
               }
 
-              if(assessment.assessor.id) {
+              if (assessment.assessor.id) {
                 return new ObjectId(peer.user).equals(new ObjectId(assessment.assessor.id))
               }
 
               return false;
-              
+
             }) >= 0;
 
             debugger
@@ -572,12 +575,12 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
                 createdAt: new Date().valueOf(),
                 updatedAt: new Date().valueOf(),
               });
-  
+
               assessment.save().then();
               assessments.push(assessment);
             }
           });
-  
+
           const selfAssessment = new Assessment({
             id: new ObjectId(),
             organization: new ObjectId(survey.organization._id),
@@ -593,7 +596,7 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
           });
           await selfAssessment.save().then();
           assessments.push(selfAssessment);
-        }        
+        }
         // send emails
         logger.info(`(${assessments.length}) Assessments Created / Loaded, sending emails to delegates and assessor`);
         let emailResults = null;
@@ -601,12 +604,12 @@ export const launchSurveyForDelegate = async (survey:TowerStone.ISurveyDocument,
           emailResults = await sendSurveyEmail(survey, delegateEntry, organigram, EmailTypesForSurvey.SurveyLaunch, { assessments, relaunch }).then();
           logger.info('Email results from sending Survey Emails', emailResults);
           if (emailResults.success === true) {
-            if(relaunch === true) {
+            if (relaunch === true) {
               return result(`Successfully sent reminder emails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
             } else {
               return result(`Successfully created ${assessments.length} assessments for delegate and emails sent ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
             }
-            
+
           }
           return result(`Assessments created but could not send the mails ${moment().format('YYYY-MM-DD HH:mm:ss')}`, true, assessments);
         } catch (ex) {

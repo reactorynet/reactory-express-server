@@ -328,7 +328,6 @@ export default {
       logger.info('Update Survey Options', { id, options });
       return Survey.findByIdAndUpdate(ObjectId(id), { options });
     },
-
     createSurvey(obj, { id, surveyData }) {
       return co.wrap(function* createSurveyGenerator(organization, survey) {
         const found = yield Organization.findById(organization).then();
@@ -380,7 +379,7 @@ export default {
 
       throw new ApiError('Survey not found or Delegate Not Found');
     },
-    removeDelegateFromSurvey(obj, { surveyId, delegateId }) {
+    async removeDelegateFromSurvey(obj, { surveyId, delegateId }) {
       return co.wrap(function* removeDelegateFromSurveyGenerator(sid, did) {
         const survey = Survey.findById(sid).then();
         const delegate = yield User.findById(did).then();
@@ -414,15 +413,15 @@ export default {
       })(surveyId, delegateId);
     },
     async surveyDelegateAction(obj, params: SurveyDelegateActionParams) {
-      
+
       const {
         entryId, survey, delegate, action, inputData,
       } = params;
 
-      
+
       const { user, partner } = global;
       const mailService = getMailService(survey, 'Survey.templates()');
-      const surveyModel : TowerStone.ISurveyDocument  = await Survey.findById(survey)
+      const surveyModel: TowerStone.ISurveyDocument = await Survey.findById(survey)
         .populate('delegates.delegate')
         .populate('delegates.assessments')
         .populate('organization')
@@ -430,25 +429,25 @@ export default {
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
 
-      const delegateModel : Reactory.IUserDocument = await User.findById(delegate).then();
+      const delegateModel: Reactory.IUserDocument = await User.findById(delegate).then();
       if (!delegateModel) throw new RecordNotFoundError('Could not find the user item', 'User');
 
       // make sure the delegate has minimum permissions for this flow
       if (delegateModel.hasRole(partner._id, 'USER', `${surveyModel.organization._id}`) === false) {
         delegateModel.addRole(partner._id, 'USER', `${surveyModel.organization._id}`);
       }
-      
+
       logger.debug(`Executing ${action} for ${delegateModel.firstName} ${delegateModel.lastName} as part of ${surveyModel.title}`);
- 
-      
+
+
       const organigramModel: any = await Organigram.findOne({
         user: new ObjectId(delegateModel._id),
         organization: new ObjectId(surveyModel.organization._id),
-      }).then();      
+      }).then();
 
-      
-      logger.debug(`${organigramModel ? `${delegateModel.firstName} ${delegateModel.lastName} has no Organigram for this organization` :  `${delegateModel.firstName} ${delegateModel.lastName} has Organigram for this organization` }`);
-      
+
+      logger.debug(`${organigramModel ? `${delegateModel.firstName} ${delegateModel.lastName} has no Organigram for this organization` : `${delegateModel.firstName} ${delegateModel.lastName} has Organigram for this organization`}`);
+
       const entryData: TowerStone.IDelegateEntryDataStruct = {
         entry: null,
         entryIdx: -1,
@@ -530,7 +529,7 @@ export default {
             \tAssessments: ${entryData.entry.assessments.length}`);
 
           switch (action) {
-            
+
             /**
              * SEND INVITATION FLOW
              */
@@ -589,19 +588,19 @@ export default {
                 await surveyModel.addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();
 
               } else {
-                
+
 
                 let requires_peersConfirmed = true;
                 let organigramInvalid = false;
 
-                if(surveyModel.surveyType === 'culture') {
+                if (surveyModel.surveyType === 'culture') {
                   requires_peersConfirmed = false;
                 } else {
-                  organigramInvalid = lodash.isNil(organigramModel) === true  || lodash.isNil(organigramModel.confirmedAt) === true
+                  organigramInvalid = lodash.isNil(organigramModel) === true || lodash.isNil(organigramModel.confirmedAt) === true
                 }
 
-                
-                if(requires_peersConfirmed === true && organigramInvalid === true) {
+
+                if (requires_peersConfirmed === true && organigramInvalid === true) {
                   entryData.entry.message = `Please set user organigram / peers. ${delegateModel.firstName} ${delegateModel.lastName}`;
                   entryData.patch = true;
                   entryData.entry.status = 'invite-sent';
@@ -613,7 +612,7 @@ export default {
                     result: entryData.entry.message,
                     who: user._id,
                   });
-                }  else {
+                } else {
                   const relaunch = inputData.relaunch === true;
                   const launchResult = await launchSurveyForDelegate(surveyModel, entryData.entry, organigramModel, relaunch).then();
                   entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
@@ -630,7 +629,7 @@ export default {
                     result: launchResult.message,
                     who: user._id,
                   });
-                }                               
+                }
               }
               break;
             }
@@ -649,7 +648,7 @@ export default {
 
                 if (assessment !== null) {
                   const mailSendResult = await mailService.send((surveyModel as TowerStone.ISurveyDocument), 'reminder', isAssessorTeam ? 'assessor' : 'delegate', [entryData.entry.delegate], {
-                    user: entryData.entry.delegate as Reactory.IUserDocument,      
+                    user: entryData.entry.delegate as Reactory.IUserDocument,
                     delegate: entryData.entry.delegate,
                     assessment: assessment,
                     survey: surveyModel,
@@ -709,7 +708,7 @@ export default {
               });
               break;
             }
-            
+
             /**
              * Remove a delegate from the survey
              */
@@ -742,7 +741,7 @@ export default {
               }
               break;
             }
-            
+
             /**
              * re-enable / add the delegate back to the survey
              */
@@ -762,7 +761,7 @@ export default {
 
               break;
             }
-            
+
             /**
              * Remove Assessor
              */
@@ -886,7 +885,17 @@ export default {
     },
 
     async SetOrganisationLookupData(obj, args) {
-     return SetOrganisationLookupData(args);
+      return SetOrganisationLookupData(args);
+    },
+    async deleteSurvey(obj, { id }) {
+      try {
+        logger.info('DELETING SURVEY', { id });
+        const response = await Survey.findByIdAndUpdate(ObjectId(id), { status: 'deleted' }).exec();
+        logger.info('DELETE SURVEY RESPONSE:: ', { response });
+        return { id: response._id, updated: true }
+      } catch (error) {
+        throw new ApiError(`Error deleting this survey. ${error}`)
+      }
     }
   }
 
