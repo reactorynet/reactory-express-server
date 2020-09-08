@@ -756,7 +756,7 @@ const config = {
       name: 'email_redirect/DEVELOP',
       data: {
         email: 'werner.weber+moresredirect@gmail.com',
-        enabled: false,
+        enabled: true,
       },
     },
     {

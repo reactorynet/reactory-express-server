@@ -31,7 +31,7 @@ const fieldMaps: any = {
   "salesTeam": "sales_team_id",
   "accountNumber": "account_number",
   "customer": "company_trading_name",
-  "company_rep_code": "company_sales_tema", 
+  "company_rep_code": "company_sales_team", 
   "country": "country"
 };
 
@@ -80,6 +80,7 @@ const getClients = async (params) => {
     case "company_on_hold":
     case "activity_status": {
       _filter[filterBy] = filter;
+      if(search.trim().length > 0) _filter.any_field = search;
       //_filter.any_field = search;
       break;
     }
