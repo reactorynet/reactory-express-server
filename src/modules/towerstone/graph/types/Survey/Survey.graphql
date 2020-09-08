@@ -108,12 +108,12 @@ input SurveyInput {
 }
 
 
-input MoresSurveyCreateInput {    
+input MoresSurveyCreateInput {
   organizationId: String!
   title: String!
-  surveyType: String!  
+  surveyType: String!
   startDate: Date
-  endDate: Date  
+  endDate: Date
 }
 
 
@@ -191,4 +191,5 @@ extend type Mutation {
   postRemidners(id: String, options: ReminderOptions): UpdateResponse
   surveyDelegateAction(entryId: String!, survey: String!, delegate: String!, action: String!, inputData: Any): DelegateEntry
   TowerStoneSurveySetTemplates(id: String!, templates: TowerStoneSurveyTemplatesInput): TowerStoneSurveyTemplates
+  deleteSurvey(id: String!): UpdateResponse
 }
