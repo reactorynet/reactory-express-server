@@ -310,6 +310,7 @@ export default {
       if (survey != null) {
         context.organization = survey.organization;
       }
+
       return survey;
     },
     async TowerStoneGetDemographicLookup(obj, args) {
@@ -414,6 +415,8 @@ export default {
     },
     async surveyDelegateAction(obj, params: SurveyDelegateActionParams) {
 
+      logger.debug(`TAKING DELGATE ACTION:: ${JSON.stringify(params)}`);
+
       const {
         entryId, survey, delegate, action, inputData,
       } = params;
@@ -427,6 +430,9 @@ export default {
         .populate('organization')
         .then();
 
+
+        logger.debug(`SURVEY MODEL:: ${JSON.stringify(surveyModel)}`);
+
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
 
       const delegateModel: Reactory.IUserDocument = await User.findById(delegate).then();
@@ -437,7 +443,7 @@ export default {
         delegateModel.addRole(partner._id, 'USER', `${surveyModel.organization._id}`);
       }
 
-      logger.debug(`Executing ${action} for ${delegateModel.firstName} ${delegateModel.lastName} as part of ${surveyModel.title}`);
+      logger.debug(`EXECUTING ${action} FOR ${delegateModel.firstName} ${delegateModel.lastName} AS PART OF ${surveyModel.title}`);
 
 
       const organigramModel: any = await Organigram.findOne({
@@ -459,6 +465,7 @@ export default {
 
       try {
         logger.info(`Survey Model has ${surveyModel.delegates.length} delegates, finding ${entryId}`);
+        // logger.info(`Survey Model has ${surveyModel.delegates.length} delegates, finding ${delegate}`);
         if (entryId === '' && action === 'add') {
           entryData.entry = {
             id: new ObjectId(),
@@ -499,7 +506,7 @@ export default {
           // TODO: Figure out why this is throwing a mongoose error now
           // record is inserted, but on return it fails
           try {
-            surveyModel.addTimelineEntry('Added Delegate', `${user.firstName} added ${delegateModel.firstName} ${delegateModel.lastName} to Survey`, user.id, true);
+            // surveyModel.addTimelineEntry('Added Delegate', `${user.firstName} added ${delegateModel.firstName} ${delegateModel.lastName} to Survey`, user.id, true);
           } catch (e) {
             logger.error(e.message, e);
           }
@@ -509,10 +516,14 @@ export default {
           return entryData.entry;
 
         } else {
+
           // not a new entry, find it!
           entryData.entry = (surveyModel as TowerStone.ISurveyDocument).delegates.id(entryId);
+          // entryData.entry = (surveyModel as TowerStone.ISurveyDocument).delegates.id(delegate);
+
           if (entryData.entry === null) {
             throw new ApiError('Could not find the delegate entry with the entry id', entryId);
+            // throw new ApiError('Could not find the delegate entry with the entry id', delegate);
           }
 
           for (let entryIndex = 0; entryIndex < surveyModel.delegates.length; entryIndex += 1) {
@@ -545,6 +556,8 @@ export default {
                 result: inviteResult.message,
                 who: user._id,
               });
+
+              // surveyModel.addTimelineEntry('Invite sent.', `${user.firstName} sent an invite to delegate ${delegateModel.firstName} ${delegateModel.lastName}.`, user.id, true);
               break;
             }
 
@@ -585,7 +598,7 @@ export default {
                   who: user._id,
                 });
 
-                await surveyModel.addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();
+                // await surveyModel.addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();
 
               } else {
 
@@ -715,6 +728,9 @@ export default {
             case 'remove': {
               entryData.entry.message = `Removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
               if (!entryData.entry.removed) {
+
+                logger.debug(`REMOVING DELEGATE!!`);
+
                 entryData.entry.removed = true;
                 entryData.entry.status = 'removed';
                 entryData.entry.lastAction = 'removed';
@@ -726,8 +742,17 @@ export default {
                   result: entryData.entry.message,
                   who: user._id,
                 });
+
+                // surveyModel.addTimelineEntry('User Removed from survey', `${user.firstName} removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
+
               } else {
+
+                logger.debug(`DELETING DELEGATE!!`);
+
                 surveyModel.delegates[entryData.entryIdx].remove();
+
+                logger.debug(`DELEGATE DELETED!!`);
+
                 entryData.entry.status = 'deleted';
                 entryData.entry.actions.push({
                   action: 'deleted',
@@ -736,7 +761,7 @@ export default {
                   who: user._id,
                 });
 
-                surveyModel.addTimelineEntry('User Removed', `${user.firstName} removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
+                // surveyModel.addTimelineEntry('User Deleted from survey', `${user.firstName} deleted delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
                 entryData.patch = false;
               }
               break;
@@ -814,7 +839,8 @@ export default {
         }
       } catch (error) {
         // console.log(error);
-        logger.error(error.message, error);
+        logger.error(`DELEGATE ACTIONS ERROR:: ${error.message, error}`, );
+        throw new ApiError('Delegate action error!', error);
       }
     },
     async TowerStoneSurveySetTemplates(parent: any, params: TowerStone.ITowerStoneSetTemplatesParameters) {
