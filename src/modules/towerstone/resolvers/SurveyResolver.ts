@@ -430,9 +430,6 @@ export default {
         .populate('organization')
         .then();
 
-
-        logger.debug(`SURVEY MODEL:: ${JSON.stringify(surveyModel)}`);
-
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
 
       const delegateModel: Reactory.IUserDocument = await User.findById(delegate).then();
@@ -601,8 +598,6 @@ export default {
                 // await surveyModel.addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();
 
               } else {
-
-
                 let requires_peersConfirmed = true;
                 let organigramInvalid = false;
 
@@ -746,9 +741,7 @@ export default {
                 // surveyModel.addTimelineEntry('User Removed from survey', `${user.firstName} removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
 
               } else {
-
-                logger.debug(`DELETING DELEGATE!!`);
-
+                // logger.debug(`ENTRYDATA ENTRYINDEX:: ${JSON.stringify(entryData.entryIdx)}`);
                 surveyModel.delegates[entryData.entryIdx].remove();
 
                 logger.debug(`DELEGATE DELETED!!`);
@@ -762,7 +755,8 @@ export default {
                 });
 
                 // surveyModel.addTimelineEntry('User Deleted from survey', `${user.firstName} deleted delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
-                entryData.patch = false;
+                // entryData.patch = false;
+                entryData.patch = true; // Added this to persist changes
               }
               break;
             }
@@ -839,7 +833,7 @@ export default {
         }
       } catch (error) {
         // console.log(error);
-        logger.error(`DELEGATE ACTIONS ERROR:: ${error.message, error}`, );
+        logger.error(`DELEGATE ACTIONS ERROR:: ${error.message, error}`,);
         throw new ApiError('Delegate action error!', error);
       }
     },
