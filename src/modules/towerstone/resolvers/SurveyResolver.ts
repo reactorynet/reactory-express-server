@@ -485,6 +485,9 @@ export default {
             createdAt: moment().valueOf(),
           };
 
+          logger.debug(`ENTRY DATA PRE SAVE:: ${JSON.stringify(entryData.entry)}`);
+
+
           if ((surveyModel as TowerStone.ISurveyDocument).surveyType.endsWith('180') === true) {
             if (typeof inputData.userAddType === 'string') {
               if (inputData.userAddType === 'delegate') {
@@ -499,7 +502,13 @@ export default {
           }
 
           (surveyModel as TowerStone.ISurveyDocument).delegates.push(entryData.entry);
-          await surveyModel.save().then();
+          const saveResponse = await surveyModel.save().then();
+
+          logger.debug(`SURVEY POST SAVE:: ${JSON.stringify(saveResponse.delegates)}`);
+
+          // NOTE - GET THE LAST DELEGATE IN THE LIST
+          entryData.entry = saveResponse.delegates[saveResponse.delegates.length - 1];
+
           // TODO: Figure out why this is throwing a mongoose error now
           // record is inserted, but on return it fails
           try {
@@ -515,6 +524,9 @@ export default {
         } else {
 
           // not a new entry, find it!
+
+          logger.debug(`ENTRY ID:: ${entryId}`);
+
           entryData.entry = (surveyModel as TowerStone.ISurveyDocument).delegates.id(entryId);
           // entryData.entry = (surveyModel as TowerStone.ISurveyDocument).delegates.id(delegate);
 
@@ -723,14 +735,10 @@ export default {
             case 'remove': {
               entryData.entry.message = `Removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
               if (!entryData.entry.removed) {
-
-                logger.debug(`REMOVING DELEGATE!!`);
-
                 entryData.entry.removed = true;
                 entryData.entry.status = 'removed';
                 entryData.entry.lastAction = 'removed';
                 entryData.patch = true;
-
                 entryData.entry.actions.push({
                   action: 'removed',
                   when: new Date(),
@@ -743,8 +751,7 @@ export default {
               } else {
                 // logger.debug(`ENTRYDATA ENTRYINDEX:: ${JSON.stringify(entryData.entryIdx)}`);
                 surveyModel.delegates[entryData.entryIdx].remove();
-
-                logger.debug(`DELEGATE DELETED!!`);
+                surveyModel.save(); // updating surveymodel - think this would occur in the addtimelineentry
 
                 entryData.entry.status = 'deleted';
                 entryData.entry.actions.push({
@@ -755,8 +762,7 @@ export default {
                 });
 
                 // surveyModel.addTimelineEntry('User Deleted from survey', `${user.firstName} deleted delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
-                // entryData.patch = false;
-                entryData.patch = true; // Added this to persist changes
+                entryData.patch = false;
               }
               break;
             }

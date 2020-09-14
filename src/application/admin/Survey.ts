@@ -114,7 +114,7 @@ export const sendParticipationInivitationForDelegate = async (survey, delegateEn
       organization = await Organization.findById(organization).then();
     }
 
-    const emailResult = await emails.surveyEmails.delegateInvite(delegate, survey).then();
+    const emailResult = await emails.surveyEmails.delegateInvite(delegate, survey, organization).then();
     logger.info('Email Generated', emailResult);
     return result(`Sent invitation to ${delegate.firstName} ${delegate.lastName} for ${survey.title}`, true);
   } catch (e) {
@@ -403,7 +403,7 @@ export const sendPeerNominationNotifications = async (user, organigram) => {
  */
 export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, relaunch: boolean = false) => {
   // options for the launch
-  logger.info(`Launching Survey: ${survey.title} for delegate ${delegateEntry.delegate.fullName} (is-relaunch: ${relaunch})`);
+  logger.info(`Launching Survey: ${survey.title} for delegate ${delegateEntry.delegate.fullName()} (is-relaunch: ${relaunch})`);
   const result = (message: string, success = false, assessments: any[]) => ({
     launched: success,
     success,
@@ -439,10 +439,9 @@ export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument
     let leadershipBrand: any = await LeadershipBrand.findById(survey.leadershipBrand);
     let templateRatings: any[] = [];
 
-    if (delegateEntry.assessments.length === 0) {
+    if (delegateEntry.assessments.length > 0) {
       for (let ai = 0; ai < delegateEntry.assessments.length; ai += 1) {
         assessments.push(delegateEntry.assessments[ai]);
-        //assessmentsPomises.push(Assessment.findById(delegateEntry.assessments[ai]));
       }
     }
 
@@ -558,8 +557,6 @@ export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument
               return false;
 
             }) >= 0;
-
-            debugger
 
             if (!peerhasAssessment) {
               const assessment = new Assessment({

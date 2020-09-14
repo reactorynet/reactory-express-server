@@ -650,13 +650,13 @@ const config = {
         main: '#5fb848',
         dark: '#298717',
         contrastText: '#222732',
-      },      
+      },
       error: {
         light: '#C7212D',
         main: '#C7212D',
         dark: '#C7212D',
         contrastText: '#C7212D',
-      },      
+      },
       success: {
         light: '#6DB84A',
         main: '#6DB84A',
@@ -668,7 +668,7 @@ const config = {
         main: '#F6950F',
         dark: '#F6950F',
         contrastText: '#F6950F',
-      },      
+      },
       info: {
         light: '#49B4D4',
         main: '#49B4D4',
@@ -756,7 +756,7 @@ const config = {
       name: 'email_redirect/DEVELOP',
       data: {
         email: 'werner.weber+moresredirect@gmail.com',
-        enabled: true,
+        enabled: false,
       },
     },
     {
