@@ -1,4 +1,3 @@
-import pf from '../../../data/forms/defs';
 import { FormNameSpace } from '../constants';
 import $defaultExport from './exports/SurveyDelegateExcelExport';
 import $TeamSurveyDelegateExport from'./exports/TeamSurveyDelegateExcelExport';
