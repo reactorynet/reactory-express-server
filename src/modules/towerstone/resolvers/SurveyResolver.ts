@@ -503,14 +503,8 @@ export default {
 
           (surveyModel as TowerStone.ISurveyDocument).delegates.push(entryData.entry);
           const saveResponse = await surveyModel.save().then();
+          entryData.entry = saveResponse.delegates[saveResponse.delegates.length - 1]; // SET TO NEWLY CREATED DELEGATE ENTRY
 
-          logger.debug(`SURVEY POST SAVE:: ${JSON.stringify(saveResponse.delegates)}`);
-
-          // NOTE - GET THE LAST DELEGATE IN THE LIST
-          entryData.entry = saveResponse.delegates[saveResponse.delegates.length - 1];
-
-          // TODO: Figure out why this is throwing a mongoose error now
-          // record is inserted, but on return it fails
           try {
             // surveyModel.addTimelineEntry('Added Delegate', `${user.firstName} added ${delegateModel.firstName} ${delegateModel.lastName} to Survey`, user.id, true);
           } catch (e) {

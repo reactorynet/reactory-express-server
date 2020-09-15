@@ -258,7 +258,7 @@ export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyD
 
     const promiseResults = await Promise.all(emailPromises).then();
 
-    return result(`Sent (${promiseResults.length}) survey reminder(s) email(s) for ${delegate.firstName} ${delegate.lastName} in ${survey.title}`, true);
+    return result(`Sent (${promiseResults.length}) survey reminder(s) email(s) at ${moment().format('YYYY-MM-DD HH:mm')} for ${delegate.firstName} ${delegate.lastName} in ${survey.title}`, true);
   } catch (e) {
     return result(e.message);
   }
