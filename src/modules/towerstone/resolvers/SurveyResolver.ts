@@ -25,7 +25,9 @@ import {
   launchSurveyForDelegate,
   sendSurveyEmail,
   EmailTypesForSurvey,
-  sendSurveyClosed
+  sendSurveyClosed,
+  sendSingleReminder,
+  sendSingleSurveyLaunchEmail
 } from '@reactory/server-core/application/admin/Survey';
 import { TowerStone } from '../towerstone';
 import { TowerStoneServicesMap } from "../services";
@@ -517,16 +519,12 @@ export default {
 
         } else {
 
-          // not a new entry, find it!
-
           logger.debug(`ENTRY ID:: ${entryId}`);
 
           entryData.entry = (surveyModel as TowerStone.ISurveyDocument).delegates.id(entryId);
-          // entryData.entry = (surveyModel as TowerStone.ISurveyDocument).delegates.id(delegate);
 
           if (entryData.entry === null) {
             throw new ApiError('Could not find the delegate entry with the entry id', entryId);
-            // throw new ApiError('Could not find the delegate entry with the entry id', delegate);
           }
 
           for (let entryIndex = 0; entryIndex < surveyModel.delegates.length; entryIndex += 1) {
@@ -683,9 +681,6 @@ export default {
                   logger.debug('Sent mails for 180 launch', { mailSendResult })
                 }
               } else {
-
-                debugger
-
                 const reminderResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
                 entryData.entry.message = reminderResult.message;
                 entryData.patch = true;
@@ -814,6 +809,48 @@ export default {
               }
               break;
             }
+
+
+            case 'send-single-reminder': {
+              const { assessment } = inputData;
+
+              logger.debug(`SENDING SINGLE REMINDER FROM RESOLVER`);
+
+              const reminderResult = await sendSingleReminder(assessment, entryData.entry, surveyModel);
+              entryData.entry.message = reminderResult.message;
+              entryData.patch = true;
+              entryData.entry.lastAction = 'reminder';
+
+              entryData.entry.actions.push({
+                action: 'reminder',
+                when: new Date(),
+                result: reminderResult.message,
+                who: user._id,
+              });
+
+              break;
+            }
+
+            case 'send-single-launch': {
+              const { assessment } = inputData;
+
+              logger.debug(`SENDING SINGLE LAUNCH FROM RESOLVER`);
+
+              const reminderResult = await sendSingleSurveyLaunchEmail(surveyModel, entryData.entry, assessment);
+              entryData.entry.message = reminderResult.message;
+              entryData.patch = true;
+              entryData.entry.lastAction = 'launch';
+
+              entryData.entry.actions.push({
+                action: 'launch',
+                when: new Date(),
+                result: reminderResult.message,
+                who: user._id,
+              });
+
+              break;
+            }
+
             // catch all
             default: {
               entryData.message = 'Default action taken, none';

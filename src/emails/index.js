@@ -586,11 +586,11 @@ export const surveyEmails = {
       assessorModel = await User.findById(assessor).then();
     } else  {
       if(!assessor.firstName || !assessor.lastName || !assessor.email) {
-        if(ObjectId.isValid(assessor.id) || ObjectId.isValid(assessor._id)) 
+        if(ObjectId.isValid(assessor.id) || ObjectId.isValid(assessor._id))
         assessorModel = await User.findById(assessor._id).then();
       } else {
         assessorModel = assessor;
-      }      
+      }
     }
 
     const emailResult = {
@@ -624,6 +624,7 @@ export const surveyEmails = {
       }
 
       logger.info('Api Key Set, configuring property bag for template.');
+
       // property bag for template
       const properties = {
         partner,
@@ -632,13 +633,13 @@ export const surveyEmails = {
         assessment,
         user: assessorModel,
         organization: organization || survey.organization,
-        isSelfAssessment: isSelfAssessment,
+        isSelfAssessment,
         survey,
         applicationTitle: partner.name,
         timeEnd: moment(survey.endDate).format('HH:mm'),
         dateEnd: moment(survey.endDate).format('YYYY-MM-DD'),
-        assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
-        link: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
+        assessmentLink: `${partner.siteUrl}/assess/${assessment.id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
+        link: `${partner.siteUrl}/assess/${assessment.id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
       };
 
       let bodyTemplate = null;
@@ -657,7 +658,6 @@ export const surveyEmails = {
       } else {
         logger.info('No elements for template');
       }
-
 
       const msg = {
         to: `${assessorModel.firstName} ${assessorModel.lastName}<${assessorModel.email}>`,
@@ -716,7 +716,7 @@ export const surveyEmails = {
         queueMail(assessor, msg, queoptions);
       }
     } catch (loadError) {
-      emailResult.error = loadError.message;
+      emailResult.error = `MAIN TRY ${loadError.message}`;
     }
     return emailResult;
   },
