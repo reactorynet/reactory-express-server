@@ -1151,6 +1151,42 @@ const Api = {
         return null;
       }
     },
+    getQuotePDF: async (quote_id) => {
+      try {
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_create_pdf.url(quote_id), { quote_id }).then();
+        logger.debug(`Get Quote PDF response`, apiResponse)
+        const {
+          status, payload,
+        } = apiResponse;
+
+        if (status === 'success') {
+          return payload;
+        }
+
+        return { pagination: {}, ids: [], items: [] };
+      } catch (error) {
+        logger.error(`An error occured while fetching the quote document ${optionId}`, error);
+        throw error;
+      }
+    },
+    getQuoteProforma: async (quote_id) => {
+      try {
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_create_pdf.url(quote_id), { quote_id }).then();
+        logger.debug(`Get Quote PDF response`, apiResponse)
+        const {
+          status, payload,
+        } = apiResponse;
+
+        if (status === 'success') {
+          return payload;
+        }
+
+        return { pagination: {}, ids: [], items: [] };
+      } catch (error) {
+        logger.error(`An error occured while fetching the quote document ${optionId}`, error);
+        throw error;
+      }
+    }
   },
   Teams: {
     list: async () => {

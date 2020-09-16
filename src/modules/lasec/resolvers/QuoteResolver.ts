@@ -658,6 +658,32 @@ export default {
     },
     LasecGetCompanyDetailsforQuote: async (obj, args) => {
       return getCompanyDetails(args);
+    },
+    LasecGetQuotePDFUrl: async (obj: any, args: { quote_id: String }) => {
+
+      const pdfresult = await lasecApi.Quotes.getQuotePDF(args.quote_id).then();
+
+      let result = {
+        id: args.quote_id,
+        url: pdfresult.url,
+      };
+
+      logger.debug(`Returning Result for LasecGetQuotePDFUrl`, result)
+
+      return result;
+    },
+    LasecGetQuoteProformaPDFUrl: async (obj: any, args: { quote_id: String }) => {
+
+      const pdfresult = await lasecApi.Quotes.getQuotePDF(args.quote_id).then();
+
+      let result = {
+        id: args.quote_id,
+        url: pdfresult.url,
+      };
+
+      logger.debug(`Returning Result for LasecGetQuoteProformaPDFUrl`, result)
+
+      return result;
     }
   },
   Mutation: {
