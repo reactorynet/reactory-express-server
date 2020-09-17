@@ -160,7 +160,7 @@ type Quote {
   meta: Any
   productClass: String
   repCode: String
-  quoteType: String
+  quoteType: String  
 }
 
 type LasecQuoteDashboardSummary {
@@ -756,7 +756,9 @@ extend type Query {
   LasecGetCompanyDetailsforQuote(id: String!): LasecCRMCustomer
 
   # LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryMonthlyCount]
-  LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryYearlyCount]
+  LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryYearlyCount]  
+  LasecGetQuotePDFUrl(quote_id: String!): DocumentUrl
+  LasecGetQuoteProformaPDFUrl(quote_id: String!): DocumentUrl
 }
 
 extend type Mutation {

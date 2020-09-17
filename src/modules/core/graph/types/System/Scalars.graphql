@@ -13,6 +13,11 @@ type Meta {
   source: Any
 }
 
+type DocumentUrl {
+    id: String!
+    url: String!
+}
+
 
 type Query {    
     apiStatus: ApiStatus
