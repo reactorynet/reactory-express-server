@@ -17,14 +17,14 @@ import { IEmailQueueDocument } from 'models/schema/EmailQueue';
 
 
 const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
-  // general templates 
+  // general templates
   // these are mapped from the const TemplateView in src/emails/index.js
   // these will replace the old mappings over time as we improve this module.
   {
     id: 'towerstone.peer-invite-email',
-    key: 'towerstone.peer-invite-email', 
+    key: 'towerstone.peer-invite-email',
     surveyType: '$general', //hijacking survey type field used as special filter
-    activity: 'peer-nomination', 
+    activity: 'peer-nomination',
     target: 'nominee',
     subject: 'You have been nominated by <%=employee.firstName%>',
     body: `No Template`,
@@ -34,9 +34,9 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   // 180 assessment types
   {
     id: ``,
-    key: ``, 
-    surveyType: '180', 
-    activity: 'invite', 
+    key: ``,
+    surveyType: '180',
+    activity: 'invite',
     target: 'assessor',
     subject: 'No Subject',
     body: `No Template`,
@@ -45,8 +45,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: '180', 
-    activity: 'invite', 
+    surveyType: '180',
+    activity: 'invite',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -55,8 +55,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: '180', 
-    activity: 'launch', 
+    surveyType: '180',
+    activity: 'launch',
     target: 'assessor',
     subject: 'No Subject',
     body: `No Template`,
@@ -65,8 +65,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: '180', 
-    activity: 'launch', 
+    surveyType: '180',
+    activity: 'launch',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -75,8 +75,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: '180', 
-    activity: 'reminder', 
+    surveyType: '180',
+    activity: 'reminder',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -85,8 +85,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: '180', 
-    activity: 'reminder', 
+    surveyType: '180',
+    activity: 'reminder',
     target: 'assessor',
     subject: 'No Subject',
     body: `No Template`,
@@ -94,12 +94,12 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   },
 
   // plc types
-    
+
   {
     id: ``,
     key: ``,
-    surveyType: 'plc', 
-    activity: 'invite', 
+    surveyType: 'plc',
+    activity: 'invite',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -109,8 +109,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'plc', 
-    activity: 'launch', 
+    surveyType: 'plc',
+    activity: 'launch',
     target: 'assessor',
     subject: 'No Subject',
     body: `No Template`,
@@ -119,8 +119,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'plc', 
-    activity: 'launch', 
+    surveyType: 'plc',
+    activity: 'launch',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -129,8 +129,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'plc', 
-    activity: 'reminder', 
+    surveyType: 'plc',
+    activity: 'reminder',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -139,8 +139,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'plc', 
-    activity: 'reminder', 
+    surveyType: 'plc',
+    activity: 'reminder',
     target: 'assessor',
     subject: 'No Subject',
     body: `No Template`,
@@ -150,9 +150,9 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   //360 email types
   {
     id: ``,
-    key: ``, 
-    surveyType: '360', 
-    activity: 'invite', 
+    key: ``,
+    surveyType: '360',
+    activity: 'invite',
     target: 'assessor',
     subject: 'No Subject',
     body: `No Template`,
@@ -161,8 +161,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: '360', 
-    activity: 'invite', 
+    surveyType: '360',
+    activity: 'invite',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -171,8 +171,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: '360', 
-    activity: 'launch', 
+    surveyType: '360',
+    activity: 'launch',
     target: 'assessor',
     subject: 'No Subject',
     body: `No Template`,
@@ -181,8 +181,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: '360', 
-    activity: 'launch', 
+    surveyType: '360',
+    activity: 'launch',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -191,8 +191,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: '360', 
-    activity: 'reminder', 
+    surveyType: '360',
+    activity: 'reminder',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -201,8 +201,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: '360', 
-    activity: 'reminder', 
+    surveyType: '360',
+    activity: 'reminder',
     target: 'assessor',
     subject: 'No Subject',
     body: `No Template`,
@@ -211,28 +211,28 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
 
 
   /**
-   * Mores types added here   
+   * Mores types added here
    */
 
    // team180 assessment types
  /*
    {
     id: ``,
-    key: ``, 
-    surveyType: 'team180', 
-    activity: 'invite', 
+    key: ``,
+    surveyType: 'team180',
+    activity: 'invite',
     target: 'assessor',
     subject: 'Invitation: Team 180° Leadership assessment between ${survey.delegateTeamName} and ${survey.delegateTeamName}',
     body: `No Template`,
     engine: 'ejs'
   },
- 
- 
+
+
   {
     id: ``,
     key: ``,
-    surveyType: 'team180', 
-    activity: 'invite', 
+    surveyType: 'team180',
+    activity: 'invite',
     target: 'delegate',
     subject: 'Invitation: Team 180° Leadership assessment between ${survey.delegateTeamName} and ${survey.assessorTeamName}',
     body: `No Template`,
@@ -244,8 +244,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'team180', 
-    activity: 'launch', 
+    surveyType: 'team180',
+    activity: 'launch',
     target: 'assessor',
     subject: 'Launch: Team 180° Leadership assessment between ${survey.delegateTeamName} and ${survey.delegateTeamName}',
     body: `This message will be setn to the assessor team member(s)`,
@@ -254,8 +254,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'team180', 
-    activity: 'launch', 
+    surveyType: 'team180',
+    activity: 'launch',
     target: 'delegate',
     subject: 'Launch: Team 180° Leadership assessment between ${survey.delegateTeamName} and ${survey.delegateTeamName}',
     body: `This message will be sent to the delegate team member(s)`,
@@ -264,8 +264,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'team180', 
-    activity: 'reminder', 
+    surveyType: 'team180',
+    activity: 'reminder',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -274,8 +274,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'team180', 
-    activity: 'reminder', 
+    surveyType: 'team180',
+    activity: 'reminder',
     target: 'assessor',
     subject: 'No Subject',
     body: `No Template`,
@@ -285,33 +285,33 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'team180', 
-    activity: 'survey-closed', 
+    surveyType: 'team180',
+    activity: 'survey-closed',
     target: 'delegate',
     subject: '<%=survey.title%> is now closed. Thank you for your participation',
     body: `This is the mail sent to the delegates with a thank you note.`,
     engine: 'ejs'
   },
 
-  // culture survey types    
+  // culture survey types
   /*
   {
     id: ``,
     key: ``,
-    surveyType: 'culture', 
-    activity: 'invite', 
+    surveyType: 'culture',
+    activity: 'invite',
     target: 'delegate',
     subject: 'Invitation: <%=survey.organization.name%> Culture Survey',
     body: `Invite: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
     engine: 'ejs',
     description: 'Sent to a delegate when the administrator sends the invitation to participate',
   },
-  
+
   {
     id: ``,
     key: ``,
-    surveyType: 'culture', 
-    activity: 'launch', 
+    surveyType: 'culture',
+    activity: 'launch',
     target: 'assessor',
     subject: 'No Subject',
     body: `No Template`,
@@ -321,8 +321,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'culture', 
-    activity: 'launch', 
+    surveyType: 'culture',
+    activity: 'launch',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -331,8 +331,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'culture', 
-    activity: 'reminder', 
+    surveyType: 'culture',
+    activity: 'reminder',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -342,8 +342,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'culture', 
-    activity: 'reminder', 
+    surveyType: 'culture',
+    activity: 'reminder',
     target: 'assessor',
     subject: 'No Subject',
     body: `No Template`,
@@ -353,8 +353,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'culture', 
-    activity: 'survey-closed', 
+    surveyType: 'culture',
+    activity: 'survey-closed',
     target: 'delegate',
     subject: 'No Subject',
     body: `No Template`,
@@ -362,12 +362,12 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   },
 
   //i360 email types
-  
+
   {
     id: ``,
     key: ``,
-    surveyType: 'i360', 
-    activity: 'invite', 
+    surveyType: 'i360',
+    activity: 'invite',
     target: 'delegate',
     subject: 'Invite: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
     body: `Invite: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
@@ -376,8 +376,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'i360', 
-    activity: 'launch', 
+    surveyType: 'i360',
+    activity: 'launch',
     target: 'assessor',
     subject: 'Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
     body: `Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
@@ -386,8 +386,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'i360', 
-    activity: 'launch', 
+    surveyType: 'i360',
+    activity: 'launch',
     target: 'delegate',
     subject: 'Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
     body: `Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
@@ -396,8 +396,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'i360', 
-    activity: 'reminder', 
+    surveyType: 'i360',
+    activity: 'reminder',
     target: 'delegate',
     subject: 'Reminder: Individual 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
     body: `Reminder: Individual 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
@@ -406,8 +406,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'i360', 
-    activity: 'reminder', 
+    surveyType: 'i360',
+    activity: 'reminder',
     target: 'assessor',
     subject: 'Reminder: Individual 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
     body: `Reminder: Individual 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
@@ -417,8 +417,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'i360', 
-    activity: 'survey-closed', 
+    surveyType: 'i360',
+    activity: 'survey-closed',
     target: 'delegate',
     subject: '<%=survey.title%> is now closed. Thank you for your participation',
     body: `This is the mail sent to the delegate with their PDF report when the assessment ends.`,
@@ -430,9 +430,9 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   /*
   {
     id: ``,
-    key: ``, 
-    surveyType: 'l360', 
-    activity: 'invite', 
+    key: ``,
+    surveyType: 'l360',
+    activity: 'invite',
     target: 'assessor',
     subject: '*** NOT SENT ***',
     body: `No Template`,
@@ -442,8 +442,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'l360', 
-    activity: 'invite', 
+    surveyType: 'l360',
+    activity: 'invite',
     target: 'delegate',
     subject: 'Invite: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
     body: `Invite: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
@@ -452,8 +452,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'l360', 
-    activity: 'launch', 
+    surveyType: 'l360',
+    activity: 'launch',
     target: 'assessor',
     subject: 'Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
     body: `Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
@@ -462,8 +462,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'l360', 
-    activity: 'launch', 
+    surveyType: 'l360',
+    activity: 'launch',
     target: 'delegate',
     subject: 'Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
     body: `Launch: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
@@ -472,8 +472,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'l360', 
-    activity: 'reminder', 
+    surveyType: 'l360',
+    activity: 'reminder',
     target: 'delegate',
     subject: 'Reminder: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
     body: `Reminder: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
@@ -482,8 +482,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'l360', 
-    activity: 'reminder', 
+    surveyType: 'l360',
+    activity: 'reminder',
     target: 'assessor',
     subject: 'Reminder: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>',
     body: `Reminder: Leadership 360° assessment for <%=delegate.firstName%> <%=delegate.lastName%>`,
@@ -493,8 +493,8 @@ const EmailDefaults: Array<TowerStone.ISurveyEmailTemplate> = [
   {
     id: ``,
     key: ``,
-    surveyType: 'l360', 
-    activity: 'survey-closed', 
+    surveyType: 'l360',
+    activity: 'survey-closed',
     target: 'delegate',
     subject: '<%=survey.title%> is now closed. Thank you for your participation',
     body: `This is the mail sent to the delegate with their PDF report when the assessment ends.`,
@@ -529,7 +529,7 @@ const queueMail = async (user: Reactory.IUserDocument, msg: any, options = Defau
     failures = 0,
     archived = false,
     createdAt = moment(),
-    survey = null,    
+    survey = null,
     client = null,
   } = { ...DefaultQueueOptions, ...options };
 
@@ -594,7 +594,7 @@ const hydrateContent = async (template: TowerStone.ISurveyEmailTemplate, survey:
       }
 
       if(element.view.endsWith("/body")) {
-        
+
         _template.body = element.content;
       }
     })
@@ -604,11 +604,11 @@ const hydrateContent = async (template: TowerStone.ISurveyEmailTemplate, survey:
 
 /**
  * Function to load an email template from the Reactory Templates
- * @param view 
- * @param organization 
- * @param client 
- * @param keys 
- * @param templateFormat 
+ * @param view
+ * @param organization
+ * @param client
+ * @param keys
+ * @param templateFormat
  */
 const getReactoryTemplate = async (view: string, organization: Reactory.IOrganization, client: Reactory.IPartner, keys: string[] = [], templateFormat: string = 'html') => {
   let qry = {
@@ -642,6 +642,7 @@ const getReactoryTemplate = async (view: string, organization: Reactory.IOrganiz
         .then();
 
       if (lodash.isNil(templateDocument) === true) {
+        logger.info(`Again no document(s) found using query ${JSON.stringify(qry, null, 2)} getting without org or client`);
         delete qry.client;
 
         templateDocument = await Template.findOne(qry)
@@ -657,18 +658,23 @@ const getReactoryTemplate = async (view: string, organization: Reactory.IOrganiz
 
 /**
  * Function used to patch a survey template
- * @param template 
- * @param organization 
- * @param client 
+ * @param template
+ * @param organization
+ * @param client
  */
 const patchTemplate = async ( template: TowerStone.ISurveyEmailTemplate, organization: Reactory.IOrganization, client: Reactory.IPartner = global.partner ) => {
-  const existingTemplate = await getReactoryTemplate(template.key, organization, client) as Reactory.ITemplateDocument;
-  
-  if(existingTemplate === null || existingTemplate === undefined) {
-    //new template
-    const _template = new Template() as Reactory.ITemplateDocument;
-    const _subjectTemplate = new Template()  as Reactory.ITemplateDocument;;
-    const _bodyTemplate = new Template()  as Reactory.ITemplateDocument;;
+
+  logger.debug(`PATCH TEMPLATE:: ${template.key} : ORG ${JSON.stringify(organization)} : CLIENT ${JSON.stringify(client._id)}`);
+
+  const existingTemplate = await getReactoryTemplate(template.key, organization, client).then() as Reactory.ITemplateDocument;
+
+  if(existingTemplate === null || existingTemplate === undefined || existingTemplate.organization == null || existingTemplate.organization._id.toString() != organization.toString()) {
+
+    logger.debug(`CAREATING NEW:: ${template.key}`);
+
+    const _template = new Template() as Reactory.ITemplateDocument
+    const _subjectTemplate = new Template()  as Reactory.ITemplateDocument;
+    const _bodyTemplate = new Template()  as Reactory.ITemplateDocument;
 
     _subjectTemplate._id = new ObjectId();
     _subjectTemplate.client = client._id;
@@ -690,7 +696,6 @@ const patchTemplate = async ( template: TowerStone.ISurveyEmailTemplate, organiz
     ];
     _subjectTemplate.elements = [];
     await _subjectTemplate.save().then();
-  
 
     _bodyTemplate._id = new ObjectId();
     _bodyTemplate.client = client._id;
@@ -712,7 +717,7 @@ const patchTemplate = async ( template: TowerStone.ISurveyEmailTemplate, organiz
     ];
     _bodyTemplate.elements = [];
     await _bodyTemplate.save().then();
-    
+
     _template._id = new ObjectId();
     _template.client = client._id;
     _template.organization = organization._id;
@@ -724,46 +729,45 @@ const patchTemplate = async ( template: TowerStone.ISurveyEmailTemplate, organiz
     ]
 
     await _template.save().then();
-
     return _template;
   } else {
-    
+
+    logger.debug(`UPDATING EXISTING:: ${template.key}`);
+
     let subjectSet: boolean = false;
     let bodySet: boolean = false;
-    
+
     if(lodash.isArray(existingTemplate.elements) === false) existingTemplate.elements = [];
 
-    
-    const patchContent = async (templateEl: Reactory.ITemplateDocument): Promise<Boolean>  => {      
-      logger.debug(`Patching content`, {templateEl, template});
+    const patchContent = async (templateEl: Reactory.ITemplateDocument): Promise<Boolean>  => {
+      // logger.debug(`Patching content`, {templateEl, template});
       try {
         if(templateEl.view.endsWith('/subject')) {
-          templateEl.content = template.subject;        
+          templateEl.content = template.subject;
           await templateEl.save().then();
           subjectSet = true;
         }
-  
+
         if(templateEl.view.endsWith('/body')) {
           templateEl.content = template.body;
           await templateEl.save().then();
           bodySet = true;
         }
-  
+
         await templateEl.save().then();
         return true;
       }catch(saveError) {
         logger.error(`Could not save the content`, saveError)
         return false;
-      }            
+      }
     }
 
+    // PATCH ALL ELEMENTS IN TEMPLATE
+    await Promise.all(existingTemplate.elements.map(patchContent)).then();
 
-    const patchedResults = await Promise.all(existingTemplate.elements.map(patchContent)).then();
-    logger.debug(`Result are in`, patchedResults);
-
+    // IF FAIL CREATE A NEW BODY TEMPLATE AND ADD TO TEMPLATE
     if(bodySet === false) {
       const _bodyTemplate = new Template()  as Reactory.ITemplateDocument;;
-      
       _bodyTemplate._id = new ObjectId();
       _bodyTemplate.client = client._id;
       _bodyTemplate.organization = organization._id
@@ -782,11 +786,12 @@ const patchTemplate = async ( template: TowerStone.ISurveyEmailTemplate, organiz
         }
       ];
       _bodyTemplate.elements = [];
-      await _bodyTemplate.save().then();      
+      await _bodyTemplate.save().then();
       existingTemplate.elements.push(_bodyTemplate)
       await existingTemplate.save().then()
     }
 
+    // IF FAIL CREATE A NEW SUBJECT TEMPLATE AND ADD TO TEMPLATE
     if(subjectSet === false) {
 
       const _subjectTemplate = new Template()  as Reactory.ITemplateDocument;
@@ -809,7 +814,7 @@ const patchTemplate = async ( template: TowerStone.ISurveyEmailTemplate, organiz
         }
       ];
       _subjectTemplate.elements = [];
-      await _subjectTemplate.save().then();  
+      await _subjectTemplate.save().then();
       existingTemplate.elements.push(_subjectTemplate)
       await existingTemplate.save().then()
     }
@@ -829,12 +834,12 @@ const extractSubjectAndBody = (template: Reactory.ITemplateDocument) : TemplateS
     body: ''
   };
 
-  if (lodash.isNil(template.elements) === false && lodash.isArray(template.elements) === true) {      
+  if (lodash.isNil(template.elements) === false && lodash.isArray(template.elements) === true) {
       template.elements.forEach((templateElement) => {
       logger.info(`Checking template element view: ${templateElement.view}`);
       if(templateElement.view.endsWith('/subject')) extracted.subject = templateElement.content;
-      if(templateElement.view.endsWith('/body')) extracted.body = templateElement.content;        
-    }); 
+      if(templateElement.view.endsWith('/body')) extracted.body = templateElement.content;
+    });
   }
 
   logger.debug('Extracted Subject and Body', extracted);
@@ -843,27 +848,27 @@ const extractSubjectAndBody = (template: Reactory.ITemplateDocument) : TemplateS
 
 /**
  * EmailServiceProvider implementation
- * @param props 
- * @param context 
+ * @param props
+ * @param context
  */
 const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context: any): TowerStone.ITowerStoneEmailService =>  {
   logger.debug("TowerStoneEmailService Constructor");
   return {
-    send: async (survey: TowerStone.ISurveyDocument, activity: string, target: string, users: Reactory.IUser[], properties: any = {} ) => {  
-      logger.debug(`Sending email for Survey ${survey.title} for ${activity} action targeting ${target} with ${users.length} user(s)`);      
+    send: async (survey: TowerStone.ISurveyDocument, activity: string, target: string, users: Reactory.IUser[], properties: any = {} ) => {
+      logger.debug(`Sending email for Survey ${survey.title} for ${activity} action targeting ${target} with ${users.length} user(s)`);
       //if(survey.surveyType === '180' || survey.surveyType === 'plc') {
-        const surveyTemplate = getTowerStoneSurveyEmailTemplate(survey.surveyType, activity, target);        
+        const surveyTemplate = getTowerStoneSurveyEmailTemplate(survey.surveyType, activity, target);
         const _template = await getReactoryTemplate(surveyTemplate.key, survey.organization, partner);
-        
+
         if(lodash.isNil(_template) === true) {
           throw new RecordNotFoundError(`Template with view name ${surveyTemplate.key} could not be loaded`);
         }
 
         const _subjectAndBody = extractSubjectAndBody(_template as Reactory.ITemplateDocument);
 
-        if(lodash.isEmpty(_subjectAndBody.body)) throw new ApiError(`Could not extract body from template, please ensure ${surveyTemplate.key}/body exists`); 
-        if(lodash.isEmpty(_subjectAndBody.subject)) throw new ApiError(`Could not extract body from template, please ensure ${surveyTemplate.key}/subject exists`); 
-       
+        if(lodash.isEmpty(_subjectAndBody.body)) throw new ApiError(`Could not extract body from template, please ensure ${surveyTemplate.key}/body exists`);
+        if(lodash.isEmpty(_subjectAndBody.subject)) throw new ApiError(`Could not extract body from template, please ensure ${surveyTemplate.key}/subject exists`);
+
         // setup api key for email being sent
         logger.debug('Setting up sgMail')
         try {
@@ -877,15 +882,15 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
         const baseProperties = {
           partner,
           user, //this be global users
-          organization: survey.organization,          
-          survey,          
+          organization: survey.organization,
+          survey,
           applicationTitle: partner.name,
           timeEnd: moment(survey.endDate).format('HH:mm'),
           dateEnd: moment(survey.endDate).format('YYYY-MM-DD'),
           ...properties
         };
 
-        users.map((_user: Reactory.IUserDocument) => {          
+        users.map((_user: Reactory.IUserDocument) => {
           const msg = {
             to: `${_user.firstName} ${_user.lastName}<${_user.email}>`,
             from: `${partner.name}<${partner.email}>`,
@@ -934,7 +939,7 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
             queueMail(_user, msg, queoptions);
           }
         });
-        
+
         return {
           errors: [],
           failed: 0,
@@ -942,7 +947,7 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
         };
       //} else {
       //  throw new ApiError('Not support yet here');
-      //}      
+      //}
     },
     templates: async (survey: TowerStone.ISurveyDocument) => {
       logger.debug(`Fetching email templates for ${survey.title} via service ref`);
@@ -976,7 +981,7 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
       result.assessorTemplates = await Promise.all(result.assessorTemplates.map((template) => {
         return hydrateContent(template, survey);
       })).then();
-  
+
       result.delegateTemplates = await Promise.all(result.delegateTemplates.map((template) => {
         return hydrateContent(template, survey);
       })).then();
@@ -986,11 +991,12 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
       })).then();
 
       logger.debug('Hydradted templates', { result });
-      
+
       return result;
     },
     patchTemplates: async (survey: TowerStone.ISurveyDocument, templates: TowerStone.ISurveyTemplates) => {
-      logger.debug(`Patching email template for survey ${survey.title}`, templates);
+      // logger.debug(`Patching email template for survey ${survey.title}`, templates);
+
       const { partner } = global;
       if(survey.id || survey._id) {
         let assessorTemplatePatchResult = await Promise.all(templates.assessorTemplates.map(
@@ -1000,7 +1006,7 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
         )).then();
 
         assessorTemplatePatchResult.forEach((patched) => {
-          logger.debug('Result for Template Patch', patched)
+          // logger.debug('Result for Template Patch', patched)
         });
 
         let delegatesTemplatePatchResult = await Promise.all(templates.delegateTemplates.map(
@@ -1010,7 +1016,7 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
         )).then();
 
         delegatesTemplatePatchResult.forEach((patched) => {
-          logger.debug('Result for Template Patch', patched)
+          // logger.debug('Result for Template Patch', patched)
         });
 
         let generalTemplatePatchResult = await Promise.all(templates.generalTemplates.map(
@@ -1020,7 +1026,7 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
         )).then();
 
         generalTemplatePatchResult.forEach((patched) => {
-          logger.debug('Result for Template Patch', patched)
+          // logger.debug('Result for Template Patch', patched)
         });
       }
       return templates;
