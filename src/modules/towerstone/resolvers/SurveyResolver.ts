@@ -558,7 +558,8 @@ export default {
                 who: user._id,
               });
 
-              // surveyModel.addTimelineEntry('Invite sent.', `${user.firstName} sent an invite to delegate ${delegateModel.firstName} ${delegateModel.lastName}.`, user.id, true);
+              surveyModel.addTimelineEntry('Launch Invite sent.', `${user.firstName} sent an invite to delegate ${delegateModel.firstName} ${delegateModel.lastName}.`, user.id, true);
+              entryData.patch = false;
               break;
             }
 
@@ -599,7 +600,7 @@ export default {
                   who: user._id,
                 });
 
-                // await surveyModel.addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();
+                await surveyModel.addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();
 
               } else {
                 let requires_peersConfirmed = true;
@@ -643,6 +644,9 @@ export default {
                   });
                 }
               }
+
+              await surveyModel.addTimelineEntry('Launched', `${user.firstName} launched for ${entryData.entry.delegate.firstName}`, user, true).then();
+
               break;
             }
 
@@ -735,12 +739,11 @@ export default {
                   who: user._id,
                 });
 
-                // surveyModel.addTimelineEntry('User Removed from survey', `${user.firstName} removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
+                surveyModel.addTimelineEntry('Delegate Removed', `${user.firstName} removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
+                entryData.patch = false;
 
               } else {
-                // logger.debug(`ENTRYDATA ENTRYINDEX:: ${JSON.stringify(entryData.entryIdx)}`);
                 surveyModel.delegates[entryData.entryIdx].remove();
-                surveyModel.save(); // updating surveymodel - think this would occur in the addtimelineentry
 
                 entryData.entry.status = 'deleted';
                 entryData.entry.actions.push({
@@ -750,7 +753,7 @@ export default {
                   who: user._id,
                 });
 
-                // surveyModel.addTimelineEntry('User Deleted from survey', `${user.firstName} deleted delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
+                surveyModel.addTimelineEntry('Delegate Deleted', `${user.firstName} deleted delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
                 entryData.patch = false;
               }
               break;

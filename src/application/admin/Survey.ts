@@ -163,7 +163,7 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
 
   try {
     await Promise.all(emailPromises).then();
-    return result(`Sent launch emails and instructions to ${delegate.firstName} ${delegate.lastName} for ${survey.title}`, true);
+    return result(`Sent launch emails and instructions to ${delegate.firstName} ${delegate.lastName} at ${moment().format('DD MMM YY HH:mm')} for ${survey.title}`, true);
   } catch (e) {
     return result(e.message);
   }
@@ -187,7 +187,7 @@ export const sendSingleSurveyLaunchEmail = async (survey: any, delegateEntry: an
 
     logger.debug(`SEND LAUNCH RESPONSE: ${JSON.stringify(response)}`);
 
-    return result(`Sent launch emails and instructions to ${assessment.assessor.firstName} ${assessment.assessor.lastName} for ${survey.title}`, true);
+    return result(`Sent launch emails and instructions to ${assessment.assessor.firstName} ${assessment.assessor.lastName} at ${moment().format('DD MMM YY HH:mm')} for ${survey.title}`, true);
   } catch (e) {
     return result(e.message);
   }
