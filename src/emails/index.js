@@ -13,6 +13,8 @@ import defaultEmailTemplates from './defaultEmailTemplates';
 import AuthConfig from '../authentication';
 import logger from '../logging';
 
+import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
+
 const TemplateViews = {
   ActivationEmail: 'activation-email',
   ForgotPassword: 'forgot-password-email',
@@ -961,6 +963,12 @@ export const organigramEmails = {
           sgMail.send(msg);
           emailResult.sent = true;
           logger.info(`Email sent to ${msg.to}`);
+
+
+          if (survey) {
+            survey.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.NOMINEE_INVITE, `Nominee invite sent to ${peer.firstName} ${peer.lastName} @ ${moment().format('DD MMM YYYY HH:mm')}.`, null, true);
+          }
+
           if (organigramModel && lodash.isArray(organigramModel.peers) === true && peerIndex >= 0) {
             organigramModel.peers[peerIndex].inviteSent = true; //eslint-disable-line
             organigramModel.peers[peerIndex].confirmed = true; //eslint-disable-line
