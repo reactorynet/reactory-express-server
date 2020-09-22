@@ -197,12 +197,15 @@ class AuthConfig {
     };
 
     static JwtOptions = {
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        ExtractJwt.fromUrlQueryParameter("auth_token")
+      ]),      
       secretOrKey: jwtSecret,
     }
 
     static JwtAuth = (payload, done) => {      
-      logger.info('JWT Auth executing');
+      logger.debug(`JWT Auth executing`, payload);
       if (payload.userId === '-1') {
         global.user = {
           id: -1,

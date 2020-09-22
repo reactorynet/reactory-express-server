@@ -15,6 +15,12 @@ type ReactoryContent {
   comments: [ Comment ]
 }
 
+type ReactorySaveImageDataResponse {  
+  success: Boolean
+  pngURL: String
+  svgURL: String
+}
+
 extend type Query {
   ReactoryGetContentBySlug(slug: String!): ReactoryContent
   ReactoryGetContentByTags(tags: [String]!): [ ReactoryContent ]
@@ -36,4 +42,5 @@ input CreateContentInput {
 
 extend type Mutation {
   ReactoryCreateContent(createInput: CreateContentInput!): ReactoryContent
+  ReactorySaveImageData(folder: String, filename: String, svg: String, png: String): ReactorySaveImageDataResponse
 }

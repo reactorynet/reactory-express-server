@@ -6,7 +6,7 @@ export const DefaultUiSchema = {
       noLookup: true,
       mapping: {
         'formContext.formData.id': 'id',
-        'formContext.formData.logo': 'logo',
+        'formContext.formData.logoURL': 'logo',
       },
       style: {
         width: '512px',

@@ -10,6 +10,7 @@ export default {
   properties: {
     name: StringProperty('Name', 'Company name', 5, 100),
     code: StringProperty('Code', 'Internal Company Reference Code', 0, 50),
-    logo: StringProperty('Logo', 'Company Logo'),
+    logo: StringProperty('Logo', 'Logo File'),
+    logoURL: StringProperty('Logo', 'Logo URL'),
   },
 };

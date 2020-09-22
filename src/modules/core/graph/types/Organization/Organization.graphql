@@ -27,6 +27,7 @@ type Organization {
   name: String
   tradingName: String
   logo: String
+  logoURL: String
   avatar: String
   businessUnits: [BusinessUnit]
   legacyId: Int

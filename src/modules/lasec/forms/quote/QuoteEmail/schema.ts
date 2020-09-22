@@ -1,6 +1,17 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
+import Builder from '@reactory/server-core/schema';
+import logger from '@reactory/server-core/logging';
 
 // const schema: Reactory.ISchema = {
+const emailAddress: Reactory.IObjectSchema = {
+  type: 'object',
+  properties: {
+    display: { type: 'text',  title: "Name"},
+    email: { type: 'text', format: 'email', title: "Email" }
+  }
+}
+
+
 const schema: Reactory.IObjectSchema = {
   title: '',
   type: 'object',
@@ -8,6 +19,17 @@ const schema: Reactory.IObjectSchema = {
     code: {
       type: 'string',
       title: 'Quote Code:',
+    },
+    toList: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          email: {
+            type: 'string'
+          }
+        },
+      },
     },
     customerName: {
       type: 'string',

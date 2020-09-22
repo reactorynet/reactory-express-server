@@ -208,14 +208,51 @@ declare namespace Reactory {
     required?: any | undefined,
     properties?: ISchemaObjectProperties | any | undefined,
     dependencies?: any | undefined,
+    format?: string | "email" | "password" | "date" | "date-time"
   }
+
+  export interface IStringSchema extends ISchema {
+    type: string | "string",
+    minLength?: number,
+    maxLength?: number 
+  }
+
+  export interface INumberSchema extends ISchema {
+    type: "number",
+    min?: number,
+    max?: number
+  }
+
+  export interface IDateSchema extends ISchema {
+    type: string | "string",
+    format: "date",
+    min?: number | string,
+    max?: number | string
+  }
+
+  export interface IDateTimeSchema extends ISchema {
+    type: "string",
+    format: "date-time"
+  }
+
+  export interface IObjectSchema extends ISchema {
+    type: "object",
+    properties?: ISchemaObjectProperties,
+  }
+
+  export interface IArraySchema extends ISchema {
+    type: "array",
+    items: IObjectSchema | IDateTimeSchema | IDateSchema | INumberSchema | IStringSchema | ISchema 
+  }
+
 
   /**
    * The base UISchema definition
    */
   export interface IUISchema {
     'ui:widget'?: string | "null",
-    'ui:options'? : object | "null"
+    'ui:options'? : object | "null",
+    [key: string]: any,
   }
 
   export interface IObjectSchema extends ISchema {

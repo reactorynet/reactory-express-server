@@ -16,6 +16,7 @@ dotenv.config();
 
 const {
   APP_DATA_ROOT,
+  CDN_ROOT
 } = process.env;
 
 
@@ -35,6 +36,12 @@ const organizationResolver = {
       if(!organization) return 'Null Organization';
 
       return organization.tradingName || organization.name;
+    },
+    logoURL: (organization) => {
+      
+      if(organization && organization.logo) {
+        return `${CDN_ROOT}organization/${organization.id}/${organization.logo}?t=${moment().format('YYYMMDDhh')}`
+      }
     },
     createdAt(obj) {
       return obj.createdAt || moment().unix();

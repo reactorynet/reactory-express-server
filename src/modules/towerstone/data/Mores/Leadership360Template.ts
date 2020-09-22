@@ -442,8 +442,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "care",
-          "chart_color": "runtime",
+          "chart_title": "I care",
+          "chart_color": "#9ECE1C",
 
           "ordinal": 0
         },
@@ -458,8 +458,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Skills development",
-          "chart_color": "runtime",
+          "chart_title": "I coach",
+          "chart_color": "#9ECE1C",
 
           "ordinal": 1
         },
@@ -474,8 +474,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Growth",
-          "chart_color": "runtime",
+          "chart_title": "I grow my\npeople",
+          "chart_color": "#9ECE1C",
 
           "ordinal": 2
         },
@@ -493,7 +493,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
       "delegate_description": "",
 
       "chart_title": "",
-      "chart_color": "runtime",
+      "chart_color": "#3F9FB1",
 
       "ordinal": 1,
       "behaviours": [
@@ -508,8 +508,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Communication",
-          "chart_color": "runtime",
+          "chart_title": "I align my\nteams",
+          "chart_color": "#3F9FB1",
 
           "ordinal": 0
         },
@@ -524,8 +524,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Trust",
-          "chart_color": "runtime",
+          "chart_title": "I trust my\nteams",
+          "chart_color": "#3F9FB1",
 
           "ordinal": 1
         },
@@ -540,8 +540,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Conflict Management",
-          "chart_color": "runtime",
+          "chart_title": "I respect my\npeople",
+          "chart_color": "#3F9FB1",
 
           "ordinal": 2
         },
@@ -564,8 +564,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Brand Ambassadorship",
-          "chart_color": "runtime",
+          "chart_title": "I inspire my\npeople",
+          "chart_color": "#FECC34",
 
           "ordinal": 0
         },
@@ -580,8 +580,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Living the brand",
-          "chart_color": "runtime",
+          "chart_title": "I lead by\nexample",
+          "chart_color": "#FECC34",
 
           "ordinal": 1
         },
@@ -596,8 +596,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Respect",
-          "chart_color": "runtime",
+          "chart_title": "I recognise good\nwork",
+          "chart_color": "#FECC34",
 
           "ordinal": 2
         },
@@ -615,7 +615,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
       "delegate_description": "",
 
       "chart_title": "",
-      "chart_color": "runtime",
+      "chart_color": "#7695A2",
 
       "ordinal": 3,
       "behaviours": [
@@ -630,8 +630,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Results",
-          "chart_color": "runtime",
+          "chart_title": "I drive results",
+          "chart_color": "#7695A2",
 
           "ordinal": 0
         },
@@ -646,8 +646,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Ownership",
-          "chart_color": "runtime",
+          "chart_title": "I drive\nownership",
+          "chart_color": "#7695A2",
 
           "ordinal": 1
         },
@@ -662,8 +662,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Initiative",
-          "chart_color": "runtime",
+          "chart_title": "I do what it\ntakes",
+          "chart_color": "#7695A2",
 
           "ordinal": 2
         },
@@ -680,8 +680,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
       "delegate_title": "",
       "delegate_description": "",
 
-      "chart_title": "",
-      "chart_color": "runtime",
+      "chart_title": "Our Growth",
+      "chart_color": "#50783F",
 
       "ordinal": 4,
       "behaviours": [
@@ -696,8 +696,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Proactivity",
-          "chart_color": "runtime",
+          "chart_title": "I stay ahead",
+          "chart_color": "#50783F",
 
           "ordinal": 0
         },
@@ -712,8 +712,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Agility",
-          "chart_color": "runtime",
+          "chart_title": "I drive new\nchallenges",
+          "chart_color": "#50783F",
 
           "ordinal": 1
         },
@@ -728,8 +728,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Innovation",
-          "chart_color": "runtime",
+          "chart_title": "I take smart\nrisks",
+          "chart_color": "#50783F",
 
           "ordinal": 2
         },
@@ -746,8 +746,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
       "delegate_title": "",
       "delegate_description": "",
 
-      "chart_title": "",
-      "chart_color": "runtime",
+      "chart_title": "Our Purpose",
+      "chart_color": "#990000",
 
       "ordinal": 4,
       "behaviours": [
@@ -762,8 +762,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Alignment",
-          "chart_color": "runtime",
+          "chart_title": "I lead our\nfuture",
+          "chart_color": "#990000",
 
           "ordinal": 0
         },
@@ -778,8 +778,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Engagement",
-          "chart_color": "runtime",
+          "chart_title": "I love what\nI do",
+          "chart_color": "#990000",
 
           "ordinal": 1
         },
@@ -794,8 +794,8 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Social Responsibility",
-          "chart_color": "runtime",
+          "chart_title": "I make a\ndifference",
+          "chart_color": "#990000",
 
           "ordinal": 2
         },

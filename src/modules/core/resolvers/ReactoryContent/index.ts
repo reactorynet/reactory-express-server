@@ -2,9 +2,25 @@
 import lodash from 'lodash';
 import { ObjectId } from 'mongodb';
 import om from 'object-mapper';
+import fs, { existsSync, mkdirSync, writeFileSync, MakeDirectoryOptions } from 'fs';
+import svg_to_png from 'svg-to-png';
+import path from 'path';
 import { Content } from '../../../../models/index';
 // import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import logger from '../../../../logging';
+
+
+const {
+  APP_DATA_ROOT,
+  CDN_ROOT
+} = process.env
+
+
+interface ReactorySaveImageDataResponse {
+  success: boolean
+  pngURL: string
+  svgURL: string
+}
 
 export default {
   ReactoryContent: {
@@ -61,6 +77,45 @@ export default {
       } catch (error) {
         logger.debug('Reactory Create Content Error: ', error);
       }
+    },
+    ReactorySaveImageData: async (parent: any, args: { folder: string, filename: string, png: string, svg: string }): Promise<ReactorySaveImageDataResponse> => {
+      const { folder, filename, png, svg }  = args;
+
+      const result: ReactorySaveImageDataResponse = {
+        pngURL: null,
+        svgURL: null,
+        success: false
+      }
+      
+      debugger
+      try {
+        //step check the folder        
+        if(folder) {
+          let fullpath = path.join(APP_DATA_ROOT, folder);
+          let cdnpath = path.join(CDN_ROOT, folder);
+          if(existsSync(fullpath) === false) mkdirSync(fullpath, { recursive: true });
+          if(svg) {
+            let svgfile = path.join(fullpath, `${filename}.svg`);
+            writeFileSync(svgfile, svg);
+            result.svgURL = path.join(cdnpath, `${filename}.svg`);
+            let pngfile = path.join(fullpath, `${filename}.png`);            
+            result.success = true;
+            
+            try {
+              await svg_to_png.convert(svgfile, pngfile, { defaultWidth: '1200px', defaultHeight: '1200px' });
+              logger.info(`✅Converted svg to ${pngfile}`)
+              result.pngURL = path.join(cdnpath, `${filename}.png`);
+
+            } catch (convertErr) {
+              logger.error(`💥Could not convert ${svgfile} to ${pngfile}`, convertErr)            
+            }            
+          }
+        }        
+      } catch (error) {
+        logger.error(`Could not save the image data`, error)
+      } 
+
+      return result;
     }
   }
 };

@@ -76,7 +76,7 @@ if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/asciilogo.txt`)) {
 
 const ENV_STRING_DEBUG = `
 Environment Settings: 
-  API_DATA_ROOT: ${APP_DATA_ROOT}
+  APP_DATA_ROOT: ${APP_DATA_ROOT}
   APP_SYSTEM_FONTS: ${APP_SYSTEM_FONTS}
   MONGOOSE: ${MONGOOSE}
   API_PORT: ${API_PORT}
@@ -177,7 +177,11 @@ startup().then((startResult) => {
   app.use('/deliveries', froala);
   app.use('/workflow', workflow);
   app.use('/resources', resources);
-  app.use('/pdf', pdf);
+  app.use('/pdf', passport.authenticate(
+    ['jwt'], 
+    { session: false }), 
+    bodyParser.urlencoded({ extended: true }
+    ), pdf);
   app.use('/excel', ExcelRouter);
   app.use('/charts', charts);
   app.use('/amq', amq.router);

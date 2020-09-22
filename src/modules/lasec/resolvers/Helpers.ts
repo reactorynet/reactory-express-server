@@ -1298,8 +1298,7 @@ export const getPagedQuotes = async (params) => {
       break;
     }
     case "quote_status": {
-
-
+      
       break;
     }
     case "total_value": {

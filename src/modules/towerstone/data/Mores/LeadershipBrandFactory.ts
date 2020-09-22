@@ -89,18 +89,31 @@ const factory = async ( organizationId: string |ObjectID, surveyType: string = '
     generatedBrand.key = surveyType;
     await generatedBrand.save().then();  
   } else {
-    //patch the brand content from the factor
+    //patch the brand content from the factory
     if(patch === true) {
       sortBy(generatedBrand.qualities, "ordinal").forEach((quality: TowerStone.IQuality, index: number) => {
         let sourceQuality = sortBy(currentTemplate.qualities, "ordinal")[index];
+        
         quality.title = sourceQuality.title;
         quality.description = sourceQuality.description;
+        quality.chart_color = sourceQuality.chart_color;
+        quality.chart_title = sourceQuality.chart_title;
+        quality.assessor_title = sourceQuality.assessor_title;
+        quality.delegate_title = sourceQuality.delegate_title;
+        quality.delegate_description = sourceQuality.delegate_description;
+        quality.ordinal = sourceQuality.ordinal;
 
         let sortedSourceBehaviours: Array<TowerStone.IBehaviour> = sourceQuality.behaviours.sort((a, b) => a.ordinal - b.ordinal);
 
         quality.behaviours.sort((a, b) => a.ordinal - b.ordinal ).forEach((behaviour: TowerStone.IBehaviour , bIdx: number) => {
           behaviour.title = sortedSourceBehaviours[bIdx].title;
           behaviour.description = sortedSourceBehaviours[bIdx].description;
+          behaviour.chart_color = sortedSourceBehaviours[bIdx].chart_color;
+          behaviour.chart_title = sortedSourceBehaviours[bIdx].chart_title;
+          behaviour.assessor_title = sortedSourceBehaviours[bIdx].assessor_title;
+          behaviour.delegate_title = sortedSourceBehaviours[bIdx].delegate_title;
+          behaviour.delegate_description = sortedSourceBehaviours[bIdx].delegate_description;
+          behaviour.ordinal = sortedSourceBehaviours[bIdx].ordinal;
         });
       });
 

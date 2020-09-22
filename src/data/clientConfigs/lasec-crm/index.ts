@@ -158,21 +158,14 @@ const Menus = {
           link: '/discuss/',
           icon: 'chat',
           roles: ['USER'],
-        },
-        {
-          ordinal: 3,
-          title: 'Approvals',
-          link: '/360/approvals/quote-approval',
-          icon: 'gavel',
-          roles: ['ADMIN', 'QUOTE_APPROVER'],
-        },
+        },        
       ],
       roles: ['USER', 'ADMIN'],
     },
     {
       ordinal: 1,
       title: 'Sales',
-      link: '/360/crm/customer-search',
+      link: '/crm/clients',
       icon: 'attach_money',
       roles: ['USER'],
       items: [
@@ -183,15 +176,7 @@ const Menus = {
           icon: 'accessible',
           roles: ['USER'],
         },
-        /*
-        {
-          ordinal: 0,
-          title: 'Clients (360)',
-          link: '/360/crm/customer-search',
-          icon: 'accessible',
-          roles: ['USER'],
-        },
-        */
+     
         {
           ordinal: 0,
           title: 'Quotes',
@@ -199,15 +184,7 @@ const Menus = {
           icon: 'add_shopping_cart',
           roles: ['USER'],
         },
-        /*
-        {
-          ordinal: 0,
-          title: 'Quotes (360)',
-          link: '/360/crm/all-quotes',
-          icon: 'add_shopping_cart',
-          roles: ['USER'],
-        },
-        */
+   
         {
           ordinal: 3,
           title: 'ISO',
@@ -215,15 +192,7 @@ const Menus = {
           icon: 'shopping_cart',
           roles: ['USER'],
         },
-        /*
-        {
-          ordinal: 3,
-          title: 'ISO (360)',
-          link: '/360/crm/sales-orders',
-          icon: 'shopping_cart',
-          roles: ['USER'],
-        },
-        */
+ 
         {
           ordinal: 3,
           title: 'Invoices',
@@ -232,15 +201,7 @@ const Menus = {
           roles: ['USER'],
         },
 
-        /*
-        {
-          ordinal: 3,
-          title: 'Invoices (360)',
-          link: '/360/crm/invoices',
-          icon: 'attach_money',
-          roles: ['USER'],
-        },
-        */
+    
 
         {
           ordinal: 3,
@@ -250,24 +211,6 @@ const Menus = {
           roles: ['USER'],
         },
 
-        /*
-        {
-          ordinal: 3,
-          title: 'Sales History (360)',
-          link: '/360/crm/sales-history',
-          icon: 'history',
-          roles: ['USER'],
-        },
-      
-       
-        {
-          ordinal: 5,
-          title: 'Sales Assistant',
-          link: '/salesconfig',
-          icon: 'speed',
-          roles: ['USER'],
-        },
-         */
       ]
     },
     {
@@ -283,21 +226,7 @@ const Menus = {
           link: '/product-catalogue/product-overview/',
           icon: 'book',
           roles: ['USER'],
-        },
-        {
-          ordinal: 1,
-          title: 'Catalogue (360)',
-          link: '/360/catalogue/search',
-          icon: 'book',
-          roles: ['USER'],
-        },
-        {
-          ordinal: 0,
-          title: 'Approvals',
-          link: '/360/approvals/quote-approval',
-          icon: 'gavel',
-          roles: ['USER'],
-        },
+        },      
       ]
     },
     {
@@ -364,28 +293,7 @@ const Menus = {
           link: '/admin/customer/',
           icon: 'business',
           roles: ['ADMIN', 'DEVELOPER'],
-        },
-        {
-          ordinal: 2,
-          title: 'Users',
-          link: '/360/admin/users',
-          icon: 'how_to_reg',
-          roles: ['ADMIN', 'DEVELOPER']
-        },
-        {
-          ordinal: 3,
-          title: 'Teams',
-          link: '/360/admin/teams',
-          icon: 'supervised_user_circle',
-          roles: ['ADMIN', 'DEVELOPER']
-        },
-        {
-          ordinal: 4,
-          title: 'Groups',
-          link: '/360/admin/groups',
-          icon: 'group_work',
-          roles: ['ADMIN', 'DEVELOPER']
-        },
+        },        
         {
           ordinal: 5,
           title: 'AR Invoices',
