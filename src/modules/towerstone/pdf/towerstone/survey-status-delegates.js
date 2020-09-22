@@ -23,6 +23,8 @@ import {
   Scale,
 } from '@reactory/server-core/models';
 
+import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
+
 const { APP_DATA_ROOT } = process.env;
 
 const debug_report = true;
@@ -48,7 +50,7 @@ const greyscalePng = (path, outpath) => {
     .pipe(new PNG({
         colorType: 0
     }))
-    .on('parsed', function() {          
+    .on('parsed', function() {
         this.pack().pipe(fs.createWriteStream(outpath));
     });
 }
@@ -61,7 +63,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
     .populate('organization')
     .populate('leadershipBrand')
     .populate('delegates.delegate')
-    .populate('delegates.assessments')            
+    .populate('delegates.assessments')
     .then();
 
   logger.info(`Resolved Survey ${survey.delegates.length}`)
@@ -75,8 +77,8 @@ const resolveData = async ({ surveyId, delegateId }) => {
       partner,
       palette: partner.themeOptions.palette,
       colorSchemes: {
-        primary: [ '0A2D51', 'E6A70F', '58595B', '83257C', '3C6899', '3C6899', ...partner.colorScheme() ], 
-        secondary: partner.colorScheme(partner.themeOptions.palette.secondary.main),        
+        primary: [ '0A2D51', 'E6A70F', '58595B', '83257C', '3C6899', '3C6899', ...partner.colorScheme() ],
+        secondary: partner.colorScheme(partner.themeOptions.palette.secondary.main),
       },
     },
     survey,
@@ -92,17 +94,25 @@ const resolveData = async ({ surveyId, delegateId }) => {
     charts: {
       timelineChart: null,
       activityFactor: null,
-      completedPie: null,      
+      completedPie: null,
     },
   };
 
   try {
+
+    const delegate = await User.findById(delegateId).then();
+    // TIMELINE ENTRY - REPORT GENERATED
+    if (survey && delegate) {
+      logger.debug(`USER FROM GLOBAL:: ${JSON.stringify(user)}`);
+      survey.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.REPORT_GENERATED, `Report generate by ${delegate.firstName} ${delegate.lastName}.`, delegate._id, true);
+    }
+
     reportData.organization = reportData.survey.organization;
     reportData.leadershipBrand = reportData.survey.leadershipBrand;
     reportData.qualities = reportData.survey.leadershipBrand.qualities;
     reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
     reportData.assessments = await Assessment.find({
-      survey: ObjectId(surveyId),       
+      survey: ObjectId(surveyId),
       })
       .populate('assessor')
       .populate('delegate')
@@ -110,10 +120,10 @@ const resolveData = async ({ surveyId, delegateId }) => {
 
     reportData.assessments = lodash.groupBy(reportData.assessments, a => a.delegate._id);
 
-    logger.debug(`Found (${reportData.assessments.length}) assessments`);   
+    logger.debug(`Found (${reportData.assessments.length}) assessments`);
   } catch (err) {
     logger.error('Error occured colating data', err);
-  }  
+  }
   // render the charts
   const chartsFolder = `${APP_DATA_ROOT}/survey/${reportData.survey._id}/charts/`;
   if (fs.existsSync(chartsFolder) === false) {
@@ -122,13 +132,13 @@ const resolveData = async ({ surveyId, delegateId }) => {
 
   let chartResult = null;
 
-  const { colorSchemes, palette } = reportData.meta; 
-  
+  const { colorSchemes, palette } = reportData.meta;
+
   const launched = lodash.filter(reportData.delegates, { status: 'launched' });
   logger.debug(`Counted ${launched.length} delegates for this survey`)
   const totalDelegates = reportData.delegates.length
   const percentLaunched = Math.floor(launched.length * 100) / totalDelegates;
-  
+
   reportData.stats = {
     launched,
     totalDelegates,
@@ -159,7 +169,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
     },
   }).then();
   logger.debug(`Overall Score Chart Created: ${chartResult.file}`, chartResult);
-  
+
   logger.debug(`PDF::Report Data Generated:`);
 
   return reportData;
@@ -172,7 +182,7 @@ export const pdfmakedefinition = (data, partner, user) => {
   data.scale.entries.forEach((scale) => {
     if(scale.rating > 0) {
       scaleSegments.push({ text: `${scale.rating} - ${scale.description}`, style: ['default'] });
-    }    
+    }
   });
 
   const { palette, includeAvatar = false } = data.meta;
@@ -186,13 +196,13 @@ export const pdfmakedefinition = (data, partner, user) => {
 
 
   greyscalePng(
-    `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`, 
+    `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`,
     `${APP_DATA_ROOT}/organization/${data.organization._id}/greyscale_${data.organization.logo}`
     );
 
   const coverpage = [
     { text: 'Survey Status Report', style: ['title', 'centerAligned'], margin: [0, 90, 0, 20] },
-    { text: `${data.survey.title}`, style: ['header', 'centerAligned'], margin: [0, 15] }, 
+    { text: `${data.survey.title}`, style: ['header', 'centerAligned'], margin: [0, 15] },
     {
       image: 'organizationLogo', width: 240, style: ['centerAligned'], margin: [0, 30, 0, 50],
     },
@@ -219,10 +229,10 @@ export const pdfmakedefinition = (data, partner, user) => {
   ];
 
 
-  const delegateRows = data.delegates.map((entry, index) => {    
+  const delegateRows = data.delegates.map((entry, index) => {
     return [{ text: `${index + 1}.) ${entry.delegate.fullName(true)}`, style: ['default'] }, { text: entry.status, style: ['default'] }];
   });
-  
+
 
   const delegates = [
     {
@@ -251,8 +261,8 @@ export const pdfmakedefinition = (data, partner, user) => {
             style: ['default'],
             color: '#fff',
           }],
-          ...delegateRows          
-        ],       
+          ...delegateRows
+        ],
       },
     }
   ];
@@ -266,10 +276,10 @@ export const pdfmakedefinition = (data, partner, user) => {
         assessorRows = assessments.map((assessment, index) => {
           return [
             { text: `${assessment.assessor ? assessment.assessor.fullName(false) : 'No Assessor'}`, style: ['default'] },
-            { text: `${assessment ? assessment.complete : 'ASSESSMENT IS NULL'}`, style: ['default'] }]          
-        });  
+            { text: `${assessment ? assessment.complete : 'ASSESSMENT IS NULL'}`, style: ['default'] }]
+        });
       }
-      
+
       return {
         // headers are automatically repeated if the table spans over multiple pages
         // you can declare how many rows should be treated as headers
@@ -289,8 +299,8 @@ export const pdfmakedefinition = (data, partner, user) => {
             style: ['default'],
             color: '#fff',
           }],
-          ...assessorRows          
-        ],       
+          ...assessorRows
+        ],
       };
     } else {
       return {
@@ -301,18 +311,18 @@ export const pdfmakedefinition = (data, partner, user) => {
         // layout: 'towerstone',
         body: [
           [{
-            text: 'Not Ready - Peers not select / confirmed',            
+            text: 'Not Ready - Peers not select / confirmed',
             style: ['default'],
             color: '#000',
-          }],          
-        ],       
+          }],
+        ],
       };
     }
   };
-  
-  const assessmentRows = data.delegates.map((entry, index) => {    
+
+  const assessmentRows = data.delegates.map((entry, index) => {
     return [
-      { text: `${index + 1}.) ${entry.delegate.fullName(true)}`, style: ['default'] }, 
+      { text: `${index + 1}.) ${entry.delegate.fullName(true)}`, style: ['default'] },
       // { text: entry.assessments.length, style: ['default'] },
       { table: delegateAssessmentTable(entry) },
       { text: entry.status, style: ['default'] }];
@@ -349,7 +359,7 @@ export const pdfmakedefinition = (data, partner, user) => {
             style: ['default'],
             color: '#fff',
           }],
-          ...assessmentRows           
+          ...assessmentRows
         ],
       },
     }
@@ -367,7 +377,7 @@ export const pdfmakedefinition = (data, partner, user) => {
       ...coverpage,
       ...overview,
       ...delegates,
-      ...assessments                         
+      ...assessments
     ],
     header: (currentPage, pageCount) => {
       logger.debug(`Getting header for currentPage: ${currentPage} pageCount: ${pageCount}`);

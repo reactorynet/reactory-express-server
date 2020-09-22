@@ -25,6 +25,7 @@ import {
   Cache
 } from '@reactory/server-core/modules/core/models'
 
+import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
 
 const badref = '../badref.png';
 
@@ -49,10 +50,10 @@ const pdfpng = (path) => {
 const greyscalePng = (path, outpath) => {
   fs.createReadStream(path)
     .pipe(new PNG({
-        colorType: 0
+      colorType: 0
     }))
-    .on('parsed', function() {          
-        this.pack().pipe(fs.createWriteStream(outpath));
+    .on('parsed', function () {
+      this.pack().pipe(fs.createWriteStream(outpath));
     });
 };
 
@@ -76,8 +77,8 @@ const resolveData = async ({ surveyId, delegateId }) => {
       partner,
       palette: partner.themeOptions.palette,
       colorSchemes: {
-        primary: [ '0A2D51', 'E6A70F', '58595B', '83257C', '3C6899', '3C6899', ...partner.colorScheme() ], 
-        secondary: partner.colorScheme(partner.themeOptions.palette.secondary.main),        
+        primary: ['0A2D51', 'E6A70F', '58595B', '83257C', '3C6899', '3C6899', ...partner.colorScheme()],
+        secondary: partner.colorScheme(partner.themeOptions.palette.secondary.main),
       },
     },
     key: `towerstone.survey@${surveyId}/${delegateId}`,
@@ -109,21 +110,28 @@ const resolveData = async ({ surveyId, delegateId }) => {
 
   try {
     reportData.delegate = await User.findById(reportData.survey.delegates.id(delegateId).delegate).then();
+
+    // TIMELINE ENTRY - REPORT GENERATED
+    if (survey) {
+      logger.debug(`USER FROM GLOBAL:: ${JSON.stringify(user)}`);
+      survey.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.REPORT_GENERATED, `Report generate by ${reportData.delegate.firstName} ${reportData.delegate.lastName}.`, reportData.delegate._id, true);
+    }
+
     reportData.employee = reportData.delegate;
     logger.debug(`Found delegate ${reportData.delegate._id}`);
     reportData.organization = reportData.survey.organization;
     reportData.leadershipBrand = reportData.survey.leadershipBrand;
     reportData.qualities = reportData.survey.leadershipBrand.qualities;
     reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
-    reportData.assessments = await Assessment.find({       
-      survey: ObjectId(surveyId),      
+    reportData.assessments = await Assessment.find({
+      survey: ObjectId(surveyId),
       complete: true,
       deleted: false,
-      _id: { 
-        $in: reportData.survey.delegates.map((d) => d.assessments) 
-      },       
+      _id: {
+        $in: reportData.survey.delegates.map((d) => d.assessments)
+      },
     }).populate('assessor')
-    .populate('delegate').then();
+      .populate('delegate').then();
     logger.debug(`Found (${reportData.assessments.length}) assessments`);
     lodash.remove(reportData.assessments, a => a === null || a.complete === false);
     logger.debug(`(${reportData.assessments.length}) assessments after clean`);
@@ -131,22 +139,23 @@ const resolveData = async ({ surveyId, delegateId }) => {
       return lodash.filter(reportData.ratings, (rating) => { return rating.qualityId.equals(quality._id) && rating.rating <= bar; });
     };
 
-    reportData.ratings = lodash.flatMap(reportData.assessments, assessment => {      
-      return assessment.ratings.map((rating) => {        
-          rating.assessor = assessment.assessor;          
-          return rating;
-      });            
+    reportData.ratings = lodash.flatMap(reportData.assessments, assessment => {
+      return assessment.ratings.map((rating) => {
+        rating.assessor = assessment.assessor;
+        return rating;
+      });
     });
 
     const otherassessments = reportData.assessments;
-      
+
     reportData.ratingsExcludingSelf = lodash.flatMap(
       otherassessments,
-      ( assessment ) => {
-        return assessment.ratings.map((rating) => {        
+      (assessment) => {
+        return assessment.ratings.map((rating) => {
           rating.assessor = assessment.assessor;
-          return rating;        
-      })});
+          return rating;
+        })
+      });
 
     reportData.ratingsSelf = [];
   } catch (err) {
@@ -182,15 +191,15 @@ const resolveData = async ({ surveyId, delegateId }) => {
       let behaviorRatings = [];
       const individualScores = [];
       try {
-        
+
         // get the score for all ratings (including self and others)
         logger.debug('Filtering ratings by quality and behaviour id');
         behaviorRatings = lodash.filter(
           reportData.ratings,
           rating => (
             rating.custom !== true &&
-          quality._id.equals(rating.qualityId) &&
-          behaviour._id.equals(rating.behaviourId)),
+            quality._id.equals(rating.qualityId) &&
+            behaviour._id.equals(rating.behaviourId)),
         );
 
 
@@ -211,8 +220,8 @@ const resolveData = async ({ surveyId, delegateId }) => {
           reportData.ratingsExcludingSelf,
           rating => (
             rating.custom !== true &&
-          quality._id.equals(rating.qualityId) &&
-          behaviour._id.equals(rating.behaviourId)),
+            quality._id.equals(rating.qualityId) &&
+            behaviour._id.equals(rating.behaviourId)),
         );
 
         behaviorRatings.forEach((rating, ri) => {
@@ -226,13 +235,13 @@ const resolveData = async ({ surveyId, delegateId }) => {
           reportData.ratingsSelf,
           rating => (
             rating.custom !== true &&
-          quality._id.equals(rating.qualityId) &&
-          behaviour._id.equals(rating.behaviourId)),
+            quality._id.equals(rating.qualityId) &&
+            behaviour._id.equals(rating.behaviourId)),
         );
 
         scoreSelf = lodash.isArray(selfRating) === true && selfRating.length >= 1 ? selfRating[0].rating : 0;
         logger.debug(`Score for self ${scoreSelf}`);
-            
+
         return {
           behaviourIndex: bi + 1,
           behaviour,
@@ -378,15 +387,15 @@ const resolveData = async ({ surveyId, delegateId }) => {
     data: {
       labels: qualitiesMap.map(q => q.model.title),
       datasets: [
-      {
-        label: 'Average',
-        labels: qualitiesMap.map(q => q.model.title),
-        data: qualitiesMap.map(q => q.avg.others),
-        backgroundColor: hex2RGBA(palette.secondary.main, 0.1),
-        lineTension: 0.1,
-        borderColor: palette.secondary.main,
-        borderWidth: 1,
-      }],
+        {
+          label: 'Average',
+          labels: qualitiesMap.map(q => q.model.title),
+          data: qualitiesMap.map(q => q.avg.others),
+          backgroundColor: hex2RGBA(palette.secondary.main, 0.1),
+          lineTension: 0.1,
+          borderColor: palette.secondary.main,
+          borderWidth: 1,
+        }],
     },
   }).then();
   logger.debug(`Radar Chart Avg Created: ${chartResult.file}`);
@@ -404,11 +413,11 @@ const resolveData = async ({ surveyId, delegateId }) => {
         borderWidth: 2,
       };
     });
-    
+
     const selfQualityratings = lodash.filter(reportData.ratingsSelf, r => r.custom !== true && quality.model._id.equals(r.qualityId));
-        
+
     datasets.push({
-      data: quality.behaviourScores.map(behaviourScore =>  {
+      data: quality.behaviourScores.map(behaviourScore => {
         return behaviourScore.scoreAvgOthers
       }),
       label: 'Avg.',
@@ -417,7 +426,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
       lineTension: 0,
     });
 
-  
+
     return DefaultBarChart({
       folder: chartsFolder,
       file: `bar-chart-${reportData.survey._id}-${quality.model._id}.png`,
@@ -476,14 +485,14 @@ const resolveData = async ({ surveyId, delegateId }) => {
 
 export const pdfmakedefinition = (data, partner, user) => {
   logger.debug('Generating PDF definition');
-  
-  const scaleSegments = [   ];
+
+  const scaleSegments = [];
   const isPlcReport = data.survey.surveyType === 'plc';
 
   data.scale.entries.forEach((scale) => {
-    if(scale.rating > 0) {
+    if (scale.rating > 0) {
       scaleSegments.push({ text: `${scale.rating} - ${scale.description}`, style: ['default'] });
-    }    
+    }
   });
 
   const { palette, includeAvatar = false } = data.meta;
@@ -497,9 +506,9 @@ export const pdfmakedefinition = (data, partner, user) => {
 
   const coverPage = [
     {
-      image:'partnerLogo', width: 190, style: ['centerAligned'], margin: [0, 0, 0, 20],
+      image: 'partnerLogo', width: 190, style: ['centerAligned'], margin: [0, 0, 0, 20],
     },
-    { text: '180°\nTeam Leadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },      
+    { text: '180°\nTeam Leadership Brand Assessment', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
     { text: `Executive Team (Exco)`, style: ['header', 'centerAligned'], margin: [0, 5] },
     includeAvatar === true ?
       {
@@ -513,21 +522,21 @@ export const pdfmakedefinition = (data, partner, user) => {
 
   const valuesText = () => {
     let text = '';
-    data.qualities.forEach((quality,qi)=>{ 
-      text=`${text}${quality.title}${qi === data.qualities.length - 2 ? ' and ' : ', ' }`;
+    data.qualities.forEach((quality, qi) => {
+      text = `${text}${quality.title}${qi === data.qualities.length - 2 ? ' and ' : ', '}`;
     });
     text = text.trim();
     text = text.substr(0, text.length - 1);
     return text;
   }
-  
+
   const introductionSection = [
     {
       text: '1. Introduction', newPage: 'before', style: ['header', 'primary'], pageBreak: 'before',
     },
     {
       text: [
-        `This report shows the aggregate and detailed results of the 180° Team Leadership Brand Assessment for the ${data.organization.name} ${data.delegateTeamName} team as completed by Senior Leadership team members.\n\n`,        
+        `This report shows the aggregate and detailed results of the 180° Team Leadership Brand Assessment for the ${data.organization.name} ${data.delegateTeamName} team as completed by Senior Leadership team members.\n\n`,
         `You have been assessed against the ${data.organization.name} values of ${valuesText()} as well as the supporting leadership behaviours for all ${data.organization.name} employees as articulated in the Leadership Brand statement of:`
       ],
       style: ['default'],
@@ -535,7 +544,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     {
       text: `${data.leadershipBrand.description.replace('\r', ' ')}`,
       style: ['default', 'quote', 'centerAligned'],
-      margin: [5, isPlcReport === true ? 30: 5, 5, isPlcReport === true ? 30: 5],
+      margin: [5, isPlcReport === true ? 30 : 5, 5, isPlcReport === true ? 30 : 5],
     },
     isPlcReport === false ? {
       text: [
@@ -546,15 +555,15 @@ export const pdfmakedefinition = (data, partner, user) => {
     } : undefined,
     isPlcReport === true ? {
       image: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/feplinfo.png`),
-      width: 400, 
-      style: ['centerAligned'], 
+      width: 400,
+      style: ['centerAligned'],
       margin: [0, 50, 0, 50]
     } :
-    {
-      text: '"You cannot manage what you cannot measure"',
-      style: ['default', 'quote', 'centerAligned'],
-      margin: [5, 5],
-    },
+      {
+        text: '"You cannot manage what you cannot measure"',
+        style: ['default', 'quote', 'centerAligned'],
+        margin: [5, 5],
+      },
     isPlcReport === false ? {
       text: [`The TowerStone Leadership Brand 180° Assessment is a tool that provides insight to track your  behavioural growth as you seek `,
         `to align yourselves collectively with the ${data.organization.name} values. It is now your responsibility to use this feedback to improve your ability `,
@@ -566,11 +575,11 @@ export const pdfmakedefinition = (data, partner, user) => {
   ];
 
   const scaleSection = [
-    { 
+    {
       newPage: 'before',
-      text: '2. Rating Scale', 
-      style: ['header', 'primary'], 
-      margin: [0, 30, 0, 30] 
+      text: '2. Rating Scale',
+      style: ['header', 'primary'],
+      margin: [0, 30, 0, 30]
     },
     { text: 'The feedback that you have received is in the context of the following rating scale:', style: ['default'] },
     ...scaleSegments
@@ -625,7 +634,7 @@ export const pdfmakedefinition = (data, partner, user) => {
     if (lodash.isArray(lowratingsForQuality) === true && lowratingsForQuality.length > 0) {
       behaviourSection.push({ text: 'Start Behaviours', style: ['default', 'primary'], margin: [0, 10, 0, 5], bold: true });
       behaviourSection.push({ text: 'You received low ratings for the behaviours below which means that your colleagues are not noticing these behaviours in the way you show up as a collective.', style: ['default'], margin: [0, 5] });
-      behaviourSection.push({ text: 'Pay special attention to developing and displaying these behaviours on a daily basis.\n\n',  style: ['default'] });
+      behaviourSection.push({ text: 'Pay special attention to developing and displaying these behaviours on a daily basis.\n\n', style: ['default'] });
 
       quality.behaviours.forEach((behaviour) => {
         const lowratingsForBehaviour = lodash.filter(lowratingsForQuality, r => r.custom !== true && behaviour._id.equals(r.behaviourId));
@@ -650,13 +659,13 @@ export const pdfmakedefinition = (data, partner, user) => {
       });
     }
 
-    const customLowRatingsForQuality = lodash.filter(data.lowratings(quality, 5), rating => rating.custom && lodash.isEmpty(rating.behaviourText) === false );
-    if(customLowRatingsForQuality.length > 0) {
-      behaviourSection.push({ text: 'Additional Comments', style: ['default', 'primary'], bold: true, margin: [0, 0, 0, 10],  pageBreak: 'before' });
-      behaviourSection.push({ text: `The assessors have provided some the following additional behaviour${customLowRatingsForQuality.length > 1 ? 's': ''} and how it impacts others (them).`, style: ['default'], margin: [0, 0, 0, 15] });
-      
+    const customLowRatingsForQuality = lodash.filter(data.lowratings(quality, 5), rating => rating.custom && lodash.isEmpty(rating.behaviourText) === false);
+    if (customLowRatingsForQuality.length > 0) {
+      behaviourSection.push({ text: 'Additional Comments', style: ['default', 'primary'], bold: true, margin: [0, 0, 0, 10], pageBreak: 'before' });
+      behaviourSection.push({ text: `The assessors have provided some the following additional behaviour${customLowRatingsForQuality.length > 1 ? 's' : ''} and how it impacts others (them).`, style: ['default'], margin: [0, 0, 0, 15] });
+
       let customRowEntries = customLowRatingsForQuality.map(custom => [{ text: custom.behaviourText, style: ['default'] }, { text: custom.rating === 0 ? 'N/A' : custom.rating, style: ['default'] }, { text: custom.comment || '(No comment provided)', style: ['default'] }]);
-      if(customRowEntries.length > 0) {
+      if (customRowEntries.length > 0) {
 
       }
       behaviourSection.push({
@@ -692,7 +701,7 @@ export const pdfmakedefinition = (data, partner, user) => {
           ],
         },
       });
-    }              
+    }
   });
 
 
@@ -744,8 +753,8 @@ export const pdfmakedefinition = (data, partner, user) => {
     { text: 'Use the table below to plan the actions you will put in place to address the feedback that you received:', style: ['default'], margin: [0, 15] },
     {
       table: {
-      // headers are automatically repeated if the table spans over multiple pages
-      // you can declare how many rows should be treated as headers
+        // headers are automatically repeated if the table spans over multiple pages
+        // you can declare how many rows should be treated as headers
         headerRows: 1,
         widths: ['*', 150, 150],
         layout: 'towerstone',
@@ -778,7 +787,7 @@ export const pdfmakedefinition = (data, partner, user) => {
 
   const acceptance = [
     { text: '7 Acceptance and Commitment', style: ['subheader', 'primary'], pageBreak: 'before' },
-    { text: 'We accept and commit to addressing the feedback presented in this assessment by taking the actions listed within the agreed timeframes.', style: ['default'],  margin: [0, 20] },
+    { text: 'We accept and commit to addressing the feedback presented in this assessment by taking the actions listed within the agreed timeframes.', style: ['default'], margin: [0, 20] },
     { text: 'Signed: ................................     Date: ...................................................... ', margin: [0, 50], style: ['default'] },
     { text: `(On behalf of ${data.delegateTeamName})`, margin: [0, 20], style: ['default'] },
   ];
@@ -793,18 +802,18 @@ export const pdfmakedefinition = (data, partner, user) => {
 
 
   greyscalePng(
-    `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`, 
+    `${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`,
     `${APP_DATA_ROOT}/organization/${data.organization._id}/greyscale_${data.organization.logo}`
-    );
+  );
 
 
   const partnerGreyScaleLogoPath = `${APP_DATA_ROOT}/themes/${partner.key}/images/greyscale_logo.png`;
-  
-  if(fs.existsSync(partnerGreyScaleLogoPath) === false) {
+
+  if (fs.existsSync(partnerGreyScaleLogoPath) === false) {
     greyscalePng(
       `${APP_DATA_ROOT}/themes/${partner.key}/images/logo.png`,
       partnerGreyScaleLogoPath
-    );  
+    );
   }
 
   return {
@@ -816,8 +825,8 @@ export const pdfmakedefinition = (data, partner, user) => {
       keywords: 'Leadership Training Personal Growth',
     },
     content: [
-      ...coverPage,      
-      ...introductionSection,      
+      ...coverPage,
+      ...introductionSection,
       ...scaleSection,
       ...qualitiesSection,
       ...behaviourSection,

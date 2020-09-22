@@ -5,16 +5,22 @@ const moment = require('moment');
 const { ObjectId } = mongoose.Schema.Types;
 
 export const EVENTS_TO_TRACK = {
-  DELEGATE_ADDED: 'DELEGATE ADDED',
-  LAUNCH_INVITE: 'LAUNCH INVITE',
-  LAUNCHED: 'LAUNCHED',
-  REMINDER: 'REMINDER SENT',
-  CLOSED: 'CLOSED',
-  REMOVED: 'DELEGATE REMOVED',
-  ASSESSOR_REMOVED: 'ASSESSOR REMOVED',
-  ENABLED: 'DELEGATE ENABLED',
-  NOMINEE_INVITE: 'NOMINEE INVITE SENT',
-  NOMINEES_CONFIRMED: 'NOMINEES CONFIRMED',
+  DELEGATE_ADDED: 'Delegate Added',
+  LAUNCH_INVITE: 'Launch Invite',
+  LAUNCHED: 'Launched',
+  REMINDER: 'Reminder Sent',
+  CLOSED: 'Closed',
+  REMOVED: 'Delegate Removed',
+  PAUSED: 'Delegate Paused',
+  RESTARTED: 'Delegate Restarted',
+  ASSESSOR_REMOVED: 'Assessor Removed',
+  ENABLED: 'Delegate Enabled',
+  NOMINEE_INVITE: 'Nomniee Invite Sent',
+  NOMINEES_CONFIRMED: 'Nominees Confirmed',
+  ASSESSMENT_STARTED: 'Assessment Started',
+  ASSESSMENT_COMPLETED: 'Assessment Completed',
+  ASSESSMENT_REOPENED: 'Assessment Re-opened',
+  REPORT_GENERATED: 'Report Generated',
 
 };
 

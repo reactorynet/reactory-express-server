@@ -771,6 +771,44 @@ export default {
               break;
             }
 
+            case 'pause-delegate': {
+
+              entryData.entry.message = `Delegate ${delegateModel.firstName} ${delegateModel.lastName} paused for survey.`;
+              entryData.entry.removed = false;
+              entryData.entry.status = 'paused';
+              entryData.entry.lastAction = 'paused';
+              entryData.entry.actions.push({
+                action: 'paused',
+                when: new Date(),
+                result: entryData.entry.message,
+                who: user._id,
+              });
+
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.PAUSED, `${user.firstName} paused delegate ${delegateModel.firstName} ${delegateModel.lastName} for Survey`, user.id, true);
+              entryData.patch = false;
+              break;
+
+            }
+
+            case 'restart-delegate': {
+
+              entryData.entry.message = `Delegate ${delegateModel.firstName} ${delegateModel.lastName} restarted for survey.`;
+              entryData.entry.removed = false;
+              entryData.entry.status = 'launched';
+              entryData.entry.lastAction = 'launched';
+              entryData.entry.actions.push({
+                action: 'launched',
+                when: new Date(),
+                result: entryData.entry.message,
+                who: user._id,
+              });
+
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.RESTARTED, `${user.firstName} restarted delegate ${delegateModel.firstName} ${delegateModel.lastName} for Survey`, user.id, true);
+              entryData.patch = false;
+              break;
+
+            }
+
             /**
              * re-enable / add the delegate back to the survey
              */

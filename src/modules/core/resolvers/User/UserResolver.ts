@@ -68,7 +68,7 @@ const MoresAssessmentsForUser = async (userId: any, status = ['ready']) => {
     logger.info(`Fetching assessments for user ${user.firstName} [${user.email}] - for partner key: ${partner.key}`);
     const assessmentTypes = [];
 
-    switch(partner.key) {
+    switch (partner.key) {
       case 'plc': {
         assessmentTypes.push('plc');
         break;
@@ -88,7 +88,7 @@ const MoresAssessmentsForUser = async (userId: any, status = ['ready']) => {
     }
 
     let modeFilters = ['live'];
-    if(user.hasRole(partner._id, 'DEVELOPER') === true || user.hasRole(partner._id, 'ADMIN') === true || user.hasRole(partner._id, 'ORGANIZATION_ADMIN') === true)  modeFilters.push('test');
+    if (user.hasRole(partner._id, 'DEVELOPER') === true || user.hasRole(partner._id, 'ADMIN') === true || user.hasRole(partner._id, 'ORGANIZATION_ADMIN') === true) modeFilters.push('test');
 
     const surveys = await Survey.find({
       surveyType: {
@@ -355,7 +355,7 @@ const userResolvers = {
     },
     async userPeers(obj: any, { id, organizationId }: any) {
 
-      if(!organizationId) {
+      if (!organizationId) {
         return []
       }
 
@@ -416,7 +416,7 @@ const userResolvers = {
     },
     MoresUserSurvey(obj: any, { id }: any, context: any, info: any) {
       const { partner } = global;
-      switch(partner.key) {
+      switch (partner.key) {
         case 'mores': {
           return MoresAssessmentsForUser(id);
         }
@@ -531,7 +531,7 @@ const userResolvers = {
 
       if (isNil(existing) === false && organization) {
         /** Checking if user has role */
-        if(existing.hasAnyRole(partner._id, organization._id) === false) {
+        if (existing.hasAnyRole(partner._id, organization._id) === false) {
           await existing.addRole(partner._id, 'USER', organization._id);
         }
 
@@ -583,6 +583,9 @@ const userResolvers = {
       })(id || _id.toString(), taskInput);
     },
     async confirmPeers(obj: any, { id, organization, surveyId }: any) {
+
+      logger.debug(`CONFIRMING PEERS - ID: ${id}  ORG: ${organization}  SURVEY ID: ${surveyId}`);
+
       const userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
         organization: ObjectId(organization),
@@ -596,10 +599,10 @@ const userResolvers = {
 
       let survey = null;
 
-      if(surveyId) {
+      if (surveyId) {
         survey = await Survey.findById(survey).then();
-        if(survey && survey.options) {
-          if(survey.options.autoLaunchOnPeerConfirm === true) {
+        if (survey && survey.options) {
+          if (survey.options.autoLaunchOnPeerConfirm === true) {
             // execml(``, {}, user, partner)
             logger.debug(`NEED TO IMPLEMENT AUTO LAUNCH FEATURE HERE`);
           }
@@ -639,7 +642,8 @@ const userResolvers = {
       try {
         if (emailPromises.length > 0) {
           await Promise.all(emailPromises).then(res => {
-            survey.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.NOMINEES_CONFIRMED, `Nominees confirmed @ ${moment().format('DD MMM YYYY HH:mm')}.`, null, true);
+            if (survey)
+              survey.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.NOMINEES_CONFIRMED, `Nominees confirmed @ ${moment().format('DD MMM YYYY HH:mm')}.`, null, true);
           });
         }
       } catch (emailError) {
@@ -844,14 +848,14 @@ const userResolvers = {
             logger.debug(`EMAIL USER FOUND: ${found}`);
             if (found) {
               const result = await O365.sendEmail(found.props.accessToken, subject, contentType, content, recipients, ccRecipients, saveToSentItems)
-              .then()
-              .catch(error => {
-                if (error.statusCode == 401) {
-                  throw new ApiError(`Error Sending Mail. Invalid Authentication Token`, { statusCode: error.statusCode, type: "MSAuthenticationFailure" });
-                } else {
-                  throw new ApiError(`Error Sending Mail: ${error.code} - ${error.message}`, { statusCode: error.statusCode });
-                }
-              });
+                .then()
+                .catch(error => {
+                  if (error.statusCode == 401) {
+                    throw new ApiError(`Error Sending Mail. Invalid Authentication Token`, { statusCode: error.statusCode, type: "MSAuthenticationFailure" });
+                  } else {
+                    throw new ApiError(`Error Sending Mail: ${error.code} - ${error.message}`, { statusCode: error.statusCode });
+                  }
+                });
 
               if (result && result.statusCode && result.statusCode != 400) {
                 throw new ApiError(`${result.code}. ${result.message}`);
@@ -897,11 +901,11 @@ const userResolvers = {
                   }
                 });
 
-                if (result && result.statusCode && result.statusCode != 400) {
-                  throw new ApiError(`Error Createing Outlook Task: ${result.message} - ${result.message}`);
-                }
+              if (result && result.statusCode && result.statusCode != 400) {
+                throw new ApiError(`Error Createing Outlook Task: ${result.message} - ${result.message}`);
+              }
 
-                return {
+              return {
                 Successful: true,
                 Message: 'Your task was created successfully.',
                 TaskId
@@ -938,13 +942,13 @@ const userResolvers = {
                   }
                 });
 
-                logger.info(`DELETION RESULT::  ${JSON.stringify(result)}`);
+              logger.info(`DELETION RESULT::  ${JSON.stringify(result)}`);
 
-                if (result && result.statusCode && result.statusCode != 400) {
-                  throw new ApiError(`Error Createing Outlook Task: ${result.message} - ${result.message}`);
-                }
+              if (result && result.statusCode && result.statusCode != 400) {
+                throw new ApiError(`Error Createing Outlook Task: ${result.message} - ${result.message}`);
+              }
 
-                return {
+              return {
                 Successful: true,
                 Message: 'Task successfully deleted.',
               }

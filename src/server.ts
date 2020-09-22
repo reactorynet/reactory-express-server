@@ -75,7 +75,7 @@ if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/asciilogo.txt`)) {
 
 
 const ENV_STRING_DEBUG = `
-Environment Settings: 
+Environment Settings:
   API_DATA_ROOT: ${APP_DATA_ROOT}
   APP_SYSTEM_FONTS: ${APP_SYSTEM_FONTS}
   MONGOOSE: ${MONGOOSE}
@@ -120,13 +120,13 @@ app.use(queryRoot,
 
 try {
   //app.use(queryRoot, graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
-  let expressConfig : ApolloServerExpressConfig = {
+  let expressConfig: ApolloServerExpressConfig = {
     typeDefs,
     resolvers,
     uploads: {
-      maxFileSize: 10000000, 
-      maxFiles: 10,      
-    },    
+      maxFileSize: 10000000,
+      maxFiles: 10,
+    },
   };
   apolloServer = new ApolloServer(expressConfig);
   //schema = makeExecutableSchema({ typeDefs, resolvers });
@@ -134,9 +134,9 @@ try {
   logger.info('Graph Schema Compiled, starting express');
 } catch (schemaCompilationError) {
   if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`)) {
-    const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { enocding: 'utf-8' });    
+    const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { enocding: 'utf-8' });
     logger.error(`\n\n${error}`);
-  }    
+  }
 
   graphError = `Error compiling the graphql schema ${schemaCompilationError.message}`;
   logger.error(graphError);
@@ -156,11 +156,11 @@ app.use(session({
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: '10mb' }));
 
-if(apolloServer) {  
+if (apolloServer) {
   apolloServer.applyMiddleware({ app, path: queryRoot });
 } else {
   if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`)) {
-    const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { enocding: 'utf-8' });    
+    const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { enocding: 'utf-8' });
     logger.error(`\n\n${error}`);
   }
   logger.error(`Error compiling the graphql schema: apolloServer instance is null!`);
@@ -170,29 +170,33 @@ if(apolloServer) {
 startup().then((startResult) => {
   logger.debug('Startup Generator Done.');
   amq.raiseSystemEvent('server.startup.begin');
-  AuthConfig.Configure(app); 
+  AuthConfig.Configure(app);
   app.use(userAccountRouter);
   app.use('/reactory', reactory);
   app.use('/froala', froala);
   app.use('/deliveries', froala);
   app.use('/workflow', workflow);
   app.use('/resources', resources);
-  app.use('/pdf', pdf);
+  app.use('/pdf', passport.authenticate(
+    ['jwt', 'anonymous'],
+    { session: false }),
+    bodyParser.urlencoded({ extended: true }
+    ), pdf);
   app.use('/excel', ExcelRouter);
   app.use('/charts', charts);
   app.use('/amq', amq.router);
-  app.use(resourcesPath, 
+  app.use(resourcesPath,
     passport.authenticate(
-      ['jwt', 'anonymous'], 
-      { session: false }), 
-      bodyParser.urlencoded({ extended: true }
-      ), 
-      express.static(APP_DATA_ROOT || publicFolder));
+      ['jwt', 'anonymous'],
+      { session: false }),
+    bodyParser.urlencoded({ extended: true }
+    ),
+    express.static(APP_DATA_ROOT || publicFolder));
   app.listen(API_PORT);
   app.use(flash());
   // logger.info(`Bots server using ${bots.name}`);
   logger.info(asciilogo);
-  if(graphcompiled === true) logger.info(`✅ Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
+  if (graphcompiled === true) logger.info(`✅ Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
   else logger.info(`🩺 GraphQL API not available - ${graphError}`);
   logger.info(`✅ System Initialized/Ready, enabling app`);
   global.REACTORY_SERVER_STARTUP = new Date();

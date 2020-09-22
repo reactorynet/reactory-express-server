@@ -25,6 +25,8 @@ import {
   Cache
 } from '@reactory/server-core/modules/core/models';
 
+import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
+
 const { APP_DATA_ROOT } = process.env;
 
 const debug_report = true;
@@ -39,9 +41,9 @@ const pdfpng = (path) => {
   } catch (fileError) {
     logger.error(`🚩 Error reading file ${path}`, fileError);
     returnpath = resolvePath(badref);
-    buffer = readFileSync(returnpath);        
+    buffer = readFileSync(returnpath);
   }
-  
+
   try {
     const { mime } = imageType(buffer);
     if (mime === 'image/png') {
@@ -53,9 +55,9 @@ const pdfpng = (path) => {
     }
   } catch (buffErr) {
     logger.error(`🚩 Error processing image ${path}`, fileError);
-    returnpath = badref;    
+    returnpath = badref;
   }
-  
+
 
   return returnpath;
 };
@@ -72,7 +74,7 @@ const greyscalePng = (path, outpath) => {
 
 /**
  * TODO: This data resolver needs to be split up into smaller segments with more precise error handling
- * @param {*} param0 
+ * @param {*} param0
  */
 const resolveData = async ({ surveyId, delegateId }) => {
   logger.info(`Resolving data for delegate-360-assessment Survey: ${surveyId}  DelegateEntry: ${delegateId}`);
@@ -139,6 +141,12 @@ const resolveData = async ({ surveyId, delegateId }) => {
       reportData.qualities = reportData.survey.leadershipBrand.qualities;
       reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
 
+      // TIMELINE ENTRY - REPORT GENERATED
+      if (survey) {
+        logger.debug(`USER FROM GLOBAL:: ${JSON.stringify(user)}`);
+        survey.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.REPORT_GENERATED, `Report generate by ${reportData.delegate.firstName} ${reportData.delegate.lastName}.`, reportData.delegate._id, true);
+      }
+
       try {
         maxRating = reportData.scale.maxRating();
         logger.debug(`Max Rating ==> ${maxRating}`)
@@ -146,7 +154,7 @@ const resolveData = async ({ surveyId, delegateId }) => {
         //could not get max via scale
         logger.error('Could not get max rating from scale', err);
       }
-      
+
       reportData.assessments = await Assessment.find({
         delegate: reportData.delegate._id,
         survey: ObjectId(surveyId),
