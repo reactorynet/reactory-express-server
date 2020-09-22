@@ -3,7 +3,6 @@ import {
 } from '../shared';
 const uiSchema: any = {
   'ui:options': {
-    submitIcon: 'search',
     componentType: "form",
     showSubmit: false,
     showRefresh: false,

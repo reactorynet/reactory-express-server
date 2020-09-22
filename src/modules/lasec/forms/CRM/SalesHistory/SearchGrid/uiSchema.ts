@@ -152,7 +152,8 @@ const uiSchema: any = {
         toolbar: true,
         selection: true,
         toolbarButtonAlignment: 'left',
-        actionsColumnIndex: -1
+        actionsColumnIndex: -1,
+        pageSize: 10,
       },
       componentMap: {
         Toolbar: 'lasec-crm.SalesHistoryGridToolbar@1.0.0',

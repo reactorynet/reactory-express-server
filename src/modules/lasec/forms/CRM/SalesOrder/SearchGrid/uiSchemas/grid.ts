@@ -4,7 +4,7 @@ const uiSchema: any = {
   'ui:options': {
     submitIcon: 'search',
     componentType: "form",
-    showSubmit: true,
+    showSubmit: false,
     showRefresh: false,
     container: "div",
     containerStyles: {
@@ -319,7 +319,8 @@ const uiSchema: any = {
         toolbar: true,
         selection: true,
         toolbarButtonAlignment: 'left',
-        actionsColumnIndex: -1
+        actionsColumnIndex: -1,
+        pageSize: 10,
       },
       remoteData: true,
       query: 'query',

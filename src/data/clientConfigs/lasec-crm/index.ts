@@ -165,7 +165,7 @@ const Menus = {
     {
       ordinal: 1,
       title: 'Sales',
-      link: '/crm/clients',
+      link: '/crm/clients/',
       icon: 'attach_money',
       roles: ['USER'],
       items: [

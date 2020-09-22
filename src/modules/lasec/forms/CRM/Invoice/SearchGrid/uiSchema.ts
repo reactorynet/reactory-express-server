@@ -270,6 +270,7 @@ const uiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
+        pageSize: 10
       },
       remoteData: true,
       query: 'query',
