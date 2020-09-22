@@ -32,7 +32,7 @@ type Assessment {
     deleted: Boolean
     deleteReason: String
     createdAt: Date
-    updatedAt: Date    
+    updatedAt: Date
 }
 
 enum ReportStatus {
@@ -56,15 +56,16 @@ extend type Query {
     userSurveys(id: String): [Assessment]
     MoresUserSurvey(id: String): [Assessment]
     userReports(id: String): [SurveyReportForUser]
-    reportDetailForUser(userId: String, surveyId: String): SurveyReportForUser    
+    reportDetailForUser(userId: String, surveyId: String): SurveyReportForUser
 }
 
 extend type Mutation {
     setRatingForAssessment(
-        id: String, ratingId: String, 
-        rating: Int, comment: String, 
+        id: String, ratingId: String,
+        rating: Int, comment: String,
         qualityId: String, behaviourId: String,
         custom: Boolean, behaviourText: String, deleteRating: Boolean) : Rating
+    assessmentStarted(id: String!): Any
     setAssessmentComplete(id: String!, complete: Boolean): Assessment
-    deleteAssessment(id: String!, remove: Boolean): Any    
+    deleteAssessment(id: String!, remove: Boolean): Any
 }

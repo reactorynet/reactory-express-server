@@ -25,12 +25,16 @@ import {
   launchSurveyForDelegate,
   sendSurveyEmail,
   EmailTypesForSurvey,
-  sendSurveyClosed
+  sendSurveyClosed,
+  sendSingleReminder,
+  sendSingleSurveyLaunchEmail
 } from '@reactory/server-core/application/admin/Survey';
 import { TowerStone } from '../towerstone';
 import { TowerStoneServicesMap } from "../services";
 import AuthConfig from 'authentication';
 import { Reactory } from '@reactory/server-core/types/reactory';
+
+import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
 
 const { findIndex, pullAt } = lodash;
 
@@ -41,6 +45,18 @@ interface SurveyDelegateActionParams {
   action: string,
   inputData: any
 };
+
+// export const EVENTS_TO_TRACK = {
+//   DELEGATE_ADDED: 'DELEGATE ADDED',
+//   LAUNCH_INVITE: 'LAUNCH INVITE',
+//   LAUNCHED: 'LAUNCHED',
+//   REMINDER: 'REMINDER SENT',
+//   CLOSED: 'CLOSED',
+//   REMOVED: 'DELEGATE REMOVED',
+//   ASSESSOR_REMOVED: 'ASSESSOR REMOVED',
+//   ENABLED: 'DELEGATE ENABLED',
+
+// }
 
 function getMailService(survey: TowerStone.ISurvey, action: String = 'default') {
   const emailServiceProvider: TowerStone.ITowerStoneEmailServiceProvider = TowerStoneServicesMap["towerstone.EmailService@1.0.0"].service as TowerStone.ITowerStoneEmailServiceProvider;
@@ -310,6 +326,7 @@ export default {
       if (survey != null) {
         context.organization = survey.organization;
       }
+
       return survey;
     },
     async TowerStoneGetDemographicLookup(obj, args) {
@@ -414,6 +431,8 @@ export default {
     },
     async surveyDelegateAction(obj, params: SurveyDelegateActionParams) {
 
+      logger.debug(`TAKING DELGATE ACTION:: ${JSON.stringify(params)}`);
+
       const {
         entryId, survey, delegate, action, inputData,
       } = params;
@@ -437,8 +456,7 @@ export default {
         delegateModel.addRole(partner._id, 'USER', `${surveyModel.organization._id}`);
       }
 
-      logger.debug(`Executing ${action} for ${delegateModel.firstName} ${delegateModel.lastName} as part of ${surveyModel.title}`);
-
+      logger.debug(`EXECUTING ${action} FOR ${delegateModel.firstName} ${delegateModel.lastName} AS PART OF ${surveyModel.title}`);
 
       const organigramModel: any = await Organigram.findOne({
         user: new ObjectId(delegateModel._id),
@@ -458,7 +476,9 @@ export default {
       };
 
       try {
+
         logger.info(`Survey Model has ${surveyModel.delegates.length} delegates, finding ${entryId}`);
+
         if (entryId === '' && action === 'add') {
           entryData.entry = {
             id: new ObjectId(),
@@ -494,23 +514,21 @@ export default {
             }
           }
 
-          (surveyModel as TowerStone.ISurveyDocument).delegates.push(entryData.entry);
-          await surveyModel.save().then();
-          // TODO: Figure out why this is throwing a mongoose error now
-          // record is inserted, but on return it fails
           try {
-            surveyModel.addTimelineEntry('Added Delegate', `${user.firstName} added ${delegateModel.firstName} ${delegateModel.lastName} to Survey`, user.id, true);
+            (surveyModel as TowerStone.ISurveyDocument).delegates.push(entryData.entry);
+
+            const saveResponse = await surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.DELEGATE_ADDED, `${user.firstName} added ${delegateModel.firstName} ${delegateModel.lastName} to Survey`, user.id, true);
+            entryData.entry = saveResponse.delegates[saveResponse.delegates.length - 1]; // SET TO NEWLY CREATED DELEGATE ENTRYrs
           } catch (e) {
             logger.error(e.message, e);
           }
 
           entryData.patch = false;
-
           return entryData.entry;
 
         } else {
-          // not a new entry, find it!
           entryData.entry = (surveyModel as TowerStone.ISurveyDocument).delegates.id(entryId);
+
           if (entryData.entry === null) {
             throw new ApiError('Could not find the delegate entry with the entry id', entryId);
           }
@@ -545,6 +563,9 @@ export default {
                 result: inviteResult.message,
                 who: user._id,
               });
+
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.LAUNCH_INVITE, `${user.firstName} sent an invite to delegate ${delegateModel.firstName} ${delegateModel.lastName}.`, user.id, true);
+              entryData.patch = false;
               break;
             }
 
@@ -585,11 +606,9 @@ export default {
                   who: user._id,
                 });
 
-                await surveyModel.addTimelineEntry('Launched 180', `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName}`, user, true).then();
+                await surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.LAUNCHED, `${user.firstName} launched 180 for ${entryData.entry.delegate.firstName} ${entryData.entry.delegate.lastName}`, user, true).then();
 
               } else {
-
-
                 let requires_peersConfirmed = true;
                 let organigramInvalid = false;
 
@@ -631,6 +650,9 @@ export default {
                   });
                 }
               }
+
+              await surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.LAUNCHED, `${user.firstName} launched for ${entryData.entry.delegate.firstName} ${entryData.entry.delegate.lastName}`, user, true).then();
+
               break;
             }
 
@@ -657,7 +679,6 @@ export default {
                   });
 
                   entryData.entry.message = mailSendResult.sent === 1 ? 'Sent reminder to delegate for 180' : 'Could not send reminder';
-                  entryData.patch = true;
                   entryData.entry.lastAction = 'reminder';
 
                   entryData.entry.actions.push({
@@ -666,15 +687,16 @@ export default {
                     result: mailSendResult.sent === 1 ? 'Sent reminder to delegate for 180' : 'Could not send reminder',
                     who: user._id,
                   });
+
+                  surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.REMINDER, `Survey reminder sent to ${delegateModel.firstName} ${delegateModel.lastName} for 180 @ ${moment().format('DD MMM YYYY HH:mm')}.`, user.id, false);
+
+                  entryData.patch = true;
+
                   logger.debug('Sent mails for 180 launch', { mailSendResult })
                 }
               } else {
-
-                debugger
-
                 const reminderResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyReminder);
                 entryData.entry.message = reminderResult.message;
-                entryData.patch = true;
                 entryData.entry.lastAction = 'reminder';
 
                 entryData.entry.actions.push({
@@ -684,8 +706,9 @@ export default {
                   who: user._id,
                 });
 
+                surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.REMINDER, `Survey reminder sent to ${delegateModel.firstName} ${delegateModel.lastName} @ ${moment().format('DD MMM YYYY HH:mm')}.`, user.id, false);
+                entryData.patch = true;
               }
-
 
               break;
             }
@@ -696,7 +719,6 @@ export default {
             case 'send-closed': {
               const closeResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.SurveyClose);
               entryData.entry.message = closeResult.message;
-              entryData.patch = true;
               entryData.entry.status = 'closed';
               entryData.entry.lastAction = 'closed';
               entryData.complete = true;
@@ -706,6 +728,9 @@ export default {
                 result: closeResult.message,
                 who: user._id,
               });
+
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.CLOSED, closeResult.message, user.id, false);
+              entryData.patch = true;
               break;
             }
 
@@ -719,15 +744,19 @@ export default {
                 entryData.entry.status = 'removed';
                 entryData.entry.lastAction = 'removed';
                 entryData.patch = true;
-
                 entryData.entry.actions.push({
                   action: 'removed',
                   when: new Date(),
                   result: entryData.entry.message,
                   who: user._id,
                 });
+
+                surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.REMOVED, `${user.firstName} removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
+                entryData.patch = false;
+
               } else {
                 surveyModel.delegates[entryData.entryIdx].remove();
+
                 entryData.entry.status = 'deleted';
                 entryData.entry.actions.push({
                   action: 'deleted',
@@ -736,10 +765,48 @@ export default {
                   who: user._id,
                 });
 
-                surveyModel.addTimelineEntry('User Removed', `${user.firstName} removed delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
+                surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.REMOVED, `${user.firstName} deleted delegate ${delegateModel.firstName} ${delegateModel.lastName} from Survey`, user.id, true);
                 entryData.patch = false;
               }
               break;
+            }
+
+            case 'pause-delegate': {
+
+              entryData.entry.message = `Delegate ${delegateModel.firstName} ${delegateModel.lastName} paused for survey.`;
+              entryData.entry.removed = false;
+              entryData.entry.status = 'paused';
+              entryData.entry.lastAction = 'paused';
+              entryData.entry.actions.push({
+                action: 'paused',
+                when: new Date(),
+                result: entryData.entry.message,
+                who: user._id,
+              });
+
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.PAUSED, `${user.firstName} paused delegate ${delegateModel.firstName} ${delegateModel.lastName} for Survey`, user.id, true);
+              entryData.patch = false;
+              break;
+
+            }
+
+            case 'restart-delegate': {
+
+              entryData.entry.message = `Delegate ${delegateModel.firstName} ${delegateModel.lastName} restarted for survey.`;
+              entryData.entry.removed = false;
+              entryData.entry.status = 'launched';
+              entryData.entry.lastAction = 'launched';
+              entryData.entry.actions.push({
+                action: 'launched',
+                when: new Date(),
+                result: entryData.entry.message,
+                who: user._id,
+              });
+
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.RESTARTED, `${user.firstName} restarted delegate ${delegateModel.firstName} ${delegateModel.lastName} for Survey`, user.id, true);
+              entryData.patch = false;
+              break;
+
             }
 
             /**
@@ -750,7 +817,6 @@ export default {
               entryData.entry.removed = false;
               entryData.entry.status = 'new';
               entryData.entry.lastAction = 're-added';
-              entryData.patch = true;
 
               entryData.entry.actions.push({
                 action: 'removed',
@@ -759,6 +825,8 @@ export default {
                 who: user._id,
               });
 
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.ENABLED, `${user.firstName} enabled delegate ${delegateModel.firstName} ${delegateModel.lastName} on Survey`, user.id, true);
+              entryData.patch = true;
               break;
             }
 
@@ -770,6 +838,7 @@ export default {
               try {
                 const { assessmentId } = inputData;
                 const assessment = await Assessment.findById(assessmentId).populate('assessor').then();
+
                 if (assessment !== null && assessment !== undefined) {
                   assessment.deleted = true;
                   assessment.completed = true;
@@ -778,16 +847,20 @@ export default {
                   let pullAtIndex = -1;
 
                   for (let aidx = 0; aidx < assessmentCount; aidx += 1) {
-                    const sourceId = entryData.entry.assessments[aidx];
+                    const sourceId = entryData.entry.assessments[aidx]._id;
                     if (ObjectId(sourceId).equals(ObjectId(assessmentId))) {
                       pullAtIndex = aidx;
                     }
                   }
 
-                  if (pullAtIndex > -1) pullAt(entryData.entry.assessments, [pullAtIndex]);
+                  if (pullAtIndex > -1) {
+                    pullAt(entryData.entry.assessments, [pullAtIndex]);
+                  }
 
                   entryData.entry.message = `Removed ${assessment.assessor.firstName} ${assessment.assessor.lastName} for ${delegateModel.firstName} ${delegateModel.lastName} from Survey`;
                   entryData.entry.lastAction = 'removed-assessor';
+
+                  surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.ASSESSOR_REMOVED, `Removed ${assessment.assessor.firstName} ${assessment.assessor.lastName} for ${delegateModel.firstName} ${delegateModel.lastName} from Survey.`, user.id, false);
                   entryData.patch = true;
                 }
               } catch (removeError) {
@@ -795,6 +868,47 @@ export default {
               }
               break;
             }
+
+            case 'send-single-reminder': {
+              const { assessment } = inputData;
+
+              const reminderResult = await sendSingleReminder(assessment, entryData.entry, surveyModel);
+              entryData.entry.message = reminderResult.message;
+              entryData.entry.lastAction = 'reminder';
+
+              entryData.entry.actions.push({
+                action: 'reminder',
+                when: new Date(),
+                result: reminderResult.message,
+                who: user._id,
+              });
+
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.REMINDER, `Survey reminder sent to ${assessment.assessor.firstName} ${assessment.assessor.lastName} @ ${moment().format('DD MMM YYYY HH:mm')}.`, user.id, false);
+              entryData.patch = true;
+
+              break;
+            }
+
+            case 'send-single-launch': {
+              const { assessment } = inputData;
+
+              const reminderResult = await sendSingleSurveyLaunchEmail(surveyModel, entryData.entry, assessment);
+              entryData.entry.message = reminderResult.message;
+              entryData.entry.lastAction = 'launch';
+
+              entryData.entry.actions.push({
+                action: 'launch',
+                when: new Date(),
+                result: reminderResult.message,
+                who: user._id,
+              });
+
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.LAUNCH_INVITE, `Launch sent to ${assessment.assessor.firstName} ${assessment.assessor.lastName} @ ${moment().format('DD MMM YYYY HH:mm')}.`, user.id, false);
+              entryData.patch = true;
+
+              break;
+            }
+
             // catch all
             default: {
               entryData.message = 'Default action taken, none';
@@ -813,8 +927,8 @@ export default {
           return entryData.entry;
         }
       } catch (error) {
-        // console.log(error);
-        logger.error(error.message, error);
+        logger.error(`DELEGATE ACTIONS ERROR:: ${error.message, error}`,);
+        throw new ApiError('Delegate action error!', error);
       }
     },
     async TowerStoneSurveySetTemplates(parent: any, params: TowerStone.ITowerStoneSetTemplatesParameters) {

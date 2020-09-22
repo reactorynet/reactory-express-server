@@ -4,6 +4,7 @@ import lodash from 'lodash';
 import { User, Survey, Assessment, LeadershipBrand } from '../../index';
 import logger from '../../../logging';
 import ApiError, { RecordNotFoundError } from '../../../exceptions';
+import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
 
 
 const assessmentResolver = {
@@ -11,15 +12,26 @@ const assessmentResolver = {
 
   },
   Mutation: {
+
+    assessmentStarted: async (obj, { id }) => {
+      try {
+        const assessment = await Assessment.findById(id).populate('assessor').then();
+        const survey = await Survey.findById(assessment.survey).then();
+        survey.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.ASSESSMENT_STARTED, `${assessment.assessor.firstName} ${assessment.assessor.lastName} started their assessment.`, null, true);
+      } catch (error) {
+        throw new ApiError(`Error creating timeline entry - Assessment Started`);
+      }
+    },
+
     setRatingForAssessment: async (obj, {
       id, ratingId,
       rating, comment,
       qualityId, behaviourId,
       custom, behaviourText,
       deleteRating = false,
-    }) => {      
+    }) => {
       const assessment = await Assessment.findById(id).then();
-      const isNew = lodash.isString(ratingId) === true && ratingId === 'NEW';      
+      const isNew = lodash.isString(ratingId) === true && ratingId === 'NEW';
 
       if (assessment && ratingId && isNew === false) {
         logger.info(`Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${global.user.fullName()} `);
@@ -28,7 +40,7 @@ const assessmentResolver = {
           ratingDoc.rating = rating;
           ratingDoc.comment = comment;
           ratingDoc.updatedAt = new Date().valueOf();
-          ratingDoc.updateBy = global.user._id;                    
+          ratingDoc.updateBy = global.user._id;
         }
 
         if (ratingDoc && deleteRating === true) {
@@ -103,20 +115,24 @@ const assessmentResolver = {
       await assessment.save().then();
       const { user } = global;
 
-      if(complete === true) {
+      if (complete === true) {
         if (user._id.equals(assessment.assessor._id) === true) {
-          surveyDoc.addTimelineEntry('Assessment Completed', `${user.fullName()} completed assessment for ${assessment.delegate.fullName()}`, user._id, true);
+          // surveyDoc.addTimelineEntry('Assessment Completed', `${user.fullName()} completed assessment for ${assessment.delegate.fullName()}`, user._id, true);
+          surveyDoc.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.ASSESSMENT_COMPLETED, `${user.fullName()} completed assessment for ${assessment.delegate.fullName()}`, user._id, true);
         } else {
-          surveyDoc.addTimelineEntry('Assessment Completed', `${user.fullName()} completed assessment for ${assessment.delegate.fullName()} on behalf of ${assessment.assessor.fullName()}`, user._id, true);
+          // surveyDoc.addTimelineEntry('Assessment Completed', `${user.fullName()} completed assessment for ${assessment.delegate.fullName()} on behalf of ${assessment.assessor.fullName()}`, user._id, true);
+          surveyDoc.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.ASSESSMENT_COMPLETED, `${user.fullName()} completed assessment for ${assessment.delegate.fullName()} on behalf of ${assessment.assessor.fullName()}`, user._id, true);
         }
       } else {
         if (user._id.equals(assessment.assessor._id) === true) {
-          surveyDoc.addTimelineEntry('Assessment re-opened', `${user.fullName()} re-opened assessment for ${assessment.delegate.fullName()}`, user._id, true);
+          // surveyDoc.addTimelineEntry('Assessment re-opened', `${user.fullName()} re-opened assessment for ${assessment.delegate.fullName()}`, user._id, true);
+          surveyDoc.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.ASSESSMENT_REOPENED, `${user.fullName()} re-opened assessment for ${assessment.delegate.fullName()}`, user._id, true);
         } else {
-          surveyDoc.addTimelineEntry('Assessment re-opened', `${user.fullName()} re-opened assessment for ${assessment.assessor.fullName()}`, user._id, true);
+          // surveyDoc.addTimelineEntry('Assessment re-opened', `${user.fullName()} re-opened assessment for ${assessment.assessor.fullName()}`, user._id, true);
+          surveyDoc.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.ASSESSMENT_REOPENED, `${user.fullName()} re-opened assessment for ${assessment.assessor.fullName()}`, user._id, true);
         }
       }
-      
+
       return assessment;
     },
     /**

@@ -36,7 +36,7 @@ class AuthConfig {
         logger.debug('AuthConfig.passport.deserializeUser', id);
         done(null, users[id]);
       });
-      
+
       passport.use(new BasicStrategy({ passReqToCallback: true }, AuthConfig.BasicAuth));
       passport.use(new JwtStrategy(AuthConfig.JwtOptions, AuthConfig.JwtAuth));
       passport.use(new AnonStrategy());
@@ -84,9 +84,9 @@ class AuthConfig {
               }
             }
 
-            if(user.avatar) {              
-              _existing.avatar = updateUserProfileImage(_existing, user.avatar, false, false);              
-            }          
+            if(user.avatar) {
+              _existing.avatar = updateUserProfileImage(_existing, user.avatar, false, false);
+            }
           }
         } catch (err) {
           done(err, null);
@@ -188,7 +188,7 @@ class AuthConfig {
       );
 
       app.get('/auth/microsoft/openid/failed', async (req, res, next) => {
-        
+
         global.partner = await ReactoryClient.findOne({ key: req.query['x-client-key'] }).then();
         logger.debug(`Received Failed Microsoft Login for ${req.query['x-client-key']}`);
 
@@ -263,7 +263,7 @@ class AuthConfig {
 
       return {
         ...authOptions,
-        userId: `${user._id.toString()}`, // eslint-disable-line no-underscore-dangle
+        userId: `${user._id ? user._id.toString() : user.id.toString()}`, // eslint-disable-line no-underscore-dangle
         refresh: uuid(),
         name: `${user.firstName} ${user.lastName}`,
         // memberships: user.memberships,
@@ -288,10 +288,10 @@ class AuthConfig {
     static generateLoginToken = (user, ip = 'none') => {
       logger.info('generating Login token');
       return new Promise((resolve, reject) => {
-        user.lastLogin = moment().valueOf(); // eslint-disable-line 
+        user.lastLogin = moment().valueOf(); // eslint-disable-line
         const jwtPayload = AuthConfig.jwtTokenForUser(user);
         AuthConfig.addSession(user, jwtPayload, ip).then((savedUser) => {
-          resolve({            
+          resolve({
             firstName: savedUser.firstName,
             lastName: savedUser.lastName,
             token: AuthConfig.jwtMake(jwtPayload),
@@ -303,7 +303,7 @@ class AuthConfig {
     static BasicAuth = (req, username, password, done) => {
       logger.info(`Authenticating User: ${username}`);
       User.findOne({ email: username }).then((userResult) => {
-        if (userResult === null || userResult === undefined) { 
+        if (userResult === null || userResult === undefined) {
           done(null, false, { message: 'Incorrect Credentials Supplied' });
           return;
         }

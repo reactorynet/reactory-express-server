@@ -13,6 +13,8 @@ import defaultEmailTemplates from './defaultEmailTemplates';
 import AuthConfig from '../authentication';
 import logger from '../logging';
 
+import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
+
 const TemplateViews = {
   ActivationEmail: 'activation-email',
   ForgotPassword: 'forgot-password-email',
@@ -586,11 +588,11 @@ export const surveyEmails = {
       assessorModel = await User.findById(assessor).then();
     } else  {
       if(!assessor.firstName || !assessor.lastName || !assessor.email) {
-        if(ObjectId.isValid(assessor.id) || ObjectId.isValid(assessor._id)) 
+        if(ObjectId.isValid(assessor.id) || ObjectId.isValid(assessor._id))
         assessorModel = await User.findById(assessor._id).then();
       } else {
         assessorModel = assessor;
-      }      
+      }
     }
 
     const emailResult = {
@@ -624,6 +626,7 @@ export const surveyEmails = {
       }
 
       logger.info('Api Key Set, configuring property bag for template.');
+
       // property bag for template
       const properties = {
         partner,
@@ -632,13 +635,13 @@ export const surveyEmails = {
         assessment,
         user: assessorModel,
         organization: organization || survey.organization,
-        isSelfAssessment: isSelfAssessment,
+        isSelfAssessment,
         survey,
         applicationTitle: partner.name,
         timeEnd: moment(survey.endDate).format('HH:mm'),
         dateEnd: moment(survey.endDate).format('YYYY-MM-DD'),
-        assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
-        link: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
+        assessmentLink: `${partner.siteUrl}/assess/${assessment.id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
+        link: `${partner.siteUrl}/assess/${assessment.id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
       };
 
       let bodyTemplate = null;
@@ -657,7 +660,6 @@ export const surveyEmails = {
       } else {
         logger.info('No elements for template');
       }
-
 
       const msg = {
         to: `${assessorModel.firstName} ${assessorModel.lastName}<${assessorModel.email}>`,
@@ -716,7 +718,7 @@ export const surveyEmails = {
         queueMail(assessor, msg, queoptions);
       }
     } catch (loadError) {
-      emailResult.error = loadError.message;
+      emailResult.error = `MAIN TRY ${loadError.message}`;
     }
     return emailResult;
   },
@@ -961,6 +963,12 @@ export const organigramEmails = {
           sgMail.send(msg);
           emailResult.sent = true;
           logger.info(`Email sent to ${msg.to}`);
+
+
+          if (survey) {
+            survey.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.NOMINEE_INVITE, `Nominee invite sent to ${peer.firstName} ${peer.lastName} @ ${moment().format('DD MMM YYYY HH:mm')}.`, null, true);
+          }
+
           if (organigramModel && lodash.isArray(organigramModel.peers) === true && peerIndex >= 0) {
             organigramModel.peers[peerIndex].inviteSent = true; //eslint-disable-line
             organigramModel.peers[peerIndex].confirmed = true; //eslint-disable-line

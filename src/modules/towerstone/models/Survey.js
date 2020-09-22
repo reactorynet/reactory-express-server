@@ -4,6 +4,26 @@ const moment = require('moment');
 
 const { ObjectId } = mongoose.Schema.Types;
 
+export const EVENTS_TO_TRACK = {
+  DELEGATE_ADDED: 'Delegate Added',
+  LAUNCH_INVITE: 'Launch Invite',
+  LAUNCHED: 'Launched',
+  REMINDER: 'Reminder Sent',
+  CLOSED: 'Closed',
+  REMOVED: 'Delegate Removed',
+  PAUSED: 'Delegate Paused',
+  RESTARTED: 'Delegate Restarted',
+  ASSESSOR_REMOVED: 'Assessor Removed',
+  ENABLED: 'Delegate Enabled',
+  NOMINEE_INVITE: 'Nomniee Invite Sent',
+  NOMINEES_CONFIRMED: 'Nominees Confirmed',
+  ASSESSMENT_STARTED: 'Assessment Started',
+  ASSESSMENT_COMPLETED: 'Assessment Completed',
+  ASSESSMENT_REOPENED: 'Assessment Re-opened',
+  REPORT_GENERATED: 'Report Generated',
+
+};
+
 const SurveySchema = new mongoose.Schema({
   id: ObjectId,
   legacyId: String,
@@ -155,7 +175,8 @@ SurveySchema.methods.addTimelineEntry = async function addTimelineEntry(
 
   this.timeline.push(entry);
 
-  if (save) await this.save().then();
+  // if (save) await this.save().then();
+  if (save) return this.save().then();
 };
 
 SurveySchema.methods.clearedForLaunchBySurvey = function clearedForLaunchBySurvey() {

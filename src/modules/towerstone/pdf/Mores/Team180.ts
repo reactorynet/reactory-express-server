@@ -30,6 +30,8 @@ import {
 } from '@reactory/server-modules/core/models';
 import { TowerStone } from '@reactory/server-modules/towerstone/towerstone';
 
+import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
+
 const { APP_DATA_ROOT } = process.env;
 
 const badref = `${APP_DATA_ROOT}/themes/mores/images/badref.png`;
@@ -127,6 +129,8 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
   try {
     const { partner, user } = global;
 
+    logger.info(`GLOBAL DATA - USER ${JSON.stringify(user)}  PARTNER: ${partner}`);
+
     const survey = await Survey.findById(surveyId)
       .populate('organization')
       .populate('leadershipBrand')
@@ -193,6 +197,12 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
       reportData.leadershipBrand = reportData.survey.leadershipBrand;
       reportData.qualities = reportData.survey.leadershipBrand.qualities;
       reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
+
+      // TIMELINE ENTRY - REPORT GENERATED
+      if (survey) {
+        logger.debug(`USER FROM GLOBAL:: ${JSON.stringify(user)}`);
+        survey.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.REPORT_GENERATED, `Report generate by ${reportData.delegate.firstName} ${reportData.delegate.lastName}.`, reportData.delegate._id, true);
+      }
 
       try {
         maxRating = reportData.scale.maxRating();
@@ -306,16 +316,16 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
       reportData.scoreSelf = Math.floor((totalSelfRatings * 100) / (reportData.ratingsSelf.length * maxRating));
     }
 
-    
+
     const user_folder = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/`;
 
-    if(fs.existsSync(user_folder) === false) {
+    if (fs.existsSync(user_folder) === false) {
       fs.mkdirSync(user_folder);
     }
 
 
     const user_charts_folder = `${user_folder}charts/`
-    if(fs.existsSync(user_charts_folder) === false) {
+    if (fs.existsSync(user_charts_folder) === false) {
       fs.mkdirSync(user_charts_folder);
     }
 
@@ -702,7 +712,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
 
     /**
      *  Behaviour Counting / Group By Charts
-     *  
+     *
      */
 
     barchartPromises = qualitiesMap.map((quality: TowerStone.IQuality, qi: number) => {
@@ -884,7 +894,7 @@ const definition = (data, partner, user) => {
       toc: {
         // title: { text: 'Sections', style: ['subheader', 'secondary'] },
         //textMargin: [0, 0, 0, 0],
-        //textStyle: {italics: true},        
+        //textStyle: {italics: true},
         numberStyle: { bold: true }
       }
     },
@@ -1580,7 +1590,7 @@ const definition = (data, partner, user) => {
     {
       table: {
         // headers are automatically repeated if the table spans over multiple pages
-        // you can declare how many rows should be treated as headers        
+        // you can declare how many rows should be treated as headers
         headerRows: 1,
         widths: [250, 250],
         layout: 'towerstone',
@@ -1680,15 +1690,15 @@ const definition = (data, partner, user) => {
               {
                 body: [
                   [
-                    {text: 'Key',...cellprops}, 
-                    {text:'Avg Others',...cellprops}, 
-                    {text:'Avg All',...cellprops}, 
-                    {text:'Self',...cellprops},
-                    {text: '1s', ...cellprops },
-                    {text: '2s', ...cellprops },
-                    {text: '3s', ...cellprops },
-                    {text: '4s', ...cellprops },
-                    {text: '5s', ...cellprops },
+                    { text: 'Key', ...cellprops },
+                    { text: 'Avg Others', ...cellprops },
+                    { text: 'Avg All', ...cellprops },
+                    { text: 'Self', ...cellprops },
+                    { text: '1s', ...cellprops },
+                    { text: '2s', ...cellprops },
+                    { text: '3s', ...cellprops },
+                    { text: '4s', ...cellprops },
+                    { text: '5s', ...cellprops },
                   ],
                   ...q.behaviourScores.map((b, bi) => [
                     { text: b.key, ...cellprops },

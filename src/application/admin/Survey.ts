@@ -41,6 +41,7 @@ export const EmailTypesForSurvey = {
   ParticipationInvite: 'survey-participation-invite',
   SurveyLaunch: 'survey-launch',
   SurveyReminder: 'survey-reminder',
+  SingleSurveyReminder: 'single-survey-reminder',
   SurveyClose: 'survey-close',
   SurveyReport: 'survey-report',
 };
@@ -114,7 +115,7 @@ export const sendParticipationInivitationForDelegate = async (survey, delegateEn
       organization = await Organization.findById(organization).then();
     }
 
-    const emailResult = await emails.surveyEmails.delegateInvite(delegate, survey).then();
+    const emailResult = await emails.surveyEmails.delegateInvite(delegate, survey, organization).then();
     logger.info('Email Generated', emailResult);
     return result(`Sent invitation to ${delegate.firstName} ${delegate.lastName} for ${survey.title}`, true);
   } catch (e) {
@@ -129,7 +130,9 @@ export const sendParticipationInivitationForDelegate = async (survey, delegateEn
  * @param {*} organigram
  */
 export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organigram, propertyBag = { assessments: [], relaunch: false }) => {
+
   logger.info('Sending launch emails for delegate', { assessmentCount: propertyBag.assessments.length });
+
   let { delegate } = delegateEntry;
 
   if (lodash.isString(delegate)) {
@@ -160,11 +163,55 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
 
   try {
     await Promise.all(emailPromises).then();
-    return result(`Sent launch emails and instructions to ${delegate.firstName} ${delegate.lastName} for ${survey.title}`, true);
+    return result(`Sent launch emails and instructions to ${delegate.firstName} ${delegate.lastName} at ${moment().format('DD MMM YY HH:mm')} for ${survey.title}`, true);
   } catch (e) {
     return result(e.message);
   }
 };
+
+export const sendSingleSurveyLaunchEmail = async (survey: any, delegateEntry: any, assessment: any) => {
+
+  logger.info(`SENDING SINGLE LAUNCH EMAIL`);
+
+  const result = (message, success = false) => {
+    return {
+      message,
+      success,
+    };
+  };
+
+  try {
+    let { delegate } = delegateEntry;
+    const { organization } = survey;
+    const response = await emails.surveyEmails.launchForDelegate(assessment.assessor, delegate, survey, assessment, organization);
+
+    logger.debug(`SEND LAUNCH RESPONSE: ${JSON.stringify(response)}`);
+
+    return result(`Sent launch emails and instructions to ${assessment.assessor.firstName} ${assessment.assessor.lastName} at ${moment().format('DD MMM YY HH:mm')} for ${survey.title}`, true);
+  } catch (e) {
+    return result(e.message);
+  }
+}
+
+
+export const sendSingleReminder = async (assessment: any, delegateEntry: any, survey: any) => {
+  const result = (message, success = false) => {
+    return {
+      message,
+      success,
+    };
+  };
+
+  try {
+    let { delegate } = delegateEntry;
+    const { organization } = survey;
+    const options = { ...defaultLaunchOptions, ...survey.options };
+    await emails.surveyEmails.reminder(assessment.assessor, delegate, survey, assessment, organization, options).then();
+    return result(`Survey reminder email sent to ${assessment.assessor.firstName} ${assessment.assessor.lastName} at ${moment().format('YYYY-MM-DD HH:mm')} for ${survey.title}`, true);
+  } catch (e) {
+    return result(e.message);
+  }
+}
 
 /**
  *
@@ -180,13 +227,10 @@ export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyD
     };
   };
 
-
   logger.debug('Survey.ts -> sendSurveyRemindersForDelegate(survey, delegateEntry)');
 
   if (lodash.isNil(survey) === true) return result('Cannot have a nill survey element');
   if (lodash.isNil(delegateEntry) === true) return result('Cannot have a null delegateEntry element');
-
-  debugger;
 
   let { delegate } = delegateEntry;
   let assessments: any[] = [];
@@ -258,7 +302,7 @@ export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyD
 
     const promiseResults = await Promise.all(emailPromises).then();
 
-    return result(`Sent (${promiseResults.length}) survey reminder(s) email(s) for ${delegate.firstName} ${delegate.lastName} in ${survey.title}`, true);
+    return result(`Sent (${promiseResults.length}) survey reminder(s) email(s) at ${moment().format('YYYY-MM-DD HH:mm')} for ${delegate.firstName} ${delegate.lastName} in ${survey.title}`, true);
   } catch (e) {
     return result(e.message);
   }
@@ -357,6 +401,9 @@ export const sendSurveyEmail = async (survey: TowerStone.ISurveyDocument, delega
       case EmailTypesForSurvey.SurveyReminder: {
         return sendSurveyRemindersForDelegate(survey, delegateEntry);
       }
+      // case EmailTypesForSurvey.SingleSurveyReminder: {
+      //   return sendSingleReminder(survey, delegateEntry);
+      // }
       case EmailTypesForSurvey.SurveyClose: {
         return sendSurveyClosed(survey, delegateEntry, organigram);
       }
@@ -403,7 +450,7 @@ export const sendPeerNominationNotifications = async (user, organigram) => {
  */
 export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, relaunch: boolean = false) => {
   // options for the launch
-  logger.info(`Launching Survey: ${survey.title} for delegate ${delegateEntry.delegate.fullName} (is-relaunch: ${relaunch})`);
+  logger.info(`Launching Survey: ${survey.title} for delegate ${delegateEntry.delegate.fullName()} (is-relaunch: ${relaunch})`);
   const result = (message: string, success = false, assessments: any[]) => ({
     launched: success,
     success,
@@ -439,10 +486,9 @@ export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument
     let leadershipBrand: any = await LeadershipBrand.findById(survey.leadershipBrand);
     let templateRatings: any[] = [];
 
-    if (delegateEntry.assessments.length === 0) {
+    if (delegateEntry.assessments.length > 0) {
       for (let ai = 0; ai < delegateEntry.assessments.length; ai += 1) {
         assessments.push(delegateEntry.assessments[ai]);
-        //assessmentsPomises.push(Assessment.findById(delegateEntry.assessments[ai]));
       }
     }
 
@@ -540,8 +586,6 @@ export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument
 
         if (relaunch === false) {
           organigram.peers.forEach((peer) => {
-            debugger;
-
             const peerhasAssessment = lodash.indexOf(assessments, (assessment: any) => {
               if (typeof assessment.assessor === 'string') {
                 return new ObjectId(peer.user).equals(new ObjectId(assessment.assessor));
@@ -558,8 +602,6 @@ export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument
               return false;
 
             }) >= 0;
-
-            debugger
 
             if (!peerhasAssessment) {
               const assessment = new Assessment({
@@ -634,6 +676,8 @@ const SurveyService = {
   createLeadershipBrand,
   updateLeadershipBrand,
   launchSurveyForDelegate,
+  sendSingleReminder,
+  sendSingleSurveyLaunchEmail,
 };
 
 export default SurveyService;
