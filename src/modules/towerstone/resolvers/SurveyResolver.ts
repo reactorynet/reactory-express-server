@@ -784,7 +784,7 @@ export default {
                 who: user._id,
               });
 
-              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.PAUSED, `${user.firstName} paused delegate ${delegateModel.firstName} ${delegateModel.lastName} for Survey`, user.id, true);
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.PAUSED, `${user.firstName} ${user.lastName} paused delegate ${delegateModel.firstName} ${delegateModel.lastName} for Survey`, user.id, true);
               entryData.patch = false;
               break;
 
@@ -803,7 +803,7 @@ export default {
                 who: user._id,
               });
 
-              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.RESTARTED, `${user.firstName} restarted delegate ${delegateModel.firstName} ${delegateModel.lastName} for Survey`, user.id, true);
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.RESTARTED, `${user.firstName} ${user.lastName} restarted delegate ${delegateModel.firstName} ${delegateModel.lastName} for Survey`, user.id, true);
               entryData.patch = false;
               break;
 
