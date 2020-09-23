@@ -30,9 +30,10 @@ import {
 import {
   Cache
 } from '@reactory/server-modules/core/models';
+import { Reactory } from '@reactory/server-core/types/reactory';
 import { TowerStone } from '@reactory/server-modules/towerstone/towerstone';
 
-import { Chart, ChartLegendLabelItem,  } from 'chart.js'
+import { Chart, ChartLegendLabelItem, } from 'chart.js'
 import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
 
 const { APP_DATA_ROOT } = process.env;
@@ -41,6 +42,24 @@ const badref = `${APP_DATA_ROOT}/themes/mores/images/badref.png`;
 const oneview_svg = `${APP_DATA_ROOT}/themes/mores/images/one_view_l360.svg`;
 const oneview_png_folder = `${APP_DATA_ROOT}/themes/mores/images/`;
 const oneview_png = `${oneview_png_folder}one_view_l360.png`;
+
+const numberWords = {
+  1: 'one',
+  2: 'two',
+  3: 'three',
+  4: 'four',
+  5: 'five',
+  6: 'six',
+  7: 'seven',
+  8: 'eight',
+  9: 'nine',
+  10: 'ten',
+  11: 'eleven',
+  12: 'twelve',
+  13: 'thirteen',
+  14: 'fourteen',
+  15: 'fifteen'
+}
 
 const graph_palette = [
   '#9A0000',
@@ -180,6 +199,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
       comments: [],
       recommendations: [],
       ratings: [],
+      //one_view_svg: '',
       charts: {
         individualRadar: null,
         avgRadar: null,
@@ -201,8 +221,8 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
       reportData.qualities = reportData.survey.leadershipBrand.qualities;
       reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
 
-       // TIMELINE ENTRY - REPORT GENERATED
-      if (survey){
+      // TIMELINE ENTRY - REPORT GENERATED
+      if (survey) {
         logger.debug(`USER FROM GLOBAL:: ${JSON.stringify(user)}`);
         survey.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.REPORT_GENERATED, `Report generate by ${reportData.delegate.firstName} ${reportData.delegate.lastName}.`, reportData.delegate._id, true);
       }
@@ -324,13 +344,13 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
 
     const user_folder = `${APP_DATA_ROOT}/profiles/${reportData.delegate._id}/`;
 
-    if(fs.existsSync(user_folder) === false) {
+    if (fs.existsSync(user_folder) === false) {
       fs.mkdirSync(user_folder);
     }
 
 
     const user_charts_folder = `${user_folder}charts/`
-    if(fs.existsSync(user_charts_folder) === false) {
+    if (fs.existsSync(user_charts_folder) === false) {
       fs.mkdirSync(user_charts_folder);
     }
 
@@ -345,8 +365,9 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
     }
 
     if (existsSync(user_one_view_svg) === true) {
+      reportData.one_view_svg = fs.readFileSync(user_one_view_svg).toString();
 
-      svg_to_png.convert(user_one_view_svg, user_one_view_path, { defaultWidth: '1200px', defaultHeight: '1200px' }).then((result) => {
+      svg_to_png.convert(user_one_view_svg, user_one_view_path, { defaultWidth: '2000px', defaultHeight: '2000px' }).then((result) => {
         logger.info(`✅Converted user one view svg to ${user_one_view_png}`)
       }).catch((convertErr: Error) => {
         logger.error(`💥Could not convert ${user_one_view_svg} to ${user_one_view_png}`, convertErr)
@@ -400,7 +421,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
             individualScores.push(rating.rating);
 
             if (rating.rating >= 1) {
-              countByScore[rating.rating - 1] += 1;                           
+              countByScore[rating.rating - 1] += 1;
             }
           });
 
@@ -419,8 +440,8 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           );
 
           behaviorRatings.forEach((rating, ri) => {
-            scoreAvgOthers += rating.rating;            
-            countByScoreOthers[rating.rating-1] += 1;            
+            scoreAvgOthers += rating.rating;
+            countByScoreOthers[rating.rating - 1] += 1;
           });
 
           scoreAvgOthers = scoreAvgOthers / behaviorRatings.length;
@@ -437,7 +458,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           scoreSelf = lodash.isArray(selfRating) === true && selfRating.length >= 1 ? selfRating[0].rating : 0;
 
           reportData.ratingsSelf.forEach((rating) => {
-            countByScoreSelf[rating.rating - 1] += 1 
+            countByScoreSelf[rating.rating - 1] += 1
           })
 
           logger.debug(`Score for self ${scoreSelf}`);
@@ -583,7 +604,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           },
         },
         title: {
-          display: false,          
+          display: false,
           fontSize: 28,
         },
         legend: {
@@ -591,21 +612,22 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           align: 'end',
           labels: {
             // This more specific font property overrides the global property
-            fontSize: 28,                        
-            usePointStyle: true,            
+            fontSize: 28,
+            usePointStyle: true,
           },
         },
       },
       data: {
         labels: labels,
         datasets: [{
-          label: 'Self',
+          label: 'Self  ',
           fontSize: 28,
           data: personalScores,
           lineTension: 0,
           borderColor: '#587444',
           fill: false,
           borderWidth: 5,
+          pointRadius: 6,
           datalabels: {
             color: '#587444',
             display: false,
@@ -623,6 +645,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           lineTension: 0,
           borderColor: '#9A0000',
           borderWidth: 5,
+          pointRadius: 6,
           datalabels: {
             display: false,
             color: '#9A0000',
@@ -695,12 +718,12 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
         mime: 'application/pdf',
         options: {
           title: {
-            display: true,            
+            display: true,
             fontSize: 24
           },
           legend: {
             labels: {
-              fontSize: 36
+              fontSize: 24
             },
             position: 'bottom',
             align: 'center'
@@ -734,7 +757,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           }
         },
         data: {
-          labels: quality.behaviours.map((b, bi) => `${sectionIndex[qi]}${bi + 1}. ${b.chart_title.replace('\n',' ')}`),
+          labels: quality.behaviours.map((b, bi) => `${sectionIndex[qi]}${bi + 1}. ${b.chart_title.replace('\n', ' ')}`),
           datasets,
         },
       });
@@ -763,14 +786,18 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           backgroundColor: behaviourScore.backgroundColor || '#FFCC33',
           datalabels: {
             clamp: true,
-            align: 'bottom',
+            align: (context: ChartJSDataLabelContext) => {
+              var index = context.dataIndex;
+              var value = context.dataset.data[index];
+              return value > 0 ? 'bottom' : 'top'
+            },
             anchor: 'end',
             color: (context: ChartJSDataLabelContext) => {
               var index = context.dataIndex;
               var value = context.dataset.data[index];
               return value <= 0 ? '#000000' : behaviourScore.color
 
-            },            
+            },
             font: {
               size: 24,
               style: 'bold'
@@ -803,8 +830,8 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
             yAxes: [{
               scaleLabel: {
                 display: true,
-                labelString: 'Count',                
-                fontSize: 24,                
+                labelString: 'Count',
+                fontSize: 24,
               },
               ticks: {
                 stepSize: 1,
@@ -896,38 +923,45 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
 };
 
 
-const definition = (data, partner, user) => {
-  logger.debug('Generating PDF definition For Mores Assessment Leadership 360 Report');
-
+const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: Reactory.IUser) => {
+  logger.debug(`Generating PDF definition For Mores Assessment Leadership 360 Report using partner ${partner.key} and user ${user.email}`);
 
   const scaleSegments = [];
-  const isPlcReport = data.survey.surveyType === 'plc';
+  const { palette } = data.meta;
+  const cpr = { text: '©', style: ['superscript'], fontFeatures: ['sups'] };
+  let coverPage = [];
+  let qualitiesSection = [];
 
-  data.scale.entries.forEach((scale) => {
-    if (scale.rating > 0) {
-      scaleSegments.push({ text: `${scale.rating} - ${scale.description}`, style: ['default'] });
-    }
-  });
+  try {
 
-  const { palette, includeAvatar = false } = data.meta;
+    data.scale.entries.forEach((scale) => {
+      if (scale.rating > 0) {
+        scaleSegments.push({ text: `${scale.rating} - ${scale.description}`, style: ['default'] });
+      }
+    });
+
+  } catch (error) {
+    logger.error(`🚩 Error getting scale segments ${error.message}`, error)
+  }
+
+
 
   const tableLayoutOut = {
-    fillColor: (rowIndex, node, columnIndex) => {
-      logger.debug('PDF::Check table layout fill color', { rowIndex, node, columnIndex });
+    fillColor: (rowIndex: number, node: any, columnIndex: any) => {
       return (rowIndex === 1) ? palette.primary.main : null;
     },
   };
 
-
-  const coverPage = [
+  coverPage = [
     {
       image: 'partnerLogo', width: 215, style: ['centerAligned'], margin: [0, 0, 0, 0]
     },
     { text: 'Leadership 360° Assessment Report', style: ['title', 'centerAligned'], margin: [0, 18, 0, 10] },
-    { 
-      text: `${data.delegate.firstName} ${data.delegate.lastName}`, 
-      style: ['header', 'centerAligned', 'secondary'], 
-      margin: [0, 0] },
+    {
+      text: `${data.delegate.firstName} ${data.delegate.lastName}`,
+      style: ['header', 'centerAligned', 'secondary'],
+      margin: [0, 0]
+    },
     { text: `${data.organization.name}`, style: ['header', 'centerAligned', 'secondary'], margin: [0, 30, 0, 0] },
     { text: `${moment().format('MMMM YYYY')}`, style: ['header', 'centerAligned', 'secondary', 'subheader2'], margin: [0, 15, 0, 340] },
     {
@@ -954,25 +988,6 @@ const definition = (data, partner, user) => {
     */
   ]
 
-  const numberWords = {
-    1: 'one',
-    2: 'two',
-    3: 'three',
-    4: 'four',
-    5: 'five',
-    6: 'six',
-    7: 'seven',
-    8: 'eight',
-    9: 'nine',
-    10: 'ten',
-    11: 'eleven',
-    12: 'twelve',
-    13: 'thirteen',
-    14: 'fourteen',
-    15: 'fifteen'
-  }
-
-  const cpr = { text: '©', style: ['superscript'], fontFeatures: ['sups'] };
 
   const introductionSection = [
     {
@@ -984,7 +999,7 @@ const definition = (data, partner, user) => {
     },
     {
       text: [
-        `${data.delegate.firstName ? data.delegate.firstName.trim() : 'Anon' }, this report presents the results of your individual self-assessment compared with the feedback from `, 
+        `${data.delegate.firstName ? data.delegate.firstName.trim() : 'Anon'}, this report presents the results of your individual self-assessment compared with the feedback from `,
         { text: `${numberWords[data.assessors.length] || data.assessors.length}`, bold: true },
         ` nominated ${data.survey.organization.name} colleagues who assessed you.\n`,
       ],
@@ -1009,13 +1024,13 @@ const definition = (data, partner, user) => {
       style: ['default', 'italic']
     },
     {
-      text: ['The TowerStone Leadership Essentials', cpr , ' Model'],
+      text: ['The TowerStone Leadership Essentials', cpr, ' Model'],
       style: ['subheader', 'primary']
     },
     {
       text: [
         `Informed by decades of experience and timeless leadership theory, the TowerStone Leadership Essentials`,
-        cpr, 
+        cpr,
         ' Model distils the individual and organisational competencies that leaders care about most. It is designed to be practical and applies to leadership in any situation or organisation.'
       ],
       style: ['default'],
@@ -1027,7 +1042,7 @@ const definition = (data, partner, user) => {
     {
       ul: [
         {
-          text: [`Ken Wilber's Integral Framework`, cpr ],
+          text: [`Ken Wilber's Integral Framework`, cpr],
           style: ['default'],
         },
         {
@@ -1061,7 +1076,7 @@ const definition = (data, partner, user) => {
     {
       ul: [
         {
-          text: [`Dr David Rock’s SCARF`,cpr,' Approach'],
+          text: [`Dr David Rock’s SCARF`, cpr, ' Approach'],
           style: ['default'],
         },
         {
@@ -1136,7 +1151,7 @@ const definition = (data, partner, user) => {
     {
       pageBreak: 'before',
       text: 'The Rating Scale',
-      style: ['header', 'primary'],      
+      style: ['header', 'primary'],
     },
     { text: 'The five-point rating scale measures how strongly participants agree or disagree with a behavioural statement, including the typical emotion associated with that rating:', style: ['default'] },
   ];
@@ -1144,7 +1159,7 @@ const definition = (data, partner, user) => {
   [
     { id: 1, title: 'Strongly Disagree ', heart: "(I'm out the door)", head: `“I’m fed up and want you to know that”` },
     { id: 2, title: 'Disagree ', heart: "(One foot in, one foot out the door)", head: `“I’m frustrated and things need to change now”` },
-    { id: 3, title: 'Neutral ', heart: "(I don’t know where the door is)", head: `“I either don’t care or can’t comment””` },
+    { id: 3, title: 'Neutral ', heart: "(I don’t know where the door is)", head: `“I either don’t care or can’t comment”` },
     { id: 4, title: 'Agree ', heart: "(We need new doors to open)", head: `“We are doing well and there’s room for improvement”` },
     { id: 5, title: 'Strongly Agree ', heart: "(We need to build new doors)", head: `“Let’s look for new challenges”` }
   ].forEach((rating) => {
@@ -1239,205 +1254,214 @@ const definition = (data, partner, user) => {
     })
   }
 
+  try {
+    qualitiesSection = [
+      {
+        text: 'Section B: Dashboard', style: ['header', 'secondary'], pageBreak: 'before',
+        tocItem: true,
+        tocStyle: { italics: false, fontSize: 10 },
+        tocMargin: [0, 10, 0, 0],
+        tocNumberStyle: { italics: true, fontSize: 10 },
+      },
+      {
+        margin: [0, -20, 0, 0],
+        table: {
+          widths: [250, 250],
+          //headerRows: ,
+          // dontBreakRows: true,
+          // keepWithHeaderRows: 1,
+          body: [
+            [
+              {
+                text: 'Overall Score',
+                style: ['subheader', 'primary'],
+                alignment: 'left',
+                border: [false, false, false, false],
+                margin: [20, 0, 0, 10]
+              },
+              {
+                text: 'Comparison per Section',
+                style: ['subheader', 'primary'],
+                alignment: 'center',
+                border: [false, false, false, false],
+                margin: [20, 0, 0, 10]
+              },
+            ],
+            [
+              {
+                alignment: 'left',
+                border: [false, false, false, false],
+                margin: [30, 0, 0, 30],
+                table: {
+                  widths: ['auto'],
+                  body: [
+                    [
+                      {
+                        image: 'overallScoreChart',
+                        height: dashboardChartSize,
+                        width: dashboardChartSize,
+                        margin: [0, dashboardChartMargin, 0, dashboardChartMargin],
+                        alignment: 'center',
+                        border: [false, false, false, false]
+                      },
+                    ],
+                    [
+                      {
+                        text: [{ text: `${((data.score / 100) * 5).toFixed(1)}`, fontSize: 9 }, { text: '/5', fontSize: 7 }],
+                        margin: [2, -50, 0, 0],
+                        alignment: 'center',
+                        border: [false, false, false, false]
+                      }
+                    ],
+                    [
+                      {
+                        text: `Raters' average score`,
+                        style: ['default', 'primary'],
+                        alignment: 'center',
+                        fontSize: 8,
+                        border: [false, false, false, false]
+                      },
+                    ],
+                    [
+                      {
+                        image: 'overallScoreSelf',
+                        height: dashboardChartSize,
+                        width: dashboardChartSize,
+                        margin: [0, dashboardChartMargin, 0, dashboardChartMargin],
+                        alignment: 'center',
+                        border: [false, false, false, false]
+                      },
+                    ],
+                    [
+                      {
+                        text: [{ text: `${((data.scoreSelf / 100) * 5).toFixed(1)}`, fontSize: 9 }, { text: '/5', fontSize: 7 }],
+                        margin: [2, -50, 0, 0],
+                        alignment: 'center',
+                        border: [false, false, false, false]
+                      }
+                    ],
+                    [
+                      {
+                        text: `Your score`,
+                        style: ['default', 'primary'],
+                        alignment: 'center',
+                        fontSize: 8,
+                        border: [false, false, false, false]
+                      },
+                    ],
+                  ]
+                }
+              },
+              {
+                image: 'spiderChartAvg',
+                height: 210,
+                width: 210,
+                margin: [0, -20, 10, dashboardChartMargin],
+                alignment: 'center',
+                border: [false, false, false, false]
+              }
+            ],
+          ]
+        }
+      },
+      {
+        text: "One View",
+        style: ['subheader', 'primary', 'centerAligned'],
+      },
+      
+      {
+        image: "oneViewUser",
+        //svg: data.one_view_svg,
+        width: 360,
+        height: 360,    
+        style: ['centerAligned'],
+        margin: [0, 0, 0, 0],
+      },
+      
+      {
+        text: "Priority Behaviours", style: ['header', 'primary'],
+        pageBreak: 'before'
+      },
+      {
+        table: {
+          // headers are automatically repeated if the table spans over multiple pages
+          // you can declare how many rows should be treated as headers
+          headerRows: 1,
+          widths: [240, 10, 240],
+          body: [
+            [
+              {
+                text: [
+                  { text: 'Highest Rated Behaviours\n', color: '#fff', style: ['default'], alignment: 'center', bold: true, },
+                  //You are doing well here (average score in brackets).  How best can you lead, mentor and coach using these strengths?
+                  { text: 'How best can you lead, mentor and coach using these strengths?', italics: true, color: '#fff', style: ['default'], alignment: 'center' }
+                ],
+                fillColor: palette.secondary.main,
+                borderColor: palette.secondary.main
+              },
+              {
+                text: '', style: ['default'], border: [false, false, false, false],
+              },
+              {
+                text: [
+                  { text: 'Lowest Rated Behaviors\n', fillColor: '#841F27', color: '#fff', style: ['default'], alignment: 'center', bold: true, italics: true },
+                  //You are doing well here (average score in brackets).  How best can you lead, mentor and coach using these strengths?
+                  { text: 'What new habits and next actions need focus now?', italics: true, color: '#fff', style: ['default'], alignment: 'center' }
+                ],
+                fillColor: '#841F27',
+                borderColor: '#841F27'
+              },
+            ],
+            [
+              {
+                table: {
+                  body: [
+                    ...new_habit_list.map((entry, idx) => {
+                      return [
+                        {
+                          text: [
+                            { text: `${entry.behaviour.key}\n`, style: ['default'], alignment: 'left', margin: [5, 5, 5, 15], bold: true },
+                            { text: `${entry.behaviour.title}\n`, style: ['default', 'primary'], lineHeight: 1.2, alignment: 'left', margin: [5, 5, 15, 5] },
+                            { text: `${entry.behaviour.description}\n\n`, style: ['default', 'secondary'], lineHeight: 1.2, alignment: 'left', margin: [25, 5, 15, 10], italics: true },
+                          ],
+                          border: [false, false, false, false],
+                        }
+                      ];
+                    })
+                  ]
+                }
+              },
+              {
+                text: '', style: ['default'], border: [false, false, false, false],
+              },
+              {
+                table: {
+                  body: [
+                    ...lowest_rated_list.map((entry, idx) => {
+                      return [
+                        {
+                          text: [
+                            { text: `${entry.behaviour.key}\n`, style: ['default'], alignment: 'left', margin: [5, 5, 5, 15], bold: true },
+                            { text: `${entry.behaviour.title}\n`, style: ['default', 'primary'], lineHeight: 1.2, alignment: 'left', margin: [5, 5, 5, 5] },
+                            { text: `${entry.behaviour.description}\n\n`, style: ['default', 'secondary'], lineHeight: 1.2, alignment: 'left', margin: [25, 5, 5, 10], italics: true },
+                          ],
+                          border: [false, false, false, false],
+                        }
+                      ];
+                    })
+                  ]
+                }
+              },
+            ],
+          ],
+        }
+      }
+    ];
+  } catch (qualitiesSectionError) {
+    logger.debug('Error generating Qualities Section', qualitiesSectionError)
+  }
 
-  const qualitiesSection = [
-    {
-      text: 'Section B: Dashboard', style: ['header', 'secondary'], pageBreak: 'before',
-      tocItem: true,
-      tocStyle: { italics: false, fontSize: 10 },
-      tocMargin: [0, 10, 0, 0],
-      tocNumberStyle: { italics: true, fontSize: 10 },
-    },
-    {
-      margin: [0, -20, 0, 0],
-      table: {
-        widths: [250, 250],
-        //headerRows: ,
-        // dontBreakRows: true,
-        // keepWithHeaderRows: 1,
-        body: [
-          [
-            {
-              text: 'Overall Score',
-              style: ['subheader', 'primary'],
-              alignment: 'left',
-              border: [false, false, false, false],
-              margin: [20, 0, 0, 10]
-            },
-            {
-              text: 'Comparison per Section',
-              style: ['subheader', 'primary'],
-              alignment: 'center',
-              border: [false, false, false, false],
-              margin: [20, 0, 0, 10]
-            },
-          ],
-          [
-            {
-              alignment: 'left',
-              border: [false, false, false, false],
-              margin: [30, 0, 0, 30],
-              table: {
-                widths: ['auto'],
-                body: [
-                  [
-                    {
-                      image: 'overallScoreChart',
-                      height: dashboardChartSize,
-                      width: dashboardChartSize,
-                      margin: [0, dashboardChartMargin, 0, dashboardChartMargin],
-                      alignment: 'center',
-                      border: [false, false, false, false]
-                    },
-                  ],
-                  [
-                    {
-                      text: [{ text: `${((data.score / 100) * 5).toFixed(1)}`, fontSize: 9 }, { text: '/5', fontSize: 7 }],
-                      margin: [2, -50, 0, 0],
-                      alignment: 'center',
-                      border: [false, false, false, false]
-                    }
-                  ],
-                  [
-                    {
-                      text: `Raters' average score`,
-                      style: ['default', 'primary'],
-                      alignment: 'center',
-                      fontSize: 8,
-                      border: [false, false, false, false]
-                    },
-                  ],
-                  [
-                    {
-                      image: 'overallScoreSelf',
-                      height: dashboardChartSize,
-                      width: dashboardChartSize,
-                      margin: [0, dashboardChartMargin, 0, dashboardChartMargin],
-                      alignment: 'center',
-                      border: [false, false, false, false]
-                    },
-                  ],
-                  [
-                    {
-                      text: [{ text: `${((data.scoreSelf / 100) * 5).toFixed(1)}`, fontSize: 9 }, { text: '/5', fontSize: 7 }],
-                      margin: [2, -50, 0, 0],
-                      alignment: 'center',
-                      border: [false, false, false, false]
-                    }
-                  ],
-                  [
-                    {
-                      text: `Your score`,
-                      style: ['default', 'primary'],
-                      alignment: 'center',
-                      fontSize: 8,
-                      border: [false, false, false, false]
-                    },
-                  ],
-                ]
-              }
-            },
-            {
-              image: 'spiderChartAvg',
-              height: 210,
-              width: 210,
-              margin: [0, dashboardChartMargin, 10, dashboardChartMargin],
-              alignment: 'center',
-              border: [false, false, false, false]
-            }
-          ],
-        ]
-      }
-    },
-    {
-      text: "One View",
-      style: ['subheader', 'primary'],      
-    },
-    {
-      image: 'oneViewUser',
-      width: 320,
-      style: ['centerAligned'],
-      margin: [0, 0, 0, 0],
-    },
-    {
-      text: "Priority Behaviours", style: ['header', 'primary'],
-      pageBreak: 'before'
-    },
-    {
-      table: {
-        // headers are automatically repeated if the table spans over multiple pages
-        // you can declare how many rows should be treated as headers
-        headerRows: 1,
-        widths: [240, 10, 240],
-        body: [
-          [
-            {
-              text: [
-                { text: 'Highest Rated Behaviours\n', color: '#fff', style: ['default'], alignment: 'center', bold: true, },
-                //You are doing well here (average score in brackets).  How best can you lead, mentor and coach using these strengths?
-                { text: 'How best can you lead, mentor and coach using these strengths?', italics: true, color: '#fff', style: ['default'], alignment: 'center' }
-              ],
-              fillColor: palette.secondary.main,
-              borderColor: palette.secondary.main
-            },
-            {
-              text: '', style: ['default'], border: [false, false, false, false],
-            },
-            {
-              text: [
-                { text: 'Lowest Rated Behaviors\n', fillColor: '#841F27', color: '#fff', style: ['default'], alignment: 'center', bold: true, italics: true },
-                //You are doing well here (average score in brackets).  How best can you lead, mentor and coach using these strengths?
-                { text: 'What new habits and next actions need focus now?', italics: true, color: '#fff', style: ['default'], alignment: 'center' }
-              ],
-              fillColor: '#841F27',
-              borderColor: '#841F27'
-            },
-          ],
-          [
-            {
-              table: {
-                body: [
-                  ...new_habit_list.map((entry, idx) => {
-                    return [
-                      {
-                        text: [
-                          { text: `${entry.behaviour.key}\n`, style:['default'], alignment: 'left', margin: [5, 5, 5, 15], bold: true },
-                          { text: `${entry.behaviour.title}\n`, style: ['default', 'primary'], lineHeight: 1.2, alignment: 'left', margin: [5, 5, 15, 5] },
-                          { text: `${entry.behaviour.description}\n\n`, style: ['default', 'secondary'], lineHeight: 1.2, alignment: 'left', margin: [25, 5, 15, 10], italics: true },
-                        ],
-                        border: [false, false, false, false],                        
-                      }
-                    ];
-                  })
-                ]
-              }
-            },
-            {
-              text: '', style: ['default'], border: [false, false, false, false],
-            },
-            {
-              table: {
-                body: [
-                  ...lowest_rated_list.map((entry, idx) => {
-                    return [
-                      {
-                        text: [
-                          { text: `${entry.behaviour.key}\n`, style:['default'],  alignment: 'left', margin: [5, 5, 5, 15], bold: true },
-                          { text: `${entry.behaviour.title}\n`, style: ['default', 'primary'], lineHeight: 1.2, alignment: 'left', margin: [5, 5, 5, 5] },
-                          { text: `${entry.behaviour.description}\n\n`, style: ['default', 'secondary'],lineHeight: 1.2, alignment: 'left', margin: [25, 5, 5, 10], italics: true },
-                        ],
-                        border: [false, false, false, false],
-                      }
-                    ];
-                  })
-                ]
-              }
-            },
-          ],
-        ],
-      }
-    }
-  ];
+  logger.debug('Qualities Section:', qualitiesSection);
 
   const behaviourSection: any[] = [
     {
@@ -1451,8 +1475,6 @@ const definition = (data, partner, user) => {
   ];
 
 
-
-
   data.qualities.forEach((quality: TowerStone.IQuality, qi: number) => {
     behaviourSection.push(
       {
@@ -1462,37 +1484,42 @@ const definition = (data, partner, user) => {
         pageBreak: qi === 0 ? 'auto' : 'before'
       });
 
-    behaviourSection.push({ text: `Comparison per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [20, 10, 20, 10] })
+    behaviourSection.push({ text: `Comparison per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [0, 10, 20, 10] })
 
     behaviourSection.push({
       image: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) === true ?
         pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) :
         pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/bar_chart.png`),
-      width: 350,
+      width: 360,
       alignment: 'left',
       margin: [0, 15]
 
     });
 
     quality.behaviours.forEach((behaviour: TowerStone.IBehaviour, bi: number) => {
-      behaviourSection.push({ text: [`${sectionIndex[qi]}${bi + 1}   `, { text: `${lodash.template(behaviour.title)(data)}`, style: ['primary'] }], style: ['default'] });
-      behaviourSection.push({ text: `${lodash.template(behaviour.description)(data)}`, style: ['default', 'secondary'], italics: true });
+      behaviourSection.push({
+         text: [
+           `${sectionIndex[qi]}${bi + 1}`,            
+          ], 
+      lineHeight: 1.2, style: ['default'] });
+      behaviourSection.push({ text: `${lodash.template(behaviour.title)(data)}`, style: ['default','primary'], lineHeight: 1.2 })
+      behaviourSection.push({ text: `${lodash.template(behaviour.description)(data)}`, style: ['default', 'secondary'], lineHeight: 1.2, italics: true, margin: [0, 0, 0, 7] });
     });
 
 
-    behaviourSection.push({ text: `Count of ratings per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [20, 10, 20, 10], border: [false, false, false, false] });
+    behaviourSection.push({ text: `Count of ratings per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [0, 10, 20, 10], border: [false, false, false, false] });
     behaviourSection.push({
       image: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}-counts.png`) === true ?
         pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}-counts.png`) :
         pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/bar_chart.png`),
-      width: 350,
+      width: 360,
       alignment: 'left',
       margin: [0, 15]
     });
 
 
 
-    behaviourSection.push({ text: 'What They Said About You', style: ['secondary', 'subheader'], italics: true, pageBreak: 'before' });
+    behaviourSection.push({ text: 'What They Said About You', style: ['primary', 'subheader'], italics: true, pageBreak: 'before' });
 
     let sectionComments: any[] = [];
 
@@ -1515,7 +1542,12 @@ const definition = (data, partner, user) => {
           widths: ['*'],
           body: [
             [
-              { text: 'Notes (Next Actions and new Habits for My Growth Plan)', color: palette.secondary.main, border: [false, false, false, false] }
+              { text: [
+                { text: 'Notes', bold: true },
+                ' (Next Actions and new Habits)'], 
+              fontSize: 12, 
+              style: ['primary'], 
+              border: [false, false, false, false] }
             ],
             ...[1, 2, 3, 4, 5, 6, 7, 8].map((i) => [
               { text: '\n\n', border: [false, false, false, true] }
@@ -1600,7 +1632,7 @@ const definition = (data, partner, user) => {
 
   const developmentPlan = [
     {
-      text: 'Section E: My Growth Plan', pageBreak: 'before', style: ['header', 'primary'],
+      text: 'Section E: My Growth Plan', pageBreak: 'before', style: ['header', 'secondary'],
       tocItem: true,
       tocStyle: { italics: false, fontSize: 10 },
       tocMargin: [0, 10, 0, 0],
@@ -1745,15 +1777,15 @@ const definition = (data, partner, user) => {
               {
                 body: [
                   [
-                    {text: 'Key',...cellprops},
-                    {text:'Avg Others',...cellprops},
-                    {text:'Avg All',...cellprops},
-                    {text:'Self',...cellprops},
-                    {text: '1s', ...cellprops },
-                    {text: '2s', ...cellprops },
-                    {text: '3s', ...cellprops },
-                    {text: '4s', ...cellprops },
-                    {text: '5s', ...cellprops },
+                    { text: 'Key', ...cellprops },
+                    { text: 'Avg Others', ...cellprops },
+                    { text: 'Avg All', ...cellprops },
+                    { text: 'Self', ...cellprops },
+                    { text: '1s', ...cellprops },
+                    { text: '2s', ...cellprops },
+                    { text: '3s', ...cellprops },
+                    { text: '4s', ...cellprops },
+                    { text: '5s', ...cellprops },
                   ],
                   ...q.behaviourScores.map((b, bi) => [
                     { text: b.key, ...cellprops },
@@ -1785,8 +1817,6 @@ const definition = (data, partner, user) => {
       }
     }
   ]
-
-
 
 
   greyscalePng(
@@ -1864,7 +1894,7 @@ const definition = (data, partner, user) => {
             margin: [20, 0, 20, 0],
           },
           {
-            text: `${data.organization.name}: Leadership 360° Assessment for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
+            text: `${data.organization.name}: Leadership 360° Assessment Report for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
             fontSize: 8,
             alignment: 'center',
             margin: [5, 5],
@@ -1959,8 +1989,8 @@ const definition = (data, partner, user) => {
         margin: [0, 15],
       },
       superscript: {
-        fontSize: 6,
-        margin: [0,0,0,0],
+        fontSize: 8,
+        margin: [0, 0, 0, 0],
         fontFeatures: ['sups']
       },
       quote: {
@@ -1989,7 +2019,7 @@ const component = {
   kind: 'pdf',
   format: 'pdf',
   name: 'Mores Assessment Leadership 360 Report',
-  content: definition,
+  content: pdfDefinition,
   resolver: resolveData,
   props: {
     meta: {

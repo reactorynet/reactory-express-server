@@ -484,7 +484,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
     {
       "_id": new ObjectID(),
       "title": "My Team",
-      "description": "My Team - How do we support each other",
+      "description": "My Team - How do we support each other?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -550,7 +550,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
     {
       "_id": new ObjectID(),
       "title": "Our Culture",
-      "description": "Our Culture - How do we behave",
+      "description": "Our Culture - How do we behave?",
       "ordinal": 2,
       "behaviours": [
         {
@@ -606,7 +606,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
     {
       "_id": new ObjectID(),
       "title": "Our Results",
-      "description": "Our Results - How do we take ownership",
+      "description": "Our Results - How do we take ownership?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -672,7 +672,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
     {
       "_id": new ObjectID(),
       "title": "Our Growth",
-      "description": "Our growth - How do we learn and innovate",
+      "description": "Our growth - How do we learn and innovate?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -738,7 +738,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
     {
       "_id": new ObjectID(),
       "title": "Our Purpose",
-      "description": "Our purpose - How are we fulfilled",
+      "description": "Our purpose - How are we fulfilled?",
 
       "assessor_title": "",
       "assessor_description": "",

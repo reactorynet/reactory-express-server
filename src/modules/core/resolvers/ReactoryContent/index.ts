@@ -78,8 +78,8 @@ export default {
         logger.debug('Reactory Create Content Error: ', error);
       }
     },
-    ReactorySaveImageData: async (parent: any, args: { folder: string, filename: string, png: string, svg: string }): Promise<ReactorySaveImageDataResponse> => {
-      const { folder, filename, png, svg }  = args;
+    ReactorySaveImageData: async (parent: any, args: { folder: string, filename: string, png: string, svg: string, width: number, height: number }): Promise<ReactorySaveImageDataResponse> => {
+      const { folder, filename, png, svg, height = 2000, width = 2000 }  = args;
 
       const result: ReactorySaveImageDataResponse = {
         pngURL: null,
@@ -87,7 +87,7 @@ export default {
         success: false
       }
       
-      debugger
+      // debugger
       try {
         //step check the folder        
         if(folder) {
@@ -97,12 +97,13 @@ export default {
           if(svg) {
             let svgfile = path.join(fullpath, `${filename}.svg`);
             writeFileSync(svgfile, svg);
+            logger.info(`✅Saved svg to ${svgfile}`)
             result.svgURL = path.join(cdnpath, `${filename}.svg`);
             let pngfile = path.join(fullpath, `${filename}.png`);            
             result.success = true;
             
             try {
-              await svg_to_png.convert(svgfile, pngfile, { defaultWidth: '1200px', defaultHeight: '1200px' });
+              await svg_to_png.convert(svgfile, pngfile, { defaultWidth: `${width}px`, defaultHeight: `${height}px` });
               logger.info(`✅Converted svg to ${pngfile}`)
               result.pngURL = path.join(cdnpath, `${filename}.png`);
 

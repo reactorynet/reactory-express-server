@@ -42,5 +42,5 @@ input CreateContentInput {
 
 extend type Mutation {
   ReactoryCreateContent(createInput: CreateContentInput!): ReactoryContent
-  ReactorySaveImageData(folder: String, filename: String, svg: String, png: String): ReactorySaveImageDataResponse
+  ReactorySaveImageData(folder: String, filename: String, svg: String, png: String, width: Int, height: Int): ReactorySaveImageDataResponse
 }
