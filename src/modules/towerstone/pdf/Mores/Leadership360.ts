@@ -561,7 +561,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
     reportData.qualitiesMap = qualitiesMap;
     logger.debug(`qualitiesMap created`);
 
-    let labels = qualitiesMap.map(q => q.model.title)
+    let labels = qualitiesMap.map((q, qidx) => `${sectionIndex[qidx]} - ${q.model.title}`)
     let personalScores = qualitiesMap.map(q => parseFloat(q.scoreByAssessor(reportData.delegate).toFixed(2)));
     let othersScores = qualitiesMap.map(q => parseFloat(q.avg.others).toFixed(2));
 
@@ -586,7 +586,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
         scale: {
           // Hides the scale
           display: true,
-          fontSize: 28,
+          fontSize: 28,          
           ticks: {
             min: 0,
             max: 5,
@@ -602,17 +602,20 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           angleLines: {
             lineWidth: 3
           },
+          gridLines: {
+            circular: true,
+            color: '#8C8C8C',
+          }
         },
         title: {
           display: false,
-          fontSize: 28,
         },
         legend: {
           position: 'bottom',
           align: 'end',
           labels: {
             // This more specific font property overrides the global property
-            fontSize: 28,
+            fontSize: 24,
             usePointStyle: true,
           },
         },
@@ -620,7 +623,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
       data: {
         labels: labels,
         datasets: [{
-          label: 'Self  ',
+          label: 'Your score ',
           fontSize: 28,
           data: personalScores,
           lineTension: 0,
@@ -637,7 +640,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           }
         },
         {
-          label: `Raters' Average`,
+          label: `Raters' average`,
           labels: labels,
           data: othersScores,
           fontSize: 28,
@@ -657,8 +660,6 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
       },
     }).then();
     logger.debug(`Radar Chart Avg Created: ${chartResult.file}`);
-
-
     let barchartPromises = qualitiesMap.map((quality: TowerStone.IQuality, qi: number) => {
 
       const datasets = []
@@ -667,9 +668,10 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
 
       datasets.push({
         data: selfQualityratings.map(rating => rating.rating),
-        label: 'Self',
+        label: 'Your score',
         fontSize: 16,
         //type: 'line',
+        barThickness: 20,
         backgroundColor: graph_green,
         borderColor: graph_green,
         borderWidth: 2,
@@ -691,11 +693,12 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
         data: quality.behaviourScores.map(behaviourScore => {
           return parseFloat(behaviourScore.scoreAvgOthers).toFixed(1)
         }),
-        label: 'Raters\' Avg.',
+        label: 'Raters\' avg.',
         backgroundColor: graph_red,
         //type: 'line',
         borderColor: graph_red,
         borderWidth: 2,
+        barThickness: 20,
         datalabels: {
           anchor: 'end',
           clamp: true,
@@ -704,7 +707,8 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           color: '#fff',
           font: {
             size: 24,
-            style: 'bold'
+            style: 'bold',
+            weight: 'bold',
           }
         }
       });
@@ -719,11 +723,11 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
         options: {
           title: {
             display: true,
-            fontSize: 24
           },
           legend: {
             labels: {
-              fontSize: 24
+              fontSize: 24,
+              fontStyle: 'bold',
             },
             position: 'bottom',
             align: 'center'
@@ -733,7 +737,8 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
               scaleLabel: {
                 display: true,
                 labelString: 'Score',
-                fontSize: 24
+                fontSize: 24,
+                fontStyle: 'bold',
               },
               ticks: {
                 suggestedMin: 0,
@@ -741,17 +746,20 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
                 stepSize: 1,
                 min: 0,
                 max: 5,
-                fontSize: 24
+                fontSize: 24,
+                fontStyle: 'bold',
               }
             }],
             xAxes: [{
               scaleLabel: {
                 display: true,
                 labelString: '',
-                fontSize: 24
+                fontSize: 24,
+                fontStyle: 'bold',
               },
               ticks: {
-                fontSize: 24
+                fontSize: 24,
+                fontStyle: 'bold',
               }
             }],
           }
@@ -782,7 +790,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           label: `${behaviourScore.key}. ${behaviourScore.behaviour.chart_title.replace('\n', ' ')}`,
           borderWidth: 2,
           lineTension: 0,
-          fontSize: 28,
+          fontSize: 24,          
           backgroundColor: behaviourScore.backgroundColor || '#FFCC33',
           datalabels: {
             clamp: true,
@@ -823,7 +831,8 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
             display: true,
             position: 'bottom',
             labels: {
-              fontSize: 24
+              fontSize: 24,
+              fontStyle: 'bold'
             },
           },
           scales: {
@@ -832,10 +841,12 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
                 display: true,
                 labelString: 'Count',
                 fontSize: 24,
+                fontStyle: 'bold',
               },
               ticks: {
                 stepSize: 1,
-                fontSize: 24
+                fontSize: 24,
+                fontStyle: 'bold',
               }
             }],
             xAxes: [{
@@ -843,9 +854,11 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
                 display: true,
                 labelString: 'Rating',
                 fontSize: 24,
+                fontStyle: 'bold',
               },
               ticks: {
-                fontSize: 24
+                fontSize: 24,
+                fontStyle: 'bold',
               }
             }],
           }
@@ -956,19 +969,17 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
     {
       image: 'partnerLogo', width: 215, style: ['centerAligned'], margin: [0, 0, 0, 0]
     },
-    { text: 'Leadership 360° Assessment Report', style: ['title', 'centerAligned'], margin: [0, 18, 0, 10] },
+    { text: 'Leadership 360° Assessment Report', style: ['title', 'centerAligned'], margin: [0, 18, 0, 20] },
     {
       text: `${data.delegate.firstName} ${data.delegate.lastName}`,
       style: ['header', 'centerAligned', 'secondary'],
       margin: [0, 0]
     },
     { text: `${data.organization.name}`, style: ['header', 'centerAligned', 'secondary'], margin: [0, 30, 0, 0] },
-    { text: `${moment().format('MMMM YYYY')}`, style: ['header', 'centerAligned', 'secondary', 'subheader2'], margin: [0, 15, 0, 340] },
+    { text: `${moment().format('MMMM YYYY')}`, style: ['header', 'centerAligned', 'secondary', 'subheader2'], margin: [0, 15, 0, 320] },    
+    { text: 'In association with', style: ['default', 'centerAligned'], margin: [0, 0, 0, 20] },
     {
-      image: 'organizationLogo', width: 130, margin: [0, 0, 0, 20],
-    },
-    {
-      image: 'towerstoneLogo', width: 130, margin: [350, -80, 0, 20],
+      image: 'towerstoneLogoGreyScale', width: 180, style: ['centerAligned'],
     },
     { text: 'Table of Contents', style: ['subheader', 'primary'], pageBreak: 'before' },
     {
@@ -991,7 +1002,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
 
   const introductionSection = [
     {
-      text: 'Section A: Welcome', newPage: 'before', style: ['header', 'secondary'], pageBreak: 'before',
+      text: 'Section A: Welcome', style: ['header', 'secondary'], pageBreak: 'before',
       tocItem: true,
       tocStyle: { italics: false, fontSize: 10 },
       tocMargin: [0, 5, 0, 0],
@@ -1153,7 +1164,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       text: 'The Rating Scale',
       style: ['header', 'primary'],
     },
-    { text: 'The five-point rating scale measures how strongly participants agree or disagree with a behavioural statement, including the typical emotion associated with that rating:', style: ['default'] },
+    { text: 'The 5-point rating scale measures how strongly participants agree or disagree with a behavioural statement, including the typical emotion associated with that rating:', style: ['default'] },
   ];
 
   [
@@ -1202,7 +1213,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       },
       {
         text: [
-          { text: 'Mid-range rating (3): ', style: ['default'], bold: true },
+          { text: 'Intermediate ratings (3): ', style: ['default'], bold: true },
           `The ‘OK’ response is a red flag as it could indicate a low level of engagement, mediocrity (comfort zone) or inconsistent behaviours.`
         ]
       },
@@ -1264,7 +1275,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
         tocNumberStyle: { italics: true, fontSize: 10 },
       },
       {
-        margin: [0, -20, 0, 0],
+        margin: [0, 0, 0, 0],
         table: {
           widths: [250, 250],
           //headerRows: ,
@@ -1366,16 +1377,16 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       },
       {
         text: "One View",
+        margin: [0,-15,0,15],
         style: ['subheader', 'primary', 'centerAligned'],
       },
       
       {
         image: "oneViewUser",
         //svg: data.one_view_svg,
-        width: 360,
-        height: 360,    
+        width: 370,        
         style: ['centerAligned'],
-        margin: [0, 0, 0, 0],
+        margin: [0,0,0,0],
       },
       
       {
@@ -1404,7 +1415,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
               },
               {
                 text: [
-                  { text: 'Lowest Rated Behaviors\n', fillColor: '#841F27', color: '#fff', style: ['default'], alignment: 'center', bold: true, italics: true },
+                  { text: 'Lowest Rated Behaviours\n', fillColor: '#841F27', color: '#fff', style: ['default'], alignment: 'center', bold: true },
                   //You are doing well here (average score in brackets).  How best can you lead, mentor and coach using these strengths?
                   { text: 'What new habits and next actions need focus now?', italics: true, color: '#fff', style: ['default'], alignment: 'center' }
                 ],
@@ -1469,8 +1480,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       tocItem: true,
       tocStyle: { italics: false, fontSize: 10 },
       tocMargin: [0, 10, 0, 0],
-      tocNumberStyle: { italics: true, fontSize: 10 },
-      margin: [0, 10, 0, 10]
+      tocNumberStyle: { italics: true, fontSize: 10 },      
     },
   ];
 
@@ -1479,7 +1489,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
     behaviourSection.push(
       {
         text: [
-          { text: `${sectionIndex[qi]}. ${quality.description}`, style: ['subheader', 'primary'], italics: true }
+          { text: `${sectionIndex[qi]}. ${quality.description}`, style: ['subheader', 'primary'] }
         ],
         pageBreak: qi === 0 ? 'auto' : 'before'
       });
@@ -1524,15 +1534,15 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
     let sectionComments: any[] = [];
 
     data.comments.forEach((comment) => {
-      if (comment.quality === quality.id) {
-        sectionComments.push({ text: `"${comment.content.content}"`, style: ['default'] })
+      if (comment.quality === quality.id && comment.content && comment.content.content) {
+        sectionComments.push({ text: `"${comment.content.content.trim()}"`, style: ['default'], margin: [0, 0, 0, 15], })
       }
     });
 
     if (sectionComments.length > 0) {
       behaviourSection.push(...sectionComments);
     } else {
-      behaviourSection.push(`No comments.`)
+      behaviourSection.push({ text: `No comments.`, style: ['default'], fontSize: 10 })
     }
 
 
@@ -1547,6 +1557,8 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
                 ' (Next Actions and new Habits)'], 
               fontSize: 12, 
               style: ['primary'], 
+              italics: true,
+              margin: [-3, 0, 0, 0],
               border: [false, false, false, false] }
             ],
             ...[1, 2, 3, 4, 5, 6, 7, 8].map((i) => [
@@ -1589,7 +1601,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
           }
 
           const row = [
-            { text: quality.title, fillColor: '#7D993C', color: '#FFF' },
+            //{ text: quality.title, fillColor: '#7D993C', color: '#FFF' },
             next_habits,
             next_actions
           ]
@@ -1604,26 +1616,28 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
 
   const overallSection = [
     {
-      text: 'Section D: Areas to Watch', pageBreak: 'before', style: ['header', 'primary'],
+      text: 'Section D: Areas to Watch', pageBreak: 'before', style: ['header', 'secondary'],
       tocItem: true,
       tocStyle: { italics: false, fontSize: 10 },
       tocMargin: [0, 10, 0, 0],
       tocNumberStyle: { italics: true, fontSize: 10 },
     },
-    {
-      text: [{ text: 'Note:', italics: true }, 'Suggestions are for lowest rated behaviours listed in Section B.'],
-      style: ['primary'],
-      fontSize: 8
-    },
+    // {
+    //   text: [{ text: 'Note:', italics: true }, 'Suggestions are for lowest rated behaviours listed in Section B.'],
+    //   style: ['primary'],
+    //   fontSize: 8
+    // },
     {
       table: {
+        widths: [250, 250],
         body: [
           [
-            { text: '', border: [false, false, false, false] },
-            { text: 'New Habits to consider', fillColor: '#52687B', color: '#FFF', bold: true },
-            { text: 'New Actions to consider', fillColor: '#52687B', color: '#FFF', bold: true }
+            { text: 'New habits to consider', style: ['default'], fillColor: '#52687B', color: '#FFF', bold: true, margin: [0,5,0,3], },
+            { text: 'New actions to consider',  style: ['default'], fillColor: '#52687B', color: '#FFF', bold: true, margin: [0,5,0,3] }
           ],
-          ...recommendation_rows,
+          [
+            '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n','\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
+          ]         
         ]
       }
     }
@@ -1643,7 +1657,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       image: 'personalBrand', width: 500, alignment: 'center', margin: [20, 40, 20, 40],
     },
     {
-      text: 'Complete yours on the next page.'
+      text: 'Complete yours on the next page.',      
     },
 
     {
@@ -1654,7 +1668,8 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       text: 'My New Habits', style: ['subheader', 'primary'], pageBreak: 'before'
     },
     {
-      text: 'Tips:\n\n', bold: true, italics: true
+      text: 'Tips:\n\n', bold: true, italics: true,
+      style: ['default'],
     },
     {
       ul: [
@@ -1684,10 +1699,10 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
         body: [
           [
             {
-              text: 'New Habit', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true,
+              text: 'New Habit', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true, margin: [0,5,0,3]
             },
             {
-              text: 'How will this help me?', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true,
+              text: 'How will this help me?', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true, margin: [0,5,0,3]
             },
           ],
           ['\n\n', ''],
@@ -1711,14 +1726,17 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       text: [
         {
           text: 'Tips:\n\n', bold: true, italics: true
-        },
-        `● Keep to SMART principles: specific, measurable and realistic with deadlines.\n`,
-        `● Consider feedback before deciding to cross a task off.\n`,
+        },        
       ],
-      style: ['default'],
-      margin: [0, 10, 0, 20]
+      style: ['default'],      
     },
-
+    {
+      ul: [
+        `Keep to SMART principles: specific, measurable and realistic with deadlines.`,
+        `Consider feedback before deciding to cross a task off.`,
+      ],
+      style: ['default'],      
+    },
     {
       table: {
         // headers are automatically repeated if the table spans over multiple pages
@@ -1759,7 +1777,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
   }
 
   const debug_section = [
-    { text: 'Appendix A - Score Data', style: ['subheader', 'secondary'], pageBreak: 'before' },
+    { text: 'Appendix A - Score Data', style: ['header', 'secondary'], pageBreak: 'before' },
     {
       table: {
         body: [
@@ -1894,7 +1912,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
             margin: [20, 0, 20, 0],
           },
           {
-            text: `${data.organization.name}: Leadership 360° Assessment Report for ${data.delegate.firstName} ${data.delegate.lastName} - ${data.meta.when.format('DD MMMM YYYY')}`,
+            text: `${data.organization.name}: Leadership 360° Assessment Report for ${data.delegate.firstName.trim()} ${data.delegate.lastName.trim()} - ${data.meta.when.format('DD MMMM YYYY')}`,
             fontSize: 8,
             alignment: 'center',
             margin: [5, 5],
@@ -1916,6 +1934,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       organizationLogo: pdfpng(`${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`),
       partnerLogo: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/logo.png`),
       towerstoneLogo: pdfpng(`${APP_DATA_ROOT}/themes/towerstone/images/logo.png`),
+      towerstoneLogoGreyScale: pdfpng(`${APP_DATA_ROOT}/themes/towerstone/images/greyscale_logo.png`),
       partnerLogoGreyScale: pdfpng(partnerGreyScaleLogoPath),
       partnerAvatar: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/avatar.png`),
       moresCycle: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/mores-cycle.png`),
@@ -1974,7 +1993,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
         fontSize: 12,
         bold: true,
         font: 'Verdana',
-        margin: [0, 15, 0, 30],
+        margin: [0, 15, 0, 15],
       },
       subheader: {
         fontSize: 11,
