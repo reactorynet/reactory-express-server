@@ -7,13 +7,13 @@ export interface Meta {
   mustSync: boolean;
   lastSync: number;
   nextSync: number;
-  reference: String;
-  owner: String;
+  reference: string;
+  owner: string;
 }
 
 export interface SimpleResponse {
   success: boolean
-  message: String
+  message: string
 }
 
 export interface DashboardParams extends LasecDashboardSearchParams { };
@@ -26,47 +26,47 @@ export interface LasecCreateSectionHeaderArgs {
 
 
 export interface LasecQuoteUpdateSectionHeaderArgs {
-  quote_id: String,
-  header_id: String,
-  header: String
+  quote_id: string,
+  header_id: string,
+  header: string
 }
 export interface LasecDeleteSectionHeaderArgs {
-  quote_id: String,
-  header_id: String
+  quote_id: string,
+  header_id: string
 }
 
 export interface LasecDuplicateQuoteOptionArgs {
-  quote_id: String,
-  option_id: String
+  quote_id: string,
+  option_id: string
 }
 
 export interface LasecCreateSectionHeaderArgs {
-  quote_id: String,
-  header: String
+  quote_id: string,
+  header: string
 }
 
 export interface LasecAddProductToQuoteArgs {
-  quote_id: String
-  product_id: String
-  option_id: String
+  quote_id: string
+  product_id: string
+  option_id: string
 }
 
 export interface LasecQuoteItemUpdate {
-  quote_id: String
-  quote_item_id: String
+  quote_id: string
+  quote_item_id: string
   quote_item: LasecQuoteItem
 }
 
 export interface LasecQuoteOption {
   [key: string]: any
-  id: String
-  quote_option_id: String
-  quote_id: String
-  option_name?: String
-  incoterm?: String
-  named_place?: String
-  transport_mode?: String
-  currency?: String
+  id: string
+  quote_option_id: string
+  quote_id: string
+  option_name?: string
+  incoterm?: string
+  named_place?: string
+  transport_mode?: string
+  currency?: string
   active?: Boolean
   lineItems?: [LasecQuoteItem]
 }
@@ -77,18 +77,18 @@ export interface LasecQuoteHeader {
 
 export interface LasecProduct {
   [key: string]: any
-  id: String
-  name: String
-  code: String
-  description: String
+  id: string
+  name: string
+  code: string
+  description: string
   qtyAvailable: number
   qtyOnHand: number
   qtyOnOrder: number
-  unitOfMeasure: String
+  unitOfMeasure: string
   price: number
-  priceAdditionalInfo: String
-  image: String
-  onSyspro: String
+  priceAdditionalInfo: string
+  image: string
+  onSyspro: string
   landedPrice: number
   wh10CostPrice: number
   threeMonthAvePrice: number
@@ -96,12 +96,12 @@ export interface LasecProduct {
   productPricing: any[]
   tenders: any[]
   contracts: any[]
-  buyer: String
-  buyerEmail: String
-  planner: String
-  plannerEmail: String
-  isHazardous: String
-  siteEvaluationRequired: String
+  buyer: string
+  buyerEmail: string
+  planner: string
+  plannerEmail: string
+  isHazardous: string
+  siteEvaluationRequired: string
   packedLength: number
   packedWidth: number
   packedHeight: number
@@ -109,55 +109,55 @@ export interface LasecProduct {
   packedWeight: number
   numberOfSalesOrders: number
   numberOfPurchaseOrders: number
-  supplier: String
-  model: String
+  supplier: string
+  model: string
   shipmentSize: number
 
   exWorksFactor: number
-  productClass: String
-  tariffCode: String
-  leadTime: String
-  validPriceUntil: String
-  lastUpdated: String
-  lastUpdatedBy: String
-  lastOrdered: String
-  lastReceived: String
-  supplyCurrency: String
-  listCurrency: String
+  productClass: string
+  tariffCode: string
+  leadTime: string
+  validPriceUntil: string
+  lastUpdated: string
+  lastUpdatedBy: string
+  lastOrdered: string
+  lastReceived: string
+  supplyCurrency: string
+  listCurrency: string
 
-  freightFactor: String
-  clearingFactor: String
-  actualCostwh10: String
-  actualCostwh20: String
-  actualCostwh21: String
-  actualCostwh31: String
-  supplierUnitPrice: String
-  percDiscount: String
-  discountPrice: String
-  freightPrice: String
-  exWorksPrice: String
-  craftingFOC: String
-  netFOB: String
-  percDuty: String
-  clearance: String
-  landedCost: String
-  markup: String
-  sellingPrice: String
+  freightFactor: string
+  clearingFactor: string
+  actualCostwh10: string
+  actualCostwh20: string
+  actualCostwh21: string
+  actualCostwh31: string
+  supplierUnitPrice: string
+  percDiscount: string
+  discountPrice: string
+  freightPrice: string
+  exWorksPrice: string
+  craftingFOC: string
+  netFOB: string
+  percDuty: string
+  clearance: string
+  landedCost: string
+  markup: string
+  sellingPrice: string
 
   onSpecial: Boolean
-  currencyCode: String
+  currencyCode: string
   specialPrice: number
 
-  notes: String
+  notes: string
 }
 
 export interface LasecQuoteItem {
   [key: string]: any
-  quote_item_id: String
-  code: String
-  title: String
-  productClass: String
-  productClassDescription: String
+  quote_item_id: string
+  code: string
+  title: string
+  productClass: string
+  productClassDescription: string
   quantity: Number
   price: Number
   discount: Number
@@ -167,8 +167,8 @@ export interface LasecQuoteItem {
   VATRate: Number
   GP: Number
   header: LasecQuoteHeader
-  note: String
-  quote_option_id: String
+  note: string
+  quote_option_id: string
   content: any
   product: LasecProduct
 }
@@ -240,9 +240,9 @@ export interface LasecDashboardSearchParams {
   periodStart?: Moment,
   periodEnd?: Moment,
   agentSelection: USER_FILTER_TYPE,
-  teamIds?: String[],
-  repIds?: String[],
-  status?: String[],
+  teamIds?: string[],
+  repIds?: string[],
+  status?: string[],
   options?: any
 };
 
@@ -273,21 +273,22 @@ export interface LasecApiResponse {
 
 
 export interface Lasec360User {
-  id: String
-  code: String
-  repId: String
-  firstName: String
-  lastName: String
-  email: String
-  company: String | 'LasecSA' | 'LasecInternational' | 'LasecEducation'
-  roles: [ String ]
+  id: string
+  code: string
+  repId: string
+  firstName: string
+  lastName: string
+  email: string
+  company: string | 'LasecSA' | 'LasecInternational' | 'LasecEducation'
+  roles: [ string ]
   target: Number
   targetPercent: Number
+  sales_team_ids: [ string ]
 }
 
 export interface Lasec360UserSearch {
-  repIds: [ String ]
-  emails: [ String ]
+  repIds: [ string ]
+  emails: [ string ]
 }
 
 export interface DateRange {
@@ -298,12 +299,12 @@ export interface DateRange {
 export interface LasecNextActionsFilter {
   dateRange?: DateRange
   actioned?: Boolean
-  actionType: String  
+  actionType: string  
 }
 
 export interface LasecNewQuoteInput {
-  clientId: String
-  repCode: String  
+  clientId: string
+  repCode: string  
 }
 
 export interface LasecNewQuoteInputArgs {
@@ -311,7 +312,7 @@ export interface LasecNewQuoteInputArgs {
 }
 
 export interface LasecNewQuoteResult {
-  quoteId: String
+  quoteId: string
   success:Boolean
-  message: String
+  message: string
 }

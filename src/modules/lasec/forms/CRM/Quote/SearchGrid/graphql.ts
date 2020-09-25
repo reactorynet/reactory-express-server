@@ -72,7 +72,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'quotes[].meta.source.sales_team_id': 'data[].repCode',
       'quotes[].meta.source.quote_type': 'data[].quoteType',
     },
-    autoQuery: false,
+    autoQuery: true,
     queryMessage: 'Search for quote',
     resultType: 'object',
     edit: false,
