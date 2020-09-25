@@ -561,7 +561,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
     reportData.qualitiesMap = qualitiesMap;
     logger.debug(`qualitiesMap created`);
 
-    let labels = qualitiesMap.map((q, qidx) => `${sectionIndex[qidx]} - ${q.model.title}`)
+    let labels = qualitiesMap.map((q, qidx) => `${sectionIndex[qidx]}. ${q.model.title}`)
     let personalScores = qualitiesMap.map(q => parseFloat(q.scoreByAssessor(reportData.delegate).toFixed(2)));
     let othersScores = qualitiesMap.map(q => parseFloat(q.avg.others).toFixed(2));
 
