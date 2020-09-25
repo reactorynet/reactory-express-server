@@ -1060,10 +1060,14 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
           type: 'none',
           ul: [
             {
-              text: `- The four lenses of human experience \n(individual and collective; visible behaviours and\n invisible motives).`,
-              style: ['default', 'sublist'],
-            },
-          ]
+              text: [
+                `- The four lenses of human experience\n`,
+                { text: `  (individual and collective; visible behaviours and\n`, preserveLeadingSpaces: true },
+                { text: `  invisible motives).`, preserveLeadingSpaces: true } 
+              ],              
+            },            
+          ],
+          style: ['default', 'sublist'],
         },
       ],
     },
@@ -1095,11 +1099,12 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
           ul: [
             {
               text: [
-                `- Using the neuroscience of minimising threat \nand maximising reward for relationship building.\n`,
-              ],
-              style: ['default', 'sublist'],
+                `- Using the neuroscience of minimising threat\n`,
+                { text: `  and maximising reward for relationship building.`, preserveLeadingSpaces: true},
+              ],              
             }
           ],
+          style: ['default', 'sublist'],
         },
       ],
     },
@@ -1162,7 +1167,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
     {
       pageBreak: 'before',
       text: 'The Rating Scale',
-      style: ['header', 'primary'],
+      style: ['subheader', 'primary'],
     },
     { text: 'The 5-point rating scale measures how strongly participants agree or disagree with a behavioural statement, including the typical emotion associated with that rating:', style: ['default'] },
   ];
@@ -1199,8 +1204,6 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
     text: 'Consider the following when reviewing the results:',
     style: ['default']
   });
-
-
 
   scaleSection.push({
 
@@ -1390,7 +1393,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       },
       
       {
-        text: "Priority Behaviours", style: ['header', 'primary'],
+        text: "Priority Behaviours", style: ['subheader', 'primary'],
         pageBreak: 'before'
       },
       {
@@ -1486,16 +1489,19 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
 
 
   data.qualities.forEach((quality: TowerStone.IQuality, qi: number) => {
-    behaviourSection.push(
-      {
-        text: [
-          { text: `${sectionIndex[qi]}. ${quality.description}`, style: ['subheader', 'primary'] }
-        ],
-        pageBreak: qi === 0 ? 'auto' : 'before'
-      });
+    let section_content = {
+      text: [
+        { text: `${sectionIndex[qi]}. ${quality.description}`, style: ['subheader', 'primary'] }
+      ],      
+    };
 
+    if(qi > 0) {
+      section_content.pageBreak = 'before';
+      section_content.margin = [0, 16.5, 0, 15];
+    }
+
+    behaviourSection.push(section_content);
     behaviourSection.push({ text: `Comparison per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [0, 10, 20, 10] })
-
     behaviourSection.push({
       image: existsSync(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) === true ?
         pdfpng(`${APP_DATA_ROOT}/profiles/${data.delegate._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) :
@@ -1503,7 +1509,6 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       width: 360,
       alignment: 'left',
       margin: [0, 15]
-
     });
 
     quality.behaviours.forEach((behaviour: TowerStone.IBehaviour, bi: number) => {
@@ -1555,7 +1560,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
               { text: [
                 { text: 'Notes', bold: true },
                 ' (Next Actions and new Habits)'], 
-              fontSize: 12, 
+              fontSize: 11, 
               style: ['primary'], 
               italics: true,
               margin: [-3, 0, 0, 0],
@@ -1675,8 +1680,8 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
     },
     {
       ul: [
-        `List all the behaviours you want to change in line with the Personal brand you envisioned for yourself.`,
-        `Choose the ONE that is the most important for now and practice it for at least three weeks until it becomes a subconscious habit.`,
+        `List all the behaviours you want to change in line with the Personal Brand you envisioned for yourself.`,
+        `Choose the ONE that is the most important for now and practise it for at least three weeks until it becomes a subconscious habit.`,
         `Set yourself daily reminders to reflect on the new habit:`,
         {
           ul: [
@@ -1749,13 +1754,28 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
         body: [
           [
             {
-              text: 'Action', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true,
+              text: 'Action', 
+              fillColor: palette.secondary.main, 
+              color: '#fff', 
+              style: ['default'], 
+              bold: true, 
+              margin: [0,5,0,3]
             },
             {
-              text: 'Who?', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true,
+              text: 'Who?', 
+              fillColor: palette.secondary.main, 
+              color: '#fff', 
+              style: ['default'], 
+              bold: true, 
+              margin: [0,5,0,3]
             },
             {
-              text: 'When?', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true,
+              text: 'When?', 
+              fillColor: palette.secondary.main, 
+              color: '#fff', 
+              style: ['default'], 
+              bold: true, 
+              margin: [0,5,0,3]
             },
           ],
           ['\n\n\n', '', ''],

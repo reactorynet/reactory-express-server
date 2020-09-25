@@ -274,7 +274,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
     {
       "_id": new ObjectID(),
       "title": "Our Growth",
-      "description": "Our growth - How do we learn and innovate",
+      "description": "Our Growth - How do we learn and innovate",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -340,7 +340,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
     {
       "_id": new ObjectID(),
       "title": "Our Purpose",
-      "description": "Our purpose - How are we fulfilled",
+      "description": "Our Purpose - How are we fulfilled",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -672,7 +672,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
     {
       "_id": new ObjectID(),
       "title": "Our Growth",
-      "description": "Our growth - how do we learn and innovate?",
+      "description": "Our Growth - how do we learn and innovate?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -738,7 +738,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
     {
       "_id": new ObjectID(),
       "title": "Our Purpose",
-      "description": "Our purpose - how are we fulfilled?",
+      "description": "Our Purpose - how are we fulfilled?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -1071,7 +1071,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Growth",
-      "description": "Our growth - How do we learn and innovate",
+      "description": "Our Growth - How do we learn and innovate",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -1137,7 +1137,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Purpose",
-      "description": "Our purpose - How are we fulfilled",
+      "description": "Our Purpose - How are we fulfilled",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -1467,7 +1467,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Growth",
-      "description": "Our growth - How do we learn and innovate",
+      "description": "Our Growth - How do we learn and innovate",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -1533,7 +1533,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Purpose",
-      "description": "Our purpose - How are we fulfilled",
+      "description": "Our Purpose - How are we fulfilled",
 
       "assessor_title": "",
       "assessor_description": "",
