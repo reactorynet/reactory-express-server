@@ -1637,11 +1637,12 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
         widths: [250, 250],
         body: [
           [
-            { text: 'New habits to consider', style: ['default'], fillColor: '#52687B', color: '#FFF', bold: true, margin: [0,5,0,3], },
-            { text: 'New actions to consider',  style: ['default'], fillColor: '#52687B', color: '#FFF', bold: true, margin: [0,5,0,3] }
+            { text: 'New Habits to Consider', style: ['default'], fillColor: '#52687B', color: '#FFF', bold: true, margin: [0,5,0,3], },
+            { text: 'New Actions to Consider',  style: ['default'], fillColor: '#52687B', color: '#FFF', bold: true, margin: [0,5,0,3] }
           ],
           [
-            '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n','\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
+            '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n',
+            '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
           ]         
         ]
       }
