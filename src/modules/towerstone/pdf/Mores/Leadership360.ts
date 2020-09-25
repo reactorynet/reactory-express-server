@@ -1657,7 +1657,9 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       image: 'personalBrand', width: 500, alignment: 'center', margin: [20, 40, 20, 40],
     },
     {
-      text: 'Complete yours on the next page.',      
+      text: 'Complete yours on the next page.',
+      style: ['default'],
+      fontSize: 10      
     },
 
     {
