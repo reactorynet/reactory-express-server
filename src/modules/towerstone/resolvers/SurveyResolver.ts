@@ -924,6 +924,9 @@ export default {
             surveyModel.save().then();
           }
 
+          if (organigramModel)
+          entryData.entry.organigram = organigramModel;
+
           return entryData.entry;
         }
       } catch (error) {

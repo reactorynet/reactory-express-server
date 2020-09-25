@@ -939,7 +939,7 @@ export const organigramEmails = {
       // load and set body
       try {
         if (lodash.isNil(bodyTemplate) === false) {
-          logger.info('Rendering body');
+          logger.info(`Rendering body ${JSON.stringify(bodyTemplate)}`);
           msg.html = renderTemplate(bodyTemplate, properties);
         } else {
           msg.html = `"${TemplateViews.InvitePeers}/body" template segment is not set/empty`;
