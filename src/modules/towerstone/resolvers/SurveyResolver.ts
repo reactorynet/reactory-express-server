@@ -23,6 +23,7 @@ import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions'
 import logger from '@reactory/server-core/logging';
 import {
   launchSurveyForDelegate,
+  launchForSingleAssessor,
   sendSurveyEmail,
   EmailTypesForSurvey,
   sendSurveyClosed,
@@ -463,7 +464,6 @@ export default {
         organization: new ObjectId(surveyModel.organization._id),
       }).then();
 
-
       logger.debug(`${organigramModel ? `${delegateModel.firstName} ${delegateModel.lastName} has no Organigram for this organization` : `${delegateModel.firstName} ${delegateModel.lastName} has Organigram for this organization`}`);
 
       const entryData: TowerStone.IDelegateEntryDataStruct = {
@@ -527,6 +527,7 @@ export default {
           return entryData.entry;
 
         } else {
+
           entryData.entry = (surveyModel as TowerStone.ISurveyDocument).delegates.id(entryId);
 
           if (entryData.entry === null) {
@@ -652,6 +653,41 @@ export default {
               }
 
               await surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.LAUNCHED, `${user.firstName} launched for ${entryData.entry.delegate.firstName} ${entryData.entry.delegate.lastName}`, user, true).then();
+
+              break;
+            }
+
+            case 'launch-single-assessor': {
+              const launchResult = await launchForSingleAssessor(surveyModel, entryData.entry, organigramModel, inputData.peer).then();
+
+              if (launchResult.assessmentId) {
+                const newAssessment = await Assessment.findById(launchResult.assessmentId).then();
+                entryData.entry.assessments.push(newAssessment);
+              }
+
+              entryData.patch = true;
+              entryData.entry.message = launchResult.success ? launchResult.message : entryData.entry.message;
+              // entryData.entry.status = launchResult.success ? 'launched' : entryData.entry.status;
+              entryData.entry.status = entryData.entry.status;
+              // entryData.entry.lastAction = launchResult.success ? 'launched' : 'launch-fail';
+              entryData.entry.lastAction = entryData.entry.lastAction;
+              // entryData.entry.launched = launchResult.success === true;
+              entryData.entry.launched = entryData.entry.launched;
+              entryData.entry.peers = {
+                id: organigramModel._id,
+                organization: organigramModel.organization,
+                peers: organigramModel.peers
+              };
+
+              entryData.entry.actions.push({
+                action: entryData.entry.status,
+                when: new Date(),
+                result: launchResult.message,
+                who: user._id,
+              });
+
+              // entryData.patch = false;
+              await surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.PEER_LAUNCHED, `${user.firstName} launched for ${inputData.peer.firstName} ${inputData.peer.lastName}`, user, true).then();
 
               break;
             }
@@ -924,8 +960,7 @@ export default {
             surveyModel.save().then();
           }
 
-          if (organigramModel)
-          entryData.entry.organigram = organigramModel;
+          logger.debug(`ENTRY DATA: ${JSON.stringify(entryData.entry.peers)}`)
 
           return entryData.entry;
         }

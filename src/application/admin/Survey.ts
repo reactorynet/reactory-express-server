@@ -9,6 +9,7 @@ import logger from '../../logging';
 import emails from '../../emails';
 import Organization from './Organization';
 import { TowerStone } from '@reactory/server-modules/towerstone/towerstone';
+import ApiError from '@reactory/server-core/exceptions';
 
 
 /**
@@ -170,9 +171,6 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
 };
 
 export const sendSingleSurveyLaunchEmail = async (survey: any, delegateEntry: any, assessment: any) => {
-
-  logger.info(`SENDING SINGLE LAUNCH EMAIL`);
-
   const result = (message, success = false) => {
     return {
       message,
@@ -184,12 +182,10 @@ export const sendSingleSurveyLaunchEmail = async (survey: any, delegateEntry: an
     let { delegate } = delegateEntry;
     const { organization } = survey;
     const response = await emails.surveyEmails.launchForDelegate(assessment.assessor, delegate, survey, assessment, organization);
-
-    logger.debug(`SEND LAUNCH RESPONSE: ${JSON.stringify(response)}`);
-
     return result(`Sent launch emails and instructions to ${assessment.assessor.firstName} ${assessment.assessor.lastName} at ${moment().format('DD MMM YY HH:mm')} for ${survey.title}`, true);
   } catch (e) {
-    return result(e.message);
+    // return result(e.message);
+    throw new ApiError(`Error sending single launch email.`)
   }
 }
 
@@ -441,6 +437,73 @@ export const sendPeerNominationNotifications = async (user, organigram) => {
     return result(e.message);
   }
 };
+
+
+/**
+ * Launch Single Assessor
+ * @param {SurveyModel} survey
+ * @param {UserModel} delegateEntry
+ * @param {OrganigramModel} organigram
+ */
+export const launchForSingleAssessor = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, peer: any) => {
+
+  logger.info(`Launching Survey for single assessor: ${survey.title} for delegate ${delegateEntry.delegate.fullName()}`);
+
+  const { surveyType } = survey;
+
+  try {
+    const options = { ...defaultLaunchOptions, ...survey.options };
+
+    let leadershipBrand: any = await LeadershipBrand.findById(survey.leadershipBrand);
+    let templateRatings: any[] = [];
+
+    leadershipBrand.qualities.map((quality, qi) => {
+      quality.behaviours.map((behaviour, bi) => {
+        templateRatings.push({
+          qualityId: quality.id,
+          behaviourId: behaviour.id,
+          rating: 0,
+          ordinal: templateRatings.length,
+          comment: '',
+        });
+      });
+    });
+
+    const _peer = organigram.peers.find(p => p.user == peer.id);
+
+    const assessment = new Assessment({
+      id: new ObjectId(),
+      organization: new ObjectId(survey.organization._id),
+      client: new ObjectId(global.partner._id),
+      delegate: new ObjectId(delegateEntry.delegate._id),
+      team: null,
+      assessor: new ObjectId(_peer.user),
+      survey: new ObjectId(survey._id),
+      complete: false,
+      ratings: [...templateRatings],
+      createdAt: new Date().valueOf(),
+      updatedAt: new Date().valueOf(),
+    });
+
+    assessment.save().then();
+    assessment.populate('assessor').execPopulate();
+
+    logger.info(`ASSESSMENT CREATED SUCCESSFULLY!!! ASS ID ${assessment._id}`);
+
+    try {
+      const reminderResult = await sendSingleSurveyLaunchEmail(survey, delegateEntry, assessment);
+      logger.info(`SINGLE LANUCH EMAIL RESPONSE!! ${JSON.stringify(reminderResult)}`);
+      reminderResult.assessmentId = assessment._id;
+      return reminderResult
+    } catch (emailError) {
+      logger.info(`SINGLE LAUNCH EMAIL ERROR!! ${JSON.stringify(emailError)}`);
+      throw new ApiError(`Error sending launch email. ${emailError.message}`)
+    }
+  } catch (mainError) {
+    logger.info(`SINGLE ASSESSOR LAUNCH ERROR. ${JSON.stringify(mainError)}`);
+    throw new ApiError(`Error launching single assessor. ${mainError.message}`)
+  }
+}
 
 /**
  * Creates assessments for the delegate

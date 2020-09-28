@@ -31,7 +31,6 @@ type DelegateEntry {
   updatedAt: Date
   lastAction: String,
   nextAction: String
-  organigram: Any
 }
 
 type TowerStoneEmailTemplate {
