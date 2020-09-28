@@ -30,10 +30,11 @@ const assessmentResolver = {
       custom, behaviourText,
       deleteRating = false,
     }) => {
-      logger.log('info',`Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${global.user.fullName()} => ${rating}`, { when: new Date().valueOf() } );
+      
       const assessment = await Assessment.findById(id).then();
       const isNew = lodash.isString(ratingId) === true && ratingId === 'NEW';
 
+      logger.log('info',`Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${global.user.fullName()} => ${rating}`, { when: new Date().valueOf() } );
       if (assessment && ratingId && isNew === false) {        
         const ratingDoc = assessment.ratings.id(ratingId);
         if (ratingDoc && deleteRating === false) {
