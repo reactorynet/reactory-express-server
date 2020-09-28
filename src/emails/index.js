@@ -386,12 +386,12 @@ const loadEmailTemplate = async (view, organization, client, keys = [], template
   return templateDocument;
 };
 
-function* installTemplateGenerator(template, organization, client) {
+const installTemplateGenerator = async (template, organization, client) => {
   try {
-    const found = yield Template.findClientTemplate(template, organization, client).then();
+    const found = await Template.findClientTemplate(template, organization, client).then();
     if (!(found && found._id)) {
       logger.info(`Template ${template.view} does not exists, creating`);
-      let newTemplate = yield new Template({
+      let newTemplate = await new Template({
         ...template,
         client: client._id,
         organization: isNil(organization) ? null : organization._id,
@@ -400,12 +400,12 @@ function* installTemplateGenerator(template, organization, client) {
 
       if (template.elements.length > 0) {
         for (let ei = 0; ei < template.elements.length; ei += 1) {
-          const newElement = yield installTemplateGenerator(template.elements[ei], organization, client);
+          const newElement = await installTemplateGenerator(template.elements[ei], organization, client);
           newTemplate.elements.push(newElement._id);
         }
       }
 
-      newTemplate = yield newTemplate.save().then();
+      newTemplate = await newTemplate.save().then();
       return newTemplate;
     }
 
@@ -417,13 +417,11 @@ function* installTemplateGenerator(template, organization, client) {
   }
 }
 
-// const installTemplate = co.wrap(installTemplateGenerator);
-
-export const installDefaultEmailTemplates = co.wrap(function* installDefaultEmailTemplatesGenerator(client) {
+export const installDefaultEmailTemplates = async (client) => {
   try {
     const installedTemplates = [];
     for (let ti = 0; ti < defaultEmailTemplates.length; ti += 1) {
-      const installedItem = yield installTemplateGenerator(defaultEmailTemplates[ti], undefined, client);
+      const installedItem = await installTemplateGenerator(defaultEmailTemplates[ti], undefined, client);
       installedTemplates.push(installedItem);
     }
     return installedTemplates;
@@ -431,7 +429,7 @@ export const installDefaultEmailTemplates = co.wrap(function* installDefaultEmai
     logger.error('Error installing templates', e);
     throw e;
   }
-});
+};
 
 export const surveyEmails = {
   /**

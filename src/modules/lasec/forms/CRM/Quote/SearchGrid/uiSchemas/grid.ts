@@ -212,7 +212,7 @@ const uiSchema: any = {
       componentMap: {
         Toolbar: 'lasec-crm.QuoteGridToolbar@1.0.0'
       },
-      variables: {
+      variables: {  
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.filterBy': 'filterBy',

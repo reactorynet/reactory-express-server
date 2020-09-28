@@ -1,9 +1,20 @@
-import passport from 'passport';
+import passport, { 
+  AuthenticateOptions, 
+  Authenticator, 
+  Framework,
+  Profile,
+  Strategy,
+  PassportStatic,
+  Passport 
+} from 'passport';
+
+import { Reactory } from '@reactory/server-core/types/reactory';
 import jwt from 'jwt-simple';
 import moment from 'moment';
 import uuid from 'uuid';
 import { isNil } from 'lodash';
 // import LocalStrategy from 'passport-local';
+import { Application } from 'express';
 import { BasicStrategy } from 'passport-http';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { OIDCStrategy } from 'passport-azure-ad';
@@ -14,6 +25,7 @@ import { UserValidationError } from '../exceptions';
 import AnonStrategy from './AnonStrategy';
 import logger from '../logging';
 import graph from '../azure/graph';
+
 import { createUserForOrganization, updateUserProfileImage } from '../application/admin/User';
 import amq from '../amq';
 import { urlencoded } from 'body-parser';
@@ -21,7 +33,7 @@ import { urlencoded } from 'body-parser';
 const jwtSecret = process.env.SECRET_SAUCE;
 
 class AuthConfig {
-    static Configure = (app) => {
+    static Configure = (app: Application) => {
       app.use(passport.initialize());
       // Passport calls serializeUser and deserializeUser to
       // manage users
@@ -55,7 +67,7 @@ class AuthConfig {
 
       // Callback function called once the sign-in is complete
       // and an access token has been obtained
-      async function signInComplete(req, iss, sub, profile, accessToken, refreshToken, params, done) {
+      async function signInComplete(req: any, iss: string, sub: string, profile: Reactory.IUser, accessToken: string, refreshToken: string, params: any, done: Function) {
         logger.info(`Sign in Complete ${profile && profile.displayName ? profile.displayName : 'NO DISPLAY NAME FOR USER'} : EXPIRES ${ moment().add(params.expires_in, 'seconds').format('YYYY-MM-DD HH:mm:ss') }`);
 
         if (!profile.oid) {
@@ -130,7 +142,7 @@ class AuthConfig {
           allowHttpForRedirectUrl: true,
           clientSecret: process.env.OAUTH_APP_PASSWORD,
           validateIssuer: false,
-          passReqToCallback: true,
+          passReqToCallback: true,        
           scope: process.env.OAUTH_SCOPES.split(' '),
         },
         signInComplete,
@@ -146,13 +158,15 @@ class AuthConfig {
         },
       );
 
+      let azure_openid_options: AuthenticateOptions
+
       app.get(
-        '/auth/microsoft/openid/:clientKey', (req, res, next) => {
+        '/auth/microsoft/openid/start/:clientKey', (req, res, next) => {
           logger.debug(`login live get ${req.params.clientKey}`);
           passport.authenticate(
             'azuread-openidconnect',
             {
-              response: res,
+              //response: res,                            
               prompt: 'login',
               failureRedirect: '/auth/microsoft/openid/failed',
               failureFlash: true,
@@ -168,14 +182,14 @@ class AuthConfig {
       );
 
       app.post(
-        '/auth/microsoft/openid/complete/:clientKey',
+        '/auth/microsoft/openid/complete/:clientKey',        
         async (req, res, next) => {
+          // debugger;
           logger.debug(`Response from login.live received for ${req.params.clientKey}`);
           global.partner = await ReactoryClient.findOne({ key: req.params.clientKey }).then();
           passport.authenticate(
             'azuread-openidconnect',
-            {
-              response: res,
+            {                            
               failureRedirect: `/auth/microsoft/openid/failed?x-client-key=${ req.params.clientKey}`,
               failureFlash: false,
             },

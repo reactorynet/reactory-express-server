@@ -224,33 +224,20 @@ const installClients = async (configs) => {
   }
 };
 
-const installTestUsers = async () => {
-  /**
-   * Returns an array of promises
-   */
-
-
-  let testUsersResult = null;
-  if (process.env.TEST_USERS === 'load') {
-    testUsersResult = await Promise.all(getUserloadPromises(users)).then();
-  }
-};
 
 const startup = async () => {
   logger.info('Startup initializing');
   try {
-    const applicationResponse = await configureApplication();
+    const applicationResponse = await configureApplication().then();
     const userResponse = await installSystemUser();
     const componentsResponse = await installComponents(components);
-    const clientsInstallResponse = await installClients(clients);
-    const installTestUsersResult = await installTestUsers(users);
+    const clientsInstallResponse = await installClients(clients);    
 
     const result = {
       application: applicationResponse,
       system_user: userResponse,
       clientsLoaded: clientsInstallResponse,
-      components: componentsResponse,
-      testUsers: installTestUsersResult,
+      components: componentsResponse,      
     };
 
     logger.info('Startup Complete', JSON.stringify(result, null, 2));

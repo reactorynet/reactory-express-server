@@ -3,7 +3,9 @@ import mongoose from 'mongoose';
 import * as mongodb from 'mongodb';
 import crypto from 'crypto';
 import * as lodash from 'lodash';
-import logger from '../../logging';
+
+import logger from '@reactory/server-core/logging';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 const ObjectIdFunc = mongodb.ObjectID;
 const { ObjectId } = mongoose.Schema.Types;
@@ -101,6 +103,7 @@ const UserSchema = new mongoose.Schema({
       lastLogin: Date,
     },
   ],
+  //TODO: the legacy id must be depracated
   legacyId: Number,
   lastLogin: Date,
   deleted: {
@@ -127,10 +130,14 @@ UserSchema.methods.validatePassword = function validatePassword(password) {
   return this.password === crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
 };
 
+UserSchema.methods.fullName = function fullName(email = false) {
+  return `${this.firstName} ${this.lastName}${email ? '<'+this.email+'>' : ''}`.trim();
+};
+
 /**
  * Extension Method on Model to check for a particular role / claim
  */
-UserSchema.methods.hasRole = function hasRole(clientId, role = 'USER', organizationId = null, businessUnitId = null) {
+UserSchema.methods.hasRole = function hasRole(clientId: mongoose.Schema.Types.ObjectId, role = 'USER', organizationId: mongoose.Schema.Types.ObjectId = null, businessUnitId: mongoose.Schema.Types.ObjectId = null) {
   logger.info(`Checking user membership 
     ReactoryClient:[${clientId}] 
     Role: [${role}]
@@ -240,9 +247,7 @@ UserSchema.methods.hasAnyRole = function(clientId, organizationId, businessUnitI
 };
 
 
-UserSchema.methods.fullName = function fullName(email = false) {
-  return `${this.firstName} ${this.lastName}${email ? '<'+this.email+'>' : ''}`.trim();
-};
+
 
 // eslint-disable-next-line max-len
 UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId) {
@@ -480,5 +485,5 @@ UserSchema.statics.parse = (inputString) => {
 export const ReactoryUserSchema = UserSchema;
 
 
-const ReactoryUserModel = mongoose.model('User', UserSchema);
+const ReactoryUserModel = mongoose.model<Reactory.IUserDocument>('User', UserSchema);
 export default ReactoryUserModel;

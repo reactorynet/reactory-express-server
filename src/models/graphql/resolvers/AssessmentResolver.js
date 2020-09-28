@@ -2,8 +2,8 @@ import { ObjectId } from 'mongodb';
 import moment from 'moment';
 import lodash from 'lodash';
 import { User, Survey, Assessment, LeadershipBrand } from '../../index';
-import logger from '../../../logging';
-import ApiError, { RecordNotFoundError } from '../../../exceptions';
+import logger from '@reactory/server-core/logging';
+import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
 import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
 
 
@@ -30,11 +30,11 @@ const assessmentResolver = {
       custom, behaviourText,
       deleteRating = false,
     }) => {
+      logger.log('info',`Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${global.user.fullName()} => ${rating}`, { when: new Date().valueOf() } );
       const assessment = await Assessment.findById(id).then();
       const isNew = lodash.isString(ratingId) === true && ratingId === 'NEW';
 
-      if (assessment && ratingId && isNew === false) {
-        logger.info(`Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${global.user.fullName()} `);
+      if (assessment && ratingId && isNew === false) {        
         const ratingDoc = assessment.ratings.id(ratingId);
         if (ratingDoc && deleteRating === false) {
           ratingDoc.rating = rating;
@@ -50,7 +50,7 @@ const assessmentResolver = {
         assessment.updatedAt = new Date().valueOf();
         assessment.updateBy = global.user._id;
         await assessment.save().then();
-        logger.info(`Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${global.user.fullName()} ✅ `);
+        logger.log('info', `Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${global.user.fullName()} ✅ `);
         return ratingDoc;
       }
 

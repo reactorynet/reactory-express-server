@@ -31,7 +31,7 @@ module.exports = function (api) {
     ["@babel/plugin-transform-typescript", { 
       isTSX: true,
       allowNamespaces: true,
-      allExtensions: true,
+      allExtensions: true,      
     }],
 
     ['@babel/plugin-proposal-class-properties', { loose: false }],

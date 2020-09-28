@@ -73,6 +73,6 @@ export const MicrosoftOpenIDAuthenticationForm = {
   helpTopics: ['microsoft-0365-login'],
   uiSchema: MicrosoftOpenIDAuthenticationUISchema,
   defaultFormValue: {
-    route: `${API_URI_ROOT}auth/microsoft/openid`,
+    route: `${API_URI_ROOT}auth/microsoft/openid/start`,
   },
 };

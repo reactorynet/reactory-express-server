@@ -1269,7 +1269,8 @@ export const getPagedQuotes = async (params) => {
   };
 
   const DEFAULT_FILTER = {
-    rep_code: lasec_user.sales_team_ids,
+    sales_team_ids: lasec_user.sales_team_ids,
+    repo_code: lasec_user.sales_team_ids,
   }
 
   const empty_result = {
@@ -1282,14 +1283,12 @@ export const getPagedQuotes = async (params) => {
       //make sure we have a search value
       delete apiFilter.start_date
       delete apiFilter.end_date
+
       if (isString(search) === false || search.length < 3 && filter === undefined) {
-
-        return {
-          paging: pagingResult,
-          quotes: [],
-        };
+        apiFilter = DEFAULT_FILTER;                
+      } else {
+        apiFilter.any_field = search;
       }
-
       break;
     }
     case "date_range": {
@@ -1729,9 +1728,9 @@ export const getPurchaseOrderDetails = async (params) => {
     throw new ApiError(`Error getting purchase order items: ${error}`);
   }
 
-}
+};
 
-export const getPagedSalesOrders = async (params) => {
+export const getPagedSalesOrders = async (params: any) => {
 
   logger.debug(`GETTING PAGED SALES ORDERS:: ${JSON.stringify(params)}`);
 
@@ -1977,9 +1976,7 @@ export const getCRMSalesOrders = async (params) => {
 
   let me = await getLoggedIn360User().then();
 
-  let apiFilter: any = {
-    customer_id: customer,
-    order_status: orderStatus,
+  let apiFilter: any = {        
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
     ordering: { order_date: "desc" },
@@ -2233,7 +2230,7 @@ export const getCRMInvoices = async (params) => {
   let me = await getLoggedIn360User().then();
 
   let apiFilter: any = {
-    customer_id: me.id,
+    //customer_id: me.id,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };

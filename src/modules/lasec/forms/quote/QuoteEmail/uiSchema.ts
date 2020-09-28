@@ -26,6 +26,9 @@ const uiSchema: any = {
       subject: { sm: 12 },
       message: { sm: 12 },
     },
+    {
+      email_type: { sm: 12 }
+    }
   ],
 
   code: {
@@ -52,6 +55,16 @@ const uiSchema: any = {
       froalaOptions,
     },
   },
+  email_type: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      selectOptions: [
+        { key: 'send_quote', value: 'send_quote', label: 'Send Quote' },
+        { key: 'status_update', value: 'send_status_update', label: 'Send Status Update' },
+        { key: 'delivery_schedule', value: 'send_delivery_schedule', label: 'Send Delivery Schedule' },
+      ],
+    }
+  }
 };
 
 export default uiSchema;

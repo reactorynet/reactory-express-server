@@ -89,6 +89,15 @@ declare namespace Reactory {
     type: string
   }
 
+  export interface IRecordMeta {
+    source: any,
+    owner: string
+    reference: string,
+    lastSync: Date,
+    nextSync: Date,
+    mustSync: boolean,    
+  }
+
   export interface ITemplate {
     enabled: boolean
     organization?: ObjectId
@@ -104,6 +113,36 @@ declare namespace Reactory {
     parameters: Array<ITemplateParam>
     contentFromFile(): string
   }
+
+  export interface ToEmail {
+    name: string,
+    email: string
+  }
+  
+  export interface EmailAttachment {
+    filename: string,
+    displayname: string,
+    fileSize: string,
+  }
+  
+  export interface EmailSentResult {
+    success: boolean,
+    message: string
+  }
+
+  export interface IEmailMessage {
+    userId: string, 
+    via: string | 'reactory' | 'microsoft' | 'google';
+    subject: string,
+    contentType: string, 
+    content: string, 
+    to: ToEmail[], 
+    cc?: ToEmail[],
+    bcc?: ToEmail[],
+    attachments?: EmailAttachment[],
+    saveToSentItems: boolean,
+  }
+  
 
   export interface ITemplateDocument extends Mongoose.Document, ITemplate {}
 
@@ -137,6 +176,23 @@ declare namespace Reactory {
     providerId: string
     lastLogin: Date
     roles: [String]
+  }
+
+  export interface ISessionInfo {
+    id: ObjectId | string
+    host: string
+    client: string
+    jwtPayload: {
+      iss: string
+      sub: string
+      exp: Date
+      aud: string[]
+      iat: Date
+      userId: ObjectId | string
+      organizationId: ObjectId | string
+      refresh: string
+      roles: string[]
+    }
   }
 
   export interface INotification {
@@ -178,13 +234,27 @@ declare namespace Reactory {
   }
 
   export interface IUser {
-    email: string
-    firstName: string
-    lastName: string
-    fullName(email: boolean): string
-    authentications: any[],
-    hasAnyRole(clientId: string, organizationId?: string, businessUnitId?: string): boolean,
+    username: string,
+    firstName: string,
+    lastName: string,
+    email: string,
+    salt: string,
+    password: string,
+    avatar: string,
+    avatarProvider: string,
+    organization: ObjectId | Reactory.IOrganizationDocument,
+    memberships: Reactory.IMemberShip[],
+    sessionInfo: Reactory.ISessionInfo,
+    authentications: Reactory.IAuthentication[],
+    deleted: boolean,
+    createdAt: Date,
+    updatedAt: Date,
+    meta?: Reactory.IRecordMeta,
+    fullName(email: boolean): string,
+    setPassword(password: string): void,
+    validatePassword(password: string): boolean,    
     hasRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean,
+    hasAnyRole(clientId: string, organizationId?: string, businessUnitId?: string): boolean,
     addRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean
     removeRole(clientId: string, role: string, organizationId: string): IMemberShip[],
     removeAuthentication(provider: string): boolean
@@ -256,12 +326,12 @@ declare namespace Reactory {
   }
 
   export interface IObjectSchema extends ISchema {
-    properties?: Object | ISchemaObjectProperties,
+    properties?:  ISchemaObjectProperties,
   }
 
-  export interface IArraySchema extends ISchema {
-    items: IObjectSchema | IArraySchema
-  }
+  // export interface IArraySchema extends ISchema {
+  //   items: IObjectSchema | IArraySchema
+  // }
 
   export interface IReactoryFormQueryErrorHandlerDefinition {
     componentRef: string,
@@ -523,14 +593,23 @@ declare namespace Reactory {
     (props: any, context: any):  IReactoryServiceResult<T>;
   }
 
+  export interface IReactoryServiceProps {
+    [key: string]: any,
+    $services: Reactory.IReactoryServiceRegister,
+  }
+
   export interface IReactoryServiceDefinition {
     id: string
     name: string
     description: string
     isAsync?: boolean
-    service: Function,
+    service(props: IReactoryServiceProps, context: any): any,
     serviceType?: string
     dependencies?: string[]
+  }
+
+  export interface IReactoryServiceRegister {
+    [key: string]: IReactoryServiceDefinition
   }
 
   export namespace Service {
@@ -557,6 +636,14 @@ declare namespace Reactory {
       formatting?: IExcelFormat,
       stream?: Stream
     }
+
+
+    
+
+    export interface ICoreEmailService {
+      sendEmail(message: Reactory.IEmailMessage): Promise<Reactory.EmailSentResult>
+    }
+
   }
 
   export interface IPagingRequest {

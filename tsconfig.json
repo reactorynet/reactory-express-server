@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
+      "module": "esnext",
       "noImplicitAny": true,
       "removeComments": true,
       "moduleResolution": "node",
       "allowSyntheticDefaultImports": true,
       // Process & infer types from .js files.
       "allowJs": true,  
-      "target":"es6",
+      "target":"ES2017",
       "baseUrl": "./",
       "paths": {
         "*": ["src/*"],

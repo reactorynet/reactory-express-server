@@ -20,6 +20,10 @@ const schema: Reactory.IObjectSchema = {
       type: 'string',
       title: 'Quote Code:',
     },
+    email_type: {
+      type: 'string',
+      title: 'Email Type', 
+    },
     toList: {
       type: 'array',
       items: {

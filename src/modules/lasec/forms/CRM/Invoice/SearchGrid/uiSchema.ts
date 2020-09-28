@@ -25,17 +25,7 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      search: { md: 4, sm: 12 },
-      filterBy: { md: 4, sm: 12 },
-      filter: { md: 4, sm: 12 },
-      periodStart: { md: 6, xs: 12 },
-      periodEnd: { md: 6, xs: 12 },
-      dateFilter: { md: 6, xs: 12 },
-      // client: { md: 6, xs: 12 },
-      // customer: { md: 6, xs: 12 },
-    },
+  'ui:grid-layout': [    
     {
       invoices: { xs: 12 }
     }
@@ -269,11 +259,14 @@ const uiSchema: any = {
         grouping: false,
         search: false,
         showTitle: false,
-        toolbar: false,
+        toolbar: true,
         pageSize: 10
       },
       remoteData: true,
       query: 'query',
+      componentMap: {
+        Toolbar: 'lasec-crm.InvoiceGridToolbar@1.0.0'
+      },
       variables: {
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.filter': 'filter',

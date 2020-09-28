@@ -2,7 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecPrepareQuoteEmail',
-    text: `query LasecPrepareQuoteEmail($quote_id: String!, email_type: String){
+    text: `query LasecPrepareQuoteEmail($quote_id: String!, $email_type: String){
       LasecPrepareQuoteEmail(quote_id: $quote_id, email_type: $email_type){
         quote_id,
         fromEmail
@@ -21,7 +21,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-
+      'formData.code': 'quote_id',
+      'formData.email_type': 'email_type'
     },
     autoQuery: true,
     new: true,

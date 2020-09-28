@@ -1,15 +1,19 @@
 import fs from 'fs';
+import dotenv from 'dotenv';
 import moment from 'moment';
 import cors from 'cors';
-import * as dotenv from 'dotenv';
 import path from 'path';
-import express from 'express';
+import https from 'https';
+import sslrootcas from 'ssl-root-cas/latest';
+import express, { Application } from 'express';
+import session from 'express-session';
+
 import bodyParser from 'body-parser';
 import passport from 'passport';
 import { ApolloServer, gql, ApolloServerExpressConfig } from 'apollo-server-express';
+import { Reactory } from '@reactory/server-core/types/reactory';
 // import { makeExecutableSchema } from 'graphql-tools';
 import mongoose from 'mongoose';
-import session from 'express-session';
 import flash from 'connect-flash';
 // import { graphqlUploadExpress } from 'graphql-upload';
 
@@ -20,6 +24,7 @@ import reactory from './reactory';
 import froala from './froala';
 import charts from './charts';
 import resources from './resources';
+import services from './services';
 import typeDefs from './models/graphql/types';
 import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
@@ -30,6 +35,8 @@ import amq from './amq';
 // import bots from './bot/server';
 import startup from './utils/startup';
 import logger from './logging';
+const ca = sslrootcas.create();
+https.globalAgent.options.ca = ca;
 
 const packageJson = require('../package.json');
 
@@ -55,6 +62,8 @@ const {
   API_URI_ROOT,
   CDN_ROOT,
   MODE,
+  NODE_ENV,
+  DOMAIN_NAME,
   OAUTH_APP_ID,
   OAUTH_APP_PASSWORD,
   OAUTH_REDIRECT_URI,
@@ -68,23 +77,30 @@ const {
 
 
 let asciilogo = `Reactory Server version : ${packageJson.version} - start ${moment().format('YYYY-MM-dd HH:mm:ss')}`;
+
 if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/asciilogo.txt`)) {
-  const logo = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/asciilogo.txt`, { enocding: 'utf-8' });
+  const logo = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/asciilogo.txt`, { encoding: 'utf-8' });
   asciilogo = `${asciilogo}\n\n${logo}`;
 }
 
+let asterisks = '';
+for(let si:number = 0;si < SECRET_SAUCE.length - 2; si += 1){ asterisks = `${asterisks}*` };
 
 const ENV_STRING_DEBUG = `
 Environment Settings: 
   APP_DATA_ROOT: ${APP_DATA_ROOT}
   APP_SYSTEM_FONTS: ${APP_SYSTEM_FONTS}
-  MONGOOSE: ${MONGOOSE}
   API_PORT: ${API_PORT}
   API_URI_ROOT: ${API_URI_ROOT}
   CDN_ROOT: ${CDN_ROOT}
+  DOMAIN_NAME: ${DOMAIN_NAME}
   MODE: ${MODE}
+  MONGOOSE: ${MONGOOSE}
+  SECRET_SAUCE: '${SECRET_SAUCE.substr(0,1)}${asterisks}${SECRET_SAUCE.substr(SECRET_SAUCE.length -1,1)}',
+  
   =========================================
-         Microsoft OAuth Settings
+         Microsoft OAuth2 Settings
+  =========================================
   OAUTH_APP_ID: ${OAUTH_APP_ID}
   OAUTH_APP_PASSWORD: ${OAUTH_APP_PASSWORD}
   OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI}
@@ -93,7 +109,7 @@ Environment Settings:
   OAUTH_ID_METADATA: ${OAUTH_ID_METADATA}
   OAUTH_AUTHORIZE_ENDPOINT: ${OAUTH_AUTHORIZE_ENDPOINT}
   OAUTH_TOKEN_ENDPOINT: ${OAUTH_TOKEN_ENDPOINT}
-  =========================================
+  =========================================  
 `;
 
 logger.info(ENV_STRING_DEBUG);
@@ -109,10 +125,16 @@ let apolloServer: ApolloServer = null;
 let graphcompiled: boolean = false;
 let graphError: String = '';
 
-const app = express();
-app.use('*', cors(corsOptions));
-app.use(reactoryClientAuthenticationMiddleware);
-app.use(queryRoot,
+const reactoryExpress: Application = express();
+/*
+services.forEach((service: Reactory.IReactoryServiceDefinition) => {
+  //logger.debug(`Service ${service.id}`)
+});
+*/
+
+reactoryExpress.use('*', cors(corsOptions));
+reactoryExpress.use(reactoryClientAuthenticationMiddleware);
+reactoryExpress.use(queryRoot,
   //authentication
   passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
   //bodyparser options
@@ -134,7 +156,7 @@ try {
   logger.info('Graph Schema Compiled, starting express');
 } catch (schemaCompilationError) {
   if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`)) {
-    const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { enocding: 'utf-8' });
+    const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { encoding: 'utf-8' });
     logger.error(`\n\n${error}`);
   }
 
@@ -142,62 +164,83 @@ try {
   logger.error(graphError);
 }
 
-
+reactoryExpress.set('trust proxy', NODE_ENV == "development" ? 0 : 1);
 
 //TODO: Werner Weber - investigate session and session management for auth.
-app.use(session({
+const sessionOptions: session.SessionOptions = {
+  name: "reactory.sid",
+  secret: SECRET_SAUCE,
+  resave: false,
+  proxy: NODE_ENV === 'development' ? false : true,
+  cookie: {
+    domain: DOMAIN_NAME,
+    maxAge: 60 * 5 * 1000,
+    httpOnly: NODE_ENV === 'development' ? true : false,
+    sameSite: 'lax',
+    secure: NODE_ENV === 'development' ? false : true,
+  },
+  saveUninitialized: false,
+  unset: 'destroy',
+};
+
+const oldOptions = {
   secret: SECRET_SAUCE,
   resave: false,
   saveUninitialized: false,
   unset: 'destroy',
-}));
+}
+
+reactoryExpress.use(session(oldOptions));
 
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json({ limit: '10mb' }));
+
+reactoryExpress.use(bodyParser.urlencoded({ extended: false }));
+reactoryExpress.use(bodyParser.json({ limit: '10mb' }));
 
 if (apolloServer) {
-  apolloServer.applyMiddleware({ app, path: queryRoot });
+  apolloServer.applyMiddleware({ app: reactoryExpress, path: queryRoot });
 } else {
   if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`)) {
-    const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { enocding: 'utf-8' });
+    const error = fs.readFileSync(`${APP_DATA_ROOT}/themes/reactory/graphql-error.txt`, { encoding: 'utf-8' });
     logger.error(`\n\n${error}`);
   }
   logger.error(`Error compiling the graphql schema: apolloServer instance is null!`);
 }
 
-// try {
+
+amq.raiseSystemEvent('server.startup.begin');
+
 startup().then((startResult) => {
-  logger.debug('Startup Generator Done.');
-  amq.raiseSystemEvent('server.startup.begin');
-  AuthConfig.Configure(app);
-  app.use(userAccountRouter);
-  app.use('/reactory', reactory);
-  app.use('/froala', froala);
-  app.use('/deliveries', froala);
-  app.use('/workflow', workflow);
-  app.use('/resources', resources);
-  app.use('/pdf', passport.authenticate(
+  
+  AuthConfig.Configure(reactoryExpress);
+  reactoryExpress.use(userAccountRouter);
+  reactoryExpress.use('/reactory', reactory);
+  reactoryExpress.use('/froala', froala);
+  reactoryExpress.use('/deliveries', froala);
+  reactoryExpress.use('/workflow', workflow);
+  reactoryExpress.use('/resources', resources);
+  reactoryExpress.use('/pdf', passport.authenticate(
     ['jwt'], 
     { session: false }), 
     bodyParser.urlencoded({ extended: true }
     ), pdf);
-  app.use('/excel', ExcelRouter);
-  app.use('/charts', charts);
-  app.use('/amq', amq.router);
-  app.use(resourcesPath,
+  reactoryExpress.use('/excel', ExcelRouter);
+  reactoryExpress.use('/charts', charts);
+  reactoryExpress.use('/amq', amq.router);
+  reactoryExpress.use(resourcesPath,
     passport.authenticate(
       ['jwt', 'anonymous'],
       { session: false }),
     bodyParser.urlencoded({ extended: true }
     ),
     express.static(APP_DATA_ROOT || publicFolder));
-  app.listen(API_PORT);
-  app.use(flash());
-  // logger.info(`Bots server using ${bots.name}`);
+  reactoryExpress.listen(API_PORT);
+  reactoryExpress.use(flash());
+
   logger.info(asciilogo);
   if (graphcompiled === true) logger.info(`✅ Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
   else logger.info(`🩺 GraphQL API not available - ${graphError}`);
+  
   logger.info(`✅ System Initialized/Ready, enabling app`);
   global.REACTORY_SERVER_STARTUP = new Date();
   amq.raiseSystemEvent('server.startup.complete');

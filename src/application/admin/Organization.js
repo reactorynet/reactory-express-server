@@ -81,6 +81,8 @@ export const updateOrganizationLogo = (organization, imageData) => {
 /**
  * migrates an organization from a legacy version to the new
  * mongo stores.
+ * 
+ * Deprecated
  */
 export const migrateOrganization = co.wrap(function* migrateGenerator(id, options = { clientKey: 'plc', dataPath: LEGACY_APP_DATA_ROOT }) {
   try {

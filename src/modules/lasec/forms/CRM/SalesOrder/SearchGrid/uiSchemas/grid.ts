@@ -16,17 +16,7 @@ const uiSchema: any = {
     }
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      search: { md: 4, sm: 12, xs: 12 },      
-      filterBy: { md: 4, sm: 6, xs: 12 },
-      filter: { md: 4, sm: 6, xs: 12 },
-      periodStart: { md: 6, sm: 6, xs: 12 },
-      periodEnd: { md: 6, sm: 6, xs: 12 },
-      dateFilter: { md: 6, xs: 12 },
-      client: { md: 6, xs: 12 },
-      customer: { md: 6, xs: 12 },
-    },
+  'ui:grid-layout': [    
     {
       salesOrders: {
         xs: 12, sm: 12, md: 12, lg: 12
@@ -324,6 +314,9 @@ const uiSchema: any = {
       },
       remoteData: true,
       query: 'query',
+      componentMap: {
+        Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0'
+      },
       variables: {
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.customer': 'customer',
