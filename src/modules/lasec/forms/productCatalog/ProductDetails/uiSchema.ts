@@ -147,12 +147,12 @@ export const uiSchemaTable: any = {
               props: {
                 componentFqn: 'lasec-crm.LasecProductDetails@1.0.0',
                 componentProps: {
-                  'rowData': 'formData',                  
+                  'rowData': 'formData',
                 },
                 slideDirection: 'left',
                 buttonVariant: 'button',
-                buttonProps: {                  
-                  size: 'small',                  
+                buttonProps: {
+                  size: 'small',
                 },
                 buttonIcon: 'launch',
                 windowTitle: '${rowData.code} ${rowData.name}',
@@ -165,9 +165,9 @@ export const uiSchemaTable: any = {
                   'ui:options': {
                     variant: 'p',
                     copyToClipboard: true,
-                    format: '${rowData.code}',                   
+                    format: '${rowData.code}',
                     bodyProps: {
-                                            
+
                     }
                   }
                 },
@@ -175,8 +175,8 @@ export const uiSchemaTable: any = {
               propsMap: {
                 'rowData.code': 'value',
               }
-            },           
-          ],          
+            },
+          ],
         },
         { title: 'Description', field: 'name' },
         {
@@ -194,9 +194,9 @@ export const uiSchemaTable: any = {
             },
           },
         },
-        { 
-          title: 'Buyer', 
-          field: 'buyer',  
+        {
+          title: 'Buyer',
+          field: 'buyer',
           components: [
             {
               component: 'core.SlideOutLauncher@1.0.0',
@@ -209,24 +209,15 @@ export const uiSchemaTable: any = {
                 childProps: {
                   context: 'buyer'
                 },
-                slideDirection: 'down',          
+                slideDirection: 'down',
                 buttonTitle: '${rowData.buyer}',
-                buttonProps: {
-                  color: "#23A06A",
-                  size: 'small',
-                  style: {
-                    marginLeft: '16px',
-                    backgroundColor: "#23A06A"
-                  }
-                },
-                buttonIcon: 'email',
                 windowTitle: 'Send email to ${rowData.buyer || "all buyers"} (Buyer) re: ${rowData.code}',
               },
             },
           ],
         },
-        { 
-          title: 'Planner', 
+        {
+          title: 'Planner',
           field: 'planner',
           components: [
             {
@@ -234,23 +225,14 @@ export const uiSchemaTable: any = {
               props: {
                 componentFqn: 'lasec-crm.ProductInquiryWrapper@1.0.0',
                 componentProps: {
-                  'rowData': 'formData',                  
+                  'rowData': 'formData',
                   'api': 'api',
                 },
                 childProps: {
                   context: 'planner'
                 },
-                slideDirection: 'down',          
+                slideDirection: 'down',
                 buttonTitle: '${rowData.planner}',
-                buttonProps: {
-                  color: "#23A06A",
-                  size: 'small',
-                  style: {
-                    marginLeft: '16px',
-                    backgroundColor: "#23A06A"
-                  }
-                },
-                buttonIcon: 'email',
                 windowTitle: 'Send email to ${rowData.planner || "all planners"} (Planner) re: ${rowData.code}',
               },
             },
