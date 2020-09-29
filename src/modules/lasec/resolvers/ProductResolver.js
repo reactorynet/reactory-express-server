@@ -312,7 +312,7 @@ const getProducts = async (params) => {
 export const getProductById = async (params) => {
   const { productId } = params;
   const productResult = await lasecApi.Products.list({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
-  
+
 
   if(productResult && productResult.items) {
     if(productResult.items.length === 1) {
@@ -320,7 +320,7 @@ export const getProductById = async (params) => {
       const costingResults = await lasecApi.Products.costings({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
       const costing = costingResults.items[0] || {}
 
-      
+
 
       product = {
         id: product.id,
@@ -389,12 +389,12 @@ export const getProductById = async (params) => {
         sellingPrice: costing.selling_price_cents,
 
         notes: ''
-      };        
+      };
 
       if (product.currency_pricing && Object.keys(product.currency_pricing).length > 0) {
         productResult.productPricing = Object.keys(product.currency_pricing).map((key) => product.currency_pricing[key]);
       }
-      
+
       return product;
     }
   }
@@ -403,7 +403,7 @@ export const getProductById = async (params) => {
 }
 
 const getProductTenders = async(product = null, params) => {
-  logger.debug(`Getting Product Tenders For Product ${product.id || params.product_id}`, {product, params});  
+  logger.debug(`Getting Product Tenders For Product ${product.id || params.product_id}`, {product, params});
 
   const { ids } =  await  lasecApi.Products.tenders({
     filter: { product_id: product.id || params.product_id  },
@@ -425,10 +425,10 @@ const getProductTenders = async(product = null, params) => {
 }
 
 const getProductContracts = async(product = null, params) => {
-  
-  logger.debug(`Getting Product Contracts For Product ${product.id || params.product_id}`, {product, params});  
 
-  
+  logger.debug(`Getting Product Contracts For Product ${product.id || params.product_id}`, {product, params});
+
+
   const { ids } =  await  lasecApi.Products.contracts({
     filter: { product_id: product.id || params.product_id  },
     format: { ids_only: true },
@@ -494,6 +494,7 @@ const getWarehouseStockLevels = async (params) => {
 
     return {
       name: WarehouseIds[warehouse.warehouse_id].title,
+      warehouseId: warehouse.warehouse_id,
       qtyAvailable: warehouse.QtyAvailable,
       qtyOnHand: warehouse.QtyOnHand,
       qtyOnBO: warehouse.QtyOnBackOrder,
@@ -624,11 +625,11 @@ export default {
   Product: {
     contracts: async (product, args) => {
       logger.debug(`PRODUCT resolving contracts for product`, { product, args });
-      return getProductContracts(product, args)      
+      return getProductContracts(product, args)
     },
     tenders: async (product, args) => {
-      logger.debug(`PRODUCT resolving renders for product`, { product, args });      
-      return getProductTenders(product, args)      
+      logger.debug(`PRODUCT resolving renders for product`, { product, args });
+      return getProductTenders(product, args)
     },
     notes: async(product, args) => {
       try {
@@ -651,11 +652,11 @@ export default {
             logger.debug(`Unfluffed Notes For Product ${product.code}`, {cleared, original: productNotes[0].notes})
             return cleared.text;
           }
-        }  
-        logger.debug(`Found Product Result for product id ${productId}`, { product });        
+        }
+        logger.debug(`Found Product Result for product id ${productId}`, { product });
       } catch(ex) {
         logger.error(`Could not retrieve product note due to ${ex.message}`);
-      } 
+      }
 
       return product.notes;
     }
@@ -666,7 +667,7 @@ export default {
     },
     LasecGetProductById: async (obj, args) => {
       return getProductById(args);
-    },    
+    },
     LasecGetProductQueryDetail: async (obj, args) => {
       return LasecGetProductQueryDetail(args);
     },

@@ -116,12 +116,12 @@ const uiSchemaTable: any = {
               props: {
                 componentFqn: 'lasec-crm.LasecProductDetails@1.0.0',
                 componentProps: {
-                  'rowData': 'formData',                  
+                  'rowData': 'formData',
                 },
                 slideDirection: 'left',
                 buttonVariant: 'button',
-                buttonProps: {                  
-                  size: 'small',                  
+                buttonProps: {
+                  size: 'small',
                 },
                 buttonIcon: 'launch',
                 windowTitle: '${rowData.code} ${rowData.name}',
@@ -134,9 +134,9 @@ const uiSchemaTable: any = {
                   'ui:options': {
                     variant: 'p',
                     copyToClipboard: true,
-                    format: '${rowData.code}',                   
+                    format: '${rowData.code}',
                     bodyProps: {
-                                            
+
                     }
                   }
                 },
@@ -144,8 +144,8 @@ const uiSchemaTable: any = {
               propsMap: {
                 'rowData.code': 'value',
               }
-            },           
-          ],          
+            },
+          ],
         },
         { title: 'Description', field: 'name' },
         {
@@ -175,6 +175,186 @@ const uiSchemaTable: any = {
           },
           propsMap: {
             'rowData.exWorksFactor': 'value',
+          },
+        },
+        {
+          title: 'Freight Factor', field: 'freightFactor',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-US',
+            currency: 'USD'
+          },
+          propsMap: {
+            'rowData.freightFactor': 'value',
+          },
+        },
+        {
+          title: 'Clearing Factor', field: 'clearingFactor',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-ZA',
+            currency: 'ZAR'
+          },
+          propsMap: {
+            'rowData.clearingFactor': 'value',
+          },
+        },
+        {
+          title: 'Actual Cost WH10', field: 'actualCostwh10',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-ZA',
+            currency: 'ZAR'
+          },
+          propsMap: {
+            'rowData.actualCostwh10': 'value',
+          },
+        },
+        {
+          title: 'Actual Cost WH20', field: 'actualCostwh20',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-ZA',
+            currency: 'ZAR'
+          },
+          propsMap: {
+            'rowData.actualCostwh20': 'value',
+          },
+        },
+        {
+          title: 'Actual Cost WH21', field: 'actualCostwh21',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-ZA',
+            currency: 'ZAR'
+          },
+          propsMap: {
+            'rowData.actualCostwh21': 'value',
+          },
+        },
+        {
+          title: 'Actual Cost WH31', field: 'actualCostwh31',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-ZA',
+            currency: 'ZAR'
+          },
+          propsMap: {
+            'rowData.actualCostwh31': 'value',
+          },
+        },
+        {
+          title: 'Supplier Unit Price', field: 'supplierUnitPrice',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-US',
+            currency: 'USD'
+          },
+          propsMap: {
+            'rowData.supplierUnitPrice': 'value',
+          },
+        },
+        { title: '% Discount', field: 'percDiscount' },
+        {
+          title: 'Discounted Price', field: 'discountPrice',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-US',
+            currency: 'USD'
+          },
+          propsMap: {
+            'rowData.discountPrice': 'value',
+          },
+        },
+        {
+          title: 'Freight Price', field: 'freightPrice',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-US',
+            currency: 'USD'
+          },
+          propsMap: {
+            'rowData.freightPrice': 'value',
+          },
+        },
+        {
+          title: 'Exworks Price', field: 'exWorksPrice',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-US',
+            currency: 'USD'
+          },
+          propsMap: {
+            'rowData.exWorksPrice': 'value',
+          },
+        },
+        {
+          title: 'Crafting FOC', field: 'craftingFOC',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-US',
+            currency: 'USD'
+          },
+          propsMap: {
+            'rowData.craftingFOC': 'value',
+          },
+        },
+        {
+          title: 'NET FOB', field: 'netFOB',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-US',
+            currency: 'USD'
+          },
+          propsMap: {
+            'rowData.netFOB': 'value',
+          },
+        },
+        { title: '% Duty', field: 'percDuty' },
+        {
+          title: 'Clearance', field: 'clearance',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-ZA',
+            currency: 'ZAR'
+          },
+          propsMap: {
+            'rowData.clearance': 'value',
+          },
+        },
+        {
+          title: 'Landed Cost', field: 'landedCost',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-ZA',
+            currency: 'ZAR'
+          },
+          propsMap: {
+            'rowData.landedCost': 'value',
+          },
+        },
+        {
+          title: 'Markup',
+          field: 'markup',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'p',
+                format: '${rowData.markup} %',
+              }
+            },
+          },
+        },
+        {
+          title: 'Selling Price', field: 'sellingPrice',
+          component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            region: 'en-ZA',
+            currency: 'ZAR'
+          },
+          propsMap: {
+            'rowData.sellingPrice': 'value',
           },
         },
       ],
@@ -224,6 +404,25 @@ const uiSchemaTable: any = {
         'products.[].model': 'data.[].model',
         'products.[].shipmentSize': 'data.[].shipmentSize',
         'products.[].exWorksFactor': 'data.[].exWorksFactor',
+
+        'products.[].freightFactor': 'data.[].freightFactor',
+        'products.[].clearingFactor': 'data.[].clearingFactor',
+        'products.[].actualCostwh10': 'data.[].actualCostwh10',
+        'products.[].actualCostwh20': 'data.[].actualCostwh20',
+        'products.[].actualCostwh21': 'data.[].actualCostwh21',
+        'products.[].actualCostwh31': 'data.[].actualCostwh31',
+        'products.[].supplierUnitPrice': 'data.[].supplierUnitPrice',
+        'products.[].percDiscount': 'data.[].percDiscount',
+        'products.[].discountPrice': 'data.[].discountPrice',
+        'products.[].freightPrice': 'data.[].freightPrice',
+        'products.[].exWorksPrice': 'data.[].exWorksPrice',
+        'products.[].craftingFOC': 'data.[].craftingFOC',
+        'products.[].netFOB': 'data.[].netFOB',
+        'products.[].percDuty': 'data.[].percDuty',
+        'products.[].clearance': 'data.[].clearance',
+        'products.[].landedCost': 'data.[].landedCost',
+        'products.[].markup': 'data.[].markup',
+        'products.[].sellingPrice': 'data.[].sellingPrice',
       },
     },
   }

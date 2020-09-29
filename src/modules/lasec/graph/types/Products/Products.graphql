@@ -30,7 +30,7 @@ type LasecProductContract {
   grand_total_excl_vat_cents: Int
   name: String
   reference: String
-  unif_of_measure: String  
+  unif_of_measure: String
 }
 
 type Product {
@@ -133,6 +133,7 @@ type WarehouseStockDetails {
 
 type WarehouseStock {
   name: String
+  warehouseId: String
   qtyAvailable: Float
   qtyOnHand: Float
   qtyOnBO: Float
@@ -163,7 +164,7 @@ extend type Query {
 }
 extend type Mutation {
   LasecSendProductQuery(
-    toEmail: String!    
+    toEmail: String!
     subject: String!
     message: String!
   ): SimpleResponse

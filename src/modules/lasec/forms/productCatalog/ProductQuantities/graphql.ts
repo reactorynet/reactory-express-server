@@ -6,6 +6,7 @@ export default {
         id
         stock {
           name
+          warehouseId
           qtyAvailable
           qtyOnHand
           qtyOnBO
