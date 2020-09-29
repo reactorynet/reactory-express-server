@@ -123,7 +123,8 @@ const tableUiSchema: any = {
                   size: 'small',
                   style: {
                     marginLeft: '16px',
-                    backgroundColor: "#23A06A"
+                    backgroundColor: "#23A06A",
+                    color: '#fff'
                   }
                 },
                 buttonIcon: 'add',
@@ -168,9 +169,7 @@ const tableUiSchema: any = {
                     variant: 'p',
                     copyToClipboard: true,
                     format: '${rowData.code}',
-                    bodyProps: {
-
-                    }
+                    bodyProps: {}
                   }
                 },
               },
