@@ -57,7 +57,9 @@ export const uiSchemaTable: any = {
                 conditions: [
                   {
                     key: 'on_syspro',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#9AD86E'
                     },
@@ -65,7 +67,9 @@ export const uiSchemaTable: any = {
                   },
                   {
                     key: 'not_on_syspro',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#D22D2C'
                     },
@@ -73,7 +77,9 @@ export const uiSchemaTable: any = {
                   },
                   {
                     key: 'on_hold',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#D22D2C'
                     },
@@ -81,7 +87,9 @@ export const uiSchemaTable: any = {
                   },
                   {
                     key: 'on_partial_hold',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#f7b425'
                     },
@@ -578,7 +586,9 @@ const uiSchemaPurOrders: any = {
             conditions: [
               {
                 key: 'on_syspro',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#9AD86E'
                 },
@@ -586,7 +596,9 @@ const uiSchemaPurOrders: any = {
               },
               {
                 key: 'not_on_syspro',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#D22D2C'
                 },
@@ -594,7 +606,9 @@ const uiSchemaPurOrders: any = {
               },
               {
                 key: 'on_hold',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#D22D2C'
                 },
@@ -602,7 +616,9 @@ const uiSchemaPurOrders: any = {
               },
               {
                 key: 'on_partial_hold',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#f7b425'
                 },

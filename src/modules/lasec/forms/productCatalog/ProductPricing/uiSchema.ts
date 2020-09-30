@@ -56,7 +56,9 @@ const tableUiSchema: any = {
                 conditions: [
                   {
                     key: 'on_syspro',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#9AD86E'
                     },
@@ -64,7 +66,9 @@ const tableUiSchema: any = {
                   },
                   {
                     key: 'not_on_syspro',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#D22D2C'
                     },
@@ -72,7 +76,9 @@ const tableUiSchema: any = {
                   },
                   {
                     key: 'on_hold',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#D22D2C'
                     },
@@ -80,7 +86,9 @@ const tableUiSchema: any = {
                   },
                   {
                     key: 'on_partial_hold',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#f7b425'
                     },
