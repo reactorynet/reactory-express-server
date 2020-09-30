@@ -240,6 +240,61 @@ export const uiSchemaTable: any = {
         },
         { title: 'Is Hazardous', field: 'isHazardous' },
         { title: 'Site Evaluation', field: 'siteEvaluationRequired' },
+        { title: 'Product Class', field: 'productClass' },
+        { title: 'Tariff Code', field: 'tariffCode' },
+        { title: 'Lead Time', field: 'leadTime' },
+        {
+          title: 'Valid Price Until',
+          field: 'validPriceUntil',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.validPriceUntil).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.validPriceUntil': 'value',
+          }
+        },
+        { title: 'Last Updated', field: 'lastUpdated' },
+        { title: 'Last Updated By', field: 'lastUpdatedBy' },
+        {
+          title: 'Last Ordered',
+          field: 'lastOrdered',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.lastOrdered).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.lastOrdered': 'value',
+          }
+        },
+        {
+          title: 'Last Received',
+          field: 'lastReceived',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.lastReceived).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.lastReceived': 'value',
+          }
+        },
+        { title: 'Supplier Currency', field: 'supplyCurrency' },
+        { title: 'List Currency', field: 'listCurrency' },
       ],
       options: {
         grouping: false,
@@ -285,6 +340,17 @@ export const uiSchemaTable: any = {
         'products.[].packedWeight': 'data.[].packedWeight',
         'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
         'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',
+
+        'products.[].productClass': 'data.[].productClass',
+        'products.[].tariffCode': 'data.[].tariffCode',
+        'products.[].leadTime': 'data.[].leadTime',
+        'products.[].validPriceUntil': 'data.[].validPriceUntil',
+        'products.[].lastUpdated': 'data.[].lastUpdated',
+        'products.[].lastUpdatedBy': 'data.[].lastUpdatedBy',
+        'products.[].lastOrdered': 'data.[].lastOrdered',
+        'products.[].lastReceived': 'data.[].lastReceived',
+        'products.[].supplyCurrency': 'data.[].supplyCurrency',
+        'products.[].listCurrency': 'data.[].listCurrency',
       },
     },
   }
