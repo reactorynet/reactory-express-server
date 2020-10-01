@@ -32,7 +32,7 @@ import {
 } from '@reactory/server-core/application/admin/Survey';
 import { TowerStone } from '../towerstone';
 import { TowerStoneServicesMap } from "../services";
-import AuthConfig from 'authentication';
+import AuthConfig from '@reactory/server-core/authentication';
 import { Reactory } from '@reactory/server-core/types/reactory';
 
 import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
