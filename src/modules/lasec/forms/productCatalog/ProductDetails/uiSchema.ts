@@ -57,7 +57,9 @@ export const uiSchemaTable: any = {
                 conditions: [
                   {
                     key: 'on_syspro',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#9AD86E'
                     },
@@ -65,7 +67,9 @@ export const uiSchemaTable: any = {
                   },
                   {
                     key: 'not_on_syspro',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#D22D2C'
                     },
@@ -73,7 +77,9 @@ export const uiSchemaTable: any = {
                   },
                   {
                     key: 'on_hold',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#D22D2C'
                     },
@@ -81,7 +87,9 @@ export const uiSchemaTable: any = {
                   },
                   {
                     key: 'on_partial_hold',
-                    icon: 'error',
+                    // icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#f7b425'
                     },
@@ -147,12 +155,12 @@ export const uiSchemaTable: any = {
               props: {
                 componentFqn: 'lasec-crm.LasecProductDetails@1.0.0',
                 componentProps: {
-                  'rowData': 'formData',                  
+                  'rowData': 'formData',
                 },
                 slideDirection: 'left',
                 buttonVariant: 'button',
-                buttonProps: {                  
-                  size: 'small',                  
+                buttonProps: {
+                  size: 'small',
                 },
                 buttonIcon: 'launch',
                 windowTitle: '${rowData.code} ${rowData.name}',
@@ -165,9 +173,9 @@ export const uiSchemaTable: any = {
                   'ui:options': {
                     variant: 'p',
                     copyToClipboard: true,
-                    format: '${rowData.code}',                   
+                    format: '${rowData.code}',
                     bodyProps: {
-                                            
+
                     }
                   }
                 },
@@ -175,8 +183,8 @@ export const uiSchemaTable: any = {
               propsMap: {
                 'rowData.code': 'value',
               }
-            },           
-          ],          
+            },
+          ],
         },
         { title: 'Description', field: 'name' },
         {
@@ -194,9 +202,9 @@ export const uiSchemaTable: any = {
             },
           },
         },
-        { 
-          title: 'Buyer', 
-          field: 'buyer',  
+        {
+          title: 'Buyer',
+          field: 'buyer',
           components: [
             {
               component: 'core.SlideOutLauncher@1.0.0',
@@ -209,24 +217,15 @@ export const uiSchemaTable: any = {
                 childProps: {
                   context: 'buyer'
                 },
-                slideDirection: 'down',          
+                slideDirection: 'down',
                 buttonTitle: '${rowData.buyer}',
-                buttonProps: {
-                  color: "#23A06A",
-                  size: 'small',
-                  style: {
-                    marginLeft: '16px',
-                    backgroundColor: "#23A06A"
-                  }
-                },
-                buttonIcon: 'email',
                 windowTitle: 'Send email to ${rowData.buyer || "all buyers"} (Buyer) re: ${rowData.code}',
               },
             },
           ],
         },
-        { 
-          title: 'Planner', 
+        {
+          title: 'Planner',
           field: 'planner',
           components: [
             {
@@ -234,23 +233,14 @@ export const uiSchemaTable: any = {
               props: {
                 componentFqn: 'lasec-crm.ProductInquiryWrapper@1.0.0',
                 componentProps: {
-                  'rowData': 'formData',                  
+                  'rowData': 'formData',
                   'api': 'api',
                 },
                 childProps: {
                   context: 'planner'
                 },
-                slideDirection: 'down',          
+                slideDirection: 'down',
                 buttonTitle: '${rowData.planner}',
-                buttonProps: {
-                  color: "#23A06A",
-                  size: 'small',
-                  style: {
-                    marginLeft: '16px',
-                    backgroundColor: "#23A06A"
-                  }
-                },
-                buttonIcon: 'email',
                 windowTitle: 'Send email to ${rowData.planner || "all planners"} (Planner) re: ${rowData.code}',
               },
             },
@@ -258,6 +248,61 @@ export const uiSchemaTable: any = {
         },
         { title: 'Is Hazardous', field: 'isHazardous' },
         { title: 'Site Evaluation', field: 'siteEvaluationRequired' },
+        { title: 'Product Class', field: 'productClass' },
+        { title: 'Tariff Code', field: 'tariffCode' },
+        { title: 'Lead Time', field: 'leadTime' },
+        {
+          title: 'Valid Price Until',
+          field: 'validPriceUntil',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.validPriceUntil).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.validPriceUntil': 'value',
+          }
+        },
+        { title: 'Last Updated', field: 'lastUpdated' },
+        { title: 'Last Updated By', field: 'lastUpdatedBy' },
+        {
+          title: 'Last Ordered',
+          field: 'lastOrdered',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.lastOrdered).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.lastOrdered': 'value',
+          }
+        },
+        {
+          title: 'Last Received',
+          field: 'lastReceived',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${api.utils.moment(rowData.lastReceived).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.lastReceived': 'value',
+          }
+        },
+        { title: 'Supplier Currency', field: 'supplyCurrency' },
+        { title: 'List Currency', field: 'listCurrency' },
       ],
       options: {
         grouping: false,
@@ -303,6 +348,17 @@ export const uiSchemaTable: any = {
         'products.[].packedWeight': 'data.[].packedWeight',
         'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
         'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',
+
+        'products.[].productClass': 'data.[].productClass',
+        'products.[].tariffCode': 'data.[].tariffCode',
+        'products.[].leadTime': 'data.[].leadTime',
+        'products.[].validPriceUntil': 'data.[].validPriceUntil',
+        'products.[].lastUpdated': 'data.[].lastUpdated',
+        'products.[].lastUpdatedBy': 'data.[].lastUpdatedBy',
+        'products.[].lastOrdered': 'data.[].lastOrdered',
+        'products.[].lastReceived': 'data.[].lastReceived',
+        'products.[].supplyCurrency': 'data.[].supplyCurrency',
+        'products.[].listCurrency': 'data.[].listCurrency',
       },
     },
   }
@@ -530,7 +586,9 @@ const uiSchemaPurOrders: any = {
             conditions: [
               {
                 key: 'on_syspro',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#9AD86E'
                 },
@@ -538,7 +596,9 @@ const uiSchemaPurOrders: any = {
               },
               {
                 key: 'not_on_syspro',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#D22D2C'
                 },
@@ -546,7 +606,9 @@ const uiSchemaPurOrders: any = {
               },
               {
                 key: 'on_hold',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#D22D2C'
                 },
@@ -554,7 +616,9 @@ const uiSchemaPurOrders: any = {
               },
               {
                 key: 'on_partial_hold',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#f7b425'
                 },

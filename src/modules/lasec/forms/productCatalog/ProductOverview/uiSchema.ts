@@ -59,7 +59,8 @@ const tableUiSchema: any = {
                 conditions: [
                   {
                     key: 'on_syspro',
-                    icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#9AD86E'
                     },
@@ -67,7 +68,8 @@ const tableUiSchema: any = {
                   },
                   {
                     key: 'not_on_syspro',
-                    icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#D22D2C'
                     },
@@ -75,7 +77,8 @@ const tableUiSchema: any = {
                   },
                   {
                     key: 'on_hold',
-                    icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#D22D2C'
                     },
@@ -83,7 +86,8 @@ const tableUiSchema: any = {
                   },
                   {
                     key: 'on_partial_hold',
-                    icon: 'error',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
                     style: {
                       color: '#f7b425'
                     },
@@ -123,7 +127,8 @@ const tableUiSchema: any = {
                   size: 'small',
                   style: {
                     marginLeft: '16px',
-                    backgroundColor: "#23A06A"
+                    backgroundColor: "#23A06A",
+                    color: '#fff'
                   }
                 },
                 buttonIcon: 'add',
@@ -149,12 +154,12 @@ const tableUiSchema: any = {
               props: {
                 componentFqn: 'lasec-crm.LasecProductDetails@1.0.0',
                 componentProps: {
-                  'rowData': 'formData',                  
+                  'rowData': 'formData',
                 },
                 slideDirection: 'left',
                 buttonVariant: 'button',
-                buttonProps: {                  
-                  size: 'small',                  
+                buttonProps: {
+                  size: 'small',
                 },
                 buttonIcon: 'launch',
                 windowTitle: '${rowData.code} ${rowData.name}',
@@ -167,18 +172,16 @@ const tableUiSchema: any = {
                   'ui:options': {
                     variant: 'p',
                     copyToClipboard: true,
-                    format: '${rowData.code}',                   
-                    bodyProps: {
-                                            
-                    }
+                    format: '${rowData.code}',
+                    bodyProps: {}
                   }
                 },
               },
               propsMap: {
                 'rowData.code': 'value',
               }
-            },           
-          ],          
+            },
+          ],
         },
         { title: 'Description', field: 'name' },
         {
@@ -248,40 +251,41 @@ const tableUiSchema: any = {
               }
             },
           },
-        },        
-        {
-          title: 'Special Price', field: 'price',
-          component: 'core.StyledCurrencyLabel@1.0.0',
-          props: {
-            displayAdditionalCurrencies: true,
-            displayPrimaryCurrency: false,
-            currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
-            region: 'en-IN',
-            uiSchema: {
-              'ui:options': {
-                prependText: '(ZAR)',
-                additionalCurrencyMapField: 'special_price_cents',
-                showZeroValues: false,
-                defaultStyle: {
-                  borderBottom: '1px solid #E1E1E4'
-                },
-                conditionalStyles: []
-              }
-            },
-          },
-          propsMap: {
-            'rowData.price': ['value', 'formData'],
-            'rowData.priceAdditionalInfo': ['condition'],
-            'rowData.productPricing': 'currencies',
-          },
         },
+        // {
+        //   title: 'Special Price', field: 'price',
+        //   component: 'core.StyledCurrencyLabel@1.0.0',
+        //   props: {
+        //     displayAdditionalCurrencies: true,
+        //     displayPrimaryCurrency: false,
+        //     currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
+        //     region: 'en-IN',
+        //     uiSchema: {
+        //       'ui:options': {
+        //         prependText: '(ZAR)',
+        //         additionalCurrencyMapField: 'special_price_cents',
+        //         showZeroValues: false,
+        //         defaultStyle: {
+        //           borderBottom: '1px solid #E1E1E4'
+        //         },
+        //         conditionalStyles: []
+        //       }
+        //     },
+        //   },
+        //   propsMap: {
+        //     'rowData.price': ['value', 'formData'],
+        //     'rowData.priceAdditionalInfo': ['condition'],
+        //     'rowData.productPricing': 'currencies',
+        //   },
+        // },
         {
           title: 'Price', field: 'price',
           component: 'core.StyledCurrencyLabel@1.0.0',
           props: {
             displayAdditionalCurrencies: true,
             displayPrimaryCurrency: false,
-            currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
+            // currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
+            currenciesDisplayed: ['USD', 'ZAR'],
             region: 'en-IN',
             uiSchema: {
               'ui:options': {

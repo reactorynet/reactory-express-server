@@ -29,7 +29,9 @@ const uiSchema: any = {
             conditions: [
               {
                 key: 'on_syspro',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#9AD86E'
                 },
@@ -37,7 +39,9 @@ const uiSchema: any = {
               },
               {
                 key: 'not_on_syspro',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#D22D2C'
                 },
@@ -45,7 +49,9 @@ const uiSchema: any = {
               },
               {
                 key: 'on_hold',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#D22D2C'
                 },
@@ -53,7 +59,9 @@ const uiSchema: any = {
               },
               {
                 key: 'on_partial_hold',
-                icon: 'error',
+                // icon: 'error',
+                icon: 'OnSyspro',
+                iconType: 'reactory',
                 style: {
                   color: '#f7b425'
                 },
@@ -88,12 +96,12 @@ const uiSchema: any = {
               props: {
                 componentFqn: 'lasec-crm.LasecProductDetails@1.0.0',
                 componentProps: {
-                  'rowData': 'formData',                  
+                  'rowData': 'formData',
                 },
                 slideDirection: 'left',
                 buttonVariant: 'button',
-                buttonProps: {                  
-                  size: 'small',                  
+                buttonProps: {
+                  size: 'small',
                 },
                 buttonIcon: 'launch',
                 windowTitle: '${rowData.code} ${rowData.name}',
@@ -106,9 +114,9 @@ const uiSchema: any = {
                   'ui:options': {
                     variant: 'p',
                     copyToClipboard: true,
-                    format: '${rowData.code}',                   
+                    format: '${rowData.code}',
                     bodyProps: {
-                                            
+
                     }
                   }
                 },
@@ -116,8 +124,8 @@ const uiSchema: any = {
               propsMap: {
                 'rowData.code': 'value',
               }
-            },           
-          ],          
+            },
+          ],
         },
         { title: 'Description', field: 'name' },
         {

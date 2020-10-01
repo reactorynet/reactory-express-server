@@ -15,10 +15,10 @@ const uiSchema: any = {
       //zIndex: 'auto',
     }
   },
-  
+
   stock: {
     'ui:widget': 'MaterialTableWidget',
-    'ui:options': {      
+    'ui:options': {
       options: {
         toolbar: false,
         draggable: false,
@@ -26,7 +26,19 @@ const uiSchema: any = {
         paging: false
       },
       columns: [
-        { title: 'Warehouse', field: 'name' },
+        {
+          title: 'Warehouse',
+          field: 'name',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'p',
+                format: '${rowData.name} (${rowData.warehouseId})',
+              }
+            },
+          },
+        },
         { title: 'Quantity Available', field: 'qtyAvailable' },
         { title: 'Quantity On Hand', field: 'qtyOnHand' },
         { title: 'Quantity On BO', field: 'qtyOnBO' },
@@ -36,11 +48,11 @@ const uiSchema: any = {
   },
 
   id: {
-    class: 'none',    
+    class: 'none',
     'ui:widget': 'HiddenWidget',
     'ui:options': {
       containerStyles: {
-        'display': 'none'        
+        'display': 'none'
       }
     }
   },
