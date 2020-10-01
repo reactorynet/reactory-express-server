@@ -125,7 +125,7 @@ const uiSchema: any = {
       columns: [
         // { title: 'Sales Order Number', field: 'salesOrderNumber' },
         { title: 'Order Type', field: 'orderType' },
-        { title: 'Order Status', field: 'orderStatus' },
+        // { title: 'Order Status', field: 'orderStatus' },
         {
           title: 'Order Date',
           field: 'orderDate',
@@ -158,7 +158,9 @@ const uiSchema: any = {
             'rowData.date': 'value',
           }
         },
-        {
+        
+        /*{
+          // L360-483 - Remove Quote date
           title: 'Quote Date',
           field: 'quoteDate',
           component: 'core.LabelComponent@1.0.0',
@@ -173,7 +175,7 @@ const uiSchema: any = {
           propsMap: {
             'rowData.date': 'value',
           }
-        },
+        },*/
         {
           title: 'ISO Number',
           field: 'salesOrderNumber',

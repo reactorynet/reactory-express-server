@@ -35,6 +35,8 @@ const graphql: Reactory.IFormGraphDefinition = {
           code
           created
           statusName
+          status
+          allowed_statuses
           totalVATInclusive
           customer {
             id
@@ -66,13 +68,15 @@ const graphql: Reactory.IFormGraphDefinition = {
       'quotes[].code': 'quotes[].code',
       'quotes[].created': 'quotes[].created',
       'quotes[].statusName': 'quotes[].status',
+      'quotes[].status': 'quotes[].quote_status',
+      'quotes[].allowed_statuses': 'quotes[].allowed_statuses',
       'quotes[].totalVATInclusive': 'quotes[].total',
       'quotes[].company.tradingName': 'quotes[].companyTradingName',
-      'quotes[].accountNumber': 'data[].accountNumber',
-      'quotes[].meta.source.sales_team_id': 'data[].repCode',
-      'quotes[].meta.source.quote_type': 'data[].quoteType',
+      'quotes[].accountNumber': 'quotes[].accountNumber',
+      'quotes[].meta.source.sales_team_id': 'quotes[].repCode',
+      'quotes[].meta.source.quote_type': 'quotes[].quoteType',
     },
-    autoQuery: true,
+    autoQuery: false,
     queryMessage: 'Search for quote',
     resultType: 'object',
     edit: false,

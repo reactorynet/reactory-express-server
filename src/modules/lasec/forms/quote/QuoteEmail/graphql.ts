@@ -4,12 +4,13 @@ const graphql: Reactory.IFormGraphDefinition = {
     name: 'LasecPrepareQuoteEmail',
     text: `query LasecPrepareQuoteEmail($quote_id: String!, $email_type: String){
       LasecPrepareQuoteEmail(quote_id: $quote_id, email_type: $email_type){
-        quote_id,
-        fromEmail
-        fromDisplay
+        from {
+          email
+          display
+        }        
         subject
         message
-        toList {
+        to {
           email
           display
         }
@@ -17,7 +18,8 @@ const graphql: Reactory.IFormGraphDefinition = {
           id
           url
           name
-        }
+        },
+        meta
       }
     }`,
     variables: {

@@ -16,7 +16,7 @@ const uiSchema: any = {
     }
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       quotes: {
         md: 12
@@ -41,7 +41,7 @@ const uiSchema: any = {
   },
   paging: {
     'ui:widget': 'HiddenWidget'
-  },  
+  },
   filterBy: {
     'ui:widget': 'SelectWidget',
     'ui:options': {
@@ -107,10 +107,15 @@ const uiSchema: any = {
         {
           title: 'Quote Number',
           field: 'code',
-          width: '220px',
+          width: '160px',
           component: 'lasec-crm.QuoteActionButton',
-          props: {            
-            variant: 'body1',            
+          props: {
+            variant: 'body1',
+            style: {
+              maxWidth: '170px',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }
           },
           propsMap: {
             'rowData.code': 'quote_id',
@@ -125,7 +130,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.date).format(\'DD MMM YYYY HH:mm\')}'
+                containerProps: {
+                  style: {
+                    maxWidth: '140px'
+                  },
+                },
+                format: '${api.utils.moment(rowData.date).format(\'DD-MM-YYYY\')}'
               }
             },
           },
@@ -135,18 +145,19 @@ const uiSchema: any = {
         },
         {
           title: 'Quote Status', field: 'status',
+          width: '140px',
           components: [
             {
               component: 'lasec-crm.QuoteStatus@1.0.0',
               props: {
                 usecase: 'grid'
-              },              
+              },
               propsMap: {
                 'rowData.status': 'value',
                 'rowData': 'quote'
               },
-            },            
-          ],          
+            },
+          ],
         },
         {
           title: 'Total Quote Value', field: 'total',
@@ -168,12 +179,13 @@ const uiSchema: any = {
         toolbar: true,
         selection: true,
         pageSize: 10,
+        doubleHorizontalScroll: true
       },
       actions: [
         {
           icon: 'remove_circle',
           tooltip: 'Deactivate Client(s)',
-          key: 'deactivate',          
+          key: 'deactivate',
           confirmation: {
             title: 'Are you sure you want to delete ${selected.length === 1 ? "this quote" : "these quotes"}?',
             titleProps: {
@@ -181,9 +193,9 @@ const uiSchema: any = {
                 fontWeight: 'bold'
               }
             },
-            content: 'Once a quote is deleted you will no longer be able to acces the quote information', 
+            content: 'Once a quote is deleted you will no longer be able to acces the quote information',
             contentProps: {
-              style:{
+              style: {
                 color: '#BCBCBC'
               }
             },
@@ -203,8 +215,8 @@ const uiSchema: any = {
           },
           iconProps: {
             color: 'error'
-          },      
-          mutation: 'deactivate',          
+          },
+          mutation: 'deactivate',
         },
       ],
       remoteData: true,
@@ -212,7 +224,7 @@ const uiSchema: any = {
       componentMap: {
         Toolbar: 'lasec-crm.QuoteGridToolbar@1.0.0'
       },
-      variables: {  
+      variables: {
         'props.formContext.$formData.search': 'search',
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.filterBy': 'filterBy',
@@ -230,14 +242,15 @@ const uiSchema: any = {
         // 'quotes': 'data',
         'quotes[].code': 'data[].code',
         'quotes[].created': 'data[].date',
-        'quotes[].statusName': 'data[].status',
+        'quotes[].statusName': 'data[].statusName',
+        'quotes[].allowed_statuses[]': 'data[].allowed_statuses',
+        'quotes[].status': 'data[].status',
         'quotes[].totalVATInclusive': 'data[].total',
         'quotes[].customer.fullName': 'data[].client',
         'quotes[].company.tradingName': 'data[].companyTradingName',
         'quotes[].company.code': 'data[].accountNumber',
         'quotes[].meta.source.sales_team_id': 'data[].repCode',
         'quotes[].meta.source.quote_type': 'data[].quoteType',
-
       },
       resultType: 'object',
     },

@@ -26,7 +26,7 @@ const theme = {
         }
       }
     },
-    overrides: {
+    overrides: {     
       MuiAppBar: {
         colorPrimary: {
           color: '#222732',
@@ -56,12 +56,23 @@ const theme = {
         body: {
             //fontSize: '12'
         }
-      },      
+      },     
+      MuiTab: {
+        root: {
+          border: '2px solid #E4E4E4',
+          borderTopLeftRadius: '4px',
+          borderTopRightRadius: '4px',          
+          //#43A06A
+          '&$selected': {
+            border: '2px solid #43A06A',
+          }
+        },        
+      }, 
       MuiBox: {
         root: {
           padding: '0px',
           paddingTop: '8px'
-        }
+        },        
       },            
     },
     type: 'material',
