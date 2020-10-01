@@ -32,12 +32,12 @@ export interface ISimpleResponse {
 
     assessor_title: string
     assessor_description: string
-    
+
     delegate_title: string
     delegate_description: string
 
     chart_title: string
-    chart_color: string    
+    chart_color: string
     options?: any
   }
 
@@ -49,7 +49,7 @@ export interface ISimpleResponse {
 
     assessor_title: string
     assessor_description: string
-    
+
     delegate_title: string
     delegate_description: string
 
@@ -57,11 +57,11 @@ export interface ISimpleResponse {
     chart_color: string
 
     behaviours: Array<IBehaviour>
-    
+
     options?: any
   }
-  
-  export interface ILeadershipBrand {    
+
+  export interface ILeadershipBrand {
     title: string
     key: string
     description: string
@@ -109,7 +109,7 @@ export interface ISimpleResponse {
 
   export interface ISurveyEmailTemplate {
     id: string
-    key: string    
+    key: string
     activity: string
     subject: string
     body: string
@@ -125,7 +125,7 @@ export interface ISimpleResponse {
     generalTemplates?:  Array<ISurveyEmailTemplate>
   }
 
- 
+
 
   export interface ISurveyDelegateEntry extends Mongoose.Document {
     delegate: Reactory.IUserDocument,
@@ -140,6 +140,7 @@ export interface ISimpleResponse {
     status: String,
     updatedAt: Date | Number,
     createdAt: Date | Number,
+    peers: any,
     actions: [
       {
         action: String,
@@ -178,7 +179,7 @@ export interface ISimpleResponse {
     calendar: any[],
     delegates: any,
     templates: TowerStone.ISurveyTemplates
-    addTimelineEntry( eventType: string, eventDetail: string, who: ObjectID, save: boolean): Promise<void> 
+    addTimelineEntry( eventType: string, eventDetail: string, who: ObjectID, save: boolean): Promise<void>
   }
 
 
@@ -193,7 +194,7 @@ export interface ISimpleResponse {
   export interface IEmailSendResult {
     sent: number,
     failed: number,
-    errors?: Error[] 
+    errors?: Error[]
   }
 
   export interface ITowerStoneServiceParameters {
@@ -205,11 +206,11 @@ export interface ISimpleResponse {
     id: string
     templates: TowerStone.ISurveyTemplates
   }
-  
+
   export interface ITowerStoneEmailService {
     send: (survey: ISurvey, activity: string, target: string, users: Reactory.IUser[], properties: any ) => Promise<IEmailSendResult>
     templates: (survey: ISurvey) => Promise<TowerStone.ISurveyTemplates>
-    patchTemplates: (survey: ISurvey, templates:  TowerStone.ISurveyTemplates) => Promise<TowerStone.ISurveyTemplates>  
+    patchTemplates: (survey: ISurvey, templates:  TowerStone.ISurveyTemplates) => Promise<TowerStone.ISurveyTemplates>
   }
 
   export interface ITowerStoneEmailServiceProvider {
