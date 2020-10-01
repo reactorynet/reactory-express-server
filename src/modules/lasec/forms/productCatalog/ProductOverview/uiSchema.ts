@@ -191,7 +191,9 @@ const tableUiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                icon: 'square_foot',
+                // icon: 'square_foot',
+                icon: 'Ruler',
+                iconType: 'reactory',
                 iconPosition: 'left',
                 variant: 'p',
                 format: '${rowData.unitOfMeasure}'
@@ -209,7 +211,9 @@ const tableUiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                icon: 'shopping_basket',
+                // icon: 'shopping_basket',
+                icon: 'Briefcase',
+                iconType: 'reactory',
                 iconPosition: 'left',
                 variant: 'p',
                 format: '${rowData.qtyAvailable}'
