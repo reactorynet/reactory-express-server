@@ -15,6 +15,21 @@ const QuoteSchema: Reactory.ISchema = {
       type: "string",
       title: "Quote Date"
     },
+
+    statusName: {
+      type: "string",
+      title: "Quote Status",
+    },
+
+    allowed_statuses: {
+      type: "array",
+      title: "Allowed Statuses",
+      items: {
+        type: "string",
+        title: 'Status'
+      }
+    },
+
     status: {
       type: "string",
       title: "Quote Status"
@@ -22,7 +37,7 @@ const QuoteSchema: Reactory.ISchema = {
     
     totalVATInclusive: {
       type: "number",
-      title: 'Totla Quote Value'
+      title: 'Total Quote Value'
     },
     client: {
       type: "String",

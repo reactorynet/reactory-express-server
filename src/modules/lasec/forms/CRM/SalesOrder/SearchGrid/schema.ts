@@ -122,7 +122,11 @@ const schema: Reactory.ISchema = {
     orderStatus: {
       type: 'string',
       title: 'ORDER STATUS'
-    },    
+    },
+    filter: {
+      type: 'string',
+      title: 'Filter Value'
+    },
     salesOrders: {
       type: 'array',
       items: {

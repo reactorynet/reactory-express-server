@@ -8,6 +8,7 @@ export const EVENTS_TO_TRACK = {
   DELEGATE_ADDED: 'Delegate Added',
   LAUNCH_INVITE: 'Launch Invite',
   LAUNCHED: 'Launched',
+  PEER_LAUNCHED: 'Peer Launched',
   REMINDER: 'Reminder Sent',
   CLOSED: 'Closed',
   REMOVED: 'Delegate Removed',

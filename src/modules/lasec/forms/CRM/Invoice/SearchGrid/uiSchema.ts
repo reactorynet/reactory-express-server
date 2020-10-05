@@ -25,7 +25,7 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       invoices: { xs: 12 }
     }
@@ -124,12 +124,13 @@ const uiSchema: any = {
         {
           title: 'Invoice Date',
           field: 'invoiceDate',
+          width: '140px',
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body1',
-                format: '${rowData.invoiceDate ? api.utils.moment(rowData.invoiceDate).format(\'DD MMM YYYY\') : ""}'
+                variant: 'body2',
+                format: '${rowData.invoiceDate ? api.utils.moment(rowData.invoiceDate).format(\'DD-MM-YYYY\') : ""}'
               }
             },
           },
@@ -141,6 +142,7 @@ const uiSchema: any = {
         {
           title: 'Invoice Number',
           field: 'isoNumber',
+          width: '140px',
           component: 'core.SlideOutLauncher@1.0.0',
           props: {
             componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
@@ -166,11 +168,12 @@ const uiSchema: any = {
             buttonTitle: '${rowData.id}',
             buttonVariant: 'Typography',
             buttonProps: {
+              variant: "body2",
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
                 'color': 'black',
-                'fontSize': '1rem'
+                maxWidth: '140px'
               }
             },
             windowTitle: 'Details view for Invoice # ${rowData.id}',
@@ -179,10 +182,11 @@ const uiSchema: any = {
             'rowData': 'rowData'
           }
         },
-        { title: 'PO Number', field: 'poNumber' },
+        { title: 'P.O. #', field: 'poNumber', breakpoint: 'sm', },
         {
-          title: 'Sales Order Number',
+          title: 'S.O. #',
           field: 'isoNumber',
+          width: '140px',
           component: 'core.SlideOutLauncher@1.0.0',
           props: {
             componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
@@ -208,14 +212,15 @@ const uiSchema: any = {
             buttonTitle: '${rowData.isoNumber}',
             buttonVariant: 'Typography',
             buttonProps: {
+              variant: "body2",
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
                 'color': 'black',
-                'fontSize': '1rem'
+                maxWidth: '140px'
               }
             },
-            windowTitle: 'Details view for Order # ${rowData.isoNumber}',
+            windowTitle: 'Sales Order# ${rowData.isoNumber} - Detail View',
           },
           propsMap: {
             'rowData': 'rowData'
@@ -229,16 +234,29 @@ const uiSchema: any = {
             'rowData.value': 'value',
           },
         },
-        { title: 'Quote Number', field: 'quoteId' },
+        {
+          title: 'Quote Number', field: 'quoteId',
+          component: 'core.LabelComponent@1.0.0',
+          breakpoint: 'sm',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData.quoteId}'
+              }
+            },
+          },
+        },
         {
           title: 'Quote Date',
           field: 'quoteDate',
           component: 'core.LabelComponent@1.0.0',
+          breakpoint: 'sm',
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body1',
-                format: '${rowData.quoteDate ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
+                variant: 'body2',
+                format: '${rowData.quoteDate ? api.utils.moment(rowData.quoteDate).format(\'DD-MM-YYYY\') : ""}'
               }
             },
           },
@@ -246,11 +264,11 @@ const uiSchema: any = {
             'rowData.quoteDate': 'value',
           }
         },
-        { title: 'Account Number', field: 'accountNumber' },
-        { title: 'Customer', field: 'customer' },
-        { title: 'Client', field: 'client' },
+        { title: 'Account Number', field: 'accountNumber', breakpoint: 'md', },
+        { title: 'Customer', field: 'customer', breakpoint: 'md', },
+        { title: 'Client', field: 'client', breakpoint: 'md', },
         // { title: 'Dispatches', field: 'dispatches' },
-        { title: 'Client Rep Code', field: 'salesTeamId' },
+        { title: 'Client Rep Code', field: 'salesTeamId', breakpoint: 'md', },
         // { title: 'ISO Number', field: 'isoNumber' },
 
 

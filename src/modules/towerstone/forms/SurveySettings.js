@@ -80,7 +80,7 @@ export const SurveySettingsSchema = {
         },
       },
     },
-    
+
   },
 };
 
@@ -90,12 +90,12 @@ export const SurveySetttingsUISchema = {
     submitProps: {
       variant: 'button',
       text: '${props.mode === "edit" ? "Update" : "Create" }',
-      color: 'primary',      
+      color: 'primary',
       iconAlign: 'left'
     }
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       defaultMinimumPeers: { md: 4 },
       mustHaveSupervisor: { md: 4 },
@@ -171,7 +171,22 @@ export const SurveySetttingsUISchema = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'When', field: 'when' },
+        {
+          title: 'When',
+          field: 'when',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body1',
+                format: '${api.utils.moment(rowData.when).format(\'DD MMM YYYY HH:mm\')}',
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
         { title: 'Event', field: 'eventType' },
         { title: 'Detail', field: 'eventDetail' },
       ],
@@ -239,7 +254,7 @@ const graphql = {
         title: 'Survey updated',
         props: {
           timeOut: 3000,
-          canDismiss: true,          
+          canDismiss: true,
         }
       },
     },

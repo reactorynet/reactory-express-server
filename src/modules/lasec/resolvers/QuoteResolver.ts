@@ -305,6 +305,15 @@ export default {
       return meta.source &&
         meta.source.substatus_id ? meta.source.substatus_id : '1';
     },
+    allowed_statuses: (quote) => {
+      const { meta } = quote;
+
+      if (meta && meta.source && meta.source.allowed_status_ids) {
+        return meta.source.allowed_status_ids
+      }
+
+      return []
+    },
     statusGroupName: (quote) => {
       const { statusGroupName, meta } = quote;
 
@@ -692,15 +701,36 @@ export default {
 
       logger.debug('Mutation.LasecUpdateQuoteStatus(...)', { quote_id, input });
 
+      let _message = 'Quote status updated.';
+
+      const timelineEntry: any = {
+        when: new Date().valueOf(),
+        what: '',
+        who: global.user._id,
+        notes: input.note,
+        reason: input.reason
+      };
+
+      if(input.status) {
+        try { 
+          let status_update_result = await lasecApi.Quotes.updateQuote({"item_id":quote_id,"values":{ status_id : input.status }}).then()
+          logger.debug(`Quote Status Update Result ${JSON.stringify(status_update_result)}`)
+          _message = status_update_result.status !== "success" ? 'Quote status not updated' : _message;
+          timelineEntry.what = `Quote status updated to ${input.status_name} by ${global.user.fullName()}`;
+        } catch (apiError) {
+          logger.error(`Api Error when updating quote status`);
+        }
+      }
+
       const quote = await getLasecQuoteById(quote_id).then();
 
       if (!quote) {
         const message = `Quote with quote id ${quote_id}, not found`;
         throw new ApiError(message, { quote_id, message, code: 404 });
       }
-
+            
       if (!quote.note && input.note) {
-        quote.note = input.note;
+        quote.note = input.note;        
       }
 
       const { user } = global;
@@ -708,16 +738,7 @@ export default {
       let reminder = null;
 
       if (lodash.isArray(quote.timeline) === false) quote.timeline = [];
-
-      const timelineEntry = {
-        when: new Date().valueOf(),
-        what: `Next actions updated by ${global.user.firstName} ${global.user.lastName} and a reminder set for ${moment().add(reminder || 3, 'days').format('YYYY-MM-DD HH:mm')}`,
-        who: global.user._id,
-        notes: input.note,
-        reason: input.reason
-      };
-
-
+      
       if (input.reminder > 0) {
         reminder = new QuoteReminder({
           quote: quote._id,
@@ -744,10 +765,8 @@ export default {
             quote: quote
           },
         }, global.partner);
-        timelineEntry.reminder = reminder._id;
+        timelineEntry.reminder = reminder._id;        
       }
-
-      // quote.status = input.status,
       quote.timeline.push(timelineEntry);
 
       amq.raiseWorkFlowEvent('startWorkflow', {
@@ -765,11 +784,13 @@ export default {
       await quote.save();
 
       //create task via ms if the user has MS authentication
-      let taskCreated = false;
-      let _message = '.';
-      if (user.getAuthentication("microsoft") !== null) {
-        const taskCreateResult = await clientFor(user, global.partner).mutate({
-          mutation: gql`
+      
+      if (reminder) {
+        let taskCreated = false;
+        
+        if (user.getAuthentication("microsoft") !== null) {
+          const taskCreateResult = await clientFor(user, global.partner).mutate({
+            mutation: gql`
             mutation createOutlookTask($task: CreateTaskInput!) {
               createOutlookTask(task: $task) {
                 Successful
@@ -777,51 +798,54 @@ export default {
                 TaskId
               }
             }`, variables: {
-            "task": {
-              "id": `${user._id.toString()}`,
-              "via": "microsoft",
-              "subject": reminder.text,
-              "startDate": moment(reminder.next).add(-6, "h").format("YYYY-MM-DD HH:MM"),
-              "dueDate": moment(reminder.next).format("YYYY-MM-DD HH:MM")
+              "task": {
+                "id": `${user._id.toString()}`,
+                "via": "microsoft",
+                "subject": reminder.text,
+                "startDate": moment(reminder.next).add(-6, "h").format("YYYY-MM-DD HH:MM"),
+                "dueDate": moment(reminder.next).format("YYYY-MM-DD HH:MM")
+              }
             }
+          })
+            .then()
+            .catch(error => {
+              logger.debug(`CREATE OUTLOOK TASK FAILED - ERROR:: ${error}`);
+              _message = `. ${error.message}`
+              return {
+                quote,
+                success: true,
+                message: `Quote status updated${_message}`
+              };
+            });
+
+
+          if (taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
+
+            logger.debug(`SYNCED:: ${JSON.stringify(taskCreateResult)}`);
+
+            // Save the task id in meta on the quote reminder
+            reminder.meta = {
+              reference: {
+                source: 'microsoft',
+                referenceId: taskCreateResult.data.createOutlookTask.TaskId
+              },
+              lastSync: moment().valueOf(),
+            }
+
+            await reminder.save();
+
+            taskCreated = true;
+            _message = '. Task synchronized via Outlook task.'
           }
-        })
-          .then()
-          .catch(error => {
-            logger.debug(`CREATE OUTLOOK TASK FAILED - ERROR:: ${error}`);
-            _message = `. ${error.message}`
-            return {
-              quote,
-              success: true,
-              message: `Quote status updated${_message}`
-            };
-          });
-
-
-        if (taskCreateResult.data && taskCreateResult.data.createOutlookTask) {
-
-          logger.debug(`SYNCED:: ${JSON.stringify(taskCreateResult)}`);
-
-          // Save the task id in meta on the quote reminder
-          reminder.meta = {
-            reference: {
-              source: 'microsoft',
-              referenceId: taskCreateResult.data.createOutlookTask.TaskId
-            },
-            lastSync: moment().valueOf(),
-          }
-
-          await reminder.save();
-
-          taskCreated = true;
-          _message = ' and task synchronized via Outlook task.'
         }
       }
+      
+
 
       return {
         quote,
         success: true,
-        message: `Quote status updated${_message}`
+        message: `${_message}`
       };
     },
 
@@ -1126,10 +1150,10 @@ export default {
       return deleteQuote(params);
     },
 
-    LasecDeleteQuotes: async(parent, params) => {
+    LasecDeleteQuotes: async (parent, params) => {
       const { quoteIds } = params;
 
-      
+
       let response: SimpleResponse = {
         message: `Deactivated ${params.quoteIds.length} quotes`,
         success: true
@@ -1141,28 +1165,28 @@ export default {
         let successCount: number, failCount: number = 0;
 
         results.forEach((patchResult) => {
-          if(patchResult.success === true) successCount += 1;
+          if (patchResult.success === true) successCount += 1;
           else failCount += 1;
         });
 
-        if(failCount > 0) {
-          if(successCount > 0) {
-            response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;            
+        if (failCount > 0) {
+          if (successCount > 0) {
+            response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;
           } else {
             response.message = ` 😣 Could not deactivate any client accounts.`;
             response.success = false;
           }
         } else {
-          if( successCount === deactivation_promises.length) {
+          if (successCount === deactivation_promises.length) {
             response.message = `🥇 Deactivated all ${successCount} clients.`
           }
         }
-      } catch(err) {
+      } catch (err) {
         response.message = `😬 An error occurred while changing the client status. [${err.nessage}]`;
         logger.error(`🧨 Error deactivating the client account`, err)
-      } 
+      }
 
-      
+
     }
   }
 };

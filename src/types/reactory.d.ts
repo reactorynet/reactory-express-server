@@ -135,7 +135,7 @@ declare namespace Reactory {
     via: string | 'reactory' | 'microsoft' | 'google';
     subject: string,
     contentType: string, 
-    content: string, 
+    content: string,     
     to: ToEmail[], 
     cc?: ToEmail[],
     bcc?: ToEmail[],

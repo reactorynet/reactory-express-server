@@ -151,6 +151,7 @@ type Quote {
   expirationDate: Date
   note: String
   active_option: String
+  allowed_statuses: [String]
   options: [LasecQuoteOption]
   headers: [LasecQuoteHeader]
   lineItems: [LasecQuoteItem]
@@ -279,6 +280,7 @@ type LasecQuoteStatus {
 
 input LasecQuoteStatusUpdate {
   nextAction: String
+  status: String
   reason: String
   reminder: Int
   note: String
@@ -634,6 +636,16 @@ type QuoteDuplicateResponse {
   quoteId: String
 }
 
+type LasecPreparedEmail {
+  fromEmail: String
+  fromDisplay: String
+  subject: String
+  message: String
+  to: [EmailAddress]
+  attachments: [EmailAttachment]
+  meta: Any
+}
+
 extend type Query {
   LasecGetQuoteList(search: String): [Quote]
   LasecGetCRMQuoteList(
@@ -759,6 +771,8 @@ extend type Query {
   LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryYearlyCount]  
   LasecGetQuotePDFUrl(quote_id: String!): DocumentUrl
   LasecGetQuoteProformaPDFUrl(quote_id: String!): DocumentUrl
+
+  LasecPrepareQuoteEmail(quote_id: String!, email_type: String): LasecPreparedEmail
 }
 
 extend type Mutation {
