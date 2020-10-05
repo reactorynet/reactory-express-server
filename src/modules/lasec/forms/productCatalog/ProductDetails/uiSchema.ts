@@ -47,8 +47,8 @@ export const uiSchemaTable: any = {
     'ui:options': {
       columns: [
         {
-          title: '', field: 'onSyspro',
-          width: '200px',
+          title: '',
+          field: 'onSyspro',
           components: [
             {
               component: 'core.ConditionalIconComponent@1.0.0',
@@ -129,7 +129,8 @@ export const uiSchemaTable: any = {
                   size: 'small',
                   style: {
                     marginLeft: '16px',
-                    backgroundColor: "#23A06A"
+                    backgroundColor: "#23A06A",
+                    color: '#fff'
                   }
                 },
                 buttonIcon: 'add',
@@ -137,13 +138,14 @@ export const uiSchemaTable: any = {
               },
             }
           ],
+          width: '150px',
           cellStyle: {
-            maxWidth: '200px',
-            width: '200px'
+            maxWidth: '150px',
+            width: '150px'
           },
           headerStyles: {
-            maxWidth: '200px',
-            width: '200px'
+            maxWidth: '150px',
+            width: '150px'
           }
         },
         {
@@ -185,11 +187,42 @@ export const uiSchemaTable: any = {
               }
             },
           ],
+          width: '180px',
+          cellStyle: {
+            maxWidth: '180px',
+            width: '180px'
+          },
+          headerStyles: {
+            maxWidth: '180px',
+            width: '180px'
+          },
         },
-        { title: 'Description', field: 'name' },
+        {
+          title: 'Description',
+          field: 'name',
+          width: '200px',
+          cellStyle: {
+            maxWidth: '200px',
+            width: '200px'
+          },
+          headerStyles: {
+            maxWidth: '200px',
+            width: '200px'
+          }
+        },
         {
           title: 'Unit of Measure',
           field: 'unitOfMeasure',
+          breakpoint: 'sm',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
@@ -206,6 +239,16 @@ export const uiSchemaTable: any = {
         {
           title: 'Buyer',
           field: 'buyer',
+          breakpoint: 'sm',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
           components: [
             {
               component: 'core.SlideOutLauncher@1.0.0',
@@ -228,6 +271,16 @@ export const uiSchemaTable: any = {
         {
           title: 'Planner',
           field: 'planner',
+          breakpoint: 'sm',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
           components: [
             {
               component: 'core.SlideOutLauncher@1.0.0',
@@ -247,19 +300,92 @@ export const uiSchemaTable: any = {
             },
           ],
         },
-        { title: 'Is Hazardous', field: 'isHazardous' },
-        { title: 'Site Evaluation', field: 'siteEvaluationRequired' },
-        { title: 'Product Class', field: 'productClass' },
-        { title: 'Tariff Code', field: 'tariffCode' },
-        { title: 'Lead Time', field: 'leadTime' },
+        {
+          title: 'Is Hazardous',
+          field: 'isHazardous',
+          breakpoint: 'sm',
+          width: '100px',
+          cellStyle: {
+            maxWidth: '100px',
+            width: '100px'
+          },
+          headerStyles: {
+            maxWidth: '100px',
+            width: '100px'
+          },
+        },
+        {
+          title: 'Site Evaluation',
+          field: 'siteEvaluationRequired',
+          breakpoint: 'sm',
+          width: '120px',
+          cellStyle: {
+            maxWidth: '120px',
+            width: '120px'
+          },
+          headerStyles: {
+            maxWidth: '120px',
+            width: '120px'
+          },
+        },
+        {
+          title: 'Product Class',
+          field: 'productClass',
+          breakpoint: 'sm',
+          width: '120px',
+          cellStyle: {
+            maxWidth: '120px',
+            width: '120px'
+          },
+          headerStyles: {
+            maxWidth: '120px',
+            width: '120px'
+          },
+        },
+        {
+          title: 'Tariff Code',
+          field: 'tariffCode',
+          breakpoint: 'sm',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+        },
+        {
+          title: 'Lead Time',
+          field: 'leadTime',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+        },
         {
           title: 'Valid Price Until',
           field: 'validPriceUntil',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.validPriceUntil).format(\'DD MMM YYYY\')}'
               }
             },
@@ -268,16 +394,49 @@ export const uiSchemaTable: any = {
             'rowData.validPriceUntil': 'value',
           }
         },
-        { title: 'Last Updated', field: 'lastUpdated' },
-        { title: 'Last Updated By', field: 'lastUpdatedBy' },
+        {
+          title: 'Last Updated',
+          field: 'lastUpdated',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+        },
+        {
+          title: 'Last Updated By',
+          field: 'lastUpdatedBy',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+        },
         {
           title: 'Last Ordered',
           field: 'lastOrdered',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.lastOrdered).format(\'DD MMM YYYY\')}'
               }
             },
@@ -289,11 +448,20 @@ export const uiSchemaTable: any = {
         {
           title: 'Last Received',
           field: 'lastReceived',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.lastReceived).format(\'DD MMM YYYY\')}'
               }
             },
@@ -302,8 +470,32 @@ export const uiSchemaTable: any = {
             'rowData.lastReceived': 'value',
           }
         },
-        { title: 'Supplier Currency', field: 'supplyCurrency' },
-        { title: 'List Currency', field: 'listCurrency' },
+        {
+          title: 'Supplier Currency',
+          field: 'supplyCurrency',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+        },
+        {
+          title: 'List Currency',
+          field: 'listCurrency',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+        },
       ],
       options: {
         grouping: false,

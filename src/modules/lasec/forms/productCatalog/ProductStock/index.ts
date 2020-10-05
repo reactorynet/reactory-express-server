@@ -26,75 +26,115 @@ const uiSchema: any = {
     'ui:options': {
       columns: [
         {
-          title: '', field: 'onSyspro',
-          width: '40px',
-          component: 'core.ConditionalIconComponent@1.0.0',
-          props: {
-            'ui:options': {},
-            conditions: [
-              {
-                key: 'on_syspro',
-                // icon: 'error',
-                icon: 'OnSyspro',
-                iconType: 'reactory',
-                style: {
-                  color: '#9AD86E'
-                },
-                tooltip: 'ON SYSPRO'
+          title: '',
+          field: 'onSyspro',
+          components: [
+            {
+              component: 'core.ConditionalIconComponent@1.0.0',
+              props: {
+                'ui:options': {},
+                conditions: [
+                  {
+                    key: 'on_syspro',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
+                    style: {
+                      color: '#9AD86E'
+                    },
+                    tooltip: 'ON SYSPRO'
+                  },
+                  {
+                    key: 'not_on_syspro',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'NOT ON SYSPRO'
+                  },
+                  {
+                    key: 'on_hold',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
+                    style: {
+                      color: '#D22D2C'
+                    },
+                    tooltip: 'ON HOLD'
+                  },
+                  {
+                    key: 'on_partial_hold',
+                    icon: 'OnSyspro',
+                    iconType: 'reactory',
+                    style: {
+                      color: '#f7b425'
+                    },
+                    tooltip: 'ON PARTIAL HOLD'
+                  },
+                ]
               },
-              {
-                key: 'not_on_syspro',
-                // icon: 'error',
-                icon: 'OnSyspro',
-                iconType: 'reactory',
-                style: {
-                  color: '#D22D2C'
-                },
-                tooltip: 'NOT ON SYSPRO'
+              propsMap: {
+                'rowData.onSyspro': 'value',
               },
-              {
-                key: 'on_hold',
-                // icon: 'error',
-                icon: 'OnSyspro',
-                iconType: 'reactory',
-                style: {
-                  color: '#D22D2C'
-                },
-                tooltip: 'ON HOLD'
-              },
-              {
-                key: 'on_partial_hold',
-                // icon: 'error',
-                icon: 'OnSyspro',
-                iconType: 'reactory',
-                style: {
-                  color: '#f7b425'
-                },
-                tooltip: 'ON PARTIAL HOLD'
-              },
-            ]
-          },
-          propsMap: {
-            'rowData.onSyspro': 'value',
-          },
-
-        },
-        {
-          title: '', field: 'image',
-          width: '80px',
-          component: 'core.ImageComponent@1.0.0',
-          props: {
-            'ui:options': {
-              variant: 'rounded'
             },
+            {
+              component: 'core.ImageComponent@1.0.0',
+              props: {
+                'ui:options': {
+                  variant: 'rounded',
+                  style: {
+                    marginLeft: '16px'
+                  }
+                },
+              },
+              propsMap: {
+                'rowData.image': 'value',
+              },
+            },
+            {
+              component: 'core.SlideOutLauncher@1.0.0',
+              props: {
+                componentFqn: 'lasec-crm.LasecAddProductToQuote@1.0.0',
+                componentProps: {
+                  'rowData.code': 'formData.id'
+                },
+                slideDirection: 'down',
+                buttonVariant: 'Fab',
+                buttonProps: {
+                  color: "#23A06A",
+                  size: 'small',
+                  style: {
+                    marginLeft: '16px',
+                    backgroundColor: "#23A06A",
+                    color: '#fff'
+                  }
+                },
+                buttonIcon: 'add',
+                windowTitle: 'Add to quote ${rowData.code}',
+              },
+            }
+          ],
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
           },
-          propsMap: {
-            'rowData.image': 'value',
-          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          }
         },
         {
           title: 'Stock Code',
           field: 'code',
+          width: '180px',
+          cellStyle: {
+            maxWidth: '180px',
+            width: '180px'
+          },
+          headerStyles: {
+            maxWidth: '180px',
+            width: '180px'
+          },
           components: [
             {
               component: 'core.SlideOutLauncher@1.0.0',
@@ -132,10 +172,32 @@ const uiSchema: any = {
             },
           ],
         },
-        { title: 'Description', field: 'name' },
+        {
+          title: 'Description',
+          field: 'name',
+          width: '200px',
+          cellStyle: {
+            maxWidth: '200px',
+            width: '200px'
+          },
+          headerStyles: {
+            maxWidth: '200px',
+            width: '200px'
+          }
+        },
         {
           title: 'Unit of Measure',
           field: 'unitOfMeasure',
+          breakpoint: 'sm',
+          width: '120px',
+          cellStyle: {
+            maxWidth: '120px',
+            width: '120px'
+          },
+          headerStyles: {
+            maxWidth: '120px',
+            width: '120px'
+          },
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
