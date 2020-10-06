@@ -194,7 +194,8 @@ export const uiSchemaTable: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                icon: 'square_foot',
+                icon: 'Ruler',
+                iconType: 'reactory',
                 iconPosition: 'left',
                 variant: 'p',
                 format: '${rowData.unitOfMeasure}'
