@@ -1,5 +1,5 @@
 
-type EmailAddress {
+interface EmailAddress {
   email: String
   display: String
 }
@@ -36,27 +36,32 @@ type EmailAttachment {
   mimeType: String
 }
 
-input ToEmail {
+input ToEmail  {
    email: String
    display: String
 }
 
-input AddAttachments {
+input InputEmailAddress {
+  email: String
+  display: String
+}
+
+input AddAttachment {
    id: String!
    name: String
+   file: String
 }
 
 input CreateEmailMessage {
   id: String
   via: String,
-  fromEmail: String
-  fromTitle: String  
+  from: InputEmailAddress
   subject: String
   message: String
-  to: [ToEmail]
-  cc: [ToEmail]
-  bcc: [ToEmail]
-  attachments: [AddAttachments]
+  to: [InputEmailAddress]
+  cc: [InputEmailAddress]
+  bcc: [InputEmailAddress]
+  attachments: [AddAttachment]
   meta: Any,  
 }
 

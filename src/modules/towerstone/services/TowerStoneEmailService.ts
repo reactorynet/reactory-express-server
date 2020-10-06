@@ -588,7 +588,7 @@ const hydrateContent = async (template: TowerStone.ISurveyEmailTemplate, survey:
   const existing = await getReactoryTemplate(template.key, survey.organization, global.partner).then() as Reactory.ITemplateDocument
   if(existing === null) return _template
   if(existing._id && existing.elements) {
-    existing.elements.forEach((element: Reactory.ITemplateDocument) => {
+    existing.elements.forEach((element: Reactory.ITemplate) => {
       if(element.view.endsWith("/subject")) {
         _template.subject = element.content;
       }

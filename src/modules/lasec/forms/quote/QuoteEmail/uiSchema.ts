@@ -12,23 +12,27 @@ const froalaOptions = {
 };
 
 const uiSchema: any = {
-
+  'ui:options': {
+    submitIcon: 'send' 
+  },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
+    {
+      email_type: { sm: 12 }
+    },
     {
       code: { md: 6, sm: 12 },
     },
     {
-      customerName: { md: 6, sm: 12 },
-      customerEmail: { md: 6, sm: 12 },
+      to: { md: 6, sm: 12 },
+      cc: { md: 6, sm: 12 },
+      bcc: { md: 6, sm: 12 },
+      attachments: { 6: 12, sm: 12 },
     },
     {
       subject: { sm: 12 },
       message: { sm: 12 },
-    },
-    {
-      email_type: { sm: 12 }
-    }
+    },        
   ],
 
   code: {
@@ -39,16 +43,80 @@ const uiSchema: any = {
       format: '${formData}',
     }
   },
-  customerName: {
-    'ui:widget': 'LabelWidget',
+
+  to: {
+    'ui:widget': 'ChipArrayWidget',
     'ui:options': {
-      variant: 'subtitle1',
-      title: 'Customer Name',
-      format: '${formData}',
+      labelFormat: '${item.display}<${item.email}>',
+      addComponent: 'core.EmailAddressForm',
+      onAddHandler: 'onAdded',
+      textChangeParser: 'core.EmailAddressTextParser',
+      container: 'core.BasicContainer',
+      containerProps: {
+        title: 'To',
+        style: {
+          maxWidth: '100%',
+          justifyContent: 'flex-end',
+        },
+      },
+    },
+  },
+
+  cc: {
+    'ui:widget': 'ChipArrayWidget',
+    'ui:options': {
+      labelFormat: '${item.display}<${item.email}>',
+      addComponent: 'core.EmailAddressForm',
+      onAddHandler: 'onAdded',
+      textChangeParser: 'core.EmailAddressTextParser',
+      container: 'core.BasicContainer',
+      containerProps: {
+        title: 'CC',
+        style: {
+          maxWidth: '100%',
+          justifyContent: 'flex-end',
+        },
+      },
+    },
+  },
+
+  bcc: {
+    'ui:widget': 'ChipArrayWidget',
+    'ui:options': {
+      labelFormat: '${item.display}<${item.email}>',
+      addComponent: 'core.EmailAddressForm',
+      onAddHandler: 'onAdded',
+      textChangeParser: 'core.EmailAddressTextParser',
+      container: 'core.BasicContainer',
+      containerProps: {
+        title: 'BCC',
+        style: {
+          maxWidth: '100%',
+          justifyContent: 'flex-end',
+        },
+      },
+    },
+  },
+
+  attachments: {
+    'ui:widget': 'MaterialListWidget',
+    'ui:options': {
+      id: 'Id',      
+      primaryText: '${item.name}',
+      secondaryText: '${item.url}',
+      variant: 'button',
+      secondaryAction: {
+        iconKey: 'trash',
+        label: 'Remove',        
+        action: 'event:onDelete',        
+      }
     }
   },
-  customerEmail: {},
-  subject: {},
+
+  subject: {
+    
+  },
+
   message: {
     'ui:widget': 'FroalaWidget',
     'ui:options': {

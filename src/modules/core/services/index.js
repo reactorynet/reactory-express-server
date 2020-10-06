@@ -1,5 +1,6 @@
 import moment from "moment";
 import EmailService from './EmailService'
+import TemplateService from './TemplateService'
 //custom services to be expressed here
 
 const services = [
@@ -11,7 +12,8 @@ const services = [
       return () => { `Hallo World ${moment().format('YYYY-MM-DD')}` };
     },
   },
-  EmailService
+  EmailService,
+  TemplateService,
 ]
 
 export default services;

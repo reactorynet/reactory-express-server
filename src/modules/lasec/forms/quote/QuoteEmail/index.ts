@@ -17,7 +17,7 @@ const LasecQuoteEmailForm: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: $schema,
   graphql: $graphql,
-  uiSchema: $uiSchema,
+  uiSchema: $uiSchema,  
   widgetMap: [],
 };
 

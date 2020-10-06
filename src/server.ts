@@ -24,7 +24,6 @@ import reactory from './reactory';
 import froala from './froala';
 import charts from './charts';
 import resources from './resources';
-import services from './services';
 import typeDefs from './models/graphql/types';
 import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
@@ -126,11 +125,8 @@ let graphcompiled: boolean = false;
 let graphError: String = '';
 
 const reactoryExpress: Application = express();
-/*
-services.forEach((service: Reactory.IReactoryServiceDefinition) => {
-  //logger.debug(`Service ${service.id}`)
-});
-*/
+
+
 
 reactoryExpress.use('*', cors(corsOptions));
 reactoryExpress.use(reactoryClientAuthenticationMiddleware);

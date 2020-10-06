@@ -40,6 +40,7 @@ const TemplateSchema = new mongoose.Schema({
   view: {
     type: String,
     trim: true,
+    lowercase: true,
   },
   locale: {
     type: String,
@@ -51,7 +52,7 @@ const TemplateSchema = new mongoose.Schema({
     type: String,
     lowercase: true,
     trim: true,
-    enum: ['email', 'widget', 'page', 'css', 'layout', 'content', 'pdf'],
+    enum: ['email', 'widget', 'page', 'css', 'layout', 'content', 'pdf', 'source', 'svg'],
     default: 'email',
   },
   format: {

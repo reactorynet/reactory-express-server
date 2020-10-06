@@ -1,0 +1,14 @@
+type ReactoryMongoBackupResult {
+    start_time: Date
+    millisecond: Int
+    message: String
+    success: Boolean
+    url: String
+    log: [String]
+    file: String
+}
+
+
+extend type Mutation {
+    ReactoryMongoBackup(  b_name: String! ): ReactoryMongoBackupResult
+}

@@ -6,10 +6,32 @@ import logger from '@reactory/server-core/logging';
 const emailAddress: Reactory.IObjectSchema = {
   type: 'object',
   properties: {
-    display: { type: 'text',  title: "Name"},
-    email: { type: 'text', format: 'email', title: "Email" }
+    display: { type: 'string',  title: "Name"},
+    email: { type: 'string', format: 'email', title: "Email" }
   }
 }
+
+const emailAddressList: Reactory.ISchema = {
+  type: 'array',
+  items: { ...emailAddress }
+}
+
+
+const emailAttachment: Reactory.IObjectSchema = {
+  type: 'object',
+  title: 'Attachment',
+  properties: {
+    id: { type: 'string',  title: "id"},
+    url: { type: 'string',  title: "Url"},
+    name: { type: 'string',  title: "Filename"},
+    mimetype: { type: 'string',  title: "Type"},
+  }
+};
+
+const emailAttachments: Reactory.ISchema = {
+  type: 'array',
+  items: { ...emailAttachment }
+};
 
 
 const schema: Reactory.IObjectSchema = {
@@ -23,26 +45,12 @@ const schema: Reactory.IObjectSchema = {
     email_type: {
       type: 'string',
       title: 'Email Type', 
+      description: 'Use the selector to select a new template'
     },
-    toList: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          email: {
-            type: 'string'
-          }
-        },
-      },
-    },
-    customerName: {
-      type: 'string',
-      title: 'Customer Name:',
-    },
-    customerEmail: {
-      type: 'string',
-      title: 'Customer Email:',
-    },
+    to: { ...emailAddressList },
+    cc: { ...emailAddressList },
+    bcc: { ...emailAddressList },
+    attachments: { ...emailAttachments },    
     subject: {
       type: 'string',
       title: 'Subject:',
@@ -50,7 +58,7 @@ const schema: Reactory.IObjectSchema = {
     message: {
       type: 'string',
       title: 'Message:',
-    },
+    },    
   }
 };
 

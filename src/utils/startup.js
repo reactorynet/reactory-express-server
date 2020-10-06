@@ -1,13 +1,14 @@
 /* eslint-disable no-await-in-loop */
 import lodash, { isArray } from 'lodash';
 import ReactoryApi from '../application';
+
 import { Application, User, ReactoryClient, Menu, ClientComponent } from '../models';
 import { installDefaultEmailTemplates } from '../emails';
 import data from '../data';
 import logger from '../logging';
 import { ReactoryClientValidationError } from '../exceptions';
 import { schemaStartup } from '../reactory';
-
+import { startServices } from '../services';
 
 const { clients, users, components } = data;
 
@@ -224,6 +225,10 @@ const installClients = async (configs) => {
   }
 };
 
+const initialiseStartupAwareServices = async () => {
+  return await startServices().then()
+};
+
 
 const startup = async () => {
   logger.info('Startup initializing');
@@ -232,6 +237,8 @@ const startup = async () => {
     const userResponse = await installSystemUser();
     const componentsResponse = await installComponents(components);
     const clientsInstallResponse = await installClients(clients);    
+
+    await initialiseStartupAwareServices();
 
     const result = {
       application: applicationResponse,

@@ -75,7 +75,7 @@ export default {
   quote_put_delete: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/`, allowed_methods: ['put', 'delete'] },
   quote_send_email: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/send_quote_email/`, allowed_methods: ['post'] },
   quote_request_authorization: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/request_quote_authorisation/`, allowed_methods: ['post'] },
-  quote_request_create_proforma: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/create_proforma_invoice/`, allowed_methods: ['post'] },
+  quote_request_create_proforma: { url: (quote_id) => `api/${ENTITY_KEY__QUOTE}/${quote_id}/create_quote_proforma/`, allowed_methods: ['post'] },
   quote_move_to_customer: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/move_quote_to_customer/`, allowed_methods: ['post'] },
   quote_copy_to_customer: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/copy_quote_to_customer/`, allowed_methods: ['post'] },
   quote_create_pdf: { url: (quote_id) => `api/${ENTITY_KEY__QUOTE}/${quote_id}/create_quote_pdf/`, allowed_methods: ['post'] },

@@ -3,6 +3,7 @@ import Mongoose from "mongoose";
 import ExcelJS from 'exceljs';
 import { TemplateType, UIFrameWork } from "./constants";
 import { Stream } from "stream";
+import { Application } from "express";
 
 
 declare namespace Reactory {
@@ -73,6 +74,8 @@ declare namespace Reactory {
     updatedAt: Date
   }
 
+  export interface IReactoryClientDocument extends Mongoose.Document, IReactoryClient { }
+
   export interface IMongoDocument {
     _id: ObjectId
     id: string
@@ -109,9 +112,16 @@ declare namespace Reactory {
     description?: string
     name?: string
     locale?: string
-    elements: Array<ITemplateDocument>
+    elements: Array<ITemplate>
     parameters: Array<ITemplateParam>
     contentFromFile(): string
+    [key: string]: any
+  }
+
+  export interface IEmailTemplate {
+    subject: string
+    body: string
+    signature?: string
   }
 
   export interface ToEmail {
@@ -135,7 +145,7 @@ declare namespace Reactory {
     via: string | 'reactory' | 'microsoft' | 'google';
     subject: string,
     contentType: string, 
-    content: string,     
+    content: string,    
     to: ToEmail[], 
     cc?: ToEmail[],
     bcc?: ToEmail[],
@@ -266,8 +276,13 @@ declare namespace Reactory {
 
   }
 
+  export interface ReactoryExecutionContext {
+    user: IUser
+    partner: IReactoryClient
+  }
+
   export interface ISchemaObjectProperties {
-    [key: string]: ISchema
+    [key: string]: ISchema 
   }
 
   export interface ISchema {
@@ -278,6 +293,7 @@ declare namespace Reactory {
     required?: any | undefined,
     properties?: ISchemaObjectProperties | any | undefined,
     dependencies?: any | undefined,
+    items?: ISchema,
     format?: string | "email" | "password" | "date" | "date-time"
   }
 
@@ -637,13 +653,66 @@ declare namespace Reactory {
       stream?: Stream
     }
 
+    export interface IReactoryService {
+      name: string
+      nameSpace: string
+      version: string
+    }
+    export interface IReactoryStartupAwareService extends IReactoryService {      
+      onStartup(): Promise<any>      
+    }
 
-    
+    export interface IReactoryShutdownAwareService extends IReactoryService {
+      onShutdown(): Promise<any>
+    }
 
-    export interface ICoreEmailService {
+    export interface IReactoryContextAwareService extends IReactoryService {
+      getExecutionContext(): ReactoryExecutionContext
+      setExecutionContext(executionContext: ReactoryExecutionContext): boolean
+    }
+          
+    export interface ICoreEmailService extends IReactoryStartupAwareService, IReactoryContextAwareService  {
       sendEmail(message: Reactory.IEmailMessage): Promise<Reactory.EmailSentResult>
     }
 
+    export interface IReactoryDefaultService extends IReactoryStartupAwareService, IReactoryContextAwareService { }
+
+    export interface ITemplateService extends IReactoryStartupAwareService, IReactoryContextAwareService {      
+      /**
+       * Service function for rerturning a template objeect
+       * @param view - string field that represents a unique element within the context of a view, reactory client id and organisation id
+       * @param reactoryClientId - the reactory client id to use in the filter, default will be global.partner
+       * @param organizationId - the organisation id to use in the filter, default is null, which means the template applies to organisation 
+       */
+      getTemplate(view: string, reactoryClientId: string, organizationId: string): Promise<ITemplate>
+
+      /***
+       * Service function to set a template for a given view, reactory client and organisation id
+       * @param view - the view name to use - if found it will update the exsting one
+       * @param reactoryClientId - the client id to use in the filter, default is global.partner
+       */
+      setTemplate(view: string, reactoryClientId: string, organizationId: string, template: ITemplate): Promise<ITemplate>      
+    }
+
+    export interface IEmailTemplateService extends ITemplateService {
+      /**
+       * Template Service function that converts a standard ITemplate into a IEmailTemplate by extracting the 
+       * subject, body and footer (if available) for this template
+       * @param template The template to use as the basis of an email template
+       */
+      hydrateEmail(template: ITemplate): Promise<IEmailTemplate>
+    }
+
+    export interface ITemplateRenderingService extends IReactoryService {
+      /**
+       * 
+       * @param template - can either be an object of type ITemplate or string.
+       * @param properties - the property bag that is passed to the ejs engine to render the template
+       */
+      renderTemplate(template: ITemplate | string, properties: any): string
+    }
+
+    export interface IReactoryTemplateService extends Reactory.Service.ITemplateService, Reactory.Service.ITemplateRenderingService, Reactory.Service.IEmailTemplateService { }
   }
 
   export interface IPagingRequest {
