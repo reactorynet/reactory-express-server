@@ -1,16 +1,29 @@
 
-import { Lasec } from './QuoteService.d'
+
 import {     
     Lasec360User,
+    LasecQuote,
+    IQuoteService
 } from '@reactory/server-modules/lasec/types/lasec';
+
+import {
+    getLasecQuoteById,
+    
+} from '@reactory/server-modules/lasec/resolvers/Helpers'
+
+import {
+    getService
+} from '@reactory/server-core/services'
 import { Reactory } from '@reactory/server-core/types/reactory';
 import logger from '@reactory/server-core/logging';
 
-class LasecQuoteService implements Lasec.Quote.IQuoteService  {
+
+
+class LasecQuoteService implements IQuoteService  {
 
     registry: Reactory.IReactoryServiceRegister
 
-    constructor(props: Reactory.IReactoryServiceProps, context){
+    constructor(props: Reactory.IReactoryServiceProps, context: any){
         this.registry = props.$services;
     }
 
@@ -25,7 +38,7 @@ class LasecQuoteService implements Lasec.Quote.IQuoteService  {
 
         const { user } = global;
 
-        const emailService: Reactory.Service.ICoreEmailService = this.registry['core.EmailService@1.0.0'].service({ $services: this.registry }, this) as Reactory.Service.ICoreEmailService;
+        const emailService: Reactory.Service.ICoreEmailService = getService('core.EmailService@1.0.0') as Reactory.Service.ICoreEmailService;
                 
         try {
             const sent_result = await emailService.sendEmail({ 
@@ -51,6 +64,10 @@ class LasecQuoteService implements Lasec.Quote.IQuoteService  {
         }
         
         return result;
+    }
+
+    getQuoteById = async (quote_id: string): Promise<LasecQuote> => {
+        return await getLasecQuoteById(quote_id).then();
     }
 };
 

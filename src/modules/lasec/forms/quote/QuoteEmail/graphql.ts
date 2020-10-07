@@ -14,12 +14,19 @@ const graphql: Reactory.IFormGraphDefinition = {
           email
           display
         }
+        cc {
+          email
+          display
+        }
+        bcc {
+          email 
+          display
+        }
         attachments {
           id
           url
           name
-        },
-        meta
+        }        
       }
     }`,
     variables: {
@@ -35,19 +42,26 @@ const graphql: Reactory.IFormGraphDefinition = {
   mutation: {
     new: {
       name: 'LasecSendQuoteEmail',
-      text: `mutation LasecSendQuoteEmail($code: String!, $email: String!, $subject: String!, $message: String!){
+      text: `mutation LasecSendQuoteEmail($code: String!, $mailMessage: CreateEmailMessage){
         LasecSendQuoteEmail(code: $code, email: $email, subject: $subject, message: $message){
           success
           message
         }
       }`,
       objectMap: true,
+      formData: {
+        via: 'microsoft'
+      },
       updateMessage: 'Sending customer commnication.',
       variables: {
         'formData.code': 'code',
-        'formData.customerEmail': 'email',
-        'formData.subject': 'subject',
-        'formData.message': 'message',
+        'formData.via': 'mailMessage.via',
+        'formData.from': 'mailMessage.from',
+        'formData.to': 'mailMessage.to',
+        'formData.bcc': 'mailMessage.bcc',
+        'formData.subject': 'mailMessage.subject',
+        'formData.message': 'mailMessage.message',
+        'formData.attachments': 'mailMessage.attachments'
       },
       options: {},
       onSuccessMethod: '',

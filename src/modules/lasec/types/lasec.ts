@@ -1,4 +1,5 @@
 import { Moment } from 'moment';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 /**
  * Meta type interface
@@ -173,11 +174,78 @@ export interface LasecQuoteItem {
   product: LasecProduct
 }
 
-export interface Quote {
+export interface RemoteDataMeta {
+  mustSync: boolean
+  owner: string
+  reference: string
+  source: any
+  lastSync: Date
+  nextSync: Date
+}
+export interface QuoteMeta extends RemoteDataMeta {
+  source: Lasec360Quote
+}
+
+export interface LasecQuote {
   id: string
   code: string
-  meta: any
+  meta: QuoteMeta
   [key: string]: any
+}
+
+export interface Lasec360Quote {
+  id: string
+  customer_id: string
+  name?: string
+  number_of_items: number
+  description?: string  
+  status: string
+  status_name: string
+  allowed_status_ids: string[]
+  organisation_id?: string | number
+  grand_total_excl_vat_cents: number
+  grand_total_vat_cents: number
+  grant_total_incl_vat_cents: number
+  grand_total_discount_cents: number
+  grand_total_douscount_percent: number
+  gp_percent: number
+  actual_gp_percent: number
+  date_sent?: Date
+  created: Date
+  modified: Date
+  expiration_date: Date
+  note?: string
+  quote_option_ids: string[]
+  site_inspection_status: boolean
+  site_evaluation_required: boolean
+  transportation_evaluation_required: boolean
+  show_quote_totals: boolean
+  valid_until?: Date
+  primary_api_staff_user_id: string
+  secondary_api_staff_user_id: string
+  sales_team_id: string
+  cc_self: boolean
+  expired: boolean
+  email?: string
+  email_recipient_ids: string[]
+  eta_of_order?: any
+  can_create_sales_order: boolean
+  quote_type: string
+  requires_authorisation: boolean
+  emailed_as_staff_user_id: string
+  last_updated_as_staff_user_id: string
+  authorisation_status: string
+  on_hold: string | "Y" | "N"
+  has_requested_authorisation: boolean
+  is_quote_authorised: boolean
+  is_quote_locked: boolean
+  approvers_note: string
+  request_auth_note: string
+  company_id: string
+  customer_full_name: string
+  company_trading_name: string
+  authorisation_requested_by_staff_user: string
+  staff_user_full_name: string
 }
 
 export interface ProductClass {
@@ -283,6 +351,7 @@ export interface Lasec360User {
   roles: [ string ]
   target: Number
   targetPercent: Number
+  signature?: string
   sales_team_ids: [ string ]
 }
 
@@ -315,4 +384,40 @@ export interface LasecNewQuoteResult {
   quoteId: string
   success:Boolean
   message: string
+}
+
+export interface LasecClient {
+  [p: string] : any
+}
+
+
+export interface IQuoteService extends Reactory.Service.IReactoryService {
+
+  /**
+   * Sends an email to the list of users regarding the quote with the quote id.
+   * @param quote_id 
+   * @param subject 
+   * @param message 
+   * @param to 
+   * @param attachments 
+   */
+  sendQuoteEmail(quote_id: string, subject: string, message: string, to: Reactory.ToEmail[], cc: Reactory.ToEmail[], bcc: Reactory.ToEmail[], attachments: Reactory.EmailAttachment[], from: Lasec360User): Promise<Reactory.EmailSentResult>;
+
+
+  /**
+   * Get quote for quote id
+   * @param quote_id 
+   */
+  getQuoteById(quote_id: string): Promise<LasecQuote>;
+
+}
+
+
+export interface ILasecClientService extends Reactory.Service.IReactoryService {
+
+  /**
+   * Returns a lasec client object
+   * @param id 
+   */
+  getClientById(id: string): Promise<LasecClient>;
 }

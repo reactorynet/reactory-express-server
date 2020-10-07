@@ -20,7 +20,7 @@ import LasecQuoteComment from '@reactory/server-modules/lasec/models/LasecQuoteC
 
 
 import {
-  Quote as LasecQuote,
+  LasecQuote,
   LasecDashboardSearchParams,
   LasecProductDashboardParams,
   USER_FILTER_TYPE,
@@ -169,6 +169,7 @@ export const getLoggedIn360User: Function = async function (): Promise<Lasec360U
 
     if (me360) {
       setCacheItem(hashkey, me360, 60);
+      logger.debug(`Updated Cache item for ${hashkey} 🟢`)
     }
 
     logger.debug(`me360 ===>`, me360)
@@ -231,10 +232,9 @@ export const getLasecQuoteById = async (quote_id: string) => {
   try {
     const owner = global.partner.key;
     let quote = await synchronizeQuote(quote_id, owner, null, true).then();
-
     logger.debug(`QUOTE RESULT:: ${JSON.stringify(quote)}`);
-
     return quote;
+
   } catch (quoteFetchError) {
     logger.error(`Could not fetch Quote with Quote Id ${quote_id} - ${quoteFetchError.message}`);
     return null;

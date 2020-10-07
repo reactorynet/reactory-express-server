@@ -637,11 +637,14 @@ type QuoteDuplicateResponse {
 }
 
 type LasecPreparedEmail {
-  fromEmail: String
-  fromDisplay: String
+  id: String
+  quote_id: String
+  from: EmailAddress
   subject: String
   message: String
   to: [EmailAddress]
+  cc: [EmailAddress]
+  bcc: [EmailAddress]
   attachments: [EmailAttachment]
   meta: Any
 }
@@ -789,6 +792,11 @@ extend type Mutation {
   LasecMarkNextActionAsActioned(id: String!): SimpleResponse
   LasecSendQuoteEmail(
     code: String!
+    to: [InputEmailAddress]
+    cc: [InputEmailAddress]
+    bcc: [InputEmailAddress]
+    attachments: [AddAttachment]
+    from: InputEmailAddress
     email: String!
     subject: String!
     message: String!

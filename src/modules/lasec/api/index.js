@@ -1171,8 +1171,8 @@ const Api = {
     },
     getQuoteProforma: async (quote_id) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.quote_create_pdf.url(quote_id), { quote_id }).then();
-        logger.debug(`Get Quote PDF response`, apiResponse)
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_request_create_proforma.url(quote_id), { quote_id }).then();
+        logger.debug(`Get Quote Proforma response`, apiResponse)
         const {
           status, payload,
         } = apiResponse;

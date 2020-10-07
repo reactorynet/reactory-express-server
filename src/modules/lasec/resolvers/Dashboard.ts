@@ -15,7 +15,7 @@ import O365 from '../../../azure/graph';
 import { getCacheItem, setCacheItem } from '../models';
 import emails from '@reactory/server-core/emails';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
-import { Quote as LasecQuote, 
+import { LasecQuote, 
   LasecDashboardSearchParams, 
   LasecProductDashboardParams, 
   USER_FILTER_TYPE, 

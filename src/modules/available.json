@@ -25,5 +25,14 @@
     "moduleEntry": "towerstone/index.ts",
     "license": "commercial",
     "shop": "https://reactory.net/shop/modules/10c75836-37bf-4000-95d2-18d69afc5321/"
-  }  
+  },  
+  { 
+    "id": "reactory-devops", 
+    "name": "Reactory Devops",  
+    "key": "reactory-devops",
+    "fqn": "reactory-devops.Console@1.0.0",
+    "moduleEntry": "reactory-devops/index.ts",
+    "license": "commercial",
+    "shop": "https://reactory.net/shop/modules/reactory-devops/"
+  }
 ]

@@ -18,7 +18,7 @@ import emails from '@reactory/server-core/emails';
 import { getProductById } from './ProductResolver';
 
 import {
-  Quote as LasecQuote,
+  LasecQuote,
   LasecNewQuoteInputArgs,
   LasecNewQuoteResult,
   LasecQuoteItem,
@@ -683,7 +683,7 @@ export default {
     },
     LasecGetQuoteProformaPDFUrl: async (obj: any, args: { quote_id: String }) => {
 
-      const pdfresult = await lasecApi.Quotes.getQuotePDF(args.quote_id).then();
+      const pdfresult = await lasecApi.Quotes.getQuoteProforma(args.quote_id).then();
 
       let result = {
         id: args.quote_id,

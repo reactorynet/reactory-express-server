@@ -25,7 +25,6 @@ import {
 import { TowerStone } from '@reactory/server-modules/towerstone/towerstone';
 import { TowerStoneServicesMap } from "@reactory/server-modules/towerstone/services";
 import LeadershipBrandFactory from '@reactory/server-modules/towerstone/data/Mores/LeadershipBrandFactory';
-import AuthConfig from 'authentication';
 import { Model } from 'mongoose';
 
 interface MoresAssessmentsCreateInput {
@@ -88,7 +87,7 @@ const MoresAssessmentSurveyResolver = {
         message: `Mores Question Library Has been updated for ${organization.name}`, 
       };
     },
-    MoresAssessementsCreateSurvey: async (obj: any, args: any, context: any, info: any): Promise<TowerStone.ISurvey> => {
+    MoresAssessementsCreateSurvey: async (obj: any, args: any, context: any, info: any): Promise<TowerStone.ISurveyDocument> => {
       
       const moresSurveyCreateArgs: MoresAssessmentsCreateInput  = args.moresSurveyCreateArgs;
 
@@ -100,9 +99,10 @@ const MoresAssessmentSurveyResolver = {
       surveyItem.mode = 'test';
       surveyItem.organization = await Organization.findById(moresSurveyCreateArgs.organizationId).then();
       await surveyItem.save().then();
+
       return surveyItem;
     },
-    MoresAssessmentsDeleteSurvey: async (obj: any, args: any, context: any, info: any): Promise<TowerStone.ISurvey> => {
+    MoresAssessmentsDeleteSurvey: async (obj: any, args: any, context: any, info: any): Promise<TowerStone.ISurveyDocument> => {
       let surveyItem: TowerStone.ISurveyDocument = await Survey.findById(args.id as string).then() as TowerStone.ISurveyDocument;
       
       if(surveyItem) { 

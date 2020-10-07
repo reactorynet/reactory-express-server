@@ -12,8 +12,42 @@ import O365 from '@reactory/server-core/azure/graph';
 
 class CoreEmailService implements Reactory.Service.ICoreEmailService {
 
+    name: string = 'EmailService';
+    nameSpace: string = 'core';
+    version: string = '1.0.0';
+
+    executionContext: Reactory.ReactoryExecutionContext = {
+        user: null,
+        partner: null,
+    };
+
     constructor(props: any, context: any){
-        
+        this.executionContext = {
+            partner: props.partner || context.partner || global.partner,
+            user: props.user || context.user || global.user
+        };
+    }
+    
+    getExecutionContext(): Reactory.ReactoryExecutionContext {
+        // throw new Error('Method not implemented.');  
+        return this.executionContext;
+    }
+
+    setExecutionContext(executionContext: Reactory.ReactoryExecutionContext): boolean {
+        this.executionContext.partner = executionContext.partner;
+        this.executionContext.user = executionContext.user;
+
+        return true;
+    }
+
+    onStartup(): Promise<any> {
+        logger.debug(`CoreEmailService onStartup()`)
+        return Promise.resolve(true);
+    }
+
+    onShutdown(): Promise<any> {
+        logger.debug(`CoreEmailService onShutdown()`)
+        return Promise.resolve(true);
     }
 
     async sendEmail(message: Reactory.IEmailMessage): Promise<any> {
@@ -34,9 +68,14 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
                             .then()
                             .catch(error => {
                                 if (error.statusCode == 401) {
-                                    throw new ApiError(`Error Sending Mail. Invalid Authentication Token`, { statusCode: error.statusCode, type: "MSAuthenticationFailure" });
+                                    throw new ApiError(`Error Sending Mail. Invalid Authentication Token`, {
+                                        statusCode: error.statusCode,
+                                        type: "MSAuthenticationFailure"
+                                    });
                                 } else {
-                                    throw new ApiError(`Error Sending Mail: ${error.code} - ${error.message}`, { statusCode: error.statusCode });
+                                    throw new ApiError(`Error Sending Mail: ${error.code} - ${error.message}`, {
+                                        statusCode: error.statusCode
+                                    });
                                 }
                             });
 
@@ -47,7 +86,7 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
                         return {
                             Successful: true,
                             Message: 'Your mail was sent successfully.'
-                        }
+                        };
                     }
                     throw new ApiError('User has not authenticated with microsoft');
                 } else {
@@ -57,9 +96,6 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
             default: {
                 throw new ApiError('Not Implemented Yet');
             }
-
-                throw new Error('Method not implemented.');
-
         }
     }
 }
