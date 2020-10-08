@@ -40,6 +40,7 @@ type LasecCRMOrganisation {
   description: String
 }
 
+# LasecGetClientDetail
 type LasecCRMClient {
   id: String
   clientStatus: String
@@ -145,6 +146,7 @@ type LasecContactDetails {
   mobileNumber: String
   alternateMobile: String
   officeNumber: String
+  alternateOfficeNumber: String
   prefferedMethodOfContact: String
 }
 
@@ -166,6 +168,7 @@ type LasecClientAddresses {
   billingAddress: LasecAddress
 }
 
+# LasecGetNewClient
 type LasecNewClient {
   id: String
   personalDetails: LasecClientPersonalDetails
@@ -296,7 +299,8 @@ extend type Query {
   LasecGetCustomerDocuments(id: String, uploadContexts: [String], paging: PagingRequest): PagedLasecDocument
   LasecGetPersonTitles: [LasecTitleLookupItem]
   LasecGetPersonTitleById(id: String): LasecTitleLookupItem
-  LasecGetNewClient: LasecNewClient
+  # LasecGetNewClient: LasecNewClient
+  LasecGetNewClient(id: String): LasecNewClient
   LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
   LasecGetPlaceDetails(placeId: String!): GoogleAddressDetails
   LasecGetAddress(searchTerm: String!): [String!]

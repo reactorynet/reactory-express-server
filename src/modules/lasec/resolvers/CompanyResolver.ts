@@ -31,36 +31,36 @@ const fieldMaps: any = {
   "salesTeam": "sales_team_id",
   "accountNumber": "account_number",
   "customer": "company_trading_name",
-  "company_rep_code": "company_sales_team", 
+  "company_rep_code": "company_sales_team",
   "country": "country"
 };
 
 const getClients = async (params) => {
-  const { 
-    search = "", 
-    paging = { page: 1, pageSize: 10 }, 
+  const {
+    search = "",
+    paging = { page: 1, pageSize: 10 },
     filterBy = "any_field",
-    orderBy = "fullName",  
+    orderBy = "fullName",
     orderDirection = "asc",
-    iter = 0, 
-    filter, 
-    repCode = undefined 
+    iter = 0,
+    filter,
+    repCode = undefined
   } = params;
 
-  logger.debug(`Getting Clients using search ${search}`, { 
-    filter, 
-    search, 
+  logger.debug(`Getting Clients using search ${search}`, {
+    filter,
+    search,
     paging,
-    filterBy, 
-    iter, 
+    filterBy,
+    iter,
     repCode,
     orderBy,
     orderDirection
-   });
+  });
 
   let ordering: { [key: string]: string } = {}
 
-  if(orderBy) {
+  if (orderBy) {
     let fieldKey: string = fieldMaps[orderBy];
     ordering[fieldKey] = orderDirection
   }
@@ -74,29 +74,29 @@ const getClients = async (params) => {
 
   let _filter: any = {};
 
-  switch(filterBy) {
-    case "country": 
+  switch (filterBy) {
+    case "country":
     case "sales_team_id":
     case "company_on_hold":
     case "activity_status": {
       _filter[filterBy] = filter;
-      if(search.trim().length > 0) _filter.any_field = search;
+      if (search.trim().length > 0) _filter.any_field = search;
       //_filter.any_field = search;
       break;
     }
     default: {
-      _filter[filterBy] =  search;    
+      _filter[filterBy] = search;
       break;
     }
   }
 
   //_filter[filterBy] = filter || search;
 
-  if(typeof repCode === 'string') {
+  if (typeof repCode === 'string') {
     _filter.sales_team_id = repCode;
   }
 
-  if(typeof repCode === 'array' && repCode.length > 0) {
+  if (typeof repCode === 'array' && repCode.length > 0) {
     _filter.sales_team_ids = repCode;
   }
 
@@ -131,7 +131,7 @@ const getClients = async (params) => {
     return _cachedResults;
   }
 
-  logger.debug(`Sending query to lasec API with filter`, { filter: _filter }  )
+  logger.debug(`Sending query to lasec API with filter`, { filter: _filter })
   const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page }, ordering }).then();
 
   let ids = [];
@@ -866,31 +866,33 @@ const getCustomerList = async (params) => {
       'sales_team_id': 'salesTeam',
       'account_terms': 'accountType',
       'customer_class_id': 'customerClass',
-      'company_on_hold': { key: 'customerStatus',  transform: ( company_on_hold: boolean )=>  (company_on_hold === true ? 'ON HOLD' : 'NOT ON HOLD')  },
-      'credit_limit_total_cents': { key: 'availableBalance', transform: ( limit: string | number  ) => {
-        let _limit = 0;
-        if(typeof limit === 'number' && limit > 0) _limit = limit;
-        if(typeof limit === 'string') {
-          if(limit.indexOf("." ) > 0) {
-            try {
-              _limit = parseFloat(limit)
-            } catch(parseError) {
-              logger.error(`Could not parse credit_limit_total "${limit}" as float`);
-            }
-          } else {
-            try {
-              _limit = parseInt(limit)
-            } catch(parseError) {
-              logger.error(`Could not parse credit_limit_total "${limit}" as number`);
+      'company_on_hold': { key: 'customerStatus', transform: (company_on_hold: boolean) => (company_on_hold === true ? 'ON HOLD' : 'NOT ON HOLD') },
+      'credit_limit_total_cents': {
+        key: 'availableBalance', transform: (limit: string | number) => {
+          let _limit = 0;
+          if (typeof limit === 'number' && limit > 0) _limit = limit;
+          if (typeof limit === 'string') {
+            if (limit.indexOf(".") > 0) {
+              try {
+                _limit = parseFloat(limit)
+              } catch (parseError) {
+                logger.error(`Could not parse credit_limit_total "${limit}" as float`);
+              }
+            } else {
+              try {
+                _limit = parseInt(limit)
+              } catch (parseError) {
+                logger.error(`Could not parse credit_limit_total "${limit}" as number`);
+              }
             }
           }
+
+          if (_limit > 0) return Math.fround(_limit / 100);
+
+          return _limit;
+
         }
-
-        if(_limit > 0) return Math.fround(_limit / 100);
-
-        return _limit;
-
-      }},
+      },
       'currency_symbol': 'currencySymbol',
       'vat_number': ['taxNumber', 'vatNumber'],
     });
@@ -1799,8 +1801,67 @@ export default {
       return lookupItem;
     },
     LasecGetNewClient: async (obj, args) => {
-      let hash = Hash(`__LasecNewClient::${global.user._id}`);
 
+      logger.debug(`[LasecGetNewClient] NEW CLIENT PARAMS:: ${JSON.stringify(args)}`);
+
+      if (args.id) {
+
+        const existingCustomer = await getClient({ id: args.id });
+        logger.debug(`[LasecGetNewClient] EXISTING CLIENT :: ${JSON.stringify(existingCustomer)}`);
+
+        if (existingCustomer) {
+
+          // let _newClient = { ...DEFAULT_NEW_CLIENT };
+
+          const toReturn  = {
+            ...DEFAULT_NEW_CLIENT,
+            ...om(existingCustomer, {
+              'id': 'id',
+
+              'title': 'personalDetails.title',
+              'firstName': 'personalDetails.firstName',
+              'lastName': 'personalDetails.lastName',
+              'country': 'personalDetails.country',
+              'salesTeam': ['personalDetails.repCode'],
+              'accountType': 'personalDetails.accountType',
+
+              'emailAddress': ['contactDetails.emailAddress','contactDetails.confirmEmail'],
+              'alternateEmail': ['contactDetails.alternateEmail', 'contactDetails.confirmAlternateEmail'],
+              'mobileNumber': 'contactDetails.mobileNumber',
+              'alternateMobile': 'contactDetails.alternateMobile',
+              'officeNumber': 'contactDetails.officeNumber',
+              'alternateOfficeNumber': 'contactDetails.alternateOfficeNumber',
+              'prefferedMethodOfContact': 'contactDetails.prefferedMethodOfContact',
+
+              'jobTitle': 'jobDetails.jobTitle',
+              'jobType': 'jobDetails.jobType',
+              'customer.salesTeam': 'jobDetails.salesTeam',
+              'lineManager': 'jobDetails.lineManager',
+              'customerType': 'jobDetails.customerType',
+              'faculty': 'jobDetails.faculty',
+              'department': 'jobDetails.clientDepartment',
+              'customer.ranking': 'jobDetails.ranking',
+              'customer.customerClass': 'jobDetails.customerClass',
+
+              'customer.id': 'customer.id',
+              'customer.registeredName': 'customer.registeredName',
+
+              'organization.id': 'organization.id',
+              'organization.name': 'organization.name',
+
+              'customer.physicalAddressId': 'address.physicalAddress.id',
+              'customer.physicalAddress': 'address.physicalAddress.fullAddress',
+              'customer.deliveryAddressId': ['address.deliveryAddress.id', 'address.billingAddress.id'],
+              'customer.deliveryAddress': 'address.deliveryAddress.fullAddress',
+              'customer.billingAddress': 'address.billingAddress.fullAddress'
+            })
+          }
+
+          return toReturn;
+        }
+      }
+
+      let hash = Hash(`__LasecNewClient::${global.user._id}`);
       const newClient = await getCacheItem(hash).then();
 
       if (newClient !== null) return newClient;
@@ -1810,6 +1871,7 @@ export default {
         await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
         let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
         return { ..._newClient, clientDocuments };
+
       }
     },
     LasecGetAddress: async (obj, args) => {
@@ -2070,8 +2132,8 @@ export default {
     LasecCRMSaveComment: async (obj, args) => {
       return saveComment(args);
     },
-    LasecDeactivateClients: async (obj: any, params: { clientIds: string[]  }): Promise<SimpleResponse> => {
-      
+    LasecDeactivateClients: async (obj: any, params: { clientIds: string[] }): Promise<SimpleResponse> => {
+
       let response: SimpleResponse = {
         message: `Deactivated ${params.clientIds.length} clients`,
         success: true
@@ -2083,7 +2145,7 @@ export default {
           clientInfo: {
             clientId,
             clientStatus: 'deactivated'
-          },                    
+          },
         }
 
         return updateClientDetail(args);
@@ -2095,27 +2157,27 @@ export default {
         let successCount: number, failCount: number = 0;
 
         results.forEach((patchResult) => {
-          if(patchResult.Success === true) successCount += 1;
+          if (patchResult.Success === true) successCount += 1;
           else failCount += 1;
         });
 
-        if(failCount > 0) {
-          if(successCount > 0) {
-            response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;            
+        if (failCount > 0) {
+          if (successCount > 0) {
+            response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;
           } else {
             response.message = ` 😣 Could not deactivate any client accounts.`;
             response.success = false;
           }
         } else {
-          if( successCount === deactivation_promises.length) {
+          if (successCount === deactivation_promises.length) {
             response.message = `🥇 Deactivated all ${successCount} clients.`
           }
         }
-      } catch(err) {
+      } catch (err) {
         response.message = `😬 An error occurred while changing the client status. [${err.nessage}]`;
         logger.error(`🧨 Error deactivating the client account`, err)
-      } 
-            
+      }
+
       return response;
     }
   },

@@ -77,9 +77,10 @@ const uiSchema: any = {
 
 const $sharedProps = {
   componentProps: { mode: 'new', uiSchemaKey: 'new', liveValidate: true },
-  componentPropsMap: {    
+  // componentProps: { mode: 'edit', uiSchemaKey: 'edit', liveValidate: true },
+  componentPropsMap: {
     //'onChange': 'onChange',
-    //'formContext.formData.client.personal': 'formData',
+    'formContext.formData': 'formData',
   },
 };
 
@@ -124,7 +125,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
             componentFqn: 'lasec-crm.LasecCRMClientJobDetails@1.0.0',
             ...$sharedProps,
           },
-        ],        
+        ],
       },
       {
         id: 'customer-details',
@@ -156,7 +157,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMNewClientDocuments@1.0.0',
-            ...$sharedProps,            
+            ...$sharedProps,
           },
         ],
       },

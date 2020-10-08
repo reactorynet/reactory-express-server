@@ -79,8 +79,8 @@ const graphql: Reactory.IFormGraphDefinition = {
 export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetNewClient',
-    text: `query LasecGetNewClient {
-      LasecGetNewClient {
+    text: `query LasecGetNewClient($id: String) {
+      LasecGetNewClient(id: $id) {
         id
         jobDetails {
           jobTitle
@@ -96,7 +96,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-
+      'formData.id': 'id',
     },
     resultMap: {
       'id': 'id',
