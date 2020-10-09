@@ -1837,7 +1837,8 @@ export default {
               'jobType': 'jobDetails.jobType',
               'customer.salesTeam': 'jobDetails.salesTeam',
               'lineManager': 'jobDetails.lineManager',
-              'customerType': 'jobDetails.customerType',
+              // 'customerType': 'jobDetails.customerType',
+              'customer.accountType': 'jobDetails.customerType',
               'faculty': 'jobDetails.faculty',
               'department': 'jobDetails.clientDepartment',
               'customer.ranking': 'jobDetails.ranking',
@@ -1845,6 +1846,7 @@ export default {
 
               'customer.id': 'customer.id',
               'customer.registeredName': 'customer.registeredName',
+              'customer.tradingName': 'customer.tradingName',
 
               'organization.id': 'organization.id',
               'organization.name': 'organization.name',
@@ -1853,7 +1855,8 @@ export default {
               'customer.physicalAddress': 'address.physicalAddress.fullAddress',
               'customer.deliveryAddressId': ['address.deliveryAddress.id', 'address.billingAddress.id'],
               'customer.deliveryAddress': 'address.deliveryAddress.fullAddress',
-              'customer.billingAddress': 'address.billingAddress.fullAddress'
+              'customer.billingAddress': 'address.billingAddress.fullAddress',
+
             })
           }
 

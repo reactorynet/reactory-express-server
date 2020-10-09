@@ -185,6 +185,7 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
         }
       }`,
       variables: {
+        'formData.id': 'id',
         'formData.paging': 'paging',
         'formData.uploadContexts': 'uploadContexts',
       },
