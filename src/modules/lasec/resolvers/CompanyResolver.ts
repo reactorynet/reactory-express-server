@@ -747,8 +747,8 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
     let skipCount: number = (params.paging.page - 1) * params.paging.pageSize;
 
     logger.debug(`TO FILTER :: ${params.paging.page}  ${params.paging.pageSize}   ${skipCount}`);
-    const toreturn = lodash(_docs).drop(skipCount).take(params.paging.pageSize);
-    logger.debug(`TO RETURN :: ${JSON.stringify(toreturn)}`);
+    const customerToReturn = lodash(_docs).drop(skipCount).take(params.paging.pageSize);
+    logger.debug(`TO RETURN :: ${JSON.stringify(customerToReturn)}`);
 
     return {
       documents: lodash(_docs).drop(skipCount).take(params.paging.pageSize),
@@ -1289,7 +1289,8 @@ export const DEFAULT_NEW_CLIENT = {
     firstName: '',
     lastName: '',
     country: 'SOUTH AFRICA',
-    repCode: 'LAB101'
+    repCode: 'LAB101',
+    accountType: ''
   },
   contactDetails: {
     emailAddress: '',
@@ -1299,6 +1300,7 @@ export const DEFAULT_NEW_CLIENT = {
     mobileNumber: '',
     alternateMobile: '',
     officeNumber: '',
+    alternateOfficeNumber: '',
     prefferedMethodOfContact: 'email',
   },
   jobDetails: {
@@ -1804,73 +1806,73 @@ export default {
 
       logger.debug(`[LasecGetNewClient] NEW CLIENT PARAMS:: ${JSON.stringify(args)}`);
 
+      let existingCustomer = null;
+      const apiClient = { ...DEFAULT_NEW_CLIENT };
       if (args.id) {
-
-        const existingCustomer = await getClient({ id: args.id });
-        logger.debug(`[LasecGetNewClient] EXISTING CLIENT :: ${JSON.stringify(existingCustomer)}`);
+        existingCustomer = await getClient({ id: args.id });
 
         if (existingCustomer) {
+          apiClient.id = existingCustomer.id || '';
+          apiClient.personalDetails.title = existingCustomer.title || 'Mr';
+          apiClient.personalDetails.firstName = existingCustomer.firstName || '';
+          apiClient.personalDetails.lastName = existingCustomer.lastName || '';
+          apiClient.personalDetails.country = existingCustomer.country || '';
+          apiClient.personalDetails.repCode = existingCustomer.salesTeam || '';
+          apiClient.personalDetails.accountType = existingCustomer.accountType || '';
 
-          // let _newClient = { ...DEFAULT_NEW_CLIENT };
+          apiClient.contactDetails.emailAddress = existingCustomer.emailAddress || '';
+          apiClient.contactDetails.confirmEmail = existingCustomer.emailAddress || '';
+          apiClient.contactDetails.alternateEmail = existingCustomer.alternateEmail || '';
+          apiClient.contactDetails.confirmAlternateEmail = existingCustomer.alternateEmail || '';
+          apiClient.contactDetails.mobileNumber = existingCustomer.mobileNumber || '';
+          apiClient.contactDetails.alternateMobile = existingCustomer.alternateMobile || '';
+          apiClient.contactDetails.officeNumber = existingCustomer.officeNumber || '';
+          apiClient.contactDetails.alternateOfficeNumber = existingCustomer.alternateOfficeNumber || '';
+          apiClient.contactDetails.prefferedMethodOfContact = existingCustomer.prefferedMethodOfContact || '';
 
-          const toReturn  = {
-            ...DEFAULT_NEW_CLIENT,
-            ...om(existingCustomer, {
-              'id': 'id',
+          apiClient.jobDetails.jobTitle = existingCustomer.jobTitle || '';
+          apiClient.jobDetails.jobType = existingCustomer.jobType || '';
+          apiClient.jobDetails.salesTeam = existingCustomer.customer.salesTeam || '';
+          apiClient.jobDetails.lineManager = existingCustomer.lineManager || '';
+          apiClient.jobDetails.customerType = existingCustomer.customer.accountType || '';
+          apiClient.jobDetails.faculty = existingCustomer.customer.faculty || '';
+          apiClient.jobDetails.clientDepartment = existingCustomer.customer.department || '';
+          apiClient.jobDetails.ranking = existingCustomer.customer.ranking || '';
+          apiClient.jobDetails.customerClass = existingCustomer.customer.customerClass || '';
 
-              'title': 'personalDetails.title',
-              'firstName': 'personalDetails.firstName',
-              'lastName': 'personalDetails.lastName',
-              'country': 'personalDetails.country',
-              'salesTeam': ['personalDetails.repCode'],
-              'accountType': 'personalDetails.accountType',
+          apiClient.customer.id = existingCustomer.customer.id || '';
+          apiClient.customer.registeredName = existingCustomer.customer.registeredName || '';
+          apiClient.organization.id = (existingCustomer.organization && existingCustomer.organization.id) ? existingCustomer.organization.id : '';
+          apiClient.organization.name = (existingCustomer.organization && existingCustomer.organization.name) ? existingCustomer.organization.name : '';
 
-              'emailAddress': ['contactDetails.emailAddress','contactDetails.confirmEmail'],
-              'alternateEmail': ['contactDetails.alternateEmail', 'contactDetails.confirmAlternateEmail'],
-              'mobileNumber': 'contactDetails.mobileNumber',
-              'alternateMobile': 'contactDetails.alternateMobile',
-              'officeNumber': 'contactDetails.officeNumber',
-              'alternateOfficeNumber': 'contactDetails.alternateOfficeNumber',
-              'prefferedMethodOfContact': 'contactDetails.prefferedMethodOfContact',
-
-              'jobTitle': 'jobDetails.jobTitle',
-              'jobType': 'jobDetails.jobType',
-              'customer.salesTeam': 'jobDetails.salesTeam',
-              'lineManager': 'jobDetails.lineManager',
-              // 'customerType': 'jobDetails.customerType',
-              'customer.accountType': 'jobDetails.customerType',
-              'faculty': 'jobDetails.faculty',
-              'department': 'jobDetails.clientDepartment',
-              'customer.ranking': 'jobDetails.ranking',
-              'customer.customerClass': 'jobDetails.customerClass',
-
-              'customer.id': 'customer.id',
-              'customer.registeredName': 'customer.registeredName',
-              'customer.tradingName': 'customer.tradingName',
-
-              'organization.id': 'organization.id',
-              'organization.name': 'organization.name',
-
-              'customer.physicalAddressId': 'address.physicalAddress.id',
-              'customer.physicalAddress': 'address.physicalAddress.fullAddress',
-              'customer.deliveryAddressId': ['address.deliveryAddress.id', 'address.billingAddress.id'],
-              'customer.deliveryAddress': 'address.deliveryAddress.fullAddress',
-              'customer.billingAddress': 'address.billingAddress.fullAddress',
-
-            })
-          }
-
-          return toReturn;
+          apiClient.address.physicalAddress.id = existingCustomer.customer.physicalAddressId || '';
+          apiClient.address.physicalAddress.fullAddress = existingCustomer.customer.physicalAddress || '';
+          apiClient.address.deliveryAddress.id = existingCustomer.customer.deliveryAddressId || '';
+          apiClient.address.billingAddress.id = existingCustomer.customer.deliveryAddressId || '';
+          apiClient.address.deliveryAddress.fullAddress = existingCustomer.customer.deliveryAddress || '';
+          apiClient.address.billingAddress.fullAddress = existingCustomer.customer.billingAddress || '';
+          logger.debug(`[LasecGetNewClient] TO RETURN :: ${JSON.stringify(apiClient)}`);
         }
       }
 
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
-      const newClient = await getCacheItem(hash).then();
+      const cachedClient = await getCacheItem(hash).then();
 
-      if (newClient !== null) return newClient;
+      if (cachedClient !== null) {
+
+        if (existingCustomer) {
+          const mergedClient = {
+            ...apiClient,
+            ...cachedClient
+          };
+          mergedClient.id = apiClient.id;
+          return mergedClient;
+        }
+
+        return cachedClient;
+      }
       else {
         let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
-        //cache this object for 12 h
         await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
         let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
         return { ..._newClient, clientDocuments };
@@ -1936,14 +1938,10 @@ export default {
       logger.debug('New Client Details', _newClient, 'debug');
 
       _newClient.updated = new Date().valueOf()
-      //update the cache for the new
       await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
 
       return _newClient;
     },
-    /**
-     * Creates a new Company Client
-     */
     LasecCreateNewClient: async (obj, args) => {
 
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
@@ -1954,6 +1952,37 @@ export default {
         messages: [
         ],
       };
+
+
+      logger.debug(`CREATE NEW ARGS:: ${JSON.stringify(args)}`);
+
+      // CLIENT EXISTS AND IS DEACTIVATED - REACTIVATE CLIENT
+      if (args.id) {
+        try {
+          const updateArgs = {
+            clientInfo: {
+              ...args.newClient,
+              clientStatus: 'active',
+              clientId: args.id,
+            }
+          }
+          await updateClientDetail(updateArgs);
+          await mysql(`
+            UPDATE Customer SET
+              activity_status = 'active',
+              company_id = ${args.customer.id},
+            WHERE customerid = ${args.id};`, 'mysql.lasec360').then()
+
+          response.client = args;
+        } catch (setStatusError) {
+          logger.error("Error Setting The Status and Customer details", setStatusError);
+          response.client = args;
+          response.messages = ['There was an error reactivating this client.'];
+          response.success = false;
+        }
+
+        return response;
+      }
 
       const { Customers, post, URIS } = lasecApi;
       /**
@@ -2020,15 +2049,12 @@ export default {
         inputData.onboarding_step_completed = 6;
         inputData.activity_status = 'active';
 
+
         logger.debug(`Create new client on LasecAPI`, inputData)
         customer = await post(URIS.customer_create.url, inputData).then()
         logger.debug(`Result in creating user`, customer);
 
         try {
-          debugger;
-          //const setting_status_result: LasecApiResponse = await post(`api/customer/${customer.id}/update`, { customer_id: customer.id, onboarding_step_completed: 6, activity_status: 'active' }).then();
-          //TODO: investigate why status update API call is not working
-          //using mysql update to complete ticket
           const update_result = await mysql(`
             UPDATE Customer SET
               activity_status = 'active',
@@ -2102,7 +2128,6 @@ export default {
 
             try {
               const updateResponse: LasecApiResponse = await lasecApi.Customers.UpdateClientDetails(customer.id, { activity_status: 'active' }).then();
-              debugger;
               if (updateResponse.status !== 'success') {
                 logger.warning(`Lasec API did not update the customer status`, updateResponse);
               }

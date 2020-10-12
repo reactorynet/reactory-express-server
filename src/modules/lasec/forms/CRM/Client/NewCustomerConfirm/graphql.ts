@@ -3,8 +3,8 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetNewClient',
-    text: `query LasecGetNewClient {
-      LasecGetNewClient {
+    text: `query LasecGetNewClient($id: String) {
+      LasecGetNewClient(id: $id) {
         id
         confirmed
         saved
@@ -75,6 +75,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
+      'formData.id': 'id',
       'formData.$uploadContexts': 'uploadContexts'
     },
     formData: {
@@ -104,8 +105,8 @@ const graphql: Reactory.IFormGraphDefinition = {
   mutation: {
     new: {
       name: "LasecCreateNewClient",
-      text: `mutation LasecCreateNewClient($newClient: LasecNewClientInput!){
-        LasecCreateNewClient(newClient: $newClient) {
+      text: `mutation LasecCreateNewClient($id: String, $newClient: LasecNewClientInput!){
+        LasecCreateNewClient(id: $id, newClient: $newClient) {
           client {
             id
             clientStatus
@@ -124,7 +125,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       objectMap: true,
       updateMessage: 'Creating New Client, Please Wait.',
       variables: {
-        'formData.id': 'newClient.id',
+        'formData.id': ['newClient.id', 'id'],
         'formData.personalDetails': 'newClient.personalDetails',
         'formData.personalDetails.title': 'newClient.personalDetails.clientTitle',
         'formData.contactDetails': 'newClient.contactDetails',
