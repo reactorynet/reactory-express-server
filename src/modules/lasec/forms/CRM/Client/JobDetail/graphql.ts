@@ -119,9 +119,11 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   },
   mutation: {
     onChange: {
+      // text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
+      // LasecUpdateNewClient(newClient: $newClient) {
       name: "LasecUpdateNewClient",
-      text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
-        LasecUpdateNewClient(newClient: $newClient) {
+      text: `mutation LasecUpdateNewClient($clientId: String, $newClient: LasecNewClientInput!){
+            LasecUpdateNewClient(clientId: $clientId, newClient: $newClient) {
           id
           jobDetails {
             jobTitle
@@ -139,6 +141,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       objectMap: true,
       updateMessage: 'Updating Personal Content',
       variables: {
+        'eventData.formData.id': 'clientId',
         'eventData.formData': 'newClient.jobDetails',
       },
       // handledBy: 'onChange',

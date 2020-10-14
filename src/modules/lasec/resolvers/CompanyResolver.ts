@@ -331,6 +331,7 @@ const getClient = async (params) => {
 
     let clientResponse = om(clients[0], {
       'id': 'id',
+      'title_id': 'title',
       'first_name': [{
         "key":
           'fullName',
@@ -348,24 +349,26 @@ const getClient = async (params) => {
       'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src) => src == true },
       'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
       'department': ['department', 'jobTitle'],
-      'ranking_id': ['customer.rankingId',
-        {
-          key: 'customer.ranking',
-          transform: (sourceValue) => {
-            /**
-             * 1	A - High Value
-               2	B - Medium Value
-               3	C - Low Value
-             */
-            const rankings = {
-              "1": 'A - High Value',
-              "2": 'B - Medium Value',
-              "3": 'C - Low Value'
-            };
-            return rankings[sourceValue];
-          }
-        }
-      ],
+      'ranking_id': 'customer.ranking',
+
+      // 'ranking_id': ['customer.rankingId',
+      //   {
+      //     key: 'customer.ranking',
+      //     transform: (sourceValue) => {
+      //       /**
+      //        * 1	A - High Value
+      //          2	B - Medium Value
+      //          3	C - Low Value
+      //        */
+      //       const rankings = {
+      //         "1": 'A - High Value',
+      //         "2": 'B - Medium Value',
+      //         "3": 'C - Low Value'
+      //       };
+      //       return rankings[sourceValue];
+      //     }
+      //   }
+      // ],
       'company_id': 'customer.id',
       'company_account_number': 'customer.accountNumber',
       'company_trading_name': 'customer.tradingName',
@@ -495,23 +498,54 @@ const updateClientDetail = async (args) => {
       const client = clients[0];
 
       let updateParams = {
-        first_name: params.firstName || (client.first_name || ''),
-        surname: params.lastName || (client.surname || ''),
+        // first_name: params.firstName || (client.first_name || ''),
+        first_name: params.personalDetails && params.personalDetails.firstName || (client.first_name || ''),
+
+        // surname: params.lastName || (client.surname || ''),
+        surname: params.personalDetails && params.personalDetails.lastName || (client.surname || ''),
+
         activity_status: params.clientStatus || (client.activity_status || ''),
-        country: params.country || (client.country || ''),
-        department: params.department || (client.department || 'NONE'),
-        title_id: client.title_id,
-        mobile_number: params.mobileNumber || (client.mobile_number || ''),
-        office_number: params.officeNumber || (client.office_number || ''),
-        alternate_office_number: params.alternateNumber || (client.alternate_office_number || ''),
-        email: params.email || (client.email || ''),
-        confirm_email: params.email || (client.email || ''),
-        alternate_email: params.alternateEmail || (client.alternate_email || ''),
+
+        // country: params.country || (client.country || ''),
+        country: params.personalDetails && params.personalDetails.country || (client.country || ''),
+
+        // department: params.department || (client.department || 'NONE'),
+        department: params.jobDetails && params.jobDetails.department || (client.department || 'NONE'),
+
+        // title_id: client.title_id,
+        title_id: params.personalDetails && params.personalDetails.title || (client.title_id || ''),
+
+        // mobile_number: params.mobileNumber || (client.mobile_number || ''),
+        mobile_number: params.contactDetails && params.contactDetails.mobileNumber || (client.mobile_number || ''),
+
+        // office_number: params.officeNumber || (client.office_number || ''),
+        office_number: params.contactDetails && params.contactDetails.officeNumber || (client.office_number || ''),
+
+        // alternate_office_number: params.alternateNumber || (client.alternate_office_number || ''),
+        alternate_office_number: params.contactDetails && params.contactDetails.alternateNumber || (client.alternate_office_number || ''),
+
+        // email: params.email || (client.email || ''),
+        email: params.contactDetails && params.contactDetails.emailAddress || (client.email || ''),
+
+        // confirm_email: params.email || (client.email || ''),
+        confirm_email: params.contactDetails && params.contactDetails.confirmEmail || (client.email || ''),
+
+        // alternate_email: params.alternateEmail || (client.alternate_email || ''),
+        alternate_email: params.contactDetails && params.contactDetails.alternateEmail || (client.alternate_email || ''),
+
         role_id: client.role_id,
-        ranking_id: params.ranking || (client.ranking_id || ''),
-        account_type: params.accountType || (client.account_type || ''),
-        customer_class_id: params.clientClass || (client.customer_class_id || ''),
-        sales_team_id: params.repCode || (client.sales_team || ''),
+
+        // ranking_id: params.ranking || (client.ranking_id || ''),
+        ranking_id: params.ranking || (client.ranking_id || ''), // come back to this
+
+        // account_type: params.accountType || (client.account_type || ''),
+        account_type: params.personalDetails && params.personalDetails.accountType || (client.account_type || ''),
+
+        // customer_class_id: params.clientClass || (client.customer_class_id || ''),
+        customer_class_id: params.jobDetails && params.jobDetails.customerClass || (client.customer_class_id || ''),
+
+        // sales_team_id: params.repCode || (client.sales_team || ''),
+        sales_team_id: params.personalDetails && params.personalDetails.repCode || (client.sales_team || ''),
       }
       const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams);
 
@@ -1284,6 +1318,7 @@ const clientDocuments: any[] = [];
 export const DEFAULT_NEW_CLIENT = {
   __typename: 'LasecNewClient',
   id: new ObjectId(),
+  clientId: '',
   personalDetails: {
     title: 'Mr',
     firstName: '',
@@ -1811,9 +1846,12 @@ export default {
       if (args.id) {
         existingCustomer = await getClient({ id: args.id });
 
+        logger.debug(`EXISTING CLIENT:: ${JSON.stringify(existingCustomer)}`)
+
         if (existingCustomer) {
           apiClient.id = existingCustomer.id || '';
-          apiClient.personalDetails.title = existingCustomer.title || 'Mr';
+          apiClient.personalDetails.title = '3';
+          apiClient.personalDetails.title = existingCustomer.title || '0';
           apiClient.personalDetails.firstName = existingCustomer.firstName || '';
           apiClient.personalDetails.lastName = existingCustomer.lastName || '';
           apiClient.personalDetails.country = existingCustomer.country || '';
@@ -1830,7 +1868,7 @@ export default {
           apiClient.contactDetails.alternateOfficeNumber = existingCustomer.alternateOfficeNumber || '';
           apiClient.contactDetails.prefferedMethodOfContact = existingCustomer.prefferedMethodOfContact || '';
 
-          apiClient.jobDetails.jobTitle = existingCustomer.jobTitle || '';
+          apiClient.jobDetails.jobTitle = existingCustomer.jobTitle.trim() || '';
           apiClient.jobDetails.jobType = existingCustomer.jobType || '';
           apiClient.jobDetails.salesTeam = existingCustomer.customer.salesTeam || '';
           apiClient.jobDetails.lineManager = existingCustomer.lineManager || '';
@@ -1855,18 +1893,41 @@ export default {
         }
       }
 
-      let hash = Hash(`__LasecNewClient::${global.user._id}`);
+      let hash;
+      hash = Hash(`__LasecNewClient::${global.user._id}`);
+
       const cachedClient = await getCacheItem(hash).then();
+
+      logger.debug(`CACHED CLIENT:: ${JSON.stringify(cachedClient)}`);
 
       if (cachedClient !== null) {
 
         if (existingCustomer) {
-          const mergedClient = {
-            ...apiClient,
-            ...cachedClient
-          };
-          mergedClient.id = apiClient.id;
-          return mergedClient;
+
+          // if (cachedClient.personalDetails.id == existingCustomer.id) {
+          if (cachedClient.clientId && cachedClient.clientId == existingCustomer.id) {
+
+            logger.debug(`IDS MATCH:: ${cachedClient.personalDetails.id} ${existingCustomer.id} and merging the 2`);
+
+            const mergedClient = {
+              ...apiClient,
+              ...cachedClient
+            };
+            mergedClient.id = apiClient.id;
+            mergedClient.jobDetails.jobTitle = mergedClient.jobDetails.jobTitle.trim();
+
+            logger.debug(`MERGED CLIENT:: ${JSON.stringify(mergedClient)}`);
+
+            return mergedClient;
+          }
+
+          logger.debug(`IDS DONT MATCH RETURNING API CLIENT ONLY:: ${JSON.stringify(apiClient)}`);
+
+          // RESET CACHED CLIENT
+          let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
+          await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+
+          return apiClient;
         }
 
         return cachedClient;
@@ -1875,8 +1936,22 @@ export default {
         let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
         await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
         let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
-        return { ..._newClient, clientDocuments };
 
+        // if (existingCustomer) {
+        //   const mergedClient = {
+        //     ...apiClient,
+        //     ..._newClient
+        //   };
+        //   mergedClient.id = apiClient.id;
+
+        //   logger.debug(`NO CACHED CLIENT - EXISTING CLIENT: ${JSON.stringify(mergedClient)}`);
+
+        //   return { ...mergedClient, clientDocuments };
+        // }
+
+        // logger.debug(`NO CACHED CLIENT - NO EXISTING CLIENT: ${JSON.stringify(_newClient)}`);
+
+        return { ..._newClient, clientDocuments };
       }
     },
     LasecGetAddress: async (obj, args) => {
@@ -1901,10 +1976,18 @@ export default {
       return deleteDocuments(args);
     },
     LasecUpdateNewClient: async (obj, args) => {
-      const { newClient } = args;
-      logger.debug('Updating new client address details with input', { newClient });
 
-      let hash = Hash(`__LasecNewClient::${global.user._id}`);
+      const { newClient } = args;
+      logger.debug('Updating new client address details with input', { args });
+      // logger.debug('Updating new client address details with input', { newClient });
+
+      let hash;
+      hash = Hash(`__LasecNewClient::${global.user._id}`);
+      // if (args.clientId)
+      //   hash = Hash(`__LasecNewClient::${args.clientId}`);
+      // else
+      //   hash = Hash(`__LasecNewClient::${global.user._id}`);
+
       let _newClient = await getCacheItem(hash).then();
 
       if (isNil(newClient.personalDetails) === false) {
@@ -1937,6 +2020,8 @@ export default {
 
       logger.debug('New Client Details', _newClient, 'debug');
 
+      _newClient.clientId = newClient.id;
+
       _newClient.updated = new Date().valueOf()
       await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
 
@@ -1952,7 +2037,6 @@ export default {
         messages: [
         ],
       };
-
 
       logger.debug(`CREATE NEW ARGS:: ${JSON.stringify(args)}`);
 

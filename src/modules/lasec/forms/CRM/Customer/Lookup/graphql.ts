@@ -9,18 +9,18 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         id
         customer {
           id
-          registeredName          
+          registeredName
         }
       }
     }`,
-    variables: {      
+    variables: {
     },
-    resultMap: {            
+    resultMap: {
       'customer.id': 'id',
       'customer.registeredName': 'registeredName',
     },
     autoQuery: true,
-    queryMessage: 'Fetch customer detail',    
+    queryMessage: 'Fetch customer detail',
     resultType: 'object',
     edit: false,
     new: true,
@@ -36,26 +36,29 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   },
   mutation: {
     onCustomerSelected: {
+      // text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
+      // LasecUpdateNewClient(newClient: $newClient) {
       name: "LasecUpdateNewClient",
-      text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
-        LasecUpdateNewClient(newClient: $newClient) {
+      text: `mutation LasecUpdateNewClient($clientId: String, $newClient: LasecNewClientInput!){
+            LasecUpdateNewClient(clientId: $clientId, newClient: $newClient) {
           id
           customer {
             id
-            registeredName            
+            registeredName
           }
         }
       }`,
       objectMap: true,
       updateMessage: 'Updating client customer selection',
-      variables: {    
+      variables: {
+        'eventData.formData.id': 'clientId',
         'eventData.formData': 'newClient.customer',
       },
       resultType: 'object',
       resultMap: {
-        'customer.id':'id',
+        'customer.id': 'id',
         'customer.registeredName': 'registeredName',
       },
     }
-  },  
+  },
 };

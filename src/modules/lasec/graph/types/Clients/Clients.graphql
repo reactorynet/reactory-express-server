@@ -313,7 +313,8 @@ extend type Mutation {
   LasecDeleteNewClientDocuments(fileIds: [String]!): UXMessage
   LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
   LasecCreateNewClient(id: String, newClient: LasecNewClientInput): NewClientResponse
-  LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
+  LasecUpdateNewClient(clientId: String, newClient: LasecNewClientInput): LasecNewClient
+  # LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
   LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
   LasecCRMSaveComment(clientId: String!, comment: String!): SimpleResponse
   LasecDeactivateClients(clientIds: [String]!): SimpleResponse
