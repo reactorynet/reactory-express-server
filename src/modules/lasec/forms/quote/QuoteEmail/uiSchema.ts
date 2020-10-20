@@ -13,7 +13,14 @@ const froalaOptions = {
 
 const uiSchema: any = {
   'ui:options': {
-    submitIcon: 'send' 
+    submitIcon: 'send',
+    containerStyles: {
+      padding: '0px',
+      marginTop: '16px'
+    },
+    style: {
+      marginTop: '16px'
+    }
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -32,7 +39,7 @@ const uiSchema: any = {
     {
       subject: { sm: 12 },
       message: { sm: 12 },
-    },        
+    },
   ],
 
   code: {
@@ -101,20 +108,20 @@ const uiSchema: any = {
   attachments: {
     'ui:widget': 'MaterialListWidget',
     'ui:options': {
-      id: 'Id',      
+      id: 'Id',
       primaryText: '${item.name}',
       secondaryText: '${item.url}',
       variant: 'button',
       secondaryAction: {
         iconKey: 'trash',
-        label: 'Remove',        
-        action: 'event:onDelete',        
+        label: 'Remove',
+        action: 'event:onDelete',
       }
     }
   },
 
   subject: {
-    
+
   },
 
   message: {

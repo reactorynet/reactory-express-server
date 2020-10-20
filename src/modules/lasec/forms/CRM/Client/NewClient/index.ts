@@ -50,12 +50,22 @@ const uiSchema: any = {
       paddingBottom: '8px'
     },
     style: {
-      marginTop: '16px',
+      // marginTop: '16px',
     },
     showSubmit: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    spacing: 2,
+    container: 'div',
+    containerStyles: {
+      padding: 0,
+      margin: 0,
+      border: "none",
+      boxShadow: "none"
+    }
+  },
   'ui:grid-layout': [
     {
       panels: { xs: 12, sm: 12, md: 12, lg: 12 },
