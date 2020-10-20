@@ -149,6 +149,15 @@ const QuoteSchema = new mongoose.Schema({
     },
   ],
   totals,
+  options: [{
+    id: String,
+    incoterm: String,
+    named_place: String,
+    transport_mode: String,
+    currency: String,
+    active: Boolean,
+    syncedAt: Date
+  }],
   created: {
     type: Date,
     required: true,

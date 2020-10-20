@@ -20,6 +20,7 @@ import LasecQueries from '../database/queries';
 import { execql, execml } from 'graph/client';
 
 import { LASEC_API_ERROR_FORMAT } from './constants';
+import { LasecQuoteOption } from '../types/lasec';
 
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
@@ -1011,7 +1012,7 @@ const Api = {
         throw quoteFetchError;
       }
     },
-    getQuoteOption: async (optionId) => {
+    getQuoteOption: async (optionId: string) => {
       try {
         const apiResponse = await FETCH(SECONDARY_API_URLS.quote_option.url, { params: { filter: { ids: [optionId] } } }).then();
         const {
@@ -1026,6 +1027,74 @@ const Api = {
       } catch (error) {
         logger.error(`An error occured while fetching the quote document ${optionId}`, error);
         throw error;
+      }
+    },
+    createQuoteOption: async (quote_id: string) => {
+      try {
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_option.url, { quote_id } ).then();
+        const {
+          status, payload, id,
+        } = apiResponse;
+
+        logger.debug(`CreateQuoteOption response status: ${status}  payload: ${payload} id: ${id}`);
+        if (status === 'success') {
+          return payload;
+        }
+      } catch (lasecApiError) {
+        logger.error(`Error Creating Quote Option ${lasecApiError.message}`);
+        return null;
+      }
+    },
+    patchQuoteOption: async (quote_id: string, quote_option_id: string, option: any) => {
+      try {
+        const apiResponse = await PUT(`${SECONDARY_API_URLS.quote_option.url}1/`, {
+          item_ids: quote_option_id, field_name: { 
+            name: option.option_name,
+            ...option,
+         }  }).then();
+        const {
+          status, payload, id,
+        } = apiResponse;
+
+        logger.debug(`patch quote options response: ${status}  payload: ${payload} id: ${id}`);
+        if (status === 'success') {
+          return payload;
+        }
+      } catch (lasecApiError) {
+        logger.error('Error patching the quote options');
+        return null;
+      }
+    },
+    copyQuoteOption: async (quote_id: string, quote_option_id: string) => {
+      try {        
+        const apiResponse = await POST(`${SECONDARY_API_URLS.quote_option.url}${quote_option_id}/duplicate_quote_option/`, { quote_option_id, quote_id }).then();
+        const {
+          status, payload,
+        } = apiResponse;
+
+        logger.debug(`Duplicating response status: ${status}  payload: ${payload} id: ${quote_option_id}`);
+        if (status === 'success') {
+          return payload;
+        }
+      } catch (lasecApiError) {
+        logger.error('Error setting quote header item');
+        return null;
+      }
+    },
+    deleteQuoteOption: async (quote_id: string, quote_option_id: string) => {
+      try {
+        const apiResponse = await DELETE(`${SECONDARY_API_URLS.quote_option.url}${quote_option_id}`, {  quote_id }).then();
+        const {
+          status, payload, id,
+        } = apiResponse;
+
+        logger.debug(`deleteQuoteOption response status: ${status}  payload: ${payload} id: ${id}`);
+        if (status === 'success') {
+          return payload;
+        }
+      } catch (lasecApiError) {
+        logger.error('Error setting quote header item');
+        return null;
       }
     },
     createQuoteHeader: async ({ quote_id, quote_item_id, header_text }) => {
@@ -1191,6 +1260,32 @@ const Api = {
         logger.error(`An error occured while fetching the quote document ${optionId}`, error);
         throw error;
       }
+    },
+    getIncoTerms: async () => { 
+      let incoterms_response = await FETCH(SECONDARY_API_URLS.incoterms.url).then();
+      const { status, payload } = incoterms_response;
+
+      let results: any[] = [];
+      if (payload && Object.keys(payload).length > 0) { 
+        Object.keys(payload).forEach((prop) => {
+
+          if (`${payload[prop]}`.indexOf("=>") > 0) {
+            results.push({
+              key: prop,
+              title: payload[prop].split('=>')[1].trim()
+            })  
+          } else {
+            results.push({
+              key: prop,
+              title: payload[prop]
+            });
+          }
+        })
+      }
+      
+      logger.debug(`Get inco terms response returned `, { results });
+      
+      return results;
     }
   },
   Teams: {

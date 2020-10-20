@@ -179,10 +179,10 @@ export const queryAsync = async (query: string, connectionId: string = 'mysql.de
 
   return new Promise((resolve, reject) => {
     const resultCallback = (error: MysqlError, results?: any, fields?: FieldInfo[]) => {
-      logger.debug(`Results from query`, { error, fields } )
       if (error === null || error === undefined) {
         resolve(results);
       } else {
+        logger.error(`Results from query`, { error, fields } )
         reject(error);
       }
     };

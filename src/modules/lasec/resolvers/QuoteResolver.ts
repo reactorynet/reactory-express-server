@@ -1,7 +1,7 @@
 
 import om from 'object-mapper';
 import moment, { Moment } from 'moment';
-import lodash, { isArray, isNil, isString } from 'lodash';
+import lodash, { isArray, isNil, isString, result } from 'lodash';
 import { ObjectId } from 'mongodb';
 import gql from 'graphql-tag';
 import uuid from 'uuid';
@@ -33,6 +33,10 @@ import {
   ProductClass,
   LasecProduct,
   IQuoteService,
+  LasecCreateQuoteOptionParams,
+  LasecPatchQuoteOptionsParams,
+  LasecDeleteQuoteOptionParams,
+  
 } from '../types/lasec';
 
 import CONSTANTS, { LOOKUPS, OBJECT_MAPS } from '../constants';
@@ -78,7 +82,7 @@ import {
 } from './Helpers';
 import { queryAsync } from '@reactory/server-core/database/mysql';
 
-
+const QUOTE_SERVICE_ID = 'lasec-crm.LasecQuoteService@1.0.0';
 
 const lookups = CONSTANTS.LOOKUPS;
 
@@ -197,7 +201,14 @@ export default {
     },
     currencies: async () => {
       try {
-        return await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+        const cacheKey = 'lasec-crm.Quote.Currencies.All';
+        let results = await getCacheItem(cacheKey).then();
+        if (!results) {
+          results = await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+          if (results) setCacheItem(cacheKey, results, 60 * 15);
+        }
+
+        return results;
       } catch (err) {
         return []
       }
@@ -547,20 +558,55 @@ export default {
 
       return null
     },
+    incoterms: (quote: LasecQuote) => {
+       return (getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms()
+    },
     options: async (quote: LasecQuote): Promise<LasecQuoteOption[]> => {
-      let result: LasecQuoteOption[] = [];
-
+      let result: LasecQuoteOption[] = [];      
+      
       if (quote.options && isArray(quote.options) === true) {
-        result = quote.options.map((option: String | LasecQuoteOption): LasecQuoteOption => {
+
+        let option_promises = [];
+
+
+        quote.options.forEach((option: String | LasecQuoteOption) => {
           if (typeof option === 'string') {
-            return {
-              id: option,
-              quote_id: quote.id,
-              quote_option_id: option,
-              active: false,
-              currency: 'R',
-            }
-          } else return option as LasecQuoteOption;
+      
+            const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0');
+            
+            option_promises.push(new Promise((resolve, reject) => {
+
+              quoteService.getQuoteOptionDetail(quote.code, option).then(({
+                inco_terms,
+                name,
+                named_place,
+                number_of_items,
+                quote_id, special_comment, id }) => {
+                
+                resolve({
+                  id: id,
+                  inco_terms,
+                  quote_id: quote_id,
+                  option_name: name,
+                  quote_option_id: id,
+                  special_comment,
+                  named_place,
+                  active: false,
+                  currency: 'R',
+                });
+              });              
+            }));
+
+            
+          }
+          
+          if (typeof option === 'object') {
+            
+            option_promises.push(Promise.resolve({ ...(option as LasecQuoteOption) }));
+            
+          
+          }
+          
         })
       } else {
         if (quote.meta && quote.meta.source && quote.meta.source.quote_option_ids) {
@@ -571,6 +617,7 @@ export default {
             quote_option_id: id,
             active: false,
             currency: 'R',
+            option_name: null,
           }))
         }
       }
@@ -1023,15 +1070,15 @@ export default {
         logger.debug(`💌 Sending Quote Email for quote: ${args.code}`, { message: args.mailMessage });
 
         const quoteService: IQuoteService = global.getService("lasec-crm.LasecQuoteService") as IQuoteService;
-        const fileService: Reactory.Service.IReactoryFileService = global.getService("core.ReactoryFileService") as Reactory.Service.IReactoryFileService;        
-        const { subject, contentType, body, saveToSentItems = true, to, via, userId, attachments, bcc = [], cc = [], id } = args.mailMessage;        
+        const fileService: Reactory.Service.IReactoryFileService = global.getService("core.ReactoryFileService") as Reactory.Service.IReactoryFileService;
+        const { subject, contentType, body, saveToSentItems = true, to, via, userId, attachments, bcc = [], cc = [], id } = args.mailMessage;
 
         const response: Reactory.EmailSentResult = await quoteService.sendQuoteEmail(args.code, subject, body, to, cc, bcc, attachments).then();
 
         if (response.success === true) {
           if (`${args.mailMessage.context}`.trim() !== '') {
             //cleaning up context files.            
-            fileService.removeFilesForContext(args.mailMessage.context).then();  
+            fileService.removeFilesForContext(args.mailMessage.context).then();
           }
         }
 
@@ -1048,7 +1095,7 @@ export default {
           message: `🚨 Could not send the email do to an error, please try again later.`
         } as Reactory.EmailSentResult
       }
-      
+
       //return LasecSendQuoteEmail(args);
     },
     LasecDeleteSaleOrderDocument: async (obj, args) => {
@@ -1226,6 +1273,49 @@ export default {
       }
 
 
+    },
+
+    LasecCreateNewQuoteOption: async (parent: any, params: LasecCreateQuoteOptionParams) => {
+      const { quote_id, copy_from } = params;
+
+      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+
+      if (copy_from) {
+        return quoteService.copyQuoteOption(quote_id, copy_from)
+      } else {
+        return quoteService.createNewQuoteOption(quote_id)
+      }
+    },
+
+    LasecPatchQuoteOption: async (parent: any, params: LasecPatchQuoteOptionsParams): Promise<LasecQuoteOption> => {
+
+      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+      const { option, quote_id, option_id } = params
+
+      return await quoteService.patchQuoteOption(quote_id, option_id, option).then();      
+    },
+
+    LasecDeleteQuoteOption: async (parent: any, params: LasecDeleteQuoteOptionParams): Promise<SimpleResponse> => {
+
+      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+
+      const { quote_id, option_id } = params;
+
+      try {
+        await quoteService.deleteQuoteOption(quote_id, option_id).then();
+
+        return {
+          message: `Deleted quote option ${option_id}`,
+          success: true
+        }
+      } catch (err) {
+        logger.error(`Error MutationLasecDeleteQuoteOption() ${err.message}`, { quote_id, option_id })
+
+        return {
+          message: `Deleted quote option ${option_id} failed`,
+          success: false
+        }
+      }
     }
   }
 };

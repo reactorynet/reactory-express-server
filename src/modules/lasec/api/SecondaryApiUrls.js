@@ -108,6 +108,7 @@ export default {
 
   create_quote: { url: `api/${CREATE_QUOTE}/`, allowed_methods: ['post'] },
 
+  incoterms: { url: `api/com_invoice/1/inco_terms/`, allowed_methods: ['get'] },
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },
   { url: `api/${ENTITY_KEY__PRODUCT_BUYER}/`, allowed_methods: ['get'] },

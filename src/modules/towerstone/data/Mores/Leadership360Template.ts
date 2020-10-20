@@ -364,7 +364,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "I contribute to our\nfuture",
+          "chart_title": "I live our\nfuture",
           "chart_color": "#990000",
 
           "ordinal": 0

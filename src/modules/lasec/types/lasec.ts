@@ -68,8 +68,9 @@ export interface LasecQuoteOption {
   named_place?: string
   transport_mode?: string
   currency?: string
-  active?: Boolean
+  active?: boolean
   lineItems?: [LasecQuoteItem]
+  must_delete?: boolean
 }
 
 export interface LasecQuoteHeader {
@@ -387,9 +388,24 @@ export interface LasecNewQuoteResult {
 }
 
 export interface LasecClient {
-  [p: string] : any
+  [p: string]: any
 }
 
+export interface LasecCreateQuoteOptionParams {
+  quote_id: string,
+  copy_from?: string
+}
+
+export interface LasecPatchQuoteOptionsParams {
+  quote_id: string,
+  option_id: string,
+  option: LasecQuoteOption
+}
+
+export interface LasecDeleteQuoteOptionParams {
+  quote_id: string,
+  option_id: string
+}
 
 export interface IQuoteService extends Reactory.Service.IReactoryService {
 
@@ -413,8 +429,19 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
   getQuoteEmail(quote_id: string, email_type: string): Promise<Reactory.IEmailMessage>;
 
   setQuoteEmail(quote_id: string, email_type: string, message: Reactory.IEmailMessage): Promise<Reactory.IEmailMessage> 
-}
 
+  createNewQuoteOption(quote_id: string): Promise<LasecQuoteOption>;
+
+  patchQuoteOption(quote_id: string, quote_option_id: string, option: LasecQuoteOption): Promise<LasecQuoteOption>
+  
+  deleteQuoteOption(quote_id: string, quote_option_id: string): Promise<SimpleResponse>;
+  
+  copyQuoteOption(quote_id: string, quote_option_id: string): Promise<LasecQuoteOption>;
+
+  getQuoteOptionDetail(quote_id: string, option_id: string): Promise<LasecQuoteOption>;
+  
+  getIncoTerms(): Promise<any>;
+}
 
 export interface ILasecClientService extends Reactory.Service.IReactoryService {
 
