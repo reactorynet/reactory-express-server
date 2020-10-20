@@ -33,6 +33,9 @@ import { TowerStone } from '@reactory/server-modules/towerstone/towerstone';
 import ApiError from 'exceptions';
 import { reporters } from 'mocha';
 
+import { partnerStyles } from './styles';
+import { numberWords, graph_palette, graph_label_color, cpr } from './constants';
+
 const { APP_DATA_ROOT } = process.env;
 
 const badref = `${APP_DATA_ROOT}/themes/mores/images/badref.png`;
@@ -40,42 +43,12 @@ const oneview_svg = `${APP_DATA_ROOT}/themes/mores/images/one_view_l360.svg`;
 const oneview_png_folder = `${APP_DATA_ROOT}/themes/mores/images/`;
 const oneview_png = `${oneview_png_folder}one_view_l360.png`;
 
-const graph_palette = [
-  '#9A0000',
-  '#54687B',
-  '#7D983C',
-  '#A3C586',
-  '#587444',
-  '#688B9A',
-  '#C5CDD8',
-  '#841F27',
-  '#3762C6',
-  '#FFCC33',
-  '#9FCE1D',
-]
-
-const graph_label_color = [
-  '#FFFFFF',
-  '#FFFFFF',
-  '#000000',
-  '#000000',
-  '#FFFFFF',
-  '#FFFFFF',
-  '#000000',
-  '#FFFFFF',
-  '#FFFFFF',
-  '#000000',
-  '#000000',
-]
-
-
 interface ChartJSDataLabelContext {
   active: boolean,
   chart: any,
   dataIndex: number,
   dataset: any,
   datasetIndex: number
-
 }
 
 const graph_red = '#841F27'
@@ -198,8 +171,8 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
 
       //reportData.delegate = await User.findById(reportData.survey.delegates.id(delegateId).delegate).then();
       //reportData.employee = reportData.delegate;
-      reportData.organization = reportData.survey.organization;
-      reportData.leadershipBrand = reportData.survey.leadershipBrand;
+      reportData.organization = survey.organization;
+      reportData.leadershipBrand = survey.leadershipBrand;
       reportData.qualities = reportData.survey.leadershipBrand.qualities;
       reportData.scale = await Scale.findById(reportData.leadershipBrand.scale).then();
 
@@ -521,9 +494,9 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
     reportData.qualitiesMap = qualitiesMap;
     logger.debug(`qualitiesMap created`);
 
-    let labels = qualitiesMap.map(q => q.model.title)
-    let personalScores = qualitiesMap.map(q => parseFloat(q.scoreByAssessor(reportData.delegate).toFixed(2)));
-    let othersScores = qualitiesMap.map(q => parseFloat(q.avg.others).toFixed(2));
+    let labels = qualitiesMap.map((q, qidx) => `${sectionIndex[qidx]}. ${q.model.title}`)
+    let personalScores = qualitiesMap.map(q => parseFloat(q.scoreByAssessor(reportData.delegate).toFixed(1)));
+    let othersScores = qualitiesMap.map(q => parseFloat(q.avg.others).toFixed(1));
 
     let taken = lodash.pullAt(labels, [0, 1])
     labels = [...labels, ...taken];
@@ -552,7 +525,8 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
             max: 5,
             stepSize: 1,
             suggestedMin: 0,
-            suggestedMax: 5
+            suggestedMax: 5,
+            fontSize: 28,
           },
           beginAtZero: true,
           pointLabels: {
@@ -561,54 +535,45 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
           angleLines: {
             lineWidth: 3
           },
+          gridLines: {
+            circular: true,
+            color: '#8C8C8C',
+          }
         },
         title: {
-          display: true,
-          text: 'Self vs Others',
-          fontSize: 28,
+          display: false,
         },
         legend: {
+          position: 'bottom',
+          align: 'end',
           labels: {
             // This more specific font property overrides the global property
-            fontSize: 28,
+            fontSize: 24,
+            usePointStyle: true,
           },
         },
       },
       data: {
         labels: labels,
-        datasets: [{
-          label: 'Self',
-          fontSize: 28,
-          data: personalScores,
-          lineTension: 0,
-          borderColor: '#587444',
-          fill: false,
-          borderWidth: 5,
-          datalabels: {
-            color: '#587444',
-            display: false,
-            font: {
-              size: 24
+        datasets: [
+          {
+            label: `Raters' average`,
+            labels: labels,
+            data: othersScores,
+            fontSize: 28,
+            fill: false,
+            lineTension: 0,
+            borderColor: '#9A0000',
+            borderWidth: 5,
+            pointRadius: 6,
+            datalabels: {
+              display: false,
+              color: '#9A0000',
+              font: {
+                size: 24
+              }
             }
-          }
-        },
-        {
-          label: `Raters' Average`,
-          labels: labels,
-          data: othersScores,
-          fontSize: 28,
-          fill: false,
-          lineTension: 0,
-          borderColor: '#9A0000',
-          borderWidth: 5,
-          datalabels: {
-            display: false,
-            color: '#9A0000',
-            font: {
-              size: 24
-            }
-          }
-        }],
+          }],
       },
     }).then();
     logger.debug(`Radar Chart Avg Created: ${chartResult.file}`);
@@ -618,26 +583,26 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
 
       const datasets = []
 
-      const selfQualityratings = lodash.filter(reportData.ratingsSelf, r => r.custom !== true && quality.model._id.equals(r.qualityId));
-
       datasets.push({
         data: quality.behaviourScores.map(behaviourScore => {
-          return parseFloat(behaviourScore.scoreAvgOthers).toFixed(2)
+          return parseFloat(behaviourScore.scoreAvgOthers).toFixed(1)
         }),
-        label: 'Raters Avg.',
-        backgroundColor: graph_red,
-        //type: 'line',
-        borderColor: graph_red,
+        barPercentage: 0.5,
+        categoryPercentage: 0.8,
+        label: 'Raters\' avg.',
+        backgroundColor: graph_green,
+        borderColor: graph_green,
         borderWidth: 2,
         datalabels: {
-          align: 'top',
-          anchor: 'center',
+          anchor: 'end',
           clamp: true,
+          align: 'bottom',
+          offset: 4,
           color: '#fff',
-          offset: 0,
           font: {
             size: 24,
-            style: 'bold'
+            style: 'bold',
+            weight: 'bold',
           }
         }
       });
@@ -652,13 +617,14 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
         options: {
           title: {
             display: true,
-            text: quality.model.title,
-            fontSize: 28
           },
           legend: {
             labels: {
-              fontSize: 28
-            }
+              fontSize: 24,
+              fontStyle: 'bold',
+            },
+            position: 'bottom',
+            align: 'center'
           },
           scales: {
             yAxes: [{
@@ -666,19 +632,34 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
                 display: true,
                 labelString: 'Score',
                 fontSize: 24,
+                fontStyle: 'bold',
               },
               ticks: {
                 suggestedMin: 0,
                 suggestedMax: 5,
                 stepSize: 1,
                 min: 0,
-                max: 5
+                max: 5,
+                fontSize: 24,
+                fontStyle: 'bold',
+              }
+            }],
+            xAxes: [{
+              scaleLabel: {
+                display: true,
+                labelString: '',
+                fontSize: 24,
+                fontStyle: 'bold',
+              },
+              ticks: {
+                fontSize: 24,
+                fontStyle: 'bold',
               }
             }],
           }
         },
         data: {
-          labels: quality.behaviours.map((b, bi) => `${sectionIndex[qi]}${bi + 1}`),
+          labels: quality.behaviours.map((b, bi) => `${sectionIndex[qi]}${bi + 1}. ${b.chart_title.replace('\n', ' ')}`),
           datasets,
         },
       });
@@ -696,26 +677,45 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
     barchartPromises = qualitiesMap.map((quality: TowerStone.IQuality, qi: number) => {
 
       let datasets: any[] = [];
+      let maxCount = 1;
+
       quality.behaviourScores.forEach((behaviourScore: any, bidx: number) => {
-        logger.debug(`Color Selection For ${behaviourScore.key}, COUNT: ${behaviourScore.countByScore}, COLOR: ${behaviourScore.countByScore === 0 ? "#000000" : behaviourScore.color}`)
+        let maxCountForBehavior = lodash.orderBy(behaviourScore.countByScore, e => e, "desc")[0];
+
+        if (maxCountForBehavior > maxCount) maxCount = maxCountForBehavior;
+
+        logger.debug(`Color Selection For ${behaviourScore.key}, COUNT: ${behaviourScore.countByScore}, COLOR: ${behaviourScore.countByScore === 0 ? "#000000" : behaviourScore.color} ==> maxCount: ${maxCount}`)
         datasets.push({
           data: behaviourScore.countByScore,
-          label: behaviourScore.key,
+          label: `${behaviourScore.key}. ${behaviourScore.behaviour.chart_title.replace('\n', ' ')}`,
           borderWidth: 2,
           lineTension: 0,
           fontSize: 28,
+          
+          barPercentage: 0.5,
+          categoryPercentage: 0.8,
+
           backgroundColor: behaviourScore.backgroundColor || '#FFCC33',
           datalabels: {
             clamp: true,
-            align: 'top',
-            anchor: 'center',
+            align: (context: ChartJSDataLabelContext) => {
+              var index = context.dataIndex;
+              var value = context.dataset.data[index];
+
+              let valuePerc = Math.round((value * 100 / maxCountForBehavior));
+
+              return valuePerc >= 15 ? 'bottom' : 'top'
+            },
+            anchor: 'end',
+
             color: (context: ChartJSDataLabelContext) => {
               var index = context.dataIndex;
               var value = context.dataset.data[index];
-              return value <= 0 ? '#000000' : behaviourScore.color
 
+              let valuePerc = Math.round((value * 100 / maxCountForBehavior));
+
+              return valuePerc <= 15 ? '#000000' : behaviourScore.color
             },
-            offset: 1,
             font: {
               size: 24,
               style: 'bold'
@@ -734,9 +734,17 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
         mime: 'application/pdf',
         options: {
           title: {
+            display: false,
+            fontSize: 48
+          },
+          legend: {
             display: true,
-            text: quality.model.title,
-            fontSize: 28
+            position: 'bottom',
+            labels: {
+              fontSize: 24,
+              fontStyle: 'bold'
+            },
+            align: 'center'
           },
           scales: {
             yAxes: [{
@@ -744,17 +752,25 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
                 display: true,
                 labelString: 'Count',
                 fontSize: 24,
-                ticks: {
-                  stepSize: 1,
-                }
+                fontStyle: 'bold',
               },
+              ticks: {
+                stepSize: maxCount > 10 ? Math.round(maxCount / 10) : 1,
+                fontSize: 24,
+                fontStyle: 'bold',
+              }
             }],
             xAxes: [{
               scaleLabel: {
                 display: true,
                 labelString: 'Rating',
                 fontSize: 24,
+                fontStyle: 'bold',
               },
+              ticks: {
+                fontSize: 24,
+                fontStyle: 'bold',
+              }
             }],
           }
         },
@@ -830,9 +846,10 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
   }
 };
 
+export const MoresTeamCultureDataResolver = resolveData;
 
 const definition = (data, partner, user) => {
-  logger.debug('Generating PDF definition For Mores Assessment Leadership 360 Report', {print_scores: data.print_scores});
+  logger.debug('Generating PDF definition For Mores Assessment Leadership 360 Report', { print_scores: data.print_scores });
 
 
   const scaleSegments = [];
@@ -854,55 +871,30 @@ const definition = (data, partner, user) => {
   };
 
 
+
   const coverPage = [
     {
-      image: 'organizationLogo', width: 120, style: ['centerAligned'], margin: [0, 30, 0, 30],
+      image: 'partnerLogo', width: 215, style: ['centerAligned'], margin: [0, 0, 0, 0]
     },
-    { text: 'Culture Survey 360° Assessment Report', style: ['title', 'centerAligned'], margin: [0, 10, 0, 10] },
-    { text: `${data.organization.name} ${data.selectionTitle}`.trim(), style: ['header', 'centerAligned', 'secondary'], margin: [0, 5] },
-    { text: `${moment().format("MMMM YYYY")}`, style: ['header', 'centerAligned', 'secondary'], margin: [0, 20, 0, 370] },
+    { text: 'Team Culture Assessment Report', style: ['title', 'centerAligned'], margin: [0, 18, 0, 20] },
     {
-      image: 'partnerLogo', width: 120, margin: [0, 0, 0, 20],
+      text: `${data.selectionTitle}`,
+      style: ['header', 'centerAligned', 'secondary'],
+      margin: [0, 0]
     },
+    { text: `${data.organization.name}`.trim(), style: ['header', 'centerAligned', 'secondary'], margin: [0, 30, 0, 0] },
+    { text: `${moment().format('MMMM YYYY')}`, style: ['header', 'centerAligned', 'secondary', 'subheader2'], margin: [0, 15, 0, 320] },
+    { text: 'In association with', style: ['default', 'centerAligned'], margin: [0, 0, 0, 20] },
     {
-      image: 'towerstoneLogo', width: 120, margin: [350, -80, 0, 20],
+      image: 'towerstoneLogoGreyScale', width: 180, style: ['centerAligned'],
     },
-    { text: 'Table of Contents', style: ['subheading', 'primary'], pageBreak: 'before' },
+    { text: 'Table of Contents', style: ['subheader', 'primary'], pageBreak: 'before' },
     {
       toc: {
-        // title: { text: 'Sections', style: ['subheader', 'secondary'] },
-        //textMargin: [0, 0, 0, 0],
-        //textStyle: {italics: true},
         numberStyle: { bold: true }
       }
     },
-    /*
-    { text: `Section A: Welcome .................................................................... 2`, style: ['default']},
-    { text: `Section B: Dashboard .................................................................. 5`, style: ['default']},
-    { text: `Section C: Detailed Results ........................................................... 7`, style: ['default']},
-    { text: `Section D: Areas to Watch ............................................................. 13`, style: ['default']},
-    { text: `Section E: My Growth Plan ............................................................. 14`, style: ['default']},
-    */
   ]
-
-  const numberWords = {
-    1: 'one',
-    2: 'two',
-    3: 'three',
-    4: 'four',
-    5: 'five',
-    6: 'six',
-    7: 'seven',
-    8: 'eight',
-    9: 'nine',
-    10: 'ten',
-    11: 'eleven',
-    12: 'twelve',
-    13: 'thirteen',
-    14: 'fourteen',
-    15: 'fifteen'
-  }
-
 
   const introductionSection = [
     {
@@ -913,7 +905,9 @@ const definition = (data, partner, user) => {
       tocNumberStyle: { italics: true, fontSize: 10 },
     },
     {
-      text: `This report presents the results of the ${data.organization.name} organisational culture assessment completed on ${moment().format('MMMM YYYY')} for all employees in the Overall Group.\n`,
+      text: [`This report presents the results of the ${data.organization.name} ${data.selectionTitle} culture assessment completed in ${moment().format('MMMM YYYY')} by`,
+      { text: ` ${numberWords[data.assessors.length] || data.assessors.length} `, bold: true }, ,
+      `respondents.\n`],
       style: ['default'],
     },
     {
@@ -922,7 +916,7 @@ const definition = (data, partner, user) => {
     },
     {
       text: [
-        'The Mores Leadership 360° Assessment provides insight to help you grow and model behaviours that will best serve your leadership needs.',
+        'The Mores Team Culture Assessment provides insight to help you grow and model behaviours that will best serve your team. ',
         'This report consists of the following sections:\n'
       ],
       style: ['default'],
@@ -931,15 +925,19 @@ const definition = (data, partner, user) => {
       image: 'sectionOverview', width: 300, style: ['centerAligned'], margin: [0, 20, 0, 20],
     },
     {
-      text: 'Make your growth plan a living document through daily reflection and weekly review. Consider how to use feedback from your teams and colleagues to enrich this process.',
+      text: 'Make your Action Plan a living document through daily reflection and weekly review. Consider how to use feedback from your teams and colleagues to enrich this process.',
       style: ['default', 'italic']
     },
     {
-      text: 'The TowerStone Leadership Essentials© Model',
+      text: ['The TowerStone Leadership Essentials', cpr, ' Model'],
       style: ['subheader', 'primary']
     },
     {
-      text: `Informed by decades of experience and timeless leadership theory, the TowerStone Leadership Essentials© Model distils the individual and organisational competencies that leaders care about most. It is designed to be practical and applies to leadership in any situation or organisation.`,
+      text: [
+        `Informed by decades of experience and timeless leadership theory, the TowerStone Leadership Essentials`,
+        cpr,
+        ' Model distils the individual and organisational competencies that leaders care about most. It is designed to be practical and applies to leadership in any situation or organisation.'
+      ],
       style: ['default'],
     },
     {
@@ -949,17 +947,21 @@ const definition = (data, partner, user) => {
     {
       ul: [
         {
-          text: `Ken Wilber's Integral Framework©`,
+          text: [`Ken Wilber's Integral Framework`, cpr],
           style: ['default'],
         },
         {
           type: 'none',
           ul: [
             {
-              text: `- The four lenses of human experience \n(individual and collective; visible behaviours and\n invisible motives)`,
-              style: ['default', 'sublist'],
+              text: [
+                `- The four lenses of human experience\n`,
+                { text: `  (individual and collective; visible behaviours and\n`, preserveLeadingSpaces: true },
+                { text: `  invisible motives).`, preserveLeadingSpaces: true }
+              ],
             },
-          ]
+          ],
+          style: ['default', 'sublist'],
         },
       ],
     },
@@ -983,7 +985,7 @@ const definition = (data, partner, user) => {
     {
       ul: [
         {
-          text: `Dr David Rock’s SCARF© Approach`,
+          text: [`Dr David Rock’s SCARF`, cpr, ' Approach'],
           style: ['default'],
         },
         {
@@ -991,18 +993,19 @@ const definition = (data, partner, user) => {
           ul: [
             {
               text: [
-                `- Using the neuroscience of minimising threat \nand maximising reward for relationship building.\n`,
+                `- Using the neuroscience of minimising threat\n`,
+                { text: `  and maximising reward for relationship building.`, preserveLeadingSpaces: true },
               ],
-              style: ['default', 'sublist'],
             }
           ],
+          style: ['default', 'sublist'],
         },
       ],
     },
     {
       ul: [
         {
-          text: `Covey’s Tree of Trust©`,
+          text: [`Covey’s Tree of Trust`, cpr],
           style: ['default'],
         },
         {
@@ -1030,7 +1033,7 @@ const definition = (data, partner, user) => {
 
     {
       text: `Covering the full spectrum of human needs – from self-development to organisational purpose – the Mores Assessments framework comprises six elements with three questions per element.`,
-      style: ['default'],
+      style: ['default'],      
     },
     {
       text: [
@@ -1059,9 +1062,8 @@ const definition = (data, partner, user) => {
       pageBreak: 'before',
       text: 'The Rating Scale',
       style: ['header', 'primary'],
-      margin: [0, 30, 0, 30]
     },
-    { text: 'The five-point rating scale measures how strongly participants agree or disagree with a behavioural statement, including the typical emotion associated with that rating:', style: ['default'] },
+    { text: 'The 5-point rating scale measures how strongly participants agree or disagree with a behavioural statement, including the typical emotion associated with that rating:', style: ['default'] },
   ];
 
   [
@@ -1110,7 +1112,7 @@ const definition = (data, partner, user) => {
       },
       {
         text: [
-          { text: 'Mid-range rating (3): ', style: ['default'], bold: true },
+          { text: 'Intermediate rating (3): ', style: ['default'], bold: true },
           `The ‘OK’ response is a red flag as it could indicate a low level of engagement, mediocrity (comfort zone) or inconsistent behaviours.`
         ]
       },
@@ -1124,7 +1126,7 @@ const definition = (data, partner, user) => {
     style: ['default']
   });
 
-  const dashboardChartSize = 65;
+  const dashboardChartSize = 85;
   const dashboardChartMargin = 5;
 
   const sorted_scores = lodash.sortBy(data.all_behaviour_scores, ['scoreAvgAll']);
@@ -1172,7 +1174,7 @@ const definition = (data, partner, user) => {
       tocNumberStyle: { italics: true, fontSize: 10 },
     },
     {
-      margin: [0, -20, 0, 0],
+      margin: [0, 0, 0, 0],
       table: {
         widths: [250, 250],
         //headerRows: ,
@@ -1188,7 +1190,7 @@ const definition = (data, partner, user) => {
               margin: [20, 0, 0, 10]
             },
             {
-              text: 'Comparison per Section',
+              text: 'Average Score per Section',
               style: ['subheader', 'primary'],
               alignment: 'center',
               border: [false, false, false, false],
@@ -1215,47 +1217,11 @@ const definition = (data, partner, user) => {
                   ],
                   [
                     {
-                      text: [{ text: `${((data.score / 100) * 5).toFixed(2)}`, fontSize: 9 }, { text: '/5', fontSize: 7 }],
-                      margin: [2, -50, 0, 0],
+                      text: [{ text: `${((data.score / 100) * 5).toFixed(1)}`, fontSize: 9 }, { text: '/5', fontSize: 7 }],
+                      margin: [2, -58, 0, 0],
                       alignment: 'center',
                       border: [false, false, false, false]
                     }
-                  ],
-                  [
-                    {
-                      text: `Raters' average score`,
-                      style: ['default', 'primary'],
-                      alignment: 'center',
-                      fontSize: 8,
-                      border: [false, false, false, false]
-                    },
-                  ],
-                  [
-                    {
-                      image: 'overallScoreSelf',
-                      height: dashboardChartSize,
-                      width: dashboardChartSize,
-                      margin: [0, dashboardChartMargin, 0, dashboardChartMargin],
-                      alignment: 'center',
-                      border: [false, false, false, false]
-                    },
-                  ],
-                  [
-                    {
-                      text: [{ text: `${((data.scoreSelf / 100) * 5).toFixed(2)}`, fontSize: 9 }, { text: '/5', fontSize: 7 }],
-                      margin: [2, -50, 0, 0],
-                      alignment: 'center',
-                      border: [false, false, false, false]
-                    }
-                  ],
-                  [
-                    {
-                      text: `Your score`,
-                      style: ['default', 'primary'],
-                      alignment: 'center',
-                      fontSize: 8,
-                      border: [false, false, false, false]
-                    },
                   ],
                 ]
               }
@@ -1264,7 +1230,7 @@ const definition = (data, partner, user) => {
               image: 'spiderChartAvg',
               height: 210,
               width: 210,
-              margin: [0, dashboardChartMargin, 10, dashboardChartMargin],
+              margin: [0, -20, 10, dashboardChartMargin],
               alignment: 'center',
               border: [false, false, false, false]
             }
@@ -1274,32 +1240,32 @@ const definition = (data, partner, user) => {
     },
     {
       text: "One View",
-      style: ['subheader', 'primary'],
-      margin: [0, -20, 0, 0]
+      margin: [0, 10, 0, 15],
+      style: ['subheader', 'primary', 'centerAligned'],
     },
     {
-      image: 'oneViewUser',
-      width: 290,
+      image: "oneViewUser",
+      width: 370,
       style: ['centerAligned'],
-      margin: [0, -15, 0, 5],
+      margin: [0,0,0,0],
     },
     {
-      text: "Priority Behaviours", style: ['header', 'primary'],
-      newPage: 'before'
+      text: "Priority Behaviours", style: ['subheader', 'primary'],
+      pageBreak: 'before'
     },
     {
       table: {
         // headers are automatically repeated if the table spans over multiple pages
         // you can declare how many rows should be treated as headers
         headerRows: 1,
-        widths: ['auto', 10, 'auto'],
+        widths: [240, 10, 240],
         body: [
           [
             {
               text: [
                 { text: 'Highest Rated Behaviours\n', color: '#fff', style: ['default'], alignment: 'center', bold: true, },
                 //You are doing well here (average score in brackets).  How best can you lead, mentor and coach using these strengths?
-                { text: 'You are doing well here (average score in brackets).  How best can you lead, mentor and coach using these strengths?', italics: true, color: '#fff', style: ['default'], alignment: 'center' }
+                { text: 'How best can you lead your team using these strengths?', italics: true, color: '#fff', style: ['default'], alignment: 'center' }
               ],
               fillColor: palette.secondary.main,
               borderColor: palette.secondary.main
@@ -1309,9 +1275,9 @@ const definition = (data, partner, user) => {
             },
             {
               text: [
-                { text: 'Lowest Rated Behaviors\n', fillColor: '#841F27', color: '#fff', style: ['default'], alignment: 'center', bold: true, italics: true },
+                { text: 'Lowest Rated Behaviours\n', fillColor: '#841F27', color: '#fff', style: ['default'], alignment: 'center', bold: true },
                 //You are doing well here (average score in brackets).  How best can you lead, mentor and coach using these strengths?
-                { text: 'You are not doing well here (average score in brackets). What new habits and next actions need focus now?', italics: true, color: '#fff', style: ['default'], alignment: 'center' }
+                { text: 'What new habits and next actions need focus now?', italics: true, color: '#fff', style: ['default'], alignment: 'center' }
               ],
               fillColor: '#841F27',
               borderColor: '#841F27'
@@ -1325,9 +1291,9 @@ const definition = (data, partner, user) => {
                     return [
                       {
                         text: [
-                          { text: `${entry.behaviour.key}\n`, alignment: 'left', margin: [5, 5, 5, 15], bold: true },
-                          { text: `${entry.behaviour.title}\n`, style: ['primary'], alignment: 'left', margin: [5, 5, 15, 5] },
-                          { text: `${entry.behaviour.description}\n\n`, style: ['secondary'], alignment: 'left', margin: [25, 5, 15, 10], italics: true },
+                          { text: `${entry.behaviour.key}\n`, style: ['default'], alignment: 'left', margin: [5, 5, 5, 15], bold: true },
+                          { text: `${entry.behaviour.title}\n`, style: ['default', 'primary'], lineHeight: 1.2, alignment: 'left', margin: [5, 5, 15, 5] },
+                          { text: `${entry.behaviour.description}\n\n`, style: ['default', 'secondary'], lineHeight: 1.2, alignment: 'left', margin: [25, 5, 15, 10], italics: true },
                         ],
                         border: [false, false, false, false],
                       }
@@ -1346,9 +1312,9 @@ const definition = (data, partner, user) => {
                     return [
                       {
                         text: [
-                          { text: `${entry.behaviour.key}\n`, alignment: 'left', margin: [5, 5, 5, 15], bold: true },
-                          { text: `${entry.behaviour.title}\n`, style: ['primary'], alignment: 'left', margin: [5, 5, 5, 5] },
-                          { text: `${entry.behaviour.description}\n\n`, style: ['secondary'], alignment: 'left', margin: [25, 5, 5, 10], italics: true },
+                          { text: `${entry.behaviour.key}\n`, style: ['default'], alignment: 'left', margin: [5, 5, 5, 15], bold: true },
+                          { text: `${entry.behaviour.title}\n`, style: ['default', 'primary'], lineHeight: 1.2, alignment: 'left', margin: [5, 5, 5, 5] },
+                          { text: `${entry.behaviour.description}\n\n`, style: ['default', 'secondary'], lineHeight: 1.2, alignment: 'left', margin: [25, 5, 5, 10], italics: true },
                         ],
                         border: [false, false, false, false],
                       }
@@ -1370,51 +1336,55 @@ const definition = (data, partner, user) => {
       tocStyle: { italics: false, fontSize: 10 },
       tocMargin: [0, 10, 0, 0],
       tocNumberStyle: { italics: true, fontSize: 10 },
-      margin: [0, 10, 0, 10]
     },
   ];
 
-
-
-
   data.qualities.forEach((quality: TowerStone.IQuality, qi: number) => {
-    behaviourSection.push(
-      {
-        text: [
-          { text: `${sectionIndex[qi]}. ${quality.description}`, style: ['subheader', 'primary'], italics: true }
-        ],
-        pageBreak: qi === 0 ? 'auto' : 'before'
-      });
 
-    behaviourSection.push({ text: `Comparison per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [20, 10, 20, 10] })
+    let section_content = {
+      text: [
+        { text: `${sectionIndex[qi]}. ${quality.description}`, style: ['subheader', 'primary'] }
+      ],
+    };
 
+    if(qi > 0) {
+      section_content.pageBreak = 'before';
+      section_content.margin = [0, 16.5, 0, 15];
+    }
+
+    behaviourSection.push(section_content);
+    behaviourSection.push({ text: `Scores per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [0, 10, 20, 10] });
     behaviourSection.push({
       image: existsSync(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) === true ?
         pdfpng(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/bar-chart-${data.survey._id}-${quality._id}.png`) :
         pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/bar_chart.png`),
-      width: 400,
-      height: 200,
-      alignment: 'center'
+      width: 360,
+      alignment: 'left'
     });
 
     quality.behaviours.forEach((behaviour: TowerStone.IBehaviour, bi: number) => {
-      behaviourSection.push({ text: [`${sectionIndex[qi]}${bi + 1}   `, { text: `${lodash.template(behaviour.title)(data)}`, style: ['primary'] }], style: ['default'] });
-      behaviourSection.push({ text: `${lodash.template(behaviour.description)(data)}`, style: ['default', 'secondary'], italics: true });
+      behaviourSection.push({
+        text: [
+          `${sectionIndex[qi]}${bi + 1}`,
+        ],
+        lineHeight: 1.2, style: ['default']
+      });
+      behaviourSection.push({ text: `${lodash.template(behaviour.title)(data)}`, style: ['default', 'primary'], lineHeight: 1.2 })
+      behaviourSection.push({ text: `${lodash.template(behaviour.description)(data)}`, style: ['default', 'secondary'], lineHeight: 1.2, italics: true, margin: [0, 0, 0, 7] });
     });
 
 
-    behaviourSection.push({ text: `Count of ratings per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [20, 10, 20, 10], border: [false, false, false, false] });
+    behaviourSection.push({ text: `Count of ratings per question`, style: ['default'], fontSize: 12, fontColor: '#838383', margin: [0, 10, 20, 10], border: [false, false, false, false] });
     behaviourSection.push({
       image: existsSync(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/bar-chart-${data.survey._id}-${quality._id}-counts.png`) === true ?
         pdfpng(`${APP_DATA_ROOT}/organization/${data.organization._id}/charts/bar-chart-${data.survey._id}-${quality._id}-counts.png`) :
         pdfpng(`${APP_DATA_ROOT}/content/placeholder/charts/bar_chart.png`),
-      width: 400,
-      alignment: 'center'
+      width: 360,
+      alignment: 'left',
+      margin: [0, 15]
     });
 
-
-
-    behaviourSection.push({ text: 'What They Said About You', style: ['secondary', 'subheader'], italics: true, pageBreak: 'before' });
+    behaviourSection.push({ text: 'Feedback comments', style: ['primary', 'subheader'], italics: true, pageBreak: 'before' });
 
     let sectionComments: any[] = [];
 
@@ -1437,7 +1407,16 @@ const definition = (data, partner, user) => {
           widths: ['*'],
           body: [
             [
-              { text: 'Notes (Next Actions and new Habits for My Growth Plan)', color: palette.secondary.main, border: [false, false, false, false] }
+              {
+                text: [
+                  { text: 'Notes', bold: true },
+                  ' (for action plan)'],
+                fontSize: 11,
+                style: ['primary'],
+                italics: true,
+                margin: [-3, 0, 0, 0],
+                border: [false, false, false, false]
+              }
             ],
             ...[1, 2, 3, 4, 5, 6, 7, 8].map((i) => [
               { text: '\n\n', border: [false, false, false, true] }
@@ -1494,7 +1473,7 @@ const definition = (data, partner, user) => {
 
   const overallSection = [
     {
-      text: 'Section D: Areas to Watch', pageBreak: 'before', style: ['header', 'primary'],
+      text: 'Section D: Areas to Watch', pageBreak: 'before', style: ['header', 'secondary'],
       tocItem: true,
       tocStyle: { italics: false, fontSize: 10 },
       tocMargin: [0, 10, 0, 0],
@@ -1504,17 +1483,26 @@ const definition = (data, partner, user) => {
       text: [{ text: 'Note:', italics: true }, 'Suggestions are for lowest rated behaviours listed in Section B.'],
       style: ['primary'],
       fontSize: 8,
-      margin: [0, 10, 0, 10]
+      margin: [0, 10, 0, 15]
     },
     {
       table: {
+        widths: [500],
         body: [
           [
-            { text: '', border: [false, false, false, false] },
-            { text: 'New Habits to consider', fillColor: '#52687B', color: '#FFF', bold: true },
-            { text: 'New Actions to consider', fillColor: '#52687B', color: '#FFF', bold: true }
+            {
+              text: 'New Actions to Consider',
+              style: ['default'],
+              fillColor: '#52687B',
+              color: '#FFF',
+              bold: true,
+              margin: [0, 5, 0, 3],
+              fontSize: 12
+            }
           ],
-          ...recommendation_rows,
+          [
+            '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
+          ]
         ]
       }
     }
@@ -1530,12 +1518,14 @@ const definition = (data, partner, user) => {
       tocNumberStyle: { italics: true, fontSize: 10 },
     },
     {
-      text: 'Priority Behavhiours', style: ['subheader', 'primary'],
-      margin: [0, 5, 0, 10]
+      text: 'Priority Behaviours', style: ['default', 'primary'],
+      margin: [0, 5, 0, 10],
+      bold: true
     },
     {
       text: `List priority behaviours that require organisational action. Note that these do not always have to be the lowest rated behaviours e.g. there may be high-ranked behaviours that require ongoing coaching or communication.`,
-      style: ['default']
+      style: ['default'],
+      margin: [0, 0, 0, 15],
     },
 
     {
@@ -1559,10 +1549,10 @@ const definition = (data, partner, user) => {
       }
     },
 
-    { text: 'Next Action', style: ['subheader', 'primary'], pageBreak: "before" },
+    { text: 'Next Actions', style: ['header', 'primary'], pageBreak: "before" },
 
     {
-      text: 'Tips:\n\n', bold: true, italics: true
+      text: 'Tips:\n', bold: true, italics: true,  style: ['default']
     },
     {
       ul: [
@@ -1573,7 +1563,8 @@ const definition = (data, partner, user) => {
             `- Mid-term: 3-6 months.`,
             `- Long-term: 6-12 months.`,
           ],
-          type: 'none'
+          type: 'none',
+          margin: [-12.5, 5, 0, 5]
         },
         `Consider focusing on no more than five actions per timeframe.`,
         `Keep to SMART principles: specific, measurable and realistic with deadlines.`,
@@ -1607,7 +1598,7 @@ const definition = (data, partner, user) => {
             },
           ],
           [
-            { text: '1 - 3 Months', fillColor: '#D9D9D9', border: [true, true, false, true] },
+            { text: '1 - 3 Months', fillColor: '#D9D9D9', style: ['default'], border: [true, true, false, true] },
             { text: '', fillColor: '#D9D9D9', border: [false, true, false, true] },
             { text: '', fillColor: '#D9D9D9', border: [false, true, true, true] },
           ],
@@ -1617,7 +1608,7 @@ const definition = (data, partner, user) => {
           ['\n\n', '', ''],
           ['\n\n', '', ''],
           [
-            { text: '3 - 6 Months', fillColor: '#D9D9D9', border: [true, true, false, true] },
+            { text: '3 - 6 Months', fillColor: '#D9D9D9', style: ['default'], border: [true, true, false, true] },
             { text: '', fillColor: '#D9D9D9', border: [false, true, false, true] },
             { text: '', fillColor: '#D9D9D9', border: [false, true, true, true] },
           ],
@@ -1627,7 +1618,7 @@ const definition = (data, partner, user) => {
           ['\n\n', '', ''],
           ['\n\n', '', ''],
           [
-            { text: '6 - 12 Months', fillColor: '#D9D9D9', border: [true, true, false, true], pageBreak: 'before' },
+            { text: '6 - 12 Months', fillColor: '#D9D9D9', style: ['default'], border: [true, true, false, true], pageBreak: 'before' },
             { text: '', fillColor: '#D9D9D9', border: [false, true, false, true] },
             { text: '', fillColor: '#D9D9D9', border: [false, true, true, true] },
           ],
@@ -1680,9 +1671,9 @@ const definition = (data, partner, user) => {
                     ],
                     ...q.behaviourScores.map((b, bi) => [
                       { text: b.key, ...cellprops },
-                      { text: parseFloat(b.scoreAvgOthers).toFixed(2), ...cellprops },
-                      { text: parseFloat(b.scoreAvgAll).toFixed(2), ...cellprops },
-                      { text: parseFloat(b.scoreSelf).toFixed(2), ...cellprops },
+                      { text: parseFloat(b.scoreAvgOthers).toFixed(1), ...cellprops },
+                      { text: parseFloat(b.scoreAvgAll).toFixed(1), ...cellprops },
+                      { text: parseFloat(b.scoreSelf).toFixed(1), ...cellprops },
                       { text: `${b.countByScore[0]}`, ...cellprops },
                       { text: `${b.countByScore[1]}`, ...cellprops },
                       { text: `${b.countByScore[2]}`, ...cellprops },
@@ -1693,16 +1684,16 @@ const definition = (data, partner, user) => {
                   ]
                 }
               },
-              { text: parseFloat(q.avg.others).toFixed(2), ...cellprops },
-              { text: parseFloat(q.avg.all).toFixed(2), ...cellprops },
-              { text: parseFloat(q.avg.self).toFixed(2), ...cellprops },
+              { text: parseFloat(q.avg.others).toFixed(1), ...cellprops },
+              { text: parseFloat(q.avg.all).toFixed(1), ...cellprops },
+              { text: parseFloat(q.avg.self).toFixed(1), ...cellprops },
             ]),
             [
               { text: '', ...cellprops },
               { text: 'Totals', ...cellprops },
-              { text: `Avg Others ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.others)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
-              { text: `Avg All ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.all)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
-              { text: `Avg Self ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.self)) / data.qualitiesMap.length).toFixed(2)}`, ...cellprops },
+              { text: `Avg Others ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.others)) / data.qualitiesMap.length).toFixed(1)}`, ...cellprops },
+              { text: `Avg All ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.all)) / data.qualitiesMap.length).toFixed(1)}`, ...cellprops },
+              { text: `Avg Self ${parseFloat(lodash.sum(data.qualitiesMap.map((q) => q.avg.self)) / data.qualitiesMap.length).toFixed(1)}`, ...cellprops },
             ]
           ]
         }
@@ -1727,11 +1718,11 @@ const definition = (data, partner, user) => {
   }
 
   return {
-    filename: `Mores Leadership 360° Assessment Report - ${data.organization.name} - ${data.selectionTitle}.pdf`,
+    filename: `Mores Team Culture Report - ${data.organization.name} - ${data.selectionTitle}.pdf`,
     info: {
-      title: `Mores Leadership 360° Assessment Report - ${data.organization.name}  - ${data.selectionTitle}`,
+      title: `Mores Team Culture Report - ${data.organization.name}  - ${data.selectionTitle}`,
       author: partner.name,
-      subject: 'Mores Assessment - Leadership 360° Assessment Report',
+      subject: 'Mores Assessment - Team Culture Report',
       keywords: 'Leadership Training Personal Growth',
     },
     content: [
@@ -1742,7 +1733,7 @@ const definition = (data, partner, user) => {
       ...behaviourSection,
       ...overallSection,
       ...developmentPlan,
-      ...debug_section
+      //...debug_section
       /*{
         qr: `${partner.siteUrl}/reports/towerstone/delegate-360-assessment/${data.survey._id}/${data.organization._id}`,
         fit: '180',
@@ -1786,7 +1777,7 @@ const definition = (data, partner, user) => {
             margin: [20, 0, 20, 0],
           },
           {
-            text: `Culture Assessment for ${data.organization.name} - ${data.selectionTitle}  - ${data.meta.when.format('DD MMMM YYYY')}`,
+            text: `Team Culture Assessment Report for ${data.organization.name} - ${data.selectionTitle} - ${data.meta.when.format('DD MMMM YYYY')}`,
             fontSize: 8,
             alignment: 'center',
             margin: [5, 5],
@@ -1808,6 +1799,7 @@ const definition = (data, partner, user) => {
       organizationLogo: pdfpng(`${APP_DATA_ROOT}/organization/${data.organization._id}/${data.organization.logo}`),
       partnerLogo: pdfpng(`${APP_DATA_ROOT}/themes/${partner.key}/images/logo.png`),
       towerstoneLogo: pdfpng(`${APP_DATA_ROOT}/themes/towerstone/images/logo.png`),
+      towerstoneLogoGreyScale: pdfpng(`${APP_DATA_ROOT}/themes/towerstone/images/greyscale_logo.png`),
       partnerLogoGreyScale: pdfpng(partnerGreyScaleLogoPath),
       partnerAvatar: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/avatar.png`),
       moresCycle: pdfpng(`${APP_DATA_ROOT}/themes/mores/images/mores-cycle.png`),
@@ -1835,58 +1827,7 @@ const definition = (data, partner, user) => {
      * First-level headings need two line spaces before and two after. Other headings need two line spaces before and one after.
      *
      */
-    styles: {
-      normal: {
-        font: 'Verdana',
-      },
-      default: {
-        fontSize: 10,
-        font: 'Verdana',
-        alignment: 'justify',
-        margin: [0, 0, 10, 0],
-        lineHeight: 1.5,
-        bold: false,
-        italics: false,
-      },
-      sublist: {
-        fontSize: 8,
-      },
-      title: {
-        fontSize: 16,
-        bold: true,
-        font: 'Verdana',
-      },
-      primary: {
-        color: partner.themeOptions.palette.primary1Color,
-      },
-      secondary: {
-        color: partner.themeOptions.palette.secondary.main,
-      },
-      header: {
-        fontSize: 12,
-        bold: true,
-        font: 'Verdana',
-        margin: [0, 15, 0, 30],
-      },
-      subheader: {
-        fontSize: 11,
-        bold: true,
-        font: 'Verdana',
-        margin: [0, 15],
-      },
-      quote: {
-        fontSize: 11,
-        font: 'Verdana',
-        italics: true,
-        color: partner.themeOptions.palette.primary1Color,
-      },
-      centerAligned: {
-        alignment: 'center',
-      },
-      justified: {
-        alignment: 'justify',
-      },
-    },
+    styles: partnerStyles(partner),
     tableLayoutOut: {
       towerstone: tableLayoutOut,
     },

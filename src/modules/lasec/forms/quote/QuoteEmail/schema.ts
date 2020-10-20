@@ -23,13 +23,14 @@ const emailAttachment: Reactory.IObjectSchema = {
   properties: {
     id: { type: 'string',  title: "id"},
     url: { type: 'string',  title: "Url"},
-    name: { type: 'string',  title: "Filename"},
+    filename: { type: 'string',  title: "Filename"},
     mimetype: { type: 'string',  title: "Type"},
   }
 };
 
 const emailAttachments: Reactory.ISchema = {
   type: 'array',
+  title: 'Attachments',
   items: { ...emailAttachment }
 };
 
@@ -38,15 +39,19 @@ const schema: Reactory.IObjectSchema = {
   title: '',
   type: 'object',
   properties: {
-    code: {
+    id: {
       type: 'string',
-      title: 'Quote Code:',
+      title: 'Email Id',
+    },
+    quote_id: {
+      type: 'string',
+      title: 'Quote #',
     },
     email_type: {
       type: 'string',
-      title: 'Email Type', 
-      description: 'Use the selector to select a new template'
+      title: 'Email Type',       
     },
+    from: { ...emailAddress },
     to: { ...emailAddressList },
     cc: { ...emailAddressList },
     bcc: { ...emailAddressList },

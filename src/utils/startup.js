@@ -8,7 +8,7 @@ import data from '../data';
 import logger from '../logging';
 import { ReactoryClientValidationError } from '../exceptions';
 import { schemaStartup } from '../reactory';
-import { startServices } from '../services';
+import { startServices, getService } from '../services';
 
 const { clients, users, components } = data;
 
@@ -226,6 +226,7 @@ const installClients = async (configs) => {
 };
 
 const initialiseStartupAwareServices = async () => {
+  global.getService = getService
   return await startServices().then()
 };
 

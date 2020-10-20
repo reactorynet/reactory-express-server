@@ -17,29 +17,31 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
+    
     {
-      email_type: { sm: 12 }
+      email_type: { sm: 12, md: 4, lg: 2 },
+      quote_id: { sm: 12, md: 4, lg: 2 }
     },
+    
     {
-      code: { md: 6, sm: 12 },
+      to: { sm: 12, md: 4, lg: 3 },
+      cc: { sm: 12, md: 4, lg: 3 },
+      bcc: { sm: 12, md: 4, lg: 3 },
+      attachments: { sm: 12,  md: 4, lg: 3 },
     },
-    {
-      to: { md: 6, sm: 12 },
-      cc: { md: 6, sm: 12 },
-      bcc: { md: 6, sm: 12 },
-      attachments: { 6: 12, sm: 12 },
-    },
+
     {
       subject: { sm: 12 },
       message: { sm: 12 },
-    },        
+    },
+
   ],
 
-  code: {
+  quote_id: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       variant: 'subtitle1',
-      title: 'Quote Code',
+      title: 'Quote ID',
       format: '${formData}',
     }
   },
@@ -48,8 +50,8 @@ const uiSchema: any = {
     'ui:widget': 'ChipArrayWidget',
     'ui:options': {
       labelFormat: '${item.display}<${item.email}>',
-      addComponent: 'core.EmailAddressForm',
-      onAddHandler: 'onAdded',
+      addComponentFqn: 'core.AddEmailAddressForm',
+      onAddHandler: 'onSubmit',
       textChangeParser: 'core.EmailAddressTextParser',
       container: 'core.BasicContainer',
       containerProps: {
@@ -66,9 +68,8 @@ const uiSchema: any = {
     'ui:widget': 'ChipArrayWidget',
     'ui:options': {
       labelFormat: '${item.display}<${item.email}>',
-      addComponent: 'core.EmailAddressForm',
-      onAddHandler: 'onAdded',
-      textChangeParser: 'core.EmailAddressTextParser',
+      addComponentFqn: 'core.AddEmailAddressForm',
+      onAddHandler: 'onSubmit',
       container: 'core.BasicContainer',
       containerProps: {
         title: 'CC',
@@ -84,9 +85,8 @@ const uiSchema: any = {
     'ui:widget': 'ChipArrayWidget',
     'ui:options': {
       labelFormat: '${item.display}<${item.email}>',
-      addComponent: 'core.EmailAddressForm',
-      onAddHandler: 'onAdded',
-      textChangeParser: 'core.EmailAddressTextParser',
+      addComponentFqn: 'core.AddEmailAddressForm',
+      onAddHandler: 'onSubmit',
       container: 'core.BasicContainer',
       containerProps: {
         title: 'BCC',
@@ -99,10 +99,32 @@ const uiSchema: any = {
   },
 
   attachments: {
+
+    'ui:widget': 'ChipArrayWidget',
+    'ui:options': {
+      labelFormat: '${item.filename}',
+      addComponentFqn: 'lasec-crm.QuoteEmailAttachmentWidget',
+      addComponentProps: {
+        email_type: '${props.formContext.$formData.email_type}',
+        quote_id: '${props.formContext.$formData.quote_id}',
+        user_id: '${props.api.$user.id}'
+      },      
+      onAddHandler: 'onSubmit',
+      container: 'core.BasicContainer',
+      containerProps: {
+        title: 'Attachments',
+        style: {
+          maxWidth: '100%',
+          justifyContent: 'flex-end',
+        },
+      },
+    },
+
+    /*
     'ui:widget': 'MaterialListWidget',
     'ui:options': {
       id: 'Id',      
-      primaryText: '${item.name}',
+      primaryText: '${item.displayName} ${item.filename}',
       secondaryText: '${item.url}',
       variant: 'button',
       secondaryAction: {
@@ -111,6 +133,7 @@ const uiSchema: any = {
         action: 'event:onDelete',        
       }
     }
+    */
   },
 
   subject: {
@@ -124,14 +147,7 @@ const uiSchema: any = {
     },
   },
   email_type: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      selectOptions: [
-        { key: 'send_quote', value: 'send_quote', label: 'Send Quote' },
-        { key: 'status_update', value: 'send_status_update', label: 'Send Status Update' },
-        { key: 'delivery_schedule', value: 'send_delivery_schedule', label: 'Send Delivery Schedule' },
-      ],
-    }
+    'ui:widget': 'QuoteEmailTypeSelector',    
   }
 };
 

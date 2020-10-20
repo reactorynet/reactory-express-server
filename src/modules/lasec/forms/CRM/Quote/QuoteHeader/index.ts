@@ -94,27 +94,23 @@ const uiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      client: { xs: 12, sm: 6, },
-      validDate: { xs: 12, sm: 6, },
-      repCode: { xs: 12, sm: 6, },
-      quoteType: { xs: 12, sm: 6, },
-
+      client: { xs: 12, sm: 6, md: 4, lg: 3 },      
+      repCode: { xs: 12, sm: 6, md: 4, lg: 3 },
+      quoteType: { xs: 12, sm: 6, md: 4, lg: 3 },
+      validDate: { xs: 12, sm: 6, md: 4, lg: 3 },
     },
   ],
 
   code: {},
 
   client: {
-    'ui:widget': 'LookupComponent',
+    'ui:widget': 'CustomerFilter',
     'ui:options': {
       label: 'Select a Client',
       placeholder: 'Select a Client',
       title: 'Search for a Client'
     },
-    props: {
-      componentFqn: 'lasec-crm.LasecCRMClientLookupTable@1.0.0',
-      componentProps: {},
-    },
+    
   },
   repCode: {
     'ui:widget': 'RepCodeFilter',
@@ -173,6 +169,7 @@ const LasecCRMQuoteHeaderForm: Reactory.IReactoryForm = {
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
     { componentFqn: 'lasec-crm.RepCodeFilter@1.0.0', widget: 'RepCodeFilter' },
+    { componentFqn: 'lasec-crm.CustomerFilter@1.0.0', widget: 'CustomerFilter' },
   ],
 };
 

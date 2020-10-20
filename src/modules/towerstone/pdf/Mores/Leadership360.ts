@@ -33,8 +33,11 @@ import {
 import { Reactory } from '@reactory/server-core/types/reactory';
 import { TowerStone } from '@reactory/server-modules/towerstone/towerstone';
 
-import { Chart, ChartLegendLabelItem, } from 'chart.js'
+import { Chart, ChartLegendLabelItem } from 'chart.js'
 import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
+
+import { partnerStyles } from './styles';
+import { numberWords, graph_palette, graph_label_color } from './constants'
 
 const { APP_DATA_ROOT } = process.env;
 
@@ -43,60 +46,12 @@ const oneview_svg = `${APP_DATA_ROOT}/themes/mores/images/one_view_l360.svg`;
 const oneview_png_folder = `${APP_DATA_ROOT}/themes/mores/images/`;
 const oneview_png = `${oneview_png_folder}one_view_l360.png`;
 
-const numberWords = {
-  1: 'one',
-  2: 'two',
-  3: 'three',
-  4: 'four',
-  5: 'five',
-  6: 'six',
-  7: 'seven',
-  8: 'eight',
-  9: 'nine',
-  10: 'ten',
-  11: 'eleven',
-  12: 'twelve',
-  13: 'thirteen',
-  14: 'fourteen',
-  15: 'fifteen'
-}
-
-const graph_palette = [
-  '#9A0000',
-  '#54687B',
-  '#7D983C',
-  '#A3C586',
-  '#587444',
-  '#688B9A',
-  '#C5CDD8',
-  '#841F27',
-  '#3762C6',
-  '#FFCC33',
-  '#9FCE1D',
-]
-
-const graph_label_color = [
-  '#FFFFFF',
-  '#FFFFFF',
-  '#000000',
-  '#000000',
-  '#FFFFFF',
-  '#FFFFFF',
-  '#000000',
-  '#FFFFFF',
-  '#FFFFFF',
-  '#000000',
-  '#000000',
-]
-
-
 interface ChartJSDataLabelContext {
   active: boolean,
   chart: any,
   dataIndex: number,
   dataset: any,
   datasetIndex: number
-
 }
 
 const graph_red = '#841F27'
@@ -930,6 +885,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
   }
 };
 
+export const MoresLeadership360DataResolver = resolveData;
 
 const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: Reactory.IUser) => {
   logger.debug(`Generating PDF definition For Mores Assessment Leadership 360 Report using partner ${partner.key} and user ${user.email}`);
@@ -979,19 +935,9 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
     { text: 'Table of Contents', style: ['subheader', 'primary'], pageBreak: 'before' },
     {
       toc: {
-        // title: { text: 'Sections', style: ['subheader', 'secondary'] },
-        //textMargin: [0, 0, 0, 0],
-        //textStyle: {italics: true},
         numberStyle: { bold: true }
       }
-    },
-    /*
-    { text: `Section A: Welcome .................................................................... 2`, style: ['default']},
-    { text: `Section B: Dashboard .................................................................. 5`, style: ['default']},
-    { text: `Section C: Detailed Results ........................................................... 7`, style: ['default']},
-    { text: `Section D: Areas to Watch ............................................................. 13`, style: ['default']},
-    { text: `Section E: My Growth Plan ............................................................. 14`, style: ['default']},
-    */
+    },    
   ]
 
 
@@ -1685,7 +1631,8 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
             `- Midday: “How am I doing so far?”`,
             `- Evening: “How did I do today?”`,
           ],
-          type: 'none'
+          type: 'none',
+          margin: [-12.5, 5, 0, 5]
         },
         `Ask for feedback on progress before deciding to move on to the next habit.`
       ],
@@ -1980,69 +1927,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
      * First-level headings need two line spaces before and two after. Other headings need two line spaces before and one after.
      *
      */
-    styles: {
-      normal: {
-        font: 'Verdana',
-      },
-      default: {
-        fontSize: 10,
-        font: 'Verdana',
-        alignment: 'justify',
-        margin: [0, 0, 10, 0],
-        lineHeight: 1.5,
-        bold: false,
-        italics: false,
-      },
-      sublist: {
-        fontSize: 8,
-      },
-      title: {
-        fontSize: 16,
-        bold: true,
-        font: 'Verdana',
-      },
-      primary: {
-        color: partner.themeOptions.palette.primary1Color,
-      },
-      secondary: {
-        color: partner.themeOptions.palette.secondary.main,
-      },
-      header: {
-        fontSize: 12,
-        bold: true,
-        font: 'Verdana',
-        margin: [0, 15, 0, 15],
-      },
-      subheader: {
-        fontSize: 11,
-        bold: true,
-        font: 'Verdana',
-        margin: [0, 15],
-      },
-      subheader2: {
-        fontSize: 10,
-        bold: true,
-        font: 'Verdana',
-        margin: [0, 15],
-      },
-      superscript: {
-        fontSize: 8,
-        margin: [0, 0, 0, 0],
-        fontFeatures: ['sups']
-      },
-      quote: {
-        fontSize: 11,
-        font: 'Verdana',
-        italics: true,
-        color: partner.themeOptions.palette.primary1Color,
-      },
-      centerAligned: {
-        alignment: 'center',
-      },
-      justified: {
-        alignment: 'justify',
-      },
-    },
+    styles: partnerStyles(partner),
     tableLayoutOut: {
       towerstone: tableLayoutOut,
     },

@@ -1,5 +1,6 @@
 import ReactoryContent from './ReactoryContent';
 import UserEmail from './Emails/UserEmails';
+import TemplateResolver from './Template/TemplateResolver';
 import { ProfileResolver, UserResolver } from './User';
 import ReactorySQLResolver from './SQL/ReactorySQLResolver';
 import ReactoryCacheResolver from './Cache/CacheResolver';
@@ -11,5 +12,6 @@ export default mergeGraphResolver([
   ReactoryContent,
   ProfileResolver,
   ReactorySQLResolver,
-  ReactoryCacheResolver
+  ReactoryCacheResolver,
+  TemplateResolver
 ]);

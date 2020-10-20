@@ -682,9 +682,9 @@ const config = {
         contrastText: '#ffffff',
       },
       secondary: {
-        light: '#aeca6a',
-        main: '#7D993C',
-        dark: '#4e6b0a',
+        light: '#7d983c',
+        main: '#7d983c',
+        dark: '#7d983c',
         contrastText: '#000000',
       },
       report: {

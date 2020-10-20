@@ -1,6 +1,6 @@
 import { ObjectID } from 'mongodb';
-import logger from '../../../../logging';
-import ReactoryUserModel from '../../../schema/User';
+import logger from '@reactory/server-core/logging';
+import ReactoryUserModel from '@reactory/server-core/models/schema/User';
 
 export default {
   Statistic: {
@@ -24,8 +24,7 @@ export default {
   },
   Mutation: {
     CorePublishStatistics: (parent, { entries }) => {
-      logger.info('Publishing Statistics', { entries });
-      
+      logger.info('Publishing Statistics', { entries });      
       return true;
     },
   },

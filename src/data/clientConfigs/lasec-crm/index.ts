@@ -605,6 +605,24 @@ const LASEC_CONFIG = {
       ],
     },
     {
+      key: 'quote-edit',
+      title: 'Edit Quote Route',
+      path: '/crm/quote/edit/:quote_id/*',
+      public: false,
+      exact: false,
+      roles: ['USER', 'ADMIN'],
+      componentFqn: 'lasec-crm.QuoteForm@1.0.0',
+      args: [
+        {
+          key: 'mode',
+          value: {
+            type: 'string',
+            mode: 'edit',
+          }
+        }
+      ]
+    },
+    {
       key: 'content-capture',
       title: 'Content Capture',
       path: '/static-content/edit/:slug/*',

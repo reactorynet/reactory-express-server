@@ -14,11 +14,13 @@ const LasecQuoteEmailForm: Reactory.IReactoryForm = {
   registerAsComponent: true,
   name: 'LasecQuoteEmail',
   nameSpace: 'lasec-crm',
-  version: '1.0.0',
+  version: '1.0.0',  
   schema: $schema,
   graphql: $graphql,
   uiSchema: $uiSchema,  
-  widgetMap: [],
+  widgetMap: [
+    { componentFqn: 'lasec-crm.QuoteEmailTypeSelector@1.0.0', widget: 'QuoteEmailTypeSelector' }
+  ],
 };
 
 export default LasecQuoteEmailForm;

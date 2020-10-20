@@ -848,6 +848,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
   }
 };
 
+export const MoresTeam180ReportDataResolver = resolveData;
 
 const definition = (data, partner, user) => {
   logger.debug('Generating PDF definition For Mores Assessment Leadership 360 Report');

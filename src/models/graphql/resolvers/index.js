@@ -340,7 +340,7 @@ merge(
   require('./BusinessUnitResolver').default,
   require('./Custom/PaymentGatewayResolver').default,
   require('./TeamResolver').default,
-  require('./Template').default,
+  //require('./Template').default,
   require('./System/Statistics').default,
   ...installedModulesResolvers,
 );

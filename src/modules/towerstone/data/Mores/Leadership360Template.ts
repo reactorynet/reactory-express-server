@@ -20,7 +20,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
       "_id": new ObjectID(),
       
       "title": "My Space",
-      "description": "My Space - How do I belong?",
+      "description": "My Space - how do I belong?",
       
       "assessor_title": "",
       "assessor_description": "",
@@ -28,8 +28,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
       "delegate_title": "",
       "delegate_description": "",
 
-      "chart_title": "",
-      "chart_color": "runtime",
+      "chart_title": "My Space",
+      "chart_color": "#9ECE1C",
 
       "ordinal": 0,
       "behaviours": [
@@ -44,8 +44,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "care",
-          "chart_color": "runtime",
+          "chart_title": "I care",
+          "chart_color": "#9ECE1C",
 
           "ordinal": 0
         },
@@ -60,8 +60,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Skills development",
-          "chart_color": "runtime",
+          "chart_title": "I want to learn",
+          "chart_color": "#9ECE1C",
 
           "ordinal": 1
         },
@@ -76,8 +76,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Growth",
-          "chart_color": "runtime",
+          "chart_title": "I want to grow",
+          "chart_color": "#9ECE1C",
 
           "ordinal": 2
         },
@@ -86,7 +86,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
     {
       "_id": new ObjectID(),
       "title": "My Team",
-      "description": "My Team - How do we support each other",
+      "description": "My Team - how do we support each other?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -95,7 +95,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
       "delegate_description": "",
 
       "chart_title": "",
-      "chart_color": "runtime",
+      "chart_color": "#3F9FB1",
 
       "ordinal": 1,
       "behaviours": [
@@ -110,8 +110,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Communication",
-          "chart_color": "runtime",
+          "chart_title": "I communicate\nclearly",
+          "chart_color": "#3F9FB1",
 
           "ordinal": 0
         },
@@ -126,8 +126,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Trust",
-          "chart_color": "runtime",
+          "chart_title": "I am trusted",
+          "chart_color": "#3F9FB1",
 
           "ordinal": 1
         },
@@ -142,8 +142,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Conflict Management",
-          "chart_color": "runtime",
+          "chart_title": "I respect others",
+          "chart_color": "#3F9FB1",
 
           "ordinal": 2
         },
@@ -152,7 +152,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
     {
       "_id": new ObjectID(),
       "title": "Our Culture",
-      "description": "Our Culture - How do we behave",
+      "description": "Our Culture - how do we behave?",
       "ordinal": 2,
       "behaviours": [
         {
@@ -166,8 +166,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Brand Ambassadorship",
-          "chart_color": "runtime",
+          "chart_title": "I love our brand",
+          "chart_color": "#FECC34",
 
           "ordinal": 0
         },
@@ -182,8 +182,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Living the brand",
-          "chart_color": "runtime",
+          "chart_title": "I set an\nexample",
+          "chart_color": "#FECC34",
 
           "ordinal": 1
         },
@@ -198,8 +198,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Respect",
-          "chart_color": "runtime",
+          "chart_title": "I appreciate\nothers",
+          "chart_color": "#FECC34",
 
           "ordinal": 2
         },
@@ -208,7 +208,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
     {
       "_id": new ObjectID(),
       "title": "Our Results",
-      "description": "Our Results - How do we take ownership",
+      "description": "Our Results - how do we take ownership?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -217,7 +217,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
       "delegate_description": "",
 
       "chart_title": "",
-      "chart_color": "runtime",
+      "chart_color": "#7695A2",
 
       "ordinal": 3,
       "behaviours": [
@@ -232,8 +232,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Results",
-          "chart_color": "runtime",
+          "chart_title": "I deliver results",
+          "chart_color": "#7695A2",
 
           "ordinal": 0
         },
@@ -248,8 +248,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Ownership",
-          "chart_color": "runtime",
+          "chart_title": "I keep\npromises",
+          "chart_color": "#7695A2",
 
           "ordinal": 1
         },
@@ -264,8 +264,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Initiative",
-          "chart_color": "runtime",
+          "chart_title": "I do more",
+          "chart_color": "#7695A2",
 
           "ordinal": 2
         },
@@ -274,7 +274,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
     {
       "_id": new ObjectID(),
       "title": "Our Growth",
-      "description": "Our Growth - How do we learn and innovate",
+      "description": "Our Growth - how do we learn and innovate?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -283,7 +283,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
       "delegate_description": "",
 
       "chart_title": "",
-      "chart_color": "runtime",
+      "chart_color": "#50783F",
 
       "ordinal": 4,
       "behaviours": [
@@ -298,8 +298,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Proactivity",
-          "chart_color": "runtime",
+          "chart_title": "I speak up",
+          "chart_color": "#50783F",
 
           "ordinal": 0
         },
@@ -314,8 +314,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Agility",
-          "chart_color": "runtime",
+          "chart_title": "I love a\nchallenge",
+          "chart_color": "#50783F",
 
           "ordinal": 1
         },
@@ -330,8 +330,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Innnovation",
-          "chart_color": "runtime",
+          "chart_title": "I take risks",
+          "chart_color": "#50783F",
 
           "ordinal": 2
         },
@@ -340,7 +340,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
     {
       "_id": new ObjectID(),
       "title": "Our Purpose",
-      "description": "Our Purpose - How are we fulfilled",
+      "description": "Our Purpose - how are we fulfilled?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -349,7 +349,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
       "delegate_description": "",
 
       "chart_title": "",
-      "chart_color": "runtime",
+      "chart_color": "#990000",
 
       "ordinal": 4,
       "behaviours": [
@@ -364,8 +364,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Alignment",
-          "chart_color": "runtime",
+          "chart_title": "I contribute to our\nfuture",
+          "chart_color": "#990000",
 
           "ordinal": 0
         },
@@ -380,8 +380,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Engagement",
-          "chart_color": "runtime",
+          "chart_title": "I love what I do",
+          "chart_color": "#990000",
 
           "ordinal": 1
         },
@@ -396,8 +396,8 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Social Responsibility",
-          "chart_color": "runtime",
+          "chart_title": "I make a\ndifference",
+          "chart_color": "#990000",
 
           "ordinal": 2
         },
@@ -817,7 +817,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "_id": new ObjectID(),
       
       "title": "My Space",
-      "description": "My Space - How do I belong?",
+      "description": "My Space - how do I belong?",
       
       "assessor_title": "",
       "assessor_description": "",
@@ -826,7 +826,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "delegate_description": "",
 
       "chart_title": "",
-      "chart_color": "runtime",
+      "chart_color": "#9ECE1C",
 
       "ordinal": 0,
       "behaviours": [
@@ -841,8 +841,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "care",
-          "chart_color": "runtime",
+          "chart_title": "I feel cared for",
+          "chart_color": "#9ECE1C",
 
           "ordinal": 0
         },
@@ -857,8 +857,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Skills development",
-          "chart_color": "runtime",
+          "chart_title": "I can learn",
+          "chart_color": "#9ECE1C",
 
           "ordinal": 1
         },
@@ -873,8 +873,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Growth",
-          "chart_color": "runtime",
+          "chart_title": "I can grow",
+          "chart_color": "#9ECE1C",
 
           "ordinal": 2
         },
@@ -883,7 +883,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "My Team",
-      "description": "My Team - How do we support each other",
+      "description": "My Team - how do we support each other?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -892,7 +892,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "delegate_description": "",
 
       "chart_title": "",
-      "chart_color": "runtime",
+      "chart_color": "#3F9FB1",
 
       "ordinal": 1,
       "behaviours": [
@@ -907,8 +907,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Communication",
-          "chart_color": "runtime",
+          "chart_title": "We are aligned",
+          "chart_color": "#3F9FB1",
 
           "ordinal": 0
         },
@@ -923,8 +923,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Trust",
-          "chart_color": "runtime",
+          "chart_title": "We trust",
+          "chart_color": "#3F9FB1",
 
           "ordinal": 1
         },
@@ -939,8 +939,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Conflict Management",
-          "chart_color": "runtime",
+          "chart_title": "We respect others",
+          "chart_color": "#3F9FB1",
 
           "ordinal": 2
         },
@@ -949,7 +949,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Culture",
-      "description": "Our Culture - How do we behave",
+      "description": "Our Culture - how do we behave?",
       "ordinal": 2,
       "behaviours": [
         {
@@ -963,8 +963,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Brand Ambassadorship",
-          "chart_color": "runtime",
+          "chart_title": "We love our brand",
+          "chart_color": "#FECC34",
 
           "ordinal": 0
         },
@@ -979,8 +979,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Living the brand",
-          "chart_color": "runtime",
+          "chart_title": "Our culture is\nalive",
+          "chart_color": "#FECC34",
 
           "ordinal": 1
         },
@@ -995,8 +995,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Respect",
-          "chart_color": "runtime",
+          "chart_title": "We are included",
+          "chart_color": "#FECC34",
 
           "ordinal": 2
         },
@@ -1005,7 +1005,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Results",
-      "description": "Our Results - How do we take ownership",
+      "description": "Our Results - how do we take ownership?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -1014,7 +1014,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "delegate_description": "",
 
       "chart_title": "",
-      "chart_color": "runtime",
+      "chart_color": "#7695A2",
 
       "ordinal": 3,
       "behaviours": [
@@ -1029,8 +1029,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Results",
-          "chart_color": "runtime",
+          "chart_title": "We deliver\nresults",
+          "chart_color": "#7695A2",
 
           "ordinal": 0
         },
@@ -1045,8 +1045,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Ownership",
-          "chart_color": "runtime",
+          "chart_title": "We keep\npromises",
+          "chart_color": "#7695A2",
 
           "ordinal": 1
         },
@@ -1061,8 +1061,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Initiative",
-          "chart_color": "runtime",
+          "chart_title": "We do more",
+          "chart_color": "#7695A2",
 
           "ordinal": 2
         },
@@ -1071,7 +1071,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Growth",
-      "description": "Our Growth - How do we learn and innovate",
+      "description": "Our Growth - how do we learn and innovate?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -1080,7 +1080,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "delegate_description": "",
 
       "chart_title": "",
-      "chart_color": "runtime",
+      "chart_color": "#50783F",
 
       "ordinal": 4,
       "behaviours": [
@@ -1095,8 +1095,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Proactivity",
-          "chart_color": "runtime",
+          "chart_title": "We speak up",
+          "chart_color": "#50783F",
 
           "ordinal": 0
         },
@@ -1111,8 +1111,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Agility",
-          "chart_color": "runtime",
+          "chart_title": "We love a\nchallenge",
+          "chart_color": "#50783F",
 
           "ordinal": 1
         },
@@ -1127,8 +1127,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Innnovation",
-          "chart_color": "runtime",
+          "chart_title": "We take risks",
+          "chart_color": "#50783F",
 
           "ordinal": 2
         },
@@ -1137,7 +1137,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Purpose",
-      "description": "Our Purpose - How are we fulfilled",
+      "description": "Our Purpose - how are we fulfilled?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -1146,7 +1146,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "delegate_description": "",
 
       "chart_title": "",
-      "chart_color": "runtime",
+      "chart_color": "#990000",
 
       "ordinal": 4,
       "behaviours": [
@@ -1161,8 +1161,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Alignment",
-          "chart_color": "runtime",
+          "chart_title": "I believe in our\nfuture",
+          "chart_color": "#990000",
 
           "ordinal": 0
         },
@@ -1177,8 +1177,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Engagement",
-          "chart_color": "runtime",
+          "chart_title": "I love what I do",
+          "chart_color": "#990000",
 
           "ordinal": 1
         },
@@ -1193,8 +1193,8 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "Social Responsibility",
-          "chart_color": "runtime",
+          "chart_title": "We make a\ndifference",
+          "chart_color": "#990000",
 
           "ordinal": 2
         },
@@ -1213,7 +1213,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
       "_id": new ObjectID(),
       
       "title": "My Space",
-      "description": "My Space - How do I belong?",
+      "description": "My Space - how do I belong?",
       
       "assessor_title": "",
       "assessor_description": "",
@@ -1279,7 +1279,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "My Team",
-      "description": "My Team - How do we support each other",
+      "description": "My Team - how do we support each other?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -1345,7 +1345,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Culture",
-      "description": "Our Culture - How do we behave",
+      "description": "Our Culture - how do we behave?",
       "ordinal": 2,
       "behaviours": [
         {
@@ -1401,7 +1401,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Results",
-      "description": "Our Results - How do we take ownership",
+      "description": "Our Results - how do we take ownership?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -1467,7 +1467,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Growth",
-      "description": "Our Growth - How do we learn and innovate",
+      "description": "Our Growth - how do we learn and innovate?",
 
       "assessor_title": "",
       "assessor_description": "",
@@ -1533,7 +1533,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
     {
       "_id": new ObjectID(),
       "title": "Our Purpose",
-      "description": "Our Purpose - How are we fulfilled",
+      "description": "Our Purpose - how are we fulfilled?",
 
       "assessor_title": "",
       "assessor_description": "",

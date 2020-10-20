@@ -401,7 +401,7 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
    * @param to 
    * @param attachments 
    */
-  sendQuoteEmail(quote_id: string, subject: string, message: string, to: Reactory.ToEmail[], cc: Reactory.ToEmail[], bcc: Reactory.ToEmail[], attachments: Reactory.EmailAttachment[], from: Lasec360User): Promise<Reactory.EmailSentResult>;
+  sendQuoteEmail(quote_id: string, subject: string, message: string, to: Reactory.ToEmail[], cc: Reactory.ToEmail[], bcc: Reactory.ToEmail[], attachments?: Reactory.EmailAttachment[], from?: Lasec360User): Promise<Reactory.EmailSentResult>;
 
 
   /**
@@ -410,6 +410,9 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
    */
   getQuoteById(quote_id: string): Promise<LasecQuote>;
 
+  getQuoteEmail(quote_id: string, email_type: string): Promise<Reactory.IEmailMessage>;
+
+  setQuoteEmail(quote_id: string, email_type: string, message: Reactory.IEmailMessage): Promise<Reactory.IEmailMessage> 
 }
 
 

@@ -4,6 +4,15 @@ interface EmailAddress {
   display: String
 }
 
+type FromEmailAddress {
+  email: String
+  display: String
+}
+type ToEmailAddress {
+  email: String
+  display: String
+}
+
 type Email {
   id: String,
   sendAfter: Date,
@@ -15,9 +24,9 @@ type Email {
   from: Email,
   message: String,
   subject: String,
-  to: [EmailAddress],
-  cc: [EmailAddress],
-  bcc: [EmailAddress],
+  to: [ToEmailAddress],
+  cc: [ToEmailAddress],
+  bcc: [ToEmailAddress],
   archived: Boolean,
   createdAt: Date,
   format: String,
@@ -30,10 +39,13 @@ type Email {
 }
 
 type EmailAttachment {
-  id: String
-  url: String
-  name: String
-  mimeType: String
+  id: String  
+  link: String
+  filename: String
+  original: String
+  size: String
+  mimetype: String
+  path: String
 }
 
 input ToEmail  {
@@ -47,9 +59,13 @@ input InputEmailAddress {
 }
 
 input AddAttachment {
-   id: String!
-   name: String
-   file: String
+  id: String  
+  link: String
+  filename: String
+  original: String
+  size: String
+  mimetype: String
+  path: String
 }
 
 input CreateEmailMessage {

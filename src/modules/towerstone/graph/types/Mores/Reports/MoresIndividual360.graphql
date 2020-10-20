@@ -16,6 +16,31 @@ type MoresIndividual360Charts {
     oneviewChart: Any
 }
 
+type MoresTeamCultureReportData {
+    id: ObjID   
+    print_scores: Boolean
+    meta: MoresReportMeta
+    employeeDemographics: Any
+    key: String    
+    assessors: [Any]
+    assessments: [Any]
+    qualityComments: [Any]
+    qualityActions: [Any]
+    survey: Any
+    score: Int
+    organization: Any
+    leadershipBrand: Any
+    scale: Any
+    qualities: [Any]
+    qualitiesMap: [Any]
+    behaviours: [Any]
+    developmentPlan: [Any]
+    comments: [Any]
+    recommentdations: [Any]
+    ratings: [Any]
+    charts: MoresIndividual360Charts
+}
+
 type MoresIndividual360ReportData {
     id: ObjID   
     print_scores: Boolean
@@ -44,4 +69,7 @@ type MoresIndividual360ReportData {
 
 extend type Query {
     MoresIndividual360ReportData(surveyId: String, delegateId: String): MoresIndividual360ReportData
+    MoresLeadership360ReportData(surveyId: String, delegateId: String): MoresIndividual360ReportData    
+    MoresTeamCultureReportData(surveyId: String, delegateIds: [String], selectionTitle: String): MoresTeamCultureReportData
+    MoresTeam180ReportData(surveyId: String, delegateIds: [String], selectionTitle: String): MoresTeamCultureReportData
 }

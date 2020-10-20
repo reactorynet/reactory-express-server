@@ -158,7 +158,8 @@ input SendMailInput {
   contentType: String
   content: String!
   recipients: [String!]!
-  ccRecipients: [String!]
+  ccRecipients: [String]
+  bcc: [String]
   saveToSentItems: Boolean
 }
 

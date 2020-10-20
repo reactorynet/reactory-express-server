@@ -5,6 +5,7 @@ import lodash, { isArray, isNil, isString } from 'lodash';
 import { ObjectId } from 'mongodb';
 import gql from 'graphql-tag';
 import uuid from 'uuid';
+import { Reactory } from '@reactory/server-core/types/reactory';
 import lasecApi from '@reactory/server-modules/lasec/api';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
@@ -31,6 +32,7 @@ import {
   LasecDeleteSectionHeaderArgs,
   ProductClass,
   LasecProduct,
+  IQuoteService,
 } from '../types/lasec';
 
 import CONSTANTS, { LOOKUPS, OBJECT_MAPS } from '../constants';
@@ -134,6 +136,11 @@ const getQuoteTimeline = async (quote, args, context, info) => {
   return lodash.sortBy(_timeline, ['when']);
 }
 
+
+interface LasecSendMailParams {
+  code: string,
+  mailMessage: Reactory.IEmailMessage
+}
 
 
 export default {
@@ -711,9 +718,9 @@ export default {
         reason: input.reason
       };
 
-      if(input.status) {
-        try { 
-          let status_update_result = await lasecApi.Quotes.updateQuote({"item_id":quote_id,"values":{ status_id : input.status }}).then()
+      if (input.status) {
+        try {
+          let status_update_result = await lasecApi.Quotes.updateQuote({ "item_id": quote_id, "values": { status_id: input.status } }).then()
           logger.debug(`Quote Status Update Result ${JSON.stringify(status_update_result)}`)
           _message = status_update_result.status !== "success" ? 'Quote status not updated' : _message;
           timelineEntry.what = `Quote status updated to ${input.status_name} by ${global.user.fullName()}`;
@@ -728,9 +735,9 @@ export default {
         const message = `Quote with quote id ${quote_id}, not found`;
         throw new ApiError(message, { quote_id, message, code: 404 });
       }
-            
+
       if (!quote.note && input.note) {
-        quote.note = input.note;        
+        quote.note = input.note;
       }
 
       const { user } = global;
@@ -738,7 +745,7 @@ export default {
       let reminder = null;
 
       if (lodash.isArray(quote.timeline) === false) quote.timeline = [];
-      
+
       if (input.reminder > 0) {
         reminder = new QuoteReminder({
           quote: quote._id,
@@ -765,7 +772,7 @@ export default {
             quote: quote
           },
         }, global.partner);
-        timelineEntry.reminder = reminder._id;        
+        timelineEntry.reminder = reminder._id;
       }
       quote.timeline.push(timelineEntry);
 
@@ -784,10 +791,10 @@ export default {
       await quote.save();
 
       //create task via ms if the user has MS authentication
-      
+
       if (reminder) {
         let taskCreated = false;
-        
+
         if (user.getAuthentication("microsoft") !== null) {
           const taskCreateResult = await clientFor(user, global.partner).mutate({
             mutation: gql`
@@ -839,7 +846,7 @@ export default {
           }
         }
       }
-      
+
 
 
       return {
@@ -1009,8 +1016,40 @@ export default {
         message: `Quote reminder marked as actioned.`
       }
     },
-    LasecSendQuoteEmail: async (obj, args) => {
-      return LasecSendQuoteEmail(args);
+    LasecSendQuoteEmail: async (obj: any, args: LasecSendMailParams) => {
+
+      try {
+        debugger
+        logger.debug(`💌 Sending Quote Email for quote: ${args.code}`, { message: args.mailMessage });
+
+        const quoteService: IQuoteService = global.getService("lasec-crm.LasecQuoteService") as IQuoteService;
+        const fileService: Reactory.Service.IReactoryFileService = global.getService("core.ReactoryFileService") as Reactory.Service.IReactoryFileService;        
+        const { subject, contentType, body, saveToSentItems = true, to, via, userId, attachments, bcc = [], cc = [], id } = args.mailMessage;        
+
+        const response: Reactory.EmailSentResult = await quoteService.sendQuoteEmail(args.code, subject, body, to, cc, bcc, attachments).then();
+
+        if (response.success === true) {
+          if (`${args.mailMessage.context}`.trim() !== '') {
+            //cleaning up context files.            
+            fileService.removeFilesForContext(args.mailMessage.context).then();  
+          }
+        }
+
+        logger.debug(`🟢 Sent email sucessfully to ${to.length + cc.length + bcc.length} recipients`)
+
+        return response;
+
+      } catch (sendError) {
+
+        logger.error(`🚨 Could not send the email due to an error`, sendError);
+
+        return {
+          success: false,
+          message: `🚨 Could not send the email do to an error, please try again later.`
+        } as Reactory.EmailSentResult
+      }
+      
+      //return LasecSendQuoteEmail(args);
     },
     LasecDeleteSaleOrderDocument: async (obj, args) => {
       return deleteSalesOrdersDocument(args);

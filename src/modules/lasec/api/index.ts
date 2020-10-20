@@ -1,6 +1,7 @@
 'use strict'
 import fetch from 'node-fetch';
 import fs from 'fs-extra';
+import { promisify } from 'util';
 import path from 'path';
 import FormData from 'form-data';
 import om from 'object-mapper';
@@ -30,6 +31,7 @@ const config = {
   SECONDARY_API_URL_PREFIX_1: 'api',
   GOOGLE_MAPS_API_KEY: 'XXXXXXXXXXXXX',
 };
+
 
 
 export class LasecNotAuthenticatedException extends ApiError {
@@ -1151,7 +1153,7 @@ const Api = {
         return null;
       }
     },
-    getQuotePDF: async (quote_id) => {
+    getQuotePDF: async (quote_id: string, download: boolean = false) => {
       try {
         const apiResponse = await POST(SECONDARY_API_URLS.quote_create_pdf.url(quote_id), { quote_id }).then();
         logger.debug(`Get Quote PDF response`, apiResponse)
@@ -1169,7 +1171,7 @@ const Api = {
         throw error;
       }
     },
-    getQuoteProforma: async (quote_id) => {
+    getQuoteProforma: async (quote_id: string, download: boolean = false) => {
       try {
         const apiResponse = await POST(SECONDARY_API_URLS.quote_request_create_proforma.url(quote_id), { quote_id }).then();
         logger.debug(`Get Quote Proforma response`, apiResponse)
@@ -1178,7 +1180,10 @@ const Api = {
         } = apiResponse;
 
         if (status === 'success') {
-          return payload;
+          if (download === false) return payload; 
+          else {
+            const download_result = await fetch(payload.url, { method: 'GET'}).then()
+          }
         }
 
         return { pagination: {}, ids: [], items: [] };

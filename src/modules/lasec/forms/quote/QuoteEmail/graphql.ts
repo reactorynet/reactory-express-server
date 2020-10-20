@@ -4,12 +4,15 @@ const graphql: Reactory.IFormGraphDefinition = {
     name: 'LasecPrepareQuoteEmail',
     text: `query LasecPrepareQuoteEmail($quote_id: String!, $email_type: String){
       LasecPrepareQuoteEmail(quote_id: $quote_id, email_type: $email_type){
+        id
+        quote_id
+        email_type
         from {
           email
           display
         }        
         subject
-        message
+        body
         to {
           email
           display
@@ -24,26 +27,35 @@ const graphql: Reactory.IFormGraphDefinition = {
         }
         attachments {
           id
-          url
-          name
+          link
+          filename
+          mimetype
+          path
         }        
       }
     }`,
     variables: {
-      'formData.code': 'quote_id',
+      'formData.quote_id': 'quote_id',
       'formData.email_type': 'email_type'
     },
     autoQuery: true,
     new: true,
-    resultMap: {
-
+    resultMap: {    
+        'quote_id': 'quote_id',
+        'via': 'via',
+        'from': 'from',
+        'to': 'to',
+        'bcc': 'bcc',
+        'subject': 'subject',
+        'body': 'message',
+        'attachments': 'attachments'
     }
   },
   mutation: {
     new: {
       name: 'LasecSendQuoteEmail',
-      text: `mutation LasecSendQuoteEmail($code: String!, $mailMessage: CreateEmailMessage){
-        LasecSendQuoteEmail(code: $code, email: $email, subject: $subject, message: $message){
+      text: `mutation LasecSendQuoteEmail($code: String!, $mailMessage: CreateEmailMessage!){
+        LasecSendQuoteEmail(code: $code, mailMessage: $mailMessage){
           success
           message
         }
@@ -54,7 +66,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       },
       updateMessage: 'Sending customer commnication.',
       variables: {
-        'formData.code': 'code',
+        'formData.quote_id': 'code',
         'formData.via': 'mailMessage.via',
         'formData.from': 'mailMessage.from',
         'formData.to': 'mailMessage.to',

@@ -2,6 +2,7 @@ import lasecResolvers from './resolvers';
 import lasecTypes from './graph/types';
 import lasecWorkflows from './workflow';
 import lasecForms from './forms';
+import lasecServices from './services';
 
 
 export { default as CONSTANTS } from './constants';
@@ -17,5 +18,6 @@ export default {
     Types: [...lasecTypes],
   },
   workflows: [...lasecWorkflows],
-  forms: [ ...lasecForms ]
+  forms: [...lasecForms],
+  services: [...lasecServices]
 };

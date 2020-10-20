@@ -5,11 +5,12 @@ import lasecApi from '../api';
 import moment from 'moment';
 import om from 'object-mapper';
 import logger from '../../../logging';
+import mongoose from  'mongoose';
 import lodash, { isArray, isNil, orderBy, isString } from 'lodash';
 import { getCacheItem, setCacheItem } from '../models';
 import Hash from '@reactory/server-core/utils/hash';
 import { clientFor, execql } from '@reactory/server-core/graph/client';
-import ReactoryFile, { IReactoryFile } from '@reactory/server-modules/core/models/CoreFile';
+import ReactoryFileModel, { IReactoryFileModel } from '@reactory/server-modules/core/models/CoreFile';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { getScaleForKey } from 'data/scales';
 import { GraphQLUpload } from 'graphql-upload';
@@ -274,7 +275,7 @@ const getClients = async (params) => {
   return result;
 }
 
-const getClient = async (params) => {
+export const getClient = async (params) => {
 
   const clientDetails = await lasecApi.Customers.list({ filter: { ids: [params.id] } });
 
@@ -735,7 +736,7 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
   }
 
   logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
-  let reactoryFiles = await ReactoryFile.find(documentFilter).then();
+  let reactoryFiles: IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
   logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> ReactorFile.find({documentFileter}) --> reactorFiles[${reactoryFiles.length}]`);
 
   reactoryFiles.forEach((rfile) => {
@@ -1177,11 +1178,11 @@ const uploadDocument = async (args: any) => {
 
     const catalogFile = () => {
       // Check if image is valid
-      const fileStats = fs.statSync(saveToPath);
+      const fileStats: fs.Stats = fs.statSync(saveToPath);
 
-      logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
+      logger.debug(`SAVING FILE:: DONE ${filename} ${fileStats.size} --> CATALOGGING`);
 
-      const reactoryFile = {
+      const reactoryFile: ReactoryFileModel = {
         id: new ObjectID(),
         filename,
         mimetype,
@@ -1202,7 +1203,7 @@ const uploadDocument = async (args: any) => {
         reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
       }
 
-      const savedDocument = new ReactoryFile(reactoryFile);
+      const savedDocument = new ReactoryFileModel(reactoryFile);
 
       savedDocument.save().then();
 
@@ -1250,7 +1251,7 @@ const deleteDocuments = async (args: any) => {
 
   const { fileIds } = args;
 
-  let files = await ReactoryFile.find({ id: { $in: fileIds } }).then()
+  let files = await ReactoryFileModel.find({ id: { $in: fileIds } }).then()
 
   files.forEach((fileDocument) => {
     const fileToRemove = path.join(process.env.APP_DATA_ROOT, 'content', 'files', fileDocument.alias);

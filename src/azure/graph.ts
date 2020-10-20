@@ -1,18 +1,20 @@
 'use strict';
 import "isomorphic-fetch";
 import { Client, ResponseType } from "@microsoft/microsoft-graph-client";
+import * as Microsoft from "@microsoft/microsoft-graph-types";
 import logger from '../logging';
 import { PNG } from 'pngjs';
 import { updateUserProfileImage } from '../application/admin/User';
 import om from 'object-mapper';
 import { Stream } from "stream";
 import ApiError from "exceptions";
+import { Reactory } from "@reactory/server-core/types/reactory";
 import { sendSurveyEmail } from "application/admin/Survey";
 import { response } from "express";
 import moment from 'moment';
 
 
-const getAuthenticatedClient = (accessToken, apiVersion = 'v1.0') => {
+const getAuthenticatedClient = (accessToken: string, apiVersion = 'v1.0') => {
   // Initialize Graph client
   const client = Client.init({
     // Use the provided access token to authenticate
@@ -193,37 +195,38 @@ const MSGraph = {
     return response;
   },
 
-  async sendEmail(accessToken, subject, contentType = 'text', content, recipients, ccRecipients = [], saveToSentItems = false) {
-    const message = {
-      message: {
-        subject,
-        body: {
-          contentType,
-          content
-        },
-        toRecipients: recipients.map(address => {
-          return {
-            emailAddress: {
-              address
-            }
-          }
-        }),
-        ccRecipients: ccRecipients.map(address => {
-          return {
-            emailAddress: {
-              address
-            }
-          }
-        }),
-      },
-      saveToSentItems
+  async sendEmail(
+    accessToken: string,
+    subject: string,
+    contentType: Microsoft.BodyType = 'text',
+    content: string,
+    recipients: Microsoft.Recipient[],
+    saveToSentItems: boolean = false,
+    ccRecipients?: Microsoft.Recipient[],
+    bccRecipients?: Microsoft.Recipient[],
+    attachments?: Microsoft.Attachment[]) {    
+
+    const message: Microsoft.Message = {
+      subject,
+      body: {
+        contentType,
+        content
+      },      
+      toRecipients: recipients,
+      ccRecipients: ccRecipients,      
+      bccRecipients: bccRecipients,
+      attachments: attachments
     };
 
-    const response = await getAuthenticatedClient(accessToken, 'beta')
+    try { 
+      const response = await getAuthenticatedClient(accessToken, 'beta')
       .api('/me/sendMail')
       .post(message)
-      .then();
-
+      .then();  
+    } catch (msGraphError) {
+      logger.error(`Could not send the email due to an error ${msGraphError}`);
+    }
+    
     return response;
   }
 };

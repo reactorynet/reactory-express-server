@@ -1,11 +1,9 @@
-import { ObjectId } from "mongodb";
+import { ObjectID, ObjectId } from "mongodb";
 import Mongoose from "mongoose";
 import ExcelJS from 'exceljs';
 import { TemplateType, UIFrameWork } from "./constants";
 import { Stream } from "stream";
 import { Application } from "express";
-
-
 declare namespace Reactory {
 
   export namespace Client {
@@ -98,13 +96,16 @@ declare namespace Reactory {
     reference: string,
     lastSync: Date,
     nextSync: Date,
-    mustSync: boolean,    
+    mustSync: boolean,
   }
 
   export interface ITemplate {
     enabled: boolean
     organization?: ObjectId
-    client: ObjectId
+    client: any
+    businessUnit?: ObjectId
+    user?: ObjectId
+    visiblity?: string | "user" | "public" | "businessUnit" | "organization" | "client"
     view: string
     kind: TemplateType
     format: string
@@ -114,47 +115,74 @@ declare namespace Reactory {
     locale?: string
     elements: Array<ITemplate>
     parameters: Array<ITemplateParam>
-    contentFromFile(): string
+    contentFromFile(): string,
+    createdBy?: ObjectId,
+    created?: Date
+    updated?: Date
+    updatedBy?: ObjectId
     [key: string]: any
   }
 
   export interface IEmailTemplate {
+    id: string,
+    view: string
+
+    name?: string
+    description?: string
+
+    organization?: ObjectId
+    client: ObjectId
+    businessUnit?: ObjectId
+    userId?: ObjectId
+    visiblity?: string | "user" | "public" | "businessUnit" | "organization" | "client"
+
     subject: string
     body: string
     signature?: string
+
   }
 
   export interface ToEmail {
-    name: string,
+    display: string,
     email: string
   }
-  
+
   export interface EmailAttachment {
+    id: ObjectID
+    link: string,
     filename: string,
-    displayname: string,
-    fileSize: string,
+    original: string,
+    path?: string,
+    size: number,
+    sizeString: string,
+    mimetype: string,
+    contentBytes: any,
+    [key: string]: any
   }
-  
+
   export interface EmailSentResult {
     success: boolean,
     message: string
   }
 
   export interface IEmailMessage {
-    userId: string, 
+    id?: string | ObjectID
+    userId: string,
     via: string | 'reactory' | 'microsoft' | 'google';
     subject: string,
-    contentType: string, 
-    content: string,    
-    to: ToEmail[], 
+    contentType: string,
+    body: string,
+    to: ToEmail[],
     cc?: ToEmail[],
     bcc?: ToEmail[],
     attachments?: EmailAttachment[],
     saveToSentItems: boolean,
+    context?: string,
+    [key: string]: any
   }
-  
 
-  export interface ITemplateDocument extends Mongoose.Document, ITemplate {}
+
+  export interface ITemplateDocument extends Mongoose.Document, ITemplate { }
 
   export interface IPartner extends IMongoDocument {
     key: string
@@ -162,7 +190,7 @@ declare namespace Reactory {
     getSetting: (key: String) => any
   }
 
-  export interface IOrganization {    
+  export interface IOrganization {
     name: string
     code: string
     logo: string
@@ -213,7 +241,7 @@ declare namespace Reactory {
     link: String,
     createdAt: Date,
     read: Boolean,
-    details: { },
+    details: {},
   }
 
   export interface IRegion {
@@ -234,8 +262,8 @@ declare namespace Reactory {
     title: String,
   }
 
-  export interface IRegionDocument extends Mongoose.Document, IRegion {}
-  export interface IOperationalGroupDocument extends Mongoose.Document, IRegion {}
+  export interface IRegionDocument extends Mongoose.Document, IRegion { }
+  export interface IOperationalGroupDocument extends Mongoose.Document, IRegion { }
 
   export interface IReactoryLoginResponse {
     token: string,
@@ -262,7 +290,7 @@ declare namespace Reactory {
     meta?: Reactory.IRecordMeta,
     fullName(email: boolean): string,
     setPassword(password: string): void,
-    validatePassword(password: string): boolean,    
+    validatePassword(password: string): boolean,
     hasRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean,
     hasAnyRole(clientId: string, organizationId?: string, businessUnitId?: string): boolean,
     addRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean
@@ -270,11 +298,54 @@ declare namespace Reactory {
     removeAuthentication(provider: string): boolean
     getAuthentication(provider: string): IAuthentication
     [key: string]: any
-  }    
+  }
 
   export interface IUserDocument extends Mongoose.Document, IUser {
 
   }
+
+  /** ReactoryFile Management Models Interface */
+  export interface IReactoryFilePermissions {
+    id?: ObjectID,
+    roles: string[]
+    partnersIncluded?: ObjectID[],
+    partnersExcluded?: ObjectID[],
+    usersIndcluded?: ObjectID[],
+    usersExcluded?: ObjectID[]
+  }
+
+  export interface IReactoryFile extends Mongoose.Document {
+    id: ObjectID,
+    hash: number,
+    partner: ObjectID,
+    ttl?: number,
+    path: String,
+    alias: String,
+    filename: string,
+    alt: string[],
+    link: string,
+    mimetype: string,
+    size: number,
+    created?: Date,
+    uploadContext?: String,
+    uploadedBy: ObjectID,
+    owner: ObjectID,
+    public?: Boolean,
+    published?: Boolean,
+    permissions?: IReactoryFilePermissions[],
+    tags?: String[],
+    [key: string]: any
+  }
+
+  export interface IReactoryFileStatic {
+    new(): IReactoryFile
+    getItem(link: string): Promise<IReactoryFile>
+    setItem(link: string, file: IReactoryFile): void
+    clean(): void
+  }
+
+  export interface IReactoryFileModel extends IReactoryFile, IReactoryFileStatic { }
+  /** ReactoryFile Management Models Interface -- End */
 
   export interface ReactoryExecutionContext {
     user: IUser
@@ -282,7 +353,7 @@ declare namespace Reactory {
   }
 
   export interface ISchemaObjectProperties {
-    [key: string]: ISchema 
+    [key: string]: ISchema
   }
 
   export interface ISchema {
@@ -300,7 +371,7 @@ declare namespace Reactory {
   export interface IStringSchema extends ISchema {
     type: string | "string",
     minLength?: number,
-    maxLength?: number 
+    maxLength?: number
   }
 
   export interface INumberSchema extends ISchema {
@@ -328,7 +399,7 @@ declare namespace Reactory {
 
   export interface IArraySchema extends ISchema {
     type: "array",
-    items: IObjectSchema | IDateTimeSchema | IDateSchema | INumberSchema | IStringSchema | ISchema 
+    items: IObjectSchema | IDateTimeSchema | IDateSchema | INumberSchema | IStringSchema | ISchema
   }
 
 
@@ -337,12 +408,12 @@ declare namespace Reactory {
    */
   export interface IUISchema {
     'ui:widget'?: string | "null",
-    'ui:options'? : object | "null",
+    'ui:options'?: object | "null",
     [key: string]: any,
   }
 
   export interface IObjectSchema extends ISchema {
-    properties?:  ISchemaObjectProperties,
+    properties?: ISchemaObjectProperties,
   }
 
   // export interface IArraySchema extends ISchema {
@@ -372,7 +443,7 @@ declare namespace Reactory {
     new?: boolean,
     delete?: boolean,
     options?: any,
-    autoQuery?:boolean,
+    autoQuery?: boolean,
     interval?: number,
     useWebsocket?: boolean,
     onError?: IReactoryFormQueryErrorHandlerDefinition,
@@ -406,7 +477,7 @@ declare namespace Reactory {
     onError?: IReactoryFormQueryErrorHandlerDefinition,
     options?: any,
     notification?: IReactoryNotification,
-    handledBy?:String | 'onChange' | 'onSubmit'
+    handledBy?: String | 'onChange' | 'onSubmit'
   }
 
   export interface IReactoryFormMutations {
@@ -520,17 +591,18 @@ declare namespace Reactory {
     defaultPdfReport?: IReactoryPdfReport,
     defaultExport?: IExport,
     reports?: IReactoryPdfReport[],
-    exports?:IExport[],
+    exports?: IExport[],
     refresh?: any,
     widgetMap?: IWidgetMap[],
     backButton?: Boolean,
     workflow?: Object,
     noHtml5Validate?: boolean,
     formContext?: any,
-      /**
-     * components to mount in the componentDef propertie
-     */
+    /**
+   * components to mount in the componentDef propertie
+   */
     componentDefs?: String[]
+    queryStringMap?: any
   }
 
 
@@ -595,7 +667,7 @@ declare namespace Reactory {
     graphDefinitions?: IGraphDefinitions,
     workflows?: IWorkflow[],
     forms?: IReactoryForm[],
-    pdfs?: IReactoryPdfComponent[]    
+    pdfs?: IReactoryPdfComponent[]
     services?: IReactoryServiceDefinition[],
     clientPlugins?: Client.IReactoryPluginDefinition
   }
@@ -606,7 +678,7 @@ declare namespace Reactory {
   }
 
   export interface IReactoryResultService<T> {
-    (props: any, context: any):  IReactoryServiceResult<T>;
+    (props: any, context: any): IReactoryServiceResult<T>;
   }
 
   export interface IReactoryServiceProps {
@@ -658,8 +730,8 @@ declare namespace Reactory {
       nameSpace: string
       version: string
     }
-    export interface IReactoryStartupAwareService extends IReactoryService {      
-      onStartup(): Promise<any>      
+    export interface IReactoryStartupAwareService extends IReactoryService {
+      onStartup(): Promise<any>
     }
 
     export interface IReactoryShutdownAwareService extends IReactoryService {
@@ -670,28 +742,34 @@ declare namespace Reactory {
       getExecutionContext(): ReactoryExecutionContext
       setExecutionContext(executionContext: ReactoryExecutionContext): boolean
     }
-          
-    export interface ICoreEmailService extends IReactoryStartupAwareService, IReactoryContextAwareService  {
+
+    export interface ICoreEmailService extends IReactoryStartupAwareService, IReactoryContextAwareService {
       sendEmail(message: Reactory.IEmailMessage): Promise<Reactory.EmailSentResult>
     }
 
     export interface IReactoryDefaultService extends IReactoryStartupAwareService, IReactoryContextAwareService { }
 
-    export interface ITemplateService extends IReactoryStartupAwareService, IReactoryContextAwareService {      
+
+    export interface ITemplateService extends IReactoryStartupAwareService, IReactoryContextAwareService {
       /**
        * Service function for rerturning a template objeect
        * @param view - string field that represents a unique element within the context of a view, reactory client id and organisation id
        * @param reactoryClientId - the reactory client id to use in the filter, default will be global.partner
        * @param organizationId - the organisation id to use in the filter, default is null, which means the template applies to organisation 
+       * @param businessUnitId - the business unit id to use as part of the filter
+       * @param userId - the user id to use as part of the filter
        */
-      getTemplate(view: string, reactoryClientId: string, organizationId: string): Promise<ITemplate>
+      getTemplate(view: string, reactoryClientId: string, organizationId?: string, businessUnitId?: string, userId?: string): Promise<ITemplate>
 
       /***
        * Service function to set a template for a given view, reactory client and organisation id
        * @param view - the view name to use - if found it will update the exsting one
        * @param reactoryClientId - the client id to use in the filter, default is global.partner
+       * @param organizationId - the organization id the template will be linked to 
+       * @param businessUnitId - the business unit id the template will be linked to 
+       * @param userId - the user the template will be linked to
        */
-      setTemplate(view: string, reactoryClientId: string, organizationId: string, template: ITemplate): Promise<ITemplate>      
+      setTemplate(view: string, template: ITemplate, reactoryClientId?: string | ObjectID, organizationId?: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID): Promise<ITemplate>
     }
 
     export interface IEmailTemplateService extends ITemplateService {
@@ -700,7 +778,13 @@ declare namespace Reactory {
        * subject, body and footer (if available) for this template
        * @param template The template to use as the basis of an email template
        */
-      hydrateEmail(template: ITemplate): Promise<IEmailTemplate>
+      hydrateEmail(template: ITemplate | ITemplateDocument): Promise<IEmailTemplate>
+
+      /**
+       * Template service function that converts the IEmailTemplate into an ITemplate
+       * @param template The email template to convert to a standard ITemplate
+       */
+      dehydrateEmail(template: IEmailTemplate): Promise<ITemplate>
     }
 
     export interface ITemplateRenderingService extends IReactoryService {
@@ -713,14 +797,42 @@ declare namespace Reactory {
     }
 
     export interface IReactoryTemplateService extends Reactory.Service.ITemplateService, Reactory.Service.ITemplateRenderingService, Reactory.Service.IEmailTemplateService { }
+
+    export interface IReactoryFileService extends Reactory.Service.IReactoryDefaultService {
+      
+      getContentBytes(path: string): number;
+
+      getContentBytesAsString(path: string, encoding: BufferEncoding): string;
+      
+      removeFilesForContext(context: string): Promise<Reactory.IReactoryFileModel[]>;
+
+      getFileModelsForContext(context: string): Promise<Reactory.IReactoryFileModel[]>;
+
+      /**
+       * Fetches remote file and saves it to the local instance.
+       * @param url 
+       * @param headers 
+       * @param save 
+       * @param options 
+       */
+      getRemote(url: string, method: string, headers: HeadersInit, save: boolean, options?: { ttl?: number, sync?: boolean, owner?: ObjectID, permissions?: Reactory.IReactoryFilePermissions, public: boolean }): Promise<Reactory.IReactoryFileModel>
+
+      setFileModel(file: IReactoryFileModel): Promise<Reactory.IReactoryFileModel>;
+
+      getFileModel(id: string): Promise<Reactory.IReactoryFileModel>;
+      
+      sync(): Promise<Reactory.IReactoryFileModel[]>;
+
+      clean(): Promise<Reactory.IReactoryFileModel[]>;
+    }
   }
 
   export interface IPagingRequest {
     page: number
-    pageSize: number 
+    pageSize: number
   }
-  
-  export interface  IPagingResult {
+
+  export interface IPagingResult {
     total: number
     page: number
     hasNext: boolean

@@ -25,6 +25,7 @@ import {
   QuoteEmail,
   QuoteDuplicateClientSelector,
   NewQuoteClientSelector,
+  QuoteEmailAttachmentWidget
 } from './quote';
 
 import QuoteList from './salesConfigurator/QuoteList';
@@ -130,6 +131,7 @@ export default [
   QuoteIdInputForm,
   QuoteListForm,
   QuoteEmail,
+  QuoteEmailAttachmentWidget,
   QuoteDetailForm,
   UpdateQuoteStatusForm,
   TabbedQuoteList,

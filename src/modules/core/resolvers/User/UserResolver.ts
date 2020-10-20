@@ -835,7 +835,7 @@ const userResolvers = {
       return false;
     },
     async sendMail(parent: any, { message }: any) {
-      const { id, via, subject, contentType, content, recipients, ccRecipients, saveToSentItems } = message;
+      const { id, via, subject, contentType, content, recipients, ccRecipients, bcc, saveToSentItems, attachments = [] } = message;
       const { user } = global;
       if (isNil(user) === true) throw new ApiError('Not Authorized');
       const userId = isNil(id) ? user._id : ObjectId(id);
@@ -847,7 +847,16 @@ const userResolvers = {
             const found = find(emailUser.authentications, { provider: via });
             logger.debug(`EMAIL USER FOUND: ${found}`);
             if (found) {
-              const result = await O365.sendEmail(found.props.accessToken, subject, contentType, content, recipients, ccRecipients, saveToSentItems)
+              const result = await O365.sendEmail(found.props.accessToken,
+                subject,
+                contentType,
+                content,
+                recipients,
+                saveToSentItems,
+                ccRecipients,
+                bcc, 
+                attachments
+                )
                 .then()
                 .catch(error => {
                   if (error.statusCode == 401) {
@@ -880,7 +889,7 @@ const userResolvers = {
       const { id, via, subject, startDate, dueDate, timeZone } = task;
       const { user } = global;
       if (isNil(user) === true) throw new ApiError('Not Authorized');
-      const userId = isNil(id) ? user._id : ObjectId(id);
+      const userId = isNil(id) ? user._id : new ObjectId(id);
       logger.info(`USER ID ${userId} via ${via}`);
       switch (via) {
         case 'microsoft': {

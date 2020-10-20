@@ -1164,9 +1164,14 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: String
   return cached;
 }
 
-export const LasecSendQuoteEmail = async (params) => {
-  const { code, email, subject, message } = params;
+export const LasecSendQuoteEmail = async (params: { code: string, mailMessage: any }) => {
+  const { code, mailMessage } = params;
+
+  const { subject, message, to, cc = [], bcc = [], from, attachments = [] } = mailMessage;
   const { user } = global;
+  
+  if (user.email !== from.email) throw new ApiError('Cannot send an email on behalf of another account. You can only send emails on behalf of yourself.', { HereBeDragons: true });
+
   let mailResponse = { success: true, message: `Customer mail sent successfully!` };
 
   if (user.getAuthentication("microsoft") !== null) {
@@ -1183,8 +1188,10 @@ export const LasecSendQuoteEmail = async (params) => {
           "via": "microsoft",
           "subject": subject,
           "content": message,
-          "recipients": [email],
-          'contentType': 'html'
+          "recipients": to,
+          "ccRecipients": cc,
+          "bcc": bcc,
+          'contentType': 'html',          
         }
       }
     })
@@ -1199,7 +1206,7 @@ export const LasecSendQuoteEmail = async (params) => {
 
   } else {
     const mailParams = {
-      to: email,
+      to: to,
       from: user.email,
       subject,
       message
@@ -1250,7 +1257,7 @@ export const getPagedQuotes = async (params) => {
   logger.debug(`🚨🚨getPagedQuotes(${JSON.stringify(params)})`);
 
   let ordering: { [key: string]: string } = {}
-  
+
   let lasec_user: Lasec360User = await getLoggedIn360User().then();
 
   if (orderBy) {
@@ -1265,7 +1272,7 @@ export const getPagedQuotes = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  let apiFilter: any = {    
+  let apiFilter: any = {
   };
 
   const DEFAULT_FILTER = {
@@ -1285,7 +1292,7 @@ export const getPagedQuotes = async (params) => {
       delete apiFilter.end_date
 
       if (isString(search) === false || search.length < 3 && filter === undefined) {
-        apiFilter = DEFAULT_FILTER;                
+        apiFilter = DEFAULT_FILTER;
       } else {
         apiFilter.any_field = search;
       }
@@ -1297,7 +1304,7 @@ export const getPagedQuotes = async (params) => {
       apiFilter.start_date = periodStart ? moment(periodStart).toISOString() : moment().startOf('year');
       apiFilter.end_date = periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day');
 
-      if(search && search.length >= 3) {
+      if (search && search.length >= 3) {
         apiFilter.any_field = search;
       }
 
@@ -1334,7 +1341,7 @@ export const getPagedQuotes = async (params) => {
       break;
     }
     case "client": {
-      apiFilter.client = search;      
+      apiFilter.client = search;
       break;
     }
     case "customer": {
@@ -1350,7 +1357,7 @@ export const getPagedQuotes = async (params) => {
       break;
     }
     case "rep_code": {
-      apiFilter.sales_team_id = isArray(filter) && filter.length > 0 ? filter  : lasec_user.sales_team_ids      
+      apiFilter.sales_team_id = isArray(filter) && filter.length > 0 ? filter : lasec_user.sales_team_ids
       break;
     }
   }
@@ -1422,22 +1429,22 @@ export const getPagedQuotes = async (params) => {
 }
 
 interface PagedClientQuotesParams {
-  clientId: string, 
-  search?: string, 
-  periodStart: string, 
-  periodEnd: string, 
-  quoteDate: string, 
+  clientId: string,
+  search?: string,
+  periodStart: string,
+  periodEnd: string,
+  quoteDate: string,
   filterBy?: string,
   paging: {
     page: number,
     pageSize: number
   }
-  iter?: number,  
+  iter?: number,
 }
 
 
 
-export const getPagedClientQuotes = async (params: PagedClientQuotesParams) : Promise<any> => {
+export const getPagedClientQuotes = async (params: PagedClientQuotesParams): Promise<any> => {
 
   logger.debug(`GETTING PAGED CLIENT QUOTES:: ${JSON.stringify(params)}`);
 
@@ -1447,7 +1454,7 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams) : Pr
     periodStart,
     periodEnd,
     quoteDate,
-    filterBy = "any_field",  
+    filterBy = "any_field",
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
@@ -1462,7 +1469,7 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams) : Pr
     paging: pagingResult,
     quotes: []
   };
-  
+
 
   if (filterBy === "any_field" || search.length < 3) {
     return empy_result;
@@ -1499,7 +1506,7 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams) : Pr
   //     "customer_id": "15366"
   //   },
   // }
-  
+
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
 
   let ids = [];
@@ -1976,7 +1983,7 @@ export const getCRMSalesOrders = async (params) => {
 
   let me = await getLoggedIn360User().then();
 
-  let apiFilter: any = {        
+  let apiFilter: any = {
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
     ordering: { order_date: "desc" },

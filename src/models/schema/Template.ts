@@ -17,15 +17,31 @@ const {
 
 const TemplateSchema = new mongoose.Schema({
   id: ObjectId,
+  client: {
+    type: ObjectId,
+    required: true,
+    ref: 'ReactoryClient',
+  },
   organization: {
     type: ObjectId,
     required: false,
     ref: 'Organization',
   },
-  client: {
+  businessUnit: {
     type: ObjectId,
-    required: true,
-    ref: 'ReactoryClient',
+    required: false,
+    ref: 'BusinessUnit',
+  },
+  user: {
+    type: ObjectId,
+    required: false,
+    ref: 'User',
+  },
+  visibility: {
+    type: String,
+    lowercase: true,
+    trim: true,
+    enum: ['user', 'public', 'businessUnit', 'organization', 'client'],
   },
   enabled: {
     type: Boolean,
@@ -76,6 +92,24 @@ const TemplateSchema = new mongoose.Schema({
     type: Map,
     of: String,
   },
+  created: {
+    type: Date,
+    required: false,  
+  },
+  createdBy: {
+    type: ObjectId,
+    ref: 'User',
+    required: false,
+  },
+  updated: {
+    type: Date,
+    required: false,  
+  },
+  updatedBy: {
+    type: ObjectId,
+    ref: 'User',
+    required: false,
+  },
   parameters: [{
     name: String,
     propType: String,
@@ -113,7 +147,7 @@ TemplateSchema.methods.contentFromFile = function(templateType: string) {
 } 
 
 // eslint-disable-next-line max-len
-TemplateSchema.statics.findClientTemplate = function findClientTemplate(template: Reactory.ITemplate, organization: Reactory.IOrganization, client: Reactory.IPartner) {
+TemplateSchema.statics.findClientTemplate = function findClientTemplate(template: Reactory.ITemplate, organization: Reactory.IOrganizationDocument, client: Reactory.IPartner) {
   const qry = { view: template.view, client: client._id, organization: null as Reactory.IOrganization }; // eslint-disable-line no-underscore-dangle
   if (organization && organization._id) qry.organization = organization._id; // eslint-disable-line no-underscore-dangle
   return this.findOne(qry).then();
