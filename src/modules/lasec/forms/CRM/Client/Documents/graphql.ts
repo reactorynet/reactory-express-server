@@ -19,6 +19,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
+      'formData.id': 'id',
       'formData.$uploadContexts': 'uploadContexts',
       'formData.paging': 'paging'
     },

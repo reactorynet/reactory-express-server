@@ -16,11 +16,12 @@ const uiSchema: any = {
     container: "div",
     style: {
       backgroundColor: "#F6F6F6",
-      position: "absolute",
-      top: "54px",
-      left: "0",
-      right: "0",
-      bottom: "0",
+      // position: "absolute",
+      // top: "54px",
+      // top: "0",
+      // left: "0",
+      // right: "0",
+      // bottom: "0",
       paddingLeft: "16px",
       paddingRight: "16px"
     }
@@ -42,7 +43,7 @@ const uiSchema: any = {
     },
   ],
   client: {
-    'ui:widget': 'LasecClientOverviewHeaderForm',    
+    'ui:widget': 'LasecClientOverviewHeaderForm',
   },
   tabs: {
     'ui:widget': 'TabbedNavWidget',

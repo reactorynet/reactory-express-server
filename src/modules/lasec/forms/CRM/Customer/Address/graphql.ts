@@ -3,28 +3,29 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetNewClient',
-    text: `query LasecGetNewClient {
-      LasecGetNewClient {
+    text: `query LasecGetNewClient($id: String) {
+      LasecGetNewClient(id: $id) {
         id
         address {
           physicalAddress {
             id
-            fullAddress                
+            fullAddress
           }
           deliveryAddress {
             id
-            fullAddress              
+            fullAddress
           }
           billingAddress {
             id
-            fullAddress            
+            fullAddress
           }
-        }        
+        }
       }
     }`,
-    variables: {      
+    variables: {
+      'formData.id': 'id',
     },
-    resultMap: {            
+    resultMap: {
       'address.physicalAddress': 'physicalAddress',
       'address.deliveryAddress': 'deliveryAddress',
       'address.billingAddress': 'billingAddress',
@@ -41,9 +42,11 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   },
   mutation: {
     onChange: {
+      // text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
+      // LasecUpdateNewClient(newClient: $newClient) {
       name: "LasecUpdateNewClient",
-      text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
-        LasecUpdateNewClient(newClient: $newClient) {
+      text: `mutation LasecUpdateNewClient($clientId: String, $newClient: LasecNewClientInput!){
+            LasecUpdateNewClient(clientId: $clientId, newClient: $newClient) {
           id
           address {
             physicalAddress {
@@ -58,12 +61,13 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
               id
               fullAddress
             }
-          }          
+          }
         }
       }`,
       objectMap: true,
       updateMessage: 'Updating client customer selection',
-      variables: {    
+      variables: {
+        'eventData.formData.id': 'clientId',
         'eventData.formData': 'newClient.address',
       },
       refreshEvents: [
@@ -76,5 +80,5 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         'address': 'address'
       },
     }
-  },  
+  },
 };

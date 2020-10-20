@@ -3,8 +3,8 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetNewClient',
-    text: `query LasecGetNewClient {
-      LasecGetNewClient {
+    text: `query LasecGetNewClient($id: String) {
+      LasecGetNewClient(id: $id) {
         id
         confirmed
         saved
@@ -44,7 +44,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         }
         customer {
           id
-          registeredName          
+          registeredName
         }
         organization {
           id
@@ -71,29 +71,30 @@ const graphql: Reactory.IFormGraphDefinition = {
           link
           mimetype
           size
-        }          
+        }
       }
     }`,
-    variables: {      
-      'formData.$uploadContexts': 'uploadContexts'            
+    variables: {
+      'formData.id': 'id',
+      'formData.$uploadContexts': 'uploadContexts'
     },
     formData: {
       $uploadContext: [
         'lasec-crm::new-company::document',
         'lasec-crm::company-document'
       ]
-    },    
-    autoQuery: true,    
+    },
+    autoQuery: true,
     resultType: 'object',
     resultMap: {
       'id': 'id',
-      'personalDetails': 'personalDetails',      
-      'personalDetails.title': 'personalDetails.clientTitle',      
+      'personalDetails': 'personalDetails',
+      'personalDetails.title': 'personalDetails.clientTitle',
       'contactDetails': 'contactDetails',
       'jobDetails': 'jobDetails',
       'customer': 'customer',
       'organization': 'organization',
-      'address': 'address',      
+      'address': 'address',
     },
     edit: false,
     new: true,
@@ -104,34 +105,34 @@ const graphql: Reactory.IFormGraphDefinition = {
   mutation: {
     new: {
       name: "LasecCreateNewClient",
-      text: `mutation LasecCreateNewClient($newClient: LasecNewClientInput!){
-        LasecCreateNewClient(newClient: $newClient) {
+      text: `mutation LasecCreateNewClient($id: String, $newClient: LasecNewClientInput!){
+        LasecCreateNewClient(id: $id, newClient: $newClient) {
           client {
             id
             clientStatus
             firstName
             lastName
             fullName
-            emailAddress            
+            emailAddress
           }
           success
           messages {
             description
             text
-          }          
+          }
         }
       }`,
       objectMap: true,
       updateMessage: 'Creating New Client, Please Wait.',
-      variables: {    
-        'formData.id': 'newClient.id',
-        'formData.personalDetails': 'newClient.personalDetails',      
-        'formData.personalDetails.title': 'newClient.personalDetails.clientTitle',      
+      variables: {
+        'formData.id': ['newClient.id', 'id'],
+        'formData.personalDetails': 'newClient.personalDetails',
+        'formData.personalDetails.title': 'newClient.personalDetails.clientTitle',
         'formData.contactDetails': 'newClient.contactDetails',
         'formData.jobDetails': 'newClient.jobDetails',
         'formData.customer': 'newClient.customer',
         'formData.organization': 'newClient.organization',
-        'formData.address': 'newClient.address',             
+        'formData.address': 'newClient.address',
       },
       resultType: 'object',
       resultMap: {
@@ -157,24 +158,25 @@ const graphql: Reactory.IFormGraphDefinition = {
           paging {
             total
             page
-            pageSize          
+            pageSize
           }
           documents {
             id
             filename
             link
             size
-          }        
-        }      
+          }
+        }
       }`,
-      variables: {      
+      variables: {
+        'formData.id': 'id',
         'formData.uploadContext': 'uploadContexts'
       },
       formData: {
         uploadContext: [
           'lasec-crm::new-company::document',
         ]
-      },    
+      },
       autoQuery: true,
       queryMessage: 'Loading customer documents',
       resultType: 'object',

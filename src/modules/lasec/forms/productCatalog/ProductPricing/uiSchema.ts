@@ -47,7 +47,7 @@ const tableUiSchema: any = {
       columns: [
         {
           title: '', field: 'onSyspro',
-          width: '200px',
+
           components: [
             {
               component: 'core.ConditionalIconComponent@1.0.0',
@@ -128,7 +128,8 @@ const tableUiSchema: any = {
                   size: 'small',
                   style: {
                     marginLeft: '16px',
-                    backgroundColor: "#23A06A"
+                    backgroundColor: "#23A06A",
+                    color: '#fff'
                   }
                 },
                 buttonIcon: 'add',
@@ -136,13 +137,14 @@ const tableUiSchema: any = {
               },
             }
           ],
+          width: '150px',
           cellStyle: {
-            maxWidth: '200px',
-            width: '200px'
+            maxWidth: '150px',
+            width: '150px'
           },
           headerStyles: {
-            maxWidth: '200px',
-            width: '200px'
+            maxWidth: '150px',
+            width: '150px'
           }
         },
         {
@@ -184,11 +186,42 @@ const tableUiSchema: any = {
               }
             },
           ],
+          width: '180px',
+          cellStyle: {
+            maxWidth: '180px',
+            width: '180px'
+          },
+          headerStyles: {
+            maxWidth: '180px',
+            width: '180px'
+          },
         },
-        { title: 'Description', field: 'name' },
+        {
+          title: 'Description',
+          field: 'name',
+          width: '200px',
+          cellStyle: {
+            maxWidth: '200px',
+            width: '200px'
+          },
+          headerStyles: {
+            maxWidth: '200px',
+            width: '200px'
+          }
+        },
         {
           title: 'Unit of Measure',
           field: 'unitOfMeasure',
+          breakpoint: 'sm',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
@@ -202,32 +235,6 @@ const tableUiSchema: any = {
             },
           },
         },
-        // {
-        //   title: 'Special Price', field: 'price',
-        //   component: 'core.StyledCurrencyLabel@1.0.0',
-        //   props: {
-        //     displayAdditionalCurrencies: true,
-        //     displayPrimaryCurrency: false,
-        //     currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
-        //     region: 'en-IN',
-        //     uiSchema: {
-        //       'ui:options': {
-        //         prependText: '(ZAR)',
-        //         additionalCurrencyMapField: 'special_price_cents',
-        //         showZeroValues: false,
-        //         defaultStyle: {
-        //           borderBottom: '1px solid #E1E1E4'
-        //         },
-        //         conditionalStyles: []
-        //       }
-        //     },
-        //   },
-        //   propsMap: {
-        //     'rowData.price': ['value', 'formData'],
-        //     'rowData.priceAdditionalInfo': ['condition'],
-        //     'rowData.productPricing': 'currencies',
-        //   },
-        // },
         {
           title: 'Price',
           field: 'id',

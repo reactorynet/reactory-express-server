@@ -32,36 +32,36 @@ const fieldMaps: any = {
   "salesTeam": "sales_team_id",
   "accountNumber": "account_number",
   "customer": "company_trading_name",
-  "company_rep_code": "company_sales_team", 
+  "company_rep_code": "company_sales_team",
   "country": "country"
 };
 
 const getClients = async (params) => {
-  const { 
-    search = "", 
-    paging = { page: 1, pageSize: 10 }, 
+  const {
+    search = "",
+    paging = { page: 1, pageSize: 10 },
     filterBy = "any_field",
-    orderBy = "fullName",  
+    orderBy = "fullName",
     orderDirection = "asc",
-    iter = 0, 
-    filter, 
-    repCode = undefined 
+    iter = 0,
+    filter,
+    repCode = undefined
   } = params;
 
-  logger.debug(`Getting Clients using search ${search}`, { 
-    filter, 
-    search, 
+  logger.debug(`Getting Clients using search ${search}`, {
+    filter,
+    search,
     paging,
-    filterBy, 
-    iter, 
+    filterBy,
+    iter,
     repCode,
     orderBy,
     orderDirection
-   });
+  });
 
   let ordering: { [key: string]: string } = {}
 
-  if(orderBy) {
+  if (orderBy) {
     let fieldKey: string = fieldMaps[orderBy];
     ordering[fieldKey] = orderDirection
   }
@@ -75,29 +75,29 @@ const getClients = async (params) => {
 
   let _filter: any = {};
 
-  switch(filterBy) {
-    case "country": 
+  switch (filterBy) {
+    case "country":
     case "sales_team_id":
     case "company_on_hold":
     case "activity_status": {
       _filter[filterBy] = filter;
-      if(search.trim().length > 0) _filter.any_field = search;
+      if (search.trim().length > 0) _filter.any_field = search;
       //_filter.any_field = search;
       break;
     }
     default: {
-      _filter[filterBy] =  search;    
+      _filter[filterBy] = search;
       break;
     }
   }
 
   //_filter[filterBy] = filter || search;
 
-  if(typeof repCode === 'string') {
+  if (typeof repCode === 'string') {
     _filter.sales_team_id = repCode;
   }
 
-  if(typeof repCode === 'array' && repCode.length > 0) {
+  if (typeof repCode === 'array' && repCode.length > 0) {
     _filter.sales_team_ids = repCode;
   }
 
@@ -132,7 +132,7 @@ const getClients = async (params) => {
     return _cachedResults;
   }
 
-  logger.debug(`Sending query to lasec API with filter`, { filter: _filter }  )
+  logger.debug(`Sending query to lasec API with filter`, { filter: _filter })
   const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page }, ordering }).then();
 
   let ids = [];
@@ -332,6 +332,7 @@ export const getClient = async (params) => {
 
     let clientResponse = om(clients[0], {
       'id': 'id',
+      'title_id': 'title',
       'first_name': [{
         "key":
           'fullName',
@@ -349,24 +350,26 @@ export const getClient = async (params) => {
       'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src) => src == true },
       'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
       'department': ['department', 'jobTitle'],
-      'ranking_id': ['customer.rankingId',
-        {
-          key: 'customer.ranking',
-          transform: (sourceValue) => {
-            /**
-             * 1	A - High Value
-               2	B - Medium Value
-               3	C - Low Value
-             */
-            const rankings = {
-              "1": 'A - High Value',
-              "2": 'B - Medium Value',
-              "3": 'C - Low Value'
-            };
-            return rankings[sourceValue];
-          }
-        }
-      ],
+      'ranking_id': 'customer.ranking',
+
+      // 'ranking_id': ['customer.rankingId',
+      //   {
+      //     key: 'customer.ranking',
+      //     transform: (sourceValue) => {
+      //       /**
+      //        * 1	A - High Value
+      //          2	B - Medium Value
+      //          3	C - Low Value
+      //        */
+      //       const rankings = {
+      //         "1": 'A - High Value',
+      //         "2": 'B - Medium Value',
+      //         "3": 'C - Low Value'
+      //       };
+      //       return rankings[sourceValue];
+      //     }
+      //   }
+      // ],
       'company_id': 'customer.id',
       'company_account_number': 'customer.accountNumber',
       'company_trading_name': 'customer.tradingName',
@@ -496,23 +499,54 @@ const updateClientDetail = async (args) => {
       const client = clients[0];
 
       let updateParams = {
-        first_name: params.firstName || (client.first_name || ''),
-        surname: params.lastName || (client.surname || ''),
+        // first_name: params.firstName || (client.first_name || ''),
+        first_name: params.personalDetails && params.personalDetails.firstName || (client.first_name || ''),
+
+        // surname: params.lastName || (client.surname || ''),
+        surname: params.personalDetails && params.personalDetails.lastName || (client.surname || ''),
+
         activity_status: params.clientStatus || (client.activity_status || ''),
-        country: params.country || (client.country || ''),
-        department: params.department || (client.department || 'NONE'),
-        title_id: client.title_id,
-        mobile_number: params.mobileNumber || (client.mobile_number || ''),
-        office_number: params.officeNumber || (client.office_number || ''),
-        alternate_office_number: params.alternateNumber || (client.alternate_office_number || ''),
-        email: params.email || (client.email || ''),
-        confirm_email: params.email || (client.email || ''),
-        alternate_email: params.alternateEmail || (client.alternate_email || ''),
+
+        // country: params.country || (client.country || ''),
+        country: params.personalDetails && params.personalDetails.country || (client.country || ''),
+
+        // department: params.department || (client.department || 'NONE'),
+        department: params.jobDetails && params.jobDetails.department || (client.department || 'NONE'),
+
+        // title_id: client.title_id,
+        title_id: params.personalDetails && params.personalDetails.title || (client.title_id || ''),
+
+        // mobile_number: params.mobileNumber || (client.mobile_number || ''),
+        mobile_number: params.contactDetails && params.contactDetails.mobileNumber || (client.mobile_number || ''),
+
+        // office_number: params.officeNumber || (client.office_number || ''),
+        office_number: params.contactDetails && params.contactDetails.officeNumber || (client.office_number || ''),
+
+        // alternate_office_number: params.alternateNumber || (client.alternate_office_number || ''),
+        alternate_office_number: params.contactDetails && params.contactDetails.alternateNumber || (client.alternate_office_number || ''),
+
+        // email: params.email || (client.email || ''),
+        email: params.contactDetails && params.contactDetails.emailAddress || (client.email || ''),
+
+        // confirm_email: params.email || (client.email || ''),
+        confirm_email: params.contactDetails && params.contactDetails.confirmEmail || (client.email || ''),
+
+        // alternate_email: params.alternateEmail || (client.alternate_email || ''),
+        alternate_email: params.contactDetails && params.contactDetails.alternateEmail || (client.alternate_email || ''),
+
         role_id: client.role_id,
-        ranking_id: params.ranking || (client.ranking_id || ''),
-        account_type: params.accountType || (client.account_type || ''),
-        customer_class_id: params.clientClass || (client.customer_class_id || ''),
-        sales_team_id: params.repCode || (client.sales_team || ''),
+
+        // ranking_id: params.ranking || (client.ranking_id || ''),
+        ranking_id: params.ranking || (client.ranking_id || ''), // come back to this
+
+        // account_type: params.accountType || (client.account_type || ''),
+        account_type: params.personalDetails && params.personalDetails.accountType || (client.account_type || ''),
+
+        // customer_class_id: params.clientClass || (client.customer_class_id || ''),
+        customer_class_id: params.jobDetails && params.jobDetails.customerClass || (client.customer_class_id || ''),
+
+        // sales_team_id: params.repCode || (client.sales_team || ''),
+        sales_team_id: params.personalDetails && params.personalDetails.repCode || (client.sales_team || ''),
       }
       const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams);
 
@@ -748,8 +782,8 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
     let skipCount: number = (params.paging.page - 1) * params.paging.pageSize;
 
     logger.debug(`TO FILTER :: ${params.paging.page}  ${params.paging.pageSize}   ${skipCount}`);
-    const toreturn = lodash(_docs).drop(skipCount).take(params.paging.pageSize);
-    logger.debug(`TO RETURN :: ${JSON.stringify(toreturn)}`);
+    const customerToReturn = lodash(_docs).drop(skipCount).take(params.paging.pageSize);
+    logger.debug(`TO RETURN :: ${JSON.stringify(customerToReturn)}`);
 
     return {
       documents: lodash(_docs).drop(skipCount).take(params.paging.pageSize),
@@ -867,31 +901,33 @@ const getCustomerList = async (params) => {
       'sales_team_id': 'salesTeam',
       'account_terms': 'accountType',
       'customer_class_id': 'customerClass',
-      'company_on_hold': { key: 'customerStatus',  transform: ( company_on_hold: boolean )=>  (company_on_hold === true ? 'ON HOLD' : 'NOT ON HOLD')  },
-      'credit_limit_total_cents': { key: 'availableBalance', transform: ( limit: string | number  ) => {
-        let _limit = 0;
-        if(typeof limit === 'number' && limit > 0) _limit = limit;
-        if(typeof limit === 'string') {
-          if(limit.indexOf("." ) > 0) {
-            try {
-              _limit = parseFloat(limit)
-            } catch(parseError) {
-              logger.error(`Could not parse credit_limit_total "${limit}" as float`);
-            }
-          } else {
-            try {
-              _limit = parseInt(limit)
-            } catch(parseError) {
-              logger.error(`Could not parse credit_limit_total "${limit}" as number`);
+      'company_on_hold': { key: 'customerStatus', transform: (company_on_hold: boolean) => (company_on_hold === true ? 'ON HOLD' : 'NOT ON HOLD') },
+      'credit_limit_total_cents': {
+        key: 'availableBalance', transform: (limit: string | number) => {
+          let _limit = 0;
+          if (typeof limit === 'number' && limit > 0) _limit = limit;
+          if (typeof limit === 'string') {
+            if (limit.indexOf(".") > 0) {
+              try {
+                _limit = parseFloat(limit)
+              } catch (parseError) {
+                logger.error(`Could not parse credit_limit_total "${limit}" as float`);
+              }
+            } else {
+              try {
+                _limit = parseInt(limit)
+              } catch (parseError) {
+                logger.error(`Could not parse credit_limit_total "${limit}" as number`);
+              }
             }
           }
+
+          if (_limit > 0) return Math.fround(_limit / 100);
+
+          return _limit;
+
         }
-
-        if(_limit > 0) return Math.fround(_limit / 100);
-
-        return _limit;
-
-      }},
+      },
       'currency_symbol': 'currencySymbol',
       'vat_number': ['taxNumber', 'vatNumber'],
     });
@@ -1283,12 +1319,14 @@ const clientDocuments: any[] = [];
 export const DEFAULT_NEW_CLIENT = {
   __typename: 'LasecNewClient',
   id: new ObjectId(),
+  clientId: '',
   personalDetails: {
     title: 'Mr',
     firstName: '',
     lastName: '',
     country: 'SOUTH AFRICA',
-    repCode: 'LAB101'
+    repCode: 'LAB101',
+    accountType: ''
   },
   contactDetails: {
     emailAddress: '',
@@ -1298,6 +1336,7 @@ export const DEFAULT_NEW_CLIENT = {
     mobileNumber: '',
     alternateMobile: '',
     officeNumber: '',
+    alternateOfficeNumber: '',
     prefferedMethodOfContact: 'email',
   },
   jobDetails: {
@@ -1800,16 +1839,119 @@ export default {
       return lookupItem;
     },
     LasecGetNewClient: async (obj, args) => {
-      let hash = Hash(`__LasecNewClient::${global.user._id}`);
 
-      const newClient = await getCacheItem(hash).then();
+      logger.debug(`[LasecGetNewClient] NEW CLIENT PARAMS:: ${JSON.stringify(args)}`);
 
-      if (newClient !== null) return newClient;
+      let existingCustomer = null;
+      const apiClient = { ...DEFAULT_NEW_CLIENT };
+      if (args.id) {
+        existingCustomer = await getClient({ id: args.id });
+
+        logger.debug(`EXISTING CLIENT:: ${JSON.stringify(existingCustomer)}`)
+
+        if (existingCustomer) {
+          apiClient.id = existingCustomer.id || '';
+          apiClient.personalDetails.title = '3';
+          apiClient.personalDetails.title = existingCustomer.title || '0';
+          apiClient.personalDetails.firstName = existingCustomer.firstName || '';
+          apiClient.personalDetails.lastName = existingCustomer.lastName || '';
+          apiClient.personalDetails.country = existingCustomer.country || '';
+          apiClient.personalDetails.repCode = existingCustomer.salesTeam || '';
+          apiClient.personalDetails.accountType = existingCustomer.accountType || '';
+
+          apiClient.contactDetails.emailAddress = existingCustomer.emailAddress || '';
+          apiClient.contactDetails.confirmEmail = existingCustomer.emailAddress || '';
+          apiClient.contactDetails.alternateEmail = existingCustomer.alternateEmail || '';
+          apiClient.contactDetails.confirmAlternateEmail = existingCustomer.alternateEmail || '';
+          apiClient.contactDetails.mobileNumber = existingCustomer.mobileNumber || '';
+          apiClient.contactDetails.alternateMobile = existingCustomer.alternateMobile || '';
+          apiClient.contactDetails.officeNumber = existingCustomer.officeNumber || '';
+          apiClient.contactDetails.alternateOfficeNumber = existingCustomer.alternateOfficeNumber || '';
+          apiClient.contactDetails.prefferedMethodOfContact = existingCustomer.prefferedMethodOfContact || '';
+
+          apiClient.jobDetails.jobTitle = existingCustomer.jobTitle.trim() || '';
+          apiClient.jobDetails.jobType = existingCustomer.jobType || '';
+          apiClient.jobDetails.salesTeam = existingCustomer.customer.salesTeam || '';
+          apiClient.jobDetails.lineManager = existingCustomer.lineManager || '';
+          apiClient.jobDetails.customerType = existingCustomer.customer.accountType || '';
+          apiClient.jobDetails.faculty = existingCustomer.customer.faculty || '';
+          apiClient.jobDetails.clientDepartment = existingCustomer.customer.department || '';
+          apiClient.jobDetails.ranking = existingCustomer.customer.ranking || '';
+          apiClient.jobDetails.customerClass = existingCustomer.customer.customerClass || '';
+
+          apiClient.customer.id = existingCustomer.customer.id || '';
+          apiClient.customer.registeredName = existingCustomer.customer.registeredName || '';
+          apiClient.organization.id = (existingCustomer.organization && existingCustomer.organization.id) ? existingCustomer.organization.id : '';
+          apiClient.organization.name = (existingCustomer.organization && existingCustomer.organization.name) ? existingCustomer.organization.name : '';
+
+          apiClient.address.physicalAddress.id = existingCustomer.customer.physicalAddressId || '';
+          apiClient.address.physicalAddress.fullAddress = existingCustomer.customer.physicalAddress || '';
+          apiClient.address.deliveryAddress.id = existingCustomer.customer.deliveryAddressId || '';
+          apiClient.address.billingAddress.id = existingCustomer.customer.deliveryAddressId || '';
+          apiClient.address.deliveryAddress.fullAddress = existingCustomer.customer.deliveryAddress || '';
+          apiClient.address.billingAddress.fullAddress = existingCustomer.customer.billingAddress || '';
+          logger.debug(`[LasecGetNewClient] TO RETURN :: ${JSON.stringify(apiClient)}`);
+        }
+      }
+
+      let hash;
+      hash = Hash(`__LasecNewClient::${global.user._id}`);
+
+      const cachedClient = await getCacheItem(hash).then();
+
+      logger.debug(`CACHED CLIENT:: ${JSON.stringify(cachedClient)}`);
+
+      if (cachedClient !== null) {
+
+        if (existingCustomer) {
+
+          // if (cachedClient.personalDetails.id == existingCustomer.id) {
+          if (cachedClient.clientId && cachedClient.clientId == existingCustomer.id) {
+
+            logger.debug(`IDS MATCH:: ${cachedClient.personalDetails.id} ${existingCustomer.id} and merging the 2`);
+
+            const mergedClient = {
+              ...apiClient,
+              ...cachedClient
+            };
+            mergedClient.id = apiClient.id;
+            mergedClient.jobDetails.jobTitle = mergedClient.jobDetails.jobTitle.trim();
+
+            logger.debug(`MERGED CLIENT:: ${JSON.stringify(mergedClient)}`);
+
+            return mergedClient;
+          }
+
+          logger.debug(`IDS DONT MATCH RETURNING API CLIENT ONLY:: ${JSON.stringify(apiClient)}`);
+
+          // RESET CACHED CLIENT
+          let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
+          await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+
+          return apiClient;
+        }
+
+        return cachedClient;
+      }
       else {
         let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
-        //cache this object for 12 h
         await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
         let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
+
+        // if (existingCustomer) {
+        //   const mergedClient = {
+        //     ...apiClient,
+        //     ..._newClient
+        //   };
+        //   mergedClient.id = apiClient.id;
+
+        //   logger.debug(`NO CACHED CLIENT - EXISTING CLIENT: ${JSON.stringify(mergedClient)}`);
+
+        //   return { ...mergedClient, clientDocuments };
+        // }
+
+        // logger.debug(`NO CACHED CLIENT - NO EXISTING CLIENT: ${JSON.stringify(_newClient)}`);
+
         return { ..._newClient, clientDocuments };
       }
     },
@@ -1835,10 +1977,18 @@ export default {
       return deleteDocuments(args);
     },
     LasecUpdateNewClient: async (obj, args) => {
-      const { newClient } = args;
-      logger.debug('Updating new client address details with input', { newClient });
 
-      let hash = Hash(`__LasecNewClient::${global.user._id}`);
+      const { newClient } = args;
+      logger.debug('Updating new client address details with input', { args });
+      // logger.debug('Updating new client address details with input', { newClient });
+
+      let hash;
+      hash = Hash(`__LasecNewClient::${global.user._id}`);
+      // if (args.clientId)
+      //   hash = Hash(`__LasecNewClient::${args.clientId}`);
+      // else
+      //   hash = Hash(`__LasecNewClient::${global.user._id}`);
+
       let _newClient = await getCacheItem(hash).then();
 
       if (isNil(newClient.personalDetails) === false) {
@@ -1871,15 +2021,13 @@ export default {
 
       logger.debug('New Client Details', _newClient, 'debug');
 
+      _newClient.clientId = newClient.id;
+
       _newClient.updated = new Date().valueOf()
-      //update the cache for the new
       await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
 
       return _newClient;
     },
-    /**
-     * Creates a new Company Client
-     */
     LasecCreateNewClient: async (obj, args) => {
 
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
@@ -1890,6 +2038,36 @@ export default {
         messages: [
         ],
       };
+
+      logger.debug(`CREATE NEW ARGS:: ${JSON.stringify(args)}`);
+
+      // CLIENT EXISTS AND IS DEACTIVATED - REACTIVATE CLIENT
+      if (args.id) {
+        try {
+          const updateArgs = {
+            clientInfo: {
+              ...args.newClient,
+              clientStatus: 'active',
+              clientId: args.id,
+            }
+          }
+          await updateClientDetail(updateArgs);
+          await mysql(`
+            UPDATE Customer SET
+              activity_status = 'active',
+              company_id = ${args.customer.id},
+            WHERE customerid = ${args.id};`, 'mysql.lasec360').then()
+
+          response.client = args;
+        } catch (setStatusError) {
+          logger.error("Error Setting The Status and Customer details", setStatusError);
+          response.client = args;
+          response.messages = ['There was an error reactivating this client.'];
+          response.success = false;
+        }
+
+        return response;
+      }
 
       const { Customers, post, URIS } = lasecApi;
       /**
@@ -1956,15 +2134,12 @@ export default {
         inputData.onboarding_step_completed = 6;
         inputData.activity_status = 'active';
 
+
         logger.debug(`Create new client on LasecAPI`, inputData)
         customer = await post(URIS.customer_create.url, inputData).then()
         logger.debug(`Result in creating user`, customer);
 
         try {
-          debugger;
-          //const setting_status_result: LasecApiResponse = await post(`api/customer/${customer.id}/update`, { customer_id: customer.id, onboarding_step_completed: 6, activity_status: 'active' }).then();
-          //TODO: investigate why status update API call is not working
-          //using mysql update to complete ticket
           const update_result = await mysql(`
             UPDATE Customer SET
               activity_status = 'active',
@@ -2038,7 +2213,6 @@ export default {
 
             try {
               const updateResponse: LasecApiResponse = await lasecApi.Customers.UpdateClientDetails(customer.id, { activity_status: 'active' }).then();
-              debugger;
               if (updateResponse.status !== 'success') {
                 logger.warning(`Lasec API did not update the customer status`, updateResponse);
               }
@@ -2071,8 +2245,8 @@ export default {
     LasecCRMSaveComment: async (obj, args) => {
       return saveComment(args);
     },
-    LasecDeactivateClients: async (obj: any, params: { clientIds: string[]  }): Promise<SimpleResponse> => {
-      
+    LasecDeactivateClients: async (obj: any, params: { clientIds: string[] }): Promise<SimpleResponse> => {
+
       let response: SimpleResponse = {
         message: `Deactivated ${params.clientIds.length} clients`,
         success: true
@@ -2084,7 +2258,7 @@ export default {
           clientInfo: {
             clientId,
             clientStatus: 'deactivated'
-          },                    
+          },
         }
 
         return updateClientDetail(args);
@@ -2096,27 +2270,27 @@ export default {
         let successCount: number, failCount: number = 0;
 
         results.forEach((patchResult) => {
-          if(patchResult.Success === true) successCount += 1;
+          if (patchResult.Success === true) successCount += 1;
           else failCount += 1;
         });
 
-        if(failCount > 0) {
-          if(successCount > 0) {
-            response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;            
+        if (failCount > 0) {
+          if (successCount > 0) {
+            response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;
           } else {
             response.message = ` 😣 Could not deactivate any client accounts.`;
             response.success = false;
           }
         } else {
-          if( successCount === deactivation_promises.length) {
+          if (successCount === deactivation_promises.length) {
             response.message = `🥇 Deactivated all ${successCount} clients.`
           }
         }
-      } catch(err) {
+      } catch (err) {
         response.message = `😬 An error occurred while changing the client status. [${err.nessage}]`;
         logger.error(`🧨 Error deactivating the client account`, err)
-      } 
-            
+      }
+
       return response;
     }
   },

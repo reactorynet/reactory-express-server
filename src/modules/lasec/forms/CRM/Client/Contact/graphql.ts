@@ -72,8 +72,8 @@ const graphql: Reactory.IFormGraphDefinition = {
 export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetNewClient',
-    text: `query LasecGetNewClient {
-      LasecGetNewClient {
+    text: `query LasecGetNewClient($id: String) {
+      LasecGetNewClient(id: $id) {
         id
         contactDetails {
           emailAddress
@@ -83,12 +83,13 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
           mobileNumber
           alternateMobile
           officeNumber
+          alternateOfficeNumber
           prefferedMethodOfContact
         }
       }
     }`,
     variables: {
-
+      'formData.id': 'id',
     },
     resultMap: {
       'id': 'id',
@@ -98,7 +99,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       'contactDetails.confirmAlternateEmail': 'confirmAlternateEmail',
       'contactDetails.mobileNumber': 'mobileNumber',
       'contactDetails.officeNumber': 'officeNumber',
-      'contactDetails.prefferedMethodOfContact':'prefferedMethodOfContact'
+      'contactDetails.prefferedMethodOfContact': 'prefferedMethodOfContact'
     },
     autoQuery: true,
     queryMessage: 'Loading new customer contact details',
@@ -108,9 +109,11 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   },
   mutation: {
     onChange: {
+      // text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
+      // LasecUpdateNewClient(newClient: $newClient) {
       name: "LasecUpdateNewClient",
-      text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
-        LasecUpdateNewClient(newClient: $newClient) {
+      text: `mutation LasecUpdateNewClient($clientId: String, $newClient: LasecNewClientInput!){
+            LasecUpdateNewClient(clientId: $clientId, newClient: $newClient) {
           id
           contactDetails {
             emailAddress
@@ -127,6 +130,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       objectMap: true,
       updateMessage: 'Updating Personal Content',
       variables: {
+        'eventData.formData.id': 'clientId',
         'eventData.formData': 'newClient.contactDetails',
       },
       // handledBy: 'onChange',
@@ -139,7 +143,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         'contactDetails.confirmAlternateEmail': 'confirmAlternateEmail',
         'contactDetails.mobileNumber': 'mobileNumber',
         'contactDetails.officeNumber': 'officeNumber',
-        'contactDetails.prefferedMethodOfContact':'prefferedMethodOfContact'
+        'contactDetails.prefferedMethodOfContact': 'prefferedMethodOfContact'
       },
       onError: {
         componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',

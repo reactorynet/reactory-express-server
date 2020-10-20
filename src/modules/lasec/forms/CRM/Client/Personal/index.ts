@@ -50,8 +50,8 @@ export const displayUiSchema: any = {
       },
     }
   },
-  clientStatus: {        
-    'ui:widget': 'LabelWidget',    
+  clientStatus: {
+    'ui:widget': 'LabelWidget',
     'ui:options': {
       readOnly: true,
       format: '${formData ? formData.toUpperCase() : "Loading"}',
@@ -79,9 +79,9 @@ export const displayUiSchema: any = {
           display: 'flex',
           justifyContent: 'flex-end'
         }
-      }, 
-    } 
-  },      
+      },
+    }
+  },
   firstName: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -575,7 +575,7 @@ export const confirmUiSchema: any = {
 
 const schema: Reactory.ISchema = { ...ClientSchema };
 schema.required = ["firstName", "lastName", "country"];
-schema.title = "PERSONAL"
+schema.title = "PERSONAL DETAILS"
 
 const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
   id: 'LasecCRMPersonalInformation',
@@ -591,7 +591,7 @@ const LasecCRMPersonalInformationForm: Reactory.IReactoryForm = {
   schema: schema,
   graphql,
   widgetMap: [
-    { 
+    {
       componentFqn: 'core.ConditionalIconComponent',
       widget: 'ConditionalIcon'
     }

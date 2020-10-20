@@ -116,8 +116,8 @@ const graphql: Reactory.IFormGraphDefinition = {
 export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetNewClient',
-    text: `query LasecGetNewClient {
-      LasecGetNewClient {
+    text: `query LasecGetNewClient($id: String) {
+      LasecGetNewClient(id: $id) {
         id
         personalDetails {
           title
@@ -130,7 +130,10 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-
+      'formData.id': 'id',
+      // 'formContext.formData.id': 'id',
+      // 'props.formContext.$formData.id': 'id',
+      // 'formContext.$ref.props.formData.id': 'id',
     },
     resultMap: {
       'id': 'id',
@@ -149,10 +152,13 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
     new: true,
   },
   mutation: {
+
+    // text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
+    // LasecUpdateNewClient(newClient: $newClient) {
     onChange: {
       name: "LasecUpdateNewClient",
-      text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
-        LasecUpdateNewClient(newClient: $newClient) {
+      text: `mutation LasecUpdateNewClient($clientId: String, $newClient: LasecNewClientInput!){
+        LasecUpdateNewClient(clientId: $clientId, newClient: $newClient) {
           id
           personalDetails {
             title
@@ -167,6 +173,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       objectMap: true,
       updateMessage: 'Updating Personal Content',
       variables: {
+        'eventData.formData.id': 'clientId',
         'eventData.formData': 'newClient.personalDetails',
         'eventData.formData.clientTitle': 'newClient.personalDetails.title'
       },

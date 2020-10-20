@@ -9,13 +9,13 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         id
         organization {
           id
-          name          
+          name
         }
       }
     }`,
-    variables: {      
+    variables: {
     },
-    resultMap: {            
+    resultMap: {
       'organization.id': 'id',
       'organization.name': 'name',
     },
@@ -36,26 +36,29 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   },
   mutation: {
     onOrganizationSelected: {
+      // text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
+      // LasecUpdateNewClient(newClient: $newClient) {
       name: "LasecUpdateNewClient",
-      text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
-        LasecUpdateNewClient(newClient: $newClient) {
+      text: `mutation LasecUpdateNewClient($clientId: String, $newClient: LasecNewClientInput!){
+            LasecUpdateNewClient(clientId: $clientId, newClient: $newClient) {
           id
           organization {
             id
-            name            
+            name
           }
         }
       }`,
       objectMap: true,
       updateMessage: 'Updating client customer selection',
-      variables: {    
+      variables: {
+        'eventData.formData.id': 'clientId',
         'eventData.formData': 'newClient.organization',
       },
       resultType: 'object',
       resultMap: {
-        'organization.id':'id',
+        'organization.id': 'id',
         'organization.name': 'name',
       },
     }
-  },  
+  },
 };
