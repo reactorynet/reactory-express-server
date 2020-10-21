@@ -43,6 +43,16 @@ const graphql: Reactory.IFormGraphDefinition = {
           iso
           poNumber
           orderDate
+
+          quoteId
+          salesOrderNumber
+          orderStatus
+          currency
+          orderType
+          deliveryAddress
+          warehouseNote
+          deliveryNote
+          salesTeam
         }
       }
     }`,

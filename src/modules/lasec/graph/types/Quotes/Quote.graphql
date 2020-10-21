@@ -137,7 +137,7 @@ type LasecQuoteOption {
   lineItems: [LasecQuoteItem]
 }
 
-input LasecQuoteOptionPatchInput {  
+input LasecQuoteOptionPatchInput {
   id: String
   option_name: String
   incoterm: String
@@ -188,7 +188,7 @@ type Quote {
   meta: Any
   productClass: String
   repCode: String
-  quoteType: String  
+  quoteType: String
 }
 
 type LasecQuoteDashboardSummary {
@@ -432,6 +432,15 @@ type SalesHistory {
   salesTeamId: String
   accountNumber: String
   invoiceNumber: String
+
+  quoteId: String
+  salesOrderNumber: String
+  orderStatus: String
+  currency: String
+  deliveryAddress: String
+  warehouseNote: String
+  deliveryNote: String
+  salesTeam: String
 }
 
 type PagedCRMSalesOrders {
@@ -799,7 +808,7 @@ extend type Query {
   LasecGetCompanyDetailsforQuote(id: String!): LasecCRMCustomer
 
   # LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryMonthlyCount]
-  LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryYearlyCount]  
+  LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryYearlyCount]
   LasecGetQuotePDFUrl(quote_id: String!): DocumentUrl
   LasecGetQuoteProformaPDFUrl(quote_id: String!): DocumentUrl
 
@@ -897,10 +906,10 @@ extend type Mutation {
   LasecDeleteQuote(id: String): SimpleResponse
 
   LasecDeleteQuotes(quoteIds: [String]): SimpleResponse
-  
+
   LasecCreateNewQuoteOption(quote_id: String!, copy_from: String): LasecQuoteOption
 
-  LasecPatchQuoteOption(quote_id: String!, option_id: String!, 
+  LasecPatchQuoteOption(quote_id: String!, option_id: String!,
     option: LasecQuoteOptionPatchInput! ): LasecQuoteOption
 
   LasecDeleteQuoteOption(quote_id: String!, option_id: String!) : CoreSimpleResponse
