@@ -71,6 +71,14 @@ export interface LasecQuoteOption {
   active?: boolean
   lineItems?: [LasecQuoteItem]
   must_delete?: boolean
+  number_of_items?: number
+  discount?: number
+  discount_percent?: number
+  total_ex_vat?: number
+  total_incl_vat?: number
+  gp: number
+  gp_percent: number
+  vat?: number
 }
 
 export interface LasecQuoteHeader {
@@ -440,6 +448,8 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
 
   getQuoteOptionDetail(quote_id: string, option_id: string): Promise<LasecQuoteOption>;
   
+  getQuoteOptionsDetail(quote_id: string, option_ids: string[]): Promise<LasecQuoteOption[]>;
+
   getIncoTerms(): Promise<any>;
 }
 

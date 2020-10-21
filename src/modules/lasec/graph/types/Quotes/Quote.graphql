@@ -120,11 +120,20 @@ type LasecQuoteOption {
   quote_option_id: String
   quote_id: String
   option_name: String
+  name: String
   incoterm: String
   named_place: String
   transport_mode: String
   currency: String
   active: Boolean
+  special_comment: String
+  number_of_items: Int
+  discount: Int
+  discount_percent: Float
+  total_ex_vat: Int
+  total_incl_vat: Int
+  vat: Int
+  gp: Int
   lineItems: [LasecQuoteItem]
 }
 

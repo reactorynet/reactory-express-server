@@ -1019,6 +1019,23 @@ const Api = {
           status, payload,
         } = apiResponse;
 
+        if (status === 'success' && payload.items.length === 1) {
+          return payload.items[0];
+        }
+
+        return null;
+      } catch (error) {
+        logger.error(`An error occured while fetching the quote document ${optionId}`, error);
+        throw error;
+      }
+    },
+    getQuoteOptions: async (optionIds: string[]) => {
+      try {
+        const apiResponse = await FETCH(SECONDARY_API_URLS.quote_option.url, { params: { filter: { ids: optionIds } } }).then();
+        const {
+          status, payload,
+        } = apiResponse;
+
         if (status === 'success') {
           return payload;
         }

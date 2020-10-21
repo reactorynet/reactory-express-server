@@ -156,7 +156,16 @@ const QuoteSchema = new mongoose.Schema({
     transport_mode: String,
     currency: String,
     active: Boolean,
-    syncedAt: Date
+    special_comment: String,
+    number_of_items: Number,
+    discount: Number,
+    discount_percent: Number,
+    total_ex_vat: Number,
+    total_incl_vat: Number,
+    gp: Number,
+    gp_percent: Number,
+    vat: Number,
+    modified: Date
   }],
   created: {
     type: Date,

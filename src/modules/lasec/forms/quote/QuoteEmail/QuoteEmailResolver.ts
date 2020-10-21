@@ -1,8 +1,8 @@
 
+import humanNumber from 'human-number';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import * as Lasec from '@reactory/server-modules/lasec/types/lasec';
 import { getLoggedIn360User } from '@reactory/server-modules/lasec/resolvers/Helpers';
-import humanNumber from 'human-number';
 import LasecAPI from '@reactory/server-modules/lasec/api';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';

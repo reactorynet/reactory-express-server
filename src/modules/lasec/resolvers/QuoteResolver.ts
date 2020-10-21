@@ -36,7 +36,7 @@ import {
   LasecCreateQuoteOptionParams,
   LasecPatchQuoteOptionsParams,
   LasecDeleteQuoteOptionParams,
-  
+
 } from '../types/lasec';
 
 import CONSTANTS, { LOOKUPS, OBJECT_MAPS } from '../constants';
@@ -559,68 +559,35 @@ export default {
       return null
     },
     incoterms: (quote: LasecQuote) => {
-       return (getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms()
+      return (getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms()
     },
     options: async (quote: LasecQuote): Promise<LasecQuoteOption[]> => {
-      let result: LasecQuoteOption[] = [];      
-      
-      if (quote.options && isArray(quote.options) === true) {
+      let result: LasecQuoteOption[] = [];
 
-        let option_promises = [];
+      const { source } = quote.meta;
+      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0');
 
+      if (source.quote_option_ids.length > 0) {
+        try {
+          
+          logger.debug(`🟠 Getting Options for quote ${source.id}`)
+          
 
-        quote.options.forEach((option: String | LasecQuoteOption) => {
-          if (typeof option === 'string') {
-      
-            const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0');
-            
-            option_promises.push(new Promise((resolve, reject) => {
+         result = await quoteService.getQuoteOptionsDetail(source.id, source.quote_option_ids).then()
 
-              quoteService.getQuoteOptionDetail(quote.code, option).then(({
-                inco_terms,
-                name,
-                named_place,
-                number_of_items,
-                quote_id, special_comment, id }) => {
-                
-                resolve({
-                  id: id,
-                  inco_terms,
-                  quote_id: quote_id,
-                  option_name: name,
-                  quote_option_id: id,
-                  special_comment,
-                  named_place,
-                  active: false,
-                  currency: 'R',
-                });
-              });              
-            }));
+          if (result && result.length > 0) {
+            quote.options = result;
+            //if (quote.save && typeof quote.save === 'function') quote.save();            
 
-            
+            logger.debug(`🟢 Getting Options for quote ${source.id} return ${result.length}`, { result })
+
+            return result;
           }
-          
-          if (typeof option === 'object') {
-            
-            option_promises.push(Promise.resolve({ ...(option as LasecQuoteOption) }));
-            
-          
-          }
-          
-        })
-      } else {
-        if (quote.meta && quote.meta.source && quote.meta.source.quote_option_ids) {
-
-          result = quote.meta.source.quote_option_ids.map((id) => ({
-            id,
-            quote_id: quote.id,
-            quote_option_id: id,
-            active: false,
-            currency: 'R',
-            option_name: null,
-          }))
+        } catch (optionFetchError) {
+          logger.error(`🚨 Error Fetching Options for ${quote}`);
         }
-      }
+      } 
+      
       return result;
     }
   },
@@ -1292,7 +1259,7 @@ export default {
       const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
       const { option, quote_id, option_id } = params
 
-      return await quoteService.patchQuoteOption(quote_id, option_id, option).then();      
+      return await quoteService.patchQuoteOption(quote_id, option_id, option).then();
     },
 
     LasecDeleteQuoteOption: async (parent: any, params: LasecDeleteQuoteOptionParams): Promise<SimpleResponse> => {

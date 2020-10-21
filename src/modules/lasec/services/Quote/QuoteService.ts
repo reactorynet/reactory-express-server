@@ -1,5 +1,4 @@
-
-
+import om from 'object-mapper';
 import {
     Lasec360User,
     LasecQuote,
@@ -35,13 +34,60 @@ class LasecQuoteService implements IQuoteService {
         this.registry = props.$services;
     }
 
-    async getQuoteOptionDetail(quote_id: string, option_id: string): Promise<LasecQuoteOption> {
+    async getQuoteOptionDetail(quote_id: string, option_id: string): Promise<LasecQuoteOption> {        
+        try {
+            logger.debug(`Calling LAPI.Quote.getQuoteOption(${option_id})`);
+            const payload = await LAPI.Quotes.getQuoteOption(option_id).then()
 
-        const payload = await LAPI.Quotes.getQuoteOption(option_id).then()
-
-        return payload;
-
+            return om.merge(payload, {
+                "id": ["id", "quote_option_id"],
+                "name": "option_name",
+                "inco_terms": "incoterm",
+                "named_place": "named_place",
+                "special_comment": "special_comment",
+                "grand_total_discount_cents": "discount",
+                "grand_total_discount_percent": "discount_percent",
+                "grand_total_excl_vat_cents": "total_ex_vat",
+                "grand_total_incl_vat_cents": "total_incl_vat",
+                "grant_total_vat_cents": "vat",
+                "gp_percent": "gp_percent",
+                "actual_gp_percent": "gp",                
+            }) as LasecQuoteOption;
+        } catch (convertError) {
+            logger.error(`💥 Could not get quote option details ${convertError.message}`, {error: convertError})
+        }        
     }
+
+    async getQuoteOptionsDetail(quote_id: string, option_ids: string[]): Promise<LasecQuoteOption[]> {        
+        try {
+            logger.debug(`Calling LAPI.Quote.getQuoteOption(${option_ids})`);
+            const payload = await LAPI.Quotes.getQuoteOptions(option_ids).then()
+
+            logger.debug(`Payload received LAPI.Quote.getQuoteOption(${option_ids})`, {payload})
+
+            let converted = om.merge(payload, {
+                "items[].id": ["[].id", "[].quote_option_id"],
+                "items[].name": "[].option_name",
+                "items[].inco_terms": "[].incoterm",
+                "items[].named_place": "[].named_place",
+                "items[].special_comment": "[].special_comment",
+                "items[].grand_total_discount_cents": "[].discount",
+                "items[].grand_total_discount_percent": "[].discount_percent",
+                "items[].grand_total_excl_vat_cents": "[].total_ex_vat",
+                "items[].grand_total_incl_vat_cents": "[].total_incl_vat",
+                "items[].grant_total_vat_cents": "[].vat",
+                "items[].gp_percent": "[].gp_percent",
+                "items[].actual_gp_percent": "[].gp",                
+            }) as LasecQuoteOption[];
+            
+            logger.debug(`Returning getQuoteOptionsDetail(${option_ids})`, { converted })
+            
+            return converted;
+        } catch (convertError) {
+            logger.error(`💥 Could not get quote option details ${convertError.message}`, {error: convertError})
+        }        
+    }
+
 
     async getIncoTerms(): Promise<string[]> {
         try {
