@@ -177,6 +177,11 @@ const uiSchema: any = {
               }
             },
             windowTitle: 'Details view for Invoice # ${rowData.id}',
+            backNavigationConfig: {
+              showAppBar: false,
+              backNavigationItems: ['Invoices', '${rowData.id}'],
+              containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
+            }
           },
           propsMap: {
             'rowData': 'rowData'
@@ -221,6 +226,11 @@ const uiSchema: any = {
               }
             },
             windowTitle: 'Sales Order# ${rowData.isoNumber} - Detail View',
+            backNavigationConfig: {
+              showAppBar: false,
+              backNavigationItems: ['Invoices', '${rowData.id}'],
+              containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
+            }
           },
           propsMap: {
             'rowData': 'rowData'
