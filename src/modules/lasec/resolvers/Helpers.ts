@@ -1173,7 +1173,7 @@ export const LasecSendQuoteEmail = async (params: { code: string, mailMessage: a
 
   const { subject, message, to, cc = [], bcc = [], from, attachments = [] } = mailMessage;
   const { user } = global;
-  
+
   if (user.email !== from.email) throw new ApiError('Cannot send an email on behalf of another account. You can only send emails on behalf of yourself.', { HereBeDragons: true });
 
   let mailResponse = { success: true, message: `Customer mail sent successfully!` };
@@ -1195,7 +1195,7 @@ export const LasecSendQuoteEmail = async (params: { code: string, mailMessage: a
           "recipients": to,
           "ccRecipients": cc,
           "bcc": bcc,
-          'contentType': 'html',          
+          'contentType': 'html',
         }
       }
     })
@@ -1242,7 +1242,7 @@ const quote_field_maps: any = {
 
 /**
  * Function that returns paged quote data from the lasec api.
- * @param params 
+ * @param params
  */
 export const getPagedQuotes = async (params) => {
 
@@ -1763,6 +1763,8 @@ export const getPagedSalesOrders = async (params: any) => {
     }
   }).then();
 
+  logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ${JSON.stringify(salesOrdersIds)}`);
+
   let ids = [];
 
   if (isArray(salesOrdersIds.ids) === true) {
@@ -1778,6 +1780,8 @@ export const getPagedSalesOrders = async (params: any) => {
 
   try {
     let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
+
+    logger.debug(`SALES ORDER DETAILS RESPONSE:: ${JSON.stringify(salesOrdersDetails)}`);
 
     let salesOrders = salesOrdersDetails && salesOrdersDetails.items ? [...salesOrdersDetails.items] : [];
 
@@ -2380,7 +2384,16 @@ export const getClientSalesHistory = async (params) => {
       client: order.customer_name,
       poNumber: order.sales_order_number,
       value: order.order_value,
-      salesTeamId: order.sales_team_id
+      salesTeamId: order.sales_team_id,
+
+      quoteId: order.quote_id,
+      salesOrderNumber: order.sales_order_number,
+      orderStatus: order.order_status,
+      currency: order.currency,
+      deliveryAddress: order.delivery_address,
+      warehouseNote: order.warehouse_note,
+      deliveryNote: order.delivery_note,
+      salesTeam: order.sales_team_id,
     }
   });
 
@@ -2533,7 +2546,7 @@ export const getCRMSalesHistory = async (params) => {
 
   let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
 
-  // logger.debug(`SALES HISTORY DETAILS:: ${JSON.stringify(saleshistoryDetails)}`);
+  logger.debug(`SALES HISTORY DETAILS:: ${JSON.stringify(saleshistoryDetails)}`);
 
   let salesHistory = [...saleshistoryDetails.items];
 

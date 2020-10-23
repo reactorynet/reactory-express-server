@@ -16,7 +16,7 @@ const uiSchema: any = {
     }
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       salesOrders: {
         xs: 12, sm: 12, md: 12, lg: 12
@@ -118,14 +118,12 @@ const uiSchema: any = {
       //componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
       //componentProps: {},
     },
-  }, 
+  },
   salesOrders: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        // { title: 'Sales Order Number', field: 'salesOrderNumber' },
         { title: 'Order Type', field: 'orderType' },
-        // { title: 'Order Status', field: 'orderStatus' },
         {
           title: 'Order Date',
           field: 'orderDate',
@@ -133,7 +131,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -149,7 +147,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -158,24 +156,6 @@ const uiSchema: any = {
             'rowData.date': 'value',
           }
         },
-        
-        /*{
-          // L360-483 - Remove Quote date
-          title: 'Quote Date',
-          field: 'quoteDate',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.date': 'value',
-          }
-        },*/
         {
           title: 'ISO Number',
           field: 'salesOrderNumber',
@@ -201,6 +181,7 @@ const uiSchema: any = {
             buttonTitle: '${rowData.salesOrderNumber}',
             buttonVariant: 'Typography',
             buttonProps: {
+              variant: 'body1',
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
@@ -208,6 +189,11 @@ const uiSchema: any = {
               }
             },
             windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
+            backNavigationConfig: {
+              showAppBar: false,
+              backNavigationItems: ['Sales Orders', '${rowData.salesOrderNumber}'],
+              containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
+            }
           },
           propsMap: {
             'rowData': 'rowData'
@@ -228,28 +214,34 @@ const uiSchema: any = {
             windowTitle: 'Details view for ${rowData.quoteId}',
             buttonVariant: 'Typography',
             buttonProps: {
+              variant: 'body1',
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
                 'color': 'black'
               }
             },
+            backNavigationConfig: {
+              showAppBar: false,
+              backNavigationItems: ['Sales Orders', 'Quote', '${rowData.quoteId}'],
+              containerProps: { PaperProps: { style: { background: '#FFFFFF' } }}
+            }
           },
           propsMap: {
             'rowData': 'rowData'
           }
         },
-        { 
-          title: 'Customer', 
+        {
+          title: 'Customer',
           field: 'customer',
           component: 'lasec-crm.CustomerLabel@1.0.0',
           props: {
             context: 'sales-order-grid'
           },
           propsMap: {
-            'rowData.crmCustomer': 'customer',            
+            'rowData.crmCustomer': 'customer',
             'rowData': 'data',
-          } 
+          }
 
         },
         { title: 'Client', field: 'client' },
@@ -344,7 +336,7 @@ const uiSchema: any = {
         'salesOrders.[].quoteDate': 'data.[].quoteDate',
         'salesOrders.[].iso': 'data.[].iso',
         'salesOrders.[].customer': 'data.[].customer',
-        'salesOrders.[].crmCustomer': 'data.[].crmCustomer',  
+        'salesOrders.[].crmCustomer': 'data.[].crmCustomer',
         'salesOrders.[].client': 'data.[].client',
         'salesOrders.[].poNumber': 'data.[].poNumber',
         'salesOrders.[].value': 'data.[].value',
