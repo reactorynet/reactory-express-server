@@ -51,6 +51,12 @@ const tableUiSchema: any = {
         {
           title: '',
           field: 'onSyspro',
+          component: 'lasec-crm.LasecProductAddToQuoteComponent@1.0.0',
+          props: {},
+          propsMap: {
+            'rowData': 'product',
+          },
+          /*
           components: [
             {
               component: 'core.ConditionalIconComponent@1.0.0',
@@ -136,15 +142,8 @@ const tableUiSchema: any = {
               },
             }
           ],
-          width: '150px',
-          cellStyle: {
-            maxWidth: '150px',
-            width: '150px'
-          },
-          headerStyles: {
-            maxWidth: '150px',
-            width: '150px'
-          }
+          */
+          width: '140px',          
         },
         {
           title: 'Stock Code',
@@ -210,16 +209,16 @@ const tableUiSchema: any = {
         {
           title: 'Unit of Measure',
           field: 'unitOfMeasure',
-            breakpoint: 'sm',
-            width: '150px',
-            cellStyle: {
-              maxWidth: '150px',
-              width: '150px'
-            },
-            headerStyles: {
-              maxWidth: '150px',
-              width: '150px'
-            },
+          breakpoint: 'sm',
+          width: '150px',
+          cellStyle: {
+            maxWidth: '150px',
+            width: '150px'
+          },
+          headerStyles: {
+            maxWidth: '150px',
+            width: '150px'
+          },
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {

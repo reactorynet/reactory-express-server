@@ -83,7 +83,20 @@ export interface LasecQuoteOption {
 
 export interface LasecQuoteHeader {
   [key: string]: any
+  header_id: string
+  quote_id: string
+  quote_item_id: number | string,
+  text?: string
+  heading: string
 }
+
+export interface LasecQuoteHeaderInput {
+  quote_header_id: string
+  quote_item_id: string
+  heading: string
+  action: string | "NEW" | "ADD_ITEM" | "REMOVE_ITEM" | "UPDATE_TEXT"
+}
+
 
 export interface LasecProduct {
   [key: string]: any
@@ -161,6 +174,17 @@ export interface LasecProduct {
   notes: string
 }
 
+export interface Lasec360QuoteLineItem {
+  quote_option_id: string
+  quote_heading_id?: string
+  is_in_syspro: string
+  [s: string]: any
+}
+
+export interface LasecQuoteItemMeta extends Meta {
+  source: Lasec360QuoteLineItem
+}
+
 export interface LasecQuoteItem {
   [key: string]: any
   quote_item_id: string
@@ -181,6 +205,7 @@ export interface LasecQuoteItem {
   quote_option_id: string
   content: any
   product: LasecProduct
+  meta: LasecQuoteItemMeta 
 }
 
 export interface RemoteDataMeta {
@@ -451,6 +476,10 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
   getQuoteOptionsDetail(quote_id: string, option_ids: string[]): Promise<LasecQuoteOption[]>;
 
   getIncoTerms(): Promise<any>;
+
+  getQuoteHeaders(quote_id: string): Promise<any>;
+
+  getQuoteTransportModes(): Promise<any>;
 }
 
 export interface ILasecClientService extends Reactory.Service.IReactoryService {

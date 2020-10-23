@@ -11,11 +11,7 @@ const $toolbar = {
       format: "search",
       description: 'Enter a product code or description',
       minLength: 3
-    },
-    submitButton: {
-      title: 'Search',
-      type: 'string',
-    },
+    },    
     resultCount: {
       title: '',
       type: 'number'

@@ -75,9 +75,12 @@ input LasecQuoteItemInput {
 # }
 
 type LasecQuoteHeader {
-  id: ObjID
+  id: String
   headerId: String
   text: String
+  heading: String
+  quote_item_id: Int
+  quote_id: String
   quoteItems: [LasecQuoteItem]
 }
 
@@ -346,12 +349,13 @@ enum QuoteHeaderAction {
   ADD_ITEM
   REMOVE_ITEM
   REMOVE_HEADER
+  UPDATE_TEXT
 }
 
 input LasecQuoteHeaderInput {
   quote_header_id: String
-  quote_item_id: String
-  header_text: String
+  quote_item_id: Int
+  heading: String
   action: QuoteHeaderAction!
 }
 

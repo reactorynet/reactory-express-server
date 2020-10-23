@@ -79,7 +79,7 @@ export default {
   quote_move_to_customer: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/move_quote_to_customer/`, allowed_methods: ['post'] },
   quote_copy_to_customer: { url: `api/${ENTITY_KEY__QUOTE}/\\d+-\\d+/copy_quote_to_customer/`, allowed_methods: ['post'] },
   quote_create_pdf: { url: (quote_id) => `api/${ENTITY_KEY__QUOTE}/${quote_id}/create_quote_pdf/`, allowed_methods: ['post'] },
-  quote_section_header: { url: 'api/quote_heading', allowed_methods: ['post', 'put', 'delete', 'get'] },
+  quote_section_header: { url: 'api/quote_heading/', allowed_methods: ['post', 'put', 'delete', 'get'] },
   sales_order: { url: `api/${ENTITY_KEY__SALES_ORDER}/`, allowed_methods: ['post', 'get'] },
   sales_order_item: { url: `api/${ENTITY_KEY__SALES_ORDER_ITEM}/`, allowed_methods: ['get'] },
   purchase_order: { url: `api/${ENTITY_KEY__PURCHASE_ORDER}/`, allowed_methods: ['get'] },
@@ -109,6 +109,7 @@ export default {
   create_quote: { url: `api/${CREATE_QUOTE}/`, allowed_methods: ['post'] },
 
   incoterms: { url: `api/com_invoice/1/inco_terms/`, allowed_methods: ['get'] },
+  transport_modes : { url: `api/quote/transport_mode/`, allowed_methods: ['get'] },
   /*
   { url: `api/${ENTITY_KEY__PRODUCT}/\\d+/request_new_product_price/`, allowed_methods: ['post'] },
   { url: `api/${ENTITY_KEY__PRODUCT_BUYER}/`, allowed_methods: ['get'] },

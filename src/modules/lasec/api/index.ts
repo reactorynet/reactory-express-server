@@ -205,7 +205,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
     try {
 
-    //  apiResponse.text().then(response => logger.debug(`RESPONSE FROM API:: -  ${response}`));
+      //  apiResponse.text().then(response => logger.debug(`RESPONSE FROM API:: -  ${response}`));
 
       return apiResponse.json();
     } catch (jsonError) {
@@ -1048,7 +1048,7 @@ const Api = {
     },
     createQuoteOption: async (quote_id: string) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.quote_option.url, { quote_id } ).then();
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_option.url, { quote_id }).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -1065,10 +1065,11 @@ const Api = {
     patchQuoteOption: async (quote_id: string, quote_option_id: string, option: any) => {
       try {
         const apiResponse = await PUT(`${SECONDARY_API_URLS.quote_option.url}1/`, {
-          item_ids: quote_option_id, field_name: { 
+          item_ids: quote_option_id, field_name: {
             name: option.option_name,
             ...option,
-         }  }).then();
+          }
+        }).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -1083,7 +1084,7 @@ const Api = {
       }
     },
     copyQuoteOption: async (quote_id: string, quote_option_id: string) => {
-      try {        
+      try {
         const apiResponse = await POST(`${SECONDARY_API_URLS.quote_option.url}${quote_option_id}/duplicate_quote_option/`, { quote_option_id, quote_id }).then();
         const {
           status, payload,
@@ -1100,7 +1101,7 @@ const Api = {
     },
     deleteQuoteOption: async (quote_id: string, quote_option_id: string) => {
       try {
-        const apiResponse = await DELETE(`${SECONDARY_API_URLS.quote_option.url}${quote_option_id}`, {  quote_id }).then();
+        const apiResponse = await DELETE(`${SECONDARY_API_URLS.quote_option.url}${quote_option_id}`, { quote_id }).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -1114,9 +1115,50 @@ const Api = {
         return null;
       }
     },
-    createQuoteHeader: async ({ quote_id, quote_item_id, header_text }) => {
+    getQuoteHeaders: async (quote_id: string) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.quote_create_section_header, { body: { quote_id, quote_item_id, heading: header_text } }).then();
+        const header_response = await FETCH(SECONDARY_API_URLS.quote_section_header.url, {
+          params:
+          {
+            filter: { quote_id },
+            format: { ids_only: true },
+            ordering: { heading: 'asc' },
+            pagination: { current_page: 1, page_size: 100, enabled: false }
+          }
+        })
+        logger.debug(`🟠 getQuoteHeaders ids response`, { header_response });
+        if (header_response.payload.ids) {
+          let details = await FETCH(SECONDARY_API_URLS.quote_section_header.url,
+            {
+              params: {
+                filter: { ids: [...header_response.payload.ids] },
+                ordering: {},
+                pagination: { current_page: 1, page_size: 100 }
+              }
+            });
+          logger.debug(`🟢 getQuoteHeaders details response`, { details });
+          if (details && details.payload && details.payload.items) {
+            return details.payload.items
+          }
+        }
+
+        return [];
+      }
+      catch (lapiError) {
+        logger.error(`🚨 getQuoteHeaders(quote_id) Remote API Error: ${lapiError.message}`, { lapiError });
+
+        return [];
+      }
+    },
+    addItemToQuoteHeader: async (params: { quote_id: string, quote_item_id: number, heading_id: string, heading: string }) => {
+
+    },
+    setQuoteHeadingText: async (params: { quote_id: string, quote_item_id: number, heading_id: string, heading: string }) => {
+
+      const { quote_id, quote_item_id, heading } = params;
+
+      try {
+        const apiResponse = await PUT(SECONDARY_API_URLS.quote_section_header.url, { body: { quote_id, quote_item_id, heading: heading } }).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -1125,6 +1167,22 @@ const Api = {
         if (status === 'success') {
           return payload;
         }
+      } catch (lasecApiError) {
+        logger.error('Error setting quote header item');
+        return null;
+      }
+    },
+    createQuoteHeader: async ({ quote_id, quote_item_id, header_text }) => {
+      try {
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_section_header.url, { quote_id, quote_item_id, heading: header_text }).then();
+        const {
+          status, payload, id,
+        } = apiResponse;
+
+        logger.debug(`CreateQuoteHeader response status: ${status}  payload: ${payload} id: ${id}`);
+        if (status === 'success') {
+          return payload;
+        } else throw new ApiError(`Could not create the header item for quote ${quote_id}`)
       } catch (lasecApiError) {
         logger.error('Error setting quote header item');
         return null;
@@ -1149,12 +1207,13 @@ const Api = {
     },
     removeQuoteHeader: async ({ quote_heading_id }) => {
       try {
-        const apiResponse = await DELETE(SECONDARY_API_URLS.quote_section_header, { body: { id: quote_heading_id } }).then();
+        const apiResponse = await DELETE(SECONDARY_API_URLS.quote_section_header.url, { id: quote_heading_id }).then();
         const {
           status,
+          payload
         } = apiResponse;
 
-        logger.debug(`Deleted quote header: ${status}  payload: ${payload} id: ${id}`);
+        logger.debug(`Deleted quote header: ${status}  payload: ${payload}`);
 
         if (status === 'success') {
           return null;
@@ -1181,6 +1240,26 @@ const Api = {
 
       } catch (lasecApiError) {
         logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`).then();
+        return null;
+      }
+    },
+    addProductToQuote: async (quote_id: string, option_id: string, product_id: string) => {
+      try {        
+        const url = `api/quote_item/`;
+        const apiResponse = await POST(url, {
+          product_id: product_id,
+          quantity: 1,
+          quote_id: quote_id,
+          quote_option_id: option_id
+        });
+        logger.debug(`ADDING QUOTE ITEM RESPONSE:: ${JSON.stringify(apiResponse)}`);
+        const { status } = apiResponse;
+        if (status === 'success') {
+          return apiResponse;
+        }
+        return null;
+      } catch (lasecApiError) {
+        logger.error(`Error adding product item:: ${JSON.stringify(lasecApiError)}`);
         return null;
       }
     },
@@ -1220,11 +1299,31 @@ const Api = {
         return null;
       }
     },
+    deleteQuoteItem: async (quote_item_id: string) => {
+      try {
+        logger.debug(`DELETE QUOTE ITEM ${quote_item_id}`);
+        const url = `api/quote_item/${quote_item_id}/`;
+        const apiResponse = await DELETE(url, {}).then();
+        logger.debug(`DELETE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
+
+        const { status } = apiResponse;
+
+        if (status === 'success') {
+          return { success: true, message: `Quote item deleted` };
+        } else {
+          return { success: false, message: `Quote item not deleted` };
+        }
+
+      } catch (lasecApiError) {
+        logger.error(`Error deleting quote:: ${JSON.stringify(lasecApiError)}`);
+        return { success: false, message: `Quote item not deleted` };;
+      }
+    },
     deleteQuote: async (id) => {
       try {
-        logger.debug(`DELETE WITH PARAMS:: ${JSON.stringify(id)}`);
+        logger.debug(`DELETE QUOTE :: ${id}`);
         const url = `api/quote/${id}/`;
-        const apiResponse = await DELETE(url).then();
+        const apiResponse = await DELETE(url, {}).then();
 
         logger.debug(`DELETE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
@@ -1235,7 +1334,7 @@ const Api = {
         }
 
       } catch (lasecApiError) {
-        logger.error(`Error deleting quote:: ${JSON.stringify(lasecApiError)}`).then();
+        logger.error(`Error deleting quote:: ${JSON.stringify(lasecApiError)}`);
         return null;
       }
     },
@@ -1266,9 +1365,9 @@ const Api = {
         } = apiResponse;
 
         if (status === 'success') {
-          if (download === false) return payload; 
+          if (download === false) return payload;
           else {
-            const download_result = await fetch(payload.url, { method: 'GET'}).then()
+            const download_result = await fetch(payload.url, { method: 'GET' }).then()
           }
         }
 
@@ -1278,19 +1377,19 @@ const Api = {
         throw error;
       }
     },
-    getIncoTerms: async () => { 
+    getIncoTerms: async () => {
       let incoterms_response = await FETCH(SECONDARY_API_URLS.incoterms.url).then();
       const { status, payload } = incoterms_response;
 
       let results: any[] = [];
-      if (payload && Object.keys(payload).length > 0) { 
+      if (payload && Object.keys(payload).length > 0) {
         Object.keys(payload).forEach((prop) => {
 
           if (`${payload[prop]}`.indexOf("=>") > 0) {
             results.push({
               key: prop,
               title: payload[prop].split('=>')[1].trim()
-            })  
+            })
           } else {
             results.push({
               key: prop,
@@ -1299,11 +1398,21 @@ const Api = {
           }
         })
       }
-      
+
       logger.debug(`Get inco terms response returned `, { results });
-      
+
       return results;
-    }
+    },
+    getQuoteTransportModes: async () => {
+      let incoterms_response = await FETCH(SECONDARY_API_URLS.transport_modes.url).then();
+      const { status, payload } = incoterms_response;
+
+      let results: any[] = payload.items || [];
+
+      logger.debug(`Get quote transport modes returned `, { results });
+
+      return results;
+    },
   },
   Teams: {
     list: async () => {

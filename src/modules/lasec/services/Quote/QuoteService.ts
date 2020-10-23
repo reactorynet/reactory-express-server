@@ -33,6 +33,36 @@ class LasecQuoteService implements IQuoteService {
     constructor(props: Reactory.IReactoryServiceProps, context: any) {
         this.registry = props.$services;
     }
+    async getQuoteHeaders(quote_id: string): Promise<any> {        
+        try {
+            return await LAPI.Quotes.getQuoteHeaders(quote_id).then();
+        } catch (err) {
+            logger.error(`Error returning headers`);
+            return [];
+        }
+
+    }
+    async getQuoteTransportModes(): Promise<any> {
+        try {
+            let cache_key = 'lasec-crm.data.all-transport-modes';
+            let items = await getCacheItem(cache_key).then()
+            
+            logger.debug(`lasec-crm.QuoteService getQuoteTransportModes()`, { cached: items });
+    
+            if (!items) {
+                const payload = await LAPI.Quotes.getQuoteTransportModes().then()
+                items = payload || [];
+    
+                logger.debug(`lasec-crm.QuoteService getQuoteTransportModes()`, { fetched: items });
+                setCacheItem(cache_key, items, 180 * 3);
+            }
+            
+            return items || [];
+        } catch (err) {
+            logger.error(`getIncoTerms() ${err.messag}`)
+            return [];
+        }
+    }
 
     async getQuoteOptionDetail(quote_id: string, option_id: string): Promise<LasecQuoteOption> {        
         try {
