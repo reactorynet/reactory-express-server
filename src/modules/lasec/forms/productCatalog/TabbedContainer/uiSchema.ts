@@ -1,14 +1,11 @@
 
 const $toolbar: any = {
-  'ui:wrapper': 'Toolbar',
+  'ui:wrapper': 'Paper',
   'ui:widget': 'MaterialToolbar',
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      product: { md: 3, sm: 4, xs: 6 },
-      // supplier: { md: 3, sm: 4, xs: 6 },
-      submitButton: { md: 3, sm: 4, xs: 6 },
-      resultCount: { md: 3, sm: 4, xs: 6 },
+      product: { md: 3, sm: 4, xs: 6 },      
     }
   ],
   product: {
@@ -25,20 +22,7 @@ const $toolbar: any = {
       }
     }
   },
-  submitButton: {
-    'ui:widget': 'FormSubmitWidget',
-    'ui:options': {
-      text: 'SEARCH',
-      color: 'default',
-      props: {
-        color: 'default',
-        style: {
-          maxWidth: '180px',
-          width: '180px'
-        }
-      }
-    }
-  },
+  
   resultCount: {
     'ui:widget': 'LabelWidget',
     'ui:options': {

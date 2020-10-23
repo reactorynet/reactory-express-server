@@ -633,6 +633,7 @@ export default {
     },
     notes: async(product, args) => {
       try {
+        /*
         const productNotes = await mysql(`SELECT notes FROM Product WHERE productid = ${product.id};`, 'mysql.lasec360').then()
         logger.debug(`Product.notes --> Checking Notes for Product Id ${product.id} - ${product.code}`, productNotes)
         if(productNotes) {
@@ -654,6 +655,11 @@ export default {
           }
         }
         logger.debug(`Found Product Result for product id ${productId}`, { product });
+        */
+        
+        if (product.note) return product.notes;
+        if (product.notes) return product.notes;
+        
       } catch(ex) {
         logger.error(`Could not retrieve product note due to ${ex.message}`);
       }

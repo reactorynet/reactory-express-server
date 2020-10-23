@@ -1113,16 +1113,14 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: String
   if (cached) logger.debug(`Found Cached Line Items For Quote: ${code}`);
 
   if (lodash.isNil(cached) === true) {
-
     const lineItems = await lasecApi.Quotes.getLineItems(code, active_option).then();
-
-    logger.debug(`Found line items for quote ${code}:: ${lineItems.length}`);
+    logger.debug(`Found line items for quote ${code}`, lineItems);
 
     if (lineItems.length == 0) return [];
 
     cached = om.merge(lineItems, {
-      'items.[]': '[].meta.source',
-      'items.[].id': [
+      'items[]': '[].meta.source',
+      'items[].id': [
         '[].quote_item_id',
         '[].meta.reference',
         '[].line_id',
@@ -1133,32 +1131,38 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: String
           key: '[].quoteId', transform: () => (code)
         }
       ],
-      'items.[].code': '[].code',
-      'items.[].description': '[].title',
-      'items.[].quantity': '[].quantity',
-      'items.[].total_price_cents': '[].price',
-      'items.[].gp_percent': '[].GP',
-      'items.[].total_price_before_discount_cents': [
+      'items[].code': '[].code',
+      'items[].description': '[].title',
+      'items[].quantity': '[].quantity',
+      'items[].total_price_cents': '[].price',
+      'items[].gp_percent': '[].GP',
+      'items[].total_price_before_discount_cents': [
         '[].totalVATExclusive',
         {
           key: '[].totalVATInclusive',
-          transform: (v) => (Number.parseInt(v) * 1.15)
+          transform: (v: any) => (Number.parseInt(v) * 1.15)
         }
       ],
-      'items.[].note': '[].note',
-      'items.[].quote_heading_id': '[].header.meta.reference',
-      'items.[].header_name': {
+      'items[].note': '[].note',
+      'items[].quote_heading_id': '[].header.meta.reference',
+      'items[].header_name': {
         key: '[].header.text', transform: (v: any) => {
           if (lodash.isEmpty(v) === false) return v;
           return 'Uncategorised';
         }
       },
-      'items.[].total_discount_percent': '[].discount',
-      'items.[].product_class': '[].productClass',
-      'items.[].product_class_description': '[].productClassDescription',
+      'items[].total_discount_percent': '[].discount',
+      'items[].product_class': '[].productClass',
+      'items[].product_class_description': '[].productClassDescription',
     });
 
-    await setCacheItem(keyhash, cached, 60).then();
+    cached.forEach((item: any) => {
+      if (item.id === null || item.id === undefined) item.id = new ObjectId();
+    });
+
+    logger.debug(`Line items ${code} 🟢`, { cached });
+
+    //await setCacheItem(keyhash, cached, 60).then();
   }
 
   return cached;

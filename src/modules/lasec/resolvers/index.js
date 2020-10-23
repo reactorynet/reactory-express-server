@@ -7,7 +7,7 @@ import CompanyResolver from './CompanyResolver';
 import LasecUserResolver from './LasecUserResolver';
 import CategoryResolver from './CategoryResolver';
 import SalesOrderRevolver from './SalesOrderResolver';
-import QuoteEmailResolver from '@reactory/server-modules/lasec/forms/Quote/QuoteEmail/QuoteEmailResolver';
+import QuoteEmailResolver from './QuoteEmailResolver';
 
 const toMerge = [
   DashboardReolver,

@@ -36,6 +36,7 @@ import {
   LasecCreateQuoteOptionParams,
   LasecPatchQuoteOptionsParams,
   LasecDeleteQuoteOptionParams,
+  LasecQuoteHeaderInput,
 
 } from '../types/lasec';
 
@@ -193,6 +194,22 @@ export default {
         let result = await getProductById({ productId: line_item.meta.source.product_id }).then()
         return result;
       }
+    },
+    header: (line_item: LasecQuoteItem) => {
+      let header: any = {
+        id: null,
+        heading: '',
+      }
+      if (line_item && line_item.meta && line_item.meta.source) {
+        const quote_item = line_item.meta.source;
+        
+        return {
+          id: quote_item.quote_heading_id,
+          heading: '',
+        }
+      }
+
+      return header;
     }
   },
   Quote: {
@@ -294,16 +311,27 @@ export default {
         email: '404@customer.reactory.net'
       }
     },
-    headers: async () => {
+    headers: async (quote: LasecQuote): Promise<LasecQuoteHeader[]> => {
 
-      let headers = [
-        {
-          id: new ObjectId(),
-          text: 'No Header',
-          headerId: 'default',
-          items: [],
-        }
-      ];
+      let headers: LasecQuoteHeader[] = [];
+      const quoteService: IQuoteService = getService(QUOTE_SERVICE_ID) as IQuoteService;
+      let quote_headers = await quoteService.getQuoteHeaders(quote.code).then()
+
+      headers = [{
+        id: null,
+        header_id: null,
+        quote_item_id: -1,
+        quote_id: quote.code,
+        heading: 'Uncategorized',
+        headerId: null,
+        items: [],
+      }];
+
+      quote_headers.forEach((heading: LasecQuoteHeader) => {
+        headers.push(heading)
+      })
+
+
 
       return headers;
     },
@@ -1153,35 +1181,53 @@ export default {
 
       return result;
     },
-    LasecQuoteAddProductToQuote: async (obj: any, params: any): Promise<[LasecQuoteItem]> => {
-      let result: [LasecQuoteItem] = null;
-
-
-      return result;
+    LasecQuoteAddProductToQuote: async (obj: any, params: { quote_id: string, option_id: string, product_id: string  }): Promise<[LasecQuoteItem]> => {
+      try {
+        const { quote_id, option_id, product_id } = params;
+        let result: [LasecQuoteItem] = null;
+        result = await lasecApi.Quotes.addProductToQuote(quote_id, option_id, product_id).then();  
+        return result;
+      } catch (err) {
+        logger.error(`Error communicating with Lasec API`);
+        return null;
+      }
+      
     },
     LasecQuoteItemUpdate: async (obj: any, params: any): Promise<LasecQuoteItem> => {
       let result: LasecQuoteItem = null;
 
       return result;
     },
-    LasecQuoteDeleteQuoteItem: async (quote_item_id: String): Promise<SimpleResponse> => {
+    LasecQuoteDeleteQuoteItem: async (obj: any, params: { quote_item_id: string }): Promise<SimpleResponse> => {
       let result: SimpleResponse = null;
+
+      try { 
+        result = await lasecApi.Quotes.deleteQuoteItem(params.quote_item_id).then();
+      } catch (deleteError) {
+        logger.error(`🚨 Error deleting quote item`, { deleteError } );
+      }
 
       return result;
     },
-    LasecSetQuoteHeader: async (parent, { quote_id, input }) => {
+    LasecSetQuoteHeader: async (parent, params: { quote_id: string, input: LasecQuoteHeaderInput }): Promise<LasecQuoteHeader> => {
+      
+      const { input, quote_id } = params
+
       switch (input.action) {
         case 'NEW': {
-          return lasecApi.Quotes.createQuoteHeader({ quote_id, ...input });
-        }
-        case 'ADD_ITEM': {
-          return lasecApi.Quotes.addItemToQuoteHeader({ quote_id, ...input });
-        }
-        case 'REMOVE_ITEM': {
-          return lasecApi.Quotes.removeItemFromHeader({ quote_id, ...input });
-        }
+          return lasecApi.Quotes.createQuoteHeader({ quote_id, header_text: input.heading, quote_item_id: input.quote_item_id  });
+        }        
         case 'REMOVE_HEADER': {
-          return lasecApi.Quotes.removeQuoteHeader({ quote_id, ...input });
+          await lasecApi.Quotes.removeQuoteHeader({ quote_id, quote_heading_id: input.quote_header_id }).then();
+          return {
+            header_id: input.quote_header_id,
+            heading: input.heading,
+            quote_id: quote_id,
+            quote_item_id: input.quote_item_id as string
+          }
+        }
+        case 'UDPATE_TEXT': {
+          return lasecApi.Quotes.setQuoteHeadingText({ quote_id, ...input });
         }
         default: {
           throw new ApiError(`The ${input.action} action is not supported`);
