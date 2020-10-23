@@ -85,6 +85,8 @@ type PagedCRMClient {
   search: String
   filterBy: String
   paging: PagingResult
+  repCode: Any
+  selectedClient: Any
   clients: [LasecCRMClient]
 }
 
@@ -274,6 +276,7 @@ extend type Query {
     iter: Int
     filter: String
     repCode: String
+    selectedClient: Any
     orderBy: String
     orderDirection: String
   ): PagedCRMClient

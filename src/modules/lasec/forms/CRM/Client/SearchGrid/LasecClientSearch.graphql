@@ -7,6 +7,7 @@ query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy){
       pageSize
     }
     filterBy
+    repCode
     clients {
       id
       clientStatus

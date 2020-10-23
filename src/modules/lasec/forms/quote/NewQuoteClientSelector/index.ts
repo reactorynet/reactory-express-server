@@ -26,7 +26,7 @@ const LasecNewQuoteClientSelector: Reactory.IReactoryForm = {
   defaultFormValue: {
     paging: {
         page: 1,
-        pageSize: 10,      
+        pageSize: 10,
       },
       filterBy: "any_field",
       search: "",
@@ -34,7 +34,7 @@ const LasecNewQuoteClientSelector: Reactory.IReactoryForm = {
       repCode: {
         title: "",
         value: ""
-      }      
+      }
   }
 };
 

@@ -3,14 +3,16 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetClientList',
-    text: `query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $filter: String, $repCode: String){
-      LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy, filter: $filter, repCode: $repCode){
+    text: `query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $filter: String, $repCode: String, $selectedClient: Any){
+      LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy, filter: $filter, repCode: $repCode, selectedClient: $selectedClient){
         paging {
           total
           page
           hasNext
           pageSize
         }
+        repCode
+        selectedClient
         clients {
           id
           clientStatus
@@ -32,15 +34,18 @@ const graphql: Reactory.IFormGraphDefinition = {
       'formData.search': 'search',
       'formData.paging': 'paging',
       'formData.filterBy': 'filterBy',
-      'formData.repCode.value': 'repCode'
+      'formData.repCode.value': 'repCode',
+      'formData.selectedClient': 'selectedClient'
     },
     resultMap: {
       'paging': 'paging',
       'filterBy': 'filterBy',
       'clients': 'clients',
+      'repCode': 'repCode',
+      'selectedClient': 'selectedClient'
     },
-    
-  },  
+
+  },
   mutation: {
     new: {
       name: 'LasecCreateNewQuoteForClient',
@@ -53,7 +58,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       }`,
       objectMap: true,
       updateMessage: 'Creating new quote',
-      
+
       variables: {
         'formData.selectedClient.id': 'newQuoteInput.client_id',
         'formData.repCode.value': 'newQuoteInput.rep_code',

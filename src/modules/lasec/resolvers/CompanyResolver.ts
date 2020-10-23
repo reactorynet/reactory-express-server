@@ -45,7 +45,8 @@ const getClients = async (params) => {
     orderDirection = "asc",
     iter = 0,
     filter,
-    repCode = undefined
+    repCode = undefined,
+    selectedClient = undefined
   } = params;
 
   logger.debug(`Getting Clients using search ${search}`, {
@@ -55,6 +56,7 @@ const getClients = async (params) => {
     filterBy,
     iter,
     repCode,
+    selectedClient,
     orderBy,
     orderDirection
   });
@@ -103,7 +105,9 @@ const getClients = async (params) => {
 
   if (isString(search) === false || search.length < 3 && filter === undefined) return {
     paging: pagingResult,
-    clients: []
+    clients: [],
+    repCode: repCode ? { title: repCode, value: repCode} : {},
+    selectedClient
   };
 
   const cachekey = Hash(`client_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
@@ -122,6 +126,8 @@ const getClients = async (params) => {
             hasNext
             pageSize
           }
+          repCode
+          selectedClient
           clients {
             id
           }
@@ -234,6 +240,8 @@ const getClients = async (params) => {
     paging: pagingResult,
     search,
     filterBy,
+    repCode: repCode ? { title: repCode, value: repCode} : {},
+    selectedClient,
     clients,
   };
 
@@ -260,6 +268,8 @@ const getClients = async (params) => {
             hasNext
             pageSize
           }
+          repCode
+          selectedClient
           clients {
             id
           }
@@ -271,6 +281,8 @@ const getClients = async (params) => {
   }
 
   // setCacheItem(cachekey, result, 60 * 10);
+
+  logger.debug(`GETCLIENTLIST RETURN  (${result.repCode})`);
 
   return result;
 }
