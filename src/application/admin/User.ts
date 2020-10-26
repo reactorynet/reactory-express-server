@@ -225,7 +225,10 @@ export const sendResetPasswordEmail = (user, partner, options) => {
  * @param {*} user
  * @param {*} imageData
  */
-export const updateUserProfileImage = (user, imageData, isBuffer = false, isPng = false) => {
+export const updateUserProfileImage = (user: any, imageData: string = null, isBuffer = false, isPng = false) => {
+
+  if (imageData === null || imageData === undefined) return null;
+
   const buffer = isBuffer === true ? imageData : Buffer.from(imageData.split(/,\s*/)[1], 'base64');
   if (!existsSync(`${APP_DATA_ROOT}/profiles`)) mkdirSync(`${APP_DATA_ROOT}/profiles`);
   const path = `${APP_DATA_ROOT}/profiles/${user._id}/`;
