@@ -93,15 +93,15 @@ const getClients = async (params) => {
     }
   }
 
-  //_filter[filterBy] = filter || search;
+  // COMMENTED SO I CAN GET SOME RESULTS
 
-  if (typeof repCode === 'string') {
-    _filter.sales_team_id = repCode;
-  }
+  // if (typeof repCode === 'string') {
+  //   _filter.sales_team_id = repCode;
+  // }
 
-  if (typeof repCode === 'array' && repCode.length > 0) {
-    _filter.sales_team_ids = repCode;
-  }
+  // if (typeof repCode === 'array' && repCode.length > 0) {
+  //   _filter.sales_team_ids = repCode;
+  // }
 
   if (isString(search) === false || search.length < 3 && filter === undefined) return {
     paging: pagingResult,

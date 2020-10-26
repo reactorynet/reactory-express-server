@@ -1223,8 +1223,25 @@ const Api = {
         throw lasecApiError;
       }
     },
-    copyQuoteToCustomer: async (params) => {
 
+    createNewQuoteForClient: async (params) => {
+      try {
+        // api/create_quote/
+        // {customer_id: "18231", secondary_api_staff_user_id: "335", status: "draft"}
+        params.status = 'draft';
+        const url = `api/create_quote/`;
+        const apiResponse = await POST(url, { ...params });
+
+        const { status } = apiResponse;
+        if (status === 'success') return apiResponse;
+
+      } catch (lasecApiError) {
+        logger.error(`[INDEX] Error creating new quote for client :: ${JSON.stringify(lasecApiError)}`).then();
+        return null;
+      }
+    },
+
+    copyQuoteToCustomer: async (params) => {
       try {
         // api/quote/2008-104335000/copy_quote_to_customer/
         const url = `api/quote/${params.quoteId}/copy_quote_to_customer/`;
@@ -1243,8 +1260,10 @@ const Api = {
         return null;
       }
     },
+
+
     addProductToQuote: async (quote_id: string, option_id: string, product_id: string) => {
-      try {        
+      try {
         const url = `api/quote_item/`;
         const apiResponse = await POST(url, {
           product_id: product_id,

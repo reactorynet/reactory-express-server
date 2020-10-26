@@ -668,6 +668,7 @@ type LasecNewQuoteResponse {
   success: Boolean
   message: String
   quoteId: String
+  quoteOptionId: String
 }
 
 type QuoteDuplicateResponse {

@@ -53,24 +53,27 @@ const graphql: Reactory.IFormGraphDefinition = {
         LasecCreateNewQuoteForClient(newQuoteInput: $newQuoteInput){
           success
           message
-          quote_id
+          quoteId
+          quoteOptionId
         }
       }`,
       objectMap: true,
       updateMessage: 'Creating new quote',
 
       variables: {
-        'formData.selectedClient.id': 'newQuoteInput.client_id',
-        'formData.repCode.value': 'newQuoteInput.rep_code',
+        'formData.selectedClient.id': 'newQuoteInput.clientId',
+        'formData.repCode.value': 'newQuoteInput.repCode',
       },
       options: {},
       resultMap: {
         'success': 'formData.success',
-        'quote_id': 'formData.quote_id',
+        'quoteId': 'formData.quoteId',
+        'quoteOptionId': 'formData.quoteOptionId',
         'message': 'formData.message'
       },
       resultType: "object",
-      onSuccessMethod: 'notification',
+      // onSuccessMethod: 'notification',
+      onSuccessMethod: "event:onNewQuoteCreated",
       notification: {
         inAppNotification: true,
         type: "success",
