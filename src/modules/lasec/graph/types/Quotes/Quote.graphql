@@ -40,6 +40,7 @@ type LasecQuoteItem {
   quote_option_id: String
   content: Any
   meta: Any
+  position: Int
 }
 
 input LasecQuoteItemInput {
@@ -880,7 +881,7 @@ extend type Mutation {
   LasecQuoteItemUpdate(
     quote_id: String
     quote_item_id: String
-    qoute_item_input: LasecQuoteItemInput
+    quote_item_input: LasecQuoteItemInput
   ): LasecQuoteItem
   LasecQuoteDeleteQuoteItem(quote_item_id: String): SimpleResponse
   LasecSaveQuoteComment(
@@ -905,7 +906,6 @@ extend type Mutation {
     agentCom: Float
     freight: Float
   ): SimpleResponse
-
 
   LasecDeleteQuote(id: String): SimpleResponse
 

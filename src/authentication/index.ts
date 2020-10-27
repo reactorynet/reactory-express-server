@@ -14,7 +14,7 @@ import moment from 'moment';
 import uuid from 'uuid';
 import { isNil } from 'lodash';
 // import LocalStrategy from 'passport-local';
-import { Application } from 'express';
+import { Application, Request } from 'express';
 import { BasicStrategy } from 'passport-http';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { OIDCStrategy } from 'passport-azure-ad';
@@ -67,8 +67,10 @@ class AuthConfig {
 
       // Callback function called once the sign-in is complete
       // and an access token has been obtained
-      async function signInComplete(req: any, iss: string, sub: string, profile: Reactory.IUser, accessToken: string, refreshToken: string, params: any, done: Function) {
-        logger.info(`Sign in Complete ${profile && profile.displayName ? profile.displayName : 'NO DISPLAY NAME FOR USER'} : EXPIRES ${ moment().add(params.expires_in, 'seconds').format('YYYY-MM-DD HH:mm:ss') }`);
+      async function signInComplete(req: Request, iss: string, sub: string, profile: Reactory.IUser, accessToken: string, refreshToken: string, params: any, done: Function) {
+        logger.info(`Sign in Complete ${profile && profile.displayName ? profile.displayName : 'NO DISPLAY NAME FOR USER'} : EXPIRES ${ moment().add(params.expires_in, 'seconds').format('YYYY-MM-DD HH:mm:ss') }`, { req });
+        
+        
 
         if (!profile.oid) {
           // return done(new Error('No OID found in user profile.'), null);

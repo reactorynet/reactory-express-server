@@ -33,7 +33,7 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
         route: '/crm/clients/',
         componentProps: {},
         componentPropsMap: {
-          'formContext.$formData.toolbar.search': 'formData.search'
+          'formContext.$formData.toolbar.search': 'formData.search',
         }
       },
       {
@@ -43,7 +43,8 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
         componentProps: {},
         route: '/crm/quotes/',
         componentPropsMap: {
-          'formContext.$formData.toolbar.search': 'formData.search'
+          'formContext.$formData.toolbar.search': 'formData.search',
+          'formContext.$route': '$route',
         }
       },
       {

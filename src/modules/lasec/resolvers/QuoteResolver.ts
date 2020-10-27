@@ -79,7 +79,8 @@ import {
   updateQuote,
   getCompanyDetails,
   deleteQuote,
-  getSalesHistoryMonthlyCount
+  getSalesHistoryMonthlyCount,
+  lasecGetQuoteLineItem
 } from './Helpers';
 import { queryAsync } from '@reactory/server-core/database/mysql';
 
@@ -202,7 +203,7 @@ export default {
       }
       if (line_item && line_item.meta && line_item.meta.source) {
         const quote_item = line_item.meta.source;
-        
+
         return {
           id: quote_item.quote_heading_id,
           heading: '',
@@ -210,6 +211,9 @@ export default {
       }
 
       return header;
+    },
+    position: (line_item: LasecQuoteItem) => {
+      return parseInt(`${line_item.meta.source.position || 0}`)
     }
   },
   Quote: {
@@ -597,11 +601,11 @@ export default {
 
       if (source.quote_option_ids.length > 0) {
         try {
-          
-          logger.debug(`🟠 Getting Options for quote ${source.id}`)
-          
 
-         result = await quoteService.getQuoteOptionsDetail(source.id, source.quote_option_ids).then()
+          logger.debug(`🟠 Getting Options for quote ${source.id}`)
+
+
+          result = await quoteService.getQuoteOptionsDetail(source.id, source.quote_option_ids).then()
 
           if (result && result.length > 0) {
             quote.options = result;
@@ -614,8 +618,8 @@ export default {
         } catch (optionFetchError) {
           logger.error(`🚨 Error Fetching Options for ${quote}`);
         }
-      } 
-      
+      }
+
       return result;
     }
   },
@@ -1152,10 +1156,7 @@ export default {
     },
     LasecDeleteQuoteComment: async (obj, args) => {
       return deleteQuoteComment(args);
-    },
-    LasecUpdateQuoteLineItems: async (obj, args) => {
-      return updateQuoteLineItems(args);
-    },
+    },    
     LasecDuplicateQuoteOption: async (obj: any, params: LasecDuplicateQuoteOptionArgs): Promise<LasecQuoteOption> => {
       let result: LasecQuoteOption = null;
       const { quote_id, option_id } = params
@@ -1181,42 +1182,71 @@ export default {
 
       return result;
     },
-    LasecQuoteAddProductToQuote: async (obj: any, params: { quote_id: string, option_id: string, product_id: string  }): Promise<[LasecQuoteItem]> => {
+    LasecQuoteAddProductToQuote: async (obj: any, params: { quote_id: string, option_id: string, product_id: string }): Promise<[LasecQuoteItem]> => {
       try {
         const { quote_id, option_id, product_id } = params;
         let result: [LasecQuoteItem] = null;
-        result = await lasecApi.Quotes.addProductToQuote(quote_id, option_id, product_id).then();  
+        result = await lasecApi.Quotes.addProductToQuote(quote_id, option_id, product_id).then();
         return result;
       } catch (err) {
         logger.error(`Error communicating with Lasec API`);
         return null;
       }
-      
-    },
-    LasecQuoteItemUpdate: async (obj: any, params: any): Promise<LasecQuoteItem> => {
-      let result: LasecQuoteItem = null;
 
-      return result;
+    },
+    LasecQuoteItemUpdate: async (obj: any, params: { quote_id: string, option_id: string, quote_item_input: LasecQuoteItem }): Promise<LasecQuoteItem> => {
+
+      try {
+        let result: LasecQuoteItem = null;
+
+        if(params.quote_item_input === null || params.quote_item_input === undefined) throw new ApiError(`LasecQuoteItemUpdate (item) parameter cannot be null`)
+
+        let fields = {
+          quantity: params.quote_item_input.quantity,
+          unit_price_cents: params.quote_item_input.price,
+          position: params.quote_item_input.position,
+          quote_heading_id: params.quote_item_input.header.quote_item_id
+        }
+
+        const apiResult = await lasecApi.Quotes.updateQuoteItems({
+          item_id: params.quote_item_input.quote_item_id,
+          values: fields
+        });
+
+        logger.debug(`LasecQuoteItemUpdate result from apiResult`, { result })
+
+        result = {
+          ...params.quote_item_input,
+          quote_item_id: params.quote_item_input.quote_item_id,
+        }
+        
+        result = await lasecGetQuoteLineItem(params.quote_item_input.quote_item_id).then()        
+
+        return result;
+
+      } catch (error) {
+        logger.debug(`Error updateding LasecQuoteItemUpdate ${error.message}`, { error })
+      }
     },
     LasecQuoteDeleteQuoteItem: async (obj: any, params: { quote_item_id: string }): Promise<SimpleResponse> => {
       let result: SimpleResponse = null;
 
-      try { 
+      try {
         result = await lasecApi.Quotes.deleteQuoteItem(params.quote_item_id).then();
       } catch (deleteError) {
-        logger.error(`🚨 Error deleting quote item`, { deleteError } );
+        logger.error(`🚨 Error deleting quote item`, { deleteError });
       }
 
       return result;
     },
     LasecSetQuoteHeader: async (parent, params: { quote_id: string, input: LasecQuoteHeaderInput }): Promise<LasecQuoteHeader> => {
-      
+
       const { input, quote_id } = params
 
       switch (input.action) {
         case 'NEW': {
-          return lasecApi.Quotes.createQuoteHeader({ quote_id, header_text: input.heading, quote_item_id: input.quote_item_id  });
-        }        
+          return lasecApi.Quotes.createQuoteHeader({ quote_id, header_text: input.heading, quote_item_id: input.quote_item_id });
+        }
         case 'REMOVE_HEADER': {
           await lasecApi.Quotes.removeQuoteHeader({ quote_id, quote_heading_id: input.quote_header_id }).then();
           return {
@@ -1226,7 +1256,7 @@ export default {
             quote_item_id: input.quote_item_id as string
           }
         }
-        case 'UDPATE_TEXT': {
+        case 'UPDATE_TEXT': {
           return lasecApi.Quotes.setQuoteHeadingText({ quote_id, ...input });
         }
         default: {

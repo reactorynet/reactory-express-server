@@ -21,7 +21,7 @@ const staticContentMappings = [
     path: '/about/*',
     public: true,
     exact: true,
-    roles: ['USER'],
+    roles: ['USER', 'ANON'],
     args: [
       {
         key: 'slug',

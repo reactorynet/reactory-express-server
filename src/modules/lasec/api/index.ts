@@ -5,7 +5,7 @@ import { promisify } from 'util';
 import path from 'path';
 import FormData from 'form-data';
 import om from 'object-mapper';
-import { isObject, map, find, isArray, isNil, concat, uniq } from 'lodash';
+import { isObject, map, find, isArray, isNil, concat, uniq, result } from 'lodash';
 import moment from 'moment';
 import axios from 'axios';
 // import { clearAuthentication } from '../actions/Auth';
@@ -32,8 +32,6 @@ const config = {
   SECONDARY_API_URL_PREFIX_1: 'api',
   GOOGLE_MAPS_API_KEY: 'XXXXXXXXXXXXX',
 };
-
-
 
 export class LasecNotAuthenticatedException extends ApiError {
   constructor(message) {
@@ -921,6 +919,22 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+    getLineItem: async (id: string) => {
+      try {
+        const result = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: [id] } } }).then()
+
+        const { status, payload } = result;
+        if (status === 'success' && payload.items && payload.items.length === 1 ) {
+          return payload.items[0]
+        } else {
+          logger.warn(`Could not get the line item with the id ${id}`);
+          return null;
+        }        
+      } catch (err) {
+        logger.error(`Get Line Item Failed ${err.message}`, err);
+        return null;
+      }      
+    },
     getLineItems: async (code, active_option) => {
 
       let filter = { quote_id: code }
@@ -1295,7 +1309,7 @@ const Api = {
         }
 
       } catch (lasecApiError) {
-        logger.error(`Error updating quote lineitems:: ${JSON.stringify(lasecApiError)}`).then();
+        logger.error(`Error updating quote lineitems:: ${JSON.stringify(lasecApiError)}`);
         return null;
       }
     },

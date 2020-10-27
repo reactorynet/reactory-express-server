@@ -175,9 +175,37 @@ export interface LasecProduct {
 }
 
 export interface Lasec360QuoteLineItem {
-  quote_option_id: string
+  id: string,
+  quote_id: string
+  product_id: string
+  code: string
+  name: string
+  quantity: number
+  unit_price_cents: number
+  total_price_cents: number
+  total_discount_cents: number
+  gp_percent: number
+  mark_up: number
+  actual_gp_percent: number
+  total_discount_percent: number
+  total_price_before_discount_cents: number
+  note: string
+  comment: string
+  header_name?: string
+  quote_item_type: string
+  position: number
+  requires_authorization?: boolean
+  quote_option_id?: string
+  included_in_quote_option?: boolean
+  received_approval: boolean
+  is_in_syspro: string,
   quote_heading_id?: string
-  is_in_syspro: string
+  authorised_by_staff_user_id?: string
+  authorised_by_staff_user_name?: string
+  ignore_duplicates: boolean
+  list_currency: string
+  product_class: string
+  product_class_description: string
   [s: string]: any
 }
 
@@ -186,6 +214,7 @@ export interface LasecQuoteItemMeta extends Meta {
 }
 
 export interface LasecQuoteItem {
+  id: string
   [key: string]: any
   quote_item_id: string
   code: string
@@ -206,6 +235,7 @@ export interface LasecQuoteItem {
   content: any
   product: LasecProduct
   meta: LasecQuoteItemMeta 
+  position: number
 }
 
 export interface RemoteDataMeta {

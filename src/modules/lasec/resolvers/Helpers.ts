@@ -25,7 +25,9 @@ import {
   LasecProductDashboardParams,
   USER_FILTER_TYPE,
   DATE_FILTER_PRESELECT,
-  Lasec360User
+  Lasec360User,
+  LasecQuoteItem,
+  Lasec360QuoteLineItem
 } from '../types/lasec';
 
 
@@ -1106,6 +1108,87 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
 
 }
 
+const line_items_map = {
+  'items[]': '[].meta.source',
+  'items[].id': [
+    '[].quote_item_id',
+    '[].meta.reference',
+    '[].line_id',
+    {
+      key: '[].id', transform: () => (new ObjectId())
+    },    
+  ],
+  'items[].quote_id': '[].quoteId',
+  'items[].code': '[].code',
+  'items[].description': '[].title',
+  'items[].quantity': '[].quantity',
+  'items[].total_price_cents': '[].price',
+  'items[].gp_percent': '[].GP',
+  'items[].total_price_before_discount_cents': [
+    '[].totalVATExclusive',
+    {
+      key: '[].totalVATInclusive',
+      transform: (v: any) => (Number.parseInt(v) * 1.15)
+    }
+  ],
+  'items[].note': '[].note',
+  'items[].quote_heading_id': '[].header.meta.reference',
+  'items[].header_name': {
+    key: '[].header.text', transform: (v: any) => {
+      if (lodash.isEmpty(v) === false) return v;
+      return 'Uncategorised';
+    }
+  },
+  'items[].total_discount_percent': '[].discount',
+  'items[].product_class': '[].productClass',
+  'items[].product_class_description': '[].productClassDescription',
+};
+
+const line_item_map = {
+  'id': [
+    'quote_item_id',
+    'meta.reference',
+    'line_id',
+    {
+      key: 'id', transform: () => (new ObjectId())
+    },
+  ],
+  'quote_id': 'quoteId',
+  'code': 'code',
+  'description': 'title',
+  'quantity': 'quantity',
+  'total_price_cents': 'price',
+  'gp_percent': 'GP',
+  'total_price_before_discount_cents': [
+    'totalVATExclusive',
+    {
+      key: 'totalVATInclusive',
+      transform: (v: any) => (Number.parseInt(v) * 1.15)
+    }
+  ],
+  'note': 'note',
+  'quote_heading_id': 'header.meta.reference',
+  'header_name': {
+    key: 'header.text', transform: (v: any) => {
+      if (lodash.isEmpty(v) === false) return v;
+      return 'Uncategorised';
+    }
+  },
+  'total_discount_percent': 'discount',
+  'product_class': 'productClass',
+  'product_class_description': 'productClassDescription',
+}
+
+export const lasecGetQuoteLineItem = async (id: string): Promise<LasecQuoteItem> => {
+  const line_item_result: Lasec360QuoteLineItem = await lasecApi.Quotes.getLineItem(id).then();
+
+  const line_item: LasecQuoteItem = om.merge(line_item_result, line_item_map) as LasecQuoteItem;
+  line_item.meta.source = line_item_result;
+  
+  return line_item;
+};
+
+
 export const lasecGetQuoteLineItems = async (code: string, active_option: String = 'all') => {
   const keyhash = `quote.${code}-${active_option}.lineitems`;
 
@@ -1113,56 +1196,22 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: String
   if (cached) logger.debug(`Found Cached Line Items For Quote: ${code}`);
 
   if (lodash.isNil(cached) === true) {
-    const lineItems = await lasecApi.Quotes.getLineItems(code, active_option).then();
+    let lineItems = await lasecApi.Quotes.getLineItems(code, active_option).then();
+
+
     logger.debug(`Found line items for quote ${code}`, lineItems);
 
     if (lineItems.length == 0) return [];
 
-    cached = om.merge(lineItems, {
-      'items[]': '[].meta.source',
-      'items[].id': [
-        '[].quote_item_id',
-        '[].meta.reference',
-        '[].line_id',
-        {
-          key: '[].id', transform: () => (new ObjectId())
-        },
-        {
-          key: '[].quoteId', transform: () => (code)
-        }
-      ],
-      'items[].code': '[].code',
-      'items[].description': '[].title',
-      'items[].quantity': '[].quantity',
-      'items[].total_price_cents': '[].price',
-      'items[].gp_percent': '[].GP',
-      'items[].total_price_before_discount_cents': [
-        '[].totalVATExclusive',
-        {
-          key: '[].totalVATInclusive',
-          transform: (v: any) => (Number.parseInt(v) * 1.15)
-        }
-      ],
-      'items[].note': '[].note',
-      'items[].quote_heading_id': '[].header.meta.reference',
-      'items[].header_name': {
-        key: '[].header.text', transform: (v: any) => {
-          if (lodash.isEmpty(v) === false) return v;
-          return 'Uncategorised';
-        }
-      },
-      'items[].total_discount_percent': '[].discount',
-      'items[].product_class': '[].productClass',
-      'items[].product_class_description': '[].productClassDescription',
-    });
+    lodash.sortBy(lineItems, (e) => `${e.quote_heading_id || -1}-${e.position}`)
 
+    cached = om.merge(lineItems, line_items_map);
     cached.forEach((item: any) => {
       if (item.id === null || item.id === undefined) item.id = new ObjectId();
     });
 
-    logger.debug(`Line items ${code} 🟢`, { cached });
-
-    //await setCacheItem(keyhash, cached, 60).then();
+    logger.debug(`Line items ${code} 🟢`, { cached });    
+    //setCacheItem(keyhash, cached, 25).then();
   }
 
   return cached;
