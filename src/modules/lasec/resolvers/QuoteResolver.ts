@@ -22,6 +22,7 @@ import {
   LasecQuote,
   LasecNewQuoteInputArgs,
   LasecNewQuoteResult,
+  LasecNewQuoteResponse,
   LasecQuoteItem,
   LasecQuoteHeader,
   LasecQuoteOption,
@@ -72,6 +73,7 @@ import {
   getFreightRequetQuoteDetails,
   updateFreightRequesyDetails,
   duplicateQuoteForClient,
+  createNewQuote,
   saveQuoteComment,
   getQuoteComments,
   deleteQuoteComment,
@@ -609,7 +611,7 @@ export default {
 
           if (result && result.length > 0) {
             quote.options = result;
-            //if (quote.save && typeof quote.save === 'function') quote.save();            
+            //if (quote.save && typeof quote.save === 'function') quote.save();
 
             logger.debug(`🟢 Getting Options for quote ${source.id} return ${result.length}`, { result })
 
@@ -1076,7 +1078,7 @@ export default {
 
         if (response.success === true) {
           if (`${args.mailMessage.context}`.trim() !== '') {
-            //cleaning up context files.            
+            //cleaning up context files.
             fileService.removeFilesForContext(args.mailMessage.context).then();
           }
         }
@@ -1112,7 +1114,7 @@ export default {
     LasecCRMDuplicateQuoteForClient: async (obj, args) => {
       return duplicateQuoteForClient(args);
     },
-    LasecCreateNewQuoteForClient: async (obj: any, args: LasecNewQuoteInputArgs): Promise<LasecNewQuoteResult> => {
+    LasecCreateNewQuoteForClient: async (obj: any, args: LasecNewQuoteInputArgs): Promise<LasecNewQuoteResponse> => {
 
       const { newQuoteInput } = args;
       const { clientId, repCode } = newQuoteInput;
@@ -1120,33 +1122,24 @@ export default {
       logger.debug(`LasecCreateNewQuoteForClient()`, newQuoteInput);
 
       try {
+        const response = await createNewQuote({clientId, repCode}).then();
 
-        const lasecClient = await lasecApi.Customers.list({
-          filter: { ids: [clientId] }, ordering: {}, pagination: {
-            enabled: false,
-            current_page: 0,
-            page_size: 10
-          }
-        }).then()
-
-        if (lasecClient) {
-          logger.debug(`lasecClient api response`, lasecClient);
-        } else {
-          logger.error(`No Response for Client Filter`);
-        }
+        logger.debug(`[RESOLVER] NEW QUOTE RESPONSE ${JSON.stringify(response)}`);
 
         return {
-          success: true,
-          quoteId: `2323-${repCode}-${clientId}`,
-          message: `This indicates a success ${repCode}`
+          success: response.success,
+          message: response.message,
+          quoteId: response.quoteId,
+          quoteOptionId: response.quoteOptionId,
         };
 
       } catch (err) {
 
         return {
           success: false,
-          quoteId: 'RANDOM',
-          message: `This indicates a failure`
+          quoteId: '',
+          quoteOptionId: '',
+          message: err.message
         };
 
       }

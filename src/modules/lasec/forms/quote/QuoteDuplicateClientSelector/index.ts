@@ -278,6 +278,7 @@ const graphql: Reactory.IFormGraphDefinition = {
           hasNext
           pageSize
         }
+        repCode
         clients {
           id
           clientStatus

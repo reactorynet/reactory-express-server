@@ -2781,6 +2781,30 @@ export const duplicateQuoteForClient = async (params) => {
 
 }
 
+export const createNewQuote = async (params) => {
+  try {
+    const { clientId, repCode } = params;
+
+    const newQuoteResponse = await lasecApi.Quotes.createNewQuoteForClient({ customer_id: clientId, secondary_api_staff_user_id: repCode }).then();
+    if (!newQuoteResponse || newQuoteResponse.status != 'success') throw new ApiError('Error creating new quote.');
+
+    return {
+      success: true,
+      quoteId: newQuoteResponse.payload.quote_id,
+      quoteOptionId: newQuoteResponse.payload.quote_option_id,
+      message: `Quote successfully created.`
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      quoteId: '',
+      quoteOptionId: '',
+      message: error
+    };
+  }
+}
+
 export const getQuoteComments = async (params) => {
   return await LasecQuoteComment.find({ quoteId: params.quote_id }).exec();
 }

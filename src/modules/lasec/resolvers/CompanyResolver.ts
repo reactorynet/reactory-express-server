@@ -45,7 +45,8 @@ const getClients = async (params) => {
     orderDirection = "asc",
     iter = 0,
     filter,
-    repCode = undefined
+    repCode = undefined,
+    selectedClient = undefined
   } = params;
 
   logger.debug(`Getting Clients using search ${search}`, {
@@ -55,6 +56,7 @@ const getClients = async (params) => {
     filterBy,
     iter,
     repCode,
+    selectedClient,
     orderBy,
     orderDirection
   });
@@ -91,19 +93,22 @@ const getClients = async (params) => {
     }
   }
 
-  //_filter[filterBy] = filter || search;
+  // NOTE
+  // LEAVING THE BELOW FILTER IN PLACE SEEMS TO RESULT IN NO CLIENTS BEING RETURNED
 
-  if (typeof repCode === 'string') {
-    _filter.sales_team_id = repCode;
-  }
+  // if (typeof repCode === 'string') {
+  //   _filter.sales_team_id = repCode;
+  // }
 
-  if (typeof repCode === 'array' && repCode.length > 0) {
-    _filter.sales_team_ids = repCode;
-  }
+  // if (typeof repCode === 'array' && repCode.length > 0) {
+  //   _filter.sales_team_ids = repCode;
+  // }
 
   if (isString(search) === false || search.length < 3 && filter === undefined) return {
     paging: pagingResult,
-    clients: []
+    clients: [],
+    repCode: repCode ? { title: repCode, value: repCode} : {},
+    selectedClient
   };
 
   const cachekey = Hash(`client_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
@@ -122,6 +127,8 @@ const getClients = async (params) => {
             hasNext
             pageSize
           }
+          repCode
+          selectedClient
           clients {
             id
           }
@@ -234,6 +241,8 @@ const getClients = async (params) => {
     paging: pagingResult,
     search,
     filterBy,
+    repCode: repCode ? { title: repCode, value: repCode} : {},
+    selectedClient,
     clients,
   };
 
@@ -260,6 +269,8 @@ const getClients = async (params) => {
             hasNext
             pageSize
           }
+          repCode
+          selectedClient
           clients {
             id
           }
@@ -271,6 +282,8 @@ const getClients = async (params) => {
   }
 
   // setCacheItem(cachekey, result, 60 * 10);
+
+  logger.debug(`GETCLIENTLIST RETURN  (${result.repCode})`);
 
   return result;
 }

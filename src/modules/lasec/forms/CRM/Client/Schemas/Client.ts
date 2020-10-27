@@ -38,39 +38,60 @@ const ClientSchema: Reactory.ISchema = {
       type: "string",
       title: "Client Name"
     },
+    // customer: {
+    //   type: "string",
+    //   title: "Customer"
+    // },
     customer: {
-      type: "string",
-      title: "Customer"
+      type: "object",
+      properties: {
+        id: {
+          title: '',
+          type: 'string'
+        },
+        accountNumber: {
+          title: '',
+          type: 'string'
+        },
+        tradingName: {
+          title: '',
+          type: 'string'
+        },
+        salesTeam: {
+          title: '',
+          type: 'string'
+        },
+      }
     },
     accountNumber: {
-      type: "string",
-      title: "Account Number"
-    },
-    accountType: {
-      type: "string",
-      title: "Account Type"
-    },
-    customerStatus: {
-      type: "string",
-      title: "Customer Status",
-    },
-    country: {
-      type: "string",
-      title: "Country"
-    },
-    repCode: {
-      type: "string",
-      title: "Rep Code"
-    },
-    isNameDuplicate: {
-      type: "boolean",
-      title: "Duplicate Name"
-    },
-    isEmailDuplicate: {
-      type: "boolean",
-      title: "Duplicate Email"
-    },
-  }
-};
+        type: "string",
+        title: "Account Number"
+      },
+      accountType: {
+        type: "string",
+        title: "Account Type"
+      },
+      customerStatus: {
+        type: "string",
+        title: "Customer Status",
+      },
+      country: {
+        type: "string",
+        title: "Country"
+      },
+      repCode: {
+        type: "string",
+        title: "Rep Code"
+      },
+      isNameDuplicate: {
+        type: "boolean",
+        title: "Duplicate Name"
+      },
+      isEmailDuplicate: {
+        type: "boolean",
+        title: "Duplicate Email"
+      },
+    }
+  };
 
-export default ClientSchema;
+  export default ClientSchema;

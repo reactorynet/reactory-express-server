@@ -262,7 +262,7 @@ export interface Lasec360Quote {
   customer_id: string
   name?: string
   number_of_items: number
-  description?: string  
+  description?: string
   status: string
   status_name: string
   allowed_status_ids: string[]
@@ -400,7 +400,7 @@ export interface LasecApiResponse {
   status: string | 'success' | 'failed',
   pagination?: {
     enabled: boolean
-  },  
+  },
 };
 
 
@@ -432,12 +432,12 @@ export interface DateRange {
 export interface LasecNextActionsFilter {
   dateRange?: DateRange
   actioned?: Boolean
-  actionType: string  
+  actionType: string
 }
 
 export interface LasecNewQuoteInput {
   clientId: string
-  repCode: string  
+  repCode: string
 }
 
 export interface LasecNewQuoteInputArgs {
@@ -446,6 +446,12 @@ export interface LasecNewQuoteInputArgs {
 
 export interface LasecNewQuoteResult {
   quoteId: string
+  success:Boolean
+  message: string
+}
+export interface LasecNewQuoteResponse {
+  quoteId: string
+  quoteOptionId: string
   success:Boolean
   message: string
 }
@@ -474,35 +480,35 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
 
   /**
    * Sends an email to the list of users regarding the quote with the quote id.
-   * @param quote_id 
-   * @param subject 
-   * @param message 
-   * @param to 
-   * @param attachments 
+   * @param quote_id
+   * @param subject
+   * @param message
+   * @param to
+   * @param attachments
    */
   sendQuoteEmail(quote_id: string, subject: string, message: string, to: Reactory.ToEmail[], cc: Reactory.ToEmail[], bcc: Reactory.ToEmail[], attachments?: Reactory.EmailAttachment[], from?: Lasec360User): Promise<Reactory.EmailSentResult>;
 
 
   /**
    * Get quote for quote id
-   * @param quote_id 
+   * @param quote_id
    */
   getQuoteById(quote_id: string): Promise<LasecQuote>;
 
   getQuoteEmail(quote_id: string, email_type: string): Promise<Reactory.IEmailMessage>;
 
-  setQuoteEmail(quote_id: string, email_type: string, message: Reactory.IEmailMessage): Promise<Reactory.IEmailMessage> 
+  setQuoteEmail(quote_id: string, email_type: string, message: Reactory.IEmailMessage): Promise<Reactory.IEmailMessage>
 
   createNewQuoteOption(quote_id: string): Promise<LasecQuoteOption>;
 
   patchQuoteOption(quote_id: string, quote_option_id: string, option: LasecQuoteOption): Promise<LasecQuoteOption>
-  
+
   deleteQuoteOption(quote_id: string, quote_option_id: string): Promise<SimpleResponse>;
-  
+
   copyQuoteOption(quote_id: string, quote_option_id: string): Promise<LasecQuoteOption>;
 
   getQuoteOptionDetail(quote_id: string, option_id: string): Promise<LasecQuoteOption>;
-  
+
   getQuoteOptionsDetail(quote_id: string, option_ids: string[]): Promise<LasecQuoteOption[]>;
 
   getIncoTerms(): Promise<any>;
@@ -516,7 +522,7 @@ export interface ILasecClientService extends Reactory.Service.IReactoryService {
 
   /**
    * Returns a lasec client object
-   * @param id 
+   * @param id
    */
   getClientById(id: string): Promise<LasecClient>;
 }

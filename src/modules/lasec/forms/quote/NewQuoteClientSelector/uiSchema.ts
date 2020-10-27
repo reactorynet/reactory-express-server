@@ -13,7 +13,7 @@ const uiSchema: any = {
       repCode: { lg: 6, md: 6, sm: 12, xs: 12 },
       search: { lg: 6, md: 6, sm: 12, xs: 12 },
     },
-    {      
+    {
       clients: { lg: 12, md: 12, sm: 12, xs: 12 },
     },
     {
@@ -25,14 +25,14 @@ const uiSchema: any = {
     'ui:widget': 'RepCodeFilter',
     'ui:options': {
       props: {
-        multiple: false,        
+        multiple: false,
       }
-    }   
+    }
   },
   clientSearchInput: {
-    
+
   },
-  clients: { 
+  clients: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
 
@@ -115,7 +115,7 @@ const uiSchema: any = {
           propsMap: {
             'rowData': 'rowData',
           },
-        },       
+        },
         {
           title: 'Customer',
           field: 'customer',
@@ -149,14 +149,14 @@ const uiSchema: any = {
             'rowData': 'value',
           },
           breakpoint: 'md',
-        },                    
+        },
       ],
       actions: [
         {
           icon: 'check',
           tooltip: 'Click to select client',
           event: {
-            via: 'api',            
+            via: 'api',
             name: 'onClientSelectedForNewQuote',
             paramsMap: {
               'selected': 'selectedClient'
@@ -180,18 +180,21 @@ const uiSchema: any = {
         'props.formContext.$formData.paging': 'paging',
         'props.formContext.$formData.filterBy': 'filterBy',
         'props.formContext.$formData.filter': 'filter',
-        'props.formContext.$formData.repCode.value': 'repCode'
+        'props.formContext.$formData.repCode.value': 'repCode',
+        'props.formContext.$formData.selectedClient': 'selectedClient'
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
         'clients': 'data',
+        'repCode': 'repCode',
+        'selectedClient': 'selectedClient'
       },
       resultType: 'object',
     },
   },
-  selectedClient: {    
+  selectedClient: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData.id !== undefined ? "Click continue below to create a new quote for " + formData.fullName : "Select a client from the grid" }',
@@ -209,7 +212,7 @@ const uiSchema: any = {
         }
       }
     },
-  }, 
+  },
 };
 
 export default uiSchema;
