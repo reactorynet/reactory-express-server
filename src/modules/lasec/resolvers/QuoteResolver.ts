@@ -1196,10 +1196,15 @@ export default {
 
         let fields = {
           quantity: params.quote_item_input.quantity,
-          unit_price_cents: params.quote_item_input.price,
+          unit_price_cents: params.quote_item_input.unit_price_cents || params.quote_item_input.price,
           position: params.quote_item_input.position,
-          quote_heading_id: params.quote_item_input.header.quote_item_id
+          quote_heading_id: params.quote_item_input.quote_heading_id
         }
+
+        if (fields.quantity === null) delete fields.quantity;
+        if (fields.unit_price_cents === null) delete fields.unit_price_cents;
+        if (fields.position === null) delete fields.position;
+        if (fields.quote_heading_id === null) delete fields.quote_heading_id;
 
         const apiResult = await lasecApi.Quotes.updateQuoteItems({
           item_id: params.quote_item_input.quote_item_id,

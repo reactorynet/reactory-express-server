@@ -50,6 +50,8 @@ input LasecQuoteItemInput {
   title: String
   quantity: Float
   price: Float
+  unit_price_cents: Int
+  position: Int
   discount: Float
   subtotal: Float
   totalVATExclusive: Float
@@ -58,6 +60,7 @@ input LasecQuoteItemInput {
   GP: Float
   header_id: String
   note: String
+  quote_heading_id: String
   quote_option_id: String
 }
 
