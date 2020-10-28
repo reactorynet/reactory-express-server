@@ -35,10 +35,11 @@ export const displayUiSchema: any = {
       view: { lg: 12, sm: 12, md: 12 },
     },
     {
-      clientStatus: {md: 6, sm: 12 },
-      firstName: {md: 6, sm: 12 },
-      lastName: {md: 6, sm: 12 },
-      country: {md: 6, sm: 12 },
+      clientStatus: { md: 6, sm: 12 },
+      titleLabel: { md: 6, sm: 12 },
+      firstName: { md: 6, sm: 12 },
+      lastName: { md: 6, sm: 12 },
+      country: { md: 6, sm: 12 },
     }
   ],
   view: {
@@ -80,6 +81,28 @@ export const displayUiSchema: any = {
           justifyContent: 'flex-end'
         }
       },
+    }
+  },
+  titleLabel: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Title',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '200px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
   firstName: {
@@ -186,7 +209,8 @@ export const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      clientStatus: {md: 6, sm: 12 },
+      clientStatus: { md: 6, sm: 12 },
+      title: { md: 6, sm: 12 },
       firstName: { md: 6, sm: 12 },
       lastName: { md: 6, sm: 12 },
       country: { md: 6, sm: 12 },
@@ -251,6 +275,24 @@ export const editUiSchema: any = {
       ],
     },
   },
+  title: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetPersonTitles {
+        LasecGetPersonTitles {
+          id
+          title
+        }
+      }`,
+      resultItem: 'LasecGetPersonTitles',
+      resultsMap: {
+        'LasecGetPersonTitles.[].id': ['[].key', '[].value'],
+        'LasecGetPersonTitles.[].title': '[].label',
+      },
+    },
+    'ui:description': "Select the client title",
+  },
   lastName: {},
   firstName: {},
   country: {
@@ -293,7 +335,7 @@ export const newUiSchema: any = {
       clientTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
       firstName: { xs: 12, sm: 12, md: 6, lg: 4 },
       lastName: { xs: 12, sm: 12, md: 6, lg: 4 },
-      country: { xs: 12, sm: 12, md: 6, lg: 4},
+      country: { xs: 12, sm: 12, md: 6, lg: 4 },
       accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
       repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
     }

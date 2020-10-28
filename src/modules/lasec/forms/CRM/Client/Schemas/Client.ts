@@ -19,6 +19,15 @@ const ClientSchema: Reactory.ISchema = {
       type: "string",
       title: "Client Status"
     },
+    title: {
+      type: "string",
+      title: "Client Title",
+      minLength: 1,
+    },
+    titleLabel: {
+      type: "string",
+      title: "Client Title",
+    },
     clientTitle: {
       type: "string",
       title: "Client Title",
