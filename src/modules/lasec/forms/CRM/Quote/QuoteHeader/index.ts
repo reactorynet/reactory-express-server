@@ -94,11 +94,13 @@ const uiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      client: { xs: 12, sm: 6, md: 4, lg: 3 },      
-      repCode: { xs: 12, sm: 6, md: 4, lg: 3 },
-      quoteType: { xs: 12, sm: 6, md: 4, lg: 3 },
-      validDate: { xs: 12, sm: 6, md: 4, lg: 3 },
+      client: { xs: 12, sm: 6, md: 6, lg: 6 },      
+      repCode: { xs: 12, sm: 6, md: 6, lg: 6 },      
     },
+    {
+      quoteType: { xs: 12, sm: 6, md: 6, lg: 6 },
+      validDate: { xs: 12, sm: 6, md: 6, lg: 6 },
+    }
   ],
 
   code: {},

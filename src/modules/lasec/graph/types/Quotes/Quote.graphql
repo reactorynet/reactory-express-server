@@ -62,6 +62,7 @@ input LasecQuoteItemInput {
   note: String
   quote_heading_id: String
   quote_option_id: String
+  included_in_quote_option: Boolean
 }
 
 # input LasecQuoteItemInput {

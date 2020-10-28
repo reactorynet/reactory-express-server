@@ -1198,13 +1198,15 @@ export default {
           quantity: params.quote_item_input.quantity,
           unit_price_cents: params.quote_item_input.unit_price_cents || params.quote_item_input.price,
           position: params.quote_item_input.position,
-          quote_heading_id: params.quote_item_input.quote_heading_id
+          quote_heading_id: params.quote_item_input.quote_heading_id,
+          included_in_quote_option: params.quote_item_input.included_in_quote_option
         }
 
         if (fields.quantity === null) delete fields.quantity;
         if (fields.unit_price_cents === null) delete fields.unit_price_cents;
         if (fields.position === null) delete fields.position;
         if (fields.quote_heading_id === null) delete fields.quote_heading_id;
+        if (fields.included_in_quote_option === null) delete fields.included_in_quote_option;
 
         const apiResult = await lasecApi.Quotes.updateQuoteItems({
           item_id: params.quote_item_input.quote_item_id,
@@ -1218,7 +1220,7 @@ export default {
           quote_item_id: params.quote_item_input.quote_item_id,
         }
         
-        result = await lasecGetQuoteLineItem(params.quote_item_input.quote_item_id).then()        
+        result = await lasecGetQuoteLineItem(params.quote_item_input.quote_item_id).then()
 
         return result;
 
