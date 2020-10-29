@@ -82,23 +82,36 @@ const DEFAULT_ADDRESS_PROPS = {
 const baseUiSchema: any =  {
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
       paddingBottom: '16px'
     },
     style: {
-      marginTop: '0',
+      marginTop: '16px',
     },
     showSubmit: false,
     showRefresh: false,
   },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '30px'
+  },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px',
+      marginBottom: '16px'
+    }
+  },
   'ui:grid-layout': [
     {
       physicalAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
       deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
       billingAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+
     },
   ],
   physicalAddress: {
@@ -240,6 +253,7 @@ let newUiSchema: any = {
     {
       physicalAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
       deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+      style: { padding: '25px 32px 0 32px' }
     },
   ],
 };

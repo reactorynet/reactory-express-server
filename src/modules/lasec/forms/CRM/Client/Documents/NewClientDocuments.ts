@@ -10,7 +10,7 @@ import { defaultUiResources } from '../../../uiResources';
 const newSchema = cloneDeep<Reactory.ISchema>(DocumentFormSchema);
 // newSchema.properties.paging = { ...PagingSchema }
 newSchema.title = 'UPLOAD DOCUMENTS';
-newSchema.description = 'Use the area below to add files for this customer.';
+// newSchema.description = 'Use the area below to add files for this customer.';
 export const NewSchema = newSchema;
 
 export const NewUiSchema: any = {
@@ -23,18 +23,6 @@ export const NewUiSchema: any = {
       marginTop: '16px',
       paddingBottom: '8px'
     },
-    // schemaSelector: {
-    //   variant: 'button',
-    //   buttonTitle: 'Edit',
-    //   activeColor: 'primary',
-    //   selectSchemaId: 'edit',
-    //   style: {
-    //     position: 'absolute',
-    //     top: '-20px',
-    //     right: 0,
-    //   }
-    // },
-    // showSchemaSelectorInToolbar: false,
     style: {
       marginTop: '16px',
     },
@@ -42,28 +30,24 @@ export const NewUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '25px'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px',
+      marginBottom: '20px'
+    }
+  },
   'ui:grid-layout': [
-    // {
-    //   view: {sm: 12, md: 12}
-    // },
     {
       upload: { lg: 6, md: 6, sm: 12, },
       uploadedDocuments: { lg: 6, md: 6, sm: 12 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
-
-  // view: {
-  //   'ui:widget': 'SchemaSelectorWidget',
-  //   'ui:options': {
-  //     style: {
-  //       width: '100%',
-  //       float: "right"
-  //     },
-  //   }
-  // },
 
   view: {
     'ui:widget': 'HiddenWidget',

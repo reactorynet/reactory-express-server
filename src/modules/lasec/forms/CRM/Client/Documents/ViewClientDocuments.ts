@@ -12,7 +12,7 @@ export const ViewSchema = viewSchema;
 
 //Schema for display purposes, should not support upload
 export const ViewUiSchema: any = {
-  'ui:graphql': {    
+  'ui:graphql': {
     query: {
       name: 'LasecGetCustomerDocuments',
       text: `query LasecGetCustomerDocuments($uploadContexts: [String], $paging: PagingRequest){
@@ -20,24 +20,24 @@ export const ViewUiSchema: any = {
           paging {
             total
             page
-            pageSize          
+            pageSize
           }
           documents {
             id
             filename
             link
             size
-          }        
-        }      
+          }
+        }
       }`,
-      variables: {      
-        'formData.$uploadContexts': 'uploadContexts'            
+      variables: {
+        'formData.$uploadContexts': 'uploadContexts'
       },
       formData: {
         $uploadContext: [
           'lasec-crm::company-document'
         ]
-      },    
+      },
       autoQuery: true,
       queryMessage: 'Loading customer documents',
       resultType: 'object',
@@ -59,13 +59,13 @@ export const ViewUiSchema: any = {
           }
         }`,
         notification: {
-          
+
         },
         variables: {
-  
+
         },
         objectMap: true,
-  
+
       }
     }
   },
@@ -83,11 +83,6 @@ export const ViewUiSchema: any = {
       buttonTitle: 'Edit',
       activeColor: 'primary',
       selectSchemaId: 'edit',
-      style: {
-        position: 'absolute',
-        top: '-20px',
-        right: 0,
-      }
     },
     showSchemaSelectorInToolbar: false,
     style: {
@@ -97,7 +92,8 @@ export const ViewUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px'
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -106,6 +102,7 @@ export const ViewUiSchema: any = {
     },
     {
       uploadedDocuments: { xs: 12, sm: 12, md: 12, lg: 12 },
+      style: { marginTop: '25px'}
     }
   ],
   view: {
@@ -121,8 +118,8 @@ export const ViewUiSchema: any = {
     'ui:widget': 'HiddenWidget',
     hidden: true
   },
-  uploadedDocuments: { 
-    ...DocumentGridWidget 
+  uploadedDocuments: {
+    ...DocumentGridWidget
   }
 };
 
@@ -143,24 +140,32 @@ export const ConfirmUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '30px'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px'
+    }
+  },
   'ui:grid-layout': [
     {
-      uploadedDocuments: { md: 12 },
+      uploadedDocuments: { sm: 12, md: 12 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
 
   uploadedDocuments: {
     ...DocumentGridWidget,
-    'ui:options': { 
-      ...DocumentGridWidget['ui:options'], 
+    'ui:options': {
+      ...DocumentGridWidget['ui:options'],
       query: 'PagedNewCustomerDocuments',
-      variables: {      
-        'formData.paging': 'paging',              
+      variables: {
+        'formData.paging': 'paging',
         'formContext.$formData.uploadContext': 'uploadContexts',
-      },      
+      },
     }
   }
 };

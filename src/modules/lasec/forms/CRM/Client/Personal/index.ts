@@ -9,7 +9,7 @@ export const displayUiSchema: any = {
     componentType: "div",
     toolbarPosition: 'none',
     containerStyles: {
-      padding: '0px',
+      padding: '24px',
       margin: '0px',
       paddingBottom: '8px'
     },
@@ -17,7 +17,7 @@ export const displayUiSchema: any = {
       variant: 'button',
       buttonTitle: 'Edit',
       activeColor: 'primary',
-      selectSchemaId: 'edit'
+      selectSchemaId: 'edit',
     },
     style: {
       marginTop: '16px',
@@ -27,9 +27,15 @@ export const displayUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px'
+    }
+  },
   'ui:grid-layout': [
     {
       view: { lg: 12, sm: 12, md: 12 },
@@ -40,6 +46,7 @@ export const displayUiSchema: any = {
       firstName: { md: 6, sm: 12 },
       lastName: { md: 6, sm: 12 },
       country: { md: 6, sm: 12 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
   view: {
@@ -71,14 +78,14 @@ export const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '200px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
       bodyProps: {
         style: {
           display: 'flex',
-          justifyContent: 'flex-end'
+          justifyContent: 'flex-end',
         }
       },
     }
@@ -93,7 +100,7 @@ export const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '200px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -115,7 +122,7 @@ export const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '200px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -141,7 +148,7 @@ export const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '200px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -162,7 +169,7 @@ export const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '200px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -188,13 +195,7 @@ export const editUiSchema: any = {
       variant: 'button',
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
-      buttonVariant: "contained",
       selectSchemaId: 'display',
-      style: {
-        position: 'absolute',
-        top: '-20px',
-        right: 0,
-      }
     },
     style: {
       marginTop: '16px',
@@ -203,17 +204,27 @@ export const editUiSchema: any = {
     showSubmit: true,
     showRefresh: false,
   },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px'
+  },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px 24px'
+    }
+  },
   'ui:grid-layout': [
     {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      clientStatus: { md: 6, sm: 12 },
+      clientStatus: { md: 8, sm: 8 },
       title: { md: 6, sm: 12 },
       firstName: { md: 6, sm: 12 },
       lastName: { md: 6, sm: 12 },
       country: { md: 6, sm: 12 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
   view: {
@@ -318,6 +329,7 @@ export const newUiSchema: any = {
   'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -328,8 +340,19 @@ export const newUiSchema: any = {
     },
     showSubmit: false,
     showRefresh: false,
+    showToolbar: false,
+  },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '30px'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px'
+    }
+  },
   'ui:grid-layout': [
     {
       clientTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
@@ -338,6 +361,7 @@ export const newUiSchema: any = {
       country: { xs: 12, sm: 12, md: 6, lg: 4 },
       accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
       repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
   clientTitle: {
@@ -408,6 +432,7 @@ export const newUiSchema: any = {
 export const confirmUiSchema: any = {
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -419,7 +444,17 @@ export const confirmUiSchema: any = {
     showSubmit: false,
     showRefresh: false,
   },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '30px'
+  },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px'
+    }
+  },
   'ui:grid-layout': [
     {
       clientTitle: { lg: 4, md: 6, sm: 12 },
@@ -428,9 +463,9 @@ export const confirmUiSchema: any = {
       country: { lg: 4, md: 6, sm: 12 },
       accountType: { lg: 4, md: 6, sm: 12 },
       repCode: { lg: 4, md: 6, sm: 12 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
-
   clientTitle: {
     'ui:graphql': {
       name: 'LasecGetPersonTitleById',
@@ -469,7 +504,6 @@ export const confirmUiSchema: any = {
       },
     }
   },
-
   clientStatus: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -492,7 +526,6 @@ export const confirmUiSchema: any = {
       },
     }
   },
-
   firstName: {
     'ui:widget': 'LabelWidget',
 
@@ -516,7 +549,6 @@ export const confirmUiSchema: any = {
       }
     }
   },
-
   lastName: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -543,7 +575,6 @@ export const confirmUiSchema: any = {
       }
     }
   },
-
   country: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -565,7 +596,6 @@ export const confirmUiSchema: any = {
       }
     }
   },
-
   accountType: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -588,7 +618,6 @@ export const confirmUiSchema: any = {
       },
     }
   },
-
   repCode: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -613,7 +642,6 @@ export const confirmUiSchema: any = {
     }
   },
 };
-
 
 const schema: Reactory.ISchema = { ...ClientSchema };
 schema.required = ["firstName", "lastName", "country"];

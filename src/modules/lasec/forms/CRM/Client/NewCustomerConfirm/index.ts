@@ -14,7 +14,7 @@ const displayUiSchema: any = {
     submitProps: {
       variant: 'button',
       text: 'CONFIRM & SAVE',
-      color: 'primary',      
+      color: 'primary',
       iconAlign: 'left'
     },
     componentType: "div",
@@ -24,7 +24,7 @@ const displayUiSchema: any = {
       margin: '0px',
       marginTop: '16px',
       paddingBottom: '8px'
-    },   
+    },
     style:{
       marginTop: '16px',
     },
@@ -32,30 +32,33 @@ const displayUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '30px'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 45px',
+      marginBottom: '5px'
+    }
+  },
   'ui:grid-layout': [
     {
       personalDetails: { xs: 12, sm: 12, md: 12, lg: 12 },
       contactDetails: { xs: 12, sm: 12, md: 12, lg: 12 },
       jobDetails: { xs: 12, sm: 12, md: 12, lg: 12 },
-    },
-    {
       customer: { xs: 12, sm: 12, md: 12, lg: 12 },
       organization: { xs: 12, sm: 12, md: 12, lg: 12 },
-    },
-    {
       address: { xs: 12,  sm: 12, md: 12, lg: 12 },
+      uploadedDocuments: { xs: 12,  sm: 12, md: 12, lg: 12 },
+      style: { padding: '16px 32px' }
     },
-    {
-      uploadedDocuments: { xs: 12,  sm: 12, md: 12, lg: 12 }
-    }
   ],
   personalDetails: PersonalDisplayUISchema,
   contactDetails: ContactDisplayUISchema,
-  jobDetails: JobDetailUISchema,  
-  address: {    
+  jobDetails: JobDetailUISchema,
+  address: {
     'ui:options': {
       componentType: "div",
       containerStyles: {
@@ -69,14 +72,25 @@ const displayUiSchema: any = {
       showSubmit: false,
       showRefresh: false,
     },
+    'ui:titleStyle': {
+      borderBottom: '2px solid #D5D5D5',
+      paddingBottom: '10px',
+      marginBottom: '30px'
+    },
     'ui:field': 'GridLayout',
+    'ui:grid-options': {
+      containerStyles: {
+        padding: '24px 24px 60px'
+      }
+    },
     'ui:grid-layout': [
       {
         physicalAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
-        deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },        
+        deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
+        style: { padding: '25px 32px 0 32px' }
       },
     ],
-  
+
     physicalAddress: {
       'ui:widget': 'LabelWidget',
       'ui:options': {
@@ -98,7 +112,7 @@ const displayUiSchema: any = {
         }
       }
     },
-  
+
     deliveryAddress: {
       'ui:widget': 'LabelWidget',
       'ui:options': {
@@ -119,8 +133,8 @@ const displayUiSchema: any = {
           }
         }
       }
-    }    
-  
+    }
+
   },
   customer: CustomerConfirmUISchema,
   organization: OrganizationConfirmUISchema,
@@ -146,7 +160,7 @@ const schema: Reactory.ISchema = {
     personalDetails: { ...LasecPersonalForm.schema, title: 'PERSONAL INFO' },
     contactDetails: { ...LasecContactForm.schema },
     jobDetails: LasecJobDetailForm.schema,
-    customer: {      
+    customer: {
       ...LasecCRMCustomerLookupForm.schema,
       title: 'SELECTED CUSTOMER',
     },
@@ -159,12 +173,12 @@ const schema: Reactory.ISchema = {
       title: "Address Details",
       properties: {
         physicalAddress: { ...AddressSchemaObject, title: 'Physical Address' },
-        deliveryAddress: { ...AddressSchemaObject, title: 'Delivery Address' },        
+        deliveryAddress: { ...AddressSchemaObject, title: 'Delivery Address' },
       }
     },
-    uploadedDocuments: { 
+    uploadedDocuments: {
       ...LasecCRMDocuments.DocumentFormSchema,
-      title: 'FILES TO ATTACH TO CLIENT',      
+      title: 'FILES TO ATTACH TO CLIENT',
     },
   }
 };
@@ -194,16 +208,16 @@ const LasecCRMNewCustomerConfirm: Reactory.IReactoryForm = {
       description: 'CONFIRM & SAVE ',
       icon: 'list',
       uiSchema: displayUiSchema,
-    },   
+    },
   ],
   widgetMap: [
     { widget: 'LasecUserTitleWidget', componentFqn: 'lasec-crm.LasecUserTitleWidget@1.0.0' }
   ],
-  defaultFormValue: {      
-    uploadContext: [ 
-      'lasec-crm::new-company::document',      
-    ]    
-  }  
+  defaultFormValue: {
+    uploadContext: [
+      'lasec-crm::new-company::document',
+    ]
+  }
 };
 
 export default LasecCRMNewCustomerConfirm;
