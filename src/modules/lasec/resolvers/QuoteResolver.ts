@@ -85,6 +85,7 @@ import {
   lasecGetQuoteLineItem
 } from './Helpers';
 import { queryAsync } from '@reactory/server-core/database/mysql';
+import { PagingRequest } from 'database/types';
 
 const QUOTE_SERVICE_ID = 'lasec-crm.LasecQuoteService@1.0.0';
 
@@ -150,6 +151,39 @@ interface LasecSendMailParams {
   mailMessage: Reactory.IEmailMessage
 }
 
+const $PagedLineItemsResponse = async (quote: any, context: { item_paging?: Reactory.IPagingRequest }, info: any) => {
+  const { code, active_option, lineItems = [], $lineItems_meta = null } = quote;
+  
+  let $line_items: LasecQuoteItem[] = quote.lineItems || [];
+  let item_paging: Reactory.IPagingRequest = {
+    page: 1,
+    pageSize: 25
+  };
+  
+  logger.debug(`🟠 $PagedLineItemsResponse() =>  Paged Line Items Request ${quote.code || quote.id}`, { context })
+
+  if (quote && quote.item_paging_request) {
+    item_paging = { ...item_paging, ...quote.item_paging_request };
+  }
+
+
+  
+  if (!$lineItems_meta) {
+    quote.lineItems = $line_items;
+                            
+    const paged_results: { lineItems: LasecQuoteItem[], item_paging: Reactory.IPagingRequest } = await lasecGetQuoteLineItems(code, active_option, item_paging.page, item_paging.pageSize).then();
+    quote.lineItems = paged_results.lineItems;
+    quote.item_paging = paged_results.item_paging;
+
+    logger.debug(`🟢 $PagedLineItemsResponse() =>  Paged Line Items Response ${quote.code || quote.id}`, { context, item_paging, paging_results: paged_results.item_paging })
+
+    quote.$lineItems_meta = {
+      when: new Date().valueOf(),
+    };
+  }
+  
+  return quote;
+}
 
 export default {
   CRMSaleOrderComment: {
@@ -341,10 +375,13 @@ export default {
 
       return headers;
     },
-    lineItems: async (quote: any) => {
-      const { code, active_option } = quote;
-      logger.debug(`Finding LineItems for Quote ${code} ${active_option}`, { quote });
-      return lasecGetQuoteLineItems(code, active_option);
+    lineItems: async (quote: any, context: { item_paging?: Reactory.IPagingRequest }, info: any) => {
+      if(!quote.lineItems || quote.lineItems.length === 0) quote = await $PagedLineItemsResponse(quote, context, info).then()
+      return quote.lineItems;
+    },
+    item_paging: async (quote: LasecQuote, context:  { item_paging?: Reactory.IPagingRequest }, info: any ) => {
+      if (!quote.item_paging) quote = await $PagedLineItemsResponse(quote, context, info).then()        
+      return quote.item_paging;
     },
     statusName: (quote) => {
       const { source } = quote.meta;
@@ -656,15 +693,17 @@ export default {
     LasecGetProductDashboard: async (obj, { dashparams }) => {
       return lasecGetProductDashboard(dashparams);
     },
-    LasecGetQuoteById: async (obj, params: { quote_id: string, option_id?: string }) => {
+    LasecGetQuoteById: async (obj, params: { quote_id: string, option_id?: string, item_paging: PagingRequest }, context: any) => {
 
-      const { quote_id, option_id } = params;
+      const { quote_id, option_id, item_paging } = params;      
 
       if (isNil(quote_id) === true) throw new ApiError('This method requies a quote id to work');
       const result = await getLasecQuoteById(quote_id).then();
 
       result.active_option = option_id || result.meta.source.quote_option_ids[0]
       logger.debug(`QUOTE RESULT:: ${JSON.stringify(result)}`);
+
+      result.item_paging_request = item_paging
 
       return result;
     },
@@ -894,9 +933,7 @@ export default {
           }
         }
       }
-
-
-
+      
       return {
         quote,
         success: true,
@@ -904,7 +941,8 @@ export default {
       };
     },
 
-    LasecUpdateQuote: async (parent, args) => {
+    LasecUpdateQuote: async (parent, args: { item_id: string, quote_type: string, rep_code: string, client_id: string, valid_until: Date }) => {
+
       return updateQuote(args);
     },
 
@@ -1199,7 +1237,9 @@ export default {
           unit_price_cents: params.quote_item_input.unit_price_cents || params.quote_item_input.price,
           position: params.quote_item_input.position,
           quote_heading_id: params.quote_item_input.quote_heading_id,
-          included_in_quote_option: params.quote_item_input.included_in_quote_option
+          included_in_quote_option: params.quote_item_input.included_in_quote_option,
+          note: params.quote_item_input.note,
+          mark_up: params.quote_item_input.markup
         }
 
         if (fields.quantity === null) delete fields.quantity;
@@ -1207,6 +1247,7 @@ export default {
         if (fields.position === null) delete fields.position;
         if (fields.quote_heading_id === null) delete fields.quote_heading_id;
         if (fields.included_in_quote_option === null) delete fields.included_in_quote_option;
+        if (fields.note === null) delete fields.note;
 
         const apiResult = await lasecApi.Quotes.updateQuoteItems({
           item_id: params.quote_item_input.quote_item_id,

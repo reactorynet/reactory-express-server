@@ -23,18 +23,7 @@ export const NewUiSchema: any = {
       marginTop: '16px',
       paddingBottom: '8px'
     },
-    // schemaSelector: {
-    //   variant: 'button',
-    //   buttonTitle: 'Edit',
-    //   activeColor: 'primary',
-    //   selectSchemaId: 'edit',
-    //   style: {
-    //     position: 'absolute',
-    //     top: '-20px',
-    //     right: 0,
-    //   }
-    // },
-    // showSchemaSelectorInToolbar: false,
+  
     style: {
       marginTop: '16px',
     },
@@ -46,24 +35,12 @@ export const NewUiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    // {
-    //   view: {sm: 12, md: 12}
-    // },
+  
     {
       upload: { lg: 6, md: 6, sm: 12, },
       uploadedDocuments: { lg: 6, md: 6, sm: 12 },
     }
   ],
-
-  // view: {
-  //   'ui:widget': 'SchemaSelectorWidget',
-  //   'ui:options': {
-  //     style: {
-  //       width: '100%',
-  //       float: "right"
-  //     },
-  //   }
-  // },
 
   view: {
     'ui:widget': 'HiddenWidget',
