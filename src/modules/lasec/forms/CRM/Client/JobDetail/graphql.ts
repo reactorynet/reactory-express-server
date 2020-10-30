@@ -9,6 +9,10 @@ const graphql: Reactory.IFormGraphDefinition = {
         jobTitle
         salesTeam
         department
+        faculty
+        lineManager
+        jobType
+        customerType
         customer {
           id
           accountType
@@ -74,7 +78,6 @@ const graphql: Reactory.IFormGraphDefinition = {
     }
   }
 };
-
 
 export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   query: {

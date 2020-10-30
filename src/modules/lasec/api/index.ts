@@ -519,6 +519,41 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
+
+    GetFacultyList: async (params = defaultParams) => {
+      const resp = await FETCH(SECONDARY_API_URLS.faculty_list.url, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') { return payload; }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+
+    GetCustomerType: async (params = defaultParams) => {
+      const resp = await FETCH(SECONDARY_API_URLS.customer_type.url, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') { return payload; }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+
+    GetCustomerLineManagers: async (params = defaultParams) => {
+      const resp = await FETCH(`api/customer/${params.customerId}/line_manager_list`, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') { return payload; }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+
+
     GetCustomerClassById: async (id) => {
 
       const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { filter: { ids: [id] }, paging: {} } }).then();
@@ -929,11 +964,11 @@ const Api = {
         } else {
           logger.warn(`Could not get the line item with the id ${id}`);
           return null;
-        }        
+        }
       } catch (err) {
         logger.error(`Get Line Item Failed ${err.message}`, err);
         return null;
-      }      
+      }
     },
     getLineItems: async (code, active_option) => {
 

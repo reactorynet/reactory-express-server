@@ -131,6 +131,10 @@ export const ENTITY_KEY__STOCK_MULTIPLIER = 'stock_multiplier';
 export const ENTITY_KEY__CUSTOMER_ACCOUNT_TYPE = 'customer_account_type';
 export const ENTITY_KEY__BANK_ACCOUNT_TYPE = 'bank_account_type';
 export const ENTITY_KEY__CUSTOMER_CLASS = 'customer_class';
+
+export const ENTITY_KEY__FACULTY_LIST = 'customer/faculty/list';
+export const ENTITY_KEY__CUSTOMER_TYPE = 'customer/type/list';
+
 export const ENTITY_KEY__CUSTOMER_SUB_CLASS = 'customer_sub_class';
 export const ENTITY_KEY__CUSTOMER_RANKING = 'customer_ranking';
 export const ENTITY_KEY__CUSTOMER_DEPARTMENT = 'customer_department';

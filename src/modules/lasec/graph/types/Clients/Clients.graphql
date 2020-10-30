@@ -64,6 +64,11 @@ type LasecCRMClient {
   alternateOfficeNumber: String
   availableBalance: Float
   creditLimit: Float
+
+  faculty: String
+  lineManager: String
+  jobType: String
+  customerType: String
 }
 
 type LasecDocument {
@@ -293,6 +298,11 @@ extend type Query {
   LasecGetClientComments(clientId: String!): [CRMClientComment]
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecLookupItem]
+  LasecGetFacultyList: [LasecLookupItem]
+
+  LasecGetCustomerType: [LasecLookupItem]
+  LasecGetCustomerLineManagerOptions(customerId: String): [LasecLookupItem]
+
   LasecGetCustomerClassById(id: String): LasecLookupItem
   LasecGetCustomerRanking: [LasecLookupItem]
   LasecGetCustomerRankingById(id: String): LasecLookupItem

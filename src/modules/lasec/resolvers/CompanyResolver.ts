@@ -365,6 +365,11 @@ export const getClient = async (params) => {
       'department': ['department', 'jobTitle'],
       'ranking_id': 'customer.ranking',
 
+      'faculty': 'faculty',
+      'line_manager_id': 'lineManager',
+      'role_id': 'jobType',
+      'customer_type': 'customerType',
+
       // 'ranking_id': ['customer.rankingId',
       //   {
       //     key: 'customer.ranking',
@@ -636,6 +641,60 @@ const getCustomerClass = async (params) => {
   }
 
   return [];
+};
+
+const getFacultyList = async (params) => {
+
+  const cached = await getCacheItem(Hash('LASEC_FACULTY')).then();
+  //if (cached && cached.items) return cached.items;
+  const idsResponse = await lasecApi.Customers.GetFacultyList();
+
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetFacultyList({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
+      setCacheItem(Hash('LASEC_FACULTY'), details, 60);
+      return details.items;
+    }
+  }
+
+  return [];
+
+};
+
+const getCustomerType = async (params) => {
+
+  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_TYPE')).then();
+  //if (cached && cached.items) return cached.items;
+  const idsResponse = await lasecApi.Customers.GetCustomerType();
+
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerType({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
+      setCacheItem(Hash('LASEC_CUSTOMER_TYPE'), details, 60);
+      return details.items;
+    }
+  }
+
+  return [];
+
+};
+
+const getCustomerLineManagerOptions = async (params) => {
+
+  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_LINEMANAGERS')).then();
+  //if (cached && cached.items) return cached.items;
+  const idsResponse = await lasecApi.Customers.GetCustomerLineManagers(params);
+
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerLineManagers({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
+      setCacheItem(Hash('LASEC_CUSTOMER_LINEMANAGERS'), details, 60);
+      return details.items;
+    }
+  }
+
+  return [];
+
 };
 
 const getCustomerClassById = async (id) => {
@@ -1704,6 +1763,18 @@ export default {
     LasecGetCustomerClass: async (obj, args) => {
       return getCustomerClass(args);
     },
+    LasecGetFacultyList: async (obj, args) => {
+      return getFacultyList(args);
+    },
+
+    LasecGetCustomerType: async (obj, args) => {
+      return getCustomerType(args);
+    },
+
+    LasecGetCustomerLineManagerOptions: async (obj, args) => {
+      return getCustomerLineManagerOptions(args);
+    },
+
     LasecGetCustomerClassById: async (obj, args) => {
       return getCustomerClassById(args.id);
     },
