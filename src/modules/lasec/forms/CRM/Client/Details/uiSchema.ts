@@ -15,13 +15,7 @@ const uiSchema: any = {
     componentType: "div",
     container: "div",
     style: {
-      backgroundColor: "#F6F6F6",
-      // position: "absolute",
-      // top: "54px",
-      // top: "0",
-      // left: "0",
-      // right: "0",
-      // bottom: "0",
+      backgroundColor: "#e6e6e6",
       paddingLeft: "16px",
       paddingRight: "16px"
     }
@@ -30,7 +24,7 @@ const uiSchema: any = {
   'ui:grid-options': {
     spacing: 4,
     containerStyles: {
-      backgroundColor: "#F6F6F6",
+      backgroundColor: "#e6e6e6",
       border: "none",
       boxShadow: "none"
     }
