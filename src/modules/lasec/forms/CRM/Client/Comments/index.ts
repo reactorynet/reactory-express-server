@@ -18,7 +18,9 @@ const displayUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '16px'
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [

@@ -1,5 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { newClientGraphQL } from './graphql';
+
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -39,24 +40,34 @@ const uiSchema: any = {
   },
 };
 
-
-
 const newUiSchema: any = {
   'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
       paddingBottom: '16px'
     },
     style: {
-      marginTop: '0',
+      marginTop: '16px',
     },
     showSubmit: false,
     showRefresh: false,
   },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '16px'
+  },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px',
+      marginBottom: '16px'
+    }
+  },
   'ui:grid-layout': [
     {
       registeredName: { xs: 12, sm: 12, md: 6, lg: 4 },
@@ -79,18 +90,18 @@ const newUiSchema: any = {
       componentProps: {
 
       },
-      componentPropertyMap: {        
+      componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',
         'LookupComponent.props.onChange': 'onCustomerSelect',
         'LookupComponent.props.formContext': 'LookupComponentFormContext',
-      },      
+      },
     },
   },
 };
 
-export const CustomerConfirmUISchema: any = {  
+export const CustomerConfirmUISchema: any = {
   'ui:options': {
-    componentType: "div",    
+    componentType: "div",
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -102,10 +113,21 @@ export const CustomerConfirmUISchema: any = {
     showSubmit: false,
     showRefresh: false,
   },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '30px'
+  },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px'
+    }
+  },
   'ui:grid-layout': [
     {
       registeredName: { xs: 12, sm: 12, md: 12, lg: 12 },
+      style: { padding: '25px 32px 0 32px' }
     },
   ],
   registeredName: {
@@ -127,7 +149,7 @@ export const CustomerConfirmUISchema: any = {
           justifyContent: 'flex-end'
         }
       }
-    }     
+    }
   },
 };
 

@@ -27,7 +27,7 @@ export const uiSchema: any = {
       label: 'Organisation Name',
       title: 'Search for an Organisation',
       modalProps: {
-        fullScreen: false,        
+        fullScreen: false,
         closeOnEvents: [
           'CloseModal:LasecCRMCustomerLookupTable'
         ]
@@ -36,8 +36,8 @@ export const uiSchema: any = {
     props: {
       componentFqn: 'lasec-crm.LasecCRMOrganisationLookupTable@1.0.0',
       componentProps: {
-       
-      },      
+
+      },
     },
   },
 };
@@ -46,18 +46,30 @@ export const newUiSchema: any = {
   'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
       paddingBottom: '16px'
     },
     style: {
-      marginTop: '0',
+      marginTop: '16px',
     },
     showSubmit: false,
     showRefresh: false,
   },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '16px'
+  },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px',
+      marginBottom: '16px'
+    }
+  },
   'ui:grid-layout': [
     {
       name: { xs: 12, sm: 12, md: 6, lg: 4 },
@@ -69,7 +81,7 @@ export const newUiSchema: any = {
       label: 'Organisation Name',
       title: 'Search for an Organisation',
       modalProps: {
-        fullScreen: false,        
+        fullScreen: false,
         closeOnEvents: [
           'CloseModal:LasecCRMOrganisationLookupTable'
         ]
@@ -78,18 +90,18 @@ export const newUiSchema: any = {
     props: {
       componentFqn: 'lasec-crm.LasecCRMOrganisationLookupTable@1.0.0',
       componentProps: {
-       
+
       },
-      componentPropertyMap: {        
+      componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',
         'LookupComponent.props.onChange': 'onOrganizationSelected',
         'LookupComponent.props.formContext': 'LookupComponentFormContext',
-      },      
+      },
     },
   },
 };
 
-export const ConfirmNewUISchema: any = {  
+export const ConfirmNewUISchema: any = {
   'ui:options': {
     componentType: "div",
     title: 'Selected Customer',
@@ -104,10 +116,21 @@ export const ConfirmNewUISchema: any = {
     showSubmit: false,
     showRefresh: false,
   },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '30px'
+  },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px'
+    }
+  },
   'ui:grid-layout': [
     {
       name: { xs: 12, sm: 12, md: 12, lg: 12 },
+      style: { padding: '25px 32px 0 32px' }
     },
   ],
   name: {
@@ -159,7 +182,7 @@ const LasecCRMOrganizationLookupForm: Reactory.IReactoryForm = {
   name: 'LasecCRMOrganizationLookup',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: schema,  
+  schema: schema,
   uiSchema: uiSchema,
   uiSchemas: [
     {

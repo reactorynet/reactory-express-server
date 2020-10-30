@@ -44,6 +44,7 @@ const schema: Reactory.ISchema = {
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -75,9 +76,12 @@ const uiSchema: any = {
     'ui:widget': 'AccordionComponent',
     'ui:options': {
       showBar: true,
+      style: {
+        backgroundColor: '#e6e6e6'
+      },
       Header: {
         style: {
-          color: '#BFBFBF'
+          color: '#afafaf'
         }
       }
     }

@@ -10,7 +10,7 @@ import { defaultUiResources } from '../../../uiResources';
 const newSchema = cloneDeep<Reactory.ISchema>(DocumentFormSchema);
 // newSchema.properties.paging = { ...PagingSchema }
 newSchema.title = 'UPLOAD DOCUMENTS';
-newSchema.description = 'Use the area below to add files for this customer.';
+// newSchema.description = 'Use the area below to add files for this customer.';
 export const NewSchema = newSchema;
 
 export const NewUiSchema: any = {
@@ -31,14 +31,23 @@ export const NewUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '25px'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px',
+      marginBottom: '20px'
+    }
+  },
   'ui:grid-layout': [
   
     {
       upload: { lg: 6, md: 6, sm: 12, },
       uploadedDocuments: { lg: 6, md: 6, sm: 12 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
 

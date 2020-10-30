@@ -50,6 +50,8 @@ type LasecCRMClient {
   isEmailDuplicate: Boolean
   isNameDuplicate: Boolean
   customer: LasecCRMCustomer
+  title: String
+  titleLabel: String
   fullName: String
   firstName: String
   lastName: String
@@ -207,6 +209,7 @@ input LasecNewClientInput {
 input ClientUpdateInput {
   clientId: String!
   clientStatus: String
+  title: String
   firstName: String
   lastName: String
   country: String

@@ -7,6 +7,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       LasecGetClientDetail(id: $id){
         id
         clientStatus
+        title
+        titleLabel
         firstName
         lastName
         fullName
@@ -27,6 +29,9 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultMap: {
       'id': 'id',
       'clientStatus': 'clientStatus',
+      'title': 'title',
+      'titleLabel': 'titleLabel',
+      'clientTitle': 'clientTitle',
       'fullName': 'fullName',
       'customer.customerStatus': 'customerStatus',
       'customer.accountNumber': 'accountNumber',
@@ -58,6 +63,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       variables: {
         'formData.id': 'clientInfo.clientId',
         'formData.clientStatus': 'clientInfo.clientStatus',
+        'formData.title': 'clientInfo.title',
         'formData.firstName': 'clientInfo.firstName',
         'formData.lastName': 'clientInfo.lastName',
         'formData.country': 'clientInfo.country',

@@ -22,18 +22,16 @@ export const EditUiSchema: any = {
       variant: 'button',
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
-      buttonVariant: "contained",
       selectSchemaId: 'display',
-      style: {
-        position: 'absolute',
-        top: '-20px',
-        right: 0,
-      }
     },
     style: {
       marginTop: '16px',
     },
     showSchemaSelectorInToolbar: false,
+  },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px'
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -41,9 +39,9 @@ export const EditUiSchema: any = {
       view: { sm: 12, md: 12 },
     },
     {
-      id: { md: 12 },
       upload: { xs: 12, sm: 12, md: 12, lg: 12 },
       documents: { xs: 12, sm: 12, md: 12, lg: 12 },
+      style: { marginTop: '25px' }
     }
   ],
   view: {

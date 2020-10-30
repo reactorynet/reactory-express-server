@@ -345,7 +345,7 @@ export const getClient = async (params) => {
 
     let clientResponse = om(clients[0], {
       'id': 'id',
-      'title_id': 'title',
+      'title_id': ['title', 'titleLabel'],
       'first_name': [{
         "key":
           'fullName',
@@ -493,6 +493,11 @@ export const getClient = async (params) => {
     } catch (companyLoadError) {
       logger.error(`Could not laod company data ${companyLoadError.message}`);
     }
+
+    // SET TITLE STRING VALUE
+    const titles = await getPersonTitles();
+    const setTitle = titles.find(t => t.id == clientResponse.titleLabel)
+    clientResponse.titleLabel = setTitle ? setTitle.title : clientResponse.titleLabel;
 
     return clientResponse;
   }
@@ -673,6 +678,8 @@ const getPersonTitles = async () => {
     if (details && details.items) {
 
       setCacheItem(Hash(CLIENT_TITLES_KEY), details, 60);
+
+      logger.debug(`TITLES:: ${JSON.stringify(details)}`);
 
       return details.items;
     }

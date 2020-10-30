@@ -17,11 +17,6 @@ export const displayUiSchema: any = {
       buttonTitle: 'Edit',
       activeColor: 'primary',
       selectSchemaId: 'edit',
-      style: {
-        position: 'absolute',
-        top: '-20px',
-        right: 0,
-      }
     },
     style: {
       marginTop: '16px',
@@ -31,9 +26,15 @@ export const displayUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px'
+    }
+  },
   'ui:grid-layout': [
     {
       view: { sm: 12, md: 12, lg: 12 },
@@ -45,6 +46,7 @@ export const displayUiSchema: any = {
       clientDepartment: {md: 6, sm: 12 },
       customerClass: {md: 6, sm: 12 },
       ranking: {md: 6, sm: 12 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
   view: {
@@ -65,7 +67,7 @@ export const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '200px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -87,7 +89,7 @@ export const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '200px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -109,7 +111,7 @@ export const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '200px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -131,7 +133,7 @@ export const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '200px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -153,7 +155,7 @@ export const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '200px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -175,275 +177,7 @@ export const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '200px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
-};
-
-export const ConfirmUiSchema: any = {
-  'ui:options': {
-    componentType: "div",
-    toolbarPosition: 'none',
-    containerStyles: {
-      padding: '0px',
-      margin: '0px',
-      paddingBottom: '8px'
-    },
-    schemaSelector: {
-      variant: 'button',
-      buttonTitle: 'Edit',
-      activeColor: 'primary',
-      selectSchemaId: 'edit'
-    },
-    style: {
-      marginTop: '16px',
-    },
-    showSchemaSelectorInToolbar: false,
-    showSubmit: false,
-    showRefresh: false,
-  },
-  'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
-  },
-  'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
-      jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
-      faculty: { xs: 12, sm: 12, md: 6, lg: 4 },
-      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
-      ranking: { xs: 12, sm: 12, md: 6, lg: 4 },
-    }
-  ],
-
-
-  jobTitle: {
-    'ui:graphql': {
-      name: 'LasecGetCustomerJobTypeById',
-      text: `query LasecGetCustomerJobTypeById($id: String){
-        LasecGetCustomerJobTypeById(id: $id) {
-          name
-        }
-      }`,
-      variables: {
-        'formData': 'id'
-      },
-      resultType: 'string',
-      resultKey: 'name',
-      resultMap: {
-        'name': 'formData',
-      },
-    },
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '$LOOKUP$',
-      variant: 'subtitle1',
-      title: 'Job Title',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '200px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
-
-  jobType: {
-
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Job Type',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '200px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
-
-  lineManager: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Line Manager',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '200px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
-
-  customerType: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Customer Type',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '200px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
-
-
-  faculty: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Faculty',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '200px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
-
-  clientDepartment: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Client Department',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '200px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
-
-  customerClass: {
-    'ui:graphql': {
-      name: 'LasecGetCustomerClassById',
-      text: `query LasecGetCustomerClassById($id: String){
-        LasecGetCustomerClassById(id: $id) {
-          name
-        }
-      }`,
-      variables: {
-        'formData': 'id'
-      },
-      resultType: 'string',
-      resultKey: 'name',
-      resultMap: {
-        'name': 'formData',
-      },
-    },
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '$LOOKUP$',
-      variant: 'subtitle1',
-      title: 'Client Class',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '200px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
-
-  ranking: {
-    'ui:graphql': {
-      name: 'LasecGetCustomerRankingById',
-      text: `query LasecGetCustomerRankingById($id: String){
-        LasecGetCustomerRankingById(id: $id) {
-          id
-          name
-        }
-      }`,
-      variables: {
-        'formData': 'id'
-      },
-      resultType: 'string',
-      resultKey: 'name',
-      resultMap: {
-        'name': 'formData',
-      },
-    },
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '$LOOKUP$',
-      variant: 'subtitle1',
-      title: 'Ranking',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '200px',
+          minWidth: '150px',
           color: "#9A9A9A",
         }
       },
@@ -469,13 +203,7 @@ const editUiSchema: any = {
       variant: 'button',
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
-      buttonVariant: "contained",
       selectSchemaId: 'display',
-      style: {
-        position: 'absolute',
-        top: '-20px',
-        right: 0,
-      }
     },
     style: {
       marginTop: '16px',
@@ -485,17 +213,27 @@ const editUiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px'
+  },
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px'
+    }
+  },
   'ui:grid-layout': [
     {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: {md: 6, sm: 12 },
+      accountType: {md: 8, sm: 8 },
       repCode: {md: 6, sm: 12 },
       jobType: {md: 6, sm: 12 },
       clientDepartment: {md: 6, sm: 12 },
       customerClass: {md: 6, sm: 12 },
       ranking: {md: 6, sm: 12 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
   view: {
@@ -596,10 +334,287 @@ const editUiSchema: any = {
   }
 };
 
+export const ConfirmUiSchema: any = {
+  'ui:options': {
+    componentType: "div",
+    toolbarPosition: 'none',
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '8px'
+    },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'Edit',
+      activeColor: 'primary',
+      selectSchemaId: 'edit'
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
+    showSubmit: false,
+    showRefresh: false,
+  },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '30px'
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px'
+    }
+  },
+  'ui:grid-layout': [
+    {
+      jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
+      jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
+      customerType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
+      faculty: { xs: 12, sm: 12, md: 6, lg: 4 },
+      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
+      ranking: { xs: 12, sm: 12, md: 6, lg: 4 },
+      style: { padding: '25px 32px 0 32px' }
+    }
+  ],
+
+
+  jobTitle: {
+    'ui:graphql': {
+      name: 'LasecGetCustomerJobTypeById',
+      text: `query LasecGetCustomerJobTypeById($id: String){
+        LasecGetCustomerJobTypeById(id: $id) {
+          name
+        }
+      }`,
+      variables: {
+        'formData': 'id'
+      },
+      resultType: 'string',
+      resultKey: 'name',
+      resultMap: {
+        'name': 'formData',
+      },
+    },
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '$LOOKUP$',
+      variant: 'subtitle1',
+      title: 'Job Title',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  jobType: {
+
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Job Type',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  lineManager: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Line Manager',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  customerType: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Customer Type',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+
+  faculty: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Faculty',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  clientDepartment: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Client Department',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  customerClass: {
+    'ui:graphql': {
+      name: 'LasecGetCustomerClassById',
+      text: `query LasecGetCustomerClassById($id: String){
+        LasecGetCustomerClassById(id: $id) {
+          name
+        }
+      }`,
+      variables: {
+        'formData': 'id'
+      },
+      resultType: 'string',
+      resultKey: 'name',
+      resultMap: {
+        'name': 'formData',
+      },
+    },
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '$LOOKUP$',
+      variant: 'subtitle1',
+      title: 'Client Class',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
+  ranking: {
+    'ui:graphql': {
+      name: 'LasecGetCustomerRankingById',
+      text: `query LasecGetCustomerRankingById($id: String){
+        LasecGetCustomerRankingById(id: $id) {
+          id
+          name
+        }
+      }`,
+      variables: {
+        'formData': 'id'
+      },
+      resultType: 'string',
+      resultKey: 'name',
+      resultMap: {
+        'name': 'formData',
+      },
+    },
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '$LOOKUP$',
+      variant: 'subtitle1',
+      title: 'Ranking',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+};
+
 const newUiSchema: any = {
   'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -611,7 +626,19 @@ const newUiSchema: any = {
     showSubmit: false,
     showRefresh: false,
   },
+
   'ui:field': 'GridLayout',
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '30px'
+  },
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px',
+      marginBottom: '16px'
+    }
+  },
   'ui:grid-layout': [
     {
       jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
@@ -622,6 +649,7 @@ const newUiSchema: any = {
       faculty: { xs: 12, sm: 12, md: 6, lg: 4 },
       clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
       ranking: { xs: 12, sm: 12, md: 6, lg: 4 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
 
