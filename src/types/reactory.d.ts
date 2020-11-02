@@ -463,7 +463,7 @@ declare namespace Reactory {
   export interface IReactoryFormMutation {
     name: String,
     text: String,
-    objectMap: boolean,
+    objectMap?: boolean,
     updateMessage?: String,
     resultMap?: Object,
     resultType?: string,

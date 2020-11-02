@@ -4,34 +4,18 @@ const graphql: Reactory.IFormGraphDefinition = {
   mutation: {
     onChange: {
       name: "LasecUpdateQuote",
-      text: `mutation LasecUpdateQuote($itemId: String, $quoteType: String, $repCode: [String], $clientId: String, $validDate: String){
-        LasecUpdateQuote(item_id: $itemId, quote_type: $quoteType, rep_code: $repCode, client_id: $clientId, valid_date: $validDate) {
+      text: `mutation LasecUpdateQuote($item_id: String, $quote_type: String, $rep_code: String, $client_id: String, $valid_until: Date){
+        LasecUpdateQuote(item_id: $item_id, quote_type: $quote_type, rep_code: $rep_code, client_id: $client_id, valid_until: $valid_until) {
           success
           message
         }
-      }`,
-      objectMap: true,
-      updateMessage: 'Updating freight request quote',
+      }`,      
       variables: {
-        // 'eventData.formData': 'newClient.address',
-        'eventData.formData.code': 'itemId',
-        'eventData.formData.quoteType': 'quoteType',
-        'eventData.formData.repCode': 'repCode',
-        'eventData.formData.client': 'clientId',
-        'eventData.formData.validDate': 'validDate',
-      },
-      onError: {
-        componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
-        method: 'onGraphQLQueryError',
-      },
-      onSuccessMethod: 'notification',
-      notification: {
-        inAppNotification: true,
-        title: 'Quote successfully updated.',
-        props: {
-          timeOut: 5000,
-          canDismiss: false,
-        }
+        'eventData.formData.code': 'item_id',
+        'eventData.formData.quoteType': 'quote_type',
+        'eventData.formData.repCode': 'rep_code',
+        'eventData.formData.client_id': 'client_id',
+        'eventData.formData.validDate': 'valid_until',
       },
     },
   },
@@ -58,7 +42,7 @@ const schema: Reactory.ISchema = {
     },
     validDate: {
       type: "string",
-      title: "Quote Valid Date"
+      title: "Quote Valid Until"
     },
   }
 };
@@ -90,43 +74,67 @@ const uiSchema: any = {
       border: "none",
       boxShadow: "none"
     }
-
   },
   'ui:grid-layout': [
     {
-      client: { xs: 12, sm: 6, md: 4, lg: 3 },      
-      repCode: { xs: 12, sm: 6, md: 4, lg: 3 },
-      quoteType: { xs: 12, sm: 6, md: 4, lg: 3 },
-      validDate: { xs: 12, sm: 6, md: 4, lg: 3 },
+      client: { xs: 12, sm: 6, md: 6, lg: 6 },      
+      repCode: { xs: 12, sm: 6, md: 6, lg: 6 },      
+      style: { marginTop: '-16px' },
     },
+    {
+      quoteType: { xs: 12, sm: 6, md: 6, lg: 6 },
+      validDate: { xs: 12, sm: 6, md: 6, lg: 6 },
+    }
   ],
 
   code: {},
 
   client: {
-    'ui:widget': 'CustomerFilter',
-    'ui:options': {
-      label: 'Select a Client',
-      placeholder: 'Select a Client',
-      title: 'Search for a Client'
-    },
-    
+    "ui:widget": "LabelWidget",
+    "ui:options": {
+      format: '${formData}',
+      title: 'Customer',
+      variant: 'body2',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }        
   },
   repCode: {
-    'ui:widget': 'RepCodeFilter',
-    'ui:options': {
-      props: {
-        multiple: false,
-        selectedValueMap: 'repCode',
+    "ui:widget": "LabelWidget",
+    "ui:options": {
+      format: '${formData}',
+      title: 'Rep Code',
+      variant: 'body2',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
       },
-      multiSelect: false,
-      inputProps: {},
-      resultItem: 'LasecSalesTeams',
-    },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }    
   },
   quoteType: {
     'ui:widget': 'SelectWidget',
     'ui:options': {
+      size: 'small',
       selectOptions: [
         { key: 'Normal', value: 'Normal', label: 'Normal' },
         { key: 'Contract', value: 'Contract', label: 'Contract' },
@@ -137,6 +145,15 @@ const uiSchema: any = {
   },
   validDate: {
     'ui:widget': 'DateSelectorWidget',
+    'ui:options': {
+      formControl: {
+        variant: 'outlined',
+        size: 'small'
+      },
+      picker: {
+        variant: 'outlined'
+      }
+    }
   },
 };
 

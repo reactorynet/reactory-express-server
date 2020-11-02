@@ -1114,9 +1114,7 @@ const line_items_map = {
     '[].quote_item_id',
     '[].meta.reference',
     '[].line_id',
-    {
-      key: '[].id', transform: () => (new ObjectId())
-    },    
+    '[].id',    
   ],
   'items[].quote_id': '[].quoteId',
   'items[].code': '[].code',
@@ -1146,12 +1144,10 @@ const line_items_map = {
 
 const line_item_map = {
   'id': [
+    'id',
     'quote_item_id',
     'meta.reference',
-    'line_id',
-    {
-      key: 'id', transform: () => (new ObjectId())
-    },
+    'line_id',    
   ],
   'quote_id': 'quoteId',
   'code': 'code',
@@ -1189,32 +1185,35 @@ export const lasecGetQuoteLineItem = async (id: string): Promise<LasecQuoteItem>
 };
 
 
-export const lasecGetQuoteLineItems = async (code: string, active_option: String = 'all') => {
-  const keyhash = `quote.${code}-${active_option}.lineitems`;
+export const lasecGetQuoteLineItems = async (code: string, active_option: String = 'all', page = 1, pageSize = 25) => {
+  const keyhash = `quote.${code}-${active_option}.lineitems.${page}-${pageSize}`;
 
-  let cached = await getCacheItem(keyhash);
-  if (cached) logger.debug(`Found Cached Line Items For Quote: ${code}`);
+  //let cached = await getCacheItem(keyhash);
+  //if (cached) logger.debug(`Found Cached Line Items For Quote: ${code}`);
 
-  if (lodash.isNil(cached) === true) {
-    let lineItems = await lasecApi.Quotes.getLineItems(code, active_option).then();
+  //if (lodash.isNil(cached) === true) {
+    let lineItems = []
+    let result = await lasecApi.Quotes.getLineItems(code, active_option, pageSize, page).then();
 
+    logger.debug(`Helpers.ts -> lasecGetQuoteLineItems() => Got results from API`, { records: result.line_items.length, paging: result.item_paging })
 
+    lineItems = result.line_items;
+    
+    
     logger.debug(`Found line items for quote ${code}`, lineItems);
 
     if (lineItems.length == 0) return [];
 
     lodash.sortBy(lineItems, (e) => `${e.quote_heading_id || -1}-${e.position}`)
 
-    cached = om.merge(lineItems, line_items_map);
-    cached.forEach((item: any) => {
-      if (item.id === null || item.id === undefined) item.id = new ObjectId();
-    });
+    lineItems = om.merge(result.line_items, line_items_map) as LasecQuoteItem[];
+    
 
-    logger.debug(`Line items ${code} 🟢`, { cached });    
+    logger.debug(`Line items ${code} 🟢`, { lineItems });    
     //setCacheItem(keyhash, cached, 25).then();
-  }
+  //}
 
-  return cached;
+  return { lineItems, item_paging: result.item_paging };
 }
 
 export const LasecSendQuoteEmail = async (params: { code: string, mailMessage: any }) => {
@@ -2638,20 +2637,7 @@ export const getFreightRequetQuoteDetails = async (params) => {
 
 
   let options = [];
-  let productDetails = [];
-
-  // const freightRequest = await FreightRequest.findOne({ quoteId: quoteId });
-
-  // logger.debug(`FREIGHT REQUEST :: ${JSON.stringify(freightRequest)}`);
-
-  // if (freightRequest) {
-
-  //   logger.debug(`----------  GOT A FREIGHT OPTION ----------`);
-
-  //   options = freightRequest.options;
-  //   productDetails = freightRequest.productDetails;
-
-  // } else {
+  let productDetails = [];  
 
   logger.debug(`----------  GETTING OPTIONS FROM API ----------`);
 
@@ -2662,15 +2648,15 @@ export const getFreightRequetQuoteDetails = async (params) => {
     logger.debug(`QUOTE OPTIONS ${quoteId}:: ${JSON.stringify(quoteOptionResponse)}`);
 
     quoteOptionResponse = quoteOptionResponse.items[0];
+    
+    const paged_results: { lineItems: LasecQuoteItem[], item_paging: Reactory.IPagingResult } = await lasecGetQuoteLineItems(quoteId, optionId).then();
 
-    // const optionLineItems = await lasecApi.Quotes.getLineItems(quoteOptionResponse.quote_id).then();
-    const lineItems = await lasecGetQuoteLineItems(quoteId, optionId).then();
+    logger.debug(`OPTION LINE ITEMS FOR::  ${quoteId} ${optionId}:: ${JSON.stringify(paged_results)}`);
 
-    logger.debug(`OPTION LINE ITEMS FOR::  ${quoteId} ${optionId}:: ${JSON.stringify(lineItems)}`);
+    let optionItemDetails: any[] = [];
 
-    let optionItemDetails = [];
-    if (lineItems.length > 0) {
-      optionItemDetails = lineItems.map(li => {
+    if (paged_results.lineItems.length > 0) {
+      optionItemDetails = paged_results.lineItems.map(li => {
         return {
           code: li.code,
           description: li.title,
@@ -2705,6 +2691,7 @@ export const getFreightRequetQuoteDetails = async (params) => {
       refrigerationRequired: false,
       containsLithium: false,
       sample: '',
+      item_paging: paged_results.item_paging,
       // additionalDetails: quoteOptionResponse.special_comment || '',
       productDetails: optionItemDetails
     }
@@ -2714,7 +2701,7 @@ export const getFreightRequetQuoteDetails = async (params) => {
   // }
 
   return {
-    email: 'drewmurphyza@gmail.com',
+    email: '',
     communicationMethod: 'attach_pdf',
     options
   };
@@ -2864,16 +2851,26 @@ export const deleteQuoteComment = async (params) => {
   }
 }
 
-export const updateQuote = async (params) => {
+interface ILasecUpdateQuoteExpectedParams {
+  //quote id
+  item_id: string,
+  quote_type: string,
+  rep_code: string,
+  //client foreign id
+  client_id: string
+  valid_until: Date
+};
+
+export const updateQuote = async (params: ILasecUpdateQuoteExpectedParams) => {
 
   logger.debug(`UPDATING QUOTE:: ${JSON.stringify(params)}`);
 
   try {
-    const { item_id, quote_type, rep_code, client_id, valid_date } = params;
+    const { item_id, quote_type, rep_code, client_id, valid_until } = params;
     const updateParams = { item_id, values: { quote_type } };
-    if (rep_code && rep_code.length > 0 && rep_code[0] != '') updateParams.values.sales_team_id = rep_code[0];
+    if (rep_code) updateParams.values.sales_team_id = rep_code;
     if (client_id) updateParams.values.customer_id = client_id;
-    if (valid_date) updateParams.values.modified = moment(valid_date).toISOString();
+    if (valid_until) updateParams.values.valid_until = moment(valid_until).toISOString();
 
     const updateResult = await lasecApi.Quotes.updateQuote(updateParams).then();
 
@@ -2884,11 +2881,16 @@ export const updateQuote = async (params) => {
 
     return {
       success: true,
-      message: 'Quote successfully updated.'
+      message: `Quote ${params.item_id} successfully updated. 👌`
     };
 
   } catch (error) {
-    throw new ApiError(`Error updating quote. ${error}`);
+    //throw new ApiError(`Error updating quote. ${error}`);
+
+    return {
+      success: false,
+      message: `Quote ${params.item_id} could not be updated. 😒 👉 ${error.message}`
+    };
   }
 
 }

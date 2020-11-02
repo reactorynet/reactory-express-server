@@ -62,6 +62,11 @@ input LasecQuoteItemInput {
   note: String
   quote_heading_id: String
   quote_option_id: String
+  included_in_quote_option: Boolean  
+  markup: Float
+  agent_commission: Float
+  comment: String
+  ignore_duplicates: Boolean
 }
 
 # input LasecQuoteItemInput {
@@ -184,6 +189,7 @@ type Quote {
   expirationDate: Date
   note: String
   active_option: String
+  item_paging: PagingResult
   allowed_statuses: [String]
   options: [LasecQuoteOption]
   headers: [LasecQuoteHeader]
@@ -723,7 +729,7 @@ extend type Query {
     dashparams: LasecQuoteQueryInput
   ): LasecProductDashboard
 
-  LasecGetQuoteById(quote_id: String!, option_id: String): Quote
+  LasecGetQuoteById(quote_id: String!, option_id: String, item_paging: PagingRequest): Quote
 
   LasecGetQuoteComments(quote_id: String!): [LasecQuoteComment]
 
@@ -898,9 +904,9 @@ extend type Mutation {
   LasecUpdateQuote(
     item_id: String
     quote_type: String
-    rep_code: [String]
+    rep_code: String
     client_id: String
-    valid_date: String
+    valid_until: Date
   ): SimpleResponse
   LasecUpdateQuoteLineItems(
     quote_id: String

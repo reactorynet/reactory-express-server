@@ -8,6 +8,7 @@ import om from 'object-mapper';
 import { isObject, map, find, isArray, isNil, concat, uniq, result } from 'lodash';
 import moment from 'moment';
 import axios from 'axios';
+import { Reactory } from '@reactory/server-core/types/reactory';
 // import { clearAuthentication } from '../actions/Auth';
 import SECONDARY_API_URLS from './SecondaryApiUrls';
 import logger from '../../../logging';
@@ -970,7 +971,7 @@ const Api = {
         return null;
       }
     },
-    getLineItems: async (code, active_option) => {
+    getLineItems: async (code, active_option, page_size = 25, page = 1): Promise<any> => {
 
       let filter = { quote_id: code }
       if (typeof active_option === 'string') {
@@ -983,7 +984,12 @@ const Api = {
 
         params: {
           ...defaultParams,
-          filter
+          filter,
+          pagination: {
+            enabled: true,
+            page_size: page_size,
+            current_page: page
+          }
         }
       }).then();
 
@@ -996,18 +1002,38 @@ const Api = {
       if (status === 'success') {
         //collet the ids
         if (payload && payload.ids) {
+
+          /**
+           * 
+           *    "num_items": 313,
+                "has_prev_page": false,
+                "current_page": 1,
+                "last_item_index": 20,
+                "page_size": 20,
+                "has_next_page": true,
+                "num_pages": 16,
+                "first_item_index": 1
+           */
+
+          const item_paging: Reactory.IPagingResult = {
+            hasNext: payload.pagination.has_next_page,
+            page: payload.pagination.current_page,
+            total: payload.pagination.num_items,
+            pageSize: payload.pagination.page_size
+          }
+
           const lineItemsExpanded = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: payload.ids } } }).then()
 
           logger.debug(`QUOTE ITEM PAYLOAD RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
           if (lineItemsExpanded.status === 'success') {
-            return lineItemsExpanded.payload;
+            return { line_items: lineItemsExpanded.payload, item_paging };
           }
         }
-        return [];
+        return {  line_items: [], item_paging: null };
       }
 
-      return [];
+      return {  line_items: [], item_paging: null };
     },
     get: async (params = defaultParams) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } }).then();
@@ -1067,8 +1093,9 @@ const Api = {
         const {
           status, payload,
         } = apiResponse;
-
+        
         if (status === 'success' && payload.items.length === 1) {
+          logger.debug(`Found Quote Option on LasecAPI`, { item: payload.items[0]})
           return payload.items[0];
         }
 
@@ -1086,12 +1113,13 @@ const Api = {
         } = apiResponse;
 
         if (status === 'success') {
+          logger.debug(`Found Quote Options on LasecAPI`, { items: payload.items })
           return payload;
         }
 
         return { pagination: {}, ids: [], items: [] };
       } catch (error) {
-        logger.error(`An error occured while fetching the quote document ${optionId}`, error);
+        logger.error(`An error occured while fetching the quote options from LasecAPI`, error);
         throw error;
       }
     },
@@ -1343,7 +1371,7 @@ const Api = {
         }
         return null;
       } catch (lasecApiError) {
-        logger.error(`Error updating quote:: ${JSON.stringify(lasecApiError)}`).then();
+        logger.error(`Error updating quote:: ${JSON.stringify(lasecApiError)}`);
         return null;
       }
     },

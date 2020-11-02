@@ -68,7 +68,7 @@ class LasecQuoteService implements IQuoteService {
         try {
             logger.debug(`Calling LAPI.Quote.getQuoteOption(${option_id})`);
             const payload = await LAPI.Quotes.getQuoteOption(option_id).then()
-
+            
             return om.merge(payload, {
                 "id": ["id", "quote_option_id"],
                 "name": "option_name",
@@ -146,7 +146,9 @@ class LasecQuoteService implements IQuoteService {
         return {
             id: payload.id,
             quote_id: quote_id,
-            quote_option_id: payload.id
+            quote_option_id: payload.id,
+            gp: 0,
+            gp_percent: 0
         }
     }
 
@@ -156,8 +158,8 @@ class LasecQuoteService implements IQuoteService {
             name: option.option_name,
             inco_terms: option.incoterm,
             named_place: option.named_place,
-            //transport_mode: option.transport_mode,
-            //currency: option.currency
+            transport_mode: option.transport_mode,
+            currency: option.currency
         }).then()
 
         return payload;
