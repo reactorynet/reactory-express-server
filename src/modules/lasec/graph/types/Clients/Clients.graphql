@@ -66,9 +66,11 @@ type LasecCRMClient {
   creditLimit: Float
 
   faculty: String
-  lineManager: String
-  jobType: String
   customerType: String
+  lineManager: String
+  lineManagerLabel: String
+  jobType: String
+  jobTypeLabel: String
 }
 
 type LasecDocument {
@@ -288,7 +290,9 @@ extend type Query {
     orderBy: String
     orderDirection: String
   ): PagedCRMClient
+
   LasecGetClientDetail(id: String!): LasecCRMClient
+
   LasecGetCustomerList(
     search: String!
     paging: PagingRequest

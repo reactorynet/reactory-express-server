@@ -9,10 +9,14 @@ const graphql: Reactory.IFormGraphDefinition = {
         jobTitle
         salesTeam
         department
+
         faculty
-        lineManager
-        jobType
         customerType
+        lineManager
+        lineManagerLabel
+        jobType
+        jobTypeLabel
+
         customer {
           id
           accountType
@@ -31,7 +35,16 @@ const graphql: Reactory.IFormGraphDefinition = {
       'jobTitle': 'jobTitle',
       'department': 'department',
       'customer.customerClass': 'clientClass',
-      'customer.ranking': 'ranking'
+      'customer.id': 'customerId',
+      'customer.ranking': 'ranking',
+
+      'faculty': 'faculty',
+      'customerType': 'customerType',
+      'lineManager': 'lineManager',
+      'lineManagerLabel': 'lineManagerLabel',
+      'jobType': 'jobType',
+      'jobTypeLabel': 'jobTypeLabel',
+
     },
     autoQuery: true,
     queryMessage: 'Loading customer job details',

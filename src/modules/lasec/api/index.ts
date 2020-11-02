@@ -544,7 +544,11 @@ const Api = {
     },
 
     GetCustomerLineManagers: async (params = defaultParams) => {
-      const resp = await FETCH(`api/customer/${params.customerId}/line_manager_list`, { params: { ...defaultParams, ...params } }).then();
+
+      logger.debug(`[INDEX] GET LINE MANAGERS:: ${JSON.stringify(params)}`);
+
+      // const resp = await FETCH(`api/customer/${params.customerId}/line_manager_list`, { params: { ...defaultParams, ...params } }).then();
+      const resp = await FETCH(`api/customer/${params.customerId}/line_manager_list/`, { params: { ...defaultParams } }).then();
       const {
         status, payload,
       } = resp;
@@ -1004,7 +1008,7 @@ const Api = {
         if (payload && payload.ids) {
 
           /**
-           * 
+           *
            *    "num_items": 313,
                 "has_prev_page": false,
                 "current_page": 1,
@@ -1093,7 +1097,7 @@ const Api = {
         const {
           status, payload,
         } = apiResponse;
-        
+
         if (status === 'success' && payload.items.length === 1) {
           logger.debug(`Found Quote Option on LasecAPI`, { item: payload.items[0]})
           return payload.items[0];

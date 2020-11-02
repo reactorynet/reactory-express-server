@@ -40,17 +40,17 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: {md: 6, sm: 12 },
-      repCode: {md: 6, sm: 12 },
-      jobTitle: {md: 6, sm: 12 },
-      clientDepartment: {md: 6, sm: 12 },
-      customerClass: {md: 6, sm: 12 },
-      ranking: {md: 6, sm: 12 },
+      accountType: { md: 6, sm: 12 },
+      repCode: { md: 6, sm: 12 },
+      jobTitle: { md: 6, sm: 12 },
+      clientDepartment: { md: 6, sm: 12 },
+      customerClass: { md: 6, sm: 12 },
+      ranking: { md: 6, sm: 12 },
 
-      faculty: {md: 6, sm: 12 },
-      lineManager: {md: 6, sm: 12 },
-      jobType: {md: 6, sm: 12 },
-      customerType: {md: 6, sm: 12 },
+      faculty: { md: 6, sm: 12 },
+      customerType: { md: 6, sm: 12 },
+      lineManagerLabel: { md: 6, sm: 12 },
+      jobTypeLabel: { md: 6, sm: 12 },
 
       style: { padding: '25px 32px 0 32px' }
     }
@@ -212,48 +212,6 @@ export const displayUiSchema: any = {
       }
     }
   },
-  lineManager: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Line Manager',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '150px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
-  jobType: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Job Type',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '150px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
   customerType: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -275,6 +233,49 @@ export const displayUiSchema: any = {
       }
     }
   },
+  lineManagerLabel: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Line Manager',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+  jobTypeLabel: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Job Type',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
 };
 
 const editUiSchema: any = {
@@ -313,14 +314,15 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: {md: 8, sm: 8 },
-      repCode: {md: 6, sm: 12 },
-      jobType: {md: 6, sm: 12 },
-      clientDepartment: {md: 6, sm: 12 },
-      customerClass: {md: 6, sm: 12 },
-      ranking: {md: 6, sm: 12 },
-      faculty: {md: 6, sm: 12 },
-      customerType: {md: 6, sm: 12 },
+      accountType: { md: 8, sm: 8 },
+      repCode: { md: 6, sm: 12 },
+      jobType: { md: 6, sm: 12 },
+      clientDepartment: { md: 6, sm: 12 },
+      customerClass: { md: 6, sm: 12 },
+      ranking: { md: 6, sm: 12 },
+      faculty: { md: 6, sm: 12 },
+      customerType: { md: 6, sm: 12 },
+      lineManager: { md: 6, sm: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -465,7 +467,7 @@ const editUiSchema: any = {
         }
       }`,
       propertyMap: {
-        'formContext.$formData.customer.id': 'customerId'
+        'formContext.$formData.id': 'customerId'
       },
       resultItem: 'LasecGetCustomerLineManagerOptions',
       resultsMap: {
@@ -893,10 +895,6 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Job Title"
     },
-    jobType: {
-      type: "string",
-      title: "Job Description"
-    },
     clientDepartment: {
       type: "string",
       title: "Client Department"
@@ -905,21 +903,37 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Class"
     },
+    customerId: {
+      type: "string",
+      title: "Class"
+    },
     ranking: {
       type: "string",
       title: "Ranking"
     },
-    lineManager: {
+    faculty: {
       type: "string",
-      title: "Line Manager"
+      title: "Faculty"
     },
     customerType: {
       type: "string",
       title: "Customer Type"
     },
-    faculty: {
+    lineManager: {
       type: "string",
-      title: "Faculty"
+      title: "Line Manager"
+    },
+    lineManagerLabel: {
+      type: "string",
+      title: "Line Manager"
+    },
+    jobType: {
+      type: "string",
+      title: "Job Type"
+    },
+    jobTypeLabel: {
+      type: "string",
+      title: "Job Type"
     },
   }
 };
