@@ -471,7 +471,9 @@ export const getClient = async (params) => {
 };
 
 const updateClientDetail = async (args) => {
+
   logger.debug(`>> >> >> UPDATE PARAMS:: `, args);
+
   try {
     const params = args.clientInfo;
     const preFetchClientDetails = await lasecApi.Customers.list({ filter: { ids: [params.clientId] } });
@@ -517,8 +519,6 @@ const updateClientDetail = async (args) => {
         // alternate_email: params.alternateEmail || (client.alternate_email || ''),
         alternate_email: params.contactDetails && params.contactDetails.alternateEmail || (client.alternate_email || ''),
 
-        role_id: client.role_id,
-
         // ranking_id: params.ranking || (client.ranking_id || ''),
         ranking_id: params.ranking || (client.ranking_id || ''), // come back to this
 
@@ -530,7 +530,18 @@ const updateClientDetail = async (args) => {
 
         // sales_team_id: params.repCode || (client.sales_team || ''),
         sales_team_id: params.personalDetails && params.personalDetails.repCode || (client.sales_team || ''),
+
+
+        faculty: params.faculty || (client.faculty || ''),
+        customer_type: params.customerType || (client.customer_type || ''),
+        line_manager_id: params.lineManager || (client.line_manager_id || ''),
+        role_id: params.jobType || (client.role_id || ''),// role_id: client.role_id,
+
+
       }
+
+      logger.debug(`UPDATE PARAMS:: ${JSON.stringify(updateParams)}`);
+
       const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams);
 
       return {
@@ -608,7 +619,7 @@ const getFacultyList = async (params) => {
   const cached = await getCacheItem(Hash('LASEC_FACULTY')).then();
   //if (cached && cached.items) return cached.items;
   const idsResponse = await lasecApi.Customers.GetFacultyList().then();
-  logger.debug(`[RESOLVER] GET CUSTOMER TYPE RESPONSE:: ${JSON.stringify(idsResponse)}`);
+  logger.debug(`[RESOLVER] GET FACULTY RESPONSE:: ${JSON.stringify(idsResponse)}`);
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetFacultyList({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
@@ -650,7 +661,7 @@ const getCustomerLineManagerOptions = async (params) => {
 
   if (response.items) {
     return response.items.map(item => {
-      return { id: item.line_manager_id, name: item.line_manager_name  };
+      return { id: item.line_manager_id, name: item.line_manager_name };
     });
   }
 
@@ -1376,6 +1387,7 @@ export const DEFAULT_NEW_CLIENT = {
   jobDetails: {
     jobTitle: '',
     jobType: '',
+    jobTypeLabel: '',
     salesTeam: '',
     lineManager: '',
     customerType: '',
@@ -1916,14 +1928,18 @@ export default {
           apiClient.contactDetails.prefferedMethodOfContact = existingCustomer.prefferedMethodOfContact || '';
 
           apiClient.jobDetails.jobTitle = existingCustomer.jobTitle.trim() || '';
-          apiClient.jobDetails.jobType = existingCustomer.jobType || '';
           apiClient.jobDetails.salesTeam = existingCustomer.customer.salesTeam || '';
-          apiClient.jobDetails.lineManager = existingCustomer.lineManager || '';
-          apiClient.jobDetails.customerType = existingCustomer.customer.accountType || '';
-          apiClient.jobDetails.faculty = existingCustomer.customer.faculty || '';
           apiClient.jobDetails.clientDepartment = existingCustomer.customer.department || '';
           apiClient.jobDetails.ranking = existingCustomer.customer.ranking || '';
           apiClient.jobDetails.customerClass = existingCustomer.customer.customerClass || '';
+          apiClient.jobDetails.faculty = existingCustomer.customer.faculty || '';
+          apiClient.jobDetails.customerType = existingCustomer.customer.accountType || '';
+          apiClient.jobDetails.lineManager = existingCustomer.lineManager || '';
+          apiClient.jobDetails.jobType = existingCustomer.jobType || '';
+
+          const roles = await getCustomerRoles({}).then();
+          const employeeRole = roles.find(t => t.id == existingCustomer.jobType);
+          apiClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : existingCustomer.jobType;
 
           apiClient.customer.id = existingCustomer.customer.id || '';
           apiClient.customer.registeredName = existingCustomer.customer.registeredName || '';
@@ -1977,6 +1993,9 @@ export default {
           return apiClient;
         }
 
+
+        logger.debug(`RETURNING CACHED CLIENT:: ${JSON.stringify(cachedClient)}`);
+
         return cachedClient;
       }
       else {
@@ -1984,19 +2003,7 @@ export default {
         await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
         let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
 
-        // if (existingCustomer) {
-        //   const mergedClient = {
-        //     ...apiClient,
-        //     ..._newClient
-        //   };
-        //   mergedClient.id = apiClient.id;
-
-        //   logger.debug(`NO CACHED CLIENT - EXISTING CLIENT: ${JSON.stringify(mergedClient)}`);
-
-        //   return { ...mergedClient, clientDocuments };
-        // }
-
-        // logger.debug(`NO CACHED CLIENT - NO EXISTING CLIENT: ${JSON.stringify(_newClient)}`);
+        logger.debug(`RETURNING MERGED NEW CLIENT`);
 
         return { ..._newClient, clientDocuments };
       }
@@ -2047,6 +2054,10 @@ export default {
 
       if (isNil(newClient.jobDetails) === false) {
         _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
+
+        const roles = await getCustomerRoles({}).then();
+        const employeeRole = roles.find(t => t.id == _newClient.jobDetails.jobType);
+        _newClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : _newClient.jobDetails.jobType;
       }
 
       if (isNil(newClient.customer) === false) {

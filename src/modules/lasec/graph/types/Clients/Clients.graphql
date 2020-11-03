@@ -163,14 +163,16 @@ type LasecContactDetails {
 
 type LasecJobDetails {
   jobTitle: String
-  jobType: String
   salesTeam: String
-  lineManager: String
-  customerType: String
   customerClass: String
-  faculty: String
   clientDepartment: String
   ranking: String
+  faculty: String
+  jobType: String
+  jobTypeLabel: String
+  customerType: String
+  lineManager: String
+  lineManagerLabel: String
 }
 
 type LasecClientAddresses {
@@ -231,6 +233,12 @@ input ClientUpdateInput {
   clientDepartment: String
   clientClass: String
   ranking: String
+
+  faculty: String
+  customerType: String
+  lineManager: String
+  jobType: String
+
 }
 
 input AddressFields {

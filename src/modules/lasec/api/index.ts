@@ -547,7 +547,6 @@ const Api = {
 
       logger.debug(`[INDEX] GET LINE MANAGERS:: ${JSON.stringify(params)}`);
 
-      // const resp = await FETCH(`api/customer/${params.customerId}/line_manager_list`, { params: { ...defaultParams, ...params } }).then();
       const resp = await FETCH(`api/customer/${params.customerId}/line_manager_list/`, { params: { ...defaultParams } }).then();
       const {
         status, payload,
