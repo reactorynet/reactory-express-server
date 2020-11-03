@@ -221,14 +221,14 @@ export interface LasecQuoteItem {
   title: string
   productClass: string
   productClassDescription: string
-  quantity: Number
-  price: Number
-  discount: Number
-  subtotal: Number
-  totalVATExclusive: Number
-  totalVATInclusive: Number
-  VATRate: Number
-  GP: Number
+  quantity: number
+  price: number
+  discount: number
+  subtotal: number
+  totalVATExclusive: number
+  totalVATInclusive: number
+  VATRate: number
+  GP: number
   header: LasecQuoteHeader
   note: string
   quote_option_id: string
@@ -236,6 +236,9 @@ export interface LasecQuoteItem {
   product: LasecProduct
   meta: LasecQuoteItemMeta 
   position: number
+  freight: number
+  agent_commission: number,
+
 }
 
 export interface RemoteDataMeta {
@@ -413,8 +416,8 @@ export interface Lasec360User {
   email: string
   company: string | 'LasecSA' | 'LasecInternational' | 'LasecEducation'
   roles: [ string ]
-  target: Number
-  targetPercent: Number
+  target: number
+  targetPercent: number
   signature?: string
   sales_team_ids: [ string ]
 }

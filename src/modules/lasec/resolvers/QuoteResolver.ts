@@ -172,7 +172,7 @@ const $PagedLineItemsResponse = async (quote: any, context: { item_paging?: Reac
     quote.lineItems = $line_items;
                             
     const paged_results: { lineItems: LasecQuoteItem[], item_paging: Reactory.IPagingRequest } = await lasecGetQuoteLineItems(code, active_option, item_paging.page, item_paging.pageSize).then();
-    quote.lineItems = paged_results.lineItems;
+    quote.lineItems = paged_results.lineItems || [];
     quote.item_paging = paged_results.item_paging;
 
     logger.debug(`🟢 $PagedLineItemsResponse() =>  Paged Line Items Response ${quote.code || quote.id}`, { context, item_paging, paging_results: paged_results.item_paging })
@@ -227,10 +227,12 @@ export default {
     id: ({ id, _id }) => (id || _id),
     product: async (line_item: LasecQuoteItem): Promise<LasecProduct> => {
       logger.debug('Resolving Product for Line Item', line_item)
-      if (line_item.meta.source.product_id) {
-        let result = await getProductById({ productId: line_item.meta.source.product_id }).then()
-        return result;
+      
+      if (!line_item.product && line_item.meta.source.product_id) {
+        line_item.product = await getProductById({ productId: line_item.meta.source.product_id }).then()        
       }
+      
+      return line_item.product;
     },
     header: (line_item: LasecQuoteItem) => {
       let header: any = {
@@ -1239,7 +1241,10 @@ export default {
           quote_heading_id: params.quote_item_input.quote_heading_id,
           included_in_quote_option: params.quote_item_input.included_in_quote_option,
           note: params.quote_item_input.note,
-          mark_up: params.quote_item_input.markup
+          mark_up: params.quote_item_input.markup,
+          agent_commission: params.quote_item_input.agent_commission,
+          gp_percent: params.quote_item_input.GP || params.quote_item_input.gp_percent,
+          freight: params.quote_item_input.freight
         }
 
         if (fields.quantity === null) delete fields.quantity;
@@ -1248,13 +1253,17 @@ export default {
         if (fields.quote_heading_id === null) delete fields.quote_heading_id;
         if (fields.included_in_quote_option === null) delete fields.included_in_quote_option;
         if (fields.note === null) delete fields.note;
+        if (fields.mark_up === null) delete fields.mark_up;
+        if (fields.agent_commission === null) delete fields.agent_commission;
+        if (fields.gp_percent === null) delete fields.gp_percent;
+        if (fields.freight === null) delete fields.freight;
 
         const apiResult = await lasecApi.Quotes.updateQuoteItems({
           item_id: params.quote_item_input.quote_item_id,
           values: fields
         });
 
-        logger.debug(`LasecQuoteItemUpdate result from apiResult`, { result })
+        logger.debug(`LasecQuoteItemUpdate result from apiResult`, { apiResult })
 
         result = {
           ...params.quote_item_input,

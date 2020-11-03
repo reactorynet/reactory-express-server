@@ -311,16 +311,14 @@ const getProducts = async (params) => {
 
 export const getProductById = async (params) => {
   const { productId } = params;
+  
   const productResult = await lasecApi.Products.list({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
-
 
   if(productResult && productResult.items) {
     if(productResult.items.length === 1) {
       let product = productResult.items[0]
       const costingResults = await lasecApi.Products.costings({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
       const costing = costingResults.items[0] || {}
-
-
 
       product = {
         id: product.id,

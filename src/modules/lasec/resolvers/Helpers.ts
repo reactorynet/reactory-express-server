@@ -1286,8 +1286,6 @@ const quote_field_maps: any = {
   "client": "client",
 };
 
-
-
 /**
  * Function that returns paged quote data from the lasec api.
  * @param params
