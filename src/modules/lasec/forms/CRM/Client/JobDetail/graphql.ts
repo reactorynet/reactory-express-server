@@ -9,6 +9,14 @@ const graphql: Reactory.IFormGraphDefinition = {
         jobTitle
         salesTeam
         department
+
+        faculty
+        customerType
+        lineManager
+        lineManagerLabel
+        jobType
+        jobTypeLabel
+
         customer {
           id
           accountType
@@ -27,7 +35,16 @@ const graphql: Reactory.IFormGraphDefinition = {
       'jobTitle': 'jobTitle',
       'department': 'department',
       'customer.customerClass': 'clientClass',
-      'customer.ranking': 'ranking'
+      'customer.id': 'customerId',
+      'customer.ranking': 'ranking',
+
+      'faculty': 'faculty',
+      'customerType': 'customerType',
+      'lineManager': 'lineManager',
+      'lineManagerLabel': 'lineManagerLabel',
+      'jobType': 'jobType',
+      'jobTypeLabel': 'jobTypeLabel',
+
     },
     autoQuery: true,
     queryMessage: 'Loading customer job details',
@@ -57,6 +74,12 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.clientDepartment': 'clientInfo.clientDepartment',
         'formData.clientClass': 'clientInfo.clientClass',
         'formData.ranking': 'clientInfo.ranking',
+
+        'formData.faculty': 'clientInfo.faculty',
+        'formData.customerType': 'clientInfo.customerType',
+        'formData.lineManager': 'clientInfo.lineManager',
+        'formData.jobType': 'clientInfo.jobType',
+
       },
       onSuccessMethod: 'notification',
       notification: {
@@ -75,7 +98,6 @@ const graphql: Reactory.IFormGraphDefinition = {
   }
 };
 
-
 export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetNewClient',
@@ -84,14 +106,16 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         id
         jobDetails {
           jobTitle
-          jobType
           salesTeam
-          lineManager
           customerType
-          faculty
           clientDepartment
           ranking
           customerClass
+          faculty
+          jobType
+          jobTypeLabel
+          lineManager
+          customerType
         }
       }
     }`,
@@ -101,14 +125,16 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
     resultMap: {
       'id': 'id',
       'jobDetails.jobTitle': 'jobTitle',
-      'jobDetails.jobType': 'jobType',
       'jobDetails.salesTeam': 'salesTeam',
-      'jobDetails.lineManager': 'lineManager',
-      'jobDetails.customerType': 'customerType',
-      'jobDetails.faculty': 'faculty',
       'jobDetails.clientDepartment': 'clientDepartment',
       'jobDetails.ranking': 'ranking',
       'jobDetails.customerClass': 'customerClass',
+
+      'jobDetails.faculty': 'faculty',
+      'jobDetails.jobType': 'jobType',
+      'jobDetails.jobTypeLabel': 'jobTypeLabel',
+      'jobDetails.lineManager': 'lineManager',
+      'jobDetails.customerType': 'customerType',
 
     },
     autoQuery: true,
@@ -128,6 +154,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
           jobDetails {
             jobTitle
             jobType
+            jobTypeLabel
             salesTeam
             lineManager
             customerType
@@ -150,6 +177,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         'id': 'id',
         'jobDetails.jobTitle': 'jobTitle',
         'jobDetails.jobType': 'jobType',
+        'jobDetails.jobTypeLabel': 'jobTypeLabel',
         'jobDetails.salesTeam': 'salesTeam',
         'jobDetails.lineManager': 'lineManager',
         'jobDetails.customerType': 'customerType',

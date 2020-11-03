@@ -40,12 +40,16 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: {md: 6, sm: 12 },
-      repCode: {md: 6, sm: 12 },
-      jobTitle: {md: 6, sm: 12 },
-      clientDepartment: {md: 6, sm: 12 },
-      customerClass: {md: 6, sm: 12 },
-      ranking: {md: 6, sm: 12 },
+      accountType: { md: 6, sm: 12 },
+      repCode: { md: 6, sm: 12 },
+      jobTitle: { md: 6, sm: 12 },
+      jobTypeLabel: { md: 6, sm: 12 },
+      clientDepartment: { md: 6, sm: 12 },
+      customerClass: { md: 6, sm: 12 },
+      ranking: { md: 6, sm: 12 },
+      faculty: { md: 6, sm: 12 },
+      customerType: { md: 6, sm: 12 },
+      lineManagerLabel: { md: 6, sm: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -79,7 +83,6 @@ export const displayUiSchema: any = {
       }
     }
   },
-
   repCode: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -101,7 +104,6 @@ export const displayUiSchema: any = {
       }
     }
   },
-
   jobTitle: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -123,7 +125,6 @@ export const displayUiSchema: any = {
       }
     }
   },
-
   clientDepartment: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -145,7 +146,6 @@ export const displayUiSchema: any = {
       }
     }
   },
-
   customerClass: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -167,7 +167,6 @@ export const displayUiSchema: any = {
       }
     }
   },
-
   ranking: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -189,6 +188,92 @@ export const displayUiSchema: any = {
       }
     }
   },
+
+  faculty: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Faculty',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+  customerType: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Customer Type',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+  lineManagerLabel: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Line Manager',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+  jobTypeLabel: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Job Type',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
 };
 
 const editUiSchema: any = {
@@ -227,12 +312,15 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: {md: 8, sm: 8 },
-      repCode: {md: 6, sm: 12 },
-      jobType: {md: 6, sm: 12 },
-      clientDepartment: {md: 6, sm: 12 },
-      customerClass: {md: 6, sm: 12 },
-      ranking: {md: 6, sm: 12 },
+      accountType: { md: 8, sm: 8 },
+      repCode: { md: 6, sm: 12 },
+      jobType: { md: 6, sm: 12 },
+      clientDepartment: { md: 6, sm: 12 },
+      customerClass: { md: 6, sm: 12 },
+      ranking: { md: 6, sm: 12 },
+      faculty: { md: 6, sm: 12 },
+      customerType: { md: 6, sm: 12 },
+      lineManager: { md: 6, sm: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -331,7 +419,61 @@ const editUiSchema: any = {
         },
       ],
     }
-  }
+  },
+  faculty: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetFacultyList {
+        LasecGetFacultyList {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetFacultyList',
+      resultsMap: {
+        'LasecGetFacultyList.[].id': ['[].key', '[].value'],
+        'LasecGetFacultyList.[].name': '[].label',
+      },
+    },
+  },
+  customerType: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerType {
+        LasecGetCustomerType {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetCustomerType',
+      resultsMap: {
+        'LasecGetCustomerType.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerType.[].name': '[].label',
+      },
+    },
+  },
+  lineManager: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerLineManagerOptions($customerId: String!) {
+        LasecGetCustomerLineManagerOptions(customerId: $customerId) {
+          id
+          name
+        }
+      }`,
+      propertyMap: {
+        'formContext.$formData.id': 'customerId'
+      },
+      resultItem: 'LasecGetCustomerLineManagerOptions',
+      resultsMap: {
+        'LasecGetCustomerLineManagerOptions.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerLineManagerOptions.[].name': '[].label',
+      },
+    },
+  },
 };
 
 export const ConfirmUiSchema: any = {
@@ -371,7 +513,9 @@ export const ConfirmUiSchema: any = {
     {
       jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
       jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
+      jobTypeLabel: { xs: 12, sm: 12, md: 6, lg: 4 },
+      // lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
+      // lineManagerLabel: { xs: 12, sm: 12, md: 6, lg: 4 },
       customerType: { xs: 12, sm: 12, md: 6, lg: 4 },
       customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
       faculty: { xs: 12, sm: 12, md: 6, lg: 4 },
@@ -443,27 +587,27 @@ export const ConfirmUiSchema: any = {
     }
   },
 
-  lineManager: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Line Manager',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '150px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
+  // lineManager: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     format: '${formData}',
+  //     variant: 'subtitle1',
+  //     title: 'Line Manager',
+  //     titleProps: {
+  //       style: {
+  //         display: 'content',
+  //         minWidth: '150px',
+  //         color: "#9A9A9A",
+  //       }
+  //     },
+  //     bodyProps: {
+  //       style: {
+  //         display: 'flex',
+  //         justifyContent: 'flex-end'
+  //       }
+  //     }
+  //   }
+  // },
 
   customerType: {
     'ui:widget': 'LabelWidget',
@@ -486,8 +630,6 @@ export const ConfirmUiSchema: any = {
       }
     }
   },
-
-
   faculty: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -509,7 +651,6 @@ export const ConfirmUiSchema: any = {
       }
     }
   },
-
   clientDepartment: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -531,7 +672,6 @@ export const ConfirmUiSchema: any = {
       }
     }
   },
-
   customerClass: {
     'ui:graphql': {
       name: 'LasecGetCustomerClassById',
@@ -569,7 +709,6 @@ export const ConfirmUiSchema: any = {
       }
     }
   },
-
   ranking: {
     'ui:graphql': {
       name: 'LasecGetCustomerRankingById',
@@ -608,6 +747,49 @@ export const ConfirmUiSchema: any = {
       }
     }
   },
+  // lineManagerLabel: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     format: '${formData}',
+  //     variant: 'subtitle1',
+  //     title: 'Line Manager',
+  //     titleProps: {
+  //       style: {
+  //         display: 'content',
+  //         minWidth: '150px',
+  //         color: "#9A9A9A",
+  //       }
+  //     },
+  //     bodyProps: {
+  //       style: {
+  //         display: 'flex',
+  //         justifyContent: 'flex-end'
+  //       }
+  //     }
+  //   }
+  // },
+  jobTypeLabel: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Job Type Label',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
+    }
+  },
+
 };
 
 const newUiSchema: any = {
@@ -643,12 +825,12 @@ const newUiSchema: any = {
     {
       jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
       jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerType: { xs: 12, sm: 12, md: 6, lg: 4 },
       customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
-      faculty: { xs: 12, sm: 12, md: 6, lg: 4 },
       clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
       ranking: { xs: 12, sm: 12, md: 6, lg: 4 },
+      faculty: { md: 6, sm: 12 },
+      customerType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      // lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -671,12 +853,21 @@ const newUiSchema: any = {
     },
   },
   jobType: {
-
-  },
-  lineManager: {
-
-  },
-  customerType: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerRoles {
+        LasecGetCustomerRoles {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetCustomerRoles',
+      resultsMap: {
+        'LasecGetCustomerRoles.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerRoles.[].name': '[].label',
+      },
+    },
   },
   customerClass: {
     'ui:widget': 'SelectWithDataWidget',
@@ -694,9 +885,6 @@ const newUiSchema: any = {
         'LasecGetCustomerClass.[].name': '[].label',
       },
     },
-  },
-  faculty: {
-
   },
   clientDepartment: {},
   ranking: {
@@ -727,7 +915,61 @@ const newUiSchema: any = {
         },
       ],
     }
-  }
+  },
+  faculty: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetFacultyList {
+        LasecGetFacultyList {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetFacultyList',
+      resultsMap: {
+        'LasecGetFacultyList.[].id': ['[].key', '[].value'],
+        'LasecGetFacultyList.[].name': '[].label',
+      },
+    },
+  },
+  customerType: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      multiSelect: false,
+      query: `query LasecGetCustomerType {
+        LasecGetCustomerType {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetCustomerType',
+      resultsMap: {
+        'LasecGetCustomerType.[].id': ['[].key', '[].value'],
+        'LasecGetCustomerType.[].name': '[].label',
+      },
+    },
+  },
+  // lineManager: {
+  //   'ui:widget': 'SelectWithDataWidget',
+  //   'ui:options': {
+  //     multiSelect: false,
+  //     query: `query LasecGetCustomerLineManagerOptions($customerId: String!) {
+  //       LasecGetCustomerLineManagerOptions(customerId: $customerId) {
+  //         id
+  //         name
+  //       }
+  //     }`,
+  //     propertyMap: {
+  //       'formContext.$formData.id': 'customerId'
+  //     },
+  //     resultItem: 'LasecGetCustomerLineManagerOptions',
+  //     resultsMap: {
+  //       'LasecGetCustomerLineManagerOptions.[].id': ['[].key', '[].value'],
+  //       'LasecGetCustomerLineManagerOptions.[].name': '[].label',
+  //     },
+  //   },
+  // },
 };
 
 const schema: Reactory.ISchema = {
@@ -751,10 +993,6 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Job Title"
     },
-    jobType: {
-      type: "string",
-      title: "Job Description"
-    },
     clientDepartment: {
       type: "string",
       title: "Client Department"
@@ -763,21 +1001,37 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Class"
     },
+    customerId: {
+      type: "string",
+      title: "Class"
+    },
     ranking: {
       type: "string",
       title: "Ranking"
     },
-    lineManager: {
+    faculty: {
       type: "string",
-      title: "Line Manager"
+      title: "Faculty"
     },
     customerType: {
       type: "string",
       title: "Customer Type"
     },
-    faculty: {
+    lineManager: {
       type: "string",
-      title: "Faculty"
+      title: "Line Manager"
+    },
+    lineManagerLabel: {
+      type: "string",
+      title: "Line Manager"
+    },
+    jobType: {
+      type: "string",
+      title: "Job Type"
+    },
+    jobTypeLabel: {
+      type: "string",
+      title: "Job Type"
     },
   }
 };

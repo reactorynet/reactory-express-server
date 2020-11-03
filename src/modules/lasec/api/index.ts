@@ -520,6 +520,44 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
+
+    GetFacultyList: async (params = defaultParams) => {
+      const resp = await FETCH(SECONDARY_API_URLS.faculty_list.url, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') { return payload; }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+
+    GetCustomerType: async (params = defaultParams) => {
+      const resp = await FETCH(SECONDARY_API_URLS.customer_type.url, { params: { ...defaultParams, ...params } }).then();
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') { return payload; }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+
+    GetCustomerLineManagers: async (params = defaultParams) => {
+
+      logger.debug(`[INDEX] GET LINE MANAGERS:: ${JSON.stringify(params)}`);
+
+      const resp = await FETCH(`api/customer/${params.customerId}/line_manager_list/`, { params: { ...defaultParams } }).then();
+      const {
+        status, payload,
+      } = resp;
+
+      if (status === 'success') { return payload; }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+
+
     GetCustomerClassById: async (id) => {
 
       const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { filter: { ids: [id] }, paging: {} } }).then();
@@ -930,11 +968,11 @@ const Api = {
         } else {
           logger.warn(`Could not get the line item with the id ${id}`);
           return null;
-        }        
+        }
       } catch (err) {
         logger.error(`Get Line Item Failed ${err.message}`, err);
         return null;
-      }      
+      }
     },
     getLineItems: async (code, active_option, page_size = 25, page = 1): Promise<any> => {
 
@@ -969,7 +1007,7 @@ const Api = {
         if (payload && payload.ids) {
 
           /**
-           * 
+           *
            *    "num_items": 313,
                 "has_prev_page": false,
                 "current_page": 1,
@@ -1058,7 +1096,7 @@ const Api = {
         const {
           status, payload,
         } = apiResponse;
-        
+
         if (status === 'success' && payload.items.length === 1) {
           logger.debug(`Found Quote Option on LasecAPI`, { item: payload.items[0]})
           return payload.items[0];

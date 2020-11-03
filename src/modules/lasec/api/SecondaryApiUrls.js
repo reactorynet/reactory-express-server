@@ -22,6 +22,8 @@ import {
   ENTITY_KEY__TENDER,
   ENTITY_KEY__CONTRACT,
   ENTITY_KEY__CUSTOMER_CLASS,
+  ENTITY_KEY__FACULTY_LIST,
+  ENTITY_KEY__CUSTOMER_TYPE,
   ENTITY_KEY__REP_CODE,
   ENTITY_KEY__UPLOAD_FILE,
   ENTITY_KEY__FILE_UPLOADS,
@@ -95,6 +97,10 @@ export default {
   customer_ranking: { url: `api/${ENTITY_KEY__CUSTOMER_RANKING}/`, allowed_methods: ['get'] },
   customer_roles: { url: `api/${ENTITY_KEY__CUSTOMER_ROLE}/`, allowed_methods: ['get'] },
   customer_class: { url: `api/${ENTITY_KEY__CUSTOMER_CLASS}/`, allowed_methods: ['get'] },
+
+  faculty_list: { url: `api/${ENTITY_KEY__FACULTY_LIST}`, allowed_methods: ['get'] },
+  customer_type: { url: `api/${ENTITY_KEY__CUSTOMER_TYPE}`, allowed_methods: ['get'] },
+
   customer_country: { url: `api/${ENTITY_KEY__CUSTOMER}/country_list`, allowed_methods: ['get'] },
   person_title: { url: `api/${ENTITY_KEY__PERSON_TITLE}/`, allowed_methods: ['get'] },
   rep_code: { url: `api/${ENTITY_KEY__REP_CODE}/`, allowed_methods: ['get'] },

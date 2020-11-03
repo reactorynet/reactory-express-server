@@ -5,7 +5,7 @@ import lasecApi from '../api';
 import moment from 'moment';
 import om from 'object-mapper';
 import logger from '../../../logging';
-import mongoose from  'mongoose';
+import mongoose from 'mongoose';
 import lodash, { isArray, isNil, orderBy, isString } from 'lodash';
 import { getCacheItem, setCacheItem } from '../models';
 import Hash from '@reactory/server-core/utils/hash';
@@ -107,7 +107,7 @@ const getClients = async (params) => {
   if (isString(search) === false || search.length < 3 && filter === undefined) return {
     paging: pagingResult,
     clients: [],
-    repCode: repCode ? { title: repCode, value: repCode} : {},
+    repCode: repCode ? { title: repCode, value: repCode } : {},
     selectedClient
   };
 
@@ -241,7 +241,7 @@ const getClients = async (params) => {
     paging: pagingResult,
     search,
     filterBy,
-    repCode: repCode ? { title: repCode, value: repCode} : {},
+    repCode: repCode ? { title: repCode, value: repCode } : {},
     selectedClient,
     clients,
   };
@@ -292,56 +292,10 @@ export const getClient = async (params) => {
 
   const clientDetails = await lasecApi.Customers.list({ filter: { ids: [params.id] } });
 
-  /**
-   *
-   * id: "15237"
-      title_id: "3"
-      first_name: "Theresa"
-      surname: "Ruppelt"
-      office_number: "021 404 4509"
-      alternate_office_number: null
-      mobile_number: "none"
-      email: "theresa.ruppett@nhls.ac.za"
-      confirm_email: "theresa.ruppett@nhls.ac.za"
-      alternate_email: null
-      onboarding_step_completed: "6"
-      role_id: "1"
-      ranking_id: "1"
-      account_type: "account"
-      modified: "2018-06-15T13:01:21.000000Z"
-      activity_status: "Active"
-      special_notes: null
-      sales_team_id: "LAB101"
-      organisation_id: "0"
-      company_id: "11625"
-      delivery_address_id: "14943"
-      delivery_address: "Main Rd, Observatory, Cape Town, 7925, South Africa"
-      physical_address_id: "14943"
-      physical_address: "Main Rd, Observatory, Cape Town, 7925, South Africa"
-      currency_id: "1"
-      currency_code: "ZAR"
-      currency_symbol: "R"
-      currency_description: "Rand"
-      company_trading_name: "NHLS OF SA"
-      company_on_hold: false
-      customer_class_id: "80"
-      department: null
-      created: null
-      document_ids: []
-      company_account_number: "11625"
-      customer_sales_team: "LAB101"
-      company_sales_team: "LAB100"
-      country: "South Africa"
-      billing_address: "Ct,Po box 1038,Sandringham,Gauteng,2000"
-   *
-   */
-
   let clients = [...clientDetails.items];
   if (clients.length === 1) {
 
-
     logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
-
 
     let clientResponse = om(clients[0], {
       'id': 'id',
@@ -364,6 +318,12 @@ export const getClient = async (params) => {
       'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
       'department': ['department', 'jobTitle'],
       'ranking_id': 'customer.ranking',
+
+      'faculty': 'faculty',
+      'customer_type': 'customerType',
+      'line_manager_id': 'lineManager',
+      'line_manager_name': 'lineManagerLabel',
+      'role_id': 'jobType',
 
       // 'ranking_id': ['customer.rankingId',
       //   {
@@ -494,10 +454,15 @@ export const getClient = async (params) => {
       logger.error(`Could not laod company data ${companyLoadError.message}`);
     }
 
-    // SET TITLE STRING VALUE
+    // SET PERSON TITLE STRING VALUE
     const titles = await getPersonTitles();
     const setTitle = titles.find(t => t.id == clientResponse.titleLabel)
     clientResponse.titleLabel = setTitle ? setTitle.title : clientResponse.titleLabel;
+
+    // SET ROLE STRING VALUE
+    const roles = await getCustomerRoles({}).then();
+    const employeeRole = roles.find(t => t.id == clientResponse.jobType);
+    clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.clientResponse.jobType;
 
     return clientResponse;
   }
@@ -506,7 +471,9 @@ export const getClient = async (params) => {
 };
 
 const updateClientDetail = async (args) => {
+
   logger.debug(`>> >> >> UPDATE PARAMS:: `, args);
+
   try {
     const params = args.clientInfo;
     const preFetchClientDetails = await lasecApi.Customers.list({ filter: { ids: [params.clientId] } });
@@ -552,8 +519,6 @@ const updateClientDetail = async (args) => {
         // alternate_email: params.alternateEmail || (client.alternate_email || ''),
         alternate_email: params.contactDetails && params.contactDetails.alternateEmail || (client.alternate_email || ''),
 
-        role_id: client.role_id,
-
         // ranking_id: params.ranking || (client.ranking_id || ''),
         ranking_id: params.ranking || (client.ranking_id || ''), // come back to this
 
@@ -565,7 +530,18 @@ const updateClientDetail = async (args) => {
 
         // sales_team_id: params.repCode || (client.sales_team || ''),
         sales_team_id: params.personalDetails && params.personalDetails.repCode || (client.sales_team || ''),
+
+
+        faculty: params.faculty || (client.faculty || ''),
+        customer_type: params.customerType || (client.customer_type || ''),
+        line_manager_id: params.lineManager || (client.line_manager_id || ''),
+        role_id: params.jobType || (client.role_id || ''),// role_id: client.role_id,
+
+
       }
+
+      logger.debug(`UPDATE PARAMS:: ${JSON.stringify(updateParams)}`);
+
       const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams);
 
       return {
@@ -638,6 +614,60 @@ const getCustomerClass = async (params) => {
   return [];
 };
 
+const getFacultyList = async (params) => {
+
+  const cached = await getCacheItem(Hash('LASEC_FACULTY')).then();
+  //if (cached && cached.items) return cached.items;
+  const idsResponse = await lasecApi.Customers.GetFacultyList().then();
+  logger.debug(`[RESOLVER] GET FACULTY RESPONSE:: ${JSON.stringify(idsResponse)}`);
+
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetFacultyList({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
+      setCacheItem(Hash('LASEC_FACULTY'), details, 60);
+      return details.items;
+    }
+  }
+
+  return [];
+
+};
+
+const getCustomerType = async (params) => {
+
+  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_TYPE')).then();
+  //if (cached && cached.items) return cached.items;
+  const idsResponse = await lasecApi.Customers.GetCustomerType().then();
+  logger.debug(`[RESOLVER] GET CUSTOMER TYPE RESPONSE:: ${JSON.stringify(idsResponse)}`);
+
+  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
+    const details = await lasecApi.Customers.GetCustomerType({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    if (details && details.items) {
+      setCacheItem(Hash('LASEC_CUSTOMER_TYPE'), details, 60);
+      return details.items;
+    }
+  }
+
+  return [];
+
+};
+
+const getCustomerLineManagerOptions = async (params) => {
+
+  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_LINEMANAGERS')).then();
+  //if (cached && cached.items) return cached.items;
+  const response = await lasecApi.Customers.GetCustomerLineManagers(params).then();
+  logger.debug(`[RESOLVER] GET LINE MANAGERS RESPONSE:: ${JSON.stringify(response)}`);
+
+  if (response.items) {
+    return response.items.map(item => {
+      return { id: item.line_manager_id, name: item.line_manager_name };
+    });
+  }
+
+  return [];
+};
+
 const getCustomerClassById = async (id) => {
   const customerClasses = await getCustomerClass({}).then();
   logger.debug(`Searching in ${customerClasses.length} classes for id ${id}`)
@@ -668,7 +698,6 @@ const CLIENT_TITLES_KEY = "LasecClientTitles";
 const getPersonTitles = async () => {
   logger.debug(`<<<<<<<< Fetching Client Titles >>>>>>>>>>>>>`);
   //const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
-
   //if (cached) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetPersonTitles();
@@ -676,11 +705,7 @@ const getPersonTitles = async () => {
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: { enabled: false, page_size: 10 } });
     if (details && details.items) {
-
       setCacheItem(Hash(CLIENT_TITLES_KEY), details, 60);
-
-      logger.debug(`TITLES:: ${JSON.stringify(details)}`);
-
       return details.items;
     }
   }
@@ -1362,6 +1387,7 @@ export const DEFAULT_NEW_CLIENT = {
   jobDetails: {
     jobTitle: '',
     jobType: '',
+    jobTypeLabel: '',
     salesTeam: '',
     lineManager: '',
     customerType: '',
@@ -1704,6 +1730,18 @@ export default {
     LasecGetCustomerClass: async (obj, args) => {
       return getCustomerClass(args);
     },
+    LasecGetFacultyList: async (obj, args) => {
+      return getFacultyList(args);
+    },
+
+    LasecGetCustomerType: async (obj, args) => {
+      return getCustomerType(args);
+    },
+
+    LasecGetCustomerLineManagerOptions: async (obj, args) => {
+      return getCustomerLineManagerOptions(args);
+    },
+
     LasecGetCustomerClassById: async (obj, args) => {
       return getCustomerClassById(args.id);
     },
@@ -1890,14 +1928,18 @@ export default {
           apiClient.contactDetails.prefferedMethodOfContact = existingCustomer.prefferedMethodOfContact || '';
 
           apiClient.jobDetails.jobTitle = existingCustomer.jobTitle.trim() || '';
-          apiClient.jobDetails.jobType = existingCustomer.jobType || '';
           apiClient.jobDetails.salesTeam = existingCustomer.customer.salesTeam || '';
-          apiClient.jobDetails.lineManager = existingCustomer.lineManager || '';
-          apiClient.jobDetails.customerType = existingCustomer.customer.accountType || '';
-          apiClient.jobDetails.faculty = existingCustomer.customer.faculty || '';
           apiClient.jobDetails.clientDepartment = existingCustomer.customer.department || '';
           apiClient.jobDetails.ranking = existingCustomer.customer.ranking || '';
           apiClient.jobDetails.customerClass = existingCustomer.customer.customerClass || '';
+          apiClient.jobDetails.faculty = existingCustomer.customer.faculty || '';
+          apiClient.jobDetails.customerType = existingCustomer.customer.accountType || '';
+          apiClient.jobDetails.lineManager = existingCustomer.lineManager || '';
+          apiClient.jobDetails.jobType = existingCustomer.jobType || '';
+
+          const roles = await getCustomerRoles({}).then();
+          const employeeRole = roles.find(t => t.id == existingCustomer.jobType);
+          apiClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : existingCustomer.jobType;
 
           apiClient.customer.id = existingCustomer.customer.id || '';
           apiClient.customer.registeredName = existingCustomer.customer.registeredName || '';
@@ -1951,6 +1993,9 @@ export default {
           return apiClient;
         }
 
+
+        logger.debug(`RETURNING CACHED CLIENT:: ${JSON.stringify(cachedClient)}`);
+
         return cachedClient;
       }
       else {
@@ -1958,19 +2003,7 @@ export default {
         await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
         let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
 
-        // if (existingCustomer) {
-        //   const mergedClient = {
-        //     ...apiClient,
-        //     ..._newClient
-        //   };
-        //   mergedClient.id = apiClient.id;
-
-        //   logger.debug(`NO CACHED CLIENT - EXISTING CLIENT: ${JSON.stringify(mergedClient)}`);
-
-        //   return { ...mergedClient, clientDocuments };
-        // }
-
-        // logger.debug(`NO CACHED CLIENT - NO EXISTING CLIENT: ${JSON.stringify(_newClient)}`);
+        logger.debug(`RETURNING MERGED NEW CLIENT`);
 
         return { ..._newClient, clientDocuments };
       }
@@ -2021,6 +2054,10 @@ export default {
 
       if (isNil(newClient.jobDetails) === false) {
         _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
+
+        const roles = await getCustomerRoles({}).then();
+        const employeeRole = roles.find(t => t.id == _newClient.jobDetails.jobType);
+        _newClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : _newClient.jobDetails.jobType;
       }
 
       if (isNil(newClient.customer) === false) {

@@ -64,6 +64,13 @@ type LasecCRMClient {
   alternateOfficeNumber: String
   availableBalance: Float
   creditLimit: Float
+
+  faculty: String
+  customerType: String
+  lineManager: String
+  lineManagerLabel: String
+  jobType: String
+  jobTypeLabel: String
 }
 
 type LasecDocument {
@@ -156,14 +163,16 @@ type LasecContactDetails {
 
 type LasecJobDetails {
   jobTitle: String
-  jobType: String
   salesTeam: String
-  lineManager: String
-  customerType: String
   customerClass: String
-  faculty: String
   clientDepartment: String
   ranking: String
+  faculty: String
+  jobType: String
+  jobTypeLabel: String
+  customerType: String
+  lineManager: String
+  lineManagerLabel: String
 }
 
 type LasecClientAddresses {
@@ -224,6 +233,12 @@ input ClientUpdateInput {
   clientDepartment: String
   clientClass: String
   ranking: String
+
+  faculty: String
+  customerType: String
+  lineManager: String
+  jobType: String
+
 }
 
 input AddressFields {
@@ -283,7 +298,9 @@ extend type Query {
     orderBy: String
     orderDirection: String
   ): PagedCRMClient
+
   LasecGetClientDetail(id: String!): LasecCRMClient
+
   LasecGetCustomerList(
     search: String!
     paging: PagingRequest
@@ -293,6 +310,11 @@ extend type Query {
   LasecGetClientComments(clientId: String!): [CRMClientComment]
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecLookupItem]
+  LasecGetFacultyList: [LasecLookupItem]
+
+  LasecGetCustomerType: [LasecLookupItem]
+  LasecGetCustomerLineManagerOptions(customerId: String): [LasecLookupItem]
+
   LasecGetCustomerClassById(id: String): LasecLookupItem
   LasecGetCustomerRanking: [LasecLookupItem]
   LasecGetCustomerRankingById(id: String): LasecLookupItem
