@@ -1,20 +1,19 @@
 // model schema
 import { defaultFormProps } from '../../../data/forms/defs';
 import { FormNameSpace } from '../constants';
+import { Reactory } from '@reactory/server-core/types/reactory';
+import moment from 'moment';
 
 export const schema = {
   title: 'Survey Configuration',
   description: 'Use the form below to configure your Survey',
   type: 'object',
   required: [
-    'organization', 
-    'leadershipBrand', 
-    'title', 
-    'surveyType', 
-    'startDate', 
-    'endDate', 
-    'mode', 
-    'status'
+    'organization',
+    'title',
+    'surveyType',
+    'startDate',
+    'endDate',
   ],
   dependencies: {
     'surveyType': {
@@ -27,23 +26,33 @@ export const schema = {
             delegateTeamName: {
               type: 'string',
               title: 'Delegate Team Name',
-              defaultValue: 'Delegates'                            
+              defaultValue: 'Delegates'
             },
             assessorTeamName: {
               type: 'string',
-              title: 'Assessor Team Name',                            
+              title: 'Assessor Team Name',
               defaultValue: 'Assessors'
             }
-          }           
+          }
         },
         {
+          required: [
+            'organization',
+            'leadershipBrand',
+            'title',
+            'surveyType',
+            'startDate',
+            'endDate',
+            'mode',
+            'status'
+          ],
           properties: {
             surveyType: {
               enum: ["plc", "360"]
             }
-          }           
+          }
         }
-      ]    
+      ]
     }
   },
   properties: {
@@ -72,8 +81,8 @@ export const schema = {
     title: {
       type: 'string',
       title: 'Survey Title',
-      description: 'Provide a meaningful description for this survey',
-    },    
+      description: 'Provide a meaningful title for this survey',
+    },
     surveyType: {
       type: 'string',
       title: 'Assessment Type',
@@ -85,8 +94,7 @@ export const schema = {
         'l360',
         'culture',
         'team180'
-      ],
-      default: '360',
+      ],      
     },
     startDate: {
       type: 'string',
@@ -109,14 +117,35 @@ export const schema = {
 
 export const defaultFormValue = {
   id: '',
+  startDate: moment().toISOString(true),
+  endDate: moment().add(14, 'day').toISOString(true)
 };
 
 export const createMutation = `
   mutation CreateSurveyMutation($id: String!, $surveyData: SurveyInput!){
     createSurvey(id: $id, surveyData: $surveyData){
       id
-  } 
+    } 
 }`;
+
+const moresCreateMutation = `
+mutation MoresAssessementsCreateSurvey($moresSurveyCreateArgs: MoresSurveyCreateInput!){
+  MoresAssessementsCreateSurvey(moresSurveyCreateArgs: $moresSurveyCreateArgs){
+    id
+  } 
+}
+`
+
+const moresMutationMap = {
+  'formData.organization.id': 'moresSurveyCreateArgs.organizationId',
+  'formData.surveyType': 'moresSurveyCreateArgs.surveyType',
+  'formData.title': 'moresSurveyCreateArgs.title',
+  'formData.delegateTeamName': 'moresSurveyCreateArgs.delegateTeamName',
+  'formData.assessorTeamName': 'moresSurveyCreateArgs.assessorTeamName',
+  'formData.startDate': 'moresSurveyCreateArgs.startDate',
+  'formData.endDate': 'moresSurveyCreateArgs.endDate',
+};
+
 
 export const createMutationMap = {
   'formData.organization.id': ['id', 'surveyData.organization'],
@@ -178,8 +207,9 @@ query SurveyDetail($surveyId: String!){
 }
 `;
 
+
 export const queryMap = {
-  'formContext.surveyId': 'surveyId',
+  'formContext.match.params.surveyId': 'surveyId',
 };
 
 export const queryResultMap = {
@@ -302,9 +332,10 @@ export const uiSchema = {
     submitProps: {
       variant: 'button',
       text: '${props.mode === "edit" ? "Update" : "Create" }',
-      color: 'primary',      
+      color: 'primary',
       iconAlign: 'left'
-    }
+    },
+    showSchemaSelectorInToolbar: true,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -314,8 +345,8 @@ export const uiSchema = {
     {
       leadershipBrand: { md: 6 },
       surveyType: { md: 6 },
-      delegateTeamName: {md: 6},
-      assessorTeamName: {md: 6},
+      delegateTeamName: { md: 6 },
+      assessorTeamName: { md: 6 },
     },
     {
       title: { md: 12 },
@@ -416,10 +447,211 @@ export const uiSchema = {
   },
 };
 
+export const moresUISchema = {
+  submitIcon: 'save',
+  'ui:options': {
+    submitProps: {
+      variant: 'button',
+      text: '${props.mode === "edit" ? "Update" : "Create" }',
+      color: 'primary',
+      iconAlign: 'left'
+    },    
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      organization: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
+    },
+    {
+      surveyType: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
+    },
+    {
+      title: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12},
+    },
+    {
+      startDate: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      endDate: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      delegateTeamName: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      assessorTeamName: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+    },        
+  ],
+  id: {
+    'ui:widget': 'HiddenWidget',
+    'ui:emptyValue': '',
+  },
+  organization: {
+    'ui:widget': 'CompanyLogoWidget',
+    'ui:options': {
+      widget: 'CompanyLogoWidget',
+      readOnly: true,
+      noLookup: true,
+      mapping: {
+        'formData.id': 'id',
+        'formData.logo': 'logo',
+      },
+      style: {
+        maxWidth: '512px',
+        width: '95%',
+        marginRight: 'auto',
+        marginLeft: 'auto',
+        marginTop: '8px',
+        marginBottom: '8px',
+        display: 'flex',
+      },
+    },
+  },
+  startDate: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  endDate: {
+    'ui:widget': 'DateSelectorWidget',
+  },
+  surveyType: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      selectOptions: [
+        { key: 'i360', value: 'i360', label: 'Mores Individual 360' },
+        { key: 'l360', value: 'l360', label: 'Mores Leadership 360' },
+        { key: 'culture', value: 'culture', label: 'Mores Culture Survey' },
+        { key: 'team180', value: 'team180', label: 'Mores Team 180' },
+      ],
+    },
+  },
+  mode: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      selectOptions: [
+        { key: 'live', value: 'live', label: 'Live' },
+        { key: 'test', value: 'test', label: 'Test' },
+      ],
+    },
+  },
+  status: {
+    'ui:widget': 'SelectWidget',
+    'ui:options': {
+      selectOptions: [
+        { key: 'new', value: 'new', label: 'New' },
+        { key: 'ready', value: 'ready', label: 'Ready For Launch' },
+        { key: 'launched', value: 'launched', label: 'Launched' },
+        { key: 'paused', value: 'paused', label: 'Paused' },
+        { key: 'complete', value: 'complete', label: 'Complete' },
+      ],
+    },
+  },
+  leadershipBrand: {
+    'ui:widget': 'SelectWithDataWidget',
+    'ui:options': {
+      query: `query BrandListForOrganization($organizationId: String!){
+        brandListForOrganization(organizationId: $organizationId){
+          id,
+          title
+        }
+      }`,
+      propertyMap: {
+        'formContext.organizationId': 'organizationId',
+      },
+      resultItem: 'brandListForOrganization',
+      resultsMap: {
+        'brandListForOrganization.[].id': ['[].key', '[].value'],
+        'brandListForOrganization.[].title': '[].label',
+      },
+    },
+  },
+};
 
-export const TowerStoneSurveyConfigForm : Reactory.IReactoryForm = {
+export const moresEditUiSchema = {
+  ...moresUISchema,
+  'ui:grid-layout': [
+    {
+      organization: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
+    },
+    {
+      surveyType: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
+    },
+    {
+      title: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12},
+    },
+    {
+      startDate: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      endDate: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      delegateTeamName: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      assessorTeamName: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+    },
+    {
+      status: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      mode: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+    }
+  ]
+}
+
+const $graphql: Reactory.IFormGraphDefinition = {
+  query: {
+    name: 'surveyDetail',
+    text: surveyQuery,
+    variables: queryMap,
+    resultMap: queryResultMap,
+    new: false,
+    edit: true,
+  },
+  mutation: {
+    new: {
+      name: 'MoresAssessementsCreateSurvey',
+      text: moresCreateMutation,
+      objectMap: true,
+      variables: moresMutationMap,
+      options: {
+        refetchQueries: [],
+      },
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Created new survey ${formData.title}, redirecting 🔀',
+        props: {
+          timeOut: 3000,
+          canDismiss: true,
+        }
+      },
+      onSuccessUrl: 'admin/org/${formData.organization}/surveys/${formData.id}',
+      onSuccessRedirectTimeout: 1000,
+    },
+    edit: {
+      name: 'updateSurvey',
+      text: updateMutation,
+      objectMap: true,
+      variables: updateMutationMap,
+      options: {
+        refetchQueries: [],
+      },
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Survey ${formData.title} has been updated',
+        props: {
+          timeOut: 3000,
+          canDismiss: true,
+        }
+      },
+    },
+  },
+};
+
+const towerstone_graphql = {
+  ...$graphql,
+  mutation: {
+    ...$graphql.mutation,
+    new: {
+      ...$graphql.mutation.new,
+      name: 'createSurvey',
+      text: createMutation,
+      variables: createMutationMap,
+    }
+  },
+}
+
+
+export const TowerStoneSurveyConfigForm: Reactory.IReactoryForm = {
   id: 'TowerStoneSurveyConfig',
-  title: 'TowerStone Survey Configuration',
+  title: 'Survey Configuration',
   nameSpace: FormNameSpace,
   name: 'TowerStoneSurveyConfig',
   version: '1.0.0',
@@ -428,57 +660,40 @@ export const TowerStoneSurveyConfigForm : Reactory.IReactoryForm = {
   registerAsComponent: true,
   schema: schema,
   uiSchema: uiSchema,
+  uiSchemas: [
+    {
+      id: 'default',
+      description: 'Default view, multi tenant perspective',
+      icon: 'globe',
+      key: 'default',
+      title: 'Default - Multi Tennant',
+      uiSchema: uiSchema,
+      graphql: towerstone_graphql,
+      modes: 'new,edit'
+    },
+    {
+      id: 'mores',
+      description: 'Mores assessments survey perspective - New',
+      icon: 'api',
+      key: 'mores',
+      title: 'Mores - New',
+      uiSchema: moresUISchema,
+      graphql: $graphql,
+      modes: 'new'
+    },
+    {
+      id: 'mores-edit',
+      description: 'Mores assessments survey perspective - Edit',
+      icon: 'api',
+      key: 'mores-edit',
+      title: 'Mores Edit',    
+      uiSchema: moresEditUiSchema,
+      graphql: $graphql,
+      modes: 'edit'
+    }
+  ],
   defaultFormValue: defaultFormValue,
   backButton: true,
   helpTopics: ['survey-config-main'],
-  graphql: {
-    query: {
-      name: 'surveyDetail',
-      text: surveyQuery,
-      variables: queryMap,
-      resultMap: queryResultMap,
-      new: false,
-      edit: true,
-    },
-    mutation: {
-      new: {
-        name: 'createSurvey',
-        text: createMutation,
-        objectMap: true,
-        variables: createMutationMap,
-        options: {
-          refetchQueries: [],
-        },
-        onSuccessMethod: 'notification',
-        notification: {
-          inAppNotification: true,
-          title: 'Survey Created',
-          props: {
-            timeOut: 3000,
-            canDismiss: true,          
-          }
-        },
-        onSuccessUrl: 'admin/org/${formData.organization}/surveys/${createSurvey.id}',
-        onSuccessRedirectTimeout: 1000,
-      },
-      edit: {
-        name: 'updateSurvey',
-        text: updateMutation,
-        objectMap: true,
-        variables: updateMutationMap,
-        options: {
-          refetchQueries: [],
-        },
-        onSuccessMethod: 'notification',
-        notification: {
-          inAppNotification: true,
-          title: 'Survey updated',
-          props: {
-            timeOut: 3000,
-            canDismiss: true,          
-          }
-        },
-      },
-    },
-  },
+  graphql: towerstone_graphql,
 };

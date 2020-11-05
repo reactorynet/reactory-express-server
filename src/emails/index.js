@@ -579,7 +579,7 @@ export const surveyEmails = {
     // final object item to return
     if (lodash.isNil(assessor)) throw new ApiError('assessor parameter for delegateInvite cannot be null / undefined');
     if (lodash.isNil(survey)) throw new ApiError('survey parameter for delegateInvite cannot be null / undefined');
-    logger.debug(`Sending Reminder Email`)
+    logger.debug(`Sending Reminder Email ${assessor.fullName()} [${assessment._id} ]`)
 
     let assessorModel = null;
     if (ObjectId.isValid(assessor) === true) {
@@ -638,8 +638,8 @@ export const surveyEmails = {
         applicationTitle: partner.name,
         timeEnd: moment(survey.endDate).format('HH:mm'),
         dateEnd: moment(survey.endDate).format('YYYY-MM-DD'),
-        assessmentLink: `${partner.siteUrl}/assess/${assessment.id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
-        link: `${partner.siteUrl}/assess/${assessment.id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
+        assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
+        link: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
       };
 
       let bodyTemplate = null;

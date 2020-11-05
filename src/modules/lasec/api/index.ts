@@ -1664,6 +1664,10 @@ const Api = {
         return 0;
       }
     },
+
+    setActiveCompany: async (company = 3) => {
+      return await POST(`${SECONDARY_API_URLS.staff_user_data.url}set_active_company`, { company }).then();
+    } 
   },
   Authentication: {
     login: async (username, password) => {

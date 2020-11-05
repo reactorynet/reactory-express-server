@@ -181,6 +181,34 @@ export const getLoggedIn360User: Function = async function (): Promise<Lasec360U
   throw new LasecNotAuthenticatedException();
 };
 
+export const setLoggedInUserProps = async (active_rep_code: string, active_company: string): Promise<Lasec360User> => {
+  const $current = getLoggedIn360User();
+
+  let company_id = 3; // sa
+
+  switch (`${active_company}`.toLowerCase()) {
+    case 'lasec_international':
+    case 'lasecinternational': {
+      company_id = 4;
+      break;
+    }
+    case 'lasec_education': 
+    case 'laseceducation': {
+      company_id = 5;
+      break;
+    }
+    case 'lasec_sa': 
+    case 'LasecSA':
+    default: {
+      company_id = 3;
+    }
+  }
+
+  let result = await lasecApi.User.setActiveCompany(company_id)
+  logger.debug(`Result from setting active company`, { result });
+  return $current;
+};
+
 export const getTargets = async (params: LasecDashboardSearchParams) => {
   const { periodStart, periodEnd, teamIds, repIds, agentSelection } = params;
   logger.debug(`QuoteResolver.getTargets(params)`, params);

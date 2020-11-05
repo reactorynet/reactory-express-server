@@ -5,7 +5,7 @@ import { IObjectSchema } from '@reactory/server/core/schema';
 import LasecApi from '@reactory/server-modules/lasec/api';
 import { User } from "@reactory/server-core/models";
 import { Quote, QuoteReminder } from '../schema/Quote';
-import { getLoggedIn360User } from './Helpers';
+import { getLoggedIn360User, setLoggedInUserProps } from './Helpers';
 import { Lasec360User } from '../types/lasec';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 
@@ -38,6 +38,24 @@ export default {
     lastName: (usr: any) => usr.first_name,
     repId: (lasec360User: any) => lasec360User.sales_team_id,
     activeCompany: (lasec360User: any) => lasec360User.user_type,
+    companyName: (lasec360User: Lasec360User) => {
+      switch (lasec360User.user_type) {        
+        case "lasec_education":
+        case "LasecEducation": {
+          return 'Lasec Education';
+        }
+        case "lasec_international":
+        case "LasecInternational": {
+          return "Lasec International"
+        }
+        case "lasec_sa":
+        case "LasecSA":
+        default:
+          {
+            return 'Lasec SA'
+          }
+      }
+    },
     repCodes: (lasec360User: any) => {
       return lasec360User.sales_team_ids || []
     },
@@ -83,6 +101,9 @@ export default {
         }
         return false;
       }
+    },
+    LasecSetMy360: async (parent: any, params: { rep_code: string, active_company: string }) => {
+      return setLoggedInUserProps(params.rep_code, params.active_company);
     }
   }
 };

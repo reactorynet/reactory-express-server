@@ -141,12 +141,22 @@ export const listAllForOrganization = async (organizationId: string | ObjectID,
   searchString = '',
   excludeSelf = false,
   showDeleted: boolean = false,
-  paging: Reactory.IPagingRequest = null): Promise<Reactory.IUserDocument[] | Reactory.IPagedResponse<Reactory.IUserDocument>> => {
+  paging: Reactory.IPagingRequest = { page: 1, pageSize: 25 }): Promise<Reactory.IUserDocument[] | Reactory.IPagedResponse<Reactory.IUserDocument>> => {
 
   const organization = await Organization.findOne({ _id: new ObjectID(organizationId) }).then();
 
-  let users: Reactory.IUserDocument[] = [];
+  let response: Reactory.IPagedResponse<Reactory.IUserDocument> = {
+    items: [],
+    paging: {
+      hasNext: false,
+      page: paging.page,
+      pageSize: paging.pageSize,
+      total: 0
+    }
+  }
 
+  let users: Reactory.IUserDocument[] = [];  
+  
   try {
 
     if (organization) {
@@ -155,6 +165,8 @@ export const listAllForOrganization = async (organizationId: string | ObjectID,
       if (showDeleted === false) {
         query.$or = [{ deleted: false }, { deleted: { $exists: false } }]
       }
+
+      
 
       if (searchString.length > 0) {
         if (searchString.indexOf('@') > 0) {
@@ -167,13 +179,18 @@ export const listAllForOrganization = async (organizationId: string | ObjectID,
         }
       }
 
-      users = await User.find(query).sort('firstName lastName').then();
+      response.paging.total = await User.count(query).then();
+      if (response.paging.total > 0) {        
+        response.items = await User.find(query).sort('firstName lastName').skip((paging.page -1)  * paging.pageSize).limit(paging.pageSize).then();    
+        response.users = response.items; //alias
+      }      
+      response.paging.hasNext = response.paging.total > paging.pageSize;            
     }
   } catch (userListError) {
 
   }
 
-  return users;
+  return response;
 
 };
 
