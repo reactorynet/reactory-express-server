@@ -1,6 +1,4 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
-// import $uiSchema from './uiSchema';
-// import $graphql from './graphql';
 
 const graphql = {
   query: {
@@ -13,16 +11,17 @@ const graphql = {
           hasNext
           pageSize
         }
+        totals
         salesOrders {
           id
           orderDate
-          salesOrderNumber,          
+          salesOrderNumber,
           shippingDate
           quoteId
           quoteDate
           orderType
           orderStatus
-          iso          
+          iso
           customer
           client
           poNumber
@@ -37,6 +36,11 @@ const graphql = {
           backorderValue
           dispatchCount
           invoiceCount
+
+          orderQty
+          shipQty
+          reservedQty
+          backOrderQty
         }
       }
     }`,
@@ -46,6 +50,9 @@ const graphql = {
     },
     resultMap: {
       'paging': 'paging',
+
+      'totals': 'totals',
+
       'salesOrders.[].id': 'salesOrders.[].id',
       'salesOrders.[].orderDate': 'salesOrders.[].orderDate',
       'salesOrders.[].orderType': 'salesOrders.[].orderType',
@@ -58,6 +65,12 @@ const graphql = {
       'salesOrders.[].client': 'salesOrders.[].client',
       'salesOrders.[].poNumber': 'salesOrders.[].poNumber',
       'salesOrders.[].value': 'salesOrders.[].value',
+
+      'salesOrders.[].orderStatus': 'salesOrders.[].orderStatus',
+      'salesOrders.[].orderQty': 'salesOrders.[].orderQty',
+      'salesOrders.[].shipQty': 'salesOrders.[].shipQty',
+      'salesOrders.[].reservedQty': 'salesOrders.[].reservedQty',
+      'salesOrders.[].backOrderQty': 'salesOrders.[].backOrderQty',
     },
     autoQuery: false,
     resultType: 'object',
@@ -101,6 +114,9 @@ const schema: Reactory.ISchema = {
           orderType: {
             type: 'string'
           },
+          orderStatus: {
+            type: 'string'
+          },
           shippingDate: {
             type: 'string'
           },
@@ -115,7 +131,7 @@ const schema: Reactory.ISchema = {
           },
           dispatchCount: {
             type: 'number',
-          },          
+          },
           customer: {
             type: 'string'
           },
@@ -128,6 +144,21 @@ const schema: Reactory.ISchema = {
           value: {
             type: 'string'
           },
+
+
+          orderQty: {
+            type: 'string'
+          },
+          shipQty: {
+            type: 'string'
+          },
+          reservedQty: {
+            type: 'string'
+          },
+          backOrderQty: {
+            type: 'string'
+          },
+
         }
       },
     }
@@ -280,7 +311,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -296,7 +327,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -307,13 +338,35 @@ const uiSchema: any = {
         },
         { title: 'ISO Number', field: 'id' },
         { title: 'Quote', field: 'quoteId' },
-        { title: 'Quote Date', field: 'quoteDate' },
-        { title: 'Dispatches', field: 'dispatchCount' },
-        { title: 'Customer', field: 'customer' },        
-        { title: 'Client', field: 'client' },        
+        {
+          title: 'Quote Date',
+          field: 'quoteDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body1',
+                format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
+        { title: 'Customer', field: 'customer' },
+        { title: 'Client', field: 'client' },
         { title: 'Purchase Order Number', field: 'poNumber' },
-        { title: 'Order Value', 
-          field: 'value', 
+
+
+        { title: 'Order', field: 'orderQty' },
+        { title: 'Ship', field: 'shipQty' },
+        { title: 'Res.', field: 'reservedQty' },
+        { title: 'BO.', field: 'backOrderQty' },
+
+        {
+          title: 'Order Value',
+          field: 'value',
           component: 'core.CurrencyLabel@1.0.0',
           props: {
             region: 'en-ZA',
@@ -321,14 +374,27 @@ const uiSchema: any = {
           },
           propsMap: {
             'rowData.value': 'value',
-          }, 
-        }, 
+          },
+        },
+
+        { title: 'Status', field: 'orderStatus' },
+
+      ],
+      footerColumns: [
+        { field: 'orderType' }, { field: 'orderDate' }, { field: 'shippingDate' }, { field: 'id' }, { field: 'quoteId' }, { field: 'quoteDate'}, { field: 'customer' }, { field: 'client' },
+        { field: 'poNumber', text: 'Totals' },
+        { field: 'orderQty', value: '${totals.orderQty}' },
+        { field: 'shipQty', value: '${totals.shipQty}' },
+        { field: 'reservedQty', value: '${totals.reservedQty}' },
+        { field: 'backOrderQty', value: '${totals.backOrderQty}' },
+        { field: 'value' }, { field: 'orderStatus' }
       ],
       options: {
         grouping: false,
         search: false,
         showTitle: false,
         toolbar: false,
+        showFooter: true
       },
       remoteData: true,
       query: 'query',
@@ -339,6 +405,9 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
+
+        'totals': 'totals',
+
         'salesOrders.[].id': 'data.[].id',
         'salesOrders.[].orderDate': 'data.[].orderDate',
         'salesOrders.[].orderType': 'data.[].orderType',
@@ -351,12 +420,18 @@ const uiSchema: any = {
         'salesOrders.[].client': 'data.[].client',
         'salesOrders.[].poNumber': 'data.[].poNumber',
         'salesOrders.[].value': 'data.[].value',
+
+        'salesOrders.[].orderStatus': 'data.[].orderStatus',
+        'salesOrders.[].orderQty': 'data.[].orderQty',
+        'salesOrders.[].shipQty': 'data.[].shipQty',
+        'salesOrders.[].reservedQty': 'data.[].reservedQty',
+        'salesOrders.[].backOrderQty': 'data.[].backOrderQty',
       },
     },
   }
 };
 
-const GridOnlyUISchema : any = {
+const GridOnlyUISchema: any = {
   'ui:options': {
     componentType: "div",
     showSubmit: false,
@@ -372,7 +447,7 @@ const GridOnlyUISchema : any = {
     },
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       salesOrders: { xs: 12 }
     }
@@ -494,7 +569,7 @@ const GridOnlyUISchema : any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -510,7 +585,7 @@ const GridOnlyUISchema : any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -521,13 +596,34 @@ const GridOnlyUISchema : any = {
         },
         { title: 'ISO Number', field: 'id' },
         { title: 'Quote', field: 'quoteId' },
-        { title: 'Quote Date', field: 'quoteDate' },
-        { title: 'Dispatches', field: 'dispatchCount' },
-        { title: 'Customer', field: 'customer' },        
-        { title: 'Client', field: 'client' },        
+        {
+          title: 'Quote Date',
+          field: 'quoteDate',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body1',
+                format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          }
+        },
+        { title: 'Customer', field: 'customer' },
+        { title: 'Client', field: 'client' },
         { title: 'Purchase Order Number', field: 'poNumber' },
-        { title: 'Order Value', 
-          field: 'value', 
+
+        { title: 'Order', field: 'orderQty' },
+        { title: 'Ship', field: 'shipQty' },
+        { title: 'Res.', field: 'reservedQty' },
+        { title: 'BO.', field: 'backOrderQty' },
+
+        {
+          title: 'Order Value',
+          field: 'value',
           component: 'core.CurrencyLabel@1.0.0',
           props: {
             region: 'en-ZA',
@@ -535,8 +631,20 @@ const GridOnlyUISchema : any = {
           },
           propsMap: {
             'rowData.value': 'value',
-          }, 
-        }, 
+          },
+        },
+
+        { title: 'Status', field: 'orderStatus' },
+
+      ],
+      footerColumns: [
+        { field: 'orderType' }, { field: 'orderDate' }, { field: 'shippingDate' }, { field: 'id' }, { field: 'quoteId' }, { field: 'quoteDate'}, { field: 'customer' }, { field: 'client' },
+        { field: 'poNumber', text: 'Totals' },
+        { field: 'totals.orderQty', value: '${totals.orderQty}' },
+        { field: 'shipQty', value: '${totals.shipQty}' },
+        { field: 'reservedQty', value: '${totals.reservedQty}' },
+        { field: 'backOrderQty', value: '${totals.backOrderQty}' },
+        { field: 'value' }, { field: 'orderStatus' }
       ],
       options: {
         grouping: false,
@@ -553,6 +661,9 @@ const GridOnlyUISchema : any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
+
+        'totals': 'totals',
+
         'salesOrders.[].id': 'data.[].id',
         'salesOrders.[].orderDate': 'data.[].orderDate',
         'salesOrders.[].orderType': 'data.[].orderType',
@@ -565,6 +676,12 @@ const GridOnlyUISchema : any = {
         'salesOrders.[].client': 'data.[].client',
         'salesOrders.[].poNumber': 'data.[].poNumber',
         'salesOrders.[].value': 'data.[].value',
+
+        'salesOrders.[].orderStatus': 'data.[].orderStatus',
+        'salesOrders.[].orderQty': 'data.[].orderQty',
+        'salesOrders.[].shipQty': 'data.[].shipQty',
+        'salesOrders.[].reservedQty': 'data.[].reservedQty',
+        'salesOrders.[].backOrderQty': 'data.[].backOrderQty',
       },
     },
   }
@@ -591,7 +708,7 @@ const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
       description: 'Default SALES PRODUCT SALES ORDER VIEW',
       icon: 'view_quilt',
       title: 'Default View',
-      uiSchema: uiSchema,      
+      uiSchema: uiSchema,
     },
     {
       id: 'grid_only',
@@ -599,7 +716,7 @@ const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
       description: 'GRID ONLY SALES PRODUCT SALES ORDER VIEW',
       icon: 'view_quilt',
       title: 'Grid Only',
-      uiSchema: GridOnlyUISchema,      
+      uiSchema: GridOnlyUISchema,
     }
   ],
   defaultFormValue: {

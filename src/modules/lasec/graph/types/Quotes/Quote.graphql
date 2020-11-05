@@ -62,7 +62,7 @@ input LasecQuoteItemInput {
   note: String
   quote_heading_id: String
   quote_option_id: String
-  included_in_quote_option: Boolean  
+  included_in_quote_option: Boolean
   markup: Float
   agent_commission: Float
   comment: String
@@ -460,6 +460,7 @@ type SalesHistory {
 type PagedCRMSalesOrders {
   paging: PagingResult
   salesOrders: [SalesOrder]
+  totals: Any
 }
 
 type PurchaseOrder {
