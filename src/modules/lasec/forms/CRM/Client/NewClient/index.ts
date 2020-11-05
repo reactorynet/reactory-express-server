@@ -167,7 +167,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
       },
       {
         id: 'documents',
-        title: 'DOCUMENTS',
+        title: 'CLIENT DOCUMENTS',
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMNewClientDocuments@1.0.0',

@@ -198,7 +198,7 @@ const schema: Reactory.ISchema = {
     inputDocument: { ...documentSchema }
   }
 };
-schema.title = "DOCUMENTS"
+schema.title = "CLIENT DOCUMENTS"
 
 const LasecCRMClientDocumentsCopy: Reactory.IReactoryForm = {
   id: 'LasecCRMClientDocumentsCopy',
