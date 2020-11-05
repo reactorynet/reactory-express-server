@@ -126,7 +126,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
           "delegate_title": "",
           "delegate_description": "",
 
-          "chart_title": "I am trusted",
+          "chart_title": "I show trust",
           "chart_color": "#3F9FB1",
 
           "ordinal": 1
