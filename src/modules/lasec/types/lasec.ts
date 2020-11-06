@@ -407,6 +407,21 @@ export interface LasecApiResponse {
 };
 
 
+/**
+ * 
+activeCompany: "lasec_sa"
+code: null
+email: "werner.weber@lasec.com"
+firstName: "Werner"
+id: "367"
+lastName: "Werner"
+repCodes: ["LAB107"]
+repId: "LAB107"
+roles: null
+signature: null
+target: 33
+ */
+
 export interface Lasec360User {
   id: string
   code: string
@@ -414,12 +429,14 @@ export interface Lasec360User {
   firstName: string
   lastName: string
   email: string
+  activeCompany: string | 'LasecSA' | 'LasecInternational' | 'LasecEducation';
   company: string | 'LasecSA' | 'LasecInternational' | 'LasecEducation'
   roles: [ string ]
   target: number
   targetPercent: number
   signature?: string
-  sales_team_ids: [ string ]
+  sales_team_ids: [string]
+  user_type?: string | 'LasecSA' | 'LasecInternational' | 'LasecEducation';
 }
 
 export interface Lasec360UserSearch {

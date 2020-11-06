@@ -542,13 +542,112 @@ const routes = [
     ]
   },
   {
-    key: 'administration',
-    title: 'Administration',
-    path: '/admin/**',
+    key: 'survey-admin',
+    title: 'Survey Admin',
+    path: '/admin/org/:organizationId/surveys/:surveyId?',
     exact: true,
     public: false,
     roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
     componentFqn: 'core.Administration@1.0.0',
+    args: [
+      {
+        key: 'tab',
+        value: {
+          type: 'string',
+          tab: 'survey'
+        }
+      }
+    ]
+  },
+  {
+    key: 'survey-admin',
+    title: 'Survey Admin',
+    path: '/admin/org/:organizationId/general',
+    exact: true,
+    public: false,
+    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+    componentFqn: 'core.Administration@1.0.0',
+    args: [
+      {
+        key: 'tab',
+        value: {
+          type: 'string',
+          tab: 'general'
+        }
+      }
+    ]
+  },
+  {
+    key: 'survey-admin',
+    title: 'Survey Admin',
+    path: '/admin/org/:organizationId/brands',
+    exact: true,
+    public: false,
+    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+    componentFqn: 'core.Administration@1.0.0',
+    args: [
+      {
+        key: 'tab',
+        value: {
+          type: 'string',
+          tab: 'brands'
+        }
+      }
+    ]
+  },
+  {
+    key: 'survey-admin',
+    title: 'Survey Admin',
+    path: '/admin/org/:organizationId/business-units/:businessUnitId?',
+    exact: true,
+    public: false,
+    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+    componentFqn: 'core.Administration@1.0.0',
+    args: [
+      {
+        key: 'tab',
+        value: {
+          type: 'string',
+          tab: 'business-units'
+        }
+      }
+    ]
+  },
+  {
+    key: 'survey-admin',
+    title: 'Survey Admin',
+    path: '/admin/org/:organizationId/employees/:employeeId?',
+    exact: true,
+    public: false,
+    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+    componentFqn: 'core.Administration@1.0.0',
+    args: [
+      {
+        key: 'tab',
+        value: {
+          type: 'string',
+          tab: 'survey'
+        }
+      }
+    ]
+  },
+  {
+    key: 'survey-admin',
+    title: 'Survey Admin',
+    path: '/admin/',
+    exact: true,
+    public: false,
+    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+    componentFqn: 'core.Administration@1.0.0',
+    args: [
+      {
+        key: 'mode',
+        value: {
+          type: 'string',
+          mode: 'overview'
+        }
+      }
+    ]
   },
   {
     key: 'content-list',
@@ -756,14 +855,14 @@ const config = {
       name: 'email_redirect/DEVELOP',
       data: {
         email: 'werner.weber+moresredirect@gmail.com',
-        enabled: false,
+        enabled: true,
       },
     },
     {
       name: 'email_redirect/PRODUCTION',
       data: {
         email: 'werner.weber+moreredirect@gmail.com',
-        enabled: false,
+        enabled: true,
       },
     },
     {

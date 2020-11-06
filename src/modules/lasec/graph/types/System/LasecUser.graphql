@@ -6,6 +6,7 @@ type Lasec360User {
   lastName: String
   email: String
   activeCompany: String
+  companyName: String
   roles: [ String ]
   target: Float
   targetPercent: Float
@@ -56,4 +57,5 @@ extend type Query {
 extend type Mutation {
   LasecSyncRemoteUserData( search: Lasec360UserSearch ) : Lasec360UserSyncResult
   LasecReset360Credentials( email: String ): Boolean
+  LasecSetMy360( rep_code: String, active_company: String): Lasec360User
 }

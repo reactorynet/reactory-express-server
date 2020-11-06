@@ -112,6 +112,8 @@ input MoresSurveyCreateInput {
   organizationId: String!
   title: String!
   surveyType: String!
+  delegateTeamName: String
+  assessorTeamName: String
   startDate: Date
   endDate: Date
 }

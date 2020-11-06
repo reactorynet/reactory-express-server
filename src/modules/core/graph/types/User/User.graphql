@@ -89,6 +89,11 @@ type User {
   meta: UserMeta
 }
 
+type PagedUserResults {
+  paging: PagingResult
+  users: [User]
+}
+
 type Comment {
   id: ObjID
   who: User

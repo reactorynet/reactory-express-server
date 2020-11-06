@@ -269,6 +269,7 @@ export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyD
 
     for (let aidx = 0; aidx < assessments.length; aidx += 1) {
       if (lodash.isNil(assessments[aidx]) === false && assessments[aidx] !== undefined) {
+        logger.debug(`Loading assessment data for assessment id ${assessments[aidx]._id}`)
         assessmentPromises.push(new Promise((resolve, reject) => {
 
           const assessment = assessments[aidx];
@@ -291,7 +292,7 @@ export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyD
     assessmentResults.forEach((assessment) => {
       const { assessor } = assessment;
       if (assessment.complete !== true) {
-        logger.debug(`Creating Reminder for ${assessor.fullName()}`)
+        logger.debug(`Creating Reminder for ${assessor.fullName()} ${assessment._id}`)
         emailPromises.push(emails.surveyEmails.reminder(assessor, delegate, survey, assessment, organization, options));
       }
     });
