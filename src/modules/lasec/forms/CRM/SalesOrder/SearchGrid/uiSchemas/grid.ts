@@ -191,7 +191,7 @@ const uiSchema: any = {
             windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
             backNavigationConfig: {
               showAppBar: false,
-              backNavigationItems: ['Sales Orders', '${rowData.salesOrderNumber}'],
+              backNavigationItems: ['Sales Order', '${rowData.salesOrderNumber}'],
               containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
             }
           },

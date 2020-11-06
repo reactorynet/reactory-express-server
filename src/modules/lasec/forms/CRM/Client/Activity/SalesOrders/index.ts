@@ -226,6 +226,11 @@ const uiSchema: any = {
               }
             },
             windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
+            backNavigationConfig: {
+              showAppBar: false,
+              backNavigationItems: ['Sales Order', '${rowData.salesOrderNumber}'],
+              containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
+            }
           },
           propsMap: {
             'rowData': 'rowData'
@@ -253,6 +258,11 @@ const uiSchema: any = {
                 'fontSize': '1rem'
               }
             },
+            backNavigationConfig: {
+              showAppBar: false,
+              backNavigationItems: ['Quote', '${rowData.quoteId}'],
+              containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
+            }
           },
           propsMap: {
             'rowData': 'rowData'
