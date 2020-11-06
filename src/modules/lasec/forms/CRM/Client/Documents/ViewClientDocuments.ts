@@ -25,6 +25,7 @@ export const ViewUiSchema: any = {
           documents {
             id
             filename
+            mimetype
             link
             size
           }
