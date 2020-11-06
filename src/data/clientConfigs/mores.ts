@@ -862,7 +862,7 @@ const config = {
       name: 'email_redirect/PRODUCTION',
       data: {
         email: 'werner.weber+moreredirect@gmail.com',
-        enabled: true,
+        enabled: false,
       },
     },
     {

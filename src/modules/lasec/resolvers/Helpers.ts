@@ -27,7 +27,8 @@ import {
   DATE_FILTER_PRESELECT,
   Lasec360User,
   LasecQuoteItem,
-  Lasec360QuoteLineItem
+  Lasec360QuoteLineItem,
+  Lasec360Credentials
 } from '../types/lasec';
 
 
@@ -143,31 +144,65 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 
 };
 
-export const getLoggedIn360User: Function = async function (): Promise<Lasec360User> {
-  const { user } = global;
+const credsFromAuthentication = (authentication: Reactory.IAuthentication) => {
+  if (authentication && authentication.props) {
+    if (authentication.props.username && authentication.props.password) {      
+      return authentication.props as Lasec360Credentials;
+    } {
+      return { ...authentication.props, username: '', password: '' }
+    }
+  }
+  
+}
 
-  if (user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
-  const lasecCreds = user.getAuthentication("lasec");
-
-  if (!lasecCreds) {
-    throw new LasecNotAuthenticatedException();
+export const LoggedInLasecUserHashKey = ($partner: Reactory.IReactoryClientDocument, $user: Reactory.IUserDocument) => {
+  if ($user === null || $user === undefined || global.user === null) throw new ApiError(`$user us a required parameter`, user)
+  let _authentication: Reactory.IAuthentication = null;
+  
+  if ($user) {
+     _authentication = user.getAuthentication("lasec");
+  }
+  
+  if (!_authentication) {
+    throw new LasecNotAuthenticatedException(`User is not currently authentication with 360`);
   }
 
 
-  if (lasecCreds.props && lasecCreds.props.payload) {
+  const lasec_creds: Lasec360Credentials = credsFromAuthentication(_authentication);
+  if (lasec_creds && lasec_creds.payload) {
     let staff_user_id: string = "";
+    staff_user_id = `${_authentication.props.payload.user_id}`;
+    return `LOGGED_IN_360_USER_${global.partner._id}_${user._id}_${staff_user_id}`;    
+  } else {
+    throw new LasecNotAuthenticatedException("User does not have 360 credentials, please try logging in");
+  }
 
-    staff_user_id = `${lasecCreds.props.payload.user_id}`;
+}
 
-    const hashkey = `LOGGED_IN_360_USER_${global.partner._id}_${user._id}_${staff_user_id}`;
+export const getLoggedIn360User: Function = async function (skip_cache: boolean = false): Promise<Lasec360User> {
+  const { user } = global;
+
+  if (user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
+  const _authentication = user.getAuthentication("lasec");
+
+  if (!_authentication) {
+    throw new LasecNotAuthenticatedException('User has no authentication entry for Lasec');
+  }
+
+  const _lasec_creds: Lasec360Credentials = credsFromAuthentication(_authentication);
+  if (_lasec_creds && _lasec_creds.payload) {
+    let staff_user_id: string = "";
+    staff_user_id = `${_lasec_creds.payload.user_id}`;
+
+    const hashkey = LoggedInLasecUserHashKey(global.partner, user);
     let me360 = await getCacheItem(hashkey).then();
-    if (!me360) {
+    if (me360 === null || skip_cache === true) {
       me360 = await lasecApi.User.getLasecUsers([staff_user_id], "ids").then();
       if (me360.length === 1) {
         me360 = me360[0];
         //fetch any other data that may be required for the data fetch
       }
-    }
+    } 
 
     if (me360) {
       setCacheItem(hashkey, me360, 60);
@@ -178,35 +213,42 @@ export const getLoggedIn360User: Function = async function (): Promise<Lasec360U
     return me360;
   }
 
-  throw new LasecNotAuthenticatedException();
+  throw new LasecNotAuthenticatedException('No lasec credentials available');
 };
 
 export const setLoggedInUserProps = async (active_rep_code: string, active_company: string): Promise<Lasec360User> => {
-  const $current = getLoggedIn360User();
-
-  let company_id = 3; // sa
+  logger.debug(`Helpers.ts setLoggedInUserProps(active_rep_code, active_company)`, { active_rep_code, active_company })
+  
+  let company_id = 2; // sa
+  let companyName = 'Lasec SA';
 
   switch (`${active_company}`.toLowerCase()) {
+    case 'lasec-international':
     case 'lasec_international':
     case 'lasecinternational': {
       company_id = 4;
+      companyName = 'Lasec International';
       break;
     }
     case 'lasec_education': 
+    case 'lasec-education': 
     case 'laseceducation': {
       company_id = 5;
+      companyName = 'Lasec Education';
       break;
     }
-    case 'lasec_sa': 
+    case 'lasec_sa':
+    case 'lasec-sa': 
     case 'LasecSA':
     default: {
-      company_id = 3;
+      company_id = 2;
     }
   }
 
-  let result = await lasecApi.User.setActiveCompany(company_id)
+  let result = await lasecApi.User.setActiveCompany(company_id).then()
   logger.debug(`Result from setting active company`, { result });
-  return $current;
+  return getLoggedIn360User( true );  
+    
 };
 
 export const getTargets = async (params: LasecDashboardSearchParams) => {

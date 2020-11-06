@@ -133,7 +133,84 @@ const theme = {
           Paper: '#f6f6f6',
           default: '#d3d3d3',
         }
-      }          
+      },
+      orange: {
+        light: '#FF9901',
+        main: '#FF9901',
+        dark: '#FF9901',
+        contrastText: '#000000',
+        default: '#FF9901',
+      },
+      burnt_orange: {
+        light: '#FD5823',
+        main: '#FD5823',
+        dark: '#FD5823',
+        contrastText: '#000000',
+        default: '#FD5823',
+      },
+      red: {
+        light: '#D22D2C',
+        main: '#D22D2C',
+        dark: '#D22D2C',
+        contrastText: '#FFFFFF',
+        default: '#D22D2C',
+      },
+
+      purple: {
+        light: '#4656A1',
+        main: '#4656A1',
+        dark: '#4656A1',
+        contrastText: '#FFFFFF',
+        default: '#4656A1',
+      },
+
+      violet: {
+        light: '#AB1257',
+        main: '#AB1257',
+        dark: '#AB1257',
+        contrastText: '#FFFFFF',
+        default: '#AB1257',
+      },
+      
+      dark_blue: {        
+        light: '#4656A1',
+        main: '#4656A1',
+        dark: '#4656A1',
+        contrastText: '#222732',
+        default: '#4656A1',
+      },
+
+      blue: {        
+        light: '#4B91C9',
+        main: '#4B91C9',
+        dark: '#4B91C9',
+        contrastText: '#222732',
+        default: '#4B91C9',
+      },
+
+      light_blue: {
+        light: '#22B2D4',
+        main: '#22B2D4',
+        dark: '#22B2D4',
+        contrastText: '#000000',
+        default: '#22B2D4',
+      },
+
+      green: {
+        light: '#018387',
+        main: '#018387',
+        dark: '#018387',
+        contrastText: '#FFFFFF',
+        default: '#018387',
+      },
+
+      light_green: {
+        light: '#5EB848',
+        main: '#5EB848',
+        dark: '#5EB848',
+        contrastText: '#000000',
+        default: '#5EB848',
+      }
     },
     provider: {
       material: {

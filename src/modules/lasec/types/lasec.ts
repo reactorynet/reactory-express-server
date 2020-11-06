@@ -422,6 +422,17 @@ signature: null
 target: 33
  */
 
+export interface Lasec360Credentials {
+  username: string,
+  password: string
+  status: string | "success" | "error" | "failed",
+  payload: {
+    token: string
+    user_id: number
+  },
+  lastStatus: number
+ }
+
 export interface Lasec360User {
   id: string
   code: string

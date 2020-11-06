@@ -103,6 +103,7 @@ export default {
       }
     },
     LasecSetMy360: async (parent: any, params: { rep_code: string, active_company: string }) => {
+      logger.debug(`Setting Active Company and Rep Code ${params.rep_code} ${params.active_company}`)
       return setLoggedInUserProps(params.rep_code, params.active_company);
     }
   }
