@@ -191,7 +191,7 @@ const uiSchema: any = {
             windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
             backNavigationConfig: {
               showAppBar: false,
-              backNavigationItems: ['Sales Orders', '${rowData.salesOrderNumber}'],
+              backNavigationItems: ['Sales Order', '${rowData.salesOrderNumber}'],
               containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
             }
           },
@@ -245,7 +245,7 @@ const uiSchema: any = {
 
         },
         { title: 'Client', field: 'client' },
-        { title: 'Rep Code', field: 'salesTeam' },
+        { title: 'Client Rep Code', field: 'salesTeam' },
         {
           title: 'Order Value',
           field: 'value',

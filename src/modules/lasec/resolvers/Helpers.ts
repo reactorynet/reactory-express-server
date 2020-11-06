@@ -1184,7 +1184,7 @@ const line_items_map = {
     '[].quote_item_id',
     '[].meta.reference',
     '[].line_id',
-    '[].id',    
+    '[].id',
   ],
   'items[].quote_id': '[].quoteId',
   'items[].code': '[].code',
@@ -1217,7 +1217,7 @@ const line_item_map = {
     'id',
     'quote_item_id',
     'meta.reference',
-    'line_id',    
+    'line_id',
   ],
   'quote_id': 'quoteId',
   'code': 'code',
@@ -1250,7 +1250,7 @@ export const lasecGetQuoteLineItem = async (id: string): Promise<LasecQuoteItem>
 
   const line_item: LasecQuoteItem = om.merge(line_item_result, line_item_map) as LasecQuoteItem;
   line_item.meta.source = line_item_result;
-  
+
   return line_item;
 };
 
@@ -1262,25 +1262,25 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: String
   //if (cached) logger.debug(`Found Cached Line Items For Quote: ${code}`);
 
   //if (lodash.isNil(cached) === true) {
-    let lineItems = []
-    let result = await lasecApi.Quotes.getLineItems(code, active_option, pageSize, page).then();
+  let lineItems = []
+  let result = await lasecApi.Quotes.getLineItems(code, active_option, pageSize, page).then();
 
-    logger.debug(`Helpers.ts -> lasecGetQuoteLineItems() => Got results from API`, { records: result.line_items.length, paging: result.item_paging })
+  logger.debug(`Helpers.ts -> lasecGetQuoteLineItems() => Got results from API`, { records: result.line_items.length, paging: result.item_paging })
 
-    lineItems = result.line_items;
-    
-    
-    logger.debug(`Found line items for quote ${code}`, lineItems);
+  lineItems = result.line_items;
 
-    if (lineItems.length == 0) return [];
 
-    lodash.sortBy(lineItems, (e) => `${e.quote_heading_id || -1}-${e.position}`)
+  logger.debug(`Found line items for quote ${code}`, lineItems);
 
-    lineItems = om.merge(result.line_items, line_items_map) as LasecQuoteItem[];
-    
+  if (lineItems.length == 0) return [];
 
-    logger.debug(`Line items ${code} 🟢`, { lineItems });    
-    //setCacheItem(keyhash, cached, 25).then();
+  lodash.sortBy(lineItems, (e) => `${e.quote_heading_id || -1}-${e.position}`)
+
+  lineItems = om.merge(result.line_items, line_items_map) as LasecQuoteItem[];
+
+
+  logger.debug(`Line items ${code} 🟢`, { lineItems });
+  //setCacheItem(keyhash, cached, 25).then();
   //}
 
   return { lineItems, item_paging: result.item_paging };
@@ -1663,6 +1663,7 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams): Pro
 }
 
 export const getSalesOrders = async (params) => {
+
   logger.debug(`GETTING PAGED SALES ORDERS:: ${JSON.stringify(params)}`);
 
   const {
@@ -1699,40 +1700,6 @@ export const getSalesOrders = async (params) => {
   let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
   logger.debug(`GOT DETAILS:: ${JSON.stringify(salesOrdersDetails.items[0])}`);
   let salesOrders = [...salesOrdersDetails.items];
-  /**
-   *
-   *
-   * {
-  "id": "497780-RLAS1GL011-0000M",
-  "document_ids": [
-    "42004"
-  ],
-  "order_date": "2020-06-30T00:00:00Z",
-  "order_type": "Normal",
-  "req_ship_date": "2020-06-30T00:00:00Z",
-  "order_status": "Open Order",
-  "sales_order_number": "497780",
-  "sales_order_id": "497780",
-  "company_trading_name": "CAPE PEN UNIVERSITY OF TECH",
-  "sales_team_id": "LAB106",
-  "currency": "R",
-  "quote_id": "2006-106331047",
-  "quote_date": "2020-06-26T08:17:57Z",
-  "order_value": 1062000,
-  "back_order_value": 675000,
-  "reserved_value": 387000,
-  "shipped_value": 0,
-  "delivery_address": "Room A113,  Floor 1,  CPUT,  Bellville,Campus,  Symphony Way,  Bellville,  7530",
-  "customer_name": "Fadia Alexander",
-  "customerponumber": "CP265392",
-  "dispatch_note_ids": [],
-  "invoice_ids": [],
-  "warehouse_note": "",
-  "delivery_note": ""
-}
-   *
-   *
-   */
 
   salesOrders = salesOrders.map(order => {
     return {
@@ -1759,15 +1726,27 @@ export const getSalesOrders = async (params) => {
       dispatchCount: (order.dispatch_note_ids || []).length,
       invoiceCount: (order.invoices || []).length,
       dispatches: order.dispatch_note_ids || [],
-      invoices: order.dispatch_invoices || []
+      invoices: order.dispatch_invoices || [],
+      orderQty: order.order_qty,
+      shipQty: order.ship_qty,
+      reservedQty: order.reserved_qty,
+      backOrderQty: order.back_order_qty
     }
-
-
   });
+
+  const totals = salesOrders.reduce((acc, obj) => {
+    return {
+      orderQty: acc.orderQty + obj.orderQty,
+      shipQty: acc.shipQty + obj.shipQty,
+      reservedQty: acc.reservedQty + obj.reservedQty,
+      backOrderQty: acc.backOrderQty + obj.backOrderQty
+    }
+  }, { orderQty: 0, shipQty: 0, reservedQty: 0, backOrderQty: 0 });
 
   let result = {
     paging: pagingResult,
     salesOrders,
+    totals
   };
 
   return result;
@@ -2705,7 +2684,7 @@ export const getFreightRequetQuoteDetails = async (params) => {
 
 
   let options = [];
-  let productDetails = [];  
+  let productDetails = [];
 
   logger.debug(`----------  GETTING OPTIONS FROM API ----------`);
 
@@ -2716,7 +2695,7 @@ export const getFreightRequetQuoteDetails = async (params) => {
     logger.debug(`QUOTE OPTIONS ${quoteId}:: ${JSON.stringify(quoteOptionResponse)}`);
 
     quoteOptionResponse = quoteOptionResponse.items[0];
-    
+
     const paged_results: { lineItems: LasecQuoteItem[], item_paging: Reactory.IPagingResult } = await lasecGetQuoteLineItems(quoteId, optionId).then();
 
     logger.debug(`OPTION LINE ITEMS FOR::  ${quoteId} ${optionId}:: ${JSON.stringify(paged_results)}`);

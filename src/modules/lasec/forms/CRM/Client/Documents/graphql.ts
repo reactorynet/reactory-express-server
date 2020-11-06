@@ -13,8 +13,14 @@ const graphql: Reactory.IFormGraphDefinition = {
         documents {
           id
           filename
+          mimetype
           link
           size
+          owner {
+            id
+            firstName
+            fullName
+          }
         }
       }
     }`,

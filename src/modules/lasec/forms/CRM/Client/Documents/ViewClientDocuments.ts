@@ -25,8 +25,14 @@ export const ViewUiSchema: any = {
           documents {
             id
             filename
+            mimetype
             link
             size
+            owner {
+              id
+              firstName
+              fullName
+            }
           }
         }
       }`,
@@ -182,7 +188,7 @@ export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
   name: 'LasecCRMViewClientDocuments',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: { ...ViewSchema, title: 'DOCUMENTS' },
+  schema: { ...ViewSchema, title: 'CLIENT DOCUMENTS' },
   graphql,
   uiSchema: { ...ViewUiSchema },
   uiSchemas: [

@@ -9,7 +9,7 @@ import { defaultUiResources } from '../../../uiResources';
 
 const newSchema = cloneDeep<Reactory.ISchema>(DocumentFormSchema);
 // newSchema.properties.paging = { ...PagingSchema }
-newSchema.title = 'UPLOAD DOCUMENTS';
+newSchema.title = 'UPLOAD CLIENT DOCUMENTS';
 // newSchema.description = 'Use the area below to add files for this customer.';
 export const NewSchema = newSchema;
 
@@ -23,7 +23,7 @@ export const NewUiSchema: any = {
       marginTop: '16px',
       paddingBottom: '8px'
     },
-  
+
     style: {
       marginTop: '16px',
     },
@@ -43,7 +43,7 @@ export const NewUiSchema: any = {
     }
   },
   'ui:grid-layout': [
-  
+
     {
       upload: { lg: 6, md: 6, sm: 12, },
       uploadedDocuments: { lg: 6, md: 6, sm: 12 },
@@ -167,6 +167,11 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
             mimetype
             link
             size
+            owner {
+              id
+              firstName
+              fullName
+            }
           }
         }
       }`,

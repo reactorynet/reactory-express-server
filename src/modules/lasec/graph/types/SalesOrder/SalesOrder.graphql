@@ -1,7 +1,7 @@
 type SalesOrder {
   id: String
   orderDate: Date
-  salesOrderNumber: String  
+  salesOrderNumber: String
   shippingDate: String
   quoteDate: String
   quoteId: String
@@ -26,4 +26,9 @@ type SalesOrder {
   invoices: [Any]
   dispatches: [Any]
   documentIds: [String]
+
+  orderQty: String
+  shipQty: String
+  reservedQty: String
+  backOrderQty: String
 }
