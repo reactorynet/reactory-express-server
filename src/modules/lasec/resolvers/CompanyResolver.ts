@@ -783,8 +783,11 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
   if (params.id && params.id !== 'new') {
     logger.debug(`Fetching Remote Documents for Lasec Customer ${params.id}`);
     let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } });
+
+    logger.debug(`API DOCUMENTS ${JSON.stringify(documents)}`);
+
+
     documents.items.forEach((documentItem: any) => {
-      logger.debug(`Adding Document item from Lasec For Customer Id ${params.id}`);
       _docs.push({
         id: new ObjectID(),
         partner: global.partner,
@@ -798,7 +801,8 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
         uploadContext: 'lasec-crm::company-document::remote',
         mimetype: '',
         uploadedBy: global.user.id,
-        owner: global.user.id
+        // owner: global.user.id
+        owner: global.user
       })
     });
   }
@@ -814,13 +818,15 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
     };
   }
 
-  logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
+  // logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
   let reactoryFiles: IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
-  logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> ReactorFile.find({documentFileter}) --> reactorFiles[${reactoryFiles.length}]`);
+  // logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> ReactorFile.find({documentFileter}) --> reactorFiles[${reactoryFiles.length}]`);
 
   reactoryFiles.forEach((rfile) => {
     _docs.push(rfile);
   });
+
+  logger.debug(`REACTORYFiles[${JSON.stringify(_docs)}]`);
 
   if (params.paging) {
 
@@ -1269,8 +1275,10 @@ const uploadDocument = async (args: any) => {
         mimetype,
         alias: randomName,
         partner: new ObjectID(global.partner.id),
-        owner: new ObjectID(global.user.id),
-        uploadedBy: new ObjectID(global.user.id),
+        owner: global.user,
+        // owner: new ObjectID(global.user.id),
+        uploadedBy: global.user,
+        // uploadedBy: new ObjectID(global.user.id),
         size: fileStats.size,
         hash: Hash(link),
         link: link,
@@ -1663,6 +1671,15 @@ const saveComment = async (args) => {
 }
 
 export default {
+  LasecDocument: {
+    owner: async ({ owner }) => {
+      if (ObjectId.isValid(owner)) {
+        const _owner = await User.findById(owner).then();
+        logger.debug(`OWNER:: ${owner} ${JSON.stringify(_owner)}`)
+        return _owner;
+      }
+    }
+  },
   CRMClientComment: {
     id: ({ id, _id }) => id || _id,
     who: async ({ who }) => {

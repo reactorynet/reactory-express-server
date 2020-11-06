@@ -28,6 +28,11 @@ export const ViewUiSchema: any = {
             mimetype
             link
             size
+            owner {
+              id
+              firstName
+              fullName
+            }
           }
         }
       }`,

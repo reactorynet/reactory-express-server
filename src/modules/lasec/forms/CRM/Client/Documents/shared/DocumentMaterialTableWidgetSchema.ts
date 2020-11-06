@@ -19,7 +19,7 @@ const MaterialTableWidgetDefintion: any =  {
                   key: 'image/png',
                   icon: 'photo',
                   style: {
-                    color: '#5EB848'                  
+                    color: '#5EB848'
                   },
                   tooltip: 'PNG'
                 },
@@ -30,7 +30,7 @@ const MaterialTableWidgetDefintion: any =  {
                     color: '#5EB848'
                   },
                   tooltip: 'JPEG'
-                },                
+                },
                 {
                   key: 'image/gif',
                   icon: 'gif',
@@ -46,7 +46,7 @@ const MaterialTableWidgetDefintion: any =  {
                     color: '#5EB848'
                   },
                   tooltip: 'Pdf document'
-                }                  
+                }
               ]
             },
             style: {
@@ -56,12 +56,28 @@ const MaterialTableWidgetDefintion: any =  {
             propsMap: {
               'rowData.mimetype': 'value',
             },
-          }            
-        ],                  
+          }
+        ],
         propsMap: {
           'rowData.mimetype': 'selectedKey'
         }
-      },      
+      },
+      {
+        title: 'Uploaded By',
+        field: 'owner',
+        component: 'core.LabelComponent@1.0.0',
+        props: {
+          uiSchema: {
+            'ui:options': {
+              variant: 'body1',
+              format: '${rowData.owner.fullName}'
+            }
+          },
+        },
+        propsMap: {
+          'rowData.invoiceDate': 'value',
+        }
+      },
     ],
 
     options: {
@@ -75,21 +91,21 @@ const MaterialTableWidgetDefintion: any =  {
     refreshEvents: [
       { name: 'lasec-crm::new-company::document::uploaded' }
     ],
-    variables: {      
-      'props.formContext.$formData.paging': 'paging',      
+    variables: {
+      'props.formContext.$formData.paging': 'paging',
       'props.formContext.$formData.filter': 'filter',
       'props.formContext.$formData.uploadContexts': 'uploadContexts',
     },
     resultMap: {
       'paging.page': 'page',
       'paging.total': 'totalCount',
-      'paging.pageSize': 'pageSize',             
-      'documents': 'data',        
+      'paging.pageSize': 'pageSize',
+      'documents': 'data',
     },
-    resultType: 'object', 
+    resultType: 'object',
   }
 };
 
- 
+
 
 export default MaterialTableWidgetDefintion;

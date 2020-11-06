@@ -167,6 +167,11 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
             mimetype
             link
             size
+            owner {
+              id
+              firstName
+              fullName
+            }
           }
         }
       }`,

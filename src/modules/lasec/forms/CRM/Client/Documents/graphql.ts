@@ -16,6 +16,11 @@ const graphql: Reactory.IFormGraphDefinition = {
           mimetype
           link
           size
+          owner {
+            id
+            firstName
+            fullName
+          }
         }
       }
     }`,

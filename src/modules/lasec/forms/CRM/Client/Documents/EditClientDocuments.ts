@@ -119,6 +119,23 @@ export const EditUiSchema: any = {
             'rowData.mimetype': 'selectedKey'
           }
         },
+        {
+          title: 'Uploaded By',
+          field: 'owner',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body1',
+                format: '${rowData.owner.fullName}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData.invoiceDate': 'value',
+          }
+        },
+
       ],
       options: {
         grouping: false,

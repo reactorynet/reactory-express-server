@@ -81,6 +81,7 @@ type LasecDocument {
   size: Int
   public: Boolean
   published: Boolean
+  owner: User
 }
 
 type PagedLasecDocument {
