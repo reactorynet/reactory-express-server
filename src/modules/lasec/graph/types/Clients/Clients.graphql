@@ -116,6 +116,7 @@ type PagedCRMOrganisation {
 
 type ClientDetailUpdateResponse {
   Success: Boolean
+  Client: LasecCRMClient
 }
 
 type LasecLookupItem {

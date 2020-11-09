@@ -544,8 +544,126 @@ const updateClientDetail = async (args) => {
 
       const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams);
 
+      if (apiResponse.success && apiResponse.customer) {
+        // map customer
+        let clientResponse = om(apiResponse.customer, {
+          'id': 'id',
+          'title_id': ['title', 'titleLabel'],
+          'first_name': [{
+            "key":
+              'fullName',
+            "transform": (sourceValue, sourceObject, destinationObject, destinationKey) => `${sourceValue} ${sourceObject.surname}`,
+          }, "firstName"],
+          'surname': 'lastName',
+          'activity_status': { key: 'clientStatus', transform: (sourceValue) => `${sourceValue}`.toLowerCase() },
+          'email': 'emailAddress',
+          'alternate_email': 'alternateEmail',
+          'mobile_number': 'mobileNumber',
+          'office_number': 'officeNumber',
+          'alternate_office_number': 'alternateOfficeNumber',
+          'special_notes': 'note',
+          'sales_team_id': 'salesTeam',
+          'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src) => src == true },
+          'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
+          'department': ['department', 'jobTitle'],
+          'ranking_id': 'customer.ranking',
+
+          'faculty': 'faculty',
+          'customer_type': 'customerType',
+          'line_manager_id': 'lineManager',
+          'line_manager_name': 'lineManagerLabel',
+          'role_id': 'jobType',
+          'company_id': 'customer.id',
+          'company_account_number': 'customer.accountNumber',
+          'company_trading_name': 'customer.tradingName',
+          'company_sales_team': 'customer.salesTeam',
+          'customer_class_id': ['customer.classId',
+            {
+              key: 'customer.customerClass',
+              transform: (sourceValue) => `${sourceValue} => Lookup Pending`
+            }
+          ],
+          'account_type': ['accountType', 'customer.accountType'],
+          'company_on_hold': {
+            'key': 'customer.customerStatus',
+            'transform': (val) => (`${val === true ? 'on-hold' : 'not-on-hold'}`)
+          },
+          'currency_code': 'customer.currencyCode',
+          'currency_symbol': 'customer.currencySymbol',
+          'physical_address_id': 'customer.physicalAddressId',
+          'physical_address': 'customer.physicalAddress',
+          'delivery_address_id': 'customer.deliveryAddressId',
+          'delivery_address': 'customer.deliveryAddress',
+          'billing_address': "customer.billingAddress",
+          'country': ['country', 'customer.country']
+        });
+
+        try {
+          let hashkey = Hash(`LASEC_COMPANY::${clientResponse.customer.id}`);
+          let found = await getCacheItem(hashkey).then();
+          logger.debug(`Found Cached Item for LASEC_COMPANY::${clientResponse.customer.id} ==> ${found}`)
+          if (found === null || found === undefined) {
+            let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }).then()
+            if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
+              if (companyPayloadResponse.items.length === 1) {
+
+                let customerObject = {
+                  ...clientResponse.customer, ...om(companyPayloadResponse.items[0], {
+                    'company_id': 'id',
+                    'registered_name': 'registeredName',
+                    'description': 'description',
+                    'trading_name': 'tradingName',
+                    "registration_number": 'registrationNumber',
+                    "vat_number": "taxNumber",
+                    'organization_id': 'organizationId',
+                    'currency_code': 'currencyCode',
+                    'currency_symbol': 'currencySymbol',
+                    'currency_description': 'currencyDescription',
+                    "credit_limit_total_cents": "creditLimit",
+                    "current_balance_total_cents": "currentBalance",
+                    "current_invoice_total_cents": "currentInvoice",
+                    "30_day_invoice_total_cents": "balance30Days",
+                    "60_day_invoice_total_cents": "balance60Days",
+                    "90_day_invoice_total_cents": "balance90Days",
+                    "120_day_invoice_total_cents": "balance120Days",
+                    "credit_invoice_total_cents": "creditTotal"
+                  })
+                };
+
+                setCacheItem(hashkey, customerObject, 10);
+                clientResponse.customer = customerObject;
+              }
+            }
+          } else {
+            clientResponse.customer = found;
+          }
+        } catch (companyLoadError) {
+          logger.error(`Could not laod company data ${companyLoadError.message}`);
+        }
+
+        // SET PERSON TITLE STRING VALUE
+        const titles = await getPersonTitles();
+        const setTitle = titles.find(t => t.id == clientResponse.titleLabel)
+        clientResponse.titleLabel = setTitle ? setTitle.title : clientResponse.titleLabel;
+
+        // SET ROLE STRING VALUE
+        const roles = await getCustomerRoles({}).then();
+        const employeeRole = roles.find(t => t.id == clientResponse.jobType);
+        clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.clientResponse.jobType;
+
+
+        logger.debug(`UPDATED AND RETURNING :: ${JSON.stringify(clientResponse)}`);
+
+        return {
+          Success: apiResponse.success,
+          Client: clientResponse
+        };
+
+      }
+
       return {
         Success: apiResponse.success,
+        Client: null
       };
     }
 

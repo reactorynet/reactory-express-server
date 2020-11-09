@@ -62,6 +62,26 @@ const graphql: Reactory.IFormGraphDefinition = {
       text: `mutation LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
         LasecUpdateClientDetails(clientInfo: $clientInfo) {
           Success
+          Client {
+            id
+            jobTitle
+            salesTeam
+            department
+
+            faculty
+            customerType
+            lineManager
+            lineManagerLabel
+            jobType
+            jobTypeLabel
+
+            customer {
+              id
+              accountType
+              customerClass
+              ranking
+            }
+          }
         }
       }`,
       objectMap: true,
@@ -81,7 +101,25 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.jobType': 'clientInfo.jobType',
 
       },
-      onSuccessMethod: 'notification',
+      resultMap: {
+        'Client.id': 'id',
+        'Client.customer.accountType': 'accountType',
+        'Client.salesTeam': 'repCode',
+        'Client.jobTitle': 'jobTitle',
+        'Client.department': 'department',
+        'Client.customer.customerClass': 'clientClass',
+        'Client.customer.id': 'customerId',
+        'Client.customer.ranking': 'ranking',
+
+        'Client.faculty': 'faculty',
+        'Client.customerType': 'customerType',
+        'Client.lineManager': 'lineManager',
+        'Client.lineManagerLabel': 'lineManagerLabel',
+        'Client.jobType': 'jobType',
+        'Client.jobTypeLabel': 'jobTypeLabel',
+      },
+      onSuccessMethod: 'refresh',
+      // onSuccessMethod: 'notification',
       notification: {
         inAppNotification: true,
         title: 'Job details successfully updated.',

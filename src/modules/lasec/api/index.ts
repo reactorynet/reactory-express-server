@@ -458,12 +458,12 @@ const Api = {
           status, payload, id,
         } = apiResponse;
 
-        // logger.debug(`UPDATE CLIENT DETAILS RESPONSE: ${JSON.stringify(apiResponse)}`);
         logger.debug(`PAYLOAD: ${JSON.stringify(payload)}`);
 
         if (status === 'success') {
           return {
             success: true,
+            customer: payload && payload.customers ? payload.customers[0] : null
           }
         }
 
@@ -1667,7 +1667,7 @@ const Api = {
 
     setActiveCompany: async (company = 3) => {
       return await POST(`${SECONDARY_API_URLS.staff_user_data.url}set_active_company`, { company }).then();
-    } 
+    }
   },
   Authentication: {
     login: async (username, password) => {
