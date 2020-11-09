@@ -14,10 +14,10 @@ export const FilterByEnumsKeys = {
   quote_date: 'quote_date',
   sales_team_id: 'sales_team_id',
   // user_sales_team_id: 'user_sales_team_id',
-  order_value: 'order_value',
-  reserved_value: 'reserved_value',
-  ship_value: 'shipped_value',
-  backorder_value: 'back_order_value',
+  // order_value: 'order_value',
+  // reserved_value: 'reserved_value',
+  // ship_value: 'shipped_value',
+  // backorder_value: 'back_order_value',
 };
 
 export const FilterByEnumArray: string[] = [
@@ -28,7 +28,7 @@ export const FilterByEnumArray: string[] = [
   FilterByEnumsKeys.customer,
   FilterByEnumsKeys.client,
   FilterByEnumsKeys.po_number,
-  FilterByEnumsKeys.order_value,
+  // FilterByEnumsKeys.order_value,
   // FilterByEnumsKeys.order_status,
 ];
 
@@ -48,10 +48,10 @@ export const FilterByOptions = [
   { key: FilterByEnumsKeys.quote_date, value: FilterByEnumsKeys.quote_date, label: 'Quote Date' },
   // { key: FilterByEnumsKeys.user_sales_team_id, value: FilterByEnumsKeys.user_sales_team_id, label: 'Sales Team' },
   { key: FilterByEnumsKeys.sales_team_id, value: FilterByEnumsKeys.sales_team_id, label: 'Sales Team' },
-  { key: FilterByEnumsKeys.order_value, value: FilterByEnumsKeys.order_value, label: 'Order Value' },
-  { key: FilterByEnumsKeys.ship_value, value: FilterByEnumsKeys.ship_value, label: 'Shipped Value' },
-  { key: FilterByEnumsKeys.backorder_value, value: FilterByEnumsKeys.backorder_value, label: 'Backorder Value' },
-  { key: FilterByEnumsKeys.reserved_value, value: FilterByEnumsKeys.reserved_value, label: 'Reserved Value' },
+  // { key: FilterByEnumsKeys.order_value, value: FilterByEnumsKeys.order_value, label: 'Order Value' },
+  // { key: FilterByEnumsKeys.ship_value, value: FilterByEnumsKeys.ship_value, label: 'Shipped Value' },
+  // { key: FilterByEnumsKeys.backorder_value, value: FilterByEnumsKeys.backorder_value, label: 'Backorder Value' },
+  // { key: FilterByEnumsKeys.reserved_value, value: FilterByEnumsKeys.reserved_value, label: 'Reserved Value' },
 ];
 
 export const FilterOptions = [
