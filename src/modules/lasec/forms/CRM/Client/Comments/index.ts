@@ -31,55 +31,60 @@ const displayUiSchema: any = {
       newComment: { sm: 12, md: 12, lg: 12, style: { paddingTop: 0 } },
     }
   ],
+
   comments: {
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
-      columns: [
-        {
-          title: '', field: 'avatar',
-          component: 'core.ImageComponent@1.0.0',
-          props: {
-            'ui:options': {
-              variant: 'rounded'
-            },
-          },
-          propsMap: {
-            'rowData.avatar': 'value',
-          },
-        },
-        {
-          title: "Who", field: "fullName"
-        },
-        {
-          title: 'When',
-          field: 'when',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${api.utils.moment(rowData.when).format(\'DD MMM YYYY HH:mm\')}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.date': 'value',
-          }
-        },
-        {
-          title: "Comment", field: "comment"
-        },
-      ],
-      options: {
-        grouping: false,
-        search: false,
-        showTitle: false,
-        toolbar: false,
-        fixedColumns: { left: 5, },
-        tableLayout: 'fixed',
-      },
-    }
+    'ui:widget': 'ClientCommentGrid',
   },
+
+  // comments: {
+  //   'ui:widget': 'MaterialTableWidget',
+  //   'ui:options': {
+  //     columns: [
+  //       {
+  //         title: '', field: 'avatar',
+  //         component: 'core.ImageComponent@1.0.0',
+  //         props: {
+  //           'ui:options': {
+  //             variant: 'rounded'
+  //           },
+  //         },
+  //         propsMap: {
+  //           'rowData.avatar': 'value',
+  //         },
+  //       },
+  //       {
+  //         title: "Who", field: "fullName"
+  //       },
+  //       {
+  //         title: 'When',
+  //         field: 'when',
+  //         component: 'core.LabelComponent@1.0.0',
+  //         props: {
+  //           uiSchema: {
+  //             'ui:options': {
+  //               variant: 'body2',
+  //               format: '${api.utils.moment(rowData.when).format(\'DD MMM YYYY HH:mm\')}'
+  //             }
+  //           },
+  //         },
+  //         propsMap: {
+  //           'rowData.date': 'value',
+  //         }
+  //       },
+  //       {
+  //         title: "Comment", field: "comment"
+  //       },
+  //     ],
+  //     options: {
+  //       grouping: false,
+  //       search: false,
+  //       showTitle: false,
+  //       toolbar: false,
+  //       fixedColumns: { left: 5, },
+  //       tableLayout: 'fixed',
+  //     },
+  //   }
+  // },
   newComment: {
     'ui:options': {
       component: 'TextField',
@@ -167,6 +172,9 @@ const LasecCRMClientComments: Reactory.IReactoryForm = {
   graphql,
   uiSchema: displayUiSchema,
   defaultFormValue: {},
+  widgetMap: [
+    { componentFqn: 'lasec-crm.ClientCommentGrid@1.0.0', widget: 'ClientCommentGrid' },
+  ],
 };
 
 export default LasecCRMClientComments;
