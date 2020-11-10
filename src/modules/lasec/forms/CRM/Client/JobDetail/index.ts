@@ -45,7 +45,8 @@ export const displayUiSchema: any = {
       jobTitle: { md: 6, sm: 12 },
       jobTypeLabel: { md: 6, sm: 12 },
       clientDepartment: { md: 6, sm: 12 },
-      customerClass: { md: 6, sm: 12 },
+      // customerClass: { md: 6, sm: 12 },
+      customerClassLabel: { md: 6, sm: 12 },
       ranking: { md: 6, sm: 12 },
       faculty: { md: 6, sm: 12 },
       customerType: { md: 6, sm: 12 },
@@ -146,12 +147,33 @@ export const displayUiSchema: any = {
       }
     }
   },
-  customerClass: {
+  // customerClass: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     format: '${formData}',
+  //     variant: 'subtitle1',
+  //     title: 'Customer Class',
+  //     titleProps: {
+  //       style: {
+  //         display: 'content',
+  //         minWidth: '150px',
+  //         color: "#9A9A9A",
+  //       }
+  //     },
+  //     bodyProps: {
+  //       style: {
+  //         display: 'flex',
+  //         justifyContent: 'flex-end'
+  //       }
+  //     }
+  //   }
+  // },
+  customerClassLabel: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
       variant: 'subtitle1',
-      title: 'Client Class',
+      title: 'Customer Class',
       titleProps: {
         style: {
           display: 'content',
@@ -693,7 +715,7 @@ export const ConfirmUiSchema: any = {
     'ui:options': {
       format: '$LOOKUP$',
       variant: 'subtitle1',
-      title: 'Client Class',
+      title: 'Customer Class',
       titleProps: {
         style: {
           display: 'content',
@@ -998,6 +1020,10 @@ const schema: Reactory.ISchema = {
       title: "Client Department"
     },
     customerClass: {
+      type: "string",
+      title: "Class"
+    },
+    customerClassLabel: {
       type: "string",
       title: "Class"
     },

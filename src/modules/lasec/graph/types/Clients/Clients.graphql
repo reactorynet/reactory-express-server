@@ -71,6 +71,8 @@ type LasecCRMClient {
   lineManagerLabel: String
   jobType: String
   jobTypeLabel: String
+  customerClassLabel: String
+
 }
 
 type LasecDocument {

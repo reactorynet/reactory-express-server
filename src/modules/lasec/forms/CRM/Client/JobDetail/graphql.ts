@@ -16,6 +16,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         lineManagerLabel
         jobType
         jobTypeLabel
+        customerClassLabel
 
         customer {
           id
@@ -34,7 +35,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       'salesTeam': 'repCode',
       'jobTitle': 'jobTitle',
       'department': 'department',
-      'customer.customerClass': 'clientClass',
+      'customer.customerClass': 'customerClass',
+      'customerClassLabel': 'customerClassLabel',
       'customer.id': 'customerId',
       'customer.ranking': 'ranking',
 
@@ -92,7 +94,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.repCode': 'clientInfo.repCode',
         'formData.jobTitle': 'clientInfo.jobTitle',
         'formData.clientDepartment': 'clientInfo.clientDepartment',
-        'formData.clientClass': 'clientInfo.clientClass',
+        'formData.customerClass': 'clientInfo.clientClass',
         'formData.ranking': 'clientInfo.ranking',
 
         'formData.faculty': 'clientInfo.faculty',

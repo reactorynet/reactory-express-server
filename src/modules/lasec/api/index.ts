@@ -458,6 +458,7 @@ const Api = {
           status, payload, id,
         } = apiResponse;
 
+        logger.debug(`API UPDATE RESPONSE: ${JSON.stringify(apiResponse)}`);
         logger.debug(`PAYLOAD: ${JSON.stringify(payload)}`);
 
         if (status === 'success') {

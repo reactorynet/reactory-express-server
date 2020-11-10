@@ -162,48 +162,6 @@ const getClients = async (params) => {
   logger.debug(`Fetched Expanded View for (${clientDetails.items.length}) Clients from API`);
   let clients = [...clientDetails.items];
   clients = clients.map(client => {
-    /**
-    * id: "15237"
-      title_id: "3"
-      first_name: "Theresa"
-      surname: "Ruppelt"
-      office_number: "021 404 4509"
-      alternate_office_number: null
-      mobile_number: "none"
-      email: "theresa.ruppett@nhls.ac.za"
-      confirm_email: "theresa.ruppett@nhls.ac.za"
-      alternate_email: null
-      onboarding_step_completed: "6"
-      role_id: "1"
-      ranking_id: "1"
-      account_type: "account"
-      modified: "2018-06-15T13:01:21.000000Z"
-      activity_status: "Active"
-      special_notes: null
-      sales_team_id: "LAB101"
-      organisation_id: "0"
-      company_id: "11625"
-      delivery_address_id: "14943"
-      delivery_address: "Main Rd, Observatory, Cape Town, 7925, South Africa"
-      physical_address_id: "14943"
-      physical_address: "Main Rd, Observatory, Cape Town, 7925, South Africa"
-      currency_id: "1"
-      currency_code: "ZAR"
-      currency_symbol: "R"
-      currency_description: "Rand"
-      company_trading_name: "NHLS OF SA"
-      company_on_hold: false
-      customer_class_id: "80"
-      department: null
-      created: null
-      document_ids: []
-      company_account_number: "11625"
-      customer_sales_team: "LAB101"
-      company_sales_team: "LAB100"
-      country: "South Africa"
-      billing_address: "Ct,Po box 1038,Sandringham,Gauteng,2000"
-     *
-     */
     let _client = om(client, {
       'id': 'id',
       'first_name': [{
@@ -230,7 +188,6 @@ const getClients = async (params) => {
       'country': ['country', 'customer.country']
     });
 
-    //_client.fullName = `${client.firstName}`
 
     return _client;
   });
@@ -347,12 +304,13 @@ export const getClient = async (params) => {
       'company_account_number': 'customer.accountNumber',
       'company_trading_name': 'customer.tradingName',
       'company_sales_team': 'customer.salesTeam',
-      'customer_class_id': ['customer.classId',
-        {
-          key: 'customer.customerClass',
-          transform: (sourceValue) => `${sourceValue} => Lookup Pending`
-        }
-      ],
+      'customer_class_id': 'customer.customerClass',
+      // 'customer_class_id': ['customer.classId',
+      //   {
+      //     key: 'customer.customerClass',
+      //     transform: (sourceValue) => `${sourceValue} => Lookup Pending`
+      //   }
+      // ],
       'account_type': ['accountType', 'customer.accountType'],
       'company_on_hold': {
         'key': 'customer.customerStatus',
@@ -464,6 +422,20 @@ export const getClient = async (params) => {
     const employeeRole = roles.find(t => t.id == clientResponse.jobType);
     clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.clientResponse.jobType;
 
+     // CUSTOMER CLASS
+
+     const customerClasses = await getCustomerClass({}).then();
+
+     logger.debug(`CUSTOMER CLASSES :: ${JSON.stringify(customerClasses)}`);
+
+     const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
+
+     logger.debug(`CUSTOMER CLASS FOUND :: ${JSON.stringify(customerClass)}`);
+
+     clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.clientResponse.customer.customerClass;
+
+     logger.debug(`UPDATED AND RETURNING :: ${JSON.stringify(clientResponse)}`);
+
     return clientResponse;
   }
 
@@ -526,7 +498,8 @@ const updateClientDetail = async (args) => {
         account_type: params.personalDetails && params.personalDetails.accountType || (client.account_type || ''),
 
         // customer_class_id: params.clientClass || (client.customer_class_id || ''),
-        customer_class_id: params.jobDetails && params.jobDetails.customerClass || (client.customer_class_id || ''),
+        // customer_class_id: params.jobDetails && params.jobDetails.customerClass || (client.customer_class_id || ''),
+        customer_class_id: params.clientClass ? params.clientClass : params.jobDetails && params.jobDetails.customerClass || (client.customer_class_id || ''),
 
         // sales_team_id: params.repCode || (client.sales_team || ''),
         sales_team_id: params.personalDetails && params.personalDetails.repCode || (client.sales_team || ''),
@@ -536,8 +509,6 @@ const updateClientDetail = async (args) => {
         customer_type: params.customerType || (client.customer_type || ''),
         line_manager_id: params.lineManager || (client.line_manager_id || ''),
         role_id: params.jobType || (client.role_id || ''),// role_id: client.role_id,
-
-
       }
 
       logger.debug(`UPDATE PARAMS:: ${JSON.stringify(updateParams)}`);
@@ -577,12 +548,13 @@ const updateClientDetail = async (args) => {
           'company_account_number': 'customer.accountNumber',
           'company_trading_name': 'customer.tradingName',
           'company_sales_team': 'customer.salesTeam',
-          'customer_class_id': ['customer.classId',
-            {
-              key: 'customer.customerClass',
-              transform: (sourceValue) => `${sourceValue} => Lookup Pending`
-            }
-          ],
+          'customer_class_id': 'customer.customerClass',
+          // 'customer_class_id': ['customer.classId',
+          //   {
+          //     key: 'customer.customerClass',
+          //     transform: (sourceValue) => `${sourceValue} => Lookup Pending`
+          //   }
+          // ],
           'account_type': ['accountType', 'customer.accountType'],
           'company_on_hold': {
             'key': 'customer.customerStatus',
@@ -651,6 +623,17 @@ const updateClientDetail = async (args) => {
         const employeeRole = roles.find(t => t.id == clientResponse.jobType);
         clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.clientResponse.jobType;
 
+        // CUSTOMER CLASS
+
+        const customerClasses = await getCustomerClass({}).then();
+
+        logger.debug(`CUSTOMER CLASSES :: ${JSON.stringify(customerClasses)}`);
+
+        const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
+
+        logger.debug(`CUSTOMER CLASS FOUND :: ${JSON.stringify(customerClass)}`);
+
+        clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.clientResponse.customer.customerClass;
 
         logger.debug(`UPDATED AND RETURNING :: ${JSON.stringify(clientResponse)}`);
 
