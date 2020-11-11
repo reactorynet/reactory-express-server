@@ -179,7 +179,6 @@ const uiSchema: any = {
         toolbar: true,
         selection: true,
         pageSize: 10,
-        doubleHorizontalScroll: true
       },
       actions: [
         {

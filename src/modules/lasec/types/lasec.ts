@@ -507,6 +507,31 @@ export interface LasecDeleteQuoteOptionParams {
   option_id: string
 }
 
+export interface LasecCreateSalesOrderInput {
+  id: string
+  quote_id: string
+  sales_order_date: string
+  purchase_order_number: string
+  confirm_number: string
+  customer_name: string
+  company_name: string
+  rep_code: string
+  vat_number: string
+  quoted_amount: number
+  amounts_confirmed: Boolean
+  order_type: string
+  preffered_warehouse: string
+  shipping_date: Date
+  part_supply: Boolean
+  delivery_address: string
+  special_instructions: string
+  special_instructions_warehouse: string
+  on_day_contact: string
+  method_of_contact: string
+  contact_number: string
+  documents: any[]
+}
+
 export interface IQuoteService extends Reactory.Service.IReactoryService {
 
   /**
@@ -547,6 +572,8 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
   getQuoteHeaders(quote_id: string): Promise<any>;
 
   getQuoteTransportModes(): Promise<any>;
+
+  createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<SimpleResponse>
 }
 
 export interface ILasecClientService extends Reactory.Service.IReactoryService {

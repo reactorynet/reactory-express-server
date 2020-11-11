@@ -1,8 +1,9 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 
 export interface LasecGenerateSalesOrderFormData {
+    [p: string]: any,
     header: {
-        sales_order_date: Date,
+        sales_order_date: string,
         quote_id: string,
         customer_name: string,
         company_name: string
@@ -21,7 +22,7 @@ export interface LasecGenerateSalesOrderFormData {
         part_supply: boolean
     },
     delivery_detail: {
-        delivery_address: string
+        delivery_address: any,
         special_instruction: string
         special_instructions_warehouse: string
         on_day_contact: string
@@ -32,7 +33,7 @@ export interface LasecGenerateSalesOrderFormData {
         view: string
         id: string
         upload: string
-        uploadContext: string
+        uploadContext: [string]
         uploadedDocuments: Reactory.IReactoryFile[]
     }
 }

@@ -32,3 +32,50 @@ type SalesOrder {
   reservedQty: String
   backOrderQty: String
 }
+
+
+type LasecPreparedSalesOrder {
+  id: String
+  quote_id: String
+  sales_order_date: String
+  customer_name: String
+  company_name: String
+  rep_code: String
+  vat_number: String
+  quoted_amount: Int
+  delivery_address: String    
+}
+
+input LasecCreateSalesOrderInput {
+  id: String
+  quote_id: String
+  sales_order_date: String
+  customer_name: String
+  company_name: String
+  rep_code: String
+  vat_number: String
+  purchase_order_number: String
+  confirm_number: String
+  quoted_amount: Int
+  amounts_confirmed: Boolean
+  order_type: String
+  preffered_warehouse: String
+  shipping_date: Date
+  part_supply: Boolean
+  delivery_address: String    
+  special_instructions: String
+  special_instructions_warehouse: String
+  on_day_contact: String
+  method_of_contact: String
+  contact_number: String
+  documents: [String]
+}
+
+
+extend type Query {
+  LasecGetPreparedSalesOrder(quote_id: String!): LasecPreparedSalesOrder
+}
+
+extend type Mutation {
+  LasecCreateSalesOrder(sales_order_input: LasecCreateSalesOrderInput): SimpleResponse
+}

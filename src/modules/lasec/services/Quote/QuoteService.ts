@@ -33,6 +33,7 @@ class LasecQuoteService implements IQuoteService {
     constructor(props: Reactory.IReactoryServiceProps, context: any) {
         this.registry = props.$services;
     }
+    
     async getQuoteHeaders(quote_id: string): Promise<any> {        
         try {
             return await LAPI.Quotes.getQuoteHeaders(quote_id).then();

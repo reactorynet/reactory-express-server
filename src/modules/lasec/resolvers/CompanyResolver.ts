@@ -826,18 +826,15 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
     _docs.push(rfile);
   });
 
-  logger.debug(`REACTORYFiles[${JSON.stringify(_docs)}]`);
+  logger.debug(`Files found (${_docs.length})`);
 
   if (params.paging) {
 
     let skipCount: number = (params.paging.page - 1) * params.paging.pageSize;
 
-    logger.debug(`TO FILTER :: ${params.paging.page}  ${params.paging.pageSize}   ${skipCount}`);
-    const customerToReturn = lodash(_docs).drop(skipCount).take(params.paging.pageSize);
-    logger.debug(`TO RETURN :: ${JSON.stringify(customerToReturn)}`);
-
     return {
       documents: lodash(_docs).drop(skipCount).take(params.paging.pageSize),
+      uploadContexts: params.uploadContexts || [],
       paging: {
         total: _docs.length,
         page: params.paging.page,
@@ -1675,7 +1672,7 @@ export default {
     owner: async ({ owner }) => {
       if (ObjectId.isValid(owner)) {
         const _owner = await User.findById(owner).then();
-        logger.debug(`OWNER:: ${owner} ${JSON.stringify(_owner)}`)
+        logger.debug(`OWNER:: ${owner} ${_owner ? _owner.email : 'no-owner'}`);
         return _owner;
       }
     }

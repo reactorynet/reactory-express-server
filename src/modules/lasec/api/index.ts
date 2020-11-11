@@ -21,7 +21,7 @@ import LasecQueries from '../database/queries';
 import { execql, execml } from 'graph/client';
 
 import { LASEC_API_ERROR_FORMAT } from './constants';
-import { LasecQuoteOption } from '../types/lasec';
+import { LasecCreateSalesOrderInput, LasecQuoteOption } from '../types/lasec';
 
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
@@ -943,6 +943,11 @@ const Api = {
     deleteDocument: async (params) => {
       const deleteDocumentResult = await DELETE(SECONDARY_API_URLS.file_upload.url + params.id, {}).then();
       return deleteDocumentResult;
+    },
+    createSalesOrder: async (sales_order_input: LasecCreateSalesOrderInput) => {
+      const create_api_result = await POST(SECONDARY_API_URLS.sales_order.url, { ...sales_order_input }).then();
+      
+      return create_api_result;
     }
   },
   Quotes: {
