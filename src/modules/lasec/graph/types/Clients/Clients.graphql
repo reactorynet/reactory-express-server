@@ -349,5 +349,6 @@ extend type Mutation {
   # LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
   LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
   LasecCRMSaveComment(clientId: String!, comment: String!): SimpleResponse
+  LasecCRMDeleteComment(commentId: String!): SimpleResponse
   LasecDeactivateClients(clientIds: [String]!): SimpleResponse
 }

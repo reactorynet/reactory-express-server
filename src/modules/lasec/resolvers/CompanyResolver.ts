@@ -626,16 +626,8 @@ const updateClientDetail = async (args) => {
         // CUSTOMER CLASS
 
         const customerClasses = await getCustomerClass({}).then();
-
-        logger.debug(`CUSTOMER CLASSES :: ${JSON.stringify(customerClasses)}`);
-
         const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
-
-        logger.debug(`CUSTOMER CLASS FOUND :: ${JSON.stringify(customerClass)}`);
-
         clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.clientResponse.customer.customerClass;
-
-        logger.debug(`UPDATED AND RETURNING :: ${JSON.stringify(clientResponse)}`);
 
         return {
           Success: apiResponse.success,
@@ -1771,6 +1763,28 @@ const saveComment = async (args) => {
   }
 }
 
+const deleteComment = async (args) => {
+
+  logger.debug(`DELETE COMMENT:: ${JSON.stringify(args)}`);
+
+  try {
+
+    const comment = await CRMClientComment.findByIdAndDelete(args.commentId);
+
+    logger.debug(`DELETED COMMENT:: ${JSON.stringify(comment)}`);
+
+    return {
+      success: comment ? true : false,
+      message: comment ? 'Comment successfully deleted.' : 'Could not delete this comment'
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: 'Error deleting comment.'
+    }
+  }
+}
+
 export default {
   LasecDocument: {
     owner: async ({ owner }) => {
@@ -2419,6 +2433,9 @@ export default {
     },
     LasecCRMSaveComment: async (obj, args) => {
       return saveComment(args);
+    },
+    LasecCRMDeleteComment: async (obj, args) => {
+      return deleteComment(args);
     },
     LasecDeactivateClients: async (obj: any, params: { clientIds: string[] }): Promise<SimpleResponse> => {
 

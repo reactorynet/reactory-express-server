@@ -35,56 +35,6 @@ const displayUiSchema: any = {
   comments: {
     'ui:widget': 'ClientCommentGrid',
   },
-
-  // comments: {
-  //   'ui:widget': 'MaterialTableWidget',
-  //   'ui:options': {
-  //     columns: [
-  //       {
-  //         title: '', field: 'avatar',
-  //         component: 'core.ImageComponent@1.0.0',
-  //         props: {
-  //           'ui:options': {
-  //             variant: 'rounded'
-  //           },
-  //         },
-  //         propsMap: {
-  //           'rowData.avatar': 'value',
-  //         },
-  //       },
-  //       {
-  //         title: "Who", field: "fullName"
-  //       },
-  //       {
-  //         title: 'When',
-  //         field: 'when',
-  //         component: 'core.LabelComponent@1.0.0',
-  //         props: {
-  //           uiSchema: {
-  //             'ui:options': {
-  //               variant: 'body2',
-  //               format: '${api.utils.moment(rowData.when).format(\'DD MMM YYYY HH:mm\')}'
-  //             }
-  //           },
-  //         },
-  //         propsMap: {
-  //           'rowData.date': 'value',
-  //         }
-  //       },
-  //       {
-  //         title: "Comment", field: "comment"
-  //       },
-  //     ],
-  //     options: {
-  //       grouping: false,
-  //       search: false,
-  //       showTitle: false,
-  //       toolbar: false,
-  //       fixedColumns: { left: 5, },
-  //       tableLayout: 'fixed',
-  //     },
-  //   }
-  // },
   newComment: {
     'ui:options': {
       component: 'TextField',
