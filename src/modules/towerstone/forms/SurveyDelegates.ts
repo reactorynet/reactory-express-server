@@ -1,6 +1,6 @@
 import { FormNameSpace } from '../constants';
 import $defaultExport from './exports/SurveyDelegateExcelExport';
-import $TeamSurveyDelegateExport from'./exports/TeamSurveyDelegateExcelExport';
+import $TeamSurveyDelegateExport from './exports/TeamSurveyDelegateExcelExport';
 import { Reactory } from '@reactory/server-core/types/reactory';
 
 export const SurveyDelegatesSchema = {
@@ -99,6 +99,38 @@ export const SurveyDelegatesSchema = {
   },
 };
 
+const GetTableOptions = () => {
+
+  return {
+    columns: [
+      {
+        title: 'Delegate',
+        field: 'delegate',
+        component: 'core.LabelComponent@1.0.0',
+        props: {
+          uiSchema: {
+            'ui:options': {
+              variant: 'body1',
+              format: '${rowData.delegate.firstName} ${rowData.delegate.lastName}'
+            }
+          },
+        },
+      }
+    ],
+    options: {
+      grouping: true,
+      search: true,
+      showTitle: true,
+      toolbar: true,
+      selection: true,
+      pageSize: 10,
+    },
+    componentMap: {
+      Toolbar: 'mores.SurveyDelegateAdminToolbar@1.0.0'
+    },
+  }
+};
+
 export const SurveyDelegatesUISchema = {
   submitIcon: 'check_circle_outline',
   'ui:options': {
@@ -146,7 +178,8 @@ export const SurveyDelegatesUISchema = {
     'ui:widget': 'LabelWidget',
   },
   delegates: {
-    'ui:widget': 'SurveyDelegatesWidget',
+    'ui:widget': 'MaterialTableWidget',
+    'ui:options': GetTableOptions()
   },
 };
 
@@ -271,7 +304,7 @@ const graphql = {
   },
 };
 
-const SurveyDelegateStatusReport : Reactory.IReactoryPdfReport = {
+const SurveyDelegateStatusReport: Reactory.IReactoryPdfReport = {
   title: 'Survey Status Report',
   report: 'survey-status-delegates',
   folder: 'towerstone',
@@ -284,7 +317,7 @@ const SurveyDelegateStatusReport : Reactory.IReactoryPdfReport = {
   }
 };
 
-const Survey180Report : Reactory.IReactoryPdfReport = {
+const Survey180Report: Reactory.IReactoryPdfReport = {
   title: 'Team 180 Report',
   report: 'delegate-180-assessment',
   folder: 'towerstone',
@@ -311,6 +344,9 @@ export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
   nameSpace: FormNameSpace,
   version: '1.0.0',
   helpTopics: ['survey-delegate-config'],
+  widgetMap: [
+    { widget: 'MoresSurveyDelegateWidget', componentFqn: 'mores.MoresSurveyDelegateWidget@1.0.0' }
+  ],
   exports: [
     $defaultExport,
     $TeamSurveyDelegateExport
