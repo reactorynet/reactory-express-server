@@ -334,8 +334,8 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { md: 8, sm: 8 },
-      repCode: { md: 6, sm: 12 },
+      accountType: { md: 6, sm: 6 },
+      repCode: { md: 5, sm: 12 },
       jobType: { md: 6, sm: 12 },
       clientDepartment: { md: 6, sm: 12 },
       customerClass: { md: 6, sm: 12 },
@@ -533,16 +533,15 @@ export const ConfirmUiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
-      jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      jobTypeLabel: { xs: 12, sm: 12, md: 6, lg: 4 },
-      // lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
+      jobTitle: { sm: 12, md: 6 },
+      jobType: { sm: 12, md: 6 },
+      jobTypeLabel: { sm: 12, md: 6 },
       // lineManagerLabel: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
-      faculty: { xs: 12, sm: 12, md: 6, lg: 4 },
-      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
-      ranking: { xs: 12, sm: 12, md: 6, lg: 4 },
+      customerType: { sm: 12, md: 6 },
+      customerClass: { sm: 12, md: 6 },
+      faculty: { sm: 12, md: 6 },
+      clientDepartment: { sm: 12, md: 6 },
+      ranking: { sm: 12, md: 6 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -845,13 +844,13 @@ const newUiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      jobTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
-      jobType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerClass: { xs: 12, sm: 12, md: 6, lg: 4 },
-      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 4 },
-      ranking: { xs: 12, sm: 12, md: 6, lg: 4 },
+      jobTitle: { sm: 12, md: 6 },
+      jobType: { sm: 12, md: 6 },
+      customerClass: { sm: 12, md: 6 },
+      clientDepartment: { sm: 12, md: 6 },
+      ranking: { sm: 12, md: 6 },
       faculty: { md: 6, sm: 12 },
-      customerType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      customerType: { sm: 12, md: 6 },
       // lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
       style: { padding: '25px 32px 0 32px' }
     }
