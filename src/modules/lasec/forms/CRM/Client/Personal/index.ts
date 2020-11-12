@@ -246,6 +246,18 @@ export const editUiSchema: any = {
           }
         }
       },
+      labelStyle: {
+        transform: 'none',
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        padding: 0
+      },
+      selectProps: {
+        style: {
+          marginTop: '1.3rem',
+        }
+      },
       selectOptions: [
         {
           key: 'active',
@@ -256,6 +268,7 @@ export const editUiSchema: any = {
             style: {
               color: '#5EB848',
               marginRight: '16px',
+              verticalAlign: 'middle'
             },
           }
         },
@@ -268,6 +281,7 @@ export const editUiSchema: any = {
             style: {
               color: '#FF9901',
               marginRight: '16px',
+              verticalAlign: 'middle'
             },
           }
         },
@@ -280,6 +294,7 @@ export const editUiSchema: any = {
             style: {
               color: '#AB1257',
               marginRight: '16px',
+              verticalAlign: 'middle'
             },
           }
         },
@@ -301,11 +316,62 @@ export const editUiSchema: any = {
         'LasecGetPersonTitles.[].id': ['[].key', '[].value'],
         'LasecGetPersonTitles.[].title': '[].label',
       },
+      selectProps: {
+        style: {
+          marginTop: '1.3rem',
+
+        }
+      },
+      labelStyle: {
+        transform: 'none',
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        padding: 0
+      }
     },
     'ui:description': "Select the client title",
   },
-  lastName: {},
-  firstName: {},
+  lastName: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'Last Name',
+        style: {
+          marginTop: '1.3rem'
+        }
+      },
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
+    }
+  },
+  firstName: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'First Name',
+        style: {
+          marginTop: '1.3rem'
+        }
+      },
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
+    }
+  },
   country: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
@@ -321,6 +387,18 @@ export const editUiSchema: any = {
         'LasecGetCustomerCountries.[].id': ['[].key', '[].value'],
         'LasecGetCustomerCountries.[].name': '[].label',
       },
+      selectProps: {
+        style: {
+          marginTop: '1.3rem',
+        }
+      },
+      labelStyle: {
+        transform: 'none',
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        padding: 0
+      }
     },
   },
 };
