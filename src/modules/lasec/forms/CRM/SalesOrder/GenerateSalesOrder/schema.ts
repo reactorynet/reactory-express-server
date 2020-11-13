@@ -18,6 +18,11 @@ const header: Reactory.ISchema = {
             title: 'Quote Id'
         },
 
+        company_id: {
+            type: 'string',
+            title: 'Company Id'
+        },
+
         customer_name: {
             type: 'string',
             title: 'Customer name'
@@ -138,6 +143,12 @@ const $paging: Reactory.IObjectSchema = {
     }
 }
 
+const $upload_documents: Reactory.ISchema = {
+    type: "string",
+    title: "Upload PO documents",
+    enum: ['yes', 'no'],
+}
+
 const documents = cloneDeep<Reactory.ISchema>(DocumentFormSchema);
 // newSchema.properties.paging = { ...PagingSchema }
 documents.title = 'Documents';
@@ -148,13 +159,27 @@ const schema: Reactory.ISchema = {
     type: "object",
     title: "Generate Sales Order",
     required: [],
+    dependencies: {
+        '$upload_documents': {
+            oneOf: [
+                {
+                    properties: {
+                        $upload_documents: {
+                            enum: ['yes']
+                        },
+                        documents
+                    }
+                }
+            ]
+        }
+    },
     properties: {
         $paging,
         header,
         customer_detail,
         order_detail,
-        delivery_detail,
-        documents
+        delivery_detail,        
+        $upload_documents,
     }
 };
 

@@ -10,6 +10,7 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
                 sales_order_date
                 customer_name
                 company_name
+                company_id
                 rep_code
                 vat_number
                 quoted_amount
@@ -26,6 +27,7 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
             'sales_order_date': 'header.sales_order_date',
             'customer_name': 'header.customer_name',
             'company_name': 'header.company_name',
+            'company_id': 'header.company_id',
             'rep_code': 'header.rep_code',
             'vat_number': 'customer.vat_number',
             'quoted_amount': 'order_detail.quoted_amount',
@@ -95,23 +97,27 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
                 'formData.order_detail.shipping_date': 'sales_order_input.shipping_date',
                 'formData.order_detail.part_supply': 'sales_order_input.part_supply',
                 'formData.delivery_detail.delivery_address.fullAddress': 'sales_order_input.delivery_address',
+                'formData.delivery_detail.delivery_address.id': 'sales_order_input.delivery_address_id',
                 'formData.delivery_detail.special_instructions': 'sales_order_input.special_instructions',
                 'formData.delivery_detail.special_instructions_warehouse': 'sales_order_input.special_instructions_warehouse',
                 'formData.delivery_detail.on_day_contact': 'sales_order_input.on_day_contact',
                 'formData.delivery_detail.method_of_contact': 'sales_order_input.method_of_contact',
-                'formData.delivery_detail.contact_number': 'sales_order_input.contact_number',                
+                'formData.delivery_detail.contact_number': 'sales_order_input.contact_number',
+                'formData.documents.uploadContext': 'sales_order_input.document_context'
             },
             resultType: 'object',
+            /*
             onSuccessMethod: 'notification',
             notification: {
                 inAppNotification: true,
-                body: 'Sales order has been created',
+                title: 'Sales order has been created',
                 props: {
                     timeout: 2500,
                     canDissmiss: true,
                     type: 'success'
                 }
             },
+            */
             objectMap: true,
             resultMap: {}
         },

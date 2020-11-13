@@ -524,11 +524,14 @@ export interface LasecCreateSalesOrderInput {
   shipping_date: Date
   part_supply: Boolean
   delivery_address: string
+  delivery_address_tag: string,
+  delivery_address_id: string,
   special_instructions: string
   special_instructions_warehouse: string
   on_day_contact: string
   method_of_contact: string
   contact_number: string
+  document_context: string,
   documents: any[]
 }
 
@@ -573,7 +576,7 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
 
   getQuoteTransportModes(): Promise<any>;
 
-  createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<SimpleResponse>
+  createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<SimpleResponse>;
 }
 
 export interface ILasecClientService extends Reactory.Service.IReactoryService {

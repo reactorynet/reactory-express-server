@@ -12,7 +12,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 // import { clearAuthentication } from '../actions/Auth';
 import SECONDARY_API_URLS from './SecondaryApiUrls';
 import logger from '../../../logging';
-import ApiError, { RecordNotFoundError } from '../../../exceptions';
+import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
 import AuthenticationSchema from '../schema/Authentication';
 import { jzon } from '../../../utils/validators';
 
@@ -51,6 +51,16 @@ export class TokenExpiredException extends ApiError {
       redirect: '/360',
       componentResolver: 'lasec-crm.Login360'
     });
+    this.extensions = this.meta;
+  }
+}
+
+export class LasecApiException extends ApiError {
+  constructor(message: string) {
+    super(message, {
+      __typename: 'lasec.api.RemoteError',
+    })
+
     this.extensions = this.meta;
   }
 }
@@ -945,10 +955,61 @@ const Api = {
       return deleteDocumentResult;
     },
     createSalesOrder: async (sales_order_input: LasecCreateSalesOrderInput) => {
-      const create_api_result = await POST(SECONDARY_API_URLS.sales_order.url, { ...sales_order_input }).then();
+
+      const data = {
+        CUSTOMER_DELIVERY_ADDRESS: sales_order_input.delivery_address,
+        CUSTOMER_DELIVERY_ADDRESS_tag_value: sales_order_input.delivery_address_tag,
+        CUSTOMER_DELIVERY_ADDRESS_tag_value_id: sales_order_input.delivery_address_id,
+        confirm_purchase_order_number: sales_order_input.confirm_number,
+        delivery_address_id: sales_order_input.delivery_address_id,
+        do_not_part_supply: sales_order_input.part_supply === false,
+        has_confirm_payment: true,
+        has_confirmed_purchase_order_amount: sales_order_input.amounts_confirmed,
+        purchase_order_amount: sales_order_input.quoted_amount,
+        purchase_order_number: sales_order_input.purchase_order_number,
+        quote_id: sales_order_input.quote_id,
+        shipping_date: sales_order_input.shipping_date,
+        type_of_order: sales_order_input.order_type,
+        vat: sales_order_input.vat_number,
+        warehouse_id: sales_order_input.preffered_warehouse,
+        communication_method: sales_order_input.method_of_contact,
+        delivery_instruction: sales_order_input.special_instructions,
+        special_instructions: sales_order_input.special_instructions_warehouse,
+        on_day_contact_person: sales_order_input.on_day_contact,
+        on_day_contact_person_contact_number: sales_order_input.contact_number,
+        status: 'writing_to_syspro'
+      };
+
+      try {
+        logger.debug(`Creating new Sales Order input =>`, { data });
+        const create_api_result = await POST(SECONDARY_API_URLS.sales_order.url, data).then();
+        logger.debug(`Result from new Sales Order =>`, { create_api_result });
+        return create_api_result;
+
+      } catch (createSalesOrder) {
+        logger.error('Could not create sales order', createSalesOrder);
+        throw new ApiError('Could not create a new sales order - remote API error', { createSalesOrder });
+      }
       
-      return create_api_result;
-    }
+    },
+    checkPONumberExists: async (company_id: string, purchase_order_number: string): Promise<{ exists: boolean, sales_order_id?: string }> => {      
+      try {
+        logger.debug(`Checking if Purchase Order number exists: company id: ${company_id}, ${purchase_order_number}`);
+        const { payload = null, status = 'failed' }: { payload: { po_number_exists: boolean, sales_order_id?: string }, status: string } = await POST(SECONDARY_API_URLS.check_po_number_exists.url, { company_id, purchase_order_number }).then();        
+        if (status === 'success' && payload) {
+          logger.debug('Results from checking if purchase order exists', { status, payload });
+          return {
+            exists: payload.po_number_exists === true,
+            sales_order_id: payload.sales_order_id || 'not-set'
+          };
+        } 
+        throw new LasecApiException('Did not get a successfull response from Lasec API');                
+      } catch ( poNumberError ) {
+        logger.error(`lasec Api.SalesOrders.checkPONumberExists: ${poNumberError.message}`, poNumberError);
+        if (poNumberError instanceof LasecApiException) throw poNumberError;
+        else throw new ApiError(`Error while checking if the purchase order number exists`, { __type: 'lasec.api.UnhandledError', error: poNumberError });
+      }
+    },
   },
   Quotes: {
     list: async (params = defaultParams) => {
@@ -968,7 +1029,7 @@ const Api = {
         const result = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: [id] } } }).then()
 
         const { status, payload } = result;
-        if (status === 'success' && payload.items && payload.items.length === 1 ) {
+        if (status === 'success' && payload.items && payload.items.length === 1) {
           return payload.items[0]
         } else {
           logger.warn(`Could not get the line item with the id ${id}`);
@@ -1038,10 +1099,10 @@ const Api = {
             return { line_items: lineItemsExpanded.payload, item_paging };
           }
         }
-        return {  line_items: [], item_paging: null };
+        return { line_items: [], item_paging: null };
       }
 
-      return {  line_items: [], item_paging: null };
+      return { line_items: [], item_paging: null };
     },
     get: async (params = defaultParams) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } }).then();
@@ -1103,7 +1164,7 @@ const Api = {
         } = apiResponse;
 
         if (status === 'success' && payload.items.length === 1) {
-          logger.debug(`Found Quote Option on LasecAPI`, { item: payload.items[0]})
+          logger.debug(`Found Quote Option on LasecAPI`, { item: payload.items[0] })
           return payload.items[0];
         }
 
@@ -1672,7 +1733,7 @@ const Api = {
 
     setActiveCompany: async (company = 3) => {
       return await POST(`${SECONDARY_API_URLS.staff_user_data.url}set_active_company`, { company }).then();
-    } 
+    }
   },
   Authentication: {
     login: async (username, password) => {

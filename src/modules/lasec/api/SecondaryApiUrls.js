@@ -86,6 +86,7 @@ export default {
   sales_order_item: { url: `api/${ENTITY_KEY__SALES_ORDER_ITEM}/`, allowed_methods: ['get'] },
   purchase_order: { url: `api/${ENTITY_KEY__PURCHASE_ORDER}/`, allowed_methods: ['get'] },
   purchase_order_item: { url: `api/${ENTITY_KEY__PURCHASE_ORDER__ITEM}/`, allowed_methods: ['get'] },
+  check_po_number_exists: { url: 'api/sales_order/check_po_number_exists/', allowed_methods: ['post'] },
   product_get: { url: `api/${ENTITY_KEY__PRODUCT}/`, allowed_methods: ['get'] },
   product_costing_get: { url: `api/${ENTITY_KEY__PRODUCT_COSTING}/`, allowed_methods: ['get'] },
   product_contracts_get: { url: `api/${ENTITY_KEY__CONTRACT}/`, allowed_methods: ['get'] },

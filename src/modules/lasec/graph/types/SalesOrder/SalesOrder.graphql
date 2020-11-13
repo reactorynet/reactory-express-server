@@ -40,10 +40,12 @@ type LasecPreparedSalesOrder {
   sales_order_date: String
   customer_name: String
   company_name: String
+  company_id: String
   rep_code: String
   vat_number: String
   quoted_amount: Int
   delivery_address: String    
+  order_type: String
 }
 
 input LasecCreateSalesOrderInput {
@@ -62,18 +64,26 @@ input LasecCreateSalesOrderInput {
   preffered_warehouse: String
   shipping_date: Date
   part_supply: Boolean
-  delivery_address: String    
+  delivery_address: String  
+  delivery_address_id: String  
   special_instructions: String
   special_instructions_warehouse: String
   on_day_contact: String
   method_of_contact: String
   contact_number: String
+  document_context: String
   documents: [String]
+}
+
+type LasecSalesOrderExistsResult {
+  exists: Boolean
+  sales_order_id: String 
 }
 
 
 extend type Query {
   LasecGetPreparedSalesOrder(quote_id: String!): LasecPreparedSalesOrder
+  LasecCheckPurchaseOrderExists(company_id: String, purchase_order_number: String) : LasecSalesOrderExistsResult
 }
 
 extend type Mutation {
