@@ -16,6 +16,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         lineManagerLabel
         jobType
         jobTypeLabel
+        customerClassLabel
 
         customer {
           id
@@ -34,7 +35,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       'salesTeam': 'repCode',
       'jobTitle': 'jobTitle',
       'department': 'department',
-      'customer.customerClass': 'clientClass',
+      'customer.customerClass': 'customerClass',
+      'customerClassLabel': 'customerClassLabel',
       'customer.id': 'customerId',
       'customer.ranking': 'ranking',
 
@@ -62,6 +64,26 @@ const graphql: Reactory.IFormGraphDefinition = {
       text: `mutation LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
         LasecUpdateClientDetails(clientInfo: $clientInfo) {
           Success
+          Client {
+            id
+            jobTitle
+            salesTeam
+            department
+
+            faculty
+            customerType
+            lineManager
+            lineManagerLabel
+            jobType
+            jobTypeLabel
+
+            customer {
+              id
+              accountType
+              customerClass
+              ranking
+            }
+          }
         }
       }`,
       objectMap: true,
@@ -72,7 +94,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.repCode': 'clientInfo.repCode',
         'formData.jobTitle': 'clientInfo.jobTitle',
         'formData.clientDepartment': 'clientInfo.clientDepartment',
-        'formData.clientClass': 'clientInfo.clientClass',
+        'formData.customerClass': 'clientInfo.clientClass',
         'formData.ranking': 'clientInfo.ranking',
 
         'formData.faculty': 'clientInfo.faculty',
@@ -81,7 +103,25 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.jobType': 'clientInfo.jobType',
 
       },
-      onSuccessMethod: 'notification',
+      resultMap: {
+        'Client.id': 'id',
+        'Client.customer.accountType': 'accountType',
+        'Client.salesTeam': 'repCode',
+        'Client.jobTitle': 'jobTitle',
+        'Client.department': 'department',
+        'Client.customer.customerClass': 'clientClass',
+        'Client.customer.id': 'customerId',
+        'Client.customer.ranking': 'ranking',
+
+        'Client.faculty': 'faculty',
+        'Client.customerType': 'customerType',
+        'Client.lineManager': 'lineManager',
+        'Client.lineManagerLabel': 'lineManagerLabel',
+        'Client.jobType': 'jobType',
+        'Client.jobTypeLabel': 'jobTypeLabel',
+      },
+      onSuccessMethod: 'refresh',
+      // onSuccessMethod: 'notification',
       notification: {
         inAppNotification: true,
         title: 'Job details successfully updated.',

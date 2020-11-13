@@ -205,8 +205,8 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { md: 8, sm: 8 },
-      alternateEmail: { md: 6, sm: 12 },
+      emailAddress: { md: 6, sm: 12 },
+      alternateEmail: { md: 5, sm: 12 },
       mobileNumber: { md: 6, sm: 12 },
       officeNumber: { md: 6, sm: 12 },
       alternateNumber: { md: 6, sm: 12 },
@@ -266,11 +266,11 @@ export const newConfirmSchema: any = {
   },
   'ui:grid-layout': [
     {
-      emailAddress: { xs: 12, sm: 12, md: 6, lg: 4 },
-      alternateEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
-      officeNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
-      mobileNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
-      alternateNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
+      emailAddress: { sm: 12, md: 6 },
+      alternateEmail: { sm: 12, md: 6 },
+      officeNumber: { sm: 12, md: 6 },
+      mobileNumber: { sm: 12, md: 6 },
+      alternateNumber: { sm: 12, md: 6 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -411,15 +411,15 @@ const newUiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      emailAddress: { xs: 12, sm: 12, md: 6, lg: 4 },
-      confirmEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
-      alternateEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
-      confirmAlternateEmail: { xs: 12, sm: 12, md: 6, lg: 4 },
-      mobileNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
-      alternateMobileNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
-      officeNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
-      alternateNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
-      prefferedMethodOfContact: { xs: 12, sm: 12, md: 6, lg: 4 },
+      emailAddress: { sm: 12, md: 6 },
+      confirmEmail: { sm: 12, md: 6 },
+      alternateEmail: { sm: 12, md: 6 },
+      confirmAlternateEmail: { sm: 12, md: 6 },
+      mobileNumber: { sm: 12, md: 6 },
+      alternateMobileNumber: { sm: 12, md: 6 },
+      officeNumber: { sm: 12, md: 6 },
+      alternateNumber: { sm: 12, md: 6 },
+      prefferedMethodOfContact: { sm: 12, md: 6 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],

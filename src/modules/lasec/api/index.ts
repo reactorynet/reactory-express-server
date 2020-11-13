@@ -468,12 +468,13 @@ const Api = {
           status, payload, id,
         } = apiResponse;
 
-        // logger.debug(`UPDATE CLIENT DETAILS RESPONSE: ${JSON.stringify(apiResponse)}`);
+        logger.debug(`API UPDATE RESPONSE: ${JSON.stringify(apiResponse)}`);
         logger.debug(`PAYLOAD: ${JSON.stringify(payload)}`);
 
         if (status === 'success') {
           return {
             success: true,
+            customer: payload && payload.customers ? payload.customers[0] : null
           }
         }
 

@@ -219,8 +219,8 @@ export const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      clientStatus: { md: 8, sm: 8 },
-      title: { md: 6, sm: 12 },
+      clientStatus: { md: 6, sm: 6 },
+      title: { md: 5, sm: 12 },
       firstName: { md: 6, sm: 12 },
       lastName: { md: 6, sm: 12 },
       country: { md: 6, sm: 12 },
@@ -246,6 +246,18 @@ export const editUiSchema: any = {
           }
         }
       },
+      labelStyle: {
+        transform: 'none',
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        padding: 0
+      },
+      selectProps: {
+        style: {
+          marginTop: '1.3rem',
+        }
+      },
       selectOptions: [
         {
           key: 'active',
@@ -256,6 +268,7 @@ export const editUiSchema: any = {
             style: {
               color: '#5EB848',
               marginRight: '16px',
+              verticalAlign: 'middle'
             },
           }
         },
@@ -268,6 +281,7 @@ export const editUiSchema: any = {
             style: {
               color: '#FF9901',
               marginRight: '16px',
+              verticalAlign: 'middle'
             },
           }
         },
@@ -280,6 +294,7 @@ export const editUiSchema: any = {
             style: {
               color: '#AB1257',
               marginRight: '16px',
+              verticalAlign: 'middle'
             },
           }
         },
@@ -301,11 +316,62 @@ export const editUiSchema: any = {
         'LasecGetPersonTitles.[].id': ['[].key', '[].value'],
         'LasecGetPersonTitles.[].title': '[].label',
       },
+      selectProps: {
+        style: {
+          marginTop: '1.3rem',
+
+        }
+      },
+      labelStyle: {
+        transform: 'none',
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        padding: 0
+      }
     },
     'ui:description': "Select the client title",
   },
-  lastName: {},
-  firstName: {},
+  lastName: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'Last Name',
+        style: {
+          marginTop: '1.3rem'
+        }
+      },
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
+    }
+  },
+  firstName: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'First Name',
+        style: {
+          marginTop: '1.3rem'
+        }
+      },
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
+    }
+  },
   country: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
@@ -321,6 +387,18 @@ export const editUiSchema: any = {
         'LasecGetCustomerCountries.[].id': ['[].key', '[].value'],
         'LasecGetCustomerCountries.[].name': '[].label',
       },
+      selectProps: {
+        style: {
+          marginTop: '1.3rem',
+        }
+      },
+      labelStyle: {
+        transform: 'none',
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        padding: 0
+      }
     },
   },
 };
@@ -355,12 +433,12 @@ export const newUiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      clientTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
-      firstName: { xs: 12, sm: 12, md: 6, lg: 4 },
-      lastName: { xs: 12, sm: 12, md: 6, lg: 4 },
-      country: { xs: 12, sm: 12, md: 6, lg: 4 },
-      accountType: { xs: 12, sm: 12, md: 6, lg: 4 },
-      repCode: { xs: 12, sm: 12, md: 6, lg: 4 },
+      clientTitle: { sm: 12, md: 6 },
+      firstName: { sm: 12, md: 6 },
+      lastName: { sm: 12, md: 6 },
+      country: { sm: 12, md: 6 },
+      accountType: { sm: 12, md: 6 },
+      repCode: { sm: 12, md: 6 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -457,12 +535,12 @@ export const confirmUiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      clientTitle: { lg: 4, md: 6, sm: 12 },
-      firstName: { lg: 4, md: 6, sm: 12 },
-      lastName: { lg: 4, md: 6, sm: 12 },
-      country: { lg: 4, md: 6, sm: 12 },
-      accountType: { lg: 4, md: 6, sm: 12 },
-      repCode: { lg: 4, md: 6, sm: 12 },
+      clientTitle: { md: 6, sm: 12 },
+      firstName: { md: 6, sm: 12 },
+      lastName: { md: 6, sm: 12 },
+      country: { md: 6, sm: 12 },
+      accountType: { md: 6, sm: 12 },
+      repCode: { md: 6, sm: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
