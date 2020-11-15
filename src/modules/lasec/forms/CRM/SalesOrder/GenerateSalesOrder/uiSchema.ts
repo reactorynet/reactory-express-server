@@ -25,12 +25,9 @@ export const DocumentsUISchema: Reactory.IUISchema = {
   'ui:grid-layout': [
     {
       upload: { lg: 6, md: 6, sm: 12, },
-      uploadedContext: { lg: 6, md: 6, sm: 12 },
-      uploadedDocuments: { lg: 6, md: 6, sm: 12 },
+      uploadedDocuments: { lg: 6, md: 6, sm: 12 },      
     }
   ],
-
-
   view: {
     'ui:widget': 'HiddenWidget',
   },
@@ -39,7 +36,7 @@ export const DocumentsUISchema: Reactory.IUISchema = {
   },
 
   uploadContext: {
-  
+    'ui:widget': 'HiddenWidget',
   },
 
   upload: {
@@ -199,6 +196,7 @@ const GenerateSalesOrderUISchema: Reactory.IUISchema = {
     },
     {
       documents: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
+      $upload_documents: {xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
     }
   ],
   header: {
@@ -300,12 +298,21 @@ const GenerateSalesOrderUISchema: Reactory.IUISchema = {
       'ui:widget': 'SelectWidget',
       'ui:options': {
         selectOptions: [
-          { key: 'cellphone', value: 'cellphone', label: 'Cell Phone' },
-          { key: 'landline', value: 'landline', label: 'Land Line' },
-          { key: 'email', value: 'email', label: 'Email' },
+          { key: 'cellphone', value: 'cellphone', label: 'Call on Cell' },
+          { key: 'whatsapp', value: 'whatsapp', label: 'WhatsApp' },
+          { key: 'sms', value: 'sms', label: 'SMS' },
         ],
       },
     },
+  },
+  $upload_documents: {
+    'ui:widget': 'SelectWidget',
+      'ui:options': {
+        selectOptions: [
+          { key: 'yes', value: 'yes', label: 'Yes, I have the documents' },
+          { key: 'no', value: 'no', label: 'No, I will upload them later' },
+        ],
+      },
   },
   documents: SalesOrderDocumentSchema
 }

@@ -30,6 +30,7 @@ const default_value = (quote_id: string): LasecGenerateSalesOrderFormData => ({
         special_instruction: '',
         special_instructions_warehouse: ''
     },
+    $upload_documents: 'no',
     documents: {
         id: '',
         upload: '',

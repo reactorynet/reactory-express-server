@@ -59,10 +59,10 @@ export const SalesOrdersFilterByEnumsKeys = {
   quote_id: 'quote_id',
   quote_date: 'quote_date',
   sales_team_id: 'sales_team_id',
-  order_value: 'order_value',
-  reserved_value: 'reserved_value',
-  ship_value: 'shipped_value',
-  backorder_value: 'back_order_value',
+  // order_value: 'order_value',
+  // reserved_value: 'reserved_value',
+  // ship_value: 'shipped_value',
+  // backorder_value: 'back_order_value',
 };
 
 export const SalesOrdersFilterByEnumArray: string[] = [
@@ -73,7 +73,7 @@ export const SalesOrdersFilterByEnumArray: string[] = [
   SalesOrdersFilterByEnumsKeys.customer,
   SalesOrdersFilterByEnumsKeys.client,
   SalesOrdersFilterByEnumsKeys.po_number,
-  SalesOrdersFilterByEnumsKeys.order_value,
+  // SalesOrdersFilterByEnumsKeys.order_value,
   SalesOrdersFilterByEnumsKeys.order_status,
 ];
 
@@ -92,10 +92,10 @@ export const SalesOrdersFilterByOptions = [
   { key: SalesOrdersFilterByEnumsKeys.quote_id, value: SalesOrdersFilterByEnumsKeys.quote_id, label: 'Quote Number' },
   { key: SalesOrdersFilterByEnumsKeys.quote_date, value: SalesOrdersFilterByEnumsKeys.quote_date, label: 'Quote Date' },
   { key: SalesOrdersFilterByEnumsKeys.sales_team_id, value: SalesOrdersFilterByEnumsKeys.sales_team_id, label: 'Rep Code' },
-  { key: SalesOrdersFilterByEnumsKeys.order_value, value: SalesOrdersFilterByEnumsKeys.order_value, label: 'Order Value' },
-  { key: SalesOrdersFilterByEnumsKeys.ship_value, value: SalesOrdersFilterByEnumsKeys.ship_value, label: 'Shipped Value' },
-  { key: SalesOrdersFilterByEnumsKeys.backorder_value, value: SalesOrdersFilterByEnumsKeys.backorder_value, label: 'Backorder Value' },
-  { key: SalesOrdersFilterByEnumsKeys.reserved_value, value: SalesOrdersFilterByEnumsKeys.reserved_value, label: 'Reserved Value' },
+  // { key: SalesOrdersFilterByEnumsKeys.order_value, value: SalesOrdersFilterByEnumsKeys.order_value, label: 'Order Value' },
+  // { key: SalesOrdersFilterByEnumsKeys.ship_value, value: SalesOrdersFilterByEnumsKeys.ship_value, label: 'Shipped Value' },
+  // { key: SalesOrdersFilterByEnumsKeys.backorder_value, value: SalesOrdersFilterByEnumsKeys.backorder_value, label: 'Backorder Value' },
+  // { key: SalesOrdersFilterByEnumsKeys.reserved_value, value: SalesOrdersFilterByEnumsKeys.reserved_value, label: 'Reserved Value' },
 ];
 
 // INVOICES

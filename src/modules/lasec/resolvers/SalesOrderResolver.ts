@@ -54,6 +54,8 @@ const SalesOrderResolver = {
     },
     LasecGetPreparedSalesOrder: async (parent: any, params: { quote_id: string, active_option: string }): Promise<any> => {
 
+
+
       try {
 
         let quote: LasecQuote = null;
@@ -82,6 +84,7 @@ const SalesOrderResolver = {
                   lastName
                 }
                 company {
+                  id                  
                   name                
                 }
                 totals {
@@ -119,7 +122,7 @@ const SalesOrderResolver = {
               creditLimit
               currentBalance
             }
-          }`, { id: quote_id }).then();
+          }`, { id: quote.company.id }).then();
 
           customer = customer_query.data.LasecGetCompanyDetailsforQuote;
         } catch (customerLoadError) {
@@ -133,16 +136,29 @@ const SalesOrderResolver = {
           sales_order_date: new Date().toISOString(),
           customer_name: lasec_quote.customer_full_name || "No Customer Found",
           company_name: lasec_quote.company_trading_name || "No Company Name",
+          company_id: lasec_quote.company_id,
           rep_code: user.repId,
+          order_type: 'normal',
           vat_number: customer.taxNumber,
           quoted_amount: lasec_quote.grand_total_excl_vat_cents,
-          delivery_address: customer.deliveryAddress
+          delivery_address: customer.deliveryAddress,
         }
       } catch (error) {
         logger.error(`Unhandled exception ${error.message}`);
         throw new ApiError(`Unhandled Error Processing Sales Order Prep ${error.message}`);
       }
-    }
+    },
+    LasecCheckPurchaseOrderExists: async (parent: any, params: { company_id: string, purchase_order_number: string }): Promise<any> => {
+      try {
+        logger.debug('SalesOrderResolver.ts => LasecCheckPurchaseOrderExists ');
+        const check_result = await LasecApi.SalesOrders.checkPONumberExists(params.company_id, params.purchase_order_number).then();
+        logger.debug('SalesOrderResolver.ts => LasecCheckPurchaseOrderExists => check_result ', check_result);
+        return check_result;
+      } catch (purchaseOrderError) {
+        logger.error('SalesOrderResolver.ts => LasecCheckPurchaseOrderExists => Errored ', purchaseOrderError);
+        throw purchaseOrderError;
+      }
+    },
   },
   Mutation: {
     LasecCreateSalesOrder: async (parent: any, params: { sales_order_input: LasecCreateSalesOrderInput }): Promise<SimpleResponse> => {

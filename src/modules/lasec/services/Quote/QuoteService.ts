@@ -4,7 +4,8 @@ import {
     LasecQuote,
     IQuoteService,
     LasecQuoteOption,
-    SimpleResponse
+    SimpleResponse,
+    LasecCreateSalesOrderInput
 } from '@reactory/server-modules/lasec/types/lasec';
 
 import {
@@ -32,6 +33,28 @@ class LasecQuoteService implements IQuoteService {
 
     constructor(props: Reactory.IReactoryServiceProps, context: any) {
         this.registry = props.$services;
+    }
+
+    async createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<SimpleResponse> {
+        
+        try {
+            const result = await LAPI.SalesOrders.createSalesOrder(sales_order_input).then();
+
+            logger.debug('Creat new sales order api resilt', result);
+
+            return {
+                message: `Created new sales order`,
+                success: true
+            };
+
+        } catch (createSalesOrderError) {
+            logger.error(`Create new sales order ${createSalesOrderError.message} failed due to an error`, createSalesOrderError);
+            return {
+                message: createSalesOrderError.message,
+                success: false,
+            }
+        }
+
     }
     
     async getQuoteHeaders(quote_id: string): Promise<any> {        

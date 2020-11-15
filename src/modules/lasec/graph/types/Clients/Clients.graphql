@@ -71,6 +71,8 @@ type LasecCRMClient {
   lineManagerLabel: String
   jobType: String
   jobTypeLabel: String
+  customerClassLabel: String
+
 }
 
 type LasecDocument {
@@ -116,6 +118,7 @@ type PagedCRMOrganisation {
 
 type ClientDetailUpdateResponse {
   Success: Boolean
+  Client: LasecCRMClient
 }
 
 type LasecLookupItem {
@@ -346,5 +349,6 @@ extend type Mutation {
   # LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
   LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
   LasecCRMSaveComment(clientId: String!, comment: String!): SimpleResponse
+  LasecCRMDeleteComment(commentId: String!): SimpleResponse
   LasecDeactivateClients(clientIds: [String]!): SimpleResponse
 }
