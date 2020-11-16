@@ -26,6 +26,13 @@ export const uiSchema: any = {
     'ui:options': {
       label: 'Organisation Name',
       title: 'Search for an Organisation',
+      labelProps: {
+        style: {
+          fontWeight: 'bold',
+          color: 'rgba(0,0,0,1)',
+          marginTop: '3px'
+        }
+      },
       modalProps: {
         fullScreen: false,
         closeOnEvents: [
@@ -80,6 +87,13 @@ export const newUiSchema: any = {
     'ui:options': {
       label: 'Organisation Name',
       title: 'Search for an Organisation',
+      labelProps: {
+        style: {
+          fontWeight: 'bold',
+          color: 'rgba(0,0,0,1)',
+          marginTop: '3px'
+        }
+      },
       modalProps: {
         fullScreen: false,
         closeOnEvents: [

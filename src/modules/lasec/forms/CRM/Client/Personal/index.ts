@@ -457,13 +457,62 @@ export const newUiSchema: any = {
         'LasecGetPersonTitles.[].id': ['[].key', '[].value'],
         'LasecGetPersonTitles.[].title': '[].label',
       },
+      selectProps: {
+        style: {
+          marginTop: '1.3rem',
+
+        }
+      },
+      labelStyle: {
+        transform: 'none',
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        padding: 0
+      }
     },
     'ui:description': "Select the client title",
   },
   firstName: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'First Name',
+        style: {
+          marginTop: '1.3rem'
+        }
+      },
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
+    },
     'ui:description': "Please provide the client first name",
   },
   lastName: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'Last Name',
+        style: {
+          marginTop: '1.3rem'
+        }
+      },
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
+    },
     'ui:description': "Please provide the client Lastname",
   },
   country: {
@@ -481,6 +530,18 @@ export const newUiSchema: any = {
         'LasecGetCustomerCountries.[].id': ['[].key', '[].value'],
         'LasecGetCustomerCountries.[].name': '[].label',
       },
+      selectProps: {
+        style: {
+          marginTop: '1.3rem',
+        }
+      },
+      labelStyle: {
+        transform: 'none',
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        padding: 0
+      }
     },
   },
   accountType: {
@@ -503,6 +564,18 @@ export const newUiSchema: any = {
         'LasecSalesTeams.[].name': ['[].key', '[].value'],
         'LasecSalesTeams.[].title': '[].label',
       },
+      selectProps: {
+        style: {
+          marginTop: '1.3rem',
+        }
+      },
+      labelStyle: {
+        transform: 'none',
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        padding: 0
+      }
     },
   },
 };
