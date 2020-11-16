@@ -2,7 +2,7 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 
 interface IUIDropDownItemSchema {
   key: string,
-  value: string, 
+  value: string,
   label: string,
   icon?: string,
   iconProps?: any
@@ -10,6 +10,8 @@ interface IUIDropDownItemSchema {
 
 interface IUIDropDownUIOptions extends Object {
   FormControl: any,
+  labelStyle: any,
+  selectProps: any,
   selectOptions: IUIDropDownItemSchema[]
 }
 interface IUIDropDownSchema extends Reactory.IUISchema {
@@ -17,7 +19,7 @@ interface IUIDropDownSchema extends Reactory.IUISchema {
   'ui:options': IUIDropDownUIOptions
 };
 
-export const AccountTypeDropdownUISchema: IUIDropDownSchema = {  
+export const AccountTypeDropdownUISchema: IUIDropDownSchema = {
   'ui:widget': 'SelectWidget',
   'ui:options': {
     FormControl: {
@@ -25,6 +27,18 @@ export const AccountTypeDropdownUISchema: IUIDropDownSchema = {
         style: {
           maxWidth: '400px'
         }
+      }
+    },
+    labelStyle: {
+      transform: 'none',
+      fontWeight: 'bold',
+      color: '#000000',
+      backgroundColor: 'transparent',
+      padding: 0
+    },
+    selectProps: {
+      style: {
+        marginTop: '1.3rem',
       }
     },
     selectOptions: [
@@ -35,7 +49,7 @@ export const AccountTypeDropdownUISchema: IUIDropDownSchema = {
         icon: 'account_balance_wallet',
         iconProps: {
           style: {
-            color: '#FF9901',   
+            color: '#FF9901',
             margin: '-6px',
             marginRight: '8px',
           },
@@ -55,5 +69,5 @@ export const AccountTypeDropdownUISchema: IUIDropDownSchema = {
         }
       },
     ],
-  }  
+  }
 }

@@ -117,6 +117,16 @@ const baseUiSchema: any =  {
   physicalAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget',
     'ui:options': {
+      labelProps: {
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      },
+      inputProps: {
+        style:{ marginTop: '1.2rem'}
+      },
       props: DEFAULT_ADDRESS_PROPS,
       mapProps: {
         googleMapURL: `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY_DEVELOPMENT}&v=3.exp&libraries=geometry,drawing,places`,
@@ -126,6 +136,16 @@ const baseUiSchema: any =  {
   deliveryAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget',
     'ui:options': {
+      labelProps: {
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      },
+      inputProps: {
+        style:{ marginTop: '1.2rem'}
+      },
       props: DEFAULT_ADDRESS_PROPS,
       mapProps: {
         googleMapURL: `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY_DEVELOPMENT}&v=3.exp&libraries=geometry,drawing,places`,
@@ -135,6 +155,16 @@ const baseUiSchema: any =  {
   billingAddress:{
     'ui:widget': 'ReactoryGoogleMapWidget',
     'ui:options': {
+      labelProps: {
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      },
+      inputProps: {
+        style:{ marginTop: '1.2rem'}
+      },
       props: DEFAULT_ADDRESS_PROPS,
       mapProps: {
         googleMapURL: `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY_DEVELOPMENT}&v=3.exp&libraries=geometry,drawing,places`,
