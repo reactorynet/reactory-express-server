@@ -71,6 +71,10 @@ export const SurveyDelegatesSchema = {
             type: 'string',
             title: 'Delegate',
           },
+          message: {
+            type: 'string',
+            title: 'Message'
+          },
           assessments: {
             type: 'array',
             title: 'Assessments',
@@ -110,8 +114,60 @@ const GetTableOptions = () => {
         props: {
           uiSchema: {
             'ui:options': {
-              variant: 'body1',
+              variant: 'body2',
               format: '${rowData.delegate.firstName} ${rowData.delegate.lastName}'
+            }
+          },
+        },
+      },
+      {
+        title: 'Status',
+        field: 'message',
+        component: 'core.LabelComponent@1.0.0',
+        props: {
+          uiSchema: {
+            'ui:options': {
+              variant: 'body2',
+              format: '${rowData.message}'
+            }
+          },
+        },
+      },
+      {
+        title: 'Removed',
+        field: 'removed',
+        component: 'core.LabelComponent@1.0.0',
+        props: {
+          uiSchema: {
+            'ui:options': {
+              variant: 'body2',
+              format: '${rowData.removed === true ? "Removed" : "Active"}'
+            }
+          },
+        },
+      },
+      {
+        title: 'Launched',
+        field: 'launched',
+        component: 'core.LabelComponent@1.0.0',
+        props: {
+          uiSchema: {
+            'ui:options': {
+              variant: 'body2',
+              format: '${rowData.launched === true ? "Launched" : "Waiting"}'
+            }
+          },
+        },
+      },
+      {
+        title: 'Last Action',
+        field: 'lastAction',
+        component: 'core.LabelComponent@1.0.0',
+        props: {
+          uiSchema: {
+            'ui:options': {
+              variant: 'body2',
+              format: '${rowData.lastAction}'
             }
           },
         },
@@ -131,10 +187,62 @@ const GetTableOptions = () => {
   }
 };
 
-export const SurveyDelegatesUISchema = {
-  submitIcon: 'check_circle_outline',
+export const SurveyDelegatesUISchema = {  
   'ui:options': {
     showSubmit: false,
+    showSchemaSelectorInToolbar: true,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      delegates: { md: 12 },
+    },
+    {
+      launched: { md: 3, sm: 6 },
+      complete: { md: 3, sm: 6 },
+      total: { md: 3, sm: 12 }
+    }
+  ],
+  id: {
+    'ui:widget': 'HiddenWidget',
+  },
+  launched: {
+    'ui:widget': 'ProgressWidget',
+    'ui:options': {
+      size: 80,
+      thickness: 5,
+      variant: 'static',
+    },
+  },
+  complete: {
+    'ui:widget': 'ProgressWidget',
+    'ui:options': {
+      size: 80,
+      thickness: 5,
+      variant: 'static',
+    },
+  },
+  peersPending: {
+    'ui:widget': 'ProgressWidget',
+    'ui:options': {
+      size: 80,
+      thickness: 5,
+      variant: 'static',
+    },
+  },
+  total: {
+    'ui:widget': 'LabelWidget',
+  },
+  delegates: {
+    'ui:widget': 'SurveyDelegatesWidget',
+  },
+};
+
+
+export const SurveyDelegatesGridUISchema = {
+  'ui:options': {
+    showSubmit: false,
+    showSchemaSelectorInToolbar: true,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -182,6 +290,7 @@ export const SurveyDelegatesUISchema = {
     'ui:options': GetTableOptions()
   },
 };
+
 
 const graphql = {
   query: {
@@ -358,6 +467,24 @@ export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
   ],
   defaultExport: $defaultExport,
   uiSchema: SurveyDelegatesUISchema,
+  uiSchemas: [
+    { 
+      id: 'SurveyDelegateWidget',
+      description: 'Use the delegate list view',
+      icon: 'list',
+      key: 'list',
+      title: 'Survey Delegate List',
+      uiSchema: SurveyDelegatesUISchema
+    },
+    { 
+      id: 'SurveyDelegateGrid',
+      description: 'Use the delegate grid view',
+      icon: 'table',
+      key: 'table',
+      title: 'Survey Delegate Grid',
+      uiSchema: SurveyDelegatesGridUISchema
+    }
+  ],
   defaultFormValue: {
     launched: 0,
     complete: 0,
