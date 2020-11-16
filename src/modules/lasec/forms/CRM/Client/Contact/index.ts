@@ -182,6 +182,11 @@ const editUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        right: '10px',
+        top: '-3px'
+      }
     },
     style: {
       marginTop: '16px',
@@ -198,7 +203,8 @@ const editUiSchema: any = {
   },
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
-    paddingBottom: '10px'
+    paddingBottom: '10px',
+    marginBottom: '10px'
   },
   'ui:grid-layout': [
     {
@@ -206,7 +212,7 @@ const editUiSchema: any = {
     },
     {
       emailAddress: { md: 6, sm: 12 },
-      alternateEmail: { md: 5, sm: 12 },
+      alternateEmail: { md: 6, sm: 12 },
       mobileNumber: { md: 6, sm: 12 },
       officeNumber: { md: 6, sm: 12 },
       alternateNumber: { md: 6, sm: 12 },

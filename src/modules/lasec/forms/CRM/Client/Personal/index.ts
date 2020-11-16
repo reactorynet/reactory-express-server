@@ -196,6 +196,11 @@ export const editUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        right: '10px',
+        top: '-3px'
+      }
     },
     style: {
       marginTop: '16px',
@@ -206,7 +211,8 @@ export const editUiSchema: any = {
   },
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
-    paddingBottom: '10px'
+    paddingBottom: '10px',
+    marginBottom: '10px'
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
@@ -219,8 +225,8 @@ export const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      clientStatus: { md: 6, sm: 6 },
-      title: { md: 5, sm: 12 },
+      // clientStatus: { md: 6, sm: 6 },
+      title: { md: 6, sm: 12 },
       firstName: { md: 6, sm: 12 },
       lastName: { md: 6, sm: 12 },
       country: { md: 6, sm: 12 },
@@ -236,71 +242,103 @@ export const editUiSchema: any = {
       },
     }
   },
-  clientStatus: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      FormControl: {
-        props: {
-          style: {
-            maxWidth: '400px'
-          }
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-        }
-      },
-      selectOptions: [
-        {
-          key: 'active',
-          value: 'active',
-          label: 'Active',
-          icon: 'trip_origin',
-          iconProps: {
-            style: {
-              color: '#5EB848',
-              marginRight: '16px',
-              verticalAlign: 'middle'
-            },
-          }
-        },
-        {
-          key: 'unfinished',
-          value: 'unfinished',
-          label: 'Unfinished',
-          icon: 'trip_origin',
-          iconProps: {
-            style: {
-              color: '#FF9901',
-              marginRight: '16px',
-              verticalAlign: 'middle'
-            },
-          }
-        },
-        {
-          key: 'deactivated',
-          value: 'deactivated',
-          label: 'Deactivated',
-          icon: 'trip_origin',
-          iconProps: {
-            style: {
-              color: '#AB1257',
-              marginRight: '16px',
-              verticalAlign: 'middle'
-            },
-          }
-        },
-      ],
-    },
-  },
+  // clientStatus: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     readOnly: true,
+  //     format: '${formData ? formData.toUpperCase() : "Loading"}',
+  //     variant: 'subtitle1',
+  //     title: 'Client Status',
+  //     icon: 'trip_origin',
+  //     iconPosition: 'inline',
+  //     iconProps: {
+  //       style: {
+  //         color: '#FF9901',
+  //         margingRight: '4px'
+  //       },
+
+  //     },
+  //     $iconProps: 'lasec-crm.ClientStatusIconFormatFunction@1.0.0',
+  //     titleProps: {
+  //       style: {
+  //         display: 'content',
+  //         minWidth: '150px',
+  //         color: "#9A9A9A",
+  //       }
+  //     },
+  //     bodyProps: {
+  //       style: {
+  //         display: 'flex',
+  //         justifyContent: 'flex-end',
+  //       }
+  //     },
+  //   }
+  // },
+  // clientStatus: {
+  //   'ui:widget': 'SelectWidget',
+  //   'ui:options': {
+  //     FormControl: {
+  //       props: {
+  //         style: {
+  //           maxWidth: '400px'
+  //         }
+  //       }
+  //     },
+  //     labelStyle: {
+  //       transform: 'none',
+  //       fontWeight: 'bold',
+  //       color: '#000000',
+  //       backgroundColor: 'transparent',
+  //       padding: 0
+  //     },
+  //     selectProps: {
+  //       style: {
+  //         marginTop: '1.3rem',
+  //       }
+  //     },
+  //     selectOptions: [
+  //       {
+  //         key: 'active',
+  //         value: 'active',
+  //         label: 'Active',
+  //         icon: 'trip_origin',
+  //         iconProps: {
+  //           style: {
+  //             color: '#5EB848',
+  //             marginRight: '16px',
+  //             verticalAlign: 'middle'
+  //           },
+  //         }
+  //       },
+  //       {
+  //         key: 'unfinished',
+  //         value: 'unfinished',
+  //         label: 'Unfinished',
+  //         icon: 'trip_origin',
+  //         iconProps: {
+  //           style: {
+  //             color: '#FF9901',
+  //             marginRight: '16px',
+  //             verticalAlign: 'middle'
+  //           },
+  //         }
+  //       },
+  //       {
+  //         key: 'deactivated',
+  //         value: 'deactivated',
+  //         label: 'Deactivated',
+  //         icon: 'trip_origin',
+  //         iconProps: {
+  //           style: {
+  //             color: '#AB1257',
+  //             marginRight: '16px',
+  //             verticalAlign: 'middle'
+  //           },
+  //         }
+  //       },
+  //     ],
+  //   },
+  // },
   title: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
@@ -442,37 +480,69 @@ export const newUiSchema: any = {
       style: { padding: '25px 32px 0 32px' }
     }
   ],
-  clientTitle: {
-    'ui:widget': 'SelectWithDataWidget',
-    'ui:options': {
-      multiSelect: false,
-      query: `query LasecGetPersonTitles {
-        LasecGetPersonTitles {
-          id
-          title
-        }
-      }`,
-      resultItem: 'LasecGetPersonTitles',
-      resultsMap: {
-        'LasecGetPersonTitles.[].id': ['[].key', '[].value'],
-        'LasecGetPersonTitles.[].title': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
+  // clientStatus: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     readOnly: true,
+  //     format: '${formData ? formData.toUpperCase() : "Loading"}',
+  //     variant: 'subtitle1',
+  //     title: 'Client Status',
+  //     icon: 'trip_origin',
+  //     iconPosition: 'inline',
+  //     iconProps: {
+  //       style: {
+  //         color: '#FF9901',
+  //         margingRight: '4px'
+  //       },
 
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
-    },
-    'ui:description': "Select the client title",
-  },
+  //     },
+  //     $iconProps: 'lasec-crm.ClientStatusIconFormatFunction@1.0.0',
+  //     titleProps: {
+  //       style: {
+  //         display: 'content',
+  //         minWidth: '150px',
+  //         color: "#9A9A9A",
+  //       }
+  //     },
+  //     bodyProps: {
+  //       style: {
+  //         display: 'flex',
+  //         justifyContent: 'flex-end',
+  //       }
+  //     },
+  //   }
+  // },
+  // clientTitle: {
+  //   'ui:widget': 'SelectWithDataWidget',
+  //   'ui:options': {
+  //     multiSelect: false,
+  //     query: `query LasecGetPersonTitles {
+  //       LasecGetPersonTitles {
+  //         id
+  //         title
+  //       }
+  //     }`,
+  //     resultItem: 'LasecGetPersonTitles',
+  //     resultsMap: {
+  //       'LasecGetPersonTitles.[].id': ['[].key', '[].value'],
+  //       'LasecGetPersonTitles.[].title': '[].label',
+  //     },
+  //     selectProps: {
+  //       style: {
+  //         marginTop: '1.3rem',
+
+  //       }
+  //     },
+  //     labelStyle: {
+  //       transform: 'none',
+  //       fontWeight: 'bold',
+  //       color: '#000000',
+  //       backgroundColor: 'transparent',
+  //       padding: 0
+  //     }
+  //   },
+  //   'ui:description': "Select the client title",
+  // },
   firstName: {
     'ui:options': {
       component: 'TextField',
