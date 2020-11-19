@@ -20,7 +20,7 @@ import { urlencoded } from 'body-parser';
 import LasecAPI from '@reactory/server-modules/lasec/api';
 import CRMClientComment from '@reactory/server-modules/lasec/models/Comment';
 import { User } from '@reactory/server-core/models';
-import { LasecApiResponse, SimpleResponse } from '../types/lasec';
+import { LasecApiResponse, LasecCRMCustomer, SimpleResponse } from '../types/lasec';
 
 import { getLoggedIn360User } from './Helpers';
 
@@ -165,8 +165,7 @@ const getClients = async (params) => {
     let _client = om(client, {
       'id': 'id',
       'first_name': [{
-        "key":
-          'fullName',
+        "key": 'fullName',
         "transform": (sourceValue, sourceObject, destinationObject, destinationKey) => `${sourceValue} ${sourceObject.surname}`,
       }, "firstName"],
       'surname': 'lastName',
@@ -908,6 +907,10 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
         if (ctx === 'lasec-crm::new-company::document') return `${ctx}::${global.user._id}`;
         return ctx;
       })
+    };
+  } else {
+    documentFilter.uploadContext = {
+      $in: [`lasec-crm::company::${params.id}`]        
     };
   }
 
@@ -1839,8 +1842,22 @@ export default {
     documents: async (parent, object) => {
       return getCustomerDocuments({ id: parent.id });
     },
-    registeredName: async (parent, obj) => {
+    registeredName: (parent, obj) => {
       return parent.registered_name || parent.registeredName
+    },
+    deliveryAddress: (parent: LasecCRMCustomer) => {
+      if (!parent.deliveryAddress) {
+        parent.deliveryAddress = 'Not Available'
+      }
+
+      return parent.deliveryAddress;
+    },
+    deliveryAddressId: (parent: LasecCRMCustomer) => {
+      if (!parent.deliveryAddressId) {
+        parent.deliveryAddressId = -1
+      }
+
+      return parent.deliveryAddressId
     }
   },
   Query: {

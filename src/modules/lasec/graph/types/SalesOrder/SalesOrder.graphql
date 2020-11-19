@@ -40,12 +40,17 @@ type LasecPreparedSalesOrder {
   sales_order_date: String
   customer_name: String
   company_name: String
+  client: LasecCRMClient  
   company_id: String
   rep_code: String
   vat_number: String
   quoted_amount: Int
-  delivery_address: String    
+  delivery_address: String
+  delivery_address_id: String
   order_type: String
+  preferred_warehouse: String
+  shipping_date: String
+  method_of_contact: String
 }
 
 input LasecCreateSalesOrderInput {
@@ -72,6 +77,7 @@ input LasecCreateSalesOrderInput {
   method_of_contact: String
   contact_number: String
   document_context: String
+  upload_documents: String
   documents: [String]
 }
 

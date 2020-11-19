@@ -41,6 +41,8 @@ const graphql: Reactory.IFormGraphDefinition = {
           customer {
             id
             fullName
+            firstName
+            lastName
           }
           company {
             id
@@ -66,6 +68,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'filterBy': 'filterBy',
       'quotes': 'quotes',
       'quotes[].code': 'quotes[].code',
+      'quotes[].customer.fullName': 'quotes.client',
       'quotes[].created': 'quotes[].created',
       'quotes[].statusName': 'quotes[].status',
       'quotes[].status': 'quotes[].quote_status',

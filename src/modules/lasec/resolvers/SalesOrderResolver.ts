@@ -4,9 +4,11 @@ import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import LasecApi from '../api';
 import ApiError from "exceptions";
 import { getCRMSalesOrders, getLasecQuoteById, getLoggedIn360User } from "./Helpers";
-import { IQuoteService, Lasec360User, LasecClient, LasecCreateSalesOrderInput, LasecQuote, SimpleResponse } from "../types/lasec";
+import { IQuoteService, Lasec360User, LasecClient, LasecCreateSalesOrderInput, LasecCRMCustomer, LasecQuote, SimpleResponse } from "../types/lasec";
 import { execql } from "@reactory/server-core/graph/client";
 import { LasecCompany } from "../constants";
+import { getCacheItem, setCacheItem } from "../models";
+import moment from "moment";
 
 const SalesOrderResolver = {
 
@@ -54,97 +56,122 @@ const SalesOrderResolver = {
     },
     LasecGetPreparedSalesOrder: async (parent: any, params: { quote_id: string, active_option: string }): Promise<any> => {
 
-
-
       try {
-
-        let quote: LasecQuote = null;
-        let customer: any = null;
-        let lasec_user: Lasec360User = null;
 
         const {
           quote_id,
           active_option
         } = params;
 
-        try {
-          lasec_user = await getLoggedIn360User().then();
-        } catch (loggedInUserError) {
-          logger.error(`Error Getting the logged in user details ${loggedInUserError.message}`);
-          throw new ApiError(`Could not get the logged in user.`);
-        }
+        let quote: LasecQuote = null;
+        let customer: LasecCRMCustomer = null;
+        let client: LasecClient = null;
+        let lasec_user: Lasec360User = null;
 
-        try {
-          const quote_detail: { errors: any[], data: any } = await execql(`query LasecGetQuoteById($quote_id: String!, $option_id: String, $item_paging: PagingRequest){
-            LasecGetQuoteById(quote_id: $quote_id, option_id: $option_id, item_paging: $item_paging){
-                id
-                meta 
-                customer {
-                  firstName
-                  lastName
-                }
-                company {
-                  id                  
-                  name                
-                }
-                totals {
-                  GP
-                  totalVATInclusive
-                  totalVATExclusive
-              }
-            }
-          }`, {
-            quote_id,
-            option_id: active_option
-          }).then();
+        let cache_key = `${quote_id}-${active_option}-SALESORDER`;
 
-          if (quote_detail.data) {
-            if (quote_detail.data && quote_detail.data.LasecGetQuoteById) {
-              quote = quote_detail.data.LasecGetQuoteById;
-            }
+        let prepared_sales_order: any = await getCacheItem(cache_key).then()
+
+        if (prepared_sales_order === null || prepared_sales_order === undefined) {
+
+          try {
+            lasec_user = await getLoggedIn360User().then();
+          } catch (loggedInUserError) {
+            logger.error(`Error Getting the logged in user details ${loggedInUserError.message}`);
+            throw new ApiError(`Could not get the logged in user.`);
           }
 
-        } catch (quoteFetchError) {
-          logger.error(`Error getting the quote details ${quoteFetchError.message}`);
-        }
 
-        const lasec_quote = quote.meta.source;
+          try {
+            const quote_detail: { errors: any[], data: any } = await execql(`query LasecGetQuoteById($quote_id: String!, $option_id: String, $item_paging: PagingRequest){
+              LasecGetQuoteById(quote_id: $quote_id, option_id: $option_id, item_paging: $item_paging){
+                  id
+                  meta 
+                  customer {
+                    firstName
+                    lastName
+                  }
+                  company {
+                    id                  
+                    name                
+                  }
+                  totals {
+                    GP
+                    totalVATInclusive
+                    totalVATExclusive
+                }
+              }
+            }`, {
+              quote_id,
+              option_id: active_option
+            }).then();
 
-        try {
-          const customer_query: { errors: any[], data: { LasecGetCompanyDetailsforQuote: LasecClient } } = await execql(`query LasecGetCompanyDetailsforQuote($id: String!){
-            LasecGetCompanyDetailsforQuote(id: $id){
-              id
-              registeredName
-              tradingName
-              deliveryAddress
-              taxNumber
-              importVATNumber
-              creditLimit
-              currentBalance
+            if (quote_detail.data) {
+              if (quote_detail.data && quote_detail.data.LasecGetQuoteById) {
+                quote = quote_detail.data.LasecGetQuoteById;
+              }
             }
-          }`, { id: quote.company.id }).then();
 
-          customer = customer_query.data.LasecGetCompanyDetailsforQuote;
-        } catch (customerLoadError) {
-          logger.debug(`LasecGetCompanyDetailsforQuote(id: $id) ${customerLoadError.message}`, customerLoadError);
-          throw new ApiError('Could load Company details for quote')
-        }
+          } catch (quoteFetchError) {
+            logger.error(`Error getting the quote details ${quoteFetchError.message}`);
+          }
 
-        return {
-          id: `${quote_id}-SALESORDER`,
-          quote_id,
-          sales_order_date: new Date().toISOString(),
-          customer_name: lasec_quote.customer_full_name || "No Customer Found",
-          company_name: lasec_quote.company_trading_name || "No Company Name",
-          company_id: lasec_quote.company_id,
-          rep_code: user.repId,
-          order_type: 'normal',
-          vat_number: customer.taxNumber,
-          quoted_amount: lasec_quote.grand_total_excl_vat_cents,
-          delivery_address: customer.deliveryAddress,
-        }
+          const lasec_quote = quote.meta.source;
+
+          try {
+            const customer_query: { errors: any[], data: { LasecGetClientDetail: LasecClient } } = await execql(`query LasecGetClientDetail($id: String!){
+              LasecGetClientDetail(id: $id){
+                id
+                clientStatus
+                fullName
+                firstName
+                lastName
+                salesTeam
+                customer {
+                  id
+                  registeredName
+                  tradingName
+                  deliveryAddress
+                  deliveryAddressId
+                  taxNumber
+                  importVATNumber
+                  creditLimit
+                  currentBalance
+                }                
+              }
+            }`, { id: lasec_quote.customer_id } ).then();
+            client = customer_query.data.LasecGetClientDetail;
+            customer = client.customer;
+            logger.debug(`LasecGetCompanyDetailsforQuote(id: $id)`, customer);
+          } catch (customerLoadError) {
+            logger.debug(`LasecGetCompanyDetailsforQuote(id: $id) ${customerLoadError.message}`, customerLoadError);
+            throw new ApiError('Could load Company details for quote')
+          }
+          
+          prepared_sales_order = {
+            id: `${quote_id}-SALESORDER`,
+            quote_id,
+            sales_order_date: new Date().toISOString(),
+            customer_name: lasec_quote.customer_full_name || "No Customer Found",
+            company_name: lasec_quote.company_trading_name || "No Company Name",
+            company_id: lasec_quote.company_id,
+            rep_code: client.salesTeam,
+            order_type: 'normal',
+            vat_number: customer.taxNumber,
+            quoted_amount: lasec_quote.grand_total_excl_vat_cents,
+            delivery_address_id: customer.deliveryAddressId,              
+            delivery_address: customer.deliveryAddress,
+            preferred_warehouse: '10',
+            method_of_contact: 'call',
+            shipping_date: moment().add(14, 'days').toISOString()
+          }
+          
+          setCacheItem(cache_key, prepared_sales_order, 60);
+        };
+                              
+        return prepared_sales_order;
       } catch (error) {
-        logger.error(`Unhandled exception ${error.message}`);
+        logger.error(`Unhandled exception ${error.message}`);        
         throw new ApiError(`Unhandled Error Processing Sales Order Prep ${error.message}`);
       }
     },
@@ -162,7 +189,7 @@ const SalesOrderResolver = {
   },
   Mutation: {
     LasecCreateSalesOrder: async (parent: any, params: { sales_order_input: LasecCreateSalesOrderInput }): Promise<SimpleResponse> => {
-      
+
       const { sales_order_input } = params;
       logger.debug(`Sales Order Resolver ${sales_order_input.customer_name}`, sales_order_input);
 

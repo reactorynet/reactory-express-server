@@ -277,7 +277,7 @@ const GenerateSalesOrderUISchema: Reactory.IUISchema = {
     'ui:field': 'GridLayout',
     'ui:grid-layout': [
       {
-        delivery_address: { xs: 12, md: 4, lg: 3, xl: 2 },
+        delivery_address: { xs: 12, md: 12, lg: 12, xl: 12 },
         special_instructions: { xs: 12, md: 12, lg: 12, xl: 12 },
         special_instructions_warehouse: { xs: 12, md: 12, lg: 12, xl: 12 },
         on_day_contact: { xs: 12, md: 4, lg: 3, xl: 2 },
@@ -298,7 +298,7 @@ const GenerateSalesOrderUISchema: Reactory.IUISchema = {
       'ui:widget': 'SelectWidget',
       'ui:options': {
         selectOptions: [
-          { key: 'cellphone', value: 'cellphone', label: 'Call on Cell' },
+          { key: 'call', value: 'call', label: 'Call on Cell' },
           { key: 'whatsapp', value: 'whatsapp', label: 'WhatsApp' },
           { key: 'sms', value: 'sms', label: 'SMS' },
         ],

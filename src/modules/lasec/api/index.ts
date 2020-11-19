@@ -958,54 +958,119 @@ const Api = {
     createSalesOrder: async (sales_order_input: LasecCreateSalesOrderInput) => {
 
       const data = {
-        CUSTOMER_DELIVERY_ADDRESS: sales_order_input.delivery_address,
-        CUSTOMER_DELIVERY_ADDRESS_tag_value: sales_order_input.delivery_address_tag,
-        CUSTOMER_DELIVERY_ADDRESS_tag_value_id: sales_order_input.delivery_address_id,
-        confirm_purchase_order_number: sales_order_input.confirm_number,
-        delivery_address_id: sales_order_input.delivery_address_id,
-        do_not_part_supply: sales_order_input.part_supply === false,
-        has_confirm_payment: true,
-        has_confirmed_purchase_order_amount: sales_order_input.amounts_confirmed,
-        purchase_order_amount: sales_order_input.quoted_amount,
-        purchase_order_number: sales_order_input.purchase_order_number,
-        quote_id: sales_order_input.quote_id,
-        shipping_date: sales_order_input.shipping_date,
-        type_of_order: sales_order_input.order_type,
-        vat: sales_order_input.vat_number,
         warehouse_id: sales_order_input.preffered_warehouse,
-        communication_method: sales_order_input.method_of_contact,
-        delivery_instruction: sales_order_input.special_instructions,
-        special_instructions: sales_order_input.special_instructions_warehouse,
-        on_day_contact_person: sales_order_input.on_day_contact,
-        on_day_contact_person_contact_number: sales_order_input.contact_number,
-        status: 'writing_to_syspro'
+        has_confirm_payment: true,
+        type_of_order: sales_order_input.order_type,
+        vat: sales_order_input.vat_number || '-',
+        purchase_order_number: sales_order_input.purchase_order_number,
+        purchase_order_amount: sales_order_input.quoted_amount,
+        shipping_date: moment(sales_order_input.shipping_date).toISOString(),
+        do_not_part_supply: sales_order_input.part_supply === false,
+        CUSTOMER_DELIVERY_ADDRESS_tag_value_id: sales_order_input.delivery_address_id,
+        CUSTOMER_DELIVERY_ADDRESS_tag_value: sales_order_input.delivery_address,
+        confirm_purchase_order_number: sales_order_input.confirm_number,
+        has_confirmed_purchase_order_amount: sales_order_input.amounts_confirmed === true,
+        delivery_address_id: sales_order_input.delivery_address_id,
+        quote_id: sales_order_input.quote_id,        
       };
+
+
+      
+
+      /*
+      
+      {
+        "warehouse_id": "10",
+        "has_confirm_payment": true,
+        "type_of_order": "normal",
+        "vat": "-",
+        "purchase_order_number": "33224455",
+        "purchase_order_amount": 438624,
+        "shipping_date": "2020-11-30T12:53:17.000Z",
+        "do_not_part_supply": false,
+        "CUSTOMER_DELIVERY_ADDRESS_tag_value_id": "19847",
+        "CUSTOMER_DELIVERY_ADDRESS_tag_value": "Medcare Products, Unit 13, South Cape Industrial Park, Leo Rd, Diep River, Cape Town, 7800, South Africa",
+        "confirm_purchase_order_number": "33224455",
+        "has_confirmed_purchase_order_amount": true,
+        "delivery_address_id": "19847",
+        "quote_id": "2010-107367000"
+      }
+      
+      */
+      
+      /**
+      
+      {
+  
+      "warehouse_id": "10",
+      "has_confirm_payment": true,
+      "type_of_order": "normal",
+      "shipping_date": "2020-11-27T16:40:00.000Z",
+      "do_not_part_supply": true,
+      "CUSTOMER_DELIVERY_ADDRESS_tag_value_id": "14305",
+      "CUSTOMER_DELIVERY_ADDRESS_tag_value": "18 High St, Worcester, 6849, South Africa",
+      "confirm_purchase_order_number": "12345",
+      "delivery_address_id": "14305",
+      "quote_id": "2011-106326070"
+  
+      }
+      
+      
+      
+      
+       */
+
 
       try {
         logger.debug(`Creating new Sales Order input =>`, { data });
+
         const create_api_result = await POST(SECONDARY_API_URLS.sales_order.url, data).then();
         logger.debug(`Result from new Sales Order =>`, { create_api_result });
+
+        if (create_api_result.status === 'success') {
+
+          const update_data = {
+            item_id: [create_api_result.payload.id],
+            values: {
+              communication_method: sales_order_input.method_of_contact,
+              on_day_contact_person: sales_order_input.on_day_contact,
+              on_day_contact_person_contact_number: sales_order_input.contact_number,
+              status: 'writing_to_syspro'
+            }
+          };
+
+          const put_result = await PUT(`api/sales_order/${create_api_result.payload.id}/`, update_data).then();
+          if (put_result.status === 'success') {
+            return put_result.payload
+          } else {
+            throw new ApiError(`Could not complete sales order: ${put_result.message}`, put_result);
+          }
+        } else {
+          throw new ApiError(`Created Sales Order ${create_api_result.payload.id} but could not update the data.`);
+        }
+
         return create_api_result;
 
       } catch (createSalesOrder) {
         logger.error('Could not create sales order', createSalesOrder);
-        throw new ApiError('Could not create a new sales order - remote API error', { createSalesOrder });
+        if (createSalesOrder instanceof ApiError) throw createSalesOrder;
+        else  throw new ApiError('Could not create a new sales order - remote API error', { createSalesOrder });
       }
-      
+
     },
-    checkPONumberExists: async (company_id: string, purchase_order_number: string): Promise<{ exists: boolean, sales_order_id?: string }> => {      
+    checkPONumberExists: async (company_id: string, purchase_order_number: string): Promise<{ exists: boolean, sales_order_id?: string }> => {
       try {
         logger.debug(`Checking if Purchase Order number exists: company id: ${company_id}, ${purchase_order_number}`);
-        const { payload = null, status = 'failed' }: { payload: { po_number_exists: boolean, sales_order_id?: string }, status: string } = await POST(SECONDARY_API_URLS.check_po_number_exists.url, { company_id, purchase_order_number }).then();        
+        const { payload = null, status = 'failed' }: { payload: { po_number_exists: boolean, sales_order_id?: string }, status: string } = await POST(SECONDARY_API_URLS.check_po_number_exists.url, { company_id, purchase_order_number }).then();
         if (status === 'success' && payload) {
           logger.debug('Results from checking if purchase order exists', { status, payload });
           return {
             exists: payload.po_number_exists === true,
             sales_order_id: payload.sales_order_id || 'not-set'
           };
-        } 
-        throw new LasecApiException('Did not get a successfull response from Lasec API');                
-      } catch ( poNumberError ) {
+        }
+        throw new LasecApiException('Did not get a successfull response from Lasec API');
+      } catch (poNumberError) {
         logger.error(`lasec Api.SalesOrders.checkPONumberExists: ${poNumberError.message}`, poNumberError);
         if (poNumberError instanceof LasecApiException) throw poNumberError;
         else throw new ApiError(`Error while checking if the purchase order number exists`, { __type: 'lasec.api.UnhandledError', error: poNumberError });

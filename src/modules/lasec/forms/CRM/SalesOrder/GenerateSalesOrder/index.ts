@@ -24,8 +24,11 @@ const default_value = (quote_id: string): LasecGenerateSalesOrderFormData => ({
     },
     delivery_detail: {
         contact_number: '',
-        delivery_address: null,
-        method_of_contact: 'cellphone',
+        delivery_address: {
+            id: '',
+            fullAddress: ''
+        },
+        method_of_contact: 'call',
         on_day_contact: '',
         special_instruction: '',
         special_instructions_warehouse: ''

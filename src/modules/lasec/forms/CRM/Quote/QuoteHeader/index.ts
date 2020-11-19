@@ -1,4 +1,5 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
+import { cloneDeep } from 'lodash';
 
 const graphql: Reactory.IFormGraphDefinition = {
   mutation: {
@@ -157,6 +158,9 @@ const uiSchema: any = {
   },
 };
 
+let internationalUiSchema = cloneDeep(uiSchema);
+internationalUiSchema.quoteType['ui:options'].selectOptions.push({ key: 'cross-trade', value: 'cross-trade', label: 'Cross Trade' })
+
 
 const LasecCRMQuoteHeaderForm: Reactory.IReactoryForm = {
   id: 'LasecCRMQuoteHeaderForm',
@@ -171,6 +175,24 @@ const LasecCRMQuoteHeaderForm: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: schema,
   graphql: graphql,
+  uiSchemas: [
+    {
+      id: 'default',
+      icon: 'local_offer',
+      uiSchema,
+      key: 'default',
+      title: 'Local',
+      description: 'Local and Education'
+    },
+    {
+      id: 'international',
+      icon: 'language',
+      uiSchema,
+      key: 'international',
+      title: 'Local',
+      description: 'Local and Education'
+    }
+  ],
   uiSchema: uiSchema,
   defaultFormValue: {
     paging: {

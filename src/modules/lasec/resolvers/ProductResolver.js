@@ -118,156 +118,159 @@ const WarehouseIds = {
 // };
 
 const getProducts = async (params) => {
-  const { product = "", paging = { page: 1, pageSize: 10 }, iter = 0 } = params;
-  // ADITIONAL PARAMS : Product Name
-  logger.debug(`Getting Products For Using Query ${product}`, { paging });
 
 
-  let pagingResult = {
-    total: 0,
-    page: paging.page || 1,
-    hasNext: false,
-    pageSize: paging.pageSize || 10
-  };
-
-  if (isString(product) === false || product.length < 3) return {
-    paging: pagingResult,
-    products: []
-  };
-
-  let filter = { "any_field": product };
-
-  const cachekey = Hash(`product_list_${product}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`.toLowerCase());
-
-  const productResult = await lasecApi.Products.list({ filter, pagination: { current_page: paging.page, page_size: paging.pageSize } }).then();
-
-  let ids = [];
-
-  if (isArray(productResult.ids) === true) {
-    ids = [...productResult.ids];
-  }
+  try {
+    const { product = "", paging = { page: 1, pageSize: 10 }, iter = 0 } = params;
+    // ADITIONAL PARAMS : Product Name
+    logger.debug(`Getting Products For Using Query ${product}`, { paging });
 
 
-  if (productResult.pagination && productResult.pagination.num_pages > 1) {
-    pagingResult.total = productResult.pagination.num_items;
-    pagingResult.pageSize = productResult.pagination.page_size || 10;
-    pagingResult.hasNext = productResult.pagination.has_next_page === true;
-    pagingResult.page = productResult.pagination.current_page || 1;
-  }
-
-  const productDetails = await lasecApi.Products.list({ filter: { ids: ids }, pagination: { page_size: paging.pageSize } });
-  let products = [...productDetails.items];
-
-  logger.debug(`PRODUCT RESOLVER - PRODUCTS:: found (${products.length}) products for request`);
-  logger.debug(`PRODUCT RESOLVER - PRODUCT:: ${JSON.stringify(products[0])}`);
-
-  products = products.map((product) => {
-    let productResult = {
-      id: product.id,
-      name: product.name,
-      code: product.code,
-      description: product.description,
-      qtyAvailable: product.QtyAvailable,
-      qtyOnHand: product.QtyOnHand,
-      qtyOnOrder: product.QtyOnOrder,
-      unitOfMeasure: product.pack_size,
-      price: product.list_price_cents,
-      priceAdditionalInfo: product.price_is_expired ? 'EXPIRED' : (product.on_special ? 'ON_SPECIAL' : ''),
-      image: product.image_url,
-      onSyspro: product.is_in_syspro,
-      landedPrice: product.cost_price_cents,
-      wh10CostPrice: product.actual_cost_wh10,
-      threeMonthAvePrice: product.three_month_ave_price_cents,
-      listPrice: product.list_price_cents,
-      buyer: product.buyer,
-      buyerEmail: product.buyer_email || 'allbuyers@lasec.com',
-      planner: product.planner,
-      plannerEmail: product.planner_email || 'allplanners@lasec.com',
-      isHazardous: product.is_hazardous ? 'Yes' : 'No',
-      siteEvaluationRequired: product.site_evaluation_required ? 'Yes' : 'No',
-      packedLength: product.packed_length,
-      packedWidth: product.packed_width,
-      packedHeight: product.packed_height,
-      packedVolume: product.packed_volume,
-      packedWeight: product.packed_weight,
-      numberOfSalesOrders: product.number_of_salesorders || 0, // THESE FIELDS DO NOT EXIST - DAWID IS IMPLEMENTING
-      numberOfPurchaseOrders: product.number_of_purchaseorders || 0, // THESE FIELDS DO NOT EXIST - DAWID IS IMPLEMENTING
-      productClass: product.class,
-      tariffCode: product.tariff_code,
-      leadTime: product.lead_time,
-      validPriceUntil: product.valid_price_until ? moment(product.valid_price_until).format('DD MMM YYYY') : '',
-      lastUpdated: product.last_updated,
-      lastUpdatedBy: product.last_updated_by,
-      lastOrdered: product.last_ordered ? moment(product.last_ordered).format('DD MMM YYYY') : '',
-      lastReceived: product.last_received ? moment(product.last_received).format('DD MMM YYYY') : '',
-      supplyCurrency: product.supplier_currency,
-      listCurrency: product.list_currency,
-      onSpecial: product.on_special,
-      specialPrice: product.special_price_cents,
-      currencyCode: product.currency_code,
+    let pagingResult = {
+      total: 0,
+      page: paging.page || 1,
+      hasNext: false,
+      pageSize: paging.pageSize || 10
     };
 
-    productResult.productPricing = [];
+    if (isString(product) === false || product.length < 3) return {
+      paging: pagingResult,
+      products: []
+    };
 
-    if (product.currency_pricing && Object.keys(product.currency_pricing).length > 0) {
-      productResult.productPricing = Object.keys(product.currency_pricing).map((key) => product.currency_pricing[key]);
+    let filter = { "any_field": product };
+
+    const cachekey = Hash(`product_list_${product}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`.toLowerCase());
+
+    const productResult = await lasecApi.Products.list({ filter, pagination: { current_page: paging.page, page_size: paging.pageSize } }).then();
+
+    let ids = [];
+
+    if (isArray(productResult.ids) === true) {
+      ids = [...productResult.ids];
     }
 
-    return productResult;
-  });
 
-  // GET ADDITIONAL COSTINGS INFORMATION
-  products = products.map(async (prod) => {
-    const productCostingsDetails = await lasecApi.Products.costings({ filter: { ids: [prod.id] }, pagination: { page_size: paging.pageSize } }).then();
-    const costing = productCostingsDetails.items[0];
-    return {
-      ...prod,
-      supplier: costing.supplier_name,
-      model: costing.model,
-      shipmentSize: costing.shipment_size,
-      exWorksFactor: costing.exworks_factor,
-
-      freightFactor: costing.freight_factor,
-      clearingFactor: costing.clearing_factor,
-      actualCostwh10: costing.actual_cost_wh10,
-      actualCostwh20: costing.actual_cost_wh20,
-      actualCostwh21: costing.actual_cost_wh21,
-      actualCostwh31: costing.actual_cost_wh31,
-      supplierUnitPrice: costing.supplier_unit_price_cents,
-      percDiscount: costing.percentage_discount,
-      discountPrice: costing.discounted_price_cents,
-      freightPrice: costing.freight_price_cents,
-      exWorksPrice: costing.exworks_price_cents,
-      craftingFOC: costing.crating_foc_cents,
-      netFOB: costing.net_fob,
-      percDuty: costing.percentage_duty,
-      clearance: costing.clearance_cost_cents,
-      landedCost: costing.landed_cost_cents,
-      markup: costing.markup,
-      sellingPrice: costing.markup,
-    }
-  });
-
-  let result = {
-    paging: pagingResult,
-    products,
-  };
-
-  if (result.paging.pageSize >= 10 && result.paging.hasNext === true) {
-    // cache the next result
-
-    // create segments for page size 5 and 10
-    if (result.paging.pageSize === 20) {
-      const cachekeys_10 = `product_list_${product}_page_${paging.page || 1}_page_size_10`.toLowerCase();
-      setCacheItem(cachekeys_10, { paging: { ...result.paging, pageSize: 10, hasNext: true }, products: lodash.take(result.products, 10) });
+    if (productResult.pagination && productResult.pagination.num_pages > 1) {
+      pagingResult.total = productResult.pagination.num_items;
+      pagingResult.pageSize = productResult.pagination.page_size || 10;
+      pagingResult.hasNext = productResult.pagination.has_next_page === true;
+      pagingResult.page = productResult.pagination.current_page || 1;
     }
 
-    const cachekeys_5 = `product_list_${product}_page_${paging.page || 1}_page_size_5`.toLowerCase();
-    setCacheItem(cachekeys_5, { paging: { ...result.paging, pageSize: 5, hasNext: true }, products: lodash.take(result.products, 5) });
-  }
+    const productDetails = await lasecApi.Products.list({ filter: { ids: ids }, pagination: { page_size: paging.pageSize } });
+    let products = [...productDetails.items];
 
-  if (result.paging.hasNext === true && iter === 0) {
-    execql(`query LasecGetProductList($product: String!, $paging: PagingRequest, $iter: Int){
+    logger.debug(`PRODUCT RESOLVER - PRODUCTS:: found (${products.length}) products for request`);
+    logger.debug(`PRODUCT RESOLVER - PRODUCT:: ${JSON.stringify(products[0])}`);
+
+    products = products.map((product) => {
+      let productResult = {
+        id: product.id,
+        name: product.name,
+        code: product.code,
+        description: product.description,
+        qtyAvailable: product.QtyAvailable,
+        qtyOnHand: product.QtyOnHand,
+        qtyOnOrder: product.QtyOnOrder,
+        unitOfMeasure: product.pack_size,
+        price: product.list_price_cents,
+        priceAdditionalInfo: product.price_is_expired ? 'EXPIRED' : (product.on_special ? 'ON_SPECIAL' : ''),
+        image: product.image_url,
+        onSyspro: product.is_in_syspro,
+        landedPrice: product.cost_price_cents,
+        wh10CostPrice: product.actual_cost_wh10,
+        threeMonthAvePrice: product.three_month_ave_price_cents,
+        listPrice: product.list_price_cents,
+        buyer: product.buyer,
+        buyerEmail: product.buyer_email || 'allbuyers@lasec.com',
+        planner: product.planner,
+        plannerEmail: product.planner_email || 'allplanners@lasec.com',
+        isHazardous: product.is_hazardous ? 'Yes' : 'No',
+        siteEvaluationRequired: product.site_evaluation_required ? 'Yes' : 'No',
+        packedLength: product.packed_length,
+        packedWidth: product.packed_width,
+        packedHeight: product.packed_height,
+        packedVolume: product.packed_volume,
+        packedWeight: product.packed_weight,
+        numberOfSalesOrders: product.number_of_salesorders || 0, // THESE FIELDS DO NOT EXIST - DAWID IS IMPLEMENTING
+        numberOfPurchaseOrders: product.number_of_purchaseorders || 0, // THESE FIELDS DO NOT EXIST - DAWID IS IMPLEMENTING
+        productClass: product.class,
+        tariffCode: product.tariff_code,
+        leadTime: product.lead_time,
+        validPriceUntil: product.valid_price_until ? moment(product.valid_price_until).format('DD MMM YYYY') : '',
+        lastUpdated: product.last_updated,
+        lastUpdatedBy: product.last_updated_by,
+        lastOrdered: product.last_ordered ? moment(product.last_ordered).format('DD MMM YYYY') : '',
+        lastReceived: product.last_received ? moment(product.last_received).format('DD MMM YYYY') : '',
+        supplyCurrency: product.supplier_currency,
+        listCurrency: product.list_currency,
+        onSpecial: product.on_special,
+        specialPrice: product.special_price_cents,
+        currencyCode: product.currency_code,
+      };
+
+      productResult.productPricing = [];
+
+      if (product.currency_pricing && Object.keys(product.currency_pricing).length > 0) {
+        productResult.productPricing = Object.keys(product.currency_pricing).map((key) => product.currency_pricing[key]);
+      }
+
+      return productResult;
+    });
+
+    // GET ADDITIONAL COSTINGS INFORMATION
+    products = products.map(async (prod) => {
+      const productCostingsDetails = await lasecApi.Products.costings({ filter: { ids: [prod.id] }, pagination: { page_size: paging.pageSize } }).then();
+      const costing = productCostingsDetails.items[0];
+      return {
+        ...prod,
+        supplier: costing.supplier_name,
+        model: costing.model,
+        shipmentSize: costing.shipment_size,
+        exWorksFactor: costing.exworks_factor,
+
+        freightFactor: costing.freight_factor,
+        clearingFactor: costing.clearing_factor,
+        actualCostwh10: costing.actual_cost_wh10,
+        actualCostwh20: costing.actual_cost_wh20,
+        actualCostwh21: costing.actual_cost_wh21,
+        actualCostwh31: costing.actual_cost_wh31,
+        supplierUnitPrice: costing.supplier_unit_price_cents,
+        percDiscount: costing.percentage_discount,
+        discountPrice: costing.discounted_price_cents,
+        freightPrice: costing.freight_price_cents,
+        exWorksPrice: costing.exworks_price_cents,
+        craftingFOC: costing.crating_foc_cents,
+        netFOB: costing.net_fob,
+        percDuty: costing.percentage_duty,
+        clearance: costing.clearance_cost_cents,
+        landedCost: costing.landed_cost_cents,
+        markup: costing.markup,
+        sellingPrice: costing.markup,
+      }
+    });
+
+    let result = {
+      paging: pagingResult,
+      products,
+    };
+
+    if (result.paging.pageSize >= 10 && result.paging.hasNext === true) {
+      // cache the next result
+
+      // create segments for page size 5 and 10
+      if (result.paging.pageSize === 20) {
+        const cachekeys_10 = `product_list_${product}_page_${paging.page || 1}_page_size_10`.toLowerCase();
+        setCacheItem(cachekeys_10, { paging: { ...result.paging, pageSize: 10, hasNext: true }, products: lodash.take(result.products, 10) });
+      }
+
+      const cachekeys_5 = `product_list_${product}_page_${paging.page || 1}_page_size_5`.toLowerCase();
+      setCacheItem(cachekeys_5, { paging: { ...result.paging, pageSize: 5, hasNext: true }, products: lodash.take(result.products, 5) });
+    }
+
+    if (result.paging.hasNext === true && iter === 0) {
+      execql(`query LasecGetProductList($product: String!, $paging: PagingRequest, $iter: Int){
       LasecGetProductList(product: $product, paging: $paging, iter: $iter){
         paging {
           total
@@ -280,11 +283,17 @@ const getProducts = async (params) => {
         }
       }
     }`, { product, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+    }
+
+    setCacheItem(cachekey, result, 60);
+
+    return result;
+  } catch (productListError) {
+    logger.error(`Error getting product list ${productListError.message}`, productListError);
+    throw new ApiError("Could not get data from remote API", { error: productListError });
   }
 
-  setCacheItem(cachekey, result, 60);
 
-  return result;
 }
 
 export const getProductById = async (params) => {
@@ -292,8 +301,8 @@ export const getProductById = async (params) => {
 
   const productResult = await lasecApi.Products.list({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
 
-  if(productResult && productResult.items) {
-    if(productResult.items.length === 1) {
+  if (productResult && productResult.items) {
+    if (productResult.items.length === 1) {
       let product = productResult.items[0]
       const costingResults = await lasecApi.Products.costings({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
       const costing = costingResults.items[0] || {}
@@ -378,14 +387,14 @@ export const getProductById = async (params) => {
   return null;
 }
 
-const getProductTenders = async(product = null, params) => {
-  logger.debug(`Getting Product Tenders For Product ${product.id || params.product_id}`, {product, params});
+const getProductTenders = async (product = null, params) => {
+  logger.debug(`Getting Product Tenders For Product ${product.id || params.product_id}`, { product, params });
 
-  const { ids } =  await  lasecApi.Products.tenders({
-    filter: { product_id: product.id || params.product_id  },
+  const { ids } = await lasecApi.Products.tenders({
+    filter: { product_id: product.id || params.product_id },
     format: { ids_only: true },
-    ordering: { },
-    pagination: { current_page: 1, page_size: 25  }
+    ordering: {},
+    pagination: { current_page: 1, page_size: 25 }
   }).then();
 
   const { items } = await lasecApi.Products.tenders({
@@ -393,23 +402,23 @@ const getProductTenders = async(product = null, params) => {
     pagination: { enabled: false }
   }).then()
 
-  if(items && isArray(items) === true) {
+  if (items && isArray(items) === true) {
     return items;
   } else {
     return []
   }
 }
 
-const getProductContracts = async(product = null, params) => {
+const getProductContracts = async (product = null, params) => {
 
-  logger.debug(`Getting Product Contracts For Product ${product.id || params.product_id}`, {product, params});
+  logger.debug(`Getting Product Contracts For Product ${product.id || params.product_id}`, { product, params });
 
 
-  const { ids } =  await  lasecApi.Products.contracts({
-    filter: { product_id: product.id || params.product_id  },
+  const { ids } = await lasecApi.Products.contracts({
+    filter: { product_id: product.id || params.product_id },
     format: { ids_only: true },
-    ordering: { },
-    pagination: { current_page: 1, page_size: 25  }
+    ordering: {},
+    pagination: { current_page: 1, page_size: 25 }
   }).then();
 
   const { items } = await lasecApi.Products.contracts({
@@ -417,7 +426,7 @@ const getProductContracts = async(product = null, params) => {
     pagination: { enabled: false }
   }).then()
 
-  if(items && isArray(items) === true) {
+  if (items && isArray(items) === true) {
     return items;
   } else {
     return []
@@ -607,7 +616,7 @@ export default {
       logger.debug(`PRODUCT resolving renders for product`, { product, args });
       return getProductTenders(product, args)
     },
-    notes: async(product, args) => {
+    notes: async (product, args) => {
       try {
         /*
         const productNotes = await mysql(`SELECT notes FROM Product WHERE productid = ${product.id};`, 'mysql.lasec360').then()
@@ -636,7 +645,7 @@ export default {
         if (product.note) return product.notes;
         if (product.notes) return product.notes;
 
-      } catch(ex) {
+      } catch (ex) {
         logger.error(`Could not retrieve product note due to ${ex.message}`);
       }
 

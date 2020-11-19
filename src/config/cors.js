@@ -1,6 +1,6 @@
 import logger from '../logging';
 
-const allowedHeadersString = 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,origin,authorization';
+const allowedHeadersString = 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,origin,authorization,x-client-name,x-client-version';
 const proxyHeaderString = 'X-Real-IP,X-Forwarded-For,X-Forwarded-Host,X-Forwarded-Proto';
 const corsOptions = {
   /**
@@ -34,7 +34,7 @@ const corsOptions = {
      * Expects a comma-delimited string (ex: 'Content-Range,X-Content-Range') or an array
      * (ex: ['Content-Range', 'X-Content-Range']). If not specified, no custom headers are exposed.
      */
-  exposedHeaders: ['X-Client-Key', 'X-Client-Pwd', 'x-client-key', 'x-client-pwd'],
+  exposedHeaders: ['X-Client-Key', 'X-Client-Pwd', 'x-client-key', 'x-client-pwd', 'x-client-version', 'x-client-name'],
   /*
    * Configures the Access-Control-Allow-Credentials CORS header. Set to true to pass the header,
    * otherwise it is omitted.

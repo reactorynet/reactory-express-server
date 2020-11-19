@@ -47,6 +47,10 @@ type LasecNextAction {
   importance: LasecImportance
 }
 
+extend type Subscription {
+  LasecLoggedInUserChanged: Lasec360User
+}
+
 extend type Query {
   LasecLoggedInUser: Lasec360User
   LasecGetRemoteUsers(search: Lasec360UserSearch): [ Lasec360User ]

@@ -1360,7 +1360,7 @@ const quote_field_maps: any = {
  * Function that returns paged quote data from the lasec api.
  * @param params
  */
-export const getPagedQuotes = async (params) => {
+export const getPagedQuotes = async (params: any) => {
 
   const {
     search = "",
@@ -1377,7 +1377,6 @@ export const getPagedQuotes = async (params) => {
   logger.debug(`🚨🚨getPagedQuotes(${JSON.stringify(params)})`);
 
   let ordering: { [key: string]: string } = {}
-
   let lasec_user: Lasec360User = await getLoggedIn360User().then();
 
   if (orderBy) {
@@ -2991,13 +2990,16 @@ export const updateQuoteLineItems = async (params) => {
   }
 }
 
-export const getCompanyDetails = async (params) => {
+export const getCompanyDetails = async (params: { id: string }) => {
   try {
     let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [params.id] } }).then();
-    let customerObject = {};
+    let customerObject = { };
+    debugger
+    logger.debug(`Results from Helpers.ts -> getCompanyDetails(params)`, { params, companyPayloadResponse });
+
     if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
       customerObject = {
-        ...om(companyPayloadResponse.items[0], {
+        ...om.merge(companyPayloadResponse.items[0], {
           'company_id': 'id',
           'registered_name': 'registeredName',
           'description': 'description',
@@ -3015,7 +3017,9 @@ export const getCompanyDetails = async (params) => {
           "60_day_invoice_total_cents": "balance60Days",
           "90_day_invoice_total_cents": "balance90Days",
           "120_day_invoice_total_cents": "balance120Days",
-          "credit_invoice_total_cents": "creditTotal"
+          "credit_invoice_total_cents": "creditTotal",
+          "delivery_address_id": "deliveryAddressId",
+          "delivery_address": "deliveryAddress"
         })
       };
     }

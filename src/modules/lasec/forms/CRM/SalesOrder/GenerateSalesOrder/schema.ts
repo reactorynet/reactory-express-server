@@ -146,6 +146,7 @@ const $paging: Reactory.IObjectSchema = {
 const $upload_documents: Reactory.ISchema = {
     type: "string",
     title: "Upload PO documents",
+    default: 'no',
     enum: ['yes', 'no'],
 }
 

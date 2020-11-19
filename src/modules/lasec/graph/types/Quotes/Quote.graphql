@@ -166,22 +166,68 @@ type Incoterm {
   title: String
 }
 
+"""
+Quote Type, root type for the lasec quote graph
+The resolvers for this graph node will fetch and shape the specfic elements
+for each quote from the LASEC API.
+
+Elements that have a slow rate of change will be cached and items
+with a high rate of change will be fetched in real time via the API.
+"""
 type Quote {
+  """
+  Mongo Id that is system generated
+  """
   id: String
+  """
+  The quote id that is used for the reference
+  """
+  quote_id: String
+  """
+  The quote id that is used for the reference - alias for quote_id 
+  """
   code: String
+  """
+  The status group for the quote (key), this will be 1-1, 1-4 etc.
+  """
   statusGroup: String
+  """
+  The visual display name for status group
+  """
   statusGroupName: String
+
   status: String
   statusName: String
   salesRep: User
   salesTeam: Team
   allowedStatus: [String]
+  
+  lasec_client: LasecCRMClient
+  lasec_customer: LasecCRMCustomer
+  
+  # These aliases need to be removed, use client, for user and customer for organisation
+  """
+  Represents the REACTORY user associated with the customer entity. 
+  This will be renamed to lasec_client in future to be in line with Lasec naming 
+  convetions
+  """
   customer: User
+
+  """
+  Represents the REACTORY organisation associated with the company entity. 
+  This will be renamed to lasec_customer in future to be in line with Lasec naming 
+  convetions
+  """
   company: Organization
+  # These aliases need to be removed
+
+  client: User
+
   totals: QuoteTotals
   totalVATExclusive: Float
   totalVAT: Float
   totalVATInclusive: Float
+
   GP: Float
   actualGP: Float
   created: Date
@@ -190,6 +236,7 @@ type Quote {
   note: String
   active_option: String
   item_paging: PagingResult
+  
   allowed_statuses: [String]
   options: [LasecQuoteOption]
   headers: [LasecQuoteHeader]
@@ -202,6 +249,10 @@ type Quote {
   productClass: String
   repCode: String
   quoteType: String
+  activeCurrency: LasecCurrency
+  transportMode: String
+
+  isInternational: Boolean
 }
 
 type LasecQuoteDashboardSummary {

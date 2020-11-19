@@ -38,6 +38,8 @@ import {
   LasecPatchQuoteOptionsParams,
   LasecDeleteQuoteOptionParams,
   LasecQuoteHeaderInput,
+  LasecCRMCustomer,
+  LasecClient,
 
 } from '../types/lasec';
 
@@ -153,13 +155,13 @@ interface LasecSendMailParams {
 
 const $PagedLineItemsResponse = async (quote: any, context: { item_paging?: Reactory.IPagingRequest }, info: any) => {
   const { code, active_option, lineItems = [], $lineItems_meta = null } = quote;
-  
+
   let $line_items: LasecQuoteItem[] = quote.lineItems || [];
   let item_paging: Reactory.IPagingRequest = {
     page: 1,
     pageSize: 25
   };
-  
+
   logger.debug(`🟠 $PagedLineItemsResponse() =>  Paged Line Items Request ${quote.code || quote.id}`, { context })
 
   if (quote && quote.item_paging_request) {
@@ -167,10 +169,10 @@ const $PagedLineItemsResponse = async (quote: any, context: { item_paging?: Reac
   }
 
 
-  
+
   if (!$lineItems_meta) {
     quote.lineItems = $line_items;
-                            
+
     const paged_results: { lineItems: LasecQuoteItem[], item_paging: Reactory.IPagingRequest } = await lasecGetQuoteLineItems(code, active_option, item_paging.page, item_paging.pageSize).then();
     quote.lineItems = paged_results.lineItems || [];
     quote.item_paging = paged_results.item_paging;
@@ -181,7 +183,7 @@ const $PagedLineItemsResponse = async (quote: any, context: { item_paging?: Reac
       when: new Date().valueOf(),
     };
   }
-  
+
   return quote;
 }
 
@@ -227,11 +229,11 @@ export default {
     id: ({ id, _id }) => (id || _id),
     product: async (line_item: LasecQuoteItem): Promise<LasecProduct> => {
       logger.debug('Resolving Product for Line Item', line_item)
-      
+
       if (!line_item.product && line_item.meta.source.product_id) {
-        line_item.product = await getProductById({ productId: line_item.meta.source.product_id }).then()        
+        line_item.product = await getProductById({ productId: line_item.meta.source.product_id }).then()
       }
-      
+
       return line_item.product;
     },
     header: (line_item: LasecQuoteItem) => {
@@ -258,6 +260,20 @@ export default {
     id: ({ _id }) => {
       return `${_id}`;
     },
+    quote_id: (quote: LasecQuote) => {
+      return quote.code || quote.meta.source.id
+    },
+    lasec_client: async (quote: LasecQuote): Promise<LasecClient> => {
+
+      return {
+        fullName: quote.meta.source.customer_full_name,
+        id: quote.meta.source.customer_id
+      }
+
+    },
+    lasec_customer: async (quote: LasecQuote, context: { item_paging?: Reactory.IPagingRequest }, info: any): Promise<LasecCRMCustomer> => {
+      return null;
+    },
     currencies: async () => {
       try {
         const cacheKey = 'lasec-crm.Quote.Currencies.All';
@@ -272,7 +288,7 @@ export default {
         return []
       }
     },
-    code: (quote) => {
+    code: (quote: LasecQuote) => {
       const { meta, code } = quote;
       if (code && typeof code === 'string') return code;
       if (meta && meta.reference) return meta.reference;
@@ -373,16 +389,14 @@ export default {
         headers.push(heading)
       })
 
-
-
       return headers;
     },
     lineItems: async (quote: any, context: { item_paging?: Reactory.IPagingRequest }, info: any) => {
-      if(!quote.lineItems || quote.lineItems.length === 0) quote = await $PagedLineItemsResponse(quote, context, info).then()
+      if (!quote.lineItems || quote.lineItems.length === 0) quote = await $PagedLineItemsResponse(quote, context, info).then()
       return quote.lineItems;
     },
-    item_paging: async (quote: LasecQuote, context:  { item_paging?: Reactory.IPagingRequest }, info: any ) => {
-      if (!quote.item_paging) quote = await $PagedLineItemsResponse(quote, context, info).then()        
+    item_paging: async (quote: LasecQuote, context: { item_paging?: Reactory.IPagingRequest }, info: any) => {
+      if (!quote.item_paging) quote = await $PagedLineItemsResponse(quote, context, info).then()
       return quote.item_paging;
     },
     statusName: (quote) => {
@@ -697,7 +711,7 @@ export default {
     },
     LasecGetQuoteById: async (obj, params: { quote_id: string, option_id?: string, item_paging: PagingRequest }, context: any) => {
 
-      const { quote_id, option_id, item_paging } = params;      
+      const { quote_id, option_id, item_paging } = params;
 
       if (isNil(quote_id) === true) throw new ApiError('This method requies a quote id to work');
       const result = await getLasecQuoteById(quote_id).then();
@@ -935,7 +949,7 @@ export default {
           }
         }
       }
-      
+
       return {
         quote,
         success: true,
@@ -1162,7 +1176,7 @@ export default {
       logger.debug(`LasecCreateNewQuoteForClient()`, newQuoteInput);
 
       try {
-        const response = await createNewQuote({clientId, repCode}).then();
+        const response = await createNewQuote({ clientId, repCode }).then();
 
         logger.debug(`[RESOLVER] NEW QUOTE RESPONSE ${JSON.stringify(response)}`);
 
@@ -1189,7 +1203,7 @@ export default {
     },
     LasecDeleteQuoteComment: async (obj, args) => {
       return deleteQuoteComment(args);
-    },    
+    },
     LasecDuplicateQuoteOption: async (obj: any, params: LasecDuplicateQuoteOptionArgs): Promise<LasecQuoteOption> => {
       let result: LasecQuoteOption = null;
       const { quote_id, option_id } = params
@@ -1232,7 +1246,7 @@ export default {
       try {
         let result: LasecQuoteItem = null;
 
-        if(params.quote_item_input === null || params.quote_item_input === undefined) throw new ApiError(`LasecQuoteItemUpdate (item) parameter cannot be null`)
+        if (params.quote_item_input === null || params.quote_item_input === undefined) throw new ApiError(`LasecQuoteItemUpdate (item) parameter cannot be null`)
 
         let fields = {
           quantity: params.quote_item_input.quantity,
@@ -1269,7 +1283,7 @@ export default {
           ...params.quote_item_input,
           quote_item_id: params.quote_item_input.quote_item_id,
         }
-        
+
         result = await lasecGetQuoteLineItem(params.quote_item_input.quote_item_id).then()
 
         return result;

@@ -9,12 +9,20 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
                 quote_id
                 sales_order_date
                 customer_name
+                client {
+                    id
+                    mobileNumber
+                }
                 company_name
                 company_id
                 rep_code
                 vat_number
                 quoted_amount
                 delivery_address
+                delivery_address_id
+                order_type
+                preferred_warehouse
+                shipping_date
             }
         }`,
         variables: {
@@ -25,13 +33,18 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
         resultMap: {
             'quote_id': 'header.quote_id',
             'sales_order_date': 'header.sales_order_date',
-            'customer_name': 'header.customer_name',
+            'customer_name': ['header.customer_name', 'delivery_detail.on_day_contact'],
             'company_name': 'header.company_name',
             'company_id': 'header.company_id',
             'rep_code': 'header.rep_code',
             'vat_number': 'customer.vat_number',
-            'quoted_amount': 'order_detail.quoted_amount',
-            'delivery_address': 'delivery_detail.delivery_address.fullAddress'
+            'quoted_amount': 'order_detail.quoted_amount',            
+            'delivery_address_id': 'delivery_detail.delivery_address.id',
+            'delivery_address': 'delivery_detail.delivery_address.fullAddress',            
+            'preferred_warehouse': 'order_detail.preffered_warehouse',
+            'order_type': 'order_detail.order_type',            
+            'client.mobileNumber': 'delivery_detail.contact_number',
+            'shipping_date': 'order_detail.shipping_date'
         },
         resultType: 'object',
     },
@@ -103,21 +116,10 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
                 'formData.delivery_detail.on_day_contact': 'sales_order_input.on_day_contact',
                 'formData.delivery_detail.method_of_contact': 'sales_order_input.method_of_contact',
                 'formData.delivery_detail.contact_number': 'sales_order_input.contact_number',
-                'formData.documents.uploadContext': 'sales_order_input.document_context'
+                'formData.documents.uploadContext': 'sales_order_input.document_context',
+                'formData.$upload_documents': 'sales_order_input.upload_documents',
             },
-            resultType: 'object',
-            /*
-            onSuccessMethod: 'notification',
-            notification: {
-                inAppNotification: true,
-                title: 'Sales order has been created',
-                props: {
-                    timeout: 2500,
-                    canDissmiss: true,
-                    type: 'success'
-                }
-            },
-            */
+            resultType: 'object',            
             objectMap: true,
             resultMap: {}
         },

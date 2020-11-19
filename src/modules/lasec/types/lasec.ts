@@ -260,6 +260,43 @@ export interface LasecQuote {
   [key: string]: any
 }
 
+export interface LasecCRMCustomer {
+  id: string
+  registeredName: string
+  tradingName: string
+  accountNumber: string
+  customerStatus: string
+  accountType: string
+  country: string
+  customerClass: string
+  description: string
+  ranking: string
+  availableBalance: number
+  salesTeam: string
+  physicalAddressId: number
+  physicalAddress: string
+  deliveryAddressId: number
+  deliveryAddress: string
+  billingAddressId: number
+  billingAddress: string
+  currencyCode: string
+  currencySymbol: string
+  currencyDisplay: string
+  registrationNumber: string
+  taxNumber: string
+  importVATNumber: string
+  creditLimit: number
+  currentBalance: number
+  currentInvoice: number
+  balance30Days: number
+  balance60Days: number
+  balance90Days: number
+  balance120Days: number
+  creditTotal: number
+  documents: any[]
+  [key: string]: any
+}
+
 export interface Lasec360Quote {
   id: string
   customer_id: string
@@ -488,6 +525,13 @@ export interface LasecNewQuoteResponse {
 }
 
 export interface LasecClient {
+  id: string
+  customer?: LasecCRMCustomer
+  clientStatus?: string
+  fullName?: string
+  firstName?: string
+  lastName?: string
+  salesTeam?: string
   [p: string]: any
 }
 
