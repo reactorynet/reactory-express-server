@@ -7,14 +7,21 @@ export default {
         stock {
           name
           warehouseId
-          qtyAvailable
+          stockCode
           qtyOnHand
+          qtyAllocated
+          qtyOnOrder
           qtyOnBO
+          qtyInTransit
+          qtyAvailable
         }
         totals {
-          qtyAvailable
           qtyOnHand
+          qtyAllocated
+          qtyOnOrder
           qtyOnBO
+          qtyInTransit
+          qtyAvailable
         }
       }
     }`,

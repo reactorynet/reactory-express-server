@@ -311,6 +311,11 @@ const editUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        right: '10px',
+        top: '-3px'
+      }
     },
     style: {
       marginTop: '16px',
@@ -322,7 +327,8 @@ const editUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
-    paddingBottom: '10px'
+    paddingBottom: '10px',
+    marginBottom: '10px'
   },
   'ui:grid-options': {
     containerStyles: {
@@ -335,7 +341,7 @@ const editUiSchema: any = {
     },
     {
       accountType: { md: 6, sm: 6 },
-      repCode: { md: 5, sm: 12 },
+      repCode: { md: 6, sm: 12 },
       jobType: { md: 6, sm: 12 },
       clientDepartment: { md: 6, sm: 12 },
       customerClass: { md: 6, sm: 12 },
@@ -960,7 +966,6 @@ const newUiSchema: any = {
       ranking: { sm: 12, md: 6 },
       faculty: { md: 6, sm: 12 },
       customerType: { sm: 12, md: 6 },
-      // lineManager: { xs: 12, sm: 12, md: 6, lg: 4 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],

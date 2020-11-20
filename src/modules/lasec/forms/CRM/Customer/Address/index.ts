@@ -174,18 +174,22 @@ const baseUiSchema: any =  {
 }
 
 const displayUiSchema: any = {
-  ...baseUiSchema
+  ...baseUiSchema,
+  'ui:graphql': newClientGraphQL,
+
 };
 
 export const DisplayUISchema = displayUiSchema;
 
 const editUiSchema: any = {
-  ...baseUiSchema
+  ...baseUiSchema,
+  'ui:graphql': newClientGraphQL,
 };
 
 
 const readOnlySchema = {
   ...baseUiSchema,
+  'ui:graphql': newClientGraphQL,
   'ui:options': {
     componentType: "div",
     containerStyles: {
@@ -321,6 +325,7 @@ const LasecCRMCustomerAddress: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: schema,
   uiSchema: DisplayUISchema,
+  graphql: newClientGraphQL,
   uiSchemas: [
     { id: 'view', key: 'view', icon: 'view', title: 'View', description: 'View Of Customer Address', uiSchema: DisplayUISchema },
     { id: 'edit', key: 'edit', icon: 'edit', title: 'Edit', description: 'Edit Of Customer Address', uiSchema: EditUISchema },

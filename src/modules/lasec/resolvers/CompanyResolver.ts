@@ -2051,7 +2051,8 @@ export default {
       if (args.id) {
         existingCustomer = await getClient({ id: args.id });
 
-        logger.debug(`EXISTING CLIENT:: ${JSON.stringify(existingCustomer)}`)
+        // logger.debug(`EXISTING CLIENT:: ${JSON.stringify(existingCustomer)}`)
+        logger.debug('EXISTING CLIENT');
 
         if (existingCustomer) {
           apiClient.id = existingCustomer.id || '';
@@ -2098,7 +2099,7 @@ export default {
           apiClient.address.billingAddress.id = existingCustomer.customer.deliveryAddressId || '';
           apiClient.address.deliveryAddress.fullAddress = existingCustomer.customer.deliveryAddress || '';
           apiClient.address.billingAddress.fullAddress = existingCustomer.customer.billingAddress || '';
-          logger.debug(`[LasecGetNewClient] TO RETURN :: ${JSON.stringify(apiClient)}`);
+
         }
       }
 
@@ -2132,11 +2133,25 @@ export default {
 
           logger.debug(`IDS DONT MATCH RETURNING API CLIENT ONLY:: ${JSON.stringify(apiClient)}`);
 
-          // RESET CACHED CLIENT
-          let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
-          await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
 
-          return apiClient;
+
+
+          // REMOVED THIS FOR THE TIME BEING - NEED TO FIND A BETTER SOLUTION
+          // RESET CACHED CLIENT
+          //let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
+
+          // return apiClient;
+
+          // TEMPORARY FIX
+          const mergedClient = {
+            ...apiClient,
+            ...cachedClient
+          };
+
+          await setCacheItem(hash, mergedClient, 60 * 60 * 12).then();
+
+          return mergedClient;
+
         }
 
 
@@ -2146,7 +2161,9 @@ export default {
       }
       else {
         let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
+
         await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+
         let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
 
         logger.debug(`RETURNING MERGED NEW CLIENT`);

@@ -26,6 +26,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       'formData.id': 'id',
     },
     resultMap: {
+      'id': 'id',
       'address.physicalAddress': 'physicalAddress',
       'address.deliveryAddress': 'deliveryAddress',
       'address.billingAddress': 'billingAddress',
