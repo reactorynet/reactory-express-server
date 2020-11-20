@@ -464,44 +464,55 @@ const getWarehouseStockLevels = async (params) => {
   }).then();
 
   let totalOnHand = 0;
+  let totalAllocated = 0; // not in use
+  let totalOnOrder = 0; // no in use
   let totalOnBO = 0;
+  let totalInTransit = 0;
   let totalAvailable = 0;
 
   logger.debug(`Loaded Warehouse Stock For Product ${params.product_id}`, warehouseStock);
 
   const stock = warehouseStock.items.map((warehouse) => {
 
-    totalAvailable += warehouse.QtyAvailable;
     totalOnHand += warehouse.QtyOnHand;
+    totalAllocated += warehouse.QtyAllocated;
+    totalOnOrder += warehouse.QtyOnOrder;
     totalOnBO += warehouse.QtyOnBackOrder;
-    //const warehouseDetails = await lasecApi.Products.warehouse({ filter: { ids: [warehouse.warehouse_id], pagination: { enabled: false } } }).then();
-    //const detail = warehouseDetails.items[0];
+    totalInTransit += warehouse.QtyInTransit;
+    totalAvailable += warehouse.QtyAvailable;
 
     return {
       name: WarehouseIds[warehouse.warehouse_id].title,
       warehouseId: warehouse.warehouse_id,
-      qtyAvailable: warehouse.QtyAvailable,
       qtyOnHand: warehouse.QtyOnHand,
+      qtyAllocated: warehouse.QtyAllocated,
+      qtyOnOrder: warehouse.QtyOnOrder,
       qtyOnBO: warehouse.QtyOnBackOrder,
+      qtyInTransit: warehouse.QtyInTransit,
+      qtyAvailable: warehouse.QtyAvailable,
     };
   });
 
-
-
   stock.push({
     name: 'Totals',
-    qtyAvailable: totalAvailable,
     qtyOnHand: totalOnHand,
+    qtyAllocated: totalAllocated,
+    qtyOnOrder: totalOnOrder,
     qtyOnBO: totalOnBO,
+    qtyInTransit: totalInTransit,
+    qtyAvailable: totalAvailable,
   });
 
   setCacheItem(cachekey, {
     id: product_id,
     stock,
     totals: {
-      qtyAvailable: totalAvailable,
       qtyOnHand: totalOnHand,
+      qtyAllocated: totalAllocated,
+      qtyOnOrder: totalOnOrder,
       qtyOnBO: totalOnBO,
+      qtyInTransit: totalInTransit,
+      qtyAvailable: totalAvailable,
     },
   }, 60 * 5);
 
@@ -509,9 +520,12 @@ const getWarehouseStockLevels = async (params) => {
     id: product_id,
     stock,
     totals: {
-      qtyAvailable: totalAvailable,
       qtyOnHand: totalOnHand,
+      qtyAllocated: totalAllocated,
+      qtyOnOrder: totalOnOrder,
       qtyOnBO: totalOnBO,
+      qtyInTransit: totalInTransit,
+      qtyAvailable: totalAvailable,
     },
   };
 }
