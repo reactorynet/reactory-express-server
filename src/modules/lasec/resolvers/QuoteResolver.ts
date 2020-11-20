@@ -327,6 +327,7 @@ export default {
           else {
             _customer = User.parse(customer_full_name);
             _customer = new User(_customer);
+            _customer._id = new ObjectId();
             _customer.setPassword(uuid());
 
             _customer.meta = {};
@@ -468,8 +469,9 @@ export default {
     },
     company: async (quote) => {
       const { meta } = quote;
+      debugger
 
-      if (isNil(quote.company) === false) {
+      if (isNil(quote.company) === false && quote.company._bsontype === "ObjectID") {
         if (ObjectId.isValid(quote.company) === true) {
           const loadedOrganization = await Organization.findById(quote.company).then();
           if (loadedOrganization === null || loadedOrganization === undefined) {
@@ -480,14 +482,13 @@ export default {
         }
       }
 
-
-      if (quote.meta && quote.meta.source) {
-        logger.debug(`No organization, checking meta data`);
+      if (quote.meta && quote.meta.source) {        
         const { company_id, company_trading_name } = meta.source;
         if (company_trading_name && company_id) {
           //check if a customer with this reference exists?
           logger.debug(`No organization, checking foreign reference ${company_id} ${global.partner.key}`);
           let _company = await Organization.findByForeignId(company_id, global.partner.key).then();
+          
           if (_company !== null) {
             if (typeof quote.save === "function") {
               quote.company = _company._id;
@@ -497,8 +498,9 @@ export default {
             return _company;
           }
           else {
-            logger.debug(`No organization, checking meta data`);
+            logger.debug(`No organization found in meta reference, adding new organization ${company_id} ${company_trading_name}`);
             _company = new Organization({
+              _id: new ObjectId(),
               meta: {
                 owner: global.partner.key,
                 reference: company_id,
@@ -516,8 +518,6 @@ export default {
               public: false,
               updatedBy: global.user._id
             });
-
-            await _company.save();
 
             if (typeof quote.save === "function") {
               quote.company = _company._id;
@@ -540,7 +540,8 @@ export default {
               },
             }, global.partner);
 
-
+            _company.save();
+                       
             return _company;
           }
         }

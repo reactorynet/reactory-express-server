@@ -42,7 +42,7 @@ const SalesOrderResolver = {
         registeredName: customerObject.registeredName || 'Place Holder Name',
         customerStatus: `${customerObject.customerStatus}`.toUpperCase() === 'Y' ? 'on-hold' : 'not-on-hold'
       }
-    }
+    }    
   },
   Query: {
     LasecGetPagedCRMSalesOrders: async (obj, args) => {

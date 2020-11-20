@@ -35,16 +35,17 @@ class LasecQuoteService implements IQuoteService {
         this.registry = props.$services;
     }
 
-    async createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<SimpleResponse> {
+    async createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<any> {
         
         try {
             const result = await LAPI.SalesOrders.createSalesOrder(sales_order_input).then();
 
-            logger.debug('Creat new sales order api resilt', result);
+            logger.debug('Creat new sales order api result', result);
 
             return {
-                message: `Created new sales order`,
-                success: true
+                message: `Sales order ${result.id} has been created. `,
+                success: true,
+                iso_id: result.id
             };
 
         } catch (createSalesOrderError) {
