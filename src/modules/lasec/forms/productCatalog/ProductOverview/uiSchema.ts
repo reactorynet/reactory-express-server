@@ -165,6 +165,14 @@ const tableUiSchema: any = {
                 componentProps: {
                   'rowData': 'formData',
                 },
+                childProps: {
+                  style: {
+                    maxWidth: '900px',
+                    marginTop: '0px',
+                    marginLeft: 'auto',
+                    marginRight: 'auto'
+                  }
+                },
                 slideDirection: 'left',
                 buttonVariant: 'button',
                 buttonProps: {

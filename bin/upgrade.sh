@@ -11,4 +11,4 @@
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
 echo Upgrading Reactory Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-development}
-git pull origin develop | pm2 restart 0
+git pull origin develop | npm i
