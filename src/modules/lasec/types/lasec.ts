@@ -260,6 +260,43 @@ export interface LasecQuote {
   [key: string]: any
 }
 
+export interface LasecCRMCustomer {
+  id: string
+  registeredName: string
+  tradingName: string
+  accountNumber: string
+  customerStatus: string
+  accountType: string
+  country: string
+  customerClass: string
+  description: string
+  ranking: string
+  availableBalance: number
+  salesTeam: string
+  physicalAddressId: number
+  physicalAddress: string
+  deliveryAddressId: number
+  deliveryAddress: string
+  billingAddressId: number
+  billingAddress: string
+  currencyCode: string
+  currencySymbol: string
+  currencyDisplay: string
+  registrationNumber: string
+  taxNumber: string
+  importVATNumber: string
+  creditLimit: number
+  currentBalance: number
+  currentInvoice: number
+  balance30Days: number
+  balance60Days: number
+  balance90Days: number
+  balance120Days: number
+  creditTotal: number
+  documents: any[]
+  [key: string]: any
+}
+
 export interface Lasec360Quote {
   id: string
   customer_id: string
@@ -488,6 +525,13 @@ export interface LasecNewQuoteResponse {
 }
 
 export interface LasecClient {
+  id: string
+  customer?: LasecCRMCustomer
+  clientStatus?: string
+  fullName?: string
+  firstName?: string
+  lastName?: string
+  salesTeam?: string
   [p: string]: any
 }
 
@@ -505,6 +549,34 @@ export interface LasecPatchQuoteOptionsParams {
 export interface LasecDeleteQuoteOptionParams {
   quote_id: string,
   option_id: string
+}
+
+export interface LasecCreateSalesOrderInput {
+  id: string
+  quote_id: string
+  sales_order_date: string
+  purchase_order_number: string
+  confirm_number: string
+  customer_name: string
+  company_name: string
+  rep_code: string
+  vat_number: string
+  quoted_amount: number
+  amounts_confirmed: Boolean
+  order_type: string
+  preffered_warehouse: string
+  shipping_date: Date
+  part_supply: Boolean
+  delivery_address: string
+  delivery_address_tag: string,
+  delivery_address_id: string,
+  special_instructions: string
+  special_instructions_warehouse: string
+  on_day_contact: string
+  method_of_contact: string
+  contact_number: string
+  document_context: string,
+  documents: any[]
 }
 
 export interface IQuoteService extends Reactory.Service.IReactoryService {
@@ -547,6 +619,8 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
   getQuoteHeaders(quote_id: string): Promise<any>;
 
   getQuoteTransportModes(): Promise<any>;
+
+  createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<SimpleResponse>;
 }
 
 export interface ILasecClientService extends Reactory.Service.IReactoryService {

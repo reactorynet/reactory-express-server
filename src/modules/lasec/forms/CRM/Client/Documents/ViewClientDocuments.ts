@@ -37,7 +37,8 @@ export const ViewUiSchema: any = {
         }
       }`,
       variables: {
-        'formData.$uploadContexts': 'uploadContexts'
+        'formData.paging': 'paging',
+        'formData.$uploadContext': 'uploadContexts'
       },
       formData: {
         $uploadContext: [

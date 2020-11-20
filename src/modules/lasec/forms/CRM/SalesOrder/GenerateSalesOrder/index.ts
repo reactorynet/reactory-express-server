@@ -7,11 +7,15 @@ import graphql from './graphql';
 
 
 const default_value = (quote_id: string): LasecGenerateSalesOrderFormData => ({
+    $paging: {
+        page: 1,
+        pageSize: 10
+    },
     header: {
         company_name: '',
         customer_name: '',
         quote_id: quote_id || null,
-        sales_order_date: new Date()
+        sales_order_date: new Date().toISOString(),
     },
     customer_detail: {
         purchase_order_number: '',
@@ -20,16 +24,20 @@ const default_value = (quote_id: string): LasecGenerateSalesOrderFormData => ({
     },
     delivery_detail: {
         contact_number: '',
-        delivery_address: '',
-        method_of_contact: 'cellphone',
+        delivery_address: {
+            id: '',
+            fullAddress: ''
+        },
+        method_of_contact: 'call',
         on_day_contact: '',
         special_instruction: '',
         special_instructions_warehouse: ''
     },
+    $upload_documents: 'no',
     documents: {
         id: '',
         upload: '',
-        uploadContext: 'lasec-crm.GenerateSalesOrder-${header.quote_id}',
+        uploadContext: null,
         uploadedDocuments: [],
         view: 'lasec-crm.GenerateSalesOrder'
     },
@@ -53,13 +61,14 @@ const GenerateSalesOrderForm: Reactory.IReactoryForm = {
     title: 'Generate Sales Order Form',
     uiFramework: 'material',
     uiSupport: ['material'],
+    helpTopics: ['lasec-sales-order-generation'],    
     backButton: false,
-    defaultFormValue: default_value('new'),
     schema,
     uiSchema,
     graphql,
     widgetMap: [
-        { componentFqn: 'lasec-crm.SalesOrderHeaderWidget@1.0.0', widget: 'SalesOrderHeaderWidget' }
+        { componentFqn: 'lasec-crm.SalesOrderHeaderWidget@1.0.0', widget: 'SalesOrderHeaderWidget' },
+        { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     ]
 }
 

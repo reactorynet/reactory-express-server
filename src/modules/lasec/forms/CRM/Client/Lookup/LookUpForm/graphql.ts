@@ -65,6 +65,8 @@ export const clientLookupGraphQL: Reactory.IFormGraphDefinition = {
             id
             clientStatus
             fullName
+            firstName
+            lastName
             emailAddress
             country
             customer {

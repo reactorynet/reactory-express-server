@@ -64,8 +64,8 @@ export const OBJECT_MAPS = {
     "note": "note",
   },
   customer: {
-    //"customer_id": "customer.meta.reference",
-    //"customer_full_name": "customer.fullName",
+    "customer_id": ["customer.meta.reference", "id"],
+    "customer_full_name": "customer.fullName"
   },
   staff: {
     "primary_api_staff_user_id": ["salesRep.meta.reference"],
@@ -73,8 +73,8 @@ export const OBJECT_MAPS = {
     "staff_user_full_name": "salesRep.fullName"
   },
   company: {
-    //"company_id": "company.meta.reference",
-    //"company_trading_name": ["company.tradingName", "company.name"]
+    "company_id": "company.meta.reference",
+    "company_trading_name": ["company.tradingName", "company.name"]
   },
   status: {
     "status_id": "status",

@@ -205,9 +205,9 @@ const uiSchema: any = {
           field: 'quoteId',
           component: 'core.SlideOutLauncher@1.0.0',
           props: {
-            componentFqn: 'lasec-crm.QuoteDetail@1.0.0',
+            componentFqn: 'lasec-crm.QuoteForm@1.0.0',
             componentProps: {
-              'rowData.quoteId': ['data.quote_id', 'data.code', 'query.quote_id']
+              'rowData.quoteId': ['quote_id']
             },
             slideDirection: 'down',
             buttonTitle: '${rowData.quoteId}',

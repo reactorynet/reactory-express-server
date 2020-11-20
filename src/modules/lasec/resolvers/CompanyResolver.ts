@@ -20,7 +20,7 @@ import { urlencoded } from 'body-parser';
 import LasecAPI from '@reactory/server-modules/lasec/api';
 import CRMClientComment from '@reactory/server-modules/lasec/models/Comment';
 import { User } from '@reactory/server-core/models';
-import { LasecApiResponse, SimpleResponse } from '../types/lasec';
+import { LasecApiResponse, LasecCRMCustomer, SimpleResponse } from '../types/lasec';
 
 import { getLoggedIn360User } from './Helpers';
 
@@ -165,8 +165,7 @@ const getClients = async (params) => {
     let _client = om(client, {
       'id': 'id',
       'first_name': [{
-        "key":
-          'fullName',
+        "key": 'fullName',
         "transform": (sourceValue, sourceObject, destinationObject, destinationKey) => `${sourceValue} ${sourceObject.surname}`,
       }, "firstName"],
       'surname': 'lastName',
@@ -909,6 +908,10 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
         return ctx;
       })
     };
+  } else {
+    documentFilter.uploadContext = {
+      $in: [`lasec-crm::company::${params.id}`]        
+    };
   }
 
   // logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
@@ -919,18 +922,15 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
     _docs.push(rfile);
   });
 
-  logger.debug(`REACTORYFiles[${JSON.stringify(_docs)}]`);
+  logger.debug(`Files found (${_docs.length})`);
 
   if (params.paging) {
 
     let skipCount: number = (params.paging.page - 1) * params.paging.pageSize;
 
-    logger.debug(`TO FILTER :: ${params.paging.page}  ${params.paging.pageSize}   ${skipCount}`);
-    const customerToReturn = lodash(_docs).drop(skipCount).take(params.paging.pageSize);
-    logger.debug(`TO RETURN :: ${JSON.stringify(customerToReturn)}`);
-
     return {
       documents: lodash(_docs).drop(skipCount).take(params.paging.pageSize),
+      uploadContexts: params.uploadContexts || [],
       paging: {
         total: _docs.length,
         page: params.paging.page,
@@ -1790,7 +1790,7 @@ export default {
     owner: async ({ owner }) => {
       if (ObjectId.isValid(owner)) {
         const _owner = await User.findById(owner).then();
-        logger.debug(`OWNER:: ${owner} ${JSON.stringify(_owner)}`)
+        logger.debug(`OWNER:: ${owner} ${_owner ? _owner.email : 'no-owner'}`);
         return _owner;
       }
     }
@@ -1842,8 +1842,22 @@ export default {
     documents: async (parent, object) => {
       return getCustomerDocuments({ id: parent.id });
     },
-    registeredName: async (parent, obj) => {
+    registeredName: (parent, obj) => {
       return parent.registered_name || parent.registeredName
+    },
+    deliveryAddress: (parent: LasecCRMCustomer) => {
+      if (!parent.deliveryAddress) {
+        parent.deliveryAddress = 'Not Available'
+      }
+
+      return parent.deliveryAddress;
+    },
+    deliveryAddressId: (parent: LasecCRMCustomer) => {
+      if (!parent.deliveryAddressId) {
+        parent.deliveryAddressId = -1
+      }
+
+      return parent.deliveryAddressId
     }
   },
   Query: {

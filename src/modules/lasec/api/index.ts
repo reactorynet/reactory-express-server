@@ -12,7 +12,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 // import { clearAuthentication } from '../actions/Auth';
 import SECONDARY_API_URLS from './SecondaryApiUrls';
 import logger from '../../../logging';
-import ApiError, { RecordNotFoundError } from '../../../exceptions';
+import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
 import AuthenticationSchema from '../schema/Authentication';
 import { jzon } from '../../../utils/validators';
 
@@ -21,7 +21,7 @@ import LasecQueries from '../database/queries';
 import { execql, execml } from 'graph/client';
 
 import { LASEC_API_ERROR_FORMAT } from './constants';
-import { LasecQuoteOption } from '../types/lasec';
+import { LasecCreateSalesOrderInput, LasecQuoteOption } from '../types/lasec';
 
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
@@ -51,6 +51,16 @@ export class TokenExpiredException extends ApiError {
       redirect: '/360',
       componentResolver: 'lasec-crm.Login360'
     });
+    this.extensions = this.meta;
+  }
+}
+
+export class LasecApiException extends ApiError {
+  constructor(message: string) {
+    super(message, {
+      __typename: 'lasec.api.RemoteError',
+    })
+
     this.extensions = this.meta;
   }
 }
@@ -944,7 +954,128 @@ const Api = {
     deleteDocument: async (params) => {
       const deleteDocumentResult = await DELETE(SECONDARY_API_URLS.file_upload.url + params.id, {}).then();
       return deleteDocumentResult;
-    }
+    },
+    createSalesOrder: async (sales_order_input: LasecCreateSalesOrderInput) => {
+
+      const data = {
+        warehouse_id: sales_order_input.preffered_warehouse,
+        has_confirm_payment: true,
+        type_of_order: sales_order_input.order_type,
+        vat: sales_order_input.vat_number || '-',
+        purchase_order_number: sales_order_input.purchase_order_number,
+        purchase_order_amount: sales_order_input.quoted_amount,
+        shipping_date: moment(sales_order_input.shipping_date).toISOString(),
+        do_not_part_supply: sales_order_input.part_supply === false,
+        CUSTOMER_DELIVERY_ADDRESS_tag_value_id: sales_order_input.delivery_address_id,
+        CUSTOMER_DELIVERY_ADDRESS_tag_value: sales_order_input.delivery_address,
+        confirm_purchase_order_number: sales_order_input.confirm_number,
+        has_confirmed_purchase_order_amount: sales_order_input.amounts_confirmed === true,
+        delivery_address_id: sales_order_input.delivery_address_id,
+        quote_id: sales_order_input.quote_id,        
+      };
+
+
+      
+
+      /*
+      
+      {
+        "warehouse_id": "10",
+        "has_confirm_payment": true,
+        "type_of_order": "normal",
+        "vat": "-",
+        "purchase_order_number": "33224455",
+        "purchase_order_amount": 438624,
+        "shipping_date": "2020-11-30T12:53:17.000Z",
+        "do_not_part_supply": false,
+        "CUSTOMER_DELIVERY_ADDRESS_tag_value_id": "19847",
+        "CUSTOMER_DELIVERY_ADDRESS_tag_value": "Medcare Products, Unit 13, South Cape Industrial Park, Leo Rd, Diep River, Cape Town, 7800, South Africa",
+        "confirm_purchase_order_number": "33224455",
+        "has_confirmed_purchase_order_amount": true,
+        "delivery_address_id": "19847",
+        "quote_id": "2010-107367000"
+      }
+      
+      */
+      
+      /**
+      
+      {
+  
+      "warehouse_id": "10",
+      "has_confirm_payment": true,
+      "type_of_order": "normal",
+      "shipping_date": "2020-11-27T16:40:00.000Z",
+      "do_not_part_supply": true,
+      "CUSTOMER_DELIVERY_ADDRESS_tag_value_id": "14305",
+      "CUSTOMER_DELIVERY_ADDRESS_tag_value": "18 High St, Worcester, 6849, South Africa",
+      "confirm_purchase_order_number": "12345",
+      "delivery_address_id": "14305",
+      "quote_id": "2011-106326070"
+  
+      }
+      
+      
+      
+      
+       */
+
+
+      try {
+        logger.debug(`Creating new Sales Order input =>`, { data });
+
+        const create_api_result = await POST(SECONDARY_API_URLS.sales_order.url, data).then();
+        logger.debug(`Result from new Sales Order =>`, { create_api_result });
+
+        if (create_api_result.status === 'success') {
+
+          const update_data = {
+            item_id: [create_api_result.payload.id],
+            values: {
+              communication_method: sales_order_input.method_of_contact,
+              on_day_contact_person: sales_order_input.on_day_contact,
+              on_day_contact_person_contact_number: sales_order_input.contact_number,
+              status: 'writing_to_syspro'
+            }
+          };
+
+          const put_result = await PUT(`api/sales_order/${create_api_result.payload.id}/`, update_data).then();
+          if (put_result.status === 'success') {
+            return put_result.payload
+          } else {
+            throw new ApiError(`Could not complete sales order: ${put_result.message}`, put_result);
+          }
+        } else {
+          throw new ApiError(`Created Sales Order ${create_api_result.payload.id} but could not update the data.`);
+        }
+
+        return create_api_result;
+
+      } catch (createSalesOrder) {
+        logger.error('Could not create sales order', createSalesOrder);
+        if (createSalesOrder instanceof ApiError) throw createSalesOrder;
+        else  throw new ApiError('Could not create a new sales order - remote API error', { createSalesOrder });
+      }
+
+    },
+    checkPONumberExists: async (company_id: string, purchase_order_number: string): Promise<{ exists: boolean, sales_order_id?: string }> => {
+      try {
+        logger.debug(`Checking if Purchase Order number exists: company id: ${company_id}, ${purchase_order_number}`);
+        const { payload = null, status = 'failed' }: { payload: { po_number_exists: boolean, sales_order_id?: string }, status: string } = await POST(SECONDARY_API_URLS.check_po_number_exists.url, { company_id, purchase_order_number }).then();
+        if (status === 'success' && payload) {
+          logger.debug('Results from checking if purchase order exists', { status, payload });
+          return {
+            exists: payload.po_number_exists === true,
+            sales_order_id: payload.sales_order_id || 'not-set'
+          };
+        }
+        throw new LasecApiException('Did not get a successfull response from Lasec API');
+      } catch (poNumberError) {
+        logger.error(`lasec Api.SalesOrders.checkPONumberExists: ${poNumberError.message}`, poNumberError);
+        if (poNumberError instanceof LasecApiException) throw poNumberError;
+        else throw new ApiError(`Error while checking if the purchase order number exists`, { __type: 'lasec.api.UnhandledError', error: poNumberError });
+      }
+    },
   },
   Quotes: {
     list: async (params = defaultParams) => {
@@ -964,7 +1095,7 @@ const Api = {
         const result = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: [id] } } }).then()
 
         const { status, payload } = result;
-        if (status === 'success' && payload.items && payload.items.length === 1 ) {
+        if (status === 'success' && payload.items && payload.items.length === 1) {
           return payload.items[0]
         } else {
           logger.warn(`Could not get the line item with the id ${id}`);
@@ -1034,10 +1165,10 @@ const Api = {
             return { line_items: lineItemsExpanded.payload, item_paging };
           }
         }
-        return {  line_items: [], item_paging: null };
+        return { line_items: [], item_paging: null };
       }
 
-      return {  line_items: [], item_paging: null };
+      return { line_items: [], item_paging: null };
     },
     get: async (params = defaultParams) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } }).then();
@@ -1099,7 +1230,7 @@ const Api = {
         } = apiResponse;
 
         if (status === 'success' && payload.items.length === 1) {
-          logger.debug(`Found Quote Option on LasecAPI`, { item: payload.items[0]})
+          logger.debug(`Found Quote Option on LasecAPI`, { item: payload.items[0] })
           return payload.items[0];
         }
 
