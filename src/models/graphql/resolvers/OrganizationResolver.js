@@ -59,7 +59,7 @@ const organizationResolver = {
     },
     CoreUsersForOrganization(obj, { id, searchString, excludeSelf = false, showDeleted = false, paging = null }, context, info) {
       logger.debug(`CoreUsersForOrganization`, {id, searchString, excludeSelf, showDeleted, paging});
-      return UserService.listAllForOrganization(id, searchString, excludeSelf, showDeleted, paging).then();
+      return UserService.listAllForOrganization(id, searchString, excludeSelf, showDeleted, paging || { page: 1, pageSize: 25 }).then();
     },
     organizationsForUser: async (obj, { id }) => {
       const user = await User.findById(id);

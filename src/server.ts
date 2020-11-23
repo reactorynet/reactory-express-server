@@ -13,10 +13,10 @@ import passport from 'passport';
 import { ApolloServer, gql, ApolloServerExpressConfig } from 'apollo-server-express';
 import { Reactory } from '@reactory/server-core/types/reactory';
 // import { makeExecutableSchema } from 'graphql-tools';
-import mongoose from 'mongoose';
+
 import flash from 'connect-flash';
 // import { graphqlUploadExpress } from 'graphql-upload';
-
+import mongooseConnection from './mongoose';
 import corsOptions from './config/cors';
 import reactoryClientAuthenticationMiddleware from './middleware/ReactoryClient';
 import userAccountRouter from './useraccount';
@@ -34,29 +34,16 @@ import amq from './amq';
 // import bots from './bot/server';
 import startup from './utils/startup';
 import logger from './logging';
-const ca = sslrootcas.create();
-https.globalAgent.options.ca = ca;
-
-const packageJson = require('../package.json');
-
-dotenv.config();
-
-process.on('unhandledRejection', (error) => {
-  // Will print "unhandledRejection err is not defined"
-  logger.error('unhandledRejection', error);
-  throw error;
-});
+import { split } from 'lodash';
 
 
-process.on('SIGINT', () => {
-  logger.info('Shutting down server');
-  process.exit(0);
-});
 
 const {
   APP_DATA_ROOT,
   APP_SYSTEM_FONTS,
   MONGOOSE,
+  MONGO_USER,
+  MONGO_PASSWORD,
   API_PORT,
   API_URI_ROOT,
   CDN_ROOT,
@@ -71,9 +58,46 @@ const {
   OAUTH_ID_METADATA,
   OAUTH_AUTHORIZE_ENDPOINT,
   OAUTH_TOKEN_ENDPOINT,
-  SECRET_SAUCE
+  SECRET_SAUCE,
+  SERVER_ID
 } = process.env;
 
+mongooseConnection.then((connectionResult) => { 
+  logger.debug(`✅Connection to mongoose complete`);
+}).catch((error) => {
+  
+  logger.error(`
+  ################################################
+  💥Could not connect to mongoose - shutting down
+  server process. Check if the configuration 
+  settings below are correct and whether your user 
+  mongo db account exists on the target database
+  ################################################
+  db: ${MONGOOSE}
+  user: ${MONGO_USER || '!!NOT-SET!!'}
+  pass: ${MONGO_PASSWORD ? '****' : '!!NOT-SET!!'}
+  ################################################
+  `);
+  process.exit(0);
+})
+
+const ca = sslrootcas.create();
+https.globalAgent.options.ca = ca;
+
+const packageJson = require('../package.json');
+
+dotenv.config();
+
+process.on('unhandledRejection', (error) => {
+  // Will print "unhandledRejection err is not defined"
+  logger.error('unhandledRejection', error);
+  throw error;
+});
+
+process.on('SIGINT', () => {
+  logger.info('Shutting down server');
+  process.exit(0);
+});
 
 let asciilogo = `Reactory Server version : ${packageJson.version} - start ${moment().format('YYYY-MM-dd HH:mm:ss')}`;
 
@@ -87,6 +111,8 @@ for(let si:number = 0;si < SECRET_SAUCE.length - 2; si += 1){ asterisks = `${ast
 
 const ENV_STRING_DEBUG = `
 Environment Settings: 
+  NODE_ENV: ${NODE_ENV}
+  SERVER_ID: ${SERVER_ID || 'reactory.local'}
   APP_DATA_ROOT: ${APP_DATA_ROOT}
   APP_SYSTEM_FONTS: ${APP_SYSTEM_FONTS}
   API_PORT: ${API_PORT}
@@ -118,15 +144,13 @@ const graphiql = '/q';
 const resourcesPath = '/cdn';
 const publicFolder = path.join(__dirname, 'public');
 
-mongoose.connect(MONGOOSE, { useNewUrlParser: true });
+
 
 let apolloServer: ApolloServer = null;
 let graphcompiled: boolean = false;
 let graphError: String = '';
 
 const reactoryExpress: Application = express();
-
-
 
 reactoryExpress.use('*', cors(corsOptions));
 reactoryExpress.use(reactoryClientAuthenticationMiddleware);
@@ -164,20 +188,22 @@ reactoryExpress.set('trust proxy', NODE_ENV == "development" ? 0 : 1);
 
 //TODO: Werner Weber - investigate session and session management for auth.
 const sessionOptions: session.SessionOptions = {
-  name: "reactory.sid",
+  //name: "connect.sid",
   secret: SECRET_SAUCE,
   resave: false,
-  proxy: NODE_ENV === 'development' ? false : true,
+  saveUninitialized: false,
+  unset: 'destroy',
+  //proxy: NODE_ENV === 'development' ? false : true,
   cookie: {
     domain: DOMAIN_NAME,
     maxAge: 60 * 5 * 1000,
-    httpOnly: NODE_ENV === 'development' ? true : false,
-    sameSite: 'lax',
-    secure: NODE_ENV === 'development' ? false : true,
-  },
-  saveUninitialized: false,
-  unset: 'destroy',
+    //httpOnly: NODE_ENV === 'development' ? true : false,
+    //sameSite: 'lax',
+    //secure: NODE_ENV === 'development' ? false : true,
+  },  
 };
+
+logger.debug(`Session Configuration`, sessionOptions);
 
 const oldOptions = {
   secret: SECRET_SAUCE,
@@ -187,9 +213,6 @@ const oldOptions = {
 }
 
 reactoryExpress.use(session(oldOptions));
-
-
-
 reactoryExpress.use(bodyParser.urlencoded({ extended: false }));
 reactoryExpress.use(bodyParser.json({ limit: '10mb' }));
 

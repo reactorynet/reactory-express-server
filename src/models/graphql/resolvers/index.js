@@ -74,6 +74,9 @@ const resolvers = {
     },
   },
   ApiStatus: {
+    id: (status) => {
+      return status.id || 'anon'
+    },
     menus: (status) => {
       logger.debug('Getting menus');
       return Menu.find({ client: ObjectId(status.menus) });
@@ -81,6 +84,7 @@ const resolvers = {
     server: (status) => {
 
       return {
+        id: process.env.SERVER_ID || 'reactory.local',
         version:  packageJson.version,
         started:  global.REACTORY_SERVER_STARTUP,
         license: packageJson.license || 'NONE',

@@ -98,6 +98,7 @@ type NavigationComponentDefinition {
 }
 
 type ReactoryServer {
+  id: String
   version: String
   started: Date
   license: String

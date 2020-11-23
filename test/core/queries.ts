@@ -1,5 +1,6 @@
 export const apiStatusQuery = `
 query status {
+    id
     apiStatus {
     applicationName
     applicationAvatar

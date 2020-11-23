@@ -1,5 +1,6 @@
 	query ReactoryApiStatus {
 		apiStatus {
+			id			
 			applicationName
 			applicationAvatar
 			when
