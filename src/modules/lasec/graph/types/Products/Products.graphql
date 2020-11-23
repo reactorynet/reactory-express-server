@@ -133,15 +133,17 @@ type WarehouseStockDetails {
 
 type WarehouseStock {
   name: String
-  warehouseId: String
   stockCode: String
+  warehouse: String
+  warehouseId: String
+
   qtyOnHand: Float
   qtyAllocated: Float
   qtyOnOrder: Float
   qtyOnBO: Float
   qtyInTransit: Float
   qtyAvailable: Float
-  # qtyOnISO: Float
+  qtyOnSalesOrder: Float
 }
 
 type StockTotals {
@@ -151,6 +153,7 @@ type StockTotals {
   qtyOnBO: Float
   qtyInTransit: Float
   qtyAvailable: Float
+  qtyOnSalesOrder: Float
 }
 
 type PagedProductResult {

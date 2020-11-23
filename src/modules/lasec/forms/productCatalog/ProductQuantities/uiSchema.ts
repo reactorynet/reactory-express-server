@@ -45,6 +45,8 @@ const uiSchema: any = {
         { title: 'Quantity On Back Order', field: 'qtyOnBO' },
         { title: 'Quantity In Transit', field: 'qtyInTransit' },
         { title: 'Quantity Available', field: 'qtyAvailable' },
+        { title: 'Quantity On ISO', field: 'qtyOnSalesOrder' },
+        // { title: 'Quantity On PO', field: 'qtyOnPurchaseOrder' },
         // { title: 'Quantity On Hand', field: 'qtyOnHand' },
         // { title: 'Quantity On BO', field: 'qtyOnBO' },
       ],
