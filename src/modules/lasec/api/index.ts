@@ -1047,10 +1047,7 @@ const Api = {
           }
         } else {
           throw new ApiError(`Created Sales Order ${create_api_result.payload.id} but could not update the data.`);
-        }
-
-        return create_api_result;
-
+        }        
       } catch (createSalesOrder) {
         logger.error('Could not create sales order', createSalesOrder);
         if (createSalesOrder instanceof ApiError) throw createSalesOrder;

@@ -86,6 +86,12 @@ type LasecSalesOrderExistsResult {
   sales_order_id: String 
 }
 
+type LasecSalesOrderCreateResponse {
+  success: Boolean
+  message: String
+  salesOrder: SalesOrder
+}
+
 
 extend type Query {
   LasecGetPreparedSalesOrder(quote_id: String!): LasecPreparedSalesOrder
@@ -93,5 +99,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  LasecCreateSalesOrder(sales_order_input: LasecCreateSalesOrderInput): SimpleResponse
+  LasecCreateSalesOrder(sales_order_input: LasecCreateSalesOrderInput): LasecSalesOrderCreateResponse
 }

@@ -1870,9 +1870,20 @@ export const getPagedSalesOrders = async (params: any) => {
     pagingResult.pageSize = salesOrdersIds.pagination.page_size || 10;
     pagingResult.hasNext = salesOrdersIds.pagination.has_next_page === true;
     pagingResult.page = salesOrdersIds.pagination.current_page || 1;
+
   }
 
+  
+
   try {
+
+    if (ids.length === 0) {
+      return {
+        paging: pagingResult,
+        salesOrders: []
+      }
+    }
+
     let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
 
     logger.debug(`SALES ORDER DETAILS RESPONSE:: ${JSON.stringify(salesOrdersDetails)}`);

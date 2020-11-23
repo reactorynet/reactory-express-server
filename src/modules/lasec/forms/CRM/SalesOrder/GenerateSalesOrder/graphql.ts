@@ -23,6 +23,7 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
                 order_type
                 preferred_warehouse
                 shipping_date
+                method_of_contact
             }
         }`,
         variables: {
@@ -44,7 +45,8 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
             'preferred_warehouse': 'order_detail.preffered_warehouse',
             'order_type': 'order_detail.order_type',            
             'client.mobileNumber': 'delivery_detail.contact_number',
-            'shipping_date': 'order_detail.shipping_date'
+            'shipping_date': 'order_detail.shipping_date',
+            'method_of_contact': 'delivery_detail.method_of_contact'
         },
         resultType: 'object',
     },
@@ -92,6 +94,10 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
                 LasecCreateSalesOrder(sales_order_input: $sales_order_input) {
                     success
                     message
+                    salesOrder {
+                        id
+                        salesOrderNumber                        
+                    }
                 }
             }`,
             variables: {
