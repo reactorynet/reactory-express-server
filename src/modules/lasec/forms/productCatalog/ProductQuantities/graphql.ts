@@ -15,6 +15,7 @@ export default {
           qtyInTransit
           qtyAvailable
           qtyOnSalesOrder
+          qtyOnPurchaseOrder
         }
         totals {
           qtyOnHand
@@ -24,6 +25,7 @@ export default {
           qtyInTransit
           qtyAvailable
           qtyOnSalesOrder
+          qtyOnPurchaseOrder
         }
       }
     }`,

@@ -470,6 +470,7 @@ const getWarehouseStockLevels = async (params) => {
   let totalInTransit = 0;
   let totalAvailable = 0;
   let totalOnSalesOrder = 0;
+  let totalOnPurchaseOrder = 0;
 
   logger.debug(`Loaded Warehouse Stock For Product ${params.product_id}`, warehouseStock);
 
@@ -482,6 +483,7 @@ const getWarehouseStockLevels = async (params) => {
     totalInTransit += warehouse.QtyInTransit;
     totalAvailable += warehouse.QtyAvailable;
     totalOnSalesOrder += warehouse.QtyOnSalesOrder;
+    totalOnPurchaseOrder = warehouse.QtyOnPurchaseOrder ? totalOnPurchaseOrder + warehouse.QtyOnPurchaseOrder : totalOnPurchaseOrder + 0;
 
     return {
       name: WarehouseIds[warehouse.warehouse_id].title,
@@ -493,6 +495,7 @@ const getWarehouseStockLevels = async (params) => {
       qtyInTransit: warehouse.QtyInTransit,
       qtyAvailable: warehouse.QtyAvailable,
       qtyOnSalesOrder: warehouse.QtyOnSalesOrder,
+      qtyOnPurchaseOrder: warehouse.QtyOnPurchaseOrder ? warehouse.QtyOnPurchaseOrder : 0
     };
   });
 
@@ -505,6 +508,7 @@ const getWarehouseStockLevels = async (params) => {
     qtyInTransit: totalInTransit,
     qtyAvailable: totalAvailable,
     qtyOnSalesOrder: totalOnSalesOrder,
+    qtyOnPurchaseOrder: totalOnPurchaseOrder,
   });
 
   setCacheItem(cachekey, {
@@ -518,6 +522,7 @@ const getWarehouseStockLevels = async (params) => {
       qtyInTransit: totalInTransit,
       qtyAvailable: totalAvailable,
       qtyOnSalesOrder: totalOnSalesOrder,
+      qtyOnPurchaseOrder: totalOnPurchaseOrder,
     },
   }, 60 * 5);
 
@@ -532,6 +537,7 @@ const getWarehouseStockLevels = async (params) => {
       qtyInTransit: totalInTransit,
       qtyAvailable: totalAvailable,
       qtyOnSalesOrder: totalOnSalesOrder,
+      qtyOnPurchaseOrder: totalOnPurchaseOrder,
     },
   };
 }

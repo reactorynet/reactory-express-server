@@ -144,6 +144,7 @@ type WarehouseStock {
   qtyInTransit: Float
   qtyAvailable: Float
   qtyOnSalesOrder: Float
+  qtyOnPurchaseOrder: Float
 }
 
 type StockTotals {
