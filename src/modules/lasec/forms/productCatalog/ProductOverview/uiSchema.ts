@@ -93,11 +93,12 @@ const tableUiSchema: any = {
                 },
                 buttonIcon: 'launch',
                 windowTitle: '${rowData.code} ${rowData.name}',
-                backNavigationConfig: {
-                  showAppBar: false,
-                  backNavigationItems: ['Catalogue', '${rowData.code}'],
-                  containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
-                }
+                dialogVariant : 'compact'
+                // backNavigationConfig: {
+                //   showAppBar: false,
+                //   backNavigationItems: ['Catalogue', '${rowData.code}'],
+                //   containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
+                // }
               },
             },
             {

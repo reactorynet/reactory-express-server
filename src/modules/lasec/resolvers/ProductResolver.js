@@ -495,7 +495,7 @@ const getWarehouseStockLevels = async (params) => {
       qtyInTransit: warehouse.QtyInTransit,
       qtyAvailable: warehouse.QtyAvailable,
       qtyOnSalesOrder: warehouse.QtyOnSalesOrder,
-      qtyOnPurchaseOrder: warehouse.QtyOnPurchaseOrder ? warehouse.QtyOnPurchaseOrder : 0
+      qtyOnPurchaseOrder: warehouse.QtyOnPurchaseOrder ? warehouse.QtyOnPurchaseOrder : 0,
     };
   });
 
