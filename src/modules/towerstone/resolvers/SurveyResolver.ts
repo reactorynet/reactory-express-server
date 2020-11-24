@@ -2,6 +2,7 @@ import { schema } from './../../lasec/forms/CRM/Organization/Lookup/index';
 import moment from 'moment';
 import co from 'co';
 import lodash, { endsWith } from 'lodash';
+import Mongoose from 'mongoose';
 import Admin from '@reactory/server-core/application/admin';
 import { queueSurveyEmails } from '@reactory/server-core/emails';
 import {
@@ -203,16 +204,45 @@ export default {
     delegate(entry) {
       return User.findById(entry.delegate);
     },
-    peers(entry, kwargs, context) {
-      logger.info(`Resolving peers for delegate: ${entry.delegate} and organization ${context.organization}`, context);
-      if (!ObjectId.isValid(entry.delegate)) return null;
-      if (!ObjectId.isValid(context.organization)) return null;
-      const query = {
-        user: ObjectId(entry.delegate),
-        organization: ObjectId(context.organization),
-      };
-      logger.info(`Looking for Organigram Model with  ${query.user} and ${query.organization}`, query);
-      return Organigram.findOne(query).then();
+    peers: async (entry: any, args: any, context: any, info: any): Promise<any> => {
+
+      if (entry === null) return [];
+      if (!entry.delegate || !context.organization) return null;
+
+      if (entry.delegate) {
+
+        let org_id = null;
+        let delegate_id = null;
+
+        const { delegate } = entry;
+        const { organization } = context;
+
+        if (delegate._id && delegate.firstName) {
+          delegate_id = delegate._id;
+        } else {
+          delegate_id = delegate;
+        }
+
+        if (organization._id) {
+          org_id = organization._id;
+        } else {
+          org_id = organization;
+        }
+              
+        if (!ObjectId.isValid(delegate_id)) return null;
+        if (!ObjectId.isValid(org_id)) return null;
+        const query = {
+          user: new ObjectId(delegate_id),
+          organization: new ObjectId(org_id),
+        };
+        
+        logger.info(`Looking for Organigram Model with  ${query.user} and ${query.organization}`, query);
+
+        return Organigram.findOne(query).then();
+
+      }
+
+      return null;
     },
     notifications(entry) {
       return new Promise((resolve) => {
@@ -430,9 +460,9 @@ export default {
         } throw new ApiError('Survey not found!');
       })(surveyId, delegateId);
     },
-    async surveyDelegateAction(obj, params: SurveyDelegateActionParams) {
+    async surveyDelegateAction(obj, params: SurveyDelegateActionParams, context: any, info: any) {
 
-      logger.debug(`TAKING DELGATE ACTION:: ${JSON.stringify(params)}`);
+      logger.debug(`STARTING DELGATE ACTION:: ${JSON.stringify(params)}`);
 
       const {
         entryId, survey, delegate, action, inputData,
@@ -448,6 +478,8 @@ export default {
         .then();
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
+
+      context.organization = surveyModel.organization;
 
       const delegateModel: Reactory.IUserDocument = await User.findById(delegate).then();
       if (!delegateModel) throw new RecordNotFoundError('Could not find the user item', 'User');
@@ -658,36 +690,41 @@ export default {
             }
 
             case 'launch-single-assessor': {
-              const launchResult = await launchForSingleAssessor(surveyModel, entryData.entry, organigramModel, inputData.peer).then();
 
-              if (launchResult.assessmentId) {
-                const newAssessment = await Assessment.findById(launchResult.assessmentId).then();
-                entryData.entry.assessments.push(newAssessment);
+              try {
+
+                const launchResult = await launchForSingleAssessor(surveyModel, entryData.entry, organigramModel, inputData.peer).then();
+
+                if (launchResult.assessmentId) {
+                  const newAssessment = await Assessment.findById(launchResult.assessmentId).then();
+                  entryData.entry.assessments.push(newAssessment);
+                }
+
+                entryData.patch = true;
+                entryData.entry.message = launchResult.success ? launchResult.message : entryData.entry.message;
+                entryData.entry.status = entryData.entry.status;
+                entryData.entry.lastAction = entryData.entry.lastAction;
+                entryData.entry.launched = entryData.entry.launched;
+                entryData.entry.peers = {
+                  id: organigramModel._id,
+                  organization: organigramModel.organization,
+                  peers: organigramModel.peers
+                };
+
+                entryData.entry.actions.push({
+                  action: entryData.entry.status,
+                  when: new Date(),
+                  result: launchResult.message,
+                  who: user._id,
+                });
+
+                // entryData.patch = false;
+                await surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.PEER_LAUNCHED, `${user.firstName} launched for ${inputData.peer.firstName} ${inputData.peer.lastName}`, user, false);
+
+              } catch (launchError) {
+                logger.error(`Something went wrong here`, { error: launchError })
               }
 
-              entryData.patch = true;
-              entryData.entry.message = launchResult.success ? launchResult.message : entryData.entry.message;
-              // entryData.entry.status = launchResult.success ? 'launched' : entryData.entry.status;
-              entryData.entry.status = entryData.entry.status;
-              // entryData.entry.lastAction = launchResult.success ? 'launched' : 'launch-fail';
-              entryData.entry.lastAction = entryData.entry.lastAction;
-              // entryData.entry.launched = launchResult.success === true;
-              entryData.entry.launched = entryData.entry.launched;
-              entryData.entry.peers = {
-                id: organigramModel._id,
-                organization: organigramModel.organization,
-                peers: organigramModel.peers
-              };
-
-              entryData.entry.actions.push({
-                action: entryData.entry.status,
-                when: new Date(),
-                result: launchResult.message,
-                who: user._id,
-              });
-
-              // entryData.patch = false;
-              await surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.PEER_LAUNCHED, `${user.firstName} launched for ${inputData.peer.firstName} ${inputData.peer.lastName}`, user, true).then();
 
               break;
             }
@@ -839,8 +876,8 @@ export default {
                 who: user._id,
               });
 
-              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.RESTARTED, `${user.firstName} ${user.lastName} restarted delegate ${delegateModel.firstName} ${delegateModel.lastName} for Survey`, user.id, true);
-              entryData.patch = false;
+              surveyModel.addTimelineEntry(SURVEY_EVENTS_TO_TRACK.RESTARTED, `${user.firstName} ${user.lastName} restarted delegate ${delegateModel.firstName} ${delegateModel.lastName} for Survey`, user.id, false);
+              entryData.patch = true;
               break;
 
             }

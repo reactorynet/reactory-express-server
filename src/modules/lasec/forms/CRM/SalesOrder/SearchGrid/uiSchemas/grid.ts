@@ -159,44 +159,9 @@ const uiSchema: any = {
         {
           title: 'ISO Number',
           field: 'salesOrderNumber',
-          component: 'core.SlideOutLauncher@1.0.0',
-          props: {
-            componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
-            componentProps: {
-              'rowData.quoteId': ['formData.quoteId', 'query.quoteId'],
-              'rowData.salesOrderNumber': ['formData.orderId', 'query.orderId'],
-              'rowData.poNumber': ['formData.poNumber', 'query.poNumber'],
-              'rowData.orderDate': [ 'formData.orderDate', 'query.orderDate'],
-              'rowData.customer': ['formData.customer', 'query.customer'],
-              'rowData.client': ['formData.header.client', 'query.client'],
-              'rowData.orderStatus': ['formData.orderStatus',  'query.orderStatus'],
-              'rowData.currency': ['formData.currency',  'query.currency'],
-              'rowData.orderType': ['formData.orderType', 'query.orderType'],
-              'rowData.deliveryAddress': ['formData.deliveryAddress', 'query.deliveryAddress'],
-              'rowData.warehouseNote': ['formData.warehouseNote',  'query.warehouseNote'],
-              'rowData.deliveryNote': ['formData.deliveryNote',  'query.deliveryNote'],
-              'rowData.salesTeam': ['formData.salesTeam', 'query.salesTeam'],
-            },
-            slideDirection: 'down',
-            buttonTitle: '${rowData.salesOrderNumber}',
-            buttonVariant: 'Typography',
-            buttonProps: {
-              variant: 'body1',
-              style: {
-                'textDecoration': 'underline',
-                'cursor': 'pointer',
-                'color': 'black'
-              }
-            },
-            windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
-            backNavigationConfig: {
-              showAppBar: false,
-              backNavigationItems: ['Sales Order', '${rowData.salesOrderNumber}'],
-              containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
-            }
-          },
+          component: 'lasec-crm.SalesOrderActionButton',          
           propsMap: {
-            'rowData': 'rowData'
+            'rowData.salesOrderNumber': 'sales_order_number'
           }
         },
         { title: 'Purchase Order Number', field: 'poNumber' },
