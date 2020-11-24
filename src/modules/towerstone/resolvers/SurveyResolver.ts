@@ -2,6 +2,7 @@ import { schema } from './../../lasec/forms/CRM/Organization/Lookup/index';
 import moment from 'moment';
 import co from 'co';
 import lodash, { endsWith } from 'lodash';
+import Mongoose from 'mongoose';
 import Admin from '@reactory/server-core/application/admin';
 import { queueSurveyEmails } from '@reactory/server-core/emails';
 import {
@@ -203,16 +204,45 @@ export default {
     delegate(entry) {
       return User.findById(entry.delegate);
     },
-    peers(entry, kwargs, context) {
-      logger.info(`Resolving peers for delegate: ${entry.delegate} and organization ${context.organization}`, context);
-      if (!ObjectId.isValid(entry.delegate)) return null;
-      if (!ObjectId.isValid(context.organization)) return null;
-      const query = {
-        user: ObjectId(entry.delegate),
-        organization: ObjectId(context.organization),
-      };
-      logger.info(`Looking for Organigram Model with  ${query.user} and ${query.organization}`, query);
-      return Organigram.findOne(query).then();
+    peers: async (entry: any, args: any, context: any, info: any): Promise<any> => {
+
+      if (entry === null) return [];
+      if (!entry.delegate || !context.organization) return null;
+
+      if (entry.delegate) {
+
+        let org_id = null;
+        let delegate_id = null;
+
+        const { delegate } = entry;
+        const { organization } = context;
+
+        if (delegate._id && delegate.firstName) {
+          delegate_id = delegate._id;
+        } else {
+          delegate_id = delegate;
+        }
+
+        if (organization._id) {
+          org_id = organization._id;
+        } else {
+          org_id = organization;
+        }
+              
+        if (!ObjectId.isValid(delegate_id)) return null;
+        if (!ObjectId.isValid(org_id)) return null;
+        const query = {
+          user: new ObjectId(delegate_id),
+          organization: new ObjectId(org_id),
+        };
+        
+        logger.info(`Looking for Organigram Model with  ${query.user} and ${query.organization}`, query);
+
+        return Organigram.findOne(query).then();
+
+      }
+
+      return null;
     },
     notifications(entry) {
       return new Promise((resolve) => {
@@ -430,9 +460,9 @@ export default {
         } throw new ApiError('Survey not found!');
       })(surveyId, delegateId);
     },
-    async surveyDelegateAction(obj, params: SurveyDelegateActionParams) {
+    async surveyDelegateAction(obj, params: SurveyDelegateActionParams, context: any, info: any) {
 
-      logger.debug(`TAKING DELGATE ACTION:: ${JSON.stringify(params)}`);
+      logger.debug(`STARTING DELGATE ACTION:: ${JSON.stringify(params)}`);
 
       const {
         entryId, survey, delegate, action, inputData,
@@ -448,6 +478,8 @@ export default {
         .then();
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
+
+      context.organization = surveyModel.organization;
 
       const delegateModel: Reactory.IUserDocument = await User.findById(delegate).then();
       if (!delegateModel) throw new RecordNotFoundError('Could not find the user item', 'User');
