@@ -298,15 +298,15 @@ const defaultQuoteObjectMap = {
 const Api = {
   FETCH,
   URIS: SECONDARY_API_URLS,
-  get: async (uri, params, shape) => {
-    const resp = await FETCH(uri, { params }).then();
+  get: async (uri: string, params: any = null, shape: any = null) => {
+    const resp = await FETCH(uri, params ? { params } : undefined).then();
     const {
       status, payload,
     } = resp;
 
     if (status === 'success') {
       if (shape && Object.keys(shape).length > 0) {
-        return om(payload, shape);
+        return om.merge(payload, shape);
       } else {
         return payload;
       }
@@ -314,7 +314,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [], status };
     }
   },
-  post: async (uri, params, shape) => {
+  post: async (uri: string, params: any, shape: any) => {
     const resp = await POST(uri, params).then();
     const {
       status, payload,
@@ -323,7 +323,25 @@ const Api = {
     logger.debug(`API POST Response ${resp}`);
     if (status === 'success') {
       if (shape && Object.keys(shape).length > 0) {
-        return om(payload, shape);
+        return om.merge(payload, shape);
+      } else {
+        return payload;
+      }
+    } else {
+      logger.error(`API POST was not successful ${resp}`);
+      return { pagination: {}, ids: [], items: [] };
+    }
+  },
+  put: async (uri: string, params: any, shape: any): Promise<any> => {
+    const resp = await PUT(uri, params).then();
+    const {
+      status, payload,
+    } = resp;
+
+    logger.debug(`API POST Response ${resp}`);
+    if (status === 'success') {
+      if (shape && Object.keys(shape).length > 0) {
+        return om.merge(payload, shape);
       } else {
         return payload;
       }
@@ -951,6 +969,752 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
+    /***
+     * 
+     Certificate of Conformance API
+      Included in the api is a lookup for Inco Terms and Payment Terms
+      GET: https://bapi.lasec.co.za/api/cert_of_conf/inco_terms
+      GET: https://bapi.lasec.co.za/api/cert_of_conf/payment_terms
+      To return the currently stored details for a ISO
+      GET: https://bapi.lasec.co.za/api/cert_of_conf/{salesordernumber} aka https://bapi.lasec.co.za/api/cert_of_conf/509401
+      When no Cert currently exists it returns the ISO detail as below:
+      {
+        "certificate_results": {
+          "header": {
+            "salesorder": "",
+            "date_of_issue": "",
+            "ucr_number": "",
+            "certification": "",
+            "date_of_expiry": "",
+            "date_of_expiry_na": "",
+            "customer_po_number": "",
+            "inco_terms": "",
+            "named_place": "",
+            "payment_terms": "",
+            "reason_for_export": "",
+            "bill_to_address": "",
+            "ship_to_address": "",
+            "consignee_address": "",
+            "consignee_contact": "",
+            "consignee_extra_info": "",
+            "notify_info": "",
+            "comments": "",
+            "staffuserid": "367",
+            "SysproCompany": "SysproCompany2",
+            "created": "2020-11-26"
+          },
+          "detail": [
+            {
+              "SysproCompany": "SysproCompany2",
+              "salesorder": "000000000509401",
+              "salesorderline": "1",
+              "stockcode": "P2TIP018Y-010200R",
+              "description": "TIPS N/FILTER YELLOW(PK 1000)",
+              "quantity": "30.000000",
+              "date_of_manufacture": "",
+              "date_of_manufacture_na": "",
+              "lot_number": "",
+              "date_of_expiry": "",
+              "date_of_expiry_na": ""
+            },
+            {
+              "SysproCompany": "SysproCompany2",
+              "salesorder": "000000000509401",
+              "salesorderline": "2",
+              "stockcode": "GLAS1S16M11410012",
+              "description": "SLIDE MIC 1ST FRS B/E PW(PK 50)",
+              "quantity": "200.000000",
+              "date_of_manufacture": "",
+              "date_of_manufacture_na": "",
+              "lot_number": "",
+              "date_of_expiry": "",
+              "date_of_expiry_na": ""
+            },
+            {
+              "SysproCompany": "SysproCompany2",
+              "salesorder": "000000000509401",
+              "salesorderline": "3",
+              "stockcode": "P3TIP018B-001000",
+              "description": "TIPS N/FILTER BLUE(PK 1000)",
+              "quantity": "6.000000",
+              "date_of_manufacture": "",
+              "date_of_manufacture_na": "",
+              "lot_number": "",
+              "date_of_expiry": "",
+              "date_of_expiry_na": ""
+            }
+          ]
+        }
+      }
+      
+      NOTE: If any of the documents have already been created, their header info will be pulled in instead of the ISO header info !!!
+      NB: the detail section can have multiple entries
+      To save a new packing list and its detail do:
+      POST: https://bapi.lasec.co.za/api/cert_of_conf/{salesordernumber} aka https://bapi.lasec.co.za/api/cert_of_conf/484584
+      Payload will be:
+      $post = array(
+      "header" => array(
+        "salesorder" => "484584",
+        "date_of_issue" => "2020-01-28",
+        "certification" => "2020-01-28",
+        "date_of_expiry" => "2020-02-28",
+        "date_of_expiry_na" => N,
+        "customer_po_number" => "405047",
+        "inco_terms" => "6",
+        "named_place" => "7",
+        "payment_terms" => "30 DAYS NETT",
+        "reason_for_export" => "SALE",
+        "bill_to_address" => "PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
+        "ship_to_address" => "Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa",
+        "consignee_address" => "3",
+        "consignee_contact" => "4",
+        "consignee_extra_info" => "5",
+        "notify_info" => "6",
+        "comments" => "7",
+      ),
+      "detail" => array(array(
+          "salesorderline" => 1,
+          "salesorder" => "484584",
+          "stockcode" => "ABC",
+          "description" => "BLA BLA BLA",
+          "quantity" => "2",
+          "date_of_manufacture" => "2020-02-28",
+          "date_of_manufacture_na" => "N",
+          "lot_number" => "71",
+          "date_of_expiry" => "2020-02-28",
+          "date_of_expiry_na" => "N"
+      )));
+    
+    NB: Once again multiple entries can be in detail section for each package
+    To update a existing listing:
+    PUT: https://bapi.lasec.co.za/api/cert_of_conf/{salesordernumber} aka https://bapi.lasec.co.za/api/cert_of_conf/484584
+    Payload will be:
+    $post = array(
+        "header" => array(
+            "salesorder" => "484584",
+            "date_of_issue" => "2020-01-28",
+            "certification" => "2020-01-28",
+            "date_of_expiry" => "2020-02-28",
+            "date_of_expiry_na" => N,
+            "customer_po_number" => "405047",
+            "inco_terms" => "6",
+            "named_place" => "7",
+            "payment_terms" => "30 DAYS NETT",
+            "reason_for_export" => "SALE",
+            "bill_to_address" => "PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
+            "ship_to_address" => "Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa",
+            "consignee_address" => "3",
+            "consignee_contact" => "4",
+            "consignee_extra_info" => "5",
+            "notify_info" => "6",
+            "comments" => "7",
+        ),
+        "detail" => array(array(
+            "salesorderline" => 1,
+            "salesorder" => "484584",
+            "stockcode" => "ABC",
+            "description" => "BLA BLA BLA",
+            "quantity" => "2",
+            "date_of_manufacture" => "2020-02-28",
+            "date_of_manufacture_na" => "N",
+            "lot_number" => "71",
+            "date_of_expiry" => "2020-02-28",
+            "date_of_expiry_na" => "N"
+        )));    
+     */
+    get_certificate_of_conformance: async (sales_order_id: string): Promise<any> => {
+
+      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`).then();
+      /**
+       *
+       * Result is HashMap 
+        {
+          "N/A": "N/A => Not Applicable",
+          "CFR": "CFR => Cost and Freight",
+          "CIF": "CIF => Cost,Insurance and Freight",
+          "CIP": "CIP => Carriage and Insurance Paid",
+          "CPT": "CPT => Carriage Paid To",
+          "DAP": "DAP => Delivered at Place",
+          "DAT": "DAT => Delivered at Terminal",
+          "DDP": "DDP => Delivered Duty Paid",
+          "EXW": "EXW => Ex Works",
+          "FAS": "FAS => Free Alongside Ship",
+          "FCA": "FCA => Free Carrier",
+          "FOB": "FOB => Free on Board"
+        }
+       * 
+       */
+      logger.debug(`Inco Terms Result`, inco_terms_for_sales_order);
+
+      let inco_terms: any[] = [];
+
+      try { 
+
+        if (inco_terms_for_sales_order && Object.keys(inco_terms_for_sales_order).length > 0) {
+          Object.keys(inco_terms_for_sales_order).forEach((prop) => {
+  
+            if (`${inco_terms_for_sales_order[prop]}`.indexOf("=>") > 0) {
+              inco_terms.push({
+                id: prop,                
+                name: inco_terms_for_sales_order[prop].split('=>')[1].trim(),
+                description: inco_terms_for_sales_order[prop].split('=>')[1].trim(),
+              })
+            } else {
+              inco_terms.push({
+                id: prop,
+                name: inco_terms_for_sales_order[prop],
+                description: inco_terms_for_sales_order[prop]
+              });
+            }
+          })
+
+          logger.debug(`Inco Terms Converted`, inco_terms);
+        }
+
+      } catch (convertError) { 
+        logger.error(`Could not convert inco term data`, convertError);
+      }
+      
+      let payment_terms: any[] = [];
+      
+      try { 
+        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`).then();
+        /**
+         * Result is hash map
+         * 
+         * 
+            {
+              "30": "30 DAYS NETT",
+              "45": "45 DAYS NETT",
+              "60": "60 DAYS NETT",
+              "90": "90 DAYS NETT",
+              "COD": "COD"
+            }
+         * 
+         * 
+         */
+  
+  
+        logger.debug(`result for payment terms for sales orders`, payment_terms_for_sales_orders);
+        if (payment_terms_for_sales_orders && Object.keys(payment_terms_for_sales_orders).length > 0) {      
+          Object.keys(payment_terms_for_sales_orders).forEach((prop) => {  
+            payment_terms.push({
+              id: prop,
+              name: payment_terms_for_sales_orders[prop],
+              description: payment_terms_for_sales_orders[prop],
+            });            
+          });
+        }
+        logger.debug(`Payment Terms Result`, payment_terms);
+      } catch (error) {
+        logger.error('Could not conver payment terms data', error);
+      }
+            
+      const new_shape = {      
+        'header.salesorder': 'id',
+        'header.date_of_isse': 'date_of_issue',
+        'header.certification': 'certification_date',
+        'header.payment_terms': 'terms',
+        'header.inco_terms': "inco_terms",
+        'header.named_place': "final_destination",
+        'header.reason_for_export': 'export_reason',
+        'header.bill_to_address': 'bill_to_address',
+        'header.ship_to_address': 'ship_to_address',
+        'header.consignee_address': 'consignee_street_address',
+        'header.consignee_contact': 'consignee_contact',
+        'header.notify_info': 'notify_info',
+        'header.comments': 'comments',
+        'detail[].salesorderline': 'products[].item_number',          
+        'detail[].salesorder': 'products[].sales_order',
+        'detail[].SysproCompany': 'products[].syspro_company',
+        'detail[].stockcode': 'products[].stock_code',
+        'detail[].description': 'products[].description',
+        'detail[].quantity': 'products[].qty',
+        'detail[].date_of_manufacture': 'products[].date_of_manufacture',
+        'detail[].date_of_manufacture_na': {
+          key: 'products[].date_of_manufacture_na',
+          transform: (v: any) => { return new Boolean(v) === true; },
+          default: false
+        },
+        'detail[].lot_number': 'products[].lot_no',
+        'detail[].date_of_expiry': 'products[].expire_date',
+        'detail[].date_of_expiry_na': {
+          key: 'products[].expire_date_na',
+          transform: (v: any) => { return new Boolean(v) === true; },
+          default: false
+        },
+      };
+
+      const existing_shape = {
+        'header.salesorder': 'id',
+        'header.date_of_isse': 'date_of_issue',
+        'header.certification': 'certification_date',
+        'header.payment_terms': 'terms',
+        'header.inco_terms': "inco_terms",
+        'header.named_place': "final_destination",
+        'header.reason_for_export': 'export_reason',
+        'header.bill_to_address': 'bill_to_address',
+        'header.ship_to_address': 'ship_to_address',
+        'header.consignee_address': 'consignee_street_address',
+        'header.consignee_contact': 'consignee_contact',
+        'header.notify_info': 'notify_info',
+        'header.comments': 'comments',
+        'detail[].salesorderline': 'products[].item_number',          
+        'detail[].salesorder': 'products[].sales_order',
+        'detail[].SysproCompany': 'products[].syspro_company',
+        'detail[].stockcode': 'products[].stock_code',
+        'detail[].description': 'products[].description',
+        'detail[].quantity': 'products[].qty',
+        'detail[].date_of_manufacture': 'products[].date_of_manufacture',
+        'detail[].date_of_manufacture_na': {
+          key: 'products[].date_of_manufacture_na',
+          transform: (v: any) => { return new Boolean(v) === true; },
+          default: false
+        },
+        'detail[].lot_number': 'products[].lot_no',
+        'detail[].date_of_expiry': 'products[].expire_date',
+        'detail[].date_of_expiry_na': {
+          key: 'products[].expire_date_na',
+          transform: (v: any) => { return new Boolean(v) === true; },
+          default: false
+        },
+      };
+
+      let certificate_results = null;
+      try {
+        certificate_results = await Api.get(`api/cert_of_conf/${sales_order_id}`).then();        
+        let is_new = true;
+        let converted: any = om.merge(certificate_results, is_new === true ? new_shape : existing_shape); 
+        
+        converted.lookups = {
+          inco_terms,
+          payment_terms
+        };
+
+        logger.debug(`Certificate Response From API ${certificate_results.status}`, { certificate_results });
+
+        converted.products.forEach((product_item: any, index: number) => {
+          product_item.id = `${sales_order_id}:${index}`
+          if (product_item.date_of_manufacture_na === null || product_item.date_of_manufacture_na === undefined) {
+            product_item.date_of_manufacture_na = false;
+          }
+
+          if (product_item.expire_date === null || product_item.expire_date === undefined) {
+            product_item.expire_date_na = false;
+          }
+        });
+        
+        return {
+          id: sales_order_id,
+          emailAddress: '',
+          sendOptionsVia: 'pdf',
+          ...converted,
+        };        
+      } catch (error) {
+
+        logger.error(`Could not get certificate results: ${error.message}`, { error });
+      }
+      
+    },
+
+    post_certificate_of_conformance: async (sales_order_id: string, certificate: any): Promise<any> => {
+
+      return {
+        id: sales_order_id,
+        pdf_url: null,
+      };
+
+    },
+
+    put_certificate_of_conformance: async (sales_order_id: string, certificate: any): Promise<any> => {
+
+      return {
+        id: sales_order_id,
+        pdf_url: null,
+      };
+    },
+
+    //commercial invoice
+
+    /**
+     * 
+     * 
+     * Commercial Invoice API
+      Included in the api is a lookup for Inco Terms and Payment Terms
+      GET: https://bapi.lasec.co.za/api/com_invoice/inco_terms
+      GET: https://bapi.lasec.co.za/api/com_invoice/payment_terms
+      To return the currently stored details for a ISO
+      GET: https://bapi.lasec.co.za/api/com_invoice/{salesordernumber} aka https://bapi.lasec.co.za/api/com_invoice/484584
+      When no Invoice currently exists it returns the ISO detail as below:
+      {"status":"success",
+      "payload":{"header":{"salesorder":"000000000484584","ucr_number":"N\\/A","date_of_issue":"2020-01-28","date_of_expiry":"2020-02-28","date_of_expiry_na":"1",
+          "customer_po_number":"405047","inco_terms":"6","named_place":"7","payment_terms":"30 DAYS NETT","bill_to_address":"PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
+          "ship_to_address":"Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa","consignee_contact":"4","consignee_address":"3",
+          "notify_contact1":"","notify_address1":"","notify_contact2":"","notify_address2":"","comments":"7","comments_bottom":"",
+          "currency":"","freight":0,"insurance":0,"deposit":0,"discount":0,"vat":0,"staffuserid":"","SysproCompany":"","created":"","reason_for_export":"SALE"},
+      "items":{"salesorder":"000000000484584","salesorderline":"1","stockcode":"HCPN108CR","description":"SWAB TRANSYSTEM MEDIA AMIES(PK 500)",
+          "quantity":"2.000000","unit_price":"2331.00000"}}}
+      NOTE: If any of the documents have already been created, their header info will be pulled in instead of the ISO header info !!!
+      NB: the detail section can have multiple entries
+      To save a new packing list and its detail do:
+      POST: https://bapi.lasec.co.za/api/com_invoice/{salesordernumber} aka https://bapi.lasec.co.za/api/com_invoice/484584
+      Payload will be:
+      $post = array(
+          "header" => array(
+              "salesorder" => "000000000484584",
+              "date_of_issue" => "2020-01-28",
+              "ucr_number" => "N/A",
+              "date_of_expiry" => "2020-02-28",
+              "date_of_expiry_na" => "N",
+              "customer_po_number" => "405047",
+              "inco_terms" => "6",
+              "named_place" => "7",
+              "payment_terms" => "30 DAYS NETT",
+              "reason_for_export" => "SALE",
+              "bill_to_address" => "PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
+              "ship_to_address" => "Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa",
+              "consignee_address" => "Con Address",
+              "consignee_contact" => "Con Contact",
+              "notify_contact1" => "Not Contact 1",
+              "notify_address1" => "Not Address 1",
+              "notify_contact2" => "Not Contact 2",
+              "notify_address2" => "Not Address 2",
+              "comments" => "The Comments",
+              "comments_bottom" => "The Comments Bottom",
+              "currency" => "USD",
+              "freight" => "7.00",
+              "insurance" => "7.00",
+              "deposit" => "7.00",
+              "discount" => "7.00",
+              "vat" => "N",
+              "SysproCompany" => "SysproCompany2",
+              "staffuserid" => 122,
+              "created" => "2020-01-28"    
+          ),
+          "detail" => array(array(
+              "salesorderline" => 1,
+              "salesorder" => "000000000484584",
+              "stockcode" => "ABC",
+              "description" => "BLA BLA BLA",
+              "quantity" => "51",
+              "unit_price" => "61.00"
+          )));
+          
+      NB: Once again multiple entries can be in detail section for each package
+      To update a existing listing:
+      PUT: https://bapi.lasec.co.za/api/com_invoice/{salesordernumber} aka https://bapi.lasec.co.za/api/com_invoice/484584
+      Payload will be:
+      $post = array(
+          "header" => array(
+              "salesorder" => "000000000484584",
+              "date_of_issue" => "2020-01-28",
+              "ucr_number" => "N/A",
+              "date_of_expiry" => "2020-02-28",
+              "date_of_expiry_na" => "N",
+              "customer_po_number" => "405047",
+              "inco_terms" => "6",
+              "named_place" => "7",
+              "payment_terms" => "30 DAYS NETT",
+              "reason_for_export" => "SALE",
+              "bill_to_address" => "PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
+              "ship_to_address" => "Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa",
+              "consignee_address" => "Con Address",
+              "consignee_contact" => "Con Contact",
+              "notify_contact1" => "Not Contact 1",
+              "notify_address1" => "Not Address 1",
+              "notify_contact2" => "Not Contact 2",
+              "notify_address2" => "Not Address 2",
+              "comments" => "The Comments",
+              "comments_bottom" => "The Comments Bottom",
+              "currency" => "USD",
+              "freight" => "7.00",
+              "insurance" => "7.00",
+              "deposit" => "7.00",
+              "discount" => "7.00",
+              "vat" => "N",
+              "SysproCompany" => "SysproCompany2",
+              "staffuserid" => 122,
+              "created" => "2020-01-28"    
+          ),
+          "detail" => array(array(
+              "salesorderline" => 1,
+              "salesorder" => "000000000484584",
+              "stockcode" => "ABC",
+              "description" => "BLA BLA BLA",
+              "quantity" => "51",
+              "unit_price" => "61.00"
+          )));
+     * 
+     */
+
+    get_commercial_invoice: async (sales_order_id: string): Promise<any> => {
+
+      const inco_terms = await Api.get(`api/com_invoice/inco_terms`, {}).then();
+      logger.debug(`Inco Terms Result`, inco_terms);
+
+      const payment_terms = await Api.get(`api/com_invoice/payment_terms`).then();
+      logger.debug(`Payment Terms Result`, payment_terms);
+
+      const shape = {
+        'header.salesorder': 'id',
+        'header.date_of_isse': 'date_of_issue',
+        'header.certification': 'certification_date',
+        'header.payment_terms': 'terms',
+        'header.inco_terms': "inco_terms",
+        'header.named_place': "final_destination",
+        'header.reason_for_export': 'export_reason',
+        'header.bill_to_address': 'bill_to_address',
+        'header.ship_to_address': 'ship_to_address',
+        'header.consignee_address': 'consignee_street_address',
+        'header.consignee_contact': 'consignee_contact',
+        'header.notify_contact': 'notify_info',
+        'header.comments': 'comments',
+        'detail': 'products'
+      };
+
+      const certificate_results = await Api.get(`api/com_invoice/${sales_order_id}`, null, shape).then();
+
+      logger.debug(`Certificate Response From API ${certificate_results.status}`, { certificate_results });
+
+      return {
+        id: sales_order_id,
+        emailAddress: '',
+        sendOptionsVia: 'email',
+        ...certificate_results,
+      };
+
+    },
+
+    post_commercial_invoice: async (sales_order_id: string, certificate: any): Promise<any> => {
+
+      return {
+        id: sales_order_id,
+        pdf_url: null,
+      };
+    },
+
+    put_commercial_invoice: async (sales_order_id: string, certificate: any): Promise<any> => {
+
+      return {
+        id: sales_order_id,
+        pdf_url: null,
+      };
+    },
+
+    //packing list
+    /***
+     *     
+      Packing list API
+      Included in the api is a lookup for Inco Terms and Payment Terms
+      GET: https://bapi.lasec.co.za/api/packing_list/inco_terms
+      GET: https://bapi.lasec.co.za/api/packing_list/payment_terms
+      To return the currently stored details for a ISO
+      GET: https://bapi.lasec.co.za/api/packing_list/{​​​​​​​​salesordernumber}​​​​​​​​ aka https://bapi.lasec.co.za/api/packing_list/484584
+      When no packing list exists for the ISO it returns:
+      {
+                "status":"success",
+        "payload": {​​​​​​​​
+            "header": {​
+                     "SysproCompany":"SysproCompany2",
+              "salesorder":"000000000509466",
+              "ucr_number":null,
+              "date_of_issue":"2020-11-17",
+              "date_of_expiry":"2020-12-17",
+              "date_of_expiry_na":0,
+              "customer_po_number":"7154",
+              "inco_terms":null,
+              "named_place":null,
+              "payment_terms":"30 DAYS NETT",
+              "reason_for_export":"SALE",
+              "bill_to_address":"PO BOX 735,WORCESTER,WESTERN CAPE,6850",
+              "ship_to_address":"Breerivier Vallei Bottelerings Ko-Op,BPK, , 018 High St, Paglande,Worcester, 6580, South Africa",
+              "consignee_address":"","consignee_contact":"","consignee_extra_info":"","notify_info":"","comments":"","staffuserid":"122","created":"2020-11-17 13:30:25.000000"}​​​​​​​​,
+              "detail":[
+                {
+                          "SysproCompany":"",
+                  "salesorder":"",
+                  "detail_id":"",
+                  "type":"",
+                  "quantity":"",
+                  "height":"",
+                  "width":"",
+                  "length":"",
+                  "weight":""
+                }
+                      ]
+            }
+                  }​​​​​​​​
+        }
+      }
+ 
+      When a entry does exists:
+      {
+                "status":"success",
+        "payload": {
+                  "header": {
+                    "SysproCompany":"SysproCompany2",
+            "salesorder":"000000000484584",
+            "ucr_number":"N\\/A",
+            "date_of_issue":"2020-01-28",
+            "date_of_expiry":"2020-02-28",
+            "date_of_expiry_na":"1",
+            "customer_po_number":"405047",
+            "inco_terms":"6",
+            "named_place":"7",
+            "payment_terms":"30 DAYS NETT",
+            "reason_for_export":"SALE","bill_to_address":"PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
+            "ship_to_address":"Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa",
+            "consignee_address":"3","consignee_contact":"4","consignee_extra_info":"5","notify_info":"6","comments":"7","staffuserid":"122","created":"2020-11-17 13:43:22"}​​​​​​​​,
+            "detail":[
+              {
+                        "SysproCompany":"SysproCompany2",
+                "salesorder":"000000000484584",
+                "detail_id":"1",
+                "type":"boxes",
+                "quantity":"5.0000",
+                "height":"51.0000",
+                "width":"61.0000",
+                "length":"71.0000",
+                "weight":"81.0000"
+              }
+            ]
+          }
+        }
+      }
+                 '
+      NB: the detail section can have multiple entries
+      To save a new packing list and its detail do:
+      POST: https://bapi.lasec.co.za/api/packing_list/{​​​​​​​​salesordernumber}​​​​​​​​ aka https://bapi.lasec.co.za/api/packing_list/484584
+      Payload will be:
+      $post = array(
+      "header" => array(
+        "salesorder" => "484584",
+        "ucr_number" => "N/A",
+        "date_of_issue" => "2020-01-28",
+        "date_of_expiry" => "2020-02-28",
+        "date_of_expiry_na" => 0,
+        "customer_po_number" => "405047",
+        "inco_terms" => "6",
+        "named_place" => "7",
+        "payment_terms" => "30 DAYS NETT",
+        "reason_for_export" => "SALE",
+        "bill_to_address" => "PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
+        "ship_to_address" => "Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa",
+        "consignee_address" => "3",
+        "consignee_contact" => "4",
+        "consignee_extra_info" => "5",
+        "notify_info" => "6",
+        "comments" => "7"
+    ),
+    "detail" => array(array(
+        "salesorder" => "484584",
+        "SysproCompany" => "SysproCompany2",
+        "type" => "boxes",
+        "quantity" => "5",
+        "height" => "51",
+        "width" => "61",
+        "length" => "71",
+        "weight" => "81"        
+    )));
+    
+NB: Once again multiple entries can be in detail section for each package
+To update a existing listing:
+PUT: https://bapi.lasec.co.za/api/packing_list/{​​​​​​​​salesordernumber}​​​​​​​​ aka https://bapi.lasec.co.za/api/packing_list/484584
+Payload will be:
+$post = array(
+    "header" => array(
+        "salesorder" => "484584",
+        "ucr_number" => "N/A",
+        "date_of_issue" => "2020-01-28",
+        "date_of_expiry" => "2020-02-28",
+        "date_of_expiry_na" => 0,
+        "customer_po_number" => "405047",
+        "inco_terms" => "6",
+        "named_place" => "7",
+        "payment_terms" => "30 DAYS NETT",
+        "reason_for_export" => "SALE",
+        "bill_to_address" => "PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
+        "ship_to_address" => "Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa",
+        "consignee_address" => "3",
+        "consignee_contact" => "4",
+        "consignee_extra_info" => "5",
+        "notify_info" => "6",
+        "comments" => "7",
+    ),
+    "detail" => array(array(
+        "detail_id" => 13,
+        "salesorder" => "484584",
+        "type" => "boxes",
+        "quantity" => "5",
+        "height" => "51",
+        "width" => "61",
+        "length" => "71",
+        "weight" => "81"        
+    )));
+    
+NB: note the addition of the detail_id for the line been updated
+
+
+     * 
+     * 
+     */
+
+    get_packing_list: async (sales_order_id: string): Promise<any> => {
+
+      const inco_terms = await Api.get(`api/packing_list/inco_terms`, {}).then();
+      logger.debug(`Inco Terms Result`, inco_terms);
+
+      const payment_terms = await Api.get(`api/packing_list/payment_terms`).then();
+      logger.debug(`Payment Terms Result`, payment_terms);
+
+      const shape = {
+        'header.salesorder': 'id',
+        'header.date_of_isse': 'date_of_issue',
+        'header.certification': 'certification_date',
+        'header.payment_terms': 'terms',
+        'header.inco_terms': "inco_terms",
+        'header.named_place': "final_destination",
+        'header.reason_for_export': 'export_reason',
+        'header.bill_to_address': 'bill_to_address',
+        'header.ship_to_address': 'ship_to_address',
+        'header.consignee_address': 'consignee_street_address',
+        'header.consignee_contact': 'consignee_contact',
+        'header.notify_info': 'notify_info',
+        'header.comments': 'comments',
+        'detail': 'items'
+      };
+
+      const packing_list_result = await Api.get(`api/packing_list/${sales_order_id}`, null, shape).then();
+
+      logger.debug(`Certificate Response From API ${packing_list_result.status}`, { certificate_results: packing_list_result });
+
+      return {
+        id: sales_order_id,
+        emailAddress: '',
+        sendOptionsVia: 'email',
+
+        ...packing_list_result,
+      };
+    },
+
+    post_packing_list: async (sales_order_id: string, certificate: any): Promise<any> => {
+
+      return {
+        id: sales_order_id,
+        pdf_url: null,
+      };
+
+    },
+
+    put_packing_list: async (sales_order_id: string, certificate: any): Promise<any> => {
+
+      return {
+        id: sales_order_id,
+        pdf_url: null,
+      };
+    },
+
+
     deleteDocument: async (params) => {
       const deleteDocumentResult = await DELETE(SECONDARY_API_URLS.file_upload.url + params.id, {}).then();
       return deleteDocumentResult;
@@ -971,11 +1735,11 @@ const Api = {
         confirm_purchase_order_number: sales_order_input.confirm_number,
         has_confirmed_purchase_order_amount: sales_order_input.amounts_confirmed === true,
         delivery_address_id: sales_order_input.delivery_address_id,
-        quote_id: sales_order_input.quote_id,        
+        quote_id: sales_order_input.quote_id,
       };
 
 
-      
+
 
       /*
       
@@ -997,7 +1761,7 @@ const Api = {
       }
       
       */
-      
+
       /**
       
       {
@@ -1047,11 +1811,11 @@ const Api = {
           }
         } else {
           throw new ApiError(`Created Sales Order ${create_api_result.payload.id} but could not update the data.`);
-        }        
+        }
       } catch (createSalesOrder) {
         logger.error('Could not create sales order', createSalesOrder);
         if (createSalesOrder instanceof ApiError) throw createSalesOrder;
-        else  throw new ApiError('Could not create a new sales order - remote API error', { createSalesOrder });
+        else throw new ApiError('Could not create a new sales order - remote API error', { createSalesOrder });
       }
 
     },

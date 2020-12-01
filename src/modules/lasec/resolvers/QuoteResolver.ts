@@ -647,7 +647,7 @@ export default {
       return null
     },
     incoterms: (quote: LasecQuote) => {
-      return (getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms()
+      return (getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms();
     },
     options: async (quote: LasecQuote): Promise<LasecQuoteOption[]> => {
       let result: LasecQuoteOption[] = [];
