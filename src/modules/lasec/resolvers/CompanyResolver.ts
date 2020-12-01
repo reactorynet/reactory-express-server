@@ -331,52 +331,11 @@ export const getClient = async (params) => {
       logger.debug(`Found Cached Item for LASEC_COMPANY::${clientResponse.customer.id} ==> ${found}`)
       if (found === null || found === undefined) {
         let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }).then()
+
+        // logger.debug(`LASEC_COMPANY DETAILS::${JSON.stringify(companyPayloadResponse.items[0])}`);
+
         if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
           if (companyPayloadResponse.items.length === 1) {
-            /**
-             *
-             *
-             * {
-                "id": "11999",
-                "registered_name": "COD  LAB  CPT",
-                "description": null,
-                "trading_name": "COD  LAB  CPT",
-                "registration_number": null,
-                "vat_number": "-",
-                "credit_facility_requested": "10",
-                "account_terms": "COD General Accts",
-                "bank_account_type_id": null,
-                "bank_name": null,
-                "bank_account_number": null,
-                "branch_code": null,
-                "organisation_id": null,
-                "department_id": null,
-                "customer_class_id": "IND024",
-                "customer_sub_class_id": null,
-                "legal_address_id": null,
-                "physical_address_id": null,
-                "procurement_person_ids": null,
-                "account_person_ids": null,
-                "company_on_hold": false,
-                "currency_id": "1",
-                "currency_code": "ZAR",
-                "currency_symbol": "R",
-                "currency_description": "Rand",
-                "sales_team_id": "LAB100",
-                "billing_address": ",,,,,",
-                "warehouse_id": "10",
-                "credit_limit_total_cents": 0,
-                "current_balance_total_cents": -7532620,
-                "current_invoice_total_cents": -1252537,
-                "30_day_invoice_total_cents": -948730,
-                "60_day_invoice_total_cents": -1574862,
-                "90_day_invoice_total_cents": -413671,
-                "120_day_invoice_total_cents": -3342820,
-                "credit_invoice_total_cents": -7698211
-              }
-             *
-             */
-
             let customerObject = {
               ...clientResponse.customer, ...om(companyPayloadResponse.items[0], {
                 'company_id': 'id',
@@ -396,9 +355,13 @@ export const getClient = async (params) => {
                 "60_day_invoice_total_cents": "balance60Days",
                 "90_day_invoice_total_cents": "balance90Days",
                 "120_day_invoice_total_cents": "balance120Days",
-                "credit_invoice_total_cents": "creditTotal"
+                "credit_invoice_total_cents": "creditTotal",
+                "special_requirements": "specialRequirements"
               })
             };
+
+            // FOR TESTING PURPOSES
+            customerObject.specialRequirements = 'Efficiently enable fully researched relationships through end-to-end web services. Objectively foster multifunctional alignments rather than covalent users. Compellingly reinvent intuitive web-readiness whereas extensive e-services. Seamlessly empower accurate services before quality processes. Objectively visualize.';
 
             setCacheItem(hashkey, customerObject, 10);
             clientResponse.customer = customerObject;
@@ -910,7 +873,7 @@ const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
     };
   } else {
     documentFilter.uploadContext = {
-      $in: [`lasec-crm::company::${params.id}`]        
+      $in: [`lasec-crm::company::${params.id}`]
     };
   }
 

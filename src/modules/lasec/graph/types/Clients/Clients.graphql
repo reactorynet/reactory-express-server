@@ -32,6 +32,7 @@ type LasecCRMCustomer {
   balance120Days: Float
   creditTotal: Float
   documents: [LasecDocument]
+  specialRequirements: String
 }
 
 type LasecCRMOrganisation {

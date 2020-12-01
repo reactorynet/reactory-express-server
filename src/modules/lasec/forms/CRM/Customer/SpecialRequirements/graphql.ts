@@ -10,7 +10,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         firstName
         lastName
         fullName
-        emailAddress      
+        emailAddress
         country
         customer {
           id
@@ -18,19 +18,16 @@ const graphql: Reactory.IFormGraphDefinition = {
           accountNumber
           customerStatus
           country
+          specialRequirements
         }
-      }      
+      }
     }`,
     variables: {
-      'formData.id': 'id',            
+      'formData.id': 'id',
     },
-    resultMap: {      
+    resultMap: {
       'id': 'id',
-      'clientStatus': 'clientStatus',
-      'fullName': 'fullName',
-      'customer.customerStatus': 'customerStatus', 
-      'customer.accountNumber':'accountNumber',
-      'customer.tradingName': 'customer',     
+      'customer.specialRequirements': 'specialRequirements',
     },
     autoQuery: true,
     queryMessage: 'Loading customer details',

@@ -1,5 +1,4 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
 
 const displayUiSchema: any = {
@@ -7,34 +6,39 @@ const displayUiSchema: any = {
     componentType: "div",
     toolbarPosition: 'bottom',
     containerStyles: {
-      padding: '0px',
+      padding: '24px',
       margin: '0px',
-      marginTop: '16px',
       paddingBottom: '8px'
     },
-    schemaSelector: {
-      variant: 'button',
-      buttonTitle: 'Edit',
-      activeColor: 'primary',
-      selectSchemaId: 'edit'
-    },
-    style:{
+    // schemaSelector: {
+    //   variant: 'button',
+    //   buttonTitle: 'Edit',
+    //   activeColor: 'primary',
+    //   selectSchemaId: 'edit'
+    // },
+    style: {
       marginTop: '16px',
     },
     showSubmit: true,
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '24px'
+  },
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px'
+    }
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
+    // {
+    //   view: { lg: 12, sm: 12, md: 12 },
+    // },
     {
-      view: { md: 12 },      
-    },
-    {
-      comments: { md: 12 },
-      newComment: { md: 12 },                
+      specialRequirements: { sm: 12 },
     }
   ],
   view: {
@@ -46,46 +50,11 @@ const displayUiSchema: any = {
         position: 'relative'
       },
     }
-  },  
-  comments: {
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
-      columns: [
-        {
-          title: "Who", field: "fullName"
-        },
-        {
-          title: "When", field: "filename"
-        },
-        {
-          title: "Comment", field: "size"
-        },        
-      ],
-      options: {
-        grouping: false,
-        search: false,
-        showTitle: false,
-        toolbar: false,
-      }
-    }
   },
-  newComment: {
-    'ui:field': 'GridLayout',
-    'ui:grid-layout': [      
-      {
-        comment: { md: 12, sm: 12 },        
-      },      
-    ],
-    comment: {
-      'ui:options': {
-        component: 'TextField',
-        componentProps: {
-          multiline: true,
-          variant: 'outlined'
-        }
-      }      
-    }
-  },
+  specialRequirements: {
+    'ui:widget': 'ClientSpecialRequirements',
+    'ui:options': {}
+  }
 };
 
 const editUiSchema: any = {
@@ -103,11 +72,11 @@ const editUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { md: 12 },
     },
     {
       comments: { md: 12 },
-      newComment: { md: 12 },                
+      newComment: { md: 12 },
     }
   ],
   view: {
@@ -119,7 +88,7 @@ const editUiSchema: any = {
         position: 'relative'
       },
     },
-  },  
+  },
   comments: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -133,7 +102,7 @@ const editUiSchema: any = {
         },
         {
           title: "Comment", field: "size"
-        },        
+        },
       ],
       options: {
         grouping: false,
@@ -145,10 +114,10 @@ const editUiSchema: any = {
   },
   newComment: {
     'ui:field': 'GridLayout',
-    'ui:grid-layout': [      
+    'ui:grid-layout': [
       {
-        comment: { md: 12, sm: 12 },        
-      },      
+        comment: { md: 12, sm: 12 },
+      },
     ],
     comment: {
       'ui:options': {
@@ -162,30 +131,6 @@ const editUiSchema: any = {
   },
 };
 
-
-const commentSchema: Reactory.ISchema = {
-  type: "object",
-  properties: {
-    comment: {
-      type: "string",
-      title: "comment"
-    },
-    fullName: {
-      type: "string",
-      title: "userName"
-    },
-    avatar: {
-      type: "string",
-      title: "Avatar"
-    },
-    when: {
-      type: "string",
-      format: "date",
-      title: "when"
-    },    
-  }
-}; 
-
 const schema: Reactory.ISchema = {
   type: "object",
   properties: {
@@ -193,11 +138,10 @@ const schema: Reactory.ISchema = {
       type: "string",
       title: "Client ID"
     },
-    comments: {
-      type: "array",
-      items: { ...commentSchema }
-    },
-    newComment: { ...commentSchema }
+    specialRequirements: {
+      type: 'string',
+      title: 'Special Requirements'
+    }
   }
 };
 
@@ -234,9 +178,12 @@ const LasecCRMSpecialRequirements: Reactory.IReactoryForm = {
       uiSchema: editUiSchema,
     },
   ],
-  defaultFormValue: {
-    
-  },
+  defaultFormValue: {},
+  widgetMap: [
+    { componentFqn: 'lasec-crm.ClientSpecialRequirement@1.0.0', widget: 'ClientSpecialRequirements' },
+    { componentFqn: 'lasec-crm.ClientCommentGrid@1.0.0', widget: 'ClientCommentGrid' },
+  ],
+
 
 };
 
