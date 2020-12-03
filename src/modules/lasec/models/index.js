@@ -1,8 +1,13 @@
 import LasecCache from './LasecCache';
 import moment from 'moment';
 import { addCatchUndefinedToSchema } from 'graphql-tools';
+import logger from '@reactory/server-core/logging';
 
-export const getCacheItem = async (cacheKey) => {
+const null_fetch = () => {
+  return new Promise((resolve) => { resolve(null) });
+}
+
+export const getCacheItem = async (cacheKey, fetchpromise, ttl ) => {
   let cached = await LasecCache.findOne({ key: cacheKey, partner: global.partner._id }).then();
 
   if(cached !== null && typeof cached === 'object' && cached.ttl) {
@@ -12,6 +17,21 @@ export const getCacheItem = async (cacheKey) => {
     } else {
       return cached.item;
     }
+  }
+
+  if (fetchpromise && typeof fetchpromise === 'function') {
+    try {
+      const _fetch_result = await fetchpromise().then()
+
+      if (_fetch_result !== null && _fetch_result !== undefined) setCacheItem(cacheKey, _fetch_result, ttl);
+
+      return _fetch_result;
+
+    } catch (error) {
+      logger.error(`fetch promise failed`, error)
+      throw error;
+    }
+    
   }
 
   return null;

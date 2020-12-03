@@ -365,7 +365,8 @@ declare namespace Reactory {
     properties?: ISchemaObjectProperties | any | undefined,
     dependencies?: any | undefined,
     items?: ISchema,
-    format?: string | "email" | "password" | "date" | "date-time"
+    format?: string | "email" | "password" | "date" | "date-time",
+    enum?: string[]
   }
 
   export interface IStringSchema extends ISchema {

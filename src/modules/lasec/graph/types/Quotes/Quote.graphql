@@ -441,32 +441,6 @@ type PagedCRMQuote {
   quotes: [Quote]
 }
 
-type SalesOrderLineItem {
-  id: String
-  line: Int
-  productId: String
-  productCode: String
-  productDescription: String
-  unitOfMeasure: String
-  price: Float
-  totalPrice: Float
-  orderQty: Int
-  shippedQty: Int
-  backOrderQty: Int
-  reservedQty: Int
-  comment: String
-  image: String
-}
-
-type SalesOrderComment {
-  comment: String
-}
-
-type SalsOrderDetails {
-  lineItems: [SalesOrderLineItem]
-  comments: [SalesOrderComment]
-}
-
 type Invoice {
   id: String
   invoiceDate: String
@@ -824,8 +798,7 @@ extend type Query {
     iter: Int
   ): PagedCRMSalesOrders
 
-  LasecGetISODetail(orderId: String!): SalsOrderDetails
-
+  
   LasecGetCRMClientInvoices(
     clientId: String
     salesTeamId: String

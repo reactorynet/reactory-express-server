@@ -63,11 +63,64 @@ const schema: Reactory.ISchema = {
       title: 'Documents',
     },
     lineItems: {
-      type: 'string',
-      title: 'Line Items',
+      type: 'array',
+      items: {
+        type: 'object',
+        title: 'Line Items',
+        properties: {
+          id: {
+            type: 'string',
+            title: 'line item id'
+          },
+          line: {
+            type: 'string',
+            title: 'Line #'
+          },
+          productCode: {
+            type: 'string',
+            title: 'Product Code'
+          },
+          productDescription: {
+            type: 'string',
+            title: 'Product Description'
+          },
+          unitOfMeasure: {
+            type: 'string',
+            title: 'Unit of Measure'
+          },
+          price: {
+            type: 'number',
+            title: 'Price'
+          },
+          totalPrice: {
+            type: 'number',
+            title: 'Total Price'
+          },
+          orderQty: {
+            type: 'number',
+            title: 'Order Quantity'
+          },
+          backOrderQty: {
+            type: 'number',
+            title: 'Back Order Quantity'
+          },
+          reservedQty: {
+            type: 'number',
+            title: 'Reserve Quantity'
+          },
+          comment: {
+            type: 'string',
+            title: 'Comment'
+          }
+        }
+      }
     },
     comments: {
-      type: 'string'
+      type: 'array',
+      items: {
+        type: 'string',
+        title: 'Comment'
+      }
     }
   }
 };

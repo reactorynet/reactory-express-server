@@ -1,39 +1,96 @@
+"""
+Sales Order Line Item Detail
+"""
+type SalesOrderLineItem {
+  id: String
+  line: Int
+  productId: String
+  productCode: String
+  productDescription: String
+  unitOfMeasure: String
+  price: Float
+  totalPrice: Float
+  orderQty: Int
+  shippedQty: Int
+  backOrderQty: Int
+  reservedQty: Int
+  comment: String
+  image: String
+}
+
+
+"""
+Sales Order Line Item Detail
+"""
+type SalesOrderComment {
+  comment: String
+}
+
+
+"""
+Sales Order Line Item Detail
+"""
+type SalesOrderDetails {
+  lineItems: [SalesOrderLineItem]
+  comments: [SalesOrderComment]
+}
+
+
+"""
+Sales Order Line Item Detail
+"""
 type SalesOrder {
   id: String
   orderDate: Date
   salesOrderNumber: String
   shippingDate: String
-  quoteDate: String
+
   quoteId: String
+  quoteDate: String
+  
   orderType: String
   orderStatus: String
+  
   iso: Int
+  
   customer: String
+  
   crmCustomer: LasecCRMCustomer
   client: String
+  
   poNumber: String
   currency: String
+  
   deliveryAddress: String
-  warehouseNote: String
   deliveryNote: String
+  warehouseNote: String
+  
   salesTeam: String
   value: Int
   reserveValue: Int
   shipValue: Int
   backorderValue: Int
+  
   dispatchCount: Int
+  dispatches: [Any]
+  
   invoiceCount: Int
   invoices: [Any]
-  dispatches: [Any]
+  
+  documents: [Any]
   documentIds: [String]
 
-  orderQty: String
-  shipQty: String
-  reservedQty: String
-  backOrderQty: String
+  orderQty: Float
+  shipQty: Float
+  reservedQty: Float
+  backOrderQty: Float
+
+  details: SalesOrderDetails
 }
 
-
+"""
+Prepared Sales Order that is used to create a Sales Order 
+"""
 type LasecPreparedSalesOrder {
   id: String
   quote_id: String
@@ -53,6 +110,9 @@ type LasecPreparedSalesOrder {
   method_of_contact: String
 }
 
+"""
+Input date for Create Sales Order Input
+"""
 input LasecCreateSalesOrderInput {
   id: String
   quote_id: String
@@ -510,10 +570,21 @@ type LasecPackingListResponse {
 
 
 
+
+
 extend type Query {
   LasecGetPreparedSalesOrder(quote_id: String!): LasecPreparedSalesOrder
 
+  LasecGetISODetail(orderId: String!): SalesOrderDetails
 
+  """
+  Returns the ISO for the give sales order id
+  """
+  LasecGetISO(sales_order_id: String!): SalesOrder
+
+  """
+  Query to check if a given purchase order existing for a company and order id combination.
+  """
   LasecCheckPurchaseOrderExists(company_id: String, purchase_order_number: String) : LasecSalesOrderExistsResult
 
   """

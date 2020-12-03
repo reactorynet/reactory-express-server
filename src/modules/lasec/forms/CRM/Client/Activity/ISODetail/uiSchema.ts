@@ -62,15 +62,23 @@ const uiSchema: any = {
   },
   documents: {
     'ui:widget': 'LasecCRMISODetailDocuments',
-    'ui:options': { }
+    'ui:options': {
+      propsMap: {
+        'formData.orderId': 'sales_order_id'
+      },
+    }
   },
   lineItems: {
     'ui:widget': 'LasecCRMISODetailLineItems',
     'ui:options': { }
   },
   comments: {
-    'ui:widget': 'LasecCRMISODetailComments',
-    'ui:options': { }
+    //'ui:widget': 'LasecCRMISODetailComments',
+    //'ui:options': { 
+    //  propsMap: {
+    //    'formData.orderId': 'sales_order_id'
+    //  },
+    //}
   },  
 };
 

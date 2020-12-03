@@ -154,7 +154,7 @@ const documents = cloneDeep<Reactory.ISchema>(DocumentFormSchema);
 // newSchema.properties.paging = { ...PagingSchema }
 documents.title = 'Documents';
 documents.description = 'Attach documents to the sales order.';
-documents.properties.uploadedDocuments.title = 'Uploaded files'
+documents.properties.uploadedDocuments.title = 'Uploaded files.';
 
 const schema: Reactory.ISchema = {
     type: "object",

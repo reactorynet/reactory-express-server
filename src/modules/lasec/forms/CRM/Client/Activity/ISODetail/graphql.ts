@@ -2,57 +2,143 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
-    name: 'LasecGetISODetail',
-    text: `query LasecGetISODetail($orderId: String!) {
-      LasecGetISODetail(orderId: $orderId) {
-        lineItems {
+    name: 'LasecGetISO',
+    text: `query SalesOrder($sales_order_id: String!) {
+      LasecGetISO (sales_order_id: $sales_order_id) {
+        id
+        orderDate
+        salesOrderNumber
+        shippingDate
+        
+        quoteId
+        quoteDate
+        
+        orderType
+        orderStatus
+    
+        iso  
+        
+        customer
+        
+        crmCustomer {
           id
-          line
-          productCode
-          productDescription
-          unitOfMeasure
-          price
-          totalPrice
-          orderQty
-          shippedQty
-          backOrderQty
-          reservedQty
-          comment
-          image
+          registeredName
+          tradingName
         }
-        comments {
-          comment
+        
+        poNumber
+        currency
+        
+        deliveryAddress
+        deliveryNote
+        warehouseNote
+        
+        salesTeam
+        value
+        reserveValue
+        shipValue
+        backorderValue
+        
+        dispatchCount
+        dispatches
+        
+        orderQty
+        shipQty
+        reservedQty
+        backOrderQty
+        
+        documents
+        
+        details {    
+          lineItems {
+            id
+            line
+            productCode
+            productDescription
+            
+            price
+            totalPrice
+            unitOfMeasure
+            
+            orderQty
+            shippedQty                              
+            reservedQty
+            backOrderQty
+            
+            comment        
+          }
+          comments {
+            comment
+          }
         }
       }
     }`,
     variables: {
-      'formData.orderId': 'orderId',
+      'formData.orderId': 'sales_order_id',
     },
     resultType: 'object',
     resultMap: {
-      'header': 'header',
-      'deliveryDetails': 'deliveryDetails',
-      'orderSummary': 'orderSummary',
+      'orderDate': 'header.orderDate',
+      'customer': 'header.client',
+      'crmCustomer.tradingName': 'header.customer',
+      'currency': 'header.currency',
+
+      'deliveryAddress': 'deliveryDetails.deliveryAddress',
+      'deliveryNote': 'deliveryDetails.deliveryNote',
+      'warehouseNote': 'deliveryDetails.warehouseNote',
+      
+      'iso': 'orderSummary.orderId',
+      'orderType': 'orderSummary.orderType',
+      'poNumber': 'orderSummary.poNumber',
+      'salesPerson': 'orderSummary.salesPerson',
+      'quoteNumber': 'orderSummary.quoteNumber',
+      
       'documents': 'documents',
-      'lineItems[].id': 'lineItems[].id',
-      'lineItems[].line': 'lineItems[].line',
-      'lineItems[].productCode': 'lineItems[].productCode',
-      'lineItems[].productDescription': 'lineItems[].productDescription',
-      'lineItems[].unitOfMeasure': 'lineItems[].unitOfMeasure',
-      'lineItems[].price': 'lineItems[].price',
-      'lineItems[].totalPrice': 'lineItems[].totalPrice',
-      'lineItems[].orderQty': 'lineItems[].orderQty',
-      'lineItems[].shippedQty': 'lineItems[].shippedQty',
-      'lineItems[].backOrderQty': 'lineItems[].backOrderQty',
-      'lineItems[].reservedQty': 'lineItems[].reservedQty',
-      'lineItems[].comment': 'lineItems[].comment',
-      'lineItems[].image': 'lineItems[].image',
-      'comments[].comment': 'comments.[].comment'
+
+      'details.lineItems': 'lineItems',
+      'details.comments': 'comments'            
     },
     // autoQuery: true,
     edit: false,
     new: false,
   },
+  queries: {
+    documents_list: {
+      name: 'LasecGetCustomerDocuments',
+      text: `query LasecGetCustomerDocuments($uploadContexts: [String], $paging: PagingRequest){
+          LasecGetCustomerDocuments(uploadContexts: $uploadContexts, paging: $paging){
+            paging {
+              total
+              page
+              pageSize
+            }
+            documents {
+              id
+              filename
+              mimetype
+              link
+              size
+              owner {
+                id
+                firstName
+                fullName
+              }
+            }
+          }
+        }`,
+      variables: {
+          'props.formContext.formData.documents.$paging': 'paging',
+          'props.formContext.formData.documents.uploadContext': 'uploadContexts',
+      },
+      resultMap: {
+          'paging.page': 'page',
+          'paging.total': 'totalCount',
+          'paging.pageSize': 'pageSize',
+          'documents': 'data',
+      },
+      resultType: 'object',
+  },
+  }
 };
 
 export default graphql;

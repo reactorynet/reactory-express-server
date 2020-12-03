@@ -1,5 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 
+/*
 const schema: Reactory.ISchema = {
   type: 'object',
   title: 'PRODUCT SUMMARY',
@@ -147,6 +148,119 @@ const uiSchema: any = {
     }
   }
 };
+*/
+
+const schema: Reactory.ISchema = {  
+  title: 'Line Items',
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string'
+      },
+      line: {
+        type: 'string'
+      },
+      productCode: {
+        type: 'string'
+      },
+      productDescription: {
+        type: 'string'
+      },
+      unitOfMeasure: {
+        type: 'string'
+      },
+      price: {
+        type: 'string'
+      },
+      totalPrice: {
+        type: 'string'
+      },
+      orderQty: {
+        type: 'string'
+      },
+      shippedQty: {
+        type: 'string'
+      },
+      backOrderQty: {
+        type: 'string'
+      },
+      reservedQty: {
+        type: 'string'
+      },
+      comment: {
+        type: 'string'
+      },
+      image: {
+        type: 'string'
+      },
+    }
+  },
+  
+};
+
+const uiSchema: any = {
+  'ui:widget': 'MaterialTableWidget',
+  'ui:options': {
+    columns: [
+      {
+        title: '', field: 'image',
+        width: '200px',
+        component: 'core.ImageComponent@1.0.0',
+        props: {
+          'ui:options': {
+            variant: 'rounded',
+            style: {
+              marginLeft: '16px'
+            }
+          },
+        },
+        propsMap: {
+          'rowData.image': 'value',
+        },
+        cellStyle: {
+          maxWidth: '200px',
+          width: '200px'
+        },
+        headerStyles: {
+          maxWidth: '200px',
+          width: '200px'
+        }
+      },
+      { title: 'Stock Code', field: 'productCode' },
+      { title: 'Product Description', field: 'productDescription' },
+      { title: 'Unit of Measure', field: 'unitOfMeasure' },
+      {
+        title: 'Unit Price',
+        field: 'value',
+        component: 'core.CurrencyLabel@1.0.0',
+        propsMap: {
+          'rowData.price': 'value',
+        },
+      },
+      {
+        title: 'Total Price',
+        field: 'value',
+        component: 'core.CurrencyLabel@1.0.0',
+        propsMap: {
+          'rowData.totalPrice': 'value',
+        },
+      },
+      { title: 'Order Qty', field: 'orderQty' },
+      { title: 'Reserved Qty', field: 'reservedQty' },
+      { title: 'Shipped Qty', field: 'shippedQty' },
+      { title: 'Back Order', field: 'backOrderQty' },
+    ],
+    options: {
+      grouping: false,
+      search: false,
+      showTitle: false,
+      toolbar: false,
+    },
+    remoteData: false,
+  }
+}; 
 
 const LasecCRMISODetailLineItems: Reactory.IReactoryForm = {
   id: 'LasecCRMISODetailLineItems',
