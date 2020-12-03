@@ -92,12 +92,481 @@ type LasecSalesOrderCreateResponse {
   salesOrder: SalesOrder
 }
 
+type LasecCertificateProductItem {
+  id: String
+  syspro_company: String
+  item_number: String
+  stock_code: String
+  description: String
+  qty: String
+  date_of_manufacture: Date
+  date_of_manufacture_na: Boolean
+  lot_no: String
+  expire_date: Date
+  expire_date_na: Boolean
+}
+
+type LasecCommercialInvoiceProductItem {
+  id: String
+  item_number: String
+  stock_code: String
+  description: String
+  qty: String
+  unit_price: Int
+  freight: Int
+  insurance: Int
+  discount: Int
+  deposit: Int
+  has_vat: Boolean
+}
+
+
+type LasecPackingListItem {
+  id: String
+  pallet_type: String
+  quantity: Int
+  width: String
+  length: String
+  height: String
+  weight: String
+}
+
+type LasecCertificateLookups {
+  inco_terms: [LasecLookupItem],
+  payment_terms: [LasecLookupItem]
+}
+
+
+"""
+Document that represent the Certificate of Conformance 
+for PDF document. 
+"""
+type LasecCertificateOfConformance {
+  id: String  
+  pdf_url: String
+  emailAddress: String
+  sendOptionsVia: String
+  
+  date_of_issue: String
+  terms: String
+  final_destination: String
+  export_reason: String
+  document_number: String
+  inco_terms: String
+  po_number: String
+
+  bill_to_company: String
+  bill_to_street_address: String
+  bill_to_suburb: String
+  bill_to_city: String
+  bill_to_province: String
+  bill_to_country: String
+
+  ship_to_company: String
+  ship_to_street_address: String
+  ship_to_suburb: String
+  ship_to_city: String
+  ship_to_province: String
+  ship_to_country: String
+
+  consignee_company: String
+  consignee_street_address: String
+  consignee_suburb: String
+  consignee_city: String
+  consignee_province: String
+  consignee_country: String
+  consignee_contact: String
+  consignee_number: String
+
+  notify_company: String
+  notify_street_address: String
+  notify_suburb: String
+  notify_city: String
+  notify_province: String
+  notify_country: String
+  notify_contact: String
+  notify_number: String
+
+  comments: String
+
+  lookups: LasecCertificateLookups
+
+  products: [LasecCertificateProductItem]
+}
+
+"""
+The Packing List data for the packing list
+"""
+type LasecPackingList {
+  id: String
+  pdf_url: String
+  emailAddress: String
+  sendOptionsVia: String
+  
+  date_of_issue: String
+  terms: String
+  final_destination: String
+  export_reason: String
+  doucment_number: String
+  inco_terms: String
+  po_number: String
+
+  bill_to_company: String
+  bill_to_street_address: String
+  bill_to_suburb: String
+  bill_to_city: String
+  bill_to_province: String
+  bill_to_country: String
+
+  ship_to_company: String
+  ship_to_street_address: String
+  ship_to_suburb: String
+  ship_to_city: String
+  ship_to_province: String
+  ship_to_country: String
+
+  consignee_company: String
+  consignee_street_address: String
+  consignee_suburb: String
+  consignee_city: String
+  consignee_province: String
+  consignee_country: String
+  consignee_contact: String
+  consignee_number: String
+
+  notify_company: String
+  notify_street_address: String
+  notify_suburb: String
+  notify_city: String
+  notify_province: String
+  notify_country: String
+  notify_contact: String
+  notify_number: String
+
+  comments: String
+
+  items: [LasecPackingListItem]
+}
+
+"""
+The Lasec Commercial Invoice
+"""
+type LasecCommercialInvoice {
+  id: String
+  pdf_url: String
+  emailAddress: String
+  sendOptionsVia: String
+  
+  date_of_issue: String
+  terms: String
+  final_destination: String
+  export_reason: String
+  doucment_number: String
+  inco_terms: String
+  po_number: String
+
+  bill_to_company: String
+  bill_to_street_address: String
+  bill_to_suburb: String
+  bill_to_city: String
+  bill_to_province: String
+  bill_to_country: String
+
+  ship_to_company: String
+  ship_to_street_address: String
+  ship_to_suburb: String
+  ship_to_city: String
+  ship_to_province: String
+  ship_to_country: String
+
+  consignee_company: String
+  consignee_street_address: String
+  consignee_suburb: String
+  consignee_city: String
+  consignee_province: String
+  consignee_country: String
+  consignee_contact: String
+  consignee_number: String
+
+  notify_company: String
+  notify_street_address: String
+  notify_suburb: String
+  notify_city: String
+  notify_province: String
+  notify_country: String
+  notify_contact: String
+  notify_number: String
+
+  comments: String
+
+  products: [LasecCommercialInvoiceProductItem]
+}
+
+
+input LasecCertficateItemInput {
+  id: String
+  item_number: String
+  stock_code: String
+  description: String
+  qty: String
+  date_of_manufacture: Date
+  lot_no: String
+  expire_date: Date
+}
+
+input LasecCommercialInvoiceItemInput {
+  id: String
+  item_number: String
+  stock_code: String
+  description: String
+  qty: String
+  date_of_manufacture: Date
+  lot_no: String
+  expire_date: Date
+}
+
+input LasecPackingListItemInput {
+  id: String
+  pallet_type: String
+  quantity: Int
+  width: String
+  length: String
+  height: String
+  weight: String
+}
+
+"""
+Input Data to Create the Certificate of Conformance
+"""
+input LasecCertificateOfConformanceInput {
+  id: String
+  emailAddress: String
+  sendOptionsVia: String
+  
+  date_of_issue: String
+  terms: String
+  final_destination: String
+  export_reason: String
+  doucment_number: String
+  inco_terms: String
+  po_number: String
+
+  bill_to_company: String
+  bill_to_street_address: String
+  bill_to_suburb: String
+  bill_to_city: String
+  bill_to_province: String
+  bill_to_country: String
+
+  ship_to_company: String
+  ship_to_street_address: String
+  ship_to_suburb: String
+  ship_to_city: String
+  ship_to_province: String
+  ship_to_country: String
+
+  consignee_company: String
+  consignee_street_address: String
+  consignee_suburb: String
+  consignee_city: String
+  consignee_province: String
+  consignee_country: String
+  consignee_contact: String
+  consignee_number: String
+
+  notify_company: String
+  notify_street_address: String
+  notify_suburb: String
+  notify_city: String
+  notify_province: String
+  notify_country: String
+  notify_contact: String
+  notify_number: String
+
+  comments: String
+
+  products: [LasecCertficateItemInput]
+}
+
+input LasecCommercialInvoiceInput {
+  id: String
+  emailAddress: String
+  sendOptionsVia: String
+  
+  date_of_issue: String
+  terms: String
+  final_destination: String
+  export_reason: String
+  doucment_number: String
+  inco_terms: String
+  po_number: String
+
+  bill_to_company: String
+  bill_to_street_address: String
+  bill_to_suburb: String
+  bill_to_city: String
+  bill_to_province: String
+  bill_to_country: String
+
+  ship_to_company: String
+  ship_to_street_address: String
+  ship_to_suburb: String
+  ship_to_city: String
+  ship_to_province: String
+  ship_to_country: String
+
+  consignee_company: String
+  consignee_street_address: String
+  consignee_suburb: String
+  consignee_city: String
+  consignee_province: String
+  consignee_country: String
+  consignee_contact: String
+  consignee_number: String
+
+  notify_company: String
+  notify_street_address: String
+  notify_suburb: String
+  notify_city: String
+  notify_province: String
+  notify_country: String
+  notify_contact: String
+  notify_number: String
+
+  comments: String
+
+  products: [LasecCommercialInvoiceItemInput]
+}
+
+input LasecPackingListInput {
+  id: String
+  emailAddress: String
+  sendOptionsVia: String
+  
+  date_of_issue: String
+  terms: String
+  final_destination: String
+  export_reason: String
+  doucment_number: String
+  inco_terms: String
+  po_number: String
+
+  bill_to_company: String
+  bill_to_street_address: String
+  bill_to_suburb: String
+  bill_to_city: String
+  bill_to_province: String
+  bill_to_country: String
+
+  ship_to_company: String
+  ship_to_street_address: String
+  ship_to_suburb: String
+  ship_to_city: String
+  ship_to_province: String
+  ship_to_country: String
+
+  consignee_company: String
+  consignee_street_address: String
+  consignee_suburb: String
+  consignee_city: String
+  consignee_province: String
+  consignee_country: String
+  consignee_contact: String
+  consignee_number: String
+
+  notify_company: String
+  notify_street_address: String
+  notify_suburb: String
+  notify_city: String
+  notify_province: String
+  notify_country: String
+  notify_contact: String
+  notify_number: String
+
+  comments: String
+
+  items: [LasecPackingListItemInput]
+}
+
+type LasecCertificateOfConformanceResponse {
+  message: String
+  success: Boolean  
+  certificate: LasecCertificateOfConformance
+}
+
+type LasecCommercialInvoiceResponse {  
+  message: String
+  success: Boolean  
+  pdf_url: String
+  commercial_invoice: LasecCommercialInvoice
+}
+
+type LasecPackingListResponse {  
+  message: String
+  success: Boolean
+  pdf_url: String  
+  packing_list: LasecPackingList
+}
+
+
 
 extend type Query {
   LasecGetPreparedSalesOrder(quote_id: String!): LasecPreparedSalesOrder
+
+
   LasecCheckPurchaseOrderExists(company_id: String, purchase_order_number: String) : LasecSalesOrderExistsResult
+
+  """
+  Get the inco terms for the sales order id
+  """
+  LasecGetIncoTermsForSalesOrder(sales_order_id: String!) : [LasecLookupItem]
+
+  """
+  Get the payment terms for the sales order id
+  """
+  LasecGetPaymentTermsForSalesOrder(sales_order_id: String!): [LasecLookupItem]
+
+  """
+  LasecCertificateOfConformance get for sales order
+  """
+  LasecCertificateOfConformanceForSalesOrder(sales_order_id: String!, item_paging: PagingRequest): LasecCertificateOfConformance
+  """
+  LasecCommercialInvoice get for sales order
+  """
+  LasecCommercialInvoiceForSalesOrder(sales_order_id: String!, item_paging: PagingRequest): LasecCommercialInvoice
+  """
+  LasecPackingList get for sales order
+  """
+  LasecPackingListForSalesOrder(sales_order_id: String,item_paging: PagingRequest): LasecPackingList
 }
 
 extend type Mutation {
   LasecCreateSalesOrder(sales_order_input: LasecCreateSalesOrderInput): LasecSalesOrderCreateResponse
+  
+  """
+  Create Certificate of Conformance
+  """
+  LasecCreateCertificateOfConformance(sales_order_id: String!, certificate: LasecCertificateOfConformanceInput): LasecCertificateOfConformanceResponse
+  """
+  Update Existing of Conformance
+  """
+  LasecUpdateCertificateOfConformance(sales_order_id: String!, certificate: LasecCertificateOfConformanceInput): LasecCertificateOfConformanceResponse
+  
+  """
+  Create Commercial Invoice
+  """
+  LasecCreateCommericalInvoice(sales_order_id: String!, invoice: LasecCommercialInvoiceInput): LasecCommercialInvoiceResponse
+  """
+  Update Existing Commercial Invoice
+  """
+  LasecUpdateCommericalInvoice(sales_order_id: String!, invoice: LasecCommercialInvoiceInput): LasecCommercialInvoiceResponse
+
+  """
+  Create Packing List
+  """
+  LasecCreatePackingList(sales_order_id: String!, packing_list: LasecPackingListInput): LasecPackingListResponse
+  """
+  Update Existing Packing List
+  """
+  LasecUpdatePackingList(sales_order_id: String!, packing_list: LasecPackingListInput): LasecPackingListResponse
 }

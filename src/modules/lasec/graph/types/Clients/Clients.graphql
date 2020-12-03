@@ -124,6 +124,7 @@ type ClientDetailUpdateResponse {
 
 type LasecLookupItem {
   id: String
+  lookup_type: String
   name: String
   description: String
 }

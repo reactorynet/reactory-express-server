@@ -175,6 +175,13 @@ const SalesOrderResolver = {
         throw new ApiError(`Unhandled Error Processing Sales Order Prep ${error.message}`);
       }
     },
+    LasecGetIncoTermsForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
+      try {
+        
+      } catch (inco_terms_error) {
+        
+      }
+    },
     LasecCheckPurchaseOrderExists: async (parent: any, params: { company_id: string, purchase_order_number: string }): Promise<any> => {
       try {
         logger.debug('SalesOrderResolver.ts => LasecCheckPurchaseOrderExists ');
@@ -186,6 +193,48 @@ const SalesOrderResolver = {
         throw purchaseOrderError;
       }
     },
+    /***
+     * Get Create Certificate of Conformance for Sales Order
+     */
+    LasecCertificateOfConformanceForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
+      try {
+        logger.debug(`SalesOrderResovler.ts => LasecCertificateOfConformanceForSalesOrder`);
+        const certificate = await LasecApi.SalesOrders.get_certificate_of_conformance(params.sales_order_id).then()
+        logger.debug(`Returning sales order certificate`, certificate);
+
+        return certificate;
+
+      } catch (err) {
+        logger.error(`Error while gettting certificate of conformance for sales order`, { error: err });
+        return null;
+      }
+    },
+
+    LasecCommercialInvoiceForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
+      try {
+        logger.debug(`SalesOrderResovler.ts => LasecCertificateOfConformanceForSalesOrder`);
+        const certificate = await LasecApi.SalesOrders.get_commercial_invoice(params.sales_order_id).then()
+        logger.debug(`Error while gettting certificate of conformance for sales order`);
+
+        return certificate
+      } catch (err) {
+        logger.error(`Error while gettting certificate of conformance for sales order`, { error: err });
+        return null;
+      }
+    },
+
+    LasecPackingListForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
+      try {
+        logger.debug(`SalesOrderResovler.ts => LasecCertificateOfConformanceForSalesOrder`);
+        const certificate = await LasecApi.SalesOrders.get_packing_list(params.sales_order_id).then()
+        logger.debug(`Error while gettting certificate of conformance for sales order`);
+
+        return certificate.payload;
+      } catch (err) {
+        logger.error(`Error while gettting certificate of conformance for sales order`);
+        return null;
+      }
+    }
   },
   Mutation: {
     LasecCreateSalesOrder: async (parent: any, params: { sales_order_input: LasecCreateSalesOrderInput }): Promise<SimpleResponse> => {
@@ -197,6 +246,153 @@ const SalesOrderResolver = {
       const createResult = await quoteService.createSalesOrder(params.sales_order_input).then();
 
       return createResult;
+    },
+    /***
+     * Create Certificate of Conformance 
+     */
+    LasecCreateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: any }, context: any, info: any): Promise<any> => {
+      try {
+        
+        const result = await LasecApi.SalesOrders.post_certificate_of_conformance(params.sales_order_id, params.certificate).then();
+        return {
+          success: true,
+          message: 'Certificate of conformance created',
+          certificate: {
+            ...params.certificate,
+            pdf_url: result.payload
+          }
+        }
+
+      } catch (error) {
+
+        return {
+          success: false, 
+          message: error.message,
+          certificate: params.certificate
+        }
+      }
+    },
+
+    LasecUpdateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: any }, context: any, info: any): Promise<any> => {
+  
+      try {
+        
+        const result = await LasecApi.SalesOrders.put_certificate_of_conformance(params.sales_order_id, params.certificate).then();
+        return {
+          success: true,
+          message: 'Certificate of conformance created',
+          certificate: {
+            ...params.certificate,
+            pdf_url: result.payload
+          }
+        }
+
+      } catch (error) {
+
+        return {
+          success: false, 
+          message: error.message,
+          certificate: params.certificate
+        }
+      }
+
+    },
+    
+    LasecCreateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any } ): Promise<any> => {
+
+      try {
+        
+        const result = await LasecApi.SalesOrders.post_commercial_invoice(params.sales_order_id, params.invoice).then();
+        return {
+          success: true,
+          message: 'Certificate of conformance created',
+          certificate: {
+            ...params.invoice,
+            pdf_url: result.payload
+          }
+        }
+
+      } catch (error) {
+
+        return {
+          success: false, 
+          message: error.message,
+          invoice: params.invoice
+        }
+      }
+
+    },
+
+    LasecUpdateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any } ): Promise<any> => {
+      try {
+        
+        const result = await LasecApi.SalesOrders.put_commercial_invoice(params.sales_order_id, params.invoice).then();
+        return {
+          success: true,
+          message: 'Certificate of conformance updated',
+          certificate: {
+            ...params.invoice,
+            pdf_url: result.payload
+          }
+        }
+
+      } catch (error) {
+
+        return {
+          success: false, 
+          message: error.message,
+          invoice: params.invoice
+        }
+      }
+
+    },
+
+    LasecCreatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any } ): Promise<any> => {
+      try {
+        
+        const result = await LasecApi.SalesOrders.post_packing_list(params.sales_order_id, params.packing_list).then();
+        return {
+          success: true,
+          message: 'Certificate of conformance created',
+          certificate: {
+            ...params.packing_list,
+            pdf_url: result.payload
+          }
+        }
+
+      } catch (error) {
+
+        return {
+          success: false, 
+          message: error.message,
+          invoice: params.packing_list
+        }
+      }
+
+    },
+
+    LasecUpdatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any } ): Promise<any> => {
+      try {
+        
+        const result = await LasecApi.SalesOrders.put_packing_list(params.sales_order_id, params.packing_list).then();
+        return {
+          success: true,
+          message: 'Certificate of conformance created',
+          certificate: {
+            ...params.packing_list,
+            pdf_url: result.payload
+          }
+        }
+
+      } catch (error) {
+
+        return {
+          success: false, 
+          message: error.message,
+          invoice: params.packing_list
+        }
+      }
+
     }
   }
 };
