@@ -64,7 +64,7 @@ const uiSchema: any = {
     'ui:widget': 'LasecCRMISODetailDocuments',
     'ui:options': {
       propsMap: {
-        'formData.orderId': 'sales_order_id'
+        'formData.orderId': 'formData.orderId'
       },
     }
   },

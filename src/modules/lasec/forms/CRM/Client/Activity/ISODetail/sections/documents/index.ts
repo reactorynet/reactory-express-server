@@ -72,7 +72,7 @@ const uiSchema : Reactory.IUISchema = {
               }
             }`,
           variables: {
-            'uploadContext': 'lasec-crm::sales-order::document-${formContext.sales_order_id}'
+            'uploadContext': 'lasec-crm::sales-order::document-${props.formContext.sales_order_id}'
           },
           onSuccessEvent: {
             name: 'lasec-crm::sales-order::document::uploaded'
