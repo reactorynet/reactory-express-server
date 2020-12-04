@@ -208,7 +208,8 @@ const uiSchema: any = {
     showSubmitButton: false,
     columns: [
       {
-        title: '', field: 'image',
+        title: '',
+        field: 'image',
         width: '200px',
         component: 'core.ImageComponent@1.0.0',
         props: {
@@ -220,7 +221,7 @@ const uiSchema: any = {
           },
         },
         propsMap: {
-          'rowData.image': 'value',
+          'rowData.product.image': 'value',
         },
         cellStyle: {
           maxWidth: '200px',

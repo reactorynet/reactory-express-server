@@ -65,7 +65,12 @@ const graphql: Reactory.IFormGraphDefinition = {
             reservedQty
             backOrderQty
             
-            comment        
+            comment 
+            
+            product {
+              id
+              image
+            }
           }
           comments {
             comment
@@ -96,7 +101,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       'documents': 'documents',
 
       'details.lineItems': 'lineItems',
-      'details.comments': 'comments'
+      
+      'details.comments': 'comments',
     },
     // autoQuery: true,
     edit: false,

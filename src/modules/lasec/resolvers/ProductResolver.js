@@ -296,17 +296,55 @@ const getProducts = async (params) => {
 
 }
 
-export const getProductById = async (params) => {
+export const getProductById = async (params, load_costings = true) => {
   const { productId } = params;
 
   const productResult = await lasecApi.Products.list({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
 
   if (productResult && productResult.items) {
+    
     if (productResult.items.length === 1) {
       let product = productResult.items[0]
-      const costingResults = await lasecApi.Products.costings({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
-      const costing = costingResults.items[0] || {}
+      
+      
+      let costingResults = null;
+      let costing = null;
+      let product_costing = {};
 
+      if (load_costings === true) {
+
+        costintResults = await lasecApi.Products.costings({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
+        costing = costingResults.items[0] || {};
+
+        product_costing = {
+          supplier: costing.supplier_name,
+          model: costing.model,
+          shipmentSize: costing.shipment_size,
+          exWorksFactor: costing.exworks_factor,
+          freightFactor: costing.freight_factor,
+          clearingFactor: costing.clearing_factor,
+          actualCostwh10: costing.actual_cost_wh10,
+          actualCostwh20: costing.actual_cost_wh20,
+          actualCostwh21: costing.actual_cost_wh21,
+          actualCostwh31: costing.actual_cost_wh31,
+          supplierUnitPrice: costing.supplier_unit_price_cents,
+          percDiscount: costing.percentage_discount,
+          discountPrice: costing.discounted_price_cents,
+          freightPrice: costing.freight_price_cents,
+          exWorksPrice: costing.exworks_price_cents,
+          craftingFOC: costing.crating_foc_cents,
+          netFOB: costing.net_fob,
+          percDuty: costing.percentage_duty,
+          clearance: costing.clearance_cost_cents,
+          landedCost: costing.landed_cost_cents,
+          markup: costing.markup,
+          sellingPrice: costing.selling_price_cents,
+        };
+
+      }
+
+
+      
       product = {
         id: product.id,
         name: product.name,
@@ -349,29 +387,8 @@ export const getProductById = async (params) => {
         onSpecial: product.on_special,
         specialPrice: product.special_price_cents,
         currencyCode: product.currency_code,
-        supplier: costing.supplier_name,
-        model: costing.model,
-        shipmentSize: costing.shipment_size,
-        exWorksFactor: costing.exworks_factor,
 
-        freightFactor: costing.freight_factor,
-        clearingFactor: costing.clearing_factor,
-        actualCostwh10: costing.actual_cost_wh10,
-        actualCostwh20: costing.actual_cost_wh20,
-        actualCostwh21: costing.actual_cost_wh21,
-        actualCostwh31: costing.actual_cost_wh31,
-        supplierUnitPrice: costing.supplier_unit_price_cents,
-        percDiscount: costing.percentage_discount,
-        discountPrice: costing.discounted_price_cents,
-        freightPrice: costing.freight_price_cents,
-        exWorksPrice: costing.exworks_price_cents,
-        craftingFOC: costing.crating_foc_cents,
-        netFOB: costing.net_fob,
-        percDuty: costing.percentage_duty,
-        clearance: costing.clearance_cost_cents,
-        landedCost: costing.landed_cost_cents,
-        markup: costing.markup,
-        sellingPrice: costing.selling_price_cents,
+        ...product_costing,
 
         notes: ''
       };

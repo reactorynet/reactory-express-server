@@ -20,6 +20,7 @@ import { execql } from "@reactory/server-core/graph/client";
 import { LasecCompany } from "../constants";
 import { getCacheItem, setCacheItem } from "../models";
 import moment from "moment";
+import { getProductById } from "./ProductResolver";
 
 const SalesOrderResolver = {
 
@@ -60,6 +61,19 @@ const SalesOrderResolver = {
     details: async (salesOrder: LasecSalesOrder, context: any, info: any) => {      
       return getISODetails({ orderId: salesOrder.id, quoteId: salesOrder.quoteId });
     }
+  },
+  SalesOrderLineItem: {
+
+    product: async (lineItem: any, args: any) => {
+      logger.debug(`Product for lineItem`, { lineItem, args });
+      
+      if (lineItem.productId) {        
+        return getProductById({ productId: lineItem.productId }, false);
+      }
+
+      return null;
+    },
+
   },
   Query: {
     LasecGetPagedCRMSalesOrders: async (obj, args) => {
@@ -106,7 +120,7 @@ const SalesOrderResolver = {
     LasecGetSaleOrderDocument: async (obj, args) => {
       return getSODocuments(args);
     },
-    LasecGetISODetail: async (obj, args) => {
+    LasecGetISODetail: async (obj: any, args: any) => {
       return getISODetails(args);
     },
 

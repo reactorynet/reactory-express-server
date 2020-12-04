@@ -16,6 +16,7 @@ type SalesOrderLineItem {
   reservedQty: Int
   comment: String
   image: String
+  product: Product
 }
 
 

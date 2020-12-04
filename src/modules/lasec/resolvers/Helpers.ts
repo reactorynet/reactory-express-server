@@ -2164,7 +2164,7 @@ export const deleteSalesOrdersDocument = async (args) => {
   }
 }
 
-export const getISODetails = async (params) => {
+export const getISODetails = async (params: { orderId: string, quoteId: string }) => {
 
   const {
     orderId,
@@ -2172,7 +2172,6 @@ export const getISODetails = async (params) => {
   } = params;
 
   let apiFilter = { sales_order_id: orderId };
-
   let salesOrdersIds = await lasecApi.SalesOrders.detail({ filter: apiFilter }).then();
 
   let ids = [];
@@ -2184,9 +2183,11 @@ export const getISODetails = async (params) => {
   let salesOrdersDetail = await lasecApi.SalesOrders.detail({ filter: { ids: ids } }).then();
   let salesOrders = [...salesOrdersDetail.items];
 
+  
+
   logger.debug(`SALES ORDERS:: ${JSON.stringify(salesOrders)}`);
 
-  let lineItems = [];
+  let lineItems: any[] = [];
   salesOrders.forEach(so => {
 
     if (so.product_code != '') {
@@ -2203,7 +2204,7 @@ export const getISODetails = async (params) => {
         shippedQty: so.shipped_qty,
         backOrderQty: so.back_order_qty,
         reservedQty: so.reserved_qty,
-        comment: so.comment
+        comment: so.comment,
       }
 
       lineItems.push(item);
