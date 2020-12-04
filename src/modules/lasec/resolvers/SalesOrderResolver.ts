@@ -65,12 +65,10 @@ const SalesOrderResolver = {
   SalesOrderLineItem: {
 
     product: async (lineItem: any, args: any) => {
-      logger.debug(`Product for lineItem`, { lineItem, args });
-      
+      logger.debug(`Product for lineItem`, { lineItem, args });      
       if (lineItem.productId) {        
         return getProductById({ productId: lineItem.productId }, false);
       }
-
       return null;
     },
 
