@@ -1026,7 +1026,7 @@ const Api = {
                 orderType: item.order_type,
                 orderStatus: item.order_status,
                 
-                iso: parseInt(item.id),
+                iso: item.id,
                 
                 customer: item.customer_name,
                 crmCustomer: {

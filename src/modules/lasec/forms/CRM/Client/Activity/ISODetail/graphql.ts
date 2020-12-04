@@ -73,6 +73,15 @@ const graphql: Reactory.IFormGraphDefinition = {
             }
           }
           comments {
+            id
+            who {
+              id
+              firstName
+              lastName
+              fullName
+              avatar
+            }
+            when
             comment
           }
         }
@@ -92,7 +101,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'deliveryNote': 'deliveryDetails.deliveryNote',
       'warehouseNote': 'deliveryDetails.warehouseNote',
       
-      'iso': 'orderSummary.orderId',
+      'iso': ['orderSummary.orderId', 'comments.orderId'],
       'orderType': 'orderSummary.orderType',
       'poNumber': 'orderSummary.poNumber',
       'salesTeam': 'orderSummary.salesPerson',
@@ -102,11 +111,13 @@ const graphql: Reactory.IFormGraphDefinition = {
 
       'details.lineItems': 'lineItems',
       
-      'details.comments': 'comments',
+      'details.comments': 'comments.comments',
     },
     // autoQuery: true,
     edit: false,
     new: false,
+    refreshEvents: [],
+
   },
   queries: {
     documents_list: {

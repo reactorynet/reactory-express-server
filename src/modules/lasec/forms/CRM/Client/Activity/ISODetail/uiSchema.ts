@@ -84,9 +84,8 @@ const uiSchema: any = {
   comments: {
     'ui:widget': 'LasecCRMISODetailComments',    
     'ui:options': { 
-      componentPropsMap: {
-        'formData': 'formData.$SalesOrder',
-        'formData.orderId': 'sales_order_id',
+      componentPropsMap: {        
+        'formData.orderId': 'orderId',
         'formData.new_comment': 'formData.new_comment',
         'formData.comments': 'formData.comments',
       },

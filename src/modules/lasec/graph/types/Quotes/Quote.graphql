@@ -548,18 +548,6 @@ type SalesOrderDocuments {
   url: String
 }
 
-type SalesOrderCommentResponse {
-  orderId: String
-  comments: [CRMSaleOrderComment]
-}
-
-type CRMSaleOrderComment {
-  id: String
-  who: User
-  comment: String
-  when: Date
-}
-
 type LasecQuoteComment {
   id: String
   who: User
@@ -781,7 +769,7 @@ extend type Query {
     dateFilter: String
     iter: Int
   ): PagedCRMSalesOrders
-  LasecGetSaleOrderComments(orderId: String!): SalesOrderCommentResponse
+ 
   LasecGetSaleOrderDocument(ids: [String]): [SalesOrderDocuments]
   LasecGetSalesOrderDocumentBySlug(slug: String!): SalesOrderDocumentContent
   LasecGetPagedCRMSalesOrders(
@@ -872,10 +860,7 @@ extend type Mutation {
     mailMessage: CreateEmailMessage!
   ): SimpleResponse
   LasecDeleteSaleOrderDocument(id: String): SimpleResponse
-  LasecCRMSaveSaleOrderComment(
-    orderId: String!
-    comment: String!
-  ): SimpleResponse
+  
   LasecUploadSaleOrderDocument(
     createInput: SalesOrderContentInput!
   ): SalesOrderDocumentContent

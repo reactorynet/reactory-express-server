@@ -13,9 +13,13 @@ import {
   getPurchaseOrderDetails,
   getPurchaseOrders,
   getSODocuments,
-
+  getSalesOrderComments,
+  saveSalesOrderComment
 } from "./Helpers";
-import { IQuoteService, Lasec360User, LasecClient, LasecCreateSalesOrderInput, LasecCRMCustomer, LasecQuote, LasecSalesOrder, SimpleResponse } from "../types/lasec";
+import {
+  IQuoteService,
+  Lasec360User, LasecClient, LasecCreateSalesOrderInput, LasecCRMCustomer, LasecQuote, LasecSalesOrder, SimpleResponse
+} from "../types/lasec";
 import { execql } from "@reactory/server-core/graph/client";
 import { LasecCompany } from "../constants";
 import { getCacheItem, setCacheItem } from "../models";
@@ -23,6 +27,13 @@ import moment from "moment";
 import { getProductById } from "./ProductResolver";
 
 const SalesOrderResolver = {
+
+
+  CRMSaleOrderComment: {
+    id: (parent: any) => {
+      return parent._id ? parent._id.toString() : null;
+    }
+  },
 
   SalesOrder: {
 
@@ -122,6 +133,14 @@ const SalesOrderResolver = {
       return getISODetails(args);
     },
 
+    LasecGetSaleOrderComments: async (obj, args) => {
+      
+      return {
+        orderId: args.orderId,
+        comments: await getSalesOrderComments(args).then()
+      } 
+      
+    },
 
     LasecGetPreparedSalesOrder: async (parent: any, params: { quote_id: string, active_option: string }): Promise<any> => {
 
@@ -316,6 +335,7 @@ const SalesOrderResolver = {
 
       return createResult;
     },
+
     /***
      * Create Certificate of Conformance 
      */
@@ -342,6 +362,9 @@ const SalesOrderResolver = {
       }
     },
 
+    /***
+     * Update a certificate of conformance
+     */
     LasecUpdateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: any }, context: any, info: any): Promise<any> => {
 
       try {
@@ -367,6 +390,9 @@ const SalesOrderResolver = {
 
     },
 
+    /***
+     * 
+     */
     LasecCreateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
 
       try {
@@ -392,6 +418,9 @@ const SalesOrderResolver = {
 
     },
 
+    /***
+     * 
+     */
     LasecUpdateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
       try {
 
@@ -416,6 +445,9 @@ const SalesOrderResolver = {
 
     },
 
+    /**
+     * 
+     */
     LasecCreatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }): Promise<any> => {
       try {
 
@@ -440,6 +472,9 @@ const SalesOrderResolver = {
 
     },
 
+    /***
+     * 
+     */
     LasecUpdatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }): Promise<any> => {
       try {
 
@@ -462,7 +497,14 @@ const SalesOrderResolver = {
         }
       }
 
-    }
+    },
+    /***
+     * Adds a comment to a Sales Order Document
+     */
+    LasecAddSaleOrderComment: async (parent: any, params: { orderId: string, comment: string }) => {
+      logger.debug('🟠 LasecAddSaleOrderComment', { ...params });
+      return saveSalesOrderComment(params);
+    },
   }
 };
 

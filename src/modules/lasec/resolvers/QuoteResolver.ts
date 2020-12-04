@@ -67,7 +67,6 @@ import {
   getCRMSalesHistory,
   getSODocuments,
   deleteSalesOrdersDocument,
-  getSalesOrderComments,
   saveSalesOrderComment,
   getSalesOrderDocBySlug,
   uploadSalesOrderDoc,
@@ -753,9 +752,7 @@ export default {
     LasecGetSalesHistoryMonthTotals: async (obj, args) => {
       return getSalesHistoryMonthlyCount(args);
     },
-    LasecGetSaleOrderComments: async (obj, args) => {
-      return getSalesOrderComments(args);
-    },
+    
     LasecGetSalesOrderDocumentBySlug: async (obj, args) => {
       return getSalesOrderDocBySlug(args);
     },
@@ -1146,9 +1143,7 @@ export default {
     LasecUploadSaleOrderDocument: async (obj, args) => {
       return uploadSalesOrderDoc(args);
     },
-    LasecCRMSaveSaleOrderComment: async (obj, args) => {
-      return saveSalesOrderComment(args);
-    },
+    
     LasecCRMUpdateFreightRequestDetails: async (obj, args) => {
       return updateFreightRequesyDetails(args);
     },

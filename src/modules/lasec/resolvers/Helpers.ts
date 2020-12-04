@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 import om from 'object-mapper';
 import gql from 'graphql-tag';
 import uuid from 'uuid';
-import lasecApi, { LasecNotAuthenticatedException } from '@reactory/server-modules/lasec/api';
+import lasecApi, { LasecApiException, LasecNotAuthenticatedException } from '@reactory/server-modules/lasec/api';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
@@ -16,7 +16,9 @@ import Hash from '@reactory/server-core/utils/hash';
 import { clientFor } from '@reactory/server-core/graph/client';
 import { getCacheItem, setCacheItem } from '../models';
 import emails from '@reactory/server-core/emails';
+
 import LasecQuoteComment from '@reactory/server-modules/lasec/models/LasecQuoteComment';
+import LasecSalesOrderComment from '@reactory/server-modules/lasec/models/LasecSalesOrderComment';
 
 
 import {
@@ -2162,8 +2164,46 @@ export const deleteSalesOrdersDocument = async (args) => {
     success: true,
     message: 'Document deleted successfully'
   }
-}
+};
 
+/**
+ * Fetches sales order comments for the order id
+ * @param params 
+ */
+export const getSalesOrderComments = async (params: { orderId: string }) => {  
+  return LasecSalesOrderComment.find({
+    salesOrderId: params.orderId
+  }).populate('who').then();
+};
+
+/**
+ * Save Sales Order Comment
+ * @param params 
+ */
+export const saveSalesOrderComment = async (params: { orderId: string, comment: string }) => {  
+  try {
+    const sales_order_comment = new LasecSalesOrderComment({
+      _id: new ObjectId(),
+      who: global.user._id,
+      salesOrderId: params.orderId,
+      comment: params.comment,
+      when: moment()
+    });  
+    await sales_order_comment.save().then();    
+    logger.debug(`🟢 Added comment to sales order ${params.orderId}`);
+    return LasecSalesOrderComment.findById(sales_order_comment._id).populate("who").then();
+  } catch (addCommentError) {
+    logger.error(`🔴 Adding Comment to sales order failed ${addCommentError.message}`, { addCommentError });
+    const exception = new LasecApiException('Could not add the comment due to an internal error');
+    exception.meta = addCommentError;
+    throw exception;
+  }  
+};
+
+/**
+ * get the iso details
+ * @param params 
+ */
 export const getISODetails = async (params: { orderId: string, quoteId: string }) => {
 
   const {
@@ -2213,10 +2253,10 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
 
   logger.debug(`LINE ITEMS TO RETURN :: ${JSON.stringify(lineItems)}`);
 
-  // return lineItems;/
+  let existing_comments = await LasecSalesOrderComment.find({ salesOrderId: params.orderId }).populate('who').then();
   return {
     lineItems,
-    comments: []
+    comments: existing_comments
   };
 }
 
@@ -2327,7 +2367,9 @@ export const getClientInvoices = async (params) => {
 
 }
 
-export const getCRMInvoices = async (params) => {
+
+
+export const getCRMInvoices = async (params: any) => {
 
   logger.debug(`GETTING PAGED CRM INVOICES:: ${JSON.stringify(params)}`);
 
@@ -2422,7 +2464,7 @@ export const getCRMInvoices = async (params) => {
 
 }
 
-export const getClientSalesHistory = async (params) => {
+export const getClientSalesHistory = async (params: any) => {
 
   logger.debug(`GETTING PAGED CLIENT SALES HISTORY:: ${JSON.stringify(params)}`);
 
@@ -2512,7 +2554,7 @@ export const getClientSalesHistory = async (params) => {
 
 }
 
-export const getSalesHistoryMonthlyCount = async (params) => {
+export const getSalesHistoryMonthlyCount = async (params: any) => {
 
   logger.debug(`GET TOTALS PARAMS:: ${JSON.stringify(params)}`);
 

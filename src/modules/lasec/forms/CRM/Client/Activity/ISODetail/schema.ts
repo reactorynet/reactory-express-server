@@ -125,15 +125,64 @@ const schema: Reactory.ISchema = {
       type: 'object',
       title: 'Sales Order Comments',
       properties: {
+        
+        orderId: {
+          type: 'string',
+          title: 'Order Id'
+        },
+
         newComment: {
           type: 'string',
           title: 'Add Comment'
         },
+
         comments: {
           type: 'array',
+          title: 'Comments',
+
           items: {
-            type: 'string',
-            title: 'Comment'
+            type: 'object',            
+            title: 'Comment',
+            properties: {
+              
+              id: {
+                type: 'string',
+                title: 'Comment Id'
+              },
+
+              who: {
+                type: 'object',
+                title: 'Who',
+                properties: {
+                  id: {
+                    type: 'string',
+                    title: 'Id'
+                  },
+                  firstName: {
+                    type: 'string',
+                    title: 'First name'
+                  },
+                  lastName: {
+                    type: 'string',
+                    title: 'Last name'
+                  },
+                  fullName: {
+                    type: 'string',
+                    title: 'Fullname'
+                  },
+                  avatar: {
+                    type: 'string',
+                    title: 'Avatar'
+                  }
+                }
+              },
+
+              comment: {
+                type: 'string',
+                title: ''
+              },
+
+            }
           }
         }
       }

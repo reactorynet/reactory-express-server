@@ -19,12 +19,14 @@ type SalesOrderLineItem {
   product: Product
 }
 
-
 """
 Sales Order Line Item Detail
 """
-type SalesOrderComment {
+type CRMSaleOrderComment {
+  id: String
+  who: User
   comment: String
+  when: Date
 }
 
 
@@ -33,7 +35,7 @@ Sales Order Line Item Detail
 """
 type SalesOrderDetails {
   lineItems: [SalesOrderLineItem]
-  comments: [SalesOrderComment]
+  comments: [CRMSaleOrderComment]
 }
 
 
@@ -52,7 +54,7 @@ type SalesOrder {
   orderType: String
   orderStatus: String
   
-  iso: Int
+  iso: String
   
   customer: String
   
@@ -569,7 +571,10 @@ type LasecPackingListResponse {
   packing_list: LasecPackingList
 }
 
-
+type SalesOrderCommentResponse {
+  orderId: String
+  comments: [CRMSaleOrderComment]
+}
 
 
 
@@ -577,6 +582,11 @@ extend type Query {
   LasecGetPreparedSalesOrder(quote_id: String!): LasecPreparedSalesOrder
 
   LasecGetISODetail(orderId: String!): SalesOrderDetails
+
+  """
+  Query to return Comments for a particular sales order 
+  """
+  LasecGetSaleOrderComments(orderId: String!): SalesOrderCommentResponse
 
   """
   Returns the ISO for the give sales order id
@@ -641,4 +651,14 @@ extend type Mutation {
   Update Existing Packing List
   """
   LasecUpdatePackingList(sales_order_id: String!, packing_list: LasecPackingListInput): LasecPackingListResponse
+
+  """
+  Add a comment to a sales order document - returns a CRMSaleOrderComment Object
+  """
+  LasecAddSaleOrderComment( orderId: String! comment: String! ): CRMSaleOrderComment
+
+  """
+  Update Sales Order Comment - returns a CRMSaleOrderComment object updated
+  """
+  LasecUpdateSaleOrderComment( id: String!, comment: String! ): CRMSaleOrderComment
 }

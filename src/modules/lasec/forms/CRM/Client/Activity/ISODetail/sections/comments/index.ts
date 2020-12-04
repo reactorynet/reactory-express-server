@@ -26,13 +26,13 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultType: 'object',
     resultMap: {
       'orderId': 'orderId',
-      'comments.[].id': 'comments.[].id',
-      'comments.[].who.fullName': 'comments.[].fullName',
-      'comments.[].who.avatar': 'comments.[].avatar',
-      'comments.[].when': 'comments.[].when',
-      'comments.[].comment': 'comments.[].comment',
+      'newComment': 'newComment',
+      'comments': 'comments'
     },
     queryMessage: 'Loading order comments',
+    refreshEvents: [
+      { name: 'lasec-crm:sales-order-comment-added' }
+    ],
     edit: false,
     new: true,
     onError: {
@@ -43,11 +43,19 @@ const graphql: Reactory.IFormGraphDefinition = {
   },
   mutation: {
     new: {
-      name: "LasecCRMSaveSaleOrderComment",
-      text: `mutation LasecCRMSaveSaleOrderComment($orderId: String!, $comment: String!){
-        LasecCRMSaveSaleOrderComment(orderId: $orderId, comment: $comment) {
-          success
-          message
+      name: "LasecAddSaleOrderComment",
+      text: `mutation LasecAddSaleOrderComment($orderId: String!, $comment: String!){
+        LasecAddSaleOrderComment(orderId: $orderId, comment: $comment) {          
+          id
+          comment
+          who {
+            id
+            firstName
+            lastName
+            fullName
+            avatar
+          }
+          when
         }
       }`,
       objectMap: true,
@@ -55,15 +63,35 @@ const graphql: Reactory.IFormGraphDefinition = {
       variables: {
         'formData.orderId': 'orderId',
         'formData.newComment': 'comment',
+      },      
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Comment has been added to sales order ${formData.orderId}',
+        props: {
+          type: 'success',
+          timeOut: 2500,
+          canDismiss: false,
+        }        
       },
-      onSuccessMethod: 'refresh'
+      onSuccessEvent: {
+        name: 'lasec-crm:sales-order-comment-added'
+      }
     },
     edit: {
-      name: "LasecCRMSaveSaleOrderComment",
+      name: "LasecAddSaleOrderComment",
       text: `mutation LasecCRMSaveSaleOrderComment($orderId: String!, $comment: String!){
         LasecCRMSaveSaleOrderComment(orderId: $orderId, comment: $comment) {
-          success
-          message
+          id
+          comment
+          who {
+            id
+            firstName
+            lastName
+            fullName
+            avatar
+          }
+          when
         }
       }`,
       objectMap: true,
@@ -72,7 +100,8 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.orderId': 'orderId',
         'formData.newComment': 'comment',
       },
-      onSuccessMethod: 'refresh'
+     
+      
     }
   }
 };
@@ -82,7 +111,8 @@ const schema: Reactory.ISchema = {
   title: 'COMMENTS',
   properties: {
     orderId: {
-      type: 'string'
+      type: 'string',
+      title: 'Order Id'
     },
     comments: {
       type: 'array',
@@ -118,7 +148,7 @@ const uiSchema: any = {
     submitIcon: 'chat',
     showSchemaSelectorInToolbar: false,
     showSubmit: true,
-    showRefresh: false,
+    showRefresh: true,
   },
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
@@ -140,21 +170,21 @@ const uiSchema: any = {
   comments: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      columns: [
+      columns: [        
         {
-          title: '', field: 'avatar',
-          component: 'core.ImageComponent@1.0.0',
+          title: "Who", field: "fullName",
+          component: 'core.LabelComponent@1.0.0',
           props: {
-            'ui:options': {
-              variant: 'rounded'
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData.who.fullName}'
+              }
             },
           },
           propsMap: {
-            'rowData.avatar': 'value',
-          },
-        },
-        {
-          title: "Who", field: "fullName"
+            'rowData': 'rowData',
+          }
         },
         {
           title: 'When',
