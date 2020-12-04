@@ -141,7 +141,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body1',
+                variant: 'body2',
                 format: '${rowData.invoiceDate ? api.utils.moment(rowData.invoiceDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
@@ -250,7 +250,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body1',
+                variant: 'body2',
                 format: '${rowData.quoteDate ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
               }
             },

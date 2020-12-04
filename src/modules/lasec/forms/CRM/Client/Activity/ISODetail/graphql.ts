@@ -90,13 +90,13 @@ const graphql: Reactory.IFormGraphDefinition = {
       'iso': 'orderSummary.orderId',
       'orderType': 'orderSummary.orderType',
       'poNumber': 'orderSummary.poNumber',
-      'salesPerson': 'orderSummary.salesPerson',
-      'quoteNumber': 'orderSummary.quoteNumber',
+      'salesTeam': 'orderSummary.salesPerson',
+      'quoteId': 'orderSummary.quoteNumber',
       
       'documents': 'documents',
 
       'details.lineItems': 'lineItems',
-      'details.comments': 'comments'            
+      'details.comments': 'comments'
     },
     // autoQuery: true,
     edit: false,

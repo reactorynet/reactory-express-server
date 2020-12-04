@@ -1,4 +1,13 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
+import { DocumentFormSchema } from '@reactory/server-modules/lasec/forms/CRM/Client/Documents/shared/DocumentFormSchema';
+import { cloneDeep } from 'lodash';
+
+
+const documents = cloneDeep<Reactory.ISchema>(DocumentFormSchema);
+// newSchema.properties.paging = { ...PagingSchema }
+documents.title = 'Documents';
+documents.description = 'Attach documents to the sales order.';
+documents.properties.uploadedDocuments.title = 'Uploaded files.';
 
 const schema: Reactory.ISchema = {
   type: 'object',
@@ -58,10 +67,7 @@ const schema: Reactory.ISchema = {
         }
       }
     },
-    documents: {
-      type: 'string',
-      title: 'Documents',
-    },
+    documents: documents,
     lineItems: {
       type: 'array',
       items: {
@@ -116,10 +122,20 @@ const schema: Reactory.ISchema = {
       }
     },
     comments: {
-      type: 'array',
-      items: {
-        type: 'string',
-        title: 'Comment'
+      type: 'object',
+      title: 'Sales Order Comments',
+      properties: {
+        newComment: {
+          type: 'string',
+          title: 'Add Comment'
+        },
+        comments: {
+          type: 'array',
+          items: {
+            type: 'string',
+            title: 'Comment'
+          }
+        }
       }
     }
   }

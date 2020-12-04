@@ -115,6 +115,7 @@ const uiSchema: any = {
       padding: 0,
       margin: 0,
     },
+    submitIcon: 'chat',
     showSchemaSelectorInToolbar: false,
     showSubmit: true,
     showRefresh: false,
@@ -190,7 +191,7 @@ const uiSchema: any = {
       componentProps: {
         multiline: true,
         variant: 'outlined',
-        submitOnEnter: true
+        //submitOnEnter: true
       }
     }
   }
@@ -212,6 +213,9 @@ const LasecCRMISODetailComments: Reactory.IReactoryForm = {
   graphql: graphql,
   defaultFormValue: {},
   widgetMap: [],
+  eventBubbles: [
+    { eventName: "onChange", action: "swallow" }
+  ]
 };
 
 export default LasecCRMISODetailComments;

@@ -57,14 +57,8 @@ const SalesOrderResolver = {
       }
     },
 
-    details: async (salesOrder: LasecSalesOrder, context: any, info: any) => {
-      let details: any = {
-        lineItems:[],
-        comments: []
-      };
-
-
-      return details;
+    details: async (salesOrder: LasecSalesOrder, context: any, info: any) => {      
+      return getISODetails({ orderId: salesOrder.id, quoteId: salesOrder.quoteId });
     }
   },
   Query: {

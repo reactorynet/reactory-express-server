@@ -203,6 +203,9 @@ const schema: Reactory.ISchema = {
 const uiSchema: any = {
   'ui:widget': 'MaterialTableWidget',
   'ui:options': {
+    showSubmit: false,
+    showRefresh: false,
+    showSubmitButton: false,
     columns: [
       {
         title: '', field: 'image',
@@ -243,6 +246,9 @@ const uiSchema: any = {
         title: 'Total Price',
         field: 'value',
         component: 'core.CurrencyLabel@1.0.0',
+        props: {
+          variant: 'body2'
+        },
         propsMap: {
           'rowData.totalPrice': 'value',
         },
