@@ -61,9 +61,9 @@ const uiSchema : Reactory.IUISchema = {
         accept: ['text/html', 'text/text', 'application/xml', 'application/pdf'],
         uploadOnDrop: true,
         mutation: {
-          name: 'LasecUploadDocument',
-          text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
-              LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
+          name: 'LasecAddSalesOrderDocument',
+          text: `mutation LasecAddSalesOrderDocument($file: Upload!, $sales_order_id: String!){
+            LasecAddSalesOrderDocument(file: $file, sales_order_id: $sales_order_id) {
                 id
                 filename
                 link
@@ -72,7 +72,7 @@ const uiSchema : Reactory.IUISchema = {
               }
             }`,
           variables: {
-            'uploadContext': 'lasec-crm::sales-order::document-${props.formContext.data.orderId}'
+            'sales_order_id': '${props.formContext.$formData.id}'            
           },
           onSuccessEvent: {
             name: 'lasec-crm::sales-order::document::uploaded'
@@ -109,6 +109,9 @@ const uiSchema : Reactory.IUISchema = {
         selection: true,
       },
       query: 'documents_list',
+      variables: {
+        'formContext.formData.id': 'sales_order_id',
+      },
       refreshEvents: [
         { name: 'lasec-crm::sales-order::document::uploaded' }
       ],      
@@ -136,9 +139,9 @@ const uiSchema : Reactory.IUISchema = {
 const graphql: Reactory.IFormGraphDefinition = {
   queries: {
     documents_list: {
-      name: 'LasecGetCustomerDocuments',
-      text: `query LasecGetCustomerDocuments($uploadContexts: [String], $paging: PagingRequest){
-            LasecGetCustomerDocuments(uploadContexts: $uploadContexts, paging: $paging){
+      name: 'LasecGetSalesOrderDocuments',
+      text: `query LasecGetSalesOrderDocuments($sales_order_id: String!, $paging: PagingRequest){
+              LasecGetSalesOrderDocuments(sales_order_id: $sales_order_id, paging: $paging){
               paging {
                 total
                 page
@@ -153,14 +156,14 @@ const graphql: Reactory.IFormGraphDefinition = {
                 owner {
                   id
                   firstName
+                  lastName
                   fullName
                 }
               }
             }
           }`,
       variables: {
-        'props.formContext.formData.documents.$paging': 'paging',
-        'props.formContext.formData.documents.uploadContext': 'uploadContexts',
+        'formContext.formData.id': 'sales_order_id',
       },
       resultMap: {
         'paging.page': 'page',
@@ -171,6 +174,17 @@ const graphql: Reactory.IFormGraphDefinition = {
       resultType: 'object',
     },
   },
+  mutation: {
+    delete: {
+      name: 'LasecDeleteSaleOrderDocument',
+      text: `mutation LasecDeleteSalesOrderDocument($document_id: String!){
+        LasecDeleteSalesOrderDocument(id: $id) {
+          success
+          message
+        }
+      }`
+    }
+  }
 };
 
 const LasecCRMISODetailDocuments: Reactory.IReactoryForm = {
@@ -188,6 +202,9 @@ const LasecCRMISODetailDocuments: Reactory.IReactoryForm = {
   graphql,
   uiSchema: uiSchema,
   defaultFormValue: {},  
+  widgetMap: [
+    { componentFqn: 'core.SlideOutLauncher@1.0.0', widget: 'SlideOutLauncher' },
+  ]
 };
 
 export default LasecCRMISODetailDocuments;

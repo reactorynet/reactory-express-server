@@ -14,7 +14,8 @@ import {
   getPurchaseOrders,
   getSODocuments,
   getSalesOrderComments,
-  saveSalesOrderComment
+  saveSalesOrderComment,
+  getCustomerDocuments
 } from "./Helpers";
 import {
   IQuoteService,
@@ -25,6 +26,8 @@ import { LasecCompany } from "../constants";
 import { getCacheItem, setCacheItem } from "../models";
 import moment from "moment";
 import { getProductById } from "./ProductResolver";
+import { PagingRequest } from "@reactory/server-core/database/types";
+import { Reactory } from "@reactory/server-core/types/reactory";
 
 const SalesOrderResolver = {
 
@@ -71,6 +74,16 @@ const SalesOrderResolver = {
 
     details: async (salesOrder: LasecSalesOrder, context: any, info: any) => {      
       return getISODetails({ orderId: salesOrder.id, quoteId: salesOrder.quoteId });
+    },
+
+    documents: async (sales_order: LasecSalesOrder, context: any, info: any) => {
+
+      try {
+        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::${sales_order.id}`] }).then()        
+      } catch (exception) {
+        logger.error('Could not get the document for the sales order', exception);
+        throw exception;
+      }
     }
   },
   SalesOrderLineItem: {
@@ -141,6 +154,8 @@ const SalesOrderResolver = {
       } 
       
     },
+
+    
 
     LasecGetPreparedSalesOrder: async (parent: any, params: { quote_id: string, active_option: string }): Promise<any> => {
 
@@ -322,6 +337,21 @@ const SalesOrderResolver = {
         logger.error(`Error while gettting certificate of conformance for sales order`);
         return null;
       }
+    },
+
+    LasecGetSalesOrderDocuments: async (parent: any, params: { sales_order_id: string, paging: PagingRequest }) => {      
+
+      try {
+
+        const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+        const sales_order = await quoteService.getSalesOrder(params.sales_order_id).then();
+        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::${sales_order.id}`], paging: params.paging });
+        
+      } catch (exception) {
+        logger.error('Could not get the document for the sales order', exception);
+        throw exception;
+      }
+
     }
   },
   Mutation: {
@@ -505,6 +535,21 @@ const SalesOrderResolver = {
       logger.debug('🟠 LasecAddSaleOrderComment', { ...params });
       return saveSalesOrderComment(params);
     },
+
+    LasecAddSalesOrderDocument: async (parent: any, params: { file: any, sales_order_id: string } ) => {
+      
+      try {
+        const fileService: Reactory.Service.IReactoryFileService = getService('core.ReactoryFileService@1.0.0') as Reactory.Service.IReactoryFileService;
+        logger.debug(`Uploading File using Reactory File Service`, {filename: params.file.filename });                  
+        let uploadResult = await fileService.uploadFile({ file: params.file, uploadContext: `lasec-crm::sales-order::${params.sales_order_id}` }).then();
+
+        return uploadResult
+
+      } catch (addDocumentError) {        
+        throw addDocumentError;
+      }
+
+    }
   }
 };
 

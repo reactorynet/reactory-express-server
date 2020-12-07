@@ -809,8 +809,21 @@ declare namespace Reactory {
 
     export interface IReactoryTemplateService extends Reactory.Service.ITemplateService, Reactory.Service.ITemplateRenderingService, Reactory.Service.IEmailTemplateService { }
 
+    export interface FileUploadArgs {
+
+      file: {
+        createReadStream:  Function,
+        filename: string,
+        mimetype: string,
+        encoding: string
+      },
+      uploadContext?: string
+      
+    }
     export interface IReactoryFileService extends Reactory.Service.IReactoryDefaultService {
       
+      uploadFile(uploadArgs: FileUploadArgs): Promise<Reactory.IReactoryFileModel>
+
       getContentBytes(path: string): number;
 
       getContentBytesAsString(path: string, encoding: BufferEncoding): string;

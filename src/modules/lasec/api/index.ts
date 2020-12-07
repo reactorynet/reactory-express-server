@@ -27,6 +27,7 @@ import {
 
 import { LASEC_API_ERROR_FORMAT } from './constants';
 import { LasecApiResponse, LasecCreateSalesOrderInput, LasecQuoteOption, LasecSalesOrder } from '../types/lasec';
+import { getCustomerDocuments } from '../resolvers/Helpers';
 
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
@@ -1058,17 +1059,16 @@ const Api = {
 
                 invoices: item.invoice_ids.map((id: string) => ({ id })),
                 dispatches: item.dispatch_note_ids.map((id: string) => ({ id })),
-                documents: item.document_ids.map((id: string) => ({ id })),
+                //documents: item.document_ids.map((id: string) => ({ id })),
                 documentIds: [...item.document_ids],
 
                 details: {
                   lineItems: [],
                   comments: []
                 }
-              };
+              };              
               
-
-              setCacheItem(`lasec-sales-order::${sales_order_id}`, sales_order);
+              setCacheItem(`lasec-sales-order::${sales_order_id}`, sales_order, 15);
               return sales_order;
             }
           }

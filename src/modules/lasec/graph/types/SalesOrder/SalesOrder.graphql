@@ -619,7 +619,11 @@ extend type Query {
   """
   LasecPackingList get for sales order
   """
-  LasecPackingListForSalesOrder(sales_order_id: String,item_paging: PagingRequest): LasecPackingList
+  LasecPackingListForSalesOrder(sales_order_id: String, item_paging: PagingRequest): LasecPackingList
+  """
+  Get paged documents for the sales order
+  """
+  LasecGetSalesOrderDocuments(sales_order_id: String!, paging: PagingRequest): PagedLasecDocument
 }
 
 extend type Mutation {
@@ -661,4 +665,16 @@ extend type Mutation {
   Update Sales Order Comment - returns a CRMSaleOrderComment object updated
   """
   LasecUpdateSaleOrderComment( id: String!, comment: String! ): CRMSaleOrderComment
+
+  """
+  Delete the Sales Order Document attached to a sales order
+  """
+  LasecDeleteSalesOrderDocument(id: String!, sales_order_id: String!) : SimpleResponse
+
+  """
+  Add a document to the sales order.  
+  This will save a local copy then sync with the lasec api once the file is cataloged
+  """
+  LasecAddSalesOrderDocument(file: Upload!, sales_order_id: String!) : LasecDocument
+
 }

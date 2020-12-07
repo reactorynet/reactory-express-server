@@ -5,7 +5,9 @@ const MaterialTableWidgetDefintion: any =  {
   'ui:options': {
     columns: [
       {
-        title: 'Filename', field: 'filename'
+        title: 'Filename',
+        field: 'filename',
+
       },
       {
         title: 'Type', field: 'mimetype',
@@ -56,11 +58,31 @@ const MaterialTableWidgetDefintion: any =  {
             propsMap: {
               'rowData.mimetype': 'value',
             },
+          },
+          {
+            component: 'core.SlideOutLauncher@1.0.0',
+            props: {
+              componentFqn: 'core.FramedWindow@1.0.0',              
+              slideDirection: 'down',
+              buttonTitle: 'View',
+              windowTitle: 'View Document ${rowData.filename}',
+              childProps: {                
+                containerProps:{},
+                method:'get'
+              },
+              componentProps: {
+                'rowData.link': 'frameProps.url',                
+              }
+            },
+            propsMap: {
+              'rowData': 'rowData'
+            }
+
           }
         ],
         propsMap: {
           'rowData.mimetype': 'selectedKey'
-        }
+        }        
       },
       {
         title: 'Uploaded By',

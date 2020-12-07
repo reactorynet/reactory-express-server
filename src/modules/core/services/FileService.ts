@@ -19,7 +19,7 @@ const {
 
 const writeFilePromise = promisify(writeFile);
 
-const getExtension = (filename: string) => {
+const getExtension =  (filename: string) => {
     return filename.split('.').pop();
 }
 
@@ -239,6 +239,100 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         this.executionContext = executionContext;
         return true;
     }
+    
+
+    uploadFile = async (args: Reactory.Service.FileUploadArgs) : Promise<Reactory.IReactoryFileModel> => {
+        return new Promise(async (resolve, reject) => {
+      
+          const { createReadStream, filename, mimetype, encoding } = await args.file;
+          logger.debug(`UPLOADED FILE:: ${filename} - ${mimetype} ${encoding}`);
+      
+          const stream: NodeJS.ReadStream = createReadStream();
+      
+          const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
+      
+          const link = `${process.env.CDN_ROOT}content/files/${randomName}`;
+      
+      
+          // Flag to tell if a stream had an error.
+          let hadStreamError: boolean = null;
+      
+          //ahndles any errors during upload / processing of file
+          const handleStreamError = (error: any) => {
+            // Do not enter twice in here.
+            if (hadStreamError) {
+              return;
+            }
+      
+            hadStreamError = true;
+      
+            // Cleanup: delete the saved path.
+            if (saveToPath) {
+              // eslint-disable-next-line consistent-return
+              return fs.unlink(saveToPath, () => {
+                reject(error)
+              });
+            }
+      
+            // eslint-disable-next-line consistent-return
+            reject(error)
+          }
+      
+      
+          const catalogFile = () => {
+            // Check if image is valid
+            const fileStats: fs.Stats = fs.statSync(saveToPath);
+      
+            logger.debug(`SAVING FILE:: DONE ${filename} ${fileStats.size} --> CATALOGGING`);
+      
+            const reactoryFile: any = {
+              id: new ObjectID(),
+              filename,
+              mimetype,
+              alias: randomName,
+              partner: new ObjectID(global.partner.id),
+              owner: global.user,
+              // owner: new ObjectID(global.user.id),
+              uploadedBy: global.user,
+              // uploadedBy: new ObjectID(global.user.id),
+              size: fileStats.size,
+              hash: Hash(link),
+              link: link,
+              path: 'content/files/',
+              uploadContext: args.uploadContext || 'lasec-crm::company-document',
+              public: false,
+              published: false,
+            };
+      
+            if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
+              reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
+            }
+      
+            const savedDocument = new ReactoryFileModel(reactoryFile);
+      
+            savedDocument.save().then();
+      
+            logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
+      
+            resolve(savedDocument);
+          }
+      
+          // Generate path where the file will be saved.
+          // const appDir = path.dirname(require.main.filename);
+          const saveToPath = path.join(process.env.APP_DATA_ROOT, 'content', 'files', randomName);
+      
+          logger.debug(`SAVING FILE:: ${filename} --> ${saveToPath}`);
+      
+          const diskWriterStream: NodeJS.WriteStream = fs.createWriteStream(saveToPath);
+          diskWriterStream.on('error', handleStreamError);
+      
+          // Validate image after it is successfully saved to disk.
+          diskWriterStream.on('finish', catalogFile);
+      
+          // Save image to disk.
+          stream.pipe(diskWriterStream);    
+        });
+      };
 }
 
 export const ReactoryFileServiceDefinition: Reactory.IReactoryServiceDefinition = {

@@ -1,6 +1,6 @@
 import moment, { Moment } from 'moment';
 import lodash, { isArray, isNil, isString } from 'lodash';
-import { ObjectId } from 'mongodb';
+import { ObjectID, ObjectId } from 'mongodb';
 import om from 'object-mapper';
 import gql from 'graphql-tag';
 import uuid from 'uuid';
@@ -38,6 +38,7 @@ import CONSTANTS, { LOOKUPS, OBJECT_MAPS } from '../constants';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import { argsToArgsConfig } from 'graphql/type/definition';
 import Api from '@reactory/server-modules/lasec/api';
+import ReactoryFileModel from '@reactory/server-modules/core/models/CoreFile';
 
 const lookups = CONSTANTS.LOOKUPS;
 
@@ -2133,6 +2134,146 @@ export const getCRMSalesOrders = async (params) => {
   return result;
 }
 
+
+interface CustomerDocumentQueryParams {
+  id?: string,
+  ids?: string[], 
+  uploadContexts?: string[],
+  paging?: {
+    page: number,
+    pageSize: number
+  }
+}
+
+
+const allowedExts = ['txt', 'pdf', 'doc', 'zip'];
+const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf', 'application/pdf', 'application/zip'];
+
+const mimes: any = {
+  "pdf": "application/pdf",
+  "txt": "text/plain",
+  "doc": "application/msword",
+  "zip": "application/zip"
+}
+
+
+const mimeTypeForFilename = (filename: string) => {
+
+  let parts = filename.split(".");
+  if (parts.length > 1) {        
+    let m: string = mimes[parts[parts.length - 1]];
+    if  (m !== null && m !== undefined  ) {
+      return m;
+    }
+  }
+
+  return 'application/octet-stream';
+};
+
+
+export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
+
+  logger.debug(`DOCUMENT PARAMS:: ${JSON.stringify(params)}`);
+
+  const _docs: any[] = []
+
+  if (params.id && params.id !== 'new') {
+    logger.debug(`Fetching Remote Documents for Lasec Customer ${params.id}`);
+    let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } });
+
+    logger.debug(`API DOCUMENTS ${JSON.stringify(documents)}`);
+
+
+    documents.items.forEach((documentItem: any) => {
+      _docs.push({
+        id: new ObjectID(),
+        partner: global.partner,
+        filename: documentItem.name,
+        link: documentItem.url,
+        hash: Hash(documentItem.url),
+        path: '',
+        alias: '',
+        alt: [],
+        size: 0,
+        uploadContext: 'lasec-crm::company-document::remote',
+        mimetype: mimeTypeForFilename(documentItem.name),
+        uploadedBy: global.user._id,
+        owner: global.user._id,
+      })
+    });
+  }
+
+  if (params.ids && params.ids.length > 0) {
+    
+    let remote_documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: params.ids }, paging: { enabled: false } });
+
+    remote_documents.items.forEach((documentItem: any) => {
+      _docs.push({
+        id: new ObjectID(),
+        partner: global.partner,
+        filename: documentItem.name,
+        link: documentItem.url,
+        hash: Hash(documentItem.url),
+        path: '',
+        alias: '',
+        alt: [],
+        size: 0,
+        uploadContext: 'lasec-crm::company-document::remote',
+        mimetype: mimeTypeForFilename(documentItem.name),
+        uploadedBy: global.user._id,
+        // owner: global.user.id
+        owner: global.user._id
+      })
+    });
+
+  }
+
+  let documentFilter: any = {};
+  if (params.uploadContexts && params.uploadContexts.length > 0) {
+    documentFilter.uploadContext = {
+      $in: params.uploadContexts.map((ctx: string) => {
+        //append the the logged in user id for the context.
+        if (ctx === 'lasec-crm::new-company::document') return `${ctx}::${global.user._id}`;
+        return ctx;
+      })
+    };
+  } else {
+    documentFilter.uploadContext = {
+      $in: [`lasec-crm::company::${params.id}`]        
+    };
+  }
+
+  // logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
+  let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
+  // logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> ReactorFile.find({documentFileter}) --> reactorFiles[${reactoryFiles.length}]`);
+
+  reactoryFiles.forEach((rfile) => {
+    _docs.push(rfile);
+  });
+
+  logger.debug(`Files found (${_docs.length})`);
+
+  if (params.paging) {
+
+    let skipCount: number = (params.paging.page - 1) * params.paging.pageSize;
+
+    return {
+      documents: lodash(_docs).drop(skipCount).take(params.paging.pageSize),
+      uploadContexts: params.uploadContexts || [],
+      paging: {
+        total: _docs.length,
+        page: params.paging.page,
+        hasNext: skipCount + params.paging.pageSize < _docs.length,
+        pageSize: params.paging.pageSize
+      },
+    }
+
+  } else {
+    return _docs;
+  }
+};
+
+
 export const getSODocuments = async (args) => {
   logger.debug(`GETTING DOCUMENTS:: ${JSON.stringify(args)}`)
 
@@ -2199,6 +2340,8 @@ export const saveSalesOrderComment = async (params: { orderId: string, comment: 
     throw exception;
   }  
 };
+
+
 
 /**
  * get the iso details

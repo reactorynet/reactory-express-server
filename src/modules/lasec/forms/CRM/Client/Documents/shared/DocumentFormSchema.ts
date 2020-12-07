@@ -46,6 +46,21 @@ export const DocumentFormSchema: Reactory.ISchema = {
       }
     },
 
+    $paging: {
+      type: "object",
+      title: "Document Pging Input",
+      properties: {
+        page: {
+          type: "number",
+          title: "Page"
+        },
+        pageSize: {
+          type: "number",
+          title: "Page Size"
+        }
+      }
+    },
+
     uploadedDocuments: {
       type: 'array',      
       items: {
@@ -63,8 +78,8 @@ export const DocumentFormSchema: Reactory.ISchema = {
             type: 'string',
             title: 'Link'
           },
-        }
-      }
+        },
+      },
     },
   }
 };
