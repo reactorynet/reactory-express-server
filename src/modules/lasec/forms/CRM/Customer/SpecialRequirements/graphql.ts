@@ -6,18 +6,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     text: `query LasecGetClientDetail($id: String!){
       LasecGetClientDetail(id: $id){
         id
-        clientStatus
-        firstName
-        lastName
-        fullName
-        emailAddress
-        country
         customer {
-          id
-          tradingName
-          accountNumber
-          customerStatus
-          country
           specialRequirements
         }
       }

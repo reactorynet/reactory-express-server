@@ -353,4 +353,5 @@ extend type Mutation {
   LasecCRMSaveComment(clientId: String!, comment: String!): SimpleResponse
   LasecCRMDeleteComment(commentId: String!): SimpleResponse
   LasecDeactivateClients(clientIds: [String]!): SimpleResponse
+  LasecUpdateSpecialRequirements(id: String!,  requirement: String!): SimpleResponse
 }
