@@ -11,7 +11,7 @@ import axios from 'axios';
 import { Reactory } from '@reactory/server-core/types/reactory';
 // import { clearAuthentication } from '../actions/Auth';
 import SECONDARY_API_URLS from './SecondaryApiUrls';
-import logger from '../../../logging';
+import logger from '@reactory/server-core/logging';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
 import AuthenticationSchema from '../schema/Authentication';
 import { jzon } from '../../../utils/validators';
@@ -20,8 +20,13 @@ import LasecDatabase from '../database';
 import LasecQueries from '../database/queries';
 import { execql, execml } from 'graph/client';
 
+import {
+  getCacheItem,
+  setCacheItem
+} from '@reactory/server-modules/lasec/models'
+
 import { LASEC_API_ERROR_FORMAT } from './constants';
-import { LasecCreateSalesOrderInput, LasecQuoteOption } from '../types/lasec';
+import { LasecApiResponse, LasecCreateSalesOrderInput, LasecQuoteOption, LasecSalesOrder } from '../types/lasec';
 
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
@@ -294,6 +299,7 @@ const defaultParams = {
 const defaultQuoteObjectMap = {
 
 };
+
 
 const Api = {
   FETCH,
@@ -891,6 +897,7 @@ const Api = {
     }
   },
   Invoices: {
+
     list: async (params = defaultParams) => {
       try {
         const invoiceResult = await FETCH(SECONDARY_API_URLS.invoices.url, { params: { ...defaultParams, ...params } });
@@ -935,6 +942,146 @@ const Api = {
     },
   },
   SalesOrders: {
+
+    item: async (sales_order_id: string): Promise<LasecSalesOrder> => {
+      try {
+
+        let sales_order: LasecSalesOrder = null;
+        const cached = await getCacheItem(`lasec-sales-order::${sales_order_id}`).then()
+
+        if (cached === null || cached === undefined) {
+
+          const iso_api_result: LasecApiResponse = await FETCH(SECONDARY_API_URLS.sales_order.url, {
+            params: {
+              filter: {
+                ids: [sales_order_id]
+              },
+              ordering: {},
+              pagination: {
+                enabled: false,
+                page_size: 10,
+                current_page: 1
+              }
+            }
+          }).then();
+
+          logger.debug(`Result from API`, iso_api_result);
+          if (iso_api_result.payload) {
+            if (iso_api_result.payload.items && iso_api_result.payload.items.length === 1) {
+
+              let item = iso_api_result.payload.items[0];
+
+              /**
+               * *************************** 
+               *   Results from Lasec API
+               * ***************************
+                  {
+                    "id": "509376",
+                    "document_ids": [
+                      "89778"
+                    ],
+                    "order_date": "2020-11-16T00:00:00Z",
+                    "account_number": "31718",
+                    "order_type": "Normal",
+                    "req_ship_date": "2020-11-16T00:00:00Z",
+                    "order_status": "Open Order",
+                    "sales_order_number": "509376",
+                    "sales_order_id": "509376",
+                    "company_trading_name": "LANCET LABORATORIES (PTY) LTD",
+                    "sales_team_id": "LAB301",
+                    "currency": "R",
+                    "quote_id": "2011-301135111",
+                    "quote_date": "2020-11-16T10:09:00Z",
+                    "order_value": 0,
+                    "back_order_value": 0,
+                    "reserved_value": 0,
+                    "shipped_value": 105472,
+                    "delivery_address": "Lancet Stores , 11 Heron Park,  80,Corobrik Rd,  Riverhorse Valley,,Newlands East,  4017,  South Africa",
+                    "customer_name": "Sipho  Ngema",
+                    "customerponumber": "PTYPO315315",
+                    "dispatch_note_ids": [
+                      "509376/0001"
+                    ],
+                    "invoice_ids": [],
+                    "warehouse_note": "",
+                    "delivery_note": "",
+                    "order_qty": 0,
+                    "ship_qty": 0,
+                    "back_order_qty": 0,
+                    "reserved_qty": 0
+                  }
+               */
+
+              sales_order = {
+                id: item.id,
+                
+                orderDate: item.order_date,
+                salesOrderNumber: sales_order_id,
+                shippingDate: item.req_ship_date,
+
+                quoteId: item.quote_id,
+                quoteDate: item.quote_date,
+
+                
+                orderType: item.order_type,
+                orderStatus: item.order_status,
+                
+                iso: parseInt(item.id),
+                
+                customer: item.customer_name,
+                crmCustomer: {
+                  id: '',
+                  tradingName: item.company_trading_name,
+                  registeredName: item.company_trading_name
+                },
+                
+                poNumber: item.customerponumber,
+                currency: item.currency,
+                
+                deliveryAddress: item.delivery_address,
+                deliveryNote: item.delivery_note,
+                warehouseNote: item.warehouse_note,
+                
+                salesTeam: item.sales_team_id,
+                value: item.order_value,
+                reserveValue: item.reserved_value,
+                shipValue: item.shipped_value,
+                backorderValue: item.back_order_value,
+
+                dispatchCount: item.dispatch_note_ids.length,
+                invoiceCount: item.invoice_ids.length,
+
+                orderQty: item.order_qty,
+                shipQty: item.ship_qty,
+                reservedQty: item.reserved_qty,
+                backOrderQty: item.back_order_qty,
+
+                invoices: item.invoice_ids.map((id: string) => ({ id })),
+                dispatches: item.dispatch_note_ids.map((id: string) => ({ id })),
+                documents: item.document_ids.map((id: string) => ({ id })),
+                documentIds: [...item.document_ids],
+
+                details: {
+                  lineItems: [],
+                  comments: []
+                }
+              };
+              
+
+              setCacheItem(`lasec-sales-order::${sales_order_id}`, sales_order);
+              return sales_order;
+            }
+          }
+        } else {
+          return cached;
+        }
+                
+      } catch (sales_order_item_error) {
+        logger.error(`Could not load ISO ${sales_order_id}`, sales_order_item_error);
+        throw sales_order_item_error;
+      }
+    },
+
     list: async (params = defaultParams) => {
       const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } }).then();
       const {
@@ -1148,14 +1295,14 @@ const Api = {
 
       let inco_terms: any[] = [];
 
-      try { 
+      try {
 
         if (inco_terms_for_sales_order && Object.keys(inco_terms_for_sales_order).length > 0) {
           Object.keys(inco_terms_for_sales_order).forEach((prop) => {
-  
+
             if (`${inco_terms_for_sales_order[prop]}`.indexOf("=>") > 0) {
               inco_terms.push({
-                id: prop,                
+                id: prop,
                 name: inco_terms_for_sales_order[prop].split('=>')[1].trim(),
                 description: inco_terms_for_sales_order[prop].split('=>')[1].trim(),
               })
@@ -1171,13 +1318,13 @@ const Api = {
           logger.debug(`Inco Terms Converted`, inco_terms);
         }
 
-      } catch (convertError) { 
+      } catch (convertError) {
         logger.error(`Could not convert inco term data`, convertError);
       }
-      
+
       let payment_terms: any[] = [];
-      
-      try { 
+
+      try {
         const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`).then();
         /**
          * Result is hash map
@@ -1193,24 +1340,24 @@ const Api = {
          * 
          * 
          */
-  
-  
+
+
         logger.debug(`result for payment terms for sales orders`, payment_terms_for_sales_orders);
-        if (payment_terms_for_sales_orders && Object.keys(payment_terms_for_sales_orders).length > 0) {      
-          Object.keys(payment_terms_for_sales_orders).forEach((prop) => {  
+        if (payment_terms_for_sales_orders && Object.keys(payment_terms_for_sales_orders).length > 0) {
+          Object.keys(payment_terms_for_sales_orders).forEach((prop) => {
             payment_terms.push({
               id: prop,
               name: payment_terms_for_sales_orders[prop],
               description: payment_terms_for_sales_orders[prop],
-            });            
+            });
           });
         }
         logger.debug(`Payment Terms Result`, payment_terms);
       } catch (error) {
         logger.error('Could not conver payment terms data', error);
       }
-            
-      const new_shape = {      
+
+      const new_shape = {
         'header.salesorder': 'id',
         'header.date_of_isse': 'date_of_issue',
         'header.certification': 'certification_date',
@@ -1224,7 +1371,7 @@ const Api = {
         'header.consignee_contact': 'consignee_contact',
         'header.notify_info': 'notify_info',
         'header.comments': 'comments',
-        'detail[].salesorderline': 'products[].item_number',          
+        'detail[].salesorderline': 'products[].item_number',
         'detail[].salesorder': 'products[].sales_order',
         'detail[].SysproCompany': 'products[].syspro_company',
         'detail[].stockcode': 'products[].stock_code',
@@ -1259,7 +1406,7 @@ const Api = {
         'header.consignee_contact': 'consignee_contact',
         'header.notify_info': 'notify_info',
         'header.comments': 'comments',
-        'detail[].salesorderline': 'products[].item_number',          
+        'detail[].salesorderline': 'products[].item_number',
         'detail[].salesorder': 'products[].sales_order',
         'detail[].SysproCompany': 'products[].syspro_company',
         'detail[].stockcode': 'products[].stock_code',
@@ -1282,10 +1429,10 @@ const Api = {
 
       let certificate_results = null;
       try {
-        certificate_results = await Api.get(`api/cert_of_conf/${sales_order_id}`).then();        
+        certificate_results = await Api.get(`api/cert_of_conf/${sales_order_id}`).then();
         let is_new = true;
-        let converted: any = om.merge(certificate_results, is_new === true ? new_shape : existing_shape); 
-        
+        let converted: any = om.merge(certificate_results, is_new === true ? new_shape : existing_shape);
+
         converted.lookups = {
           inco_terms,
           payment_terms
@@ -1303,18 +1450,18 @@ const Api = {
             product_item.expire_date_na = false;
           }
         });
-        
+
         return {
           id: sales_order_id,
           emailAddress: '',
           sendOptionsVia: 'pdf',
           ...converted,
-        };        
+        };
       } catch (error) {
 
         logger.error(`Could not get certificate results: ${error.message}`, { error });
       }
-      
+
     },
 
     post_certificate_of_conformance: async (sales_order_id: string, certificate: any): Promise<any> => {

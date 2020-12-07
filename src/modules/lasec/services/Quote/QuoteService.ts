@@ -5,7 +5,8 @@ import {
     IQuoteService,
     LasecQuoteOption,
     SimpleResponse,
-    LasecCreateSalesOrderInput
+    LasecCreateSalesOrderInput,
+    LasecSalesOrder
 } from '@reactory/server-modules/lasec/types/lasec';
 
 import {
@@ -270,6 +271,20 @@ class LasecQuoteService implements IQuoteService {
 
     setQuoteEmail = async (quote_id: string, email_type: string, message: Reactory.IEmailMessage): Promise<Reactory.IEmailMessage> => {
         return await setCacheItem(`${email_type}::${quote_id}::${user._id}`, message, (24 * 60 * 60)).then() as Reactory.IEmailMessage;
+    }
+
+    getSalesOrder = async (sales_order_id: string): Promise<LasecSalesOrder> => {
+        
+        try {
+            logger.debug(`QuoteService.ts getSalesOrders ${sales_order_id} 🟠`);
+            const sales_order_result = await LAPI.SalesOrders.item(sales_order_id).then();
+            logger.debug(`QuoteService.ts getSalesOrders ${sales_order_id} 🟢`, sales_order_result);
+            return sales_order_result;             
+        } catch (get_error) {
+            logger.error(`QuoteService.ts getSalesOrders ${sales_order_id} 🔴`, get_error);
+            throw get_error;
+        }
+        
     }
 };
 

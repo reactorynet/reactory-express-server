@@ -365,7 +365,8 @@ declare namespace Reactory {
     properties?: ISchemaObjectProperties | any | undefined,
     dependencies?: any | undefined,
     items?: ISchema,
-    format?: string | "email" | "password" | "date" | "date-time"
+    format?: string | "email" | "password" | "date" | "date-time",
+    enum?: string[]
   }
 
   export interface IStringSchema extends ISchema {
@@ -565,6 +566,14 @@ declare namespace Reactory {
     modes?: string
   }
 
+
+
+  export interface IEventBubbleAction {
+    eventName: string,
+    action: string | "bubble" | "swallow" | "function",
+    functionFqn?: string,
+  }
+
   export interface IReactoryForm {
     id: String,
     uiFramework: String,
@@ -599,6 +608,7 @@ declare namespace Reactory {
     workflow?: Object,
     noHtml5Validate?: boolean,
     formContext?: any,
+    eventBubbles?: IEventBubbleAction[]
     /**
    * components to mount in the componentDef propertie
    */

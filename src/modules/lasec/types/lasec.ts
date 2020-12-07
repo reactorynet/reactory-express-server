@@ -262,38 +262,38 @@ export interface LasecQuote {
 
 export interface LasecCRMCustomer {
   id: string
-  registeredName: string
+  registeredName?: string
   tradingName: string
-  accountNumber: string
-  customerStatus: string
-  accountType: string
-  country: string
-  customerClass: string
-  description: string
-  ranking: string
-  availableBalance: number
-  salesTeam: string
-  physicalAddressId: number
-  physicalAddress: string
-  deliveryAddressId: number
-  deliveryAddress: string
-  billingAddressId: number
-  billingAddress: string
-  currencyCode: string
-  currencySymbol: string
-  currencyDisplay: string
-  registrationNumber: string
-  taxNumber: string
-  importVATNumber: string
-  creditLimit: number
-  currentBalance: number
-  currentInvoice: number
-  balance30Days: number
-  balance60Days: number
-  balance90Days: number
-  balance120Days: number
-  creditTotal: number
-  documents: any[]
+  accountNumber?: string
+  customerStatus?: string
+  accountType?: string
+  country?: string
+  customerClass?: string
+  description?: string
+  ranking?: string
+  availableBalance?: number
+  salesTeam?: string
+  physicalAddressId?: number
+  physicalAddress?: string
+  deliveryAddressId?: number
+  deliveryAddress?: string
+  billingAddressId?: number
+  billingAddress?: string
+  currencyCode?: string
+  currencySymbol?: string
+  currencyDisplay?: string
+  registrationNumber?: string
+  taxNumber?: string
+  importVATNumber?: string
+  creditLimit?: number
+  currentBalance?: number
+  currentInvoice?: number
+  balance30Days?: number
+  balance60Days?: number
+  balance90Days?: number
+  balance120Days?: number
+  creditTotal?: number
+  documents?: any[]
   [key: string]: any
 }
 
@@ -579,6 +579,57 @@ export interface LasecCreateSalesOrderInput {
   documents: any[]
 }
 
+
+export interface LasecSalesOrder {  
+  id: string
+  
+  orderDate: string
+  salesOrderNumber: string
+  shippingDate: Date
+  
+  quoteId: string
+  quoteDate: Date
+  
+  orderType: string
+  orderStatus: string
+
+  iso: number
+  
+  customer: string
+  crmCustomer: LasecCRMCustomer
+  
+  poNumber: string
+  currency: string
+      
+  deliveryAddress: string
+  deliveryNote: string
+  warehouseNote: string
+
+  salesTeam: string
+  value: number
+  reserveValue: number
+  shipValue: number
+  backorderValue: number
+
+  dispatchCount: number
+  invoiceCount: number
+  
+  invoices: any[]
+  dispatches: any[]
+  documentIds: any[]
+  documents: any[]
+  
+  orderQty: number
+  shipQty: number
+  reservedQty: number
+  backOrderQty: number
+  
+  details: {
+    lineItems: any[],
+    comments: any[]
+  }  
+}
+
 export interface IQuoteService extends Reactory.Service.IReactoryService {
 
   /**
@@ -621,6 +672,8 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
   getQuoteTransportModes(): Promise<any>;
 
   createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<SimpleResponse>;
+
+  getSalesOrder(sales_order_id: String): Promise<LasecSalesOrder>
 }
 
 export interface ILasecClientService extends Reactory.Service.IReactoryService {

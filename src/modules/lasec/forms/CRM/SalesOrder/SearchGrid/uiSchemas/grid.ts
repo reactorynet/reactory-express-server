@@ -123,7 +123,22 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Order Type', field: 'orderType' },
+        {
+          title: 'Order Type',
+          field: 'orderType',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${data.orderType}'
+              },
+            },
+          },
+          propsMap: {
+            'rowData': 'data',
+          },
+        },
         {
           title: 'Order Date',
           field: 'orderDate',
@@ -131,7 +146,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body1',
+                variant: 'body2',
                 format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -147,7 +162,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body1',
+                variant: 'body2',
                 format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -164,7 +179,22 @@ const uiSchema: any = {
             'rowData.salesOrderNumber': 'sales_order_number'
           }
         },
-        { title: 'Purchase Order Number', field: 'poNumber' },
+        {
+          title: 'Purchase Order Number',
+          field: 'poNumber',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${data.poNumber}'
+              },
+            },
+          },
+          propsMap: {
+            'rowData': 'data',
+          },
+        },
         {
           title: 'Quote Number',
           field: 'quoteId',
@@ -179,7 +209,7 @@ const uiSchema: any = {
             windowTitle: 'Details view for ${rowData.quoteId}',
             buttonVariant: 'Typography',
             buttonProps: {
-              variant: 'body1',
+              variant: 'body2',
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
@@ -209,8 +239,38 @@ const uiSchema: any = {
           }
 
         },
-        { title: 'Client', field: 'client' },
-        { title: 'Client Rep Code', field: 'salesTeam' },
+        {
+          title: 'Client',
+          field: 'client',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${data.client}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData': 'data',
+          },
+        },
+        {
+          title: 'Client Rep Code',
+          field: 'salesTeam',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${data.salesTeam}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData': 'data',
+          },
+        },
         {
           title: 'Order Value',
           field: 'value',

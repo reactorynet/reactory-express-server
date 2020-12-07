@@ -3,8 +3,19 @@ import logger from "@reactory/server-core/logging";
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import LasecApi from '../api';
 import ApiError from "exceptions";
-import { getCRMSalesOrders, getLasecQuoteById, getLoggedIn360User } from "./Helpers";
-import { IQuoteService, Lasec360User, LasecClient, LasecCreateSalesOrderInput, LasecCRMCustomer, LasecQuote, SimpleResponse } from "../types/lasec";
+
+import {
+
+  getClientSalesOrders,
+  getCRMSalesOrders,
+  getISODetails,
+  getLoggedIn360User,
+  getPurchaseOrderDetails,
+  getPurchaseOrders,
+  getSODocuments,
+
+} from "./Helpers";
+import { IQuoteService, Lasec360User, LasecClient, LasecCreateSalesOrderInput, LasecCRMCustomer, LasecQuote, LasecSalesOrder, SimpleResponse } from "../types/lasec";
 import { execql } from "@reactory/server-core/graph/client";
 import { LasecCompany } from "../constants";
 import { getCacheItem, setCacheItem } from "../models";
@@ -15,34 +26,40 @@ const SalesOrderResolver = {
   SalesOrder: {
 
     crmCustomer: async (salesOrder: any) => {
-      logger.debug(`SalesOrderResolver.crmCustomer`, { salesOrder })
 
-      const query = `
-      
-      SELECT 
-        qt.customer_id as id, 
-        AC.Name as registeredName,
-        AC.CustomerOnHold as customerStatus
-      FROM Quote as qt
-        INNER JOIN Customer as cust on qt.customer_id = cust.customerid
-        LEFT JOIN ArCustomer AC on cust.company_id=AC.Customer
-        WHERE qt.quoteid = '${salesOrder.quoteId}';
-      
-      `;
+      try {
+        logger.debug(`SalesOrderResolver.crmCustomer`, { salesOrder });
 
-      let sqlresult = await mysql(query, 'mysql.lasec360').then()
-      let customerObject = sqlresult[0];
-      logger.debug(`SalesOrderResolver.crmCustomer Results from mysql query`, sqlresult)
+        const query = `      
+          SELECT 
+            qt.customer_id as id, 
+            AC.Name as registeredName,
+            AC.CustomerOnHold as customerStatus
+          FROM Quote as qt
+            INNER JOIN Customer as cust on qt.customer_id = cust.customerid
+            LEFT JOIN ArCustomer AC on cust.company_id=AC.Customer
+            WHERE qt.quoteid = '${salesOrder.quoteId}';`;
 
-      if (customerObject === undefined || customerObject === null) return null;
+        let sqlresult: any = await mysql(query, 'mysql.lasec360').then()
+        let customerObject = sqlresult[0];
 
+        logger.debug(`SalesOrderResolver.crmCustomer Results from mysql query`, sqlresult);
+        if (customerObject === undefined || customerObject === null) return null;
 
-      return {
-        id: customerObject.id,
-        registeredName: customerObject.registeredName || 'Place Holder Name',
-        customerStatus: `${customerObject.customerStatus}`.toUpperCase() === 'Y' ? 'on-hold' : 'not-on-hold'
+        return {
+          id: customerObject.id,
+          registeredName: customerObject.registeredName || 'Place Holder Name',
+          tradingName: customerObject.registeredName,
+          customerStatus: `${customerObject.customerStatus}`.toUpperCase() === 'Y' ? 'on-hold' : 'not-on-hold'
+        }
+      } catch (crm_resolver_error) {
+        logger.error(`Error getting customer for sales order`, crm_resolver_error)
       }
-    }    
+    },
+
+    details: async (salesOrder: LasecSalesOrder, context: any, info: any) => {      
+      return getISODetails({ orderId: salesOrder.id, quoteId: salesOrder.quoteId });
+    }
   },
   Query: {
     LasecGetPagedCRMSalesOrders: async (obj, args) => {
@@ -54,6 +71,46 @@ const SalesOrderResolver = {
       }
 
     },
+
+    LasecGetISO: async (parent: any, params: { sales_order_id: string }, context: any, info: any): Promise<any> => {
+      const {
+        sales_order_id
+      } = params;
+
+      try {
+        const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+        const sales_order = await quoteService.getSalesOrder(sales_order_id).then();
+
+        return sales_order;
+
+      } catch (sales_order_fetch_error) {
+        logger.error(`Error getting sales order details`, sales_order_fetch_error);
+
+        throw new ApiError('Could not load the sales order, if this problem persists, contact your administrator')
+      }
+
+    },
+
+    LasecGetCRMPurchaseOrders: async (obj, args) => {
+      return getPurchaseOrders(args);
+    },
+
+    LasecGetCRMPurchaseOrderDetail: async (obj, args) => {
+      return getPurchaseOrderDetails(args)
+    },
+
+    LasecGetCRMClientSalesOrders: async (obj, args) => {
+      return getClientSalesOrders(args);
+    },
+
+    LasecGetSaleOrderDocument: async (obj, args) => {
+      return getSODocuments(args);
+    },
+    LasecGetISODetail: async (obj, args) => {
+      return getISODetails(args);
+    },
+
+
     LasecGetPreparedSalesOrder: async (parent: any, params: { quote_id: string, active_option: string }): Promise<any> => {
 
       try {
@@ -139,7 +196,7 @@ const SalesOrderResolver = {
                   currentBalance
                 }                
               }
-            }`, { id: lasec_quote.customer_id } ).then();
+            }`, { id: lasec_quote.customer_id }).then();
             client = customer_query.data.LasecGetClientDetail;
             customer = client.customer;
             logger.debug(`LasecGetCompanyDetailsforQuote(id: $id)`, customer);
@@ -147,7 +204,7 @@ const SalesOrderResolver = {
             logger.debug(`LasecGetCompanyDetailsforQuote(id: $id) ${customerLoadError.message}`, customerLoadError);
             throw new ApiError('Could load Company details for quote')
           }
-          
+
           prepared_sales_order = {
             id: `${quote_id}-SALESORDER`,
             quote_id,
@@ -159,27 +216,27 @@ const SalesOrderResolver = {
             order_type: 'normal',
             vat_number: customer.taxNumber,
             quoted_amount: lasec_quote.grand_total_excl_vat_cents,
-            delivery_address_id: customer.deliveryAddressId,              
+            delivery_address_id: customer.deliveryAddressId,
             delivery_address: customer.deliveryAddress,
             preferred_warehouse: '10',
             method_of_contact: 'call',
             shipping_date: moment().add(14, 'days').toISOString()
           }
-          
+
           setCacheItem(cache_key, prepared_sales_order, 60);
         };
-                              
+
         return prepared_sales_order;
       } catch (error) {
-        logger.error(`Unhandled exception ${error.message}`);        
+        logger.error(`Unhandled exception ${error.message}`);
         throw new ApiError(`Unhandled Error Processing Sales Order Prep ${error.message}`);
       }
     },
     LasecGetIncoTermsForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
       try {
-        
+
       } catch (inco_terms_error) {
-        
+
       }
     },
     LasecCheckPurchaseOrderExists: async (parent: any, params: { company_id: string, purchase_order_number: string }): Promise<any> => {
@@ -252,7 +309,7 @@ const SalesOrderResolver = {
      */
     LasecCreateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: any }, context: any, info: any): Promise<any> => {
       try {
-        
+
         const result = await LasecApi.SalesOrders.post_certificate_of_conformance(params.sales_order_id, params.certificate).then();
         return {
           success: true,
@@ -266,7 +323,7 @@ const SalesOrderResolver = {
       } catch (error) {
 
         return {
-          success: false, 
+          success: false,
           message: error.message,
           certificate: params.certificate
         }
@@ -274,9 +331,9 @@ const SalesOrderResolver = {
     },
 
     LasecUpdateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: any }, context: any, info: any): Promise<any> => {
-  
+
       try {
-        
+
         const result = await LasecApi.SalesOrders.put_certificate_of_conformance(params.sales_order_id, params.certificate).then();
         return {
           success: true,
@@ -290,18 +347,18 @@ const SalesOrderResolver = {
       } catch (error) {
 
         return {
-          success: false, 
+          success: false,
           message: error.message,
           certificate: params.certificate
         }
       }
 
     },
-    
-    LasecCreateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any } ): Promise<any> => {
+
+    LasecCreateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
 
       try {
-        
+
         const result = await LasecApi.SalesOrders.post_commercial_invoice(params.sales_order_id, params.invoice).then();
         return {
           success: true,
@@ -315,7 +372,7 @@ const SalesOrderResolver = {
       } catch (error) {
 
         return {
-          success: false, 
+          success: false,
           message: error.message,
           invoice: params.invoice
         }
@@ -323,9 +380,9 @@ const SalesOrderResolver = {
 
     },
 
-    LasecUpdateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any } ): Promise<any> => {
+    LasecUpdateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
       try {
-        
+
         const result = await LasecApi.SalesOrders.put_commercial_invoice(params.sales_order_id, params.invoice).then();
         return {
           success: true,
@@ -339,7 +396,7 @@ const SalesOrderResolver = {
       } catch (error) {
 
         return {
-          success: false, 
+          success: false,
           message: error.message,
           invoice: params.invoice
         }
@@ -347,9 +404,9 @@ const SalesOrderResolver = {
 
     },
 
-    LasecCreatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any } ): Promise<any> => {
+    LasecCreatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }): Promise<any> => {
       try {
-        
+
         const result = await LasecApi.SalesOrders.post_packing_list(params.sales_order_id, params.packing_list).then();
         return {
           success: true,
@@ -363,7 +420,7 @@ const SalesOrderResolver = {
       } catch (error) {
 
         return {
-          success: false, 
+          success: false,
           message: error.message,
           invoice: params.packing_list
         }
@@ -371,9 +428,9 @@ const SalesOrderResolver = {
 
     },
 
-    LasecUpdatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any } ): Promise<any> => {
+    LasecUpdatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }): Promise<any> => {
       try {
-        
+
         const result = await LasecApi.SalesOrders.put_packing_list(params.sales_order_id, params.packing_list).then();
         return {
           success: true,
@@ -387,7 +444,7 @@ const SalesOrderResolver = {
       } catch (error) {
 
         return {
-          success: false, 
+          success: false,
           message: error.message,
           invoice: params.packing_list
         }

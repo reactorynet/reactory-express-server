@@ -737,21 +737,7 @@ export default {
     LasecGetCRMSalesOrders: async (obj, args) => {
       return getSalesOrders(args);
     },
-    LasecGetCRMPurchaseOrders: async (obj, args) => {
-      return getPurchaseOrders(args);
-    },
-    LasecGetCRMPurchaseOrderDetail: async (obj, args) => {
-      return getPurchaseOrderDetails(args)
-    },
-    LasecGetCRMClientSalesOrders: async (obj, args) => {
-      return getClientSalesOrders(args);
-    },
-    LasecGetSaleOrderDocument: async (obj, args) => {
-      return getSODocuments(args);
-    },
-    LasecGetISODetail: async (obj, args) => {
-      return getISODetails(args);
-    },
+    
     LasecGetCRMClientInvoices: async (obj, args) => {
       return getClientInvoices(args);
     },

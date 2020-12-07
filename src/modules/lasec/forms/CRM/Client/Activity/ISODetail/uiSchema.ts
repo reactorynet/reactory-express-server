@@ -61,17 +61,37 @@ const uiSchema: any = {
     'ui:options': { }
   },
   documents: {
-    'ui:widget': 'LasecCRMISODetailDocuments',
-    'ui:options': { }
+    'ui:widget': 'LasecSalesOrderDocuments',
+    'ui:options': {
+      componentProps: {
+        use_case: 'existing',
+      },
+      componentPropsMap: {
+        'formData.orderId': 'sales_order_id'
+      },
+    }
   },
   lineItems: {
     'ui:widget': 'LasecCRMISODetailLineItems',
-    'ui:options': { }
+    'ui:options': {
+      
+      propsMap: {
+        'formData': 'formData.$SalesOrder',
+        'formData.orderId': 'sales_order_id'
+      }
+    }
   },
   comments: {
-    'ui:widget': 'LasecCRMISODetailComments',
-    'ui:options': { }
-  },  
+    'ui:widget': 'LasecCRMISODetailComments',    
+    'ui:options': { 
+      componentPropsMap: {
+        'formData': 'formData.$SalesOrder',
+        'formData.orderId': 'sales_order_id',
+        'formData.new_comment': 'formData.new_comment',
+        'formData.comments': 'formData.comments',
+      },
+    },
+  },
 };
 
 export default uiSchema;

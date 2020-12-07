@@ -61,10 +61,10 @@ export const DocumentsUISchema: Reactory.IUISchema = {
               }
             }`,
           variables: {
-            'uploadContext': 'lasec-crm::generate-sales-order::document-${props.formContext.$formData.header.quote_id}'
+            'uploadContext': 'lasec-crm::sales-order::document-${props.formContext.$formData.header.quote_id}'
           },
           onSuccessEvent: {
-            name: 'lasec-crm::generate-sales-order::document::uploaded'
+            name: 'lasec-crm::sales-order::document::uploaded'
           }
         },
         iconProps: {
@@ -96,9 +96,10 @@ export const DocumentsUISchema: Reactory.IUISchema = {
         toolbar: true,
         title: 'Files uploaded for sales order',
         selection: true,
+        
       },
       refreshEvents: [
-        { name: 'lasec-crm::generate-sales-order::document::uploaded' }
+        { name: 'lasec-crm::sales-order::document::uploaded' }
       ],      
       actions: [
         {
@@ -120,6 +121,17 @@ export const DocumentsUISchema: Reactory.IUISchema = {
     }
   },
 };
+
+
+
+
+const SalesOrderDocumentSchema = {
+  ...DocumentsUISchema
+};
+
+SalesOrderDocumentSchema.uploadedDocuments["ui:options"].query = 'documents_list';
+delete SalesOrderDocumentSchema.uploadedDocuments["ui:options"].variables;
+delete SalesOrderDocumentSchema.uploadedDocuments["ui:options"].resultMap;
 
 const GOOGLE_MAPS_API_KEY_DEVELOPMENT = '<GOOGLE MAPS API KEY>';
 
@@ -156,14 +168,6 @@ const DEFAULT_ADDRESS_PROPS = {
   }
 };
 
-
-const SalesOrderDocumentSchema = {
-  ...DocumentsUISchema
-};
-
-SalesOrderDocumentSchema.uploadedDocuments["ui:options"].query = 'documents_list';
-delete SalesOrderDocumentSchema.uploadedDocuments["ui:options"].variables;
-delete SalesOrderDocumentSchema.uploadedDocuments["ui:options"].resultMap;
 
 const GenerateSalesOrderUISchema: Reactory.IUISchema = {
   "ui:options": {
@@ -208,7 +212,7 @@ const GenerateSalesOrderUISchema: Reactory.IUISchema = {
       {
         purchase_order_number: { xs: 12, md: 4, lg: 3, xl: 2 },
         confirm_number: { xs: 12, md: 4, lg: 3, xl: 2 },
-        vat_number: { xs: 12, md: 4, lg: 3, xl: 2 }
+        vat_number: { xs: 12, md: 4, lg: 3, xl: 2 },
       }
     ]
   },
