@@ -1747,15 +1747,8 @@ const deleteComment = async (args) => {
 }
 
 const updateClientSpecialRequirements = async (args) => {
-
-  logger.debug(`>> >> >> UPDATE PARAMS:: `, args);
-
   try {
-
     let updateParams = { special_requirements: args.requirement == 'No special requirements set.' ? '' :  args.requirement }
-
-    logger.debug(`UPDATE PARAMS:: ${JSON.stringify(updateParams)}`);
-
     const apiResponse = await lasecApi.Customers.UpdateClientSpecialRequirements(args.id, updateParams);
 
     return {

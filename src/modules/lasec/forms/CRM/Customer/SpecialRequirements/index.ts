@@ -93,10 +93,6 @@ const displayUiSchema: any = {
       }
     }
   },
-  // specialRequirements: {
-  //   'ui:widget': 'ClientSpecialRequirements',
-  //   'ui:options': {}
-  // }
 };
 
 const editUiSchema: any = {
