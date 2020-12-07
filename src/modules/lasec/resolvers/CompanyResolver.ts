@@ -332,7 +332,7 @@ export const getClient = async (params) => {
       if (found === null || found === undefined) {
         let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }).then()
 
-        // logger.debug(`LASEC_COMPANY DETAILS::${JSON.stringify(companyPayloadResponse.items[0])}`);
+        logger.debug(`LASEC_COMPANY DETAILS::${JSON.stringify(companyPayloadResponse.items[0])}`);
 
         if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
           if (companyPayloadResponse.items.length === 1) {
@@ -356,12 +356,10 @@ export const getClient = async (params) => {
                 "90_day_invoice_total_cents": "balance90Days",
                 "120_day_invoice_total_cents": "balance120Days",
                 "credit_invoice_total_cents": "creditTotal",
-                "special_requirements": "specialRequirements"
+                'special_requirements': { key: 'specialRequirements', transform: (srcVal) => srcVal == null || srcVal == '' ? 'No special requirements set.' : srcVal },
               })
             };
-
-            // FOR TESTING PURPOSES
-            customerObject.specialRequirements = 'Efficiently enable fully researched relationships through end-to-end web services. Objectively foster multifunctional alignments rather than covalent users. Compellingly reinvent intuitive web-readiness whereas extensive e-services. Seamlessly empower accurate services before quality processes. Objectively visualize.';
+            // "special_requirements": "specialRequirements"
 
             setCacheItem(hashkey, customerObject, 10);
             clientResponse.customer = customerObject;
@@ -384,19 +382,19 @@ export const getClient = async (params) => {
     const employeeRole = roles.find(t => t.id == clientResponse.jobType);
     clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.clientResponse.jobType;
 
-     // CUSTOMER CLASS
+    // CUSTOMER CLASS
 
-     const customerClasses = await getCustomerClass({}).then();
+    const customerClasses = await getCustomerClass({}).then();
 
-     logger.debug(`CUSTOMER CLASSES :: ${JSON.stringify(customerClasses)}`);
+    logger.debug(`CUSTOMER CLASSES :: ${JSON.stringify(customerClasses)}`);
 
-     const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
+    const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
 
-     logger.debug(`CUSTOMER CLASS FOUND :: ${JSON.stringify(customerClass)}`);
+    logger.debug(`CUSTOMER CLASS FOUND :: ${JSON.stringify(customerClass)}`);
 
-     clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.clientResponse.customer.customerClass;
+    clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.clientResponse.customer.customerClass;
 
-     logger.debug(`UPDATED AND RETURNING :: ${JSON.stringify(clientResponse)}`);
+    logger.debug(`UPDATED AND RETURNING :: ${JSON.stringify(clientResponse)}`);
 
     return clientResponse;
   }
@@ -1748,6 +1746,29 @@ const deleteComment = async (args) => {
   }
 }
 
+const updateClientSpecialRequirements = async (args) => {
+
+  logger.debug(`>> >> >> UPDATE PARAMS:: `, args);
+
+  try {
+
+    let updateParams = { special_requirements: args.requirement == 'No special requirements set.' ? '' :  args.requirement }
+
+    logger.debug(`UPDATE PARAMS:: ${JSON.stringify(updateParams)}`);
+
+    const apiResponse = await lasecApi.Customers.UpdateClientSpecialRequirements(args.id, updateParams);
+
+    return {
+      success: apiResponse.success,
+      message: apiResponse.success ? 'Special requirements updated successfully.' : 'Error updating special requirments.'
+    };
+  }
+  catch (ex) {
+    logger.error(`ERROR UPDATING CLIENT DETAILS::  ${ex}`);
+    throw new ApiError('Error updating client details. Please try again');
+  }
+}
+
 export default {
   LasecDocument: {
     owner: async ({ owner }) => {
@@ -2478,6 +2499,9 @@ export default {
       }
 
       return response;
+    },
+    LasecUpdateSpecialRequirements: async (obj: any, args: any) => {
+      return updateClientSpecialRequirements(args);
     }
   },
 };

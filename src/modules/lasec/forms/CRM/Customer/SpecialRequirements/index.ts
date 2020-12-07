@@ -1,6 +1,25 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 import graphql from './graphql';
 
+const labelProps = {
+  readOnly: true,
+  format: '${formData}',
+  variant: 'subtitle1',
+  titleProps: {
+    style: {
+      display: 'content',
+      minWidth: '220px',
+      color: "#9A9A9A",
+    }
+  },
+  bodyProps: {
+    style: {
+      display: 'flex',
+      justifyContent: 'flex-end'
+    }
+  }
+};
+
 const displayUiSchema: any = {
   'ui:graphql': graphql,
   'ui:options': {
@@ -62,7 +81,7 @@ const displayUiSchema: any = {
       titleProps: {
         style: {
           display: 'content',
-          minWidth: '150px',
+          minWidth: '220px',
           color: "#9A9A9A",
         }
       },
@@ -152,6 +171,10 @@ const schema: Reactory.ISchema = {
     id: {
       type: "string",
       title: "Client ID"
+    },
+    companyId: {
+      type: "string",
+      title: "Company ID"
     },
     specialRequirements: {
       type: 'string',

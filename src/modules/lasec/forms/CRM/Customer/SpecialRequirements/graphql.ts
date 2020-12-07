@@ -7,6 +7,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       LasecGetClientDetail(id: $id){
         id
         customer {
+          id
           specialRequirements
         }
       }
@@ -16,6 +17,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     },
     resultMap: {
       'id': 'id',
+      'customer.id': 'companyId',
       'customer.specialRequirements': 'specialRequirements',
     },
     autoQuery: true,

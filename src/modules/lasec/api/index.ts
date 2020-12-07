@@ -555,7 +555,6 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
-
     GetFacultyList: async (params = defaultParams) => {
       const resp = await FETCH(SECONDARY_API_URLS.faculty_list.url, { params: { ...defaultParams, ...params } }).then();
       const {
@@ -566,7 +565,6 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-
     GetCustomerType: async (params = defaultParams) => {
       const resp = await FETCH(SECONDARY_API_URLS.customer_type.url, { params: { ...defaultParams, ...params } }).then();
       const {
@@ -577,7 +575,6 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-
     GetCustomerLineManagers: async (params = defaultParams) => {
 
       logger.debug(`[INDEX] GET LINE MANAGERS:: ${JSON.stringify(params)}`);
@@ -591,8 +588,6 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-
-
     GetCustomerClassById: async (id) => {
 
       const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { filter: { ids: [id] }, paging: {} } }).then();
@@ -694,7 +689,38 @@ const Api = {
         logger.error(`ERROR GETTING ADDRESS:: ${ex}`);
         return response.text();
       }
-    }
+    },
+    UpdateClientSpecialRequirements: async (clientId, params) => {
+      try {
+        logger.debug(`PARAMS: `, params);
+
+        // const apiResponse = await POST(`api/company/${clientId}`, params).then();
+        const apiResponse = await PUT(`api/company/${clientId}`, params).then();
+        const { status, payload, id, } = apiResponse;
+
+        logger.debug(`API UPDATE RESPONSE: ${JSON.stringify(apiResponse)}`);
+        logger.debug(`PAYLOAD: ${JSON.stringify(payload)}`);
+
+        if (status === 'success') {
+          return {
+            success: true,
+            message: 'Special requirements updated.'
+          }
+        }
+
+        return {
+          success: false,
+          message: 'Error updating special requirements .'
+        };
+
+      } catch (error) {
+        logger.error(`ERROR UPDATING CLIENT SPECIAL REQUIREMENTS:: ${error}`);
+        return {
+          success: false,
+          message: 'Error updating special requirements .'
+        };
+      }
+    },
   },
   Company: {
     list: async (params) => {
@@ -972,7 +998,7 @@ const Api = {
               let item = iso_api_result.payload.items[0];
 
               /**
-               * *************************** 
+               * ***************************
                *   Results from Lasec API
                * ***************************
                   {
@@ -1014,7 +1040,7 @@ const Api = {
 
               sales_order = {
                 id: item.id,
-                
+
                 orderDate: item.order_date,
                 salesOrderNumber: sales_order_id,
                 shippingDate: item.req_ship_date,
@@ -1022,26 +1048,26 @@ const Api = {
                 quoteId: item.quote_id,
                 quoteDate: item.quote_date,
 
-                
+
                 orderType: item.order_type,
                 orderStatus: item.order_status,
-                
+
                 iso: parseInt(item.id),
-                
+
                 customer: item.customer_name,
                 crmCustomer: {
                   id: '',
                   tradingName: item.company_trading_name,
                   registeredName: item.company_trading_name
                 },
-                
+
                 poNumber: item.customerponumber,
                 currency: item.currency,
-                
+
                 deliveryAddress: item.delivery_address,
                 deliveryNote: item.delivery_note,
                 warehouseNote: item.warehouse_note,
-                
+
                 salesTeam: item.sales_team_id,
                 value: item.order_value,
                 reserveValue: item.reserved_value,
@@ -1066,7 +1092,7 @@ const Api = {
                   comments: []
                 }
               };
-              
+
 
               setCacheItem(`lasec-sales-order::${sales_order_id}`, sales_order);
               return sales_order;
@@ -1075,7 +1101,7 @@ const Api = {
         } else {
           return cached;
         }
-                
+
       } catch (sales_order_item_error) {
         logger.error(`Could not load ISO ${sales_order_id}`, sales_order_item_error);
         throw sales_order_item_error;
@@ -1117,7 +1143,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
     },
     /***
-     * 
+     *
      Certificate of Conformance API
       Included in the api is a lookup for Inco Terms and Payment Terms
       GET: https://bapi.lasec.co.za/api/cert_of_conf/inco_terms
@@ -1193,7 +1219,7 @@ const Api = {
           ]
         }
       }
-      
+
       NOTE: If any of the documents have already been created, their header info will be pulled in instead of the ISO header info !!!
       NB: the detail section can have multiple entries
       To save a new packing list and its detail do:
@@ -1231,7 +1257,7 @@ const Api = {
           "date_of_expiry" => "2020-02-28",
           "date_of_expiry_na" => "N"
       )));
-    
+
     NB: Once again multiple entries can be in detail section for each package
     To update a existing listing:
     PUT: https://bapi.lasec.co.za/api/cert_of_conf/{salesordernumber} aka https://bapi.lasec.co.za/api/cert_of_conf/484584
@@ -1267,14 +1293,14 @@ const Api = {
             "lot_number" => "71",
             "date_of_expiry" => "2020-02-28",
             "date_of_expiry_na" => "N"
-        )));    
+        )));
      */
     get_certificate_of_conformance: async (sales_order_id: string): Promise<any> => {
 
       const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`).then();
       /**
        *
-       * Result is HashMap 
+       * Result is HashMap
         {
           "N/A": "N/A => Not Applicable",
           "CFR": "CFR => Cost and Freight",
@@ -1289,7 +1315,7 @@ const Api = {
           "FCA": "FCA => Free Carrier",
           "FOB": "FOB => Free on Board"
         }
-       * 
+       *
        */
       logger.debug(`Inco Terms Result`, inco_terms_for_sales_order);
 
@@ -1328,8 +1354,8 @@ const Api = {
         const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`).then();
         /**
          * Result is hash map
-         * 
-         * 
+         *
+         *
             {
               "30": "30 DAYS NETT",
               "45": "45 DAYS NETT",
@@ -1337,8 +1363,8 @@ const Api = {
               "90": "90 DAYS NETT",
               "COD": "COD"
             }
-         * 
-         * 
+         *
+         *
          */
 
 
@@ -1484,8 +1510,8 @@ const Api = {
     //commercial invoice
 
     /**
-     * 
-     * 
+     *
+     *
      * Commercial Invoice API
       Included in the api is a lookup for Inco Terms and Payment Terms
       GET: https://bapi.lasec.co.za/api/com_invoice/inco_terms
@@ -1536,7 +1562,7 @@ const Api = {
               "vat" => "N",
               "SysproCompany" => "SysproCompany2",
               "staffuserid" => 122,
-              "created" => "2020-01-28"    
+              "created" => "2020-01-28"
           ),
           "detail" => array(array(
               "salesorderline" => 1,
@@ -1546,7 +1572,7 @@ const Api = {
               "quantity" => "51",
               "unit_price" => "61.00"
           )));
-          
+
       NB: Once again multiple entries can be in detail section for each package
       To update a existing listing:
       PUT: https://bapi.lasec.co.za/api/com_invoice/{salesordernumber} aka https://bapi.lasec.co.za/api/com_invoice/484584
@@ -1581,7 +1607,7 @@ const Api = {
               "vat" => "N",
               "SysproCompany" => "SysproCompany2",
               "staffuserid" => 122,
-              "created" => "2020-01-28"    
+              "created" => "2020-01-28"
           ),
           "detail" => array(array(
               "salesorderline" => 1,
@@ -1591,7 +1617,7 @@ const Api = {
               "quantity" => "51",
               "unit_price" => "61.00"
           )));
-     * 
+     *
      */
 
     get_commercial_invoice: async (sales_order_id: string): Promise<any> => {
@@ -1650,7 +1676,7 @@ const Api = {
 
     //packing list
     /***
-     *     
+     *
       Packing list API
       Included in the api is a lookup for Inco Terms and Payment Terms
       GET: https://bapi.lasec.co.za/api/packing_list/inco_terms
@@ -1693,7 +1719,7 @@ const Api = {
                   }​​​​​​​​
         }
       }
- 
+
       When a entry does exists:
       {
                 "status":"success",
@@ -1761,9 +1787,9 @@ const Api = {
         "height" => "51",
         "width" => "61",
         "length" => "71",
-        "weight" => "81"        
+        "weight" => "81"
     )));
-    
+
 NB: Once again multiple entries can be in detail section for each package
 To update a existing listing:
 PUT: https://bapi.lasec.co.za/api/packing_list/{​​​​​​​​salesordernumber}​​​​​​​​ aka https://bapi.lasec.co.za/api/packing_list/484584
@@ -1796,14 +1822,14 @@ $post = array(
         "height" => "51",
         "width" => "61",
         "length" => "71",
-        "weight" => "81"        
+        "weight" => "81"
     )));
-    
+
 NB: note the addition of the detail_id for the line been updated
 
 
-     * 
-     * 
+     *
+     *
      */
 
     get_packing_list: async (sales_order_id: string): Promise<any> => {
@@ -1889,7 +1915,7 @@ NB: note the addition of the detail_id for the line been updated
 
 
       /*
-      
+
       {
         "warehouse_id": "10",
         "has_confirm_payment": true,
@@ -1906,13 +1932,13 @@ NB: note the addition of the detail_id for the line been updated
         "delivery_address_id": "19847",
         "quote_id": "2010-107367000"
       }
-      
+
       */
 
       /**
-      
+
       {
-  
+
       "warehouse_id": "10",
       "has_confirm_payment": true,
       "type_of_order": "normal",
@@ -1923,12 +1949,12 @@ NB: note the addition of the detail_id for the line been updated
       "confirm_purchase_order_number": "12345",
       "delivery_address_id": "14305",
       "quote_id": "2011-106326070"
-  
+
       }
-      
-      
-      
-      
+
+
+
+
        */
 
 
