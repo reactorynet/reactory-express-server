@@ -787,7 +787,15 @@ export default {
       logger.debug(`Returning Result for LasecGetQuoteProformaPDFUrl`, result)
 
       return result;
-    }
+    },
+    LasecGetCurrencies: async (parent: any, params: any) => {
+
+      try {
+        return await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+      } catch (err) {
+        return []
+      }
+    },
   },
   Mutation: {
 
@@ -1310,16 +1318,7 @@ export default {
         }
       }
     },
-    LasecGetCurrencies: async (parent, params) => {
-
-      try {
-        return await queryAsync(`SELECT currencyid, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
-      } catch (err) {
-        return []
-      }
-
-
-    },
+    
 
     LasecDeleteQuote: async (parent, params) => {
       return deleteQuote(params);

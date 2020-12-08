@@ -100,61 +100,57 @@ const graphql: Reactory.IFormGraphDefinition = {
       'deliveryAddress': 'deliveryDetails.deliveryAddress',
       'deliveryNote': 'deliveryDetails.deliveryNote',
       'warehouseNote': 'deliveryDetails.warehouseNote',
-      
+
       'iso': ['orderSummary.orderId', 'comments.orderId'],
       'orderType': 'orderSummary.orderType',
       'poNumber': 'orderSummary.poNumber',
       'salesTeam': 'orderSummary.salesPerson',
-      'quoteId': 'orderSummary.quoteNumber',
-      
-      'documents': 'documents',
-
+      'quoteId': 'orderSummary.quoteNumber',      
       'details.lineItems': 'lineItems',
-      
+
       'details.comments': 'comments.comments',
     },
     // autoQuery: true,
     edit: false,
     new: false,
     refreshEvents: [],
-
   },
   queries: {
     documents_list: {
-      name: 'LasecGetCustomerDocuments',
-      text: `query LasecGetCustomerDocuments($uploadContexts: [String], $paging: PagingRequest){
-          LasecGetCustomerDocuments(uploadContexts: $uploadContexts, paging: $paging){
-            paging {
-              total
-              page
-              pageSize
-            }
-            documents {
-              id
-              filename
-              mimetype
-              link
-              size
-              owner {
+      name: 'LasecGetSalesOrderDocuments',
+      text: `query LasecGetSalesOrderDocuments($sales_order_id: String!, $paging: PagingRequest){
+              LasecGetSalesOrderDocuments(sales_order_id: $sales_order_id, paging: $paging){
+              paging {
+                total
+                page
+                pageSize
+              }
+              documents {
                 id
-                firstName
-                fullName
+                filename
+                mimetype
+                link
+                size
+                owner {
+                  id
+                  firstName
+                  lastName
+                  fullName
+                }
               }
             }
-          }
-        }`,
+          }`,
       variables: {
-          'props.formContext.formData.documents.$paging': 'paging',
-          'props.formContext.formData.documents.uploadContext': 'uploadContexts',
+        'formContext.$formData.id': 'sales_order_id',
       },
       resultMap: {
-          'paging.page': 'page',
-          'paging.total': 'totalCount',
-          'paging.pageSize': 'pageSize',
-          'documents': 'data',
+        'paging.page': 'page',
+        'paging.total': 'totalCount',
+        'paging.pageSize': 'pageSize',
+        'documents': 'data',
       },
       resultType: 'object',
-  },
+    }
   }
 };
 

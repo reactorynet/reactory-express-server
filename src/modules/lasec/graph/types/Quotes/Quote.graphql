@@ -832,6 +832,9 @@ extend type Query {
     years: [Any]
     iter: Int
   ): PagedCRMSalesHistory
+
+  LasecGetCurrencies: [LasecCurrency]
+  
   LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
   LasecGetCompanyDetailsforQuote(id: String!): LasecCRMCustomer
 
@@ -909,7 +912,7 @@ extend type Mutation {
     comment: String!
     commentId: String
   ): SimpleResponse
-  LasecGetCurrencies: [LasecCurrency]
+  
   LasecDeleteQuoteComment(commentId: String): SimpleResponse
   LasecUpdateQuote(
     item_id: String

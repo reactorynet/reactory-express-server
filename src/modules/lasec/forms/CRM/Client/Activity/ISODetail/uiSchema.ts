@@ -76,16 +76,16 @@ const uiSchema: any = {
       componentProps: {
         use_case: 'existing',
       },
-      componentPropsMap: {
-        'formData.orderId': 'sales_order_id'
+      propsMap: {
+        'formData.orderSummary.orderId': 'sales_order_id'
       },
     }
   },
   comments: {
     'ui:widget': 'LasecCRMISODetailComments',    
     'ui:options': { 
-      componentPropsMap: {        
-        'formData.orderId': 'orderId',
+      propsMap: {        
+        'formData.orderSummary.orderId': 'orderId',
         'formData.new_comment': 'formData.new_comment',
         'formData.comments': 'formData.comments',
       },

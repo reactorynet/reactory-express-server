@@ -12,7 +12,7 @@ schema.description = 'Attach documents to the sales order.';
 schema.properties.uploadedDocuments.title = 'Uploaded files';
 
 
-const uiSchema : Reactory.IUISchema = {
+const uiSchema: Reactory.IUISchema = {
   'ui:options': {
     componentType: 'div',
     toolbarPosition: 'none',
@@ -36,7 +36,7 @@ const uiSchema : Reactory.IUISchema = {
   'ui:grid-layout': [
     {
       upload: { lg: 6, md: 6, sm: 12, },
-      uploadedDocuments: { lg: 6, md: 6, sm: 12 },      
+      uploadedDocuments: { lg: 6, md: 6, sm: 12 },
     }
   ],
   view: {
@@ -72,7 +72,7 @@ const uiSchema : Reactory.IUISchema = {
               }
             }`,
           variables: {
-            'sales_order_id': '${props.formContext.$formData.id}'            
+            'sales_order_id': '${props.formContext.$formData.id}'
           },
           onSuccessEvent: {
             name: 'lasec-crm::sales-order::document::uploaded'
@@ -110,11 +110,11 @@ const uiSchema : Reactory.IUISchema = {
       },
       query: 'documents_list',
       variables: {
-        'formContext.formData.id': 'sales_order_id',
+        'formContext.formData.orderId': 'sales_order_id',
       },
       refreshEvents: [
         { name: 'lasec-crm::sales-order::document::uploaded' }
-      ],      
+      ],
       actions: [
         {
           icon: 'remove_circle',
@@ -123,7 +123,7 @@ const uiSchema : Reactory.IUISchema = {
             color: 'error'
           },
           mutation: 'delete',
-          variables: {            
+          variables: {
             'selected[].id': 'fileIds',
           },
           resultMap: {
@@ -162,9 +162,9 @@ const graphql: Reactory.IFormGraphDefinition = {
               }
             }
           }`,
-      variables: {
-        'formContext.formData.id': 'sales_order_id',
-      },
+      // variables: {
+      //   'formContext.$formData.orderSummary.orderId': 'sales_order_id',
+      // },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
@@ -201,7 +201,7 @@ const LasecCRMISODetailDocuments: Reactory.IReactoryForm = {
   schema: schema,
   graphql,
   uiSchema: uiSchema,
-  defaultFormValue: {},  
+  defaultFormValue: {},
   widgetMap: [
     { componentFqn: 'core.SlideOutLauncher@1.0.0', widget: 'SlideOutLauncher' },
   ]

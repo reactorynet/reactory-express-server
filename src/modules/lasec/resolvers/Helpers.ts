@@ -1853,11 +1853,14 @@ export const getPagedSalesOrders = async (params: any) => {
 
   let salesOrdersIds = await lasecApi.SalesOrders.list({
     filter: apiFilter,
+    format: {
+      ids_only: true,
+    },
     ordering: { order_date: "desc" },
     pagination: {
       page_size: paging.pageSize || 10,
       current_page: paging.page
-    }
+    }    
   }).then();
 
   logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ${JSON.stringify(salesOrdersIds)}`);
@@ -2097,12 +2100,13 @@ export const getCRMSalesOrders = async (params) => {
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
-  let me = await getLoggedIn360User().then();
+  let me: Lasec360User = await getLoggedIn360User().then() as Lasec360User;
 
   let apiFilter: any = {
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),    
     ordering: { order_date: "desc" },
+    sales_team_id: me.sales_team_ids[0]
   };
 
   if (filterBy == 'order_date' || filterBy == 'shipping_date' || filterBy == 'quote_date') {

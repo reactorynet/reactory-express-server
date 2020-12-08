@@ -439,7 +439,7 @@ declare namespace Reactory {
     resultType?: string,
     queryMessage?: String,
     formData?: Object,
-    variables: Object,
+    variables?: Object,
     edit?: boolean,
     new?: boolean,
     delete?: boolean,
