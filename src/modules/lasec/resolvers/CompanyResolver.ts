@@ -340,52 +340,11 @@ export const getClient = async (params: any) => {
       logger.debug(`Found Cached Item for LASEC_COMPANY::${clientResponse.customer.id} ==> ${found}`)
       if (found === null || found === undefined) {
         let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }).then()
+
+        logger.debug(`LASEC_COMPANY DETAILS::${JSON.stringify(companyPayloadResponse.items[0])}`);
+
         if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
           if (companyPayloadResponse.items.length === 1) {
-            /**
-             *
-             *
-             * {
-                "id": "11999",
-                "registered_name": "COD  LAB  CPT",
-                "description": null,
-                "trading_name": "COD  LAB  CPT",
-                "registration_number": null,
-                "vat_number": "-",
-                "credit_facility_requested": "10",
-                "account_terms": "COD General Accts",
-                "bank_account_type_id": null,
-                "bank_name": null,
-                "bank_account_number": null,
-                "branch_code": null,
-                "organisation_id": null,
-                "department_id": null,
-                "customer_class_id": "IND024",
-                "customer_sub_class_id": null,
-                "legal_address_id": null,
-                "physical_address_id": null,
-                "procurement_person_ids": null,
-                "account_person_ids": null,
-                "company_on_hold": false,
-                "currency_id": "1",
-                "currency_code": "ZAR",
-                "currency_symbol": "R",
-                "currency_description": "Rand",
-                "sales_team_id": "LAB100",
-                "billing_address": ",,,,,",
-                "warehouse_id": "10",
-                "credit_limit_total_cents": 0,
-                "current_balance_total_cents": -7532620,
-                "current_invoice_total_cents": -1252537,
-                "30_day_invoice_total_cents": -948730,
-                "60_day_invoice_total_cents": -1574862,
-                "90_day_invoice_total_cents": -413671,
-                "120_day_invoice_total_cents": -3342820,
-                "credit_invoice_total_cents": -7698211
-              }
-             *
-             */
-
             let customerObject = {
               ...clientResponse.customer, ...om(companyPayloadResponse.items[0], {
                 'company_id': 'id',
@@ -405,9 +364,11 @@ export const getClient = async (params: any) => {
                 "60_day_invoice_total_cents": "balance60Days",
                 "90_day_invoice_total_cents": "balance90Days",
                 "120_day_invoice_total_cents": "balance120Days",
-                "credit_invoice_total_cents": "creditTotal"
+                "credit_invoice_total_cents": "creditTotal",
+                'special_requirements': { key: 'specialRequirements', transform: (srcVal) => srcVal == null || srcVal == '' ? 'No special requirements set.' : srcVal },
               })
             };
+            // "special_requirements": "specialRequirements"
 
             setCacheItem(hashkey, customerObject, 10);
             clientResponse.customer = customerObject;
@@ -430,19 +391,19 @@ export const getClient = async (params: any) => {
     const employeeRole = roles.find(t => t.id == clientResponse.jobType);
     clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.clientResponse.jobType;
 
-     // CUSTOMER CLASS
+    // CUSTOMER CLASS
 
-     const customerClasses = await getCustomerClass({}).then();
+    const customerClasses = await getCustomerClass({}).then();
 
-     logger.debug(`CUSTOMER CLASSES :: ${JSON.stringify(customerClasses)}`);
+    logger.debug(`CUSTOMER CLASSES :: ${JSON.stringify(customerClasses)}`);
 
-     const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
+    const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
 
-     logger.debug(`CUSTOMER CLASS FOUND :: ${JSON.stringify(customerClass)}`);
+    logger.debug(`CUSTOMER CLASS FOUND :: ${JSON.stringify(customerClass)}`);
 
-     clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.clientResponse.customer.customerClass;
+    clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.clientResponse.customer.customerClass;
 
-     logger.debug(`UPDATED AND RETURNING :: ${JSON.stringify(clientResponse)}`);
+    logger.debug(`UPDATED AND RETURNING :: ${JSON.stringify(clientResponse)}`);
 
     return clientResponse;
   }
@@ -773,7 +734,15 @@ const getCustomerClassById = async (id) => {
 };
 
 const getCustomerCountries = async () => {
-  return await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country.[]': ['[].id', '[].name'] });
+  try {
+    logger.info("Retrieving countries from remote api")
+    const countries = await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country[]': ['[].id', '[].name'] }).then();
+    logger.debug("Retrieved and mapped remote data to ", { countries });
+    return countries;
+  } catch (countryListError) {
+    logger.error("Could not get the country list from the remote API", countryListError);
+    return []
+  }
 };
 
 const getCustomerRepCodes = async () => {
@@ -793,9 +762,10 @@ const getCustomerRepCodes = async () => {
 const CLIENT_TITLES_KEY = "LasecClientTitles";
 
 const getPersonTitles = async () => {
-  logger.debug(`<<<<<<<< Fetching Client Titles >>>>>>>>>>>>>`);
-  //const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
-  //if (cached) return cached.items;
+  logger.debug(`CompanyResolver.ts getPersonTitles()`);
+  
+  const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
+  if (cached) return cached.items;
 
   const idsResponse = await lasecApi.Customers.GetPersonTitles();
 
@@ -1678,6 +1648,22 @@ const deleteComment = async (args) => {
   }
 }
 
+const updateClientSpecialRequirements = async (args) => {
+  try {
+    let updateParams = { special_requirements: args.requirement == 'No special requirements set.' ? '' :  args.requirement }
+    const apiResponse = await lasecApi.Customers.UpdateClientSpecialRequirements(args.id, updateParams);
+
+    return {
+      success: apiResponse.success,
+      message: apiResponse.success ? 'Special requirements updated successfully.' : 'Error updating special requirments.'
+    };
+  }
+  catch (ex) {
+    logger.error(`ERROR UPDATING CLIENT DETAILS::  ${ex}`);
+    throw new ApiError('Error updating client details. Please try again');
+  }
+}
+
 export default {
   LasecDocument: {
     owner: async ({ owner }) => {
@@ -1806,8 +1792,8 @@ export default {
       }
 
     },
-    LasecGetCustomerCountries: async (object, args) => {
-      return getCustomerCountries(args);
+    LasecGetCustomerCountries: async (object: anty, params: any) => {
+      return getCustomerCountries();
     },
     LasecGetCustomerRepCodes: async (object, args) => {
       return getCustomerRepCodes(args);
@@ -2404,6 +2390,9 @@ export default {
       }
 
       return response;
+    },
+    LasecUpdateSpecialRequirements: async (obj: any, args: any) => {
+      return updateClientSpecialRequirements(args);
     }
   },
 };

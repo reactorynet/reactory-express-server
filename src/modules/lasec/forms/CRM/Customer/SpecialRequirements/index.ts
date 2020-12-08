@@ -1,89 +1,96 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
 
+const labelProps = {
+  readOnly: true,
+  format: '${formData}',
+  variant: 'subtitle1',
+  titleProps: {
+    style: {
+      display: 'content',
+      minWidth: '220px',
+      color: "#9A9A9A",
+    }
+  },
+  bodyProps: {
+    style: {
+      display: 'flex',
+      justifyContent: 'flex-end'
+    }
+  }
+};
+
 const displayUiSchema: any = {
+  'ui:graphql': graphql,
   'ui:options': {
     componentType: "div",
-    toolbarPosition: 'bottom',
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
-      marginTop: '16px',
       paddingBottom: '8px'
     },
     schemaSelector: {
       variant: 'button',
       buttonTitle: 'Edit',
       activeColor: 'primary',
-      selectSchemaId: 'edit'
+      selectSchemaId: 'edit',
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
-    showSubmit: true,
+    showSchemaSelectorInToolbar: false,
+    showSubmit: false,
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px'
+  },
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px'
+    }
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { lg: 12, sm: 12, md: 12 },
     },
     {
-      comments: { md: 12 },
-      newComment: { md: 12 },                
+      specialRequirements: { sm: 12 },
+      style: { padding: '50px 32px 32px' }
     }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
+        width: '100%',
+        float: "right"
       },
     }
-  },  
-  comments: {
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
-      columns: [
-        {
-          title: "Who", field: "fullName"
-        },
-        {
-          title: "When", field: "filename"
-        },
-        {
-          title: "Comment", field: "size"
-        },        
-      ],
-      options: {
-        grouping: false,
-        search: false,
-        showTitle: false,
-        toolbar: false,
-      }
-    }
   },
-  newComment: {
-    'ui:field': 'GridLayout',
-    'ui:grid-layout': [      
-      {
-        comment: { md: 12, sm: 12 },        
-      },      
-    ],
-    comment: {
-      'ui:options': {
-        component: 'TextField',
-        componentProps: {
-          multiline: true,
-          variant: 'outlined'
+  specialRequirements: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      readOnly: true,
+      format: '${formData}',
+      variant: 'subtitle1',
+      title: 'Special Requirements',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '220px',
+          color: "#9A9A9A",
         }
-      }      
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      }
     }
   },
 };
@@ -97,107 +104,78 @@ const editUiSchema: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'CANCEL',
+      activeColor: 'secondary',
+      selectSchemaId: 'display',
+      style: {
+        position: 'absolute',
+        right: '10px',
+        top: '-3px'
+      }
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px'
+    }
+  },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '10px'
+  },
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      comments: { md: 12 },
-      newComment: { md: 12 },                
+      specialRequirements: { sm: 12 },
+      style: { padding: '40px 32px 32px' }
     }
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
       style: {
-        top: '10px',
-        right: '10px',
-        position: 'relative'
+        width: '100%',
+        float: "right"
       },
-    },
-  },  
-  comments: {
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
-      title: 'Client Comments',
-      columns: [
-        {
-          title: "Who", field: "fullName"
-        },
-        {
-          title: "When", field: "filename"
-        },
-        {
-          title: "Comment", field: "size"
-        },        
-      ],
-      options: {
-        grouping: false,
-        search: false,
-        showTitle: false,
-        toolbar: false,
-      }
-    },
-  },
-  newComment: {
-    'ui:field': 'GridLayout',
-    'ui:grid-layout': [      
-      {
-        comment: { md: 12, sm: 12 },        
-      },      
-    ],
-    comment: {
-      'ui:options': {
-        component: 'TextField',
-        componentProps: {
-          multiline: true,
-          variant: 'outlined'
-        }
-      }
     }
   },
-};
-
-
-const commentSchema: Reactory.ISchema = {
-  type: "object",
-  properties: {
-    comment: {
-      type: "string",
-      title: "comment"
-    },
-    fullName: {
-      type: "string",
-      title: "userName"
-    },
-    avatar: {
-      type: "string",
-      title: "Avatar"
-    },
-    when: {
-      type: "string",
-      format: "date",
-      title: "when"
-    },    
+  specialRequirements: {
+    'ui:widget': 'ClientSpecialRequirements',
+    'ui:options': {}
   }
-}; 
+};
 
 const schema: Reactory.ISchema = {
   type: "object",
   properties: {
+    view: {
+      title: '',
+      type: 'string'
+    },
     id: {
       type: "string",
       title: "Client ID"
     },
-    comments: {
-      type: "array",
-      items: { ...commentSchema }
+    companyId: {
+      type: "string",
+      title: "Company ID"
     },
-    newComment: { ...commentSchema }
+    specialRequirements: {
+      type: 'string',
+      title: 'Special Requirements'
+    }
   }
 };
 
@@ -214,7 +192,7 @@ const LasecCRMSpecialRequirements: Reactory.IReactoryForm = {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
-  graphql,
+  // graphql,
   uiSchema: displayUiSchema,
   uiSchemas: [
     {
@@ -234,9 +212,12 @@ const LasecCRMSpecialRequirements: Reactory.IReactoryForm = {
       uiSchema: editUiSchema,
     },
   ],
-  defaultFormValue: {
-    
-  },
+  defaultFormValue: {},
+  widgetMap: [
+    { componentFqn: 'lasec-crm.ClientSpecialRequirement@1.0.0', widget: 'ClientSpecialRequirements' },
+    { componentFqn: 'lasec-crm.ClientCommentGrid@1.0.0', widget: 'ClientCommentGrid' },
+  ],
+
 
 };
 

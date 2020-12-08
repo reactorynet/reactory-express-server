@@ -589,6 +589,7 @@ declare namespace Reactory {
     sanitizeSchema?: ISchema | IObjectSchema | IArraySchema,
     uiSchema?: any,
     uiSchemas?: IUISchemaMenuItem[],
+    defaultUiSchemaKey?: string,
     registerAsComponent: boolean,
     nameSpace: String,
     name: String,

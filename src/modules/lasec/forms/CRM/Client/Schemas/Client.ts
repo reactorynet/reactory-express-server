@@ -1,5 +1,9 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 
+/**
+ * Represents the client schema object.  This references a human with additional
+ * organisational attributes and contact details
+ */
 const ClientSchema: Reactory.ISchema = {
   type: "object",
   properties: {
@@ -47,10 +51,7 @@ const ClientSchema: Reactory.ISchema = {
       type: "string",
       title: "Client Name"
     },
-    // customer: {
-    //   type: "string",
-    //   title: "Customer"
-    // },
+
     customer: {
       type: "object",
       properties: {
@@ -72,35 +73,36 @@ const ClientSchema: Reactory.ISchema = {
         },
       }
     },
-    accountNumber: {
-        type: "string",
-        title: "Account Number"
-      },
-      accountType: {
-        type: "string",
-        title: "Account Type"
-      },
-      customerStatus: {
-        type: "string",
-        title: "Customer Status",
-      },
-      country: {
-        type: "string",
-        title: "Country"
-      },
-      repCode: {
-        type: "string",
-        title: "Rep Code"
-      },
-      isNameDuplicate: {
-        type: "boolean",
-        title: "Duplicate Name"
-      },
-      isEmailDuplicate: {
-        type: "boolean",
-        title: "Duplicate Email"
-      },
-    }
-  };
 
-  export default ClientSchema;
+    accountNumber: {
+      type: "string",
+      title: "Account Number"
+    },
+    accountType: {
+      type: "string",
+      title: "Account Type"
+    },
+    customerStatus: {
+      type: "string",
+      title: "Customer Status",
+    },
+    country: {
+      type: "string",
+      title: "Country"
+    },
+    repCode: {
+      type: "string",
+      title: "Rep Code"
+    },
+    isNameDuplicate: {
+      type: "boolean",
+      title: "Duplicate Name"
+    },
+    isEmailDuplicate: {
+      type: "boolean",
+      title: "Duplicate Email"
+    },
+  }
+};
+
+export default ClientSchema;

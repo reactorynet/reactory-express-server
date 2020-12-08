@@ -1297,7 +1297,7 @@ const FileLoader = {
   },
   uiSchema: {
     content: {
-      'ui:widget': 'DropZoneWidget',
+      'ui:widget': 'ReactoryDropZoneWidget',
       'ui:options': {
         readAsString: true,
         accept: ['text/html', 'text/text', 'application/xml'],

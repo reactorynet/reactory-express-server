@@ -143,7 +143,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       onSuccessMethod: "event:LasecNewCustomerCreated",
       notification: {
         title: 'Created New Customer',
-        inAppNotification: 'true',
+        inAppNotification: true,
         props: {
           canDismiss: true
         }

@@ -5,6 +5,7 @@ import LasecJobDetailForm from '../JobDetail';
 import LasecCRMCustomerLookupForm from '../../Customer/Lookup';
 import LasecCRMCustomerAddress from '../../Customer/Address';
 import LasecCRMClientDocuments from '../Documents';
+import { cloneDeep } from 'lodash';
 
 const schema: Reactory.ISchema = {
   type: 'object',
@@ -13,12 +14,12 @@ const schema: Reactory.ISchema = {
       type: 'object',
       title: 'Client Data',
       properties: {
-        personal: LasecPersonalForm.schema,
-        contact: LasecContactForm.schema,
-        jobDetail: LasecJobDetailForm.schema,
-        customer: LasecCRMCustomerLookupForm.schema,
-        address: LasecCRMCustomerAddress.schema,
-        documents: LasecCRMClientDocuments.ViewSchema
+        personal: cloneDeep(LasecPersonalForm.schema),
+        contact: cloneDeep(LasecContactForm.schema),
+        jobDetail: cloneDeep(LasecJobDetailForm.schema),
+        customer: cloneDeep(LasecCRMCustomerLookupForm.schema),
+        address: cloneDeep(LasecCRMCustomerAddress.schema),
+        documents: cloneDeep(LasecCRMClientDocuments.ViewSchema)
       }
     },
     expandedPanels: {
@@ -90,11 +91,13 @@ const uiSchema: any = {
 };
 
 const $sharedProps = {
-  componentProps: { mode: 'new', uiSchemaKey: 'new', liveValidate: true },
-  // componentProps: { mode: 'edit', uiSchemaKey: 'edit', liveValidate: true },
+  componentProps: { mode: 'new', uiSchemaKey: 'new', uiSchemaId: 'new', liveValidate: true },
+  //componentProps: { mode: 'edit', uiSchemaKey: 'edit', liveValidate: true },
   componentPropsMap: {
     //'onChange': 'onChange',
     'formContext.formData': 'formData',
+    //'formContext.mode': 'mode',
+    //'formContext.uiSchemaKey': 'uiSchemaKey'
   },
 };
 
@@ -181,8 +184,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMNewCustomerConfirm@1.0.0',
-            ...$sharedProps,
-          },
+            componentProps: { mode: 'new', uiSchemaKey: 'confirm', uiSchemaId: 'confirm', liveValidate: false },},
         ],
         nextButtonProps: {
           title: 'CONFIRM & SAVE',

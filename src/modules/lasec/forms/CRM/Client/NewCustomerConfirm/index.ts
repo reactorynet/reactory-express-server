@@ -1,7 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql from './graphql';
-import LasecPersonalForm, { confirmUiSchema as PersonalDisplayUISchema } from '../Personal/';
+import LasecPersonalForm, { PersonalFormUiSchemas as PersonalDisplayUISchema } from '../Personal/';
 import LasecContactForm, { newConfirmSchema as ContactDisplayUISchema } from '../Contact';
 import LasecJobDetailForm, { ConfirmUiSchema as JobDetailUISchema } from '../JobDetail';
 import LasecCRMCustomerLookupForm, { CustomerConfirmUISchema  } from '../../Customer/Lookup';
@@ -29,7 +29,8 @@ const displayUiSchema: any = {
       marginTop: '16px',
     },
     showSubmit: true,
-    showRefresh: false,
+    showRefresh: true,
+    showHelp: true,
   },
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
@@ -51,11 +52,10 @@ const displayUiSchema: any = {
       customer: { xs: 12, sm: 12, md: 12, lg: 12 },
       organization: { xs: 12, sm: 12, md: 12, lg: 12 },
       address: { xs: 12,  sm: 12, md: 12, lg: 12 },
-      uploadedDocuments: { xs: 12,  sm: 12, md: 12, lg: 12 },
-      style: { padding: '16px 32px' }
+      uploadedDocuments: { xs: 12,  sm: 12, md: 12, lg: 12 },      
     },
   ],
-  personalDetails: PersonalDisplayUISchema,
+  personalDetails: PersonalDisplayUISchema.ConfirmDetailsUISchema,
   contactDetails: ContactDisplayUISchema,
   jobDetails: JobDetailUISchema,
   address: {
@@ -200,6 +200,7 @@ const LasecCRMNewCustomerConfirm: Reactory.IReactoryForm = {
   schema: schema,
   graphql,
   uiSchema: displayUiSchema,
+  helpTopics: ["Customer Onboarding"],
   uiSchemas: [
     {
       id: 'new',

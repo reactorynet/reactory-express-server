@@ -25,7 +25,10 @@ const displayUiSchema: any = {
     componentType: "div",
     toolbarPosition: 'none',
     containerStyles: {
-      padding: '0px',
+      // padding: '0px',
+      // margin: '0px',
+      // paddingBottom: '8px'
+      padding: '24px',
       margin: '0px',
       paddingBottom: '8px'
     },
@@ -48,35 +51,32 @@ const displayUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    borderBottom: '2px solid #D5D5D5'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '24px'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px',
+    }
+  },
   'ui:grid-layout': [
-    // {
-    //   view: { sm: 12, md: 12, lg: 12 },
-    // },
     {
-      customerStatus: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
-      registeredCompanyName: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
-      tradingName: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
-      tradingCurrency: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
-      description: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
-      physicalAddress: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
-      deliveryAddress: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
-      billingAddress: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
-      registrationNumber: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } },
-      taxNumber: { sm: 12, md: 12, lg: 12, style: { paddingTop: '1rem' } }
+      customerStatus: { md: 6, sm: 12 },
+      registeredCompanyName: { md: 6, sm: 12 },
+      tradingName: { md: 6, sm: 12 },
+      tradingCurrency: { md: 6, sm: 12 },
+      description: { md: 6, sm: 12 },
+      physicalAddress: { md: 6, sm: 12 },
+      deliveryAddress: { md: 6, sm: 12 },
+      billingAddress: { md: 6, sm: 12 },
+      registrationNumber: { md: 6, sm: 12 },
+      taxNumber: { md: 6, sm: 12 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
-  // view: {
-  //   'ui:widget': 'SchemaSelectorWidget',
-  //   'ui:options': {
-  //     style: {
-  //       width: '100%',
-  //       float: "right"
-  //     },
-  //   }
-  // },
+
   customerStatus: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -107,10 +107,9 @@ const displayUiSchema: any = {
 
       },
       $iconProps: 'lasec-crm.CustomerStatusIconFormatFunction@1.0.0',
-      
+
     }
   },
-
   registeredCompanyName: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -183,7 +182,7 @@ const displayUiSchema: any = {
   }
 };
 
-// NOT IN USE
+
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -211,22 +210,28 @@ const editUiSchema: any = {
     showSubmit: true,
     showRefresh: false,
   },
+  'ui:titleStyle': {
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '24px'
+  },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     // {
     //   view: { sm: 12, md: 12, lg: 12 },
     // },
     {
-      customerStatus: { sm: 12, md: 12, lg: 12 },
-      registeredCompanyName: { sm: 12, md: 12, lg: 12 },
-      tradingName: { sm: 12, md: 12, lg: 12 },
-      tradingCurrency: { sm: 12, md: 12, lg: 12 },
-      description: { sm: 12, md: 12, lg: 12 },
-      physicalAddress: { sm: 12, md: 12, lg: 12 },
-      deliveryAddress: { sm: 12, md: 12, lg: 12 },
-      billingAddress: { sm: 12, md: 12, lg: 12 },
-      registrationNumber: { sm: 12, md: 12, lg: 12 },
-      taxNumber: { sm: 12, md: 12, lg: 12 }
+      customerStatus: { md: 6, sm: 12 },
+      registeredCompanyName: { md: 6, sm: 12 },
+      tradingName: { md: 6, sm: 12 },
+      tradingCurrency: { md: 6, sm: 12 },
+      description: { md: 6, sm: 12 },
+      physicalAddress: { md: 6, sm: 12 },
+      deliveryAddress: { md: 6, sm: 12 },
+      billingAddress: { md: 6, sm: 12 },
+      registrationNumber: { md: 6, sm: 12 },
+      taxNumber: { md: 6, sm: 12 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
   // view: {

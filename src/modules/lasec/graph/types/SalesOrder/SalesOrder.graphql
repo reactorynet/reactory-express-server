@@ -194,9 +194,24 @@ type LasecPackingListItem {
   weight: String
 }
 
+
+type LasecIncoTermsLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
+type LasecPaymentTermsLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
 type LasecCertificateLookups {
-  inco_terms: [LasecLookupItem],
-  payment_terms: [LasecLookupItem]
+  inco_terms: [LasecIncoTermsLookupItem],
+  payment_terms: [LasecPaymentTermsLookupItem]
 }
 
 
@@ -601,12 +616,12 @@ extend type Query {
   """
   Get the inco terms for the sales order id
   """
-  LasecGetIncoTermsForSalesOrder(sales_order_id: String!) : [LasecLookupItem]
+  LasecGetIncoTermsForSalesOrder(sales_order_id: String!) : [LasecIncoTermsLookupItem]
 
   """
   Get the payment terms for the sales order id
   """
-  LasecGetPaymentTermsForSalesOrder(sales_order_id: String!): [LasecLookupItem]
+  LasecGetPaymentTermsForSalesOrder(sales_order_id: String!): [LasecPaymentTermsLookupItem]
 
   """
   LasecCertificateOfConformance get for sales order

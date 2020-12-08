@@ -32,6 +32,7 @@ type LasecCRMCustomer {
   balance120Days: Float
   creditTotal: Float
   documents: [LasecDocument]
+  specialRequirements: String
 }
 
 type LasecCRMOrganisation {
@@ -121,18 +122,90 @@ type ClientDetailUpdateResponse {
   Client: LasecCRMClient
 }
 
-type LasecLookupItem {
-  id: String
-  lookup_type: String
-  name: String
-  description: String
-}
 
+"""
+Lookup item for titles
+"""
 type LasecTitleLookupItem {
   id: String
   title: String
   long_title: String
 }
+
+type LasecCustomerClassLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
+type LasecFacultyListLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
+type LasecCustomerTypeLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
+type LasecLineManagerLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
+type LasecCustomerRankingLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
+type LasecCustomerRolesLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
+type LasecCustomerJobTypesLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
+type LasecCountryLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
+type LasecRepCodeLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
+type LasecCustomerFilterLookupItem {
+  id: String  
+  key: String
+  name: String
+  description: String
+}
+
+
+
+
+
 
 type CreateNewOrganisationResponse {
   id: Int
@@ -314,21 +387,21 @@ extend type Query {
   ): PagedCRMCustomer
   LasecGetClientComments(clientId: String!): [CRMClientComment]
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
-  LasecGetCustomerClass: [LasecLookupItem]
-  LasecGetFacultyList: [LasecLookupItem]
+  LasecGetCustomerClass: [LasecCustomerClassLookupItem]
+  LasecGetFacultyList: [LasecFacultyListLookupItem]
 
-  LasecGetCustomerType: [LasecLookupItem]
-  LasecGetCustomerLineManagerOptions(customerId: String): [LasecLookupItem]
+  LasecGetCustomerType: [LasecCustomerTypeLookupItem]
+  LasecGetCustomerLineManagerOptions(customerId: String): [LasecLineManagerLookupItem]
 
-  LasecGetCustomerClassById(id: String): LasecLookupItem
-  LasecGetCustomerRanking: [LasecLookupItem]
-  LasecGetCustomerRankingById(id: String): LasecLookupItem
-  LasecGetCustomerRoles: [LasecLookupItem]
-  LasecGetCustomerJobTypes: [LasecLookupItem]
-  LasecGetCustomerJobTypeById(id: String): LasecLookupItem
-  LasecGetCustomerCountries: [LasecLookupItem]
-  LasecGetCustomerRepCodes: [LasecLookupItem]
-  LasecGetCustomerFilterLookup(filterBy: String): [LasecLookupItem]
+  LasecGetCustomerClassById(id: String): LasecCustomerClassLookupItem
+  LasecGetCustomerRanking: [LasecCustomerRankingLookupItem]
+  LasecGetCustomerRankingById(id: String): LasecCustomerRankingLookupItem
+  LasecGetCustomerRoles: [LasecCustomerRolesLookupItem]
+  LasecGetCustomerJobTypes: [LasecCustomerJobTypesLookupItem]
+  LasecGetCustomerJobTypeById(id: String): LasecCustomerJobTypesLookupItem
+  LasecGetCustomerCountries: [LasecCountryLookupItem]
+  LasecGetCustomerRepCodes: [LasecRepCodeLookupItem]
+  LasecGetCustomerFilterLookup(filterBy: String): [LasecCustomerFilterLookupItem]
   LasecGetCustomerDocuments(id: String, uploadContexts: [String], paging: PagingRequest): PagedLasecDocument
   LasecGetPersonTitles: [LasecTitleLookupItem]
   LasecGetPersonTitleById(id: String): LasecTitleLookupItem
@@ -352,4 +425,5 @@ extend type Mutation {
   LasecCRMSaveComment(clientId: String!, comment: String!): SimpleResponse
   LasecCRMDeleteComment(commentId: String!): SimpleResponse
   LasecDeactivateClients(clientIds: [String]!): SimpleResponse
+  LasecUpdateSpecialRequirements(id: String!,  requirement: String!): SimpleResponse
 }

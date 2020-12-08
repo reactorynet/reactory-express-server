@@ -180,8 +180,8 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       updateMessage: 'Updating Personal Content',
       variables: {
         'eventData.formData.id': 'clientId',
-        'eventData.formData': 'newClient.personalDetails',
-        'eventData.formData.clientTitle': 'newClient.personalDetails.title'
+        'eventData.formData.personal': 'newClient.personalDetails',
+        'eventData.formData.personal.clientTitle': 'newClient.personalDetails.title'
       },
       resultType: 'object',
       resultMap: {

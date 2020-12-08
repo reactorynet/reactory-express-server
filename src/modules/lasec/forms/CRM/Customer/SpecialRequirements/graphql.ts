@@ -6,31 +6,19 @@ const graphql: Reactory.IFormGraphDefinition = {
     text: `query LasecGetClientDetail($id: String!){
       LasecGetClientDetail(id: $id){
         id
-        clientStatus
-        firstName
-        lastName
-        fullName
-        emailAddress      
-        country
         customer {
           id
-          tradingName
-          accountNumber
-          customerStatus
-          country
+          specialRequirements
         }
-      }      
+      }
     }`,
     variables: {
-      'formData.id': 'id',            
+      'formData.id': 'id',
     },
-    resultMap: {      
+    resultMap: {
       'id': 'id',
-      'clientStatus': 'clientStatus',
-      'fullName': 'fullName',
-      'customer.customerStatus': 'customerStatus', 
-      'customer.accountNumber':'accountNumber',
-      'customer.tradingName': 'customer',     
+      'customer.id': 'companyId',
+      'customer.specialRequirements': 'specialRequirements',
     },
     autoQuery: true,
     queryMessage: 'Loading customer details',
