@@ -212,6 +212,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         'eventData.formData.jobType': 'newClient.jobDetails.jobType',
         'eventData.formData.lineManager': 'newClient.jobDetails.lineManager',
         'eventData.formData.customerType': 'newClient.jobDetails.customerType',
+        'eventData.formData.clientDepartment': 'newClient.jobDetails.clientDepartment',
         'eventData.formData.ranking': 'newClient.jobDetails.ranking',
         'eventData.formData.customerClass': 'newClient.jobDetails.customerClass',
       },

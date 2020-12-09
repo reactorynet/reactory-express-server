@@ -132,6 +132,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       variables: {
         'eventData.formData.id': 'clientId',
         'eventData.formData.emailAddress': 'newClient.contactDetails.emailAddress',
+        'eventData.formData.confirmEmail': 'newClient.contactDetails.confirmEmail',
         'eventData.formData.alternateEmail': 'newClient.contactDetails.alternateEmail',
         'eventData.formData.confirmAlternateEmail': 'newClient.contactDetails.confirmAlternateEmail',
         'eventData.formData.mobileNumber': 'newClient.contactDetails.mobileNumber',

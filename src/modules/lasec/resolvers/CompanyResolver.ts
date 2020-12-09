@@ -2147,7 +2147,6 @@ export default {
         ],
       };
 
-      debugger
       let isExistingClient = false;
       let existing_client_id = null;
 
@@ -2200,7 +2199,7 @@ export default {
       }
 
       //Not an existing customer we can create the customer
-      logger.debug(`No existing customer with email ${args.newClient.contactDetails.emailAddress} found, creating new`)
+      logger.debug(`No existing customer with email ${args.newClient.contactDetails.emailAddress} found, creating new from args`, { newClient: _newClient })
 
       const { post, URIS } = lasecApi;
       /**
@@ -2234,7 +2233,7 @@ export default {
 
 
       const _map = {
-        'personalDetails.clientTitle': 'title_id',
+        'personalDetails.title': 'title_id',
         'personalDetails.firstName': "first_name",
         'personalDetails.lastName': "surname",
         'personalDetails.country': "country",
@@ -2253,8 +2252,6 @@ export default {
         'jobDetails.ranking': 'ranking_id',
         'jobDetails.customerClass': 'customer_class_id',
 
-        'customer.id': 'company_id',
-        'customer.registeredName': 'company',
         'organization.id': { key: 'oranisation_id', transform: (v: string) => Number.parseInt(`${v}`) },
         'address.physicalAddress.id': 'physical_address_id',
         'address.deliveryAddress.id': 'delivery_address_id',
