@@ -313,7 +313,7 @@ export const getProductById = async (params, load_costings = true) => {
 
       if (load_costings === true) {
 
-        costintResults = await lasecApi.Products.costings({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
+        costingResults = await lasecApi.Products.costings({ filter: { ids: [productId] }, pagination: { page_size: 5 } }).then();
         costing = costingResults.items[0] || {};
 
         product_costing = {
