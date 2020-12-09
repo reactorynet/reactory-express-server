@@ -10,7 +10,7 @@ const graphql: Reactory.IFormGraphDefinition = {
           success
           message
         }
-      }`,      
+      }`,
       variables: {
         'eventData.formData.code': 'item_id',
         'eventData.formData.quoteType': 'quote_type',
@@ -31,7 +31,7 @@ const schema: Reactory.ISchema = {
     },
     client: {
       type: 'string',
-      title: 'Show'
+      title: 'Client Name'
     },
     repCode: {
       type: "string",
@@ -78,39 +78,60 @@ const uiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      client: { xs: 12, sm: 6, md: 6, lg: 6 },      
-      repCode: { xs: 12, sm: 6, md: 6, lg: 6 },      
+      client: { xs: 12, sm: 6, md: 6, lg: 6 },
+      quoteType: { xs: 12, sm: 6, md: 6, lg: 6 },
       style: { marginTop: '-16px' },
     },
     {
-      quoteType: { xs: 12, sm: 6, md: 6, lg: 6 },
+      repCode: { xs: 12, sm: 6, md: 6, lg: 6 },
       validDate: { xs: 12, sm: 6, md: 6, lg: 6 },
+      // style: { marginTop: '-16px' },
     }
   ],
 
   code: {},
 
   client: {
-    "ui:widget": "LabelWidget",
-    "ui:options": {
-      format: '${formData}',
-      title: 'Customer',
-      variant: 'body2',
-      titleProps: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'Client Name',
         style: {
-          display: 'content',
-          minWidth: '150px',
-          color: "#9A9A9A",
+          marginTop: '1.3rem'
         }
       },
-      bodyProps: {
+      labelProps: {
+        dontShrink: true,
         style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
         }
       }
-    }        
+    }
   },
+  // client: {
+  //   "ui:widget": "LabelWidget",
+  //   "ui:options": {
+  // format: '${formData}',
+  // title: 'Client Name',
+  // variant: 'body2',
+  // titleProps: {
+  //   style: {
+  //     display: 'content',
+  //     minWidth: '150px',
+  //     color: "#9A9A9A",
+  //   }
+  // },
+  // bodyProps: {
+  //   style: {
+  //     display: 'flex',
+  //     justifyContent: 'flex-end'
+  //   }
+  // }
+  // }
+  // },
   repCode: {
     "ui:widget": "LabelWidget",
     "ui:options": {
@@ -130,29 +151,60 @@ const uiSchema: any = {
           justifyContent: 'flex-end'
         }
       }
-    }    
+    }
   },
   quoteType: {
     'ui:widget': 'SelectWidget',
     'ui:options': {
-      size: 'small',
+      FormControl: {
+        props: {
+          style: {
+            maxWidth: '400px'
+          }
+        }
+      },
+      labelStyle: {
+        transform: 'none',
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        padding: 0
+      },
+      selectProps: {
+        style: {
+          marginTop: '1.3rem',
+        }
+      },
       selectOptions: [
         { key: 'Normal', value: 'Normal', label: 'Normal' },
         { key: 'Contract', value: 'Contract', label: 'Contract' },
         { key: 'Tender', value: 'Tender', label: 'Tender' },
         { key: 'Budget', value: 'Budget', label: 'Budget' },
       ],
-    },
+    }
   },
+  // quoteType: {
+  //   'ui:widget': 'SelectWidget',
+  //   'ui:options': {
+  //     size: 'small',
+  //     selectOptions: [
+  //       { key: 'Normal', value: 'Normal', label: 'Normal' },
+  //       { key: 'Contract', value: 'Contract', label: 'Contract' },
+  //       { key: 'Tender', value: 'Tender', label: 'Tender' },
+  //       { key: 'Budget', value: 'Budget', label: 'Budget' },
+  //     ],
+  //   },
+  // },
   validDate: {
     'ui:widget': 'DateSelectorWidget',
     'ui:options': {
-      formControl: {
-        variant: 'outlined',
-        size: 'small'
-      },
-      picker: {
-        variant: 'outlined'
+      variant: 'outlined',
+      typography: {
+        variant: 'subtitle1',
+        style: {
+          fontWeight: 'bold',
+          marginBottom: '5px'
+        }
       }
     }
   },
@@ -204,7 +256,7 @@ const LasecCRMQuoteHeaderForm: Reactory.IReactoryForm = {
     quotes: []
   },
   widgetMap: [
-    { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
+    // { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
     { componentFqn: 'lasec-crm.RepCodeFilter@1.0.0', widget: 'RepCodeFilter' },
