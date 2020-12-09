@@ -131,9 +131,16 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       updateMessage: 'Updating Personal Content',
       variables: {
         'eventData.formData.id': 'clientId',
-        'eventData.formData': 'newClient.contactDetails',
+        'eventData.formData.emailAddress': 'newClient.contactDetails.emailAddress',
+        'eventData.formData.alternateEmail': 'newClient.contactDetails.alternateEmail',
+        'eventData.formData.confirmAlternateEmail': 'newClient.contactDetails.confirmAlternateEmail',
+        'eventData.formData.mobileNumber': 'newClient.contactDetails.mobileNumber',
+        'eventData.formData.alternateMobile': 'newClient.contactDetails.alternateMobile',
+        'eventData.formData.officeNumber': 'newClient.contactDetails.officeNumber',
+        'eventData.formData.prefferedMethodOfContact': 'newClient.contactDetails.prefferedMethodOfContact',
       },
       // handledBy: 'onChange',
+      throttle: 1000,
       resultType: 'object',
       resultMap: {
         'id': 'id',

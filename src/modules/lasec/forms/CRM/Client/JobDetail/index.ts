@@ -652,9 +652,9 @@ export const ConfirmUiSchema: any = {
       jobType: { sm: 12, md: 6 },
       jobTypeLabel: { sm: 12, md: 6 },
       // lineManagerLabel: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerType: { sm: 12, md: 6 },
+      //customerType: { sm: 12, md: 6 },
       customerClass: { sm: 12, md: 6 },
-      faculty: { sm: 12, md: 6 },
+      //faculty: { sm: 12, md: 6 },
       clientDepartment: { sm: 12, md: 6 },
       ranking: { sm: 12, md: 6 },
       style: { padding: '25px 32px 0 32px' }
@@ -723,27 +723,7 @@ export const ConfirmUiSchema: any = {
     }
   },
 
-  // lineManager: {
-  //   'ui:widget': 'LabelWidget',
-  //   'ui:options': {
-  //     format: '${formData}',
-  //     variant: 'subtitle1',
-  //     title: 'Line Manager',
-  //     titleProps: {
-  //       style: {
-  //         display: 'content',
-  //         minWidth: '150px',
-  //         color: "#9A9A9A",
-  //       }
-  //     },
-  //     bodyProps: {
-  //       style: {
-  //         display: 'flex',
-  //         justifyContent: 'flex-end'
-  //       }
-  //     }
-  //   }
-  // },
+  
 
   customerType: {
     'ui:widget': 'LabelWidget',
@@ -964,8 +944,8 @@ const newUiSchema: any = {
       customerClass: { sm: 12, md: 6 },
       clientDepartment: { sm: 12, md: 6 },
       ranking: { sm: 12, md: 6 },
-      faculty: { md: 6, sm: 12 },
-      customerType: { sm: 12, md: 6 },
+      //faculty: { md: 6, sm: 12 },
+      //customerType: { sm: 12, md: 6 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],

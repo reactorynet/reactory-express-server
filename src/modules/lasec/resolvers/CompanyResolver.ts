@@ -7,6 +7,7 @@ import logger from '../../../logging';
 import lodash, { isArray, isNil, orderBy, isString } from 'lodash';
 import { getCacheItem, setCacheItem } from '../models';
 import Hash from '@reactory/server-core/utils/hash';
+import iz from '@reactory/server-core/utils/validators';
 import { execql } from '@reactory/server-core/graph/client';
 import ReactoryFileModel from '@reactory/server-modules/core/models/CoreFile';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
@@ -15,7 +16,7 @@ import { ObjectID, ObjectId } from 'mongodb';
 import LasecAPI from '@reactory/server-modules/lasec/api';
 import CRMClientComment from '@reactory/server-modules/lasec/models/Comment';
 import { User } from '@reactory/server-core/models';
-import { LasecApiResponse, LasecCRMCustomer, SimpleResponse } from '../types/lasec';
+import { LasecApiResponse, LasecCRMCustomer, LasecNewClientInput, SimpleResponse } from '../types/lasec';
 
 import { getLoggedIn360User, getCustomerDocuments } from './Helpers';
 
@@ -763,7 +764,7 @@ const CLIENT_TITLES_KEY = "LasecClientTitles";
 
 const getPersonTitles = async () => {
   logger.debug(`CompanyResolver.ts getPersonTitles()`);
-  
+
   const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
   if (cached) return cached.items;
 
@@ -1088,7 +1089,7 @@ const getOrganisationList = async (params) => {
 
   logger.debug(`Returning ids ${organisationResult.ids}`);
 
-  let ids = [];
+  let ids:string[] = [];
 
   if (isArray(organisationResult.ids) === true) {
     ids = [...organisationResult.ids];
@@ -1104,25 +1105,30 @@ const getOrganisationList = async (params) => {
 
   logger.debug(`Loading (${ids.length}) company ids`);
 
-  const organisationDetails = await lasecApi.Organisation.list({ filter: { ids: ids } });
+  let organisations: any[] = [];
 
-  logger.debug(`Fetched Expanded View for (${organisationDetails.organisations.length}) ORGANISATIONS from API`);
-  let organisations = [...organisationDetails.organisations];
+  if (ids.length > 0) {
+  
+    const organisationDetails = await lasecApi.Organisation.list({ filter: { ids: ids } }).then();
 
-  logger.debug(`ORGANISATION RESOLVER - ORGANISATION:: Found (${organisations.length}) for request`);
-
-  organisations = organisations.map(organisation => {
-    let _organisation = om(organisation, {
-      'id': 'id',
-      'name': 'name',
-      'description': 'description',
-    });
-    return _organisation;
-  });
-
+    logger.debug(`Fetched Expanded View for (${organisationDetails.organisations.length}) ORGANISATIONS from API`);
+    organisations = [...organisationDetails.organisations];
+  
+    logger.debug(`ORGANISATION RESOLVER - ORGANISATION:: Found (${organisations.length}) for request`);
+  
+    organisations = organisations.map(organisation => {
+      let _organisation = om.merge(organisation, {
+        'id': 'id',
+        'name': 'name',
+        'description': 'description',
+      });
+      return _organisation;
+    });      
+  }
+  
   logger.debug(`ORGANISATIONS:: (${JSON.stringify(organisations)})`);
-
-  organisations = orderBy(organisations, ['name', ['asc']]);
+  
+  if(organisations.length > 1) organisations = orderBy(organisations, ['name', ['asc']]);
 
   let result = {
     paging: pagingResult,
@@ -1288,7 +1294,7 @@ const uploadDocument = async (args: any) => {
     diskWriterStream.on('finish', catalogFile);
 
     // Save image to disk.
-    stream.pipe(diskWriterStream);    
+    stream.pipe(diskWriterStream);
   });
 };
 
@@ -1650,7 +1656,7 @@ const deleteComment = async (args) => {
 
 const updateClientSpecialRequirements = async (args) => {
   try {
-    let updateParams = { special_requirements: args.requirement == 'No special requirements set.' ? '' :  args.requirement }
+    let updateParams = { special_requirements: args.requirement == 'No special requirements set.' ? '' : args.requirement }
     const apiResponse = await lasecApi.Customers.UpdateClientSpecialRequirements(args.id, updateParams);
 
     return {
@@ -2086,35 +2092,38 @@ export default {
 
       let _newClient = await getCacheItem(hash).then();
 
-      if (isNil(newClient.personalDetails) === false) {
+      if (isNil(newClient.personalDetails) === false && Object.keys(newClient.personalDetails).length > 0) {
         _newClient.personalDetails = { ..._newClient.personalDetails, ...newClient.personalDetails };
       }
 
-      if (isNil(newClient.contactDetails) === false) {
+      if (isNil(newClient.contactDetails) === false && Object.keys(newClient.contactDetails).length > 0) {
         _newClient.contactDetails = { ..._newClient.contactDetails, ...newClient.contactDetails };
       }
 
-      if (isNil(newClient.jobDetails) === false) {
+      if (isNil(newClient.jobDetails) === false && Object.keys(newClient.jobDetails).length > 0) {
         _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
+
 
         const roles = await getCustomerRoles({}).then();
         const employeeRole = roles.find(t => t.id == _newClient.jobDetails.jobType);
         _newClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : _newClient.jobDetails.jobType;
+
+        _newClient.jobDetails.faculty = "Science";
+        _newClient.jobDetails.customerType = "default";
       }
 
-      if (isNil(newClient.customer) === false) {
+      if (isNil(newClient.customer) === false && Object.keys(newClient.customer).length > 0) {
         _newClient.customer = { ..._newClient.customer, ...newClient.customer };
       }
 
-      if (isNil(newClient.organization) === false) {
+      if (isNil(newClient.organization && Object.keys(newClient.organization).length > 0) === false) {
         _newClient.organization = { ..._newClient.organization, ...newClient.organization };
       }
 
-      if (isNil(newClient.address) === false) {
+      if (isNil(newClient.address && Object.keys(newClient.address).length > 0) === false) {
         _newClient.address = {
           physicalAddress: { ..._newClient.address.physicalAddress, ...newClient.address.physicalAddress },
-          deliveryAddress: { ..._newClient.address.deliveryAddress, ...newClient.address.deliveryAddress },
-          // billingAddress: { ..._newClient.address.billingAddress, ...newClient.address.billingAddress },
+          deliveryAddress: { ..._newClient.address.deliveryAddress, ...newClient.address.deliveryAddress },          
         };
       }
 
@@ -2127,7 +2136,7 @@ export default {
 
       return _newClient;
     },
-    LasecCreateNewClient: async (obj, args) => {
+    LasecCreateNewClient: async (obj: any, args: { id: string, newClient: LasecNewClientInput }) => {
 
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
       const _newClient = await getCacheItem(hash).then();
@@ -2138,35 +2147,60 @@ export default {
         ],
       };
 
-      logger.debug(`CREATE NEW ARGS:: ${JSON.stringify(args)}`);
+      debugger
+      let isExistingClient = false;
+      let existing_client_id = null;
 
-      // CLIENT EXISTS AND IS DEACTIVATED - REACTIVATE CLIENT
-      if (args.id) {
-        try {
-          const updateArgs = {
-            clientInfo: {
-              ...args.newClient,
-              clientStatus: 'active',
-              clientId: args.id,
-            }
+      //check if the customer exist using email address
+      if (iz.email(args.newClient.contactDetails.emailAddress) === true) {
+        const customer_ids: string[] = await mysql(`SELECT customerid, first_name, surname FROM Customer C where C.email = '${args.newClient.contactDetails.emailAddress.trim()}';`, 'mysql.lasec360').then()
+        if (customer_ids.length > 0) {
+          if (customer_ids.length > 1) throw new ApiError(`Multiple Email Addresses are registered with email ${args.newClient.contactDetails.emailAddress}`);
+          existing_client_id = customer_ids[0];
+          if (iz.nil(existing_client_id) === false) {
+            isExistingClient = true;
           }
-          await updateClientDetail(updateArgs);
-          await mysql(`
+        }
+      } else {
+        throw new ApiError("User contact details does not have a valid email address");
+      }
+
+      if (isExistingClient === true) {
+        // CLIENT EXISTS AND IS DEACTIVATED - REACTIVATE CLIENT
+        logger.debug(`Existing customer with id found ${existing_client_id} using parameters tp update customer`);
+        if (args.id) {
+          try {
+            const updateArgs = {
+              clientInfo: {
+                ...args.newClient,
+                clientStatus: 'active',
+                clientId: existing_client_id,
+              }
+            }
+            //Patch the remote data with the data from the form input
+            await updateClientDetail(updateArgs);
+
+            //toggle the active status
+            await mysql(`
             UPDATE Customer SET
               activity_status = 'active',
-              company_id = ${args.customer.id},
-            WHERE customerid = ${args.id};`, 'mysql.lasec360').then()
+              company_id = ${args.newClient.organization.id},
+            WHERE customerid = ${existing_client_id};`, 'mysql.lasec360').then()
 
-          response.client = args;
-        } catch (setStatusError) {
-          logger.error("Error Setting The Status and Customer details", setStatusError);
-          response.client = args;
-          response.messages = ['There was an error reactivating this client.'];
-          response.success = false;
+            response.client = args;
+          } catch (setStatusError) {
+            logger.error("Error Setting The Status and Customer details", setStatusError);
+            response.client = args;
+            response.messages = ['There was an error reactivating this client.'];
+            response.success = false;
+          }
+
+          return response;
         }
-
-        return response;
       }
+
+      //Not an existing customer we can create the customer
+      logger.debug(`No existing customer with email ${args.newClient.contactDetails.emailAddress} found, creating new`)
 
       const { post, URIS } = lasecApi;
       /**
@@ -2196,6 +2230,8 @@ export default {
             );
        *
        */
+
+
 
       const _map = {
         'personalDetails.clientTitle': 'title_id',
@@ -2227,172 +2263,189 @@ export default {
       let customer: any = null;
 
       let customerCreated = false;
-      try {
-        let inputData: any = om.merge(_newClient, _map);
-        inputData.onboarding_step_completed = 6;
-        inputData.activity_status = 'active';
+      let inputData: any;
 
+      const doCreate = async () => {
+        try {
+          inputData = om.merge(_newClient, _map);
+          inputData.onboarding_step_completed = 6;
+          inputData.activity_status = 'active';
 
-        logger.debug(`Create new client on LasecAPI`, inputData)
-        customer = await post(URIS.customer_create.url, inputData).then()
-        logger.debug(`Result in creating user`, customer);
+          logger.debug(`🟠 Create new client on LasecAPI using input data:`, inputData)
+          customer = await post(URIS.customer_create.url, inputData, null, true).then()
+          logger.debug(`👀 Result in creating user`, customer);
+          
+          return customer;
+        }
+        catch (postError) {
+          logger.error("Error Setting The Status and Customer details", postError);
+          response.messages.push({ text: `Could not create the customer ${postError.message}`, type: 'error', inAppNotification: true });
+
+          return null;
+        }
+      };
+
+      const doStatusUpdate = async () => {
 
         try {
+          logger.debug(`🟠 Updating user activity and organization and company details status complete via mysql`, { organization: _newClient.organization, customer: _newClient.customer });
           const update_result = await mysql(`
             UPDATE Customer SET
               activity_status = 'active',
-              organisation_id = ${_newClient.organization.id},
-              company_id = ${_newClient.customer.id},
-
+              organisation_id = 0,
+              company_id = ${_newClient.organization.id},
+  
             WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
-          logger.debug(`Updated user activity status complete`, update_result);
+          logger.debug(`🟢 Updated user activity status complete`, update_result);          
 
+          response.messages.push({ text: `Client ${args.newClient.contactDetails.emailAddress} activity status set to active`, type: 'success', inAppNotification: true });
+  
         } catch (setStatusError) {
-          logger.error("Error Setting The Status and Customer details", setStatusError)
-        }
-
-        if (customer && customer.id && Number.parseInt(`${customer.id}`) > 0) {
-          customer = { ...inputData, ...customer };
-          customerCreated = Boolean(customer && customer.id);
-          if (customerCreated === true) {
-            response.messages.push({ text: `Client ${customer.first_name} ${customer.surname} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });
-
-            /***
-             * set addresses for the customer
-             * */
-            const { deliveryAddress, physicalAddress } = _newClient.address;
-            if (Number.parseInt(physicalAddress.id) > 0) {
-              try {
-                logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
-              } catch (exc) {
-                logger.error(`Could not save the physical address against the customer`, exc);
-                response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set physical address`, type: 'warning', inAppNotification: true });
-              }
-            }
-
-
-            if (Number.parseInt(deliveryAddress.id) > 0) {
-              try {
-                logger.debug(`Set delivery address ${deliveryAddress.fullAddress}`);
-              } catch (exc) {
-                logger.error(`Could not save the delivery address against the customer`, exc);
-                response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });
-              }
-            }
-
-            try {
-              //set upload files if any and clear local cache (delete files)
-              let upload_promises = [];
-
-              let clientDocuments: any[] = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
-              if (clientDocuments.length > 0) {
-                upload_promises = clientDocuments.map((documentInfo) => {
-                  return lasecApi.Documents.upload(documentInfo, customer)
-                });
-
-                let uploadResults = await Promise.all(upload_promises).then();
-                uploadResults.forEach((uploadResult) => {
-                  logger.debug(`File upload result ${uploadResult}`)
-                  uploadResult.document.uploadContext = `lasec-crm::client::document::${customer.id}`;
-                  uploadResult.document.save()
-
-                  if (uploadResult.success === false) {
-                    response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading ${uploadResult.document.filename} to Lasec API`, type: 'warning', inAppNotification: true });
-                  }
-                });
-              }
-            } catch (exc) {
-              logger.debug(`Could; not upload documents for the customer`, exc);
-              response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading documents`, type: 'warning', inAppNotification: true });
-            }
-
-            try {
-              const updateResponse: LasecApiResponse = await lasecApi.Customers.UpdateClientDetails(customer.id, { activity_status: 'active' }).then();
-              if (updateResponse.status !== 'success') {
-                logger.warning(`Lasec API did not update the customer status`, updateResponse);
-              }
-            } catch (setStatusException) {
-              logger.error(`Could set the client status`, setStatusException);
-              response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while setting activity status`, type: 'warning', inAppNotification: true });
-            }
-
-            setCacheItem(hash, { ...DEFAULT_NEW_CLIENT }, 60 * 60 * 12);
-          } else {
-            response.messages.push({ text: `Could not create the new client on Lasec API`, type: 'success', inAppNotification: true });
-          }
-        } else {
-          response.success = false;
-          response.messages.push({
-            text: 'Could not save user',
-            description: 'Could not save user'
-          });
-        }
-      } catch (exc) {
-        logger.debug(`Exception while saving new client: ${exc.message}`, exc);
-        throw exc;
+          logger.error("Error Setting The Status and Customer details", setStatusError);
+          response.messages.push({ text: `Could not set the activity status: ${setStatusError.message}`,  })
+        }  
       }
 
-      return response;
-    },
-    LasecCreateNewAddress: async (obj, args) => {
-      return createNewAddress(args);
-    },
-    LasecCRMSaveComment: async (obj, args) => {
-      return saveComment(args);
-    },
-    LasecCRMDeleteComment: async (obj, args) => {
-      return deleteComment(args);
-    },
-    LasecDeactivateClients: async (obj: any, params: { clientIds: string[] }): Promise<SimpleResponse> => {
+      customer = await doCreate();
+      
+      if (customer && customer.id && Number.parseInt(`${customer.id}`) > 0) {
+        customer = { ...inputData, ...customer };
+        customerCreated = Boolean(customer && customer.id);
 
-      let response: SimpleResponse = {
-        message: `Deactivated ${params.clientIds.length} clients`,
-        success: true
-      };
 
-      const deactivation_promises: Promise<any>[] = params.clientIds.map((clientId: string) => {
+        if (customerCreated === true) {
+          response.messages.push({ text: `Client ${customer.first_name} ${customer.surname} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });         
+          /***
+           * set addresses for the customer
+           * */
+          const { deliveryAddress, physicalAddress } = _newClient.address;
+          if (Number.parseInt(physicalAddress.id) > 0) {
+            try {
+              logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
+            } catch (exc) {
+              logger.error(`Could not save the physical address against the customer`, exc);
+              response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set physical address`, type: 'warning', inAppNotification: true });
+            }
+          }
 
-        const args = {
-          clientInfo: {
-            clientId,
-            clientStatus: 'deactivated'
-          },
+
+          if (Number.parseInt(deliveryAddress.id) > 0) {
+            try {
+              logger.debug(`Set delivery address ${deliveryAddress.fullAddress}`);
+            } catch (exc) {
+              logger.error(`Could not save the delivery address against the customer`, exc);
+              response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });
+            }
+          }
+
+          try {
+            //set upload files if any and clear local cache (delete files)
+            let upload_promises = [];
+
+            let clientDocuments: any[] = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
+            if (clientDocuments.length > 0) {
+              upload_promises = clientDocuments.map((documentInfo) => {
+                return lasecApi.Documents.upload(documentInfo, customer)
+              });
+
+              let uploadResults = await Promise.all(upload_promises).then();
+              uploadResults.forEach((uploadResult) => {
+                logger.debug(`♻ File upload result: FILE SYNCH ${uploadResult}`)
+                uploadResult.document.uploadContext = `lasec-crm::client::document::${customer.id}`;
+                uploadResult.document.save();
+
+                if (uploadResult.success === false) {
+                  response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading ${uploadResult.document.filename} to Lasec API`, type: 'warning', inAppNotification: true });
+                }
+              });
+            }
+          } catch (exc) {
+            logger.debug(`Could; not upload documents for the customer`, exc);
+            response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading documents`, type: 'warning', inAppNotification: true });
+          }
+
+          try {
+            await doStatusUpdate();
+                        
+          } catch (setStatusException) {
+            logger.error(`Could set the client status`, setStatusException);
+            response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while setting activity status`, type: 'warning', inAppNotification: true });
+          }
+
+          setCacheItem(hash, { ...DEFAULT_NEW_CLIENT }, 60 * 60 * 12);
+
+        } else {
+          response.messages.push({ text: `Could not create the new client on Lasec API`, type: 'success', inAppNotification: true });
         }
+      } else {
+        response.success = false;
+        response.messages.push({
+          text: 'Could not save user',
+          description: 'Could not save user'
+        });
+      }
+    
+      return response;
+  },
+  LasecCreateNewAddress: async (obj, args) => {
+    return createNewAddress(args);
+  },
+  LasecCRMSaveComment: async (obj, args) => {
+    return saveComment(args);
+  },
+  LasecCRMDeleteComment: async (obj, args) => {
+    return deleteComment(args);
+  },
+  LasecDeactivateClients: async (obj: any, params: { clientIds: string[] }): Promise<SimpleResponse> => {
 
-        return updateClientDetail(args);
+    let response: SimpleResponse = {
+      message: `Deactivated ${params.clientIds.length} clients`,
+      success: true
+    };
 
+    const deactivation_promises: Promise<any>[] = params.clientIds.map((clientId: string) => {
+
+      const args = {
+        clientInfo: {
+          clientId,
+          clientStatus: 'deactivated'
+        },
+      }
+
+      return updateClientDetail(args);
+
+    });
+
+    try {
+      const results = await Promise.all(deactivation_promises).then();
+      let successCount: number, failCount: number = 0;
+
+      results.forEach((patchResult) => {
+        if (patchResult.Success === true) successCount += 1;
+        else failCount += 1;
       });
 
-      try {
-        const results = await Promise.all(deactivation_promises).then();
-        let successCount: number, failCount: number = 0;
-
-        results.forEach((patchResult) => {
-          if (patchResult.Success === true) successCount += 1;
-          else failCount += 1;
-        });
-
-        if (failCount > 0) {
-          if (successCount > 0) {
-            response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;
-          } else {
-            response.message = ` 😣 Could not deactivate any client accounts.`;
-            response.success = false;
-          }
+      if (failCount > 0) {
+        if (successCount > 0) {
+          response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;
         } else {
-          if (successCount === deactivation_promises.length) {
-            response.message = `🥇 Deactivated all ${successCount} clients.`
-          }
+          response.message = ` 😣 Could not deactivate any client accounts.`;
+          response.success = false;
         }
-      } catch (err) {
-        response.message = `😬 An error occurred while changing the client status. [${err.nessage}]`;
-        logger.error(`🧨 Error deactivating the client account`, err)
+      } else {
+        if (successCount === deactivation_promises.length) {
+          response.message = `🥇 Deactivated all ${successCount} clients.`
+        }
       }
-
-      return response;
-    },
-    LasecUpdateSpecialRequirements: async (obj: any, args: any) => {
-      return updateClientSpecialRequirements(args);
+    } catch (err) {
+      response.message = `😬 An error occurred while changing the client status. [${err.nessage}]`;
+      logger.error(`🧨 Error deactivating the client account`, err)
     }
+
+    return response;
   },
+  LasecUpdateSpecialRequirements: async (obj: any, args: any) => {
+    return updateClientSpecialRequirements(args);
+  }
+},
 };

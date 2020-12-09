@@ -535,6 +535,24 @@ export interface LasecClient {
   [p: string]: any
 }
 
+
+export interface LasecNewClientInput {
+  id: string
+  personalDetails: any
+  contactDetails: any
+  jobDetails: any
+  customer: any
+  organization: any
+  address: any
+  clientDocuments: [any]
+  confirmed: boolean
+  valid: boolean
+  saved: boolean
+  createdBy: any
+  created: Date | Moment
+  updated: Date | Moment 
+}
+
 export interface LasecCreateQuoteOptionParams {
   quote_id: string,
   copy_from?: string

@@ -313,14 +313,14 @@ const Api = {
 
     logger.debug(`🟠 GET ${uri} => `, { status, payload })
 
-    
+
 
     if (status === undefined && payload) {
       if (shape && Object.keys(shape).length > 0) {
         return om.merge(payload, shape);
       } else {
         return payload;
-      }  
+      }
     }
 
     if (status && status === 'success') {
@@ -333,23 +333,40 @@ const Api = {
       return { pagination: {}, ids: [], items: [], status };
     }
   },
-  post: async (uri: string, params: any, shape: any) => {
-    const resp = await POST(uri, params).then();
-    const {
-      status, payload,
-    } = resp;
+  post: async (uri: string, params: any, shape: any, auth:boolean = true) => {
 
-    logger.debug(`API POST Response ${resp}`);
-    if (status === 'success') {
-      if (shape && Object.keys(shape).length > 0) {
-        return om.merge(payload, shape);
-      } else {
-        return payload;
+    try {
+      const resp = await POST(uri, params, auth).then();
+      const {
+        status, payload,
+      } = resp;
+
+      logger.debug(`API POST Response`, { status, payload });
+
+      if (payload && !status) {
+        if (shape && Object.keys(shape).length > 0) {
+          return om.merge(payload, shape);
+        } else {
+          return payload;
+        }
       }
-    } else {
-      logger.error(`API POST was not successful ${resp}`);
-      return { pagination: {}, ids: [], items: [] };
+
+      if (status === 'success') {
+        if (shape && Object.keys(shape).length > 0) {
+          return om.merge(payload, shape);
+        } else {
+          return payload;
+        }
+      } else {
+        logger.error(`API POST was not successful`, resp);
+        return { pagination: {}, ids: [], items: [] };
+      }
+    } catch (lasecApiError) {
+      logger.error(`API threw error`, lasecApiError);
+
+      throw lasecApiError;
     }
+
   },
   put: async (uri: string, params: any, shape: any): Promise<any> => {
     const resp = await PUT(uri, params).then();
@@ -683,7 +700,7 @@ const Api = {
       } else {
         return apiResponse;
       }
-      
+
     },
     getAddress: async (params) => {
       const resp = await FETCH(SECONDARY_API_URLS.address.url, { params: { ...defaultParams, ...params } }).then()
@@ -815,7 +832,7 @@ const Api = {
     }
   },
   Organisation: {
-    list: async (params = defaultParams) => {
+    list: async (params: any = defaultParams) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.organisation.url, { params: { ...defaultParams, ...params } }).then();
       const {
         status, payload,
@@ -1082,9 +1099,9 @@ const Api = {
 
                 orderType: item.order_type,
                 orderStatus: item.order_status,
-                
+
                 iso: item.id,
-                
+
                 customer: item.customer_name,
                 crmCustomer: {
                   id: '',
@@ -1122,8 +1139,8 @@ const Api = {
                   lineItems: [],
                   comments: []
                 }
-              };              
-              
+              };
+
               setCacheItem(`lasec-sales-order::${sales_order_id}`, sales_order, 15);
               return sales_order;
             }
