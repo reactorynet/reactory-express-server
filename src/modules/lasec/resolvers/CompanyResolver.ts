@@ -678,9 +678,31 @@ const getCustomerClass = async () => {
 
 const getFacultyList = async () => {
 
+  
+  try {
+    const faculty_list: { faculty: string }[] = await mysql(`SELECT faculty FROM CustomerFaculty ORDER by faculty ASC`, 'mysql.lasec360').then();
+    logger.debug(`Results from Faculty Query`, { faculty_list })
+
+    if (faculty_list && faculty_list.length > 0) {
+      return faculty_list.map((faculty_row: { faculty: string }) => ({
+        id: faculty_row.faculty,
+        key: faculty_row.faculty,
+        name: faculty_row.faculty,
+        description: faculty_row.faculty,
+      }));
+    }
+
+  } catch (databaseError) {
+    logger.error(`Could not retrieve the Faculty List: ${databaseError.message}`, { databaseError });
+    return [];
+  }
+
+  /*
+  logger.debug(`[RESOLVER] GET FACULTY RESPONSE:: ${JSON.stringify(idsResponse)}`);
+
   //if (cached && cached.items) return cached.items;
   const idsResponse = await lasecApi.Customers.GetFacultyList().then();
-  logger.debug(`[RESOLVER] GET FACULTY RESPONSE:: ${JSON.stringify(idsResponse)}`);
+
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
     const details = await lasecApi.Customers.GetFacultyList({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
@@ -689,13 +711,34 @@ const getFacultyList = async () => {
       return details.items;
     }
   }
-
-  return [];
+*/
+  
 
 };
 
-const getCustomerType = async () => {
+const getCustomerTypeList = async () => {
 
+   
+  try {
+    const type_list: { customer_type: string }[] = await mysql(`SELECT type as customer_type FROM CustomerType ORDER by customer_type ASC`, 'mysql.lasec360').then();
+    logger.debug(`Results from CustomerType Query`, { customer_type_list: type_list })
+
+    if (type_list && type_list.length > 0) {
+      return type_list.map((customer_type_row: { customer_type: string }) => ({
+        id: customer_type_row.customer_type,
+        key: customer_type_row.customer_type,
+        name: customer_type_row.customer_type,
+        description: customer_type_row.customer_type,
+      }));
+    }
+
+  } catch (databaseError) {
+    logger.error(`Could not retrieve the Customer Type List: ${databaseError.message}`, { databaseError });
+    return [];
+  }
+
+
+  /*
   //if (cached && cached.items) return cached.items;
   const idsResponse = await lasecApi.Customers.GetCustomerType().then();
   logger.debug(`[RESOLVER] GET CUSTOMER TYPE RESPONSE:: ${JSON.stringify(idsResponse)}`);
@@ -709,7 +752,7 @@ const getCustomerType = async () => {
   }
 
   return [];
-
+  */
 };
 
 const getCustomerLineManagerOptions = async (params) => {
@@ -1761,12 +1804,12 @@ export default {
     LasecGetCustomerClass: async (obj, args) => {
       return getCustomerClass(args);
     },
-    LasecGetFacultyList: async (obj, args) => {
-      return getFacultyList(args);
+    LasecGetFacultyList: async () => {
+      return getFacultyList();
     },
 
-    LasecGetCustomerType: async (obj, args) => {
-      return getCustomerType(args);
+    LasecGetCustomerType: async () => {
+      return getCustomerTypeList();
     },
 
     LasecGetCustomerLineManagerOptions: async (obj, args) => {
