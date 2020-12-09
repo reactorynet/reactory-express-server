@@ -332,7 +332,6 @@ const editUiSchema: any = {
 
 export const newConfirmSchema: any = {
   'ui:graphql': newClientGraphQL,
-
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',

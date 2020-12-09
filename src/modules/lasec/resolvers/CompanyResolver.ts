@@ -2183,8 +2183,9 @@ export default {
             await mysql(`
             UPDATE Customer SET
               activity_status = 'active',
-              company_id = '${args.newClient.organization.id}',
-            WHERE customerid = ${existing_client_id};`, 'mysql.lasec360').then()
+              organisation_id = 0,
+              company_id = '${args.newClient.organization.id}'
+            WHERE customerid = ${existing_client_id}`, 'mysql.lasec360').then()
 
             response.client = args;
           } catch (setStatusError) {
@@ -2290,8 +2291,7 @@ export default {
             UPDATE Customer SET
               activity_status = 'active',
               organisation_id = 0,
-              company_id = '${_newClient.organization.id}',
-  
+              company_id = '${_newClient.organization.id}'  
             WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
           logger.debug(`🟢 Updated user activity status complete`, update_result);          
 
