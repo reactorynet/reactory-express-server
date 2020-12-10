@@ -159,8 +159,6 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   },
   mutation: {
 
-    // text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
-    // LasecUpdateNewClient(newClient: $newClient) {
     onChange: {
       name: "LasecUpdateNewClient",
       text: `mutation LasecUpdateNewClient($clientId: String, $newClient: LasecNewClientInput!){
@@ -180,8 +178,12 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       updateMessage: 'Updating Personal Content',
       variables: {
         'eventData.formData.id': 'clientId',
-        'eventData.formData.personal': 'newClient.personalDetails',
-        'eventData.formData.personal.clientTitle': 'newClient.personalDetails.title'
+        'eventData.formData.firstName': 'newClient.personalDetails.firstName',
+        'eventData.formData.lastName': 'newClient.personalDetails.lastName',
+        'eventData.formData.country': 'newClient.personalDetails.country',
+        'eventData.formData.repCode': 'newClient.personalDetails.repCode',
+        'eventData.formData.accountType': 'newClient.personalDetails.accountType',
+        'eventData.formData.clientTitle': 'newClient.personalDetails.title'
       },
       resultType: 'object',
       resultMap: {
@@ -193,6 +195,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         'personalDetails.accountType': 'accountType',
         'personalDetails.repCode': 'repCode',
       },
+      throttle: 1000,
       onError: {
         componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
         method: 'onGraphQLQueryError',

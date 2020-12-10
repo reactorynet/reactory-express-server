@@ -195,7 +195,6 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
             jobTitle
             jobType
             jobTypeLabel
-            salesTeam
             lineManager
             customerType
             faculty
@@ -209,10 +208,17 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       updateMessage: 'Updating Personal Content',
       variables: {
         'eventData.formData.id': 'clientId',
-        'eventData.formData': 'newClient.jobDetails',
+        'eventData.formData.jobTitle': 'newClient.jobDetails.jobTitle',
+        'eventData.formData.jobType': 'newClient.jobDetails.jobType',
+        'eventData.formData.lineManager': 'newClient.jobDetails.lineManager',
+        'eventData.formData.customerType': 'newClient.jobDetails.customerType',
+        'eventData.formData.clientDepartment': 'newClient.jobDetails.clientDepartment',
+        'eventData.formData.ranking': 'newClient.jobDetails.ranking',
+        'eventData.formData.customerClass': 'newClient.jobDetails.customerClass',
       },
       // handledBy: 'onChange',
       resultType: 'object',
+      throttle: 1000,
       resultMap: {
         'id': 'id',
         'jobDetails.jobTitle': 'jobTitle',

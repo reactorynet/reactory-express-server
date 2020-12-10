@@ -178,7 +178,7 @@ const Menus = {
         },
      
         {
-          ordinal: 0,
+          ordinal: 1,
           title: 'Quotes',
           link: '/crm/quotes/',
           icon: 'add_shopping_cart',
@@ -186,7 +186,7 @@ const Menus = {
         },
    
         {
-          ordinal: 3,
+          ordinal: 2,
           title: 'ISO',
           link: '/crm/sales-orders/',
           icon: 'shopping_cart',
@@ -200,17 +200,22 @@ const Menus = {
           icon: 'attach_money',
           roles: ['USER'],
         },
-
-    
-
+        
         {
-          ordinal: 3,
+          ordinal: 4,
           title: 'Sales History',
           link: '/crm/sales-history/',
           icon: 'history',
           roles: ['USER'],
         },
 
+        {
+          ordinal: 5,
+          title: 'Approvals',
+          link: '/360/approvals/quote-approval',
+          icon: 'gavel',
+          roles: ['ADMIN', 'QUOTE_APPROVER'],
+        },
       ]
     },
     {

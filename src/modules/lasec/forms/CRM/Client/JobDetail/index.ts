@@ -723,27 +723,7 @@ export const ConfirmUiSchema: any = {
     }
   },
 
-  // lineManager: {
-  //   'ui:widget': 'LabelWidget',
-  //   'ui:options': {
-  //     format: '${formData}',
-  //     variant: 'subtitle1',
-  //     title: 'Line Manager',
-  //     titleProps: {
-  //       style: {
-  //         display: 'content',
-  //         minWidth: '150px',
-  //         color: "#9A9A9A",
-  //       }
-  //     },
-  //     bodyProps: {
-  //       style: {
-  //         display: 'flex',
-  //         justifyContent: 'flex-end'
-  //       }
-  //     }
-  //   }
-  // },
+  
 
   customerType: {
     'ui:widget': 'LabelWidget',
@@ -1129,6 +1109,7 @@ const newUiSchema: any = {
       query: `query LasecGetFacultyList {
         LasecGetFacultyList {
           id
+          key
           name
         }
       }`,

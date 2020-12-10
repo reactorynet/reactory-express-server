@@ -478,6 +478,7 @@ declare namespace Reactory {
     onError?: IReactoryFormQueryErrorHandlerDefinition,
     options?: any,
     notification?: IReactoryNotification,
+    throttle?: number,
     handledBy?: String | 'onChange' | 'onSubmit'
   }
 

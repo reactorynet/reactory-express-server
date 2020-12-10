@@ -332,7 +332,6 @@ const editUiSchema: any = {
 
 export const newConfirmSchema: any = {
   'ui:graphql': newClientGraphQL,
-
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -587,7 +586,7 @@ const newUiSchema: any = {
     },
     'ui:title': 'Alternate Email',
   },
-  confirmAlternate: {
+  confirmAlternateEmail: {
     'ui:options': {
       component: 'TextField',
       componentProps: {
@@ -606,7 +605,7 @@ const newUiSchema: any = {
         }
       }
     },
-    'ui:title': 'Confirm Alt Email',
+    'ui:title': 'Alternate Email Confirm',
   },
   mobileNumber: {
     'ui:options': {
@@ -649,6 +648,26 @@ const newUiSchema: any = {
     }
   },
   officeNumber: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'Office Number',
+        style: {
+          marginTop: '1.3rem'
+        }
+      },
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
+    }
+  },
+  alternateNumber: {
     'ui:options': {
       component: 'TextField',
       componentProps: {
