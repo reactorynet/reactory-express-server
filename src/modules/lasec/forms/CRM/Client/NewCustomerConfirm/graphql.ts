@@ -85,6 +85,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       ]
     },
     autoQuery: true,
+    autoQueryDelay: 1000,
     resultType: 'object',
     resultMap: {
       'id': 'id',
@@ -99,7 +100,8 @@ const graphql: Reactory.IFormGraphDefinition = {
     edit: false,
     new: true,
     refreshEvents: [
-      { name: 'lasec-crm::new-document::uploaded' }
+      { name: 'lasec-crm::new-document::uploaded' },      
+      { name: "LasecNewClient::onResetForm" }      
     ],
   },
   mutation: {
@@ -139,7 +141,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         'client': 'client',
         'success': 'success',
         'saved': 'saved'
-      },
+      },      
       onSuccessMethod: "event:LasecNewCustomerCreated",
       notification: {
         title: 'Created New Customer',

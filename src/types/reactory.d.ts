@@ -445,6 +445,8 @@ declare namespace Reactory {
     delete?: boolean,
     options?: any,
     autoQuery?: boolean,
+    //the number of milliseconds the autoQuery must be delayed for before executing
+    autoQueryDelay?: number, 
     interval?: number,
     useWebsocket?: boolean,
     onError?: IReactoryFormQueryErrorHandlerDefinition,

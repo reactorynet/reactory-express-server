@@ -41,6 +41,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'lastName': 'lastName',
     },
     autoQuery: true,
+    autoQueryDelay: 1000,
     queryMessage: 'Loading customer details',
     resultType: 'object',
     edit: true,
@@ -152,6 +153,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
     },
     //interval: 1500,
     autoQuery: true,
+    autoQueryDelay: 1000,
     refreshEvents: [
       { name: "LasecNewClient::onResetForm" }
     ],

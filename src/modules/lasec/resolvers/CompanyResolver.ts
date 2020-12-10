@@ -1983,33 +1983,35 @@ export default {
       logger.debug(`[LasecGetNewClient] NEW CLIENT PARAMS:: ${JSON.stringify(args)}`);
       let existingCustomer: any = null;
       let remote_fetched: boolean = false;
-      let apiClient: any = { ...DEFAULT_NEW_CLIENT };
+      let remote_client: any = lodash.cloneDeep( DEFAULT_NEW_CLIENT ) ;
       let hash;
 
       const cacheLifeSpan = 60 * 60 * 12; //12 hours
 
       hash = Hash(`__LasecNewClient::${global.user._id}`);
+      
+      
+      //check if the call requires a clean slate
+      if (args.reset === true) {
+        await setCacheItem(hash, lodash.cloneDeep(remote_client), cacheLifeSpan).then();
+        logger.debug(`Reset requested - new client data cache data overwrite`, { remote_client: remote_client });
+        return lodash.cloneDeep(remote_client);
+      }
+
       let cachedClient = await getCacheItem(hash).then(); //get whatever is in the cache;
       let hasCached = !iz.nil(cachedClient);
 
       logger.debug(`CompanyResolver.ts LasecGetNewClient => CACHED CLIENT ${hasCached === true ? `FOUND [last fetch: ${cachedClient.fetched ? moment(cachedClient.fetched).toString() : 'NO FETCHED TIME STAMP' }]` : 'NONE'}`, { cachedClient });
-
-      //check if the call requires a clean slate
-      if (args.reset === true) {
-        await setCacheItem(hash, apiClient, cacheLifeSpan).then();
-        logger.debug(`Reset requested - new client data ${hasCached ? 'discarded, default returned' : 'returned'}`)
-        return apiClient;
-      }
-
+      
       //there is no cache and there is no ID, just return the new blank item
       if (hasCached === false && !args.id) {
         //set the cache item and return the new empty state
-        setCacheItem(hash, apiClient, cacheLifeSpan);
-        return apiClient;
+        await setCacheItem(hash, remote_client, cacheLifeSpan).then();
+        return remote_client;
       }
 
-      //there is an id, we need to check whether or not we need to fetch the remote
-      //data
+      //there is an id, we need to check whether or not we need 
+      //to fetch the remote data
       if (args.id) {
         let intcheck = false;
         let objectIdCheck = false;
@@ -2057,56 +2059,56 @@ export default {
             if (existingCustomer && existingCustomer.id === args.id) {
               remote_fetched = true;
               logger.debug('mapping existing customer data to api client data object 🔀')
-              apiClient.id = existingCustomer.id || '';
+              remote_client.id = existingCustomer.id || '';
 
-              apiClient.fetched = new Date().valueOf();
-              apiClient.remote_id = existingCustomer.id;
+              remote_client.fetched = new Date().valueOf();
+              remote_client.remote_id = existingCustomer.id;
               
-              apiClient.personalDetails.title = existingCustomer.title || '1';
-              apiClient.personalDetails.firstName = existingCustomer.firstName || '';
-              apiClient.personalDetails.lastName = existingCustomer.lastName || '';
-              apiClient.personalDetails.country = existingCustomer.country || '';
-              apiClient.personalDetails.repCode = existingCustomer.salesTeam || '';
-              apiClient.personalDetails.accountType = existingCustomer.accountType || '';
+              remote_client.personalDetails.title = existingCustomer.title || '1';
+              remote_client.personalDetails.firstName = existingCustomer.firstName || '';
+              remote_client.personalDetails.lastName = existingCustomer.lastName || '';
+              remote_client.personalDetails.country = existingCustomer.country || '';
+              remote_client.personalDetails.repCode = existingCustomer.salesTeam || '';
+              remote_client.personalDetails.accountType = existingCustomer.accountType || '';
 
-              apiClient.contactDetails.emailAddress = existingCustomer.emailAddress || '';
-              apiClient.contactDetails.confirmEmail = existingCustomer.emailAddress || '';
-              apiClient.contactDetails.alternateEmail = existingCustomer.alternateEmail || '';
-              apiClient.contactDetails.confirmAlternateEmail = existingCustomer.alternateEmail || '';
-              apiClient.contactDetails.mobileNumber = existingCustomer.mobileNumber || '';
-              apiClient.contactDetails.alternateMobile = existingCustomer.alternateMobile || '';
-              apiClient.contactDetails.officeNumber = existingCustomer.officeNumber || '';
-              apiClient.contactDetails.alternateOfficeNumber = existingCustomer.alternateOfficeNumber || '';
-              apiClient.contactDetails.prefferedMethodOfContact = existingCustomer.prefferedMethodOfContact || '';
+              remote_client.contactDetails.emailAddress = existingCustomer.emailAddress || '';
+              remote_client.contactDetails.confirmEmail = existingCustomer.emailAddress || '';
+              remote_client.contactDetails.alternateEmail = existingCustomer.alternateEmail || '';
+              remote_client.contactDetails.confirmAlternateEmail = existingCustomer.alternateEmail || '';
+              remote_client.contactDetails.mobileNumber = existingCustomer.mobileNumber || '';
+              remote_client.contactDetails.alternateMobile = existingCustomer.alternateMobile || '';
+              remote_client.contactDetails.officeNumber = existingCustomer.officeNumber || '';
+              remote_client.contactDetails.alternateOfficeNumber = existingCustomer.alternateOfficeNumber || '';
+              remote_client.contactDetails.prefferedMethodOfContact = existingCustomer.prefferedMethodOfContact || '';
 
               
-              apiClient.jobDetails.jobTitle = existingCustomer && existingCustomer.jobTitle ? existingCustomer.jobTitle.trim() : '';
-              apiClient.jobDetails.salesTeam = existingCustomer.customer.salesTeam || '';
-              apiClient.jobDetails.clientDepartment = existingCustomer.customer.department || '';
-              apiClient.jobDetails.ranking = existingCustomer.customer.ranking || '';
-              apiClient.jobDetails.customerClass = existingCustomer.customer.customerClass || '';
-              apiClient.jobDetails.faculty = existingCustomer.customer.faculty || '';
-              apiClient.jobDetails.customerType = existingCustomer.customer.accountType || '';
-              apiClient.jobDetails.lineManager = existingCustomer.lineManager || '';
-              apiClient.jobDetails.jobType = existingCustomer.jobType || '';
+              remote_client.jobDetails.jobTitle = existingCustomer && existingCustomer.jobTitle ? existingCustomer.jobTitle.trim() : '';
+              remote_client.jobDetails.salesTeam = existingCustomer.customer.salesTeam || '';
+              remote_client.jobDetails.clientDepartment = existingCustomer.customer.department || '';
+              remote_client.jobDetails.ranking = existingCustomer.customer.ranking || '';
+              remote_client.jobDetails.customerClass = existingCustomer.customer.customerClass || '';
+              remote_client.jobDetails.faculty = existingCustomer.customer.faculty || '';
+              remote_client.jobDetails.customerType = existingCustomer.customer.accountType || '';
+              remote_client.jobDetails.lineManager = existingCustomer.lineManager || '';
+              remote_client.jobDetails.jobType = existingCustomer.jobType || '';
 
               const roles = await getCustomerRoles().then();
               const employeeRole = roles.find((t: any) => (t.id == existingCustomer.jobType));
-              apiClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : existingCustomer.jobType;
+              remote_client.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : existingCustomer.jobType;
 
-              apiClient.customer.id = existingCustomer.customer.id || '';
-              apiClient.customer.registeredName = existingCustomer.customer.registeredName || '';
-              apiClient.organization.id = (existingCustomer.organization && existingCustomer.organization.id) ? existingCustomer.organization.id : '';
-              apiClient.organization.name = (existingCustomer.organization && existingCustomer.organization.name) ? existingCustomer.organization.name : '';
+              remote_client.customer.id = existingCustomer.customer.id || '';
+              remote_client.customer.registeredName = existingCustomer.customer.registeredName || '';
+              remote_client.organization.id = (existingCustomer.organization && existingCustomer.organization.id) ? existingCustomer.organization.id : '';
+              remote_client.organization.name = (existingCustomer.organization && existingCustomer.organization.name) ? existingCustomer.organization.name : '';
 
-              apiClient.address.physicalAddress.id = existingCustomer.customer.physicalAddressId || '';
-              apiClient.address.physicalAddress.fullAddress = existingCustomer.customer.physicalAddress || '';
-              apiClient.address.deliveryAddress.id = existingCustomer.customer.deliveryAddressId || '';
-              apiClient.address.billingAddress.id = existingCustomer.customer.deliveryAddressId || '';
-              apiClient.address.deliveryAddress.fullAddress = existingCustomer.customer.deliveryAddress || '';
-              apiClient.address.billingAddress.fullAddress = existingCustomer.customer.billingAddress || '';
+              remote_client.address.physicalAddress.id = existingCustomer.customer.physicalAddressId || '';
+              remote_client.address.physicalAddress.fullAddress = existingCustomer.customer.physicalAddress || '';
+              remote_client.address.deliveryAddress.id = existingCustomer.customer.deliveryAddressId || '';
+              remote_client.address.billingAddress.id = existingCustomer.customer.deliveryAddressId || '';
+              remote_client.address.deliveryAddress.fullAddress = existingCustomer.customer.deliveryAddress || '';
+              remote_client.address.billingAddress.fullAddress = existingCustomer.customer.billingAddress || '';
 
-              logger.debug(`Mapped Item Api Client Data`, { apiClient });
+              logger.debug(`Mapped Item Api Client Data`, { apiClient: remote_client });
             }
           }
 
@@ -2117,26 +2119,33 @@ export default {
         }
       }
 
-      let client_to_return = { ...apiClient };
+      let client_to_return = { ...remote_client };
 
       if (hasCached === true) {
-        //we have a cached item and remote fetched item.
-        debugger
+
+        if (remote_fetched === true && cachedClient.id && cachedClient.id !== existingCustomer.id) {
+          client_to_return = { ...remote_client }
+        }
+
+        //we have a cached item and remote fetched item.        
         if (remote_fetched === true && cachedClient.id && cachedClient.id === existingCustomer.id) {
           logger.debug(`IDS MATCH:: ${cachedClient.personalDetails.id} ${existingCustomer.id} and merging`);
 
           client_to_return = {
-            ...apiClient,
+            ...remote_client,
             ...cachedClient
           };
 
-          client_to_return.id = apiClient.id;
+          client_to_return.id = remote_client.id;
           client_to_return.jobDetails.jobTitle = client_to_return.jobDetails.jobTitle.trim();
           client_to_return.updated = new Date().valueOf();          
           logger.debug(`MERGED CLIENT:: ${JSON.stringify(client_to_return)}`);
         } 
         //we did not fetch a remote item, we have a cache at the ready
-        if (remote_fetched === false) client_to_return = cachedClient;
+        if (remote_fetched === false) client_to_return = { ...cachedClient };
+
+        
+
       } else {                        
         //no cache available
         client_to_return.clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
@@ -2478,7 +2487,7 @@ export default {
             response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while setting activity status`, type: 'warning', inAppNotification: true });
           }
 
-          setCacheItem(hash, { ...DEFAULT_NEW_CLIENT }, 60 * 60 * 12);
+          setCacheItem(hash, lodash.cloneDeep(DEFAULT_NEW_CLIENT), 60 * 60 * 12);
 
         } else {
           response.messages.push({ text: `Could not create the new client on Lasec API`, type: 'success', inAppNotification: true });

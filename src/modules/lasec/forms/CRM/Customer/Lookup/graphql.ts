@@ -29,10 +29,9 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       method: 'onGraphQLQueryError',
     },
     refreshEvents: [
-      {
-        name: 'NewClient.onCustomerSelected'
-      }
-    ]
+      { name: 'NewClient.onCustomerSelected'},
+      { name: "LasecNewClient::onResetForm" }
+    ]    
   },
   mutation: {
     onCustomerSelected: {

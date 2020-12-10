@@ -31,6 +31,9 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       'address.deliveryAddress': 'deliveryAddress',
       'address.billingAddress': 'billingAddress',
     },
+    refreshEvents: [
+      { name: "LasecNewClient::onResetForm" }
+    ],
     autoQuery: true,
     queryMessage: 'Fetch New Customer Address Detail',
     resultType: 'object',
