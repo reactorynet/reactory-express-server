@@ -149,23 +149,23 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 
 const credsFromAuthentication = (authentication: Reactory.IAuthentication) => {
   if (authentication && authentication.props) {
-    if (authentication.props.username && authentication.props.password) {      
+    if (authentication.props.username && authentication.props.password) {
       return authentication.props as Lasec360Credentials;
     } {
       return { ...authentication.props, username: '', password: '' }
     }
   }
-  
+
 }
 
 export const LoggedInLasecUserHashKey = ($partner: Reactory.IReactoryClientDocument, $user: Reactory.IUserDocument) => {
   if ($user === null || $user === undefined || global.user === null) throw new ApiError(`$user us a required parameter`, user)
   let _authentication: Reactory.IAuthentication = null;
-  
+
   if ($user) {
      _authentication = user.getAuthentication("lasec");
   }
-  
+
   if (!_authentication) {
     throw new LasecNotAuthenticatedException(`User is not currently authentication with 360`);
   }
@@ -175,7 +175,7 @@ export const LoggedInLasecUserHashKey = ($partner: Reactory.IReactoryClientDocum
   if (lasec_creds && lasec_creds.payload) {
     let staff_user_id: string = "";
     staff_user_id = `${_authentication.props.payload.user_id}`;
-    return `LOGGED_IN_360_USER_${global.partner._id}_${user._id}_${staff_user_id}`;    
+    return `LOGGED_IN_360_USER_${global.partner._id}_${user._id}_${staff_user_id}`;
   } else {
     throw new LasecNotAuthenticatedException("User does not have 360 credentials, please try logging in");
   }
@@ -205,7 +205,7 @@ export const getLoggedIn360User: Function = async function (skip_cache: boolean 
         me360 = me360[0];
         //fetch any other data that may be required for the data fetch
       }
-    } 
+    }
 
     if (me360) {
       setCacheItem(hashkey, me360, 60);
@@ -221,7 +221,7 @@ export const getLoggedIn360User: Function = async function (skip_cache: boolean 
 
 export const setLoggedInUserProps = async (active_rep_code: string, active_company: string): Promise<Lasec360User> => {
   logger.debug(`Helpers.ts setLoggedInUserProps(active_rep_code, active_company)`, { active_rep_code, active_company })
-  
+
   let company_id = 2; // sa
   let companyName = 'Lasec SA';
 
@@ -233,15 +233,15 @@ export const setLoggedInUserProps = async (active_rep_code: string, active_compa
       companyName = 'Lasec International';
       break;
     }
-    case 'lasec_education': 
-    case 'lasec-education': 
+    case 'lasec_education':
+    case 'lasec-education':
     case 'laseceducation': {
       company_id = 5;
       companyName = 'Lasec Education';
       break;
     }
     case 'lasec_sa':
-    case 'lasec-sa': 
+    case 'lasec-sa':
     case 'LasecSA':
     default: {
       company_id = 2;
@@ -250,8 +250,8 @@ export const setLoggedInUserProps = async (active_rep_code: string, active_compa
 
   let result = await lasecApi.User.setActiveCompany(company_id).then()
   logger.debug(`Result from setting active company`, { result });
-  return getLoggedIn360User( true );  
-    
+  return getLoggedIn360User( true );
+
 };
 
 export const getTargets = async (params: LasecDashboardSearchParams) => {
@@ -1860,7 +1860,7 @@ export const getPagedSalesOrders = async (params: any) => {
     pagination: {
       page_size: paging.pageSize || 10,
       current_page: paging.page
-    }    
+    }
   }).then();
 
   logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ${JSON.stringify(salesOrdersIds)}`);
@@ -1879,7 +1879,7 @@ export const getPagedSalesOrders = async (params: any) => {
 
   }
 
-  
+
 
   try {
 
@@ -2104,7 +2104,7 @@ export const getCRMSalesOrders = async (params) => {
 
   let apiFilter: any = {
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),    
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
     ordering: { order_date: "desc" },
     sales_team_id: me.sales_team_ids[0]
   };
@@ -2141,7 +2141,7 @@ export const getCRMSalesOrders = async (params) => {
 
 interface CustomerDocumentQueryParams {
   id?: string,
-  ids?: string[], 
+  ids?: string[],
   uploadContexts?: string[],
   paging?: {
     page: number,
@@ -2164,7 +2164,7 @@ const mimes: any = {
 const mimeTypeForFilename = (filename: string) => {
 
   let parts = filename.split(".");
-  if (parts.length > 1) {        
+  if (parts.length > 1) {
     let m: string = mimes[parts[parts.length - 1]];
     if  (m !== null && m !== undefined  ) {
       return m;
@@ -2208,7 +2208,7 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
   }
 
   if (params.ids && params.ids.length > 0) {
-    
+
     let remote_documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: params.ids }, paging: { enabled: false } });
 
     remote_documents.items.forEach((documentItem: any) => {
@@ -2243,7 +2243,7 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
     };
   } else {
     documentFilter.uploadContext = {
-      $in: [`lasec-crm::company::${params.id}`]        
+      $in: [`lasec-crm::company::${params.id}`]
     };
   }
 
@@ -2313,9 +2313,9 @@ export const deleteSalesOrdersDocument = async (args) => {
 
 /**
  * Fetches sales order comments for the order id
- * @param params 
+ * @param params
  */
-export const getSalesOrderComments = async (params: { orderId: string }) => {  
+export const getSalesOrderComments = async (params: { orderId: string }) => {
   return LasecSalesOrderComment.find({
     salesOrderId: params.orderId
   }).populate('who').then();
@@ -2323,9 +2323,9 @@ export const getSalesOrderComments = async (params: { orderId: string }) => {
 
 /**
  * Save Sales Order Comment
- * @param params 
+ * @param params
  */
-export const saveSalesOrderComment = async (params: { orderId: string, comment: string }) => {  
+export const saveSalesOrderComment = async (params: { orderId: string, comment: string }) => {
   try {
     const sales_order_comment = new LasecSalesOrderComment({
       _id: new ObjectId(),
@@ -2333,8 +2333,8 @@ export const saveSalesOrderComment = async (params: { orderId: string, comment: 
       salesOrderId: params.orderId,
       comment: params.comment,
       when: moment()
-    });  
-    await sales_order_comment.save().then();    
+    });
+    await sales_order_comment.save().then();
     logger.debug(`🟢 Added comment to sales order ${params.orderId}`);
     return LasecSalesOrderComment.findById(sales_order_comment._id).populate("who").then();
   } catch (addCommentError) {
@@ -2342,14 +2342,14 @@ export const saveSalesOrderComment = async (params: { orderId: string, comment: 
     const exception = new LasecApiException('Could not add the comment due to an internal error');
     exception.meta = addCommentError;
     throw exception;
-  }  
+  }
 };
 
 
 
 /**
  * get the iso details
- * @param params 
+ * @param params
  */
 export const getISODetails = async (params: { orderId: string, quoteId: string }) => {
 
@@ -2370,7 +2370,7 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
   let salesOrdersDetail = await lasecApi.SalesOrders.detail({ filter: { ids: ids } }).then();
   let salesOrders = [...salesOrdersDetail.items];
 
-  
+
 
   logger.debug(`SALES ORDERS:: ${JSON.stringify(salesOrders)}`);
 
@@ -3117,7 +3117,7 @@ export const updateQuote = async (params: ILasecUpdateQuoteExpectedParams) => {
     const updateParams = { item_id, values: { quote_type } };
     if (rep_code) updateParams.values.sales_team_id = rep_code;
     if (client_id) updateParams.values.customer_id = client_id;
-    if (valid_until) updateParams.values.valid_until = moment(valid_until).toISOString();
+    if (valid_until) updateParams.values.valid_until = moment(valid_until, 'YYYY-MM-DD').toISOString();
 
     const updateResult = await lasecApi.Quotes.updateQuote(updateParams).then();
 

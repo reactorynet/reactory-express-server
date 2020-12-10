@@ -5,7 +5,7 @@ const graphql: Reactory.IFormGraphDefinition = {
   mutation: {
     onChange: {
       name: "LasecUpdateQuote",
-      text: `mutation LasecUpdateQuote($item_id: String, $quote_type: String, $rep_code: String, $client_id: String, $valid_until: Date){
+      text: `mutation LasecUpdateQuote($item_id: String, $quote_type: String, $rep_code: String, $client_id: String, $valid_until: String){
         LasecUpdateQuote(item_id: $item_id, quote_type: $quote_type, rep_code: $rep_code, client_id: $client_id, valid_until: $valid_until) {
           success
           message
@@ -35,7 +35,7 @@ const schema: Reactory.ISchema = {
     },
     repCode: {
       type: "string",
-      title: "Rep Code"
+      title: "Client Rep Code"
     },
     quoteType: {
       type: "string",
@@ -85,11 +85,9 @@ const uiSchema: any = {
     {
       repCode: { xs: 12, sm: 6, md: 6, lg: 6 },
       validDate: { xs: 12, sm: 6, md: 6, lg: 6 },
-      // style: { marginTop: '-16px' },
+      style: { marginTop: '5px' },
     }
   ],
-
-  code: {},
 
   client: {
     'ui:options': {
@@ -101,54 +99,42 @@ const uiSchema: any = {
           marginTop: '1.3rem'
         }
       },
+      inputProps:{
+        readOnly: true,
+      },
       labelProps: {
         dontShrink: true,
         style: {
           transform: 'none',
           fontWeight: 'bold',
-          color: '#000000'
+          color: '#000000',
+          fontSize: '1em',
+          lineHeight: '1em'
         }
       }
     }
   },
-  // client: {
-  //   "ui:widget": "LabelWidget",
-  //   "ui:options": {
-  // format: '${formData}',
-  // title: 'Client Name',
-  // variant: 'body2',
-  // titleProps: {
-  //   style: {
-  //     display: 'content',
-  //     minWidth: '150px',
-  //     color: "#9A9A9A",
-  //   }
-  // },
-  // bodyProps: {
-  //   style: {
-  //     display: 'flex',
-  //     justifyContent: 'flex-end'
-  //   }
-  // }
-  // }
-  // },
   repCode: {
-    "ui:widget": "LabelWidget",
-    "ui:options": {
-      format: '${formData}',
-      title: 'Rep Code',
-      variant: 'body2',
-      titleProps: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'Client Rep Code',
         style: {
-          display: 'content',
-          minWidth: '150px',
-          color: "#9A9A9A",
+          marginTop: '1.3rem'
         }
       },
-      bodyProps: {
+      inputProps:{
+        readOnly: true,
+      },
+      labelProps: {
+        dontShrink: true,
         style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000',
+          fontSize: '1em',
+          lineHeight: '1em'
         }
       }
     }
@@ -168,7 +154,9 @@ const uiSchema: any = {
         fontWeight: 'bold',
         color: '#000000',
         backgroundColor: 'transparent',
-        padding: 0
+        padding: 0,
+        fontSize: '1em',
+        lineHeight: '1em'
       },
       selectProps: {
         style: {
@@ -183,18 +171,6 @@ const uiSchema: any = {
       ],
     }
   },
-  // quoteType: {
-  //   'ui:widget': 'SelectWidget',
-  //   'ui:options': {
-  //     size: 'small',
-  //     selectOptions: [
-  //       { key: 'Normal', value: 'Normal', label: 'Normal' },
-  //       { key: 'Contract', value: 'Contract', label: 'Contract' },
-  //       { key: 'Tender', value: 'Tender', label: 'Tender' },
-  //       { key: 'Budget', value: 'Budget', label: 'Budget' },
-  //     ],
-  //   },
-  // },
   validDate: {
     'ui:widget': 'DateSelectorWidget',
     'ui:options': {
@@ -203,7 +179,9 @@ const uiSchema: any = {
         variant: 'subtitle1',
         style: {
           fontWeight: 'bold',
-          marginBottom: '5px'
+          marginBottom: '7px',
+          fontSize: '1em',
+          lineHeight: '1em'
         }
       }
     }
