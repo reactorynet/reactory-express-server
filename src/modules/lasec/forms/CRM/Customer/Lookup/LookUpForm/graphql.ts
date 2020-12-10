@@ -77,8 +77,10 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         customers {
           id
           registeredName
+          tradingName
           country
           accountNumber
+          customerStatus
         }
       }
     }`,

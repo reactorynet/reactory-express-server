@@ -14,7 +14,7 @@ const uiSchema: any = {
     },
     componentType: 'div',
     submitIcon: 'search',
-    showSubmit: true,
+    showSubmit: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
@@ -42,24 +42,10 @@ const uiSchema: any = {
     }
   },
   selected: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData && formData.registeredName ? formData.registeredName : "None"}',
-      variant: 'subtitle1',
-      title: 'Current Selected Customer',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '200px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
+    'ui:widget': 'CustomerLabel',
+    'ui:options': {      
+      'use_case': 'customer_lookup',
+      'displayField': 'registeredName',      
     }
   },
   paging: {
@@ -77,10 +63,10 @@ const uiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
-        selection: true,
-        //multiSelect: false,
-        // toolbarButtonAlignment: 'left',
-        // actionsColumnIndex: -1
+        // selection: true,
+        // multiSelect: false,
+        toolbarButtonAlignment: 'left',
+        actionsColumnIndex: -1
       },
       actions: [
         {
@@ -210,7 +196,9 @@ const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
     },
   ],
   graphql: $graphql,
-  widgetMap: [],
+  widgetMap: [
+    { componentFqn: 'lasec-crm.CustomerLabel', widget: 'CustomerLabel' }
+  ],
   defaultFormValue: {
     paging: { page: 1, pageSize: 10 },
     search: "",

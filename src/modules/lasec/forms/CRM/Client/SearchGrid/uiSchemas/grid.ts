@@ -135,7 +135,10 @@ const uiSchema: any = {
           field: 'customer',
           component: 'lasec-crm.CustomerLabel@1.0.0',          
           propsMap: {
-            'rowData.customer': 'customer',
+            'rowData.customer': ['customer', 'formData'],            
+          },
+          props: {
+            'use_case': 'grid'
           },
           breakpoint: 'md',
         },

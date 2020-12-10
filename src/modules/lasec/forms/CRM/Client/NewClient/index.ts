@@ -149,7 +149,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         title: 'CUSTOMER & ORGANISATION',
         Components: [
           {
-            componentFqn: 'lasec-crm.CustomerLookupModal@1.0.0',
+            componentFqn: 'lasec-crm.LasecCRMCustomerLookup@1.0.0',
             ...$sharedProps,
           },
           {

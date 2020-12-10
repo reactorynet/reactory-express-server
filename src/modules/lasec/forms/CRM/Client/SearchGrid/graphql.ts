@@ -46,7 +46,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'clients': 'clients',
     },
     autoQuery: true,
-    autoQueryDelay: 1000,
+    autoQueryDelay: 2000,
     queryMessage: 'Search for client',
     resultType: 'object',
     edit: false,
