@@ -184,7 +184,7 @@ type Quote {
   """
   quote_id: String
   """
-  The quote id that is used for the reference - alias for quote_id 
+  The quote id that is used for the reference - alias for quote_id
   """
   code: String
   """
@@ -201,21 +201,21 @@ type Quote {
   salesRep: User
   salesTeam: Team
   allowedStatus: [String]
-  
+
   lasec_client: LasecCRMClient
   lasec_customer: LasecCRMCustomer
-  
+
   # These aliases need to be removed, use client, for user and customer for organisation
   """
-  Represents the REACTORY user associated with the customer entity. 
-  This will be renamed to lasec_client in future to be in line with Lasec naming 
+  Represents the REACTORY user associated with the customer entity.
+  This will be renamed to lasec_client in future to be in line with Lasec naming
   convetions
   """
   customer: User
 
   """
-  Represents the REACTORY organisation associated with the company entity. 
-  This will be renamed to lasec_customer in future to be in line with Lasec naming 
+  Represents the REACTORY organisation associated with the company entity.
+  This will be renamed to lasec_customer in future to be in line with Lasec naming
   convetions
   """
   company: Organization
@@ -236,7 +236,7 @@ type Quote {
   note: String
   active_option: String
   item_paging: PagingResult
-  
+
   allowed_statuses: [String]
   options: [LasecQuoteOption]
   headers: [LasecQuoteHeader]
@@ -769,7 +769,7 @@ extend type Query {
     dateFilter: String
     iter: Int
   ): PagedCRMSalesOrders
- 
+
   LasecGetSaleOrderDocument(ids: [String]): [SalesOrderDocuments]
   LasecGetSalesOrderDocumentBySlug(slug: String!): SalesOrderDocumentContent
   LasecGetPagedCRMSalesOrders(
@@ -786,7 +786,7 @@ extend type Query {
     iter: Int
   ): PagedCRMSalesOrders
 
-  
+
   LasecGetCRMClientInvoices(
     clientId: String
     salesTeamId: String
@@ -834,7 +834,7 @@ extend type Query {
   ): PagedCRMSalesHistory
 
   LasecGetCurrencies: [LasecCurrency]
-  
+
   LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
   LasecGetCompanyDetailsforQuote(id: String!): LasecCRMCustomer
 
@@ -863,7 +863,7 @@ extend type Mutation {
     mailMessage: CreateEmailMessage!
   ): SimpleResponse
   LasecDeleteSaleOrderDocument(id: String): SimpleResponse
-  
+
   LasecUploadSaleOrderDocument(
     createInput: SalesOrderContentInput!
   ): SalesOrderDocumentContent
@@ -912,14 +912,14 @@ extend type Mutation {
     comment: String!
     commentId: String
   ): SimpleResponse
-  
+
   LasecDeleteQuoteComment(commentId: String): SimpleResponse
   LasecUpdateQuote(
     item_id: String
     quote_type: String
     rep_code: String
     client_id: String
-    valid_until: Date
+    valid_until: String
   ): SimpleResponse
   LasecUpdateQuoteLineItems(
     quote_id: String
