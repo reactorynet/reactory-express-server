@@ -1,6 +1,9 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import $graphql, { newClientGraphQL } from './graphql';
 
+/**
+ * 
+ */
 const uiSchema: any = {
   'ui:graphql': newClientGraphQL,
   'ui:options': {
@@ -45,7 +48,8 @@ const uiSchema: any = {
     'ui:widget': 'CustomerLabel',
     'ui:options': {      
       'use_case': 'customer_lookup',
-      'displayField': 'registeredName',      
+      'displayField': 'registeredName',
+      allow_preview: true
     }
   },
   paging: {
@@ -53,9 +57,26 @@ const uiSchema: any = {
   },
   customers: {
     'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
+    'ui:options': {      
       columns: [
-        { title: "Name", field: "registeredName" },
+        {
+          title: "Registered Name",
+          field: "registeredName",
+          component: 'lasec-crm.CustomerLabel@1.0.0',          
+          propsMap: {
+            'rowData': 'formData',            
+          },
+          props: {
+            uiSchema: {
+              "ui:options": {
+                allow_preview: true,
+                use_case: 'lookup-grid',
+                displayField: 'registeredName'
+              }
+            },            
+          },
+          breakpoint: 'md',
+        },        
         { title: "Account Number", field: "accountNumber" },
       ],
       options: {
@@ -158,6 +179,42 @@ const schema: Reactory.ISchema = {
             type: "string",
             title: "Registered Name"
           },
+          tradingname: {
+            type: "string",
+            title: "Trading Name"
+          },
+          customerStatus: {
+            type: "string",
+            title: "Status"
+          },
+          accountNumber: {
+            type: "string",
+            title: "Account Numbner"
+          },
+          tradingCurrency: {
+            type: "string",
+            title: "Trading Currency",
+          },
+          description: {
+            type: "string",
+            title: "Description",            
+          },
+          registrationNumber: {
+            type: "string",
+            title: "Registration Number"
+          },
+          taxNumber: {
+            type: "string",
+            title: "Tax number"
+          },
+          bankName: {
+            type: "string",
+            title: "Bank Name"
+          },
+          bankAccountNumber: {
+            type: "string",
+            title: "Bank Account Number"
+          }
         }
       },
     }

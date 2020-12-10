@@ -63,6 +63,11 @@ const graphql: Reactory.IFormGraphDefinition = {
   }
 };
 
+/**
+ * Query definition returns a list of customer based on the search input and paging.*
+ * 
+ * Used in the Customer Lookup Table remote data query.
+ */
 export const newClientGraphQL: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetCustomerList',
@@ -78,9 +83,16 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
           id
           registeredName
           tradingName
-          country
           accountNumber
+          accountType
+          country
           customerStatus
+          currencySymbol
+          currencyCode
+          currencyDisplay
+          registrationNumber
+          taxNumber
+          importVATNumber
         }
       }
     }`,

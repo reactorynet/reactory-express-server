@@ -198,7 +198,8 @@ class AuthConfig {
           )(req, res, next);
         },
         (req, res) => {
-          const token = AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(global.user));
+          const token = AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(global.user));          
+          res.clearCookie("connect.sid");
           res.redirect(`${global.partner.siteUrl}/?auth_token=${token}`);
         },
       );

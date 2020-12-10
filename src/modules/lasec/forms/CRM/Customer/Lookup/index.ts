@@ -165,9 +165,25 @@ const schema: Reactory.ISchema = {
       title: 'Registered Name',
       type: 'string'
     },
+    tradingName: {
+      title: 'Trading As',
+      type: 'string'
+    }
   }
 };
 
+/**
+ * A basic form that holds the schema
+ * for a customer object
+ * 
+ * id
+ * registeredName
+ * tradingName
+ * 
+ * Does not have a default query to lookup customer for the given data input
+ * Only the new UI Schema configuration has graphql forms and components to lookup
+ * and set the form schema.
+ */
 const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
   id: 'LasecCRMCustomerLookup',
   uiFramework: 'material',

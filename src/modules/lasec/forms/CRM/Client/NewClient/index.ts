@@ -199,7 +199,6 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
   widgetMap: [
     { componentFqn: 'core.AccordionComponent@1.0.0', widget: 'AccordionComponent' },
   ],
-
 };
 
 export default LasecCRMNewClientForm;
