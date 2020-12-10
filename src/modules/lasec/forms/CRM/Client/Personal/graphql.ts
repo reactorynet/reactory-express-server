@@ -152,6 +152,9 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
     },
     //interval: 1500,
     autoQuery: true,
+    refreshEvents: [
+      { name: "LasecNewClient::onResetForm" }
+    ],
     queryMessage: 'Loading new customer details',
     resultType: 'object',
     edit: false,

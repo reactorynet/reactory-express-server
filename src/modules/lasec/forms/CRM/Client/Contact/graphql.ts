@@ -101,6 +101,9 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       'contactDetails.officeNumber': 'officeNumber',
       'contactDetails.prefferedMethodOfContact': 'prefferedMethodOfContact'
     },
+    refreshEvents: [
+      { name: "LasecNewClient::onResetForm" }
+    ],
     autoQuery: true,
     queryMessage: 'Loading new customer contact details',
     resultType: 'object',

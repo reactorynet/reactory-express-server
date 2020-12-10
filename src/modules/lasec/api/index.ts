@@ -493,6 +493,10 @@ const Api = {
         status, payload,
       } = apiResponse;
 
+      logger.debug(`♻ Customer List Response from remote api ${status}`, { status, payload });
+
+      if (payload && !status) return payload;
+
       if (status === 'success') {
         return payload;
       }

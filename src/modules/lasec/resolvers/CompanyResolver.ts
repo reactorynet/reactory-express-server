@@ -3,6 +3,7 @@ import path from 'path';
 import sha1 from 'sha1';
 import lasecApi from '../api';
 import om from 'object-mapper';
+import moment from 'moment';
 import logger from '../../../logging';
 import lodash, { isArray, isNil, orderBy, isString } from 'lodash';
 import { getCacheItem, setCacheItem } from '../models';
@@ -19,6 +20,7 @@ import { User } from '@reactory/server-core/models';
 import { LasecApiResponse, LasecCRMCustomer, LasecNewClientInput, SimpleResponse } from '../types/lasec';
 
 import { getLoggedIn360User, getCustomerDocuments } from './Helpers';
+import deepEquals from '@reactory/server-core/utils/compare';
 
 const fieldMaps: any = {
   "fullName": "first_name",
@@ -390,22 +392,16 @@ export const getClient = async (params: any) => {
     // SET ROLE STRING VALUE
     const roles = await getCustomerRoles({}).then();
     const employeeRole = roles.find(t => t.id == clientResponse.jobType);
-    clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.clientResponse.jobType;
+    clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.jobType;
 
     // CUSTOMER CLASS
 
-    const customerClasses = await getCustomerClass({}).then();
-
-    logger.debug(`CUSTOMER CLASSES :: ${JSON.stringify(customerClasses)}`);
-
+    const customerClasses = await getCustomerClass().then();
     const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
 
-    logger.debug(`CUSTOMER CLASS FOUND :: ${JSON.stringify(customerClass)}`);
+    clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.customer.customerClass;
 
-    clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.clientResponse.customer.customerClass;
-
-    logger.debug(`UPDATED AND RETURNING :: ${JSON.stringify(clientResponse)}`);
-
+    logger.debug(`CompanyResolver.ts getClient(${params.id})`, clientResponse);
     return clientResponse;
   }
 
@@ -678,7 +674,7 @@ const getCustomerClass = async () => {
 
 const getFacultyList = async () => {
 
-  
+
   try {
     const faculty_list: { faculty: string }[] = await mysql(`SELECT faculty FROM CustomerFaculty ORDER by faculty ASC`, 'mysql.lasec360').then();
     logger.debug(`Results from Faculty Query`, { faculty_list })
@@ -712,13 +708,13 @@ const getFacultyList = async () => {
     }
   }
 */
-  
+
 
 };
 
 const getCustomerTypeList = async () => {
 
-   
+
   try {
     const type_list: { customer_type: string }[] = await mysql(`SELECT type as customer_type FROM CustomerType ORDER by customer_type ASC`, 'mysql.lasec360').then();
     logger.debug(`Results from CustomerType Query`, { customer_type_list: type_list })
@@ -1132,7 +1128,7 @@ const getOrganisationList = async (params) => {
 
   logger.debug(`Returning ids ${organisationResult.ids}`);
 
-  let ids:string[] = [];
+  let ids: string[] = [];
 
   if (isArray(organisationResult.ids) === true) {
     ids = [...organisationResult.ids];
@@ -1151,14 +1147,14 @@ const getOrganisationList = async (params) => {
   let organisations: any[] = [];
 
   if (ids.length > 0) {
-  
+
     const organisationDetails = await lasecApi.Organisation.list({ filter: { ids: ids } }).then();
 
     logger.debug(`Fetched Expanded View for (${organisationDetails.organisations.length}) ORGANISATIONS from API`);
     organisations = [...organisationDetails.organisations];
-  
+
     logger.debug(`ORGANISATION RESOLVER - ORGANISATION:: Found (${organisations.length}) for request`);
-  
+
     organisations = organisations.map(organisation => {
       let _organisation = om.merge(organisation, {
         'id': 'id',
@@ -1166,12 +1162,12 @@ const getOrganisationList = async (params) => {
         'description': 'description',
       });
       return _organisation;
-    });      
+    });
   }
-  
+
   logger.debug(`ORGANISATIONS:: (${JSON.stringify(organisations)})`);
-  
-  if(organisations.length > 1) organisations = orderBy(organisations, ['name', ['asc']]);
+
+  if (organisations.length > 1) organisations = orderBy(organisations, ['name', ['asc']]);
 
   let result = {
     paging: pagingResult,
@@ -1379,10 +1375,10 @@ export const DEFAULT_NEW_CLIENT = {
   id: new ObjectId(),
   clientId: '',
   personalDetails: {
-    title: 'Mr',
+    title: '',
     firstName: '',
     lastName: '',
-    country: 'SOUTH AFRICA',
+    country: '',
     repCode: 'LAB101',
     accountType: ''
   },
@@ -1970,134 +1966,186 @@ export default {
 
       return lookupItem;
     },
-    LasecGetNewClient: async (obj, args) => {
+    /**
+      Returns the currently cached object that is associated with the new client onboarding
+      screen.  The data can be used in the context of an existing client that is either 
+      unfinished or deactivated.
 
+      id - The id of the object to load.  if the id can be parsed as a number it will load 
+       the remote client object from the Lasec API.  This data is merged with the 
+       new object id that is in the cache
+
+      reset - If true, the current data will be reset in the cache and a default new 
+       customer object is returned 
+     */
+    LasecGetNewClient: async (obj: any, args: { id?: string, reset?: boolean }) => {
+      debugger
       logger.debug(`[LasecGetNewClient] NEW CLIENT PARAMS:: ${JSON.stringify(args)}`);
+      let existingCustomer: any = null;
+      let remote_fetched: boolean = false;
+      let apiClient: any = { ...DEFAULT_NEW_CLIENT };
+      let hash;
 
-      let existingCustomer = null;
-      const apiClient = { ...DEFAULT_NEW_CLIENT };
+      const cacheLifeSpan = 60 * 60 * 12; //12 hours
+
+      hash = Hash(`__LasecNewClient::${global.user._id}`);
+      let cachedClient = await getCacheItem(hash).then(); //get whatever is in the cache;
+      let hasCached = !iz.nil(cachedClient);
+
+      logger.debug(`CompanyResolver.ts LasecGetNewClient => CACHED CLIENT ${hasCached === true ? `FOUND [last fetch: ${cachedClient.fetched ? moment(cachedClient.fetched).toString() : 'NO FETCHED TIME STAMP' }]` : 'NONE'}`, { cachedClient });
+
+      //check if the call requires a clean slate
+      if (args.reset === true) {
+        await setCacheItem(hash, apiClient, cacheLifeSpan).then();
+        logger.debug(`Reset requested - new client data ${hasCached ? 'discarded, default returned' : 'returned'}`)
+        return apiClient;
+      }
+
+      //there is no cache and there is no ID, just return the new blank item
+      if (hasCached === false && !args.id) {
+        //set the cache item and return the new empty state
+        setCacheItem(hash, apiClient, cacheLifeSpan);
+        return apiClient;
+      }
+
+      //there is an id, we need to check whether or not we need to fetch the remote
+      //data
       if (args.id) {
-        existingCustomer = await getClient({ id: args.id });
+        let intcheck = false;
+        let objectIdCheck = false;
 
-        // logger.debug(`EXISTING CLIENT:: ${JSON.stringify(existingCustomer)}`)
-        logger.debug('EXISTING CLIENT');
+        let must_fetch = true; //by default we enable a fetch of a remote record 
+        //before we fetch the existing customer, check if our cache item has an id that matches
+        //the arg.id if we have a cached item.
+        //if the cached item is fresh or recently modified we don't fetch the remote, 
+        //as it could overwrite our current changes.        
+        if (hasCached === true) {          
+          if (cachedClient.clientId && cachedClient.clientId === args.id) {
+            //we already have the remote client loaded we want to work on
+            if (cachedClient.updated) {
+              if (moment(cachedClient.updated).add(5, "minutes").isAfter(moment())) {
+                //this cached record was updated less than 5 minutes ago, don't fetch a fresh one
+                must_fetch = false;
+              }
+            }
+            if (cachedClient.fetched) {
+              if (cachedClient)
+                if (moment(cachedClient.fetched).add(15, "minutes").isAfter(moment())) {
+                  must_fetch = false;
+                }
+            }
+          }
+        }
 
-        if (existingCustomer) {
-          apiClient.id = existingCustomer.id || '';
-          apiClient.personalDetails.title = '3';
-          apiClient.personalDetails.title = existingCustomer.title || '0';
-          apiClient.personalDetails.firstName = existingCustomer.firstName || '';
-          apiClient.personalDetails.lastName = existingCustomer.lastName || '';
-          apiClient.personalDetails.country = existingCustomer.country || '';
-          apiClient.personalDetails.repCode = existingCustomer.salesTeam || '';
-          apiClient.personalDetails.accountType = existingCustomer.accountType || '';
+        if (must_fetch === true) {
+          try {
+            //we check if the id can be parsed as an int even it is a string.  the remote api stores the ids as long integers
+            intcheck = parseInt(args.id) > 0;
+          } catch (parseErr) { }
 
-          apiClient.contactDetails.emailAddress = existingCustomer.emailAddress || '';
-          apiClient.contactDetails.confirmEmail = existingCustomer.emailAddress || '';
-          apiClient.contactDetails.alternateEmail = existingCustomer.alternateEmail || '';
-          apiClient.contactDetails.confirmAlternateEmail = existingCustomer.alternateEmail || '';
-          apiClient.contactDetails.mobileNumber = existingCustomer.mobileNumber || '';
-          apiClient.contactDetails.alternateMobile = existingCustomer.alternateMobile || '';
-          apiClient.contactDetails.officeNumber = existingCustomer.officeNumber || '';
-          apiClient.contactDetails.alternateOfficeNumber = existingCustomer.alternateOfficeNumber || '';
-          apiClient.contactDetails.prefferedMethodOfContact = existingCustomer.prefferedMethodOfContact || '';
+          if (!intcheck) {
+            try {
+              objectIdCheck = ObjectID.isValid(args.id); //no integer, see if we have a object ID here
+            } catch (objectCheckErr) { }
+          }
 
-          apiClient.jobDetails.jobTitle = existingCustomer.jobTitle.trim() || '';
-          apiClient.jobDetails.salesTeam = existingCustomer.customer.salesTeam || '';
-          apiClient.jobDetails.clientDepartment = existingCustomer.customer.department || '';
-          apiClient.jobDetails.ranking = existingCustomer.customer.ranking || '';
-          apiClient.jobDetails.customerClass = existingCustomer.customer.customerClass || '';
-          apiClient.jobDetails.faculty = existingCustomer.customer.faculty || '';
-          apiClient.jobDetails.customerType = existingCustomer.customer.accountType || '';
-          apiClient.jobDetails.lineManager = existingCustomer.lineManager || '';
-          apiClient.jobDetails.jobType = existingCustomer.jobType || '';
+          if (intcheck === true && objectIdCheck === false) {
+            logger.debug(`Fetching remote customer data for client id: ${args.id}`)
+            existingCustomer = await getClient({ id: args.id });
+            logger.debug(`Response for Client Id ${args.id} Result`, { existingCustomer });
+            //sanity check 
+            if (existingCustomer && existingCustomer.id === args.id) {
+              remote_fetched = true;
+              logger.debug('mapping existing customer data to api client data object 🔀')
+              apiClient.id = existingCustomer.id || '';
 
-          const roles = await getCustomerRoles({}).then();
-          const employeeRole = roles.find(t => t.id == existingCustomer.jobType);
-          apiClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : existingCustomer.jobType;
+              apiClient.fetched = new Date().valueOf();
+              apiClient.remote_id = existingCustomer.id;
+              
+              apiClient.personalDetails.title = existingCustomer.title || '1';
+              apiClient.personalDetails.firstName = existingCustomer.firstName || '';
+              apiClient.personalDetails.lastName = existingCustomer.lastName || '';
+              apiClient.personalDetails.country = existingCustomer.country || '';
+              apiClient.personalDetails.repCode = existingCustomer.salesTeam || '';
+              apiClient.personalDetails.accountType = existingCustomer.accountType || '';
 
-          apiClient.customer.id = existingCustomer.customer.id || '';
-          apiClient.customer.registeredName = existingCustomer.customer.registeredName || '';
-          apiClient.organization.id = (existingCustomer.organization && existingCustomer.organization.id) ? existingCustomer.organization.id : '';
-          apiClient.organization.name = (existingCustomer.organization && existingCustomer.organization.name) ? existingCustomer.organization.name : '';
+              apiClient.contactDetails.emailAddress = existingCustomer.emailAddress || '';
+              apiClient.contactDetails.confirmEmail = existingCustomer.emailAddress || '';
+              apiClient.contactDetails.alternateEmail = existingCustomer.alternateEmail || '';
+              apiClient.contactDetails.confirmAlternateEmail = existingCustomer.alternateEmail || '';
+              apiClient.contactDetails.mobileNumber = existingCustomer.mobileNumber || '';
+              apiClient.contactDetails.alternateMobile = existingCustomer.alternateMobile || '';
+              apiClient.contactDetails.officeNumber = existingCustomer.officeNumber || '';
+              apiClient.contactDetails.alternateOfficeNumber = existingCustomer.alternateOfficeNumber || '';
+              apiClient.contactDetails.prefferedMethodOfContact = existingCustomer.prefferedMethodOfContact || '';
 
-          apiClient.address.physicalAddress.id = existingCustomer.customer.physicalAddressId || '';
-          apiClient.address.physicalAddress.fullAddress = existingCustomer.customer.physicalAddress || '';
-          apiClient.address.deliveryAddress.id = existingCustomer.customer.deliveryAddressId || '';
-          apiClient.address.billingAddress.id = existingCustomer.customer.deliveryAddressId || '';
-          apiClient.address.deliveryAddress.fullAddress = existingCustomer.customer.deliveryAddress || '';
-          apiClient.address.billingAddress.fullAddress = existingCustomer.customer.billingAddress || '';
+              
+              apiClient.jobDetails.jobTitle = existingCustomer && existingCustomer.jobTitle ? existingCustomer.jobTitle.trim() : '';
+              apiClient.jobDetails.salesTeam = existingCustomer.customer.salesTeam || '';
+              apiClient.jobDetails.clientDepartment = existingCustomer.customer.department || '';
+              apiClient.jobDetails.ranking = existingCustomer.customer.ranking || '';
+              apiClient.jobDetails.customerClass = existingCustomer.customer.customerClass || '';
+              apiClient.jobDetails.faculty = existingCustomer.customer.faculty || '';
+              apiClient.jobDetails.customerType = existingCustomer.customer.accountType || '';
+              apiClient.jobDetails.lineManager = existingCustomer.lineManager || '';
+              apiClient.jobDetails.jobType = existingCustomer.jobType || '';
 
+              const roles = await getCustomerRoles().then();
+              const employeeRole = roles.find((t: any) => (t.id == existingCustomer.jobType));
+              apiClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : existingCustomer.jobType;
+
+              apiClient.customer.id = existingCustomer.customer.id || '';
+              apiClient.customer.registeredName = existingCustomer.customer.registeredName || '';
+              apiClient.organization.id = (existingCustomer.organization && existingCustomer.organization.id) ? existingCustomer.organization.id : '';
+              apiClient.organization.name = (existingCustomer.organization && existingCustomer.organization.name) ? existingCustomer.organization.name : '';
+
+              apiClient.address.physicalAddress.id = existingCustomer.customer.physicalAddressId || '';
+              apiClient.address.physicalAddress.fullAddress = existingCustomer.customer.physicalAddress || '';
+              apiClient.address.deliveryAddress.id = existingCustomer.customer.deliveryAddressId || '';
+              apiClient.address.billingAddress.id = existingCustomer.customer.deliveryAddressId || '';
+              apiClient.address.deliveryAddress.fullAddress = existingCustomer.customer.deliveryAddress || '';
+              apiClient.address.billingAddress.fullAddress = existingCustomer.customer.billingAddress || '';
+
+              logger.debug(`Mapped Item Api Client Data`, { apiClient });
+            }
+          }
+
+          //if we have an object id, load another cached "New Client" object
+          if (objectIdCheck === true) {
+            logger.warn("🟠 Object Id lookup not supported yet");
+          }
         }
       }
 
-      let hash;
-      hash = Hash(`__LasecNewClient::${global.user._id}`);
+      let client_to_return = { ...apiClient };
 
-      const cachedClient = await getCacheItem(hash).then();
+      if (hasCached === true) {
+        //we have a cached item and remote fetched item.
+        debugger
+        if (remote_fetched === true && cachedClient.id && cachedClient.id === existingCustomer.id) {
+          logger.debug(`IDS MATCH:: ${cachedClient.personalDetails.id} ${existingCustomer.id} and merging`);
 
-      logger.debug(`CACHED CLIENT:: ${JSON.stringify(cachedClient)}`);
-
-      if (cachedClient !== null) {
-
-        if (existingCustomer) {
-
-          // if (cachedClient.personalDetails.id == existingCustomer.id) {
-          if (cachedClient.clientId && cachedClient.clientId == existingCustomer.id) {
-
-            logger.debug(`IDS MATCH:: ${cachedClient.personalDetails.id} ${existingCustomer.id} and merging the 2`);
-
-            const mergedClient = {
-              ...apiClient,
-              ...cachedClient
-            };
-            mergedClient.id = apiClient.id;
-            mergedClient.jobDetails.jobTitle = mergedClient.jobDetails.jobTitle.trim();
-
-            logger.debug(`MERGED CLIENT:: ${JSON.stringify(mergedClient)}`);
-
-            return mergedClient;
-          }
-
-          logger.debug(`IDS DONT MATCH RETURNING API CLIENT ONLY:: ${JSON.stringify(apiClient)}`);
-
-
-
-
-          // REMOVED THIS FOR THE TIME BEING - NEED TO FIND A BETTER SOLUTION
-          // RESET CACHED CLIENT
-          //let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
-
-          // return apiClient;
-
-          // TEMPORARY FIX
-          const mergedClient = {
+          client_to_return = {
             ...apiClient,
             ...cachedClient
           };
 
-          await setCacheItem(hash, mergedClient, 60 * 60 * 12).then();
-
-          return mergedClient;
-
-        }
-
-
-        logger.debug(`RETURNING CACHED CLIENT:: ${JSON.stringify(cachedClient)}`);
-
-        return cachedClient;
+          client_to_return.id = apiClient.id;
+          client_to_return.jobDetails.jobTitle = client_to_return.jobDetails.jobTitle.trim();
+          client_to_return.updated = new Date().valueOf();          
+          logger.debug(`MERGED CLIENT:: ${JSON.stringify(client_to_return)}`);
+        } 
+        //we did not fetch a remote item, we have a cache at the ready
+        if (remote_fetched === false) client_to_return = cachedClient;
+      } else {                        
+        //no cache available
+        client_to_return.clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
       }
-      else {
-        let _newClient = { ...DEFAULT_NEW_CLIENT, id: new ObjectId(), createdBy: global.user._id };
 
-        await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+      setCacheItem(hash, client_to_return, cacheLifeSpan).then();
 
-        let clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
+      return client_to_return;
 
-        logger.debug(`RETURNING MERGED NEW CLIENT`);
-
-        return { ..._newClient, clientDocuments };
-      }
     },
     LasecGetAddress: async (obj, args) => {
       return getAddress(args);
@@ -2120,62 +2168,80 @@ export default {
     LasecDeleteNewClientDocuments: async (obj, args) => {
       return deleteDocuments(args);
     },
-    LasecUpdateNewClient: async (obj, args) => {
+    LasecUpdateNewClient: async (obj: any, args: { id: string, newClient: any }) => {
 
       const { newClient } = args;
       logger.debug('Updating new client address details with input', { args });
       // logger.debug('Updating new client address details with input', { newClient });
 
+      let touched = false;
       let hash;
       hash = Hash(`__LasecNewClient::${global.user._id}`);
-      // if (args.clientId)
-      //   hash = Hash(`__LasecNewClient::${args.clientId}`);
-      // else
-      //   hash = Hash(`__LasecNewClient::${global.user._id}`);
-
+      
       let _newClient = await getCacheItem(hash).then();
 
       if (isNil(newClient.personalDetails) === false && Object.keys(newClient.personalDetails).length > 0) {
-        _newClient.personalDetails = { ..._newClient.personalDetails, ...newClient.personalDetails };
+        if (deepEquals(newClient.personalDetails, _newClient.personalDetails) === false) {
+          touched = true;
+          _newClient.personalDetails = { ..._newClient.personalDetails, ...newClient.personalDetails };
+        }
       }
 
       if (isNil(newClient.contactDetails) === false && Object.keys(newClient.contactDetails).length > 0) {
-        _newClient.contactDetails = { ..._newClient.contactDetails, ...newClient.contactDetails };
+        if (deepEquals(newClient.contactDetails, _newClient.contactDetails) === false) {
+          touched = true;
+          _newClient.contactDetails = { ..._newClient.contactDetails, ...newClient.contactDetails };
+        }
       }
 
       if (isNil(newClient.jobDetails) === false && Object.keys(newClient.jobDetails).length > 0) {
-        _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
 
+        if (deepEquals(newClient.jobDetails, _newClient.jobDetails) === false) {
+          touched = true;
+          _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
 
-        const roles = await getCustomerRoles({}).then();
-        const employeeRole = roles.find(t => t.id == _newClient.jobDetails.jobType);
-        _newClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : _newClient.jobDetails.jobType;
+          const roles = await getCustomerRoles().then();
+          const employeeRole = roles.find((t: any) => t.id == _newClient.jobDetails.jobType);
+          _newClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : _newClient.jobDetails.jobType;
 
-        _newClient.jobDetails.faculty = "Science";
-        _newClient.jobDetails.customerType = "default";
+          _newClient.jobDetails.faculty = "Science";
+          _newClient.jobDetails.customerType = "Science";
+
+        }
       }
 
       if (isNil(newClient.customer) === false && Object.keys(newClient.customer).length > 0) {
-        _newClient.customer = { ..._newClient.customer, ...newClient.customer };
+
+        if (deepEquals(newClient.customer, _newClient.customer) === false) {
+          touched = true;
+          _newClient.customer = { ..._newClient.customer, ...newClient.customer };
+        }
       }
 
       if (isNil(newClient.organization && Object.keys(newClient.organization).length > 0) === false) {
-        _newClient.organization = { ..._newClient.organization, ...newClient.organization };
+        if (deepEquals(newClient.organization, _newClient.organization) === false) {
+          touched = true;
+          _newClient.organization = { ..._newClient.organization, ...newClient.organization };
+        }
       }
 
       if (isNil(newClient.address && Object.keys(newClient.address).length > 0) === false) {
-        _newClient.address = {
-          physicalAddress: { ..._newClient.address.physicalAddress, ...newClient.address.physicalAddress },
-          deliveryAddress: { ..._newClient.address.deliveryAddress, ...newClient.address.deliveryAddress },          
-        };
+        if (deepEquals(newClient.address, _newClient.address) === false) {
+          touched = true;
+          _newClient.address = {
+            physicalAddress: { ..._newClient.address.physicalAddress, ...newClient.address.physicalAddress },
+            deliveryAddress: { ..._newClient.address.deliveryAddress, ...newClient.address.deliveryAddress },
+          };
+        }
       }
 
       logger.debug('New Client Details', _newClient, 'debug');
 
-      _newClient.clientId = newClient.id;
-
-      _newClient.updated = new Date().valueOf()
-      await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+      if (touched) {
+        _newClient.clientId = newClient.id;
+        _newClient.updated = new Date().valueOf()
+        await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+      }
 
       return _newClient;
     },
@@ -2315,7 +2381,7 @@ export default {
           logger.debug(`🟠 Create new client on LasecAPI using input data:`, inputData)
           customer = await post(URIS.customer_create.url, inputData, null, true).then()
           logger.debug(`👀 Result in creating user`, customer);
-          
+
           return customer;
         }
         catch (postError) {
@@ -2336,25 +2402,25 @@ export default {
               organisation_id = 0,
               company_id = '${_newClient.organization.id}'  
             WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
-          logger.debug(`🟢 Updated user activity status complete`, update_result);          
+          logger.debug(`🟢 Updated user activity status complete`, update_result);
 
           response.messages.push({ text: `Client ${args.newClient.contactDetails.emailAddress} activity status set to active`, type: 'success', inAppNotification: true });
-  
+
         } catch (setStatusError) {
           logger.error("Error Setting The Status and Customer details", setStatusError);
-          response.messages.push({ text: `Could not set the activity status: ${setStatusError.message}`,  })
-        }  
+          response.messages.push({ text: `Could not set the activity status: ${setStatusError.message}`, })
+        }
       }
 
       customer = await doCreate();
-      
+
       if (customer && customer.id && Number.parseInt(`${customer.id}`) > 0) {
         customer = { ...inputData, ...customer };
         customerCreated = Boolean(customer && customer.id);
 
 
         if (customerCreated === true) {
-          response.messages.push({ text: `Client ${customer.first_name} ${customer.surname} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });         
+          response.messages.push({ text: `Client ${customer.first_name} ${customer.surname} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });
           /***
            * set addresses for the customer
            * */
@@ -2406,7 +2472,7 @@ export default {
 
           try {
             await doStatusUpdate();
-                        
+
           } catch (setStatusException) {
             logger.error(`Could set the client status`, setStatusException);
             response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while setting activity status`, type: 'warning', inAppNotification: true });
@@ -2424,68 +2490,68 @@ export default {
           description: 'Could not save user'
         });
       }
-    
+
       return response;
-  },
-  LasecCreateNewAddress: async (obj, args) => {
-    return createNewAddress(args);
-  },
-  LasecCRMSaveComment: async (obj, args) => {
-    return saveComment(args);
-  },
-  LasecCRMDeleteComment: async (obj, args) => {
-    return deleteComment(args);
-  },
-  LasecDeactivateClients: async (obj: any, params: { clientIds: string[] }): Promise<SimpleResponse> => {
+    },
+    LasecCreateNewAddress: async (obj, args) => {
+      return createNewAddress(args);
+    },
+    LasecCRMSaveComment: async (obj, args) => {
+      return saveComment(args);
+    },
+    LasecCRMDeleteComment: async (obj, args) => {
+      return deleteComment(args);
+    },
+    LasecDeactivateClients: async (obj: any, params: { clientIds: string[] }): Promise<SimpleResponse> => {
 
-    let response: SimpleResponse = {
-      message: `Deactivated ${params.clientIds.length} clients`,
-      success: true
-    };
+      let response: SimpleResponse = {
+        message: `Deactivated ${params.clientIds.length} clients`,
+        success: true
+      };
 
-    const deactivation_promises: Promise<any>[] = params.clientIds.map((clientId: string) => {
+      const deactivation_promises: Promise<any>[] = params.clientIds.map((clientId: string) => {
 
-      const args = {
-        clientInfo: {
-          clientId,
-          clientStatus: 'deactivated'
-        },
-      }
+        const args = {
+          clientInfo: {
+            clientId,
+            clientStatus: 'deactivated'
+          },
+        }
 
-      return updateClientDetail(args);
+        return updateClientDetail(args);
 
-    });
-
-    try {
-      const results = await Promise.all(deactivation_promises).then();
-      let successCount: number, failCount: number = 0;
-
-      results.forEach((patchResult) => {
-        if (patchResult.Success === true) successCount += 1;
-        else failCount += 1;
       });
 
-      if (failCount > 0) {
-        if (successCount > 0) {
-          response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;
-        } else {
-          response.message = ` 😣 Could not deactivate any client accounts.`;
-          response.success = false;
-        }
-      } else {
-        if (successCount === deactivation_promises.length) {
-          response.message = `🥇 Deactivated all ${successCount} clients.`
-        }
-      }
-    } catch (err) {
-      response.message = `😬 An error occurred while changing the client status. [${err.nessage}]`;
-      logger.error(`🧨 Error deactivating the client account`, err)
-    }
+      try {
+        const results = await Promise.all(deactivation_promises).then();
+        let successCount: number, failCount: number = 0;
 
-    return response;
+        results.forEach((patchResult) => {
+          if (patchResult.Success === true) successCount += 1;
+          else failCount += 1;
+        });
+
+        if (failCount > 0) {
+          if (successCount > 0) {
+            response.message = `🥈 Deactivated ${successCount} clients and failed to deactivate ${failCount} clients.`;
+          } else {
+            response.message = ` 😣 Could not deactivate any client accounts.`;
+            response.success = false;
+          }
+        } else {
+          if (successCount === deactivation_promises.length) {
+            response.message = `🥇 Deactivated all ${successCount} clients.`
+          }
+        }
+      } catch (err) {
+        response.message = `😬 An error occurred while changing the client status. [${err.nessage}]`;
+        logger.error(`🧨 Error deactivating the client account`, err)
+      }
+
+      return response;
+    },
+    LasecUpdateSpecialRequirements: async (obj: any, args: any) => {
+      return updateClientSpecialRequirements(args);
+    }
   },
-  LasecUpdateSpecialRequirements: async (obj: any, args: any) => {
-    return updateClientSpecialRequirements(args);
-  }
-},
 };

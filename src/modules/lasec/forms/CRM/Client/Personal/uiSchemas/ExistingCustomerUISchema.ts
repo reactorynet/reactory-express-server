@@ -15,9 +15,8 @@ const uiSchema: Reactory.IUISchema = {
         activeColor: 'secondary',
         selectSchemaId: 'display',
         style: {
-          position: 'absolute',
-          right: '10px',
-          top: '-3px'
+          'justifyContent': "flex-end",
+          'display': "flex",
         }
       },
       style: {

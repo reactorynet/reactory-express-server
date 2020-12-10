@@ -406,7 +406,20 @@ extend type Query {
   LasecGetPersonTitles: [LasecTitleLookupItem]
   LasecGetPersonTitleById(id: String): LasecTitleLookupItem
   # LasecGetNewClient: LasecNewClient
-  LasecGetNewClient(id: String): LasecNewClient
+  """
+  Returns the currently cached object that is associated with the new client onboarding
+  screen.  The data can be used in the context of an existing client that is either 
+  unfinished or deactivated.
+
+  id - The id of the object to load.  if the id can be parsed as a number it will load 
+       the remote client object from the Lasec API.  This data is merged with the 
+       new object id that is in the cache
+
+  reset - If true, the current data will be reset in the cache and a default new 
+       customer object is returned 
+
+  """
+  LasecGetNewClient(id: String, reset: Boolean): LasecNewClient
   LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
   LasecGetPlaceDetails(placeId: String!): GoogleAddressDetails
   LasecGetAddress(searchTerm: String!): [String!]
