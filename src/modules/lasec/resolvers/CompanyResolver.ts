@@ -17,7 +17,7 @@ import { ObjectID, ObjectId } from 'mongodb';
 import LasecAPI from '@reactory/server-modules/lasec/api';
 import CRMClientComment from '@reactory/server-modules/lasec/models/Comment';
 import { User } from '@reactory/server-core/models';
-import { LasecApiResponse, LasecCRMCustomer, LasecNewClientInput, SimpleResponse } from '../types/lasec';
+import { LasecApiResponse, LasecCRMCustomer, LasecNewClientInput, SimpleResponse, LasecAddress } from '../types/lasec';
 
 import { getLoggedIn360User, getCustomerDocuments } from './Helpers';
 import deepEquals from '@reactory/server-core/utils/compare';
@@ -1436,23 +1436,32 @@ export const DEFAULT_NEW_CLIENT = {
   saved: false,
 };
 
-const getAddress = async (args) => {
+const getAddress = async (args: { searchTerm: string }) => {
 
-  logger.debug(`GETTING ADDRESS:: ${JSON.stringify(args)}`);
+  try {
+    logger.debug(`GETTING ADDRESS:: ${JSON.stringify(args)}`);
+    const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true } });
 
-  const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true } });
+    let _ids = [];
+    if (isArray(addressIds.ids) === true && addressIds.ids.length > 0) {
+      _ids = [...addressIds.ids];
+      const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
+      const addresses = [...addressDetails.items]; 
+      logger.debug(`Found ${addresses.length || 0} that matches the search term "${args.searchTerm}"`, { addresses });
+      return addresses
+    }
 
-  let _ids = [];
-  if (isArray(addressIds.ids) === true && addressIds.ids.length > 0) {
-    _ids = [...addressIds.ids];
-    const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
+    return [];
 
-    const addresses = [...addressDetails.items];
+  } catch (getAddressError) {
 
-    return addresses
+    return []
   }
 
-  return [];
+
+
+
+
 }
 
 const createNewAddress = async (args) => {
@@ -1710,6 +1719,118 @@ const updateClientSpecialRequirements = async (args) => {
 }
 
 export default {
+  LasecAddress: {
+    building_description: async (address: LasecAddress) => {
+
+      if(address.building_description && address.building_description.length > 0) return address.building_description
+
+      if (lodash.isNil(address)) return null;
+      if (lodash.isNil(address.building_description_id)) return "";
+
+      let build_id = 0;
+      try {
+         build_id = parseInt(address.building_description_id)
+      } catch (pErr) {
+        logger.warn("Could not parse building id as integer", { address, error: pErr });
+        return "";
+      }
+
+      let building_description_id = parseInt(address.building_description_id);
+
+      try {
+        let result_rows: any[] = await mysql(`
+          SELECT
+            floor_number as description
+          FROM
+            BuildingFloorNumber WHERE buildingfloornumberid = ${building_description_id}`, 'mysql.lasec360').then();
+        logger.debug(`LasecAddress.building_description`, { result_rows });
+
+        if (result_rows.length === 1 && result_rows[0]) return result_rows[0].description || "";
+
+        logger.warn(`LasecAddress.building_description no DB result`);
+        return "";
+      } catch (sql_error) {
+        logger.error("Error returning the building address detail");
+        return ""
+      }
+    },
+    linked_companies_count: async (address: LasecAddress): Promise<number> => {
+      let count = 0;
+
+      if (lodash.isNil(address)) return count;
+      if (lodash.isNil(address.id)) return count;
+
+      const query = ``
+
+      try {
+        let result_rows: any[] = await mysql(query, 'mysql.lasec360').then();
+        logger.debug(`LasecAddress linked_companies_count`, { result_rows });
+
+        if (result_rows.length === 1 && result_rows[0]) return result_rows[0].description || "";
+
+        logger.warn(`LasecAddress linked_companies_count no DB result`);
+        return count;
+      } catch (sql_error) {
+        logger.error("Error returning the building address detail");
+        return count
+      }      
+    },
+    linked_clients_count: async (address: LasecAddress): Promise<number> => {
+      let count = 0;
+
+      if (lodash.isNil(address)) return count;
+      if (lodash.isNil(address.id)) return count;
+      
+      const query = `
+      SELECT 
+        COUNT(*) as linked_customers
+      FROM 
+        Address as a inner join Customer as c 
+          on a.addressid  = CAST(c.delivery_address_id as unsigned)
+        WHERE a.addressid = ${parseInt(address.id)};`;
+
+      try {
+        let result_rows: any[] = await mysql(query, 'mysql.lasec360').then();
+        logger.debug(`LasecAddress linked_clients_count`, { result_rows });
+
+        if (result_rows.length === 1 && result_rows[0]) return result_rows[0].linked_customers || 0;
+
+        logger.warn(`LasecAddress  no DB result`);
+        return count;
+      } catch (sql_error) {
+        logger.error("Error returning the building address detail");
+        return count
+      }      
+    },
+    linked_sales_orders_count: async (address: LasecAddress): Promise<number> => {
+      let count = 0;
+
+      if (lodash.isNil(address)) return count;
+      if (lodash.isNil(address.id)) return count;
+
+      const query = `
+      SELECT
+        COUNT(*) linked_sales_orders_count
+      FROM 
+        Address as a inner join SalesOrder as s 
+          on a.addressid  = CAST(s.delivery_address_id as unsigned)
+      WHERE a.addressid = ${parseInt(address.id)};
+      `;
+
+      try {
+        let result_rows: any[] = await mysql(query, 'mysql.lasec360').then();
+        logger.debug(`LasecAddress linked_sales_orders_count`, { result_rows });
+
+        if (result_rows.length === 1 && result_rows[0]) return result_rows[0].linked_sales_orders_count || 0;
+
+        logger.warn(`LasecAddress linked_sales_orders_count no DB result`);
+        return count;
+      } catch (sql_error) {
+        logger.error("Error returning the building address detail");
+        return count
+      }      
+    },
+  },
   LasecDocument: {
     owner: async ({ owner }) => {
       if (ObjectId.isValid(owner)) {
@@ -1983,14 +2104,14 @@ export default {
       logger.debug(`[LasecGetNewClient] NEW CLIENT PARAMS:: ${JSON.stringify(args)}`);
       let existingCustomer: any = null;
       let remote_fetched: boolean = false;
-      let remote_client: any = lodash.cloneDeep( DEFAULT_NEW_CLIENT ) ;
+      let remote_client: any = lodash.cloneDeep(DEFAULT_NEW_CLIENT);
       let hash;
 
       const cacheLifeSpan = 60 * 60 * 12; //12 hours
 
       hash = Hash(`__LasecNewClient::${global.user._id}`);
-      
-      
+
+
       //check if the call requires a clean slate
       if (args.reset === true) {
         await setCacheItem(hash, lodash.cloneDeep(remote_client), cacheLifeSpan).then();
@@ -2001,8 +2122,8 @@ export default {
       let cachedClient = await getCacheItem(hash).then(); //get whatever is in the cache;
       let hasCached = !iz.nil(cachedClient);
 
-      logger.debug(`CompanyResolver.ts LasecGetNewClient => CACHED CLIENT ${hasCached === true ? `FOUND [last fetch: ${cachedClient.fetched ? moment(cachedClient.fetched).toString() : 'NO FETCHED TIME STAMP' }]` : 'NONE'}`, { cachedClient });
-      
+      logger.debug(`CompanyResolver.ts LasecGetNewClient => CACHED CLIENT ${hasCached === true ? `FOUND [last fetch: ${cachedClient.fetched ? moment(cachedClient.fetched).toString() : 'NO FETCHED TIME STAMP'}]` : 'NONE'}`, { cachedClient });
+
       //there is no cache and there is no ID, just return the new blank item
       if (hasCached === false && !args.id) {
         //set the cache item and return the new empty state
@@ -2021,7 +2142,7 @@ export default {
         //the arg.id if we have a cached item.
         //if the cached item is fresh or recently modified we don't fetch the remote, 
         //as it could overwrite our current changes.        
-        if (hasCached === true) {          
+        if (hasCached === true) {
           if (cachedClient.clientId && cachedClient.clientId === args.id) {
             //we already have the remote client loaded we want to work on
             if (cachedClient.updated) {
@@ -2063,7 +2184,7 @@ export default {
 
               remote_client.fetched = new Date().valueOf();
               remote_client.remote_id = existingCustomer.id;
-              
+
               remote_client.personalDetails.title = existingCustomer.title || '1';
               remote_client.personalDetails.firstName = existingCustomer.firstName || '';
               remote_client.personalDetails.lastName = existingCustomer.lastName || '';
@@ -2081,7 +2202,7 @@ export default {
               remote_client.contactDetails.alternateOfficeNumber = existingCustomer.alternateOfficeNumber || '';
               remote_client.contactDetails.prefferedMethodOfContact = existingCustomer.prefferedMethodOfContact || '';
 
-              
+
               remote_client.jobDetails.jobTitle = existingCustomer && existingCustomer.jobTitle ? existingCustomer.jobTitle.trim() : '';
               remote_client.jobDetails.salesTeam = existingCustomer.customer.salesTeam || '';
               remote_client.jobDetails.clientDepartment = existingCustomer.customer.department || '';
@@ -2138,15 +2259,15 @@ export default {
 
           client_to_return.id = remote_client.id;
           client_to_return.jobDetails.jobTitle = client_to_return.jobDetails.jobTitle.trim();
-          client_to_return.updated = new Date().valueOf();          
+          client_to_return.updated = new Date().valueOf();
           logger.debug(`MERGED CLIENT:: ${JSON.stringify(client_to_return)}`);
-        } 
+        }
         //we did not fetch a remote item, we have a cache at the ready
         if (remote_fetched === false) client_to_return = { ...cachedClient };
 
-        
 
-      } else {                        
+
+      } else {
         //no cache available
         client_to_return.clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
       }
@@ -2156,8 +2277,44 @@ export default {
       return client_to_return;
 
     },
-    LasecGetAddress: async (obj, args) => {
-      return getAddress(args);
+    LasecGetAddressById: async (obj: any, args: { id: string }): Promise< LasecAddress > => {
+
+      let result = await lasecApi.Customers.getAddress({ filter: { ids: [args.id] } }).then();
+
+      if (result.items && result.items.length === 1) {
+        return result.items[0];
+      }
+
+      return null;
+    },
+    LasecGetAddress: async (obj: any, args: { searchTerm: string }) => {
+      const addresses = await getAddress(args);
+
+      return addresses.map((address: LasecAddress) => {
+        /**
+         * {
+            "id": "35593",
+            "building_description_id": "6",
+            "building_floor_number_id": "1",
+            "province_id": "",
+            "country_id": "",
+            "formatted_address": "Portion 163, Farm 811 1 Main Tesselaarsdal Overberg District Municipality Caledon 7523 Western Cape South Africa",
+            "lat": "0.000000",
+            "lng": "0.000000",
+            "created_by": "Werner Weber",
+            "last_edited_by": "Werner Weber"
+          },
+        */
+       
+        return {
+          ...address,
+          fullAddress: address.formatted_address,
+          map: {
+            lat: address.lat,
+            long: address.lng,
+          }
+        }
+      });
     },
     LasecGetPlaceDetails: async (obj, args) => {
       return getPlaceDetails(args);
@@ -2186,7 +2343,7 @@ export default {
       let touched = false;
       let hash;
       hash = Hash(`__LasecNewClient::${global.user._id}`);
-      
+
       let _newClient = await getCacheItem(hash).then();
 
       if (isNil(newClient.personalDetails) === false && Object.keys(newClient.personalDetails).length > 0) {

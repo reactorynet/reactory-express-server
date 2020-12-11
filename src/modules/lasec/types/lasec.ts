@@ -648,6 +648,43 @@ export interface LasecSalesOrder {
   }  
 }
 
+export interface LasecAddress {
+  id: string
+  fullAddress?: string
+  formatted_address?: string
+
+  building_description_id?: string
+  building_description?: string
+  
+  building_floor_number_id?: string
+  building_floor_description?: string
+
+  province_id?: string
+  province_name?: string  
+
+  country_id?: string
+  country_name?: string
+  
+  lat?: string
+  lng?: string
+  created_by?: string
+  last_edited_by?: string
+  map?: any
+
+  linked_companies_count?: number,  
+  linked_companies?: LasecCRMCustomer[]
+
+  linked_clients_count?: number,
+  linked_clients?: LasecClient[]
+
+  linked_sales_order_count: number,
+  linked_sales_orders?: LasecSalesOrder[]
+
+  linked_invoices_count: number,
+  linked_invoices?: any[]
+
+}
+
 export interface IQuoteService extends Reactory.Service.IReactoryService {
 
   /**

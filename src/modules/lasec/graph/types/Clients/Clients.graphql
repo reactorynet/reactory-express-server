@@ -224,7 +224,39 @@ type LasecClientPersonalDetails {
 type LasecAddress {
   id: String
   fullAddress: String
+  formatted_address: String
+
+  building_description_id: String
+  building_description: String
+  
+  building_floor_number_id: String
+  building_floor_description: String
+
+  province_id: String
+  province_name: String
+
+  country_id: String
+  country_name: String
+  
+  lat: String
+  lng: String
+
+  created_by: String
+  last_edited_by: String
   map: Any
+
+  linked_companies_count: Int,  
+  linked_companies: [LasecCRMCustomer]
+
+  linked_clients_count: Int,
+  linked_clients: [LasecCRMClient]
+
+  linked_sales_orders_count: Int,
+  linked_sales_orders: [SalesOrder]
+
+  linked_invoices_count: Int,
+
+  linked_deliveries: Int
 }
 
 type LasecContactDetails {
@@ -422,7 +454,18 @@ extend type Query {
   LasecGetNewClient(id: String, reset: Boolean): LasecNewClient
   LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
   LasecGetPlaceDetails(placeId: String!): GoogleAddressDetails
-  LasecGetAddress(searchTerm: String!): [String!]
+
+  """
+  Use this function to search for Addresses that is contained in the 
+  lasec api.  Accepts one required property "searchTerm", this will 
+  do a wildcard search against the api.
+  """
+  LasecGetAddress(searchTerm: String!): [LasecAddress]
+  """
+  Use this function to expand the address details for a 
+  particular id
+  """
+  LasecGetAddressById(id: String!): LasecAddress
 }
 
 extend type Mutation {

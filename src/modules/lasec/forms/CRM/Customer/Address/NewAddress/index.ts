@@ -3,44 +3,18 @@ import $graphql from './graphql';
 
 const uiSchema: any = {
   'ui:options': {
-    componentType: "form",
+    componentType: "div",
     containerStyles: {
       margin: '0',
       padding: '0px',
-      paddingBottom: '16px'
+      paddingBottom: '0'
     },
     style: {
       margin: '16',
     },
     submitIcon: 'check',
     showSubmit: true,
-    showRefresh: false,
-    buttons: [
-      {
-        key: 'cancel',
-        buttonProps: {
-          title: 'CANCEL'
-        },
-        iconProps: {
-          icon: 'close'
-        },
-        type: 'callback',
-        handler: 'onCancel'
-      },
-      /*
-      {
-        key: 'validate',
-        buttonProps: {
-          title: 'VALIDATE'
-        },
-        iconProps: {
-          icon: 'check_outline'
-        },
-        type: 'callback',
-        handler: 'validateAddress'
-      }
-      */
-    ]
+    showRefresh: false,    
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
