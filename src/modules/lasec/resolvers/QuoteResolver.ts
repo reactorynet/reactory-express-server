@@ -481,13 +481,13 @@ export default {
         }
       }
 
-      if (quote.meta && quote.meta.source) {        
+      if (quote.meta && quote.meta.source) {
         const { company_id, company_trading_name } = meta.source;
         if (company_trading_name && company_id) {
           //check if a customer with this reference exists?
           logger.debug(`No organization, checking foreign reference ${company_id} ${global.partner.key}`);
           let _company = await Organization.findByForeignId(company_id, global.partner.key).then();
-          
+
           if (_company !== null) {
             if (typeof quote.save === "function") {
               quote.company = _company._id;
@@ -540,7 +540,7 @@ export default {
             }, global.partner);
 
             _company.save();
-                       
+
             return _company;
           }
         }
@@ -736,7 +736,7 @@ export default {
     LasecGetCRMSalesOrders: async (obj, args) => {
       return getSalesOrders(args);
     },
-    
+
     LasecGetCRMClientInvoices: async (obj, args) => {
       return getClientInvoices(args);
     },
@@ -752,7 +752,7 @@ export default {
     LasecGetSalesHistoryMonthTotals: async (obj, args) => {
       return getSalesHistoryMonthlyCount(args);
     },
-    
+
     LasecGetSalesOrderDocumentBySlug: async (obj, args) => {
       return getSalesOrderDocBySlug(args);
     },
@@ -1151,7 +1151,7 @@ export default {
     LasecUploadSaleOrderDocument: async (obj, args) => {
       return uploadSalesOrderDoc(args);
     },
-    
+
     LasecCRMUpdateFreightRequestDetails: async (obj, args) => {
       return updateFreightRequesyDetails(args);
     },
@@ -1318,7 +1318,7 @@ export default {
         }
       }
     },
-    
+
 
     LasecDeleteQuote: async (parent, params) => {
       return deleteQuote(params);
@@ -1380,7 +1380,23 @@ export default {
       const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
       const { option, quote_id, option_id } = params
 
-      return await quoteService.patchQuoteOption(quote_id, option_id, option).then();
+      const response = await quoteService.patchQuoteOption(quote_id, option_id, option).then();
+
+      // need to get the updated option
+
+      if (response) {
+        let result: LasecQuoteOption = null;
+        result = await quoteService.getQuoteOptionsDetail('', [response.quote_option_id]).then()
+
+        logger.debug(`PATCHING - GOT QUOTE OPTION DETAILS :: ${JSON.stringify(result)}`);
+
+        if (result && result.length > 0)
+          return result[0]
+
+        return null;
+      }
+
+      throw new ApiError('Could not update this quote option');
     },
 
     LasecDeleteQuoteOption: async (parent: any, params: LasecDeleteQuoteOptionParams): Promise<SimpleResponse> => {

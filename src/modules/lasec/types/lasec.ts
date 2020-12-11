@@ -64,7 +64,7 @@ export interface LasecQuoteOption {
   quote_option_id: string
   quote_id: string
   option_name?: string
-  incoterm?: string
+  inco_terms?: string
   named_place?: string
   transport_mode?: string
   currency?: string
@@ -234,7 +234,7 @@ export interface LasecQuoteItem {
   quote_option_id: string
   content: any
   product: LasecProduct
-  meta: LasecQuoteItemMeta 
+  meta: LasecQuoteItemMeta
   position: number
   freight: number
   agent_commission: number,
@@ -445,7 +445,7 @@ export interface LasecApiResponse {
 
 
 /**
- * 
+ *
 activeCompany: "lasec_sa"
 code: null
 email: "werner.weber@lasec.com"
@@ -550,7 +550,7 @@ export interface LasecNewClientInput {
   saved: boolean
   createdBy: any
   created: Date | Moment
-  updated: Date | Moment 
+  updated: Date | Moment
 }
 
 export interface LasecCreateQuoteOptionParams {
@@ -598,27 +598,27 @@ export interface LasecCreateSalesOrderInput {
 }
 
 
-export interface LasecSalesOrder {  
+export interface LasecSalesOrder {
   id: string
-  
+
   orderDate: string
   salesOrderNumber: string
   shippingDate: Date
-  
+
   quoteId: string
   quoteDate: Date
-  
+
   orderType: string
   orderStatus: string
 
   iso: number
-  
+
   customer: string
   crmCustomer: LasecCRMCustomer
-  
+
   poNumber: string
   currency: string
-      
+
   deliveryAddress: string
   deliveryNote: string
   warehouseNote: string
@@ -631,21 +631,21 @@ export interface LasecSalesOrder {
 
   dispatchCount: number
   invoiceCount: number
-  
+
   invoices: any[]
   dispatches: any[]
   documentIds: any[]
   documents: any[]
-  
+
   orderQty: number
   shipQty: number
   reservedQty: number
   backOrderQty: number
-  
+
   details: {
     lineItems: any[],
     comments: any[]
-  }  
+  }
 }
 
 export interface IQuoteService extends Reactory.Service.IReactoryService {

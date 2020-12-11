@@ -133,7 +133,7 @@ type LasecQuoteOption {
   quote_id: String
   option_name: String
   name: String
-  incoterm: String
+  inco_terms: String
   named_place: String
   transport_mode: String
   currency: String
@@ -152,7 +152,7 @@ type LasecQuoteOption {
 input LasecQuoteOptionPatchInput {
   id: String
   option_name: String
-  incoterm: String
+  inco_terms: String
   named_place: String
   transport_mode: String
   currency: String
@@ -936,8 +936,7 @@ extend type Mutation {
 
   LasecCreateNewQuoteOption(quote_id: String!, copy_from: String): LasecQuoteOption
 
-  LasecPatchQuoteOption(quote_id: String!, option_id: String!,
-    option: LasecQuoteOptionPatchInput! ): LasecQuoteOption
+  LasecPatchQuoteOption(quote_id: String!, option_id: String!, option: LasecQuoteOptionPatchInput! ): LasecQuoteOption
 
   LasecDeleteQuoteOption(quote_id: String!, option_id: String!) : CoreSimpleResponse
 }
