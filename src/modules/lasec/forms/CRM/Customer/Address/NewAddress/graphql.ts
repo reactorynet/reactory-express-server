@@ -58,8 +58,13 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.postalCode': 'addressDetails.addressFields.postalCode',
         'formData.country': 'addressDetails.addressFields.country',
       },
-      onSuccessMethod: 'refresh'
-    }
+      onSuccessMethod: "notification",
+      notification: {
+        title: "Address [${mutation_result.fullAddress}] has been added with id: ${mutation_result.id}",
+        type: "success",
+        inAppNotification: true
+      }
+    },    
   }
 };
 

@@ -17,7 +17,15 @@ import { ObjectID, ObjectId } from 'mongodb';
 import LasecAPI from '@reactory/server-modules/lasec/api';
 import CRMClientComment from '@reactory/server-modules/lasec/models/Comment';
 import { User } from '@reactory/server-core/models';
-import { LasecApiResponse, LasecCRMCustomer, LasecNewClientInput, SimpleResponse, LasecAddress } from '../types/lasec';
+import {
+  Lasec360User,
+  LasecApiResponse,
+  LasecCRMCustomer,
+  LasecNewClientInput,
+  SimpleResponse,
+  LasecAddress,
+  LasecAddressUpdateResponse,  
+} from '../types/lasec';
 
 import { getLoggedIn360User, getCustomerDocuments } from './Helpers';
 import deepEquals from '@reactory/server-core/utils/compare';
@@ -1510,10 +1518,10 @@ const createNewAddress = async (args) => {
         9: addressDetails.addressFields.country || '',
       },
       map: {
-        lat: 0,
-        lng: 0,
+        lat: addressDetails.lat || 0,
+        lng: addressDetails.lng || 0,
         formatted_address: `${addressDetails.addressFields.unitNumber || ''}, ${addressDetails.addressFields.unitName || ''} ${addressDetails.addressFields.streetNumber || ''} ${addressDetails.addressFields.streetName || ''} ${addressDetails.addressFields.suburb || ''} ${addressDetails.addressFields.metro || ''} ${addressDetails.addressFields.city || ''} ${addressDetails.addressFields.postalCode || ''} ${addressDetails.addressFields.province || ''} ${addressDetails.addressFields.country || ''}`,
-        address_components: [],
+        address_components: []
       },
       confirm_pin: true,
       confirm_address: true,
@@ -1719,7 +1727,7 @@ const updateClientSpecialRequirements = async (args) => {
 }
 
 export default {
-  LasecAddress: {
+  LasecAddress: {     
     building_description: async (address: LasecAddress) => {
 
       if(address.building_description && address.building_description.length > 0) return address.building_description
@@ -1729,13 +1737,13 @@ export default {
 
       let build_id = 0;
       try {
-         build_id = parseInt(address.building_description_id)
+         build_id = address.building_description_id
       } catch (pErr) {
         logger.warn("Could not parse building id as integer", { address, error: pErr });
         return "";
       }
 
-      let building_description_id = parseInt(address.building_description_id);
+      let building_description_id = address.building_description_id;
 
       try {
         let result_rows: any[] = await mysql(`
@@ -2661,6 +2669,80 @@ export default {
     },
     LasecCreateNewAddress: async (obj, args) => {
       return createNewAddress(args);
+    },
+    LasecEditAddress: async (obj: any, args: { address_input: LasecAddress }): Promise<LasecAddressUpdateResponse> => {            
+      try {
+        
+        let address: LasecAddress = null;//await LasecAPI.Customers.UpdateAddress(args.address_input).then();                
+        const { address_input } = args;
+
+        const unit_segment = `${address_input.unit_number || ""} ${address_input.unit_name || ""} `;
+        const street_segment = `${address_input.street_number || ""} ${address_input.street_name || ""} `;
+        const region_segment = `${address_input.suburb || ""} ${address_input.city || ""} ${address_input.postal_code || ""} `; 
+        const country_segment = `${address_input.country_name || ""}`
+
+        let formatted_address = "";
+
+        if (unit_segment.trim() !== "") {
+          formatted_address = `${unit_segment} `          
+        }
+
+        if (street_segment.trim() !== "") {
+          formatted_address = `${formatted_address}${street_segment} `
+        }
+
+        if (region_segment.trim() !== "") {
+          formatted_address = `${formatted_address}${region_segment} `
+        }
+
+        if (country_segment.trim() !== "") {
+          formatted_address = `${formatted_address}${region_segment} `
+        }
+
+
+        const me: Lasec360User = await getLoggedIn360User();
+
+        let query = `
+          UPDATE Address
+          SET
+            formatted_address = '${formatted_address}' 
+            building_description_id = '${address_input.building_description_id || 0}',
+            building_floor_number_id = '${address_input.building_floor_number_id || 0}',
+            province_id = '${address_input.province_id || 0}',
+            country_id = '${address_input.country_id || 1}',
+            lat = ${address_input.lat},
+            lng = ${address_input.lng},
+            last_edited_by_staff_user = ${me.id}
+          WHERE 
+            addressid = ${address_input.id};`
+        
+      
+        try {
+          const update_result = await mysql(query, 'mysql.lasec360').then();
+          logger.debug("Results from database update", udpate_result)
+          let result = await lasecApi.Customers.getAddress({ filter: { ids: [args.address_input.id] } }).then();
+
+          if (result.items && result.items.length === 1) {
+            address = result.items[0];
+          }
+    
+          return {
+            success: true,
+            message: `Address #${args.address_input.id} has been updated`,
+            address,
+          }
+
+        } catch(dbError) {
+          logger.error(`Error updating the the address due to a database error`);
+        }
+        
+        
+      } catch ( update_error ) {
+        logger.error("Could not update the address due to a SQL error", update_error);
+        throw update_error;
+      }
+
+      
     },
     LasecCRMSaveComment: async (obj, args) => {
       return saveComment(args);

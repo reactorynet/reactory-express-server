@@ -26,7 +26,13 @@ import {
 } from '@reactory/server-modules/lasec/models'
 
 import { LASEC_API_ERROR_FORMAT } from './constants';
-import { LasecApiResponse, LasecCreateSalesOrderInput, LasecQuoteOption, LasecSalesOrder } from '../types/lasec';
+import {
+  LasecApiResponse,
+  LasecCreateSalesOrderInput,
+  LasecQuoteOption,
+  LasecSalesOrder,
+  LasecAddress,
+} from '../types/lasec';
 import { getCustomerDocuments } from '../resolvers/Helpers';
 
 const config = {
@@ -705,6 +711,34 @@ const Api = {
         return apiResponse;
       }
 
+    },
+    UpdateAddress: async (edit_address: LasecAddress): Promise<LasecAddress> => {
+      //get the existing address for
+      let api_result = await Api.Customers.getAddress({ filter: { ids: [edit_address.id] } }).then();
+      logger.debug(`Existing Address Lookup Returned`, api_result);
+      let existing_address = null;
+
+      if (api_result.items.length > 0) {
+        existing_address = api_result.items[0];        
+      }
+
+      if (existing_address !== null) {
+        try {
+          const update_result = await PUT(`${SECONDARY_API_URLS.address.url}${edit_address.id}`, edit_address).then();
+          logger.debug(`Address update result`, { update_result })
+
+          if (update_result.status === "success") {
+            return update_result.payload as LasecAddress;
+          }          
+
+        } catch (address_update_error) {
+          logger.error("Could not update the address details");
+
+          return existing_address;
+        }
+        
+      }
+      throw new RecordNotFoundError(`The address with the id ${edit_address.id} was not found`)      
     },
     getAddress: async (params) => {
       const resp = await FETCH(SECONDARY_API_URLS.address.url, { params: { ...defaultParams, ...params } }).then()

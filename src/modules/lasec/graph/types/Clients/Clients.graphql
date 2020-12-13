@@ -226,6 +226,15 @@ type LasecAddress {
   fullAddress: String
   formatted_address: String
 
+  street_name: String
+  street_number: String
+
+  suburb: String
+
+  city: String
+
+  metro: String
+
   building_description_id: String
   building_description: String
   
@@ -396,6 +405,38 @@ type CRMClientComment {
   when: Date
 }
 
+input EditAddressInput {
+  id: String
+  
+  building_description_id: Int
+  building_floor_number_id: Int
+  
+  lat: Float
+  lng: Float
+
+  unit_number: String
+  street_name: String
+  street_number: String
+  
+  suburb: String
+  city: String
+  metro: String
+  
+  province_id: String
+  province: String
+
+  postal_code: String
+  
+  country_id: String
+  country: String
+}
+
+type UpdateAddressResponse {
+  success: Boolean
+  message: String
+  address: LasecAddress
+}
+
 extend type Query {
   LasecGetClientList(
     search: String!
@@ -478,6 +519,9 @@ extend type Mutation {
   LasecUpdateNewClient(clientId: String, newClient: LasecNewClientInput): LasecNewClient
   # LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
   LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
+
+  LasecEditAddress(address_input: EditAddressInput): UpdateAddressResponse
+
   LasecCRMSaveComment(clientId: String!, comment: String!): SimpleResponse
   LasecCRMDeleteComment(commentId: String!): SimpleResponse
   LasecDeactivateClients(clientIds: [String]!): SimpleResponse

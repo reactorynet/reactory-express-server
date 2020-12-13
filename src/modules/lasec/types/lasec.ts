@@ -653,10 +653,22 @@ export interface LasecAddress {
   fullAddress?: string
   formatted_address?: string
 
-  building_description_id?: string
+  unit_number?: string
+  unit_name?: string,
+  
+  street_name?: string
+  street_number?: string
+
+  suburb?: string
+  city?: string
+  metro?: string
+
+  postal_code: string
+
+  building_description_id?: number
   building_description?: string
   
-  building_floor_number_id?: string
+  building_floor_number_id?: number
   building_floor_description?: string
 
   province_id?: string
@@ -665,8 +677,8 @@ export interface LasecAddress {
   country_id?: string
   country_name?: string
   
-  lat?: string
-  lng?: string
+  lat?: number
+  lng?: number
   created_by?: string
   last_edited_by?: string
   map?: any
@@ -684,6 +696,8 @@ export interface LasecAddress {
   linked_invoices?: any[]
 
 }
+
+export interface LasecAddressUpdateResponse { success: boolean, message: string, address: LasecAddress }
 
 export interface IQuoteService extends Reactory.Service.IReactoryService {
 
