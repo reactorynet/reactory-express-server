@@ -6,8 +6,8 @@ import { newClientGraphQL } from './graphql';
 const GOOGLE_MAPS_API_KEY_DEVELOPMENT = '<GOOGLE MAPS API KEY>';
 
 const GOOGLE_PLACE_TO_ADDRESS_MAP = {
-  'address': 'fullAddress',
-  'placeId': 'map.place_id'
+  'address.formatted_address': 'fullAddress',
+  'address.id': 'id'
 };
 
 export const AddressSchemaObject = AddressSchema;

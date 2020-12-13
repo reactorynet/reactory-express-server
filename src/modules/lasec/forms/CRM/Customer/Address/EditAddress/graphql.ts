@@ -43,6 +43,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultMap: {
       'lat': 'lat',
       'lng': 'lng',
+      'formatted_address': 'formatted_address',
       'street_name': 'streetName',
       'street_number': 'streetNumber',
       'suburb': 'suburb',
@@ -54,16 +55,26 @@ const graphql: Reactory.IFormGraphDefinition = {
       'last_editied_by': 'editied_by'
     },
     edit: true,
+    new: false,
   },
   mutation: {
-    new: {
+    edit: {
       name: "LasecEditAddress",
       text: `mutation LasecEditAddress($address_input: EditAddressInput!){
         LasecEditAddress(address_input: $address_input) {
           success
           message
-          id
-          fullAddress
+          address {
+            id
+            formatted_address
+            street_name
+            street_number
+            suburb
+            city      
+            metro
+            building_description_id
+            building_floor_number_id
+          }
         }
       }`,
       objectMap: true,

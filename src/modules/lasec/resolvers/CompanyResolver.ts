@@ -2705,21 +2705,21 @@ export default {
         let query = `
           UPDATE Address
           SET
-            formatted_address = '${formatted_address}' 
+            formatted_address = '${formatted_address}', 
             building_description_id = '${address_input.building_description_id || 0}',
             building_floor_number_id = '${address_input.building_floor_number_id || 0}',
             province_id = '${address_input.province_id || 0}',
             country_id = '${address_input.country_id || 1}',
             lat = ${address_input.lat},
             lng = ${address_input.lng},
-            last_edited_by_staff_user = ${me.id}
+            last_edited_by_staff_user_id = ${me.id}
           WHERE 
             addressid = ${address_input.id};`
         
       
         try {
           const update_result = await mysql(query, 'mysql.lasec360').then();
-          logger.debug("Results from database update", udpate_result)
+          logger.debug("Results from database update", update_result)
           let result = await lasecApi.Customers.getAddress({ filter: { ids: [args.address_input.id] } }).then();
 
           if (result.items && result.items.length === 1) {

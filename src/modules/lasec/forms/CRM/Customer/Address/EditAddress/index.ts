@@ -8,27 +8,30 @@ const uiSchema: any = {
       margin: '0',
       padding: '0px',
       paddingBottom: '0'
-    },    
+    },
     submitIcon: 'save',
     showSubmit: true,
-    showRefresh: false,    
+    showRefresh: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      unitNumber: { xs:12, sm: 12, md: 6, lg: 4 },
-      unitName: { xs:12, sm: 12, md: 6, lg: 4 },
-      floorNumber: { xs:12, sm: 12, md: 6, lg: 4 },
-      buildingName: { xs:12, sm: 12, md: 6, lg: 4 },
-      buildingType: { xs:12, sm: 12, md: 6, lg: 4 },
-      streetNumber: { xs:12, sm: 12, md: 6, lg: 4 },
-      streetName: { xs:12, sm: 12, md: 6, lg: 4 },
-      suburb: { xs:12, sm: 12, md: 6, lg: 4 },
-      city: { xs:12, sm: 12, md: 6, lg: 4 },
-      metro: { xs:12, sm: 12, md: 6, lg: 4 },
-      province: { xs:12, sm: 12, md: 6, lg: 4 },
-      postalCode: { xs:12, sm: 12, md: 6, lg: 4 },
-      country: { xs:12, sm: 12, md: 6, lg: 4 },
+      unitNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
+      unitName: { xs: 12, sm: 12, md: 6, lg: 4 },
+      floorNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
+      buildingName: { xs: 12, sm: 12, md: 6, lg: 4 },
+      buildingType: { xs: 12, sm: 12, md: 6, lg: 4 },
+      streetNumber: { xs: 12, sm: 12, md: 6, lg: 4 },
+      streetName: { xs: 12, sm: 12, md: 6, lg: 4 },
+      suburb: { xs: 12, sm: 12, md: 6, lg: 4 },
+      city: { xs: 12, sm: 12, md: 6, lg: 4 },
+      metro: { xs: 12, sm: 12, md: 6, lg: 4 },
+      province: { xs: 12, sm: 12, md: 6, lg: 4 },
+      postalCode: { xs: 12, sm: 12, md: 6, lg: 4 },
+      country: { xs: 12, sm: 12, md: 6, lg: 4 },
+      lat: { xs: 12, sm: 12, md: 6, lg: 4 },
+      lng: { xs: 12, sm: 12, md: 6, lg: 4 },
+      formatted_address: { xs: 12, sm: 12, md: 6, lg: 4 }
     },
   ],
 
@@ -240,6 +243,18 @@ const schema: Reactory.ISchema = {
       title: 'Country',
       type: 'string'
     },
+    lat: {
+      title: 'Lattitude',
+      type: 'string'
+    },
+    lng: {
+      title: 'Longtitude',
+      type: 'string'
+    },
+    formatted_address: {
+      type: 'string',
+      title: "Display Address"
+    }
   }
 };
 

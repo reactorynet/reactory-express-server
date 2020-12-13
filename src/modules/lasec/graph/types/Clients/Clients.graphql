@@ -408,13 +408,15 @@ type CRMClientComment {
 input EditAddressInput {
   id: String
   
-  building_description_id: Int
-  building_floor_number_id: Int
+  building_description_id: String
+  building_floor_number_id: String
   
-  lat: Float
-  lng: Float
+  lat: String
+  lng: String
 
   unit_number: String
+  unit_name: String
+  
   street_name: String
   street_number: String
   
