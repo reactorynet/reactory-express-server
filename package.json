@@ -1,6 +1,6 @@
 {
   "name": "@reactory/server-core",
-  "version": "0.8.9",
+  "version": "0.8.9.141220-1",
   "displayName": "Reactory Server",
   "description": "Reactory Core Server",
   "main": "server.js",

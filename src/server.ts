@@ -214,7 +214,7 @@ const oldOptions = {
 
 reactoryExpress.use(session(oldOptions));
 reactoryExpress.use(bodyParser.urlencoded({ extended: false }));
-reactoryExpress.use(bodyParser.json({ limit: '10mb' }));
+reactoryExpress.use(bodyParser.json({ limit: '20mb' }));
 
 if (apolloServer) {
   apolloServer.applyMiddleware({ app: reactoryExpress, path: queryRoot });
