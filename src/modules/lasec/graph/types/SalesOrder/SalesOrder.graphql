@@ -214,6 +214,17 @@ type LasecCertificateLookups {
   payment_terms: [LasecPaymentTermsLookupItem]
 }
 
+type LasecCommercialInvoiceLookups {
+  inco_terms: [LasecIncoTermsLookupItem],
+  payment_terms: [LasecPaymentTermsLookupItem]
+}
+
+type LasecPackingListLookups {
+  inco_terms: [LasecIncoTermsLookupItem],
+  payment_terms: [LasecPaymentTermsLookupItem]
+}
+
+
 
 """
 Document that represent the Certificate of Conformance 
@@ -285,7 +296,7 @@ type LasecPackingList {
   terms: String
   final_destination: String
   export_reason: String
-  doucment_number: String
+  document_number: String
   inco_terms: String
   po_number: String
 
@@ -322,6 +333,8 @@ type LasecPackingList {
   notify_number: String
 
   comments: String
+
+  lookups: LasecPackingListLookups
 
   items: [LasecPackingListItem]
 }
@@ -339,7 +352,7 @@ type LasecCommercialInvoice {
   terms: String
   final_destination: String
   export_reason: String
-  doucment_number: String
+  document_number: String
   inco_terms: String
   po_number: String
 
@@ -376,6 +389,8 @@ type LasecCommercialInvoice {
   notify_number: String
 
   comments: String
+
+  lookups: LasecCommercialInvoiceLookups
 
   products: [LasecCommercialInvoiceProductItem]
 }
@@ -414,7 +429,7 @@ input LasecPackingListItemInput {
 }
 
 """
-Input Data to Create the Certificate of Conformance
+Input Data to Create or Update the Certificate of Conformance
 """
 input LasecCertificateOfConformanceInput {
   id: String
@@ -634,7 +649,7 @@ extend type Query {
   """
   LasecPackingList get for sales order
   """
-  LasecPackingListForSalesOrder(sales_order_id: String, item_paging: PagingRequest): LasecPackingList
+  LasecPackingListForSalesOrder(sales_order_id: String!, item_paging: PagingRequest): LasecPackingList
   """
   Get paged documents for the sales order
   """

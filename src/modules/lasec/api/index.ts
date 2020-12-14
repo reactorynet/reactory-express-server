@@ -339,7 +339,7 @@ const Api = {
       return { pagination: {}, ids: [], items: [], status };
     }
   },
-  post: async (uri: string, params: any, shape: any, auth:boolean = true) => {
+  post: async (uri: string, params: any, shape: any, auth: boolean = true) => {
 
     try {
       const resp = await POST(uri, params, auth).then();
@@ -719,7 +719,7 @@ const Api = {
       let existing_address = null;
 
       if (api_result.items.length > 0) {
-        existing_address = api_result.items[0];        
+        existing_address = api_result.items[0];
       }
 
       if (existing_address !== null) {
@@ -729,16 +729,16 @@ const Api = {
 
           if (update_result.status === "success") {
             return update_result.payload as LasecAddress;
-          }          
+          }
 
         } catch (address_update_error) {
           logger.error("Could not update the address details");
 
           return existing_address;
         }
-        
+
       }
-      throw new RecordNotFoundError(`The address with the id ${edit_address.id} was not found`)      
+      throw new RecordNotFoundError(`The address with the id ${edit_address.id} was not found`)
     },
     getAddress: async (params) => {
       const resp = await FETCH(SECONDARY_API_URLS.address.url, { params: { ...defaultParams, ...params } }).then()
@@ -1707,11 +1707,99 @@ const Api = {
 
     get_commercial_invoice: async (sales_order_id: string): Promise<any> => {
 
-      const inco_terms = await Api.get(`api/com_invoice/inco_terms`, {}).then();
-      logger.debug(`Inco Terms Result`, inco_terms);
+      //const inco_terms = await Api.get(`api/com_invoice/inco_terms`, {}).then();
+      //logger.debug(`Inco Terms Result`, inco_terms);
 
-      const payment_terms = await Api.get(`api/com_invoice/payment_terms`).then();
-      logger.debug(`Payment Terms Result`, payment_terms);
+      //const payment_terms = await Api.get(`api/com_invoice/payment_terms`).then();
+      //logger.debug(`Payment Terms Result`, payment_terms);
+
+
+      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`).then();
+      /**
+       *
+       * Result is HashMap
+        {
+          "N/A": "N/A => Not Applicable",
+          "CFR": "CFR => Cost and Freight",
+          "CIF": "CIF => Cost,Insurance and Freight",
+          "CIP": "CIP => Carriage and Insurance Paid",
+          "CPT": "CPT => Carriage Paid To",
+          "DAP": "DAP => Delivered at Place",
+          "DAT": "DAT => Delivered at Terminal",
+          "DDP": "DDP => Delivered Duty Paid",
+          "EXW": "EXW => Ex Works",
+          "FAS": "FAS => Free Alongside Ship",
+          "FCA": "FCA => Free Carrier",
+          "FOB": "FOB => Free on Board"
+        }
+       *
+       */
+      logger.debug(`Inco Terms Result`, inco_terms_for_sales_order);
+
+      let inco_terms: any[] = [];
+
+      try {
+
+        if (inco_terms_for_sales_order && Object.keys(inco_terms_for_sales_order).length > 0) {
+          Object.keys(inco_terms_for_sales_order).forEach((prop) => {
+
+            if (`${inco_terms_for_sales_order[prop]}`.indexOf("=>") > 0) {
+              inco_terms.push({
+                id: prop,
+                name: inco_terms_for_sales_order[prop].split('=>')[1].trim(),
+                description: inco_terms_for_sales_order[prop].split('=>')[1].trim(),
+              })
+            } else {
+              inco_terms.push({
+                id: prop,
+                name: inco_terms_for_sales_order[prop],
+                description: inco_terms_for_sales_order[prop]
+              });
+            }
+          })
+
+          logger.debug(`Inco Terms Converted`, inco_terms);
+        }
+
+      } catch (convertError) {
+        logger.error(`Could not convert inco term data`, convertError);
+      }
+
+      let payment_terms: any[] = [];
+
+      try {
+        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`).then();
+        /**
+         * Result is hash map
+         *
+         *
+            {
+              "30": "30 DAYS NETT",
+              "45": "45 DAYS NETT",
+              "60": "60 DAYS NETT",
+              "90": "90 DAYS NETT",
+              "COD": "COD"
+            }
+         *
+         *
+         */
+
+
+        logger.debug(`result for payment terms for sales orders`, payment_terms_for_sales_orders);
+        if (payment_terms_for_sales_orders && Object.keys(payment_terms_for_sales_orders).length > 0) {
+          Object.keys(payment_terms_for_sales_orders).forEach((prop) => {
+            payment_terms.push({
+              id: prop,
+              name: payment_terms_for_sales_orders[prop],
+              description: payment_terms_for_sales_orders[prop],
+            });
+          });
+        }
+        logger.debug(`Payment Terms Result`, payment_terms);
+      } catch (error) {
+        logger.error('Could not conver payment terms data', error);
+      }
+
 
       const shape = {
         'header.salesorder': 'id',
@@ -1730,17 +1818,20 @@ const Api = {
         'detail': 'products'
       };
 
-      const certificate_results = await Api.get(`api/com_invoice/${sales_order_id}`, null, shape).then();
+      try {
+        const commercial_invoice = await Api.get(`api/com_invoice/${sales_order_id}`, null, shape).then();
+        logger.debug(`Commercial Invoice Response From API ${commercial_invoice.status}`, { commercial_invoice: commercial_invoice });
+        return {
+          id: sales_order_id,
+          emailAddress: '',
+          sendOptionsVia: 'email',
+          ...commercial_invoice,
+        };
 
-      logger.debug(`Certificate Response From API ${certificate_results.status}`, { certificate_results });
-
-      return {
-        id: sales_order_id,
-        emailAddress: '',
-        sendOptionsVia: 'email',
-        ...certificate_results,
-      };
-
+      } catch (get_invoice_error) {
+        logger.error(`Error while getting the commercial invoice from the API ${get_invoice_error.message}`, get_invoice_error);
+        throw get_invoice_error;
+      }
     },
 
     post_commercial_invoice: async (sales_order_id: string, certificate: any): Promise<any> => {
@@ -1919,11 +2010,97 @@ NB: note the addition of the detail_id for the line been updated
 
     get_packing_list: async (sales_order_id: string): Promise<any> => {
 
-      const inco_terms = await Api.get(`api/packing_list/inco_terms`, {}).then();
-      logger.debug(`Inco Terms Result`, inco_terms);
+      //const inco_terms = await Api.get(`api/packing_list/inco_terms`, {}).then();
+      //logger.debug(`Inco Terms Result`, inco_terms);
 
-      const payment_terms = await Api.get(`api/packing_list/payment_terms`).then();
-      logger.debug(`Payment Terms Result`, payment_terms);
+      //const payment_terms = await Api.get(`api/packing_list/payment_terms`).then();
+      //logger.debug(`Payment Terms Result`, payment_terms);
+
+      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`).then();
+      /**
+       *
+       * Result is HashMap
+        {
+          "N/A": "N/A => Not Applicable",
+          "CFR": "CFR => Cost and Freight",
+          "CIF": "CIF => Cost,Insurance and Freight",
+          "CIP": "CIP => Carriage and Insurance Paid",
+          "CPT": "CPT => Carriage Paid To",
+          "DAP": "DAP => Delivered at Place",
+          "DAT": "DAT => Delivered at Terminal",
+          "DDP": "DDP => Delivered Duty Paid",
+          "EXW": "EXW => Ex Works",
+          "FAS": "FAS => Free Alongside Ship",
+          "FCA": "FCA => Free Carrier",
+          "FOB": "FOB => Free on Board"
+        }
+       *
+       */
+      logger.debug(`Inco Terms Result`, inco_terms_for_sales_order);
+
+      let inco_terms: any[] = [];
+
+      try {
+
+        if (inco_terms_for_sales_order && Object.keys(inco_terms_for_sales_order).length > 0) {
+          Object.keys(inco_terms_for_sales_order).forEach((prop) => {
+
+            if (`${inco_terms_for_sales_order[prop]}`.indexOf("=>") > 0) {
+              inco_terms.push({
+                id: prop,
+                name: inco_terms_for_sales_order[prop].split('=>')[1].trim(),
+                description: inco_terms_for_sales_order[prop].split('=>')[1].trim(),
+              })
+            } else {
+              inco_terms.push({
+                id: prop,
+                name: inco_terms_for_sales_order[prop],
+                description: inco_terms_for_sales_order[prop]
+              });
+            }
+          })
+
+          logger.debug(`Inco Terms Converted`, inco_terms);
+        }
+
+      } catch (convertError) {
+        logger.error(`Could not convert inco term data`, convertError);
+      }
+
+      let payment_terms: any[] = [];
+
+      try {
+        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`).then();
+        /**
+         * Result is hash map
+         *
+         *
+            {
+              "30": "30 DAYS NETT",
+              "45": "45 DAYS NETT",
+              "60": "60 DAYS NETT",
+              "90": "90 DAYS NETT",
+              "COD": "COD"
+            }
+         *
+         *
+         */
+
+
+        logger.debug(`result for payment terms for sales orders`, payment_terms_for_sales_orders);
+        if (payment_terms_for_sales_orders && Object.keys(payment_terms_for_sales_orders).length > 0) {
+          Object.keys(payment_terms_for_sales_orders).forEach((prop) => {
+            payment_terms.push({
+              id: prop,
+              name: payment_terms_for_sales_orders[prop],
+              description: payment_terms_for_sales_orders[prop],
+            });
+          });
+        }
+        logger.debug(`Payment Terms Result`, payment_terms);
+      } catch (error) {
+        logger.error('Could not conver payment terms data', error);
+      }
 
       const shape = {
         'header.salesorder': 'id',
@@ -1942,17 +2119,26 @@ NB: note the addition of the detail_id for the line been updated
         'detail': 'items'
       };
 
-      const packing_list_result = await Api.get(`api/packing_list/${sales_order_id}`, null, shape).then();
+      try {
+        const packing_list_result = await Api.get(`api/packing_list/${sales_order_id}`, null, shape).then();
 
-      logger.debug(`Certificate Response From API ${packing_list_result.status}`, { certificate_results: packing_list_result });
+        logger.debug(`Pakcing list Response From API ${packing_list_result.status}`, { certificate_results: packing_list_result });
 
-      return {
-        id: sales_order_id,
-        emailAddress: '',
-        sendOptionsVia: 'email',
+        return {
+          id: sales_order_id,
+          emailAddress: '',
+          sendOptionsVia: 'email',
 
-        ...packing_list_result,
-      };
+          ...packing_list_result,
+        };
+      } catch (get_packing_list_error) {
+
+        logger.error(`Could not get the packing list from the remote server: ${get_packing_list_error.message}`, {  get_packing_list_error });
+
+        throw get_packing_list_error;
+
+      }
+
     },
 
     post_packing_list: async (sales_order_id: string, certificate: any): Promise<any> => {
