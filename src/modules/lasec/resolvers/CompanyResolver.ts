@@ -24,7 +24,7 @@ import {
   LasecNewClientInput,
   SimpleResponse,
   LasecAddress,
-  LasecAddressUpdateResponse,  
+  LasecAddressUpdateResponse,
 } from '../types/lasec';
 
 import { getLoggedIn360User, getCustomerDocuments } from './Helpers';
@@ -416,12 +416,18 @@ export const getClient = async (params: any) => {
   return null;
 };
 
-const updateClientDetail = async (args) => {
 
-  logger.debug(`>> >> >> UPDATE PARAMS:: `, args);
+/**
+ * 
+ * @param args client object
+ */
+const updateClientDetail = async (args: any) => {
+
+  logger.debug(`CompanyResolver.ts >> updateClientDetail(args)`, args);
 
   try {
     const params = args.clientInfo;
+
     const preFetchClientDetails = await lasecApi.Customers.list({ filter: { ids: [params.clientId] } });
 
     let clients = [...preFetchClientDetails.items];
@@ -1454,7 +1460,7 @@ const getAddress = async (args: { searchTerm: string }) => {
     if (isArray(addressIds.ids) === true && addressIds.ids.length > 0) {
       _ids = [...addressIds.ids];
       const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
-      const addresses = [...addressDetails.items]; 
+      const addresses = [...addressDetails.items];
       logger.debug(`Found ${addresses.length || 0} that matches the search term "${args.searchTerm}"`, { addresses });
       return addresses
     }
@@ -1727,17 +1733,17 @@ const updateClientSpecialRequirements = async (args) => {
 }
 
 export default {
-  LasecAddress: {     
+  LasecAddress: {
     building_description: async (address: LasecAddress) => {
 
-      if(address.building_description && address.building_description.length > 0) return address.building_description
+      if (address.building_description && address.building_description.length > 0) return address.building_description
 
       if (lodash.isNil(address)) return null;
       if (lodash.isNil(address.building_description_id)) return "";
 
       let build_id = 0;
       try {
-         build_id = address.building_description_id
+        build_id = address.building_description_id
       } catch (pErr) {
         logger.warn("Could not parse building id as integer", { address, error: pErr });
         return "";
@@ -1781,14 +1787,14 @@ export default {
       } catch (sql_error) {
         logger.error("Error returning the building address detail");
         return count
-      }      
+      }
     },
     linked_clients_count: async (address: LasecAddress): Promise<number> => {
       let count = 0;
 
       if (lodash.isNil(address)) return count;
       if (lodash.isNil(address.id)) return count;
-      
+
       const query = `
       SELECT 
         COUNT(*) as linked_customers
@@ -1808,7 +1814,7 @@ export default {
       } catch (sql_error) {
         logger.error("Error returning the building address detail");
         return count
-      }      
+      }
     },
     linked_sales_orders_count: async (address: LasecAddress): Promise<number> => {
       let count = 0;
@@ -1836,7 +1842,7 @@ export default {
       } catch (sql_error) {
         logger.error("Error returning the building address detail");
         return count
-      }      
+      }
     },
   },
   LasecDocument: {
@@ -2285,7 +2291,7 @@ export default {
       return client_to_return;
 
     },
-    LasecGetAddressById: async (obj: any, args: { id: string }): Promise< LasecAddress > => {
+    LasecGetAddressById: async (obj: any, args: { id: string }): Promise<LasecAddress> => {
 
       let result = await lasecApi.Customers.getAddress({ filter: { ids: [args.id] } }).then();
 
@@ -2313,7 +2319,7 @@ export default {
             "last_edited_by": "Werner Weber"
           },
         */
-       
+
         return {
           ...address,
           fullAddress: address.formatted_address,
@@ -2429,7 +2435,7 @@ export default {
         messages: [
         ],
       };
-
+      
       let isExistingClient = false;
       let existing_client_id = null;
 
@@ -2453,20 +2459,19 @@ export default {
         if (args.id) {
           try {
             const updateArgs = {
-              clientInfo: {
-                ...args.newClient,
+              ...args.newClient,
+              clientInfo: {                                
                 clientStatus: 'active',
                 clientId: existing_client_id,
-              }
+              },              
             }
             //Patch the remote data with the data from the form input
-            await updateClientDetail(updateArgs);
-
+            await updateClientDetail(updateArgs);            
             //toggle the active status
             await mysql(`
             UPDATE Customer SET
               activity_status = 'active',
-              organisation_id = 0,
+              organisation_id = ${args.newClient.organization.id},
               company_id = '${args.newClient.organization.id}'
             WHERE customerid = ${existing_client_id}`, 'mysql.lasec360').then()
 
@@ -2670,21 +2675,21 @@ export default {
     LasecCreateNewAddress: async (obj, args) => {
       return createNewAddress(args);
     },
-    LasecEditAddress: async (obj: any, args: { address_input: LasecAddress }): Promise<LasecAddressUpdateResponse> => {            
+    LasecEditAddress: async (obj: any, args: { address_input: LasecAddress }): Promise<LasecAddressUpdateResponse> => {
       try {
-        
+
         let address: LasecAddress = null;//await LasecAPI.Customers.UpdateAddress(args.address_input).then();                
         const { address_input } = args;
 
         const unit_segment = `${address_input.unit_number || ""} ${address_input.unit_name || ""} `;
         const street_segment = `${address_input.street_number || ""} ${address_input.street_name || ""} `;
-        const region_segment = `${address_input.suburb || ""} ${address_input.city || ""} ${address_input.postal_code || ""} `; 
+        const region_segment = `${address_input.suburb || ""} ${address_input.city || ""} ${address_input.postal_code || ""} `;
         const country_segment = `${address_input.country_name || ""}`
 
         let formatted_address = "";
 
         if (unit_segment.trim() !== "") {
-          formatted_address = `${unit_segment} `          
+          formatted_address = `${unit_segment} `
         }
 
         if (street_segment.trim() !== "") {
@@ -2715,8 +2720,8 @@ export default {
             last_edited_by_staff_user_id = ${me.id}
           WHERE 
             addressid = ${address_input.id};`
-        
-      
+
+
         try {
           const update_result = await mysql(query, 'mysql.lasec360').then();
           logger.debug("Results from database update", update_result)
@@ -2725,24 +2730,24 @@ export default {
           if (result.items && result.items.length === 1) {
             address = result.items[0];
           }
-    
+
           return {
             success: true,
             message: `Address #${args.address_input.id} has been updated`,
             address,
           }
 
-        } catch(dbError) {
+        } catch (dbError) {
           logger.error(`Error updating the the address due to a database error`);
         }
-        
-        
-      } catch ( update_error ) {
+
+
+      } catch (update_error) {
         logger.error("Could not update the address due to a SQL error", update_error);
         throw update_error;
       }
 
-      
+
     },
     LasecCRMSaveComment: async (obj, args) => {
       return saveComment(args);

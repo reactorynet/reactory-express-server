@@ -86,6 +86,16 @@ export function stringifyIds(ids) {
   return x;
 }
 
+
+const safe_date_transform = (value: any) => {
+  const date_moment = moment(value)
+  if (date_moment.isValid() === false) {
+    return null
+  } else {
+    return date_moment.format("YYYY-MM-DD")
+  }
+};
+
 const isCredentialsValid = (authentication) => {
   // return jzon.validate(AuthenticationSchema, authentication);
 
@@ -1575,11 +1585,10 @@ const Api = {
 
     },
 
-    post_certificate_of_conformance: async (sales_order_id: string, certificate: any): Promise<any> => {
-
-
-      /**
-       * header" => array(
+    /**
+      * Specifications for POST
+      *      
+        * header" => array(
             "salesorder" => "484584",
             "date_of_issue" => "2020-01-28",
             "certification" => "2020-01-28",
@@ -1610,73 +1619,22 @@ const Api = {
             "date_of_expiry" => "2020-02-28",
             "date_of_expiry_na" => "N"
         )));
-       */
-
-      /**
-       * 
-       * {
-  "params": {
-    "sales_order_id": "12112",
-    "certificate": {
-      "id": "12112",
-      "emailAddress": "werner.weber@gmail.com",
-      "sendOptionsVia": "pdf",
-      "terms": "45",
-      "final_destination": "",
-      "export_reason": "",
-      "inco_terms": "CPT",
-      "consignee_street_address": "",
-      "consignee_contact": "",
-      "comments": "",
-      "products": [
-        {
-          "id": "12112:0",
-          "syspro_company": "SysproCompany4",
-          "item_number": "1",
-          "stock_code": "PLASEC-PT-90",
-          "description": "DISH PETRI ST DISP(PK 500)",
-          "qty": "10.000000",
-          "date_of_manufacture_na": true,
-          "expire_date_na": true
-        },
-        {
-          "id": "12112:1",
-          "syspro_company": "SysproCompany4",
-          "item_number": "2",
-          "stock_code": "HCPN150C",
-          "description": "SWAB PLAIN WOOD SHAFT COTTON(PK 100)",
-          "qty": "20.000000",
-          "date_of_manufacture_na": true,
-          "expire_date_na": true
-        }
-      ]
-    }
-  }
-}
-       * 
-       */
-      
-      const safe_date_transform = (value: any) => {
-        const date_moment = moment(value)
-        if (date_moment.isValid() === false) {
-            return null
-        } else {
-            return date_moment.format("YYYY-MM-DD")
-        }
-    
-    };
-      
-
+     * 
+     * @param sales_order_id 
+     * @param certificate 
+     */
+    post_certificate_of_conformance: async (sales_order_id: string, certificate: any): Promise<any> => {
+            
       const input_data: any = om.merge(certificate, {
-        'id': 'header.salesorder',      
+        'id': 'header.salesorder',
         'date_of_issue': [
           { key: 'header.date_of_issue', transform: safe_date_transform, default: "" },
           { key: 'header.certification', transform: safe_date_transform, default: "" }
-        ],        
-        'date_of_expiry': { key: 'header.date_of_expiry', transform: safe_date_transform, default: () => {  "" } },
-        'date_of_expiry_na': { key: 'header.date_of_expiry_na', transform: (value: Boolean) => {  value ? "Y" : "N" }, default: 'N' },
+        ],
+        'date_of_expiry': { key: 'header.date_of_expiry', transform: safe_date_transform, default: () => { "" } },
+        'date_of_expiry_na': { key: 'header.date_of_expiry_na', transform: (value: Boolean) => { value ? "Y" : "N" }, default: 'N' },
         'po_number': { key: 'header.customer_po_number', transform: (v: any) => `${v ? v : "NOT SET"}`, default: "NOT SET" },
-        'document_number': { key: 'header.ucr_number', transform: (v: any) => { return  v ? v : 'N/A' }, default: "N/A" },
+        'document_number': { key: 'header.ucr_number', transform: (v: any) => { return v ? v : 'N/A' }, default: "N/A" },
         'inco_terms': 'header.inco_terms',
         'final_destination': 'header.named_place',
         'terms': 'header.payment_terms',
@@ -1686,7 +1644,7 @@ const Api = {
         'comments': 'header.comments',
         'products': {
           key: 'detail',
-          transform: (products: any[]) => { 
+          transform: (products: any[]) => {
             return products.map((certificate_item: any, index: number) => {
 
 
@@ -1704,28 +1662,28 @@ const Api = {
                 date_of_expiry_na: certificate_item.date_of_expiry_na === true ? "Y" : "N",
               };
 
-            })  
+            })
           }
         }
       });
-         
-      const format_address = (fieldname: string = 'bill_to') => {        
-        
+
+      const format_address = (fieldname: string = 'bill_to', document: any) => {
+
         const sections = {
-          company: certificate[`${fieldname}_company`] || "",
-          street_address: certificate[`${fieldname}_street_address`] || "",
-          suburb: certificate[`${fieldname}_suburb`] || "",
-          city: certificate[`${fieldname}_city`] || "",
-          province: certificate[`${fieldname}_province`] || "",
-          country: certificate[`${fieldname}_country`] || "",
+          company: document[`${fieldname}_company`] || "",
+          street_address: document[`${fieldname}_street_address`] || "",
+          suburb: document[`${fieldname}_suburb`] || "",
+          city: document[`${fieldname}_city`] || "",
+          province: document[`${fieldname}_province`] || "",
+          country: document[`${fieldname}_country`] || "",
         }
 
         return `${sections.company}${sections.company !== "" ? ', ' : ''}${sections.street_address}${sections.street_address !== "" ? ', ' : ''}${sections.suburb}${sections.suburb !== "" ? ', ' : ''}${sections.city}${sections.city !== "" ? ', ' : ''}${sections.province}${sections.province !== "" ? ', ' : ''}${sections.country}`;
       }
-      
-      input_data.header.bill_to_address = format_address('bill_to');      
-      input_data.header.ship_to_address = format_address('ship_to');
-      input_data.header.consignee_address = format_address('consignee');
+
+      input_data.header.bill_to_address = format_address('bill_to', certificate);
+      input_data.header.ship_to_address = format_address('ship_to', certificate);
+      input_data.header.consignee_address = format_address('consignee', certificate);
 
       try {
         logger.debug(`Sending certificate input to API`, { input_data });
@@ -1913,6 +1871,7 @@ const Api = {
       //logger.debug(`Payment Terms Result`, payment_terms);
 
 
+
       const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`).then();
       /**
        *
@@ -2078,6 +2037,8 @@ const Api = {
     },
 
     post_commercial_invoice: async (sales_order_id: string, certificate: any): Promise<any> => {
+
+      
 
       return {
         id: sales_order_id,
