@@ -949,8 +949,7 @@ export default {
       };
     },
 
-    LasecUpdateQuote: async (parent, args: { item_id: string, quote_type: string, rep_code: string, client_id: string, valid_until: Date }) => {
-
+    LasecUpdateQuote: async (parent: any, args: any) => {
       return updateQuote(args);
     },
 

@@ -3099,13 +3099,12 @@ export const deleteQuoteComment = async (params) => {
 }
 
 interface ILasecUpdateQuoteExpectedParams {
-  //quote id
   item_id: string,
   quote_type: string,
   rep_code: string,
-  //client foreign id
   client_id: string
   valid_until: Date
+  currency_code: String
 };
 
 export const updateQuote = async (params: ILasecUpdateQuoteExpectedParams) => {
@@ -3113,10 +3112,21 @@ export const updateQuote = async (params: ILasecUpdateQuoteExpectedParams) => {
   logger.debug(`UPDATING QUOTE:: ${JSON.stringify(params)}`);
 
   try {
-    const { item_id, quote_type, rep_code, client_id, valid_until } = params;
-    const updateParams = { item_id, values: { quote_type } };
+    const {
+      item_id, // Quote code
+      quote_type,
+      rep_code,
+      client_id,
+      valid_until,
+      currency_code
+    } = params;
+
+    const updateParams = { item_id, values: {} };
+
+    if (quote_type) updateParams.values.quote_type = quote_type;
     if (rep_code) updateParams.values.sales_team_id = rep_code;
     if (client_id) updateParams.values.customer_id = client_id;
+    if (currency_code) updateParams.values.currency_id = currency_code;
     if (valid_until) updateParams.values.valid_until = moment(valid_until, 'YYYY-MM-DD').toISOString();
 
     const updateResult = await lasecApi.Quotes.updateQuote(updateParams).then();
