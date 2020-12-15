@@ -5,8 +5,8 @@ const graphql: Reactory.IFormGraphDefinition = {
   mutation: {
     onChange: {
       name: "LasecUpdateQuote",
-      text: `mutation LasecUpdateQuote($item_id: String, $quote_type: String, $rep_code: String, $client_id: String, $valid_until: String){
-        LasecUpdateQuote(item_id: $item_id, quote_type: $quote_type, rep_code: $rep_code, client_id: $client_id, valid_until: $valid_until) {
+      text: `mutation LasecUpdateQuote($item_id: String, $quote_type: String, $rep_code: String, $client_id: String, $valid_until: String, $currency_code: String){
+        LasecUpdateQuote(item_id: $item_id, quote_type: $quote_type, rep_code: $rep_code, client_id: $client_id, valid_until: $valid_until, currency_code: $currency_code) {
           success
           message
         }
@@ -17,6 +17,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         'eventData.formData.repCode': 'rep_code',
         'eventData.formData.client_id': 'client_id',
         'eventData.formData.validDate': 'valid_until',
+        'eventData.formData.currencyCode': 'currency_code',
       },
     },
   },
@@ -28,6 +29,10 @@ const schema: Reactory.ISchema = {
     code: {
       type: 'string',
       title: 'Code'
+    },
+    currencyCode: {
+      type: 'string',
+      title: 'Currency Code'
     },
     client: {
       type: 'string',

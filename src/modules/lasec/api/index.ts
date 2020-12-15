@@ -33,7 +33,7 @@ import {
   LasecSalesOrder,
   LasecAddress,
 } from '../types/lasec';
-import { getCustomerDocuments } from '../resolvers/Helpers';
+import { deleteSalesOrdersDocument, getCustomerDocuments } from '../resolvers/Helpers';
 
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
@@ -2934,6 +2934,10 @@ NB: note the addition of the detail_id for the line been updated
       try {
         // {"item_id":"2008-335010","values":{"quote_type":"Normal"}}
         const url = `api/quote/${params.item_id}`;
+
+        params.item_ids = [params.item_id];
+        delete params.item_id;
+
         const apiResponse = await PUT(url, { ...params });
         logger.debug(`UPDATE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
         const { status } = apiResponse;

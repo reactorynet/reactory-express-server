@@ -134,6 +134,7 @@ class LasecQuoteService implements IQuoteService {
         "items[].grant_total_vat_cents": "[].vat",
         "items[].gp_percent": "[].gp_percent",
         "items[].actual_gp_percent": "[].gp",
+        "items[].transport_mode": "[].transport_mode",
       }) as LasecQuoteOption[];
 
       logger.debug(`Returning getQuoteOptionsDetail(${option_ids})`, { converted })
