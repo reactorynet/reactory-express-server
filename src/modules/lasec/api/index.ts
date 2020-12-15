@@ -1577,11 +1577,168 @@ const Api = {
 
     post_certificate_of_conformance: async (sales_order_id: string, certificate: any): Promise<any> => {
 
-      return {
-        id: sales_order_id,
-        pdf_url: null,
-      };
 
+      /**
+       * header" => array(
+            "salesorder" => "484584",
+            "date_of_issue" => "2020-01-28",
+            "certification" => "2020-01-28",
+            "date_of_expiry" => "2020-02-28",
+            "date_of_expiry_na" => N,
+            "customer_po_number" => "405047",
+            "inco_terms" => "6",
+            "named_place" => "7",
+            "payment_terms" => "30 DAYS NETT",
+            "reason_for_export" => "SALE",
+            "bill_to_address" => "PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
+            "ship_to_address" => "Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa",
+            "consignee_address" => "3",
+            "consignee_contact" => "4",
+            "consignee_extra_info" => "5",
+            "notify_info" => "6",
+            "comments" => "7",
+        ),
+        "detail" => array(array(
+            "salesorderline" => 1,
+            "salesorder" => "484584",
+            "stockcode" => "ABC",
+            "description" => "BLA BLA BLA",
+            "quantity" => "2",
+            "date_of_manufacture" => "2020-02-28",
+            "date_of_manufacture_na" => "N",
+            "lot_number" => "71",
+            "date_of_expiry" => "2020-02-28",
+            "date_of_expiry_na" => "N"
+        )));
+       */
+
+      /**
+       * 
+       * {
+  "params": {
+    "sales_order_id": "12112",
+    "certificate": {
+      "id": "12112",
+      "emailAddress": "werner.weber@gmail.com",
+      "sendOptionsVia": "pdf",
+      "terms": "45",
+      "final_destination": "",
+      "export_reason": "",
+      "inco_terms": "CPT",
+      "consignee_street_address": "",
+      "consignee_contact": "",
+      "comments": "",
+      "products": [
+        {
+          "id": "12112:0",
+          "syspro_company": "SysproCompany4",
+          "item_number": "1",
+          "stock_code": "PLASEC-PT-90",
+          "description": "DISH PETRI ST DISP(PK 500)",
+          "qty": "10.000000",
+          "date_of_manufacture_na": true,
+          "expire_date_na": true
+        },
+        {
+          "id": "12112:1",
+          "syspro_company": "SysproCompany4",
+          "item_number": "2",
+          "stock_code": "HCPN150C",
+          "description": "SWAB PLAIN WOOD SHAFT COTTON(PK 100)",
+          "qty": "20.000000",
+          "date_of_manufacture_na": true,
+          "expire_date_na": true
+        }
+      ]
+    }
+  }
+}
+       * 
+       */
+      
+      const safe_date_transform = (value: any) => {
+        const date_moment = moment(value)
+        if (date_moment.isValid() === false) {
+            return null
+        } else {
+            return date_moment.format("YYYY-MM-DD")
+        }
+    
+    };
+      
+
+      const input_data: any = om.merge(certificate, {
+        'id': 'header.salesorder',      
+        'date_of_issue': [
+          { key: 'header.date_of_issue', transform: safe_date_transform, default: "" },
+          { key: 'header.certification', transform: safe_date_transform, default: "" }
+        ],        
+        'date_of_expiry': { key: 'header.date_of_expiry', transform: safe_date_transform, default: () => {  "" } },
+        'date_of_expiry_na': { key: 'header.date_of_expiry_na', transform: (value: Boolean) => {  value ? "Y" : "N" }, default: 'N' },
+        'po_number': { key: 'header.customer_po_number', transform: (v: any) => `${v ? v : "NOT SET"}`, default: "NOT SET" },
+        'document_number': { key: 'header.ucr_number', transform: (v: any) => { return  v ? v : 'N/A' }, default: "N/A" },
+        'inco_terms': 'header.inco_terms',
+        'final_destination': 'header.named_place',
+        'terms': 'header.payment_terms',
+        'export_reason': 'header.reason_for_export',
+        'consignee_contact': 'header.consignee_contact',
+        'consignee_number': 'header.consignee_extra_info',
+        'comments': 'header.comments',
+        'products': {
+          key: 'detail',
+          transform: (products: any[]) => { 
+            return products.map((certificate_item: any, index: number) => {
+
+
+
+              return {
+                salesorderline: certificate_item.item_number || index,
+                salesorder: sales_order_id,
+                stockcode: certificate_item.stock_code,
+                description: certificate_item.description,
+                quantity: certificate_item.qty,
+                date_of_manufacture: `${safe_date_transform(certificate_item.date_of_manufacture)}`,
+                date_of_manufacture_na: certificate_item.date_of_manufacture_na === true ? "Y" : "N",
+                lot_no: certificate_item.lot_no,
+                date_of_expiry: `${safe_date_transform(certificate_item.date_of_expiry)}`,
+                date_of_expiry_na: certificate_item.date_of_expiry_na === true ? "Y" : "N",
+              };
+
+            })  
+          }
+        }
+      });
+         
+      const format_address = (fieldname: string = 'bill_to') => {        
+        
+        const sections = {
+          company: certificate[`${fieldname}_company`] || "",
+          street_address: certificate[`${fieldname}_street_address`] || "",
+          suburb: certificate[`${fieldname}_suburb`] || "",
+          city: certificate[`${fieldname}_city`] || "",
+          province: certificate[`${fieldname}_province`] || "",
+          country: certificate[`${fieldname}_country`] || "",
+        }
+
+        return `${sections.company}${sections.company !== "" ? ', ' : ''}${sections.street_address}${sections.street_address !== "" ? ', ' : ''}${sections.suburb}${sections.suburb !== "" ? ', ' : ''}${sections.city}${sections.city !== "" ? ', ' : ''}${sections.province}${sections.province !== "" ? ', ' : ''}${sections.country}`;
+      }
+      
+      input_data.header.bill_to_address = format_address('bill_to');      
+      input_data.header.ship_to_address = format_address('ship_to');
+      input_data.header.consignee_address = format_address('consignee');
+
+      try {
+        logger.debug(`Sending certificate input to API`, { input_data });
+        let certificate_result = await Api.post(`api/cert_of_conf/${sales_order_id}`, input_data, undefined, true).then();
+        logger.debug(`🔢Certificate Result`, { certificate_result });
+        return {
+          id: sales_order_id,
+          pdf_url: certificate_result.url,
+        };
+      } catch (create_error) {
+        logger.debug("Could not create the certificate due to an error", { create_error });
+        throw create_error;
+      }
     },
 
     put_certificate_of_conformance: async (sales_order_id: string, certificate: any): Promise<any> => {
@@ -1604,14 +1761,56 @@ const Api = {
       To return the currently stored details for a ISO
       GET: https://bapi.lasec.co.za/api/com_invoice/{salesordernumber} aka https://bapi.lasec.co.za/api/com_invoice/484584
       When no Invoice currently exists it returns the ISO detail as below:
-      {"status":"success",
-      "payload":{"header":{"salesorder":"000000000484584","ucr_number":"N\\/A","date_of_issue":"2020-01-28","date_of_expiry":"2020-02-28","date_of_expiry_na":"1",
-          "customer_po_number":"405047","inco_terms":"6","named_place":"7","payment_terms":"30 DAYS NETT","bill_to_address":"PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
-          "ship_to_address":"Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa","consignee_contact":"4","consignee_address":"3",
-          "notify_contact1":"","notify_address1":"","notify_contact2":"","notify_address2":"","comments":"7","comments_bottom":"",
-          "currency":"","freight":0,"insurance":0,"deposit":0,"discount":0,"vat":0,"staffuserid":"","SysproCompany":"","created":"","reason_for_export":"SALE"},
-      "items":{"salesorder":"000000000484584","salesorderline":"1","stockcode":"HCPN108CR","description":"SWAB TRANSYSTEM MEDIA AMIES(PK 500)",
-          "quantity":"2.000000","unit_price":"2331.00000"}}}
+      
+      {
+        "status": "success",
+        "payload": {
+          "header": {
+            "salesorder": "00000 0000012114",
+            "ucr_number": "0ZA00857074012114",
+            "date_of_issue": "2020-12-14",
+            "date_of_expiry": "2021-01-13",
+            "date_of_expiry_na": 0,
+            "customer_po_number": "1043917",
+            "inco_terms": "CPT",
+            "named_place": "Parmalat, Gaborone, Botswana",
+            "payment_terms": "60 DAYS NETT",
+            "bill_to_address": "PLOT 22026/27 TAKATOKWANE RD,GABORONE,BOTSWANA",
+            "ship_to_address": "Botswana Quality Laboratory,Plot 22026/7,G West Industrial,Gaborone,BOTSWANA",
+            "consignee_contact": "",
+            "consignee_address": "",
+            "notify_contact1": "",
+            "notify_address1": "",
+            "notify_contact2": "",
+            "notify_address2": "",
+            "comments": "",
+            "comments_bottom": "",
+            "currency": "",
+            "freight": 0,
+            "insurance": 0,
+            "deposit": 0,
+            "discount": 0,
+            "vat": 0,
+            "staffuserid": "367",
+            "SysproCompany": "SysproCompany4",
+            "created": "2020-12-14",
+            "reason_for_export": "SALE"
+          },
+          "items": [
+            {
+              "SysproCompany": "SysproCompany4",
+              "salesorder": "000000000012114",
+              "salesorderline": "1",
+              "stockcode": "GLSC6600",
+              "description": "LACTOGENSIMETER FOR MILK(EA)",
+              "quantity": "2.000000",
+              "unit_price": "2030.51000"
+            },      
+          ]
+        }
+      }
+
+
       NOTE: If any of the documents have already been created, their header info will be pulled in instead of the ISO header info !!!
       NB: the detail section can have multiple entries
       To save a new packing list and its detail do:
@@ -1815,7 +2014,47 @@ const Api = {
         'header.consignee_contact': 'consignee_contact',
         'header.notify_contact': 'notify_info',
         'header.comments': 'comments',
-        'detail': 'products'
+        'items': [
+          {
+            key: 'products',
+            /**
+             * 
+             * @param source   
+              {
+                "SysproCompany": "SysproCompany4",
+                "salesorder": "000000000012114",
+                "salesorderline": "1",
+                "stockcode": "GLSC6600",
+                "description": "LACTOGENSIMETER FOR MILK(EA)",
+                "quantity": "2.000000",
+                "unit_price": "2030.51000"
+              },                
+             */
+            transform: (source_array: any[]) => {
+              logger.debug(`🔀 Transforming results - get_commercial_invoice`, source_array)
+              let items = source_array.map((source: any) => {
+                let item = {
+                  id: `${source.salesorder}-${source.salesorderline}`,
+                  syspro_company: source.SysproCompany,
+                  item_number: source.salesorderline,
+                  stock_code: source.stockcode,
+                  description: source.description,
+                  qty: parseFloat(source.quantity || "0"),
+                  freight: parseFloat(source.freight || "0"),
+                  insurance: parseFloat(source.insurance || "0"),
+                  discount: parseFloat(source.discount),
+                  has_vat: source.has_vat === true
+                };
+
+                return item;
+              });
+
+
+              return items;
+            }
+          }],
+
+
       };
 
       try {
@@ -1825,6 +2064,10 @@ const Api = {
           id: sales_order_id,
           emailAddress: '',
           sendOptionsVia: 'email',
+          lookups: {
+            inco_terms,
+            payment_terms
+          },
           ...commercial_invoice,
         };
 
@@ -2116,7 +2359,43 @@ NB: note the addition of the detail_id for the line been updated
         'header.consignee_contact': 'consignee_contact',
         'header.notify_info': 'notify_info',
         'header.comments': 'comments',
-        'detail': 'items'
+        'detail': [
+          {
+            key: 'packing_list',
+            /**
+             * 
+             * @param source                             
+             *  "SysproCompany": "SysproCompany4",
+                "salesorder": "",
+                "detail_id": "",
+                "type": "",
+                "quantity": "",
+                "height": "",
+                "width": "",
+                "length": "",
+                "weight": ""
+             */
+            transform: (source_array: any[]) => {
+              logger.debug(`🔀 Transforming results - get_commercial_invoice`, source_array)
+              let items = source_array.map((source: any) => {
+
+                let item = {
+                  id: `${source.salesorder}-${source.salesorderline}`,
+                  syspro_company: source.SysproCompany,
+                  pallet_type: source.type,
+                  quantity: source.quanity,
+                  width: source.width,
+                  height: source.height,
+                  length: source.length,
+                  weight: source.weight
+                };
+
+                return item;
+              });
+
+              return items;
+            }
+          }],
       };
 
       try {
@@ -2128,12 +2407,15 @@ NB: note the addition of the detail_id for the line been updated
           id: sales_order_id,
           emailAddress: '',
           sendOptionsVia: 'email',
-
+          lookups: {
+            inco_terms,
+            payment_terms
+          },
           ...packing_list_result,
         };
       } catch (get_packing_list_error) {
 
-        logger.error(`Could not get the packing list from the remote server: ${get_packing_list_error.message}`, {  get_packing_list_error });
+        logger.error(`Could not get the packing list from the remote server: ${get_packing_list_error.message}`, { get_packing_list_error });
 
         throw get_packing_list_error;
 
@@ -2181,12 +2463,7 @@ NB: note the addition of the detail_id for the line been updated
         delivery_address_id: sales_order_input.delivery_address_id,
         quote_id: sales_order_input.quote_id,
       };
-
-
-
-
       /*
-
       {
         "warehouse_id": "10",
         "has_confirm_payment": true,
@@ -2209,24 +2486,17 @@ NB: note the addition of the detail_id for the line been updated
       /**
 
       {
-
-      "warehouse_id": "10",
-      "has_confirm_payment": true,
-      "type_of_order": "normal",
-      "shipping_date": "2020-11-27T16:40:00.000Z",
-      "do_not_part_supply": true,
-      "CUSTOMER_DELIVERY_ADDRESS_tag_value_id": "14305",
-      "CUSTOMER_DELIVERY_ADDRESS_tag_value": "18 High St, Worcester, 6849, South Africa",
-      "confirm_purchase_order_number": "12345",
-      "delivery_address_id": "14305",
-      "quote_id": "2011-106326070"
-
-      }
-
-
-
-
-       */
+        "warehouse_id": "10",
+        "has_confirm_payment": true,
+        "type_of_order": "normal",
+        "shipping_date": "2020-11-27T16:40:00.000Z",
+        "do_not_part_supply": true,
+        "CUSTOMER_DELIVERY_ADDRESS_tag_value_id": "14305",
+        "CUSTOMER_DELIVERY_ADDRESS_tag_value": "18 High St, Worcester, 6849, South Africa",
+        "confirm_purchase_order_number": "12345",
+        "delivery_address_id": "14305",
+        "quote_id": "2011-106326070"
+      }*/
 
 
       try {

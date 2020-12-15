@@ -171,21 +171,23 @@ type LasecCertificateProductItem {
 
 type LasecCommercialInvoiceProductItem {
   id: String
+  syspro_company: String
   item_number: String
   stock_code: String
   description: String
-  qty: String
-  unit_price: Int
-  freight: Int
-  insurance: Int
-  discount: Int
-  deposit: Int
+  qty: Float
+  unit_price: Float
+  freight: Float
+  insurance: Float
+  discount: Float
+  deposit: Float
   has_vat: Boolean
 }
 
 
 type LasecPackingListItem {
   id: String
+  syspro_company: String
   pallet_type: String
   quantity: Int
   width: String
@@ -236,7 +238,11 @@ type LasecCertificateOfConformance {
   emailAddress: String
   sendOptionsVia: String
   
-  date_of_issue: String
+  date_of_issue: Date
+  certification: Date
+  date_of_expiry: Date
+  date_of_expiry_na: Boolean
+  
   terms: String
   final_destination: String
   export_reason: String
@@ -336,7 +342,7 @@ type LasecPackingList {
 
   lookups: LasecPackingListLookups
 
-  items: [LasecPackingListItem]
+  packing_list: [LasecPackingListItem]
 }
 
 """
@@ -398,28 +404,36 @@ type LasecCommercialInvoice {
 
 input LasecCertficateItemInput {
   id: String
+  syspro_company: String
   item_number: String
   stock_code: String
   description: String
   qty: String
   date_of_manufacture: Date
+  date_of_manufacture_na: Boolean
   lot_no: String
   expire_date: Date
+  expire_date_na: Boolean
 }
 
 input LasecCommercialInvoiceItemInput {
   id: String
+  syspro_company: String
   item_number: String
   stock_code: String
   description: String
-  qty: String
-  date_of_manufacture: Date
-  lot_no: String
-  expire_date: Date
+  qty: Float
+  unit_price: Float
+  freight: Float
+  insurance: Float
+  discount: Float
+  deposit: Float
+  has_vat: Boolean
 }
 
 input LasecPackingListItemInput {
   id: String
+  syspro_company: String
   pallet_type: String
   quantity: Int
   width: String
@@ -436,11 +450,15 @@ input LasecCertificateOfConformanceInput {
   emailAddress: String
   sendOptionsVia: String
   
-  date_of_issue: String
+
+  date_of_issue: Date
+  certification_date: Date
+  date_of_expiry: Date
+  date_expiry_na: Boolean
   terms: String
   final_destination: String
   export_reason: String
-  doucment_number: String
+  document_number: String
   inco_terms: String
   po_number: String
 
@@ -490,7 +508,7 @@ input LasecCommercialInvoiceInput {
   terms: String
   final_destination: String
   export_reason: String
-  doucment_number: String
+  document_number: String
   inco_terms: String
   po_number: String
 
@@ -578,7 +596,7 @@ input LasecPackingListInput {
 
   comments: String
 
-  items: [LasecPackingListItemInput]
+  packing_list: [LasecPackingListItemInput]
 }
 
 type LasecCertificateOfConformanceResponse {

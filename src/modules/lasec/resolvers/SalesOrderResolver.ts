@@ -316,25 +316,24 @@ const SalesOrderResolver = {
     LasecCommercialInvoiceForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
       try {
         logger.debug(`SalesOrderResovler.ts => LasecCertificateOfConformanceForSalesOrder`);
-        const certificate = await LasecApi.SalesOrders.get_commercial_invoice(params.sales_order_id).then()
-        logger.debug(`Error while gettting certificate of conformance for sales order`);
-
-        return certificate
+        const commercial_invoice = await LasecApi.SalesOrders.get_commercial_invoice(params.sales_order_id).then()
+        logger.debug(`Commercial invoice for for sales order`, commercial_invoice);
+        return commercial_invoice
       } catch (err) {
-        logger.error(`Error while gettting certificate of conformance for sales order`, { error: err });
+        logger.error(`Error while gettting certificate of commercial invoice for sales order`, { error: err });
         return null;
       }
     },
 
     LasecPackingListForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
       try {
-        logger.debug(`SalesOrderResovler.ts => LasecCertificateOfConformanceForSalesOrder`);
-        const certificate = await LasecApi.SalesOrders.get_packing_list(params.sales_order_id).then()
-        logger.debug(`Error while gettting certificate of conformance for sales order`);
+        logger.debug(`SalesOrderResovler.ts => LasecPackingListForSalesOrder`);
+        const packing_list = await LasecApi.SalesOrders.get_packing_list(params.sales_order_id).then()
+        logger.debug(`Packing list for sales order`, packing_list);
 
-        return certificate.payload;
+        return packing_list;
       } catch (err) {
-        logger.error(`Error while gettting certificate of conformance for sales order`);
+        logger.error(`Error while getting packing list for sales order`);
         return null;
       }
     },
@@ -371,7 +370,7 @@ const SalesOrderResolver = {
      */
     LasecCreateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: any }, context: any, info: any): Promise<any> => {
       try {
-
+        logger.debug("Creating certificate of conformance", { params });
         const result = await LasecApi.SalesOrders.post_certificate_of_conformance(params.sales_order_id, params.certificate).then();
         return {
           success: true,
@@ -398,7 +397,7 @@ const SalesOrderResolver = {
     LasecUpdateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: any }, context: any, info: any): Promise<any> => {
 
       try {
-
+        logger.debug("Updating certificate of conformance", { params });
         const result = await LasecApi.SalesOrders.put_certificate_of_conformance(params.sales_order_id, params.certificate).then();
         return {
           success: true,
