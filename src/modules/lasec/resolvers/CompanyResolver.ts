@@ -1452,31 +1452,49 @@ export const DEFAULT_NEW_CLIENT = {
   saved: false,
 };
 
-const getAddress = async (args: { searchTerm: string, paging: Reactory.IPagingRequest }): Promise<any> => {
+interface LasecPagedAddressResults {
+  paging: Reactory.IPagingResult,
+  addresses: LasecAddress[]
+}
+
+const getAddress = async (args: { searchTerm: string, paging: Reactory.IPagingRequest }): Promise<LasecPagedAddressResults> => {
 
   const { paging } = args;
 
   try {
     logger.debug(`GETTING ADDRESS:: ${JSON.stringify(args)}`);
-    const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true }, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } });
+    const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true }, pagination: { enabled: true, page_size: paging.pageSize || 10, current_page: paging.page } });
 
     let _ids = [];
     if (isArray(addressIds.ids) === true && addressIds.ids.length > 0) {
       _ids = [...addressIds.ids];
-      const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } });
+      const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: true, page_size: paging.pageSize || 10, current_page: paging.page } });
       const addresses = [...addressDetails.items];
       logger.debug(`Found ${addresses.length || 0} that matches the search term "${args.searchTerm}"`, { addressDetails });
       return {
-        paging: addressDetails.pagination,
+        paging: {
+          hasNext: addressIds.pagination.has_next_page === true,
+          page: addressIds.pagination.current_page,
+          pageSize: addressIds.pagination.page_size,
+          total: addressIds.pagination.num_pages
+        },
         addresses
       }
     }
 
-    return [];
+    return {
+      paging: {
+        hasNext: false,
+        page: 1,
+        pageSize: args.paging.pageSize,
+        total: 0
+      },
+      addresses: []
+    };
 
   } catch (getAddressError) {
-
-    return []
+    logger.error(`Error Getting the address details`, { error: getAddressError })
+    throw new ApiError("Could not process query", getAddressError);
   }
 
 
@@ -1542,14 +1560,14 @@ const createNewAddress = async (args) => {
 
     const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address, paging: { page: 1, pageSize: 100 } }).then();
 
-    logger.debug(`Found ${existingAddress.length} matches: ${existingAddress}`);
+    logger.debug(`Found ${existingAddress.addresses.length} matches: ${existingAddress}`);
 
-    if (existingAddress && existingAddress.length > 0) {
+    if (existingAddress && existingAddress.addresses.length > 0) {
       return {
         success: true,
         message: 'Existing address found',
-        id: existingAddress[0].id,
-        fullAddress: existingAddress[0].formatted_address
+        id: existingAddress.addresses[0].id,
+        fullAddress: existingAddress.addresses[0].formatted_address
       };
     }
 

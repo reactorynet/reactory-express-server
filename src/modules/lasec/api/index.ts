@@ -191,11 +191,18 @@ export function PUT(url, data, auth = true) {
   return FETCH(url, args, auth);
 }
 
+interface LasecAPIFetchArgs {
+  headers: any,
+  credentials: string,
+  params: any
+  [key: string]: any
+};
+
 export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = true, failed = false, attempt = 0) {
   // url = `${url}`;
   let absoluteUrl = `${config.SECONDARY_API_URL}/${url}`;
 
-  const kwargs = fethArguments || {};
+  const kwargs : LasecAPIFetchArgs = fethArguments || {};
   if (!kwargs.headers) {
     kwargs.headers = {};
     kwargs.headers['Content-type'] = 'application/json; charset=UTF-8';
@@ -223,21 +230,30 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
 
   if (kwargs.params) {
     const paramPayload = JSON.stringify(kwargs.params);
-    absoluteUrl += `?params=${paramPayload}`;
+    logger.debug(`query params: ${paramPayload}`);
+    absoluteUrl += `?params=${encodeURIComponent(paramPayload)}`;
   }
 
   if (isObject(kwargs.body)) {
     kwargs.body = JSON.stringify(kwargs.body);
   }
 
-  logger.debug(`Making fetch call with ${absoluteUrl}`, kwargs);
+  logger.debug(`API CALL: curl '${absoluteUrl}' \\
+  -H 'Connection: keep-alive' \\
+  -H 'Authorization: ${kwargs.headers.Authorization}' \\
+  -H 'X-LASEC-AUTH: ${kwargs.headers.Authorization}' \\
+  -H 'User-Agent: ReactoryServer' \\
+  -H 'X-CSRFToken: undefined' \\
+  -H 'Content-type: application/json; charset=UTF-8' \\
+  -H 'Accept: */*' \\
+  -H 'Origin: ${process.env.API_URI_ROOT}' \\
+  -H 'Accept-Language: en-US,en;q=0.9,af;q=0.8,nl;q=0.7' \\
+  --compressed`);
 
   const apiResponse = await fetch(absoluteUrl, kwargs).then();
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
     try {
-
       //  apiResponse.text().then(response => logger.debug(`RESPONSE FROM API:: -  ${response}`));
-
       return apiResponse.json();
     } catch (jsonError) {
       logger.error("JSON Error", jsonError);
