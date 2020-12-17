@@ -3205,7 +3205,7 @@ export const getCompanyDetails = async (params: { id: string }) => {
   try {
     let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [params.id] } }).then();
     let customerObject = { };
-    debugger
+    
     logger.debug(`Results from Helpers.ts -> getCompanyDetails(params)`, { params, companyPayloadResponse });
 
     if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {

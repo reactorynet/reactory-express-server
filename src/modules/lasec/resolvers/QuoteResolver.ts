@@ -468,7 +468,7 @@ export default {
     },
     company: async (quote) => {
       const { meta } = quote;
-      debugger
+      
 
       if (isNil(quote.company) === false && quote.company._bsontype === "ObjectID") {
         if (ObjectId.isValid(quote.company) === true) {
@@ -1112,7 +1112,7 @@ export default {
     LasecSendQuoteEmail: async (obj: any, args: LasecSendMailParams) => {
 
       try {
-        debugger
+        
         logger.debug(`💌 Sending Quote Email for quote: ${args.code}`, { message: args.mailMessage });
 
         const quoteService: IQuoteService = global.getService("lasec-crm.LasecQuoteService") as IQuoteService;

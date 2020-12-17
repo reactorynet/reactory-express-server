@@ -68,8 +68,6 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
                     const found = find(emailUser.authentications, { provider: via });
                     logger.debug(`EMAIL USER FOUND: ${found}`);
 
-                    debugger
-
                     const $to: Microsoft.Recipient[] = [];
                     const $cc: Microsoft.Recipient[] = [];
                     const $bcc: Microsoft.Recipient[] = [];

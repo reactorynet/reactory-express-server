@@ -186,7 +186,7 @@ class AuthConfig {
       app.post(
         '/auth/microsoft/openid/complete/:clientKey',        
         async (req, res, next) => {
-          // debugger;
+          // ;
           logger.debug(`Response from login.live received for ${req.params.clientKey}`);
           global.partner = await ReactoryClient.findOne({ key: req.params.clientKey }).then();
           passport.authenticate(

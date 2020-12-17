@@ -756,6 +756,8 @@ const Api = {
         status, payload,
       } = resp;
 
+      logger.debug(`API REPONSE  Get Address`, {resp})
+
       if (payload && status === undefined) return payload;
 
       if (status === 'success') {

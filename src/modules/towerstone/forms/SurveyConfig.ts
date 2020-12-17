@@ -5,7 +5,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 import moment from 'moment';
 
 export const schema = {
-  title: 'Survey Configuration',
+  title: 'More Survey Config',
   description: 'Use the form below to configure your Survey',
   type: 'object',
   required: [
@@ -77,6 +77,10 @@ export const schema = {
       type: 'string',
       title: 'Leadership Brand',
       name: 'Leadership Brand'
+    },
+    UserThatCreatedMe: {
+      type: 'string',
+      title: 'Creator',      
     },
     title: {
       type: 'string',
@@ -349,7 +353,7 @@ export const uiSchema = {
       assessorTeamName: { md: 6 },
     },
     {
-      title: { md: 12 },
+      title: { md: 12 },      
     },
     {
       startDate: { md: 6 },
@@ -450,6 +454,7 @@ export const uiSchema = {
 export const moresUISchema = {
   submitIcon: 'save',
   'ui:options': {
+    
     submitProps: {
       variant: 'button',
       text: '${props.mode === "edit" ? "Update" : "Create" }',
@@ -569,7 +574,8 @@ export const moresEditUiSchema = {
       surveyType: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
     },
     {
-      title: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12},
+      title: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
+      UserThatCreatedMe: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }
     },
     {
       startDate: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },

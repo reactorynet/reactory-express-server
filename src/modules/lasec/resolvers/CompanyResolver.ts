@@ -27,6 +27,8 @@ import {
   LasecAddressUpdateResponse,
 } from '../types/lasec';
 
+import { Reactory } from '@reactory/server-core/types/reactory';
+
 import { getLoggedIn360User, getCustomerDocuments } from './Helpers';
 import deepEquals from '@reactory/server-core/utils/compare';
 
@@ -1450,19 +1452,24 @@ export const DEFAULT_NEW_CLIENT = {
   saved: false,
 };
 
-const getAddress = async (args: { searchTerm: string }) => {
+const getAddress = async (args: { searchTerm: string, paging: Reactory.IPagingRequest }): Promise<any> => {
+
+  const { paging } = args;
 
   try {
     logger.debug(`GETTING ADDRESS:: ${JSON.stringify(args)}`);
-    const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true } });
+    const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true }, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } });
 
     let _ids = [];
     if (isArray(addressIds.ids) === true && addressIds.ids.length > 0) {
       _ids = [...addressIds.ids];
-      const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: false } });
+      const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } });
       const addresses = [...addressDetails.items];
-      logger.debug(`Found ${addresses.length || 0} that matches the search term "${args.searchTerm}"`, { addresses });
-      return addresses
+      logger.debug(`Found ${addresses.length || 0} that matches the search term "${args.searchTerm}"`, { addressDetails });
+      return {
+        paging: addressDetails.pagination,
+        addresses
+      }
     }
 
     return [];
@@ -1533,7 +1540,7 @@ const createNewAddress = async (args) => {
       confirm_address: true,
     };
 
-    const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address }).then();
+    const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address, paging: { page: 1, pageSize: 100 } }).then();
 
     logger.debug(`Found ${existingAddress.length} matches: ${existingAddress}`);
 
@@ -2114,7 +2121,7 @@ export default {
        customer object is returned 
      */
     LasecGetNewClient: async (obj: any, args: { id?: string, reset?: boolean }) => {
-      debugger
+
       logger.debug(`[LasecGetNewClient] NEW CLIENT PARAMS:: ${JSON.stringify(args)}`);
       let existingCustomer: any = null;
       let remote_fetched: boolean = false;
@@ -2301,34 +2308,37 @@ export default {
 
       return null;
     },
-    LasecGetAddress: async (obj: any, args: { searchTerm: string }) => {
-      const addresses = await getAddress(args);
+    LasecGetAddress: async (obj: any, args: { searchTerm: string, paging: Reactory.IPagingRequest }) => {
+      const search_results = await getAddress(args);
 
-      return addresses.map((address: LasecAddress) => {
-        /**
-         * {
-            "id": "35593",
-            "building_description_id": "6",
-            "building_floor_number_id": "1",
-            "province_id": "",
-            "country_id": "",
-            "formatted_address": "Portion 163, Farm 811 1 Main Tesselaarsdal Overberg District Municipality Caledon 7523 Western Cape South Africa",
-            "lat": "0.000000",
-            "lng": "0.000000",
-            "created_by": "Werner Weber",
-            "last_edited_by": "Werner Weber"
-          },
-        */
+      return {
+        paging: search_results.paging,
+        addresses: search_results.addresses.map((address: LasecAddress) => {
+          /**
+           * {
+              "id": "35593",
+              "building_description_id": "6",
+              "building_floor_number_id": "1",
+              "province_id": "",
+              "country_id": "",
+              "formatted_address": "Portion 163, Farm 811 1 Main Tesselaarsdal Overberg District Municipality Caledon 7523 Western Cape South Africa",
+              "lat": "0.000000",
+              "lng": "0.000000",
+              "created_by": "Werner Weber",
+              "last_edited_by": "Werner Weber"
+            },
+          */
 
-        return {
-          ...address,
-          fullAddress: address.formatted_address,
-          map: {
-            lat: address.lat,
-            long: address.lng,
+          return {
+            ...address,
+            fullAddress: address.formatted_address,
+            map: {
+              lat: address.lat,
+              long: address.lng,
+            }
           }
-        }
-      });
+        })
+      }
     },
     LasecGetPlaceDetails: async (obj, args) => {
       return getPlaceDetails(args);
@@ -2435,7 +2445,7 @@ export default {
         messages: [
         ],
       };
-      
+
       let isExistingClient = false;
       let existing_client_id = null;
 
@@ -2460,13 +2470,13 @@ export default {
           try {
             const updateArgs = {
               ...args.newClient,
-              clientInfo: {                                
+              clientInfo: {
                 clientStatus: 'active',
                 clientId: existing_client_id,
-              },              
+              },
             }
             //Patch the remote data with the data from the form input
-            await updateClientDetail(updateArgs);            
+            await updateClientDetail(updateArgs);
             //toggle the active status
             await mysql(`
             UPDATE Customer SET

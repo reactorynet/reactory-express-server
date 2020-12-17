@@ -87,7 +87,7 @@ export default {
         success: false
       }
       
-      // debugger
+      // 
       try {
         //step check the folder        
         if(folder) {

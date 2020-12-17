@@ -19,7 +19,8 @@ const graphql: Reactory.IFormGraphDefinition = {
         'eventData.formData.validDate': 'valid_until',
         'eventData.formData.currencyCode': 'currency_code',
       },
-    },
+      throttle: 1500,
+    },    
   },
 };
 
