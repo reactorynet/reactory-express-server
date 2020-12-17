@@ -484,6 +484,7 @@ extend type Query {
   LasecGetCustomerFilterLookup(filterBy: String): [LasecCustomerFilterLookupItem]
   LasecGetCustomerDocuments(id: String, uploadContexts: [String], paging: PagingRequest): PagedLasecDocument
   LasecGetPersonTitles: [LasecTitleLookupItem]
+  LasecGetPersonTitleById(id: String): LasecTitleLookupItem
   # LasecGetNewClient: LasecNewClient
   """
   Returns the currently cached object that is associated with the new client onboarding
