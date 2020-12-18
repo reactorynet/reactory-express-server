@@ -2706,9 +2706,12 @@ export default {
     LasecEditAddress: async (obj: any, args: { address_input: LasecAddress }): Promise<LasecAddressUpdateResponse> => {
       try {
 
-        let address: LasecAddress = null;//await LasecAPI.Customers.UpdateAddress(args.address_input).then();                
+        let address: LasecAddress = null;                
         const { address_input } = args;
 
+        if (address_input === null || address_input == undefined) throw new ApiError(`Address Input Cannot be empty`);
+        if (address_input.id === null || address_input.id === undefined ) throw new ApiError("Address does not have id")
+                
         const unit_segment = `${address_input.unit_number || ""} ${address_input.unit_name || ""} `;
         const street_segment = `${address_input.street_number || ""} ${address_input.street_name || ""} `;
         const region_segment = `${address_input.suburb || ""} ${address_input.city || ""} ${address_input.postal_code || ""} `;
@@ -2736,19 +2739,53 @@ export default {
         const me: Lasec360User = await getLoggedIn360User();
 
         let query = `
+          SELECT 
+            formatted_address, 
+            building_description_id,
+            building_floor_number_id,
+            province_id,
+            country_id,
+            lat,
+            lng
+          FROM Address
+          WHERE addressid = ${address_input.id}`
+        
+        let existing_data: any = {
+          formatted_address: formatted_address,
+          building_description_id: 0,
+          building_floor_number_id: 0,
+          province_id: null,
+          country_id: null,
+          lat: 0,
+          lng: 0
+        };
+
+        try {
+          //read the record
+          const find_result: any = await mysql(query, 'mysql.lasec360').then();
+          logger.debug(`results for lookup of address ${address_input.id}`, {find_result})
+          if (find_result && find_result.length === 1) {
+            existing_data = { ...find_result[0]}
+          }
+
+        } catch (read_error) {
+          logger.error(`Could not read data from the database ${read_error.message}`, { read_error });
+          throw new ApiError('Could not read the data');
+        }
+ 
+        query = `
           UPDATE Address
           SET
-            formatted_address = '${formatted_address}', 
-            building_description_id = '${address_input.building_description_id || 0}',
-            building_floor_number_id = '${address_input.building_floor_number_id || 0}',
-            province_id = '${address_input.province_id || 0}',
-            country_id = '${address_input.country_id || 1}',
-            lat = ${address_input.lat},
-            lng = ${address_input.lng},
+            formatted_address = '${formatted_address || existing_data.formatted_address}', 
+            building_description_id = '${address_input.building_description_id || existing_data.building_description_id}',
+            building_floor_number_id = '${address_input.building_floor_number_id || existing_data.building_floor_number_id}',
+            province_id = '${address_input.province_id || existing_data.province_id}',
+            country_id = '${address_input.country_id || existing_data.country_id}',
+            lat = ${address_input.lat || existing_data.lat},
+            lng = ${address_input.lng || existing_data.lng},
             last_edited_by_staff_user_id = ${me.id}
           WHERE 
             addressid = ${address_input.id};`
-
 
         try {
           const update_result = await mysql(query, 'mysql.lasec360').then();

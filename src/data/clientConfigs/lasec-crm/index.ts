@@ -241,6 +241,9 @@ const Menus = {
           ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN']
         },
         {
+          ordinal: 9, title: 'Form Editor', link: '/form-editor/', icon: 'dynamic_form', roles: ['DEVELOPER', 'ADMIN'],
+        },
+        {
           ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
         },
         {
@@ -1032,8 +1035,18 @@ const LASEC_CONFIG = {
       exact: true,
       public: false,
       roles: ['ADMIN', 'DEVELOPER'],
-      componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
+      componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'    
     },
+
+    {
+      key: 'form-editor',
+      title: 'Form Editor',
+      path: '/form-editor/**',
+      public: false,
+      roles: ['ADMIN', 'DEVELOPER'],
+      componentFqn: 'reactory.FormEditor@1.0.0'
+    },
+
     {
       key: 'quote-note',
       title: 'Quote Note',

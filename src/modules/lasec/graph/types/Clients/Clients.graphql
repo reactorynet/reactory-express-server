@@ -416,8 +416,8 @@ input EditAddressInput {
   building_description_id: String
   building_floor_number_id: String
   
-  lat: String
-  lng: String
+  lat: Float
+  lng: Float
 
   unit_number: String
   unit_name: String
