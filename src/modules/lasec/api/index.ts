@@ -235,7 +235,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   }
 
   if (isObject(kwargs.body)) {
-    kwargs.body = JSON.stringify(kwargs.body);
+    kwargs.body = JSON.stringify(kwargs.body, null, 2);
   }
 
   logger.debug(`API CALL: curl '${absoluteUrl}' \\
@@ -248,6 +248,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   -H 'Accept: */*' \\
   -H 'Origin: ${process.env.API_URI_ROOT}' \\
   -H 'Accept-Language: en-US,en;q=0.9,af;q=0.8,nl;q=0.7' \\
+  ${kwargs.body ? `--data-binary '${kwargs.body}' \\` : '' }  
   --compressed`);
 
   const apiResponse = await fetch(absoluteUrl, kwargs).then();
