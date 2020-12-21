@@ -16,7 +16,8 @@ const LasecCMSProductOverview: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: $schema,
   graphql: $graphql,
-  uiSchema: tableUiSchema,
+  // uiSchema: tableUiSchema,
+  uiSchema: gridUiSchemaGrid,
   defaultFormValue: {
     paging: {
       page: 1,

@@ -62,6 +62,12 @@ const schema: Reactory.ISchema = {
           },
           priceAdditionalInfo:{
             type: 'string'
+          },
+          availableCurrencies: {
+            type: 'array',
+            items: {
+              type: 'string'
+            }
           }
         }
       },

@@ -44,6 +44,7 @@ const graphql: Reactory.IFormGraphDefinition = {
             currency_description
             special_price_cents
           }
+          availableCurrencies
         }
       }
     }`,
@@ -73,6 +74,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'products.[].onSpecial': 'products.[].onSpecial',
       'products.[].currencyCode': 'products.[].currencyCode',
       'products.[].specialPrice': 'products.[].specialPrice',
+      'products.[].availableCurrencies': 'products.[].availableCurrencies',
     },
     resultType: 'object',
     edit: false,
