@@ -3,8 +3,8 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetPlaceDetails',
-    text: `query LasecGetPlaceDetails($placeId: String!){
-      LasecGetPlaceDetails(placeId: $placeId) {
+    text: `query LasecGetPlaceDetails($placeId: String!, $lat: Float, $lng: Float){
+      LasecGetPlaceDetails(placeId: $placeId, lat: $lat, lng: $lng) {
         streetName
         streetNumber
         suburb
@@ -13,10 +13,15 @@ const graphql: Reactory.IFormGraphDefinition = {
         province
         postalCode
         country
+        lat
+        lng                
       }
     }`,
     variables: {
       'formContext.place_id': 'placeId',
+      'formData.lat': 'lat',
+      'formData.lng': 'lng'
+
     },
     resultMap: {
       'streetName': 'streetName',
@@ -27,6 +32,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       'province': 'province',
       'postalCode': 'postalCode',
       'country': 'country',
+      'lat': 'lat',
+      'lng': 'lng'
     },
     edit: false,
     new: true
@@ -57,6 +64,8 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.province': 'addressDetails.addressFields.province',
         'formData.postalCode': 'addressDetails.addressFields.postalCode',
         'formData.country': 'addressDetails.addressFields.country',
+        'formData.lat': 'addressDetails.lat',
+        'formData.lng': 'addressDetails.lng'
       },
       onSuccessMethod: "notification",
       notification: {

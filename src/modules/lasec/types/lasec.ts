@@ -677,8 +677,8 @@ export interface LasecAddress {
   country_id?: string
   country_name?: string
   
-  lat?: number
-  lng?: number
+  lat?: string | number
+  lng?: string | number
   created_by?: string
   last_edited_by?: string
   map?: any

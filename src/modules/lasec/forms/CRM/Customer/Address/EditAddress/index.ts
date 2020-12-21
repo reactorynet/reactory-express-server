@@ -165,6 +165,16 @@ const uiSchema: any = {
   streetNumber: {},
   streetName: {},
   country: {},
+  lat: {
+    'ui:options': {
+      format: 'float',
+    }
+  },
+  lng: {
+    'ui:options': {
+      format: 'float'
+    }
+  }
 
 }
 
@@ -245,11 +255,11 @@ const schema: Reactory.ISchema = {
     },
     lat: {
       title: 'Lattitude',
-      type: 'string'
+      type: 'number'
     },
     lng: {
       title: 'Longtitude',
-      type: 'string'
+      type: 'number'
     },
     formatted_address: {
       type: 'string',

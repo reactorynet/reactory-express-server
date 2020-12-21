@@ -247,8 +247,8 @@ type LasecAddress {
   country_id: String
   country_name: String
   
-  lat: String
-  lng: String
+  lat: Float
+  lng: Float
 
   created_by: String
   last_edited_by: String
@@ -382,6 +382,8 @@ input NewAddressInput {
   buildingDescriptionId: String
   buildingFloorNumberId: String
   unit: String
+  lat: Float
+  lng: Float
   addressFields: AddressFields
 }
 
@@ -401,6 +403,8 @@ type GoogleAddressDetails {
   province: String
   postalCode: String
   country: String
+  lat: Float
+  lng: Float
 }
 
 type CRMClientComment {
@@ -501,7 +505,7 @@ extend type Query {
   """
   LasecGetNewClient(id: String, reset: Boolean): LasecNewClient
   LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
-  LasecGetPlaceDetails(placeId: String!): GoogleAddressDetails
+  LasecGetPlaceDetails(placeId: String!, lat: Float, lng: Float): GoogleAddressDetails
 
   """
   Use this function to search for Addresses that is contained in the 

@@ -1565,7 +1565,7 @@ const createNewAddress = async (args) => {
     if (existingAddress && existingAddress.addresses.length > 0) {
       return {
         success: true,
-        message: 'Existing address found',
+        message: 'Existing address found, matching the address selected',
         id: existingAddress.addresses[0].id,
         fullAddress: existingAddress.addresses[0].formatted_address
       };
@@ -1600,8 +1600,11 @@ const createNewAddress = async (args) => {
   }
 };
 
-const getPlaceDetails = async (args) => {
+interface ILasecGetPlaceParams { placeId: string, lat?: number, lng?: number }
+const getPlaceDetails = async (args: ILasecGetPlaceParams) => {
   const apiResponse = await lasecApi.Customers.getPlaceDetails(args.placeId);
+
+  logger.debug(`Results from Google GetPlaceDetails 🌍`, { apiResponse })
 
   if (apiResponse && apiResponse.status === 'OK') {
     const addressObj = {
@@ -1612,9 +1615,12 @@ const getPlaceDetails = async (args) => {
       metro: '',
       province: '',
       postalCode: '',
+      country: '',
+      lat: args.lat || 0,
+      lng: args.lng || 0,
     };
 
-    apiResponse.result.address_components.forEach((comp) => {
+    apiResponse.result.address_components.forEach((comp: any) => {
       if (comp.types.includes('street_number')) addressObj.streetNumber = comp.long_name;
       if (comp.types.includes('route')) addressObj.streetName = comp.long_name;
       if (comp.types.includes('sublocality') || comp.types.includes('sublocality_level_1')) addressObj.suburb = comp.long_name;
@@ -1636,6 +1642,8 @@ const getPlaceDetails = async (args) => {
     metro: '',
     province: '',
     postalCode: '',
+    lat: args.lat || 0,
+    lng: args.lng || 0
   };
 };
 
@@ -2819,7 +2827,7 @@ export default {
 
         if (args.address_input === null) throw new ApiError(`address_input cannot be null`);  
         if (args.address_input.id === null) throw new ApiError("address_input argument requires id");
-        
+
         const delete_response = await mysql(`
           UPDATE Address set deleted = 1
           WHERE addressid = ${args.address_input.id};

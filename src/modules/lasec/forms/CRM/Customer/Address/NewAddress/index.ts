@@ -31,7 +31,10 @@ const uiSchema: any = {
       metro: { xs:12, sm: 12, md: 6, lg: 4 },
       province: { xs:12, sm: 12, md: 6, lg: 4 },
       postalCode: { xs:12, sm: 12, md: 6, lg: 4 },
-      country: { xs:12, sm: 12, md: 6, lg: 4 },
+      country: { xs: 12, sm: 12, md: 6, lg: 4 },
+      lat: { xs: 12, sm: 12, md: 6, lg: 4 },
+      lng: { xs: 12, sm: 12, md: 6, lg: 4 },
+      formatted_address: { xs: 12, sm: 12, md: 6, lg: 4 }
     },
   ],
 
@@ -165,7 +168,16 @@ const uiSchema: any = {
   streetNumber: {},
   streetName: {},
   country: {},
-
+  lat: {
+    'ui:options': {
+      format: 'float',
+    }
+  },
+  lng: {
+    'ui:options': {
+      format: 'float'
+    }
+  }
 }
 
 const schema: Reactory.ISchema = {
@@ -239,6 +251,18 @@ const schema: Reactory.ISchema = {
       title: 'Country',
       type: 'string'
     },
+    lat: {
+      title: 'Lattitude',
+      type: "number"
+    },
+    lng: {
+      title: 'Longtitude',
+      type: "number"
+    },
+    formatted_address: {
+      type: 'string',
+      title: "Display Address"
+    }
   }
 };
 
