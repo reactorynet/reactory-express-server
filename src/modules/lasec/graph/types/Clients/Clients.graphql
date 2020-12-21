@@ -528,6 +528,7 @@ extend type Mutation {
   LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
 
   LasecEditAddress(address_input: EditAddressInput): UpdateAddressResponse
+  LasecDeleteAddress(address_input: EditAddressInput): SimpleResponse
 
   LasecCRMSaveComment(clientId: String!, comment: String!): SimpleResponse
   LasecCRMDeleteComment(commentId: String!): SimpleResponse

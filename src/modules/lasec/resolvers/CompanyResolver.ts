@@ -2765,7 +2765,7 @@ export default {
           const find_result: any = await mysql(query, 'mysql.lasec360').then();
           logger.debug(`results for lookup of address ${address_input.id}`, {find_result})
           if (find_result && find_result.length === 1) {
-            existing_data = { ...find_result[0]}
+            return existing_data = { ...find_result[0]}
           }
 
         } catch (read_error) {
@@ -2813,6 +2813,30 @@ export default {
       }
 
 
+    },
+    LasecDeleteAddress: async (obj: any, args: { address_input: LasecAddress }): Promise<SimpleResponse> => {
+      try {
+
+        if (args.address_input === null) throw new ApiError(`address_input cannot be null`);  
+        if (args.address_input.id === null) throw new ApiError("address_input argument requires id");
+        
+        const delete_response = await mysql(`
+          UPDATE Address set deleted = 1
+          WHERE addressid = ${args.address_input.id};
+        `, 'mysql.lasec360').then();
+        
+        if (delete_response) {
+          logger.debug(`Lasec API Response for Address DELETE`, { delete_response });
+          return {
+            success: true,
+            message: `Address ${args.address_input.id} has been deleted`
+          }
+        } 
+      } catch (apiError) {
+        logger.error(`Could not delete the Address ${args.address_input.id}`, { apiError });
+        throw new ApiError(`Could not delete the Address ${args.address_input.id}`, apiError);
+      }
+    
     },
     LasecCRMSaveComment: async (obj, args) => {
       return saveComment(args);

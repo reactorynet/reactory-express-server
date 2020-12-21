@@ -400,6 +400,41 @@ const Api = {
     }
 
   },
+  delete: async (uri: string, params: any, shape: any, auth: boolean = true) => {
+
+    try {
+      const resp = await DELETE(uri, params, auth).then();
+      const {
+        status, payload,
+      } = resp;
+
+      logger.debug(`API POST Response`, { status, payload });
+
+      if (payload && !status) {
+        if (shape && Object.keys(shape).length > 0) {
+          return om.merge(payload, shape);
+        } else {
+          return payload;
+        }
+      }
+
+      if (status === 'success') {
+        if (shape && Object.keys(shape).length > 0) {
+          return om.merge(payload, shape);
+        } else {
+          return payload;
+        }
+      } else {
+        logger.error(`API POST was not successful`, resp);
+        return { pagination: {}, ids: [], items: [] };
+      }
+    } catch (lasecApiError) {
+      logger.error(`API threw error`, lasecApiError);
+
+      throw lasecApiError;
+    }
+
+  },
   put: async (uri: string, params: any, shape: any): Promise<any> => {
     const resp = await PUT(uri, params).then();
     const {
