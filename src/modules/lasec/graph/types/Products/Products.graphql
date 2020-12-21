@@ -106,6 +106,8 @@ type Product {
   specialPrice: Float
 
   notes: String
+
+  availableCurrencies: [String]
 }
 
 type ProductQueryDetail {

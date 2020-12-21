@@ -260,7 +260,8 @@ const tableUiSchema: any = {
             displayAdditionalCurrencies: true,
             displayPrimaryCurrency: false,
             // currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
-            currenciesDisplayed: ['USD', 'ZAR'],
+            // currenciesDisplayed: ['USD', 'ZAR'],
+            currenciesDisplayed: '${rowData.availableCurrencies}',
             region: 'en-IN',
             uiSchema: {
               'ui:options': {
@@ -327,6 +328,7 @@ const tableUiSchema: any = {
         'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
         'products.[].productPricing.[]': 'data.[].productPricing.[]',
         'products.[].onSpecial': 'data.[].onSpecial',
+        'products.[].availableCurrencies.[]': 'data.[].availableCurrencies.[]',
       },
     },
   }
@@ -409,16 +411,18 @@ const gridUiSchemaGrid: any = {
               unit: '',
               icon: 'receipt'
             },
-            {
-              label: 'Price: From - ',
-              value: 'price',
-              isCents: true,
-              region: 'en-ZA',
-              currency: 'ZAR',
-              icon: ''
-            },
+            // {
+            //   label: 'Price: From - ',
+            //   value: 'price',
+            //   isCents: true,
+            //   region: 'en-ZA',
+            //   currency: 'ZAR',
+            //   icon: ''
+            // },
           ],
-          currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
+          // currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
+          currenciesDisplayed: '${data.availableCurrencies}',
+          showPricing: true,
           showSpecialPricing: true,
           hasPricingChart: true,
         },
@@ -469,6 +473,7 @@ const gridUiSchemaGrid: any = {
         'products.[].onSpecial': 'data.[].onSpecial',
         'products.[].currencyCode': 'data.[].currencyCode',
         'products.[].specialPrice': 'data.[].specialPrice',
+        'products.[].availableCurrencies.[]': 'data.[].availableCurrencies.[]',
       },
     },
   }

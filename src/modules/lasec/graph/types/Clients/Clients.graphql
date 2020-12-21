@@ -133,70 +133,70 @@ type LasecTitleLookupItem {
 }
 
 type LasecCustomerClassLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
 }
 
 type LasecFacultyListLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
 }
 
 type LasecCustomerTypeLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
 }
 
 type LasecLineManagerLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
 }
 
 type LasecCustomerRankingLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
 }
 
 type LasecCustomerRolesLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
 }
 
 type LasecCustomerJobTypesLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
 }
 
 type LasecCountryLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
 }
 
 type LasecRepCodeLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
 }
 
 type LasecCustomerFilterLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
@@ -237,7 +237,7 @@ type LasecAddress {
 
   building_description_id: String
   building_description: String
-  
+
   building_floor_number_id: String
   building_floor_description: String
 
@@ -246,7 +246,7 @@ type LasecAddress {
 
   country_id: String
   country_name: String
-  
+
   lat: String
   lng: String
 
@@ -254,7 +254,7 @@ type LasecAddress {
   last_edited_by: String
   map: Any
 
-  linked_companies_count: Int,  
+  linked_companies_count: Int,
   linked_companies: [LasecCRMCustomer]
 
   linked_clients_count: Int,
@@ -412,28 +412,28 @@ type CRMClientComment {
 
 input EditAddressInput {
   id: String
-  
+
   building_description_id: String
   building_floor_number_id: String
-  
+
   lat: String
   lng: String
 
   unit_number: String
   unit_name: String
-  
+
   street_name: String
   street_number: String
-  
+
   suburb: String
   city: String
   metro: String
-  
+
   province_id: String
   province: String
 
   postal_code: String
-  
+
   country_id: String
   country: String
 }
@@ -458,6 +458,8 @@ extend type Query {
   ): PagedCRMClient
 
   LasecGetClientDetail(id: String!): LasecCRMClient
+
+  LasecGetPersonTitleById(id: String): Any
 
   LasecGetCustomerList(
     search: String!
@@ -487,15 +489,15 @@ extend type Query {
   # LasecGetNewClient: LasecNewClient
   """
   Returns the currently cached object that is associated with the new client onboarding
-  screen.  The data can be used in the context of an existing client that is either 
+  screen.  The data can be used in the context of an existing client that is either
   unfinished or deactivated.
 
-  id - The id of the object to load.  if the id can be parsed as a number it will load 
-       the remote client object from the Lasec API.  This data is merged with the 
+  id - The id of the object to load.  if the id can be parsed as a number it will load
+       the remote client object from the Lasec API.  This data is merged with the
        new object id that is in the cache
 
-  reset - If true, the current data will be reset in the cache and a default new 
-       customer object is returned 
+  reset - If true, the current data will be reset in the cache and a default new
+       customer object is returned
 
   """
   LasecGetNewClient(id: String, reset: Boolean): LasecNewClient
@@ -503,13 +505,13 @@ extend type Query {
   LasecGetPlaceDetails(placeId: String!): GoogleAddressDetails
 
   """
-  Use this function to search for Addresses that is contained in the 
-  lasec api.  Accepts one required property "searchTerm", this will 
+  Use this function to search for Addresses that is contained in the
+  lasec api.  Accepts one required property "searchTerm", this will
   do a wildcard search against the api.
   """
   LasecGetAddress(searchTerm: String!, paging: PagingRequest): PagedLasecAddress
   """
-  Use this function to expand the address details for a 
+  Use this function to expand the address details for a
   particular id
   """
   LasecGetAddressById(id: String!): LasecAddress
