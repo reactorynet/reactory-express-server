@@ -191,6 +191,7 @@
     "@types/mongodb": "^3.3.11",
     "@types/mongoose": "^5.5.32",
     "@types/mysql": "^2.15.8",
+    "@types/node": "10.17.49",
     "@types/sha1": "^1.1.2",
     "@types/uuid": "^3.4.6",
     "@types/chart.js": "2.7.15",

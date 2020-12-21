@@ -31,6 +31,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 
 import { getLoggedIn360User, getCustomerDocuments } from './Helpers';
 import deepEquals from '@reactory/server-core/utils/compare';
+import LasecCRMClientJobDetails from '../forms/CRM/Client/JobDetail';
 
 const fieldMaps: any = {
   "fullName": "first_name",
@@ -419,11 +420,36 @@ export const getClient = async (params: any) => {
 };
 
 
-/**
- * 
+
+interface ClientUpdateInput {
+  clientId: string
+  clientStatus?: string
+  title: string
+  firstName: string
+  lastName: string
+  country: string
+  mobileNumber: string
+  officeNumber: string
+  alternateOfficeNumber: string
+  email: string
+  alternateEmail: string
+  accountType: string
+  repCode: string
+  jobTitle: string
+  clientDepartment: string
+  clientClass: string
+  ranking: string
+
+  faculty: string
+  customerType: string
+  lineManager: string
+  jobType: string
+};
+
+/** 
  * @param args client object
  */
-const updateClientDetail = async (args: any) => {
+const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
 
   logger.debug(`CompanyResolver.ts >> updateClientDetail(args)`, args);
 
@@ -2371,7 +2397,7 @@ export default {
     },
   },
   Mutation: {
-    LasecUpdateClientDetails: async (obj, args) => {
+    LasecUpdateClientDetails: async (obj, args: { clientInfo: ClientUpdateInput }) => {
       logger.debug(`UPDATING CLIENT DETAILS WITH ARGS ${args}`);
       return updateClientDetail(args);
     },
@@ -2464,7 +2490,12 @@ export default {
     LasecCreateNewClient: async (obj: any, args: { id: string, newClient: LasecNewClientInput }) => {
 
       let hash = Hash(`__LasecNewClient::${global.user._id}`);
-      const _newClient = await getCacheItem(hash).then();
+      const _newClient: LasecNewClientInput = await getCacheItem(hash).then();
+
+      logger.debug(`Current Data Stored In NewClientCache:\n ${JSON.stringify({ client_data: _newClient, newClientParam: args.newClient }, null, 2)}`)
+
+
+
       let response: NewClientResponse = {
         client: _newClient,
         success: true,
@@ -2495,20 +2526,39 @@ export default {
         if (args.id) {
           try {
             const updateArgs = {
-              ...args.newClient,
-              clientInfo: {
-                clientStatus: 'active',
-                clientId: existing_client_id,
-              },
+
             }
             //Patch the remote data with the data from the form input
-            await updateClientDetail(updateArgs);
+            await updateClientDetail({
+              clientInfo: {
+                clientId: existing_client_id,
+                accountType: _newClient.personalDetails.accountType,
+                alternateEmail: _newClient.contactDetails.alternateEmail,
+                email: _newClient.personalDetails.emailAddress,
+                country: _newClient.personalDetails.country,
+                title: _newClient.personalDetails.title,
+                alternateOfficeNumber: _newClient.contactDetails.alternateOfficeNumber,
+                clientDepartment: _newClient.jobDetails.clientDepartment,
+                clientClass: _newClient.jobDetails.customerClass,
+                repCode: _newClient.jobDetails.salesTeam,
+                customerType: _newClient.jobDetails.customerType,
+                faculty: _newClient.jobDetails.faculty,
+                firstName: _newClient.personalDetails.firstName,
+                jobTitle: _newClient.jobDetails.jobTitle,
+                jobType: _newClient.jobDetails.jobType,
+                lastName: _newClient.personalDetails.lastName,
+                lineManager: _newClient.personalDetails.lineManager,
+                mobileNumber: _newClient.contactDetails.mobileNumber,
+                officeNumber: _newClient.contactDetails.officeNumber,
+                ranking: _newClient.jobDetails.ranking                
+              }
+            });
             //toggle the active status
             await mysql(`
             UPDATE Customer SET
               activity_status = 'active',
               organisation_id = ${args.newClient.organization.id},
-              company_id = '${args.newClient.organization.id}'
+              company_id = '${args.newClient.customer.id}'
             WHERE customerid = ${existing_client_id}`, 'mysql.lasec360').then()
 
             response.client = args;
@@ -2614,8 +2664,8 @@ export default {
           const update_result = await mysql(`
             UPDATE Customer SET
               activity_status = 'active',
-              organisation_id = 0,
-              company_id = '${_newClient.organization.id}'  
+              organisation_id = ${_newClient.organization.id},
+              company_id = '${_newClient.customer.id}'  
             WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
           logger.debug(`🟢 Updated user activity status complete`, update_result);
 

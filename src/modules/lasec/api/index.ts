@@ -192,13 +192,13 @@ export function PUT(url, data, auth = true) {
 }
 
 interface LasecAPIFetchArgs {
-  headers: any,
-  credentials: string,
-  params: any
+  headers?: any,
+  credentials?: string,
+  params?: any
   [key: string]: any
 };
 
-export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = true, failed = false, attempt = 0) {
+export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = true, failed = false, attempt = 0): Promise<any> {
   // url = `${url}`;
   let absoluteUrl = `${config.SECONDARY_API_URL}/${url}`;
 
@@ -222,7 +222,9 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     kwargs.headers.Origin = 'http://localhost:3000';
     kwargs.headers['X-LASEC-AUTH'] = 'Token null';
     kwargs.headers['X-CSRFToken'] = '';
-  }
+  }  
+
+  kwargs.headers['User-Agent'] = `ReactoryServer`
 
   if (!kwargs.credentials) {
     kwargs.credentials = 'same-origin';
@@ -248,19 +250,31 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   -H 'Accept: */*' \\
   -H 'Origin: ${process.env.API_URI_ROOT}' \\
   -H 'Accept-Language: en-US,en;q=0.9,af;q=0.8,nl;q=0.7' \\
-  ${kwargs.body ? `--data-binary '${kwargs.body}' \\` : '' }  
+  ${kwargs.body ? `--data-binary '${kwargs.body}' \\` : '' }
   --compressed`);
 
-  const apiResponse = await fetch(absoluteUrl, kwargs).then();
+  let apiResponse = null;
+
+  try {  
+    apiResponse = await fetch(absoluteUrl, kwargs).then();
+  } catch (apiError) {
+    return {
+      status: 'failed',
+      payload: null,
+      message: `FETCH api threw error ${apiError}`
+    };
+  }
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
     try {
       //  apiResponse.text().then(response => logger.debug(`RESPONSE FROM API:: -  ${response}`));
       return apiResponse.json();
     } catch (jsonError) {
-      logger.error("JSON Error", jsonError);
-      apiResponse.text().then(text => {
-        logger.error(`Error Source: ${text}`);
-      });
+      logger.error("JSON Error From API", jsonError);
+      return {
+        status: 'failed',
+        payload: null,
+        message: `apiResponse.toJSON failed Api threw error ${jsonError.message}`
+      };      
     }
   } else {
     logger.warn(`Failed API call to ${absoluteUrl}`, { apiResponse, status: apiResponse.status || 'xxx', statusText: apiResponse.statusText });
