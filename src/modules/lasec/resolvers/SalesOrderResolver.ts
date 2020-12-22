@@ -303,7 +303,7 @@ const SalesOrderResolver = {
       try {
         logger.debug(`SalesOrderResovler.ts => LasecCertificateOfConformanceForSalesOrder`);
         const certificate = await LasecApi.SalesOrders.get_certificate_of_conformance(params.sales_order_id).then()
-        logger.debug(`Returning sales order certificate`, certificate);
+        logger.debug(`Returning sales order certificate ${certificate.id}`);
 
         return certificate;
 
@@ -372,13 +372,18 @@ const SalesOrderResolver = {
       try {
         logger.debug("Creating certificate of conformance", { params });
         const result = await LasecApi.SalesOrders.post_certificate_of_conformance(params.sales_order_id, params.certificate).then();
+
+        let certificate = {
+          ...params.certificate,
+        };
+
+        certificate.pdf_url = result.pdf_url;
+        certificate.id = result.id || `CERTIFICATE_OF_CONFORMANCE-${params.sales_order_id}`;
+          
         return {
           success: true,
           message: 'Certificate of conformance created',
-          certificate: {
-            ...params.certificate,
-            pdf_url: result.payload
-          }
+          certificate
         }
 
       } catch (error) {

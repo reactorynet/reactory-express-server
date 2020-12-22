@@ -1627,7 +1627,7 @@ const Api = {
           payment_terms
         };
 
-        logger.debug(`Certificate Response From API ${certificate_results.status}`, { certificate_results });
+        logger.debug(`Certificate Response From API:\n ${JSON.stringify(certificate_results, null, 2)}`);
 
         converted.products.forEach((product_item: any, index: number) => {
           product_item.id = `${sales_order_id}:${index}`
