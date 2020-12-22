@@ -188,6 +188,7 @@ declare namespace Reactory {
     key: string
     name: string
     getSetting: (key: String) => any
+    [key: string]: any
   }
 
   export interface IOrganization {

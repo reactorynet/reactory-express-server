@@ -60,6 +60,11 @@ export interface GetClientsParams {
 };
 
 const getClients = async (params: GetClientsParams) => {
+
+  let logged_in: Lasec360User = await getLoggedIn360User().then();
+
+  if (logged_in === null) throw new ApiError('No Valid Lasec User Logged In');
+
   const {
     search = "",
     paging = { page: 1, pageSize: 10 },
@@ -99,33 +104,43 @@ const getClients = async (params: GetClientsParams) => {
   };
 
   let _filter: any = {};
-
+  
   switch (filterBy) {
+    case "sales_team_id": {
+      _filter['sales_team_id'] = filter || logged_in.repId;
+      if (search.trim().length > 0) _filter.any_field = search;
+      break;
+    }
     case "country":
-    case "sales_team_id":
     case "company_on_hold":
     case "activity_status": {
       _filter[filterBy] = filter;
       if (search.trim().length > 0) _filter.any_field = search;
-      //_filter.any_field = search;
       break;
     }
-    default: {
-      _filter[filterBy] = search;
+    case "any_field":
+    default: {           
+      if (search.trim().length > 0) _filter.any_field = search;
+      
+      _filter['sales_team_id'] = logged_in.repId;
       break;
     }
-  }
-
+  }  
   // NOTE
   // LEAVING THE BELOW FILTER IN PLACE SEEMS TO RESULT IN NO CLIENTS BEING RETURNED
 
-  // if (typeof repCode === 'string') {
-  //   _filter.sales_team_id = repCode;
-  // }
+  if (typeof repCode === 'string') {
+     _filter.sales_team_id = repCode;
+  }
 
-  // if (typeof repCode === 'array' && repCode.length > 0) {
-  //   _filter.sales_team_ids = repCode;
-  // }
+  if (typeof repCode === 'array' && repCode.length > 0) {
+     _filter.sales_team_ids = repCode;
+  }
+
+  if (!_filter.sales_team_id && !_filter.sales_team_ids) {
+    _filter.sales_team_id = logged_in.repId
+  }
+
 
   if (isString(search) === false || search.length < 3 && filter === undefined) return {
     paging: pagingResult,
@@ -163,9 +178,9 @@ const getClients = async (params: GetClientsParams) => {
   }
 
   logger.debug(`Sending query to lasec API with filter`, { filter: _filter })
-  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page }, ordering }).then();
+  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { enabled: true,  page_size: paging.pageSize || 10, current_page: paging.page }, ordering }).then();
 
-  let ids = [];
+  let ids: any[] = [];
 
   if (isArray(clientResult.ids) === true) {
     ids = [...clientResult.ids];
@@ -181,7 +196,7 @@ const getClients = async (params: GetClientsParams) => {
 
   logger.debug(`Loading (${ids.length}) client ids`);
 
-  const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids } });
+  const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids }, ordering: {  }, pagination: { enabled: false, current_page: paging.page, page_size: paging.pageSize } });
   logger.debug(`Fetched Expanded View for (${clientDetails.items.length}) Clients from API`);
   let clients = [...clientDetails.items];
   clients = clients.map(client => {
@@ -1979,7 +1994,7 @@ export default {
     }
   },
   Query: {
-    LasecGetClientList: async (obj, args) => {
+    LasecGetClientList: async (obj: any, args: GetClientsParams) => {      
       return getClients(args);
     },
     LasecGetClientDetail: async (obj, args) => {

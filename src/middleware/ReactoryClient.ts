@@ -15,7 +15,6 @@ const bypassUri = [
 
 const ReactoryClientAuthenticationMiddleware = (req: any, res: any, next: Function) => {
 
-  debugger
 
   let clientId = req.headers['x-client-key'];
   let clientPwd = req.headers['x-client-pwd'];
@@ -30,9 +29,7 @@ const ReactoryClientAuthenticationMiddleware = (req: any, res: any, next: Functi
   if(isNil(clientPwd) === true) clientPwd = req.params.secret;
   if(isNil(clientPwd) === true) clientPwd = query.secret;  
   if(isNil(clientPwd) === true) clientPwd = query['x-client-pwd'];
-
   
-
   logger.debug(`ReactoryClientAuthenticationMiddleware:: Client key: [${clientId}], Client Token: [${clientPwd}], Original Url: ${req.originalUrl}`, { query: req.query, params: req.params, method: req.method });
 
   let bypass = false;

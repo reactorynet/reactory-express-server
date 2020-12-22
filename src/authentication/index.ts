@@ -221,10 +221,11 @@ class AuthConfig {
       secretOrKey: jwtSecret,
     }
 
-    static JwtAuth = (payload, done) => {      
+  static JwtAuth = (payload: any, done: Function) => {      
       logger.debug(`JWT Auth executing`, payload);
       if (payload.userId === '-1') {
         global.user = {
+          _id: "ANON",
           id: -1,
           firstName: 'Guest',
           lastName: 'User',

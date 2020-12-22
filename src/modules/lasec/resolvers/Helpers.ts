@@ -184,7 +184,10 @@ export const LoggedInLasecUserHashKey = ($partner: Reactory.IReactoryClientDocum
 
 export const getLoggedIn360User: Function = async function (skip_cache: boolean = false): Promise<Lasec360User> {
   const { user } = global;
-
+  if (user._id === "ANON") {
+    logger.debug("🚨 Anon User Cannot Retrieve Authentications");
+    return null;
+  }
   if (user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
   const _authentication = user.getAuthentication("lasec");
 
