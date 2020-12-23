@@ -23,6 +23,15 @@ export const EditUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       selectSchemaId: 'display',
+      buttonVariant: 'outlined',
+      style: {
+        top: '10px'
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      },
     },
     style: {
       marginTop: '16px',

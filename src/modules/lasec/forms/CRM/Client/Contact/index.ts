@@ -16,7 +16,16 @@ export const displayUiSchema: any = {
       variant: 'button',
       buttonTitle: 'Edit',
       activeColor: 'primary',
-      selectSchemaId: 'edit'
+      selectSchemaId: 'edit',
+      buttonVariant: 'outlined',
+      style: {
+        top: '10px'
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      }
     },
     style: {
       marginTop: '16px',
@@ -182,11 +191,15 @@ const editUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       selectSchemaId: 'display',
+      buttonVariant: 'outlined',
       style: {
-        position: 'absolute',
-        right: '10px',
-        top: '-3px'
-      }
+        top: 0
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      },
     },
     style: {
       marginTop: '16px',
@@ -344,7 +357,17 @@ export const newConfirmSchema: any = {
       variant: 'button',
       buttonTitle: 'Edit',
       activeColor: 'primary',
-      selectSchemaId: 'edit'
+      selectSchemaId: 'edit',
+      buttonVariant: 'outlined',
+      style: {
+        top: '10px'
+
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      }
     },
     style: {
       marginTop: '16px',

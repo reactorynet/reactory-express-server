@@ -16,6 +16,16 @@ const uiSchema: Reactory.IUISchema = {
         buttonTitle: 'Edit',
         activeColor: 'primary',
         selectSchemaId: 'edit',
+        buttonVariant: 'outlined',
+        style: {
+          top: '10px'
+
+        },
+        buttonStyle: {
+          borderWidth: '2px',
+          fontWeight: 'bold',
+          fontSize: '1em'
+        }
       },
       style: {
         marginTop: '16px',
@@ -70,7 +80,7 @@ const uiSchema: Reactory.IUISchema = {
             color: '#FF9901',
             margingRight: '4px'
           },
-  
+
         },
         $iconProps: 'lasec-crm.ClientStatusIconFormatFunction@1.0.0',
         titleProps: {

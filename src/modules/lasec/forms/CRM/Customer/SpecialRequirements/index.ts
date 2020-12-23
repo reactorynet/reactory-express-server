@@ -35,6 +35,15 @@ const displayUiSchema: any = {
       buttonTitle: 'Edit',
       activeColor: 'primary',
       selectSchemaId: 'edit',
+      buttonVariant: 'outlined',
+      style: {
+        top: '10px'
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      }
     },
     style: {
       marginTop: '16px',
@@ -109,11 +118,20 @@ const editUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       selectSchemaId: 'display',
+      buttonVariant: 'outlined',
       style: {
-        position: 'absolute',
-        right: '10px',
-        top: '-3px'
-      }
+        top: 0
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      },
+      // style: {
+      //   position: 'absolute',
+      //   right: '10px',
+      //   top: '-3px'
+      // }
     },
     style: {
       marginTop: '16px',
@@ -139,7 +157,7 @@ const editUiSchema: any = {
     },
     {
       specialRequirements: { sm: 12 },
-      style: { padding: '40px 32px 32px' }
+      style: { padding: '48px 32px 32px' }
     }
   ],
   view: {

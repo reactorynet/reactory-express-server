@@ -16,7 +16,16 @@ const displayUiSchema: any = {
       variant: 'button',
       buttonTitle: 'Edit',
       activeColor: 'primary',
-      selectSchemaId: 'edit'
+      selectSchemaId: 'edit',
+      buttonVariant: 'outlined',
+      style: {
+        top: '10px'
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      }
     },
     style:{
       marginTop: '16px',
@@ -30,11 +39,11 @@ const displayUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { md: 12 },
     },
     {
       comments: { md: 12 },
-      newComment: { md: 12 },                
+      newComment: { md: 12 },
     }
   ],
   view: {
@@ -46,7 +55,7 @@ const displayUiSchema: any = {
         position: 'relative'
       },
     }
-  },  
+  },
   comments: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -59,7 +68,7 @@ const displayUiSchema: any = {
         },
         {
           title: "Comment", field: "size"
-        },        
+        },
       ],
       options: {
         grouping: false,
@@ -71,10 +80,10 @@ const displayUiSchema: any = {
   },
   newComment: {
     'ui:field': 'GridLayout',
-    'ui:grid-layout': [      
+    'ui:grid-layout': [
       {
-        comment: { md: 12, sm: 12 },        
-      },      
+        comment: { md: 12, sm: 12 },
+      },
     ],
     comment: {
       'ui:options': {
@@ -83,7 +92,7 @@ const displayUiSchema: any = {
           multiline: true,
           variant: 'outlined'
         }
-      }      
+      }
     }
   },
 };
@@ -97,17 +106,32 @@ const editUiSchema: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'CANCEL',
+      activeColor: 'secondary',
+      selectSchemaId: 'display',
+      buttonVariant: 'outlined',
+      style: {
+        top: 0
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      },
+    },
     showSubmit: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { md: 12 },      
+      view: { md: 12 },
     },
     {
       comments: { md: 12 },
-      newComment: { md: 12 },                
+      newComment: { md: 12 },
     }
   ],
   view: {
@@ -119,7 +143,7 @@ const editUiSchema: any = {
         position: 'relative'
       },
     },
-  },  
+  },
   comments: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -133,7 +157,7 @@ const editUiSchema: any = {
         },
         {
           title: "Comment", field: "size"
-        },        
+        },
       ],
       options: {
         grouping: false,
@@ -145,10 +169,10 @@ const editUiSchema: any = {
   },
   newComment: {
     'ui:field': 'GridLayout',
-    'ui:grid-layout': [      
+    'ui:grid-layout': [
       {
-        comment: { md: 12, sm: 12 },        
-      },      
+        comment: { md: 12, sm: 12 },
+      },
     ],
     comment: {
       'ui:options': {
@@ -182,9 +206,9 @@ const commentSchema: Reactory.ISchema = {
       type: "string",
       format: "date",
       title: "when"
-    },    
+    },
   }
-}; 
+};
 
 const schema: Reactory.ISchema = {
   type: "object",
@@ -192,7 +216,7 @@ const schema: Reactory.ISchema = {
     id: {
       type: "string",
       title: "Client ID"
-    },    
+    },
   }
 };
 
@@ -231,7 +255,7 @@ const LasecCRMCustomerOrganizationDetails: Reactory.IReactoryForm = {
     },
   ],
   defaultFormValue: {
-    
+
   },
 
 };

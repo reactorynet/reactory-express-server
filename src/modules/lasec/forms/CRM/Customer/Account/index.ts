@@ -33,7 +33,16 @@ const displayUiSchema: any = {
       variant: 'button',
       buttonTitle: 'Edit',
       activeColor: 'primary',
-      selectSchemaId: 'edit'
+      selectSchemaId: 'edit',
+      buttonVariant: 'outlined',
+      style: {
+        top: '10px'
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      }
     },
     style: {
       marginTop: '16px',
@@ -138,8 +147,16 @@ const editUiSchema: any = {
       variant: 'button',
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
-      buttonVariant: "contained",
-      selectSchemaId: 'display'
+      selectSchemaId: 'display',
+      buttonVariant: 'outlined',
+      style: {
+        top: 0
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      },
     },
     showSchemaSelectorInToolbar: false,
     showSubmit: true,

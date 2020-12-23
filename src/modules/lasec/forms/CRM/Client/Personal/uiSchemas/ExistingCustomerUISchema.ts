@@ -14,9 +14,14 @@ const uiSchema: Reactory.IUISchema = {
         buttonTitle: 'CANCEL',
         activeColor: 'secondary',
         selectSchemaId: 'display',
+        buttonVariant: 'outlined',
         style: {
-          'justifyContent': "flex-end",
-          'display': "flex",
+          top: 0
+        },
+        buttonStyle: {
+          borderWidth: '2px',
+          fontWeight: 'bold',
+          fontSize: '1em'
         }
       },
       style: {
@@ -64,7 +69,7 @@ const uiSchema: Reactory.IUISchema = {
         multiSelect: false,
         query: `query LasecGetPersonTitles {
           LasecGetPersonTitles {
-            id          
+            id
             title
           }
         }`,
@@ -76,7 +81,7 @@ const uiSchema: Reactory.IUISchema = {
         selectProps: {
           style: {
             marginTop: '1.3rem',
-  
+
           }
         },
         labelStyle: {

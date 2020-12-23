@@ -17,6 +17,16 @@ export const displayUiSchema: any = {
       buttonTitle: 'Edit',
       activeColor: 'primary',
       selectSchemaId: 'edit',
+      buttonVariant: 'outlined',
+      style: {
+        top: '10px'
+
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      }
     },
     style: {
       marginTop: '16px',
@@ -311,11 +321,20 @@ const editUiSchema: any = {
       buttonTitle: 'CANCEL',
       activeColor: 'secondary',
       selectSchemaId: 'display',
+      buttonVariant: 'outlined',
       style: {
-        position: 'absolute',
-        right: '10px',
-        top: '-3px'
-      }
+        top: 0
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      },
+      // style: {
+      //   position: 'absolute',
+      //   right: '10px',
+      //   top: '-3px'
+      // }
     },
     style: {
       marginTop: '16px',
@@ -626,7 +645,16 @@ export const ConfirmUiSchema: any = {
       variant: 'button',
       buttonTitle: 'Edit',
       activeColor: 'primary',
-      selectSchemaId: 'edit'
+      selectSchemaId: 'edit',
+      buttonVariant: 'outlined',
+      style: {
+        top: 0
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      },
     },
     style: {
       marginTop: '16px',
@@ -660,8 +688,6 @@ export const ConfirmUiSchema: any = {
       style: { padding: '25px 32px 0 32px' }
     }
   ],
-
-
   jobTitle: {
     'ui:graphql': {
       name: 'LasecGetCustomerJobTypeById',
@@ -699,7 +725,6 @@ export const ConfirmUiSchema: any = {
       }
     }
   },
-
   jobType: {
 
     'ui:widget': 'LabelWidget',
@@ -722,9 +747,6 @@ export const ConfirmUiSchema: any = {
       }
     }
   },
-
-  
-
   customerType: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -905,7 +927,6 @@ export const ConfirmUiSchema: any = {
       }
     }
   },
-
 };
 
 const newUiSchema: any = {

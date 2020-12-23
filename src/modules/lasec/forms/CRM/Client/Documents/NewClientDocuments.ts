@@ -137,7 +137,6 @@ export const NewUiSchema: any = {
   },
 };
 
-
 export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
   id: 'LasecCRMNewClientDocuments',
   uiFramework: 'material',
