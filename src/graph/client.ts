@@ -35,7 +35,6 @@ export const clientFor = (user: Reactory.IUser, partner: Reactory.IPartner) => {
     link: setContext((_, { headers }) => {
       // get the authentication token from local storage if it exists  
       // return the headers to the context so httpLink can read them
-      debugger
       const token = AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(user));
       return {
         headers: {
