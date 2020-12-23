@@ -432,24 +432,32 @@ const SalesOrderResolver = {
       try {
 
         const result = await LasecApi.SalesOrders.post_commercial_invoice(params.sales_order_id, params.invoice).then();
+
+        if (result.error) {
+          return {
+            success: false, 
+            message: `Could not create the commercial invoice [${result.error.message}]`,
+            commercial_invoice: null
+          }
+        }
+
         return {
           success: true,
           message: 'Certificate of conformance created',
           commercial_invoice: {
             ...params.invoice,
-            pdf_url: result.payload
+            pdf_url: result.pdf_url
           }
         }
 
       } catch (error) {
-
+        logger.error('Error occured while creating the Commercial Invoice')
         return {
           success: false,
           message: error.message,
-          invoice: params.invoice
+          commercial_invoice: params.invoice
         }
       }
-
     },
 
     /***

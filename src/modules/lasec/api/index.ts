@@ -406,7 +406,7 @@ const Api = {
         }
       } else {
         logger.error(`API POST was not successful`, resp);
-        return { pagination: {}, ids: [], items: [] };
+        return { pagination: {}, ids: [], items: [], error: resp };
       }
     } catch (lasecApiError) {
       logger.error(`API threw error`, lasecApiError);
@@ -2179,11 +2179,10 @@ const Api = {
             return products.map((certificate_item: any, index: number) => {
 
 
-
               return {
                 salesorderline: certificate_item.item_number || index,
                 salesorder: sales_order_id,
-                stockcode: certificate_item.stock_code,
+                stockcode: certificate_item.id ||certificate_item.stock_code,
                 description: certificate_item.description,
                 quantity: certificate_item.qty,
                 unit_price: certificate_item.unit_price
@@ -2213,9 +2212,9 @@ const Api = {
       input_data.header.consignee_address = format_address('consignee', commercial_invoice);
 
       try {
-        logger.debug(`Sending certificate input to API`, { input_data });
-        let invoice_result = await Api.post(`api/cert_of_conf/${sales_order_id}`, input_data, undefined, true).then();
-        logger.debug(`🔢 Invoice Result`, { certificate_result: invoice_result });
+        logger.debug(`Sending invoice input to API`, { input_data });
+        let invoice_result = await Api.post(`api/com_invoice/${sales_order_id}`, input_data, undefined, true).then();
+        logger.debug(`🔢 Invoice Result`, {  invoice_result });
         return {
           id: sales_order_id,
           pdf_url: invoice_result.url,
