@@ -49,15 +49,7 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
               'formContext.$formData.id': 'formData.id'
             },
           },
-          {
-            componentFqn: 'lasec-crm.LasecCRMCustomerAddress',
-            // componentProps: { mode: 'edit', uiSchemaKey: 'display' },
-            componentProps: { mode: 'new', uiSchemaKey: 'new' },
-            componentPropsMap: {
-              'formContext.$formData': 'formData',
-              'formContext.$formData.id': 'formData.id'
-            },
-          },
+
           {
             componentFqn: 'lasec-crm.LasecCRMViewClientDocuments',
             componentProps: { mode: 'edit', uiSchemaKey: 'display' },
@@ -83,6 +75,15 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
           'formContext.$formData.id': 'formData.id'
         },
         additionalComponents: [
+          {
+            componentFqn: 'lasec-crm.LasecCRMCustomerAddress',
+            // componentProps: { mode: 'edit', uiSchemaKey: 'display' },
+            componentProps: { mode: 'new', uiSchemaKey: 'new' },
+            componentPropsMap: {
+              'formContext.$formData': 'formData',
+              'formContext.$formData.id': 'formData.id'
+            },
+          },
           {
             componentFqn: 'lasec-crm.LasecCRMSpecialRequirements',
             componentProps: { mode: 'edit', uiSchemaKey: 'display' },
