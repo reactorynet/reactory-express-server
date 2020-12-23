@@ -427,7 +427,7 @@ const SalesOrderResolver = {
     /***
      * 
      */
-    LasecCreateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
+    LasecCreateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
 
       try {
 
@@ -435,7 +435,7 @@ const SalesOrderResolver = {
         return {
           success: true,
           message: 'Certificate of conformance created',
-          certificate: {
+          commercial_invoice: {
             ...params.invoice,
             pdf_url: result.payload
           }
@@ -455,7 +455,7 @@ const SalesOrderResolver = {
     /***
      * 
      */
-    LasecUpdateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
+    LasecUpdateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
       try {
 
         const result = await LasecApi.SalesOrders.put_commercial_invoice(params.sales_order_id, params.invoice).then();

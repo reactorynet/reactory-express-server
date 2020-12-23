@@ -18,7 +18,7 @@ import { jzon } from '../../../utils/validators';
 
 import LasecDatabase from '../database';
 import LasecQueries from '../database/queries';
-import { execql, execml } from 'graph/client';
+import { execql, execml } from '@reactory/server-core/graph/client';
 
 import {
   getCacheItem,
@@ -202,7 +202,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   // url = `${url}`;
   let absoluteUrl = `${config.SECONDARY_API_URL}/${url}`;
 
-  const kwargs : LasecAPIFetchArgs = fethArguments || {};
+  const kwargs: LasecAPIFetchArgs = fethArguments || {};
   if (!kwargs.headers) {
     kwargs.headers = {};
     kwargs.headers['Content-type'] = 'application/json; charset=UTF-8';
@@ -222,7 +222,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     kwargs.headers.Origin = 'http://localhost:3000';
     kwargs.headers['X-LASEC-AUTH'] = 'Token null';
     kwargs.headers['X-CSRFToken'] = '';
-  }  
+  }
 
   kwargs.headers['User-Agent'] = `ReactoryServer`
 
@@ -250,12 +250,12 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   -H 'Accept: */*' \\
   -H 'Origin: ${process.env.API_URI_ROOT}' \\
   -H 'Accept-Language: en-US,en;q=0.9,af;q=0.8,nl;q=0.7' \\
-  ${kwargs.body ? `--data-binary '${kwargs.body}' \\` : '' }
+  ${kwargs.body ? `--data-binary '${kwargs.body}' \\` : ''}
   --compressed`);
 
   let apiResponse = null;
 
-  try {  
+  try {
     apiResponse = await fetch(absoluteUrl, kwargs).then();
   } catch (apiError) {
     return {
@@ -274,7 +274,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
         status: 'failed',
         payload: null,
         message: `apiResponse.toJSON failed Api threw error ${jsonError.message}`
-      };      
+      };
     }
   } else {
     logger.warn(`Failed API call to ${absoluteUrl}`, { apiResponse, status: apiResponse.status || 'xxx', statusText: apiResponse.statusText });
@@ -822,7 +822,7 @@ const Api = {
         status, payload,
       } = resp;
 
-      logger.debug(`API REPONSE  Get Address`, {resp})
+      logger.debug(`API REPONSE  Get Address`, { resp })
 
       if (payload && status === undefined) return payload;
 
@@ -1692,7 +1692,7 @@ const Api = {
      * @param certificate 
      */
     post_certificate_of_conformance: async (sales_order_id: string, certificate: any): Promise<any> => {
-            
+
       const input_data: any = om.merge(certificate, {
         'id': 'header.salesorder',
         'date_of_issue': [
@@ -2104,14 +2104,127 @@ const Api = {
       }
     },
 
-    post_commercial_invoice: async (sales_order_id: string, certificate: any): Promise<any> => {
+    post_commercial_invoice: async (sales_order_id: string, commercial_invoice: any): Promise<any> => {
 
-      
+      /**
+       * 
+       * 
+       POST: https://bapi.lasec.co.za/api/com_invoice/{salesordernumber} aka https://bapi.lasec.co.za/api/com_invoice/484584
+      Payload will be:
+      $post = array(
+          "header" => array(
+              "salesorder" => "000000000484584",
+              "date_of_issue" => "2020-01-28",
+              "ucr_number" => "N/A",
+              "date_of_expiry" => "2020-02-28",
+              "date_of_expiry_na" => "N",
+              "customer_po_number" => "405047",
+              "inco_terms" => "6",
+              "named_place" => "7",
+              "payment_terms" => "30 DAYS NETT",
+              "reason_for_export" => "SALE",
+              "bill_to_address" => "PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
+              "ship_to_address" => "Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa",
+              "consignee_address" => "Con Address",
+              "consignee_contact" => "Con Contact",
+              "notify_contact1" => "Not Contact 1",
+              "notify_address1" => "Not Address 1",
+              "notify_contact2" => "Not Contact 2",
+              "notify_address2" => "Not Address 2",
+              "comments" => "The Comments",
+              "comments_bottom" => "The Comments Bottom",
+              "currency" => "USD",
+              "freight" => "7.00",
+              "insurance" => "7.00",
+              "deposit" => "7.00",
+              "discount" => "7.00",
+              "vat" => "N",
+              "SysproCompany" => "SysproCompany2",
+              "staffuserid" => 122,
+              "created" => "2020-01-28"
+          ),
+          "detail" => array(array(
+              "salesorderline" => 1,
+              "salesorder" => "000000000484584",
+              "stockcode" => "ABC",
+              "description" => "BLA BLA BLA",
+              "quantity" => "51",
+              "unit_price" => "61.00"
+          )));
+       * 
+       */
 
-      return {
-        id: sales_order_id,
-        pdf_url: null,
-      };
+
+      const input_data: any = om.merge(commercial_invoice, {
+        'id': 'header.salesorder',
+        'date_of_issue': [
+          { key: 'header.date_of_issue', transform: safe_date_transform, default: "" },
+          { key: 'header.certification', transform: safe_date_transform, default: "" }
+        ],
+        'date_of_expiry': { key: 'header.date_of_expiry', transform: safe_date_transform, default: () => { "" } },
+        'date_of_expiry_na': { key: 'header.date_of_expiry_na', transform: (value: Boolean) => { value ? "Y" : "N" }, default: 'N' },
+        'po_number': { key: 'header.customer_po_number', transform: (v: any) => `${v ? v : "NOT SET"}`, default: "NOT SET" },
+        'document_number': { key: 'header.ucr_number', transform: (v: any) => { return v ? v : 'N/A' }, default: "N/A" },
+        'inco_terms': 'header.inco_terms',
+        'final_destination': 'header.named_place',
+        'terms': 'header.payment_terms',
+        'export_reason': 'header.reason_for_export',
+        'consignee_contact': 'header.consignee_contact',
+        'consignee_number': 'header.consignee_extra_info',
+        'comments': 'header.comments',
+        'notes': 'header.comments_bottom',
+        'products': {
+          key: 'detail',
+          transform: (products: any[]) => {
+            return products.map((certificate_item: any, index: number) => {
+
+
+
+              return {
+                salesorderline: certificate_item.item_number || index,
+                salesorder: sales_order_id,
+                stockcode: certificate_item.stock_code,
+                description: certificate_item.description,
+                quantity: certificate_item.qty,
+                unit_price: certificate_item.unit_price
+              };
+
+            })
+          }
+        }
+      });
+
+      const format_address = (fieldname: string = 'bill_to', document: any) => {
+
+        const sections = {
+          company: document[`${fieldname}_company`] || "",
+          street_address: document[`${fieldname}_street_address`] || "",
+          suburb: document[`${fieldname}_suburb`] || "",
+          city: document[`${fieldname}_city`] || "",
+          province: document[`${fieldname}_province`] || "",
+          country: document[`${fieldname}_country`] || "",
+        }
+
+        return `${sections.company}${sections.company !== "" ? ', ' : ''}${sections.street_address}${sections.street_address !== "" ? ', ' : ''}${sections.suburb}${sections.suburb !== "" ? ', ' : ''}${sections.city}${sections.city !== "" ? ', ' : ''}${sections.province}${sections.province !== "" ? ', ' : ''}${sections.country}`;
+      }
+
+      input_data.header.bill_to_address = format_address('bill_to', commercial_invoice);
+      input_data.header.ship_to_address = format_address('ship_to', commercial_invoice);
+      input_data.header.consignee_address = format_address('consignee', commercial_invoice);
+
+      try {
+        logger.debug(`Sending certificate input to API`, { input_data });
+        let invoice_result = await Api.post(`api/cert_of_conf/${sales_order_id}`, input_data, undefined, true).then();
+        logger.debug(`🔢 Invoice Result`, { certificate_result: invoice_result });
+        return {
+          id: sales_order_id,
+          pdf_url: invoice_result.url,
+        };
+      } catch (create_error) {
+        logger.debug("Could not create the certificate due to an error", { create_error });
+        throw create_error;
+      }
+
     },
 
     put_commercial_invoice: async (sales_order_id: string, certificate: any): Promise<any> => {
@@ -2454,11 +2567,78 @@ NB: note the addition of the detail_id for the line been updated
 
     post_packing_list: async (sales_order_id: string, certificate: any): Promise<any> => {
 
-      return {
-        id: sales_order_id,
-        pdf_url: null,
-      };
+      const input_data: any = om.merge(certificate, {
+        'id': 'header.salesorder',
+        'date_of_issue': [
+          { key: 'header.date_of_issue', transform: safe_date_transform, default: "" },
+          { key: 'header.certification', transform: safe_date_transform, default: "" }
+        ],
+        'date_of_expiry': { key: 'header.date_of_expiry', transform: safe_date_transform, default: () => { "" } },
+        'date_of_expiry_na': { key: 'header.date_of_expiry_na', transform: (value: Boolean) => { value ? "Y" : "N" }, default: 'N' },
+        'po_number': { key: 'header.customer_po_number', transform: (v: any) => `${v ? v : "NOT SET"}`, default: "NOT SET" },
+        'document_number': { key: 'header.ucr_number', transform: (v: any) => { return v ? v : 'N/A' }, default: "N/A" },
+        'inco_terms': 'header.inco_terms',
+        'final_destination': 'header.named_place',
+        'terms': 'header.payment_terms',
+        'export_reason': 'header.reason_for_export',
+        'consignee_contact': 'header.consignee_contact',
+        'consignee_number': 'header.consignee_extra_info',
+        'comments': 'header.comments',
+        'products': {
+          key: 'detail',
+          transform: (products: any[]) => {
+            return products.map((certificate_item: any, index: number) => {
 
+
+
+              return {
+                salesorderline: certificate_item.item_number || index,
+                salesorder: sales_order_id,
+                stockcode: certificate_item.stock_code,
+                description: certificate_item.description,
+                quantity: certificate_item.qty,
+                date_of_manufacture: `${safe_date_transform(certificate_item.date_of_manufacture)}`,
+                date_of_manufacture_na: certificate_item.date_of_manufacture_na === true ? "Y" : "N",
+                lot_no: certificate_item.lot_no,
+                date_of_expiry: `${safe_date_transform(certificate_item.date_of_expiry)}`,
+                date_of_expiry_na: certificate_item.date_of_expiry_na === true ? "Y" : "N",
+              };
+
+            })
+          }
+        }
+      });
+
+      const format_address = (fieldname: string = 'bill_to', document: any) => {
+
+        const sections = {
+          company: document[`${fieldname}_company`] || "",
+          street_address: document[`${fieldname}_street_address`] || "",
+          suburb: document[`${fieldname}_suburb`] || "",
+          city: document[`${fieldname}_city`] || "",
+          province: document[`${fieldname}_province`] || "",
+          country: document[`${fieldname}_country`] || "",
+        }
+
+        return `${sections.company}${sections.company !== "" ? ', ' : ''}${sections.street_address}${sections.street_address !== "" ? ', ' : ''}${sections.suburb}${sections.suburb !== "" ? ', ' : ''}${sections.city}${sections.city !== "" ? ', ' : ''}${sections.province}${sections.province !== "" ? ', ' : ''}${sections.country}`;
+      }
+
+      input_data.header.bill_to_address = format_address('bill_to', certificate);
+      input_data.header.ship_to_address = format_address('ship_to', certificate);
+      input_data.header.consignee_address = format_address('consignee', certificate);
+
+      try {
+        logger.debug(`Sending certificate input to API`, { input_data });
+        let certificate_result = await Api.post(`api/cert_of_conf/${sales_order_id}`, input_data, undefined, true).then();
+        logger.debug(`🔢Certificate Result`, { certificate_result });
+        return {
+          id: sales_order_id,
+          pdf_url: certificate_result.url,
+        };
+      } catch (create_error) {
+        logger.debug("Could not create the certificate due to an error", { create_error });
+        throw create_error;
+      }
     },
 
     put_packing_list: async (sales_order_id: string, certificate: any): Promise<any> => {

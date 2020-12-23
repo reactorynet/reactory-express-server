@@ -689,11 +689,11 @@ extend type Mutation {
   """
   Create Commercial Invoice
   """
-  LasecCreateCommericalInvoice(sales_order_id: String!, invoice: LasecCommercialInvoiceInput): LasecCommercialInvoiceResponse
+  LasecCreateCommercialInvoice(sales_order_id: String!, invoice: LasecCommercialInvoiceInput): LasecCommercialInvoiceResponse
   """
   Update Existing Commercial Invoice
   """
-  LasecUpdateCommericalInvoice(sales_order_id: String!, invoice: LasecCommercialInvoiceInput): LasecCommercialInvoiceResponse
+  LasecUpdateCommercialInvoice(sales_order_id: String!, invoice: LasecCommercialInvoiceInput): LasecCommercialInvoiceResponse
 
   """
   Create Packing List
