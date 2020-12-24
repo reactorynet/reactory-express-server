@@ -201,6 +201,12 @@ type LasecCustomerFilterLookupItem {
   name: String
   description: String
 }
+type LasecCurrencyFilterLookupItem {
+  id: String
+  key: String
+  name: String
+  description: String
+}
 
 
 
@@ -363,6 +369,13 @@ input ClientUpdateInput {
   lineManager: String
   jobType: String
 
+  customerCompanyName: String
+  customerTradingName: String
+  customerTradingCurrency: String
+  customerDescription: String
+  customerRegistrationNumber: String
+  customerTaxNumber: String
+
 }
 
 input AddressFields {
@@ -484,6 +497,7 @@ extend type Query {
   LasecGetCustomerCountries: [LasecCountryLookupItem]
   LasecGetCustomerRepCodes: [LasecRepCodeLookupItem]
   LasecGetCustomerFilterLookup(filterBy: String): [LasecCustomerFilterLookupItem]
+  LasecGetCurrencyLookup: [LasecCurrencyFilterLookupItem]
   LasecGetCustomerDocuments(id: String, uploadContexts: [String], paging: PagingRequest): PagedLasecDocument
   LasecGetPersonTitles: [LasecTitleLookupItem]
   LasecGetPersonTitleById(id: String): LasecTitleLookupItem

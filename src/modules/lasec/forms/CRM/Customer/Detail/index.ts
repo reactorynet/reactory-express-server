@@ -266,7 +266,34 @@ const editUiSchema: any = {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       title: 'Customer Status',
-      ...labelProps
+      readOnly: true,
+      format: '${formData}',
+      variant: 'subtitle1',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '220px',
+          color: "#ffffff",
+          fontWeight: 'bold'
+        }
+      },
+      bodyProps: {
+        style: {
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }
+      },
+      icon: 'fiber_manual_record',
+      iconPosition: 'inline',
+      iconProps: {
+        style: {
+          color: '#FF9901',
+          margingRight: '4px'
+        },
+
+      },
+      $iconProps: 'lasec-crm.CustomerStatusIconFormatFunction@1.0.0',
+
     }
   },
   registeredCompanyName: {
@@ -310,19 +337,97 @@ const editUiSchema: any = {
     }
   },
   tradingCurrency: {
-    'ui:widget': 'LabelWidget',
+    'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
-      title: 'Trading Currency',
-      ...labelProps
-    }
+      multiSelect: false,
+      query: `query LasecGetCurrencyLookup {
+        LasecGetCurrencyLookup {
+          id
+          name
+        }
+      }`,
+      resultItem: 'LasecGetCurrencyLookup',
+      resultsMap: {
+        'LasecGetCurrencyLookup.[].id': ['[].key', '[].value'],
+        'LasecGetCurrencyLookup.[].name': '[].label',
+      },
+      selectProps: {
+        style: {
+          marginTop: '1.3rem',
+        }
+      },
+      labelStyle: {
+        transform: 'none',
+        fontWeight: 'bold',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        padding: 0
+      }
+    },
   },
   description: {
-    'ui:widget': 'LabelWidget',
     'ui:options': {
-      title: 'Description',
-      ...labelProps
+      component: 'TextField',
+      componentProps: {
+        multiline: true,
+        rows: 3,
+        variant: 'outlined',
+        placeholder: 'Description',
+        style: {
+          marginTop: '1.3rem'
+        }
+      },
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
     }
   },
+  registrationNumber: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'Registration Number',
+        style: {
+          marginTop: '1.3rem'
+        }
+      },
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
+    }
+  },
+  taxNumber: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'Tax Number',
+        style: {
+          marginTop: '1.3rem'
+        }
+      },
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
+    }
+  },
+
   // physicalAddress: {
   //   'ui:widget': 'LabelWidget',
   //   'ui:options': {
@@ -344,20 +449,6 @@ const editUiSchema: any = {
   //     ...labelProps
   //   }
   // },
-  registrationNumber: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      title: 'Registration Number',
-      ...labelProps
-    }
-  },
-  taxNumber: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      title: 'Tax Number',
-      ...labelProps
-    }
-  }
 };
 
 const schema: Reactory.ISchema = {
