@@ -32,6 +32,7 @@ import {
   LasecQuoteOption,
   LasecSalesOrder,
   LasecAddress,
+  LasecAPIParams,
 } from '../types/lasec';
 import { deleteSalesOrdersDocument, getCustomerDocuments } from '../resolvers/Helpers';
 
@@ -338,10 +339,12 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   }
 }
 
-const defaultParams = {
+
+
+const defaultParams: LasecAPIParams = {
   filter: {},
   ordering: {},
-  pagination: { enabled: false, page_size: 10, current_page: null },
+  pagination: { enabled: false, page_size: 10, current_page: 1 },
 };
 
 const defaultQuoteObjectMap = {
@@ -2803,9 +2806,9 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    getLineItems: async (code, active_option, page_size = 25, page = 1): Promise<any> => {
+    getLineItems: async (code: string, active_option: string, page_size: number = 25, page: number = 1): Promise<any> => {
 
-      let filter = { quote_id: code }
+      let filter: any = { quote_id: code }
       if (typeof active_option === 'string') {
         filter.quote_option_id = active_option
         delete filter.quote_id;
@@ -2879,30 +2882,21 @@ NB: note the addition of the detail_id for the line been updated
 
       return { pagination: {}, ids: [], items: [] };
     },
-    getByQuoteId: async (quote_id, objectMap = defaultQuoteObjectMap) => {
+    getByQuoteId: async (quote_id: string, objectMap: any = undefined) => {
       try {
-        const payload = await Api.Quotes.get({ filter: { ids: [quote_id] } }).then();
+        const payload = await Api.Quotes.get({ filter: { ids: [quote_id] }, pagination: { enabled: false } }).then();
         if (payload) {
-          logger.debug(`Api Response successful fetching quote id ${quote_id}`, payload);
-          const quotes = payload.items || [];
-          if (isArray(quotes) === true && quotes.length >= 1) {
-            //return om(quotes[0], objectMap);
-            /* const mappedQuote = om(quotes[0], {
-              'id': 'id',
-              'status_id': 'status',
-              'substatus_id': 'statusGroup',
-              'customer_full_name': 'customer.fullName',
-              'customer_id': 'customer.id',
-              'allowed_status_ids': 'allowedStatus',
-              'company_trading_name': 'company.fullName',
-              'comapny_id': 'company.id',
-              'staff_user_full_name': 'timeline[0].who.firstName',
-              'primary_api_staff_user_id': 'timeline[0].who.id',
-              'created': ['created', 'timeline[0].when'],
-
-            });
-            */
-            return quotes[0];
+          logger.debug(`Api Response successful fetching quote id ${quote_id}`, JSON.stringify(payload, null, 2));
+          const quotes = payload.items || [];          
+          if (isArray(quotes) === true && quotes.length >= 1) {            
+            if (objectMap) {
+              try {
+                return om.merge(quotes[0], objectMap);
+              } catch (mapping_errors) {
+                logger.error(`Could not convert the quote using the object map input`, { objectMap, quote: quotes[0] });
+                throw new ApiError(`Could not map the result`, mapping_errors);
+              }
+            } else return quotes[0];
           }
           if (quotes.length === 0) {
             logger.debug('No Matching Document found');

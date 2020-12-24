@@ -1,5 +1,6 @@
 import { Moment } from 'moment';
 import { Reactory } from '@reactory/server-core/types/reactory';
+import { PagingResult } from '@reactory/server-core/database/types';
 
 /**
  * Meta type interface
@@ -752,4 +753,63 @@ export interface ILasecClientService extends Reactory.Service.IReactoryService {
    * @param id
    */
   getClientById(id: string): Promise<LasecClient>;
+}
+
+
+export interface LasecGetFreightRequestQuoteParams {
+  quoteId: string
+}
+
+export interface FreightRequestProductDetail {
+  code: string
+  description: string
+  unitOfMeasure: string
+  sellingPrice: number
+  qty: number
+  length: number
+  width: number
+  height: number
+  volume: number
+}
+export interface FreightRequestOption {
+  name: string
+  transportMode: String
+  incoTerm: String
+  place: String
+  fromSA: Boolean
+  vatExempt: Boolean
+  totalValue: String
+  companyName: String
+  streetAddress: String
+  suburb: String
+  city: String
+  province: String
+  country: String
+  freightFor: String
+  offloadRequired: Boolean
+  hazardous: String
+  refrigerationRequired: Boolean
+  containsLithium: Boolean
+  sample: String
+  item_paging: PagingResult,
+  productDetails: FreightRequestProductDetail[]
+}
+
+export interface FreightRequestQuoteDetail {
+  id: string
+  email: string
+  communicationMethod: string
+  options: FreightRequestOption[]
+}
+
+export interface LasecAPIParams {
+  filter?: any
+  ordering?: {  
+    [key:  string]: string | "asc" | "desc"
+  },
+  pagination?: {
+    enabled?: boolean,
+    page_size?: number,
+    current_page?: number
+  } 
 }

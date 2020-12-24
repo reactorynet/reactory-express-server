@@ -40,6 +40,8 @@ import {
   LasecQuoteHeaderInput,
   LasecCRMCustomer,
   LasecClient,
+  LasecGetFreightRequestQuoteParams,
+  FreightRequestQuoteDetail,
 
 } from '../types/lasec';
 
@@ -756,7 +758,7 @@ export default {
     LasecGetSalesOrderDocumentBySlug: async (obj, args) => {
       return getSalesOrderDocBySlug(args);
     },
-    LasecGetFreightRequestQuoteDetail: async (obj, args) => {
+    LasecGetFreightRequestQuoteDetail: async (obj: any, args: LasecGetFreightRequestQuoteParams): Promise<FreightRequestQuoteDetail> => {
       return getFreightRequetQuoteDetails(args);
     },
     LasecGetCompanyDetailsforQuote: async (obj, args) => {
