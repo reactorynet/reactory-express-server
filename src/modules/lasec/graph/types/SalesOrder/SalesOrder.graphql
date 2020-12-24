@@ -558,7 +558,7 @@ input LasecPackingListInput {
   terms: String
   final_destination: String
   export_reason: String
-  doucment_number: String
+  document_number: String
   inco_terms: String
   po_number: String
 

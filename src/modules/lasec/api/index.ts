@@ -2315,40 +2315,7 @@ const Api = {
         }
       }
                  '
-      NB: the detail section can have multiple entries
-      To save a new packing list and its detail do:
-      POST: https://bapi.lasec.co.za/api/packing_list/{​​​​​​​​salesordernumber}​​​​​​​​ aka https://bapi.lasec.co.za/api/packing_list/484584
-      Payload will be:
-      $post = array(
-      "header" => array(
-        "salesorder" => "484584",
-        "ucr_number" => "N/A",
-        "date_of_issue" => "2020-01-28",
-        "date_of_expiry" => "2020-02-28",
-        "date_of_expiry_na" => 0,
-        "customer_po_number" => "405047",
-        "inco_terms" => "6",
-        "named_place" => "7",
-        "payment_terms" => "30 DAYS NETT",
-        "reason_for_export" => "SALE",
-        "bill_to_address" => "PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
-        "ship_to_address" => "Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa",
-        "consignee_address" => "3",
-        "consignee_contact" => "4",
-        "consignee_extra_info" => "5",
-        "notify_info" => "6",
-        "comments" => "7"
-    ),
-    "detail" => array(array(
-        "salesorder" => "484584",
-        "SysproCompany" => "SysproCompany2",
-        "type" => "boxes",
-        "quantity" => "5",
-        "height" => "51",
-        "width" => "61",
-        "length" => "71",
-        "weight" => "81"
-    )));
+      
 
 NB: Once again multiple entries can be in detail section for each package
 To update a existing listing:
@@ -2564,9 +2531,49 @@ NB: note the addition of the detail_id for the line been updated
 
     },
 
-    post_packing_list: async (sales_order_id: string, certificate: any): Promise<any> => {
+    /**
+     * 
+     *   NB: the detail section can have multiple entries
+     *   To save a new packing list and its detail do:
+     *   POST: https://bapi.lasec.co.za/api/packing_list/{​​​​​​​​salesordernumber}​​​​​​​​ aka https://bapi.lasec.co.za/api/packing_list/484584
+     *   Payload will be:
+     *   $post = array(
+     *    "header" => array(
+     *      "salesorder" => "484584",
+     *      "ucr_number" => "N/A",
+     *      "date_of_issue" => "2020-01-28",
+     *      "date_of_expiry" => "2020-02-28",
+     *      "date_of_expiry_na" => 0,
+     *      "customer_po_number" => "405047",
+     *      "inco_terms" => "6",
+     *      "named_place" => "7",
+     *      "payment_terms" => "30 DAYS NETT",
+     *      "reason_for_export" => "SALE",
+     *      "bill_to_address" => "PO BOX 524,AUCKLAND PARK,GAUTENG,2006",
+     *      "ship_to_address" => "Room 2104, 2nd floor, John Orr,building, 37 Nind St, Doornfontein,Johannesburg, South Africa",
+     *      "consignee_address" => "3",
+     *      "consignee_contact" => "4",
+     *      "consignee_extra_info" => "5",
+     *      "notify_info" => "6",
+     *      "comments" => "7"
+     *    ),
+     *    "detail" => array(array(
+     *      "salesorder" => "484584",
+     *      "SysproCompany" => "SysproCompany2",
+     *      "type" => "boxes",
+     *      "quantity" => "5",
+     *      "height" => "51",
+     *      "width" => "61",
+     *      "length" => "71",
+     *      "weight" => "81"
+     *    )));
+     * @param sales_order_id
+     * @param packing_list 
+     */
+    post_packing_list: async (sales_order_id: string, packing_list: any): Promise<any> => {
 
-      const input_data: any = om.merge(certificate, {
+      
+      const input_data: any = om.merge(packing_list, {
         'id': 'header.salesorder',
         'date_of_issue': [
           { key: 'header.date_of_issue', transform: safe_date_transform, default: "" },
@@ -2583,26 +2590,33 @@ NB: note the addition of the detail_id for the line been updated
         'consignee_contact': 'header.consignee_contact',
         'consignee_number': 'header.consignee_extra_info',
         'comments': 'header.comments',
-        'products': {
+        'packing_list': {
           key: 'detail',
-          transform: (products: any[]) => {
-            return products.map((certificate_item: any, index: number) => {
-
-
-
+          transform: (packing_list: any[]) => {
+            return packing_list.map((packing_list_item: any, index: number) => {
+              /**************************************
+              *    "detail" => array(array(
+              *      "salesorder" => "484584",
+              *      "SysproCompany" => "SysproCompany2",
+              *      "type" => "boxes",
+              *      "quantity" => "5",
+              *      "height" => "51",
+              *      "width" => "61",
+              *      "length" => "71",
+              *      "weight" => "81"
+              *    )));
+              * 
+              ***************************************/
               return {
-                salesorderline: certificate_item.item_number || index,
                 salesorder: sales_order_id,
-                stockcode: certificate_item.stock_code,
-                description: certificate_item.description,
-                quantity: certificate_item.qty,
-                date_of_manufacture: `${safe_date_transform(certificate_item.date_of_manufacture)}`,
-                date_of_manufacture_na: certificate_item.date_of_manufacture_na === true ? "Y" : "N",
-                lot_no: certificate_item.lot_no,
-                date_of_expiry: `${safe_date_transform(certificate_item.date_of_expiry)}`,
-                date_of_expiry_na: certificate_item.date_of_expiry_na === true ? "Y" : "N",
+                SysproCompany: packing_list_item.syspro_company || "SysproCompany2",
+                type: packing_list_item.pallet_type,
+                quantity: packing_list_item.quantity || 0,
+                height: packing_list_item.height || 0,
+                length: packing_list_item.length || 0,
+                width: packing_list_item.width || 0,
+                weight: packing_list_item.weight || 0
               };
-
             })
           }
         }
@@ -2622,17 +2636,17 @@ NB: note the addition of the detail_id for the line been updated
         return `${sections.company}${sections.company !== "" ? ', ' : ''}${sections.street_address}${sections.street_address !== "" ? ', ' : ''}${sections.suburb}${sections.suburb !== "" ? ', ' : ''}${sections.city}${sections.city !== "" ? ', ' : ''}${sections.province}${sections.province !== "" ? ', ' : ''}${sections.country}`;
       }
 
-      input_data.header.bill_to_address = format_address('bill_to', certificate);
-      input_data.header.ship_to_address = format_address('ship_to', certificate);
-      input_data.header.consignee_address = format_address('consignee', certificate);
+      input_data.header.bill_to_address = format_address('bill_to', packing_list);
+      input_data.header.ship_to_address = format_address('ship_to', packing_list);
+      input_data.header.consignee_address = format_address('consignee', packing_list);
 
       try {
         logger.debug(`Sending certificate input to API`, { input_data });
-        let certificate_result = await Api.post(`api/cert_of_conf/${sales_order_id}`, input_data, undefined, true).then();
-        logger.debug(`🔢Certificate Result`, { certificate_result });
+        let packing_list_result = await Api.post(`api/packing_list/${sales_order_id}`, input_data, undefined, true).then();
+        logger.debug(`🔢Certificate Result`, { packing_list_result });
         return {
           id: sales_order_id,
-          pdf_url: certificate_result.url,
+          pdf_url: packing_list_result.url,
         };
       } catch (create_error) {
         logger.debug("Could not create the certificate due to an error", { create_error });

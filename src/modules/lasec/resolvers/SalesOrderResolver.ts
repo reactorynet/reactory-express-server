@@ -497,9 +497,9 @@ const SalesOrderResolver = {
         return {
           success: true,
           message: 'Certificate of conformance created',
-          certificate: {
+          packing_list: {
             ...params.packing_list,
-            pdf_url: result.payload
+            pdf_url: result.pdf_url || "http://document.notready.com/empty.pdf"
           }
         }
 
@@ -508,7 +508,7 @@ const SalesOrderResolver = {
         return {
           success: false,
           message: error.message,
-          invoice: params.packing_list
+          packing_list: params.packing_list
         }
       }
 
