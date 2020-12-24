@@ -246,7 +246,7 @@ type LasecAddress {
 
   country_id: String
   country_name: String
-  
+
   lat: Float
   lng: Float
 
@@ -419,7 +419,7 @@ input EditAddressInput {
 
   building_description_id: String
   building_floor_number_id: String
-  
+
   lat: Float
   lng: Float
 
@@ -460,9 +460,7 @@ extend type Query {
     orderBy: String
     orderDirection: String
   ): PagedCRMClient
-
   LasecGetClientDetail(id: String!): LasecCRMClient
-
   LasecGetCustomerList(
     search: String!
     paging: PagingRequest

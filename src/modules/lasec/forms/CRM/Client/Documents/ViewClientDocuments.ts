@@ -90,6 +90,15 @@ export const ViewUiSchema: any = {
       buttonTitle: 'Edit',
       activeColor: 'primary',
       selectSchemaId: 'edit',
+      buttonVariant: 'outlined',
+      style: {
+        top: '10px'
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      }
     },
     showSchemaSelectorInToolbar: false,
     style: {

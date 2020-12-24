@@ -25,35 +25,35 @@ const displayUiSchema: any = {
     componentType: "div",
     toolbarPosition: 'none',
     containerStyles: {
-      // padding: '0px',
-      // margin: '0px',
-      // paddingBottom: '8px'
       padding: '24px',
       margin: '0px',
       paddingBottom: '8px'
     },
-    // schemaSelector: {
-    //   variant: 'button',
-    //   buttonTitle: 'Edit',
-    //   activeColor: 'primary',
-    //   selectSchemaId: 'edit',
-    //   style: {
-    //     position: 'absolute',
-    //     top: '-20px',
-    //     right: 0,
-    //   }
-    // },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'Edit',
+      activeColor: 'primary',
+      selectSchemaId: 'edit',
+      buttonVariant: 'outlined',
+      style: {
+        top: '10px'
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      }
+    },
     style: {
       marginTop: '16px',
     },
-    // showSchemaSelectorInToolbar: false,
+    showSchemaSelectorInToolbar: true,
     showSubmit: false,
     showRefresh: false,
   },
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
     paddingBottom: '10px',
-    marginBottom: '24px'
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
@@ -63,20 +63,31 @@ const displayUiSchema: any = {
   },
   'ui:grid-layout': [
     {
+      view: { sm: 12, md: 12, lg: 12 },
+    },
+    {
       customerStatus: { md: 6, sm: 12 },
       registeredCompanyName: { md: 6, sm: 12 },
       tradingName: { md: 6, sm: 12 },
       tradingCurrency: { md: 6, sm: 12 },
       description: { md: 6, sm: 12 },
-      physicalAddress: { md: 6, sm: 12 },
-      deliveryAddress: { md: 6, sm: 12 },
-      billingAddress: { md: 6, sm: 12 },
+      // physicalAddress: { md: 6, sm: 12 },
+      // deliveryAddress: { md: 6, sm: 12 },
+      // billingAddress: { md: 6, sm: 12 },
       registrationNumber: { md: 6, sm: 12 },
       taxNumber: { md: 6, sm: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
-
+  view: {
+    'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+      style: {
+        width: '100%',
+        float: "right"
+      },
+    }
+  },
   customerStatus: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -145,27 +156,28 @@ const displayUiSchema: any = {
       ...labelProps
     }
   },
-  physicalAddress: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      title: 'Physical Address',
-      ...labelProps
-    }
-  },
-  deliveryAddress: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      title: 'Delivery Address',
-      ...labelProps
-    }
-  },
-  billingAddress: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      title: 'Billing Address',
-      ...labelProps
-    }
-  },
+  // ADDRESS GOES IN THE ADDRESS FORM
+  // physicalAddress: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     title: 'Physical Address',
+  //     ...labelProps
+  //   }
+  // },
+  // deliveryAddress: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     title: 'Delivery Address',
+  //     ...labelProps
+  //   }
+  // },
+  // billingAddress: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     title: 'Billing Address',
+  //     ...labelProps
+  //   }
+  // },
   registrationNumber: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -182,7 +194,6 @@ const displayUiSchema: any = {
   }
 };
 
-
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -191,58 +202,66 @@ const editUiSchema: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
-    // schemaSelector: {
-    //   variant: 'button',
-    //   buttonTitle: 'CANCEL',
-    //   activeColor: 'secondary',
-    //   buttonVariant: "contained",
-    //   selectSchemaId: 'display',
-    //   style: {
-    //     position: 'absolute',
-    //     top: '-20px',
-    //     right: 0,
-    //   }
-    // },
+    schemaSelector: {
+      variant: 'button',
+      buttonTitle: 'CANCEL',
+      activeColor: 'secondary',
+      selectSchemaId: 'display',
+      buttonVariant: 'outlined',
+      style: {
+        top: 0
+      },
+      buttonStyle: {
+        borderWidth: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      },
+    },
     style: {
       marginTop: '16px',
     },
-    // showSchemaSelectorInToolbar: false,
+    showSchemaSelectorInToolbar: false,
     showSubmit: true,
     showRefresh: false,
   },
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
     paddingBottom: '10px',
-    marginBottom: '24px'
+    marginBottom: '10px'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px 24px'
+    }
+  },
   'ui:grid-layout': [
-    // {
-    //   view: { sm: 12, md: 12, lg: 12 },
-    // },
+    {
+      view: { sm: 12, md: 12, lg: 12 },
+    },
     {
       customerStatus: { md: 6, sm: 12 },
       registeredCompanyName: { md: 6, sm: 12 },
       tradingName: { md: 6, sm: 12 },
       tradingCurrency: { md: 6, sm: 12 },
       description: { md: 6, sm: 12 },
-      physicalAddress: { md: 6, sm: 12 },
-      deliveryAddress: { md: 6, sm: 12 },
-      billingAddress: { md: 6, sm: 12 },
+      // physicalAddress: { md: 6, sm: 12 },
+      // deliveryAddress: { md: 6, sm: 12 },
+      // billingAddress: { md: 6, sm: 12 },
       registrationNumber: { md: 6, sm: 12 },
       taxNumber: { md: 6, sm: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
-  // view: {
-  //   'ui:widget': 'SchemaSelectorWidget',
-  //   'ui:options': {
-  //     style: {
-  //       width: '100%',
-  //       float: "right"
-  //     },
-  //   }
-  // },
+  view: {
+    'ui:widget': 'SchemaSelectorWidget',
+    'ui:options': {
+      style: {
+        width: '100%',
+        float: "right"
+      },
+    }
+  },
   customerStatus: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -250,19 +269,44 @@ const editUiSchema: any = {
       ...labelProps
     }
   },
-  registeredCompanyName: {},
-  tradingName: {
-    'ui:widget': 'LabelWidget',
+  registeredCompanyName: {
     'ui:options': {
-      readOnly: true,
-      component: "TextField",
+      component: 'TextField',
       componentProps: {
-        variant: "outlined"
+        variant: 'outlined',
+        placeholder: 'Registered Company Name',
+        style: {
+          marginTop: '1.3rem'
+        }
       },
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Trading Name',
-      ...labelProps
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
+    }
+  },
+  tradingName: {
+    'ui:options': {
+      component: 'TextField',
+      componentProps: {
+        variant: 'outlined',
+        placeholder: 'Tading Name',
+        style: {
+          marginTop: '1.3rem'
+        }
+      },
+      labelProps: {
+        dontShrink: true,
+        style: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000'
+        }
+      }
     }
   },
   tradingCurrency: {
@@ -279,27 +323,27 @@ const editUiSchema: any = {
       ...labelProps
     }
   },
-  physicalAddress: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      title: 'Physical Address',
-      ...labelProps
-    }
-  },
-  deliveryAddress: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      title: 'Delivery Address',
-      ...labelProps
-    }
-  },
-  billingAddress: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      title: 'Billing Address',
-      ...labelProps
-    }
-  },
+  // physicalAddress: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     title: 'Physical Address',
+  //     ...labelProps
+  //   }
+  // },
+  // deliveryAddress: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     title: 'Delivery Address',
+  //     ...labelProps
+  //   }
+  // },
+  // billingAddress: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     title: 'Billing Address',
+  //     ...labelProps
+  //   }
+  // },
   registrationNumber: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -320,10 +364,10 @@ const schema: Reactory.ISchema = {
   type: 'object',
   title: "CUSTOMER DETAILS",
   properties: {
-    // view: {
-    //   title: '',
-    //   type: 'string'
-    // },
+    view: {
+      title: '',
+      type: 'string'
+    },
     customerStatus: {
       type: 'string',
       title: 'Customer Status'
@@ -402,6 +446,7 @@ const LasecCRMCustomerDetails: Reactory.IReactoryForm = {
   defaultFormValue: {
 
   },
+  defaultUiSchemaKey: 'display',
 };
 
 export default LasecCRMCustomerDetails;
