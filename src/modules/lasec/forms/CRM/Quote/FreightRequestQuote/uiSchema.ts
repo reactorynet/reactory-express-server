@@ -20,11 +20,14 @@ const uiSchema: any = {
       communicationMethod: { xs: 12, sm: 6, md: 6, lg: 6 },
     },
     {
-      details: { xs: 12, sm: 12, md: 12, lg: 12 },
+      options: { xs: 12, sm: 12, md: 12, lg: 12 },
     },
   ],
-  code: {
-    'ui:widget': 'HiddenWidget',
+  quote_id: {
+    'ui:widget': 'LabelWidget',
+    'ui:options': {
+      format: 'Complete the below fields in order to request a Freigh Quote [${formData}]'
+    }
   },
   email: {},
   communicationMethod: {
@@ -43,28 +46,11 @@ const uiSchema: any = {
           label: 'Attach as PDF',
         },
       ]
-    },
-    propsMap: {
-      'formData': 'formData',
-      'formContext.$formData.communicationMethod': 'formData',
-    },
+    }
   },
-  details: {
+  options: {
     'ui:widget': 'FreightRequestWidget',
-    'ui:options': {
-      props: {
-        optionsComponents: [
-          { componentFqn: 'lasec-crm.LasecFreightRequestOptionForm' },
-          { componentFqn: 'lasec-crm.LasecFreightRequestCosigneeForm' },
-          { componentFqn: 'lasec-crm.LasecFreightRequestConsignmentForm' },
-          { componentFqn: 'lasec-crm.LasecFreightRequestProductDetail' }
-        ],
-      },
-      propsMap: {
-        'formContext.$formData': 'formData',
-        'formData': 'formData',
-      }
-    },
+    'ui:options': {},
   },
 };
 

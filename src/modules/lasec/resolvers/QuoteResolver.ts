@@ -759,7 +759,15 @@ export default {
       return getSalesOrderDocBySlug(args);
     },
     LasecGetFreightRequestQuoteDetail: async (obj: any, args: LasecGetFreightRequestQuoteParams): Promise<FreightRequestQuoteDetail> => {
-      return getFreightRequetQuoteDetails(args);
+      try {
+        const result: FreightRequestQuoteDetail = await getFreightRequetQuoteDetails(args).then();
+        return result;
+      } catch (unhandledError) {
+        if (unhandledError instanceof ApiError) throw ApiError;
+
+        logger.error(`Unhandled error while Getting Freight Request Detail for Quote ${args.quoteId}`, unhandledError);
+        throw new ApiError('Unandled Error', unhandledError);
+      }      
     },
     LasecGetCompanyDetailsforQuote: async (obj, args) => {
       return getCompanyDetails(args);

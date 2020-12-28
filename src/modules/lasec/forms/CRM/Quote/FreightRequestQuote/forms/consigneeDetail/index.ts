@@ -1,24 +1,24 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
-import { schema } from './schema';
 import { uiSchema } from './uiSchema';
+import { schema } from './schema';
 
-const LasecFreightRequestConsignmentForm: Reactory.IReactoryForm = {
-  id: 'LasecFreightRequestConsignmentForm',
+
+
+const LasecFreightRequestConsigneeForm: Reactory.IReactoryForm = {
+  id: 'LasecFreightRequestConsigneeForm',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
   title: 'CRM Lasec Freight Request Quote',
   tags: ['CRM Lasec Freight Request Quote'],
   registerAsComponent: true,
-  name: 'LasecFreightRequestConsignmentForm',
+  name: 'LasecFreightRequestConsigneeForm',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
   uiSchema: uiSchema,
   defaultFormValue: {},
-  widgetMap: [
-    { componentFqn: 'core.RadioGroupComponent@1.0.0', widget: 'RadioGroupComponent' },
-  ],
+  widgetMap: [],
 };
 
-export default LasecFreightRequestConsignmentForm;
+export default LasecFreightRequestConsigneeForm;

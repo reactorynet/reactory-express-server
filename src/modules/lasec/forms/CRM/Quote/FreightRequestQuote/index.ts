@@ -18,11 +18,11 @@ const LasecFreightRequestQuote: Reactory.IReactoryForm = {
   graphql: $graphql,
   uiSchema: $uiSchema,
   defaultFormValue: {
-    options: [],
-    productDetails: []
+    communicationMethod: 'attach_pdf',
+    options: [],    
   },
   widgetMap: [
-    { componentFqn: 'lasec.FreightRequestQuoteComponent@1.0.0', widget: 'FreightRequestWidget' },
+    { componentFqn: 'lasec-crm.FreightRequestQuoteComponent@1.0.0', widget: 'FreightRequestWidget' },
     { componentFqn: 'core.RadioGroupComponent@1.0.0', widget: 'RadioGroupComponent' },
   ],
 };

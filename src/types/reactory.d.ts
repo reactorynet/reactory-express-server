@@ -763,6 +763,10 @@ declare namespace Reactory {
       sendEmail(message: Reactory.IEmailMessage): Promise<Reactory.EmailSentResult>
     }
 
+    export interface IErrorHandlerServer extends IReactoryContextAwareService {
+      handle<T>( FunctionPointer: Promise<T> ): T
+    }
+
     export interface IReactoryDefaultService extends IReactoryStartupAwareService, IReactoryContextAwareService { }
 
 

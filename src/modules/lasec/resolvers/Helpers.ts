@@ -2889,6 +2889,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
   `);
 
   const { quoteId } = params;
+  
   let quoteDetail: LasecQuote = await lasecApi.Quotes.getByQuoteId(quoteId).then();
 
   logger.debug(`Fetched Quote Results :\n${JSON.stringify(quoteDetail)}\nLoading Quote Options`);
@@ -2967,7 +2968,8 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
   }
 
   return {
-    email: '',
+    id: params.quoteId,
+    email: global.user.email,
     communicationMethod: 'attach_pdf',
     options: await Promise.all(promises).then()
   };
