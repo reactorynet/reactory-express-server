@@ -462,9 +462,6 @@ extend type Query {
   ): PagedCRMClient
 
   LasecGetClientDetail(id: String!): LasecCRMClient
-
-  LasecGetPersonTitleById(id: String): Any
-
   LasecGetCustomerList(
     search: String!
     paging: PagingRequest
