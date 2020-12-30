@@ -70,6 +70,8 @@ const graphql: Reactory.IFormGraphDefinition = {
     },
     autoQuery: false,
     resultType: 'object',
+    //waitUntil: '${api.utils.lodash.isNil(api.$LasecUser)===false}',
+    waitTimeout: 4500,
     edit: false,
     new: false,
   },

@@ -113,11 +113,6 @@ import LasecCRMISODetailComments from './CRM/Client/Activity/ISODetail/sections/
 import LasecCRMInvoiceGrid from './CRM/Invoice/SearchGrid';
 import LasecCRMSalesHistoryGrid from './CRM/SalesHistory/SearchGrid';
 
-import LasecCRMFreightRequestQuote from './CRM/Quote/FreightRequestQuote';
-import LasecFreightRequestOptionForm from './CRM/Quote/FreightRequestQuote/forms/quoteOptionDetail';
-import LasecFreightRequestCosigneeForm from './CRM/Quote/FreightRequestQuote/forms/consigneeDetail';
-import LasecFreightRequestConsignmentForm from './CRM/Quote/FreightRequestQuote/forms/consignmentDetail';
-import LasecFreightRequestProductDetail from './CRM/Quote/FreightRequestQuote/forms/productDetail';
 
 import LasecCRMQuoteHeaderForm from './CRM/Quote/QuoteHeader';
 import LasecGenerateSalesOrderForm from './CRM/SalesOrder/GenerateSalesOrder';
@@ -216,13 +211,8 @@ export default [
   LasecCRMISODetailLineItems,
   LasecCRMISODetailComments,
   LasecCRMInvoiceGrid,
-  LasecCRMSalesHistoryGrid,
-  LasecCRMFreightRequestQuote,
-  LasecFreightRequestOptionForm,
-  LasecFreightRequestCosigneeForm,
-  LasecFreightRequestConsignmentForm,
-  LasecFreightRequestProductDetail,
-
+  LasecCRMSalesHistoryGrid,  
+ 
   LasecCRMQuoteHeaderForm,
   LasecGenerateSalesOrderForm
 ];

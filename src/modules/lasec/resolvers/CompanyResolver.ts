@@ -833,9 +833,9 @@ const getCustomerClassById = async (id) => {
 const getCustomerCountries = async () => {
   try {
     logger.info("Retrieving countries from remote api")
-    const countries = await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country[]': ['[].id', '[].name'] }).then();
+    let countries = await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country[]': ['[].id', '[].name'] }).then();    
     logger.debug("Retrieved and mapped remote data to ", { countries });
-    return countries;
+    return lodash.uniqWith(countries, lodash.isEqual);
   } catch (countryListError) {
     logger.error("Could not get the country list from the remote API", countryListError);
     return []

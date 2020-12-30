@@ -47,6 +47,8 @@ const graphql: Reactory.IFormGraphDefinition = {
     },
     autoQuery: true,
     autoQueryDelay: 2000,
+    //waitUntil: '${api.utils.lodash.isNil(api.$LasecUser)===false}',
+    //waitTimeout: 4500,
     queryMessage: 'Search for client',
     resultType: 'object',
     edit: false,

@@ -2836,7 +2836,7 @@ NB: note the addition of the detail_id for the line been updated
 
       if (status === 'success') {
         //collet the ids
-        if (payload && payload.ids) {
+        if (payload && payload.ids && payload.ids.length > 0) {
 
           /**
            *
@@ -2919,6 +2919,8 @@ NB: note the addition of the detail_id for the line been updated
         const {
           status, payload,
         } = apiResponse;
+
+        logger.debug(`LasecAPI quote option result ${JSON.stringify(apiResponse, null, 2)}`)
 
         if (status === 'success' && payload.items.length === 1) {
           logger.debug(`Found Quote Option on LasecAPI`, { item: payload.items[0] })
@@ -3305,7 +3307,9 @@ NB: note the addition of the detail_id for the line been updated
     },
     getIncoTerms: async () => {
       let incoterms_response = await FETCH(SECONDARY_API_URLS.incoterms.url).then();
-      const { status, payload } = incoterms_response;
+      const { payload } = incoterms_response;
+
+      logger.debug(`IncoTerms API Response:\n${JSON.stringify(incoterms_response, null, 2)}`)
 
       let results: any[] = [];
       if (payload && Object.keys(payload).length > 0) {
@@ -3313,13 +3317,17 @@ NB: note the addition of the detail_id for the line been updated
 
           if (`${payload[prop]}`.indexOf("=>") > 0) {
             results.push({
+              id: prop,
               key: prop,
-              title: payload[prop].split('=>')[1].trim()
+              title: payload[prop].split('=>')[1].trim(),
+              name: payload[prop].split('=>')[1].trim()
             })
           } else {
             results.push({
+              id: prop,
               key: prop,
-              title: payload[prop]
+              title: payload[prop],
+              name: payload[prop]
             });
           }
         })
@@ -3330,14 +3338,15 @@ NB: note the addition of the detail_id for the line been updated
       return results;
     },
     getQuoteTransportModes: async () => {
-      let incoterms_response = await FETCH(SECONDARY_API_URLS.transport_modes.url).then();
-      const { status, payload } = incoterms_response;
+      let transport_modes = await FETCH(SECONDARY_API_URLS.transport_modes.url).then();      
+      logger.debug(`Get quote transport modes returned:\n${JSON.stringify(transport_modes, null, 2)}`);
+      const { payload } = transport_modes;
 
-      let results: any[] = payload.items || [];
+      if (payload && payload.items && payload.items.transport_mode) {
+        return payload.items.transport_mode.map((item: string) => ({ id: `${item}`.toLowerCase(), title: item }))
+      }
 
-      logger.debug(`Get quote transport modes returned `, { results });
-
-      return results;
+      return [];      
     },
   },
   Teams: {

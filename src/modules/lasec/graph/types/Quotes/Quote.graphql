@@ -607,7 +607,7 @@ type FreightRequestOption {
   place: String
   fromSA: Boolean
   vatExempt: Boolean
-  totalValue: String
+  totalValue: Int
   companyName: String
   streetAddress: String
   suburb: String
@@ -715,7 +715,13 @@ type LasecPreparedEmail {
   meta: Any
 }
 
+type LasecTransportationMode {
+  id: String
+  title: String
+}
+
 extend type Query {
+  LasecTransportationModes: [LasecTransportationMode]
   LasecGetQuoteList(search: String): [Quote]
   LasecGetCRMQuoteList(
     search: String!

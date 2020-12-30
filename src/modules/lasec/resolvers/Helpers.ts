@@ -1265,7 +1265,7 @@ export const lasecGetQuoteLineItem = async (id: string): Promise<LasecQuoteItem>
 };
 
 
-export const lasecGetQuoteLineItems = async (code: string, active_option: String = 'all', page = 1, pageSize = 25) => {
+export const lasecGetQuoteLineItems = async (code: string, active_option: string = 'all', page = 1, pageSize = 25): Promise<any> => {
   const keyhash = `quote.${code}-${active_option}.lineitems.${page}-${pageSize}`;
 
   //let cached = await getCacheItem(keyhash);
@@ -2900,7 +2900,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
       return new Promise((resolve, reject) => {
         
         lasecApi.Quotes.getQuoteOption(option_id).then((option_result) => {
-          logger.debug(`QUOTE OPTIONS ${quoteId}:: ${JSON.stringify(option_result)}`);
+          logger.debug(`QUOTE [${quoteId}] OPTION [${option_id}]\n ${JSON.stringify(option_result, null, 2)}`);
           if (option_result.id) {
             
             let quoteOptionResponse = option_result;
@@ -2912,7 +2912,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
               place: quoteOptionResponse.named_place || '',
               fromSA: false,
               vatExempt: false,
-              totalValue: quoteOptionResponse.grand_total_incl_vat_cents,
+              totalValue: quoteOptionResponse.grand_total_incl_vat_cents || 0,
               companyName: '',
               streetAddress: '',
               suburb: '',
@@ -2936,7 +2936,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
 
 
             lasecGetQuoteLineItems(quoteId, option_id).then((paged_results: { lineItems: LasecQuoteItem[], item_paging: PagingResult }) => {              
-              if (paged_results.lineItems.length > 0) {
+              if (paged_results && paged_results.lineItems && paged_results.lineItems.length > 0) {
                 freight_request_option.item_paging = paged_results.item_paging,
                 freight_request_option.productDetails = paged_results.lineItems.map((line_item: LasecQuoteItem) => {
                   return {
@@ -2956,7 +2956,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
               resolve(freight_request_option);
 
             }).catch((get_line_items_error) => {
-              logger.error("COuld not get the the line items for the Freight Costing Details")
+              logger.error(`Could not get the the line items for the Freight Costing Details:\n${get_line_items_error.message}`, get_line_items_error)
               reject(get_line_items_error);
             })        
           } else {

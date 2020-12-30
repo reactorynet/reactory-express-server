@@ -42,6 +42,7 @@ import {
   LasecClient,
   LasecGetFreightRequestQuoteParams,
   FreightRequestQuoteDetail,
+  LasecTransportationMode,
 
 } from '../types/lasec';
 
@@ -705,6 +706,9 @@ export default {
 
   },
   Query: {
+    LasecTransportationModes: async (): Promise<LasecTransportationMode[]> => { 
+      return (getService(QUOTE_SERVICE_ID) as IQuoteService).getQuoteTransportModes();
+    },
     LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes({ search });
     },

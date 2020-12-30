@@ -647,9 +647,9 @@ extend type Query {
   LasecCheckPurchaseOrderExists(company_id: String, purchase_order_number: String) : LasecSalesOrderExistsResult
 
   """
-  Get the inco terms for the sales order id
+  Returns a list of lasec inco terms
   """
-  LasecGetIncoTermsForSalesOrder(sales_order_id: String!) : [LasecIncoTermsLookupItem]
+  LasecIncoTerms : [LasecIncoTermsLookupItem]
 
   """
   Get the payment terms for the sales order id

@@ -813,3 +813,8 @@ export interface LasecAPIParams {
     current_page?: number
   } 
 }
+
+export interface LasecTransportationMode {
+  id: string,
+  title: string
+}

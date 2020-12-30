@@ -29,6 +29,9 @@ import { getProductById } from "./ProductResolver";
 import { PagingRequest } from "@reactory/server-core/database/types";
 import { Reactory } from "@reactory/server-core/types/reactory";
 
+
+const QUOTE_SERVICE_ID = 'lasec-crm.LasecQuoteService@1.0.0';
+
 const SalesOrderResolver = {
 
 
@@ -278,11 +281,12 @@ const SalesOrderResolver = {
         throw new ApiError(`Unhandled Error Processing Sales Order Prep ${error.message}`);
       }
     },
-    LasecGetIncoTermsForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
+    LasecIncoTerms: async (): Promise<any> => {
       try {
-
+        return (getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms();
       } catch (inco_terms_error) {
-
+        logger.error(`Could not get the inco terms: ${inco_terms_error.message}`, inco_terms_error)
+        return [];
       }
     },
     LasecCheckPurchaseOrderExists: async (parent: any, params: { company_id: string, purchase_order_number: string }): Promise<any> => {
