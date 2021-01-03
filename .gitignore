@@ -9,3 +9,4 @@ config/*/pm2.local*
 build/*
 yarn.lock
 src/modules/enabled*.json
+~/develop/reactory/data/*
