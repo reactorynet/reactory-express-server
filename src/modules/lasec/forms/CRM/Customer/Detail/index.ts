@@ -240,16 +240,17 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      customerStatus: { md: 6, sm: 12 },
       registeredCompanyName: { md: 6, sm: 12 },
-      tradingName: { md: 6, sm: 12 },
-      tradingCurrency: { md: 6, sm: 12 },
-      description: { md: 6, sm: 12 },
+      // customerStatus: { md: 6, sm: 12 },
+      // registeredCompanyName: { md: 6, sm: 12 },
+      // tradingName: { md: 6, sm: 12 },
+      // tradingCurrency: { md: 6, sm: 12 },
+      // description: { md: 6, sm: 12 },
       // physicalAddress: { md: 6, sm: 12 },
       // deliveryAddress: { md: 6, sm: 12 },
       // billingAddress: { md: 6, sm: 12 },
-      registrationNumber: { md: 6, sm: 12 },
-      taxNumber: { md: 6, sm: 12 },
+      // registrationNumber: { md: 6, sm: 12 },
+      // taxNumber: { md: 6, sm: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -261,6 +262,28 @@ const editUiSchema: any = {
         float: "right"
       },
     }
+  },
+  registeredCompanyName: {
+    'ui:widget': 'LookupComponent',
+    'ui:options': {
+      label: 'Select a Customer',
+      title: 'Search for a Customer',
+      modalProps: {
+        fullScreen: false,
+        closeOnEvents: [
+          'CloseModal:LasecCRMCustomerLookupTable'
+        ]
+      }
+    },
+    props: {
+      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+      componentProps: {},
+      componentPropertyMap: {
+        'LookupComponent.props.formContext.$formData': 'formData.selected',
+        'LookupComponent.props.onChange': 'LasecUpdateClientDetails',
+        'LookupComponent.props.formContext': 'LookupComponentFormContext',
+      },
+    },
   },
   customerStatus: {
     'ui:widget': 'LabelWidget',
@@ -296,26 +319,26 @@ const editUiSchema: any = {
 
     }
   },
-  registeredCompanyName: {
-    'ui:options': {
-      component: 'TextField',
-      componentProps: {
-        variant: 'outlined',
-        placeholder: 'Registered Company Name',
-        style: {
-          marginTop: '1.3rem'
-        }
-      },
-      labelProps: {
-        dontShrink: true,
-        style: {
-          transform: 'none',
-          fontWeight: 'bold',
-          color: '#000000'
-        }
-      }
-    }
-  },
+  // registeredCompanyName: {
+  //   'ui:options': {
+  //     component: 'TextField',
+  //     componentProps: {
+  //       variant: 'outlined',
+  //       placeholder: 'Registered Company Name',
+  //       style: {
+  //         marginTop: '1.3rem'
+  //       }
+  //     },
+  //     labelProps: {
+  //       dontShrink: true,
+  //       style: {
+  //         transform: 'none',
+  //         fontWeight: 'bold',
+  //         color: '#000000'
+  //       }
+  //     }
+  //   }
+  // },
   tradingName: {
     'ui:options': {
       component: 'TextField',
@@ -463,6 +486,10 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'Customer Status'
     },
+    customer: {
+      type: 'string',
+      title: 'Customer'
+    },
     registeredCompanyName: {
       type: 'string',
       title: 'Registered Company Name'
@@ -538,6 +565,9 @@ const LasecCRMCustomerDetails: Reactory.IReactoryForm = {
 
   },
   defaultUiSchemaKey: 'display',
+  widgetMap: [
+    { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
+  ],
 };
 
 export default LasecCRMCustomerDetails;

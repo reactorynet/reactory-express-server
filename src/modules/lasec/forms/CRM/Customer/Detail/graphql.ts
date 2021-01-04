@@ -51,7 +51,72 @@ const graphql: Reactory.IFormGraphDefinition = {
     },
   },
   mutation: {
-    edit: {
+    // edit: {
+    //   name: "LasecUpdateClientDetails",
+    //   text: `mutation LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
+    //     LasecUpdateClientDetails(clientInfo: $clientInfo) {
+    //       Success
+    //     }
+    //   }`,
+    //   objectMap: true,
+    //   updateMessage: 'Updating Template Content',
+    //   variables: {
+    //     'formData.id': 'clientInfo.clientId',
+    //     'formData.registeredCompanyName': 'clientInfo.customerCompanyName',
+    //     'formData.tradingName': 'clientInfo.customerTradingName',
+    //     'formData.tradingCurrency': 'clientInfo.customerTradingCurrency',
+    //     'formData.description': 'clientInfo.customerDescription',
+    //     'formData.registrationNumber': 'clientInfo.customerRegistrationNumber',
+    //     'formData.taxNumber': 'clientInfo.customerTaxNumber',
+    //   },
+    //   onError: {
+    //     componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+    //     method: 'onGraphQLQueryError',
+    //   },
+    //   onSuccessMethod: 'notification',
+    //   notification: {
+    //     inAppNotification: true,
+    //     title: 'Personal details successfully updated.',
+    //     props: {
+    //       timeOut: 10000,
+    //       canDismiss: false,
+    //       components: [
+    //         {
+    //           componentFqn: 'core.ConditionalIconComponent@1.0.0',
+    //           componentProps: {
+    //             conditions: [
+    //               {
+    //                 key: 'de-active',
+    //                 icon: 'trip_origin',
+    //                 style: {
+    //                   color: 'red'
+    //                 },
+    //                 tooltip: 'Client Active'
+    //               },
+    //               {
+    //                 key: 'active',
+    //                 icon: 'trip_origin',
+    //                 style: {
+    //                   color: '#fff'
+    //                 },
+    //                 tooltip: 'Client Active'
+    //               }
+
+    //             ]
+    //           },
+    //           style: {
+    //             marginRight: '8px',
+    //             marginTop: '8px',
+    //           },
+    //           propsMap: {
+    //             'formData.clientStatus': 'value',
+    //           },
+    //         }
+    //       ]
+    //     }
+    //   },
+    // },
+    onNewCustomerSelected: {
       name: "LasecUpdateClientDetails",
       text: `mutation LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
         LasecUpdateClientDetails(clientInfo: $clientInfo) {
@@ -59,62 +124,18 @@ const graphql: Reactory.IFormGraphDefinition = {
         }
       }`,
       objectMap: true,
-      updateMessage: 'Updating Template Content',
+      updateMessage: 'Updating client customer selection',
       variables: {
-        'formData.id': 'clientInfo.clientId',
-        'formData.registeredCompanyName': 'clientInfo.customerCompanyName',
-        'formData.tradingName': 'clientInfo.customerTradingName',
-        'formData.tradingCurrency': 'clientInfo.customerTradingCurrency',
-        'formData.description': 'clientInfo.customerDescription',
-        'formData.registrationNumber': 'clientInfo.customerRegistrationNumber',
-        'formData.taxNumber': 'clientInfo.customerTaxNumber',
+        // 'formData.id': 'clientInfo.clientId',
+        // 'formData.registeredCompanyName': 'clientInfo.customerCompanyName',
+        'eventData.formData.id': 'clientInfo.clientId',
+        'eventData.formData': 'clientInfo.customerId',
       },
-      onError: {
-        componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
-        method: 'onGraphQLQueryError',
-      },
-      onSuccessMethod: 'notification',
-      notification: {
-        inAppNotification: true,
-        title: 'Personal details successfully updated.',
-        props: {
-          timeOut: 10000,
-          canDismiss: false,
-          components: [
-            {
-              componentFqn: 'core.ConditionalIconComponent@1.0.0',
-              componentProps: {
-                conditions: [
-                  {
-                    key: 'de-active',
-                    icon: 'trip_origin',
-                    style: {
-                      color: 'red'
-                    },
-                    tooltip: 'Client Active'
-                  },
-                  {
-                    key: 'active',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#fff'
-                    },
-                    tooltip: 'Client Active'
-                  }
-
-                ]
-              },
-              style: {
-                marginRight: '8px',
-                marginTop: '8px',
-              },
-              propsMap: {
-                'formData.clientStatus': 'value',
-              },
-            }
-          ]
-        }
-      },
+      resultType: 'object',
+      // resultMap: {
+      //   'customer.id': 'id',
+      //   'customer.registeredName': 'registeredName',
+      // },
     }
   },
 };

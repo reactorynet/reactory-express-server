@@ -31,6 +31,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 
 import { getLoggedIn360User, getCustomerDocuments } from './Helpers';
 import deepEquals from '@reactory/server-core/utils/compare';
+import { queryAsync } from '@reactory/server-core/database/mysql';
 
 const fieldMaps: any = {
   "fullName": "first_name",
@@ -466,6 +467,7 @@ const updateClientDetail = async (args: any) => {
         customer_type: params.customerType || (client.customer_type || ''),
         line_manager_id: params.lineManager || (client.line_manager_id || ''),
         role_id: params.jobType || (client.role_id || ''),// role_id: client.role_id,
+
       }
 
       logger.debug(`UPDATE PARAMS:: ${JSON.stringify(updateParams)}`);
@@ -1962,7 +1964,6 @@ export default {
       return getCustomerRanking(args);
     },
     LasecGetCustomerRankingById: async (object, args) => {
-      logger.debug('LasecGetCustomerRankingById', args)
       switch (args.id) {
         case "1": return {
           id: '1',
@@ -1990,8 +1991,6 @@ export default {
       return getCustomerDocuments(args);
     },
     LasecSalesTeams: async () => {
-      // return getLasecSalesTeamsForLookup();
-      // return getRepCodesForFilter();
       return getRepCodesForLoggedInUser();
     },
     LasecGetCustomerFilterLookup: async (object, args) => {
@@ -2088,12 +2087,15 @@ export default {
       }
     },
     LasecGetCurrencyLookup: async (object, args) => {
+      try {
+        const currencies = await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+        logger.debug(`CURRENCIES - ${JSON.stringify(currencies)}`);
+        return currencies.map(currency => { return { id: currency.code, name: currency.name } });
 
-      return [
-        { id: 'ZAR', name: 'Rand' },
-        { id: 'DOL', name: 'Dollar' },
-      ];
-
+      } catch (err) {
+        logger.debug(`ERROR GETTING CURRENCIES`);
+        return []
+      }
     },
     LasecGetPersonTitles: async (object, args) => {
       return getPersonTitles(args);
@@ -2355,7 +2357,7 @@ export default {
   },
   Mutation: {
     LasecUpdateClientDetails: async (obj, args) => {
-      logger.debug(`UPDATING CLIENT DETAILS WITH ARGS ${args}`);
+      logger.debug(`UPDATING CLIENT DETAILS WITH ARGS ${JSON.stringify(args)}`);
       return updateClientDetail(args);
     },
     LasecCreateNewOrganisation: async (onj, args) => {

@@ -534,6 +534,9 @@ extend type Query {
 
 extend type Mutation {
   LasecUpdateClientDetails(clientInfo: ClientUpdateInput!): ClientDetailUpdateResponse
+
+  LasecUpdateClientCustomer($clientId: String, $customerDetail: Any!): SimpleResponse
+
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
   LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument
   LasecDeleteNewClientDocuments(fileIds: [String]!): UXMessage
