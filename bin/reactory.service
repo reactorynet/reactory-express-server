@@ -6,9 +6,9 @@ Description=Reactory Server
 [Service]
 ExecStart=NODE_PATH=./src env-cmd env-cmd -f ./config/.env.reactory.local npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000
 Restart=always
-User=nobody
+User=reactory
 # Note Debian/Ubuntu uses 'nogroup', RHEL/Fedora uses 'nobody'
-Group=nogroup
+Group=reactory
 Environment=PATH=/usr/bin:/usr/local/bin
 Environment=NODE_ENV=production
 WorkingDirectory=/var/www/myapp
