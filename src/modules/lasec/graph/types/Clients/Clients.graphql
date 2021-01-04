@@ -533,9 +533,10 @@ extend type Query {
 }
 
 extend type Mutation {
+
   LasecUpdateClientDetails(clientInfo: ClientUpdateInput!): ClientDetailUpdateResponse
 
-  LasecUpdateClientCustomer($clientId: String, $customerDetail: Any!): SimpleResponse
+  LasecUpdateCustomerCompany(clientId: String, customerDetail: Any!): SimpleResponse
 
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
   LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument
@@ -543,12 +544,9 @@ extend type Mutation {
   LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
   LasecCreateNewClient(id: String, newClient: LasecNewClientInput): NewClientResponse
   LasecUpdateNewClient(clientId: String, newClient: LasecNewClientInput): LasecNewClient
-  # LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
   LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
-
   LasecEditAddress(address_input: EditAddressInput): UpdateAddressResponse
   LasecDeleteAddress(address_input: EditAddressInput): SimpleResponse
-
   LasecCRMSaveComment(clientId: String!, comment: String!): SimpleResponse
   LasecCRMDeleteComment(commentId: String!): SimpleResponse
   LasecDeactivateClients(clientIds: [String]!): SimpleResponse

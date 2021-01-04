@@ -116,20 +116,59 @@ const graphql: Reactory.IFormGraphDefinition = {
     //     }
     //   },
     // },
-    onNewCustomerSelected: {
-      name: "LasecUpdateClientDetails",
-      text: `mutation LasecUpdateClientDetails($clientInfo: ClientUpdateInput!){
-        LasecUpdateClientDetails(clientInfo: $clientInfo) {
-          Success
+    edit: {
+      name: "LasecUpdateCustomerCompany",
+      text: `mutation LasecUpdateCustomerCompany($clientId: String, $customerDetail: Any!){
+        LasecUpdateCustomerCompany(clientId: $clientId,  customerDetail: $customerDetail) {
+          success
+          message
         }
       }`,
       objectMap: true,
       updateMessage: 'Updating client customer selection',
       variables: {
-        // 'formData.id': 'clientInfo.clientId',
-        // 'formData.registeredCompanyName': 'clientInfo.customerCompanyName',
-        'eventData.formData.id': 'clientInfo.clientId',
-        'eventData.formData': 'clientInfo.customerId',
+        'formData.id': 'clientId',
+        'eventData.formData': 'customerDetail',
+      },
+      resultType: 'object',
+      // resultMap: {
+      //   'customer.id': 'id',
+      //   'customer.registeredName': 'registeredName',
+      // },
+    },
+    new: {
+      name: "LasecUpdateCustomerCompany",
+      text: `mutation LasecUpdateCustomerCompany($clientId: String, $customerDetail: Any!){
+        LasecUpdateCustomerCompany(clientId: $clientId,  customerDetail: $customerDetail) {
+          success
+          message
+        }
+      }`,
+      objectMap: true,
+      updateMessage: 'Updating client customer selection',
+      variables: {
+        'formData.id': 'clientId',
+        'eventData.formData': 'customerDetail',
+      },
+      resultType: 'object',
+      // resultMap: {
+      //   'customer.id': 'id',
+      //   'customer.registeredName': 'registeredName',
+      // },
+    },
+    onCustomerSelect: {
+      name: "LasecUpdateCustomerCompany",
+      text: `mutation LasecUpdateCustomerCompany($clientId: String, $customerDetail: Any!){
+        LasecUpdateCustomerCompany(clientId: $clientId,  customerDetail: $customerDetail) {
+          success
+          message
+        }
+      }`,
+      objectMap: true,
+      updateMessage: 'Updating client customer selection',
+      variables: {
+        'formData.id': 'clientId',
+        'eventData.formData': 'customerDetail',
       },
       resultType: 'object',
       // resultMap: {

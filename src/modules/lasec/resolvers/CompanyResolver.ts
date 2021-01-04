@@ -2446,6 +2446,13 @@ export default {
 
       return _newClient;
     },
+    LasecUpdateCustomerCompany: async (obj: any, args: any) => {
+
+      logger.debug(`UPDATING CUSTOMER DETAILS (COMPANY) --  ${JSON.stringify(args)}`);
+
+      return { success: true, message: 'Updated successfully' };
+
+    },
     LasecCreateNewClient: async (obj: any, args: { id: string, newClient: LasecNewClientInput }) => {
 
       let hash = Hash(`__LasecNewClient::${global.user._id}`);

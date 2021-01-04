@@ -271,16 +271,16 @@ const editUiSchema: any = {
       modalProps: {
         fullScreen: false,
         closeOnEvents: [
-          'CloseModal:LasecCRMCustomerLookupTable'
+          'CloseModal:LasecCRMCustomerCompanyLookupTable'
         ]
       }
     },
     props: {
-      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
+      componentFqn: 'lasec-crm.LasecCRMCustomerCompanyLookupTable@1.0.0',
       componentProps: {},
       componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',
-        'LookupComponent.props.onChange': 'LasecUpdateClientDetails',
+        'LookupComponent.props.onChange': 'onCustomerSelect',
         'LookupComponent.props.formContext': 'LookupComponentFormContext',
       },
     },
