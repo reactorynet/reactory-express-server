@@ -158,7 +158,7 @@ reactoryExpress.use(queryRoot,
   //authentication
   passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
   //bodyparser options
-  bodyParser.json({ limit: '10mb' }));
+  bodyParser.json({ limit: '20mb' }));
 
 try {
   //app.use(queryRoot, graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
@@ -166,7 +166,7 @@ try {
     typeDefs,
     resolvers,
     uploads: {
-      maxFileSize: 10000000,
+      maxFileSize: 20000000,
       maxFiles: 10,
     },
   };
