@@ -94,10 +94,10 @@ const uiSchema: any = {
           iconProps: {
             color: '#5fb848'
           },
-          mutation: 'onSelectCustomer',
-          variables: {
-            'selected': 'newClient.customer',
-          },
+          // mutation: 'onSelectCustomer',
+          // variables: {
+          //   'selected': 'newClient.customer',
+          // },
           event: {
             name: 'onCustomerSelect',
             via: 'form', // make either "form" || "amq"
@@ -148,6 +148,10 @@ const schema: Reactory.ISchema = {
           type: 'boolean'
         }
       }
+    },
+    clientId: {
+      type: "string",
+      title: "Client Id",
     },
     selected: {
       type: "object",
@@ -218,15 +222,15 @@ const schema: Reactory.ISchema = {
   }
 };
 
-const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
-  id: 'LasecCRMCustomerLookupTable',
+const LasecCRMCustomerCompanyLookupForm: Reactory.IReactoryForm = {
+  id: 'LasecCRMCustomerCompanyLookupTable',
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
   title: 'CRM Customer Lookup Table',
   tags: ['CRM Customer Lookup Table'],
   registerAsComponent: true,
-  name: 'LasecCRMCustomerLookupTable',
+  name: 'LasecCRMCustomerCompanyLookupTable',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: schema,
@@ -260,4 +264,4 @@ const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
   }
 };
 
-export default LasecCRMCustomerLookupForm;
+export default LasecCRMCustomerCompanyLookupForm;

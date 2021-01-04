@@ -32,6 +32,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 import { getLoggedIn360User, getCustomerDocuments } from './Helpers';
 import deepEquals from '@reactory/server-core/utils/compare';
 import LasecCRMClientJobDetails from '../forms/CRM/Client/JobDetail';
+import { queryAsync } from '@reactory/server-core/database/mysql';
 
 const fieldMaps: any = {
   "fullName": "first_name",
@@ -318,40 +319,15 @@ export const getClient = async (params: any) => {
       'line_manager_id': 'lineManager',
       'line_manager_name': 'lineManagerLabel',
       'role_id': 'jobType',
-
-      // 'ranking_id': ['customer.rankingId',
-      //   {
-      //     key: 'customer.ranking',
-      //     transform: (sourceValue) => {
-      //       /**
-      //        * 1	A - High Value
-      //          2	B - Medium Value
-      //          3	C - Low Value
-      //        */
-      //       const rankings = {
-      //         "1": 'A - High Value',
-      //         "2": 'B - Medium Value',
-      //         "3": 'C - Low Value'
-      //       };
-      //       return rankings[sourceValue];
-      //     }
-      //   }
-      // ],
       'company_id': 'customer.id',
       'company_account_number': 'customer.accountNumber',
       'company_trading_name': 'customer.tradingName',
       'company_sales_team': 'customer.salesTeam',
       'customer_class_id': 'customer.customerClass',
-      // 'customer_class_id': ['customer.classId',
-      //   {
-      //     key: 'customer.customerClass',
-      //     transform: (sourceValue) => `${sourceValue} => Lookup Pending`
-      //   }
-      // ],
       'account_type': ['accountType', 'customer.accountType'],
       'company_on_hold': {
         'key': 'customer.customerStatus',
-        'transform': (val) => (`${val === true ? 'on-hold' : 'not-on-hold'}`)
+        'transform': (val) => (`${val === true ? 'On-hold' : 'Active'}`)
       },
       'currency_code': 'customer.currencyCode',
       'currency_symbol': 'customer.currencySymbol',
@@ -532,6 +508,7 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
         customer_type: params.customerType || (client.customer_type || ''),
         line_manager_id: params.lineManager || (client.line_manager_id || ''),
         role_id: params.jobType || (client.role_id || ''),// role_id: client.role_id,
+
       }
 
       logger.debug(`UPDATE PARAMS:: ${JSON.stringify(updateParams)}`);
@@ -1870,10 +1847,10 @@ export default {
       if (lodash.isNil(address.id)) return count;
 
       const query = `
-      SELECT 
+      SELECT
         COUNT(*) as linked_customers
-      FROM 
-        Address as a inner join Customer as c 
+      FROM
+        Address as a inner join Customer as c
           on a.addressid  = CAST(c.delivery_address_id as unsigned)
         WHERE a.addressid = ${parseInt(address.id)};`;
 
@@ -1899,8 +1876,8 @@ export default {
       const query = `
       SELECT
         COUNT(*) linked_sales_orders_count
-      FROM 
-        Address as a inner join SalesOrder as s 
+      FROM
+        Address as a inner join SalesOrder as s
           on a.addressid  = CAST(s.delivery_address_id as unsigned)
       WHERE a.addressid = ${parseInt(address.id)};
       `;
@@ -2028,7 +2005,6 @@ export default {
       return getCustomerRanking(args);
     },
     LasecGetCustomerRankingById: async (object, args) => {
-      logger.debug('LasecGetCustomerRankingById', args)
       switch (args.id) {
         case "1": return {
           id: '1',
@@ -2056,8 +2032,6 @@ export default {
       return getCustomerDocuments(args);
     },
     LasecSalesTeams: async () => {
-      // return getLasecSalesTeamsForLookup();
-      // return getRepCodesForFilter();
       return getRepCodesForLoggedInUser();
     },
     LasecGetCustomerFilterLookup: async (object, args) => {
@@ -2153,6 +2127,17 @@ export default {
         }
       }
     },
+    LasecGetCurrencyLookup: async (object, args) => {
+      try {
+        const currencies = await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+        logger.debug(`CURRENCIES - ${JSON.stringify(currencies)}`);
+        return currencies.map(currency => { return { id: currency.code, name: currency.name } });
+
+      } catch (err) {
+        logger.debug(`ERROR GETTING CURRENCIES`);
+        return []
+      }
+    },
     LasecGetPersonTitles: async (object, args) => {
       return getPersonTitles(args);
     },
@@ -2177,15 +2162,15 @@ export default {
     },
     /**
       Returns the currently cached object that is associated with the new client onboarding
-      screen.  The data can be used in the context of an existing client that is either 
+      screen.  The data can be used in the context of an existing client that is either
       unfinished or deactivated.
 
-      id - The id of the object to load.  if the id can be parsed as a number it will load 
-       the remote client object from the Lasec API.  This data is merged with the 
+      id - The id of the object to load.  if the id can be parsed as a number it will load
+       the remote client object from the Lasec API.  This data is merged with the
        new object id that is in the cache
 
-      reset - If true, the current data will be reset in the cache and a default new 
-       customer object is returned 
+      reset - If true, the current data will be reset in the cache and a default new
+       customer object is returned
      */
     LasecGetNewClient: async (obj: any, args: { id?: string, reset?: boolean }) => {
 
@@ -2219,17 +2204,17 @@ export default {
         return remote_client;
       }
 
-      //there is an id, we need to check whether or not we need 
+      //there is an id, we need to check whether or not we need
       //to fetch the remote data
       if (args.id) {
         let intcheck = false;
         let objectIdCheck = false;
 
-        let must_fetch = true; //by default we enable a fetch of a remote record 
+        let must_fetch = true; //by default we enable a fetch of a remote record
         //before we fetch the existing customer, check if our cache item has an id that matches
         //the arg.id if we have a cached item.
-        //if the cached item is fresh or recently modified we don't fetch the remote, 
-        //as it could overwrite our current changes.        
+        //if the cached item is fresh or recently modified we don't fetch the remote,
+        //as it could overwrite our current changes.
         if (hasCached === true) {
           if (cachedClient.clientId && cachedClient.clientId === args.id) {
             //we already have the remote client loaded we want to work on
@@ -2264,7 +2249,7 @@ export default {
             logger.debug(`Fetching remote customer data for client id: ${args.id}`)
             existingCustomer = await getClient({ id: args.id });
             logger.debug(`Response for Client Id ${args.id} Result`, { existingCustomer });
-            //sanity check 
+            //sanity check
             if (existingCustomer && existingCustomer.id === args.id) {
               remote_fetched = true;
               logger.debug('mapping existing customer data to api client data object 🔀')
@@ -2336,7 +2321,7 @@ export default {
           client_to_return = { ...remote_client }
         }
 
-        //we have a cached item and remote fetched item.        
+        //we have a cached item and remote fetched item.
         if (remote_fetched === true && cachedClient.id && cachedClient.id === existingCustomer.id) {
           logger.debug(`IDS MATCH:: ${cachedClient.personalDetails.id} ${existingCustomer.id} and merging`);
 
@@ -2501,6 +2486,13 @@ export default {
       }
 
       return _newClient;
+    },
+    LasecUpdateCustomerCompany: async (obj: any, args: any) => {
+
+      logger.debug(`UPDATING CUSTOMER DETAILS (COMPANY) --  ${JSON.stringify(args)}`);
+
+      return { success: true, message: 'Updated successfully' };
+
     },
     LasecCreateNewClient: async (obj: any, args: { id: string, newClient: LasecNewClientInput }) => {
 
@@ -2779,12 +2771,12 @@ export default {
     LasecEditAddress: async (obj: any, args: { address_input: LasecAddress }): Promise<LasecAddressUpdateResponse> => {
       try {
 
-        let address: LasecAddress = null;                
+        let address: LasecAddress = null;
         const { address_input } = args;
 
         if (address_input === null || address_input == undefined) throw new ApiError(`Address Input Cannot be empty`);
         if (address_input.id === null || address_input.id === undefined ) throw new ApiError("Address does not have id")
-                
+
         const unit_segment = `${address_input.unit_number || ""} ${address_input.unit_name || ""} `;
         const street_segment = `${address_input.street_number || ""} ${address_input.street_name || ""} `;
         const region_segment = `${address_input.suburb || ""} ${address_input.city || ""} ${address_input.postal_code || ""} `;
@@ -2812,8 +2804,8 @@ export default {
         const me: Lasec360User = await getLoggedIn360User();
 
         let query = `
-          SELECT 
-            formatted_address, 
+          SELECT
+            formatted_address,
             building_description_id,
             building_floor_number_id,
             province_id,
@@ -2822,7 +2814,7 @@ export default {
             lng
           FROM Address
           WHERE addressid = ${address_input.id}`
-        
+
         let existing_data: any = {
           formatted_address: formatted_address,
           building_description_id: 0,
@@ -2845,11 +2837,11 @@ export default {
           logger.error(`Could not read data from the database ${read_error.message}`, { read_error });
           throw new ApiError('Could not read the data');
         }
- 
+
         query = `
           UPDATE Address
           SET
-            formatted_address = '${formatted_address || existing_data.formatted_address}', 
+            formatted_address = '${formatted_address || existing_data.formatted_address}',
             building_description_id = '${address_input.building_description_id || existing_data.building_description_id}',
             building_floor_number_id = '${address_input.building_floor_number_id || existing_data.building_floor_number_id}',
             province_id = '${address_input.province_id || existing_data.province_id}',
@@ -2857,7 +2849,7 @@ export default {
             lat = ${address_input.lat || existing_data.lat},
             lng = ${address_input.lng || existing_data.lng},
             last_edited_by_staff_user_id = ${me.id}
-          WHERE 
+          WHERE
             addressid = ${address_input.id};`
 
         try {
@@ -2890,26 +2882,26 @@ export default {
     LasecDeleteAddress: async (obj: any, args: { address_input: LasecAddress }): Promise<SimpleResponse> => {
       try {
 
-        if (args.address_input === null) throw new ApiError(`address_input cannot be null`);  
+        if (args.address_input === null) throw new ApiError(`address_input cannot be null`);
         if (args.address_input.id === null) throw new ApiError("address_input argument requires id");
 
         const delete_response = await mysql(`
           UPDATE Address set deleted = 1
           WHERE addressid = ${args.address_input.id};
         `, 'mysql.lasec360').then();
-        
+
         if (delete_response) {
           logger.debug(`Lasec API Response for Address DELETE`, { delete_response });
           return {
             success: true,
             message: `Address ${args.address_input.id} has been deleted`
           }
-        } 
+        }
       } catch (apiError) {
         logger.error(`Could not delete the Address ${args.address_input.id}`, { apiError });
         throw new ApiError(`Could not delete the Address ${args.address_input.id}`, apiError);
       }
-    
+
     },
     LasecCRMSaveComment: async (obj, args) => {
       return saveComment(args);

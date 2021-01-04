@@ -85,6 +85,7 @@ import CustomerLookUpForm from './CRM/Customer/Lookup/LookUpForm';
 import CustomerAddress from './CRM/Customer/Address';
 import NewCustomerAddress from './CRM/Customer/Address/NewAddress';
 import LasecEditCustomerAddress from './CRM/Customer/Address/EditAddress';
+import LasecCRMCustomerCompanyLookupForm from './CRM/Customer/Detail/Lookup';
 
 import OrganizationLookup from './CRM/Organization/Lookup';
 import OrganizationLookupForm from './CRM/Organization/Lookup/LookUpForm';
@@ -181,6 +182,7 @@ export default [
   CustomerAddress,
   NewCustomerAddress,
   LasecEditCustomerAddress,
+  LasecCRMCustomerCompanyLookupForm,
   CustomerOrganizationInfo,
   CustomerLookUp,
   CustomerLookUpForm,

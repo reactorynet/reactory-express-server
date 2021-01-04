@@ -201,6 +201,12 @@ type LasecCustomerFilterLookupItem {
   name: String
   description: String
 }
+type LasecCurrencyFilterLookupItem {
+  id: String
+  key: String
+  name: String
+  description: String
+}
 
 
 
@@ -363,6 +369,13 @@ input ClientUpdateInput {
   lineManager: String
   jobType: String
 
+  customerCompanyName: String
+  customerTradingName: String
+  customerTradingCurrency: String
+  customerDescription: String
+  customerRegistrationNumber: String
+  customerTaxNumber: String
+
 }
 
 input AddressFields {
@@ -484,6 +497,7 @@ extend type Query {
   LasecGetCustomerCountries: [LasecCountryLookupItem]
   LasecGetCustomerRepCodes: [LasecRepCodeLookupItem]
   LasecGetCustomerFilterLookup(filterBy: String): [LasecCustomerFilterLookupItem]
+  LasecGetCurrencyLookup: [LasecCurrencyFilterLookupItem]
   LasecGetCustomerDocuments(id: String, uploadContexts: [String], paging: PagingRequest): PagedLasecDocument
   LasecGetPersonTitles: [LasecTitleLookupItem]
   LasecGetPersonTitleById(id: String): LasecTitleLookupItem
@@ -519,19 +533,20 @@ extend type Query {
 }
 
 extend type Mutation {
+
   LasecUpdateClientDetails(clientInfo: ClientUpdateInput!): ClientDetailUpdateResponse
+
+  LasecUpdateCustomerCompany(clientId: String, customerDetail: Any!): SimpleResponse
+
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
   LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument
   LasecDeleteNewClientDocuments(fileIds: [String]!): UXMessage
   LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
   LasecCreateNewClient(id: String, newClient: LasecNewClientInput): NewClientResponse
   LasecUpdateNewClient(clientId: String, newClient: LasecNewClientInput): LasecNewClient
-  # LasecUpdateNewClient(newClient: LasecNewClientInput): LasecNewClient
   LasecCreateNewAddress(addressDetails: NewAddressInput!): NewAddressResponse
-
   LasecEditAddress(address_input: EditAddressInput): UpdateAddressResponse
   LasecDeleteAddress(address_input: EditAddressInput): SimpleResponse
-
   LasecCRMSaveComment(clientId: String!, comment: String!): SimpleResponse
   LasecCRMDeleteComment(commentId: String!): SimpleResponse
   LasecDeactivateClients(clientIds: [String]!): SimpleResponse
