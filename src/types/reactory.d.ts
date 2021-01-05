@@ -720,11 +720,7 @@ declare namespace Reactory {
 
   export namespace Service {
 
-    export interface IExcelWriterService {
-      writeAsFile(options: IExcelWriterOptions): Promise<Boolean>
-      writeAsStream(options: IExcelWriterOptions): Promise<Boolean>
-      writeToBuffer(options: IExcelWriterOptions): Promise<Buffer>
-    }
+   
 
     export interface IExcelReaderService {
       readFile(file: string): Promise<ExcelJS.Workbook>
@@ -759,6 +755,13 @@ declare namespace Reactory {
     export interface IReactoryContextAwareService extends IReactoryService {
       getExecutionContext(): ReactoryExecutionContext
       setExecutionContext(executionContext: ReactoryExecutionContext): boolean
+    }
+    
+
+    export interface IExcelWriterService extends IReactoryContextAwareService {
+      writeAsFile(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook> ): Promise<Boolean>
+      writeAsStream(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook> ): Promise<Boolean>
+      writeToBuffer(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook> ): Promise<Buffer>
     }
 
     export interface ICoreEmailService extends IReactoryStartupAwareService, IReactoryContextAwareService {

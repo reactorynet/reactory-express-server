@@ -1280,7 +1280,7 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: string
   lineItems = result.line_items;
 
 
-  logger.debug(`Found line items for quote ${code}`, lineItems);
+  logger.debug(`Found line items for quote ${code}:\n${JSON.stringify(lineItems, null, 2)}`);
 
   if (lineItems.length == 0) return [];
 
@@ -1289,7 +1289,6 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: string
   lineItems = om.merge(result.line_items, line_items_map) as LasecQuoteItem[];
 
 
-  logger.debug(`Line items ${code} 🟢`, { lineItems });
   //setCacheItem(keyhash, cached, 25).then();
   //}
 
@@ -2938,8 +2937,10 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
             lasecGetQuoteLineItems(quoteId, option_id).then((paged_results: { lineItems: LasecQuoteItem[], item_paging: PagingResult }) => {              
               if (paged_results && paged_results.lineItems && paged_results.lineItems.length > 0) {
                 freight_request_option.item_paging = paged_results.item_paging,
-                freight_request_option.productDetails = paged_results.lineItems.map((line_item: LasecQuoteItem) => {
-                  return {
+                
+                paged_results.lineItems.forEach((line_item: LasecQuoteItem) => {
+                  
+                  freight_request_option.productDetails.push({
                     code: line_item.code,
                     description: line_item.title,
                     sellingPrice: line_item.totalVATExclusive,
@@ -2949,8 +2950,10 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
                     width: 0,
                     height: 0,
                     volume: 0
-                  }
-                })
+                  });
+                  
+
+                });
               }
 
               resolve(freight_request_option);
@@ -2975,8 +2978,8 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
   };
 }
 
-export const updateFreightRequesyDetails = async (params) => {
-  logger.debug(`UPDATE FREIGHT REQUEST DETAILS :: ${JSON.stringify(params)}`);
+export const updateFreightRequestDetails = async (params: any) => {
+  logger.debug(`UPDATE FREIGHT REQUEST DETAILS ::\n ${JSON.stringify(params, null, 2)}`);
 
   const { quoteId, email, communicationMethod, options, productDetails } = params.freightRequestDetailInput;
   try {

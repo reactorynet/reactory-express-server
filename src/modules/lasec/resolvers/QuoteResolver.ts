@@ -43,6 +43,7 @@ import {
   LasecGetFreightRequestQuoteParams,
   FreightRequestQuoteDetail,
   LasecTransportationMode,
+  FreightRequestProductDetail,
 
 } from '../types/lasec';
 
@@ -75,7 +76,7 @@ import {
   uploadSalesOrderDoc,
   getCRMInvoices,
   getFreightRequetQuoteDetails,
-  updateFreightRequesyDetails,
+  updateFreightRequestDetails,
   duplicateQuoteForClient,
   createNewQuote,
   saveQuoteComment,
@@ -88,7 +89,7 @@ import {
   getSalesHistoryMonthlyCount,
   lasecGetQuoteLineItem
 } from './Helpers';
-import { queryAsync } from '@reactory/server-core/database/mysql';
+import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { PagingRequest } from 'database/types';
 
 const QUOTE_SERVICE_ID = 'lasec-crm.LasecQuoteService@1.0.0';
@@ -187,6 +188,44 @@ const $PagedLineItemsResponse = async (quote: any, context: { item_paging?: Reac
   }
 
   return quote;
+}
+
+interface product_dimensions {
+  length: number, 
+  height: number, 
+  width: number,
+  volume: number,
+  weight: number,
+  unitOfMeasure: string
+};
+
+const PopulateProductDimensions = async ({ code }: FreightRequestProductDetail): Promise<product_dimensions> => {
+          
+    if(code) {        
+      const result: any[] = await mysql(`
+        SELECT 
+          product_length as length,
+          product_weight as weight, 
+          product_height as height,
+          product_volume as volume,
+          product_width as width,
+          pack_size as unitOfMeasure
+        FROM Product WHERE code = '${code}';`, 'mysql.lasec360').then();
+
+      if(result && result.length === 1) {
+        return result[0];
+      }
+    };
+
+    return {
+      height: 0,
+      length: 0,
+      volume: 0,
+      weight: 0,
+      width: 0,
+      unitOfMeasure: "none"
+    }
+  
 }
 
 export default {
@@ -705,6 +744,86 @@ export default {
   LasecQuoteOption: {
 
   },
+  FreightRequestProductDetail: {
+    length: async (item: FreightRequestProductDetail): Promise<number> => {
+      const { length } = item;
+
+      if(length && length > 0) return length;
+
+
+      if(!item._dimensions) {
+        item._dimensions = await PopulateProductDimensions(item);
+        item = {...item, ...item._dimensions};
+      }
+
+      return item.length;                
+    },
+    width: async (item: FreightRequestProductDetail): Promise<number> => {
+      const { width } = item;
+
+      if(width && width > 0) return width;
+
+
+      if(!item._dimensions) {
+        item._dimensions = await PopulateProductDimensions(item);
+        item = {...item, ...item._dimensions};
+      }
+
+      return item.width;                
+    },
+    height: async (item: FreightRequestProductDetail): Promise<number> => {
+      const { height } = item;
+
+      if(height && height > 0) return height;
+
+
+      if(!item._dimensions) {
+        item._dimensions = await PopulateProductDimensions(item);
+        item = {...item, ...item._dimensions};
+      }
+
+      return item.height;                
+    },
+    volume: async (item: FreightRequestProductDetail): Promise<number> => {
+      const { volume } = item;
+
+      if(volume && volume > 0) return volume;
+
+
+      if(!item._dimensions) {
+        item._dimensions = await PopulateProductDimensions(item);
+        item = {...item, ...item._dimensions};
+      }
+
+      return item.volume;                
+    },
+    weight: async (item: FreightRequestProductDetail): Promise<number> => {
+      const { weight } = item;
+
+      if(weight && weight > 0) return weight;
+
+
+      if(!item._dimensions) {
+        item._dimensions = await PopulateProductDimensions(item);
+        item = {...item, ...item._dimensions};
+      }
+
+      return item.weight;                
+    },
+    unitOfMeasure: async (item: FreightRequestProductDetail): Promise<string> => {
+      const { unitOfMeasure } = item;
+
+      if(unitOfMeasure && unitOfMeasure !== "") return unitOfMeasure;
+
+
+      if(!item._dimensions) {
+        item._dimensions = await PopulateProductDimensions(item);
+        item = {...item, ...item._dimensions};
+      }
+
+      return item.unitOfMeasure;                
+    },
+  },
   Query: {
     LasecTransportationModes: async (): Promise<LasecTransportationMode[]> => { 
       return (getService(QUOTE_SERVICE_ID) as IQuoteService).getQuoteTransportModes();
@@ -1165,8 +1284,8 @@ export default {
       return uploadSalesOrderDoc(args);
     },
 
-    LasecCRMUpdateFreightRequestDetails: async (obj, args) => {
-      return updateFreightRequesyDetails(args);
+    LasecCRMUpdateFreightRequestDetails: async (obj: any, args: {  freightRequestDetailInput: FreightRequestQuoteDetail  }) => {
+      return updateFreightRequestDetails(args);
     },
     LasecCRMDuplicateQuoteForClient: async (obj, args) => {
       return duplicateQuoteForClient(args);

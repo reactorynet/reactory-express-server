@@ -761,16 +761,25 @@ export interface LasecGetFreightRequestQuoteParams {
 }
 
 export interface FreightRequestProductDetail {
+  _dimensions?: {
+    length: number
+    width: number
+    height: number
+    volume: number
+    weight: number
+  },
   code: string
   description: string
   unitOfMeasure: string
   sellingPrice: number
   qty: number
+  weight: number,
   length: number
   width: number
   height: number
   volume: number
 }
+
 export interface FreightRequestOption {
   name: string
   transportMode: String
