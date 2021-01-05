@@ -40,6 +40,9 @@ import {
   LasecQuoteHeaderInput,
   LasecCRMCustomer,
   LasecClient,
+  LasecGetFreightRequestQuoteParams,
+  FreightRequestQuoteDetail,
+  LasecTransportationMode,
 
 } from '../types/lasec';
 
@@ -703,6 +706,9 @@ export default {
 
   },
   Query: {
+    LasecTransportationModes: async (): Promise<LasecTransportationMode[]> => { 
+      return (getService(QUOTE_SERVICE_ID) as IQuoteService).getQuoteTransportModes();
+    },
     LasecGetQuoteList: async (obj, { search }) => {
       return getQuotes({ search });
     },
@@ -756,8 +762,16 @@ export default {
     LasecGetSalesOrderDocumentBySlug: async (obj, args) => {
       return getSalesOrderDocBySlug(args);
     },
-    LasecGetFreightRequestQuoteDetail: async (obj, args) => {
-      return getFreightRequetQuoteDetails(args);
+    LasecGetFreightRequestQuoteDetail: async (obj: any, args: LasecGetFreightRequestQuoteParams): Promise<FreightRequestQuoteDetail> => {
+      try {
+        const result: FreightRequestQuoteDetail = await getFreightRequetQuoteDetails(args).then();
+        return result;
+      } catch (unhandledError) {
+        if (unhandledError instanceof ApiError) throw ApiError;
+
+        logger.error(`Unhandled error while Getting Freight Request Detail for Quote ${args.quoteId}`, unhandledError);
+        throw new ApiError('Unandled Error', unhandledError);
+      }      
     },
     LasecGetCompanyDetailsforQuote: async (obj, args) => {
       return getCompanyDetails(args);

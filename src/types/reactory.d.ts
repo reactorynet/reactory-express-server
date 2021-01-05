@@ -188,6 +188,7 @@ declare namespace Reactory {
     key: string
     name: string
     getSetting: (key: String) => any
+    [key: string]: any
   }
 
   export interface IOrganization {
@@ -446,7 +447,9 @@ declare namespace Reactory {
     options?: any,
     autoQuery?: boolean,
     //the number of milliseconds the autoQuery must be delayed for before executing
-    autoQueryDelay?: number, 
+    autoQueryDelay?: number,
+    waitUntil?: string,
+    waitTimeout?: number,
     interval?: number,
     useWebsocket?: boolean,
     onError?: IReactoryFormQueryErrorHandlerDefinition,
@@ -760,6 +763,10 @@ declare namespace Reactory {
 
     export interface ICoreEmailService extends IReactoryStartupAwareService, IReactoryContextAwareService {
       sendEmail(message: Reactory.IEmailMessage): Promise<Reactory.EmailSentResult>
+    }
+
+    export interface IErrorHandlerServer extends IReactoryContextAwareService {
+      handle<T>( FunctionPointer: Promise<T> ): T
     }
 
     export interface IReactoryDefaultService extends IReactoryStartupAwareService, IReactoryContextAwareService { }

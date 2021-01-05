@@ -13,7 +13,9 @@ const bypassUri = [
   '/auth/microsoft/openid',
 ];
 
-const ReactoryClientAuthenticationMiddleware = (req, res, next) => {
+const ReactoryClientAuthenticationMiddleware = (req: any, res: any, next: Function) => {
+
+
   let clientId = req.headers['x-client-key'];
   let clientPwd = req.headers['x-client-pwd'];
   let serverBypass = req.headers['x-reactory-pass'];  
@@ -27,8 +29,8 @@ const ReactoryClientAuthenticationMiddleware = (req, res, next) => {
   if(isNil(clientPwd) === true) clientPwd = req.params.secret;
   if(isNil(clientPwd) === true) clientPwd = query.secret;  
   if(isNil(clientPwd) === true) clientPwd = query['x-client-pwd'];
-
-  logger.debug(`ReactoryClientAuthenticationMiddleware:: Client key: [${clientId}], Client Token: [${clientPwd}], Original Url: ${req.originalUrl}`, {query: req.query, params: req.params, method: req.method });
+  
+  logger.debug(`ReactoryClientAuthenticationMiddleware:: Client key: [${clientId}], Client Token: [${clientPwd}], Original Url: ${req.originalUrl}`, { query: req.query, params: req.params, method: req.method });
 
   let bypass = false;
   if (req.originalUrl) {
@@ -47,7 +49,7 @@ const ReactoryClientAuthenticationMiddleware = (req, res, next) => {
   } else {
     logger.debug(`ReactoryClientAuthenticationMiddleware:: extracted partner key: ${clientId}`); 
     try {
-      ReactoryClient.findOne({ key: clientId }).then((clientResult) => {
+      ReactoryClient.findOne({ key: clientId }).then((clientResult:any) => {
         if (isNil(clientResult)) res.status(401).send({ error: `X-Client-Key / ?clientId ${clientId} Credentials Invalid.` });        
 
         if(isNil(serverBypass) === false) {

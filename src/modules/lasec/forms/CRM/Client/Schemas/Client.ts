@@ -1,4 +1,17 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
+import logger from 'logging';
+import { getLoggedIn360User } from 'modules/lasec/resolvers/Helpers';
+
+let is_international = false;
+
+// try {
+//   let current_logged_in = await getLoggedIn360User();
+//   if (current_logged_in.user_type === "lasec_international") is_international = true;
+// } catch (error) {
+//   logger.debug("No logged in user available", error);
+// }
+
+
 
 /**
  * Represents the client schema object.  This references a human with additional
@@ -88,7 +101,7 @@ const ClientSchema: Reactory.ISchema = {
     },
     country: {
       type: "string",
-      title: "Country"
+      title: `Country / Province`
     },
     repCode: {
       type: "string",

@@ -76,9 +76,7 @@ class LasecQuoteService implements IQuoteService {
       logger.debug(`lasec-crm.QuoteService getQuoteTransportModes()`, { cached: items });
 
       if (!items) {
-        const payload = await LAPI.Quotes.getQuoteTransportModes().then()
-        items = payload || [];
-
+        items  = await LAPI.Quotes.getQuoteTransportModes().then()        
         logger.debug(`lasec-crm.QuoteService getQuoteTransportModes()`, { fetched: items });
         setCacheItem(cache_key, items, 180 * 3);
       }

@@ -30,7 +30,10 @@ import {
   Lasec360User,
   LasecQuoteItem,
   Lasec360QuoteLineItem,
-  Lasec360Credentials
+  Lasec360Credentials,
+  LasecGetFreightRequestQuoteParams,
+  LasecQuoteOption,
+  FreightRequestOption
 } from '../types/lasec';
 
 
@@ -39,6 +42,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 import { argsToArgsConfig } from 'graphql/type/definition';
 import Api from '@reactory/server-modules/lasec/api';
 import ReactoryFileModel from '@reactory/server-modules/core/models/CoreFile';
+import { PagingResult } from 'database/types';
 
 const lookups = CONSTANTS.LOOKUPS;
 
@@ -163,7 +167,7 @@ export const LoggedInLasecUserHashKey = ($partner: Reactory.IReactoryClientDocum
   let _authentication: Reactory.IAuthentication = null;
 
   if ($user) {
-     _authentication = user.getAuthentication("lasec");
+    _authentication = user.getAuthentication("lasec");
   }
 
   if (!_authentication) {
@@ -184,7 +188,10 @@ export const LoggedInLasecUserHashKey = ($partner: Reactory.IReactoryClientDocum
 
 export const getLoggedIn360User: Function = async function (skip_cache: boolean = false): Promise<Lasec360User> {
   const { user } = global;
-
+  if (user._id === "ANON") {
+    logger.debug("🚨 Anon User Cannot Retrieve Authentications");
+    return null;
+  }
   if (user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
   const _authentication = user.getAuthentication("lasec");
 
@@ -250,7 +257,7 @@ export const setLoggedInUserProps = async (active_rep_code: string, active_compa
 
   let result = await lasecApi.User.setActiveCompany(company_id).then()
   logger.debug(`Result from setting active company`, { result });
-  return getLoggedIn360User( true );
+  return getLoggedIn360User(true);
 
 };
 
@@ -1258,7 +1265,7 @@ export const lasecGetQuoteLineItem = async (id: string): Promise<LasecQuoteItem>
 };
 
 
-export const lasecGetQuoteLineItems = async (code: string, active_option: String = 'all', page = 1, pageSize = 25) => {
+export const lasecGetQuoteLineItems = async (code: string, active_option: string = 'all', page = 1, pageSize = 25): Promise<any> => {
   const keyhash = `quote.${code}-${active_option}.lineitems.${page}-${pageSize}`;
 
   //let cached = await getCacheItem(keyhash);
@@ -2166,7 +2173,7 @@ const mimeTypeForFilename = (filename: string) => {
   let parts = filename.split(".");
   if (parts.length > 1) {
     let m: string = mimes[parts[parts.length - 1]];
-    if  (m !== null && m !== undefined  ) {
+    if (m !== null && m !== undefined) {
       return m;
     }
   }
@@ -2872,85 +2879,99 @@ export const getCRMSalesHistory = async (params) => {
 
 }
 
-export const getFreightRequetQuoteDetails = async (params) => {
+export const getFreightRequetQuoteDetails = async (params: LasecGetFreightRequestQuoteParams) => {
 
-  logger.debug(`FREIGHT REQUEST PARAMS:: ${JSON.stringify(params)}`);
+
+  logger.debug(`
+  **********************************************************
+  * 🚛 Getting Freight Request for Quote ${params.quoteId} *
+  **********************************************************
+  `);
 
   const { quoteId } = params;
+  
+  let quoteDetail: LasecQuote = await lasecApi.Quotes.getByQuoteId(quoteId).then();
 
-  let quoteDetail = await lasecApi.Quotes.getByQuoteId(quoteId).then();
+  logger.debug(`Fetched Quote Results :\n${JSON.stringify(quoteDetail)}\nLoading Quote Options`);
 
-  logger.debug(`QUOTE DETAIL:: ${JSON.stringify(quoteDetail)}`);
+  let promises: Promise<any>[] = [];
+  if (quoteDetail && quoteDetail.quote_option_ids) {
+    promises = quoteDetail.quote_option_ids.map((option_id: string): Promise<FreightRequestOption> => {
+      return new Promise((resolve, reject) => {
+        
+        lasecApi.Quotes.getQuoteOption(option_id).then((option_result) => {
+          logger.debug(`QUOTE [${quoteId}] OPTION [${option_id}]\n ${JSON.stringify(option_result, null, 2)}`);
+          if (option_result.id) {
+            
+            let quoteOptionResponse = option_result;
+
+            let freight_request_option: FreightRequestOption = {
+              name: quoteOptionResponse.name,
+              transportMode: '',
+              incoTerm: quoteOptionResponse.inco_terms || '',
+              place: quoteOptionResponse.named_place || '',
+              fromSA: false,
+              vatExempt: false,
+              totalValue: quoteOptionResponse.grand_total_incl_vat_cents || 0,
+              companyName: '',
+              streetAddress: '',
+              suburb: '',
+              city: '',
+              province: '',
+              country: '',
+              freightFor: '',
+              offloadRequired: false,
+              hazardous: 'non-hazardous',
+              refrigerationRequired: false,
+              containsLithium: false,
+              sample: '',    
+              item_paging: {
+                total: 0,
+                hasNext: false,
+                page: 0,
+                pageSize: 0
+              },
+              productDetails: [],
+            };
 
 
-  let options = [];
-  let productDetails = [];
+            lasecGetQuoteLineItems(quoteId, option_id).then((paged_results: { lineItems: LasecQuoteItem[], item_paging: PagingResult }) => {              
+              if (paged_results && paged_results.lineItems && paged_results.lineItems.length > 0) {
+                freight_request_option.item_paging = paged_results.item_paging,
+                freight_request_option.productDetails = paged_results.lineItems.map((line_item: LasecQuoteItem) => {
+                  return {
+                    code: line_item.code,
+                    description: line_item.title,
+                    sellingPrice: line_item.totalVATExclusive,
+                    qty: line_item.quantity,
+                    unitOfMeasure: '',
+                    length: 0,
+                    width: 0,
+                    height: 0,
+                    volume: 0
+                  }
+                })
+              }
 
-  logger.debug(`----------  GETTING OPTIONS FROM API ----------`);
+              resolve(freight_request_option);
 
-  options = quoteDetail.quote_option_ids.map(async (optionId) => {
-
-    let quoteOptionResponse = await lasecApi.Quotes.getQuoteOption(optionId).then();
-
-    logger.debug(`QUOTE OPTIONS ${quoteId}:: ${JSON.stringify(quoteOptionResponse)}`);
-
-    quoteOptionResponse = quoteOptionResponse.items[0];
-
-    const paged_results: { lineItems: LasecQuoteItem[], item_paging: Reactory.IPagingResult } = await lasecGetQuoteLineItems(quoteId, optionId).then();
-
-    logger.debug(`OPTION LINE ITEMS FOR::  ${quoteId} ${optionId}:: ${JSON.stringify(paged_results)}`);
-
-    let optionItemDetails: any[] = [];
-
-    if (paged_results.lineItems.length > 0) {
-      optionItemDetails = paged_results.lineItems.map(li => {
-        return {
-          code: li.code,
-          description: li.title,
-          sellingPrice: li.totalVATExclusive,
-          qty: li.quantity,
-          unitOfMeasure: '',
-          length: 0,
-          width: 0,
-          height: 0,
-          volume: 0
-        }
+            }).catch((get_line_items_error) => {
+              logger.error(`Could not get the the line items for the Freight Costing Details:\n${get_line_items_error.message}`, get_line_items_error)
+              reject(get_line_items_error);
+            })        
+          } else {
+            reject(new ApiError('No data available for quote option'))
+          }
+        });
       });
-    }
-
-    return {
-      name: quoteOptionResponse.name,
-      transportMode: '',
-      incoTerm: quoteOptionResponse.inco_terms || '',
-      place: quoteOptionResponse.named_place || '',
-      fromSA: false,
-      vatExempt: false,
-      totalValue: quoteOptionResponse.grand_total_incl_vat_cents,
-      companyName: '',
-      streetAddress: '',
-      suburb: '',
-      city: '',
-      province: '',
-      country: '',
-      freightFor: '',
-      offloadRequired: false,
-      hazardous: 'non-hazardous',
-      refrigerationRequired: false,
-      containsLithium: false,
-      sample: '',
-      item_paging: paged_results.item_paging,
-      // additionalDetails: quoteOptionResponse.special_comment || '',
-      productDetails: optionItemDetails
-    }
-
-  });
-
-  // }
+    })
+  }
 
   return {
-    email: '',
+    id: params.quoteId,
+    email: global.user.email,
     communicationMethod: 'attach_pdf',
-    options
+    options: await Promise.all(promises).then()
   };
 }
 
@@ -3204,8 +3225,8 @@ export const updateQuoteLineItems = async (params) => {
 export const getCompanyDetails = async (params: { id: string }) => {
   try {
     let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [params.id] } }).then();
-    let customerObject = { };
-    
+    let customerObject = {};
+
     logger.debug(`Results from Helpers.ts -> getCompanyDetails(params)`, { params, companyPayloadResponse });
 
     if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {

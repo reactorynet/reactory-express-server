@@ -29,6 +29,9 @@ import { getProductById } from "./ProductResolver";
 import { PagingRequest } from "@reactory/server-core/database/types";
 import { Reactory } from "@reactory/server-core/types/reactory";
 
+
+const QUOTE_SERVICE_ID = 'lasec-crm.LasecQuoteService@1.0.0';
+
 const SalesOrderResolver = {
 
 
@@ -278,11 +281,12 @@ const SalesOrderResolver = {
         throw new ApiError(`Unhandled Error Processing Sales Order Prep ${error.message}`);
       }
     },
-    LasecGetIncoTermsForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
+    LasecIncoTerms: async (): Promise<any> => {
       try {
-
+        return (getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms();
       } catch (inco_terms_error) {
-
+        logger.error(`Could not get the inco terms: ${inco_terms_error.message}`, inco_terms_error)
+        return [];
       }
     },
     LasecCheckPurchaseOrderExists: async (parent: any, params: { company_id: string, purchase_order_number: string }): Promise<any> => {
@@ -303,7 +307,7 @@ const SalesOrderResolver = {
       try {
         logger.debug(`SalesOrderResovler.ts => LasecCertificateOfConformanceForSalesOrder`);
         const certificate = await LasecApi.SalesOrders.get_certificate_of_conformance(params.sales_order_id).then()
-        logger.debug(`Returning sales order certificate`, certificate);
+        logger.debug(`Returning sales order certificate ${certificate.id}`);
 
         return certificate;
 
@@ -372,13 +376,18 @@ const SalesOrderResolver = {
       try {
         logger.debug("Creating certificate of conformance", { params });
         const result = await LasecApi.SalesOrders.post_certificate_of_conformance(params.sales_order_id, params.certificate).then();
+
+        let certificate = {
+          ...params.certificate,
+        };
+
+        certificate.pdf_url = result.pdf_url;
+        certificate.id = result.id || `CERTIFICATE_OF_CONFORMANCE-${params.sales_order_id}`;
+          
         return {
           success: true,
           message: 'Certificate of conformance created',
-          certificate: {
-            ...params.certificate,
-            pdf_url: result.payload
-          }
+          certificate
         }
 
       } catch (error) {
@@ -422,35 +431,43 @@ const SalesOrderResolver = {
     /***
      * 
      */
-    LasecCreateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
+    LasecCreateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
 
       try {
 
         const result = await LasecApi.SalesOrders.post_commercial_invoice(params.sales_order_id, params.invoice).then();
+
+        if (result.error) {
+          return {
+            success: false, 
+            message: `Could not create the commercial invoice [${result.error.message}]`,
+            commercial_invoice: null
+          }
+        }
+
         return {
           success: true,
           message: 'Certificate of conformance created',
-          certificate: {
+          commercial_invoice: {
             ...params.invoice,
-            pdf_url: result.payload
+            pdf_url: result.pdf_url
           }
         }
 
       } catch (error) {
-
+        logger.error('Error occured while creating the Commercial Invoice')
         return {
           success: false,
           message: error.message,
-          invoice: params.invoice
+          commercial_invoice: params.invoice
         }
       }
-
     },
 
     /***
      * 
      */
-    LasecUpdateCommericalInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
+    LasecUpdateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
       try {
 
         const result = await LasecApi.SalesOrders.put_commercial_invoice(params.sales_order_id, params.invoice).then();
@@ -484,9 +501,9 @@ const SalesOrderResolver = {
         return {
           success: true,
           message: 'Certificate of conformance created',
-          certificate: {
+          packing_list: {
             ...params.packing_list,
-            pdf_url: result.payload
+            pdf_url: result.pdf_url || "http://document.notready.com/empty.pdf"
           }
         }
 
@@ -495,7 +512,7 @@ const SalesOrderResolver = {
         return {
           success: false,
           message: error.message,
-          invoice: params.packing_list
+          packing_list: params.packing_list
         }
       }
 

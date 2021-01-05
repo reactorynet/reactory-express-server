@@ -558,7 +558,7 @@ input LasecPackingListInput {
   terms: String
   final_destination: String
   export_reason: String
-  doucment_number: String
+  document_number: String
   inco_terms: String
   po_number: String
 
@@ -647,9 +647,9 @@ extend type Query {
   LasecCheckPurchaseOrderExists(company_id: String, purchase_order_number: String) : LasecSalesOrderExistsResult
 
   """
-  Get the inco terms for the sales order id
+  Returns a list of lasec inco terms
   """
-  LasecGetIncoTermsForSalesOrder(sales_order_id: String!) : [LasecIncoTermsLookupItem]
+  LasecIncoTerms : [LasecIncoTermsLookupItem]
 
   """
   Get the payment terms for the sales order id
@@ -689,11 +689,11 @@ extend type Mutation {
   """
   Create Commercial Invoice
   """
-  LasecCreateCommericalInvoice(sales_order_id: String!, invoice: LasecCommercialInvoiceInput): LasecCommercialInvoiceResponse
+  LasecCreateCommercialInvoice(sales_order_id: String!, invoice: LasecCommercialInvoiceInput): LasecCommercialInvoiceResponse
   """
   Update Existing Commercial Invoice
   """
-  LasecUpdateCommericalInvoice(sales_order_id: String!, invoice: LasecCommercialInvoiceInput): LasecCommercialInvoiceResponse
+  LasecUpdateCommercialInvoice(sales_order_id: String!, invoice: LasecCommercialInvoiceInput): LasecCommercialInvoiceResponse
 
   """
   Create Packing List

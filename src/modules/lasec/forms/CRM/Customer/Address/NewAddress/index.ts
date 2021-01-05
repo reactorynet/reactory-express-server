@@ -34,7 +34,6 @@ const uiSchema: any = {
       country: { xs: 12, sm: 12, md: 6, lg: 4 },
       lat: { xs: 12, sm: 12, md: 6, lg: 4 },
       lng: { xs: 12, sm: 12, md: 6, lg: 4 },
-      formatted_address: { xs: 12, sm: 12, md: 6, lg: 4 }
     },
   ],
 
@@ -186,11 +185,12 @@ const schema: Reactory.ISchema = {
   required: [
     "streetNumber",
     "streetName",
-    "suburb",
+    "floorNumber",
+    //"suburb",
     "postalCode",
     "province",
     "city",
-    "metro",
+    //"metro",
     "country",
     "buildingType"
   ],

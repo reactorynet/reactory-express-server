@@ -11,8 +11,14 @@ const corsOptions = {
   origin(origin, callback) {
     //console.log('checking origin', origin);
     const { user, partner } = global;
-    logger.debug(`Validatinging CORS:\n ORIGIN: ${origin}\n Partner => ${partner ? partner.key : 'NO PARTNER'}\n USER => ${user ? `${user.firstName} ${user.lastName}` : 'NO USER' }`);
+    logger.debug(`
+      Validatinging CORS:
+        ORIGIN => ${origin}
+        PARTNER => ${partner ? partner.key : 'NO PARTNER'} 
+        USER => ${user ? `${user.firstName} ${user.lastName}` : 'NO USER'}`);
+    
     callback(null, true);
+    
     /*
     if (whitelist.indexOf(origin) !== -1) {
       callback(null, true)

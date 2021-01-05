@@ -90,7 +90,7 @@ const MSGraph = {
       user.avatar = await MSGraph.getProfileImage(accessToken, options.imageSize);
     }
 
-    logger.debug(`MSGraph /me ${options.profileImage ? 'with profile image fetch' : ''} result`, { user })
+    logger.debug(`MSGraph /me ${options.profileImage ? 'with profile image fetch' : ''} result`)
 
     return user;
   },

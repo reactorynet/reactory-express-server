@@ -279,9 +279,9 @@ const editUiSchema: any = {
       componentFqn: 'lasec-crm.LasecCRMCustomerCompanyLookupTable@1.0.0',
       componentProps: {},
       componentPropertyMap: {
-        'LookupComponent.props.formContext.$formData': 'formData.selected',
         'LookupComponent.props.onChange': 'onCustomerSelect',
-        'LookupComponent.props.formContext': 'LookupComponentFormContext',
+        // 'LookupComponent.props.formContext.$formData': 'formData.selected',
+        // 'LookupComponent.props.formContext': 'LookupComponentFormContext',
       },
     },
   },
