@@ -62,7 +62,27 @@ export const DocumentFormSchema: Reactory.ISchema = {
     },
 
     uploadedDocuments: {
-      type: 'array',      
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+            title: 'ID'
+          },
+          filename: {
+            type: 'string',
+            title: 'Filename'
+          },
+          link: {
+            type: 'string',
+            title: 'Link'
+          },
+        },
+      },
+    },
+    clientDocs: {
+      type: 'array',
       items: {
         type: 'object',
         properties: {

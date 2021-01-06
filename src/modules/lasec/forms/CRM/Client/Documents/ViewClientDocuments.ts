@@ -114,10 +114,11 @@ export const ViewUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      view: { xs: 12, sm: 12, md: 12, lg: 12 },
+      // view: { xs: 12, sm: 12, md: 12, lg: 12 },
     },
     {
-      uploadedDocuments: { xs: 12, sm: 12, md: 12, lg: 12 },
+      // uploadedDocuments: { xs: 12, sm: 12, md: 12, lg: 12 },
+      clientDocs: { xs: 12, sm: 12, md: 12, lg: 12 },
       style: { marginTop: '25px'}
     }
   ],
@@ -136,6 +137,9 @@ export const ViewUiSchema: any = {
   },
   uploadedDocuments: {
     ...DocumentGridWidget
+  },
+  clientDocs: {
+    'ui:widget': 'ClientDocuments'
   }
 };
 
@@ -218,5 +222,8 @@ export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
       icon: 'edit',
       uiSchema: { ...EditUiSchema }
     },
+  ],
+  widgetMap: [
+    { componentFqn: 'lasec-crm.ClientDocuments@1.0.0', widget: 'ClientDocuments' },
   ],
 };
