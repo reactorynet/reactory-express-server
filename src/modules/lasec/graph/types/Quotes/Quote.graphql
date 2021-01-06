@@ -590,6 +590,7 @@ type FreightRequestProductDetail {
   length: Float
   width: Float
   height: Float
+  weight: Float
   volume: Float
 }
 
@@ -660,7 +661,7 @@ input FreightRequestProductDetailInput {
   volume: Float
 }
 
-input FreightReqestDetailInput {
+input FreightRequestDetailInput {
   quoteId: String
   email: String
   communicationMethod: String
@@ -874,7 +875,7 @@ extend type Mutation {
     createInput: SalesOrderContentInput!
   ): SalesOrderDocumentContent
   LasecCRMUpdateFreightRequestDetails(
-    freightRequestDetailInput: FreightReqestDetailInput!
+    freightRequestDetailInput: FreightRequestDetailInput!
   ): SimpleResponse
 
   LasecCRMDuplicateQuoteForClient(

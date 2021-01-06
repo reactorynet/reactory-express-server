@@ -31,8 +31,8 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 
 import { getLoggedIn360User, getCustomerDocuments } from './Helpers';
 import deepEquals from '@reactory/server-core/utils/compare';
-import { queryAsync } from '@reactory/server-core/database/mysql';
 import LasecCRMClientJobDetails from '../forms/CRM/Client/JobDetail';
+import { queryAsync } from '@reactory/server-core/database/mysql';
 
 const fieldMaps: any = {
   "fullName": "first_name",
@@ -411,8 +411,6 @@ export const getClient = async (params: any) => {
 };
 
 
-/**
- *
 
 interface ClientUpdateInput {
   clientId: string
@@ -2399,8 +2397,8 @@ export default {
     },
   },
   Mutation: {
-    LasecUpdateClientDetails: async (obj, args) => {
-      logger.debug(`UPDATING CLIENT DETAILS WITH ARGS ${JSON.stringify(args)}`);
+    LasecUpdateClientDetails: async (obj, args: { clientInfo: ClientUpdateInput }) => {
+      logger.debug(`UPDATING CLIENT DETAILS WITH ARGS ${args}`);
       return updateClientDetail(args);
     },
     LasecCreateNewOrganisation: async (onj, args) => {

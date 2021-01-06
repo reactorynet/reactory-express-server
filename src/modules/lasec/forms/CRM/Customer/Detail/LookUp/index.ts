@@ -44,8 +44,8 @@ const uiSchema: any = {
   selected: {
     'ui:widget': 'CustomerLabel',
     'ui:options': {
-      'use_case': 'customer_lookup',
-      'displayField': 'registeredName',
+      use_case: 'customer_lookup',
+      displayField: 'registeredName',
       allow_preview: true
     }
   },
@@ -93,11 +93,7 @@ const uiSchema: any = {
           id: 'select_customer',
           iconProps: {
             color: '#5fb848'
-          },
-          // mutation: 'onSelectCustomer',
-          // variables: {
-          //   'selected': 'newClient.customer',
-          // },
+          },          
           event: {
             name: 'onCustomerSelect',
             via: 'form', // make either "form" || "amq"
