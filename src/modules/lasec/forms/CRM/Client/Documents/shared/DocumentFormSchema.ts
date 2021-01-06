@@ -81,7 +81,7 @@ export const DocumentFormSchema: Reactory.ISchema = {
         },
       },
     },
-    clientDocs: {
+    documents: {
       type: 'array',
       items: {
         type: 'object',

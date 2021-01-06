@@ -131,11 +131,11 @@ const getClients = async (params: GetClientsParams) => {
   // LEAVING THE BELOW FILTER IN PLACE SEEMS TO RESULT IN NO CLIENTS BEING RETURNED
 
   if (typeof repCode === 'string') {
-     _filter.sales_team_id = repCode;
+    _filter.sales_team_id = repCode;
   }
 
   if (typeof repCode === 'array' && repCode.length > 0) {
-     _filter.sales_team_ids = repCode;
+    _filter.sales_team_ids = repCode;
   }
 
   if (!_filter.sales_team_id && !_filter.sales_team_ids) {
@@ -179,7 +179,7 @@ const getClients = async (params: GetClientsParams) => {
   }
 
   logger.debug(`Sending query to lasec API with filter`, { filter: _filter })
-  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { enabled: true,  page_size: paging.pageSize || 10, current_page: paging.page }, ordering }).then();
+  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { enabled: true, page_size: paging.pageSize || 10, current_page: paging.page }, ordering }).then();
 
   let ids: any[] = [];
 
@@ -197,7 +197,7 @@ const getClients = async (params: GetClientsParams) => {
 
   logger.debug(`Loading (${ids.length}) client ids`);
 
-  const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids }, ordering: {  }, pagination: { enabled: false, current_page: paging.page, page_size: paging.pageSize } });
+  const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids }, ordering: {}, pagination: { enabled: false, current_page: paging.page, page_size: paging.pageSize } });
   logger.debug(`Fetched Expanded View for (${clientDetails.items.length}) Clients from API`);
   let clients = [...clientDetails.items];
   clients = clients.map(client => {
@@ -1373,6 +1373,8 @@ const uploadDocument = async (args: any) => {
 
 const deleteDocuments = async (args: any) => {
 
+  logger.debug(`FILE DELETE ARGS: ${JSON.stringify(args)}`);
+
   const { fileIds } = args;
 
   let files = await ReactoryFileModel.find({ id: { $in: fileIds } }).then()
@@ -1382,7 +1384,12 @@ const deleteDocuments = async (args: any) => {
     try {
       if (fs.existsSync(fileToRemove)) fs.unlinkSync(fileToRemove);
 
-      fileDocument.remove().then();
+
+
+      logger.debug(`REMOVING FILE`);
+      // fileDocument.remove().then();
+
+
     } catch (unlinkError) {
       logger.debug(`Could not unlink file`)
     }
@@ -2775,7 +2782,7 @@ export default {
         const { address_input } = args;
 
         if (address_input === null || address_input == undefined) throw new ApiError(`Address Input Cannot be empty`);
-        if (address_input.id === null || address_input.id === undefined ) throw new ApiError("Address does not have id")
+        if (address_input.id === null || address_input.id === undefined) throw new ApiError("Address does not have id")
 
         const unit_segment = `${address_input.unit_number || ""} ${address_input.unit_name || ""} `;
         const street_segment = `${address_input.street_number || ""} ${address_input.street_name || ""} `;
@@ -2828,9 +2835,9 @@ export default {
         try {
           //read the record
           const find_result: any = await mysql(query, 'mysql.lasec360').then();
-          logger.debug(`results for lookup of address ${address_input.id}`, {find_result})
+          logger.debug(`results for lookup of address ${address_input.id}`, { find_result })
           if (find_result && find_result.length === 1) {
-            return existing_data = { ...find_result[0]}
+            return existing_data = { ...find_result[0] }
           }
 
         } catch (read_error) {

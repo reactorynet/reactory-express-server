@@ -35,6 +35,11 @@ const graphql: Reactory.IFormGraphDefinition = {
         'lasec-crm::company-document'
       ]
     },
+    resultMap: {
+      'paging': 'paging',
+      'documents': 'documents',
+      // 'documents.[]': 'documents.[]',
+    },
     autoQuery: true,
     queryMessage: 'Loading customer documents',
     resultType: 'object',

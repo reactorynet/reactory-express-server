@@ -45,6 +45,11 @@ export const ViewUiSchema: any = {
           'lasec-crm::company-document'
         ]
       },
+      resultMap: {
+        'paging': 'paging',
+        'documents': 'documents',
+        // 'documents.[]': 'documents.[]',
+      },
       autoQuery: true,
       queryMessage: 'Loading customer documents',
       resultType: 'object',
@@ -113,33 +118,33 @@ export const ViewUiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    {
-      // view: { xs: 12, sm: 12, md: 12, lg: 12 },
-    },
+    // {
+    //   view: { xs: 12, sm: 12, md: 12, lg: 12 },
+    // },
     {
       // uploadedDocuments: { xs: 12, sm: 12, md: 12, lg: 12 },
-      clientDocs: { xs: 12, sm: 12, md: 12, lg: 12 },
+      documents: { xs: 12, sm: 12, md: 12, lg: 12 },
       style: { marginTop: '25px'}
     }
   ],
-  view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      style: {
-        width: '100%',
-        float: "right"
-      },
-    }
-  },
+  // view: {
+  //   'ui:widget': 'SchemaSelectorWidget',
+  //   'ui:options': {
+  //     style: {
+  //       width: '100%',
+  //       float: "right"
+  //     },
+  //   }
+  // },
   id: {
     'ui:widget': 'HiddenWidget',
     hidden: true
   },
-  uploadedDocuments: {
-    ...DocumentGridWidget
-  },
-  clientDocs: {
-    'ui:widget': 'ClientDocuments'
+  // uploadedDocuments: {
+  //   ...DocumentGridWidget
+  // },
+  documents: {
+    'ui:widget': 'ClientDocumentsWidget'
   }
 };
 
@@ -224,6 +229,6 @@ export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
     },
   ],
   widgetMap: [
-    { componentFqn: 'lasec-crm.ClientDocuments@1.0.0', widget: 'ClientDocuments' },
+    { componentFqn: 'lasec-crm.ClientDocuments@1.0.0', widget: 'ClientDocumentsWidget' },
   ],
 };

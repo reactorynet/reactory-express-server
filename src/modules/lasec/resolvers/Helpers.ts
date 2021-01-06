@@ -2253,8 +2253,12 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
     };
   }
 
-  // logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
-  let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
+  logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
+
+  // TODO - UNCOMMENT - JUST GETTING ALL FILES
+  // let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
+  let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find({}).then();
+
   // logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> ReactorFile.find({documentFileter}) --> reactorFiles[${reactoryFiles.length}]`);
 
   reactoryFiles.forEach((rfile) => {
@@ -2279,7 +2283,13 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
     }
 
   } else {
-    return _docs;
+    return {
+      documents: _docs,
+      uploadContexts: params.uploadContexts || [],
+      paging: {},
+    }
+    // UNCOMMENT THIS
+    // return _docs;
   }
 };
 
@@ -2888,7 +2898,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
   `);
 
   const { quoteId } = params;
-  
+
   let quoteDetail: LasecQuote = await lasecApi.Quotes.getByQuoteId(quoteId).then();
 
   logger.debug(`Fetched Quote Results :\n${JSON.stringify(quoteDetail)}\nLoading Quote Options`);
@@ -2897,11 +2907,11 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
   if (quoteDetail && quoteDetail.quote_option_ids) {
     promises = quoteDetail.quote_option_ids.map((option_id: string): Promise<FreightRequestOption> => {
       return new Promise((resolve, reject) => {
-        
+
         lasecApi.Quotes.getQuoteOption(option_id).then((option_result) => {
           logger.debug(`QUOTE [${quoteId}] OPTION [${option_id}]\n ${JSON.stringify(option_result, null, 2)}`);
           if (option_result.id) {
-            
+
             let quoteOptionResponse = option_result;
 
             let freight_request_option: FreightRequestOption = {
@@ -2923,7 +2933,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
               hazardous: 'non-hazardous',
               refrigerationRequired: false,
               containsLithium: false,
-              sample: '',    
+              sample: '',
               item_paging: {
                 total: 0,
                 hasNext: false,
@@ -2934,12 +2944,12 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
             };
 
 
-            lasecGetQuoteLineItems(quoteId, option_id).then((paged_results: { lineItems: LasecQuoteItem[], item_paging: PagingResult }) => {              
+            lasecGetQuoteLineItems(quoteId, option_id).then((paged_results: { lineItems: LasecQuoteItem[], item_paging: PagingResult }) => {
               if (paged_results && paged_results.lineItems && paged_results.lineItems.length > 0) {
                 freight_request_option.item_paging = paged_results.item_paging,
-                
+
                 paged_results.lineItems.forEach((line_item: LasecQuoteItem) => {
-                  
+
                   freight_request_option.productDetails.push({
                     code: line_item.code,
                     description: line_item.title,
@@ -2951,7 +2961,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
                     height: 0,
                     volume: 0
                   });
-                  
+
 
                 });
               }
@@ -2961,7 +2971,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
             }).catch((get_line_items_error) => {
               logger.error(`Could not get the the line items for the Freight Costing Details:\n${get_line_items_error.message}`, get_line_items_error)
               reject(get_line_items_error);
-            })        
+            })
           } else {
             reject(new ApiError('No data available for quote option'))
           }
