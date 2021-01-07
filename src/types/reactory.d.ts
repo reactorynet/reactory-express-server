@@ -884,4 +884,4 @@ declare namespace Reactory {
   }
 }
 
-
+// declare module 'human-number';

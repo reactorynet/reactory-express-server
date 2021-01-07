@@ -404,7 +404,7 @@ UserSchema.methods.setAuthentication = async function setAuthentication(authenti
   }  
 };
 
-UserSchema.methods.removeAuthentication = async function removeAuthentication(provider) {
+UserSchema.methods.removeAuthentication = async function removeAuthentication(provider: string) {
   if (provider && this.authentications) {
     const found = find(this.authentications, { provider });
     if (found) {
@@ -416,7 +416,7 @@ UserSchema.methods.removeAuthentication = async function removeAuthentication(pr
   return false;
 };
 
-UserSchema.methods.getAuthentication = function getAuthentication(provider) {
+UserSchema.methods.getAuthentication = function getAuthentication(provider: string) {
   logger.debug(`Getting user authentication for provider ${provider}`);
   if (provider && this.authentications) {
     const found = find(this.authentications, { provider });
@@ -426,7 +426,7 @@ UserSchema.methods.getAuthentication = function getAuthentication(provider) {
   return null;
 };
 
-UserSchema.statics.findByForeignId = async function findByForeignId(id, owner){
+UserSchema.statics.findByForeignId = async function findByForeignId(id: string, owner: string){
   return await this.findOne({ 'meta.reference' : id, 'meta.owner':  owner}).then();
 };
 
@@ -448,7 +448,7 @@ UserSchema.statics.findByForeignId = async function findByForeignId(id, owner){
  *    email: 'james.v+@{global.partner.key}.reactory.net, 
  *  }   
  */
-UserSchema.statics.parse = (inputString) => {  
+UserSchema.statics.parse = (inputString: string) => {  
   if(typeof inputString === 'string') {
     let _s = inputString.trim();
     let _name = _s;
