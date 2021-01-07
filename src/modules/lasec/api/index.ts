@@ -578,7 +578,7 @@ const Api = {
         status, payload,
       } = apiResponse;
 
-      logger.debug(`♻ Customer List Response from remote api ${status}`, { status, payload });
+      // logger.debug(`♻ Customer List Response from remote api ${status}`, { status, payload });
 
       if (payload && !status) return payload;
 
@@ -1658,7 +1658,7 @@ const Api = {
 
     /**
       * Specifications for POST
-      *      
+      *
         * header" => array(
             "salesorder" => "484584",
             "date_of_issue" => "2020-01-28",
@@ -1690,9 +1690,9 @@ const Api = {
             "date_of_expiry" => "2020-02-28",
             "date_of_expiry_na" => "N"
         )));
-     * 
-     * @param sales_order_id 
-     * @param certificate 
+     *
+     * @param sales_order_id
+     * @param certificate
      */
     post_certificate_of_conformance: async (sales_order_id: string, certificate: any): Promise<any> => {
 
@@ -1790,7 +1790,7 @@ const Api = {
       To return the currently stored details for a ISO
       GET: https://bapi.lasec.co.za/api/com_invoice/{salesordernumber} aka https://bapi.lasec.co.za/api/com_invoice/484584
       When no Invoice currently exists it returns the ISO detail as below:
-      
+
       {
         "status": "success",
         "payload": {
@@ -1834,7 +1834,7 @@ const Api = {
               "description": "LACTOGENSIMETER FOR MILK(EA)",
               "quantity": "2.000000",
               "unit_price": "2030.51000"
-            },      
+            },
           ]
         }
       }
@@ -2048,8 +2048,8 @@ const Api = {
           {
             key: 'products',
             /**
-             * 
-             * @param source   
+             *
+             * @param source
               {
                 "SysproCompany": "SysproCompany4",
                 "salesorder": "000000000012114",
@@ -2058,7 +2058,7 @@ const Api = {
                 "description": "LACTOGENSIMETER FOR MILK(EA)",
                 "quantity": "2.000000",
                 "unit_price": "2030.51000"
-              },                
+              },
              */
             transform: (source_array: any[]) => {
               logger.debug(`🔀 Transforming results - get_commercial_invoice`, source_array)
@@ -2110,8 +2110,8 @@ const Api = {
     post_commercial_invoice: async (sales_order_id: string, commercial_invoice: any): Promise<any> => {
 
       /**
-       * 
-       * 
+       *
+       *
        POST: https://bapi.lasec.co.za/api/com_invoice/{salesordernumber} aka https://bapi.lasec.co.za/api/com_invoice/484584
       Payload will be:
       $post = array(
@@ -2154,7 +2154,7 @@ const Api = {
               "quantity" => "51",
               "unit_price" => "61.00"
           )));
-       * 
+       *
        */
 
 
@@ -2318,7 +2318,7 @@ const Api = {
         }
       }
                  '
-      
+
 
 NB: Once again multiple entries can be in detail section for each package
 To update a existing listing:
@@ -2474,8 +2474,8 @@ NB: note the addition of the detail_id for the line been updated
           {
             key: 'packing_list',
             /**
-             * 
-             * @param source                             
+             *
+             * @param source
              *  "SysproCompany": "SysproCompany4",
                 "salesorder": "",
                 "detail_id": "",
@@ -2535,7 +2535,7 @@ NB: note the addition of the detail_id for the line been updated
     },
 
     /**
-     * 
+     *
      *   NB: the detail section can have multiple entries
      *   To save a new packing list and its detail do:
      *   POST: https://bapi.lasec.co.za/api/packing_list/{​​​​​​​​salesordernumber}​​​​​​​​ aka https://bapi.lasec.co.za/api/packing_list/484584
@@ -2571,11 +2571,11 @@ NB: note the addition of the detail_id for the line been updated
      *      "weight" => "81"
      *    )));
      * @param sales_order_id
-     * @param packing_list 
+     * @param packing_list
      */
     post_packing_list: async (sales_order_id: string, packing_list: any): Promise<any> => {
 
-      
+
       const input_data: any = om.merge(packing_list, {
         'id': 'header.salesorder',
         'date_of_issue': [
@@ -2608,7 +2608,7 @@ NB: note the addition of the detail_id for the line been updated
               *      "length" => "71",
               *      "weight" => "81"
               *    )));
-              * 
+              *
               ***************************************/
               return {
                 salesorder: sales_order_id,
@@ -2887,8 +2887,8 @@ NB: note the addition of the detail_id for the line been updated
         const payload = await Api.Quotes.get({ filter: { ids: [quote_id] }, pagination: { enabled: false } }).then();
         if (payload) {
           logger.debug(`Api Response successful fetching quote id ${quote_id}`, JSON.stringify(payload, null, 2));
-          const quotes = payload.items || [];          
-          if (isArray(quotes) === true && quotes.length >= 1) {            
+          const quotes = payload.items || [];
+          if (isArray(quotes) === true && quotes.length >= 1) {
             if (objectMap) {
               try {
                 return om.merge(quotes[0], objectMap);
@@ -3338,7 +3338,7 @@ NB: note the addition of the detail_id for the line been updated
       return results;
     },
     getQuoteTransportModes: async () => {
-      let transport_modes = await FETCH(SECONDARY_API_URLS.transport_modes.url).then();      
+      let transport_modes = await FETCH(SECONDARY_API_URLS.transport_modes.url).then();
       logger.debug(`Get quote transport modes returned:\n${JSON.stringify(transport_modes, null, 2)}`);
       const { payload } = transport_modes;
 
@@ -3346,7 +3346,7 @@ NB: note the addition of the detail_id for the line been updated
         return payload.items.transport_mode.map((item: string) => ({ id: `${item}`.toLowerCase(), title: item }))
       }
 
-      return [];      
+      return [];
     },
   },
   Teams: {

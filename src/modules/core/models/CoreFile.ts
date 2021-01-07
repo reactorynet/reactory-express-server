@@ -38,7 +38,7 @@ const ReactoryFileSchema: Schema<Reactory.IReactoryFileModel> = new Schema<React
     ref: 'User',
   },
   public: {
-    type: Boolean, 
+    type: Boolean,
     default: false
   },
   published: {
@@ -51,36 +51,29 @@ const ReactoryFileSchema: Schema<Reactory.IReactoryFileModel> = new Schema<React
   }
 });
 
-
-
 ReactoryFileSchema.statics.getItem = async (link: string): Promise<Reactory.IReactoryFileModel> => {
-  
-  
-  
   return null;
 };
 
 ReactoryFileSchema.statics.setItem = async (link: string, file: Reactory.IReactoryFileModel, partner: Reactory.IPartner): Promise<Reactory.IReactoryFileModel> => {
-  
   return null;
 };
 
 
 ReactoryFileSchema.statics.clean = function Clean() {
-
   const now = moment().valueOf();
   try {
     this.deleteMany({ ttl: { $lt: now }}, (err: Error)=>{
       if(err) {
-        logger.error(`Could not clean cache - deleteMany({}) fail: ${err ? err.message : 'No Error Message'}`, err);   
+        logger.error(`Could not clean cache - deleteMany({}) fail: ${err ? err.message : 'No Error Message'}`, err);
       }
       logger.debug(`ReactoryFile Cleared `, now)
     });
   } catch (err) {
-    logger.error(`Could not clean cache: ${err ? err.message : 'No Error Message'}`, err);   
+    logger.error(`Could not clean cache: ${err ? err.message : 'No Error Message'}`, err);
     //not critical, don't retrhow
   }
-  
+
 };
 
 const ReactoryFileModel: ReactoryFileModel = mongoose.model<Reactory.IReactoryFileModel>('ReactoryFile', ReactoryFileSchema);

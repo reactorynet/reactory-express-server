@@ -2242,7 +2242,6 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
   if (params.uploadContexts && params.uploadContexts.length > 0) {
     documentFilter.uploadContext = {
       $in: params.uploadContexts.map((ctx: string) => {
-        //append the the logged in user id for the context.
         if (ctx === 'lasec-crm::new-company::document') return `${ctx}::${global.user._id}`;
         return ctx;
       })
@@ -2255,11 +2254,7 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
 
   logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
 
-  // TODO - UNCOMMENT - JUST GETTING ALL FILES
-  // let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
-  let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find({}).then();
-
-  // logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> ReactorFile.find({documentFileter}) --> reactorFiles[${reactoryFiles.length}]`);
+  let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
 
   reactoryFiles.forEach((rfile) => {
     _docs.push(rfile);

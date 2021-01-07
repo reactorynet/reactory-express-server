@@ -10,18 +10,12 @@ import { defaultUiResources } from '../../../uiResources';
 const viewSchema = cloneDeep<Reactory.ISchema>(DocumentFormSchema);
 export const ViewSchema = viewSchema;
 
-//Schema for display purposes, should not support upload
 export const ViewUiSchema: any = {
   'ui:graphql': {
     query: {
       name: 'LasecGetCustomerDocuments',
-      text: `query LasecGetCustomerDocuments($uploadContexts: [String], $paging: PagingRequest){
-        LasecGetCustomerDocuments(uploadContexts: $uploadContexts, paging: $paging){
-          paging {
-            total
-            page
-            pageSize
-          }
+      text: `query LasecGetCustomerDocuments($id: String, $uploadContexts: [String], $paging: PagingRequest){
+        LasecGetCustomerDocuments(id: $id, uploadContexts: $uploadContexts, paging: $paging){
           documents {
             id
             filename
@@ -37,18 +31,18 @@ export const ViewUiSchema: any = {
         }
       }`,
       variables: {
-        'formData.paging': 'paging',
-        'formData.$uploadContext': 'uploadContexts'
+        'formData.id': 'id',
+        'formData.$uploadContexts': 'uploadContexts'
+        // 'formData.$uploadContext': 'uploadContexts',
       },
       formData: {
-        $uploadContext: [
-          'lasec-crm::company-document'
+        $uploadContexts: [
+          'lasec-crm::company-document',
+          'lasec-crm::new-company::document'
         ]
       },
       resultMap: {
-        'paging': 'paging',
         'documents': 'documents',
-        // 'documents.[]': 'documents.[]',
       },
       autoQuery: true,
       queryMessage: 'Loading customer documents',
@@ -118,34 +112,66 @@ export const ViewUiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    // {
-    //   view: { xs: 12, sm: 12, md: 12, lg: 12 },
-    // },
     {
-      // uploadedDocuments: { xs: 12, sm: 12, md: 12, lg: 12 },
       documents: { xs: 12, sm: 12, md: 12, lg: 12 },
-      style: { marginTop: '25px'}
+      style: { padding: "47px 32px 10px" }
+    },
+    {
+      upload: { xs: 12, sm: 12, md: 12, lg: 12 },
+      style: { paddingTop: "32px" }
     }
   ],
-  // view: {
-  //   'ui:widget': 'SchemaSelectorWidget',
-  //   'ui:options': {
-  //     style: {
-  //       width: '100%',
-  //       float: "right"
-  //     },
-  //   }
-  // },
   id: {
     'ui:widget': 'HiddenWidget',
     hidden: true
   },
-  // uploadedDocuments: {
-  //   ...DocumentGridWidget
-  // },
   documents: {
     'ui:widget': 'ClientDocumentsWidget'
-  }
+  },
+  upload: {
+    'ui:widget': 'ReactoryDropZoneWidget',
+    'ui:options': {
+      style: {},
+      ReactoryDropZoneProps: {
+        text: `Drop files here, or click to select files to upload`,
+        accept: ['text/html', 'text/text', 'application/xml', 'application/pdf'],
+        uploadOnDrop: true,
+        name: 'LasecUploadDocument',
+        mutation: {
+          name: 'LasecUploadDocument',
+          text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
+            LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
+              id
+              filename
+              link
+              mimetype
+              size
+            }
+          }`,
+          variables: {
+            'uploadContext': 'lasec-crm::new-company::document'
+          },
+          onSuccessMethod: 'refresh',
+        },
+        iconProps: {
+          icon: 'upload',
+          color: 'secondary'
+        },
+        labelProps: {
+          style: {
+            display: 'block',
+            paddingTop: '95px',
+            height: '200px',
+            textAlign: 'center',
+          }
+        },
+        style: {
+          minHeight: `200px`,
+          outline: '1px dashed #E8E8E8'
+        }
+      },
+    }
+  },
 };
 
 export const ConfirmUiSchema: any = {
@@ -177,22 +203,26 @@ export const ConfirmUiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      uploadedDocuments: { sm: 12, md: 12 },
+      documents: { sm: 12, md: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
 
-  uploadedDocuments: {
-    ...DocumentGridWidget,
-    'ui:options': {
-      ...DocumentGridWidget['ui:options'],
-      query: 'PagedNewCustomerDocuments',
-      variables: {
-        'formData.paging': 'paging',
-        'formContext.$formData.uploadContext': 'uploadContexts',
-      },
-    }
-  }
+  documents: {
+    'ui:widget': 'ClientDocumentsWidget'
+  },
+
+  // uploadedDocuments: {
+  //   ...DocumentGridWidget,
+  //   'ui:options': {
+  //     ...DocumentGridWidget['ui:options'],
+  //     query: 'PagedNewCustomerDocuments',
+  //     variables: {
+  //       'formData.paging': 'paging',
+  //       'formContext.$formData.uploadContext': 'uploadContexts',
+  //     },
+  //   }
+  // }
 };
 
 export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {

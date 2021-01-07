@@ -290,7 +290,7 @@ export const getClient = async (params: any) => {
   let clients = [...clientDetails.items];
   if (clients.length === 1) {
 
-    logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
+    // logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
 
     let clientResponse = om(clients[0], {
       'id': 'id',
@@ -403,7 +403,7 @@ export const getClient = async (params: any) => {
 
     clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.customer.customerClass;
 
-    logger.debug(`CompanyResolver.ts getClient(${params.id})`, clientResponse);
+    // logger.debug(`CompanyResolver.ts getClient(${params.id})`, clientResponse);
     return clientResponse;
   }
 
@@ -1384,11 +1384,7 @@ const deleteDocuments = async (args: any) => {
     try {
       if (fs.existsSync(fileToRemove)) fs.unlinkSync(fileToRemove);
 
-
-
-      logger.debug(`REMOVING FILE`);
-      // fileDocument.remove().then();
-
+      fileDocument.remove().then();
 
     } catch (unlinkError) {
       logger.debug(`Could not unlink file`)
