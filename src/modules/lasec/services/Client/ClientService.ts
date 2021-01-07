@@ -83,7 +83,7 @@ class LasecClientService implements ILasecClientService {
         if (clients.length === 1) {
 
 
-            logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
+            // logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
 
 
             let clientResponse = om(clients[0], {

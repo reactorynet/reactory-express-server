@@ -105,7 +105,7 @@ const getClients = async (params: GetClientsParams) => {
   };
 
   let _filter: any = {};
-  
+
   switch (filterBy) {
     case "sales_team_id": {
       _filter['sales_team_id'] = filter || logged_in.repId;
@@ -120,22 +120,22 @@ const getClients = async (params: GetClientsParams) => {
       break;
     }
     case "any_field":
-    default: {           
+    default: {
       if (search.trim().length > 0) _filter.any_field = search;
-      
+
       _filter['sales_team_id'] = logged_in.repId;
       break;
     }
-  }  
+  }
   // NOTE
   // LEAVING THE BELOW FILTER IN PLACE SEEMS TO RESULT IN NO CLIENTS BEING RETURNED
 
   if (typeof repCode === 'string') {
-     _filter.sales_team_id = repCode;
+    _filter.sales_team_id = repCode;
   }
 
   if (typeof repCode === 'array' && repCode.length > 0) {
-     _filter.sales_team_ids = repCode;
+    _filter.sales_team_ids = repCode;
   }
 
   if (!_filter.sales_team_id && !_filter.sales_team_ids) {
@@ -179,7 +179,7 @@ const getClients = async (params: GetClientsParams) => {
   }
 
   logger.debug(`Sending query to lasec API with filter`, { filter: _filter })
-  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { enabled: true,  page_size: paging.pageSize || 10, current_page: paging.page }, ordering }).then();
+  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { enabled: true, page_size: paging.pageSize || 10, current_page: paging.page }, ordering }).then();
 
   let ids: any[] = [];
 
@@ -197,7 +197,7 @@ const getClients = async (params: GetClientsParams) => {
 
   logger.debug(`Loading (${ids.length}) client ids`);
 
-  const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids }, ordering: {  }, pagination: { enabled: false, current_page: paging.page, page_size: paging.pageSize } });
+  const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids }, ordering: {}, pagination: { enabled: false, current_page: paging.page, page_size: paging.pageSize } });
   logger.debug(`Fetched Expanded View for (${clientDetails.items.length}) Clients from API`);
   let clients = [...clientDetails.items];
   clients = clients.map(client => {
@@ -290,7 +290,7 @@ export const getClient = async (params: any) => {
   let clients = [...clientDetails.items];
   if (clients.length === 1) {
 
-    logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
+    // logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
 
     let clientResponse = om(clients[0], {
       'id': 'id',
@@ -403,7 +403,7 @@ export const getClient = async (params: any) => {
 
     clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.customer.customerClass;
 
-    logger.debug(`CompanyResolver.ts getClient(${params.id})`, clientResponse);
+    // logger.debug(`CompanyResolver.ts getClient(${params.id})`, clientResponse);
     return clientResponse;
   }
 
@@ -437,7 +437,7 @@ interface ClientUpdateInput {
   jobType: string
 };
 
-/** 
+/**
  * @param args client object
  */
 const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
@@ -810,7 +810,7 @@ const getCustomerClassById = async (id) => {
 const getCustomerCountries = async () => {
   try {
     logger.info("Retrieving countries from remote api")
-    let countries = await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country[]': ['[].id', '[].name'] }).then();    
+    let countries = await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country[]': ['[].id', '[].name'] }).then();
     logger.debug("Retrieved and mapped remote data to ", { countries });
     return lodash.uniqWith(countries, lodash.isEqual);
   } catch (countryListError) {
@@ -1373,6 +1373,8 @@ const uploadDocument = async (args: any) => {
 
 const deleteDocuments = async (args: any) => {
 
+  logger.debug(`FILE DELETE ARGS: ${JSON.stringify(args)}`);
+
   const { fileIds } = args;
 
   let files = await ReactoryFileModel.find({ id: { $in: fileIds } }).then()
@@ -1383,6 +1385,7 @@ const deleteDocuments = async (args: any) => {
       if (fs.existsSync(fileToRemove)) fs.unlinkSync(fileToRemove);
 
       fileDocument.remove().then();
+
     } catch (unlinkError) {
       logger.debug(`Could not unlink file`)
     }
@@ -1971,7 +1974,7 @@ export default {
     }
   },
   Query: {
-    LasecGetClientList: async (obj: any, args: GetClientsParams) => {      
+    LasecGetClientList: async (obj: any, args: GetClientsParams) => {
       return getClients(args);
     },
     LasecGetClientDetail: async (obj, args) => {
@@ -2557,7 +2560,7 @@ export default {
                 lineManager: _newClient.personalDetails.lineManager,
                 mobileNumber: _newClient.contactDetails.mobileNumber,
                 officeNumber: _newClient.contactDetails.officeNumber,
-                ranking: _newClient.jobDetails.ranking                
+                ranking: _newClient.jobDetails.ranking
               }
             });
             //toggle the active status
@@ -2672,7 +2675,7 @@ export default {
             UPDATE Customer SET
               activity_status = 'active',
               organisation_id = ${_newClient.organization.id},
-              company_id = '${_newClient.customer.id}'  
+              company_id = '${_newClient.customer.id}'
             WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
           logger.debug(`🟢 Updated user activity status complete`, update_result);
 
@@ -2775,7 +2778,7 @@ export default {
         const { address_input } = args;
 
         if (address_input === null || address_input == undefined) throw new ApiError(`Address Input Cannot be empty`);
-        if (address_input.id === null || address_input.id === undefined ) throw new ApiError("Address does not have id")
+        if (address_input.id === null || address_input.id === undefined) throw new ApiError("Address does not have id")
 
         const unit_segment = `${address_input.unit_number || ""} ${address_input.unit_name || ""} `;
         const street_segment = `${address_input.street_number || ""} ${address_input.street_name || ""} `;
@@ -2828,9 +2831,9 @@ export default {
         try {
           //read the record
           const find_result: any = await mysql(query, 'mysql.lasec360').then();
-          logger.debug(`results for lookup of address ${address_input.id}`, {find_result})
+          logger.debug(`results for lookup of address ${address_input.id}`, { find_result })
           if (find_result && find_result.length === 1) {
-            return existing_data = { ...find_result[0]}
+            return existing_data = { ...find_result[0] }
           }
 
         } catch (read_error) {

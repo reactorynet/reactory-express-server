@@ -240,7 +240,7 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      registeredCompanyName: { md: 6, sm: 12 },      
+      registeredCompanyName: { md: 6, sm: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -277,12 +277,12 @@ const editUiSchema: any = {
       componentProps: {},
       componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',
-        'LookupComponent.props.onChange': 'onCustomerSelect',        
+        'LookupComponent.props.onChange': 'onCustomerSelect',
         'LookupComponent.props.formContext': 'LookupComponentFormContext',
         'LookupComponent.props.formData': 'formData.selected.registeredName'
       },
     },
-  },      
+  },
 };
 
 const schema: Reactory.ISchema = {

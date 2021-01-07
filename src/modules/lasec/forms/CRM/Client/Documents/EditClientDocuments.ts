@@ -67,100 +67,101 @@ export const EditUiSchema: any = {
     hidden: true
   },
   documents: {
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
-      columns: [
-        {
-          title: 'Filename', field: 'filename'
-        },
-        {
-          title: 'Type', field: 'mimetype',
-          components: [
-            {
-              component: 'core.ConditionalIconComponent@1.0.0',
-              props: {
-                'ui:options': {},
-                conditions: [
-                  {
-                    key: 'image/png',
-                    icon: 'photo',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'PNG'
-                  },
-                  {
-                    key: 'image/jpeg',
-                    icon: 'photo',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'JPEG'
-                  },
-                  {
-                    key: 'image/gif',
-                    icon: 'gif',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'GIF'
-                  },
-                  {
-                    key: 'application/pdf',
-                    icon: 'picture_as_pdf',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'Pdf document'
-                  }
-                ]
-              },
-              style: {
-                marginRight: '8px',
-                marginTop: '8px',
-              },
-              propsMap: {
-                'rowData.mimetype': 'value',
-              },
-            }
-          ],
-          propsMap: {
-            'rowData.mimetype': 'selectedKey'
-          }
-        },
-        {
-          title: 'Uploaded By',
-          field: 'owner',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body1',
-                format: '${rowData.owner.fullName}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.invoiceDate': 'value',
-          }
-        },
-
-      ],
-      options: {
-        grouping: false,
-        search: false,
-        showTitle: false,
-        toolbar: false,
-      }
-    }
+    'ui:widget': 'ClientDocumentsWidget'
   },
+  // documents: {
+  //   'ui:widget': 'MaterialTableWidget',
+  //   'ui:options': {
+  //     columns: [
+  //       {
+  //         title: 'Filename', field: 'filename'
+  //       },
+  //       {
+  //         title: 'Type', field: 'mimetype',
+  //         components: [
+  //           {
+  //             component: 'core.ConditionalIconComponent@1.0.0',
+  //             props: {
+  //               'ui:options': {},
+  //               conditions: [
+  //                 {
+  //                   key: 'image/png',
+  //                   icon: 'photo',
+  //                   style: {
+  //                     color: '#5EB848'
+  //                   },
+  //                   tooltip: 'PNG'
+  //                 },
+  //                 {
+  //                   key: 'image/jpeg',
+  //                   icon: 'photo',
+  //                   style: {
+  //                     color: '#5EB848'
+  //                   },
+  //                   tooltip: 'JPEG'
+  //                 },
+  //                 {
+  //                   key: 'image/gif',
+  //                   icon: 'gif',
+  //                   style: {
+  //                     color: '#5EB848'
+  //                   },
+  //                   tooltip: 'GIF'
+  //                 },
+  //                 {
+  //                   key: 'application/pdf',
+  //                   icon: 'picture_as_pdf',
+  //                   style: {
+  //                     color: '#5EB848'
+  //                   },
+  //                   tooltip: 'Pdf document'
+  //                 }
+  //               ]
+  //             },
+  //             style: {
+  //               marginRight: '8px',
+  //               marginTop: '8px',
+  //             },
+  //             propsMap: {
+  //               'rowData.mimetype': 'value',
+  //             },
+  //           }
+  //         ],
+  //         propsMap: {
+  //           'rowData.mimetype': 'selectedKey'
+  //         }
+  //       },
+  //       {
+  //         title: 'Uploaded By',
+  //         field: 'owner',
+  //         component: 'core.LabelComponent@1.0.0',
+  //         props: {
+  //           uiSchema: {
+  //             'ui:options': {
+  //               variant: 'body1',
+  //               format: '${rowData.owner.fullName}'
+  //             }
+  //           },
+  //         },
+  //         propsMap: {
+  //           'rowData.invoiceDate': 'value',
+  //         }
+  //       },
+
+  //     ],
+  //     options: {
+  //       grouping: false,
+  //       search: false,
+  //       showTitle: false,
+  //       toolbar: false,
+  //     }
+  //   }
+  // },
   upload: {
     'ui:widget': 'ReactoryDropZoneWidget',
     'ui:options': {
       //main container styles
-      style: {
-
-      },
+      style: {},
       //properties for Reactory DropZone
       ReactoryDropZoneProps: {
         text: `Drop files here, or click to select files to upload`,
@@ -237,5 +238,8 @@ export const LasecCRMEditClientDocuments: Reactory.IReactoryForm = {
       icon: 'pencil',
       uiSchema: { ...EditUiSchema }
     },
+  ],
+  widgetMap: [
+    { componentFqn: 'lasec-crm.ClientDocuments@1.0.0', widget: 'ClientDocumentsWidget' },
   ],
 };

@@ -45,8 +45,8 @@ export const NewUiSchema: any = {
   'ui:grid-layout': [
 
     {
+      documents: { lg: 6, md: 6, sm: 12 },
       upload: { lg: 6, md: 6, sm: 12, },
-      uploadedDocuments: { lg: 6, md: 6, sm: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -57,7 +57,9 @@ export const NewUiSchema: any = {
   id: {
     'ui:widget': 'HiddenWidget',
   },
-
+  documents: {
+    'ui:widget': 'ClientDocumentsWidget'
+  },
   upload: {
     'ui:widget': 'ReactoryDropZoneWidget',
     'ui:options': {
@@ -105,36 +107,35 @@ export const NewUiSchema: any = {
       },
     }
   },
+  // uploadedDocuments: {
+  //   ...DocumentGridWidget,
+  //   'ui:options': {
+  //     ...DocumentGridWidget['ui:options'],
+  //     options: {
+  //       ...DocumentGridWidget['ui:options'].options,
+  //       toolbar: true,
+  //       selection: true,
+  //     },
+  //     actions: [
+  //       {
+  //         icon: 'remove_circle',
+  //         tooltip: 'Remove Files',
+  //         iconProps: {
+  //           color: 'error'
+  //         },
+  //         mutation: 'delete',
+  //         variables: {
+  //           'formContext.formData.uploadContext': 'uploadContext',
+  //           'selected[].id': 'fileIds',
+  //         },
+  //         resultMap: {
 
-  uploadedDocuments: {
-    ...DocumentGridWidget,
-    'ui:options': {
-      ...DocumentGridWidget['ui:options'],
-      options: {
-        ...DocumentGridWidget['ui:options'].options,
-        toolbar: true,
-        selection: true,
-      },
-      actions: [
-        {
-          icon: 'remove_circle',
-          tooltip: 'Remove Files',
-          iconProps: {
-            color: 'error'
-          },
-          mutation: 'delete',
-          variables: {
-            'formContext.formData.uploadContext': 'uploadContext',
-            'selected[].id': 'fileIds',
-          },
-          resultMap: {
-
-          },
-          resultAction: 'refresh',
-        },
-      ]
-    }
-  },
+  //         },
+  //         resultAction: 'refresh',
+  //       },
+  //     ]
+  //   }
+  // },
 };
 
 export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
@@ -224,5 +225,8 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
     uploadContexts: [
       `lasec-crm::new-company::document`,
     ]
-  }
+  },
+  widgetMap: [
+    { componentFqn: 'lasec-crm.ClientDocuments@1.0.0', widget: 'ClientDocumentsWidget' },
+  ],
 };
