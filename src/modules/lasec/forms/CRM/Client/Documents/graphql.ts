@@ -3,13 +3,8 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetCustomerDocuments',
-    text: `query LasecGetCustomerDocuments($uploadContexts: [String], $paging: PagingRequest){
-      LasecGetCustomerDocuments(uploadContexts: $uploadContexts, paging: $paging){
-        paging {
-          total
-          page
-          pageSize
-        }
+    text: `query LasecGetCustomerDocuments($id: String, $uploadContexts: [String], $paging: PagingRequest){
+      LasecGetCustomerDocuments(id: $id, uploadContexts: $uploadContexts, paging: $paging){
         documents {
           id
           filename
@@ -27,13 +22,15 @@ const graphql: Reactory.IFormGraphDefinition = {
     variables: {
       'formData.id': 'id',
       'formData.$uploadContexts': 'uploadContexts',
-      'formData.paging': 'paging'
     },
     formData: {
-      $uploadContext: [
-        'lasec-crm::new-company::document',
-        'lasec-crm::company-document'
+      $uploadContexts: [
+        'lasec-crm::company-document',
+        'lasec-crm::new-company::document'
       ]
+    },
+    resultMap: {
+      'documents': 'documents',
     },
     autoQuery: true,
     queryMessage: 'Loading customer documents',
