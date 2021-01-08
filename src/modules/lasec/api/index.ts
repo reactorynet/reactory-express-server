@@ -569,6 +569,9 @@ const Api = {
           message: exc.message
         }
       }
+    },
+    updateDocumentIds: async (documentIds, customerId) => {
+      return await POST(`${SECONDARY_API_URLS.customer_documents}`, { document_ids: documentIds, customer_id: customerId }).then();
     }
   },
   Customers: {

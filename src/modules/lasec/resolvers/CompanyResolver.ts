@@ -290,7 +290,7 @@ export const getClient = async (params: any) => {
   let clients = [...clientDetails.items];
   if (clients.length === 1) {
 
-    // logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
+    logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
 
     let clientResponse = om(clients[0], {
       'id': 'id',
@@ -1275,9 +1275,6 @@ const getExtension = (filename: string) => {
 const allowedExts = ['txt', 'pdf', 'doc', 'zip'];
 const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf', 'application/pdf', 'application/zip'];
 
-// Test if a file is valid based on its extension and mime type.
-
-
 const uploadDocument = async (args: any) => {
   return new Promise(async (resolve, reject) => {
 
@@ -1372,10 +1369,45 @@ const uploadDocument = async (args: any) => {
 };
 
 const deleteDocuments = async (args: any) => {
-
   logger.debug(`FILE DELETE ARGS: ${JSON.stringify(args)}`);
+  const { clientId, fileIds } = args;
+  const _updatedfileIds = fileIds;
 
-  const { fileIds } = args;
+  // DOCS FROM API
+  if (clientId) {
+
+    const clientDetails = await lasecApi.Customers.list({ filter: { ids: [clientId] } });
+    if (clientDetails && clientDetails.items.length > 0) {
+      let client = clientDetails.items[0];
+      logger.debug(`CLIENT ${JSON.stringify(client)}`);
+      logger.debug(`CLIENT DOC IDS ${client.document_ids.length}`);
+
+      if (client.document_ids.length > 0) {
+        let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: client.document_ids }, paging: { enabled: false } });
+        logger.debug(`API DOCUMENTS ${JSON.stringify(documents)}`);
+
+        const docIds = documents.items.map((doc: any) => doc.id);
+
+        // Iterate fileIds and check if they are ids in the docIds.
+        // If there are remove them from both the docIds and the fileIds.
+        // Call api/customer/save_documents with the updated ids
+
+        fileIds.forEach(fileId => {
+          const indexOfId = docIds.indexOf(fileId);
+          if (indexOfId > -1) {
+            docIds.splice(indexOfId);
+          }
+        });
+
+        logger.debug(`NEW DOC IDS TO SET ON CUSTOMER::  ${docIds}`);
+
+        // THIS NEEDS TO BE THOROUGHLY TESTED
+        //const updateResult = await lasecApi.Documents.updateDocumentIds(docIds, clientId);
+
+      }
+    }
+  }
+
 
   let files = await ReactoryFileModel.find({ id: { $in: fileIds } }).then()
 
@@ -1383,7 +1415,6 @@ const deleteDocuments = async (args: any) => {
     const fileToRemove = path.join(process.env.APP_DATA_ROOT, 'content', 'files', fileDocument.alias);
     try {
       if (fs.existsSync(fileToRemove)) fs.unlinkSync(fileToRemove);
-
       fileDocument.remove().then();
 
     } catch (unlinkError) {

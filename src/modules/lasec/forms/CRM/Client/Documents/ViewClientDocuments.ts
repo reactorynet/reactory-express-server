@@ -16,6 +16,7 @@ export const ViewUiSchema: any = {
       name: 'LasecGetCustomerDocuments',
       text: `query LasecGetCustomerDocuments($id: String, $uploadContexts: [String], $paging: PagingRequest){
         LasecGetCustomerDocuments(id: $id, uploadContexts: $uploadContexts, paging: $paging){
+          id
           documents {
             id
             filename
@@ -27,13 +28,13 @@ export const ViewUiSchema: any = {
               firstName
               fullName
             }
+            fromApi
           }
         }
       }`,
       variables: {
         'formData.id': 'id',
         'formData.$uploadContexts': 'uploadContexts'
-        // 'formData.$uploadContext': 'uploadContexts',
       },
       formData: {
         $uploadContexts: [
@@ -42,6 +43,7 @@ export const ViewUiSchema: any = {
         ]
       },
       resultMap: {
+        'id': 'id',
         'documents': 'documents',
       },
       autoQuery: true,
@@ -53,27 +55,6 @@ export const ViewUiSchema: any = {
         {name: 'lasec-crm::new-document::uploaded'}
       ],
     },
-    mutation: {
-      new: {
-        name: 'LasecUploadCustomerDocument',
-        text: `mutation LasecUploadCustomerDocument($id: String, $file: Upload!){
-          LasecUploadCustomerDocument(id: $id, file: $file) {
-            id
-            name
-            url
-            mimetype
-          }
-        }`,
-        notification: {
-
-        },
-        variables: {
-
-        },
-        objectMap: true,
-
-      }
-    }
   },
   'ui:options': {
     componentType: 'div',
