@@ -1369,12 +1369,18 @@ const uploadDocument = async (args: any) => {
 };
 
 const deleteDocuments = async (args: any) => {
+
   logger.debug(`FILE DELETE ARGS: ${JSON.stringify(args)}`);
   const { clientId, fileIds } = args;
-  const _updatedfileIds = fileIds;
+  // const _updatedfileIds = fileIds;
 
   // DOCS FROM API
   if (clientId) {
+
+    // STEPS
+    // 1. Get customer details from API - document_ids
+    // 2. Filter out the ID thats being removed
+    // 3. Set the Customers Documents to the new/updated ids
 
     const clientDetails = await lasecApi.Customers.list({ filter: { ids: [clientId] } });
     if (clientDetails && clientDetails.items.length > 0) {
@@ -1383,23 +1389,26 @@ const deleteDocuments = async (args: any) => {
       logger.debug(`CLIENT DOC IDS ${client.document_ids.length}`);
 
       if (client.document_ids.length > 0) {
-        let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: client.document_ids }, paging: { enabled: false } });
-        logger.debug(`API DOCUMENTS ${JSON.stringify(documents)}`);
 
-        const docIds = documents.items.map((doc: any) => doc.id);
+        // DONT NEED TO GET THE ACTUAL DOCUMENTS - JUST NEED THE IDS, WHICH WE ALREADY HAVE
+        // let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: client.document_ids }, paging: { enabled: false } });
+        // logger.debug(`API DOCUMENTS ${JSON.stringify(documents)}`);
 
-        // Iterate fileIds and check if they are ids in the docIds.
-        // If there are remove them from both the docIds and the fileIds.
-        // Call api/customer/save_documents with the updated ids
+        // const docIds = documents.items.map((doc: any) => doc.id);
+        const docIds = [...client.document_ids]; // clone to edit
 
-        fileIds.forEach(fileId => {
-          const indexOfId = docIds.indexOf(fileId);
+        // REMOVE DOCUMENT TO BE DELETEDS ID FROM docIds
+
+        fileIds.forEach(fieldId => {
+          const indexOfId = docIds.indexOf(fieldId);
           if (indexOfId > -1) {
             docIds.splice(indexOfId);
           }
         });
 
         logger.debug(`NEW DOC IDS TO SET ON CUSTOMER::  ${docIds}`);
+
+        // CALL api/customer/save_documents WITH THE UPDATED DOC IDS
 
         // THIS NEEDS TO BE THOROUGHLY TESTED
         //const updateResult = await lasecApi.Documents.updateDocumentIds(docIds, clientId);
