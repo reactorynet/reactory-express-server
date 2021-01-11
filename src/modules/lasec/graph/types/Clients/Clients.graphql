@@ -541,7 +541,7 @@ extend type Mutation {
   LasecUpdateCustomerCompany(clientId: String, customerDetail: Any!): SimpleResponse
 
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
-  LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument
+  LasecUploadDocument(clientId: String, file: Upload!, uploadContext: String): LasecDocument
   LasecDeleteNewClientDocuments(clientId: String, fileIds: [String]!): UXMessage
   LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
   LasecCreateNewClient(id: String, newClient: LasecNewClientInput): NewClientResponse

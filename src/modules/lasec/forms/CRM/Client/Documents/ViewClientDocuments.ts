@@ -38,7 +38,7 @@ export const ViewUiSchema: any = {
       },
       formData: {
         $uploadContexts: [
-          'lasec-crm::company-document',
+          // 'lasec-crm::company-document',
           'lasec-crm::new-company::document'
         ]
       },
@@ -120,8 +120,8 @@ export const ViewUiSchema: any = {
         name: 'LasecUploadDocument',
         mutation: {
           name: 'LasecUploadDocument',
-          text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
-            LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
+          text: `mutation LasecUploadDocument($clientId: String, $file: Upload!, $uploadContext: String){
+            LasecUploadDocument(clientId: $clientId, file: $file, uploadContext: $uploadContext) {
               id
               filename
               link
@@ -130,7 +130,10 @@ export const ViewUiSchema: any = {
             }
           }`,
           variables: {
-            'uploadContext': 'lasec-crm::new-company::document'
+            'clientId': '${props.formContext.$formData.id}',
+            // 'formData.id': 'clientId',
+            'uploadContext': 'lasec-crm::existing-company::document'
+            // 'uploadContext': 'lasec-crm::new-company::document'
           },
           onSuccessMethod: 'refresh',
         },
@@ -188,22 +191,9 @@ export const ConfirmUiSchema: any = {
       style: { padding: '25px 32px 0 32px' }
     }
   ],
-
   documents: {
     'ui:widget': 'ClientDocumentsWidget'
   },
-
-  // uploadedDocuments: {
-  //   ...DocumentGridWidget,
-  //   'ui:options': {
-  //     ...DocumentGridWidget['ui:options'],
-  //     query: 'PagedNewCustomerDocuments',
-  //     variables: {
-  //       'formData.paging': 'paging',
-  //       'formContext.$formData.uploadContext': 'uploadContexts',
-  //     },
-  //   }
-  // }
 };
 
 export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
@@ -214,7 +204,6 @@ export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
   title: 'CRM Client Documents',
   tags: ['CRM Client Documents'],
   registerAsComponent: true,
-  // name: 'LasecCRMClientDocuments',
   name: 'LasecCRMViewClientDocuments',
   nameSpace: 'lasec-crm',
   version: '1.0.0',

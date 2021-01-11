@@ -1278,7 +1278,10 @@ const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf
 const uploadDocument = async (args: any) => {
   return new Promise(async (resolve, reject) => {
 
-    const { createReadStream, filename, mimetype, encoding } = await args.file;
+    const { clientId, file } = args;
+    const { createReadStream, filename, mimetype, encoding } = await file;
+
+    logger.debug(`UPLOADED ARGS:: ${JSON.stringify(args)}`);
     logger.debug(`UPLOADED FILE:: ${filename} - ${mimetype} ${encoding}`);
 
     const stream: NodeJS.ReadStream = createReadStream();
@@ -1336,6 +1339,10 @@ const uploadDocument = async (args: any) => {
 
       if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
         reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
+      }
+
+      if (reactoryFile.uploadContext === 'lasec-crm::existing-company::document') {
+        reactoryFile.uploadContext = `lasec-crm::existing-company::document::${clientId}`;
       }
 
       const savedDocument = new ReactoryFileModel(reactoryFile);

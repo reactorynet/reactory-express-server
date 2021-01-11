@@ -22,12 +22,13 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-      'formData.id': 'id',
+      'clientId': '${props.formContext.$formData.id}',
+      // 'formData.id': 'id',
       'formData.$uploadContexts': 'uploadContexts',
     },
     formData: {
       $uploadContexts: [
-        'lasec-crm::company-document',
+        // 'lasec-crm::company-document',
         'lasec-crm::new-company::document'
       ]
     },
