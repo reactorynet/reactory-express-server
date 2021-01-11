@@ -704,7 +704,7 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
 
               let valuePerc = Math.round((value * 100 / maxCountForBehavior));
 
-              return valuePerc >= 15 ? 'bottom' : 'top'
+              return valuePerc >= 10 ? 'bottom' : 'top';
             },
             anchor: 'end',
 
@@ -714,7 +714,7 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
 
               let valuePerc = Math.round((value * 100 / maxCountForBehavior));
 
-              return valuePerc <= 15 ? '#000000' : behaviourScore.color
+              return valuePerc <= 10 ? '#000000' : behaviourScore.color
             },
             font: {
               size: 24,
