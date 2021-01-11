@@ -356,6 +356,9 @@ const Api = {
   FETCH,
   URIS: SECONDARY_API_URLS,
   get: async (uri: string, params: any = null, shape: any = null) => {
+
+    logger.debug(`🟠 GET PARAMS ${uri}  -   ${JSON.stringify(params)} `)
+
     const resp = await FETCH(uri, params ? { params } : undefined).then();
     const {
       status, payload,
@@ -570,8 +573,8 @@ const Api = {
         }
       }
     },
-    updateDocumentIds: async (documentIds, customerId) => {
-      return await POST(`${SECONDARY_API_URLS.customer_documents}`, { document_ids: documentIds, customer_id: customerId }).then();
+    updateDocumentIds: async (documentIds: any, customerId: any) => {
+      return await POST(`${SECONDARY_API_URLS.customer_documents.url(customerId)}`, { document_ids: documentIds, customer_id: customerId }).then();
     }
   },
   Customers: {

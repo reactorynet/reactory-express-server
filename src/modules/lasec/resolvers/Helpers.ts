@@ -2185,35 +2185,16 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
 
   logger.debug(`DOCUMENT PARAMS:: ${JSON.stringify(params)}`);
 
-  // PARAMS
-  // ID - THE CLIENT/CUTOMER ID
-  // UPLOADCONTEXT - IS A STRING
-
   const _docs: any[] = []
-
-  // NOTE: THIS WILL BE FOR A GIVEN CLIENT/CUSTOMER
   if (params.id && params.id !== 'new') {
-
-    logger.debug(`Fetching Remote Documents for Lasec Customer ${params.id}`);
-
     const clientDetails = await lasecApi.Customers.list({ filter: { ids: [params.id] } });
-
-    logger.debug(`CLIENT DETAILS ${JSON.stringify(clientDetails)}`);
-
     if (clientDetails && clientDetails.items.length > 0) {
       let client = clientDetails.items[0];
-
-      logger.debug(`CLIENT ${JSON.stringify(client)}`);
-      logger.debug(`CLIENT DOC IDS ${client.document_ids.length}`);
-
       if (client.document_ids.length > 0) {
         let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: client.document_ids }, paging: { enabled: false } });
-
-        logger.debug(`API DOCUMENTS ${JSON.stringify(documents)}`);
-
         documents.items.forEach((documentItem: any) => {
           _docs.push({
-            id: new ObjectID(),
+            id: documentItem.id,
             partner: global.partner,
             filename: documentItem.name,
             link: documentItem.url,

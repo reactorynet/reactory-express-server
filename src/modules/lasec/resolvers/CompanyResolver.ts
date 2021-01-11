@@ -1282,11 +1282,8 @@ const uploadDocument = async (args: any) => {
     logger.debug(`UPLOADED FILE:: ${filename} - ${mimetype} ${encoding}`);
 
     const stream: NodeJS.ReadStream = createReadStream();
-
     const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
-
     const link = `${process.env.CDN_ROOT}content/files/${randomName}`;
-
 
     // Flag to tell if a stream had an error.
     let hadStreamError: boolean = null;
@@ -1311,7 +1308,6 @@ const uploadDocument = async (args: any) => {
       // eslint-disable-next-line consistent-return
       reject(error)
     }
-
 
     const catalogFile = () => {
       // Check if image is valid
@@ -1372,53 +1368,35 @@ const deleteDocuments = async (args: any) => {
 
   logger.debug(`FILE DELETE ARGS: ${JSON.stringify(args)}`);
   const { clientId, fileIds } = args;
-  // const _updatedfileIds = fileIds;
+  const _fileIds = [...fileIds];
 
-  // DOCS FROM API
   if (clientId) {
-
-    // STEPS
-    // 1. Get customer details from API - document_ids
-    // 2. Filter out the ID thats being removed
-    // 3. Set the Customers Documents to the new/updated ids
-
     const clientDetails = await lasecApi.Customers.list({ filter: { ids: [clientId] } });
     if (clientDetails && clientDetails.items.length > 0) {
       let client = clientDetails.items[0];
-      logger.debug(`CLIENT ${JSON.stringify(client)}`);
-      logger.debug(`CLIENT DOC IDS ${client.document_ids.length}`);
-
       if (client.document_ids.length > 0) {
-
-        // DONT NEED TO GET THE ACTUAL DOCUMENTS - JUST NEED THE IDS, WHICH WE ALREADY HAVE
-        // let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: client.document_ids }, paging: { enabled: false } });
-        // logger.debug(`API DOCUMENTS ${JSON.stringify(documents)}`);
-
-        // const docIds = documents.items.map((doc: any) => doc.id);
         const docIds = [...client.document_ids]; // clone to edit
 
-        // REMOVE DOCUMENT TO BE DELETEDS ID FROM docIds
-
-        fileIds.forEach(fieldId => {
-          const indexOfId = docIds.indexOf(fieldId);
+        fileIds.forEach(fileId => {
+          const indexOfId = docIds.indexOf(fileId);
           if (indexOfId > -1) {
-            docIds.splice(indexOfId);
+            docIds.splice(indexOfId, 1);
+            _fileIds.splice(fileIds.indexOf(fileId), 1);
           }
         });
 
-        logger.debug(`NEW DOC IDS TO SET ON CUSTOMER::  ${docIds}`);
+        const updateResult = await lasecApi.Documents.updateDocumentIds(docIds, clientId);
 
-        // CALL api/customer/save_documents WITH THE UPDATED DOC IDS
-
-        // THIS NEEDS TO BE THOROUGHLY TESTED
-        //const updateResult = await lasecApi.Documents.updateDocumentIds(docIds, clientId);
+        logger.debug(`UPDATE RESULT:: ${JSON.stringify(updateResult)}`);
+        logger.debug(`FILE IDS:: ${_fileIds}`);
 
       }
     }
   }
 
 
-  let files = await ReactoryFileModel.find({ id: { $in: fileIds } }).then()
+  // let files = await ReactoryFileModel.find({ id: { $in: fileIds } }).then()
+  let files = await ReactoryFileModel.find({ id: { $in: _fileIds } }).then()
 
   files.forEach((fileDocument) => {
     const fileToRemove = path.join(process.env.APP_DATA_ROOT, 'content', 'files', fileDocument.alias);
