@@ -475,9 +475,6 @@ const Api = {
     }
   },
   Documents: {
-    /**
-     * Uploads a document to the lasec API against a particular customer
-     */
     upload: async (documentInfo, customerInfo) => {
       logger.debug(`Uploading document to LasecAPI`, { documentInfo, customerInfo });
       /**
@@ -510,10 +507,7 @@ const Api = {
        *
        */
 
-
-
-
-      const kwargs = {};
+       const kwargs = {};
       if (!kwargs.headers) {
         kwargs.headers = {};
         kwargs.headers['Content-type'] = 'application/json; charset=UTF-8';
