@@ -1278,20 +1278,15 @@ const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf
 const uploadDocument = async (args: any) => {
   return new Promise(async (resolve, reject) => {
 
+    logger.debug(`UPLOAD FILE ARGS:: ${JSON.stringify(args)}`);
+
     const { clientId, file } = args;
     const { createReadStream, filename, mimetype, encoding } = await file;
-
-    logger.debug(`UPLOADED ARGS:: ${JSON.stringify(args)}`);
-    logger.debug(`UPLOADED FILE:: ${filename} - ${mimetype} ${encoding}`);
-
     const stream: NodeJS.ReadStream = createReadStream();
     const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
     const link = `${process.env.CDN_ROOT}content/files/${randomName}`;
 
-    // Flag to tell if a stream had an error.
     let hadStreamError: boolean = null;
-
-    //ahndles any errors during upload / processing of file
     const handleStreamError = (error: any) => {
       // Do not enter twice in here.
       if (hadStreamError) {
@@ -1313,10 +1308,7 @@ const uploadDocument = async (args: any) => {
     }
 
     const catalogFile = () => {
-      // Check if image is valid
       const fileStats: fs.Stats = fs.statSync(saveToPath);
-
-      logger.debug(`SAVING FILE:: DONE ${filename} ${fileStats.size} --> CATALOGGING`);
 
       const reactoryFile: any = {
         id: new ObjectID(),
@@ -1337,19 +1329,35 @@ const uploadDocument = async (args: any) => {
         published: false,
       };
 
+
+      // NEW CLIENT DOCUMENTS
       if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
-        reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
+        if (clientId && clientId == 'new_client') {
+          // NEW CLIENT
+          reactoryFile.uploadContext = `lasec-crm::new-company::document`;
+          // reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
+        } else {
+          // INCOMPLETE CLIENT
+          reactoryFile.uploadContext = `lasec-crm::client::document::${clientId}`;
+          // reactoryFile.uploadContext = `lasec-crm::new-company::document`;
+        }
       }
 
-      if (reactoryFile.uploadContext === 'lasec-crm::existing-company::document') {
-        reactoryFile.uploadContext = `lasec-crm::existing-company::document::${clientId}`;
+      // VIEW CLIENT DOCUMENTS
+      if (reactoryFile.uploadContext === 'lasec-crm::client::document') {
+        // EXISTING CLIENT
+        reactoryFile.uploadContext = `lasec-crm::client::document::${clientId}`;
       }
+
+      // COPY OF OLD
+      // if (reactoryFile.uploadContext === 'lasec-crm::existing-company::document') {
+      //   reactoryFile.uploadContext = `lasec-crm::existing-company::document::${clientId}`;
+      // }
 
       const savedDocument = new ReactoryFileModel(reactoryFile);
-
       savedDocument.save().then();
 
-      logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
+      logger.debug(`SAVING FILE:: COMPLETE ${filename} --> CATALOGGING`);
 
       resolve(savedDocument);
     }
@@ -2017,15 +2025,12 @@ export default {
     LasecGetFacultyList: async () => {
       return getFacultyList();
     },
-
     LasecGetCustomerType: async () => {
       return getCustomerTypeList();
     },
-
     LasecGetCustomerLineManagerOptions: async (obj, args) => {
       return getCustomerLineManagerOptions(args);
     },
-
     LasecGetCustomerClassById: async (obj, args) => {
       return getCustomerClassById(args.id);
     },

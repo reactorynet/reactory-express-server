@@ -2183,10 +2183,12 @@ const mimeTypeForFilename = (filename: string) => {
 
 export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
 
-  logger.debug(`DOCUMENT PARAMS:: ${JSON.stringify(params)}`);
+  logger.debug(`GET CUSTOMER DOCUMENT PARAMS:: ${JSON.stringify(params)}`);
 
   const _docs: any[] = []
-  if (params.id && params.id !== 'new') {
+
+  // GET DOCS FROM LASEC API
+  if (params.id && params.id !== 'new_client') {
     const clientDetails = await lasecApi.Customers.list({ filter: { ids: [params.id] } });
     if (clientDetails && clientDetails.items.length > 0) {
       let client = clientDetails.items[0];
@@ -2214,7 +2216,7 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
     }
   }
 
-  // NOTE: IDS IS A STRING, SO NOT SURE HOW THIS IS A COLLECTION
+  // ID IDS IS AN ARRAY (NOT SURE WHEN THIS OCCURS)
   if (params.ids && params.ids.length > 0) {
     let remote_documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: params.ids }, paging: { enabled: false } });
     remote_documents.items.forEach((documentItem: any) => {
@@ -2243,7 +2245,14 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
   if (params.uploadContexts && params.uploadContexts.length > 0) {
     documentFilter.uploadContext = {
       $in: params.uploadContexts.map((ctx: string) => {
-        if (ctx === 'lasec-crm::new-company::document') return `${ctx}::${global.user._id}`;
+        if (ctx === 'lasec-crm::new-company::document') {
+          if (params.id == 'new_client') return `${ctx}`; // NEW CLIENT
+          else return `lasec-crm::client::document::${params.id}`; // INCOMPLETE CLIENT - EXISTING CLIENT
+          // return `${ctx}::${global.user._id}`;
+        }
+        else if (ctx === 'lasec-crm::client::document') {
+          return `${ctx}::${params.id}`;// EXISTING CUSTOMER
+        }
         return ctx;
       })
     };
