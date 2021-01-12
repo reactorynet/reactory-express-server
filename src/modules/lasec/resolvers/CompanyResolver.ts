@@ -290,7 +290,7 @@ export const getClient = async (params: any) => {
   let clients = [...clientDetails.items];
   if (clients.length === 1) {
 
-    // logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
+    logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
 
     let clientResponse = om(clients[0], {
       'id': 'id',
@@ -1275,21 +1275,18 @@ const getExtension = (filename: string) => {
 const allowedExts = ['txt', 'pdf', 'doc', 'zip'];
 const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf', 'application/pdf', 'application/zip'];
 
-// Test if a file is valid based on its extension and mime type.
-
-
 const uploadDocument = async (args: any) => {
   return new Promise(async (resolve, reject) => {
 
-    const { createReadStream, filename, mimetype, encoding } = await args.file;
+    const { clientId, file } = args;
+    const { createReadStream, filename, mimetype, encoding } = await file;
+
+    logger.debug(`UPLOADED ARGS:: ${JSON.stringify(args)}`);
     logger.debug(`UPLOADED FILE:: ${filename} - ${mimetype} ${encoding}`);
 
     const stream: NodeJS.ReadStream = createReadStream();
-
     const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
-
     const link = `${process.env.CDN_ROOT}content/files/${randomName}`;
-
 
     // Flag to tell if a stream had an error.
     let hadStreamError: boolean = null;
@@ -1314,7 +1311,6 @@ const uploadDocument = async (args: any) => {
       // eslint-disable-next-line consistent-return
       reject(error)
     }
-
 
     const catalogFile = () => {
       // Check if image is valid
@@ -1343,6 +1339,10 @@ const uploadDocument = async (args: any) => {
 
       if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
         reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
+      }
+
+      if (reactoryFile.uploadContext === 'lasec-crm::existing-company::document') {
+        reactoryFile.uploadContext = `lasec-crm::existing-company::document::${clientId}`;
       }
 
       const savedDocument = new ReactoryFileModel(reactoryFile);
@@ -1374,16 +1374,41 @@ const uploadDocument = async (args: any) => {
 const deleteDocuments = async (args: any) => {
 
   logger.debug(`FILE DELETE ARGS: ${JSON.stringify(args)}`);
+  const { clientId, fileIds } = args;
+  const _fileIds = [...fileIds];
 
-  const { fileIds } = args;
+  if (clientId) {
+    const clientDetails = await lasecApi.Customers.list({ filter: { ids: [clientId] } });
+    if (clientDetails && clientDetails.items.length > 0) {
+      let client = clientDetails.items[0];
+      if (client.document_ids.length > 0) {
+        const docIds = [...client.document_ids]; // clone to edit
 
-  let files = await ReactoryFileModel.find({ id: { $in: fileIds } }).then()
+        fileIds.forEach(fileId => {
+          const indexOfId = docIds.indexOf(fileId);
+          if (indexOfId > -1) {
+            docIds.splice(indexOfId, 1);
+            _fileIds.splice(fileIds.indexOf(fileId), 1);
+          }
+        });
+
+        const updateResult = await lasecApi.Documents.updateDocumentIds(docIds, clientId);
+
+        logger.debug(`UPDATE RESULT:: ${JSON.stringify(updateResult)}`);
+        logger.debug(`FILE IDS:: ${_fileIds}`);
+
+      }
+    }
+  }
+
+
+  // let files = await ReactoryFileModel.find({ id: { $in: fileIds } }).then()
+  let files = await ReactoryFileModel.find({ id: { $in: _fileIds } }).then()
 
   files.forEach((fileDocument) => {
     const fileToRemove = path.join(process.env.APP_DATA_ROOT, 'content', 'files', fileDocument.alias);
     try {
       if (fs.existsSync(fileToRemove)) fs.unlinkSync(fileToRemove);
-
       fileDocument.remove().then();
 
     } catch (unlinkError) {

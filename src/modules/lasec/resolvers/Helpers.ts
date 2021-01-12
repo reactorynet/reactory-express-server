@@ -2186,37 +2186,37 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
   logger.debug(`DOCUMENT PARAMS:: ${JSON.stringify(params)}`);
 
   const _docs: any[] = []
-
   if (params.id && params.id !== 'new') {
-    logger.debug(`Fetching Remote Documents for Lasec Customer ${params.id}`);
-    let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: [params.id] }, paging: { enabled: false } });
-
-    logger.debug(`API DOCUMENTS ${JSON.stringify(documents)}`);
-
-
-    documents.items.forEach((documentItem: any) => {
-      _docs.push({
-        id: new ObjectID(),
-        partner: global.partner,
-        filename: documentItem.name,
-        link: documentItem.url,
-        hash: Hash(documentItem.url),
-        path: '',
-        alias: '',
-        alt: [],
-        size: 0,
-        uploadContext: 'lasec-crm::company-document::remote',
-        mimetype: mimeTypeForFilename(documentItem.name),
-        uploadedBy: global.user._id,
-        owner: global.user._id,
-      })
-    });
+    const clientDetails = await lasecApi.Customers.list({ filter: { ids: [params.id] } });
+    if (clientDetails && clientDetails.items.length > 0) {
+      let client = clientDetails.items[0];
+      if (client.document_ids.length > 0) {
+        let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: client.document_ids }, paging: { enabled: false } });
+        documents.items.forEach((documentItem: any) => {
+          _docs.push({
+            id: documentItem.id,
+            partner: global.partner,
+            filename: documentItem.name,
+            link: documentItem.url,
+            hash: Hash(documentItem.url),
+            path: '',
+            alias: '',
+            alt: [],
+            size: 0,
+            uploadContext: 'lasec-crm::company-document::remote',
+            mimetype: mimeTypeForFilename(documentItem.name),
+            uploadedBy: global.user._id,
+            owner: global.user._id,
+            fromApi: true
+          })
+        });
+      }
+    }
   }
 
+  // NOTE: IDS IS A STRING, SO NOT SURE HOW THIS IS A COLLECTION
   if (params.ids && params.ids.length > 0) {
-
     let remote_documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: params.ids }, paging: { enabled: false } });
-
     remote_documents.items.forEach((documentItem: any) => {
       _docs.push({
         id: new ObjectID(),
@@ -2232,7 +2232,8 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
         mimetype: mimeTypeForFilename(documentItem.name),
         uploadedBy: global.user._id,
         // owner: global.user.id
-        owner: global.user._id
+        owner: global.user._id,
+        fromApi: true
       })
     });
 
@@ -2257,16 +2258,16 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
   let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
 
   reactoryFiles.forEach((rfile) => {
+    rfile.fromApi = false;
     _docs.push(rfile);
   });
 
   logger.debug(`Files found (${_docs.length})`);
 
   if (params.paging) {
-
     let skipCount: number = (params.paging.page - 1) * params.paging.pageSize;
-
     return {
+      id: params.id,
       documents: lodash(_docs).drop(skipCount).take(params.paging.pageSize),
       uploadContexts: params.uploadContexts || [],
       paging: {
@@ -2276,14 +2277,13 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
         pageSize: params.paging.pageSize
       },
     }
-
   } else {
     return {
+      id: params.id,
       documents: _docs,
       uploadContexts: params.uploadContexts || [],
       paging: {},
     }
-    // UNCOMMENT THIS
     // return _docs;
   }
 };
@@ -2943,22 +2943,22 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
               if (paged_results && paged_results.lineItems && paged_results.lineItems.length > 0) {
                 freight_request_option.item_paging = paged_results.item_paging,
 
-                paged_results.lineItems.forEach((line_item: LasecQuoteItem) => {
+                  paged_results.lineItems.forEach((line_item: LasecQuoteItem) => {
 
-                  freight_request_option.productDetails.push({
-                    code: line_item.code,
-                    description: line_item.title,
-                    sellingPrice: line_item.totalVATExclusive,
-                    qty: line_item.quantity,
-                    unitOfMeasure: '',
-                    length: 0,
-                    width: 0,
-                    height: 0,
-                    volume: 0
+                    freight_request_option.productDetails.push({
+                      code: line_item.code,
+                      description: line_item.title,
+                      sellingPrice: line_item.totalVATExclusive,
+                      qty: line_item.quantity,
+                      unitOfMeasure: '',
+                      length: 0,
+                      width: 0,
+                      height: 0,
+                      volume: 0
+                    });
+
+
                   });
-
-
-                });
               }
 
               resolve(freight_request_option);

@@ -52,10 +52,16 @@ const displayUiSchema: any = {
     showRefresh: false,
   },
   'ui:titleStyle': {
-    // borderBottom: '2px solid #D5D5D5',
-    marginBottom: '16px'
+    borderBottom: '2px solid #D5D5D5',
+    paddingBottom: '10px',
+    marginBottom: '20px'
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 60px'
+    }
+  },
   'ui:grid-layout': [
     {
       currentBalance: { sm: 12, md: 6, lg: 4 },
@@ -65,6 +71,7 @@ const displayUiSchema: any = {
       balance60Days: { sm: 12, md: 6, lg: 4 },
       balance90Days: { sm: 12, md: 6, lg: 4 },
       credits: { sm: 12, md: 6, lg: 4 },
+      style: { padding: '25px 32px 0 32px' }
     }
   ],
   view: {
@@ -81,7 +88,7 @@ const displayUiSchema: any = {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
       inlineLabel: true,
-      label:"Current Balance:"
+      label: "Current Balance:"
     },
   },
 
@@ -89,7 +96,7 @@ const displayUiSchema: any = {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
       inlineLabel: true,
-      label:"Credit Limit:"
+      label: "Credit Limit:"
     },
   },
 
@@ -97,7 +104,7 @@ const displayUiSchema: any = {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
       inlineLabel: true,
-      label:"Current Invoice"
+      label: "Current Invoice"
     },
   },
 
@@ -105,7 +112,7 @@ const displayUiSchema: any = {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
       inlineLabel: true,
-      label:"30 Day Invoice"
+      label: "30 Day Invoice"
     },
   },
 
@@ -113,7 +120,7 @@ const displayUiSchema: any = {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
       inlineLabel: true,
-      label:"60 Day Invoice"
+      label: "60 Day Invoice"
     },
   },
 
@@ -121,7 +128,7 @@ const displayUiSchema: any = {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
       inlineLabel: true,
-      label:"90 Day Invoice"
+      label: "90 Day Invoice"
     },
   },
 
@@ -129,7 +136,7 @@ const displayUiSchema: any = {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
       inlineLabel: true,
-      label:"Credits"
+      label: "Credits"
     },
   },
 };
@@ -325,7 +332,7 @@ const editUiSchema: any = {
         }
       }
       */
-     variant: 'outlined'
+      variant: 'outlined'
     }
   },
   deliveryAddress: {
@@ -350,7 +357,7 @@ const editUiSchema: any = {
         }
       }
       */
-     variant: "outlined"
+      variant: "outlined"
     }
   },
   registrationNumber: {
@@ -408,7 +415,7 @@ const schema: Reactory.ISchema = {
       title: 'View Mode'
     },
     currencySymbol: {
-      type:'string',
+      type: 'string',
       title: 'Currency Symbol'
     },
     currentBalance: {

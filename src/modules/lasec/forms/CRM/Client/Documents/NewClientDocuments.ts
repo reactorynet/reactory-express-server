@@ -10,7 +10,6 @@ import { defaultUiResources } from '../../../uiResources';
 const newSchema = cloneDeep<Reactory.ISchema>(DocumentFormSchema);
 // newSchema.properties.paging = { ...PagingSchema }
 newSchema.title = 'UPLOAD CLIENT DOCUMENTS';
-// newSchema.description = 'Use the area below to add files for this customer.';
 export const NewSchema = newSchema;
 
 export const NewUiSchema: any = {
@@ -107,35 +106,6 @@ export const NewUiSchema: any = {
       },
     }
   },
-  // uploadedDocuments: {
-  //   ...DocumentGridWidget,
-  //   'ui:options': {
-  //     ...DocumentGridWidget['ui:options'],
-  //     options: {
-  //       ...DocumentGridWidget['ui:options'].options,
-  //       toolbar: true,
-  //       selection: true,
-  //     },
-  //     actions: [
-  //       {
-  //         icon: 'remove_circle',
-  //         tooltip: 'Remove Files',
-  //         iconProps: {
-  //           color: 'error'
-  //         },
-  //         mutation: 'delete',
-  //         variables: {
-  //           'formContext.formData.uploadContext': 'uploadContext',
-  //           'selected[].id': 'fileIds',
-  //         },
-  //         resultMap: {
-
-  //         },
-  //         resultAction: 'refresh',
-  //       },
-  //     ]
-  //   }
-  // },
 };
 
 export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {

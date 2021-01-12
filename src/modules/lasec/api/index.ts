@@ -356,6 +356,9 @@ const Api = {
   FETCH,
   URIS: SECONDARY_API_URLS,
   get: async (uri: string, params: any = null, shape: any = null) => {
+
+    logger.debug(`🟠 GET PARAMS ${uri}  -   ${JSON.stringify(params)} `)
+
     const resp = await FETCH(uri, params ? { params } : undefined).then();
     const {
       status, payload,
@@ -472,9 +475,6 @@ const Api = {
     }
   },
   Documents: {
-    /**
-     * Uploads a document to the lasec API against a particular customer
-     */
     upload: async (documentInfo, customerInfo) => {
       logger.debug(`Uploading document to LasecAPI`, { documentInfo, customerInfo });
       /**
@@ -507,10 +507,7 @@ const Api = {
        *
        */
 
-
-
-
-      const kwargs = {};
+       const kwargs = {};
       if (!kwargs.headers) {
         kwargs.headers = {};
         kwargs.headers['Content-type'] = 'application/json; charset=UTF-8';
@@ -569,6 +566,9 @@ const Api = {
           message: exc.message
         }
       }
+    },
+    updateDocumentIds: async (documentIds: any, customerId: any) => {
+      return await POST(`${SECONDARY_API_URLS.customer_documents.url(customerId)}`, { document_ids: documentIds, customer_id: customerId }).then();
     }
   },
   Customers: {

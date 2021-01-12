@@ -5,6 +5,7 @@ const graphql: Reactory.IFormGraphDefinition = {
     name: 'LasecGetCustomerDocuments',
     text: `query LasecGetCustomerDocuments($id: String, $uploadContexts: [String], $paging: PagingRequest){
       LasecGetCustomerDocuments(id: $id, uploadContexts: $uploadContexts, paging: $paging){
+        id
         documents {
           id
           filename
@@ -16,20 +17,23 @@ const graphql: Reactory.IFormGraphDefinition = {
             firstName
             fullName
           }
+          fromApi
         }
       }
     }`,
     variables: {
-      'formData.id': 'id',
+      'clientId': '${props.formContext.$formData.id}',
+      // 'formData.id': 'id',
       'formData.$uploadContexts': 'uploadContexts',
     },
     formData: {
       $uploadContexts: [
-        'lasec-crm::company-document',
+        // 'lasec-crm::company-document',
         'lasec-crm::new-company::document'
       ]
     },
     resultMap: {
+      'id': 'id',
       'documents': 'documents',
     },
     autoQuery: true,
@@ -38,34 +42,13 @@ const graphql: Reactory.IFormGraphDefinition = {
     edit: false,
     new: false,
     refreshEvents: [
-      {name: 'lasec-crm::new-document::uploaded'}
+      { name: 'lasec-crm::new-document::uploaded' }
     ],
     onError: {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
   },
-  mutation: {
-    new: {
-      name: 'LasecUploadCustomerDocument',
-      text: `mutation LasecUploadCustomerDocument($id: String, $file: Upload!){
-        LasecUploadCustomerDocument(id: $id, file: $file) {
-          id
-          name
-          url
-          mimetype
-        }
-      }`,
-      notification: {
-
-      },
-      variables: {
-
-      },
-      objectMap: true,
-
-    }
-  }
 };
 
 export default graphql;

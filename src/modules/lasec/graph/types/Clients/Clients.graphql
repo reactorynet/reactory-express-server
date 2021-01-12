@@ -85,12 +85,14 @@ type LasecDocument {
   public: Boolean
   published: Boolean
   owner: User
+  fromApi: Boolean
 }
 
 type PagedLasecDocument {
   search: String
   filterBy: String
   paging: PagingResult
+  id: String
   documents: [LasecDocument]
 }
 
@@ -539,8 +541,8 @@ extend type Mutation {
   LasecUpdateCustomerCompany(clientId: String, customerDetail: Any!): SimpleResponse
 
   LasecUploadCustomerDocument(id: String, file: Upload!): LasecDocument
-  LasecUploadDocument(file: Upload!, uploadContext: String): LasecDocument
-  LasecDeleteNewClientDocuments(fileIds: [String]!): UXMessage
+  LasecUploadDocument(clientId: String, file: Upload!, uploadContext: String): LasecDocument
+  LasecDeleteNewClientDocuments(clientId: String, fileIds: [String]!): UXMessage
   LasecCreateNewOrganisation(customerId: String, name: String, description: String): CreateNewOrganisationResponse
   LasecCreateNewClient(id: String, newClient: LasecNewClientInput): NewClientResponse
   LasecUpdateNewClient(clientId: String, newClient: LasecNewClientInput): LasecNewClient

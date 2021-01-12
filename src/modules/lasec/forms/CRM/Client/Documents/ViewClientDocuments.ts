@@ -16,6 +16,7 @@ export const ViewUiSchema: any = {
       name: 'LasecGetCustomerDocuments',
       text: `query LasecGetCustomerDocuments($id: String, $uploadContexts: [String], $paging: PagingRequest){
         LasecGetCustomerDocuments(id: $id, uploadContexts: $uploadContexts, paging: $paging){
+          id
           documents {
             id
             filename
@@ -27,21 +28,22 @@ export const ViewUiSchema: any = {
               firstName
               fullName
             }
+            fromApi
           }
         }
       }`,
       variables: {
         'formData.id': 'id',
         'formData.$uploadContexts': 'uploadContexts'
-        // 'formData.$uploadContext': 'uploadContexts',
       },
       formData: {
         $uploadContexts: [
-          'lasec-crm::company-document',
+          // 'lasec-crm::company-document',
           'lasec-crm::new-company::document'
         ]
       },
       resultMap: {
+        'id': 'id',
         'documents': 'documents',
       },
       autoQuery: true,
@@ -53,27 +55,6 @@ export const ViewUiSchema: any = {
         {name: 'lasec-crm::new-document::uploaded'}
       ],
     },
-    mutation: {
-      new: {
-        name: 'LasecUploadCustomerDocument',
-        text: `mutation LasecUploadCustomerDocument($id: String, $file: Upload!){
-          LasecUploadCustomerDocument(id: $id, file: $file) {
-            id
-            name
-            url
-            mimetype
-          }
-        }`,
-        notification: {
-
-        },
-        variables: {
-
-        },
-        objectMap: true,
-
-      }
-    }
   },
   'ui:options': {
     componentType: 'div',
@@ -139,8 +120,8 @@ export const ViewUiSchema: any = {
         name: 'LasecUploadDocument',
         mutation: {
           name: 'LasecUploadDocument',
-          text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
-            LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
+          text: `mutation LasecUploadDocument($clientId: String, $file: Upload!, $uploadContext: String){
+            LasecUploadDocument(clientId: $clientId, file: $file, uploadContext: $uploadContext) {
               id
               filename
               link
@@ -149,7 +130,10 @@ export const ViewUiSchema: any = {
             }
           }`,
           variables: {
-            'uploadContext': 'lasec-crm::new-company::document'
+            'clientId': '${props.formContext.$formData.id}',
+            // 'formData.id': 'clientId',
+            'uploadContext': 'lasec-crm::existing-company::document'
+            // 'uploadContext': 'lasec-crm::new-company::document'
           },
           onSuccessMethod: 'refresh',
         },
@@ -207,22 +191,9 @@ export const ConfirmUiSchema: any = {
       style: { padding: '25px 32px 0 32px' }
     }
   ],
-
   documents: {
     'ui:widget': 'ClientDocumentsWidget'
   },
-
-  // uploadedDocuments: {
-  //   ...DocumentGridWidget,
-  //   'ui:options': {
-  //     ...DocumentGridWidget['ui:options'],
-  //     query: 'PagedNewCustomerDocuments',
-  //     variables: {
-  //       'formData.paging': 'paging',
-  //       'formContext.$formData.uploadContext': 'uploadContexts',
-  //     },
-  //   }
-  // }
 };
 
 export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
@@ -233,7 +204,6 @@ export const LasecCRMViewClientDocuments: Reactory.IReactoryForm = {
   title: 'CRM Client Documents',
   tags: ['CRM Client Documents'],
   registerAsComponent: true,
-  // name: 'LasecCRMClientDocuments',
   name: 'LasecCRMViewClientDocuments',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
