@@ -429,6 +429,11 @@ type CRMClientComment {
   when: Date
 }
 
+type ClientCommentResponse {
+  id: String
+  comments: [CRMClientComment]
+}
+
 input EditAddressInput {
   id: String
 
@@ -482,7 +487,7 @@ extend type Query {
     filterBy: String
     iter: Int
   ): PagedCRMCustomer
-  LasecGetClientComments(clientId: String!): [CRMClientComment]
+  LasecGetClientComments(clientId: String!): ClientCommentResponse
   LasecGetCustomerDetail(id: String!): LasecCRMCustomer
   LasecGetCustomerClass: [LasecCustomerClassLookupItem]
   LasecGetFacultyList: [LasecFacultyListLookupItem]

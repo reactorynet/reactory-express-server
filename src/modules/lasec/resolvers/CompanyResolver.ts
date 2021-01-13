@@ -1745,14 +1745,20 @@ const getUsersRepCodes = async () => {
 }
 
 const getClientComments = async (args) => {
-
   logger.debug(`FIND COMMENTS:: ${JSON.stringify(args)}`);
-
   const comments = await CRMClientComment.find({ client: args.clientId }).sort({ when: -1 });
 
-  logger.debug(`COMMENTS:: ${JSON.stringify(comments)}`);
-
-  return comments;
+  return {
+    id: args.clientId,
+    comments: comments.map(comment => {
+      return {
+        id: comment._id,
+        who: comment.who,
+        comment: comment.comment,
+        when: comment.when,
+      }
+    })
+  }
 }
 
 const saveComment = async (args) => {
