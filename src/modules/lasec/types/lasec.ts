@@ -800,6 +800,7 @@ export interface FreightRequestOption {
   refrigerationRequired: Boolean
   containsLithium: Boolean
   sample: String
+  deliveryNote: String,
   item_paging: PagingResult,
   productDetails: FreightRequestProductDetail[]
 }

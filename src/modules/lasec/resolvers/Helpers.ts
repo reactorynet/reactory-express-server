@@ -2929,6 +2929,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
               refrigerationRequired: false,
               containsLithium: false,
               sample: '',
+              deliveryNote: '',
               item_paging: {
                 total: 0,
                 hasNext: false,
@@ -2954,6 +2955,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
                       length: 0,
                       width: 0,
                       height: 0,
+                      weight: 0,
                       volume: 0
                     });
 
