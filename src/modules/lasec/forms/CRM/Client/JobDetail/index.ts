@@ -89,7 +89,8 @@ export const displayUiSchema: any = {
       bodyProps: {
         style: {
           display: 'flex',
-          justifyContent: 'flex-end'
+          justifyContent: 'flex-end',
+          textTransform: 'capitalize'
         }
       }
     }
