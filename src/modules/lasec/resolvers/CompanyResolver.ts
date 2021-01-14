@@ -501,7 +501,8 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
         customer_class_id: params.clientClass ? params.clientClass : params.jobDetails && params.jobDetails.customerClass || (client.customer_class_id || ''),
 
         // sales_team_id: params.repCode || (client.sales_team || ''),
-        sales_team_id: params.personalDetails && params.personalDetails.repCode || (client.sales_team || ''),
+        // sales_team_id: params.personalDetails && params.personalDetails.repCode || (client.sales_team || ''),
+        sales_team_id: params.repCode ? params.repCode : params.jobDetails && params.jobDetails.repCode ? params.jobDetails.repCode : (client.sales_team || ''),
 
 
         faculty: params.faculty || (client.faculty || ''),

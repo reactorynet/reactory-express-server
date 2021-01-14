@@ -4,6 +4,20 @@ type LasecSalesTeam {
   title: String
 }
 
+type SalesTeamMeta {
+  id: String
+  reference: String
+  owner: User
+}
+
+type LasecApiSalesTeam {
+  id: String
+  title: String
+  description: String
+  meta: SalesTeamMeta
+}
+
 extend type Query {
   LasecSalesTeams: [LasecSalesTeam]
+  LasecSalesTeamsFromApi: [LasecApiSalesTeam]
 }

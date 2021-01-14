@@ -388,8 +388,8 @@ const editUiSchema: any = {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
       multiSelect: false,
-      query: `query LasecSalesTeams {
-        LasecSalesTeams {
+      query: `query LasecSalesTeamsFromApi {
+        LasecSalesTeamsFromApi {
           id
           title
           meta  {
@@ -397,10 +397,10 @@ const editUiSchema: any = {
           }
         }
       }`,
-      resultItem: 'LasecSalesTeams',
+      resultItem: 'LasecSalesTeamsFromApi',
       resultsMap: {
-        'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
-        'LasecSalesTeams.[].title': '[].label',
+        'LasecSalesTeamsFromApi.[].id': ['[].key', '[].value'],
+        'LasecSalesTeamsFromApi.[].title': '[].label',
       },
       selectProps: {
         style: {
