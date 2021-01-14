@@ -9,6 +9,7 @@ type LasecCRMCustomer {
   customerClass: String
   description: String
   ranking: String
+  rankingLabel: String
   availableBalance: Float
   salesTeam: String
   physicalAddressId: Int

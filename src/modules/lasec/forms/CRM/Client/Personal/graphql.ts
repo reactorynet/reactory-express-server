@@ -6,6 +6,8 @@ const graphql: Reactory.IFormGraphDefinition = {
     text: `query LasecGetClientDetail($id: String!){
       LasecGetClientDetail(id: $id){
         id
+        accountType
+        salesTeam
         clientStatus
         title
         titleLabel
@@ -39,6 +41,10 @@ const graphql: Reactory.IFormGraphDefinition = {
       'country': 'country',
       'firstName': 'firstName',
       'lastName': 'lastName',
+
+      'accountType': 'accountType',
+      'salesTeam': 'repCode',
+
     },
     autoQuery: true,
     autoQueryDelay: 1000,
@@ -68,6 +74,8 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.firstName': 'clientInfo.firstName',
         'formData.lastName': 'clientInfo.lastName',
         'formData.country': 'clientInfo.country',
+        'formData.accountType': 'clientInfo.accountType',
+        'formData.repCode': 'clientInfo.repCode',
       },
       onError: {
         componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',

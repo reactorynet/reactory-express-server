@@ -9,7 +9,6 @@ const graphql: Reactory.IFormGraphDefinition = {
         jobTitle
         salesTeam
         department
-
         faculty
         customerType
         lineManager
@@ -17,12 +16,12 @@ const graphql: Reactory.IFormGraphDefinition = {
         jobType
         jobTypeLabel
         customerClassLabel
-
         customer {
           id
           accountType
           customerClass
           ranking
+          rankingLabel
         }
       }
     }`,
@@ -39,6 +38,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'customerClassLabel': 'customerClassLabel',
       'customer.id': 'customerId',
       'customer.ranking': 'ranking',
+      'customer.rankingLabel': 'rankingLabel',
 
       'faculty': 'faculty',
       'customerType': 'customerType',

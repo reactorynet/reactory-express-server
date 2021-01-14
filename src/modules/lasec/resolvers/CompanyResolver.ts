@@ -295,11 +295,7 @@ export const getClient = async (params: any) => {
     let clientResponse = om(clients[0], {
       'id': 'id',
       'title_id': ['title', 'titleLabel'],
-      'first_name': [{
-        "key":
-          'fullName',
-        "transform": (sourceValue, sourceObject) => `${sourceValue} ${sourceObject.surname}`,
-      }, "firstName"],
+      'first_name': [{ "key": 'fullName', "transform": (sourceValue, sourceObject) => `${sourceValue} ${sourceObject.surname}` }, "firstName"],
       'surname': 'lastName',
       'activity_status': { key: 'clientStatus', transform: (sourceValue) => `${sourceValue}`.toLowerCase() },
       'email': 'emailAddress',
@@ -312,7 +308,25 @@ export const getClient = async (params: any) => {
       'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src) => src == true },
       'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
       'department': ['department', 'jobTitle'],
-      'ranking_id': 'customer.ranking',
+
+      // 'ranking_id': 'customer.ranking',
+      'ranking_id': ['customer.ranking', {
+        key: 'customer.rankingLabel', "transform": (srcVal, srcObj) => {
+
+          logger.debug(`SRC VAL:: ${srcVal}`);
+
+          switch (srcVal) {
+            case '1':
+              return 'A - High Value';
+            case '2':
+              return 'B - Medium Value';
+            case '3':
+              return 'C - Low Value';
+            default:
+              return 'Unknown Value';
+          }
+        }
+      }],
 
       'faculty': 'faculty',
       'customer_type': 'customerType',
@@ -494,7 +508,8 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
         ranking_id: params.ranking || (client.ranking_id || ''), // come back to this
 
         // account_type: params.accountType || (client.account_type || ''),
-        account_type: params.personalDetails && params.personalDetails.accountType || (client.account_type || ''),
+        // account_type: params.personalDetails && params.personalDetails.accountType || (client.account_type || ''),
+        account_type: params.accountType ? params.accountType : params.personalDetails && params.personalDetails.accountType || (client.account_type || ''),
 
         // customer_class_id: params.clientClass || (client.customer_class_id || ''),
         // customer_class_id: params.jobDetails && params.jobDetails.customerClass || (client.customer_class_id || ''),
