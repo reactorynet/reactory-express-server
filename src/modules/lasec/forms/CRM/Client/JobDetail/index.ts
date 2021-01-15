@@ -356,8 +356,6 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      // accountType: { md: 6, sm: 6 },
-      // repCode: { md: 6, sm: 12 },
       jobType: { md: 6, sm: 12 },
       lineManager: { md: 6, sm: 12 },
       customerType: { md: 6, sm: 12 },
@@ -377,42 +375,6 @@ const editUiSchema: any = {
       },
     }
   },
-  // accountType: {
-  //   ...AccountTypeDropdownUISchema
-  // },
-  // repCode: {
-  //   'ui:widget': 'SelectWithDataWidget',
-  //   'ui:options': {
-  //     multiSelect: false,
-  //     query: `query LasecSalesTeamsFromApi {
-  //       LasecSalesTeamsFromApi {
-  //         id
-  //         title
-  //         meta  {
-  //           reference
-  //         }
-  //       }
-  //     }`,
-  //     resultItem: 'LasecSalesTeamsFromApi',
-  //     resultsMap: {
-  //       'LasecSalesTeamsFromApi.[].id': ['[].key', '[].value'],
-  //       'LasecSalesTeamsFromApi.[].title': '[].label',
-  //     },
-  //     selectProps: {
-  //       style: {
-  //         marginTop: '1.3rem',
-
-  //       }
-  //     },
-  //     labelStyle: {
-  //       transform: 'none',
-  //       fontWeight: 'bold',
-  //       color: '#000000',
-  //       backgroundColor: 'transparent',
-  //       padding: 0
-  //     }
-  //   },
-  // },
   jobType: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {

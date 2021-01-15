@@ -309,12 +309,8 @@ export const getClient = async (params: any) => {
       'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
       'department': ['department', 'jobTitle'],
 
-      // 'ranking_id': 'customer.ranking',
       'ranking_id': ['customer.ranking', {
         key: 'customer.rankingLabel', "transform": (srcVal, srcObj) => {
-
-          logger.debug(`SRC VAL:: ${srcVal}`);
-
           switch (srcVal) {
             case '1':
               return 'A - High Value';
@@ -328,10 +324,16 @@ export const getClient = async (params: any) => {
         }
       }],
 
-      'faculty': 'faculty',
-      'customer_type': 'customerType',
-      'line_manager_id': 'lineManager',
-      'line_manager_name': 'lineManagerLabel',
+      // 'faculty': 'faculty',
+      'faculty': { 'key': 'faculty', 'transform': (srcVal) => srcVal == null ? '' : srcVal },
+      // 'customer_type': 'customerType',
+      'customer_type': { 'key': 'customerType', 'transform': (srcVal) => srcVal == null ? '' : srcVal },
+
+      // 'line_manager_id': 'lineManager',
+      'line_manager_id': { 'key': 'lineManager', 'transform': (srcVal) => srcVal == '0' || srcVal == '0' ? '' : srcVal },
+      // 'line_manager_name': 'lineManagerLabel',
+      'line_manager_name': { 'key': 'lineManagerLabel', 'transform': (srcVal) => srcVal == null ? '' : srcVal },
+
       'role_id': 'jobType',
       'company_id': 'customer.id',
       'company_account_number': 'customer.accountNumber',
@@ -359,9 +361,7 @@ export const getClient = async (params: any) => {
       logger.debug(`Found Cached Item for LASEC_COMPANY::${clientResponse.customer.id} ==> ${found}`)
       if (found === null || found === undefined) {
         let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }).then()
-
-        logger.debug(`LASEC_COMPANY DETAILS::${JSON.stringify(companyPayloadResponse.items[0])}`);
-
+        // logger.debug(`LASEC_COMPANY DETAILS::${JSON.stringify(companyPayloadResponse.items[0])}`);
         if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
           if (companyPayloadResponse.items.length === 1) {
             let customerObject = {
@@ -411,7 +411,6 @@ export const getClient = async (params: any) => {
     clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.jobType;
 
     // CUSTOMER CLASS
-
     const customerClasses = await getCustomerClass().then();
     const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
 
@@ -470,39 +469,41 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
 
       let updateParams = {
         // first_name: params.firstName || (client.first_name || ''),
-        first_name: params.personalDetails && params.personalDetails.firstName || (client.first_name || ''),
+        // first_name: params.personalDetails && params.personalDetails.firstName || (client.first_name || ''),
+        first_name: params.firstName ? params.firstName : params.personalDetails && params.personalDetails.firstName || (client.first_name || ''),
 
         // surname: params.lastName || (client.surname || ''),
-        surname: params.personalDetails && params.personalDetails.lastName || (client.surname || ''),
+        // surname: params.personalDetails && params.personalDetails.lastName || (client.surname || ''),
+        surname: params.lastName ? params.lastName : params.personalDetails && params.personalDetails.lastName || (client.surname || ''),
 
         activity_status: params.clientStatus || (client.activity_status || ''),
 
         // country: params.country || (client.country || ''),
-        country: params.personalDetails && params.personalDetails.country || (client.country || ''),
+        country: params.country ? params.country : params.personalDetails && params.personalDetails.country || (client.country || ''),
 
         // department: params.department || (client.department || 'NONE'),
-        department: params.jobDetails && params.jobDetails.department || (client.department || 'NONE'),
+        department: params.department ? params.department : params.jobDetails && params.jobDetails.department || (client.department || 'NONE'),
 
         // title_id: client.title_id,
-        title_id: params.personalDetails && params.personalDetails.title || (client.title_id || ''),
+        title_id: params.title ? params.title : params.personalDetails && params.personalDetails.title || (client.title_id || ''),
 
         // mobile_number: params.mobileNumber || (client.mobile_number || ''),
-        mobile_number: params.contactDetails && params.contactDetails.mobileNumber || (client.mobile_number || ''),
+        mobile_number: params.mobileNumber ? params.mobileNumber : params.contactDetails && params.contactDetails.mobileNumber || (client.mobile_number || ''),
 
         // office_number: params.officeNumber || (client.office_number || ''),
-        office_number: params.contactDetails && params.contactDetails.officeNumber || (client.office_number || ''),
+        office_number: params.officeNumber ? params.officeNumber : params.contactDetails && params.contactDetails.officeNumber || (client.office_number || ''),
 
         // alternate_office_number: params.alternateNumber || (client.alternate_office_number || ''),
-        alternate_office_number: params.contactDetails && params.contactDetails.alternateNumber || (client.alternate_office_number || ''),
+        alternate_office_number: params.alternateNumber ? params.alternateNumber : params.contactDetails && params.contactDetails.alternateNumber || (client.alternate_office_number || ''),
 
         // email: params.email || (client.email || ''),
-        email: params.contactDetails && params.contactDetails.emailAddress || (client.email || ''),
+        email: params.emailAddress ? params.emailAddress : params.contactDetails && params.contactDetails.emailAddress || (client.email || ''),
 
         // confirm_email: params.email || (client.email || ''),
-        confirm_email: params.contactDetails && params.contactDetails.confirmEmail || (client.email || ''),
+        confirm_email: params.confirmEmail ? params.confirmEmail : params.contactDetails && params.contactDetails.confirmEmail || (client.email || ''),
 
         // alternate_email: params.alternateEmail || (client.alternate_email || ''),
-        alternate_email: params.contactDetails && params.contactDetails.alternateEmail || (client.alternate_email || ''),
+        alternate_email: params.alternateEmail ? params.alternateEmail : params.contactDetails && params.contactDetails.alternateEmail || (client.alternate_email || ''),
 
         // ranking_id: params.ranking || (client.ranking_id || ''),
         ranking_id: params.ranking || (client.ranking_id || ''), // come back to this
@@ -723,11 +724,9 @@ const getCustomerClass = async () => {
 };
 
 const getFacultyList = async () => {
-
-
   try {
     const faculty_list: { faculty: string }[] = await mysql(`SELECT faculty FROM CustomerFaculty ORDER by faculty ASC`, 'mysql.lasec360').then();
-    logger.debug(`Results from Faculty Query`, { faculty_list })
+    // logger.debug(`Results from Faculty Query`, { faculty_list })
 
     if (faculty_list && faculty_list.length > 0) {
       return faculty_list.map((faculty_row: { faculty: string }) => ({
@@ -738,36 +737,19 @@ const getFacultyList = async () => {
       }));
     }
 
+    return faculty_list;
+
   } catch (databaseError) {
     logger.error(`Could not retrieve the Faculty List: ${databaseError.message}`, { databaseError });
     return [];
   }
 
-  /*
-  logger.debug(`[RESOLVER] GET FACULTY RESPONSE:: ${JSON.stringify(idsResponse)}`);
-
-  //if (cached && cached.items) return cached.items;
-  const idsResponse = await lasecApi.Customers.GetFacultyList().then();
-
-
-  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetFacultyList({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
-    if (details && details.items) {
-      setCacheItem(Hash('LASEC_FACULTY'), details, 60);
-      return details.items;
-    }
-  }
-*/
-
-
 };
 
 const getCustomerTypeList = async () => {
-
-
   try {
     const type_list: { customer_type: string }[] = await mysql(`SELECT type as customer_type FROM CustomerType ORDER by customer_type ASC`, 'mysql.lasec360').then();
-    logger.debug(`Results from CustomerType Query`, { customer_type_list: type_list })
+    // logger.debug(`Results from CustomerType Query`, { customer_type_list: type_list })
 
     if (type_list && type_list.length > 0) {
       return type_list.map((customer_type_row: { customer_type: string }) => ({
@@ -777,6 +759,8 @@ const getCustomerTypeList = async () => {
         description: customer_type_row.customer_type,
       }));
     }
+
+    return type_list;
 
   } catch (databaseError) {
     logger.error(`Could not retrieve the Customer Type List: ${databaseError.message}`, { databaseError });
@@ -802,11 +786,7 @@ const getCustomerTypeList = async () => {
 };
 
 const getCustomerLineManagerOptions = async (params) => {
-
-  //if (cached && cached.items) return cached.items;
   const response = await lasecApi.Customers.GetCustomerLineManagers(params).then();
-  logger.debug(`[RESOLVER] GET LINE MANAGERS RESPONSE:: ${JSON.stringify(response)}`);
-
   if (response.items) {
     return response.items.map(item => {
       return { id: item.line_manager_id, name: item.line_manager_name };

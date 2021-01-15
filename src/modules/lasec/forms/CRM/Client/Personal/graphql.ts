@@ -87,7 +87,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         title: 'Personal details successfully updated.',
         props: {
           timeOut: 10000,
-          canDismiss: false,
+          canDismiss: true,
           components: [
             {
               componentFqn: 'core.ConditionalIconComponent@1.0.0',

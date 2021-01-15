@@ -33,7 +33,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'customer.accountType': 'accountType',
       'salesTeam': 'repCode',
       'jobTitle': 'jobTitle',
-      'department': 'department',
+      'department': 'clientDepartment',
       'customer.customerClass': 'customerClass',
       'customerClassLabel': 'customerClassLabel',
       'customer.id': 'customerId',
@@ -120,14 +120,47 @@ const graphql: Reactory.IFormGraphDefinition = {
         'Client.jobType': 'jobType',
         'Client.jobTypeLabel': 'jobTypeLabel',
       },
-      onSuccessMethod: 'refresh',
-      // onSuccessMethod: 'notification',
+      // onSuccessMethod: 'refresh',
+      onSuccessMethod: 'notification',
       notification: {
         inAppNotification: true,
-        title: 'Job details successfully updated.',
+        title: 'Personal details successfully updated.',
         props: {
-          timeOut: 3000,
-          canDismiss: false,
+          timeOut: 10000,
+          canDismiss: true,
+          components: [
+            {
+              componentFqn: 'core.ConditionalIconComponent@1.0.0',
+              componentProps: {
+                conditions: [
+                  {
+                    key: 'de-active',
+                    icon: 'trip_origin',
+                    style: {
+                      color: 'red'
+                    },
+                    tooltip: 'Client Active'
+                  },
+                  {
+                    key: 'active',
+                    icon: 'trip_origin',
+                    style: {
+                      color: '#fff'
+                    },
+                    tooltip: 'Client Active'
+                  }
+
+                ]
+              },
+              style: {
+                marginRight: '8px',
+                marginTop: '8px',
+              },
+              propsMap: {
+                'formData.clientStatus': 'value',
+              },
+            }
+          ]
         }
       },
       onError: {
