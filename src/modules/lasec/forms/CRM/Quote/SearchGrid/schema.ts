@@ -94,7 +94,9 @@ const schema: Reactory.ISchema = {
       title: 'ACTIONS',
     },
     search: {
-      type: 'string'
+      type: 'string',
+      title: 'Search',
+      default: '',
     },
     paging: {
       type: 'object',
@@ -124,10 +126,7 @@ const schema: Reactory.ISchema = {
       type: 'string',
       title: 'Filter'
     },
-    // client: {
-    //   type: 'string',
-    //   title: 'Show'
-    // },
+    
     quotes: {
       type: 'array',
       items: QuotesSchema,

@@ -77,11 +77,7 @@ export const schema = {
       type: 'string',
       title: 'Leadership Brand',
       name: 'Leadership Brand'
-    },
-    UserThatCreatedMe: {
-      type: 'string',
-      title: 'Creator',      
-    },
+    },    
     title: {
       type: 'string',
       title: 'Survey Title',
@@ -121,6 +117,7 @@ export const schema = {
 
 export const defaultFormValue = {
   id: '',
+  surveyType: 'l360',
   startDate: moment().toISOString(true),
   endDate: moment().add(14, 'day').toISOString(true)
 };
@@ -617,7 +614,7 @@ const $graphql: Reactory.IFormGraphDefinition = {
           canDismiss: true,
         }
       },
-      onSuccessUrl: 'admin/org/${formData.organization}/surveys/${formData.id}',
+      onSuccessUrl: 'admin/org/${formData.organization.id}/surveys/${formData.id}',
       onSuccessRedirectTimeout: 1000,
     },
     edit: {

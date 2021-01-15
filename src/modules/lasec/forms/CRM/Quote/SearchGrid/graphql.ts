@@ -5,7 +5,7 @@ const graphql: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetCRMQuoteList',
     text: `query LasecGetCRMQuoteList(
-      $search: String!,
+      $search: String,
       $paging: PagingRequest,
       $filterBy: String,
       $periodStart: String,
@@ -68,7 +68,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'filterBy': 'filterBy',
       'quotes': 'quotes',
       'quotes[].code': 'quotes[].code',
-      'quotes[].customer.fullName': 'quotes.client',
+      'quotes[].customer.fullName': 'quotes[].client',
       'quotes[].created': 'quotes[].created',
       'quotes[].statusName': 'quotes[].status',
       'quotes[].status': 'quotes[].quote_status',
@@ -90,6 +90,74 @@ const graphql: Reactory.IFormGraphDefinition = {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
+  },
+  queries: {
+    quotes: {
+      name: 'LasecGetCRMQuoteList',
+      text: `query LasecGetCRMQuoteList(
+        $search: String,
+        $paging: PagingRequest,
+        $filterBy: String,
+        $periodStart: String,
+        $periodEnd: String,
+        $quoteDate: String,
+        $orderBy: String, 
+        $orderDirection: String
+        ){
+        LasecGetCRMQuoteList(
+          search: $search,
+          paging: $paging,
+          filterBy: $filterBy,
+          periodStart: $periodStart,
+          periodEnd: $periodEnd,
+          quoteDate: $quoteDate,
+          orderBy: $orderBy,
+          orderDirection: $orderDirection
+          ){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          quotes {
+            id
+            code
+            created
+            statusName
+            status
+            allowed_statuses
+            totalVATInclusive
+            customer {
+              id
+              fullName
+              firstName
+              lastName
+            }
+            company {
+              id
+              tradingName
+              code
+            }
+            totalVATExclusive
+            repCode
+            meta
+          }
+        }
+      }`,
+            
+      autoQuery: false,
+      queryMessage: 'Search for quote',
+      resultType: 'object',
+      //waitUntil: '${api.utils.lodash.isNil(api.$LasecUser)===false}',
+      waitTimeout: 4500,
+      edit: false,
+      new: false,
+      onError: {
+        componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+        method: 'onGraphQLQueryError',
+      },
+    }
   },
   mutation: {
     deactivate: {

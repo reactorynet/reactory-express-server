@@ -16,6 +16,9 @@ const uiSchema: any = {
     }
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    spacing: 0
+  },
   'ui:grid-layout': [
     {
       quotes: {
@@ -219,18 +222,19 @@ const uiSchema: any = {
         },
       ],
       remoteData: true,
-      query: 'query',
+      query: 'quotes',
       componentMap: {
         Toolbar: 'lasec-crm.QuoteGridToolbar@1.0.0'
       },
       variables: {
-        'props.formContext.$formData.search': 'search',
-        'props.formContext.$formData.paging': 'paging',
-        'props.formContext.$formData.filterBy': 'filterBy',
-        'props.formContext.$formData.filter': 'filter',
-        'props.formContext.$formData.periodStart': 'periodStart',
-        'props.formContext.$formData.periodEnd': 'periodEnd',
-        'props.formContext.$formData.dateFilter': 'quoteDate',
+        'query.search': 'search',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize',
+        'query.filterBy': 'filterBy',
+        'query.filter': 'filter',
+        'query.periodStart': 'periodStart',
+        'query.periodEnd': 'periodEnd',
+        'query.dateFilter': 'quoteDate',
         'query.orderBy.field': 'orderBy',
         'query.orderDirection': 'orderDirection'
       },
@@ -238,7 +242,6 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        // 'quotes': 'data',
         'quotes[].code': 'data[].code',
         'quotes[].created': 'data[].date',
         'quotes[].statusName': 'data[].statusName',

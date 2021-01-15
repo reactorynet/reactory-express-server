@@ -2580,7 +2580,7 @@ export const getCRMInvoices = async (params: any) => {
 
   logger.debug(`INVOICE COUNT:: ${invoiceIdsResponse.ids.length}`);
 
-  let ids = [];
+  let ids: any[] = [];
 
   if (isArray(invoiceIdsResponse.ids) === true) {
     ids = [...invoiceIdsResponse.ids];

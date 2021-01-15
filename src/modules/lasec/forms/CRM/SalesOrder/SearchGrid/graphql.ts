@@ -4,7 +4,7 @@ const graphql: Reactory.IFormGraphDefinition =  {
   query: {
     name: 'LasecGetPagedCRMSalesOrders',
     text: `query LasecGetPagedCRMSalesOrders(
-      $search: String!,
+      $search: String,
       $paging: PagingRequest,
       $filterBy: String,
       $filter: String,

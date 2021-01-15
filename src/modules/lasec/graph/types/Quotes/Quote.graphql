@@ -703,6 +703,12 @@ type QuoteDuplicateResponse {
   quoteId: String
 }
 
+type LasecFreightRequestQuotePatchResponse {
+  success: Boolean
+  message: String
+  freightRequest: FreightRequestQuoteDetail
+}
+
 type LasecPreparedEmail {
   id: String
   quote_id: String
@@ -726,7 +732,7 @@ extend type Query {
   LasecTransportationModes: [LasecTransportationMode]
   LasecGetQuoteList(search: String): [Quote]
   LasecGetCRMQuoteList(
-    search: String!
+    search: String
     paging: PagingRequest
     filterBy: String
     periodStart: String
@@ -781,7 +787,7 @@ extend type Query {
   LasecGetSaleOrderDocument(ids: [String]): [SalesOrderDocuments]
   LasecGetSalesOrderDocumentBySlug(slug: String!): SalesOrderDocumentContent
   LasecGetPagedCRMSalesOrders(
-    search: String!
+    search: String
     paging: PagingRequest
     filterBy: String
     filter: String
@@ -798,7 +804,7 @@ extend type Query {
   LasecGetCRMClientInvoices(
     clientId: String
     salesTeamId: String
-    search: String!
+    search: String
     paging: PagingRequest
     filterBy: String
     filter: String
@@ -808,7 +814,7 @@ extend type Query {
     iter: Int
   ): PagedCRMInvoices
   LasecGetCRMInvoices(
-    search: String!
+    search: String
     paging: PagingRequest
     filterBy: String
     filter: String
@@ -819,7 +825,7 @@ extend type Query {
   ): PagedCRMInvoices
   LasecGetCRMClientSalesHistory(
     clientId: String
-    search: String!
+    search: String
     paging: PagingRequest
     filterBy: String
     filter: String
@@ -829,7 +835,7 @@ extend type Query {
   ): PagedCRMSalesHistory
   LasecGetCRMSalesHistory(
     clientId: String
-    search: String!
+    search: String
     paging: PagingRequest
     filterBy: String
     filter: String

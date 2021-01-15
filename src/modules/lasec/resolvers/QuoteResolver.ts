@@ -865,7 +865,7 @@ export default {
     LasecGetCRMClientInvoices: async (obj, args) => {
       return getClientInvoices(args);
     },
-    LasecGetCRMInvoices: async (obj, args) => {
+    LasecGetCRMInvoices: async (obj: any, args: any) => {
       return getCRMInvoices(args);
     },
     LasecGetCRMClientSalesHistory: async (obj, args) => {

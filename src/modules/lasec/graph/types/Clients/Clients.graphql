@@ -465,7 +465,7 @@ type UpdateAddressResponse {
 
 extend type Query {
   LasecGetClientList(
-    search: String!
+    search: String
     paging: PagingRequest
     filterBy: String
     iter: Int

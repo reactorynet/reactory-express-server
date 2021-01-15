@@ -368,13 +368,31 @@ export default {
     }
   },
   Mutation: {
-    updateSurvey(obj, { id, surveyData }) {
-      logger.info('Updating Survey Config', { id, surveyData });
-      return Survey.findByIdAndUpdate(ObjectId(id), { ...surveyData });
+    updateSurvey: async (obj: any, params: { id: string, surveyData: any }) => {
+      logger.info('Updating Survey Config', params);
+      const { id, surveyData } = params;
+      const survey: any = await Survey.findById(new ObjectId(params.id)).then();
+
+      if(survey) {
+        survey.organization = new ObjectId(surveyData.organization || survey.organization);
+        survey.leadershipBrand = new ObjectId(surveyData.leadershipBrand || survey.leadershipBrand);                
+        survey.surveyType = surveyData.surveyType || survey.surveyType;
+        survey.title = surveyData.title || survey.title;
+        survey.startDate = moment(surveyData.startDate || survey.startDate || moment().startOf('D')).valueOf();
+        survey.endDate = moment(surveyData.endDate || survey.endDate || moment().add(14, 'days').endOf('D')).valueOf();
+        survey.mode = surveyData.mode || survey.mode;
+        survey.status = surveyData.status || survey.status;        
+        
+        return survey;
+      } else { 
+        throw new RecordNotFoundError(`Survey with id ${id} not found`);
+      }
+
+      
     },
     updateSurveyOptions(obj, { id, options }) {
       logger.info('Update Survey Options', { id, options });
-      return Survey.findByIdAndUpdate(ObjectId(id), { options });
+      return Survey.findByIdAndUpdate(new ObjectId(id), { options });
     },
     createSurvey(obj, { id, surveyData }) {
       return co.wrap(function* createSurveyGenerator(organization, survey) {

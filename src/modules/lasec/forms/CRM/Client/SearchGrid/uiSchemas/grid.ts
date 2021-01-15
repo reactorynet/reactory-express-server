@@ -236,10 +236,11 @@ const uiSchema: any = {
       remoteData: true,
       query: 'query',
       variables: {
-        'props.formContext.$formData.search': 'search',
-        'props.formContext.$formData.paging': 'paging',
-        'props.formContext.$formData.filterBy': 'filterBy',
-        'props.formContext.$formData.filter': 'filter',
+        'query.search': 'search',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize',
+        'query.filterBy': 'filterBy',
+        'query.filter': 'filter',
         'query.orderBy.field': 'orderBy',
         'query.orderDirection': 'orderDirection'
       },
@@ -247,8 +248,7 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'clients': 'data',
-        'clients[].customer.salesTeam': 'data[].company_rep_code'
+        'clients': 'data',        
       },
       resultType: 'object',
     },
