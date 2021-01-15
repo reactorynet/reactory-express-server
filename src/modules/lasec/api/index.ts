@@ -5,7 +5,7 @@ import { promisify } from 'util';
 import path from 'path';
 import FormData from 'form-data';
 import om from 'object-mapper';
-import { isObject, map, find, isArray, isNil, concat, uniq, result } from 'lodash';
+import { isObject, map, find, isArray, isNil, concat, uniq, result, stubFalse } from 'lodash';
 import moment from 'moment';
 import axios from 'axios';
 import { Reactory } from '@reactory/server-core/types/reactory';
@@ -507,7 +507,7 @@ const Api = {
        *
        */
 
-       const kwargs = {};
+      const kwargs = {};
       if (!kwargs.headers) {
         kwargs.headers = {};
         kwargs.headers['Content-type'] = 'application/json; charset=UTF-8';
@@ -2185,7 +2185,7 @@ const Api = {
               return {
                 salesorderline: certificate_item.item_number || index,
                 salesorder: sales_order_id,
-                stockcode: certificate_item.id ||certificate_item.stock_code,
+                stockcode: certificate_item.id || certificate_item.stock_code,
                 description: certificate_item.description,
                 quantity: certificate_item.qty,
                 unit_price: certificate_item.unit_price
@@ -2217,7 +2217,7 @@ const Api = {
       try {
         logger.debug(`Sending invoice input to API`, { input_data });
         let invoice_result = await Api.post(`api/com_invoice/${sales_order_id}`, input_data, undefined, true).then();
-        logger.debug(`🔢 Invoice Result`, {  invoice_result });
+        logger.debug(`🔢 Invoice Result`, { invoice_result });
         return {
           id: sales_order_id,
           pdf_url: invoice_result.url,
@@ -3351,14 +3351,32 @@ NB: note the addition of the detail_id for the line been updated
   },
   Teams: {
     list: async () => {
-      return await FETCH(SECONDARY_API_URLS.groups.url, {
-        params: {
-          ...defaultParams,
-          filter: {
-            "ids": ["LAB101", "LAB102", "LAB103", "LAB104", "LAB105", "LAB106", "LAB107", "LAB121"]
+      try {
+        const teamIdsResponse = await FETCH(SECONDARY_API_URLS.sales_teams.url, {
+          params: {
+            filter: {},
+            ordering: {},
+            pagination: { enabled: false }
           }
-        }
-      }, true).then();
+        }, true).then();
+
+        const teamDetailsResponse = await FETCH(SECONDARY_API_URLS.sales_teams.url, {
+          params: {
+            filter: {
+              ids: teamIdsResponse && teamIdsResponse.payload.ids.length > 0 ? teamIdsResponse.payload.ids : []
+              // "ids": ["LAB101", "LAB102", "LAB103", "LAB104", "LAB105", "LAB106", "LAB107", "LAB121"]
+            },
+            ordering: {},
+            pagination: { enabled: false }
+          }
+        }, true).then();
+
+        return teamDetailsResponse;
+
+      } catch (ex) {
+        logger.debug(`ERROR getting users rep codes. ${ex}`)
+        throw new ApiError(`Error getting users rep codes. ${ex}`);
+      }
     },
   },
   User: {

@@ -41,14 +41,14 @@ const uiSchema: Reactory.IUISchema = {
         style: { padding: '25px 32px 0 32px' }
       }
     ],
-  
+
     clientTitle: {
       'ui:widget': 'SelectWithDataWidget',
       'ui:options': {
         multiSelect: false,
         query: `query LasecGetPersonTitles {
           LasecGetPersonTitles {
-            id          
+            id
             title
           }
         }`,
@@ -60,7 +60,7 @@ const uiSchema: Reactory.IUISchema = {
         selectProps: {
           style: {
             marginTop: '1.3rem',
-  
+
           }
         },
         labelStyle: {
@@ -73,7 +73,7 @@ const uiSchema: Reactory.IUISchema = {
       },
       'ui:description': "Select the client title",
     },
-    
+
     firstName: {
       'ui:options': {
         component: 'TextField',
@@ -149,26 +149,59 @@ const uiSchema: Reactory.IUISchema = {
     accountType: {
       ...AccountTypeDropdownUISchema
     },
+    // repCode: {
+    //   'ui:widget': 'SelectWithDataWidget',
+    //   'ui:options': {
+    //     multiSelect: false,
+    //     query: `query LasecSalesTeams {
+    //       LasecSalesTeams {
+    //         id
+    //         name
+    //         title
+    //       }
+    //     }`,
+    //     resultItem: 'LasecSalesTeams',
+    //     resultsMap: {
+    //       'LasecSalesTeams.[].id': '[].id',
+    //       'LasecSalesTeams.[].name': ['[].key', '[].value'],
+    //       'LasecSalesTeams.[].title': '[].label',
+    //     },
+    //     selectProps: {
+    //       style: {
+    //         marginTop: '1.3rem',
+    //       }
+    //     },
+    //     labelStyle: {
+    //       transform: 'none',
+    //       fontWeight: 'bold',
+    //       color: '#000000',
+    //       backgroundColor: 'transparent',
+    //       padding: 0
+    //     }
+    //   },
+    // },
     repCode: {
       'ui:widget': 'SelectWithDataWidget',
       'ui:options': {
         multiSelect: false,
-        query: `query LasecSalesTeams {
-          LasecSalesTeams {
+        query: `query LasecSalesTeamsFromApi {
+          LasecSalesTeamsFromApi {
             id
-            name
             title
+            meta  {
+              reference
+            }
           }
         }`,
-        resultItem: 'LasecSalesTeams',
+        resultItem: 'LasecSalesTeamsFromApi',
         resultsMap: {
-          'LasecSalesTeams.[].id': '[].id',
-          'LasecSalesTeams.[].name': ['[].key', '[].value'],
-          'LasecSalesTeams.[].title': '[].label',
+          'LasecSalesTeamsFromApi.[].id': ['[].key', '[].value'],
+          'LasecSalesTeamsFromApi.[].title': '[].label',
         },
         selectProps: {
           style: {
             marginTop: '1.3rem',
+
           }
         },
         labelStyle: {

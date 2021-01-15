@@ -295,11 +295,7 @@ export const getClient = async (params: any) => {
     let clientResponse = om(clients[0], {
       'id': 'id',
       'title_id': ['title', 'titleLabel'],
-      'first_name': [{
-        "key":
-          'fullName',
-        "transform": (sourceValue, sourceObject) => `${sourceValue} ${sourceObject.surname}`,
-      }, "firstName"],
+      'first_name': [{ "key": 'fullName', "transform": (sourceValue, sourceObject) => `${sourceValue} ${sourceObject.surname}` }, "firstName"],
       'surname': 'lastName',
       'activity_status': { key: 'clientStatus', transform: (sourceValue) => `${sourceValue}`.toLowerCase() },
       'email': 'emailAddress',
@@ -312,12 +308,32 @@ export const getClient = async (params: any) => {
       'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src) => src == true },
       'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
       'department': ['department', 'jobTitle'],
-      'ranking_id': 'customer.ranking',
 
-      'faculty': 'faculty',
-      'customer_type': 'customerType',
-      'line_manager_id': 'lineManager',
-      'line_manager_name': 'lineManagerLabel',
+      'ranking_id': ['customer.ranking', {
+        key: 'customer.rankingLabel', "transform": (srcVal, srcObj) => {
+          switch (srcVal) {
+            case '1':
+              return 'A - High Value';
+            case '2':
+              return 'B - Medium Value';
+            case '3':
+              return 'C - Low Value';
+            default:
+              return 'Unknown Value';
+          }
+        }
+      }],
+
+      // 'faculty': 'faculty',
+      'faculty': { 'key': 'faculty', 'transform': (srcVal) => srcVal == null ? '' : srcVal },
+      // 'customer_type': 'customerType',
+      'customer_type': { 'key': 'customerType', 'transform': (srcVal) => srcVal == null ? '' : srcVal },
+
+      // 'line_manager_id': 'lineManager',
+      'line_manager_id': { 'key': 'lineManager', 'transform': (srcVal) => srcVal == '0' || srcVal == '0' ? '' : srcVal },
+      // 'line_manager_name': 'lineManagerLabel',
+      'line_manager_name': { 'key': 'lineManagerLabel', 'transform': (srcVal) => srcVal == null ? '' : srcVal },
+
       'role_id': 'jobType',
       'company_id': 'customer.id',
       'company_account_number': 'customer.accountNumber',
@@ -345,9 +361,7 @@ export const getClient = async (params: any) => {
       logger.debug(`Found Cached Item for LASEC_COMPANY::${clientResponse.customer.id} ==> ${found}`)
       if (found === null || found === undefined) {
         let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }).then()
-
-        logger.debug(`LASEC_COMPANY DETAILS::${JSON.stringify(companyPayloadResponse.items[0])}`);
-
+        // logger.debug(`LASEC_COMPANY DETAILS::${JSON.stringify(companyPayloadResponse.items[0])}`);
         if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
           if (companyPayloadResponse.items.length === 1) {
             let customerObject = {
@@ -397,7 +411,6 @@ export const getClient = async (params: any) => {
     clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.jobType;
 
     // CUSTOMER CLASS
-
     const customerClasses = await getCustomerClass().then();
     const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
 
@@ -456,52 +469,56 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
 
       let updateParams = {
         // first_name: params.firstName || (client.first_name || ''),
-        first_name: params.personalDetails && params.personalDetails.firstName || (client.first_name || ''),
+        // first_name: params.personalDetails && params.personalDetails.firstName || (client.first_name || ''),
+        first_name: params.firstName ? params.firstName : params.personalDetails && params.personalDetails.firstName || (client.first_name || ''),
 
         // surname: params.lastName || (client.surname || ''),
-        surname: params.personalDetails && params.personalDetails.lastName || (client.surname || ''),
+        // surname: params.personalDetails && params.personalDetails.lastName || (client.surname || ''),
+        surname: params.lastName ? params.lastName : params.personalDetails && params.personalDetails.lastName || (client.surname || ''),
 
         activity_status: params.clientStatus || (client.activity_status || ''),
 
         // country: params.country || (client.country || ''),
-        country: params.personalDetails && params.personalDetails.country || (client.country || ''),
+        country: params.country ? params.country : params.personalDetails && params.personalDetails.country || (client.country || ''),
 
         // department: params.department || (client.department || 'NONE'),
-        department: params.jobDetails && params.jobDetails.department || (client.department || 'NONE'),
+        department: params.department ? params.department : params.jobDetails && params.jobDetails.department || (client.department || 'NONE'),
 
         // title_id: client.title_id,
-        title_id: params.personalDetails && params.personalDetails.title || (client.title_id || ''),
+        title_id: params.title ? params.title : params.personalDetails && params.personalDetails.title || (client.title_id || ''),
 
         // mobile_number: params.mobileNumber || (client.mobile_number || ''),
-        mobile_number: params.contactDetails && params.contactDetails.mobileNumber || (client.mobile_number || ''),
+        mobile_number: params.mobileNumber ? params.mobileNumber : params.contactDetails && params.contactDetails.mobileNumber || (client.mobile_number || ''),
 
         // office_number: params.officeNumber || (client.office_number || ''),
-        office_number: params.contactDetails && params.contactDetails.officeNumber || (client.office_number || ''),
+        office_number: params.officeNumber ? params.officeNumber : params.contactDetails && params.contactDetails.officeNumber || (client.office_number || ''),
 
         // alternate_office_number: params.alternateNumber || (client.alternate_office_number || ''),
-        alternate_office_number: params.contactDetails && params.contactDetails.alternateNumber || (client.alternate_office_number || ''),
+        alternate_office_number: params.alternateNumber ? params.alternateNumber : params.contactDetails && params.contactDetails.alternateNumber || (client.alternate_office_number || ''),
 
         // email: params.email || (client.email || ''),
-        email: params.contactDetails && params.contactDetails.emailAddress || (client.email || ''),
+        email: params.emailAddress ? params.emailAddress : params.contactDetails && params.contactDetails.emailAddress || (client.email || ''),
 
         // confirm_email: params.email || (client.email || ''),
-        confirm_email: params.contactDetails && params.contactDetails.confirmEmail || (client.email || ''),
+        confirm_email: params.confirmEmail ? params.confirmEmail : params.contactDetails && params.contactDetails.confirmEmail || (client.email || ''),
 
         // alternate_email: params.alternateEmail || (client.alternate_email || ''),
-        alternate_email: params.contactDetails && params.contactDetails.alternateEmail || (client.alternate_email || ''),
+        alternate_email: params.alternateEmail ? params.alternateEmail : params.contactDetails && params.contactDetails.alternateEmail || (client.alternate_email || ''),
 
         // ranking_id: params.ranking || (client.ranking_id || ''),
         ranking_id: params.ranking || (client.ranking_id || ''), // come back to this
 
         // account_type: params.accountType || (client.account_type || ''),
-        account_type: params.personalDetails && params.personalDetails.accountType || (client.account_type || ''),
+        // account_type: params.personalDetails && params.personalDetails.accountType || (client.account_type || ''),
+        account_type: params.accountType ? params.accountType : params.personalDetails && params.personalDetails.accountType || (client.account_type || ''),
 
         // customer_class_id: params.clientClass || (client.customer_class_id || ''),
         // customer_class_id: params.jobDetails && params.jobDetails.customerClass || (client.customer_class_id || ''),
         customer_class_id: params.clientClass ? params.clientClass : params.jobDetails && params.jobDetails.customerClass || (client.customer_class_id || ''),
 
         // sales_team_id: params.repCode || (client.sales_team || ''),
-        sales_team_id: params.personalDetails && params.personalDetails.repCode || (client.sales_team || ''),
+        // sales_team_id: params.personalDetails && params.personalDetails.repCode || (client.sales_team || ''),
+        sales_team_id: params.repCode ? params.repCode : params.jobDetails && params.jobDetails.repCode ? params.jobDetails.repCode : (client.sales_team || ''),
 
 
         faculty: params.faculty || (client.faculty || ''),
@@ -707,11 +724,9 @@ const getCustomerClass = async () => {
 };
 
 const getFacultyList = async () => {
-
-
   try {
     const faculty_list: { faculty: string }[] = await mysql(`SELECT faculty FROM CustomerFaculty ORDER by faculty ASC`, 'mysql.lasec360').then();
-    logger.debug(`Results from Faculty Query`, { faculty_list })
+    // logger.debug(`Results from Faculty Query`, { faculty_list })
 
     if (faculty_list && faculty_list.length > 0) {
       return faculty_list.map((faculty_row: { faculty: string }) => ({
@@ -722,36 +737,19 @@ const getFacultyList = async () => {
       }));
     }
 
+    return faculty_list;
+
   } catch (databaseError) {
     logger.error(`Could not retrieve the Faculty List: ${databaseError.message}`, { databaseError });
     return [];
   }
 
-  /*
-  logger.debug(`[RESOLVER] GET FACULTY RESPONSE:: ${JSON.stringify(idsResponse)}`);
-
-  //if (cached && cached.items) return cached.items;
-  const idsResponse = await lasecApi.Customers.GetFacultyList().then();
-
-
-  if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetFacultyList({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
-    if (details && details.items) {
-      setCacheItem(Hash('LASEC_FACULTY'), details, 60);
-      return details.items;
-    }
-  }
-*/
-
-
 };
 
 const getCustomerTypeList = async () => {
-
-
   try {
     const type_list: { customer_type: string }[] = await mysql(`SELECT type as customer_type FROM CustomerType ORDER by customer_type ASC`, 'mysql.lasec360').then();
-    logger.debug(`Results from CustomerType Query`, { customer_type_list: type_list })
+    // logger.debug(`Results from CustomerType Query`, { customer_type_list: type_list })
 
     if (type_list && type_list.length > 0) {
       return type_list.map((customer_type_row: { customer_type: string }) => ({
@@ -761,6 +759,8 @@ const getCustomerTypeList = async () => {
         description: customer_type_row.customer_type,
       }));
     }
+
+    return type_list;
 
   } catch (databaseError) {
     logger.error(`Could not retrieve the Customer Type List: ${databaseError.message}`, { databaseError });
@@ -786,11 +786,7 @@ const getCustomerTypeList = async () => {
 };
 
 const getCustomerLineManagerOptions = async (params) => {
-
-  //if (cached && cached.items) return cached.items;
   const response = await lasecApi.Customers.GetCustomerLineManagers(params).then();
-  logger.debug(`[RESOLVER] GET LINE MANAGERS RESPONSE:: ${JSON.stringify(response)}`);
-
   if (response.items) {
     return response.items.map(item => {
       return { id: item.line_manager_id, name: item.line_manager_name };
@@ -1278,20 +1274,15 @@ const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf
 const uploadDocument = async (args: any) => {
   return new Promise(async (resolve, reject) => {
 
+    logger.debug(`UPLOAD FILE ARGS:: ${JSON.stringify(args)}`);
+
     const { clientId, file } = args;
     const { createReadStream, filename, mimetype, encoding } = await file;
-
-    logger.debug(`UPLOADED ARGS:: ${JSON.stringify(args)}`);
-    logger.debug(`UPLOADED FILE:: ${filename} - ${mimetype} ${encoding}`);
-
     const stream: NodeJS.ReadStream = createReadStream();
     const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
     const link = `${process.env.CDN_ROOT}content/files/${randomName}`;
 
-    // Flag to tell if a stream had an error.
     let hadStreamError: boolean = null;
-
-    //ahndles any errors during upload / processing of file
     const handleStreamError = (error: any) => {
       // Do not enter twice in here.
       if (hadStreamError) {
@@ -1313,10 +1304,7 @@ const uploadDocument = async (args: any) => {
     }
 
     const catalogFile = () => {
-      // Check if image is valid
       const fileStats: fs.Stats = fs.statSync(saveToPath);
-
-      logger.debug(`SAVING FILE:: DONE ${filename} ${fileStats.size} --> CATALOGGING`);
 
       const reactoryFile: any = {
         id: new ObjectID(),
@@ -1337,19 +1325,35 @@ const uploadDocument = async (args: any) => {
         published: false,
       };
 
+
+      // NEW CLIENT DOCUMENTS
       if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
-        reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
+        if (clientId && clientId == 'new_client') {
+          // NEW CLIENT
+          reactoryFile.uploadContext = `lasec-crm::new-company::document`;
+          // reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
+        } else {
+          // INCOMPLETE CLIENT
+          reactoryFile.uploadContext = `lasec-crm::client::document::${clientId}`;
+          // reactoryFile.uploadContext = `lasec-crm::new-company::document`;
+        }
       }
 
-      if (reactoryFile.uploadContext === 'lasec-crm::existing-company::document') {
-        reactoryFile.uploadContext = `lasec-crm::existing-company::document::${clientId}`;
+      // VIEW CLIENT DOCUMENTS
+      if (reactoryFile.uploadContext === 'lasec-crm::client::document') {
+        // EXISTING CLIENT
+        reactoryFile.uploadContext = `lasec-crm::client::document::${clientId}`;
       }
+
+      // COPY OF OLD
+      // if (reactoryFile.uploadContext === 'lasec-crm::existing-company::document') {
+      //   reactoryFile.uploadContext = `lasec-crm::existing-company::document::${clientId}`;
+      // }
 
       const savedDocument = new ReactoryFileModel(reactoryFile);
-
       savedDocument.save().then();
 
-      logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
+      logger.debug(`SAVING FILE:: COMPLETE ${filename} --> CATALOGGING`);
 
       resolve(savedDocument);
     }
@@ -1737,14 +1741,20 @@ const getUsersRepCodes = async () => {
 }
 
 const getClientComments = async (args) => {
-
   logger.debug(`FIND COMMENTS:: ${JSON.stringify(args)}`);
-
   const comments = await CRMClientComment.find({ client: args.clientId }).sort({ when: -1 });
 
-  logger.debug(`COMMENTS:: ${JSON.stringify(comments)}`);
-
-  return comments;
+  return {
+    id: args.clientId,
+    comments: comments.map(comment => {
+      return {
+        id: comment._id,
+        who: comment.who,
+        comment: comment.comment,
+        when: comment.when,
+      }
+    })
+  }
 }
 
 const saveComment = async (args) => {
@@ -2017,15 +2027,12 @@ export default {
     LasecGetFacultyList: async () => {
       return getFacultyList();
     },
-
     LasecGetCustomerType: async () => {
       return getCustomerTypeList();
     },
-
     LasecGetCustomerLineManagerOptions: async (obj, args) => {
       return getCustomerLineManagerOptions(args);
     },
-
     LasecGetCustomerClassById: async (obj, args) => {
       return getCustomerClassById(args.id);
     },

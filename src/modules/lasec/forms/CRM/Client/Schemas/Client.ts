@@ -64,29 +64,27 @@ const ClientSchema: Reactory.ISchema = {
       type: "string",
       title: "Client Name"
     },
-
-    customer: {
-      type: "object",
-      properties: {
-        id: {
-          title: '',
-          type: 'string'
-        },
-        accountNumber: {
-          title: '',
-          type: 'string'
-        },
-        tradingName: {
-          title: '',
-          type: 'string'
-        },
-        salesTeam: {
-          title: '',
-          type: 'string'
-        },
-      }
-    },
-
+    // customer: {
+    //   type: "object",
+    //   properties: {
+    //     id: {
+    //       title: '',
+    //       type: 'string'
+    //     },
+    //     accountNumber: {
+    //       title: '',
+    //       type: 'string'
+    //     },
+    //     tradingName: {
+    //       title: '',
+    //       type: 'string'
+    //     },
+    //     salesTeam: {
+    //       title: '',
+    //       type: 'string'
+    //     },
+    //   }
+    // },
     accountNumber: {
       type: "string",
       title: "Account Number"

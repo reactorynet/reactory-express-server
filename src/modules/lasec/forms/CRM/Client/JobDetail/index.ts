@@ -50,17 +50,14 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { md: 6, sm: 12 },
-      repCode: { md: 6, sm: 12 },
       jobTitle: { md: 6, sm: 12 },
       jobTypeLabel: { md: 6, sm: 12 },
-      clientDepartment: { md: 6, sm: 12 },
-      // customerClass: { md: 6, sm: 12 },
-      customerClassLabel: { md: 6, sm: 12 },
-      ranking: { md: 6, sm: 12 },
-      faculty: { md: 6, sm: 12 },
-      customerType: { md: 6, sm: 12 },
       lineManagerLabel: { md: 6, sm: 12 },
+      customerType: { md: 6, sm: 12 },
+      customerClassLabel: { md: 6, sm: 12 },
+      faculty: { md: 6, sm: 12 },
+      clientDepartment: { md: 6, sm: 12 },
+      rankingLabel: { md: 6, sm: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -73,48 +70,49 @@ export const displayUiSchema: any = {
       },
     }
   },
-  accountType: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Account Type',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '150px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
-  repCode: {
-    'ui:widget': 'LabelWidget',
-    'ui:options': {
-      format: '${formData}',
-      variant: 'subtitle1',
-      title: 'Rep Code',
-      titleProps: {
-        style: {
-          display: 'content',
-          minWidth: '150px',
-          color: "#9A9A9A",
-        }
-      },
-      bodyProps: {
-        style: {
-          display: 'flex',
-          justifyContent: 'flex-end'
-        }
-      }
-    }
-  },
+  // accountType: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     format: '${formData}',
+  //     variant: 'subtitle1',
+  //     title: 'Account Type',
+  //     titleProps: {
+  //       style: {
+  //         display: 'content',
+  //         minWidth: '150px',
+  //         color: "#9A9A9A",
+  //       }
+  //     },
+  //     bodyProps: {
+  //       style: {
+  //         display: 'flex',
+  //         justifyContent: 'flex-end',
+  //         textTransform: 'capitalize'
+  //       }
+  //     }
+  //   }
+  // },
+  // repCode: {
+  //   'ui:widget': 'LabelWidget',
+  //   'ui:options': {
+  //     format: '${formData}',
+  //     variant: 'subtitle1',
+  //     title: 'Rep Code',
+  //     titleProps: {
+  //       style: {
+  //         display: 'content',
+  //         minWidth: '150px',
+  //         color: "#9A9A9A",
+  //       }
+  //     },
+  //     bodyProps: {
+  //       style: {
+  //         display: 'flex',
+  //         justifyContent: 'flex-end'
+  //       }
+  //     }
+  //   }
+  // },
   jobTitle: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -199,7 +197,7 @@ export const displayUiSchema: any = {
       }
     }
   },
-  ranking: {
+  rankingLabel: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
@@ -220,7 +218,6 @@ export const displayUiSchema: any = {
       }
     }
   },
-
   faculty: {
     'ui:widget': 'LabelWidget',
     'ui:options': {
@@ -359,15 +356,13 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      accountType: { md: 6, sm: 6 },
-      repCode: { md: 6, sm: 12 },
       jobType: { md: 6, sm: 12 },
-      clientDepartment: { md: 6, sm: 12 },
-      customerClass: { md: 6, sm: 12 },
-      ranking: { md: 6, sm: 12 },
-      faculty: { md: 6, sm: 12 },
-      customerType: { md: 6, sm: 12 },
       lineManager: { md: 6, sm: 12 },
+      customerType: { md: 6, sm: 12 },
+      customerClass: { md: 6, sm: 12 },
+      faculty: { md: 6, sm: 12 },
+      clientDepartment: { md: 6, sm: 12 },
+      ranking: { md: 6, sm: 12 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -379,42 +374,6 @@ const editUiSchema: any = {
         float: "right"
       },
     }
-  },
-  accountType: {
-    ...AccountTypeDropdownUISchema
-  },
-  repCode: {
-    'ui:widget': 'SelectWithDataWidget',
-    'ui:options': {
-      multiSelect: false,
-      query: `query LasecSalesTeams {
-        LasecSalesTeams {
-          id
-          title
-          meta  {
-            reference
-          }
-        }
-      }`,
-      resultItem: 'LasecSalesTeams',
-      resultsMap: {
-        'LasecSalesTeams.[].meta.reference': ['[].key', '[].value'],
-        'LasecSalesTeams.[].title': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
-    },
   },
   jobType: {
     'ui:widget': 'SelectWithDataWidget',
@@ -962,11 +921,12 @@ const newUiSchema: any = {
     {
       jobTitle: { sm: 12, md: 6 },
       jobType: { sm: 12, md: 6 },
+      // WHAT ABOUT LINE MANAGER
+      customerType: { sm: 12, md: 6 },
       customerClass: { sm: 12, md: 6 },
+      faculty: { md: 6, sm: 12 },
       clientDepartment: { sm: 12, md: 6 },
       ranking: { sm: 12, md: 6 },
-      faculty: { md: 6, sm: 12 },
-      customerType: { sm: 12, md: 6 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -1224,6 +1184,10 @@ const schema: Reactory.ISchema = {
       title: "Class"
     },
     ranking: {
+      type: "string",
+      title: "Ranking"
+    },
+    rankingLabel: {
       type: "string",
       title: "Ranking"
     },

@@ -92,6 +92,8 @@ export const LIST_KEY__QUOTE_STATUS = 'quote_status';
 export const LIST_KEY__TEAMS = 'teams';
 export const LIST_KEY__STAFF_USERS_FOR_TEAMS = 'staff_users_for_teams';
 
+export const LIST_KEY__SALES_TEAM = 'sales_team';
+
 export const LIST_KEY__GAMMA_SALES_ORDER = 'gamma_sales_order';
 export const LIST_KEY__GAMMA_HISTORICAL_SALES_ORDER = 'gamma_historical_sales_order';
 export const LIST_KEY__GAMMA_INVOICES = 'gamma_invoice_items';

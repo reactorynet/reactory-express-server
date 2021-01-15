@@ -8,11 +8,57 @@ import PagingSchema from '../Schemas/Paging';
 import { defaultUiResources } from '../../../uiResources';
 
 const newSchema = cloneDeep<Reactory.ISchema>(DocumentFormSchema);
-// newSchema.properties.paging = { ...PagingSchema }
 newSchema.title = 'UPLOAD CLIENT DOCUMENTS';
 export const NewSchema = newSchema;
 
 export const NewUiSchema: any = {
+  'ui:graphql': {
+    query: {
+      name: 'LasecGetCustomerDocuments',
+      text: `query LasecGetCustomerDocuments($id: String, $uploadContexts: [String], $paging: PagingRequest){
+        LasecGetCustomerDocuments(id: $id, uploadContexts: $uploadContexts, paging: $paging){
+          id
+          documents {
+            id
+            filename
+            mimetype
+            link
+            size
+            owner {
+              id
+              firstName
+              fullName
+            }
+            fromApi
+          }
+        }
+      }`,
+      variables: {
+        'formData.id': 'id',
+        'formData.$uploadContexts': 'uploadContexts'
+      },
+      formData: {
+        $uploadContexts: [
+          'lasec-crm::new-company::document'
+        ]
+      },
+      resultMap: {
+        'id': 'id',
+        'documents': 'documents',
+      },
+      autoQuery: true,
+      queryMessage: 'Loading customer documents',
+      resultType: 'object',
+      edit: false,
+      new: false,
+      refreshEvents: [
+        { name: 'lasec-crm::new-company::document' },
+        { name: 'lasec-crm::new-company::document::uploaded' },
+        { name: 'lasec-crm::client::document' },
+        { name: 'lasec-crm::client::document:uploaded' },
+      ],
+    },
+  },
   'ui:options': {
     componentType: 'div',
     toolbarPosition: 'none',
@@ -71,8 +117,8 @@ export const NewUiSchema: any = {
         uploadOnDrop: true,
         mutation: {
           name: 'LasecUploadDocument',
-          text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
-            LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
+          text: `mutation LasecUploadDocument($clientId: String, $file: Upload!, $uploadContext: String){
+            LasecUploadDocument(clientId: $clientId, file: $file, uploadContext: $uploadContext) {
               id
               filename
               link
@@ -81,6 +127,7 @@ export const NewUiSchema: any = {
             }
           }`,
           variables: {
+            'clientId': '${props.formContext.$formData.id}',
             'uploadContext': 'lasec-crm::new-company::document'
           },
           onSuccessEvent: {
@@ -120,59 +167,60 @@ export const LasecCRMNewClientDocuments: Reactory.IReactoryForm = {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: { ...NewSchema },
-  graphql: {
-    ...graphql,
-    query: {
-      ...graphql.query,
-      text: `query LasecGetCustomerDocuments($uploadContexts: [String], $paging: PagingRequest){
-        LasecGetCustomerDocuments(uploadContexts: $uploadContexts, paging: $paging){
-          paging {
-            total
-            page
-            pageSize
-          }
-          documents {
-            id
-            filename
-            mimetype
-            link
-            size
-            owner {
-              id
-              firstName
-              fullName
-            }
-          }
-        }
-      }`,
-      variables: {
-        'formData.id': 'id',
-        'formData.paging': 'paging',
-        'formData.uploadContexts': 'uploadContexts',
-      },
-    },
-    mutation: {
-      delete: {
-        name: 'LasecDeleteNewClientDocuments',
-        text: `
-          mutation LasecDeleteNewClientDocuments($fileIds: [String]!){
-            LasecDeleteNewClientDocuments(fileIds: $fileIds){
-              description
-              text
-              status
-            }
-          }
-        `,
-        variables: {
-          'selected.[].id': 'fileIds'
-        },
-        objectMap: true,
-        onSuccessEvent: {
-          name: 'lasec-crm::new-company::documents::delete'
-        },
-      }
-    }
-  },
+  graphql,
+  // graphql: {
+  //   ...graphql,
+  //   query: {
+  //     ...graphql.query,
+  //     text: `query LasecGetCustomerDocuments($uploadContexts: [String], $paging: PagingRequest){
+  //       LasecGetCustomerDocuments(uploadContexts: $uploadContexts, paging: $paging){
+  //         paging {
+  //           total
+  //           page
+  //           pageSize
+  //         }
+  //         documents {
+  //           id
+  //           filename
+  //           mimetype
+  //           link
+  //           size
+  //           owner {
+  //             id
+  //             firstName
+  //             fullName
+  //           }
+  //         }
+  //       }
+  //     }`,
+  //     variables: {
+  //       'formData.id': 'id',
+  //       'formData.paging': 'paging',
+  //       'formData.uploadContexts': 'uploadContexts',
+  //     },
+  //   },
+  //   mutation: {
+  //     delete: {
+  //       name: 'LasecDeleteNewClientDocuments',
+  //       text: `
+  //         mutation LasecDeleteNewClientDocuments($fileIds: [String]!){
+  //           LasecDeleteNewClientDocuments(fileIds: $fileIds){
+  //             description
+  //             text
+  //             status
+  //           }
+  //         }
+  //       `,
+  //       variables: {
+  //         'selected.[].id': 'fileIds'
+  //       },
+  //       objectMap: true,
+  //       onSuccessEvent: {
+  //         name: 'lasec-crm::new-company::documents::delete'
+  //       },
+  //     }
+  //   }
+  // },
   uiSchema: { ...NewUiSchema },
   uiSchemas: [
     {

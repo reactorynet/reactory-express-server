@@ -1,5 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 import { ClientSchema } from "../../Schemas"
+import { AccountTypeDropdownUISchema } from '@reactory/server-modules/lasec/forms/widgets'
 
 const uiSchema: Reactory.IUISchema = {
     'ui:options': {
@@ -51,6 +52,8 @@ const uiSchema: Reactory.IUISchema = {
         firstName: { md: 6, sm: 12 },
         lastName: { md: 6, sm: 12 },
         country: { md: 6, sm: 12 },
+        accountType: { sm: 12, md: 6 },
+        repCode: { sm: 12, md: 6 },
         style: { padding: '25px 32px 0 32px' }
       }
     ],
@@ -152,6 +155,42 @@ const uiSchema: Reactory.IUISchema = {
         selectProps: {
           style: {
             marginTop: '1.3rem',
+          }
+        },
+        labelStyle: {
+          transform: 'none',
+          fontWeight: 'bold',
+          color: '#000000',
+          backgroundColor: 'transparent',
+          padding: 0
+        }
+      },
+    },
+    accountType: {
+      ...AccountTypeDropdownUISchema
+    },
+    repCode: {
+      'ui:widget': 'SelectWithDataWidget',
+      'ui:options': {
+        multiSelect: false,
+        query: `query LasecSalesTeamsFromApi {
+          LasecSalesTeamsFromApi {
+            id
+            title
+            meta  {
+              reference
+            }
+          }
+        }`,
+        resultItem: 'LasecSalesTeamsFromApi',
+        resultsMap: {
+          'LasecSalesTeamsFromApi.[].id': ['[].key', '[].value'],
+          'LasecSalesTeamsFromApi.[].title': '[].label',
+        },
+        selectProps: {
+          style: {
+            marginTop: '1.3rem',
+
           }
         },
         labelStyle: {

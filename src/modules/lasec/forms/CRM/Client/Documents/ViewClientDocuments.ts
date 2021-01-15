@@ -38,8 +38,7 @@ export const ViewUiSchema: any = {
       },
       formData: {
         $uploadContexts: [
-          // 'lasec-crm::company-document',
-          'lasec-crm::new-company::document'
+          'lasec-crm::client::document'
         ]
       },
       resultMap: {
@@ -52,7 +51,8 @@ export const ViewUiSchema: any = {
       edit: false,
       new: false,
       refreshEvents: [
-        {name: 'lasec-crm::new-document::uploaded'}
+        {name: 'lasec-crm::client::document'},
+        {name: 'lasec-crm::client::document::uploaded'}
       ],
     },
   },
@@ -131,9 +131,10 @@ export const ViewUiSchema: any = {
           }`,
           variables: {
             'clientId': '${props.formContext.$formData.id}',
-            // 'formData.id': 'clientId',
-            'uploadContext': 'lasec-crm::existing-company::document'
-            // 'uploadContext': 'lasec-crm::new-company::document'
+            'uploadContext': 'lasec-crm::client::document'
+          },
+          onSuccessEvent: {
+            name: 'lasec-crm::client::document::uploaded'
           },
           onSuccessMethod: 'refresh',
         },

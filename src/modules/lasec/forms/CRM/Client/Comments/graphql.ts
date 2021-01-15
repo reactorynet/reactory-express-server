@@ -6,28 +6,29 @@ const graphql: Reactory.IFormGraphDefinition = {
     text: `query LasecGetClientComments($clientId: String!){
       LasecGetClientComments(clientId: $clientId){
           id
-          comment
-          when
-          who {
+          comments {
             id
-            firstName
-            lastName
-            fullName
-            avatar
+            comment
+            when
+            who {
+              id
+              firstName
+              lastName
+              fullName
+              avatar
+            }
           }
       }
     }`,
     variables: {
       'formContext.$ref.props.formData.id': 'clientId',
     },
-    resultType: 'array',
+    resultType: 'object',
     resultMap: {
-      '[].id': 'comments.[].id',
-      '[].who.fullName': 'comments.[].fullName',
-      '[].who.avatar': 'comments.[].avatar',
-      '[].when': 'comments.[].when',
-      '[].comment': 'comments.[].comment',
+      'id': 'id',
+      'comments': 'comments',
     },
+    autoQuery: true,
     queryMessage: 'Loading client comments',
     edit: true,
     new: false,
@@ -35,7 +36,6 @@ const graphql: Reactory.IFormGraphDefinition = {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
-    // autoQuery: true,
   },
   mutation: {
     new: {
