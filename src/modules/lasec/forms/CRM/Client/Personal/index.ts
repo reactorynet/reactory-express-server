@@ -1,7 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
-import { AccountTypeDropdownUISchema } from '../../../widgets'
-import graphql, { newClientGraphQL } from './graphql';
+import graphql from './graphql';
 
 import ViewUISchema from './uiSchemas/ViewCustomerUISchema';
 import NewUISchema from './uiSchemas/NewCustomerUISchema';

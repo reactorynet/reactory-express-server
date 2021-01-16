@@ -23,7 +23,13 @@ const graphql: Reactory.IFormGraphDefinition = {
       'formData.client.id': 'id',
     },
     resultMap: {
-      '.*': 'formData.*',
+      'id': 'id',
+      'clientStatus': 'clientStatus',
+      'fullName': 'fullName',
+      'emailAddress': 'emailAddress',
+      'tabs': 'tabs',
+      'country': 'country',
+      'customer': 'customer',
     },
     refreshEvents: [
       { name: 'LasecClientDeactivated' }
