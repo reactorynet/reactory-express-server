@@ -1,10 +1,10 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { ClientSchema } from "../../Schemas"
 import { AccountTypeDropdownUISchema } from '@reactory/server-modules/lasec/forms/widgets'
 
 const uiSchema: Reactory.IUISchema = {
     'ui:options': {
       componentType: "div",
+      toolbarPosition: 'bottom',
       containerStyles: {
         padding: '0px',
         margin: '0px',
@@ -31,6 +31,17 @@ const uiSchema: Reactory.IUISchema = {
       showSchemaSelectorInToolbar: false,
       showSubmit: true,
       showRefresh: false,
+      submitProps: {
+        variant: 'button',
+        text: 'SAVE CHANGES',
+        color: 'primary',
+        iconAlign: 'left',
+        style: {
+          marginLeft: '2px',
+          fontWeight: 'bold',
+          fontSize: '1em'
+        }
+      },
     },
     'ui:titleStyle': {
       borderBottom: '2px solid #D5D5D5',

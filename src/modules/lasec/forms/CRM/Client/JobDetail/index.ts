@@ -308,6 +308,7 @@ export const displayUiSchema: any = {
 const editUiSchema: any = {
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -327,14 +328,21 @@ const editUiSchema: any = {
         fontWeight: 'bold',
         fontSize: '1em'
       },
-      // style: {
-      //   position: 'absolute',
-      //   right: '10px',
-      //   top: '-3px'
-      // }
+      components: ["submit"],      
     },
     style: {
       marginTop: '16px',
+    },
+    submitProps: {
+      variant: 'contained',
+      text: 'SAVE CHANGES',
+      color: 'primary',
+      iconAlign: 'left',
+      style: {
+        marginLeft: '2px',
+        fontWeight: 'bold',
+        fontSize: '1em'
+      }
     },
     showSchemaSelectorInToolbar: false,
     showSubmit: true,
