@@ -95,7 +95,7 @@ type UserDashboard {
 
 input SurveyInput {
   id: String
-  leadershipBrand: String!
+  leadershipBrand: String
   organization: String!
   title: String!
   surveyType: String!

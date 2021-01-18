@@ -614,7 +614,7 @@ const $graphql: Reactory.IFormGraphDefinition = {
           canDismiss: true,
         }
       },
-      onSuccessUrl: 'admin/org/${formData.organization.id}/surveys/${formData.id}',
+      onSuccessUrl: '/admin/org/${formData.organization.id}/surveys/${formData.id}',
       onSuccessRedirectTimeout: 1000,
     },
     edit: {
