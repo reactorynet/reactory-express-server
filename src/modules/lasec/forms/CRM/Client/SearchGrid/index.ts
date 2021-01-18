@@ -29,7 +29,7 @@ const LasecClientGrid: Reactory.IReactoryForm = {
   defaultFormValue: {
     paging: {
       page: 1,
-      pageSize: 10,      
+      pageSize: 10,
     },
     filterBy: "any_field",
     filter: "",

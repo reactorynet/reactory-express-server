@@ -12,6 +12,7 @@ const graphql: Reactory.IFormGraphDefinition = {
           hasNext
           pageSize
         }
+        product
         products {
           id
           name
@@ -49,11 +50,12 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-      'formData.product': 'product',
-      'formData.paging': 'paging'
+      'formContext.$formData.product': 'product',
+      'formContext.$formData.paging': 'paging'
     },
     resultMap: {
       'paging': 'paging',
+      'product': 'product',
       'products.[].id': 'products.[].id',
       'products.[].name': 'products.[].name',
       'products.[].code': 'products.[].code',

@@ -162,7 +162,8 @@ type StockTotals {
 
 type PagedProductResult {
   filter: String
-  paging: PagingResult
+  paging: PagingResult,
+  product: String,
   products: [Product]
 }
 

@@ -140,6 +140,7 @@ const getProducts = async (params) => {
     };
 
     let filter = { "any_field": product };
+    // let filter = { "any_field123": product }; // REMOVE THIS - TRYING TO BREAK CALL
 
     const cachekey = Hash(`product_list_${product}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}`.toLowerCase());
 
@@ -161,11 +162,8 @@ const getProducts = async (params) => {
     const productDetails = await lasecApi.Products.list({ filter: { ids: ids }, pagination: { page_size: paging.pageSize } });
     let products = [...productDetails.items];
 
-    logger.debug(`PRODUCT RESOLVER - PRODUCTS:: found (${products.length}) products for request`);
-
     const loggedInUser = await getLoggedIn360User().then();
     const currencies = loggedInUser && loggedInUser.user_type === 'lasec_international' ? ['USD', 'ZAR'] : ['ZAR'];
-    logger.debug(`AVAILABLE CURRENCIES:: ${currencies}`);
 
     products = products.map((product) => {
       let productResult = {
@@ -222,9 +220,6 @@ const getProducts = async (params) => {
       return productResult;
     });
 
-    logger.debug(`PRODUCTS:: ${JSON.stringify(products[0])}`);
-
-    // GET ADDITIONAL COSTINGS INFORMATION
     products = products.map(async (prod) => {
       const productCostingsDetails = await lasecApi.Products.costings({ filter: { ids: [prod.id] }, pagination: { page_size: paging.pageSize } }).then();
       const costing = productCostingsDetails.items[0];
@@ -256,48 +251,15 @@ const getProducts = async (params) => {
       }
     });
 
-
-
     let result = {
       paging: pagingResult,
+      product,
       products,
     };
 
-    // if (result.paging.pageSize >= 10 && result.paging.hasNext === true) {
-    //   // cache the next result
-
-    //   // create segments for page size 5 and 10
-    //   if (result.paging.pageSize === 20) {
-    //     const cachekeys_10 = `product_list_${product}_page_${paging.page || 1}_page_size_10`.toLowerCase();
-    //     setCacheItem(cachekeys_10, { paging: { ...result.paging, pageSize: 10, hasNext: true }, products: lodash.take(result.products, 10) });
-    //   }
-
-    //   const cachekeys_5 = `product_list_${product}_page_${paging.page || 1}_page_size_5`.toLowerCase();
-    //   setCacheItem(cachekeys_5, { paging: { ...result.paging, pageSize: 5, hasNext: true }, products: lodash.take(result.products, 5) });
-    // }
-
-    // if (result.paging.hasNext === true && iter === 0) {
-    //   execql(`query LasecGetProductList($product: String!, $paging: PagingRequest, $iter: Int){
-    //   LasecGetProductList(product: $product, paging: $paging, iter: $iter){
-    //     paging {
-    //       total
-    //       page
-    //       hasNext
-    //       pageSize
-    //     }
-    //     products {
-    //       id
-    //     }
-    //   }
-    // }`, { product, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
-    // }
-
-    // setCacheItem(cachekey, result, 60);
-
-    logger.debug(`TO RETURN :: ${JSON.stringify(result.products)}`);
+    logger.debug(`TO RETURN :: ${JSON.stringify(result)}`);
 
     return result;
-
   } catch (productListError) {
     logger.error(`Error getting product list ${productListError.message}`, productListError);
     throw new ApiError("Could not get data from remote API", { error: productListError });
@@ -671,7 +633,7 @@ export default {
     },
     notes: async (product, args) => {
       try {
-        
+
         const productNotes = await mysql(`SELECT notes FROM Product WHERE productid = ${product.id};`, 'mysql.lasec360').then()
         logger.debug(`Product.notes --> Checking Notes for Product Id ${product.id} - ${product.code}`, productNotes)
         if(productNotes) {
@@ -692,7 +654,7 @@ export default {
             return cleared.text;
           }
         }
-        logger.debug(`Found Product Result for product id ${productId}`, { product });        
+        logger.debug(`Found Product Result for product id ${productId}`, { product });
 
         /*
         if (product.note) return product.note;
