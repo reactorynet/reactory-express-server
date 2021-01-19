@@ -144,7 +144,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         'eventData.formData.prefferedMethodOfContact': 'newClient.contactDetails.prefferedMethodOfContact',
       },
       // handledBy: 'onChange',
-      throttle: 1000,
+      throttle: 0,
       resultType: 'object',
       resultMap: {
         'id': 'id',

@@ -208,7 +208,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         'personalDetails.accountType': 'accountType',
         'personalDetails.repCode': 'repCode',
       },
-      throttle: 1000,
+      throttle: 0,
       onError: {
         componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
         method: 'onGraphQLQueryError',

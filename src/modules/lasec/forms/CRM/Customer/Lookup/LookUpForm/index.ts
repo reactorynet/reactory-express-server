@@ -18,10 +18,7 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      search: { xs: 12, sm: 12, md: 6, lg: 4 },
-    },
+  'ui:grid-layout': [    
     {
       selected: { xs: 12, sm: 12, md: 6, lg: 4 },
     },
@@ -78,9 +75,9 @@ const uiSchema: any = {
       ],
       options: {
         grouping: false,
-        search: false,
+        search: true,
         showTitle: false,
-        toolbar: false,
+        toolbar: true,
         // selection: true,
         // multiSelect: false,
         toolbarButtonAlignment: 'left',
@@ -110,8 +107,8 @@ const uiSchema: any = {
       remoteData: true,
       query: 'query',
       variables: {
-        'props.formContext.$formData.search': 'search',
-        'props.formContext.$formData.paging': 'paging',
+        'query.search': 'search',
+        'query.paging': 'paging',
       },
       resultMap: {
         'paging.page': 'page',

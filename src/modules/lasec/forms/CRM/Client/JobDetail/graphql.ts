@@ -254,7 +254,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       },
       // handledBy: 'onChange',
       resultType: 'object',
-      throttle: 1000,
+      throttle: 0,
       resultMap: {
         'id': 'id',
         'jobDetails.jobTitle': 'jobTitle',

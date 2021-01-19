@@ -42,11 +42,11 @@ const uiSchema: Reactory.IUISchema = {
         'ui:graphql': {
             name: 'LasecGetPersonTitleById',
             text: `query LasecGetPersonTitleById($id: String){
-          LasecGetPersonTitleById(id: $id) {
-            id          
-            title
-          }
-        }`,
+                LasecGetPersonTitleById(id: $id) {
+                    id          
+                    title
+                }
+            }`,
             variables: {
                 'formData': 'id'
             },

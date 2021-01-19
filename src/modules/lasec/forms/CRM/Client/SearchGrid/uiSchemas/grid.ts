@@ -234,7 +234,7 @@ const uiSchema: any = {
         Toolbar: 'lasec-crm.ClientGridToolbar@1.0.0'
       },
       remoteData: true,
-      query: 'query',
+      query: 'clients_search',
       variables: {
         'query.search': 'search',
         'query.page': 'paging.page',

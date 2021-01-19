@@ -20,29 +20,14 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      search: { xs: 12, sm: 12, md: 6, lg: 6 },
+      // search: { xs: 12, sm: 12, md: 6, lg: 6 },
       addNew: { xs: 12, sm: 12, md: 6, lg: 6 },
       selected: { xs: 12, sm: 12, md: 6, lg: 6 },
     },
     { 
       organisations: { xs: 12, sm: 12, md: 12, lg: 12 }
     },
-  ],
-  search: {
-    'ui:options': {
-      showLabel: false,
-      icon: 'search',
-      component: "TextField",
-      componentProps: {
-        placeholder: 'Search',
-        variant: "outlined",
-        type: 'search',
-        style: {
-          minWidth: '180px'
-        }
-      }
-    }
-  },
+  ],  
   addNew: {
     'ui:widget': 'SlideOutLauncher',
     'ui:options': {
@@ -98,7 +83,7 @@ const uiSchema: any = {
       ],
       options: {
         grouping: false,
-        search: false,
+        search: true,
         showTitle: false,
         toolbar: true,
         //selection: true,
@@ -118,14 +103,10 @@ const uiSchema: any = {
           variables: {            
             'selected': 'newClient.organization',
           },                                         
-        },   
+        },           
       ],
       remoteData: true,
-      query: 'query',
-      variables: {
-        'props.formContext.$formData.search': 'search',
-        'props.formContext.$formData.paging': 'paging',
-      },
+      query: 'organizations',      
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
@@ -154,31 +135,14 @@ const newUiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      search: { xs: 12, sm: 12, md: 6, lg: 6 },
-    },
+  'ui:grid-layout': [    
     {
       addNew: { sm: 12, md: 6 },
       selected: { sm: 12, md: 6 },
     },
     { organisations: { sm: 12 } },
   ],
-  search: {
-    'ui:options': {
-      showLabel: false,
-      icon: 'search',
-      component: "TextField",
-      componentProps: {
-        placeholder: 'Search',
-        variant: "outlined",
-        type: 'search',
-        style: {
-          minWidth: '180px'
-        }
-      }
-    }
-  },
+
   addNew: {
     'ui:widget': 'SlideOutLauncher',
     'ui:options': {
@@ -234,7 +198,7 @@ const newUiSchema: any = {
       ],
       options: {
         grouping: false,
-        search: false,
+        search: true,
         showTitle: false,
         toolbar: true,
         //selection: true,
@@ -262,11 +226,7 @@ const newUiSchema: any = {
         },   
       ],
       remoteData: true,
-      query: 'query',
-      variables: {
-        'props.formContext.$formData.search': 'search',
-        'props.formContext.$formData.paging': 'paging',
-      },
+      query: 'organizations',      
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',

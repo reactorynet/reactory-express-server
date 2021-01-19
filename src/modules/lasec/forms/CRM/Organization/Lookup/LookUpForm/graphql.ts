@@ -22,7 +22,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       'formData.paging': 'paging',
     },
     resultMap: {
-      'paging': 'paging',
+      'paging.page': 'paging.page',
+      'paging.pageSize': 'paging.pageSize',
       'filterBy': 'filterBy',
       'organisations': 'organisations',
     },
@@ -39,40 +40,44 @@ const graphql: Reactory.IFormGraphDefinition = {
 };
 
 export const newClientGraphQL: Reactory.IFormGraphDefinition = {
-  query: {
-    name: 'LasecGetOrganisationList',
-    text: `query LasecGetOrganisationList($search: String!, $paging: PagingRequest, $filterBy: String){
-      LasecGetOrganisationList(search: $search, paging: $paging, filterBy: $filterBy){
-        paging {
-          total
-          page
-          hasNext
-          pageSize
+  queries: {
+    organizations: {
+      name: 'LasecGetOrganisationList',
+      text: `query LasecGetOrganisationList($search: String, $paging: PagingRequest, $filterBy: String){
+        LasecGetOrganisationList(search: $search, paging: $paging, filterBy: $filterBy){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          organisations {
+            id
+            name
+          }
         }
-        organisations {
-          id
-          name
-        }
-      }
-    }`,
-    variables: {
-      'formData.search': 'search',
-      'formData.paging': 'paging',
-    },
-    resultMap: {
-      'paging': 'paging',
-      'filterBy': 'filterBy',
-      'organisations': 'organisations',
-    },
-    autoQuery: false,
-    queryMessage: 'Search for organisations',
-    resultType: 'object',
-    edit: false,
-    new: false,
-    onError: {
-      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
-      method: 'onGraphQLQueryError',
-    },
+      }`,
+      variables: {
+        'query.search': 'search',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize',
+        'query.filterBy': 'filterBy',        
+      },
+      resultMap: {
+        'paging': 'paging',        
+        'filterBy': 'filterBy',
+        'organisations': 'data',
+      },
+      autoQuery: false,
+      queryMessage: 'Search for organisations',
+      resultType: 'object',
+      edit: false,
+      new: false,
+      onError: {
+        componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+        method: 'onGraphQLQueryError',
+      },
+    }
   },  
   mutation: {
     onSelectOrganization: {

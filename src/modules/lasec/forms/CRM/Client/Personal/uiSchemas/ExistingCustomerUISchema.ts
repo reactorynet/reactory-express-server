@@ -4,7 +4,7 @@ import { AccountTypeDropdownUISchema } from '@reactory/server-modules/lasec/form
 const uiSchema: Reactory.IUISchema = {
     'ui:options': {
       componentType: "div",
-      toolbarPosition: 'bottom',
+      toolbarPosition: 'none',
       containerStyles: {
         padding: '0px',
         margin: '0px',
@@ -23,7 +23,8 @@ const uiSchema: Reactory.IUISchema = {
           borderWidth: '2px',
           fontWeight: 'bold',
           fontSize: '1em'
-        }
+        },
+        components: ["submit"],
       },
       style: {
         marginTop: '16px',

@@ -1106,7 +1106,7 @@ const getOrganisationList = async (params) => {
 
   _filter[filterBy] = filter || search;
 
-  if (isString(search) === false || search.length < 3 && filter === undefined) return {
+  if (isString(search) === false && filter === undefined) return {
     paging: pagingResult,
     organisations: []
   };
@@ -1964,7 +1964,12 @@ export default {
         id: '',
         registeredName: ''
       };
-    }
+    },
+    clientDocuments: async (parent: any) => {
+      if(parent.clientDocuments && Array.isArray(parent.clientDocuments) === true) return parent.clientDocuments;
+
+      await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] });
+    },
   },
   LasecCRMCustomer: {
     customerClass: async (parent) => {
@@ -2209,6 +2214,8 @@ export default {
      */
     LasecGetNewClient: async (obj: any, args: { id?: string, reset?: boolean }) => {
 
+      debugger
+
       logger.debug(`[LasecGetNewClient] NEW CLIENT PARAMS:: ${JSON.stringify(args)}`);
       let existingCustomer: any = null;
       let remote_fetched: boolean = false;
@@ -2448,7 +2455,7 @@ export default {
     LasecUpdateNewClient: async (obj: any, args: { id: string, newClient: any }) => {
 
       const { newClient } = args;
-      logger.debug('Updating new client address details with input', { args });
+      logger.debug(`Updating new client address details with input:\n ${ JSON.stringify(newClient, null, 2)}`);
       // logger.debug('Updating new client address details with input', { newClient });
 
       let touched = false;

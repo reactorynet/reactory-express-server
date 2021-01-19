@@ -524,7 +524,7 @@ extend type Query {
 
   """
   LasecGetNewClient(id: String, reset: Boolean): LasecNewClient
-  LasecGetOrganisationList(search: String! paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
+  LasecGetOrganisationList(search: String paging: PagingRequest filterBy: String iter: Int): PagedCRMOrganisation
   LasecGetPlaceDetails(placeId: String!, lat: Float, lng: Float): GoogleAddressDetails
 
   """
