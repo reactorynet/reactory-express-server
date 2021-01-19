@@ -1,7 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import $schema from './schema';
 import $uiSchema from './uiSchema';
-import $graphql from './graphql';
 
 const LasecProductCatalogTabs: Reactory.IReactoryForm = {
   id: 'LasecCMSProductCatalog',
@@ -15,26 +14,7 @@ const LasecProductCatalogTabs: Reactory.IReactoryForm = {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,
-  uiSchema: $uiSchema,
-  // graphql: $graphql,
-  uiSchemas: [
-    {
-      id: 'default',
-      title: 'Grid View',
-      key: 'default',
-      description: 'View Product Catalog As Grid',
-      icon: 'list',
-      uiSchema:  $schema,
-    },
-    {
-      id: 'detail',
-      title: 'Card View',
-      key: 'detail',
-      description: 'View Product Catalog As Card',
-      icon: 'view_module',
-      uiSchema:  $schema,
-    },
-  ],
+  uiSchema: $uiSchema,  
   widgetMap: [
     {
       componentFqn: 'core.MaterialInput@1.0.0',

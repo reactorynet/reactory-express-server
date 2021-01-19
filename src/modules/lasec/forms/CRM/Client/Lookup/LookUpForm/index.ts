@@ -18,8 +18,7 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    { search: { md: 4, sm: 12 } },
+  'ui:grid-layout': [    
     { clients: { sm: 12 } },
   ],
   search: {
@@ -80,7 +79,7 @@ const uiSchema: any = {
       ],
       options: {
         grouping: false,
-        search: false,
+        search: true,
         showTitle: false,
         toolbar: true,
         // selection: true,

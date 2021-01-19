@@ -15,7 +15,7 @@ const $toolbar: any = {
       component: "TextField",
       componentProps: {
         submitOnEnter: true,
-        refreshEvents: [ 'lasec-crm::product-search' ],
+        //refreshEvents: [ 'lasec-crm::product-search' ],
         placeholder: 'Find a Product',
       },
       props: {

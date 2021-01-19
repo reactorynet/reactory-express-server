@@ -1,5 +1,6 @@
-
+import { table_graph, cards_graph } from './graphql';
 const tableUiSchema: any = {
+  'ui:graphql': table_graph,
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -45,8 +46,8 @@ const tableUiSchema: any = {
     'ui:widget': 'HiddenWidget'
   },
   products: {
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
+    'ui:widget': 'MaterialTableWidget',    
+    'ui:options': {      
       columns: [
         {
           title: '',
@@ -300,12 +301,17 @@ const tableUiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
+        searchText: '${formContext.$formData.product}'
+      },      
+      propsMap: {
+        'formContext.$formData.product': 'searchText'
       },
       remoteData: true,
-      query: 'query',
+      query: 'products_table',
       variables: {
-        'formContext.$formData.product': 'product',
-        'formContext.$formData.paging': 'paging'
+        'query.search': 'product',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize'
       },
       resultMap: {
         'paging.page': 'page',
@@ -322,6 +328,7 @@ const tableUiSchema: any = {
 };
 
 const gridUiSchemaGrid: any = {
+  'ui:graphql': cards_graph,
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
