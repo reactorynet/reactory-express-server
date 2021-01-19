@@ -15,9 +15,8 @@ const LasecCMSProductOverview: Reactory.IReactoryForm = {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,
-  graphql: $graphql,
-  // uiSchema: tableUiSchema,
-  uiSchema: gridUiSchemaGrid,
+  graphql: $graphql.table_graph,
+  uiSchema: tableUiSchema,
   defaultFormValue: {
     paging: {
       page: 1,
@@ -32,6 +31,7 @@ const LasecCMSProductOverview: Reactory.IReactoryForm = {
       title: 'TABLE',
       key: 'default',
       description: 'Product Details Table',
+      graphql: $graphql.table_graph,
       icon: 'list',
       uiSchema: tableUiSchema,
     },
@@ -41,6 +41,7 @@ const LasecCMSProductOverview: Reactory.IReactoryForm = {
       key: 'grid',
       description: 'Product Details Grid',
       icon: 'view_module',
+      graphql: $graphql.cards_graph,
       uiSchema: gridUiSchemaGrid,
     }
   ],

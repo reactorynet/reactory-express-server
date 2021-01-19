@@ -2844,7 +2844,7 @@ export const getCRMSalesHistory = async (params) => {
     // ordering,
   }).then();
 
-  // logger.debug(`SALES HISTORY RESPONSE:: ${JSON.stringify(salesHistoryResponse)}`);
+  logger.debug(`SALES HISTORY RESPONSE:: ${JSON.stringify(salesHistoryResponse)}`);
 
   let ids = [];
 

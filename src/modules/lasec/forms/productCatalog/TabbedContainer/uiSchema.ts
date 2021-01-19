@@ -5,16 +5,20 @@ const $toolbar: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      product: { md: 3, sm: 4, xs: 6 },      
+      product: { md: 3, sm: 4, xs: 6 },
     }
   ],
   product: {
     'ui:options': {
-      showLabel: true,
+      showLabel: false,
       icon: 'search',
       component: "TextField",
-      props: {
+      componentProps: {
+        submitOnEnter: true,
+        //refreshEvents: [ 'lasec-crm::product-search' ],
         placeholder: 'Find a Product',
+      },
+      props: {
         type: 'search',
         style: {
           minWidth: '180px'
@@ -22,7 +26,7 @@ const $toolbar: any = {
       }
     }
   },
-  
+
   resultCount: {
     'ui:widget': 'LabelWidget',
     'ui:options': {

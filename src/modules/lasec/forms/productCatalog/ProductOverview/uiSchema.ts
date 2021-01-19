@@ -1,5 +1,6 @@
-
+import { table_graph, cards_graph } from './graphql';
 const tableUiSchema: any = {
+  'ui:graphql': table_graph,
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -45,8 +46,8 @@ const tableUiSchema: any = {
     'ui:widget': 'HiddenWidget'
   },
   products: {
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
+    'ui:widget': 'MaterialTableWidget',    
+    'ui:options': {      
       columns: [
         {
           title: '',
@@ -93,7 +94,7 @@ const tableUiSchema: any = {
                 },
                 buttonIcon: 'launch',
                 windowTitle: '${rowData.code} ${rowData.name}',
-                dialogVariant : 'compact'
+                dialogVariant: 'compact'
                 // backNavigationConfig: {
                 //   showAppBar: false,
                 //   backNavigationItems: ['Catalogue', '${rowData.code}'],
@@ -300,41 +301,34 @@ const tableUiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
-        // fixedColumns: {
-        //   left: 5,
-        // },
-        // tableLayout: 'fixed',
+        searchText: '${formContext.$formData.product}'
+      },      
+      propsMap: {
+        'formContext.$formData.product': 'searchText'
       },
       remoteData: true,
-      query: 'query',
+      query: 'products_table',
       variables: {
-        'props.formContext.$formData.product': 'product'
+        'query.search': 'product',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize'
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'products.[].id': 'data.[].id',
-        'products.[].name': 'data.[].name',
-        'products.[].code': 'data.[].code',
-        'products.[].description': 'data.[].description',
-        'products.[].qtyAvailable': 'data.[].qtyAvailable',
-        'products.[].qtyOnHand': 'data.[].qtyOnHand',
-        'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
-        'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
-        'products.[].price': 'data.[].price',
-        'products.[].image': 'data.[].image',
-        'products.[].onSyspro': 'data.[].onSyspro',
-        'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
-        'products.[].productPricing.[]': 'data.[].productPricing.[]',
-        'products.[].onSpecial': 'data.[].onSpecial',
-        'products.[].availableCurrencies.[]': 'data.[].availableCurrencies.[]',
+        'product': 'product',
+        'products': 'data'
       },
+      refreshEvents: [
+        { name: 'lasec-crm::product-search' }
+      ],
     },
   }
 };
 
 const gridUiSchemaGrid: any = {
+  'ui:graphql': cards_graph,
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
