@@ -15,7 +15,7 @@ const LasecCMSProductDetail: Reactory.IReactoryForm = {
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,
-  graphql: $graphql,
+  graphql: $graphql.product_detail_table_graph,
   uiSchema: uiSchemaTable,
   uiSchemas: [
     {
@@ -24,6 +24,7 @@ const LasecCMSProductDetail: Reactory.IReactoryForm = {
       key: 'default',
       description: 'Product Details Table',
       icon: 'list',
+      graphql: $graphql.product_detail_table_graph,
       uiSchema: uiSchemaTable,
     },
     {
@@ -32,6 +33,7 @@ const LasecCMSProductDetail: Reactory.IReactoryForm = {
       key: 'grid',
       description: 'Product Details Grid',
       icon: 'view_module',
+      graphql: $graphql.product_card_detail_graph,
       uiSchema: uiSchemaGrid,
     }
   ],

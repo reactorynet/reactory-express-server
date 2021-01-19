@@ -1,5 +1,7 @@
+import { product_card_graph, product_table_graph } from './graphql'
 
 const tableUiSchema: any = {
+  'ui:graphql': product_table_graph,
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -260,11 +262,17 @@ const tableUiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
+        searchText: '${formContext.$formData.product}'
+      },
+      propsMap: {
+        'formContext.$formData.product': 'searchText'
       },
       remoteData: true,
-      query: 'query',
+      query: 'product_pricing',
       variables: {
-        'props.formContext.$formData.product': 'product'
+        'query.search': 'product',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize'
       },
       resultMap: {
         'paging.page': 'page',
@@ -294,6 +302,7 @@ const tableUiSchema: any = {
 };
 
 const gridUiSchema: any = {
+  'ui:graphql': product_card_graph,
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',

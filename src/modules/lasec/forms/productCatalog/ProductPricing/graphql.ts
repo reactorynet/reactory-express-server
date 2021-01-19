@@ -1,4 +1,6 @@
-export default {
+import { Reactory } from '@reactory/server-core/types/reactory';
+
+export const product_card_graph: Reactory.IFormGraphDefinition = {
   query: {
     name: 'LasecGetProductList',
     autoQuery: false,
@@ -82,5 +84,69 @@ export default {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
-  },
+  }
+};
+
+export const product_table_graph: Reactory.IFormGraphDefinition = {
+ queries: {
+   product_pricing: {
+    name: 'LasecGetProductList',
+    autoQuery: false,
+    text: `query LasecGetProductList($product: String,  $paging: PagingRequest){
+      LasecGetProductList(product: $product, paging: $paging){
+        paging {
+          total
+          page
+          hasNext
+          pageSize
+        }
+        products {
+          id
+          name
+          code
+          description
+          qtyAvailable
+          qtyOnHand
+          qtyOnOrder
+          unitOfMeasure
+          price
+          priceAdditionalInfo
+          image
+          onSyspro
+          landedPrice
+          wh10CostPrice
+          threeMonthAvePrice
+          listPrice
+          onSpecial
+          currencyCode
+          specialPrice
+          productPricing {
+            cost_price_cents
+            max_price_cents
+            min_price_cents
+            min_non_authorisation_price_cents
+            three_month_ave_price_cents
+            list_price_cents
+            currency_symbol
+            currency_code
+            currency_description
+            special_price_cents
+          }
+        }
+      }
+    }`,    
+    resultType: 'object',
+    edit: false,
+    new: false,
+    onError: {
+      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+      method: 'onGraphQLQueryError',
+    },
+  }
+ }
+};
+
+export default {
+  product_card_graph,
+  product_table_graph,
 };

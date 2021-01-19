@@ -319,10 +319,7 @@ const tableUiSchema: any = {
         'paging.pageSize': 'pageSize',
         'product': 'product',
         'products': 'data'
-      },
-      refreshEvents: [
-        { name: 'lasec-crm::product-search' }
-      ],
+      },      
     },
   }
 };

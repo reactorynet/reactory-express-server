@@ -244,11 +244,17 @@ const uiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
+        searchText: '${formContext.$formData.product}'
       },
       remoteData: true,
       query: 'query',
+      propsMap: {
+        'formContext.$formData.product': 'searchText'
+      },
       variables: {
-        'props.formContext.$formData.product': 'product'
+        'query.search': 'product',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize'
       },
       resultMap: {
         'paging.page': 'page',

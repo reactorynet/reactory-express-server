@@ -1,5 +1,8 @@
+import graph from './graphql';
 // TABLE
+
 export const uiSchemaTable: any = {
+  'ui:grapql': graph.product_detail_table_graph,
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -502,11 +505,17 @@ export const uiSchemaTable: any = {
         search: false,
         showTitle: false,
         toolbar: false,
+        searchText: '${formContext.$formData.product}'
+      },
+      propsMap: {
+        'formContext.$formData.product': 'searchText'
       },
       remoteData: true,
-      query: 'query',
+      query: 'product_details',
       variables: {
-        'props.formContext.$formData.product': 'product'
+        'query.search': 'product',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize'
       },
       resultMap: {
         'paging.page': 'page',
@@ -541,7 +550,6 @@ export const uiSchemaTable: any = {
         'products.[].packedWeight': 'data.[].packedWeight',
         'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
         'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',
-
         'products.[].productClass': 'data.[].productClass',
         'products.[].tariffCode': 'data.[].tariffCode',
         'products.[].leadTime': 'data.[].leadTime',
@@ -559,6 +567,7 @@ export const uiSchemaTable: any = {
 
 // GRID LAYOUT
 export const uiSchemaGrid: any = {
+  'ui:grapql': graph.product_card_detail_graph,
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
