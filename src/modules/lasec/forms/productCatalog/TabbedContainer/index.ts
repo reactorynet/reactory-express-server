@@ -1,7 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import $schema from './schema';
 import $uiSchema from './uiSchema';
-// import $graphql from './graphql';
+import $graphql from './graphql';
 
 const LasecProductCatalogTabs: Reactory.IReactoryForm = {
   id: 'LasecCMSProductCatalog',
@@ -10,12 +10,13 @@ const LasecProductCatalogTabs: Reactory.IReactoryForm = {
   uiResources: [],
   title: 'CMS Product Catalog',
   tags: ['CMS Product Catalog'],
-  registerAsComponent: true,  
+  registerAsComponent: true,
   name: 'LasecCMSProductCatalog',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
   schema: $schema,
   uiSchema: $uiSchema,
+  // graphql: $graphql,
   uiSchemas: [
     {
       id: 'default',
@@ -38,7 +39,7 @@ const LasecProductCatalogTabs: Reactory.IReactoryForm = {
     {
       componentFqn: 'core.MaterialInput@1.0.0',
       widget: 'InputWidget',
-    },    
+    },
     {
       componentFqn: 'core.FormSubmissionComponent@1.0.0',
       widget: 'FormSubmitWidget',

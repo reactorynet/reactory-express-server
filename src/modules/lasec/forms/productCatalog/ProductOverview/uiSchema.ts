@@ -304,10 +304,6 @@ const tableUiSchema: any = {
       remoteData: true,
       query: 'query',
       variables: {
-        // 'props.formContext.$formData.product': 'product'
-        // 'query.product': 'product'
-        // 'formData.product': 'product',
-        // 'formData.paging': 'paging'
         'formContext.$formData.product': 'product',
         'formContext.$formData.paging': 'paging'
       },
@@ -317,22 +313,10 @@ const tableUiSchema: any = {
         'paging.pageSize': 'pageSize',
         'product': 'product',
         'products': 'data'
-        // 'products.[].id': 'data.[].id',
-        // 'products.[].name': 'data.[].name',
-        // 'products.[].code': 'data.[].code',
-        // 'products.[].description': 'data.[].description',
-        // 'products.[].qtyAvailable': 'data.[].qtyAvailable',
-        // 'products.[].qtyOnHand': 'data.[].qtyOnHand',
-        // 'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
-        // 'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
-        // 'products.[].price': 'data.[].price',
-        // 'products.[].image': 'data.[].image',
-        // 'products.[].onSyspro': 'data.[].onSyspro',
-        // 'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
-        // 'products.[].productPricing.[]': 'data.[].productPricing.[]',
-        // 'products.[].onSpecial': 'data.[].onSpecial',
-        // 'products.[].availableCurrencies.[]': 'data.[].availableCurrencies.[]',
       },
+      refreshEvents: [
+        { name: 'lasec-crm::product-search' }
+      ],
     },
   }
 };

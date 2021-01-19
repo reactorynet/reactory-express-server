@@ -136,6 +136,7 @@ const getProducts = async (params) => {
 
     if (isString(product) === false || product.length < 3) return {
       paging: pagingResult,
+      product,
       products: []
     };
 

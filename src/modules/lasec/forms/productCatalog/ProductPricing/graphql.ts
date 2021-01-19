@@ -46,11 +46,14 @@ export default {
       }
     }`,
     variables: {
-      'formData.product': 'product',
-      'formData.paging': 'paging'
+      // 'formData.product': 'product',
+      // 'formData.paging': 'paging'
+      'formContext.$formData.product': 'product',
+      'formContext.$formData.paging': 'paging'
     },
     resultMap: {
       'paging': 'paging',
+      'product': 'product',
       'products.[].id': 'products.[].id',
       'products.[].name': 'products.[].name',
       'products.[].code': 'products.[].code',

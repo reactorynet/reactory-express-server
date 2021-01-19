@@ -50,8 +50,10 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-      'formContext.$formData.product': 'product',
-      'formContext.$formData.paging': 'paging'
+      'formData.product': 'product',
+      'formData.paging': 'paging'
+      // 'formContext.$formData.product': 'product',
+      // 'formContext.$formData.paging': 'paging'
     },
     resultMap: {
       'paging': 'paging',
@@ -81,6 +83,9 @@ const graphql: Reactory.IFormGraphDefinition = {
     resultType: 'object',
     edit: false,
     new: false,
+    // refreshEvents: [
+    //   { name: 'lasec-crm::product-search' }
+    // ],
     onError: {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',

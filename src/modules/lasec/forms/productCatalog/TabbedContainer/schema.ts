@@ -11,7 +11,7 @@ const $toolbar = {
       format: "search",
       description: 'Enter a product code or description',
       minLength: 3
-    },    
+    },
     resultCount: {
       title: '',
       type: 'number'
@@ -28,7 +28,7 @@ const schema: Reactory.ISchema = {
   title: '',
   properties: {
     toolbar: $toolbar,
-    tabs: {      
+    tabs: {
       type: 'array',
       items: {
         type: 'object',
@@ -38,7 +38,7 @@ const schema: Reactory.ISchema = {
           }
         }
       }
-    }          
+    }
   }
 
 };
