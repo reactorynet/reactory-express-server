@@ -37,7 +37,7 @@ const uiSchema: any = {
     },
   ],
   client: {
-    'ui:widget': 'LasecClientOverviewHeaderForm',
+    'ui:widget': 'LasecClientOverviewHeaderForm',    
   },
   tabs: {
     'ui:widget': 'TabbedNavWidget',

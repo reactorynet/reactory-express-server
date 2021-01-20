@@ -20,7 +20,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-      'formData.client.id': 'id',
+      'formData.id': 'id',
     },
     resultMap: {
       'id': 'id',
@@ -30,6 +30,9 @@ const graphql: Reactory.IFormGraphDefinition = {
       'tabs': 'tabs',
       'country': 'country',
       'customer': 'customer',
+    },
+    options: {
+      fetchPolicy: 'network-only'
     },
     refreshEvents: [
       { name: 'LasecClientDeactivated' }

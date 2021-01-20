@@ -282,7 +282,7 @@ const LasecCRMISODetailLineItems: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: schema,
   uiSchema: uiSchema,
-  defaultFormValue: {},
+  defaultFormValue: [],
   widgetMap: [
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
   ],
