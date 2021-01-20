@@ -19,74 +19,7 @@ const uiSchema: any = {
   products: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      columns: [
-        // {
-        //   title: '', field: 'onSyspro',
-        //   width: '40px',
-        //   component: 'core.ConditionalIconComponent@1.0.0',
-        //   props: {
-        //     'ui:options': {},
-        //     conditions: [
-        //       {
-        //         key: 'on_syspro',
-        //         // icon: 'error',
-        //         icon: 'OnSyspro',
-        //         iconType: 'reactory',
-        //         style: {
-        //           color: '#9AD86E'
-        //         },
-        //         tooltip: 'ON SYSPRO'
-        //       },
-        //       {
-        //         key: 'not_on_syspro',
-        //         // icon: 'error',
-        //         icon: 'OnSyspro',
-        //         iconType: 'reactory',
-        //         style: {
-        //           color: '#D22D2C'
-        //         },
-        //         tooltip: 'NOT ON SYSPRO'
-        //       },
-        //       {
-        //         key: 'on_hold',
-        //         // icon: 'error',
-        //         icon: 'OnSyspro',
-        //         iconType: 'reactory',
-        //         style: {
-        //           color: '#D22D2C'
-        //         },
-        //         tooltip: 'ON HOLD'
-        //       },
-        //       {
-        //         key: 'on_partial_hold',
-        //         // icon: 'error',
-        //         icon: 'OnSyspro',
-        //         iconType: 'reactory',
-        //         style: {
-        //           color: '#f7b425'
-        //         },
-        //         tooltip: 'ON PARTIAL HOLD'
-        //       },
-        //     ]
-        //   },
-        //   propsMap: {
-        //     'rowData.onSyspro': 'value',
-        //   },
-
-        // },
-        // {
-        //   title: '', field: 'image',
-        //   width: '80px',
-        //   component: 'core.ImageComponent@1.0.0',
-        //   props: {
-        //     'ui:options': {
-        //       variant: 'rounded'
-        //     },
-        //   },
-        //   propsMap: {
-        //     'rowData.image': 'value',
-        //   },
-        // },
+      columns: [        
         {
           title: '',
           field: 'onSyspro',
@@ -314,11 +247,17 @@ const uiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
+        searchText: '${formContext.$formData.product}'
+      },      
+      propsMap: {
+        'formContext.$formData.product': 'searchText'
       },
       remoteData: true,
-      query: 'query',
+      query: 'products_table',
       variables: {
-        'props.formContext.$formData.product': 'product'
+        'query.search': 'product',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize'
       },
       resultMap: {
         'paging.page': 'page',

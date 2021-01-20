@@ -5,8 +5,27 @@ import $schema from '../shared/schema';
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
+    toolbarPosition: 'none',
     showSubmit: false,
     showRefresh: false,
+    container: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px'
+    },
+    schemaSelector: {
+      variant: 'icon-button',
+      showTitle: false,
+      activeColor: 'secondary',
+      style: {
+        display: 'flex',
+        justifyContent: 'flex-end'
+      }
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSchemaSelectorInToolbar: false,
   },
   product: {
     hidden: true,
@@ -247,11 +266,14 @@ const uiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
+        searchText: '${formContext.$formData.product}'
       },
       remoteData: true,
-      query: 'query',
+      query: 'products_table',
       variables: {
-        'props.formContext.$formData.product': 'product'
+        'query.search': 'product',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize'
       },
       resultMap: {
         'paging.page': 'page',

@@ -1,9 +1,10 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 
-const graphql = {
-  query: {
-    name: 'LasecGetCRMSalesOrders',
-    text: `query LasecGetCRMSalesOrders($productId: String, $paging: PagingRequest){
+const graphql: Reactory.IFormGraphDefinition = {
+  queries: {
+    sales_orders: {
+      name: 'LasecGetCRMSalesOrders',
+      text: `query LasecGetCRMSalesOrders($productId: String, $paging: PagingRequest){
       LasecGetCRMSalesOrders(productId: $productId, paging: $paging){
         paging {
           total
@@ -44,38 +45,11 @@ const graphql = {
         }
       }
     }`,
-    variables: {
-      'formData.id': 'productId',
-      'formData.paging': 'paging'
+      autoQuery: false,
+      resultType: 'object',
+      edit: false,
+      new: false,
     },
-    resultMap: {
-      'paging': 'paging',
-
-      'totals': 'totals',
-
-      'salesOrders.[].id': 'salesOrders.[].id',
-      'salesOrders.[].orderDate': 'salesOrders.[].orderDate',
-      'salesOrders.[].orderType': 'salesOrders.[].orderType',
-      'salesOrders.[].shippingDate': 'salesOrders.[].shippingDate',
-      'salesOrders.[].iso': 'salesOrders.[].iso',
-      'salesOrders.[].quoteId': 'salesOrders.[].quoteId',
-      'salesOrders.[].quoteDate': 'salesOrders.[].quoteDate',
-      'salesOrders.[].dispatchCount': 'salesOrders.[].dispatchCount',
-      'salesOrders.[].customer': 'salesOrders.[].customer',
-      'salesOrders.[].client': 'salesOrders.[].client',
-      'salesOrders.[].poNumber': 'salesOrders.[].poNumber',
-      'salesOrders.[].value': 'salesOrders.[].value',
-
-      'salesOrders.[].orderStatus': 'salesOrders.[].orderStatus',
-      'salesOrders.[].orderQty': 'salesOrders.[].orderQty',
-      'salesOrders.[].shipQty': 'salesOrders.[].shipQty',
-      'salesOrders.[].reservedQty': 'salesOrders.[].reservedQty',
-      'salesOrders.[].backOrderQty': 'salesOrders.[].backOrderQty',
-    },
-    autoQuery: false,
-    resultType: 'object',
-    edit: false,
-    new: false,
   },
 };
 
@@ -166,7 +140,7 @@ const schema: Reactory.ISchema = {
 
 };
 
-const uiSchema: any = {
+const uiSchema: any = {  
   'ui:options': {
     componentType: "div",
     showSubmit: false,
@@ -381,7 +355,7 @@ const uiSchema: any = {
 
       ],
       footerColumns: [
-        { field: 'orderType' }, { field: 'orderDate' }, { field: 'shippingDate' }, { field: 'id' }, { field: 'quoteId' }, { field: 'quoteDate'}, { field: 'customer' }, { field: 'client' },
+        { field: 'orderType' }, { field: 'orderDate' }, { field: 'shippingDate' }, { field: 'id' }, { field: 'quoteId' }, { field: 'quoteDate' }, { field: 'customer' }, { field: 'client' },
         { field: 'poNumber', text: 'Totals' },
         { field: 'orderQty', value: '${totals.orderQty}' },
         { field: 'shipQty', value: '${totals.shipQty}' },
@@ -394,12 +368,15 @@ const uiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
-        showFooter: true
+        showFooter: true,
+        searchText: '${formContext.$formData.product}'
       },
       remoteData: true,
-      query: 'query',
+      query: 'sales_orders',
       variables: {
-        'props.formContext.$formData.id': 'productId'
+        'query.search': 'product',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize'
       },
       resultMap: {
         'paging.page': 'page',
@@ -638,7 +615,7 @@ const GridOnlyUISchema: any = {
 
       ],
       footerColumns: [
-        { field: 'orderType' }, { field: 'orderDate' }, { field: 'shippingDate' }, { field: 'id' }, { field: 'quoteId' }, { field: 'quoteDate'}, { field: 'customer' }, { field: 'client' },
+        { field: 'orderType' }, { field: 'orderDate' }, { field: 'shippingDate' }, { field: 'id' }, { field: 'quoteId' }, { field: 'quoteDate' }, { field: 'customer' }, { field: 'client' },
         { field: 'poNumber', text: 'Totals' },
         { field: 'totals.orderQty', value: '${totals.orderQty}' },
         { field: 'shipQty', value: '${totals.shipQty}' },
