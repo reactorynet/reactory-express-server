@@ -8,11 +8,7 @@ const uiSchema: any = {
     toolbarPosition: 'none',
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      repCode: { lg: 6, md: 6, sm: 12, xs: 12 },
-      search: { lg: 6, md: 6, sm: 12, xs: 12 },
-    },
+  'ui:grid-layout': [    
     {
       clients: { lg: 12, md: 12, sm: 12, xs: 12 },
     },
@@ -173,15 +169,19 @@ const uiSchema: any = {
         toolbarButtonAlignment: 'left',
         actionsColumnIndex: -1,
       },
+      componentMap: {
+        Toolbar: 'lasec-crm.ClientGridToolbar@1.0.0'
+      },
       remoteData: true,
-      query: 'query',
+      query: 'client_list',
       variables: {
-        'props.formContext.$formData.search': 'search',
-        'props.formContext.$formData.paging': 'paging',
-        'props.formContext.$formData.filterBy': 'filterBy',
-        'props.formContext.$formData.filter': 'filter',
-        'props.formContext.$formData.repCode.value': 'repCode',
-        'props.formContext.$formData.selectedClient': 'selectedClient'
+        'query.search': 'search',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize',
+        'query.filterBy': 'filterBy',
+        'query.filter': 'filter',
+        'query.orderBy.field': 'orderBy',
+        'query.orderDirection': 'orderDirection'
       },
       resultMap: {
         'paging.page': 'page',

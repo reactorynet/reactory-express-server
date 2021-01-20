@@ -1,50 +1,51 @@
 import { Reactory } from "@reactory/server-core/types/reactory";
 
-const graphql: Reactory.IFormGraphDefinition = {
-  query: {
-    name: 'LasecGetClientList',
-    text: `query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $filter: String, $repCode: String, $selectedClient: Any){
-      LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy, filter: $filter, repCode: $repCode, selectedClient: $selectedClient){
-        paging {
-          total
-          page
-          hasNext
-          pageSize
-        }
-        repCode
-        selectedClient
-        clients {
-          id
-          clientStatus
-          fullName
-          emailAddress
-          country
-          salesTeam
-          customer {
+const graphql: Reactory.IFormGraphDefinition = {  
+  queries: {
+    client_list: {
+      name: 'LasecGetClientList',
+      text: `query LasecGetClientList($search: String!, $paging: PagingRequest, $filterBy: String, $filter: String, $repCode: String, $selectedClient: Any){
+        LasecGetClientList(search: $search, paging: $paging, filterBy: $filterBy, filter: $filter, repCode: $repCode, selectedClient: $selectedClient){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          repCode
+          selectedClient
+          clients {
             id
-            tradingName
-            accountNumber
-            customerStatus
+            clientStatus
+            fullName
+            emailAddress
             country
+            salesTeam
+            customer {
+              id
+              tradingName
+              accountNumber
+              customerStatus
+              country
+            }
           }
         }
-      }
-    }`,
-    variables: {
-      'formData.search': 'search',
-      'formData.paging': 'paging',
-      'formData.filterBy': 'filterBy',
-      'formData.repCode.value': 'repCode',
-      'formData.selectedClient': 'selectedClient'
+      }`,
+      variables: {
+        'query.search': 'search',
+        'query.paging': 'paging',
+        'query.filterBy': 'filterBy',
+        'query.filter': 'repCode',        
+      },
+      resultMap: {
+        'paging': 'paging',
+        'filterBy': 'filterBy',
+        'clients': 'clients',
+        'repCode': 'repCode',
+        'selectedClient': 'selectedClient'
+      },
+  
     },
-    resultMap: {
-      'paging': 'paging',
-      'filterBy': 'filterBy',
-      'clients': 'clients',
-      'repCode': 'repCode',
-      'selectedClient': 'selectedClient'
-    },
-
   },
   mutation: {
     new: {

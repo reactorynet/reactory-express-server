@@ -134,7 +134,10 @@ export const product_table_graph: Reactory.IFormGraphDefinition = {
           }
         }
       }
-    }`,    
+    }`,
+    options: {
+      fetchPolicy: 'cache-and-network'
+    },    
     resultType: 'object',
     edit: false,
     new: false,
