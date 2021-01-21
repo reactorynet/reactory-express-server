@@ -189,7 +189,7 @@ const uiSchema: any = {
         DetailsPanel: 'lasec-crm.salesHistoryTableDetailPanel@1.0.0'
       },
       remoteData: true,
-      query: 'query',
+      query: 'sales_history',
       variables: {
         'query.id': 'clientId',
         'query.search': 'search',
