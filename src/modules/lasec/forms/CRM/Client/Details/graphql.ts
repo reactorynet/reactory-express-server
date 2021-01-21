@@ -23,13 +23,12 @@ const graphql: Reactory.IFormGraphDefinition = {
       'formData.id': 'id',
     },
     resultMap: {
-      'id': 'id',
-      'clientStatus': 'clientStatus',
-      'fullName': 'fullName',
-      'emailAddress': 'emailAddress',
+      'id': ['id','client.id'],
+      'clientStatus': 'client.clientStatus',
+      'fullName': 'client.fullName',
+      'country': 'client.country',
+      'customer': 'client.customer',
       'tabs': 'tabs',
-      'country': 'country',
-      'customer': 'customer',
     },
     options: {
       fetchPolicy: 'network-only'
