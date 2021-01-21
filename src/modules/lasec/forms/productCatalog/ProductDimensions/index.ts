@@ -2,6 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import $graphql from '../shared/graphql';
 import $schema from '../shared/schema';
 
+
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -14,6 +15,11 @@ const uiSchema: any = {
     showSubmit: false,
     showRefresh: false,
   },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    { view: { sm: 12, md: 12, lg: 12 } },
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
+  ],
   product: {
     hidden: true,
     'ui:widget': 'HiddenWidget'
