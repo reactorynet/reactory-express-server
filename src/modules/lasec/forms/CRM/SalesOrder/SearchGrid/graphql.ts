@@ -2,7 +2,7 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 
 const graphql: Reactory.IFormGraphDefinition =  {
   queries: {
-    query: {
+    sales_orders: {
       name: 'LasecGetPagedCRMSalesOrders',
       text: `query LasecGetPagedCRMSalesOrders(
         $search: String,

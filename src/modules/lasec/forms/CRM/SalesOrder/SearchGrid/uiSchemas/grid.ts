@@ -331,11 +331,13 @@ const uiSchema: any = {
         actionsColumnIndex: -1,
         pageSize: 10,
       },
-      remoteData: true,
+      remoteData: true,    
       query: 'sales_orders',
       componentMap: {
         Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0'
       },
+
+      //some comment
       variables: {
         'query.search': 'search',
         'query.customer': 'customer',
