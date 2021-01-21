@@ -572,6 +572,13 @@ declare namespace Reactory {
     modes?: string
   }
 
+  export interface IReactoryComponentDefinition {
+    fqn?: string,
+    dependencies?: IReactoryComponentDefinition[]
+    props?: any,
+    propsMap?: any,
+    componentType: string | "component" | "object" | "function" | "module" | "plugin"
+  }
 
 
   export interface IEventBubbleAction {
@@ -620,7 +627,8 @@ declare namespace Reactory {
    * components to mount in the componentDef propertie
    */
     componentDefs?: String[]
-    queryStringMap?: any
+    queryStringMap?: any,
+    dependencies?: IReactoryComponentDefinition[]
   }
 
 
