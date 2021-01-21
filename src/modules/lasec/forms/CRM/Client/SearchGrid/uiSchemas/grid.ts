@@ -233,6 +233,12 @@ const uiSchema: any = {
       componentMap: {
         Toolbar: 'lasec-crm.ClientGridToolbar@1.0.0'
       },
+      toolbarPropsMap: {
+
+      },
+      toolbarProps: {
+
+      },
       remoteData: true,
       query: 'clients_search',
       variables: {

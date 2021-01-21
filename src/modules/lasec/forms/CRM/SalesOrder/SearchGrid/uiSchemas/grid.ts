@@ -332,7 +332,7 @@ const uiSchema: any = {
         pageSize: 10,
       },
       remoteData: true,
-      query: 'query',
+      query: 'sales_orders',
       componentMap: {
         Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0'
       },

@@ -53,7 +53,8 @@ const uiSchema: Reactory.IUISchema = {
             resultType: 'string',
             resultKey: 'title',
             resultMap: {
-                'title': 'formData',
+                'id': 'id',
+                'title': 'title',
             },
         },
         'ui:widget': 'LabelWidget',

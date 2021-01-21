@@ -32,25 +32,11 @@ const graphql: Reactory.IFormGraphDefinition = {
             }
           }
         }
-      }`,
-      variables: {
-        'formData.search': 'search',
-        'formData.paging.page': 'paging.page',
-        'formData.paging.pageSize': 'paging.pageSize',
-        'formData.filterBy': 'filterBy',
-        'formData.filter': 'filter',
-        'query.orderBy.field': 'orderBy',
-        'query.orderDirection': 'orderDirection'
+      }`,     
+      options: {
+        fetchPolicy: 'cache-first'
       },
-      resultMap: {
-        'paging': 'paging',
-        'filterBy': 'filterBy',
-        'clients': 'clients',
-      },
-      autoQuery: false,
-      //autoQueryDelay: 777,    
-      //waitUntil: '${api.utils.lodash.isNil(api.$LasecUser)===false}',
-      //waitTimeout: 4500,
+      autoQuery: false,      
       queryMessage: 'Search for client',
       resultType: 'object',
       edit: false,

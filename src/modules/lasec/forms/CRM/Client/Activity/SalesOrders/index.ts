@@ -28,17 +28,7 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    {
-      search: { md: 4, sm: 12 },
-      filterBy: { md: 4, sm: 12 },
-      filter: { md: 4, sm: 12 },
-      periodStart: { md: 6, xs: 12 },
-      periodEnd: { md: 6, xs: 12 },
-      dateFilter: { md: 6, xs: 12 },
-      client: { md: 6, xs: 12 },
-      customer: { md: 6, xs: 12 },
-    },
+  'ui:grid-layout': [    
     {
       salesOrders: { xs: 12 }
     }
@@ -308,19 +298,30 @@ const uiSchema: any = {
         grouping: false,
         search: false,
         showTitle: false,
-        toolbar: false,
+        toolbar: true,
+      },
+      componentMap: {
+        Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0',        
+      },      
+      toobarPropsMap: {
+        'toolbarProps.filterBy': 'query.filterBy',
+        'formContext.formData.filter': 'query.filter',
+        'toolbarProps.use_case': 'use_case', 
+      },
+      toolbarProps: {
+        filterBy: 'client_id',
+        use_case: 'client_activity',
       },
       remoteData: true,
-      query: 'query',
+      query: 'client_sales_orders',
       variables: {
-        'props.formContext.$formData.id': 'clientId',
-        'props.formContext.$formData.search': 'search',
-        'props.formContext.$formData.filter': 'filter',
-        'props.formContext.$formData.filterBy': 'filterBy',
-        'props.formContext.$formData.paging': 'paging',
-        'props.formContext.$formData.periodStart': 'periodStart',
-        'props.formContext.$formData.periodEnd': 'periodEnd',
-        'props.formContext.$formData.dateFilter': 'dateFilter',
+        'query.search': 'search',
+        'query.filter': 'filter',
+        'query.filterBy': 'filterBy',
+        'query.paging': 'paging',
+        'query.periodStart': 'periodStart',
+        'query.periodEnd': 'periodEnd',
+        'query.dateFilter': 'dateFilter',
       },
       resultMap: {
         'paging.page': 'page',

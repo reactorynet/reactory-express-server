@@ -22,6 +22,7 @@ export const LasecUserLookupQuery: Reactory.IReactoryFormQuery = {
 };
 
 export default {
+  debug: true,
   query: {
     name: 'LasecGetDashboard',
     text: fileAsString(require.resolve('./LasecGetDashboard.graphql')),
@@ -71,6 +72,7 @@ export default {
       'quotes[].totalVATInclusive' : 'quotes[].totalVATInclusive',
       'quotes[].company.tradingName': 'quotes[].companyTradingName',
     },
+    options: 'cache-first',
     edit: false,
     new: false,
     onError: {
