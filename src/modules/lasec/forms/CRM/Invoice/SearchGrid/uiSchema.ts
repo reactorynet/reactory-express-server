@@ -291,18 +291,18 @@ const uiSchema: any = {
         pageSize: 10
       },
       remoteData: true,
-      query: 'query',
+      query: 'invoices',
       componentMap: {
         Toolbar: 'lasec-crm.InvoiceGridToolbar@1.0.0'
       },
       variables: {
-        'props.formContext.$formData.search': 'search',
-        'props.formContext.$formData.filter': 'filter',
-        'props.formContext.$formData.filterBy': 'filterBy',
-        'props.formContext.$formData.paging': 'paging',
-        'props.formContext.$formData.periodStart': 'periodStart',
-        'props.formContext.$formData.periodEnd': 'periodEnd',
-        'props.formContext.$formData.dateFilter': 'dateFilter',
+        'query.search': 'search',
+        'query.filter': 'filter',
+        'query.filterBy': 'filterBy',
+        'query.paging': 'paging',
+        'query.periodStart': 'periodStart',
+        'query.periodEnd': 'periodEnd',
+        'query.dateFilter': 'dateFilter',
       },
       resultMap: {
         'paging.page': 'page',

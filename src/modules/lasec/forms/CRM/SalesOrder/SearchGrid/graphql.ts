@@ -68,11 +68,11 @@ const graphql: Reactory.IFormGraphDefinition =  {
       }`,      
       autoQuery: false,
       resultType: 'object',
-      edit: false,
-      new: false,
-    },
-  },
-  
+      options: {
+        fetchPolicy: 'cache-first'
+      }
+    },  
+  },  
 };
 
 export default graphql;
