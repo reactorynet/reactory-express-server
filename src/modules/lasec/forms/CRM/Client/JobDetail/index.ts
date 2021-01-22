@@ -328,7 +328,7 @@ const editUiSchema: any = {
         fontWeight: 'bold',
         fontSize: '1em'
       },
-      components: ["submit"],      
+      components: ["submit"],
     },
     style: {
       marginTop: '16px',
@@ -660,6 +660,7 @@ export const ConfirmUiSchema: any = {
       name: 'LasecGetCustomerJobTypeById',
       text: `query LasecGetCustomerJobTypeById($id: String){
         LasecGetCustomerJobTypeById(id: $id) {
+          id
           name
         }
       }`,
@@ -669,7 +670,8 @@ export const ConfirmUiSchema: any = {
       resultType: 'string',
       resultKey: 'name',
       resultMap: {
-        'name': 'formData',
+        'id': 'id',
+        'name': 'name',
       },
     },
     'ui:widget': 'LabelWidget',
@@ -693,7 +695,22 @@ export const ConfirmUiSchema: any = {
     }
   },
   jobType: {
-
+    'ui:graphql': {
+      name: 'LasecGetCustomerJobTypeById',
+      text: `query LasecGetCustomerJobTypeById($id: String){
+        LasecGetCustomerJobTypeById(id: $id) {
+          name
+        }
+      }`,
+      variables: {
+        'formData': 'id'
+      },
+      resultType: 'string',
+      resultKey: 'name',
+      resultMap: {
+        'name': 'formData',
+      },
+    },
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',

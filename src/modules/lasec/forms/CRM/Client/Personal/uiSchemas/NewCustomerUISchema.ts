@@ -32,12 +32,12 @@ const uiSchema: Reactory.IUISchema = {
     },
     'ui:grid-layout': [
       {
-        clientTitle: { sm: 12, md: 6 },
-        firstName: { sm: 12, md: 6 },
-        lastName: { sm: 12, md: 6 },
-        country: { sm: 12, md: 6 },
-        accountType: { sm: 12, md: 6 },
-        repCode: { sm: 12, md: 6 },
+        clientTitle: { xs: 12, sm: 12,  md: 6, lg: 4 },
+        firstName: { xs: 12, sm: 12, md: 6, lg: 8 },
+        lastName: { xs: 12, sm: 12, md: 6, lg: 6 },
+        country: { xs: 12, sm: 12, md: 6, lg: 6 },
+        accountType: { xs: 12, sm: 12, md: 6, lg: 6 },
+        repCode: { xs: 12, sm: 12, md: 6, lg: 6 },
         style: { padding: '25px 32px 0 32px' }
       }
     ],
@@ -64,7 +64,7 @@ const uiSchema: Reactory.IUISchema = {
           }
         },
         labelStyle: {
-          transform: 'none',
+          //transform: 'none',
           fontWeight: 'bold',
           color: '#000000',
           backgroundColor: 'transparent',
@@ -85,7 +85,7 @@ const uiSchema: Reactory.IUISchema = {
           }
         },
         labelProps: {
-          dontShrink: true,
+          //dontShrink: true,
           style: {
             transform: 'none',
             fontWeight: 'bold',
