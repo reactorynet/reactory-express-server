@@ -159,7 +159,7 @@ export const ViewUiSchema: any = {
   },
 };
 
-export const ConfirmUiSchema: any = {
+export const ConfirmUiSchema: any = {  
   'ui:options': {
     componentType: 'div',
     toolbarPosition: 'none',

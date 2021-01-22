@@ -33,7 +33,7 @@ const uiSchema: Reactory.IUISchema = {
       showSubmit: true,
       showRefresh: false,
       submitProps: {
-        variant: 'button',
+        variant: 'contained',
         text: 'SAVE CHANGES',
         color: 'primary',
         iconAlign: 'left',
