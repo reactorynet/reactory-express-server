@@ -1966,7 +1966,7 @@ export default {
       };
     },
     clientDocuments: async (parent: any) => {
-      debugger
+      
       // if(parent.clientDocuments && Array.isArray(parent.clientDocuments) === true) return parent.clientDocuments;
 
       let _result = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }).then();
@@ -2216,7 +2216,7 @@ export default {
      */
     LasecGetNewClient: async (obj: any, args: { id?: string, reset?: boolean }) => {
 
-      debugger
+      
 
       logger.debug(`[LasecGetNewClient] NEW CLIENT PARAMS:: ${JSON.stringify(args)}`);
       let existingCustomer: any = null;
@@ -2383,7 +2383,7 @@ export default {
         if (remote_fetched === false) client_to_return = { ...cachedClient };
 
       } 
-      debugger      
+            
             
       
       setCacheItem(hash, client_to_return, cacheLifeSpan).then();
