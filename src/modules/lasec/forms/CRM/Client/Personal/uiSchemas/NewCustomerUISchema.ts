@@ -21,8 +21,8 @@ const uiSchema: Reactory.IUISchema = {
     },
     'ui:titleStyle': {
       borderBottom: '2px solid #D5D5D5',
-      paddingBottom: '10px',
-      marginBottom: '30px'
+      paddingBottom: '15px',
+      marginBottom: '45px'
     },
     'ui:field': 'GridLayout',
     'ui:grid-options': {
@@ -57,18 +57,9 @@ const uiSchema: Reactory.IUISchema = {
           'LasecGetPersonTitles.[].id': ['[].key', '[].value'],
           'LasecGetPersonTitles.[].title': '[].label',
         },
-        selectProps: {
-          style: {
-            marginTop: '1.3rem',
-
-          }
+        selectProps: {          
         },
-        labelStyle: {
-          //transform: 'none',
-          fontWeight: 'bold',
-          color: '#000000',
-          backgroundColor: 'transparent',
-          padding: 0
+        labelStyle: {        
         }
       },
       'ui:description': "Select the client title",
@@ -79,19 +70,8 @@ const uiSchema: Reactory.IUISchema = {
         component: 'TextField',
         componentProps: {
           variant: 'outlined',
-          placeholder: 'First Name',
-          style: {
-            marginTop: '1.3rem'
-          }
-        },
-        labelProps: {
-          //dontShrink: true,
-          style: {
-            transform: 'none',
-            fontWeight: 'bold',
-            color: '#000000'
-          }
-        }
+          placeholder: 'First Name',          
+        },                
       },
       'ui:description': "Please provide the client first name",
     },
@@ -100,19 +80,8 @@ const uiSchema: Reactory.IUISchema = {
         component: 'TextField',
         componentProps: {
           variant: 'outlined',
-          placeholder: 'Last Name',
-          style: {
-            marginTop: '1.3rem'
-          }
-        },
-        labelProps: {
-          dontShrink: true,
-          style: {
-            transform: 'none',
-            fontWeight: 'bold',
-            color: '#000000'
-          }
-        }
+          placeholder: 'Last Name',          
+        },        
       },
       'ui:description': "Please provide the client Lastname",
     },
@@ -131,55 +100,12 @@ const uiSchema: Reactory.IUISchema = {
         resultsMap: {
           'LasecGetCustomerCountries.[].id': ['[].key', '[].value'],
           'LasecGetCustomerCountries.[].name': '[].label',
-        },
-        selectProps: {
-          style: {
-            marginTop: '1.3rem',
-          }
-        },
-        labelStyle: {
-          transform: 'none',
-          fontWeight: 'bold',
-          color: '#000000',
-          backgroundColor: 'transparent',
-          padding: 0
-        }
+        },        
       },
     },
     accountType: {
       ...AccountTypeDropdownUISchema
-    },
-    // repCode: {
-    //   'ui:widget': 'SelectWithDataWidget',
-    //   'ui:options': {
-    //     multiSelect: false,
-    //     query: `query LasecSalesTeams {
-    //       LasecSalesTeams {
-    //         id
-    //         name
-    //         title
-    //       }
-    //     }`,
-    //     resultItem: 'LasecSalesTeams',
-    //     resultsMap: {
-    //       'LasecSalesTeams.[].id': '[].id',
-    //       'LasecSalesTeams.[].name': ['[].key', '[].value'],
-    //       'LasecSalesTeams.[].title': '[].label',
-    //     },
-    //     selectProps: {
-    //       style: {
-    //         marginTop: '1.3rem',
-    //       }
-    //     },
-    //     labelStyle: {
-    //       transform: 'none',
-    //       fontWeight: 'bold',
-    //       color: '#000000',
-    //       backgroundColor: 'transparent',
-    //       padding: 0
-    //     }
-    //   },
-    // },
+    },  
     repCode: {
       'ui:widget': 'SelectWithDataWidget',
       'ui:options': {
@@ -197,20 +123,7 @@ const uiSchema: Reactory.IUISchema = {
         resultsMap: {
           'LasecSalesTeamsFromApi.[].id': ['[].key', '[].value'],
           'LasecSalesTeamsFromApi.[].title': '[].label',
-        },
-        selectProps: {
-          style: {
-            marginTop: '1.3rem',
-
-          }
-        },
-        labelStyle: {
-          transform: 'none',
-          fontWeight: 'bold',
-          color: '#000000',
-          backgroundColor: 'transparent',
-          padding: 0
-        }
+        },        
       },
     },
   };

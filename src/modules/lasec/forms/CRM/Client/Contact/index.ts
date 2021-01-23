@@ -391,8 +391,8 @@ export const newConfirmSchema: any = {
   },
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
-    paddingBottom: '10px',
-    marginBottom: '30px'
+    paddingBottom: '15px',
+    marginBottom: '45px'
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
@@ -536,8 +536,8 @@ const newUiSchema: any = {
   },
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
-    paddingBottom: '10px',
-    marginBottom: '30px'
+    paddingBottom: '15px',
+    marginBottom: '45px'
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {

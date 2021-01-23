@@ -92,20 +92,7 @@ const uiSchema: Reactory.IUISchema = {
         resultsMap: {
           'LasecGetPersonTitles.[].id': ['[].key', '[].value'],
           'LasecGetPersonTitles.[].title': '[].label',
-        },
-        selectProps: {
-          style: {
-            marginTop: '1.3rem',
-
-          }
-        },
-        labelStyle: {
-          transform: 'none',
-          fontWeight: 'bold',
-          color: '#000000',
-          backgroundColor: 'transparent',
-          padding: 0
-        }
+        },        
       },
       'ui:description': "Select the client title",
     },
@@ -114,19 +101,8 @@ const uiSchema: Reactory.IUISchema = {
         component: 'TextField',
         componentProps: {
           variant: 'outlined',
-          placeholder: 'Last Name',
-          style: {
-            marginTop: '1.3rem'
-          }
-        },
-        labelProps: {
-          dontShrink: true,
-          style: {
-            transform: 'none',
-            fontWeight: 'bold',
-            color: '#000000'
-          }
-        }
+          placeholder: 'Last Name',          
+        },        
       }
     },
     firstName: {
@@ -135,18 +111,8 @@ const uiSchema: Reactory.IUISchema = {
         componentProps: {
           variant: 'outlined',
           placeholder: 'First Name',
-          style: {
-            marginTop: '1.3rem'
-          }
-        },
-        labelProps: {
-          dontShrink: true,
-          style: {
-            transform: 'none',
-            fontWeight: 'bold',
-            color: '#000000'
-          }
-        }
+          
+        },        
       }
     },
     country: {
@@ -164,18 +130,8 @@ const uiSchema: Reactory.IUISchema = {
           'LasecGetCustomerCountries.[].id': ['[].key', '[].value'],
           'LasecGetCustomerCountries.[].name': '[].label',
         },
-        selectProps: {
-          style: {
-            marginTop: '1.3rem',
-          }
-        },
-        labelStyle: {
-          transform: 'none',
-          fontWeight: 'bold',
-          color: '#000000',
-          backgroundColor: 'transparent',
-          padding: 0
-        }
+        selectProps: {          
+        },        
       },
     },
     accountType: {
@@ -198,20 +154,7 @@ const uiSchema: Reactory.IUISchema = {
         resultsMap: {
           'LasecSalesTeamsFromApi.[].id': ['[].key', '[].value'],
           'LasecSalesTeamsFromApi.[].title': '[].label',
-        },
-        selectProps: {
-          style: {
-            marginTop: '1.3rem',
-
-          }
-        },
-        labelStyle: {
-          transform: 'none',
-          fontWeight: 'bold',
-          color: '#000000',
-          backgroundColor: 'transparent',
-          padding: 0
-        }
+        },       
       },
     },
   };

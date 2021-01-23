@@ -10,8 +10,8 @@ interface IUIDropDownItemSchema {
 
 interface IUIDropDownUIOptions extends Object {
   FormControl: any,
-  labelStyle: any,
-  selectProps: any,
+  labelStyle?: any,
+  selectProps?: any,
   selectOptions: IUIDropDownItemSchema[]
 }
 interface IUIDropDownSchema extends Reactory.IUISchema {
@@ -28,19 +28,7 @@ export const AccountTypeDropdownUISchema: IUIDropDownSchema = {
           maxWidth: '400px'
         }
       }
-    },
-    labelStyle: {
-      transform: 'none',
-      fontWeight: 'bold',
-      color: '#000000',
-      backgroundColor: 'transparent',
-      padding: 0
-    },
-    selectProps: {
-      style: {
-        marginTop: '1.3rem',
-      }
-    },
+    },    
     selectOptions: [
       {
         key: 'account',

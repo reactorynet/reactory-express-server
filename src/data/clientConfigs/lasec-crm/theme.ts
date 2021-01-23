@@ -24,9 +24,13 @@ const theme = {
         'MuiToolbar-regular': {
           minHeight: '48px'
         }
-      }
+      },
+      'MuiInputLabel-shrink': {
+        transform: 'translate(0px, -24px) scale(1)'
+      },
     },
-    overrides: {     
+    overrides: {         
+      
       MuiAppBar: {
         colorPrimary: {
           color: '#222732',
