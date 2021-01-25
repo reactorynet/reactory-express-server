@@ -177,7 +177,7 @@ const schema: Reactory.ISchema = {
       }
     },
     uploadedDocuments: {
-      ...LasecCRMDocuments.DocumentFormSchema,
+      ...LasecCRMDocuments.DocumentSchema,
       title: 'FILES TO ATTACH TO CLIENT',
     },
   }
@@ -212,7 +212,8 @@ const LasecCRMNewCustomerConfirm: Reactory.IReactoryForm = {
     },
   ],
   widgetMap: [
-    { widget: 'LasecUserTitleWidget', componentFqn: 'lasec-crm.LasecUserTitleWidget@1.0.0' }
+    { widget: 'LasecUserTitleWidget', componentFqn: 'lasec-crm.LasecUserTitleWidget@1.0.0' },
+    { widget: 'ClientDocumentsWidget', componentFqn: 'lasec-crm.ClientDocuments@1.0.0' },
   ],
   defaultFormValue: {
     uploadContext: [

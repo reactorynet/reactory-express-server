@@ -97,6 +97,9 @@ const LasecCRMTabs: Reactory.IReactoryForm = {
       uiSchema:  $uiSchema,
     },
   ],
+  dependencies: [
+    { fqn: "lasec-crm.Lasec360Plugin@1.0.0", componentType: "plugin" }
+  ],
   widgetMap: [
     {
       componentFqn: 'core.MaterialInput@1.0.0',

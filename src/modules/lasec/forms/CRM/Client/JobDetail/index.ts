@@ -328,7 +328,7 @@ const editUiSchema: any = {
         fontWeight: 'bold',
         fontSize: '1em'
       },
-      components: ["submit"],      
+      components: ["submit"],
     },
     style: {
       marginTop: '16px',
@@ -397,20 +397,7 @@ const editUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerRoles.[].id': ['[].key', '[].value'],
         'LasecGetCustomerRoles.[].name': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
+      },      
     },
   },
   clientDepartment: {
@@ -418,19 +405,8 @@ const editUiSchema: any = {
       component: 'TextField',
       componentProps: {
         variant: 'outlined',
-        placeholder: 'Department',
-        style: {
-          marginTop: '1.3rem'
-        }
-      },
-      labelProps: {
-        dontShrink: true,
-        style: {
-          transform: 'none',
-          fontWeight: 'bold',
-          color: '#000000'
-        }
-      }
+        placeholder: 'Department',        
+      },      
     }
   },
   customerClass: {
@@ -447,20 +423,7 @@ const editUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerClass.[].id': ['[].key', '[].value'],
         'LasecGetCustomerClass.[].name': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
+      },     
     },
   },
   ranking: {
@@ -472,19 +435,7 @@ const editUiSchema: any = {
             maxWidth: '400px'
           }
         }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-        }
-      },
+      },            
       selectOptions: [
         {
           key: '1',
@@ -518,20 +469,7 @@ const editUiSchema: any = {
       resultsMap: {
         'LasecGetFacultyList.[].id': ['[].key', '[].value'],
         'LasecGetFacultyList.[].name': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
+      },      
     },
   },
   customerType: {
@@ -548,20 +486,7 @@ const editUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerType.[].id': ['[].key', '[].value'],
         'LasecGetCustomerType.[].name': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
+      },      
     },
   },
   lineManager: {
@@ -581,20 +506,7 @@ const editUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerLineManagerOptions.[].id': ['[].key', '[].value'],
         'LasecGetCustomerLineManagerOptions.[].name': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
+      },      
     },
   },
 };
@@ -643,15 +555,13 @@ export const ConfirmUiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      jobTitle: { sm: 12, md: 6 },
-      jobType: { sm: 12, md: 6 },
-      jobTypeLabel: { sm: 12, md: 6 },
-      // lineManagerLabel: { xs: 12, sm: 12, md: 6, lg: 4 },
-      customerType: { sm: 12, md: 6 },
+      jobTitle: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      jobType: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      customerType: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
       customerClass: { sm: 12, md: 6 },
-      faculty: { sm: 12, md: 6 },
-      clientDepartment: { sm: 12, md: 6 },
-      ranking: { sm: 12, md: 6 },
+      faculty: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      ranking: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -660,6 +570,7 @@ export const ConfirmUiSchema: any = {
       name: 'LasecGetCustomerJobTypeById',
       text: `query LasecGetCustomerJobTypeById($id: String){
         LasecGetCustomerJobTypeById(id: $id) {
+          id
           name
         }
       }`,
@@ -669,7 +580,8 @@ export const ConfirmUiSchema: any = {
       resultType: 'string',
       resultKey: 'name',
       resultMap: {
-        'name': 'formData',
+        'id': 'id',
+        'name': 'name',
       },
     },
     'ui:widget': 'LabelWidget',
@@ -693,7 +605,24 @@ export const ConfirmUiSchema: any = {
     }
   },
   jobType: {
-
+    'ui:graphql': {
+      name: 'LasecGetCustomerJobTypeById',
+      text: `query LasecGetCustomerJobTypeById($id: String){
+        LasecGetCustomerJobTypeById(id: $id) {
+          id
+          name
+        }
+      }`,
+      variables: {
+        'formData': 'id'
+      },
+      resultType: 'string',
+      resultKey: 'name',
+      resultMap: {
+        'id': 'id',
+        'name': 'name',
+      },
+    },
     'ui:widget': 'LabelWidget',
     'ui:options': {
       format: '${formData}',
@@ -916,8 +845,8 @@ const newUiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
-    paddingBottom: '10px',
-    marginBottom: '30px'
+    paddingBottom: '15px',
+    marginBottom: '45px'
   },
   'ui:grid-options': {
     containerStyles: {
@@ -953,20 +882,7 @@ const newUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerRoles.[].id': ['[].key', '[].value'],
         'LasecGetCustomerRoles.[].name': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
+      },      
     },
   },
   jobType: {
@@ -983,20 +899,7 @@ const newUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerRoles.[].id': ['[].key', '[].value'],
         'LasecGetCustomerRoles.[].name': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
+      },      
     },
   },
   customerClass: {
@@ -1013,20 +916,7 @@ const newUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerClass.[].id': ['[].key', '[].value'],
         'LasecGetCustomerClass.[].name': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
+      },     
     },
   },
   clientDepartment: {
@@ -1034,19 +924,9 @@ const newUiSchema: any = {
       component: 'TextField',
       componentProps: {
         variant: 'outlined',
-        placeholder: 'Department',
-        style: {
-          marginTop: '1.3rem'
-        }
+        placeholder: 'Department',        
       },
-      labelProps: {
-        dontShrink: true,
-        style: {
-          transform: 'none',
-          fontWeight: 'bold',
-          color: '#000000'
-        }
-      }
+      
     }
   },
   ranking: {
@@ -1059,19 +939,8 @@ const newUiSchema: any = {
           }
         }
       },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      },
+      selectProps: {        
+      },      
       selectOptions: [
         {
           key: '1',
@@ -1106,20 +975,7 @@ const newUiSchema: any = {
       resultsMap: {
         'LasecGetFacultyList.[].id': ['[].key', '[].value'],
         'LasecGetFacultyList.[].name': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
+      },      
     },
   },
   customerType: {
@@ -1136,20 +992,7 @@ const newUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerType.[].id': ['[].key', '[].value'],
         'LasecGetCustomerType.[].name': '[].label',
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-
-        }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0
-      }
+      },      
     },
   },
 };

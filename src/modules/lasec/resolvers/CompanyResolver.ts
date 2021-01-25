@@ -1966,9 +1966,11 @@ export default {
       };
     },
     clientDocuments: async (parent: any) => {
-      if(parent.clientDocuments && Array.isArray(parent.clientDocuments) === true) return parent.clientDocuments;
+      
+      // if(parent.clientDocuments && Array.isArray(parent.clientDocuments) === true) return parent.clientDocuments;
 
-      await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] });
+      let _result = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }).then();
+      return _result.documents || [];
     },
   },
   LasecCRMCustomer: {
@@ -2214,7 +2216,7 @@ export default {
      */
     LasecGetNewClient: async (obj: any, args: { id?: string, reset?: boolean }) => {
 
-      debugger
+      
 
       logger.debug(`[LasecGetNewClient] NEW CLIENT PARAMS:: ${JSON.stringify(args)}`);
       let existingCustomer: any = null;
@@ -2380,13 +2382,10 @@ export default {
         //we did not fetch a remote item, we have a cache at the ready
         if (remote_fetched === false) client_to_return = { ...cachedClient };
 
-
-
-      } else {
-        //no cache available
-        client_to_return.clientDocuments = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
-      }
-
+      } 
+            
+            
+      
       setCacheItem(hash, client_to_return, cacheLifeSpan).then();
 
       return client_to_return;

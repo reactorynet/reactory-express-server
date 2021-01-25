@@ -100,24 +100,11 @@ const uiSchema: any = {
       component: 'TextField',
       componentProps: {
         variant: 'outlined',
-        placeholder: 'Client Name',
-        style: {
-          marginTop: '1.3rem'
-        }
+        placeholder: 'Client Name',        
       },
       inputProps:{
         readOnly: true,
-      },
-      labelProps: {
-        dontShrink: true,
-        style: {
-          transform: 'none',
-          fontWeight: 'bold',
-          color: '#000000',
-          fontSize: '1em',
-          lineHeight: '1em'
-        }
-      }
+      },      
     }
   },
   repCode: {
@@ -132,17 +119,7 @@ const uiSchema: any = {
       },
       inputProps:{
         readOnly: true,
-      },
-      labelProps: {
-        dontShrink: true,
-        style: {
-          transform: 'none',
-          fontWeight: 'bold',
-          color: '#000000',
-          fontSize: '1em',
-          lineHeight: '1em'
-        }
-      }
+      },      
     }
   },
   quoteType: {
@@ -154,21 +131,7 @@ const uiSchema: any = {
             maxWidth: '400px'
           }
         }
-      },
-      labelStyle: {
-        transform: 'none',
-        fontWeight: 'bold',
-        color: '#000000',
-        backgroundColor: 'transparent',
-        padding: 0,
-        fontSize: '1em',
-        lineHeight: '1em'
-      },
-      selectProps: {
-        style: {
-          marginTop: '1.3rem',
-        }
-      },
+      },      
       selectOptions: [
         { key: 'Normal', value: 'Normal', label: 'Normal' },
         { key: 'Contract', value: 'Contract', label: 'Contract' },
@@ -182,13 +145,7 @@ const uiSchema: any = {
     'ui:options': {
       variant: 'outlined',
       typography: {
-        variant: 'subtitle1',
-        style: {
-          fontWeight: 'bold',
-          marginBottom: '7px',
-          fontSize: '1em',
-          lineHeight: '1em'
-        }
+        variant: 'subtitle1',        
       }
     }
   },

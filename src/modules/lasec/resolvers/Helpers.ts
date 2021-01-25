@@ -2834,8 +2834,8 @@ export const getCRMSalesHistory = async (params) => {
   if (month != undefined) {
     logger.debug(`SETTING DATES PER MONTH:: ${month}`);
     let _year = year || moment().year();
-    _filter.start_date = moment([_year, month]).startOf('month').toISOString();
-    _filter.end_date = moment([_year, month]).endOf('month').toISOString();
+    _filter.start_date = moment([_year, month - 1]).startOf('month').toISOString();
+    _filter.end_date = moment([_year, month - 1]).endOf('month').toISOString();
   }
 
   const salesHistoryResponse = await lasecApi.Products.sales_orders({

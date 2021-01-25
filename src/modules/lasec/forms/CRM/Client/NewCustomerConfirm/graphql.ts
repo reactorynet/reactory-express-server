@@ -71,6 +71,10 @@ const graphql: Reactory.IFormGraphDefinition = {
           link
           mimetype
           size
+          owner {
+            id
+            fullName
+          }
         }
       }
     }`,
@@ -96,6 +100,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'customer': 'customer',
       'organization': 'organization',
       'address': 'address',
+      'clientDocuments': 'uploadedDocuments.documents'
     },
     edit: false,
     new: true,
