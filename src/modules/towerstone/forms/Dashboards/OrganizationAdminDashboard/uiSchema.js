@@ -124,9 +124,7 @@ export default {
     /**
        * The agent should be pulled from AD groups.
        **/
-    userFilter: {
-      'ui:graphql': LasecUserLookupQuery,
-      'ui:widget': 'UserSelectorWidget',
+    userFilter: {            
       'ui:options': {
         widget: 'UserSelectorWidget',
         lookupWidget: 'core.UserSearch',
@@ -219,80 +217,5 @@ export default {
         variant: 'static',
       },
     },        
-  },
-
-  /**
-   * Next Actions Section
-   **/  
-
- 
-  assessments: {
-    title: 'Assessments List',
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
-      columns: [
-        {
-          title: 'Overview',
-          field: 'code',
-          component: 'core.SlideOutLauncher@1.0.0',
-          props: {
-            componentFqn: 'lasec-crm.QuoteDetail@1.0.0',
-            componentProps: {
-              'rowData.code': ['data.quote_id', 'data.code', 'query.quote_id']
-            },
-            slideDirection: 'down',
-            buttonTitle: '${rowData.code}',
-            windowTitle: 'Details view for ${rowData.code}',
-          },
-          propsMap: {
-            'rowData': 'rowData'
-          }
-        },
-        {
-          title: 'Next Actions',
-          field: 'code',
-          component: 'core.SlideOutLauncher@1.0.0',
-          props: {
-            componentFqn: 'lasec-crm.UpdateQuoteStatus@1.0.0',
-            componentProps: {
-              'rowData.code': ['data.quote_id', 'data.code', 'query.quote_id']
-            },
-            slideDirection: 'down',            
-            buttonTitle: 'Next Actions',
-            windowTitle: 'Next Actions ${rowData.code}',
-            buttonIcon: 'add_alert'
-          },
-          propsMap: {
-            'rowData': 'rowData'
-          }
-        },
-        { title: 'Status', field: 'statusName', defaultGroupOrder: 0 },
-        { title: 'Company', field: 'companyTradingName', defaultGroupOrder: 1 },
-        { title: 'Customer', field: 'customerName', style: { paddingTop: '8px' } },
-        {
-          title: 'Total (VAT Excl)',
-          field: 'totalVATExclusive',
-          component: 'core.CurrencyLabel@1.0.0',  
-          props: {
-            uiSchema: {
-              'ui:options': {
-                valueProp: 'totalVATExclusive'
-              }
-            }
-          },        
-          propsMap: {
-            'rowData.totalVATExclusive': 'totalVATExclusive',
-          },
-        },
-        {
-          title: 'GP (%)',
-          field: 'GP',
-        },
-      ],
-      options: {
-        grouping: true,
-      },
-      title: 'Assessments',
-    },
   },
 };
