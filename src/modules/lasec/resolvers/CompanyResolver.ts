@@ -25,6 +25,9 @@ import {
   SimpleResponse,
   LasecAddress,
   LasecAddressUpdateResponse,
+  ILasecOrganisation,
+  ILasecCreateOrganisationArgs,
+  LasecCreateNeworganisationResponse,
 } from '../types/lasec';
 
 import { Reactory } from '@reactory/server-core/types/reactory';
@@ -1233,10 +1236,8 @@ const getOrganisationList = async (params) => {
 
 };
 
-const createNewOrganisation = async (args) => {
 
-  // Required:: customer_id name description
-  // Possibly also needs "onboarding_step_completed"
+const createNewOrganisation = async (args: ILasecCreateOrganisationArgs): Promise<LasecCreateNeworganisationResponse> => {
 
   try {
 
@@ -1250,14 +1251,25 @@ const createNewOrganisation = async (args) => {
 
     return {
       success: apiResponse.status === 'success',
-      id: apiResponse.payload.id,
+      message: '',
+      organisation: {
+        id: apiResponse.payload.id,
+        name: args.name,
+        description: args.description
+      }      
     }
   }
   catch (ex) {
     logger.error(`ERROR CREATING ORGANISATION::  ${ex}`);
     return {
       success: false,
-      id: 0,
+      message: '',
+      organisation: {
+        id: null,
+        name: args.name,
+        description: args.description,
+      }
+
     }
   }
 };
@@ -2740,6 +2752,11 @@ export default {
           const { deliveryAddress, physicalAddress } = _newClient.address;
           if (Number.parseInt(physicalAddress.id) > 0) {
             try {
+              const update_result = await mysql(`
+              UPDATE Customer SET
+                physical_address_id = '${physicalAddress.id}'                
+              WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()            
+
               logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
             } catch (exc) {
               logger.error(`Could not save the physical address against the customer`, exc);
@@ -2751,6 +2768,10 @@ export default {
           if (Number.parseInt(deliveryAddress.id) > 0) {
             try {
               logger.debug(`Set delivery address ${deliveryAddress.fullAddress}`);
+              await mysql(`
+              UPDATE Customer SET
+                delivery_address_id = '${deliveryAddress.id}'                
+              WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()            
             } catch (exc) {
               logger.error(`Could not save the delivery address against the customer`, exc);
               response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });

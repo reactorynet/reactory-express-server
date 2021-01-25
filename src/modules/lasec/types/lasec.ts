@@ -261,6 +261,32 @@ export interface LasecQuote {
   [key: string]: any
 }
 
+export interface ILasecOrganisation {
+  id?: string
+  name: string
+  description?: string
+}
+
+type ExistingLasecOrgnisation = ILasecOrganisation & {
+  id: string
+  name: string
+  description?: string
+}
+
+export interface ILasecCreateOrganisationArgs {
+  customerId: string,
+  name: string,
+  description?: string
+}
+export interface LasecCreateNeworganisationResponse {
+  organisation: ExistingLasecOrgnisation;
+  success: boolean;
+  message: string;
+}
+
+
+
+
 export interface LasecCRMCustomer {
   id: string
   registeredName?: string

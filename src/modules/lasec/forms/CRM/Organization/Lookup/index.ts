@@ -104,12 +104,15 @@ export const newUiSchema: any = {
     props: {
       componentFqn: 'lasec-crm.LasecCRMOrganisationLookupTable@1.0.0',
       componentProps: {
-
+        mode: 'new',
+        uiSchemaKey: 'new',
       },
       componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',
         'LookupComponent.props.onChange': 'onOrganizationSelected',
         'LookupComponent.props.formContext': 'LookupComponentFormContext',
+        'LookupComponent.props.mode': 'mode',
+        'LookupComponent.props.uiSchemaKey': 'uiSchemaKey',
       },
     },
   },

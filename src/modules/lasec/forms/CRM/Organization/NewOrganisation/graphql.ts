@@ -7,17 +7,27 @@ const graphql: Reactory.IFormGraphDefinition = {
       text: `mutation LasecCreateNewOrganisation($customerId: String, $name: String, $description: String){
         LasecCreateNewOrganisation(customerId: $customerId, name: $name, description: $description) {
           success
-          id
+          message 
+          organisation {
+            id
+            name
+            description
+          }
         }
       }`,
       objectMap: true,
-      updateMessage: 'Updating Template Content',
+      updateMessage: 'Creating organisation...',
       variables: {
         'formData.customerId': 'customerId',
         'formData.name': 'name',
         'formData.decription': 'description',
       },
-      onSuccessMethod: 'refresh'
+      onSuccessMethod: 'notification',
+      notification: {
+        inAppNotification: true,
+        title: 'Organisation Created',
+        type: 'success'
+      }
     }
   }
 };
