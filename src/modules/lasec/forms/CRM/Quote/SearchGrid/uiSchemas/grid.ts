@@ -1,6 +1,3 @@
-import {
-  FilterByOptions,
-} from '../shared';
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
@@ -25,83 +22,11 @@ const uiSchema: any = {
         md: 12
       }
     }
-  ],
-  search: {
-    'ui:widget': 'HiddenWidget',
-    // 'ui:options': {
-    //   showLabel: false,
-    //   icon: 'search',
-    //   component: "TextField",
-    //   componentProps: {
-    //     placeholder: 'Search',
-    //     variant: "outlined",
-    //     type: 'search',
-    //     style: {
-    //       minWidth: '180px'
-    //     }
-    //   }
-    // }
-  },
+  ],  
   paging: {
     'ui:widget': 'HiddenWidget'
   },
-  filterBy: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      selectOptions: FilterByOptions,
-    },
-  },
-  dateFilter: {
-    'ui:widget': 'DateSelectorWidget',
-  },
-  selectFilter: {
-    'ui:widget': 'SelectWithDataWidget',
-    'ui:options': {
-      multiSelect: false,
-      query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
-        LasecGetCustomerFilterLookup(filterBy: $filterBy) {
-          id
-          name
-        }
-      }`,
-      propertyMap: {
-        'formContext.$formData.filterBy': 'filterBy'
-      },
-      resultItem: 'LasecGetCustomerFilterLookup',
-      resultsMap: {
-        'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
-        'LasecGetCustomerFilterLookup.[].name': '[].label',
-      },
-    },
-  },
-  periodStart: {
-    'ui:widget': 'DateSelectorWidget',
-  },
-  periodEnd: {
-    'ui:widget': 'DateSelectorWidget',
-  },
-  client: {
-    'ui:widget': 'LookupComponent',
-    'ui:options': {
-      label: 'Select a Client',
-      title: 'Search for a Client'
-    },
-    props: {
-      componentFqn: 'lasec-crm.LasecCRMClientLookupTable@1.0.0',
-      componentProps: {},
-    },
-  },
-  customer: {
-    'ui:widget': 'LookupComponent',
-    'ui:options': {
-      label: 'Select a Customer',
-      title: 'Search for a Customer'
-    },
-    props: {
-      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
-      componentProps: {},
-    },
-  },
+  
   quotes: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {

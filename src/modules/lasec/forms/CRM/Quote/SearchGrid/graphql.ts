@@ -59,12 +59,12 @@ const graphql: Reactory.IFormGraphDefinition = {
             
       autoQuery: false,
       options: {
-        fetchPolicy: 'network-only'
+        fetchPolicy: 'cache-first'
       },
       queryMessage: 'Search for quote',
       resultType: 'object',
       //waitUntil: '${api.utils.lodash.isNil(api.$LasecUser)===false}',
-      waitTimeout: 4500,
+      waitTimeout: 4500,      
       edit: false,
       new: false,
       onError: {

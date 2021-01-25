@@ -122,7 +122,23 @@ const getClients = async (params: GetClientsParams) => {
       if (search.trim().length > 0) _filter.any_field = search;
       break;
     }
-    case "any_field":
+    case "company_trading_name": {
+      _filter[filterBy] = search;
+      break;
+    };
+    case "company_id": {
+      _filter[filterBy] = search;
+      break;
+    };
+    case "first_name": {
+      _filter["first_name"] = search;
+      break;
+    };
+    case "email": {
+      _filter["email"] = search;
+      break;
+    };
+    case "any_field":      
     default: {
       if (search.trim().length > 0) _filter.any_field = search;
 

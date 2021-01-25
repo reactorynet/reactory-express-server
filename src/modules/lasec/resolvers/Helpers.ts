@@ -1451,7 +1451,7 @@ export const getPagedQuotes = async (params: any) => {
         };
       }
 
-      apiFilter.id = search;
+      apiFilter.ids = [search];
 
       break;
     }
