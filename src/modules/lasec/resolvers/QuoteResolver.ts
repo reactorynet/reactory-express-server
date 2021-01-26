@@ -852,7 +852,7 @@ export default {
     LasecGetQuoteComments: async (obj, params) => {
       return getQuoteComments(params);
     },
-    LasecGetCRMQuoteList: async (obj, args) => {
+    LasecGetCRMQuoteList: async (obj: any, args: any) => {
       return getPagedQuotes(args);
     },
     LasecGetCRMClientQuoteList: async (obj, args) => {

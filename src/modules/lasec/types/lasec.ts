@@ -1,6 +1,6 @@
 import { Moment } from 'moment';
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { PagingResult } from '@reactory/server-core/database/types';
+import { PagingRequest, PagingResult } from '@reactory/server-core/database/types';
 
 /**
  * Meta type interface
@@ -495,7 +495,7 @@ export interface Lasec360Credentials {
     user_id: number
   },
   lastStatus: number
- }
+}
 
 export interface Lasec360User {
   id: string
@@ -506,7 +506,7 @@ export interface Lasec360User {
   email: string
   activeCompany: string | 'LasecSA' | 'LasecInternational' | 'LasecEducation';
   company: string | 'LasecSA' | 'LasecInternational' | 'LasecEducation'
-  roles: [ string ]
+  roles: [string]
   target: number
   targetPercent: number
   signature?: string
@@ -515,8 +515,8 @@ export interface Lasec360User {
 }
 
 export interface Lasec360UserSearch {
-  repIds: [ string ]
-  emails: [ string ]
+  repIds: [string]
+  emails: [string]
 }
 
 export interface DateRange {
@@ -541,13 +541,13 @@ export interface LasecNewQuoteInputArgs {
 
 export interface LasecNewQuoteResult {
   quoteId: string
-  success:Boolean
+  success: Boolean
   message: string
 }
 export interface LasecNewQuoteResponse {
   quoteId: string
   quoteOptionId: string
-  success:Boolean
+  success: Boolean
   message: string
 }
 
@@ -682,7 +682,7 @@ export interface LasecAddress {
 
   unit_number?: string
   unit_name?: string,
-  
+
   street_name?: string
   street_number?: string
 
@@ -694,23 +694,23 @@ export interface LasecAddress {
 
   building_description_id?: number
   building_description?: string
-  
+
   building_floor_number_id?: number
   building_floor_description?: string
 
   province_id?: string
-  province_name?: string  
+  province_name?: string
 
   country_id?: string
   country_name?: string
-  
+
   lat?: string | number
   lng?: string | number
   created_by?: string
   last_edited_by?: string
   map?: any
 
-  linked_companies_count?: number,  
+  linked_companies_count?: number,
   linked_companies?: LasecCRMCustomer[]
 
   linked_clients_count?: number,
@@ -840,17 +840,31 @@ export interface FreightRequestQuoteDetail {
 
 export interface LasecAPIParams {
   filter?: any
-  ordering?: {  
-    [key:  string]: string | "asc" | "desc"
+  ordering?: {
+    [key: string]: string | "asc" | "desc"
   },
   pagination?: {
     enabled?: boolean,
     page_size?: number,
     current_page?: number
-  } 
+  },
+  format?: any
 }
 
 export interface LasecTransportationMode {
   id: string,
   title: string
+}
+
+export interface LasecGetPageQuotesParams {
+  search: string
+  paging: PagingRequest,
+  filterBy: string
+  filter: string
+  periodStart: string
+  periodEnd: string
+  quoteDate: string
+  orderBy: string
+  orderDirection: string
+  iter: number
 }

@@ -735,6 +735,7 @@ extend type Query {
     search: String
     paging: PagingRequest
     filterBy: String
+    filter: String
     periodStart: String
     periodEnd: String
     quoteDate: String
@@ -746,6 +747,7 @@ extend type Query {
     clientId: String
     search: String!
     paging: PagingRequest
+    filter: String
     filterBy: String
     periodStart: String
     periodEnd: String
