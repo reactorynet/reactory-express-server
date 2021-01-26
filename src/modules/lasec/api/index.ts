@@ -266,9 +266,14 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     };
   }
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
-    try {
-      //  apiResponse.text().then(response => logger.debug(`RESPONSE FROM API:: -  ${response}`));
-      return apiResponse.json();
+    try {      
+      return apiResponse.json().catch((invalidJsonErr) => {
+        return {
+          status: 'failed',
+          payload: null,
+          message: `apiResponse.toJSON failed Api threw error ${invalidJsonErr.message}`
+        };
+      });
     } catch (jsonError) {
       logger.error("JSON Error From API", jsonError);
       return {
