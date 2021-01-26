@@ -60,6 +60,7 @@ type ClientRoute {
   roles: [String]
   componentFqn: String
   exact: Boolean
+  redirect: String
   component: [ClientComponent]
   args: [ComponentArgs]
 }

@@ -259,6 +259,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   try {
     apiResponse = await fetch(absoluteUrl, kwargs).then();
   } catch (apiError) {
+    logger.error(`🚨 Error Getting Responsefrom LASEC API ${apiError.message}`)
     return {
       status: 'failed',
       payload: null,
@@ -268,6 +269,9 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
     try {      
       return apiResponse.json().catch((invalidJsonErr) => {
+
+        logger.error(`🚨 Error Getting JSON Response from LASEC API ${invalidJsonErr.message}`);
+
         return {
           status: 'failed',
           payload: null,

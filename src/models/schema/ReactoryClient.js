@@ -58,6 +58,7 @@ const ReactoryClientSchema = new mongoose.Schema({
       public: Boolean,
       roles: [String],
       exact: Boolean,
+      redirect: String,
       componentFqn: String,
       args: [
         { },
