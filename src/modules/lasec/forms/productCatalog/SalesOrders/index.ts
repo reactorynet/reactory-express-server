@@ -243,7 +243,7 @@ const uiSchema: any = {
           props: {
             componentFqn: 'lasec-crm.LasecCMSProductSalesOrdersTable@1.0.0',
             componentProps: {
-              'rowData.id': 'formData.id',
+              'rowData.id': ['formData.id', 'formData.product'],
               'rowData.image': 'formData.image',
               'rowData.code': 'formData.code',
               'rowData.description': 'formData.description',
@@ -279,6 +279,7 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
+        'product': 'product',
         'products.[].id': 'data.[].id',
         'products.[].name': 'data.[].name',
         'products.[].code': 'data.[].code',

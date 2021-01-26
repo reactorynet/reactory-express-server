@@ -46,8 +46,8 @@ const tableUiSchema: any = {
     'ui:widget': 'HiddenWidget'
   },
   products: {
-    'ui:widget': 'MaterialTableWidget',    
-    'ui:options': {      
+    'ui:widget': 'MaterialTableWidget',
+    'ui:options': {
       columns: [
         {
           title: '',
@@ -302,7 +302,7 @@ const tableUiSchema: any = {
         showTitle: false,
         toolbar: false,
         searchText: '${formContext.$formData.product}'
-      },      
+      },
       propsMap: {
         'formContext.$formData.product': 'searchText'
       },
@@ -319,7 +319,7 @@ const tableUiSchema: any = {
         'paging.pageSize': 'pageSize',
         'product': 'product',
         'products': 'data'
-      },      
+      },
     },
   }
 };
@@ -372,9 +372,8 @@ const gridUiSchemaGrid: any = {
     'ui:widget': 'HiddenWidget'
   },
   products: {
-    'ui:widget': 'GridLayoutWidget',
+    'ui:widget': 'ProductGrid',
     'ui:options': {
-      component: 'lasec.ProductCardComponent@1.0.0',
       componentProps: {
         cardContent: {
           fields: [
@@ -401,17 +400,8 @@ const gridUiSchemaGrid: any = {
               value: 'qtyOnOrder',
               unit: '',
               icon: 'receipt'
-            },
-            // {
-            //   label: 'Price: From - ',
-            //   value: 'price',
-            //   isCents: true,
-            //   region: 'en-ZA',
-            //   currency: 'ZAR',
-            //   icon: ''
-            // },
+            }
           ],
-          // currenciesDisplayed: ['USD', 'EUR', 'GBP', 'ZAR'],
           currenciesDisplayed: '${data.availableCurrencies}',
           showPricing: true,
           showSpecialPricing: true,
@@ -420,10 +410,9 @@ const gridUiSchemaGrid: any = {
       },
       loadingMessage: 'Loading product overview, please wait a moment',
       remoteData: true,
-
       variables: {
-        'props.formContext.$formData.product': 'product',
-        'props.formContext.$formData.paging': 'paging'
+        'formContext.$formData.product': 'product',
+        'formContext.$formData.paging': 'paging'
       },
       resultMap: {
         'paging.page': 'page',
@@ -466,8 +455,8 @@ const gridUiSchemaGrid: any = {
         'products.[].specialPrice': 'data.[].specialPrice',
         'products.[].availableCurrencies.[]': 'data.[].availableCurrencies.[]',
       },
-    },
-  }
+    }
+  },
 };
 
 const cardUiSchema: any = {

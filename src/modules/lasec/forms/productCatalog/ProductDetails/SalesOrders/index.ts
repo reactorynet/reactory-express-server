@@ -1,6 +1,63 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 
 const graphql: Reactory.IFormGraphDefinition = {
+  query:{
+    name: 'LasecGetCRMSalesOrders',
+      text: `query LasecGetCRMSalesOrders($productId: String, $paging: PagingRequest){
+      LasecGetCRMSalesOrders(productId: $productId, paging: $paging){
+        paging {
+          total
+          page
+          hasNext
+          pageSize
+        }
+        totals
+        salesOrders {
+          id
+          orderDate
+          salesOrderNumber,
+          shippingDate
+          quoteId
+          quoteDate
+          orderType
+          orderStatus
+          iso
+          customer
+          client
+          poNumber
+          currency
+          value
+          deliveryAddress
+          warehouseNote
+          deliveryNote
+          salesTeam
+          reserveValue
+          shipValue
+          backorderValue
+          dispatchCount
+          invoiceCount
+
+          orderQty
+          shipQty
+          reservedQty
+          backOrderQty
+        }
+      }
+    }`,
+      autoQuery: false,
+      resultType: 'object',
+      edit: false,
+      new: false,
+      variables: {
+        'formData.id': 'productId',
+        'formData.paging': 'paging'
+      },
+      resultMap: {
+        'paging': 'paging',
+        'totals': 'totals',
+        'salesOrders': 'salesOrders',
+      },
+  },
   queries: {
     sales_orders: {
       name: 'LasecGetCRMSalesOrders',
@@ -140,7 +197,7 @@ const schema: Reactory.ISchema = {
 
 };
 
-const uiSchema: any = {  
+const uiSchema: any = {
   'ui:options': {
     componentType: "div",
     showSubmit: false,
@@ -372,19 +429,21 @@ const uiSchema: any = {
         searchText: '${formContext.$formData.product}'
       },
       remoteData: true,
-      query: 'sales_orders',
+      // query: 'sales_orders',
+      query: 'query',
       variables: {
-        'query.search': 'product',
-        'query.page': 'paging.page',
-        'query.pageSize': 'paging.pageSize'
+        'props.formContext.$formData.id': 'productId',
+        'props.formContext.$formData.paging': 'paging',
+        // 'formData.product': 'product',
+        // 'query.search': 'product',
+        // 'query.page': 'paging.page',
+        // 'query.pageSize': 'paging.pageSize'
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-
         'totals': 'totals',
-
         'salesOrders.[].id': 'data.[].id',
         'salesOrders.[].orderDate': 'data.[].orderDate',
         'salesOrders.[].orderType': 'data.[].orderType',

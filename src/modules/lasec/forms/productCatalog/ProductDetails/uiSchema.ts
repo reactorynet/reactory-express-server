@@ -1,5 +1,4 @@
 import graph from './graphql';
-// TABLE
 
 export const uiSchemaTable: any = {
   'ui:grapql': graph.product_detail_table_graph,
@@ -565,7 +564,6 @@ export const uiSchemaTable: any = {
   }
 };
 
-// GRID LAYOUT
 export const uiSchemaGrid: any = {
   'ui:grapql': graph.product_card_detail_graph,
   'ui:options': {
@@ -614,6 +612,159 @@ export const uiSchemaGrid: any = {
     'ui:widget': 'HiddenWidget'
   },
   products: {
+    'ui:widget': 'ProductGrid',
+    'ui:options': {
+      componentProps: {
+        cardContent: {
+          fields: [
+            {
+              label: 'Buyer:',
+              value: 'buyer',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Planner:',
+              value: 'planner',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Hazardous:',
+              value: 'isHazardous',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Site Evaluation:',
+              value: 'siteEvaluationRequired',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Product Class:',
+              value: 'productClass',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Tariff Code:',
+              value: 'tariffCode',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Lead Time:',
+              value: 'leadTime',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Valid Price Until:',
+              value: 'validPriceUntil',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Last Updated:',
+              value: 'lastUpdated',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Last Updated by:',
+              value: 'lastUpdatedBy',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Last Ordered:',
+              value: 'lastOrdered',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Last Received:',
+              value: 'lastReceived',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'Supplier Currency:',
+              value: 'supplyCurrency',
+              unit: '',
+              icon: ''
+            },
+            {
+              label: 'List Currency:',
+              value: 'listCurrency',
+              unit: '',
+              icon: ''
+            },
+          ],
+          hasPricingChart: false
+        },
+      },
+      loadingMessage: 'Loading product overview, please wait a moment',
+      remoteData: true,
+
+      variables: {
+        'formContext.$formData.product': 'product',
+        'formContext.$formData.paging': 'paging'
+      },
+      resultMap: {
+        'paging.page': 'page',
+        'paging.total': 'totalCount',
+        'paging.pageSize': 'pageSize',
+        'products.[].id': 'data.[].id',
+        'products.[].name': 'data.[].name',
+        'products.[].code': 'data.[].code',
+        'products.[].description': 'data.[].description',
+        'products.[].qtyAvailable': 'data.[].qtyAvailable',
+        'products.[].qtyOnHand': 'data.[].qtyOnHand',
+        'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
+        'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
+        'products.[].price': 'data.[].price',
+        'products.[].image': 'data.[].image',
+        'products.[].onSyspro': 'data.[].onSyspro',
+        'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
+        'products.[].landedPrice': 'data.[].landedPrice',
+        'products.[].wh10CostPrice': 'data.[].wh10CostPrice',
+        'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
+        'products.[].listPrice': 'data.[].listPrice',
+        'products.[].buyer': 'data.[].buyer',
+        'products.[].buyerEmail': 'data.[].buyerEmail',
+        'products.[].planner': 'data.[].planner',
+        'products.[].plannerEmail': 'data.[].plannerEmail',
+        'products.[].isHazardous': 'data.[].isHazardous',
+        'products.[].siteEvaluationRequired': 'data.[].siteEvaluationRequired',
+        'products.[].packedLength': 'data.[].packedLength',
+        'products.[].packedWidth': 'data.[].packedWidth',
+        'products.[].packedHeight': 'data.[].packedHeight',
+        'products.[].packedVolume': 'data.[].packedVolume',
+        'products.[].packedWeight': 'data.[].packedWeight',
+        'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
+        'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',
+        'products.[].supplier': 'data.[].supplier',
+        'products.[].model': 'data.[].model',
+        'products.[].shipmentSize': 'data.[].shipmentSize',
+        'products.[].exWorksFactor': 'data.[].exWorksFactor',
+
+        'products.[].productClass': 'data.[].productClass',
+        'products.[].tariffCode': 'data.[].tariffCode',
+        'products.[].leadTime': 'data.[].leadTime',
+        'products.[].validPriceUntil': 'data.[].validPriceUntil',
+        'products.[].lastUpdated': 'data.[].lastUpdated',
+        'products.[].lastUpdatedBy': 'data.[].lastUpdatedBy',
+        'products.[].lastOrdered': 'data.[].lastOrdered',
+        'products.[].lastReceived': 'data.[].lastReceived',
+        'products.[].supplyCurrency': 'data.[].supplyCurrency',
+        'products.[].listCurrency': 'data.[].listCurrency',
+
+      },
+    }
+  },
+  productsOld: {
     'ui:widget': 'GridLayoutWidget',
     'ui:options': {
       component: 'lasec.ProductCardComponent@1.0.0',
