@@ -109,6 +109,8 @@ const uiSchema: any = {
       variables: {
         'query.search': 'search',
         'query.paging': 'paging',
+        'query.orderBy': 'orderBy',
+        'query.orderDirection': 'orderDirection'
       },
       resultMap: {
         'paging.page': 'page',

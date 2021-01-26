@@ -923,7 +923,7 @@ const getLasecSalesTeamsForLookup = async () => {
 
 const getCustomerList = async (params) => {
 
-  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter } = params;
+  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter, orderBy = 'name', orderDirection = "asc" } = params;
 
   logger.debug(`Getting Customers using search ${search}`, { search, paging, filterBy, iter });
 
@@ -945,7 +945,7 @@ const getCustomerList = async (params) => {
 
   const cachekey = Hash(`company_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
-  let _cachedResults = await getCacheItem(cachekey);
+  let _cachedResults = null; //await getCacheItem(cachekey);
 
   if (_cachedResults) {
 
@@ -971,9 +971,11 @@ const getCustomerList = async (params) => {
     return _cachedResults;
   }
 
+  debugger
+
   logger.debug(`Calling companies api`);
 
-  let filterParams = {
+  let filterParams: any = {
     filter: {
       account_type: "",
       any_field: search,
@@ -987,6 +989,8 @@ const getCustomerList = async (params) => {
       page_size: pagingResult.pageSize,
     }
   };
+
+  filterParams.ordering[orderBy] = orderDirection;
 
   const companyResult = await lasecApi.Company.list(filterParams).then();
 
@@ -1055,7 +1059,7 @@ const getCustomerList = async (params) => {
     return _customer;
   });
 
-  customers = orderBy(customers, ['registeredName', ['asc']]);
+  //customers = orderBy(customers, ['registeredName', ['asc']]);
 
   let result = {
     paging: pagingResult,
