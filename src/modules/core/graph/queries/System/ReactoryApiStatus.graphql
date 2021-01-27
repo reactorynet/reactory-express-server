@@ -18,6 +18,7 @@
 				public
 				roles
 				componentFqn
+				redirect
 				component {
 					nameSpace
 					name

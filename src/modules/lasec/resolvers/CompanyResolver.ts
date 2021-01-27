@@ -25,6 +25,9 @@ import {
   SimpleResponse,
   LasecAddress,
   LasecAddressUpdateResponse,
+  ILasecOrganisation,
+  ILasecCreateOrganisationArgs,
+  LasecCreateNeworganisationResponse,
 } from '../types/lasec';
 
 import { Reactory } from '@reactory/server-core/types/reactory';
@@ -119,7 +122,23 @@ const getClients = async (params: GetClientsParams) => {
       if (search.trim().length > 0) _filter.any_field = search;
       break;
     }
-    case "any_field":
+    case "company_trading_name": {
+      _filter[filterBy] = search;
+      break;
+    };
+    case "company_id": {
+      _filter[filterBy] = search;
+      break;
+    };
+    case "first_name": {
+      _filter["first_name"] = search;
+      break;
+    };
+    case "email": {
+      _filter["email"] = search;
+      break;
+    };
+    case "any_field":      
     default: {
       if (search.trim().length > 0) _filter.any_field = search;
 
@@ -904,7 +923,7 @@ const getLasecSalesTeamsForLookup = async () => {
 
 const getCustomerList = async (params) => {
 
-  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter } = params;
+  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter, orderBy = 'name', orderDirection = "asc" } = params;
 
   logger.debug(`Getting Customers using search ${search}`, { search, paging, filterBy, iter });
 
@@ -926,7 +945,7 @@ const getCustomerList = async (params) => {
 
   const cachekey = Hash(`company_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
-  let _cachedResults = await getCacheItem(cachekey);
+  let _cachedResults = null; //await getCacheItem(cachekey);
 
   if (_cachedResults) {
 
@@ -952,9 +971,11 @@ const getCustomerList = async (params) => {
     return _cachedResults;
   }
 
+  debugger
+
   logger.debug(`Calling companies api`);
 
-  let filterParams = {
+  let filterParams: any = {
     filter: {
       account_type: "",
       any_field: search,
@@ -968,6 +989,8 @@ const getCustomerList = async (params) => {
       page_size: pagingResult.pageSize,
     }
   };
+
+  filterParams.ordering[orderBy] = orderDirection;
 
   const companyResult = await lasecApi.Company.list(filterParams).then();
 
@@ -1036,7 +1059,7 @@ const getCustomerList = async (params) => {
     return _customer;
   });
 
-  customers = orderBy(customers, ['registeredName', ['asc']]);
+  //customers = orderBy(customers, ['registeredName', ['asc']]);
 
   let result = {
     paging: pagingResult,
@@ -1233,10 +1256,8 @@ const getOrganisationList = async (params) => {
 
 };
 
-const createNewOrganisation = async (args) => {
 
-  // Required:: customer_id name description
-  // Possibly also needs "onboarding_step_completed"
+const createNewOrganisation = async (args: ILasecCreateOrganisationArgs): Promise<LasecCreateNeworganisationResponse> => {
 
   try {
 
@@ -1250,14 +1271,25 @@ const createNewOrganisation = async (args) => {
 
     return {
       success: apiResponse.status === 'success',
-      id: apiResponse.payload.id,
+      message: '',
+      organisation: {
+        id: apiResponse.payload.id,
+        name: args.name,
+        description: args.description
+      }      
     }
   }
   catch (ex) {
     logger.error(`ERROR CREATING ORGANISATION::  ${ex}`);
     return {
       success: false,
-      id: 0,
+      message: '',
+      organisation: {
+        id: null,
+        name: args.name,
+        description: args.description,
+      }
+
     }
   }
 };
@@ -2740,6 +2772,11 @@ export default {
           const { deliveryAddress, physicalAddress } = _newClient.address;
           if (Number.parseInt(physicalAddress.id) > 0) {
             try {
+              const update_result = await mysql(`
+              UPDATE Customer SET
+                physical_address_id = '${physicalAddress.id}'                
+              WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()            
+
               logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
             } catch (exc) {
               logger.error(`Could not save the physical address against the customer`, exc);
@@ -2751,6 +2788,10 @@ export default {
           if (Number.parseInt(deliveryAddress.id) > 0) {
             try {
               logger.debug(`Set delivery address ${deliveryAddress.fullAddress}`);
+              await mysql(`
+              UPDATE Customer SET
+                delivery_address_id = '${deliveryAddress.id}'                
+              WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()            
             } catch (exc) {
               logger.error(`Could not save the delivery address against the customer`, exc);
               response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });

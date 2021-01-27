@@ -22,7 +22,7 @@ const LasecQuoteGrid: Reactory.IReactoryForm = {
       page: 1,
       pageSize: 10,
     },
-    filterBy: "any_field",
+    filterBy: "rep_code",
     search: "",
     quotes: []
   },

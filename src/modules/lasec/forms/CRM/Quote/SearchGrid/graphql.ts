@@ -8,6 +8,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       text: `query LasecGetCRMQuoteList(
         $search: String,
         $paging: PagingRequest,
+        $filter: String
         $filterBy: String,
         $periodStart: String,
         $periodEnd: String,
@@ -18,6 +19,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         LasecGetCRMQuoteList(
           search: $search,
           paging: $paging,
+          filter: $filter,
           filterBy: $filterBy,
           periodStart: $periodStart,
           periodEnd: $periodEnd,
@@ -59,12 +61,12 @@ const graphql: Reactory.IFormGraphDefinition = {
             
       autoQuery: false,
       options: {
-        fetchPolicy: 'network-only'
+        fetchPolicy: 'cache-first'
       },
       queryMessage: 'Search for quote',
       resultType: 'object',
       //waitUntil: '${api.utils.lodash.isNil(api.$LasecUser)===false}',
-      waitTimeout: 4500,
+      waitTimeout: 4500,      
       edit: false,
       new: false,
       onError: {

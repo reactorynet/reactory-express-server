@@ -217,11 +217,13 @@ type LasecCurrencyFilterLookupItem {
 
 
 type CreateNewOrganisationResponse {
-  id: Int
+  organisation: LasecCRMOrganisation
   success: Boolean
+  message: String
 }
 
 type LasecClientPersonalDetails {
+  id: String
   title: String
   firstName: String
   lastName: String

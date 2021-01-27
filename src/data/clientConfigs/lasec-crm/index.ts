@@ -132,6 +132,7 @@ const Menus = {
   ],
 
   PRODUCTION: [
+    /*
     {
       ordinal: 0,
       title: 'Dashboard',
@@ -162,6 +163,7 @@ const Menus = {
       ],
       roles: ['USER', 'ADMIN'],
     },
+    */
     {
       ordinal: 1,
       title: 'Sales',
@@ -239,43 +241,10 @@ const Menus = {
       items: [
         {
           ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN']
-        },
-        {
-          ordinal: 9, title: 'Form Editor', link: '/form-editor/', icon: 'dynamic_form', roles: ['DEVELOPER', 'ADMIN'],
-        },
+        },        
         {
           ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
-        },
-        {
-          ordinal: 13, title: 'Product List', link: '/productlist/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 14, title: 'New Quote', link: '/newquote/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 14, title: 'Capture Category', link: '/capturecategory/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 15, title: 'Category List', link: '/categorylist/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 16, title: 'Capture Category Filter', link: '/capture-category-filter/new/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 16, title: 'Update Category Filter', link: '/capture-category-filter/edit/5dbab8773fd27904a91a7b61', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 17, title: 'Category Filter List', link: '/category-filter-list/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 18, title: 'Tabbed Quote List', link: '/tabbed-quote-list/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 19, title: 'Filter Results', link: '/filter-results/', icon: 'reorder', roles: ['USER'],
-        },
-        {
-          ordinal: 19, title: 'Tabbed Product Catelog', link: '/product-catalogue/', icon: 'reorder', roles: ['USER'],
-        },
+        },        
       ]
     },
     {
@@ -526,17 +495,9 @@ const LASEC_CONFIG = {
       path: '/',
       public: false,
       exact: true,
+      componentFqn: 'core.NotFound@1.0.0',
+      redirect: '/crm/clients/',
       roles: ['USER'],
-      componentFqn: `${key}.Dashboard@1.0.0`,
-      args: [
-        {
-          key: 'mode',
-          value: {
-            type: 'string',
-            mode: 'edit'
-          }
-        }
-      ],
     },
     {
       key: 'product-dashboard',

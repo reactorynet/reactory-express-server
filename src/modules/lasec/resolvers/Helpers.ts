@@ -33,7 +33,8 @@ import {
   Lasec360Credentials,
   LasecGetFreightRequestQuoteParams,
   LasecQuoteOption,
-  FreightRequestOption
+  FreightRequestOption,
+  LasecGetPageQuotesParams
 } from '../types/lasec';
 
 
@@ -1365,18 +1366,20 @@ const quote_field_maps: any = {
   "client": "client",
 };
 
+
+
 /**
  * Function that returns paged quote data from the lasec api.
  * @param params
  */
-export const getPagedQuotes = async (params: any) => {
+export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
 
   const {
     search = "",
     periodStart,
     periodEnd,
     quoteDate,
-    filterBy = "any_field",
+    filterBy = "rep_code",
     filter,
     paging = { page: 1, pageSize: 10 },
     orderBy = 'code',
@@ -1404,8 +1407,7 @@ export const getPagedQuotes = async (params: any) => {
   };
 
   const DEFAULT_FILTER = {
-    sales_team_ids: lasec_user.sales_team_ids,
-    repo_code: lasec_user.sales_team_ids,
+    rep_code: lasec_user.repId,
   }
 
   const empty_result = {
@@ -1419,7 +1421,7 @@ export const getPagedQuotes = async (params: any) => {
       delete apiFilter.start_date
       delete apiFilter.end_date
 
-      if (isString(search) === false || search.length < 3 && filter === undefined) {
+      if (isString(search) === false && filter === undefined) {
         apiFilter = DEFAULT_FILTER;
       } else {
         apiFilter.any_field = search;
@@ -1440,7 +1442,7 @@ export const getPagedQuotes = async (params: any) => {
     }
     case "quote_number": {
 
-      if (isString(search) === false || search.length < 3 && filter === undefined) {
+      if (isString(search) === false && filter === undefined) {
         return {
           paging: pagingResult,
           periodStart,
@@ -1451,12 +1453,13 @@ export const getPagedQuotes = async (params: any) => {
         };
       }
 
-      apiFilter.id = search;
+      apiFilter.ids = [search];
+
 
       break;
     }
     case "quote_date": {
-      apiFilter.created = moment(filter).format('yyyy-MM-dd')
+      apiFilter.created = moment(filter).format('YYYY-MM-DD')
       break;
     }
     case "quote_status": {
@@ -1469,15 +1472,18 @@ export const getPagedQuotes = async (params: any) => {
       break;
     }
     case "client": {
-      apiFilter.client = search;
+      //apiFilter.full_name = search;
+      apiFilter.any_field = search;
       break;
     }
     case "customer": {
-      apiFilter.company_trading_name = search;
+      //apiFilter.registered_name = search;
+      apiFilter.any_field = search;
       break;
     }
     case "account_number": {
-      apiFilter.account_number = search;
+      //apiFilter.account_number = search;
+      apiFilter.any_field = search;
       break;
     }
     case "quote_type": {
@@ -1485,7 +1491,7 @@ export const getPagedQuotes = async (params: any) => {
       break;
     }
     case "rep_code": {
-      apiFilter.sales_team_id = isArray(filter) && filter.length > 0 ? filter : lasec_user.sales_team_ids
+      apiFilter.sales_team_id = filter || lasec_user.repId
       break;
     }
   }
@@ -1495,35 +1501,32 @@ export const getPagedQuotes = async (params: any) => {
     apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
   }
 
-  const filterExample = {
-    "filter": {
-      "any_field": "cod",
-      "start_date": "2020-04-06T22:00:00.000Z",
-      "end_date": "2020-05-05T22:00:00.000Z"
-    },
-    "format": { "ids_only": true },
-    "ordering": { "quote_id": "asc" }
+  let ids: string[] = [];
+
+  if (filterBy !== 'quote_number') {
+    let quoteResult = await lasecApi.Quotes.list({
+      filter: apiFilter,
+      pagination: { page_size: paging.pageSize || 10, current_page: paging.page },
+      ordering,
+      format: { "ids_only": true },
+    }).then();
+
+
+    if (isArray(quoteResult.ids) === true) {
+      ids = [...quoteResult.ids];
+    }
+
+    if (quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
+      pagingResult.total = quoteResult.pagination.num_items;
+      pagingResult.pageSize = quoteResult.pagination.page_size || 10;
+      pagingResult.hasNext = quoteResult.pagination.has_next_page === true;
+      pagingResult.page = quoteResult.pagination.current_page || 1;
+    }
+
+  } else {
+    ids = apiFilter.ids;
   }
 
-  let quoteResult = await lasecApi.Quotes.list({
-    filter: apiFilter,
-    pagination: { page_size: paging.pageSize || 10, current_page: paging.page },
-    ordering,
-    format: { "ids_only": true },
-  }).then();
-
-  let ids = [];
-
-  if (isArray(quoteResult.ids) === true) {
-    ids = [...quoteResult.ids];
-  }
-
-  if (quoteResult.pagination && quoteResult.pagination.num_pages > 1) {
-    pagingResult.total = quoteResult.pagination.num_items;
-    pagingResult.pageSize = quoteResult.pagination.page_size || 10;
-    pagingResult.hasNext = quoteResult.pagination.has_next_page === true;
-    pagingResult.page = quoteResult.pagination.current_page || 1;
-  }
 
   // logger.debug(`Loading (${ids.length}) quote ids`);
 

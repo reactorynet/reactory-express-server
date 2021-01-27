@@ -33,7 +33,9 @@ const uiSchema: any = {
     'ui:options': {
       props: {
         componentFqn: 'lasec-crm.LasecCRMNewOrganisation@1.0.0',
-        componentProps: {},
+        componentProps: {
+          mode: 'new'
+        },
         slideDirection: 'down',
         buttonVariant: 'Typography',
         buttonTitle: 'Add New Organisation',
@@ -46,7 +48,9 @@ const uiSchema: any = {
         },
         windowTitle: 'Add New Organisation',
       },
-      propertyMap: {},
+      propertyMap: {
+        'formContext.formData.customer.id': 'formData.customerId'
+      },
       fullWidth:false
     }
   },
@@ -147,8 +151,8 @@ const newUiSchema: any = {
     'ui:widget': 'SlideOutLauncher',
     'ui:options': {
       props: {
-        componentFqn: 'lasec-crm.LasecCRMNewOrganisation@1.0.0',
-        componentProps: {},
+        debugger: true,
+        componentFqn: 'lasec-crm.LasecCRMNewOrganisation@1.0.0',        
         slideDirection: 'down',
         buttonVariant: 'Typography',
         buttonTitle: 'Add New Organisation',
@@ -159,9 +163,13 @@ const newUiSchema: any = {
             fontSize: '16px'
           }
         },
-        windowTitle: 'Add New Organisation',
-      },
-      propertyMap: {},
+        windowTitle: 'Add New Organisation ${formContext.uiSchemaKey}',        
+        componentProps: {
+          'formContext.mode': 'mode',
+          'formData.customerId': 'formData.customerId',
+          'formContext.uiSchemaKey': 'uiSchemaKey'
+        }
+      },      
       fullWidth:false
     }
   },

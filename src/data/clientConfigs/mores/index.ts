@@ -1,9 +1,10 @@
-import * as dotenv from 'dotenv';
 import {
   profileSmall,
   towerStoneMenuDef,
   MenuItems,
-} from '../menus';
+} from '../../menus';
+
+import themeOptions from './theme';
 
 import {
   formsroute,
@@ -12,9 +13,10 @@ import {
   resetpasswordroute,
   forgotpasswordroute,
   notfoundroute,
-} from './defaultRoutes';
+} from '../defaultRoutes';
+import { Reactory } from 'types/reactory';
 
-dotenv.config();
+const key = 'mores';
 
 const {
   CDN_ROOT,
@@ -45,6 +47,7 @@ const APPLICATION_ROLES = {
   ORGANIZATION_ADMIN: 'ORGANIZATION_ADMIN',
   FACILITATOR: 'FACILITATOR',
   PARTNER_ADMIN: 'PARTNER_ADMIN'
+
 };
 
 const  applicationRoles = [
@@ -78,16 +81,14 @@ switch (MODE) {
   }
 }
 
-const key = 'mores';
+
 
 const MainMenu = {
   name: 'Main',
   key: 'left-nav',
   target: 'left-nav',
   roles: ['USER'],
-  entries: [
-
-  ],
+  entries: [],
 };
 
 const TopRightMenu = {
@@ -179,9 +180,7 @@ const staticContentMappings = [
  * A wrapper object for menus, makes it easier for merging during development and production
  */
 const Menus = {
-  DEVELOP: [
-  ],
-
+  DEVELOP: [],
   PRODUCTION: [
     {
       ordinal: 0,
@@ -273,10 +272,10 @@ const Menus = {
       ]
     },
     {
-      ordinal: 17, title: 'Develop', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN'],
+      ordinal: 17, title: 'Develop', link: '/Forms/', icon: 'code', roles: ['DEVELOPER', 'ADMIN'],
       items: [
         {
-          ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN']
+          ordinal: 8, title: 'Reactory Forms', link: '/Forms/', icon: 'code', roles: ['DEVELOPER', 'ADMIN']
         },
         {
           ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
@@ -523,10 +522,12 @@ const routes = [
     roles: ['USER'],
     componentFqn: `${key}.ProfileHOC@1.0.0`,
   },
+
+  /*
   {
-    key: 'reactoryrouter',
+    key: 'reactoryrouter-mode-id',
     title: 'Reactory Forms',
-    path: '/reactory/**',
+    path: '/Forms/:formId/:mode/:id/**',
     exact: false,
     public: false,
     roles: ['ADMIN', 'DEVELOPER'],
@@ -536,11 +537,70 @@ const routes = [
         key: 'routePrefix',
         value: {
           type: 'string',
-          routePrefix: '/reactory'
+          routePrefix: '/Forms'
         },
       }
     ]
   },
+
+  {
+    key: 'reactoryrouter-mode-specific',
+    title: 'Reactory Forms',
+    path: '/Forms/:formId/:mode/',
+    exact: true,
+    public: false,
+    roles: ['ADMIN', 'DEVELOPER'],
+    componentFqn: 'core.ReactoryRouter',
+    args: [
+      {
+        key: 'routePrefix',
+        value: {
+          type: 'string',
+          routePrefix: '/Forms'
+        },
+      }
+    ]
+  },
+
+  {
+    key: 'reactoryrouter-view',
+    title: 'Reactory Forms',
+    path: '/Forms/:formId/',
+    exact: true,
+    public: false,
+    roles: ['ADMIN', 'DEVELOPER'],
+    componentFqn: 'core.ReactoryRouter',
+    args: [
+      {
+        key: 'routePrefix',
+        value: {
+          type: 'string',
+          routePrefix: '/Forms'
+        },
+      }
+    ]
+  },
+  */
+
+  {
+    key: 'reactoryrouter',
+    title: 'Reactory Forms',
+    path: '/Forms/**',
+    exact: true,
+    public: false,
+    roles: ['ADMIN', 'DEVELOPER'],
+    componentFqn: 'core.ReactoryRouter',
+    args: [
+      {
+        key: 'routePrefix',
+        value: {
+          type: 'string',
+          routePrefix: '/Forms'
+        },
+      }
+    ]
+  },
+
   {
     key: 'survey-admin',
     title: 'Survey Admin',
@@ -701,7 +761,7 @@ const routes = [
 
 ];
 
-const config = {
+const config: Reactory.IReactoryClient = {
   key,
   name: 'Mores Assessments',
   username: 'mores-assessments',
@@ -715,96 +775,15 @@ const config = {
   avatar: `${CDN_ROOT}themes/${key}/images/avatar.png`,
   applicationRoles,
   billingType: 'partner',
-  users: [
-    {
-      email: 'werner.weber@gmail.com', roles: ['ADMIN', 'USER', 'DEVELOPER', APPLICATION_ROLES.ORGANIZATION_ADMIN], firstName: 'Werner', lastName: 'Weber',
-    },
-    {
-      email: 'drewmurphyza@gmail.com', roles: ['ADMIN', 'USER', 'DEVELOPER', APPLICATION_ROLES.ORGANIZATION_ADMIN], firstName: 'Drew', lastName: 'Murphy',
-    },
-    {
-      email: 'garydob@gmail.com', roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.USER, APPLICATION_ROLES.DEVELOPER, APPLICATION_ROLES.ORGANIZATION_ADMIN], firstName: 'Gary', lastName: 'Dobkins',
-    },
-    {
-      email: 'yolande.wheatley@towerstone-global.com', roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.USER, APPLICATION_ROLES.DEVELOPER, APPLICATION_ROLES.ORGANIZATION_ADMIN], firstName: 'Yolande', lastName: 'Wheatley',
-    },
-    {
-      email: 'thea.shaw@towerstone-global.com', roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.USER, APPLICATION_ROLES.DEVELOPER, APPLICATION_ROLES.ORGANIZATION_ADMIN], firstName: 'Thea', lastName: 'Shaw',
-    },
-  ],
+  users: [],
   components: [],
   menus: [],
+  mode: 'development',
   routes,
   theme: 'mores',
-  themeOptions: {
-    key,
-    typography: {
-      useNextVariants: true,
-    },
-    type: 'material',
-    palette: {
-      primary1Color: '#52687b',
-      grey: {
-        light: '#757575',
-        main: '#5fb848',
-        dark: '#298717',
-        contrastText: '#222732',
-      },
-      error: {
-        light: '#C7212D',
-        main: '#C7212D',
-        dark: '#C7212D',
-        contrastText: '#C7212D',
-      },
-      success: {
-        light: '#6DB84A',
-        main: '#6DB84A',
-        dark: '#6DB84A',
-        contrastText: '#222732',
-      },
-      warning: {
-        light: '#F6950F',
-        main: '#F6950F',
-        dark: '#F6950F',
-        contrastText: '#F6950F',
-      },
-      info: {
-        light: '#49B4D4',
-        main: '#49B4D4',
-        dark: '#49B4D4',
-        contrastText: '#222732',
-      },
-      primary: {
-        light: '#7f96aa',
-        main: '#52687b',
-        dark: '#85B810',
-        contrastText: '#ffffff',
-      },
-      secondary: {
-        light: '#7d983c',
-        main: '#7d983c',
-        dark: '#7d983c',
-        contrastText: '#000000',
-      },
-      report: {
-        empty: '#ffffd2',
-        fill: '#273e4f',
-      },
-    },
-    assets: {
-      featureImage: `${CDN_ROOT}themes/${key}/images/stairs.jpg`,
-      logo: `${CDN_ROOT}themes/${key}/images/logo.png`,
-      favicon: `${CDN_ROOT}themes/${key}/images/favicon.ico`,
-      emailLogo: `${CDN_ROOT}themes/${key}/images/logo.png`,
-    },
-    content: {
-      appTitle: 'Mores Assessments',
-      login: {
-        message: 'Each one of us has only one precious life',
-      },
-    },
-  },
+  themeOptions: themeOptions,
   allowCustomTheme: true,
+  modules: [],
   auth_config: [
     {
       provider: 'local',

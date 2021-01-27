@@ -62,14 +62,17 @@ declare namespace Reactory {
     themeOptions: any,
     applicationRoles: String[],
     billingType: String,
-    modules: any[],
+    modules?: any[],
     menus: any[],
     routes: any[],
-    auth_config: any[],
-    settings: any[],
-    whitelist: string[]
-    createdAt: Date,
-    updatedAt: Date
+    auth_config?: any[],
+    settings?: any[],
+    whitelist?: string[]
+    components?: any[],
+    users?: any[],
+    allowCustomTheme?: boolean,
+    createdAt?: Date,
+    updatedAt?: Date
   }
 
   export interface IReactoryClientDocument extends Mongoose.Document, IReactoryClient { }

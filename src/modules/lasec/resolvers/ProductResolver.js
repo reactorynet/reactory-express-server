@@ -635,7 +635,7 @@ export default {
     notes: async (product, args) => {
       try {
 
-        const productNotes = await mysql(`SELECT notes FROM Product WHERE productid = ${product.id};`, 'mysql.lasec360').then()
+        const productNotes = await mysql(`SELECT Notes FROM ProductDescription WHERE productid = ${product.id};`, 'mysql.lasec360').then()
         logger.debug(`Product.notes --> Checking Notes for Product Id ${product.id} - ${product.code}`, productNotes)
         if(productNotes) {
           if(isArray(productNotes) === true && productNotes.length === 1) {

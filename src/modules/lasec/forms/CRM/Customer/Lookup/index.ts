@@ -26,6 +26,13 @@ const uiSchema: any = {
     'ui:options': {
       label: 'Select a Customer',
       title: 'Search for a Customer',
+      labelProps: {
+        style: {
+          fontWeight: 'bold',
+          color: 'rgba(0,0,0,1)',
+          marginTop: '3px'
+        }
+      },
       modalProps: {
         fullScreen: false,
         closeOnEvents: [
@@ -78,6 +85,13 @@ const newUiSchema: any = {
     'ui:options': {
       label: 'Customer Registered Name',
       title: 'Search for a Customer',
+      labelProps: {
+        style: {
+          fontWeight: 'bold',
+          color: 'rgba(0,0,0,1)',
+          marginTop: '3px'
+        }
+      },
       modalProps: {
         fullScreen: false,
         closeOnEvents: [

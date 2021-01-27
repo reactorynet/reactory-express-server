@@ -87,7 +87,7 @@ const LasecCRMNewOrganisationForm: Reactory.IReactoryForm = {
   name: 'LasecCRMNewOrganisation',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: schema,
+  schema: schema,  
   uiSchema: uiSchema,
   graphql: $graphql,
   widgetMap: [],

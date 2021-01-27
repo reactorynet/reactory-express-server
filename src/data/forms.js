@@ -243,6 +243,14 @@ const LoginForm = {
   },
   uiSchema: {
     submitIcon: 'lock',
+
+    email: {
+      className: 'login-form-email'
+    },
+
+    password: {
+      className: 'login-form-password'
+    },
   },
 };
 

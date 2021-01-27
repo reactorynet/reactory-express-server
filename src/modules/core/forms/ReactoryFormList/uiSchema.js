@@ -17,10 +17,10 @@
             field: 'id',
             component: 'core.Link@1.0.0',
             props: {
-              link: '/reactory\/${rowData.id}\/',
+              link: '/Forms\/${rowData.id}\/',
               uiSchema: {
                 'ui:options': {
-                  format: '/reactory\/${rowData.id}\/',
+                  format: '/Forms\/${rowData.id}\/',
                   title: '${rowData.id}',
                   userouter: false,
                 },

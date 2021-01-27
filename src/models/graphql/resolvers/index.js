@@ -224,8 +224,8 @@ const resolvers = {
       if(navigationComponentsSetting && navigationComponentsSetting.data) {
         navigationComponents = [ ...navigationComponentsSetting.data ];
       }
-      
-      return {
+
+      const api_status_result = {
         when: moment(),
         status: 'API OK',        
         firstName: isNil(user) === false ? user.firstName : 'An',
@@ -254,6 +254,10 @@ const resolvers = {
         messages: uxmessages, 
         navigationComponents       
       };
+
+      logger.debug(`${user.firstName} Api Status Call Result:\n${JSON.stringify(api_status_result)}`);
+
+      return api_status_result;
     },
   },
   Any: new GraphQLScalarType({
