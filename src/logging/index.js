@@ -3,9 +3,13 @@ import * as dotenv from 'dotenv';
 
 import 'winston-daily-rotate-file';
 
+const { format, transports } = winston;
+
+const { combine, timestamp, label, prettyPrint } = format;
+
 dotenv.config();
 
-const dailyRotate = new (winston.transports.DailyRotateFile)({
+const dailyRotate = new (transports.DailyRotateFile)({
   level: process.env.LOG_LEVEL || 'debug',
   filename: `${process.env.APP_DATA_ROOT}/logging/reactory-%DATE%.json`,
   datePattern: 'YYYY-MM-DD-HH',
@@ -14,14 +18,17 @@ const dailyRotate = new (winston.transports.DailyRotateFile)({
   maxFiles: '14d',
 });
 
-const consolelogger = new (winston.transports.Console)({
+const consolelogger = new (transports.Console)({
   level: 'debug',
-  format: winston.format.simple(),
+  format: format.simple(),
 });
 
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'debug',
-  format: winston.format.json(),
+  format: combine(    
+    timestamp(),
+    prettyPrint()
+  ),
   transports: [
     // new winston.transports.File({ filename: 'error.log', level: 'error' }),
     // new winston.transports.File({ filename: 'combined.log' }),

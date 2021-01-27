@@ -2573,7 +2573,7 @@ export default {
       const _newClient: LasecNewClientInput = await getCacheItem(hash).then();
 
       logger.debug(`Current Data Stored In NewClientCache:\n ${JSON.stringify({ client_data: _newClient, newClientParam: args.newClient }, null, 2)}`)
-
+      debugger
 
 
       let response: NewClientResponse = {
@@ -2718,13 +2718,16 @@ export default {
       let inputData: any;
 
       const doCreate = async () => {
+        
         try {
           inputData = om.merge(_newClient, _map);
+          inputData.company_id = _newClient.customer.id,
           inputData.onboarding_step_completed = 6;
           inputData.activity_status = 'active';
 
           logger.debug(`🟠 Create new client on LasecAPI using input data:`, inputData)
           customer = await post(URIS.customer_create.url, inputData, null, true).then()
+          debugger
           logger.debug(`👀 Result in creating user`, customer);
 
           return customer;
@@ -2737,7 +2740,11 @@ export default {
         }
       };
 
+
+
       const doStatusUpdate = async () => {
+
+        debugger
 
         try {
           logger.debug(`🟠 Updating user activity and organization and company details status complete via mysql`, { organization: _newClient.organization, customer: _newClient.customer });
@@ -2758,7 +2765,7 @@ export default {
       }
 
       customer = await doCreate();
-
+      
       if (customer && customer.id && Number.parseInt(`${customer.id}`) > 0) {
         customer = { ...inputData, ...customer };
         customerCreated = Boolean(customer && customer.id);
@@ -2770,6 +2777,7 @@ export default {
            * set addresses for the customer
            * */
           const { deliveryAddress, physicalAddress } = _newClient.address;
+
           if (Number.parseInt(physicalAddress.id) > 0) {
             try {
               const update_result = await mysql(`
@@ -2803,6 +2811,7 @@ export default {
             let upload_promises = [];
 
             let clientDocuments: any[] = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
+            debugger
             if (clientDocuments.length > 0) {
               upload_promises = clientDocuments.map((documentInfo) => {
                 return lasecApi.Documents.upload(documentInfo, customer)
@@ -2838,11 +2847,30 @@ export default {
           response.messages.push({ text: `Could not create the new client on Lasec API`, type: 'success', inAppNotification: true });
         }
       } else {
+
+        // {"pagination":{},"ids":[],"items":[],"error":{"office_number":["This field is required"]},"timestamp":"2021-01-27T08:32:59.691Z"}
+
+        let messages = [{text: 'Error saving customer', description: 'Unknown Error saving customer' }];
+
+        if(customer.error) {
+          messages = Object.keys(customer.error).map((k) => { 
+            let desc = '';
+
+            if(Array.isArray(customer.error[k]) === true) {
+              customer.error[k].forEach((e: string) => {
+                desc = `${desc}${k}: ${e}, `;
+              })
+            }
+
+            return {
+              text: k,
+              description: desc
+            }            
+           });
+        }
+        
         response.success = false;
-        response.messages.push({
-          text: 'Could not save user',
-          description: 'Could not save user'
-        });
+        response.messages = messages;
       }
 
       return response;
