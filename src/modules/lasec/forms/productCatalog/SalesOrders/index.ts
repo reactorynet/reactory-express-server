@@ -1,6 +1,107 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
-import $graphql from '../shared/graphql';
+// import $graphql from '../shared/graphql';
 import $schema from '../shared/schema';
+
+const $graphql = {
+  queries: {
+    products_table: {
+      name: 'LasecGetProductList',
+      autoQuery: false,
+      text: `query LasecGetProductList($product: String!, $paging: PagingRequest){
+        LasecGetProductList(product: $product, paging: $paging){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          product
+          products {
+            id
+            name
+            code
+            description
+            qtyAvailable
+            qtyOnHand
+            qtyOnOrder
+            unitOfMeasure
+            price
+            priceAdditionalInfo
+            image
+            onSyspro
+            landedPrice
+            wh10CostPrice
+            threeMonthAvePrice
+            listPrice
+            buyer
+            planner
+            isHazardous
+            siteEvaluationRequired
+            packedLength
+            packedWidth
+            packedHeight
+            packedVolume
+            packedWeight
+
+            numberOfSalesOrders
+            numberOfPurchaseOrders
+
+            supplier
+            model
+            shipmentSize
+            exWorksFactor
+
+            productClass
+            tariffCode
+            leadTime
+            validPriceUntil
+            lastUpdated
+            lastUpdatedBy
+            lastOrdered
+            lastReceived
+            supplyCurrency
+            listCurrency
+
+            freightFactor
+            clearingFactor
+            actualCostwh10
+            actualCostwh20
+            actualCostwh21
+            actualCostwh31
+            supplierUnitPrice
+            percDiscount
+            discountPrice
+            freightPrice
+            exWorksPrice
+            craftingFOC
+            netFOB
+            percDuty
+            percDuty
+            clearance
+            landedCost
+            markup
+            sellingPrice
+          }
+        }
+      }`,
+      resultMap: {
+        'paging': 'paging',
+        'product': 'product',
+        'products': 'products',
+      },
+      resultType: 'object',
+      edit: false,
+      new: false,
+      refreshEvents: [
+        { name: 'lasec-crm::product-search' }
+      ],
+      onError: {
+        componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+        method: 'onGraphQLQueryError',
+      },
+    },
+  },
+};
 
 const uiSchema: any = {
   'ui:options': {
@@ -239,11 +340,12 @@ const uiSchema: any = {
           },
         },
         {
+          field: 'id',
           component: 'core.SlideOutLauncher@1.0.0',
           props: {
             componentFqn: 'lasec-crm.LasecCMSProductSalesOrdersTable@1.0.0',
             componentProps: {
-              'rowData.id': ['formData.id', 'formData.product'],
+              'rowData.id': ['formData.id'],
               'rowData.image': 'formData.image',
               'rowData.code': 'formData.code',
               'rowData.description': 'formData.description',
@@ -254,7 +356,7 @@ const uiSchema: any = {
             buttonVariant: 'Typography',
             buttonProps: {
               color: "#000000",
-              style: { color: "#000000", textDecoration: 'underline' }
+              style: { cursor: 'pointer', color: "#000000", textDecoration: 'underline' }
             },
             buttonTitle: 'View Sales Orders',
             windowTitle: 'Sales Orders',
@@ -280,33 +382,7 @@ const uiSchema: any = {
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
         'product': 'product',
-        'products.[].id': 'data.[].id',
-        'products.[].name': 'data.[].name',
-        'products.[].code': 'data.[].code',
-        'products.[].description': 'data.[].description',
-        'products.[].qtyAvailable': 'data.[].qtyAvailable',
-        'products.[].qtyOnHand': 'data.[].qtyOnHand',
-        'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
-        'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
-        'products.[].price': 'data.[].price',
-        'products.[].image': 'data.[].image',
-        'products.[].onSyspro': 'data.[].onSyspro',
-        'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
-        'products.[].landedPrice': 'data.[].landedPrice',
-        'products.[].wh10CostPrice': 'data.[].wh10CostPrice',
-        'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
-        'products.[].listPrice': 'data.[].listPrice',
-        'products.[].buyer': 'data.[].buyer',
-        'products.[].planner': 'data.[].planner',
-        'products.[].isHazardous': 'data.[].isHazardous',
-        'products.[].siteEvaluationRequired': 'data.[].siteEvaluationRequired',
-        'products.[].packedLength': 'data.[].packedLength',
-        'products.[].packedWidth': 'data.[].packedWidth',
-        'products.[].packedHeight': 'data.[].packedHeight',
-        'products.[].packedVolume': 'data.[].packedVolume',
-        'products.[].packedWeight': 'data.[].packedWeight',
-        'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
-        'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',
+        'products': 'data',
       },
     },
   }

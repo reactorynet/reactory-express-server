@@ -15,6 +15,7 @@ const tableUiSchema: any = {
       variant: 'icon-button',
       showTitle: false,
       activeColor: 'secondary',
+      selectSchemaId: 'grid',
       style: {
         display: 'flex',
         justifyContent: 'flex-end'

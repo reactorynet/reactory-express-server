@@ -1,63 +1,63 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 
 const graphql: Reactory.IFormGraphDefinition = {
-  query:{
-    name: 'LasecGetCRMSalesOrders',
-      text: `query LasecGetCRMSalesOrders($productId: String, $paging: PagingRequest){
-      LasecGetCRMSalesOrders(productId: $productId, paging: $paging){
-        paging {
-          total
-          page
-          hasNext
-          pageSize
-        }
-        totals
-        salesOrders {
-          id
-          orderDate
-          salesOrderNumber,
-          shippingDate
-          quoteId
-          quoteDate
-          orderType
-          orderStatus
-          iso
-          customer
-          client
-          poNumber
-          currency
-          value
-          deliveryAddress
-          warehouseNote
-          deliveryNote
-          salesTeam
-          reserveValue
-          shipValue
-          backorderValue
-          dispatchCount
-          invoiceCount
+  // query:{
+  //   name: 'LasecGetCRMSalesOrders',
+  //     text: `query LasecGetCRMSalesOrders($productId: String, $paging: PagingRequest){
+  //     LasecGetCRMSalesOrders(productId: $productId, paging: $paging){
+  //       paging {
+  //         total
+  //         page
+  //         hasNext
+  //         pageSize
+  //       }
+  //       totals
+  //       salesOrders {
+  //         id
+  //         orderDate
+  //         salesOrderNumber,
+  //         shippingDate
+  //         quoteId
+  //         quoteDate
+  //         orderType
+  //         orderStatus
+  //         iso
+  //         customer
+  //         client
+  //         poNumber
+  //         currency
+  //         value
+  //         deliveryAddress
+  //         warehouseNote
+  //         deliveryNote
+  //         salesTeam
+  //         reserveValue
+  //         shipValue
+  //         backorderValue
+  //         dispatchCount
+  //         invoiceCount
 
-          orderQty
-          shipQty
-          reservedQty
-          backOrderQty
-        }
-      }
-    }`,
-      autoQuery: false,
-      resultType: 'object',
-      edit: false,
-      new: false,
-      variables: {
-        'formData.id': 'productId',
-        'formData.paging': 'paging'
-      },
-      resultMap: {
-        'paging': 'paging',
-        'totals': 'totals',
-        'salesOrders': 'salesOrders',
-      },
-  },
+  //         orderQty
+  //         shipQty
+  //         reservedQty
+  //         backOrderQty
+  //       }
+  //     }
+  //   }`,
+  //     autoQuery: false,
+  //     resultType: 'object',
+  //     edit: false,
+  //     new: false,
+  //     variables: {
+  //       'formData.id': 'productId',
+  //       'formData.paging': 'paging'
+  //     },
+  //     resultMap: {
+  //       'paging': 'paging',
+  //       'totals': 'totals',
+  //       'salesOrders': 'salesOrders',
+  //     },
+  // },
   queries: {
     sales_orders: {
       name: 'LasecGetCRMSalesOrders',
@@ -113,6 +113,9 @@ const graphql: Reactory.IFormGraphDefinition = {
 const schema: Reactory.ISchema = {
   type: 'object',
   properties: {
+    id: {
+      type: 'string',
+    },
     product: {
       type: 'string',
     },
@@ -225,6 +228,10 @@ const uiSchema: any = {
       salesOrders: { xs: 12, lg: 12 }
     }
   ],
+  id: {
+    hidden: true,
+    'ui:widget': 'HiddenWidget'
+  },
   product: {
     hidden: true,
     'ui:widget': 'HiddenWidget'
@@ -411,15 +418,15 @@ const uiSchema: any = {
         { title: 'Status', field: 'orderStatus' },
 
       ],
-      footerColumns: [
-        { field: 'orderType' }, { field: 'orderDate' }, { field: 'shippingDate' }, { field: 'id' }, { field: 'quoteId' }, { field: 'quoteDate' }, { field: 'customer' }, { field: 'client' },
-        { field: 'poNumber', text: 'Totals' },
-        { field: 'orderQty', value: '${totals.orderQty}' },
-        { field: 'shipQty', value: '${totals.shipQty}' },
-        { field: 'reservedQty', value: '${totals.reservedQty}' },
-        { field: 'backOrderQty', value: '${totals.backOrderQty}' },
-        { field: 'value' }, { field: 'orderStatus' }
-      ],
+      // footerColumns: [
+      //   { field: 'orderType' }, { field: 'orderDate' }, { field: 'shippingDate' }, { field: 'id' }, { field: 'quoteId' }, { field: 'quoteDate' }, { field: 'customer' }, { field: 'client' },
+      //   { field: 'poNumber', text: 'Totals' },
+      //   { field: 'orderQty', value: '${totals.orderQty}' },
+      //   { field: 'shipQty', value: '${totals.shipQty}' },
+      //   { field: 'reservedQty', value: '${totals.reservedQty}' },
+      //   { field: 'backOrderQty', value: '${totals.backOrderQty}' },
+      //   { field: 'value' }, { field: 'orderStatus' }
+      // ],
       options: {
         grouping: false,
         search: false,
@@ -429,15 +436,10 @@ const uiSchema: any = {
         searchText: '${formContext.$formData.product}'
       },
       remoteData: true,
-      // query: 'sales_orders',
-      query: 'query',
+      query: 'sales_orders',
       variables: {
         'props.formContext.$formData.id': 'productId',
         'props.formContext.$formData.paging': 'paging',
-        // 'formData.product': 'product',
-        // 'query.search': 'product',
-        // 'query.page': 'paging.page',
-        // 'query.pageSize': 'paging.pageSize'
       },
       resultMap: {
         'paging.page': 'page',
@@ -756,12 +758,12 @@ const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
     }
   ],
   defaultFormValue: {
+    id: '',
+    product: '',
     paging: {
       page: 1,
       pageSize: 10,
     },
-    product: "",
-    products: []
   },
   widgetMap: [
     { componentFqn: 'core.LabelComponent@1.0.0', widget: 'LabelWidget' },
