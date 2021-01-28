@@ -486,6 +486,12 @@ type PagedCRMSalesOrders {
   paging: PagingResult
   salesOrders: [SalesOrder]
   totals: Any
+  id: String
+  image: String
+  code: String
+  description: String
+  unitOfMeasure: String
+  price: String
 }
 
 type PurchaseOrder {
@@ -759,16 +765,17 @@ extend type Query {
     dashparams: LasecQuoteQueryInput
   ): LasecProductDashboard
 
-  LasecGetQuoteById(quote_id: String!, option_id: String, item_paging: PagingRequest): Quote
+  LasecGetQuoteById(
+    quote_id: String!
+    option_id: String
+    item_paging: PagingRequest
+  ): Quote
 
   LasecGetQuoteComments(quote_id: String!): [LasecQuoteComment]
 
   LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [Quote]
 
-  LasecGetCRMSalesOrders(
-    productId: String
-    paging: PagingRequest
-  ): PagedCRMSalesOrders
+  LasecGetCRMSalesOrders(productId: String, image: String, code:  String, description: String, unitOfMeasure: String, price: Int, paging: PagingRequest): PagedCRMSalesOrders
   LasecGetCRMPurchaseOrders(
     productId: String
     paging: PagingRequest
@@ -801,7 +808,6 @@ extend type Query {
     dateFilter: String
     iter: Int
   ): PagedCRMSalesOrders
-
 
   LasecGetCRMClientInvoices(
     clientId: String
@@ -855,11 +861,17 @@ extend type Query {
   LasecGetCompanyDetailsforQuote(id: String!): LasecCRMCustomer
 
   # LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryMonthlyCount]
-  LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryYearlyCount]
+  LasecGetSalesHistoryMonthTotals(
+    search: String!
+    filterBy: String
+  ): [SalesHistoryYearlyCount]
   LasecGetQuotePDFUrl(quote_id: String!): DocumentUrl
   LasecGetQuoteProformaPDFUrl(quote_id: String!): DocumentUrl
 
-  LasecPrepareQuoteEmail(quote_id: String!, email_type: String): LasecPreparedEmail
+  LasecPrepareQuoteEmail(
+    quote_id: String!
+    email_type: String
+  ): LasecPreparedEmail
 }
 
 extend type Mutation {
@@ -935,8 +947,8 @@ extend type Mutation {
     quote_type: String
     rep_code: String
     client_id: String
-    valid_until: String,
-    currency_code: String,
+    valid_until: String
+    currency_code: String
   ): SimpleResponse
   LasecUpdateQuoteLineItems(
     quote_id: String
@@ -951,9 +963,19 @@ extend type Mutation {
 
   LasecDeleteQuotes(quoteIds: [String]): SimpleResponse
 
-  LasecCreateNewQuoteOption(quote_id: String!, copy_from: String): LasecQuoteOption
+  LasecCreateNewQuoteOption(
+    quote_id: String!
+    copy_from: String
+  ): LasecQuoteOption
 
-  LasecPatchQuoteOption(quote_id: String!, option_id: String!, option: LasecQuoteOptionPatchInput! ): LasecQuoteOption
+  LasecPatchQuoteOption(
+    quote_id: String!
+    option_id: String!
+    option: LasecQuoteOptionPatchInput!
+  ): LasecQuoteOption
 
-  LasecDeleteQuoteOption(quote_id: String!, option_id: String!) : CoreSimpleResponse
+  LasecDeleteQuoteOption(
+    quote_id: String!
+    option_id: String!
+  ): CoreSimpleResponse
 }

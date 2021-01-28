@@ -1679,6 +1679,12 @@ export const getSalesOrders = async (params) => {
 
   const {
     productId,
+    id,
+    image,
+    code,
+    description,
+    unitOfMeasure,
+    price,
     filterBy,
     search,
     paging = { page: 1, pageSize: 10 }
@@ -1757,7 +1763,13 @@ export const getSalesOrders = async (params) => {
   let result = {
     paging: pagingResult,
     salesOrders,
-    totals
+    totals,
+    id: productId,
+    image,
+    code,
+    description,
+    unitOfMeasure,
+    price
   };
 
   return result;
