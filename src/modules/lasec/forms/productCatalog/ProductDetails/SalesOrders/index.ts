@@ -1,11 +1,85 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 
 const graphql: Reactory.IFormGraphDefinition = {
+  // query: {
+  //   name: 'LasecGetCRMSalesOrders',
+  //   text: `query LasecGetCRMSalesOrders($productId: String, $image: String, $code: String, $description: String, $unitOfMeasure: String, $price: Int, $paging: PagingRequest){
+  //     LasecGetCRMSalesOrders(productId: $productId, image: $image, code: $code, description: $description, unitOfMeasure: $unitOfMeasure, price: $price, paging: $paging){
+  //       paging {
+  //         total
+  //         page
+  //         hasNext
+  //         pageSize
+  //       }
+  //       totals
+  //       id
+  //       image
+  //       code
+  //       description
+  //       unitOfMeasure
+  //       price
+  //       salesOrders {
+  //         id
+  //         orderDate
+  //         salesOrderNumber,
+  //         shippingDate
+  //         quoteId
+  //         quoteDate
+  //         orderType
+  //         orderStatus
+  //         iso
+  //         customer
+  //         client
+  //         poNumber
+  //         currency
+  //         value
+  //         deliveryAddress
+  //         warehouseNote
+  //         deliveryNote
+  //         salesTeam
+  //         reserveValue
+  //         shipValue
+  //         backorderValue
+  //         dispatchCount
+  //         invoiceCount
+
+  //         orderQty
+  //         shipQty
+  //         reservedQty
+  //         backOrderQty
+  //       }
+  //     }
+  //   }`,
+  //   autoQuery: false,
+  //   resultType: 'object',
+  //   edit: false,
+  //   new: false,
+  //   variables: {
+  //     'formData.id': 'productId',
+  //     'formData.paging': 'paging',
+  //     'formData.image': 'image',
+  //     'formData.code': 'code',
+  //     'formData.description': 'description',
+  //     'formData.unitOfMeasure': 'unitOfMeasure',
+  //     'formData.price': 'price',
+  //   },
+  //   resultMap: {
+  //     'paging': 'paging',
+  //     'totals': 'totals',
+  //     'salesOrders': 'salesOrders',
+  //     'id': ['id', 'product'],
+  //     'image': 'image',
+  //     'code': 'code',
+  //     'description': 'description',
+  //     'unitOfMeasure': 'unitofMeasure',
+  //     'price': 'price'
+  //   },
+  // },
   queries: {
     sales_orders: {
       name: 'LasecGetCRMSalesOrders',
-      text: `query LasecGetCRMSalesOrders($productId: String, $paging: PagingRequest){
-      LasecGetCRMSalesOrders(productId: $productId, paging: $paging){
+      text: `query LasecGetCRMSalesOrders($productId: String, $image: String, $code: String, $description: String, $unitOfMeasure: String, $price: Int, $paging: PagingRequest){
+      LasecGetCRMSalesOrders(productId: $productId, image: $image, code: $code, description: $description, unitOfMeasure: $unitOfMeasure, price: $price, paging: $paging){
         paging {
           total
           page
@@ -13,6 +87,12 @@ const graphql: Reactory.IFormGraphDefinition = {
           pageSize
         }
         totals
+        id
+        image
+        code
+        description
+        unitOfMeasure
+        price
         salesOrders {
           id
           orderDate
@@ -49,6 +129,26 @@ const graphql: Reactory.IFormGraphDefinition = {
       resultType: 'object',
       edit: false,
       new: false,
+      variables: {
+        'formData.id': 'productId',
+        'formData.paging': 'paging',
+        'formData.image': 'image',
+        'formData.code': 'code',
+        'formData.description': 'description',
+        'formData.unitOfMeasure': 'unitOfMeasure',
+        'formData.price': 'price',
+      },
+      resultMap: {
+        'paging': 'paging',
+        'totals': 'totals',
+        'salesOrders': 'salesOrders',
+        'id': ['id', 'product'],
+        'image': 'image',
+        'code': 'code',
+        'description': 'description',
+        'unitOfMeasure': 'unitofMeasure',
+        'price': 'price'
+      },
     },
   },
 };
@@ -56,6 +156,9 @@ const graphql: Reactory.IFormGraphDefinition = {
 const schema: Reactory.ISchema = {
   type: 'object',
   properties: {
+    id: {
+      type: 'string',
+    },
     product: {
       type: 'string',
     },
@@ -140,7 +243,7 @@ const schema: Reactory.ISchema = {
 
 };
 
-const uiSchema: any = {  
+const uiSchema: any = {
   'ui:options': {
     componentType: "div",
     showSubmit: false,
@@ -168,6 +271,10 @@ const uiSchema: any = {
       salesOrders: { xs: 12, lg: 12 }
     }
   ],
+  id: {
+    hidden: true,
+    'ui:widget': 'HiddenWidget'
+  },
   product: {
     hidden: true,
     'ui:widget': 'HiddenWidget'
@@ -374,35 +481,25 @@ const uiSchema: any = {
       remoteData: true,
       query: 'sales_orders',
       variables: {
-        'query.search': 'product',
-        'query.page': 'paging.page',
-        'query.pageSize': 'paging.pageSize'
+        'formContext.$formData.id': 'productId',
+        'formContext.$formData.image': 'image',
+        'formContext.$formData.code': 'code',
+        'formContext.$formData.description': 'description',
+        'formContext.$formData.unitOfMeasure': 'unitOfMeasure',
+        'formContext.$formData.price': 'price'
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-
         'totals': 'totals',
-
-        'salesOrders.[].id': 'data.[].id',
-        'salesOrders.[].orderDate': 'data.[].orderDate',
-        'salesOrders.[].orderType': 'data.[].orderType',
-        'salesOrders.[].quoteId': 'data.[].quoteId',
-        'salesOrders.[].quoteDate': 'data.[].quoteDate',
-        'salesOrders.[].dispatchCount': 'data.[].dispatchCount',
-        'salesOrders.[].shippingDate': 'data.[].shippingDate',
-        'salesOrders.[].iso': 'data.[].iso',
-        'salesOrders.[].customer': 'data.[].customer',
-        'salesOrders.[].client': 'data.[].client',
-        'salesOrders.[].poNumber': 'data.[].poNumber',
-        'salesOrders.[].value': 'data.[].value',
-
-        'salesOrders.[].orderStatus': 'data.[].orderStatus',
-        'salesOrders.[].orderQty': 'data.[].orderQty',
-        'salesOrders.[].shipQty': 'data.[].shipQty',
-        'salesOrders.[].reservedQty': 'data.[].reservedQty',
-        'salesOrders.[].backOrderQty': 'data.[].backOrderQty',
+        'salesOrders': 'data',
+        'id': 'id',
+        'image': 'image',
+        'code': 'code',
+        'description': 'description',
+        'unitOfMeasure': 'unitofMeasure',
+        'price': 'price'
       },
     },
   }
@@ -429,10 +526,14 @@ const GridOnlyUISchema: any = {
       salesOrders: { xs: 12 }
     }
   ],
-  product: {
+  id: {
     hidden: true,
     'ui:widget': 'HiddenWidget'
   },
+  // product: {
+  //   hidden: true,
+  //   'ui:widget': 'HiddenWidget'
+  // },
   image: {
     'ui:widget': 'HiddenWidget',
     props: {
@@ -697,12 +798,12 @@ const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
     }
   ],
   defaultFormValue: {
+    id: '',
+    product: '',
     paging: {
       page: 1,
       pageSize: 10,
     },
-    product: "",
-    products: []
   },
   widgetMap: [
     { componentFqn: 'core.LabelComponent@1.0.0', widget: 'LabelWidget' },

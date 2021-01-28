@@ -49,7 +49,8 @@ const LasecCMSProductDetail: Reactory.IReactoryForm = {
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
-    { componentFqn: 'core.GridLayoutComponent@1.0.0', widget: 'GridLayoutWidget' }
+    { componentFqn: 'core.GridLayoutComponent@1.0.0', widget: 'GridLayoutWidget' },
+    { componentFqn: 'lasec-crm.LasecProductGrid@1.0.0', widget: 'ProductGrid' }
   ],
 };
 

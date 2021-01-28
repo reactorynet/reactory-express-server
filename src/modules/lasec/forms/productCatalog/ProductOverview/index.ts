@@ -1,7 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import $schema from './schema';
 import $graphql from './graphql';
-import { tableUiSchema, gridUiSchemaGrid} from './uiSchema';
+import { tableUiSchema, gridUiSchemaGrid } from './uiSchema';
 
 const LasecCMSProductOverview: Reactory.IReactoryForm = {
   id: 'LasecProductOverviewTable',
@@ -49,7 +49,8 @@ const LasecCMSProductOverview: Reactory.IReactoryForm = {
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
-    { componentFqn: 'core.GridLayoutComponent@1.0.0', widget: 'GridLayoutWidget' }
+    // { componentFqn: 'core.GridLayoutComponent@1.0.0', widget: 'GridLayoutWidget' },
+    { componentFqn: 'lasec-crm.LasecProductGrid@1.0.0', widget: 'ProductGrid' }
   ],
 };
 

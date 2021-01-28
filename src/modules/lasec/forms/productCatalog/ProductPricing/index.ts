@@ -33,7 +33,7 @@ const LasecCMSProductPricing: Reactory.IReactoryForm = {
       key: 'default',
       description: 'Product Details Table',
       icon: 'list',
-      graphql: $graphql.product_table_graph,      
+      graphql: $graphql.product_table_graph,
       uiSchema: tableUiSchema,
     },
     {
@@ -50,7 +50,8 @@ const LasecCMSProductPricing: Reactory.IReactoryForm = {
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
-    { componentFqn: 'core.GridLayoutComponent@1.0.0', widget: 'GridLayoutWidget' }
+    { componentFqn: 'core.GridLayoutComponent@1.0.0', widget: 'GridLayoutWidget' },
+    { componentFqn: 'lasec-crm.LasecProductGrid@1.0.0', widget: 'ProductGrid' }
   ],
 };
 

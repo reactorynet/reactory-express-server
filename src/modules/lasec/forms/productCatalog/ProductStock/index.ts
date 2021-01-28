@@ -3,6 +3,7 @@ import $graphql from '../shared/graphql';
 import $schema from '../shared/schema';
 
 const uiSchema: any = {
+  'ui:graphql': $graphql,
   'ui:options': {
     componentType: "div",
     containerStyles: {
@@ -13,11 +14,14 @@ const uiSchema: any = {
     showSubmit: false,
     showRefresh: false,
   },
-  product: {
+  view: {
     hidden: true,
     'ui:widget': 'HiddenWidget'
   },
-  view: {
+  paging: {
+    'ui:widget': 'HiddenWidget'
+  },
+  product: {
     hidden: true,
     'ui:widget': 'HiddenWidget'
   },
@@ -246,47 +250,51 @@ const uiSchema: any = {
         toolbar: false,
         searchText: '${formContext.$formData.product}'
       },
-      remoteData: true,
-      query: 'query',
       propsMap: {
         'formContext.$formData.product': 'searchText'
       },
+      remoteData: true,
+      query: 'products_table',
       variables: {
         'query.search': 'product',
         'query.page': 'paging.page',
         'query.pageSize': 'paging.pageSize'
+        // 'formContext.$formData.product': 'product',
+        // 'formContext.$formData.paging': 'paging'
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'products.[].id': 'data.[].id',
-        'products.[].name': 'data.[].name',
-        'products.[].code': 'data.[].code',
-        'products.[].description': 'data.[].description',
-        'products.[].qtyAvailable': 'data.[].qtyAvailable',
-        'products.[].qtyOnHand': 'data.[].qtyOnHand',
-        'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
-        'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
-        'products.[].price': 'data.[].price',
-        'products.[].image': 'data.[].image',
-        'products.[].onSyspro': 'data.[].onSyspro',
-        'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
-        'products.[].landedPrice': 'data.[].landedPrice',
-        'products.[].wh10CostPrice': 'data.[].wh10CostPrice',
-        'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
-        'products.[].listPrice': 'data.[].listPrice',
-        'products.[].buyer': 'data.[].buyer',
-        'products.[].planner': 'data.[].planner',
-        'products.[].isHazardous': 'data.[].isHazardous',
-        'products.[].siteEvaluationRequired': 'data.[].siteEvaluationRequired',
-        'products.[].packedLength': 'data.[].packedLength',
-        'products.[].packedWidth': 'data.[].packedWidth',
-        'products.[].packedHeight': 'data.[].packedHeight',
-        'products.[].packedVolume': 'data.[].packedVolume',
-        'products.[].packedWeight': 'data.[].packedWeight',
-        'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
-        'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',
+        'product': 'product',
+        'products': 'data'
+        // 'products.[].id': 'data.[].id',
+        // 'products.[].name': 'data.[].name',
+        // 'products.[].code': 'data.[].code',
+        // 'products.[].description': 'data.[].description',
+        // 'products.[].qtyAvailable': 'data.[].qtyAvailable',
+        // 'products.[].qtyOnHand': 'data.[].qtyOnHand',
+        // 'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
+        // 'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
+        // 'products.[].price': 'data.[].price',
+        // 'products.[].image': 'data.[].image',
+        // 'products.[].onSyspro': 'data.[].onSyspro',
+        // 'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
+        // 'products.[].landedPrice': 'data.[].landedPrice',
+        // 'products.[].wh10CostPrice': 'data.[].wh10CostPrice',
+        // 'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
+        // 'products.[].listPrice': 'data.[].listPrice',
+        // 'products.[].buyer': 'data.[].buyer',
+        // 'products.[].planner': 'data.[].planner',
+        // 'products.[].isHazardous': 'data.[].isHazardous',
+        // 'products.[].siteEvaluationRequired': 'data.[].siteEvaluationRequired',
+        // 'products.[].packedLength': 'data.[].packedLength',
+        // 'products.[].packedWidth': 'data.[].packedWidth',
+        // 'products.[].packedHeight': 'data.[].packedHeight',
+        // 'products.[].packedVolume': 'data.[].packedVolume',
+        // 'products.[].packedWeight': 'data.[].packedWeight',
+        // 'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
+        // 'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',
       },
     },
   }

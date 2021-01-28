@@ -19,7 +19,7 @@ const uiSchema: any = {
   products: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      columns: [        
+      columns: [
         {
           title: '',
           field: 'onSyspro',
@@ -248,7 +248,7 @@ const uiSchema: any = {
         showTitle: false,
         toolbar: false,
         searchText: '${formContext.$formData.product}'
-      },      
+      },
       propsMap: {
         'formContext.$formData.product': 'searchText'
       },
