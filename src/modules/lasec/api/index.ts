@@ -484,8 +484,9 @@ const Api = {
     }
   },
   Documents: {
-    upload: async (documentInfo, customerInfo) => {
-      logger.debug(`Uploading document to LasecAPI`, { documentInfo, customerInfo });
+    upload: async (reactoryFile: Reactory.IReactoryFile, customerInfo: any, link_only: boolean = false): Promise<Reactory.IReactoryFile> => {
+      logger.debug(`Uploading document to LasecAPI`, { reactoryFile, customerInfo });
+      let _client_id = customerInfo && customerInfo.id ? customerInfo.id : customerInfo;
       /**
        *
         {
@@ -516,10 +517,38 @@ const Api = {
        *
        */
 
-      const kwargs = {};
+      const link_to_client = async ( remote_id: string ) => {
+        let isNewClient = _client_id === 'new_client';
+        if (_client_id && remote_id && isNewClient === false) {
+          logger.debug(`Linking file to customer using input \n file:\n${remote_id}\ncustomer id: ${_client_id} `);
+          const link_result = await POST(`${SECONDARY_API_URLS.customer_documents.url(_client_id)}`, { document_ids: [remote_id] });
+          logger.debug(`Linking file to customer Results \n  ${JSON.stringify(link_result)} `); 
+          if(link_result.success) {
+            //reactoryFile.uploadContext = 'lasec'
+            if(reactoryFile.uploadContext.indexOf(`lasec-crm::company::document::new_client::${user._id}`) === 0) {
+              //we can safeuly assume here we can link the two files.
+              reactoryFile.uploadContext = `lasec-crm::company::document::${_client_id}`;
+            }
+            reactoryFile.timeline.push({ timestamp: new Date().valueOf(), message: `Linked File To Client ${_client_id}` });
+            reactoryFile.remotes[reactoryFile.remotes.length-1].syncMessage += `Linked to client ${_client_id}`;
+          }
+
+          await reactoryFile.save().then();
+
+          return reactoryFile;
+        }
+      }
+
+      if(link_only === true) {
+        if(reactoryFile.remotes && reactoryFile.remotes.length === 1) {
+          link_to_client(reactoryFile.remotes[0].id.split('@')[0]);
+        }
+      }
+
+      const kwargs: any = {};
       if (!kwargs.headers) {
         kwargs.headers = {};
-        kwargs.headers['Content-type'] = 'application/json; charset=UTF-8';
+        kwargs.headers['Content-type'] = 'multipart/form-data;';
       }
 
 
@@ -529,6 +558,8 @@ const Api = {
         kwargs.headers.Origin = 'http://localhost:3000';
         kwargs.headers['X-LASEC-AUTH'] = `Token ${token}`;
         kwargs.headers['X-CSRFToken'] = '';
+      } else {
+        
       }
       // should throw an error if there is no token!
       if (!kwargs.credentials) {
@@ -536,44 +567,75 @@ const Api = {
       }
 
       try {
-        let filename = path.join(process.env.APP_DATA_ROOT, documentInfo.path, documentInfo.alias);
-        if (fs.existsSync(filename) === true) {
-          const stream = fs.createReadStream(filename);
-          kwargs.body = stream;
-          let absoluteUrl = `${config.SECONDARY_API_URL}/${SECONDARY_API_URLS.file_uploads.url}/`;
+        let filename = path.join(process.env.APP_DATA_ROOT, reactoryFile.path, reactoryFile.alias);
+        
+        if(Array.isArray(reactoryFile.remotes) === false)  reactoryFile.remotes = [];
+        if(Array.isArray(reactoryFile.timeline) === false) reactoryFile.timeline = [];
 
+        if (fs.existsSync(filename) === true) {
+          
+          const stream = fs.createReadStream(filename);
           const form = new FormData(); //
-          form.append('file', stream);
+          form.append('files', stream, { filename: reactoryFile.alias });
+          
+          let absoluteUrl = `${config.SECONDARY_API_URL}/${SECONDARY_API_URLS.file_uploads.url}`;          
           // In Node.js environment you need to set boundary in the header field 'Content-Type' by calling method `getHeaders`
           const formHeaders = form.getHeaders();
-          let uploadResult = await axios.post(absoluteUrl, form, { params: {}, headers: { ...kwargs.headers, ...formHeaders } }).then();
-          logger.debug(`Uploaded document complete:\n\t ${uploadResult}`);
-          const { status, payload } = uploadResult.data;
-          if (status === 'sucess') {
-            const fileData = uploadResult.data.payload;
-            if (customerInfo && customerInfo.id) {
-              uploadResult = await POST(`${SECONDARY_API_URLS.customer_documents}`, { document_ids: [fileData.id], customer_id: customerInfo.id }).then();
+          let apiResponse = await fetch(absoluteUrl, { method: 'post', body: form, headers: { ...kwargs.headers, ...formHeaders } }).then()
+          
+          if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
+            try {      
+              const json_result = await apiResponse.json().then();
+              
+              const { status, payload } = json_result;
+              debugger                
+
+              let remote_file: Reactory.IReactoryFileRemoteEntry = {
+                id: `${payload.id}@${config.SECONDARY_API_URL}`,
+                lastSync: new Date(),
+                success: status === 'success',
+                syncMessage: status === 'success' ? `File successfully uploaded to remote with id ${payload.id}` : 'File could not be uploaded to remote',
+                url: status === 'success' ? payload.url : 'about:blank',
+                priority: 0,
+                modified: new Date(),
+              };            
+
+              let tl = { timestamp: new Date().valueOf(), message: remote_file.syncMessage };
+
+              if(Array.isArray(reactoryFile.remotes) === false) {
+                reactoryFile.remotes = [remote_file];
+              } else {
+                reactoryFile.remotes.push(remote_file);
+              }
+              
+              if(Array.isArray(reactoryFile.timeline) === false) {
+                reactoryFile.timeline = [tl];
+              } else reactoryFile.timeline.push(tl);
+
+              if (status === 'success') {
+                
+                /**
+                 * payload:
+                 * id: number
+                 * url: string
+                 */                              
+                link_to_client(payload.id);
+                return reactoryFile;
+              } else {
+                return reactoryFile;
+              }
+
+            } catch (invalidJsonErr) {
+                reactoryFile.timeline.push({ timestamp: new Date().valueOf(), message: 'Failed to uplaod' });
             }
-            return {
-              document: documentInfo,
-              success: true,
-              messsage: `${documentInfo.fileName}`
-            };
+
           } else {
-            return {
-              document: documentInfo,
-              success: false,
-              message: payload
-            }
-          }
+            
+          }          
         }
       } catch (exc) {
         logger.debug(`Could not upload file to endpoint:\n\t Exception ${exc}`);
-        return {
-          document: documentInfo,
-          success: false,
-          message: exc.message
-        }
+        
       }
     },
     updateDocumentIds: async (documentIds: any, customerId: any) => {

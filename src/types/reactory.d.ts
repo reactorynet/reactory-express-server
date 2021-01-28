@@ -318,26 +318,44 @@ declare namespace Reactory {
     usersExcluded?: ObjectID[]
   }
 
+  export interface IReactoryFileRemoteEntry {
+    id: string
+    url: string
+    lastSync: Date
+    success: boolean,
+    verified?: boolean, 
+    syncMessage: string,
+    priority?: number,
+    modified?: Date
+  }
+
+  export interface ITimeline {
+    timestamp: number,
+    message: string
+  }
+
   export interface IReactoryFile extends Mongoose.Document {
     id: ObjectID,
     hash: number,
     partner: ObjectID,
     ttl?: number,
-    path: String,
-    alias: String,
+    path: string,
+    alias: string,
     filename: string,
     alt: string[],
     link: string,
     mimetype: string,
     size: number,
     created?: Date,
-    uploadContext?: String,
+    uploadContext?: string,
     uploadedBy: ObjectID,
     owner: ObjectID,
     public?: Boolean,
     published?: Boolean,
     permissions?: IReactoryFilePermissions[],
-    tags?: String[],
+    tags?: string[],
+    remotes?: IReactoryFileRemoteEntry[],
+    timeline?: ITimeline[],
     [key: string]: any
   }
 
@@ -406,7 +424,6 @@ declare namespace Reactory {
     type: "array",
     items: IObjectSchema | IDateTimeSchema | IDateSchema | INumberSchema | IStringSchema | ISchema
   }
-
 
   /**
    * The base UISchema definition

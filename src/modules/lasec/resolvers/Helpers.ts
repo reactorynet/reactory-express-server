@@ -2249,9 +2249,8 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
     documentFilter.uploadContext = {
       $in: params.uploadContexts.map((ctx: string) => {
         if (ctx === 'lasec-crm::new-company::document') {
-          if (params.id == 'new_client') return `${ctx}`; // NEW CLIENT
+          if (params.id == 'new_client') return `lasec-crm::client::document::new_client::${global.user._id}`; // NEW CLIENT
           else return `lasec-crm::client::document::${params.id}`; // INCOMPLETE CLIENT - EXISTING CLIENT
-          // return `${ctx}::${global.user._id}`;
         }
         else if (ctx === 'lasec-crm::client::document') {
           return `${ctx}::${params.id}`;// EXISTING CUSTOMER
