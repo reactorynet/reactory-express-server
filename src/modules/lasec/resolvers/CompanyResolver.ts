@@ -1383,7 +1383,7 @@ const uploadDocument = async (args: any) => {
       if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
         if (clientId && clientId == 'new_client') {
           // NEW CLIENT
-          reactoryFile.uploadContext = `lasec-crm::company::document::${clientId}::${global.user._id}`;
+          reactoryFile.uploadContext = `lasec-crm::client::document::${clientId}::${global.user._id}`;
           // reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
         } else {
           // INCOMPLETE CLIENT

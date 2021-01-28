@@ -267,7 +267,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     };
   }
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
-    try {      
+    try {
       return apiResponse.json().catch((invalidJsonErr) => {
 
         logger.error(`🚨 Error Getting JSON Response from LASEC API ${invalidJsonErr.message}`);
@@ -517,20 +517,20 @@ const Api = {
        *
        */
 
-      const link_to_client = async ( remote_id: string ) => {
+      const link_to_client = async (remote_id: string) => {
         let isNewClient = _client_id === 'new_client';
         if (_client_id && remote_id && isNewClient === false) {
           logger.debug(`Linking file to customer using input \n file:\n${remote_id}\ncustomer id: ${_client_id} `);
           const link_result = await POST(`${SECONDARY_API_URLS.customer_documents.url(_client_id)}`, { document_ids: [remote_id] });
-          logger.debug(`Linking file to customer Results \n  ${JSON.stringify(link_result)} `); 
-          if(link_result.success) {
+          logger.debug(`Linking file to customer Results \n  ${JSON.stringify(link_result)} `);
+          if (link_result.success) {
             //reactoryFile.uploadContext = 'lasec'
-            if(reactoryFile.uploadContext.indexOf(`lasec-crm::company::document::new_client::${user._id}`) === 0) {
+            if (reactoryFile.uploadContext.indexOf(`lasec-crm::company::document::new_client::${user._id}`) === 0) {
               //we can safeuly assume here we can link the two files.
               reactoryFile.uploadContext = `lasec-crm::company::document::${_client_id}`;
             }
             reactoryFile.timeline.push({ timestamp: new Date().valueOf(), message: `Linked File To Client ${_client_id}` });
-            reactoryFile.remotes[reactoryFile.remotes.length-1].syncMessage += `Linked to client ${_client_id}`;
+            reactoryFile.remotes[reactoryFile.remotes.length - 1].syncMessage += `Linked to client ${_client_id}`;
           }
 
           await reactoryFile.save().then();
@@ -539,8 +539,8 @@ const Api = {
         }
       }
 
-      if(link_only === true) {
-        if(reactoryFile.remotes && reactoryFile.remotes.length === 1) {
+      if (link_only === true) {
+        if (reactoryFile.remotes && reactoryFile.remotes.length === 1) {
           link_to_client(reactoryFile.remotes[0].id.split('@')[0]);
         }
       }
@@ -552,43 +552,47 @@ const Api = {
       }
 
 
-      const token = await getStorageItem('secondary_api_token').then();
-      if (token) {
-        kwargs.headers.Authorization = `Token ${token}`;
-        kwargs.headers.Origin = 'http://localhost:3000';
-        kwargs.headers['X-LASEC-AUTH'] = `Token ${token}`;
-        kwargs.headers['X-CSRFToken'] = '';
-      } else {
-        
-      }
-      // should throw an error if there is no token!
-      if (!kwargs.credentials) {
-        kwargs.credentials = 'same-origin';
-      }
+
 
       try {
+
+        const token = await getStorageItem('secondary_api_token').then();
+        if (token) {
+          kwargs.headers.Authorization = `Token ${token}`;
+          kwargs.headers.Origin = 'http://localhost:3000';
+          kwargs.headers['X-LASEC-AUTH'] = `Token ${token}`;
+          kwargs.headers['X-CSRFToken'] = '';
+        } else {
+          logger.error(`No token for the user?`);
+          return reactoryFile;
+        }
+        // should throw an error if there is no token!
+        if (!kwargs.credentials) {
+          kwargs.credentials = 'same-origin';
+        }
+
         let filename = path.join(process.env.APP_DATA_ROOT, reactoryFile.path, reactoryFile.alias);
-        
-        if(Array.isArray(reactoryFile.remotes) === false)  reactoryFile.remotes = [];
-        if(Array.isArray(reactoryFile.timeline) === false) reactoryFile.timeline = [];
+
+        if (Array.isArray(reactoryFile.remotes) === false) reactoryFile.remotes = [];
+        if (Array.isArray(reactoryFile.timeline) === false) reactoryFile.timeline = [];
 
         if (fs.existsSync(filename) === true) {
-          
+
           const stream = fs.createReadStream(filename);
           const form = new FormData(); //
           form.append('files', stream, { filename: reactoryFile.alias });
-          
-          let absoluteUrl = `${config.SECONDARY_API_URL}/${SECONDARY_API_URLS.file_uploads.url}`;          
+
+          let absoluteUrl = `${config.SECONDARY_API_URL}/${SECONDARY_API_URLS.file_uploads.url}`;
           // In Node.js environment you need to set boundary in the header field 'Content-Type' by calling method `getHeaders`
           const formHeaders = form.getHeaders();
           let apiResponse = await fetch(absoluteUrl, { method: 'post', body: form, headers: { ...kwargs.headers, ...formHeaders } }).then()
-          
+
           if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
-            try {      
+            try {
               const json_result = await apiResponse.json().then();
-              
+
               const { status, payload } = json_result;
-              debugger                
+              debugger
 
               let remote_file: Reactory.IReactoryFileRemoteEntry = {
                 id: `${payload.id}@${config.SECONDARY_API_URL}`,
@@ -598,27 +602,27 @@ const Api = {
                 url: status === 'success' ? payload.url : 'about:blank',
                 priority: 0,
                 modified: new Date(),
-              };            
+              };
 
               let tl = { timestamp: new Date().valueOf(), message: remote_file.syncMessage };
 
-              if(Array.isArray(reactoryFile.remotes) === false) {
+              if (Array.isArray(reactoryFile.remotes) === false) {
                 reactoryFile.remotes = [remote_file];
               } else {
                 reactoryFile.remotes.push(remote_file);
               }
-              
-              if(Array.isArray(reactoryFile.timeline) === false) {
+
+              if (Array.isArray(reactoryFile.timeline) === false) {
                 reactoryFile.timeline = [tl];
               } else reactoryFile.timeline.push(tl);
 
               if (status === 'success') {
-                
+
                 /**
                  * payload:
                  * id: number
                  * url: string
-                 */                              
+                 */
                 link_to_client(payload.id);
                 return reactoryFile;
               } else {
@@ -626,17 +630,18 @@ const Api = {
               }
 
             } catch (invalidJsonErr) {
-                reactoryFile.timeline.push({ timestamp: new Date().valueOf(), message: 'Failed to uplaod' });
+              reactoryFile.timeline.push({ timestamp: new Date().valueOf(), message: 'Failed to uplaod' });
             }
 
           } else {
-            
-          }          
+
+          }
         }
       } catch (exc) {
         logger.debug(`Could not upload file to endpoint:\n\t Exception ${exc}`);
-        
       }
+
+      return reactoryFile;
     },
     updateDocumentIds: async (documentIds: any, customerId: any) => {
       return await POST(`${SECONDARY_API_URLS.customer_documents.url(customerId)}`, { document_ids: documentIds, customer_id: customerId }).then();
