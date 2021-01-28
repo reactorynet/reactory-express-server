@@ -184,7 +184,14 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMNewCustomerConfirm@1.0.0',
-            componentProps: { mode: 'new', uiSchemaKey: 'confirm', uiSchemaId: 'confirm', liveValidate: false },},
+            componentProps: { mode: 'new', uiSchemaKey: 'confirm', uiSchemaId: 'confirm', liveValidate: true },
+            componentPropsMap: {
+              'onBeforeMutation': 'onBeforeMutation',
+              'onMutationComplete': 'onMutationComplete',
+              'onQueryComplete': 'onQueryComplete',
+              'onBeforeQuery': 'onBeforeQuery',
+            },
+          },
         ],
         nextButtonProps: {
           title: 'CONFIRM & SAVE',

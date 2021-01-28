@@ -511,6 +511,7 @@ export interface Lasec360User {
   targetPercent: number
   signature?: string
   sales_team_ids: [string]
+  sales_team_id: string,
   user_type?: string | 'LasecSA' | 'LasecInternational' | 'LasecEducation';
 }
 

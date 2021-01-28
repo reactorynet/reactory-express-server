@@ -59,11 +59,13 @@ export interface GetClientsParams {
   orderDirection?: string | "asc" | "desc";
   iter?: number;
   filter: any;
-  repCode?: any;
+  repCode?: any | any[];
   selectedClient?: any;
 };
 
 const getClients = async (params: GetClientsParams) => {
+
+  debugger
 
   let logged_in: Lasec360User = await getLoggedIn360User().then();
 
@@ -111,15 +113,15 @@ const getClients = async (params: GetClientsParams) => {
 
   switch (filterBy) {
     case "sales_team_id": {
-      _filter['sales_team_id'] = filter || logged_in.repId;
-      if (search.trim().length > 0) _filter.any_field = search;
+      _filter['sales_team_id'] = filter || logged_in.sales_team_id;
+      if (search.trim().length >= 0) _filter.any_field = search;
       break;
     }
     case "country":
     case "company_on_hold":
     case "activity_status": {
       _filter[filterBy] = filter;
-      if (search.trim().length > 0) _filter.any_field = search;
+      if (search.trim().length >= 0) _filter.any_field = search;
       break;
     }
     case "company_trading_name": {
@@ -138,10 +140,9 @@ const getClients = async (params: GetClientsParams) => {
       _filter["email"] = search;
       break;
     };
-    case "any_field":      
+    case "any_field":
     default: {
-      if (search.trim().length > 0) _filter.any_field = search;
-
+      _filter.any_field = search || "";
       _filter['sales_team_id'] = logged_in.repId;
       break;
     }
@@ -153,7 +154,7 @@ const getClients = async (params: GetClientsParams) => {
     _filter.sales_team_id = repCode;
   }
 
-  if (typeof repCode === 'array' && repCode.length > 0) {
+  if (Array.isArray(repCode) && repCode.length > 0) {
     _filter.sales_team_ids = repCode;
   }
 
@@ -162,12 +163,14 @@ const getClients = async (params: GetClientsParams) => {
   }
 
 
-  if (isString(search) === false || search.length < 3 && filter === undefined) return {
-    paging: pagingResult,
-    clients: [],
-    repCode: repCode ? { title: repCode, value: repCode } : {},
-    selectedClient
-  };
+  if ((search === undefined || search === null) && (filter === undefined || filter === null))  {
+    return {
+      paging: pagingResult,
+      clients: [],
+      repCode: repCode ? { title: repCode, value: repCode } : {},
+      selectedClient
+    };
+  } 
 
   const cachekey = Hash(`client_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
@@ -923,7 +926,7 @@ const getLasecSalesTeamsForLookup = async () => {
 
 const getCustomerList = async (params) => {
 
-  const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter, orderBy = 'name', orderDirection = "asc" } = params;
+  const { search = "   ", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter, orderBy = 'name', orderDirection = "asc" } = params;
 
   logger.debug(`Getting Customers using search ${search}`, { search, paging, filterBy, iter });
 
@@ -938,9 +941,11 @@ const getCustomerList = async (params) => {
 
   _filter[filterBy] = filter || search;
 
-  if (isString(search) === false || search.length < 3 && filter === undefined) return {
-    paging: pagingResult,
-    customers: []
+  if (isString(search) === false && filter === undefined) {
+    return {
+      paging: pagingResult,
+      customers: []
+    }
   };
 
   const cachekey = Hash(`company_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
@@ -1276,7 +1281,7 @@ const createNewOrganisation = async (args: ILasecCreateOrganisationArgs): Promis
         id: apiResponse.payload.id,
         name: args.name,
         description: args.description
-      }      
+      }
     }
   }
   catch (ex) {
@@ -1300,10 +1305,25 @@ const getExtension = (filename: string) => {
   return filename.split('.').pop();
 }
 
+const uploadRemote = async (file: Reactory.IReactoryFile, customer: any): Promise<Reactory.IReactoryFile> => {
+  try {
+    //set upload files if any and clear local cache (delete files)
+    const uploadResult =  await lasecApi.Documents.upload(file, customer);      
+    logger.debug(`♻ File upload result: FILE SYNCH ${uploadResult.timeline.map((tl) => `\n\t * ${tl.timestamp} => ${tl.message}`)}`);        
+    
+    return file;
+    
+  } catch (exc) {
+    logger.debug(`Could; not upload documents for the customer`, exc);
+    throw exc;    
+  }
+}
+
 const allowedExts = ['txt', 'pdf', 'doc', 'zip'];
 const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf', 'application/pdf', 'application/zip'];
 
 const uploadDocument = async (args: any) => {
+
   return new Promise(async (resolve, reject) => {
 
     logger.debug(`UPLOAD FILE ARGS:: ${JSON.stringify(args)}`);
@@ -1313,6 +1333,7 @@ const uploadDocument = async (args: any) => {
     const stream: NodeJS.ReadStream = createReadStream();
     const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
     const link = `${process.env.CDN_ROOT}content/files/${randomName}`;
+
 
     let hadStreamError: boolean = null;
     const handleStreamError = (error: any) => {
@@ -1357,12 +1378,12 @@ const uploadDocument = async (args: any) => {
         published: false,
       };
 
-
+      debugger
       // NEW CLIENT DOCUMENTS
       if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
         if (clientId && clientId == 'new_client') {
           // NEW CLIENT
-          reactoryFile.uploadContext = `lasec-crm::new-company::document`;
+          reactoryFile.uploadContext = `lasec-crm::client::document::${clientId}::${global.user._id}`;
           // reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
         } else {
           // INCOMPLETE CLIENT
@@ -1376,18 +1397,20 @@ const uploadDocument = async (args: any) => {
         // EXISTING CLIENT
         reactoryFile.uploadContext = `lasec-crm::client::document::${clientId}`;
       }
-
-      // COPY OF OLD
-      // if (reactoryFile.uploadContext === 'lasec-crm::existing-company::document') {
-      //   reactoryFile.uploadContext = `lasec-crm::existing-company::document::${clientId}`;
-      // }
+      
 
       const savedDocument = new ReactoryFileModel(reactoryFile);
-      savedDocument.save().then();
 
-      logger.debug(`SAVING FILE:: COMPLETE ${filename} --> CATALOGGING`);
-
-      resolve(savedDocument);
+      uploadRemote(savedDocument, clientId).then((fileResult) => {
+        logger.debug(`File has been synched with remote API`, {fileResult});        
+        fileResult.save();
+        resolve(fileResult)
+      }).catch((syncError) => {
+        logger.debug(`File could not be synched with remote API`, {syncError});
+        savedDocument.save();
+        resolve(savedDocument);
+      });
+            
     }
 
     // Generate path where the file will be saved.
@@ -1998,7 +2021,7 @@ export default {
       };
     },
     clientDocuments: async (parent: any) => {
-      
+
       // if(parent.clientDocuments && Array.isArray(parent.clientDocuments) === true) return parent.clientDocuments;
 
       let _result = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }).then();
@@ -2248,7 +2271,7 @@ export default {
      */
     LasecGetNewClient: async (obj: any, args: { id?: string, reset?: boolean }) => {
 
-      
+
 
       logger.debug(`[LasecGetNewClient] NEW CLIENT PARAMS:: ${JSON.stringify(args)}`);
       let existingCustomer: any = null;
@@ -2414,10 +2437,10 @@ export default {
         //we did not fetch a remote item, we have a cache at the ready
         if (remote_fetched === false) client_to_return = { ...cachedClient };
 
-      } 
-            
-            
-      
+      }
+
+
+
       setCacheItem(hash, client_to_return, cacheLifeSpan).then();
 
       return client_to_return;
@@ -2486,7 +2509,7 @@ export default {
     LasecUpdateNewClient: async (obj: any, args: { id: string, newClient: any }) => {
 
       const { newClient } = args;
-      logger.debug(`Updating new client address details with input:\n ${ JSON.stringify(newClient, null, 2)}`);
+      logger.debug(`Updating new client address details with input:\n ${JSON.stringify(newClient, null, 2)}`);
       // logger.debug('Updating new client address details with input', { newClient });
 
       let touched = false;
@@ -2573,7 +2596,7 @@ export default {
       const _newClient: LasecNewClientInput = await getCacheItem(hash).then();
 
       logger.debug(`Current Data Stored In NewClientCache:\n ${JSON.stringify({ client_data: _newClient, newClientParam: args.newClient }, null, 2)}`)
-
+      debugger
 
 
       let response: NewClientResponse = {
@@ -2718,13 +2741,16 @@ export default {
       let inputData: any;
 
       const doCreate = async () => {
+
         try {
           inputData = om.merge(_newClient, _map);
-          inputData.onboarding_step_completed = 6;
+          inputData.company_id = _newClient.customer.id,
+            inputData.onboarding_step_completed = 6;
           inputData.activity_status = 'active';
 
           logger.debug(`🟠 Create new client on LasecAPI using input data:`, inputData)
           customer = await post(URIS.customer_create.url, inputData, null, true).then()
+          debugger
           logger.debug(`👀 Result in creating user`, customer);
 
           return customer;
@@ -2737,7 +2763,11 @@ export default {
         }
       };
 
+
+
       const doStatusUpdate = async () => {
+
+        debugger
 
         try {
           logger.debug(`🟠 Updating user activity and organization and company details status complete via mysql`, { organization: _newClient.organization, customer: _newClient.customer });
@@ -2770,12 +2800,13 @@ export default {
            * set addresses for the customer
            * */
           const { deliveryAddress, physicalAddress } = _newClient.address;
+
           if (Number.parseInt(physicalAddress.id) > 0) {
             try {
               const update_result = await mysql(`
               UPDATE Customer SET
                 physical_address_id = '${physicalAddress.id}'                
-              WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()            
+              WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
 
               logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
             } catch (exc) {
@@ -2791,7 +2822,7 @@ export default {
               await mysql(`
               UPDATE Customer SET
                 delivery_address_id = '${deliveryAddress.id}'                
-              WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()            
+              WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
             } catch (exc) {
               logger.error(`Could not save the delivery address against the customer`, exc);
               response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });
@@ -2803,20 +2834,18 @@ export default {
             let upload_promises = [];
 
             let clientDocuments: any[] = await getCustomerDocuments({ id: 'new', uploadContexts: ['lasec-crm::new-company::document'] }).then();
+            debugger
             if (clientDocuments.length > 0) {
               upload_promises = clientDocuments.map((documentInfo) => {
-                return lasecApi.Documents.upload(documentInfo, customer)
+                return lasecApi.Documents.upload(documentInfo, customer.id, true)
               });
 
               let uploadResults = await Promise.all(upload_promises).then();
+              debugger
               uploadResults.forEach((uploadResult) => {
-                logger.debug(`♻ File upload result: FILE SYNCH ${uploadResult}`)
-                uploadResult.document.uploadContext = `lasec-crm::client::document::${customer.id}`;
-                uploadResult.document.save();
-
-                if (uploadResult.success === false) {
+                if(uploadResult.uploadContext !== `lasec-crm::client::document::${customer.id}`) {
                   response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading ${uploadResult.document.filename} to Lasec API`, type: 'warning', inAppNotification: true });
-                }
+                }                              
               });
             }
           } catch (exc) {
@@ -2838,11 +2867,30 @@ export default {
           response.messages.push({ text: `Could not create the new client on Lasec API`, type: 'success', inAppNotification: true });
         }
       } else {
+
+        // {"pagination":{},"ids":[],"items":[],"error":{"office_number":["This field is required"]},"timestamp":"2021-01-27T08:32:59.691Z"}
+
+        let messages = [{ text: 'Error saving customer', description: 'Unknown Error saving customer' }];
+
+        if (customer.error) {
+          messages = Object.keys(customer.error).map((k) => {
+            let desc = '';
+
+            if (Array.isArray(customer.error[k]) === true) {
+              customer.error[k].forEach((e: string) => {
+                desc = `${desc}${k}: ${e}, `;
+              })
+            }
+
+            return {
+              text: k,
+              description: desc
+            }
+          });
+        }
+
         response.success = false;
-        response.messages.push({
-          text: 'Could not save user',
-          description: 'Could not save user'
-        });
+        response.messages = messages;
       }
 
       return response;
