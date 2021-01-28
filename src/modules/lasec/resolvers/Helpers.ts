@@ -2190,6 +2190,36 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
 
   const _docs: any[] = []
 
+  let documentFilter: any = {};
+  if (params.uploadContexts && params.uploadContexts.length > 0) {
+    documentFilter.uploadContext = {
+      $in: params.uploadContexts.map((ctx: string) => {
+        if (ctx === 'lasec-crm::new-company::document') {
+          if (params.id == 'new_client') return `lasec-crm::client::document::new_client::${global.user._id}`; // NEW CLIENT
+          else return `lasec-crm::client::document::${params.id}`; // INCOMPLETE CLIENT - EXISTING CLIENT
+        }
+        else if (ctx === 'lasec-crm::client::document') {
+          return `${ctx}::${params.id}`;// EXISTING CUSTOMER
+        }
+        return ctx;
+      })
+    };
+  } else {
+    documentFilter.uploadContext = {
+      $in: [`lasec-crm::company::${params.id}`]
+    };
+  }
+
+  logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
+
+  let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
+  
+  reactoryFiles.forEach((rfile) => {    
+    rfile.fromApi = false;
+    _docs.push(rfile);
+  });
+
+
   // GET DOCS FROM LASEC API
   if (params.id && params.id !== 'new_client') {
     const clientDetails = await lasecApi.Customers.list({ filter: { ids: [params.id] } });
@@ -2197,23 +2227,37 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
       let client = clientDetails.items[0];
       if (client.document_ids.length > 0) {
         let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: client.document_ids }, paging: { enabled: false } });
+        
         documents.items.forEach((documentItem: any) => {
-          _docs.push({
-            id: documentItem.id,
-            partner: global.partner,
-            filename: documentItem.name,
-            link: documentItem.url,
-            hash: Hash(documentItem.url),
-            path: '',
-            alias: '',
-            alt: [],
-            size: 0,
-            uploadContext: 'lasec-crm::company-document::remote',
-            mimetype: mimeTypeForFilename(documentItem.name),
-            uploadedBy: global.user._id,
-            owner: global.user._id,
-            fromApi: true
-          })
+          
+          let found = false;
+
+          _docs.forEach((loaded: Reactory.IReactoryFile) => {
+            if(loaded.remotes && loaded.remotes.length === 1) {
+              if(loaded.remotes[0].id.indexOf(`${documentItem.id}@`) === 0) {
+                found = true;
+              }
+            }
+          });
+          
+          if(found === false) {
+            _docs.push({
+              id: documentItem.id,
+              partner: global.partner,
+              filename: documentItem.name,
+              link: documentItem.url,
+              hash: Hash(documentItem.url),
+              path: '',
+              alias: '',
+              alt: [],
+              size: 0,
+              uploadContext: 'lasec-crm::company-document::remote',
+              mimetype: mimeTypeForFilename(documentItem.name),
+              uploadedBy: global.user._id,
+              owner: global.user._id,
+              fromApi: true
+            });
+          }          
         });
       }
     }
@@ -2244,34 +2288,7 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
 
   }
 
-  let documentFilter: any = {};
-  if (params.uploadContexts && params.uploadContexts.length > 0) {
-    documentFilter.uploadContext = {
-      $in: params.uploadContexts.map((ctx: string) => {
-        if (ctx === 'lasec-crm::new-company::document') {
-          if (params.id == 'new_client') return `lasec-crm::client::document::new_client::${global.user._id}`; // NEW CLIENT
-          else return `lasec-crm::client::document::${params.id}`; // INCOMPLETE CLIENT - EXISTING CLIENT
-        }
-        else if (ctx === 'lasec-crm::client::document') {
-          return `${ctx}::${params.id}`;// EXISTING CUSTOMER
-        }
-        return ctx;
-      })
-    };
-  } else {
-    documentFilter.uploadContext = {
-      $in: [`lasec-crm::company::${params.id}`]
-    };
-  }
-
-  logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
-
-  let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
-
-  reactoryFiles.forEach((rfile) => {
-    rfile.fromApi = false;
-    _docs.push(rfile);
-  });
+  
 
   logger.debug(`Files found (${_docs.length})`);
 

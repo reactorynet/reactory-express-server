@@ -282,7 +282,7 @@ export const TowerStoneSurveySettings = {
     maxReminders: 3,
     autoLaunchOnPeerConfirm: true,
   },
-  helpTopics: ['towerstone-survey-settings'],
+  helpTopics: ['towerstone-survey-settings', 'survey-config-main'],
   name: 'TowerStoneSurveySettings',
   nameSpace: FormNameSpace,
   version: '1.0.0',
