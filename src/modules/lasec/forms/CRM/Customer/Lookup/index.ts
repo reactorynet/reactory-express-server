@@ -110,7 +110,6 @@ const newUiSchema: any = {
       componentProps: {},
       componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',
-        'LookupComponent.props.onChange': 'onCustomerSelect',
         'LookupComponent.props.formContext': 'LookupComponentFormContext',
         'LookupComponent.props.formData': 'formData.selected.registeredName'
       },

@@ -163,14 +163,10 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         'selected': 'newClient.customer',
       },
       resultType: 'object',
+      onSuccessMethod: 'event',
       onSuccessEvent: {
-        name: 'CloseModal:LasecCRMCustomerLookupTable'
-      },
-      refreshEvents: [
-        {
-          name: "NewClient.onCustomerSelected"
-        }
-      ],
+        name: 'onChange',
+      },      
       resultMap: {
         'customer.id': 'id',
         'customer.registeredName': 'registeredName',
