@@ -36,6 +36,7 @@ import { getLoggedIn360User, getCustomerDocuments } from './Helpers';
 import deepEquals from '@reactory/server-core/utils/compare';
 import LasecCRMClientJobDetails from '../forms/CRM/Client/JobDetail';
 import { queryAsync } from '@reactory/server-core/database/mysql';
+import client from '@sendgrid/client';
 
 const fieldMaps: any = {
   "fullName": "first_name",
@@ -2755,7 +2756,7 @@ export default {
           }
           catch (postError) {
             logger.error("Error Setting The Status and Customer details", postError);
-            response.messages.push({ text: `Could not create the customer ${postError.message}`, type: 'error', inAppNotification: true });
+            response.messages.push({ text: 'Error.', description: `Could not create the customer ${postError.message}`, type: 'error', inAppNotification: true });
 
             return null;
           }
@@ -2775,11 +2776,11 @@ export default {
             WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
             logger.debug(`🟢 Updated user activity status complete`, update_result);
 
-            response.messages.push({ text: `Client ${args.newClient.contactDetails.emailAddress} activity status set to active`, type: 'success', inAppNotification: true });
+            response.messages.push({ text: '🟢 Success.', description: `Client ${args.newClient.contactDetails.emailAddress} activity status set to active`, type: 'success', inAppNotification: true });
 
           } catch (setStatusError) {
             logger.error("Error Setting The Status and Customer details", setStatusError);
-            response.messages.push({ text: `Could not set the activity status: ${setStatusError.message}`, })
+            response.messages.push({ text: ' Warning.', description: `Could not set the activity status: ${setStatusError.message}`, })
           }
         }
 
@@ -2791,7 +2792,7 @@ export default {
 
 
           if (customerCreated === true) {
-            response.messages.push({ text: `Client ${customer.first_name} ${customer.surname} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });
+            response.messages.push({ text: 'Client Added.', description: `Client ${customer.first_name} ${customer.surname} created on LASEC CRM id ${customer.id}`, type: 'success', inAppNotification: true });
             /***
              * set addresses for the customer
              * */
@@ -2807,7 +2808,7 @@ export default {
                 logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
               } catch (exc) {
                 logger.error(`Could not save the physical address against the customer`, exc);
-                response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set physical address`, type: 'warning', inAppNotification: true });
+                response.messages.push({ text: 'Warning.', description: `Client ${customer.first_name} ${customer.last_name} could not set physical address`, type: 'warning', inAppNotification: true });
               }
             }
 
@@ -2818,10 +2819,10 @@ export default {
                 await mysql(`
               UPDATE Customer SET
                 delivery_address_id = '${deliveryAddress.id}'                
-              WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
+                WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
               } catch (exc) {
                 logger.error(`Could not save the delivery address against the customer`, exc);
-                response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });
+                response.messages.push({ text: 'Warning.', description: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });
               }
             }
 
@@ -2829,22 +2830,32 @@ export default {
               //set upload files if any and clear local cache (delete files)
               let upload_promises = [];
 
-              let clientDocuments: any[] = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }).then();
-
-              if (clientDocuments.length > 0) {
-                debugger
-                upload_promises = clientDocuments.map((documentInfo) => {
-                  return lasecApi.Documents.upload(documentInfo, customer.id, true)
-                });
-
-                let uploadResults = await Promise.all(upload_promises).then();
-                debugger
-                uploadResults.forEach((uploadResult) => {
-                  if (uploadResult.uploadContext !== `lasec-crm::client::document::${customer.id}`) {
-                    response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading ${uploadResult.document.filename} to Lasec API`, type: 'warning', inAppNotification: true });
-                  }
-                });
+              interface client_documents_results {
+                id: string
+                documents: Reactory.IReactoryFile[]
               }
+
+              let clientDocuments: client_documents_results = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }).then();
+              let ids: string[] = [];
+              if(clientDocuments && clientDocuments.documents) {
+                clientDocuments.documents.forEach(( doc ) => {
+                  let linked = false;
+                  if(doc.remotes && doc.remotes.length === 1) {
+                    ids.push(doc.remotes[0].id.split("@")[0]);
+                    linked = true;                    
+                  }
+
+                  doc.uploadContext = `lasec-crm::client::document::${customer.id}`;
+                  doc.timeline.push({ timestamp: new Date().valueOf(), message: `File linked to customer on local` })                  
+                  doc.save();
+                });
+
+                if(ids.length > 0) {
+                  let link_result = await lasecApi.Documents.updateDocumentIds(ids, customer.id).then();
+                  logger.debug(`LasecCreateNewClient :: result from updating document list. ${JSON.stringify(link_result)}`);                  
+                }
+              }
+              
             } catch (exc) {
               logger.debug(`Could; not upload documents for the customer`, exc);
               response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading documents`, type: 'warning', inAppNotification: true });
