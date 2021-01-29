@@ -2127,7 +2127,7 @@ export const getCRMSalesOrders = async (params) => {
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
     ordering: { order_date: "desc" },
-    sales_team_id: me.sales_team_ids[0]
+    // sales_team_id: me.sales_team_ids[0]
   };
 
   if (filterBy == 'order_date' || filterBy == 'shipping_date' || filterBy == 'quote_date') {
@@ -2225,8 +2225,8 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
   logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
 
   let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
-  
-  reactoryFiles.forEach((rfile) => {    
+
+  reactoryFiles.forEach((rfile) => {
     rfile.fromApi = false;
     _docs.push(rfile);
   });
@@ -2239,9 +2239,9 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
       let client = clientDetails.items[0];
       if (client.document_ids.length > 0) {
         let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: client.document_ids }, paging: { enabled: false } });
-        
+
         documents.items.forEach((documentItem: any) => {
-          
+
           let found = false;
 
           _docs.forEach((loaded: Reactory.IReactoryFile) => {
@@ -2251,7 +2251,7 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
               }
             }
           });
-          
+
           if(found === false) {
             _docs.push({
               id: documentItem.id,
@@ -2269,7 +2269,7 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
               owner: global.user._id,
               fromApi: true
             });
-          }          
+          }
         });
       }
     }
@@ -2300,7 +2300,7 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
 
   }
 
-  
+
 
   logger.debug(`Files found (${_docs.length})`);
 
