@@ -802,15 +802,11 @@ const LASEC_CONFIG = {
       exact: true,
       public: false,
       roles: ['USER', 'ADMIN'],
-      componentFqn: `${key}.LasecCMSProductCatalog@1.0.0`,
+      componentFqn: `${key}.ProductTabbedSearch@1.0.0`,
       args: [
-        {
-          key: 'mode',
-          value: {
-            type: 'string',
-            mode: 'view'
-          }
-        }
+        { key: 'mode', value: { type: 'string', mode: 'view' } },
+        { key: 'use_case', value: { type: 'string', use_case: 'default' }  },
+        { key: 'via', value: { type: 'string', via: 'route' }  }
       ],
     },
 

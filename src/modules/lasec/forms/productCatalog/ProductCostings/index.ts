@@ -2,6 +2,11 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import $graphql from '../shared/graphql';
 import $schema from '../shared/schema';
 
+
+let $table_graphql = { ...$graphql };
+let $grid_graphql = {...$graphql };
+delete $table_graphql.query;
+
 const uiSchemaTable: any = {
   'ui:options': {
     componentType: "div",
@@ -756,6 +761,7 @@ const uiSchemaTable: any = {
 };
 
 const uiSchemaGrid: any = {
+  'ui:graphql': $grid_graphql,
   'ui:options': {
     componentType: "div",
     containerStyles: {
@@ -1078,8 +1084,7 @@ const LasecProductCostings: Reactory.IReactoryForm = {
   name: 'LasecProductCostings',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: $schema,
-  graphql: $graphql,
+  schema: $schema,  
   uiSchema: uiSchemaTable,
   defaultFormValue: {
     paging: {
@@ -1095,6 +1100,7 @@ const LasecProductCostings: Reactory.IReactoryForm = {
       title: 'TABLE',
       key: 'default',
       description: 'Product Details Table',
+      graphql: $table_graphql,
       icon: 'list',
       uiSchema: uiSchemaTable,
     },
@@ -1103,6 +1109,7 @@ const LasecProductCostings: Reactory.IReactoryForm = {
       title: 'GRID',
       key: 'grid',
       description: 'Product Details Grid',
+      graphql: $graphql,
       icon: 'view_module',
       uiSchema: uiSchemaGrid,
     }

@@ -189,42 +189,48 @@ export const LoggedInLasecUserHashKey = ($partner: Reactory.IReactoryClientDocum
 
 export const getLoggedIn360User: Function = async function (skip_cache: boolean = false): Promise<Lasec360User> {
   const { user } = global;
-  if (user._id === "ANON") {
+  if (user._id === "ANON" || user.id === 'ANON') {
     logger.debug("🚨 Anon User Cannot Retrieve Authentications");
     return null;
   }
   if (user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
-  const _authentication = user.getAuthentication("lasec");
 
-  if (!_authentication) {
-    throw new LasecNotAuthenticatedException('User has no authentication entry for Lasec');
-  }
-
-  const _lasec_creds: Lasec360Credentials = credsFromAuthentication(_authentication);
-  if (_lasec_creds && _lasec_creds.payload) {
-    let staff_user_id: string = "";
-    staff_user_id = `${_lasec_creds.payload.user_id}`;
-
-    const hashkey = LoggedInLasecUserHashKey(global.partner, user);
-    let me360 = await getCacheItem(hashkey).then();
-    if (me360 === null || skip_cache === true) {
-      me360 = await lasecApi.User.getLasecUsers([staff_user_id], "ids").then();
-      if (me360.length === 1) {
-        me360 = me360[0];
-        //fetch any other data that may be required for the data fetch
+  if(typeof user.getAuthentication === 'function') {
+    const _authentication = user.getAuthentication("lasec");
+  
+    if (!_authentication) {
+      throw new LasecNotAuthenticatedException('User has no authentication entry for Lasec');
+    }
+    
+    const _lasec_creds: Lasec360Credentials = credsFromAuthentication(_authentication);
+    if (_lasec_creds && _lasec_creds.payload) {
+      let staff_user_id: string = "";
+      staff_user_id = `${_lasec_creds.payload.user_id}`;
+  
+      const hashkey = LoggedInLasecUserHashKey(global.partner, user);
+      let me360 = await getCacheItem(hashkey).then();
+      if (me360 === null || skip_cache === true) {
+        me360 = await lasecApi.User.getLasecUsers([staff_user_id], "ids").then();
+        if (me360.length === 1) {
+          me360 = me360[0];
+          //fetch any other data that may be required for the data fetch
+        }
       }
+  
+      if (me360) {
+        setCacheItem(hashkey, me360, 60);
+        logger.debug(`Updated Cache item for ${hashkey} 🟢`)
+      }
+  
+      logger.debug(`me360 ===>`, me360)
+      return me360;
     }
+  } else {
 
-    if (me360) {
-      setCacheItem(hashkey, me360, 60);
-      logger.debug(`Updated Cache item for ${hashkey} 🟢`)
-    }
-
-    logger.debug(`me360 ===>`, me360)
-    return me360;
+    throw new LasecNotAuthenticatedException('No lasec credentials available');
   }
 
-  throw new LasecNotAuthenticatedException('No lasec credentials available');
+
 };
 
 export const setLoggedInUserProps = async (active_rep_code: string, active_company: string): Promise<Lasec360User> => {

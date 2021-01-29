@@ -318,7 +318,6 @@ const tableUiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'product': 'product',
         'products': 'data'
       },
     },

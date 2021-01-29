@@ -14,8 +14,7 @@ const LasecCMSProductOverview: Reactory.IReactoryForm = {
   name: 'LasecProductOverviewTable',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: $schema,
-  graphql: $graphql.table_graph,
+  schema: $schema,  
   uiSchema: tableUiSchema,
   defaultFormValue: {
     paging: {

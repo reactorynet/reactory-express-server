@@ -227,20 +227,7 @@ const uiSchema: any = {
           props: {},
           propsMap: {
             'rowData.id': 'formData.id',
-          },
-          //component: {
-          //
-          //},
-          /*
-          component: 'core.TableChildComponentWrapper@1.0.0',
-          props: {
-
-          },
-          propsMap: {
-            'rowData': 'rowData',
-            'formData': 'formData'
-          },
-          */
+          },          
         },
       ],
       options: {
@@ -259,8 +246,6 @@ const uiSchema: any = {
         'query.search': 'product',
         'query.page': 'paging.page',
         'query.pageSize': 'paging.pageSize'
-        // 'formContext.$formData.product': 'product',
-        // 'formContext.$formData.paging': 'paging'
       },
       resultMap: {
         'paging.page': 'page',
@@ -268,33 +253,6 @@ const uiSchema: any = {
         'paging.pageSize': 'pageSize',
         'product': 'product',
         'products': 'data'
-        // 'products.[].id': 'data.[].id',
-        // 'products.[].name': 'data.[].name',
-        // 'products.[].code': 'data.[].code',
-        // 'products.[].description': 'data.[].description',
-        // 'products.[].qtyAvailable': 'data.[].qtyAvailable',
-        // 'products.[].qtyOnHand': 'data.[].qtyOnHand',
-        // 'products.[].qtyOnOrder': 'data.[].qtyOnOrder',
-        // 'products.[].unitOfMeasure': 'data.[].unitOfMeasure',
-        // 'products.[].price': 'data.[].price',
-        // 'products.[].image': 'data.[].image',
-        // 'products.[].onSyspro': 'data.[].onSyspro',
-        // 'products.[].priceAdditionalInfo': 'data.[].priceAdditionalInfo',
-        // 'products.[].landedPrice': 'data.[].landedPrice',
-        // 'products.[].wh10CostPrice': 'data.[].wh10CostPrice',
-        // 'products.[].threeMonthAvePrice': 'data.[].threeMonthAvePrice',
-        // 'products.[].listPrice': 'data.[].listPrice',
-        // 'products.[].buyer': 'data.[].buyer',
-        // 'products.[].planner': 'data.[].planner',
-        // 'products.[].isHazardous': 'data.[].isHazardous',
-        // 'products.[].siteEvaluationRequired': 'data.[].siteEvaluationRequired',
-        // 'products.[].packedLength': 'data.[].packedLength',
-        // 'products.[].packedWidth': 'data.[].packedWidth',
-        // 'products.[].packedHeight': 'data.[].packedHeight',
-        // 'products.[].packedVolume': 'data.[].packedVolume',
-        // 'products.[].packedWeight': 'data.[].packedWeight',
-        // 'products.[].numberOfSalesOrders': 'data.[].numberOfSalesOrders',
-        // 'products.[].numberOfPurchaseOrders': 'data.[].numberOfPurchaseOrders',
       },
     },
   }
