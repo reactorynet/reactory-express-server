@@ -186,11 +186,8 @@ const schema: Reactory.ISchema = {
     "streetNumber",
     "streetName",
     "floorNumber",
-    //"suburb",
-    "postalCode",
     "province",
     "city",
-    //"metro",
     "country",
     "buildingType"
   ],

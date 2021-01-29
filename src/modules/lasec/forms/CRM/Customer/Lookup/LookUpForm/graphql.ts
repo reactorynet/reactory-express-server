@@ -166,6 +166,9 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       onSuccessMethod: 'event',
       onSuccessEvent: {
         name: 'onChange',
+        dataMap: {
+          'customer.registeredName': 'formData',  
+        },        
       },      
       resultMap: {
         'customer.id': 'id',

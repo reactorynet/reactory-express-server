@@ -100,13 +100,8 @@ const newUiSchema: any = {
       }
     },
     props: {
-      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
-      eventMaps: {
-        onChange: {
-          'evt.selected.registeredName': 'formData?'
-        },
-      },
-      handleOnChange: false,      
+      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',      
+      handleOnChange: true,      
       componentProps: {},
       componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',

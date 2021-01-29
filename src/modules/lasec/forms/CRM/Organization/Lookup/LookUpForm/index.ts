@@ -11,10 +11,9 @@ const uiSchema: any = {
     },
     style: {
       marginTop: '0',
-    },    
-    submitIcon: 'search',
+    },        
     componentType: "div",
-    showSubmit: true,
+    showSubmit: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
@@ -106,7 +105,14 @@ const uiSchema: any = {
           errorMessage: 'Could not set ${selected.name} organization',
           variables: {            
             'selected': 'newClient.organization',
-          },                                         
+          },
+          event: {
+            name: 'onCustomerSelect',
+            via: 'form', // make either "form" || "amq"
+            paramsMap: {
+              'selected': 'formData.selected',
+            },
+          }                                         
         },           
       ],
       remoteData: true,
@@ -347,10 +353,10 @@ const LasecCRMOrganisationLookupForm: Reactory.IReactoryForm = {
   defaultFormValue: {
     paging: { page: 1, pageSize: 10 },
     search: "",
-    selected: {
-      id: "0",
-      name:"Not Set"
-    },
+    // selected: {
+    //   id: "0",
+    //   name:"Not Set"
+    // },
     organisations: []
   }
 };

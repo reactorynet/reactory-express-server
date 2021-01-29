@@ -92,12 +92,8 @@ const uiSchema: any = {
 
 const $sharedProps = {
   componentProps: { mode: 'new', uiSchemaKey: 'new', liveValidate: true },
-  //componentProps: { mode: 'edit', uiSchemaKey: 'edit', liveValidate: true },
   componentPropsMap: {
-    //'onChange': 'onChange',
     'formContext.formData': 'formData',
-    //'formContext.mode': 'mode',
-    //'formContext.uiSchemaKey': 'uiSchemaKey'
   },
 };
 
