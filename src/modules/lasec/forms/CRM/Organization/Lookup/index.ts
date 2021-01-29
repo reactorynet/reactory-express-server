@@ -109,7 +109,6 @@ export const newUiSchema: any = {
       },
       componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',
-        'LookupComponent.props.onChange': 'onOrganizationSelected',
         'LookupComponent.props.formContext': 'LookupComponentFormContext',
         'LookupComponent.props.mode': 'mode',
         'LookupComponent.props.uiSchemaKey': 'uiSchemaKey',

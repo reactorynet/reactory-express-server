@@ -540,6 +540,7 @@ const Api = {
       }
 
       if (link_only === true) {
+        debugger
         if (reactoryFile.remotes && reactoryFile.remotes.length === 1) {
           link_to_client(reactoryFile.remotes[0].id.split('@')[0]);
         }
@@ -550,8 +551,6 @@ const Api = {
         kwargs.headers = {};
         kwargs.headers['Content-type'] = 'multipart/form-data;';
       }
-
-
 
 
       try {
@@ -580,7 +579,7 @@ const Api = {
 
           const stream = fs.createReadStream(filename);
           const form = new FormData(); //
-          form.append('files', stream, { filename: reactoryFile.alias });
+          form.append('files', stream, reactoryFile.filename);
 
           let absoluteUrl = `${config.SECONDARY_API_URL}/${SECONDARY_API_URLS.file_uploads.url}`;
           // In Node.js environment you need to set boundary in the header field 'Content-Type' by calling method `getHeaders`
@@ -623,6 +622,7 @@ const Api = {
                  * id: number
                  * url: string
                  */
+                debugger
                 link_to_client(payload.id);
                 return reactoryFile;
               } else {

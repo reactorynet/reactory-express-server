@@ -141,20 +141,16 @@ const uiSchema: Reactory.IUISchema = {
       'ui:widget': 'SelectWithDataWidget',
       'ui:options': {
         multiSelect: false,
-        query: `query LasecSalesTeamsFromApi {
-          LasecSalesTeamsFromApi {
+        query: `query LasecLoggedInUser {
+          LasecLoggedInUser {
             id
-            title
-            meta  {
-              reference
-            }
+            repCodes            
           }
         }`,
-        resultItem: 'LasecSalesTeamsFromApi',
+        resultItem: 'LasecLoggedInUser',
         resultsMap: {
-          'LasecSalesTeamsFromApi.[].id': ['[].key', '[].value'],
-          'LasecSalesTeamsFromApi.[].title': '[].label',
-        },       
+          'LasecLoggedInUser.repCodes[]': ['[].key', '[].value', '[].label'],          
+        },
       },
     },
   };

@@ -278,7 +278,7 @@ const Menus = {
           ordinal: 8, title: 'Reactory Forms', link: '/Forms/', icon: 'code', roles: ['DEVELOPER', 'ADMIN']
         },
         {
-          ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
+          ordinal: 11, title: 'GraphQL Queries', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
         },
       ]
     },
