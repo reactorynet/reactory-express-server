@@ -393,7 +393,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
+                format: '${rowData.orderDate != "" ? api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\'): ""}'
               }
             },
           },
@@ -409,7 +409,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
+                format: '${rowData.shippingDate != "" ? api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\'): ""}'
               }
             },
           },
@@ -427,7 +427,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
+                format: '${rowData.quoteDate != "" ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\'): ""}'
               }
             },
           },
@@ -438,13 +438,10 @@ const uiSchema: any = {
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
         { title: 'Purchase Order Number', field: 'poNumber' },
-
-
         { title: 'Order', field: 'orderQty' },
         { title: 'Ship', field: 'shipQty' },
         { title: 'Res.', field: 'reservedQty' },
         { title: 'BO.', field: 'backOrderQty' },
-
         {
           title: 'Order Value',
           field: 'value',
@@ -457,9 +454,7 @@ const uiSchema: any = {
             'rowData.value': 'value',
           },
         },
-
         { title: 'Status', field: 'orderStatus' },
-
       ],
       footerColumns: [
         { field: 'orderType' }, { field: 'orderDate' }, { field: 'shippingDate' }, { field: 'id' }, { field: 'quoteId' }, { field: 'quoteDate' }, { field: 'customer' }, { field: 'client' },
