@@ -111,6 +111,9 @@ export default {
     resultType: 'object',
     edit: false,
     new: false,
+    options: {
+      fetchPolicy: 'cache-first',
+    },
     refreshEvents: [
       { name: 'lasec-crm::product-search' }
     ],
@@ -228,6 +231,9 @@ export default {
       resultType: 'object',
       edit: false,
       new: false,
+      options: {
+        fetchPolicy: 'cache-first',
+      },
       refreshEvents: [
         { name: 'lasec-crm::product-search' }
       ],

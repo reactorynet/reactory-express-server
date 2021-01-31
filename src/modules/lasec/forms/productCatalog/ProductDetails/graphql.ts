@@ -82,6 +82,9 @@ const product_detail_table_graph: Reactory.IFormGraphDefinition = {
           }
         }
       }`,
+      options: {
+        fetchPolicy: 'cache-first',
+      },
       resultType: 'object',
       edit: false,
       new: false,
@@ -250,6 +253,9 @@ const product_detail_card_graph = {
     resultType: 'object',
     edit: false,
     new: false,
+    options: {
+      fetchPolicy: 'cache-first',
+    },
     onError: {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',

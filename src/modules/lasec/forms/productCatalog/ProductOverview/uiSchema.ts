@@ -9,37 +9,17 @@ const tableUiSchema: any = {
     container: "div",
     containerStyles: {
       padding: '0px',
-      margin: '0px'
-    },
-    schemaSelector: {
-      variant: 'icon-button',
-      showTitle: false,
-      activeColor: 'secondary',
-      selectSchemaId: 'grid',
-      style: {
-        display: 'flex',
-        justifyContent: 'flex-end'
-      }
-    },
-    style: {
       marginTop: '16px',
     },
     showSchemaSelectorInToolbar: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [
-    { view: { sm: 12, md: 12, lg: 12 } },
-    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
-  ],
-  view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      style: {
-        width: '100%',
-        float: "right"
-      },
-    }
+  'ui:grid-options': {
+    container: 'div',
   },
+  'ui:grid-layout': [
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0, marginTop: '16px' } }
+  ],
   paging: {
     'ui:widget': 'HiddenWidget'
   },
@@ -334,36 +314,17 @@ const gridUiSchemaGrid: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
-    schemaSelector: {
-      variant: 'icon-button',
-      showTitle: false,
-      activeColor: 'secondary',
-      style: {
-        display: 'flex',
-        justifyContent: 'flex-end'
-      }
-    },
-    style: {
-      marginTop: '16px',
-    },
     showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+  },
   'ui:grid-layout': [
-    { view: { sm: 12, md: 12, lg: 12 } },
     { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
   ],
-  view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      style: {
-        width: '100%',
-        float: "right"
-      },
-    }
-  },
   paging: {
     'ui:widget': 'HiddenWidget'
   },

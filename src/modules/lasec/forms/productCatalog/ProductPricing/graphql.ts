@@ -80,6 +80,9 @@ export const product_card_graph: Reactory.IFormGraphDefinition = {
     resultType: 'object',
     edit: false,
     new: false,
+    options: {
+      fetchPolicy: 'cache-first',
+    },
     onError: {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
@@ -141,6 +144,9 @@ export const product_table_graph: Reactory.IFormGraphDefinition = {
       resultType: 'object',
       edit: false,
       new: false,
+      options: {
+        fetchPolicy: 'cache-first',
+      },
       refreshEvents: [
         { name: 'lasec-crm::product-search' }
       ],
