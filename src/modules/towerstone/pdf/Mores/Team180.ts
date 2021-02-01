@@ -722,6 +722,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
           borderWidth: 2,
           lineTension: 0,
           fontSize: 28,
+          barThickness: 30,
           backgroundColor: behaviourScore.backgroundColor || '#FFCC33',
           datalabels: {
             clamp: true,

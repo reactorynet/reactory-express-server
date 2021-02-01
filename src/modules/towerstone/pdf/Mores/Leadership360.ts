@@ -621,7 +621,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
         label: 'Your score',
         fontSize: 16,
         //type: 'line',
-        barThickness: 20,
+        //barThickness: 20,
         backgroundColor: graph_green,
         borderColor: graph_green,
         borderWidth: 2,
@@ -648,7 +648,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
         //type: 'line',
         borderColor: graph_red,
         borderWidth: 2,
-        barThickness: 20,
+        //barThickness: 20,
         datalabels: {
           anchor: 'end',
           clamp: true,
@@ -753,7 +753,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
             color: (context: ChartJSDataLabelContext) => {
               var index = context.dataIndex;
               var value = context.dataset.data[index];
-              return value <= 0 ? '#000000' : behaviourScore.color
+              return value <= 0 ? '#000000' : '#FFFFFF'
 
             },
             font: {
@@ -937,7 +937,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       toc: {
         numberStyle: { bold: true }
       }
-    },    
+    },
   ]
 
 
@@ -1041,7 +1041,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
             {
               text: [
                 `- Using the neuroscience of minimising threat\n`,
-                { text: `  and maximising reward for relationship building.`, preserveLeadingSpaces: true},
+                { text: `  and maximising reward for relationship building.`, preserveLeadingSpaces: true },
               ],
             }
           ],
@@ -1321,7 +1321,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       },
       {
         text: "One View",
-        margin: [0,-15,0,15],
+        margin: [0, -15, 0, 15],
         style: ['subheader', 'primary', 'centerAligned'],
       },
 
@@ -1330,7 +1330,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
         //svg: data.one_view_svg,
         width: 370,
         style: ['centerAligned'],
-        margin: [0,0,0,0],
+        margin: [0, 0, 0, 0],
       },
 
       {
@@ -1436,7 +1436,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
       ],
     };
 
-    if(qi > 0) {
+    if (qi > 0) {
       section_content.pageBreak = 'before';
       section_content.margin = [0, 16.5, 0, 15];
     }
@@ -1454,11 +1454,12 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
 
     quality.behaviours.forEach((behaviour: TowerStone.IBehaviour, bi: number) => {
       behaviourSection.push({
-         text: [
-           `${sectionIndex[qi]}${bi + 1}`,
-          ],
-      lineHeight: 1.2, style: ['default'] });
-      behaviourSection.push({ text: `${lodash.template(behaviour.title)(data)}`, style: ['default','primary'], lineHeight: 1.2 })
+        text: [
+          `${sectionIndex[qi]}${bi + 1}`,
+        ],
+        lineHeight: 1.2, style: ['default']
+      });
+      behaviourSection.push({ text: `${lodash.template(behaviour.title)(data)}`, style: ['default', 'primary'], lineHeight: 1.2 })
       behaviourSection.push({ text: `${lodash.template(behaviour.description)(data)}`, style: ['default', 'secondary'], lineHeight: 1.2, italics: true, margin: [0, 0, 0, 7] });
     });
 
@@ -1498,14 +1499,16 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
           widths: ['*'],
           body: [
             [
-              { text: [
-                { text: 'Notes', bold: true },
-                ' (Next Actions and new Habits)'],
-              fontSize: 11,
-              style: ['primary'],
-              italics: true,
-              margin: [-3, 0, 0, 0],
-              border: [false, false, false, false] }
+              {
+                text: [
+                  { text: 'Notes', bold: true },
+                  ' (Next Actions and new Habits)'],
+                fontSize: 11,
+                style: ['primary'],
+                italics: true,
+                margin: [-3, 0, 0, 0],
+                border: [false, false, false, false]
+              }
             ],
             ...[1, 2, 3, 4, 5, 6, 7, 8].map((i) => [
               { text: '\n\n', border: [false, false, false, true] }
@@ -1578,8 +1581,8 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
         widths: [250, 250],
         body: [
           [
-            { text: 'New Habits to Consider', style: ['default'], fillColor: '#52687B', color: '#FFF', bold: true, margin: [0,5,0,3], },
-            { text: 'New Actions to Consider',  style: ['default'], fillColor: '#52687B', color: '#FFF', bold: true, margin: [0,5,0,3] }
+            { text: 'New Habits to Consider', style: ['default'], fillColor: '#52687B', color: '#FFF', bold: true, margin: [0, 5, 0, 3], },
+            { text: 'New Actions to Consider', style: ['default'], fillColor: '#52687B', color: '#FFF', bold: true, margin: [0, 5, 0, 3] }
           ],
           [
             '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n',
@@ -1649,10 +1652,10 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
         body: [
           [
             {
-              text: 'New Habit', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true, margin: [0,5,0,3]
+              text: 'New Habit', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true, margin: [0, 5, 0, 3]
             },
             {
-              text: 'How will this help me?', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true, margin: [0,5,0,3]
+              text: 'How will this help me?', fillColor: palette.secondary.main, color: '#fff', style: ['default'], bold: true, margin: [0, 5, 0, 3]
             },
           ],
           ['\n\n', ''],
@@ -1702,7 +1705,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
               color: '#fff',
               style: ['default'],
               bold: true,
-              margin: [0,5,0,3]
+              margin: [0, 5, 0, 3]
             },
             {
               text: 'Who?',
@@ -1710,7 +1713,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
               color: '#fff',
               style: ['default'],
               bold: true,
-              margin: [0,5,0,3]
+              margin: [0, 5, 0, 3]
             },
             {
               text: 'When?',
@@ -1718,7 +1721,7 @@ const pdfDefinition = (data: any, partner: Reactory.IReactoryClient, user: React
               color: '#fff',
               style: ['default'],
               bold: true,
-              margin: [0,5,0,3]
+              margin: [0, 5, 0, 3]
             },
           ],
           ['\n\n\n', '', ''],
