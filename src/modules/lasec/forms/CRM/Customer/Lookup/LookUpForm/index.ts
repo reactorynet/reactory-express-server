@@ -12,8 +12,7 @@ const uiSchema: any = {
     style: {
       marginTop: '0',
     },
-    componentType: 'div',
-    submitIcon: 'search',
+    componentType: 'div',    
     showSubmit: false,
     showRefresh: false,
   },

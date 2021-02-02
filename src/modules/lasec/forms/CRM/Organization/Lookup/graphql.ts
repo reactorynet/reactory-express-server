@@ -58,10 +58,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
         'organization.id': 'id',
         'organization.name': 'name',
       },
-      onSuccessMethod: 'event',
-      onSuccessEvent: {
-        name: 'onChange',
-      },
+      onSuccessMethod: 'event',      
     }
   },
 };

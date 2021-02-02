@@ -691,8 +691,8 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
           borderWidth: 2,
           lineTension: 0,
           fontSize: 28,
-          
-          barPercentage: 0.5,
+
+          barPercentage: 0.8,
           categoryPercentage: 0.8,
 
           backgroundColor: behaviourScore.backgroundColor || '#FFCC33',
@@ -714,7 +714,7 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
 
               let valuePerc = Math.round((value * 100 / maxCountForBehavior));
 
-              return valuePerc <= 10 ? '#000000' : behaviourScore.color
+              return valuePerc <= 10 ? '#000000' : '#FFFFFF'
             },
             font: {
               size: 24,
@@ -907,7 +907,7 @@ const definition = (data, partner, user) => {
     {
       text: [`This report presents the results of the ${data.organization.name} ${data.selectionTitle} culture assessment completed in ${moment().format('MMMM YYYY')} by`,
       { text: ` ${numberWords[data.assessors.length] || data.assessors.length} `, bold: true }, ,
-      `respondents.\n`],
+        `respondents.\n`],
       style: ['default'],
     },
     {
@@ -1033,7 +1033,7 @@ const definition = (data, partner, user) => {
 
     {
       text: `Covering the full spectrum of human needs – from self-development to organisational purpose – the Mores Assessments framework comprises six elements with three questions per element.`,
-      style: ['default'],      
+      style: ['default'],
     },
     {
       text: [
@@ -1247,7 +1247,7 @@ const definition = (data, partner, user) => {
       image: "oneViewUser",
       width: 370,
       style: ['centerAligned'],
-      margin: [0,0,0,0],
+      margin: [0, 0, 0, 0],
     },
     {
       text: "Priority Behaviours", style: ['subheader', 'primary'],
@@ -1347,7 +1347,7 @@ const definition = (data, partner, user) => {
       ],
     };
 
-    if(qi > 0) {
+    if (qi > 0) {
       section_content.pageBreak = 'before';
       section_content.margin = [0, 16.5, 0, 15];
     }
@@ -1552,7 +1552,7 @@ const definition = (data, partner, user) => {
     { text: 'Next Actions', style: ['header', 'primary'], pageBreak: "before" },
 
     {
-      text: 'Tips:\n', bold: true, italics: true,  style: ['default']
+      text: 'Tips:\n', bold: true, italics: true, style: ['default']
     },
     {
       ul: [

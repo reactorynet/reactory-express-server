@@ -22,11 +22,11 @@ const uiSchema: any = {
         md: 12
       }
     }
-  ],  
+  ],
   paging: {
     'ui:widget': 'HiddenWidget'
   },
-  
+
   quotes: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -38,7 +38,7 @@ const uiSchema: any = {
           width: '160px',
           component: 'lasec-crm.QuoteActionButton',
           props: {
-            variant: 'body1',
+            variant: 'body2',
             style: {
               maxWidth: '170px',
               textDecoration: 'underline',
@@ -57,7 +57,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body1',
+                variant: 'body2',
                 containerProps: {
                   style: {
                     maxWidth: '140px'
@@ -73,7 +73,7 @@ const uiSchema: any = {
         },
         {
           title: 'Quote Status', field: 'status',
-          width: '140px',
+          width: '100px',
           components: [
             {
               component: 'lasec-crm.QuoteStatus@1.0.0',
@@ -94,11 +94,80 @@ const uiSchema: any = {
             'rowData.total': 'value',
           },
         },
-        { title: 'Client', field: 'client' },
-        { title: 'Customer', field: 'companyTradingName' },
-        { title: 'Account Number', field: 'accountNumber' },
-        { title: 'Quote Type', field: 'quoteType' },
-        { title: 'Rep Code', field: 'repCode' },
+        {
+          title: 'Client', field: 'client', breakpoint: 'sm',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData && rowData.repCode ? rowData.client : "No Client"}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData': 'formData',
+          },
+        },
+        {
+          title: 'Customer', field: 'companyTradingName', breakpoint: 'md',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData && rowData.companyTradingName ? rowData.companyTradingName : "No Company"}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData': 'formData',
+          },
+        },
+        {
+          title: 'Account Number', field: 'accountNumber', breakpoint: 'md',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData && rowData.companyTradingName ? rowData.companyTradingName : "No Company"}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData': 'formData',
+          },
+        },
+        {
+          title: 'Quote Type', field: 'quoteType', breakpoint: 'md',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData && rowData.quoteType ? rowData.quoteType : "No Quote Type"}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData': 'formData',
+          },
+        },
+        {
+          title: 'Rep Code', field: 'repCode', breakpoint: 'md', component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData && rowData.repCode ? rowData.repCode : "No Rep Code"}'
+              }
+            },
+          },
+          propsMap: {
+            'rowData': 'formData',
+          },
+        },
       ],
       options: {
         grouping: false,

@@ -620,7 +620,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
         label: 'Your score',
         fontSize: 16,
         //type: 'line',
-        barThickness: 20,
+        //barThickness: 20,
         backgroundColor: graph_green,
         borderColor: graph_green,
         borderWidth: 2,
@@ -647,7 +647,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
         //type: 'line',
         borderColor: graph_red,
         borderWidth: 2,
-        barThickness: 20,
+        //barThickness: 20,
         datalabels: {
           anchor: 'end',
           clamp: true,
@@ -752,7 +752,7 @@ const resolveData = async ({ surveyId, delegateId, print_scores }) => {
             color: (context: ChartJSDataLabelContext) => {
               var index = context.dataIndex;
               var value = context.dataset.data[index];
-              return value <= 0 ? '#000000' : behaviourScore.color
+              return value <= 0 ? '#000000' : '#FFFFFF'
 
             },
             font: {
@@ -996,9 +996,9 @@ const definition = (data, partner, user) => {
               text: [
                 { text: `- The four lenses of human experience\n`, style: ['default', 'sublist'] },
                 { text: `  (individual and collective; visible behaviours and\n`, style: ['default', 'sublist'], preserveLeadingSpaces: true },
-                { text: `  invisible motives)`, style: ['default', 'sublist'],  preserveLeadingSpaces: true }
+                { text: `  invisible motives)`, style: ['default', 'sublist'], preserveLeadingSpaces: true }
               ],
-              
+
             },
           ],
         },
@@ -1016,7 +1016,7 @@ const definition = (data, partner, user) => {
           ul: [
             { text: `- Our lower-level needs driven by fear.`, style: ['default', 'sublist'] },
             { text: `- Our need to learn and adapt.`, style: ['default', 'sublist'] },
-            { text: `- Our higher-level needs based on purpose.`, style: ['default', 'sublist'] },                      
+            { text: `- Our higher-level needs based on purpose.`, style: ['default', 'sublist'] },
           ],
           style: ['default', 'sublist'],
         },
@@ -1627,7 +1627,7 @@ const definition = (data, partner, user) => {
             `- Midday: “How am I doing so far?”`,
             `- Evening: “How did I do today?”`,
           ],
-          margin: [-12,0,0,10],
+          margin: [-12, 0, 0, 10],
           type: 'none'
         },
         `Ask for feedback on progress before deciding to move on to the next habit.`

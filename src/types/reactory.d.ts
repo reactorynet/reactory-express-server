@@ -450,7 +450,9 @@ declare namespace Reactory {
   export interface IReactoryEvent {
     name: String,
     data?: any | undefined,
-    dataMap?: any
+    dataMap?: any,
+    //used when mapping a object to primitive
+    valueKey?: string
   }
 
   export interface IReactoryFormQuery {
