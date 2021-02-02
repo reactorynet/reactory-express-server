@@ -34,10 +34,10 @@ const theme = {
     MuiAppBar: {
       colorPrimary: {
         color: '#222732',
-        backgroundColor: "#fff",
+        //backgroundColor: "#fff",
         '@media (prefers-color-scheme: dark)': {
-          color: '#fff',
-          backgroundColor: "#424242",
+          //color: '#fff',
+          //backgroundColor: "#424242",
         }
       }
     },
@@ -48,7 +48,7 @@ const theme = {
     },
     MuiTableCell: {
       head: {
-        backgroundColor: "#E1E1E4 !important",
+        //backgroundColor: "#E1E1E4 !important",
         fontWeight: 700
       },
       root: {
@@ -298,15 +298,35 @@ const theme = {
     },
   },
   MaterialTableWidget: {
-    rowStyle: {
-      backgroundColor: '#E7E7E7'
+    dark: {
+      headerStyle: {
+        backgroundColor: '#29322e'
+      },
+      rowStyle: {
+        backgroundColor: '#29322e'
+      },
+      altRowStyle: {
+        backgroundColor: '#3E404E'
+      },
+      selectedRowStyle: {
+        backgroundColor: '#5F5E4C'
+      }
     },
-    altRowStyle: {
-      backgroundColor: '#FAFAFA'
-    },
-    selectedRowStyle: {
-      backgroundColor: '#DFF1FF'
+    light: {
+      headerStyle: {
+        backgroundColor: '#e1e1e4',
+      },
+      rowStyle: {
+        backgroundColor: '#E7E7E7'
+      },
+      altRowStyle: {
+        backgroundColor: '#FAFAFA'
+      },
+      selectedRowStyle: {
+        backgroundColor: '#DFF1FF'
+      }
     }
+
   },
   MaterialTextField: {
     variant: 'outlined'

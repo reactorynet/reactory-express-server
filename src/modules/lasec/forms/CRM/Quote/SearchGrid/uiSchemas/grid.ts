@@ -131,7 +131,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${rowData && rowData.companyTradingName ? rowData.companyTradingName : "No Company"}'
+                format: '${rowData && rowData.accountNumber ? rowData.accountNumber : "No Account Number"}'
               }
             },
           },

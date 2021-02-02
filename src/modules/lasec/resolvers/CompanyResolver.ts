@@ -75,7 +75,7 @@ const getClients = async (params: GetClientsParams) => {
     search = "",
     paging = { page: 1, pageSize: 10 },
     filterBy = "any_field",
-    orderBy = "fullName",
+    orderBy = "lastName",
     orderDirection = "asc",
     iter = 0,
     filter,
@@ -83,7 +83,7 @@ const getClients = async (params: GetClientsParams) => {
     selectedClient = undefined
   } = params;
 
-  logger.debug(`Getting Clients using search ${search}`, {
+  logger.debug(`Getting Clients using search::\n ${JSON.stringify(search, null, 2)}`, {
     filter,
     search,
     paging,
@@ -94,6 +94,8 @@ const getClients = async (params: GetClientsParams) => {
     orderBy,
     orderDirection
   });
+
+  debugger;
 
   let ordering: { [key: string]: string } = {}
 
@@ -136,6 +138,10 @@ const getClients = async (params: GetClientsParams) => {
       _filter["first_name"] = search;
       break;
     };
+    case "full_name": {
+      _filter["full_name"] = search;
+      break;
+    }
     case "email": {
       _filter["email"] = search;
       break;
@@ -143,7 +149,7 @@ const getClients = async (params: GetClientsParams) => {
     case "any_field":
     default: {
       _filter.any_field = search || "";
-      _filter['sales_team_id'] = logged_in.repId;
+      _filter['sales_team_id'] = logged_in.sales_team_id;
       break;
     }
   }
@@ -158,8 +164,9 @@ const getClients = async (params: GetClientsParams) => {
     _filter.sales_team_ids = repCode;
   }
 
-  if (!_filter.sales_team_id && !_filter.sales_team_ids) {
-    _filter.sales_team_id = logged_in.repId
+  //make sure there is a sales_team_id set, if they aren't specified.
+  if (!_filter.sales_team_id && !_filter.sales_team_ids && filterBy === 'any_field') {
+    _filter.sales_team_id = logged_in.sales_team_id;
   }
 
 
@@ -201,7 +208,14 @@ const getClients = async (params: GetClientsParams) => {
   }
 
   logger.debug(`Sending query to lasec API with filter`, { filter: _filter })
-  const clientResult = await lasecApi.Customers.list({ filter: _filter, pagination: { enabled: true, page_size: paging.pageSize || 10, current_page: paging.page }, ordering }).then();
+  const clientResult = await lasecApi.Customers.list({
+    filter: _filter,
+    //filter: {},
+    ordering,
+    format: { ids_only: true },
+    pagination:
+      { enabled: true, page_size: paging.pageSize || 10, current_page: paging.page }
+  }).then();
 
   let ids: any[] = [];
 
@@ -2744,7 +2758,7 @@ export default {
           try {
             inputData = om.merge(_newClient, _map);
             inputData.company_id = _newClient.customer.id,
-            inputData.onboarding_step_completed = 6;
+              inputData.onboarding_step_completed = 6;
             inputData.activity_status = 'active';
 
             logger.debug(`🟠 Create new client on LasecAPI using input data:\n ${JSON.stringify(inputData, null, 2)}`)
@@ -2837,25 +2851,25 @@ export default {
 
               let clientDocuments: client_documents_results = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }).then();
               let ids: string[] = [];
-              if(clientDocuments && clientDocuments.documents) {
-                clientDocuments.documents.forEach(( doc ) => {
+              if (clientDocuments && clientDocuments.documents) {
+                clientDocuments.documents.forEach((doc) => {
                   let linked = false;
-                  if(doc.remotes && doc.remotes.length === 1) {
+                  if (doc.remotes && doc.remotes.length === 1) {
                     ids.push(doc.remotes[0].id.split("@")[0]);
-                    linked = true;                    
+                    linked = true;
                   }
 
                   doc.uploadContext = `lasec-crm::client::document::${customer.id}`;
-                  doc.timeline.push({ timestamp: new Date().valueOf(), message: `File linked to customer on local` })                  
+                  doc.timeline.push({ timestamp: new Date().valueOf(), message: `File linked to customer on local` })
                   doc.save();
                 });
 
-                if(ids.length > 0) {
+                if (ids.length > 0) {
                   let link_result = await lasecApi.Documents.updateDocumentIds(ids, customer.id).then();
-                  logger.debug(`LasecCreateNewClient :: result from updating document list. ${JSON.stringify(link_result)}`);                  
+                  logger.debug(`LasecCreateNewClient :: result from updating document list. ${JSON.stringify(link_result)}`);
                 }
               }
-              
+
             } catch (exc) {
               logger.debug(`Could; not upload documents for the customer`, exc);
               response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while uploading documents`, type: 'warning', inAppNotification: true });
