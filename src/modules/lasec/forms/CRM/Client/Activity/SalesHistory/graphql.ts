@@ -10,8 +10,15 @@ const graphql: Reactory.IFormGraphDefinition = {
         $paging: PagingRequest,
         $filterBy: String,
         $filter: String
+
+
         $periodStart: String,
         $periodEnd: String,
+        $year: Int,
+        $month: Int,
+        $years: [Any],
+
+
       ){
         LasecGetCRMClientSalesHistory(
           clientId: $clientId,
@@ -19,8 +26,15 @@ const graphql: Reactory.IFormGraphDefinition = {
           paging: $paging,
           filterBy: $filterBy,
           filter: $filter,
+
+
           periodStart: $periodStart,
           periodEnd: $periodEnd,
+          year: $year,
+          month: $month,
+          years: $years,
+
+
         ){
           paging {
             total
@@ -28,53 +42,85 @@ const graphql: Reactory.IFormGraphDefinition = {
             hasNext
             pageSize
           }
+
+          year
+          month
+          years
+
           salesHistory {
             id
-            orderType
-            quoteDate
-            quoteNumber
-            orderDate
-            iso
-            dispatches
+            accountNumber
             customer
-            client
+            invoiceNumber
+            iso
             poNumber
-            value
-            salesTeamId
+            orderDate
+            quoteId
+            salesOrderNumber
+            orderStatus
+            currency
+            orderType
+            deliveryAddress
+            warehouseNote
+            deliveryNote
+            salesTeam
           }
         }
       }`,
-      variables: {
-        'formData.id': 'clientId',
-        'formData.search': 'search',
-        'formData.filterBy': 'filterBy',
-        'formData.filter': 'filter',
-        'formData.paging': 'paging',
-        'formData.periodStart': 'periodStart',
-        'formData.periodEnd': 'periodEnd',
-      },
-      resultMap: {
-        'paging': 'paging',
-        'filterBy': 'filterBy',
-        'salesHistory.[].id': 'salesHistory.[].id',
-        'salesHistory.[].orderType': 'salesHistory.[].orderType',
-        'salesHistory.[].quoteDate': 'salesHistory.[].quoteDate',
-        'salesHistory.[].quoteNumber': 'salesHistory.[].quoteNumber',
-        'salesHistory.[].orderDate': 'salesHistory.[].orderDate',
-        'salesHistory.[].iso': 'salesHistory.[].isoNumber',
-        'salesHistory.[].dispatches': 'salesHistory.[].dispatches',
-        'salesHistory.[].customer': 'salesHistory.[].customer',
-        'salesHistory.[].client': 'salesHistory.[].client',
-        'salesHistory.[].poNumber': 'salesHistory.[].poNumber',
-        'salesHistory.[].value': 'salesHistory.[].value',
-        'salesHistory.[].salesTeamId': 'salesHistory.[].salesTeamId',
-      },
+      // id
+      //       orderType
+      //       quoteDate
+      //       quoteNumber
+      //       orderDate
+      //       iso
+      //       dispatches
+      //       customer
+      //       client
+      //       poNumber
+      //       value
+      //       salesTeamId
+      // variables: {
+      //   'formData.id': 'clientId',
+      //   'formData.search': 'search',
+      //   'formData.filterBy': 'filterBy',
+      //   'formData.filter': 'filter',
+      //   'formData.paging': 'paging',
+
+
+      //   'formData.periodStart': 'periodStart',
+      //   'formData.periodEnd': 'periodEnd',
+      //   'formData.year': 'year',
+      //   'formData.years': 'years',
+      //   'formData.month': 'month',
+
+      // },
+      // resultMap: {
+      //   'paging': 'paging',
+      //   'filterBy': 'filterBy',
+
+      //   'year': 'year',
+      //   'years': 'years',
+      //   'month': 'month',
+
+      //   'salesHistory.[].id': 'salesHistory.[].id',
+      //   'salesHistory.[].orderType': 'salesHistory.[].orderType',
+      //   'salesHistory.[].quoteDate': 'salesHistory.[].quoteDate',
+      //   'salesHistory.[].quoteNumber': 'salesHistory.[].quoteNumber',
+      //   'salesHistory.[].orderDate': 'salesHistory.[].orderDate',
+      //   'salesHistory.[].iso': 'salesHistory.[].isoNumber',
+      //   'salesHistory.[].dispatches': 'salesHistory.[].dispatches',
+      //   'salesHistory.[].customer': 'salesHistory.[].customer',
+      //   'salesHistory.[].client': 'salesHistory.[].client',
+      //   'salesHistory.[].poNumber': 'salesHistory.[].poNumber',
+      //   'salesHistory.[].value': 'salesHistory.[].value',
+      //   'salesHistory.[].salesTeamId': 'salesHistory.[].salesTeamId',
+      // },
       autoQuery: false,
       resultType: 'object',
       edit: false,
       new: false,
     },
-  },  
+  },
 };
 
 export default graphql;

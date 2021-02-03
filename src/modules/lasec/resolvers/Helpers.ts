@@ -2693,6 +2693,11 @@ export const getClientSalesHistory = async (params: any) => {
     filterBy = "any_field",
     filter,
     paging = { page: 1, pageSize: 10 },
+
+    year,
+    month,
+    years,
+
     iter = 0 } = params;
 
   let pagingResult = {
@@ -2709,6 +2714,22 @@ export const getClientSalesHistory = async (params: any) => {
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
+
+  if (search != '')
+    apiFilter[filterBy] = search;
+
+  if (year) {
+    logger.debug(`SETTING DATES PER YEAR:: ${month}`);
+    apiFilter.start_date = moment([year]).startOf('year').toISOString();
+    apiFilter.end_date = moment([year]).endOf('year').toISOString();
+  }
+
+  if (month != undefined) {
+    logger.debug(`SETTING DATES PER MONTH:: ${month}`);
+    let _year = year || moment().year();
+    apiFilter.start_date = moment([_year, month - 1]).startOf('month').toISOString();
+    apiFilter.end_date = moment([_year, month - 1]).endOf('month').toISOString();
+  }
 
   const salesHistoryResponse = await lasecApi.Products.sales_orders({
     filter: apiFilter,
@@ -2738,16 +2759,26 @@ export const getClientSalesHistory = async (params: any) => {
 
   salesHistory = salesHistory.map(order => {
     return {
+
       id: order.id,
-      orderType: order.order_type,
-      orderDate: order.order_date,
-      quoteDate: order.quote_date,
-      quoteNumber: order.quote_id || '',
-      iso: order.sales_order_id,
-      dispatches: order.dispatch_note_ids.join(', '),
+      accountNumber: order.account_number,
       customer: order.company_trading_name,
       client: order.customer_name,
-      poNumber: order.sales_order_number,
+      invoiceNumber: order.invoice_ids.length > 0 ? order.invoice_ids[0] : '', // THESE ARE IDS AND CAN BE MULTIPLE
+      iso: order.sales_order_id,
+      poNumber: order.customerponumber,
+      orderDate: order.order_date,
+
+      // id: order.id,
+      orderType: order.order_type,
+      // orderDate: order.order_date,
+      quoteDate: order.quote_date,
+      quoteNumber: order.quote_id || '',
+      // iso: order.sales_order_id,
+      dispatches: order.dispatch_note_ids.join(', '),
+      // customer: order.company_trading_name,
+      // client: order.customer_name,
+      // poNumber: order.sales_order_number,
       value: order.order_value,
       salesTeamId: order.sales_team_id,
 
@@ -2765,6 +2796,9 @@ export const getClientSalesHistory = async (params: any) => {
   let result = {
     paging: pagingResult,
     salesHistory,
+    year,
+    month,
+    years,
   };
 
   return result;
