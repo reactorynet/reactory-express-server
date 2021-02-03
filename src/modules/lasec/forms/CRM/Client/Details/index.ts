@@ -24,7 +24,7 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
     },
     salesTeam: "",
     tabs: [
-      {                
+      {
         id: 'clientsDetails',
         title: 'Client Details',
         componentFqn: 'lasec-crm.LasecCRMPersonalInformation',
@@ -65,7 +65,7 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
             },
           }
         ],
-        
+
       },
       {
         id: 'customer-details',
@@ -134,7 +134,8 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
         componentFqn: 'lasec-crm.LasecCRMClientSalesHistory',
         componentProps: { mode: 'edit', uiSchemaKey: 'display' },
         componentPropsMap: {
-          'formContext.formData.id': 'formData.id'
+          // 'formContext.formData.id': 'formData.id'
+          'formContext.formData.id': ['formData.id', 'query.id']
         }
       }
     ]
@@ -142,10 +143,10 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
-    { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },    
+    { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
     { componentFqn: 'lasec-crm.ClientDetailHeaderWidget@1.0.0', widget: 'ClientDetailHeaderWidget' },
     { componentFqn: 'lasec-crm.LasecClientOverviewHeaderForm@1.0.0', widget: 'LasecClientOverviewHeaderForm' },
-    { componentFqn: 'core.TabbedNavigation@1.0.0', widget: 'TabbedNavWidget' },    
+    { componentFqn: 'core.TabbedNavigation@1.0.0', widget: 'TabbedNavWidget' },
   ],
 };
 
