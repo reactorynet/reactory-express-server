@@ -1385,14 +1385,14 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
     periodStart,
     periodEnd,
     quoteDate,
-    filterBy = "rep_code",
+    filterBy = "any_field",
     filter,
     paging = { page: 1, pageSize: 10 },
     orderBy = 'code',
     orderDirection = 'asc',
     iter = 0 } = params;
 
-  logger.debug(`🚨🚨getPagedQuotes(${JSON.stringify(params)})`);
+  logger.debug(`🚨🚨getPagedQuotes(${JSON.stringify(params, null, 2)})`);
 
   let ordering: { [key: string]: string } = {}
   let lasec_user: Lasec360User = await getLoggedIn360User().then();
@@ -1410,13 +1410,14 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
   };
 
   let apiFilter: any = {
+    rep_id: lasec_user.sales_team_id,
   };
 
   const DEFAULT_FILTER = {
-    rep_code: lasec_user.repId,
+    rep_id: lasec_user.sales_team_id,
   }
 
-  const empty_result = {
+  const empty_result: any = {
     paging: pagingResult,
     quotes: [],
   }
@@ -1432,6 +1433,8 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
       } else {
         apiFilter.any_field = search;
       }
+
+
       break;
     }
     case "date_range": {
@@ -1443,6 +1446,8 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
       if (search && search.length >= 3) {
         apiFilter.any_field = search;
       }
+
+      delete apiFilter.rep_id;
 
       break;
     }
@@ -1460,44 +1465,52 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
       }
 
       apiFilter.ids = [search];
-
+      delete apiFilter.rep_id;
 
       break;
     }
     case "quote_date": {
       apiFilter.created = moment(filter).format('YYYY-MM-DD')
+      delete apiFilter.rep_id;
       break;
     }
     case "quote_status": {
-      apiFilter.quote_status_id = filter;
+      //HACK to ensure the quote status filter works
+      apiFilter.quote_status = `${filter},${filter}`;
+      delete apiFilter.rep_id;
       break;
     }
     case "total_value": {
       let total_value: number = parseInt(parseFloat(search || "100").toFixed(2)) * 10;
       apiFilter.total_value = total_value;
+      delete apiFilter.rep_id;
       break;
     }
     case "client": {
       //apiFilter.full_name = search;
-      apiFilter.any_field = search;
+      apiFilter.customer_name = search;
+      delete apiFilter.rep_id;
       break;
     }
     case "customer": {
       //apiFilter.registered_name = search;
-      apiFilter.any_field = search;
+      apiFilter.company_name = search;
+      delete apiFilter.rep_id;
       break;
     }
     case "account_number": {
       //apiFilter.account_number = search;
-      apiFilter.any_field = search;
+      apiFilter.account_number = search;
+      delete apiFilter.rep_id;
       break;
     }
     case "quote_type": {
-      apiFilter.quote_type = filter
+      apiFilter.quote_type = filter;
+      delete apiFilter.rep_id;
       break;
     }
     case "rep_code": {
-      apiFilter.sales_team_id = filter || lasec_user.repId
+      apiFilter.rep_id = filter || lasec_user.sales_team_id
       break;
     }
   }
