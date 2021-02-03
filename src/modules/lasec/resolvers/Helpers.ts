@@ -195,18 +195,18 @@ export const getLoggedIn360User: Function = async function (skip_cache: boolean 
   }
   if (user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
 
-  if(typeof user.getAuthentication === 'function') {
+  if (typeof user.getAuthentication === 'function') {
     const _authentication = user.getAuthentication("lasec");
-  
+
     if (!_authentication) {
       throw new LasecNotAuthenticatedException('User has no authentication entry for Lasec');
     }
-    
+
     const _lasec_creds: Lasec360Credentials = credsFromAuthentication(_authentication);
     if (_lasec_creds && _lasec_creds.payload) {
       let staff_user_id: string = "";
       staff_user_id = `${_lasec_creds.payload.user_id}`;
-  
+
       const hashkey = LoggedInLasecUserHashKey(global.partner, user);
       let me360 = await getCacheItem(hashkey).then();
       if (me360 === null || skip_cache === true) {
@@ -216,12 +216,12 @@ export const getLoggedIn360User: Function = async function (skip_cache: boolean 
           //fetch any other data that may be required for the data fetch
         }
       }
-  
+
       if (me360) {
         setCacheItem(hashkey, me360, 60);
         logger.debug(`Updated Cache item for ${hashkey} 🟢`)
       }
-  
+
       logger.debug(`me360 ===>`, me360)
       return me360;
     }
@@ -2251,14 +2251,14 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
           let found = false;
 
           _docs.forEach((loaded: Reactory.IReactoryFile) => {
-            if(loaded.remotes && loaded.remotes.length === 1) {
-              if(loaded.remotes[0].id.indexOf(`${documentItem.id}@`) === 0) {
+            if (loaded.remotes && loaded.remotes.length === 1) {
+              if (loaded.remotes[0].id.indexOf(`${documentItem.id}@`) === 0) {
                 found = true;
               }
             }
           });
 
-          if(found === false) {
+          if (found === false) {
             _docs.push({
               id: documentItem.id,
               partner: global.partner,
@@ -2765,6 +2765,7 @@ export const getSalesHistoryMonthlyCount = async (params: any) => {
   try {
 
     const {
+      clientId,
       search = "",
       filterBy = "any_field",
     } = params;
@@ -2775,6 +2776,11 @@ export const getSalesHistoryMonthlyCount = async (params: any) => {
       end_date: moment().endOf('day').toISOString(),
       totals: true
     };
+
+    // CATER FOR SPECIFIC CLIENT
+    if (clientId && clientId != '') {
+      _filter.customer_id = clientId;
+    }
 
     _filter[filterBy] = search;
 

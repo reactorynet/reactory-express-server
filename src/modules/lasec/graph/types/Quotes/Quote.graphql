@@ -860,11 +860,7 @@ extend type Query {
   LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
   LasecGetCompanyDetailsforQuote(id: String!): LasecCRMCustomer
 
-  # LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryMonthlyCount]
-  LasecGetSalesHistoryMonthTotals(
-    search: String!
-    filterBy: String
-  ): [SalesHistoryYearlyCount]
+  LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String, clientId: String): [SalesHistoryYearlyCount]
   LasecGetQuotePDFUrl(quote_id: String!): DocumentUrl
   LasecGetQuoteProformaPDFUrl(quote_id: String!): DocumentUrl
 

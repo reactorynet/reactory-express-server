@@ -191,8 +191,8 @@ const $PagedLineItemsResponse = async (quote: any, context: { item_paging?: Reac
 }
 
 interface product_dimensions {
-  length: number, 
-  height: number, 
+  length: number,
+  height: number,
   width: number,
   volume: number,
   weight: number,
@@ -200,12 +200,12 @@ interface product_dimensions {
 };
 
 const PopulateProductDimensions = async ({ code }: FreightRequestProductDetail): Promise<product_dimensions> => {
-          
-    if(code) {        
+
+    if(code) {
       const result: any[] = await mysql(`
-        SELECT 
+        SELECT
           product_length as length,
-          product_weight as weight, 
+          product_weight as weight,
           product_height as height,
           product_volume as volume,
           product_width as width,
@@ -225,7 +225,7 @@ const PopulateProductDimensions = async ({ code }: FreightRequestProductDetail):
       width: 0,
       unitOfMeasure: "none"
     }
-  
+
 }
 
 export default {
@@ -510,7 +510,7 @@ export default {
     },
     company: async (quote) => {
       const { meta } = quote;
-      
+
 
       if (isNil(quote.company) === false && quote.company._bsontype === "ObjectID") {
         if (ObjectId.isValid(quote.company) === true) {
@@ -756,7 +756,7 @@ export default {
         item = {...item, ...item._dimensions};
       }
 
-      return item.length;                
+      return item.length;
     },
     width: async (item: FreightRequestProductDetail): Promise<number> => {
       const { width } = item;
@@ -769,7 +769,7 @@ export default {
         item = {...item, ...item._dimensions};
       }
 
-      return item.width;                
+      return item.width;
     },
     height: async (item: FreightRequestProductDetail): Promise<number> => {
       const { height } = item;
@@ -782,7 +782,7 @@ export default {
         item = {...item, ...item._dimensions};
       }
 
-      return item.height;                
+      return item.height;
     },
     volume: async (item: FreightRequestProductDetail): Promise<number> => {
       const { volume } = item;
@@ -795,7 +795,7 @@ export default {
         item = {...item, ...item._dimensions};
       }
 
-      return item.volume;                
+      return item.volume;
     },
     weight: async (item: FreightRequestProductDetail): Promise<number> => {
       const { weight } = item;
@@ -808,7 +808,7 @@ export default {
         item = {...item, ...item._dimensions};
       }
 
-      return item.weight;                
+      return item.weight;
     },
     unitOfMeasure: async (item: FreightRequestProductDetail): Promise<string> => {
       const { unitOfMeasure } = item;
@@ -821,11 +821,11 @@ export default {
         item = {...item, ...item._dimensions};
       }
 
-      return item.unitOfMeasure;                
+      return item.unitOfMeasure;
     },
   },
   Query: {
-    LasecTransportationModes: async (): Promise<LasecTransportationMode[]> => { 
+    LasecTransportationModes: async (): Promise<LasecTransportationMode[]> => {
       return (getService(QUOTE_SERVICE_ID) as IQuoteService).getQuoteTransportModes();
     },
     LasecGetQuoteList: async (obj, { search }) => {
@@ -868,12 +868,19 @@ export default {
     LasecGetCRMInvoices: async (obj: any, args: any) => {
       return getCRMInvoices(args);
     },
+
+    // CLIENT SALES HISTORY
     LasecGetCRMClientSalesHistory: async (obj, args) => {
       return getClientSalesHistory(args);
     },
+
+    // ALL SALES HISTORY
     LasecGetCRMSalesHistory: async (obj, args) => {
       return getCRMSalesHistory(args);
     },
+
+    // MONTHLY TOTALS
+    // FOR ALL SALES HISTORY AND FOR CLIENT SPECIFIC SALES HISTORY
     LasecGetSalesHistoryMonthTotals: async (obj, args) => {
       return getSalesHistoryMonthlyCount(args);
     },
@@ -890,7 +897,7 @@ export default {
 
         logger.error(`Unhandled error while Getting Freight Request Detail for Quote ${args.quoteId}`, unhandledError);
         throw new ApiError('Unandled Error', unhandledError);
-      }      
+      }
     },
     LasecGetCompanyDetailsforQuote: async (obj, args) => {
       return getCompanyDetails(args);
@@ -1245,7 +1252,7 @@ export default {
     LasecSendQuoteEmail: async (obj: any, args: LasecSendMailParams) => {
 
       try {
-        
+
         logger.debug(`💌 Sending Quote Email for quote: ${args.code}`, { message: args.mailMessage });
 
         const quoteService: IQuoteService = global.getService("lasec-crm.LasecQuoteService") as IQuoteService;

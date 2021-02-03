@@ -2,6 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import $graphql from './graphql';
 import $schema from './schema';
 import { SalesHistoryFilterByOptions } from '../shared';
+import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
 const uiSchema: any = {
   'ui:options': {
@@ -28,7 +29,7 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       salesHistory: { xs: 12 }
     }
@@ -164,23 +165,23 @@ const uiSchema: any = {
         grouping: false,
         search: false,
         showTitle: false,
-        toolbar: false,
+        toolbar: true,
       },
       componentMap: {
-        Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0',        
-      },      
-      toobarPropsMap: {
-        'toolbarProps.filterBy': 'query.filterBy',
-        'formContext.formData.filter': 'query.filter',
-        'toolbarProps.use_case': 'use_case', 
+        Toolbar: 'lasec-crm.SalesHistoryGridToolbar@1.0.0',
       },
-      toolbarProps: {
-        filterBy: 'client_id',
-        use_case: 'client_activity',
-      },
+      // toobarPropsMap: {
+      //   'toolbarProps.filterBy': 'query.filterBy',
+      //   'formContext.formData.filter': 'query.filter',
+      //   'toolbarProps.use_case': 'use_case',
+      // },
+      // toolbarProps: {
+      //   filterBy: 'client_id',
+      //   use_case: 'client_activity',
+      // },
       remoteData: true,
       query: 'client_sales_history',
-      variables: {        
+      variables: {
         'query.search': 'search',
         'query.filter': ['filter', 'clientId'],
         'query.filterBy': 'filterBy',
@@ -206,6 +207,7 @@ const uiSchema: any = {
         'salesHistory.[].salesTeamId': 'data.[].salesTeamId',
 
       },
+
     },
   }
 };
@@ -214,7 +216,14 @@ const LasecCRMClientSalesHistory: Reactory.IReactoryForm = {
   id: 'LasecCRMClientSalesHistory',
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [],
+  uiResources: [
+    {
+      id: 'reactory.plugin.lasec360',
+      name: 'reactory.plugin.lasec360',
+      type: 'script',
+      uri: `${ENVIRONMENT.CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
+    },
+  ],
   title: 'CMS Client Activities Sales History',
   tags: ['CMS Client Activities Sales History'],
   registerAsComponent: true,
