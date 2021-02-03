@@ -1882,7 +1882,7 @@ export const getPagedSalesOrders = async (params: any) => {
 
   logger.debug(`GETTING PAGED SALES ORDERS:: ${JSON.stringify(params)}`);
 
-  const { paging, apiFilter } = params;
+  const { paging, apiFilter, ordering } = params;
 
   let pagingResult = {
     total: 0,
@@ -1896,7 +1896,7 @@ export const getPagedSalesOrders = async (params: any) => {
     format: {
       ids_only: true,
     },
-    ordering: { order_date: "desc" },
+    ordering: ordering || { order_date: "desc" },
     pagination: {
       page_size: paging.pageSize || 10,
       current_page: paging.page
@@ -2133,48 +2133,56 @@ export const getCRMSalesOrders = async (params) => {
     periodEnd,
     filterBy = "any_field",
     filter,
-    customer = [],
-    client = [],
-    orderStatus,
-    dateFilter,
+    orderBy = 'order_date',
+    orderDirection = 'desc',
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
   let me: Lasec360User = await getLoggedIn360User().then() as Lasec360User;
 
-  let apiFilter: any = {
-    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
-    ordering: { order_date: "desc" },
-    sales_team_id: me.sales_team_ids[0]
-  };
+  let apiFilter: any = {};
 
   if (filterBy == 'order_date' || filterBy == 'shipping_date' || filterBy == 'quote_date') {
     apiFilter.using = filterBy;
-    apiFilter.start_date = moment(dateFilter).startOf('day');
-    apiFilter.end_date = moment(dateFilter).endOf('day');
+    apiFilter.start_date = moment(filter).startOf('day');
+    apiFilter.end_date = moment(filter).endOf('day');
   }
 
-  if (filterBy == 'order_type')
+  if (filterBy == 'order_type') {
     apiFilter[filterBy] = filter;
+  }
 
   if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id') {
     apiFilter[filterBy] = search;
   }
 
   if (filterBy === 'customer') {
-    apiFilter.customer_id = customer;
+    apiFilter.customer = search;
   }
 
   if (filterBy === 'client') {
-    apiFilter.client_id = client
+    apiFilter.client = search
   }
 
   if (filterBy == 'sales_team_id') {
     apiFilter[filterBy] = filter;
   }
 
-  const result = await getPagedSalesOrders({ paging, apiFilter });
+  if (filterBy === 'date_range') {
+    apiFilter = {
+      ...apiFilter,
+      using: 'order_date',
+      start_date: periodStart ? moment(periodStart).toISOString() : moment().add(-1, 'year'),
+      end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    }
+  }
+
+  if (search.trim() === "" && filterBy === "any_field") apiFilter.sales_team_id = me.sales_team_id;
+
+  let ordering: any = {};
+  ordering[orderBy] = orderDirection;
+
+  const result = await getPagedSalesOrders({ paging, apiFilter, ordering: { order_date: "desc" }, });
   return result;
 }
 
@@ -2650,6 +2658,14 @@ export const getCRMInvoices = async (params: any) => {
     pagingResult.pageSize = invoiceIdsResponse.pagination.page_size || 10;
     pagingResult.hasNext = invoiceIdsResponse.pagination.has_next_page === true;
     pagingResult.page = invoiceIdsResponse.pagination.current_page || 1;
+  }
+
+  if (ids.length === 0) {
+    logger.debug('🚨 QUERY PARAMETERS RETURNED NO RESULTS 🚨')
+    return {
+      paging: pagingResult,
+      invoices: []
+    }
   }
 
   let invoiceDetails = await lasecApi.Invoices.list({ filter: { ids: ids } }).then();

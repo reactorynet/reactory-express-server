@@ -279,6 +279,11 @@ const uiSchema: any = {
           title: 'Order Value',
           field: 'value',
           component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            style: {
+              fontSize: '0.75rem'
+            }
+          },
           propsMap: {
             'rowData.value': 'value',
           },
@@ -287,6 +292,11 @@ const uiSchema: any = {
           title: 'Reserve Value',
           field: 'reserveValue',
           component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            style: {
+              fontSize: '0.75rem'
+            }
+          },
           propsMap: {
             'rowData.reserveValue': 'value',
           },
@@ -295,6 +305,11 @@ const uiSchema: any = {
           title: 'Shipped Value',
           field: 'shipValue',
           component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            style: {
+              fontSize: '0.75rem'
+            }
+          },
           propsMap: {
             'rowData.shipValue': 'value',
           },
@@ -303,6 +318,11 @@ const uiSchema: any = {
           title: 'Back Order Value',
           field: 'backorderValue',
           component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            style: {
+              fontSize: '0.75rem'
+            }
+          },
           propsMap: {
             'rowData.backorderValue': 'value',
           },

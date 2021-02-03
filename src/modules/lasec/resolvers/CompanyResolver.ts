@@ -95,7 +95,6 @@ const getClients = async (params: GetClientsParams) => {
     orderDirection
   });
 
-  debugger;
 
   let ordering: { [key: string]: string } = {}
 
@@ -149,7 +148,12 @@ const getClients = async (params: GetClientsParams) => {
     case "any_field":
     default: {
       _filter.any_field = search || "";
-      _filter['sales_team_id'] = logged_in.sales_team_id;
+      if (search.length > 0) {
+        delete _filter.sales_team_id;
+      } else {
+        _filter['sales_team_id'] = logged_in.sales_team_id;
+      }
+
       break;
     }
   }
@@ -165,7 +169,7 @@ const getClients = async (params: GetClientsParams) => {
   }
 
   //make sure there is a sales_team_id set, if they aren't specified.
-  if (!_filter.sales_team_id && !_filter.sales_team_ids && filterBy === 'any_field') {
+  if (!_filter.sales_team_id && !_filter.sales_team_ids && filterBy === 'any_field' && search.length === 0) {
     _filter.sales_team_id = logged_in.sales_team_id;
   }
 
