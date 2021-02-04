@@ -16,7 +16,7 @@ const uiSchema: any = {
     }
   },
   'ui:field':'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       clients: {
         xs: 12, sm: 12, md: 12, lg: 12
@@ -92,7 +92,7 @@ const uiSchema: any = {
   clients: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      columns: [       
+      columns: [
         {
           title: 'Client Full Name',
           field: 'fullName',
@@ -102,10 +102,10 @@ const uiSchema: any = {
             'rowData': 'formData',
           },
         },
-        { title: 'Email Address', 
+        { title: 'Email Address',
           field: 'emailAddress',
           breakpoint: 'sm',
-          component: 'lasec-crm.LasecClientLabel@1.0.0', 
+          component: 'lasec-crm.LasecClientLabel@1.0.0',
           props: {
             dataLabelField: 'emailAddress',
             displayIcon: false
@@ -114,7 +114,7 @@ const uiSchema: any = {
             'rowData': 'formData',
           },
         },
-        { title: 'Client Rep Code', 
+        { title: 'Client Rep Code',
           field: 'salesTeam',
           breakpoint: 'sm',
           component: 'core.LabelComponent@1.0.0',
@@ -128,21 +128,21 @@ const uiSchema: any = {
           },
           propsMap: {
             'rowData': 'formData',
-          },     
+          },
         },
         {
           title: 'Customer',
           field: 'customer',
-          component: 'lasec-crm.CustomerLabel@1.0.0',          
+          component: 'lasec-crm.CustomerLabel@1.0.0',
           propsMap: {
-            'rowData.customer': ['customer', 'formData'],            
+            'rowData.customer': ['customer', 'formData'],
           },
           props: {
             'use_case': 'grid'
           },
           breakpoint: 'md',
         },
-        { title: 'Customer Rep Code', 
+        { title: 'Customer Rep Code',
           field: 'company_rep_code',
           breakpoint: 'md',
           component: 'core.LabelComponent@1.0.0',
@@ -156,7 +156,7 @@ const uiSchema: any = {
           },
           propsMap: {
             'rowData': 'formData',
-          },          
+          },
         },
         {
           title: 'Account Number',
@@ -174,19 +174,19 @@ const uiSchema: any = {
             'rowData': 'value',
           },
           breakpoint: 'md',
-        },        
+        },
         {
           title: 'Country',
           field: 'country',
           breakpoint: 'md',
 
         }
-      ],      
+      ],
       actions: [
         {
           icon: 'remove_circle',
           tooltip: 'Deactivate Client(s)',
-          key: 'deactivate',          
+          key: 'deactivate',
           confirmation: {
             title: 'Are you sure you want to deactivate ${selected.length === 1 ? "this client" : "these clients"}?',
             titleProps: {
@@ -194,7 +194,7 @@ const uiSchema: any = {
                 fontWeight: 'bold'
               }
             },
-            content: 'Once a client is deactivated you will no longer be able to acces the client information', 
+            content: 'Once a client is deactivated you will no longer be able to acces the client information',
             contentProps: {
               style:{
                 color: '#BCBCBC'
@@ -216,13 +216,13 @@ const uiSchema: any = {
           },
           iconProps: {
             color: 'error'
-          },      
-          mutation: 'deactivate',          
+          },
+          mutation: 'deactivate',
         },
       ],
       options: {
         grouping: false,
-        search: true,        
+        search: true,
         showTitle: false,
         toolbar: true,
         selection: true,
@@ -233,12 +233,8 @@ const uiSchema: any = {
       componentMap: {
         Toolbar: 'lasec-crm.ClientGridToolbar@1.0.0'
       },
-      toolbarPropsMap: {
-
-      },
-      toolbarProps: {
-
-      },
+      toolbarPropsMap: {},
+      toolbarProps: {},
       remoteData: true,
       query: 'clients_search',
       variables: {
@@ -254,7 +250,7 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'clients': 'data',        
+        'clients': 'data',
       },
       resultType: 'object',
     },

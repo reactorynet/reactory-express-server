@@ -2,6 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import $graphql from './graphql';
 import $schema from './schema';
 import { InvoiceFilterByOptions } from '../shared';
+import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
 const uiSchema: any = {
   'ui:options': {
@@ -28,12 +29,12 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       invoices: { xs: 12 }
     }
   ],
- 
+
   invoices: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -179,12 +180,15 @@ const uiSchema: any = {
         toolbar: true,
       },
       componentMap: {
-        Toolbar: 'lasec-crm.InvoiceGridToolbar@1.0.0',        
-      },      
+        Toolbar: 'lasec-crm.InvoiceGridToolbar@1.0.0',
+      },
       toobarPropsMap: {
+        'formContext.formData.id': 'query.id',
+        'formContext.formData.salesTeam': 'query.salesTeam',
+        'formContext.formData.search': 'query.search',
         'toolbarProps.filterBy': 'query.filterBy',
         'formContext.formData.filter': 'query.filter',
-        'toolbarProps.use_case': 'use_case', 
+        'toolbarProps.use_case': 'use_case',
       },
       toolbarProps: {
         filterBy: 'client_id',
@@ -193,6 +197,8 @@ const uiSchema: any = {
       remoteData: true,
       query: 'client_invoices',
       variables: {
+        'query.id': 'clientId',
+        'query.salesTeam': 'salesTeamId',
         'query.search': 'search',
         'query.filter': 'filter',
         'query.filterBy': 'filterBy',
@@ -205,18 +211,21 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'invoices.[].id': 'data.[].id',
-        'invoices.[].invoiceDate': 'data.[].invoiceDate',
-        'invoices.[].quoteDate': 'data.[].quoteDate',
-        'invoices.[].quoteId': 'data.[].quoteId',
-        'invoices.[].customer': 'data.[].customer',
-        'invoices.[].client': 'data.[].client',
-        'invoices.[].dispatches': 'data.[].dispatches',
-        'invoices.[].accountNumber': 'data.[].accountNumber',
-        'invoices.[].salesTeamId': 'data.[].salesTeamId',
-        'invoices.[].poNumber': 'data.[].poNumber',
-        'invoices.[].isoNumber': 'data.[].isoNumber',
-        'invoices.[].value': 'data.[].value',
+
+        'invoices': 'invoices',
+
+        // 'invoices.[].id': 'data.[].id',
+        // 'invoices.[].invoiceDate': 'data.[].invoiceDate',
+        // 'invoices.[].quoteDate': 'data.[].quoteDate',
+        // 'invoices.[].quoteId': 'data.[].quoteId',
+        // 'invoices.[].customer': 'data.[].customer',
+        // 'invoices.[].client': 'data.[].client',
+        // 'invoices.[].dispatches': 'data.[].dispatches',
+        // 'invoices.[].accountNumber': 'data.[].accountNumber',
+        // 'invoices.[].salesTeamId': 'data.[].salesTeamId',
+        // 'invoices.[].poNumber': 'data.[].poNumber',
+        // 'invoices.[].isoNumber': 'data.[].isoNumber',
+        // 'invoices.[].value': 'data.[].value',
       },
     },
   }
@@ -226,7 +235,14 @@ const LasecCRMClienInvoiceActivities: Reactory.IReactoryForm = {
   id: 'LasecCRMClienInvoiceActivities',
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [],
+  uiResources: [
+    {
+      id: 'reactory.plugin.lasec360',
+      name: 'reactory.plugin.lasec360',
+      type: 'script',
+      uri: `${ENVIRONMENT.CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
+    },
+  ],
   title: 'CMS Client Activities Invoices',
   tags: ['CMS Client Activities Invoices'],
   registerAsComponent: true,

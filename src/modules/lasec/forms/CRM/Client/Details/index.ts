@@ -124,8 +124,8 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
         componentFqn: 'lasec-crm.LasecCRMClienInvoiceActivities',
         componentProps: { mode: 'edit', uiSchemaKey: 'display' },
         componentPropsMap: {
-          'formContext.formData.id': 'formData.id',
-          'formContext.formData.salesTeam': 'formData.salesTeam'
+          'formContext.formData.id': ['formData.id', 'query.id'],
+          'formContext.formData.salesTeam': ['formData.salesTeam', 'query.salesTeam']
         }
       },
       {
