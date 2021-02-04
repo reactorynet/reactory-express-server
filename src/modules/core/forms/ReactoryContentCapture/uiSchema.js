@@ -24,7 +24,7 @@ const minmalOptions = {
   imageDefaultWidth: 300,
   imageDefaultDisplay: 'inline',
   imageUploadMethod: 'POST',
-  toolbarButtons: 	{
+  toolbarButtons: {
     'moreText': {
       'buttons': ['bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript', 'fontFamily', 'fontSize', 'textColor', 'backgroundColor', 'inlineClass', 'inlineStyle', 'clearFormatting']
     },
@@ -50,7 +50,7 @@ const minmalExtendedOptions = {
   imageDefaultWidth: 300,
   imageDefaultDisplay: 'inline',
   imageUploadMethod: 'POST',
-  toolbarButtons: 	{
+  toolbarButtons: {
     'moreText': {
       'buttons': ['bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript', 'fontFamily', 'fontSize', 'textColor', 'backgroundColor', 'inlineClass', 'inlineStyle', 'clearFormatting']
     },
@@ -134,20 +134,20 @@ export const minimalEdit = {
     hidden: true
   },
   topics: {
-  'ui:widget': 'HiddenWidget',
-  'ui:options': {
-    container: 'core.BasicContainer',
-    style: {
-      display: 'none',
-      maxHeight: '0px',
-    },
-    containerProps: {
-      title: 'Page Tags',
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      container: 'core.BasicContainer',
       style: {
-        display: "none"
+        display: 'none',
+        maxHeight: '0px',
+      },
+      containerProps: {
+        title: 'Page Tags',
+        style: {
+          display: "none"
+        },
       },
     },
-  },
   }
 };
 
@@ -214,30 +214,66 @@ export const minimalExtendedEdit = {
     hidden: true
   },
   topics: {
-  'ui:widget': 'HiddenWidget',
-  'ui:options': {
-    container: 'core.BasicContainer',
-    style: {
-      display: 'none',
-      maxHeight: '0px',
-    },
-    containerProps: {
-      title: 'Page Tags',
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      container: 'core.BasicContainer',
       style: {
-        display: "none"
+        display: 'none',
+        maxHeight: '0px',
+      },
+      containerProps: {
+        title: 'Page Tags',
+        style: {
+          display: "none"
+        },
       },
     },
-  },
   }
 };
 
 export default {
+  'ui:options': {
+    containerType: "div",
+    containerStyles: {
+      padding: '0px',
+      margin: '0px',
+      paddingBottom: '8px'
+    },
+    style: {
+      marginTop: '16px',
+    },
+    showSubmit: true,
+    showRefresh: true,
+    showHelp: true,
+  },
+  'ui:field': 'GridLayout',
+  'ui:grid-layout': [
+    {
+      slug: {
+        xs: 12, sm: 12, md: 6, lg: 6
+      },
+      title: {
+        xs: 12, sm: 12, md: 6, lg: 6
+      }
+    },
+    {
+      createdAt: {
+        xs: 12, sm: 12, md: 6, lg: 6
+      },
+      published: {
+        xs: 12, sm: 12, md: 6, lg: 6
+      }
+    },
+    {
+      content: { xs: 12, sm: 12, md: 12, lg: 12 }
+    }
+  ],
+
   slug: {
-    //TODO - add fancy check slug on change widget with query
-    //'ui:widget': 'HiddenWidget'
+    // ? slug wiget?
   },
   createdAt: {
-   'ui:widget': 'DateSelectorWidget'
+    'ui:widget': 'DateSelectorWidget',
   },
   content: {
     'ui:widget': 'FroalaWidget',
@@ -246,17 +282,17 @@ export default {
     },
   },
   topics: {
-   'ui:widget': 'ChipArrayWidget',
-      'ui:options': {
-        container: 'core.BasicContainer',
-        containerProps: {
-          title: 'Page Tags',
-          style: {
-            maxWidth: '100%',
-            justifyContent: 'flex-end',
-          },
+    'ui:widget': 'ChipArrayWidget',
+    'ui:options': {
+      container: 'core.BasicContainer',
+      containerProps: {
+        title: 'Page Tags',
+        style: {
+          maxWidth: '100%',
+          justifyContent: 'flex-end',
         },
       },
+    },
   }
 };
 

@@ -1410,7 +1410,7 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
   };
 
   let apiFilter: any = {
-    rep_id: lasec_user.sales_team_id,
+    sales_team_id: lasec_user.sales_team_id,
   };
 
   const DEFAULT_FILTER = {

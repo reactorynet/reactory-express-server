@@ -1,5 +1,5 @@
 export default {
-  type: 'object',  
+  type: 'object',
   required: ['slug', 'title', 'content'],
   properties: {
     slug: {
@@ -29,6 +29,13 @@ export default {
     published: {
       type: 'boolean',
       title: 'Published',
+    },
+    author: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        fullName: { type: 'string' },
+      }
     }
   }
 };

@@ -52,7 +52,8 @@ const ContentCapture = {
     },
   ],
   defaultFormValue: {
-    slug: ''
+    slug: 'your-new-slug',
+    title: 'Your title'
   },
   graphql: $graphql
 };
