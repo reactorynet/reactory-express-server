@@ -1434,6 +1434,8 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
         apiFilter.any_field = search;
       }
 
+      if (search.length > 0) delete apiFilter.sales_team_id;
+
 
       break;
     }
@@ -1447,7 +1449,7 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
         apiFilter.any_field = search;
       }
 
-      delete apiFilter.rep_id;
+      delete apiFilter.sales_team_id;
 
       break;
     }
@@ -1465,52 +1467,52 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
       }
 
       apiFilter.ids = [search];
-      delete apiFilter.rep_id;
+      delete apiFilter.sales_team_id;
 
       break;
     }
     case "quote_date": {
       apiFilter.created = moment(filter).format('YYYY-MM-DD')
-      delete apiFilter.rep_id;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "quote_status": {
       //HACK to ensure the quote status filter works
       apiFilter.quote_status = `${filter},${filter}`;
-      delete apiFilter.rep_id;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "total_value": {
       let total_value: number = parseInt(parseFloat(search || "100").toFixed(2)) * 10;
       apiFilter.total_value = total_value;
-      delete apiFilter.rep_id;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "client": {
       //apiFilter.full_name = search;
       apiFilter.customer_name = search;
-      delete apiFilter.rep_id;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "customer": {
       //apiFilter.registered_name = search;
       apiFilter.company_name = search;
-      delete apiFilter.rep_id;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "account_number": {
       //apiFilter.account_number = search;
       apiFilter.account_number = search;
-      delete apiFilter.rep_id;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "quote_type": {
       apiFilter.quote_type = filter;
-      delete apiFilter.rep_id;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "rep_code": {
-      apiFilter.rep_id = filter || lasec_user.sales_team_id
+      apiFilter.sales_team_id = filter || lasec_user.sales_team_id
       break;
     }
   }

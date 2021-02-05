@@ -196,6 +196,7 @@ interface LasecAPIFetchArgs {
   headers?: any,
   credentials?: string,
   params?: any
+  body?: any
   [key: string]: any
 };
 
@@ -270,7 +271,17 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     try {
       return apiResponse.json().catch((invalidJsonErr) => {
 
-        logger.error(`🚨 Error Getting JSON Response from LASEC API ${invalidJsonErr.message}`);
+        logger.error(`
+        ################################################################## 
+        🚨🚨           Invalid Response Type from LASEC API           🚨🚨
+        ################################################################## 
+        MESSAGE: ${invalidJsonErr.message}
+        ENDPOINT: ${absoluteUrl}
+        METHOD: ${kwargs.method || "GET"}
+        PARAMS: ${kwargs.params}
+        BODY:\n${kwargs.body ? JSON.stringify(kwargs.body, null, 2) : null}
+        ################################################################## 
+        `);
 
         return {
           status: 'failed',
@@ -279,7 +290,17 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
         };
       });
     } catch (jsonError) {
-      logger.error("JSON Error From API", jsonError);
+      logger.error(`
+        ################################################################## 
+        🚨🚨        Error Getting JSON Response from LASEC API        🚨🚨
+        ################################################################## 
+        MESSAGE: ${jsonError.message}
+        ENDPOINT: ${absoluteUrl}
+        METHOD: ${kwargs.method || "GET"}
+        PARAMS: ${kwargs.params}
+        BODY:\n${kwargs.body ? JSON.stringify(kwargs.body, null, 2) : null}
+        ################################################################## 
+        `);
       return {
         status: 'failed',
         payload: null,
@@ -294,6 +315,18 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
       }
       case 401:
       case 403: {
+
+        logger.warn(`
+        ################################################################## 
+        🚨🚨        Warning User Not Authenticated / Token Failed     🚨🚨
+        ################################################################## 
+        MESSAGE: Access Forbidden
+        ENDPOINT: ${absoluteUrl}
+        METHOD: ${kwargs.method || "GET"}
+        PARAMS: ${kwargs.params}
+        BODY:\n${kwargs.body ? JSON.stringify(kwargs.body, null, 2) : null}
+        ################################################################## 
+        `);
 
         const retry = async function retry() {
           logger.debug('Attempting to refetch', { attempt });
