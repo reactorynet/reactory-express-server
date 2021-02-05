@@ -2507,25 +2507,14 @@ export const getClientInvoices = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  // -- POSSIBLE FILTERS --
-  // any_field - done
-  // date_range - done
-  // invoice_date - done
-  // invoice_number - done
-  // po_number - done
-  // quote_number - done
-  // sales_team_id - done
-  // iso_number - done
-  // account_number - done
-
-  // invoice_value -  Error
-  // customer
-  // client
-
   let apiFilter: any = {
     customer_id: clientId,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+
+    // REMOVE THIS - TEST
+    // start_date: moment().startOf('year'),
+    // end_date: moment().endOf('month'),
   };
 
   if (filterBy == 'invoice_date') {
@@ -2584,6 +2573,7 @@ export const getClientInvoices = async (params) => {
   });
 
   let result = {
+    clientId,
     paging: pagingResult,
     invoices,
   };
@@ -2619,8 +2609,14 @@ export const getCRMInvoices = async (params: any) => {
 
   let apiFilter: any = {
     //customer_id: me.id,
-    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    // start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    // end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+
+
+    start_date: moment().startOf('year'),
+    end_date: moment().endOf('month'),
+
+
   };
 
   if (filterBy == 'invoice_date') {

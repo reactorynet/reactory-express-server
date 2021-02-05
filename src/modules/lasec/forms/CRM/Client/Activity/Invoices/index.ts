@@ -55,7 +55,6 @@ const uiSchema: any = {
             'rowData.invoiceDate': 'value',
           }
         },
-        // { title: 'Invoice Number', field: 'id' },
         {
           title: 'Invoice Number',
           field: 'isoNumber',
@@ -84,11 +83,11 @@ const uiSchema: any = {
             buttonTitle: '${rowData.id}',
             buttonVariant: 'Typography',
             buttonProps: {
+              variant: 'body1',
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
                 'color': 'black',
-                'fontSize': '1rem'
               }
             },
             windowTitle: 'Details view for Invoice # ${rowData.id}',
@@ -126,11 +125,11 @@ const uiSchema: any = {
             buttonTitle: '${rowData.isoNumber}',
             buttonVariant: 'Typography',
             buttonProps: {
+              variant: 'body1',
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
                 'color': 'black',
-                'fontSize': '1rem'
               }
             },
             windowTitle: 'Details view for Order # ${rowData.isoNumber}',
@@ -155,7 +154,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${rowData.quoteDate ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
@@ -166,11 +165,7 @@ const uiSchema: any = {
         },
         { title: 'Account Number', field: 'accountNumber' },
         { title: 'Customer', field: 'customer' },
-        { title: 'Client', field: 'client' },
-        // { title: 'Dispatches', field: 'dispatches' },
-        { title: 'Client Rep Code', field: 'salesTeamId' },
         { title: 'PO Number', field: 'poNumber' },
-        // { title: 'ISO Number', field: 'isoNumber' },
 
       ],
       options: {
@@ -211,21 +206,8 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-
-        'invoices': 'invoices',
-
-        // 'invoices.[].id': 'data.[].id',
-        // 'invoices.[].invoiceDate': 'data.[].invoiceDate',
-        // 'invoices.[].quoteDate': 'data.[].quoteDate',
-        // 'invoices.[].quoteId': 'data.[].quoteId',
-        // 'invoices.[].customer': 'data.[].customer',
-        // 'invoices.[].client': 'data.[].client',
-        // 'invoices.[].dispatches': 'data.[].dispatches',
-        // 'invoices.[].accountNumber': 'data.[].accountNumber',
-        // 'invoices.[].salesTeamId': 'data.[].salesTeamId',
-        // 'invoices.[].poNumber': 'data.[].poNumber',
-        // 'invoices.[].isoNumber': 'data.[].isoNumber',
-        // 'invoices.[].value': 'data.[].value',
+        'clientId': ['id', 'query.id'],
+        'invoices': 'data',
       },
     },
   }

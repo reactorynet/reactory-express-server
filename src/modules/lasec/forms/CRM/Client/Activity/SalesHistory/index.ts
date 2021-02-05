@@ -211,26 +211,10 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-
         'year': 'year',
         'years': 'years',
         'month': 'month',
-
         'salesHistory': 'data'
-
-        // 'salesHistory.[].id': 'data.[].id',
-        // 'salesHistory.[].orderType': 'data.[].orderType',
-        // 'salesHistory.[].quoteDate': 'data.[].quoteDate',
-        // 'salesHistory.[].quoteNumber': 'data.[].quoteNumber',
-        // 'salesHistory.[].orderDate': 'data.[].orderDate',
-        // 'salesHistory.[].iso': 'data.[].isoNumber',
-        // 'salesHistory.[].dispatches': 'data.[].dispatches',
-        // 'salesHistory.[].customer': 'data.[].customer',
-        // 'salesHistory.[].client': 'data.[].client',
-        // 'salesHistory.[].poNumber': 'data.[].poNumber',
-        // 'salesHistory.[].value': 'data.[].value',
-        // 'salesHistory.[].salesTeamId': 'data.[].salesTeamId',
-
       },
 
     },

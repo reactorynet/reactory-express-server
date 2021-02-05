@@ -32,6 +32,7 @@ const graphql: Reactory.IFormGraphDefinition = {
             hasNext
             pageSize
           }
+          clientId
           invoices {
             id
             invoiceDate
@@ -48,33 +49,6 @@ const graphql: Reactory.IFormGraphDefinition = {
           }
         }
       }`,
-      // variables: {
-      //   'formData.id': 'clientId',
-      //   'formData.salesTeam': 'salesTeamId',
-      //   'formData.search': 'search',
-      //   'formData.filterBy': 'filterBy',
-      //   'formData.filter': 'filter',
-      //   'formData.paging': 'paging',
-      //   'formData.periodStart': 'periodStart',
-      //   'formData.periodEnd': 'periodEnd',
-      //   'formData.dateFilter': 'dateFilter',
-      // },
-      // resultMap: {
-      //   'paging': 'paging',
-      //   'filterBy': 'filterBy',
-      //   'invoices.[].id': 'invoices.[].id',
-      //   'invoices.[].invoiceDate': 'invoices.[].invoiceDate',
-      //   'invoices.[].quoteDate': 'invoices.[].quoteDate',
-      //   'invoices.[].quoteId': 'invoices.[].quoteId',
-      //   'invoices.[].customer': 'invoices.[].customer',
-      //   'invoices.[].client': 'invoices.[].client',
-      //   'invoices.[].dispatches': 'invoices.[].dispatches',
-      //   'invoices.[].accountNumber': 'invoices.[].accountNumber',
-      //   'invoices.[].salesTeamId': 'invoices.[].salesTeamId',
-      //   'invoices.[].poNumber': 'invoices.[].poNumber',
-      //   'invoices.[].isoNumber': 'invoices.[].isoNumber',
-      //   'invoices.[].value': 'invoices.[].value',
-      // },
       autoQuery: false,
       resultType: 'object',
       edit: false,
