@@ -39,11 +39,11 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
             'company_id': 'header.company_id',
             'rep_code': 'header.rep_code',
             'vat_number': 'customer.vat_number',
-            'quoted_amount': 'order_detail.quoted_amount',            
+            'quoted_amount': 'order_detail.quoted_amount',
             'delivery_address_id': 'delivery_detail.delivery_address.id',
-            'delivery_address': 'delivery_detail.delivery_address.fullAddress',            
+            'delivery_address': 'delivery_detail.delivery_address.fullAddress',
             'preferred_warehouse': 'order_detail.preffered_warehouse',
-            'order_type': 'order_detail.order_type',            
+            'order_type': 'order_detail.order_type',
             'client.mobileNumber': 'delivery_detail.contact_number',
             'shipping_date': 'order_detail.shipping_date',
             'method_of_contact': 'delivery_detail.method_of_contact'
@@ -94,6 +94,7 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
                 LasecCreateSalesOrder(sales_order_input: $sales_order_input) {
                     success
                     message
+                    iso_id
                     salesOrder {
                         id
                         salesOrderNumber                        
@@ -105,6 +106,7 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
                 'formData.header.sales_order_date': 'sales_order_input.sales_order_date',
                 'formData.header.customer_name': 'sales_order_input.customer_name',
                 'formData.header.company_name': 'sales_order_input.company_name',
+                'formData.header.company_id': 'sales_order_input.company_id',
                 'formData.header.rep_code': 'sales_order_input.rep_code',
                 'formData.customer_detail.purchase_order_number': 'sales_order_input.purchase_order_number',
                 'formData.customer_detail.confirm_number': 'sales_order_input.confirm_number',
@@ -125,9 +127,9 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
                 'formData.documents.uploadContext': 'sales_order_input.document_context',
                 'formData.$upload_documents': 'sales_order_input.upload_documents',
             },
-            resultType: 'object',            
+            resultType: 'object',
             objectMap: true,
-            resultMap: {}
+
         },
         delete: {
             name: 'LasecDeleteNewClientDocuments',

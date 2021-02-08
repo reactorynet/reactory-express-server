@@ -201,8 +201,8 @@ interface product_dimensions {
 
 const PopulateProductDimensions = async ({ code }: FreightRequestProductDetail): Promise<product_dimensions> => {
 
-    if(code) {
-      const result: any[] = await mysql(`
+  if (code) {
+    const result: any[] = await mysql(`
         SELECT
           product_length as length,
           product_weight as weight,
@@ -212,19 +212,19 @@ const PopulateProductDimensions = async ({ code }: FreightRequestProductDetail):
           pack_size as unitOfMeasure
         FROM Product WHERE code = '${code}';`, 'mysql.lasec360').then();
 
-      if(result && result.length === 1) {
-        return result[0];
-      }
-    };
-
-    return {
-      height: 0,
-      length: 0,
-      volume: 0,
-      weight: 0,
-      width: 0,
-      unitOfMeasure: "none"
+    if (result && result.length === 1) {
+      return result[0];
     }
+  };
+
+  return {
+    height: 0,
+    length: 0,
+    volume: 0,
+    weight: 0,
+    width: 0,
+    unitOfMeasure: "none"
+  }
 
 }
 
@@ -748,12 +748,12 @@ export default {
     length: async (item: FreightRequestProductDetail): Promise<number> => {
       const { length } = item;
 
-      if(length && length > 0) return length;
+      if (length && length > 0) return length;
 
 
-      if(!item._dimensions) {
+      if (!item._dimensions) {
         item._dimensions = await PopulateProductDimensions(item);
-        item = {...item, ...item._dimensions};
+        item = { ...item, ...item._dimensions };
       }
 
       return item.length;
@@ -761,12 +761,12 @@ export default {
     width: async (item: FreightRequestProductDetail): Promise<number> => {
       const { width } = item;
 
-      if(width && width > 0) return width;
+      if (width && width > 0) return width;
 
 
-      if(!item._dimensions) {
+      if (!item._dimensions) {
         item._dimensions = await PopulateProductDimensions(item);
-        item = {...item, ...item._dimensions};
+        item = { ...item, ...item._dimensions };
       }
 
       return item.width;
@@ -774,12 +774,12 @@ export default {
     height: async (item: FreightRequestProductDetail): Promise<number> => {
       const { height } = item;
 
-      if(height && height > 0) return height;
+      if (height && height > 0) return height;
 
 
-      if(!item._dimensions) {
+      if (!item._dimensions) {
         item._dimensions = await PopulateProductDimensions(item);
-        item = {...item, ...item._dimensions};
+        item = { ...item, ...item._dimensions };
       }
 
       return item.height;
@@ -787,12 +787,12 @@ export default {
     volume: async (item: FreightRequestProductDetail): Promise<number> => {
       const { volume } = item;
 
-      if(volume && volume > 0) return volume;
+      if (volume && volume > 0) return volume;
 
 
-      if(!item._dimensions) {
+      if (!item._dimensions) {
         item._dimensions = await PopulateProductDimensions(item);
-        item = {...item, ...item._dimensions};
+        item = { ...item, ...item._dimensions };
       }
 
       return item.volume;
@@ -800,12 +800,12 @@ export default {
     weight: async (item: FreightRequestProductDetail): Promise<number> => {
       const { weight } = item;
 
-      if(weight && weight > 0) return weight;
+      if (weight && weight > 0) return weight;
 
 
-      if(!item._dimensions) {
+      if (!item._dimensions) {
         item._dimensions = await PopulateProductDimensions(item);
-        item = {...item, ...item._dimensions};
+        item = { ...item, ...item._dimensions };
       }
 
       return item.weight;
@@ -813,12 +813,12 @@ export default {
     unitOfMeasure: async (item: FreightRequestProductDetail): Promise<string> => {
       const { unitOfMeasure } = item;
 
-      if(unitOfMeasure && unitOfMeasure !== "") return unitOfMeasure;
+      if (unitOfMeasure && unitOfMeasure !== "") return unitOfMeasure;
 
 
-      if(!item._dimensions) {
+      if (!item._dimensions) {
         item._dimensions = await PopulateProductDimensions(item);
-        item = {...item, ...item._dimensions};
+        item = { ...item, ...item._dimensions };
       }
 
       return item.unitOfMeasure;
@@ -1291,7 +1291,7 @@ export default {
       return uploadSalesOrderDoc(args);
     },
 
-    LasecCRMUpdateFreightRequestDetails: async (obj: any, args: {  freightRequestDetailInput: FreightRequestQuoteDetail  }) => {
+    LasecCRMUpdateFreightRequestDetails: async (obj: any, args: { freightRequestDetailInput: FreightRequestQuoteDetail }) => {
       return updateFreightRequestDetails(args);
     },
     LasecCRMDuplicateQuoteForClient: async (obj, args) => {

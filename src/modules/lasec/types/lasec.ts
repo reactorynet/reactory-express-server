@@ -597,6 +597,13 @@ export interface LasecDeleteQuoteOptionParams {
   option_id: string
 }
 
+export interface LasecSalesOrderCreateResponse {
+  success: boolean,
+  message: string,
+  iso_id: string,
+  salesOrder: LasecSalesOrder
+}
+
 export interface LasecCreateSalesOrderInput {
   id: string
   quote_id: string
@@ -605,6 +612,7 @@ export interface LasecCreateSalesOrderInput {
   confirm_number: string
   customer_name: string
   company_name: string
+  company_id: string
   rep_code: string
   vat_number: string
   quoted_amount: number
@@ -768,7 +776,7 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
 
   getQuoteTransportModes(): Promise<any>;
 
-  createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<SimpleResponse>;
+  createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<LasecSalesOrderCreateResponse>;
 
   getSalesOrder(sales_order_id: String): Promise<LasecSalesOrder>
 }

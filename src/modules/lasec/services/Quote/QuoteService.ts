@@ -41,11 +41,12 @@ class LasecQuoteService implements IQuoteService {
     try {
       const result = await LAPI.SalesOrders.createSalesOrder(sales_order_input).then();
 
-      logger.debug('Creat new sales order api result', result);
+      logger.debug('Create new sales order api result', result);
 
       return {
         message: `Sales order ${result.id} has been created. `,
         success: true,
+        salesOrder: null,
         iso_id: result.id
       };
 
@@ -54,6 +55,8 @@ class LasecQuoteService implements IQuoteService {
       return {
         message: createSalesOrderError.message,
         success: false,
+        salesOrder: null,
+        iso_id: null,
       }
     }
 
@@ -73,10 +76,10 @@ class LasecQuoteService implements IQuoteService {
       let cache_key = 'lasec-crm.data.all-transport-modes';
       let items = await getCacheItem(cache_key).then()
 
-      
+
 
       if (!items) {
-        items  = await LAPI.Quotes.getQuoteTransportModes().then()        
+        items = await LAPI.Quotes.getQuoteTransportModes().then()
         logger.debug(`↔ [FETCHED] lasec-crm.QuoteService getQuoteTransportModes()`, { fetched: items });
         setCacheItem(cache_key, items, 180 * 3);
       } else {
