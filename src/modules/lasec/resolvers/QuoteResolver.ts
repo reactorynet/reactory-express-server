@@ -160,7 +160,7 @@ interface LasecSendMailParams {
   mailMessage: Reactory.IEmailMessage
 }
 
-const $PagedLineItemsResponse = async (quote: any, context: { item_paging?: Reactory.IPagingRequest }, info: any) => {
+const $PagedLineItemsResponse = async (quote: any, context: Reactory.IReactoryContext, info: any) => {
   const { code, active_option, lineItems = [], $lineItems_meta = null } = quote;
 
   let $line_items: LasecQuoteItem[] = quote.lineItems || [];
@@ -180,11 +180,11 @@ const $PagedLineItemsResponse = async (quote: any, context: { item_paging?: Reac
   if (!$lineItems_meta) {
     quote.lineItems = $line_items;
 
-    const paged_results: { lineItems: LasecQuoteItem[], item_paging: Reactory.IPagingRequest } = await lasecGetQuoteLineItems(code, active_option, item_paging.page, item_paging.pageSize).then();
+    const paged_results: { lineItems: LasecQuoteItem[], item_paging: Reactory.IPagingRequest } = await lasecGetQuoteLineItems(code, active_option, item_paging.page, item_paging.pageSize, context).then();
     quote.lineItems = paged_results.lineItems || [];
     quote.item_paging = paged_results.item_paging;
 
-    logger.debug(`🟢 $PagedLineItemsResponse() =>  Paged Line Items Response ${quote.code || quote.id}`, { context, item_paging, paging_results: paged_results.item_paging })
+    logger.debug(`🟢 $PagedLineItemsResponse() =>  Paged Line Items Response ${quote.code || quote.id}`, { item_paging, paging_results: paged_results.item_paging })
 
     quote.$lineItems_meta = {
       when: new Date().valueOf(),
@@ -272,11 +272,11 @@ export default {
   },
   LasecQuoteItem: {
     id: ({ id, _id }: any) => (id || _id),
-    product: async (line_item: LasecQuoteItem): Promise<LasecProduct> => {
+    product: async (line_item: LasecQuoteItem, args: any, context: Reactory.IReactoryContext): Promise<LasecProduct> => {
       logger.debug('Resolving Product for Line Item', line_item)
 
       if (!line_item.product && line_item.meta.source.product_id) {
-        line_item.product = await getProductById({ productId: line_item.meta.source.product_id }).then()
+        line_item.product = await getProductById({ productId: line_item.meta.source.product_id }, true, context).then()
       }
 
       return line_item.product;
@@ -439,11 +439,13 @@ export default {
 
       return headers;
     },
-    lineItems: async (quote: any, context: { item_paging?: Reactory.IPagingRequest }, info: any) => {
+    lineItems: async (quote: any, args: any, context: Reactory.IReactoryContext, info: any) => {
+      debugger
       if (!quote.lineItems || quote.lineItems.length === 0) quote = await $PagedLineItemsResponse(quote, context, info).then()
       return quote.lineItems;
     },
-    item_paging: async (quote: LasecQuote, context: { item_paging?: Reactory.IPagingRequest }, info: any) => {
+    item_paging: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext, info: any) => {
+      debugger
       if (!quote.item_paging) quote = await $PagedLineItemsResponse(quote, context, info).then()
       return quote.item_paging;
     },
@@ -856,7 +858,7 @@ export default {
     },
 
     LasecGetQuoteComments: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
-      return getQuoteComments(params, context);
+      return getQuoteComments(args, context);
     },
     LasecGetCRMQuoteList: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
       return getPagedQuotes(args, context);

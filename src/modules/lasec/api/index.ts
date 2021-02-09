@@ -312,7 +312,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
         const retry = async function retry() {
           logger.debug('Attempting to refetch', { attempt });
           if (attempt < 3) {
-            return await FETCH(url, fethArguments, mustAuthenticate, true, attempt ? attempt + 1 : 1).then();
+            return await FETCH(url, fethArguments, mustAuthenticate, true, attempt ? attempt + 1 : 1, context).then();
           } else {
             throw new TokenExpiredException('Authentication Credentials cannot log in');
           }
@@ -354,7 +354,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
       default: {
         await execml(`mutation LasecReset360Credentials {
           LasecReset360Credentials
-        }`);
+        }`, {}, {}, context.user, context.partner);
         throw new ApiError('Could not execute fetch against Lasec API', { status: apiResponse, statusText: apiResponse.statusText });
       }
     }

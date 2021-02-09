@@ -4,7 +4,7 @@ import $schema from '../shared/schema';
 
 
 let $table_graphql = { ...$graphql };
-let $grid_graphql = {...$graphql };
+let $grid_graphql = { ...$graphql };
 delete $table_graphql.query;
 
 const uiSchemaTable: any = {
@@ -39,6 +39,7 @@ const uiSchemaTable: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         width: '100%',
         float: "right"
@@ -52,7 +53,7 @@ const uiSchemaTable: any = {
   products: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      columns: [      
+      columns: [
         {
           title: '',
           field: 'onSyspro',
@@ -690,7 +691,7 @@ const uiSchemaTable: any = {
         showTitle: false,
         toolbar: false,
         searchText: '${formContext.$formData.product}'
-      },      
+      },
       propsMap: {
         'formContext.$formData.product': 'searchText'
       },
@@ -793,6 +794,7 @@ const uiSchemaGrid: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         width: '100%',
         float: "right"
@@ -1084,7 +1086,7 @@ const LasecProductCostings: Reactory.IReactoryForm = {
   name: 'LasecProductCostings',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: $schema,  
+  schema: $schema,
   uiSchema: uiSchemaTable,
   defaultFormValue: {
     paging: {

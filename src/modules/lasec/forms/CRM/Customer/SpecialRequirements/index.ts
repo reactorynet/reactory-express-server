@@ -74,6 +74,7 @@ const displayUiSchema: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         width: '100%',
         float: "right"
@@ -163,6 +164,7 @@ const editUiSchema: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         width: '100%',
         float: "right"

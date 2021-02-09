@@ -18,7 +18,7 @@ const displayUiSchema: any = {
       activeColor: 'primary',
       selectSchemaId: 'edit'
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSubmit: false,
@@ -40,6 +40,7 @@ const displayUiSchema: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         top: '10px',
         right: '10px',
@@ -73,7 +74,7 @@ const displayUiSchema: any = {
         filename: { md: 6, sm: 12 },
       },
       {
-        link: {md: 12}
+        link: { md: 12 }
       }
     ],
     filename: {
@@ -139,6 +140,7 @@ const editUiSchema: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         top: '10px',
         right: '10px',

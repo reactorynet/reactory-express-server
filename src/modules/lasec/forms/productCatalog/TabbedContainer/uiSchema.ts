@@ -38,9 +38,10 @@ const $toolbar: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         width: 'unset',
-        float: 'right'
+        float: 'right',
       },
     }
   }
@@ -82,7 +83,7 @@ const uiSchema: any = {
   },
   'ui:grid-layout': [
     {
-       toolbar: { xs: 12 },
+      toolbar: { xs: 12 },
     },
     {
       tabs: { xs: 12 },

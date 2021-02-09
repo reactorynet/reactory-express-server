@@ -34,6 +34,7 @@ const tableUiSchema: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         width: '100%',
         float: "right"
@@ -278,7 +279,7 @@ const tableUiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'products':'data',
+        'products': 'data',
       },
     },
   }
@@ -318,6 +319,7 @@ const gridUiSchema: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         width: '100%',
         float: "right"

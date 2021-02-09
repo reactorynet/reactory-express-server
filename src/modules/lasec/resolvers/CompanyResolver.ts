@@ -2250,7 +2250,7 @@ export default {
       }
     },
     LasecGetPersonTitles: async (object: any, args: any, context: Reactory.IReactoryContext) => {
-      return getPersonTitles(args);
+      return getPersonTitles(context);
     },
     LasecGetPersonTitleById: async (object: any, args: any, context: Reactory.IReactoryContext) => {
       return getPersonTitle(args, context);

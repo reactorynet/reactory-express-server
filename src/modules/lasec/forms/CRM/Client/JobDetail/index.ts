@@ -64,6 +64,7 @@ export const displayUiSchema: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         width: '100%',
         float: "right"
@@ -377,6 +378,7 @@ const editUiSchema: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         width: '100%',
         float: "right"
@@ -397,7 +399,7 @@ const editUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerRoles.[].id': ['[].key', '[].value'],
         'LasecGetCustomerRoles.[].name': '[].label',
-      },      
+      },
     },
   },
   clientDepartment: {
@@ -405,8 +407,8 @@ const editUiSchema: any = {
       component: 'TextField',
       componentProps: {
         variant: 'outlined',
-        placeholder: 'Department',        
-      },      
+        placeholder: 'Department',
+      },
     }
   },
   customerClass: {
@@ -423,7 +425,7 @@ const editUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerClass.[].id': ['[].key', '[].value'],
         'LasecGetCustomerClass.[].name': '[].label',
-      },     
+      },
     },
   },
   ranking: {
@@ -435,7 +437,7 @@ const editUiSchema: any = {
             maxWidth: '400px'
           }
         }
-      },            
+      },
       selectOptions: [
         {
           key: '1',
@@ -469,7 +471,7 @@ const editUiSchema: any = {
       resultsMap: {
         'LasecGetFacultyList.[].id': ['[].key', '[].value'],
         'LasecGetFacultyList.[].name': '[].label',
-      },      
+      },
     },
   },
   customerType: {
@@ -486,7 +488,7 @@ const editUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerType.[].id': ['[].key', '[].value'],
         'LasecGetCustomerType.[].name': '[].label',
-      },      
+      },
     },
   },
   lineManager: {
@@ -506,7 +508,7 @@ const editUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerLineManagerOptions.[].id': ['[].key', '[].value'],
         'LasecGetCustomerLineManagerOptions.[].name': '[].label',
-      },      
+      },
     },
   },
 };
@@ -882,7 +884,7 @@ const newUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerRoles.[].id': ['[].key', '[].value'],
         'LasecGetCustomerRoles.[].name': '[].label',
-      },      
+      },
     },
   },
   jobType: {
@@ -899,7 +901,7 @@ const newUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerRoles.[].id': ['[].key', '[].value'],
         'LasecGetCustomerRoles.[].name': '[].label',
-      },      
+      },
     },
   },
   customerClass: {
@@ -916,7 +918,7 @@ const newUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerClass.[].id': ['[].key', '[].value'],
         'LasecGetCustomerClass.[].name': '[].label',
-      },     
+      },
     },
   },
   clientDepartment: {
@@ -924,9 +926,9 @@ const newUiSchema: any = {
       component: 'TextField',
       componentProps: {
         variant: 'outlined',
-        placeholder: 'Department',        
+        placeholder: 'Department',
       },
-      
+
     }
   },
   ranking: {
@@ -939,8 +941,8 @@ const newUiSchema: any = {
           }
         }
       },
-      selectProps: {        
-      },      
+      selectProps: {
+      },
       selectOptions: [
         {
           key: '1',
@@ -975,7 +977,7 @@ const newUiSchema: any = {
       resultsMap: {
         'LasecGetFacultyList.[].id': ['[].key', '[].value'],
         'LasecGetFacultyList.[].name': '[].label',
-      },      
+      },
     },
   },
   customerType: {
@@ -992,7 +994,7 @@ const newUiSchema: any = {
       resultsMap: {
         'LasecGetCustomerType.[].id': ['[].key', '[].value'],
         'LasecGetCustomerType.[].name': '[].label',
-      },      
+      },
     },
   },
 };
