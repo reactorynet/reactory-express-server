@@ -58,12 +58,12 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
 
   constructor(props: any, context: any) {
     this.executionContext = {
-      partner: props.partner || context.partner || global.partner,
-      user: props.user || context.partner || global.user
+      partner: props.partner || context.partner,
+      user: props.user || context.partner
     }
   }
 
-  async dehydrateEmail(template: Reactory.IEmailTemplate): Promise<Reactory.ITemplate> {
+  async dehydrateEmail(template: Reactory.IEmailTemplate, context: Reactory.IReactoryContext): Promise<Reactory.ITemplate> {
 
     const { view, client, organization, businessUnit, userId, id } = template
 
@@ -122,7 +122,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
         _bodyTemplate.parameters = [];
         _bodyTemplate.elements = [];
 
-        _bodyTemplate.createdBy = global.user._id;
+        _bodyTemplate.createdBy = context.user._id;
         _bodyTemplate.created = new Date();
 
         _template._id = new ObjectID();
@@ -139,7 +139,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
         _template.enabled = true
         _template.description = template.description;
 
-        _template.createdBy = global.user._id;
+        _template.createdBy = context.user._id;
         _template.created = new Date();
 
         _template.elements = [
@@ -176,7 +176,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
             }
 
             templateEl.updated = new Date();
-            templateEl.updatedBy = global.user._id
+            templateEl.updatedBy = context.user._id
 
             await templateEl.save().then();
 
@@ -323,7 +323,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
   };
 
 
-  async getTemplate(view: string, reactoryClientId: string | ObjectID, organizationId: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID): Promise<Reactory.ITemplate> {
+  async getTemplate(view: string, reactoryClientId: string | ObjectID, organizationId: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID, context: Reactory.IReactoryContext): Promise<Reactory.ITemplate> {
 
     logger.debug(`TemplateService.ts.getTemplate()`, { view, reactoryClientId, organizationId, businessUnitId, userId });
 
@@ -338,7 +338,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
     let search_type = 'default';
 
     if (ObjectID.isValid(reactoryClientId) === true) conditions.client = new ObjectID(reactoryClientId)
-    else conditions.client = (global.partner as Reactory.IReactoryClientDocument)._id;
+    else conditions.client = context.partner._id;
 
     if (ObjectID.isValid(organizationId) === true) conditions.organization = new ObjectID(organizationId);
     else conditions.organization = null;
@@ -409,7 +409,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
 
   }
 
-  async setTemplate(view: string, template: Reactory.ITemplateDocument, reactoryClientId?: string | ObjectID, organizationId?: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID): Promise<Reactory.ITemplate> {
+  async setTemplate(view: string, template: Reactory.ITemplateDocument, reactoryClientId?: string | ObjectID, organizationId?: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID, context: Reactory.IReactoryContext): Promise<Reactory.ITemplate> {
 
     let filter: { [key: string]: any } = {
       view
@@ -420,7 +420,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
     let $businessUnitId: ObjectID;
     let $userId: ObjectID;
 
-    $clientId = ObjectID.isValid(reactoryClientId) === true ? new ObjectID(reactoryClientId) : (global.partner as Reactory.IReactoryClientDocument)._id; //force the partner id on the template.  better practice to not have global global templates.
+    $clientId = ObjectID.isValid(reactoryClientId) === true ? new ObjectID(reactoryClientId) : context.partner._id; //force the partner id on the template.  better practice to not have global global templates.
     $organizationId = ObjectID.isValid(organizationId) === true ? new ObjectID(organizationId) : null;
     $businessUnitId = ObjectID.isValid(businessUnitId) === true ? new ObjectID(businessUnitId) : null;
     $userId = ObjectID.isValid(userId) === true ? new ObjectID(userId) : null;

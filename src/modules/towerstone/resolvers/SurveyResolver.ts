@@ -228,14 +228,14 @@ export default {
         } else {
           org_id = organization;
         }
-              
+
         if (!ObjectId.isValid(delegate_id)) return null;
         if (!ObjectId.isValid(org_id)) return null;
         const query = {
           user: new ObjectId(delegate_id),
           organization: new ObjectId(org_id),
         };
-        
+
         logger.info(`Looking for Organigram Model with  ${query.user} and ${query.organization}`, query);
 
         return Organigram.findOne(query).then();
@@ -373,22 +373,22 @@ export default {
       const { id, surveyData } = params;
       const survey: any = await Survey.findById(new ObjectId(params.id)).then();
 
-      if(survey) {
+      if (survey) {
         survey.organization = new ObjectId(surveyData.organization || survey.organization);
-        survey.leadershipBrand = new ObjectId(surveyData.leadershipBrand || survey.leadershipBrand);                
+        survey.leadershipBrand = new ObjectId(surveyData.leadershipBrand || survey.leadershipBrand);
         survey.surveyType = surveyData.surveyType || survey.surveyType;
         survey.title = surveyData.title || survey.title;
         survey.startDate = moment(surveyData.startDate || survey.startDate || moment().startOf('D')).valueOf();
         survey.endDate = moment(surveyData.endDate || survey.endDate || moment().add(14, 'days').endOf('D')).valueOf();
         survey.mode = surveyData.mode || survey.mode;
-        survey.status = surveyData.status || survey.status;        
-        
+        survey.status = surveyData.status || survey.status;
+
         return survey;
-      } else { 
+      } else {
         throw new RecordNotFoundError(`Survey with id ${id} not found`);
       }
 
-      
+
     },
     updateSurveyOptions(obj, { id, options }) {
       logger.info('Update Survey Options', { id, options });
@@ -487,7 +487,7 @@ export default {
       } = params;
 
 
-      const { user, partner } = global;
+      const { user, partner } = context;
       const mailService = getMailService(survey, 'Survey.templates()');
       const surveyModel: TowerStone.ISurveyDocument = await Survey.findById(survey)
         .populate('delegates.delegate')

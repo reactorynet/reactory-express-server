@@ -63,7 +63,7 @@ export default {
     },
   },
   Mutation: {
-    ReactoryCreateContent: async (parent, args) => {
+    ReactoryCreateContent: async (parent, args, context) => {
       const { createInput } = args;
       try {
         logger.debug('Reactory Create Content Starting: ', args);
@@ -71,50 +71,50 @@ export default {
           ...createInput,
           createdAt: new Date().valueOf(),
           updatedAt: new Date().valueOf(),
-          createdBy: global.user._id,
-          updatedBy: global.user._id
+          createdBy: context.user._id,
+          updatedBy: context.user._id
         }, { upsert: true }).then();
       } catch (error) {
         logger.debug('Reactory Create Content Error: ', error);
       }
     },
     ReactorySaveImageData: async (parent: any, args: { folder: string, filename: string, png: string, svg: string, width: number, height: number }): Promise<ReactorySaveImageDataResponse> => {
-      const { folder, filename, png, svg, height = 2000, width = 2000 }  = args;
+      const { folder, filename, png, svg, height = 2000, width = 2000 } = args;
 
       const result: ReactorySaveImageDataResponse = {
         pngURL: null,
         svgURL: null,
         success: false
       }
-      
+
       // 
       try {
         //step check the folder        
-        if(folder) {
+        if (folder) {
           let fullpath = path.join(APP_DATA_ROOT, folder);
           let cdnpath = path.join(CDN_ROOT, folder);
-          if(existsSync(fullpath) === false) mkdirSync(fullpath, { recursive: true });
-          if(svg) {
+          if (existsSync(fullpath) === false) mkdirSync(fullpath, { recursive: true });
+          if (svg) {
             let svgfile = path.join(fullpath, `${filename}.svg`);
             writeFileSync(svgfile, svg);
             logger.info(`✅Saved svg to ${svgfile}`)
             result.svgURL = path.join(cdnpath, `${filename}.svg`);
-            let pngfile = path.join(fullpath, `${filename}.png`);            
+            let pngfile = path.join(fullpath, `${filename}.png`);
             result.success = true;
-            
+
             try {
               await svg_to_png.convert(svgfile, pngfile, { defaultWidth: `${width}px`, defaultHeight: `${height}px` });
               logger.info(`✅Converted svg to ${pngfile}`)
               result.pngURL = path.join(cdnpath, `${filename}.png`);
 
             } catch (convertErr) {
-              logger.error(`💥Could not convert ${svgfile} to ${pngfile}`, convertErr)            
-            }            
+              logger.error(`💥Could not convert ${svgfile} to ${pngfile}`, convertErr)
+            }
           }
-        }        
+        }
       } catch (error) {
         logger.error(`Could not save the image data`, error)
-      } 
+      }
 
       return result;
     }

@@ -35,7 +35,7 @@ const TemplateResolvers = {
     }
   },
   Query: {
-    ReactoryTemplates: async (obj, { client = null, organization = null }) => {
+    ReactoryTemplates: async (obj, { client = null, organization = null }, context) => {
       logger.info(`Listing templates using search criteria client id: ${client || 'null'} orgnization: ${organization || 'null'}`);
       if (isNil(client) === false && ObjectId.isValid(client)) {
         logger.debug('Filtering templates by client and organization id');
@@ -52,8 +52,8 @@ const TemplateResolvers = {
         }).then();
       }
       // use default partner tempaltes
-      logger.debug(`Returning template list for authenticated partner id ${global.partner._id}`);
-      return Template.find({ client: global.partner._id }).then();
+      logger.debug(`Returning template list for authenticated partner id ${context.partner._id}`);
+      return Template.find({ client: context.partner._id }).then();
     },
     ReactoryTemplate: (obj, { id }) => { return Template.findById(id).then(); },
   },

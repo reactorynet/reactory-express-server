@@ -187,8 +187,8 @@ const getPersonalDemographics = async (args) => {
 
 export default {
   Query: {
-    refreshProfileData: async (parent, { id, skipImage = true }) => {
-      let userToRefresh = global.user;
+    refreshProfileData: async (parent, { id, skipImage = true }, context) => {
+      let userToRefresh = context.user;
       const uxmessages = [];
       if (id && typeof id === 'string') {
         userToRefresh = await User.findById(id);
@@ -278,7 +278,7 @@ export default {
               {
                 id: `ms-auth-login-${now}`,
                 title: 'Re-Authenticate',
-                action: `${process.env.API_URI_ROOT}/auth/microsoft/openid/${global.partner.key}?x-client-key=${global.partner.key}&x-reactory-pass=${global.partner.password}+${global.partner.salt}`,
+                action: `${process.env.API_URI_ROOT}/auth/microsoft/openid/${context.partner.key}?x-client-key=${context.partner.key}&x-reactory-pass=${context.partner.password}+${context.partner.salt}`,
               }
             ],
             via: 'notification',

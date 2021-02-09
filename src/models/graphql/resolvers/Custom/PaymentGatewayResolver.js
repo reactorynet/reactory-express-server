@@ -30,9 +30,12 @@ export default {
   },
   Query: {
     gatewayAuditTrail(obj, {
-      from, till, target, paymentMethod = 'NAEDO', debitOrderStatus = ['paid', 'not-set', 'submit'],
-    }) {
-      // const partnerSettings = global.partner.settings;
+      from,
+      till,
+      target,
+      paymentMethod = 'NAEDO',
+      debitOrderStatus = ['paid', 'not-set', 'submit'],
+    }, context) {
       logger.info('Input values', { from, till, target });
 
       return co.wrap(function* syncGatewayGenerator(opts) {

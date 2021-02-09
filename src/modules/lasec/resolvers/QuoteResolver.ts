@@ -1,4 +1,8 @@
-
+/**
+ * Lasec CRM Quote Resolver.
+ * 
+ * Contains helpers, resolvers related to Lasec Quotes, international and local.
+ */
 import om from 'object-mapper';
 import moment, { Moment } from 'moment';
 import lodash, { isArray, isNil, isString, result } from 'lodash';
@@ -12,10 +16,8 @@ import ApiError from '@reactory/server-core/exceptions';
 import { Organization, User, Task } from '@reactory/server-core/models';
 import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
 import amq from '@reactory/server-core/amq';
-import Hash from '@reactory/server-core/utils/hash';
 import { clientFor } from '@reactory/server-core/graph/client';
 import { getCacheItem, setCacheItem } from '../models';
-import emails from '@reactory/server-core/emails';
 import { getProductById } from './ProductResolver';
 
 import {
@@ -72,8 +74,9 @@ import {
   getSODocuments,
   deleteSalesOrdersDocument,
   saveSalesOrderComment,
-  getSalesOrderDocBySlug,
-  uploadSalesOrderDoc,
+  //TODO: Werner Weber - Check why these imports are not found.
+  //getSalesOrderDocBySlug,
+  //uploadSalesOrderDoc,
   getCRMInvoices,
   getFreightRequetQuoteDetails,
   updateFreightRequestDetails,
@@ -89,8 +92,9 @@ import {
   getSalesHistoryMonthlyCount,
   lasecGetQuoteLineItem
 } from './Helpers';
-import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
+import { queryAsync as mysql, queryAsync } from '@reactory/server-core/database/mysql';
 import { PagingRequest } from 'database/types';
+import ReactoryUserModel from 'models/schema/User';
 
 const QUOTE_SERVICE_ID = 'lasec-crm.LasecQuoteService@1.0.0';
 
@@ -101,7 +105,7 @@ const maps = { ...OBJECT_MAPS };
 const totalsFromMeta = totalsFromMetaData;
 
 
-const getQuoteTimeline = async (quote, args, context, info) => {
+const getQuoteTimeline = async (quote: any, args: any, context: Reactory.IReactoryContext, info: any) => {
   const { options = { bypassEmail: true } } = args;
   logger.debug(`Getting timeline for quote "${quote.code}" >> `, options);
 
@@ -109,13 +113,13 @@ const getQuoteTimeline = async (quote, args, context, info) => {
   const _timeline: Array<any> = []; //create a virtual timeline
 
   if (isArray(timeline) === true && timeline.length > 0) {
-    timeline.forEach(tl => _timeline.push(tl));
+    timeline.forEach((tl: any) => _timeline.push(tl));
   }
 
   if (options && options.bypassEmail !== true) {
     let mails: Array<any> = [];
     try {
-      mails = await getQuoteEmails(quote.code).then();
+      mails = await getQuoteEmails(quote.code, context).then();
     } catch (exc) {
       logger.error(`Could not read the user email due to an error, ${exc.message}`);
       mails = [];
@@ -126,7 +130,7 @@ const getQuoteTimeline = async (quote, args, context, info) => {
       mails.forEach((mail) => {
         if (mail.id !== 'no-id') {
           logger.debug('Transforming Email to timeline entry', mail);
-          const entry = om(mail, {
+          const entry: any = om.merge(mail, {
             'createdAt': 'when',
             'from': {
               key: 'who',
@@ -199,7 +203,7 @@ interface product_dimensions {
   unitOfMeasure: string
 };
 
-const PopulateProductDimensions = async ({ code }: FreightRequestProductDetail): Promise<product_dimensions> => {
+const PopulateProductDimensions = async ({ code }: FreightRequestProductDetail, context: Reactory.IReactoryContext): Promise<product_dimensions> => {
 
   if (code) {
     const result: any[] = await mysql(`
@@ -210,7 +214,7 @@ const PopulateProductDimensions = async ({ code }: FreightRequestProductDetail):
           product_volume as volume,
           product_width as width,
           pack_size as unitOfMeasure
-        FROM Product WHERE code = '${code}';`, 'mysql.lasec360').then();
+        FROM Product WHERE code = '${code}';`, 'mysql.lasec360', undefined, context).then();
 
     if (result && result.length === 1) {
       return result[0];
@@ -230,34 +234,34 @@ const PopulateProductDimensions = async ({ code }: FreightRequestProductDetail):
 
 export default {
   CRMSaleOrderComment: {
-    id: ({ id, _id }) => id || _id,
-    who: async ({ who }) => {
+    id: ({ id, _id }: any) => id || _id,
+    who: async ({ who }: any) => {
       if (ObjectId.isValid(who)) {
         return User.findById(who);
       }
     }
   },
   QuoteReminder: {
-    id: ({ id, _id }) => id || _id,
-    who: ({ id, who = [] }) => {
+    id: ({ id, _id }: any) => id || _id,
+    who: ({ id, who = [] }: any) => {
       if (who.length === 0) return null
 
-      return who.map(whoObj => ObjectId.isValid(whoObj) ? User.findById(whoObj) : null);
+      return who.map((whoObj: any) => ObjectId.isValid(whoObj) ? User.findById(whoObj) : null);
     },
-    quote: ({ quote }) => {
+    quote: ({ quote }: any) => {
       if (quote && ObjectId.isValid(quote) === true) return Quote.findById(quote);
       else return null;
     }
   },
   QuoteTimeLine: {
-    who: (tl) => {
+    who: (tl: any) => {
       if (ObjectId.isValid(tl.who)) {
         return User.findById(tl.who);
       }
 
       return null;
     },
-    reminder: (tl) => {
+    reminder: (tl: any) => {
       if (ObjectId.isValid(tl.reminder) === true) {
         return QuoteReminder.findById(tl.reminder);
       }
@@ -267,7 +271,7 @@ export default {
 
   },
   LasecQuoteItem: {
-    id: ({ id, _id }) => (id || _id),
+    id: ({ id, _id }: any) => (id || _id),
     product: async (line_item: LasecQuoteItem): Promise<LasecProduct> => {
       logger.debug('Resolving Product for Line Item', line_item)
 
@@ -312,16 +316,16 @@ export default {
       }
 
     },
-    lasec_customer: async (quote: LasecQuote, context: { item_paging?: Reactory.IPagingRequest }, info: any): Promise<LasecCRMCustomer> => {
+    lasec_customer: async (quote: LasecQuote, args: any, context: { partner: Reactory.IReactoryClientDocument, item_paging?: Reactory.IPagingRequest }, info: any): Promise<LasecCRMCustomer> => {
       return null;
     },
-    currencies: async () => {
+    currencies: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext) => {
       try {
         const cacheKey = 'lasec-crm.Quote.Currencies.All';
-        let results = await getCacheItem(cacheKey).then();
+        let results = await getCacheItem(cacheKey, null, 60, context.partner).then();
         if (!results) {
           results = await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
-          if (results) setCacheItem(cacheKey, results, 60 * 15);
+          if (results) setCacheItem(cacheKey, results, 60, context.partner);
         }
 
         return results;
@@ -337,7 +341,7 @@ export default {
 
       return null;
     },
-    customer: async (quote) => {
+    customer: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext) => {
       if (quote === null) throw new ApiError('Quote is null');
       const { customer } = quote;
       if (isNil(customer) === false) {
@@ -353,8 +357,9 @@ export default {
         const { customer_full_name, customer_id } = quote.meta.source;
 
         if (customer_full_name && customer_id) {
-          //check if a customer with this reference exists?
-          let _customer = await User.findByForeignId(customer_id, global.partner.key).then();
+          // Check if a customer with this reference exists?          
+          // eslint-disable-next-line / tslint:disable-next-line 
+          let _customer = await User.findByForeignId(customer_id, context.partner.key).then();
           if (_customer !== null) {
             logger.debug(`Customer ${_customer.fullName()} found via foreign reference`);
             quote.customer = _customer._id;
@@ -366,13 +371,14 @@ export default {
             return _customer;
           }
           else {
+            // tslint:disable-next-line
             _customer = User.parse(customer_full_name);
             _customer = new User(_customer);
             _customer._id = new ObjectId();
             _customer.setPassword(uuid());
 
             _customer.meta = {};
-            _customer.meta.owner = global.partner.key;
+            _customer.meta.owner = context.partner.key;
             _customer.meta.reference = customer_id;
             _customer.meta.lastSync = null;
             _customer.meta.nextSync = new Date().valueOf();
@@ -386,7 +392,7 @@ export default {
                 logger.warn(`Could not update quote`, parallelSaveError);
               }
             }
-            _customer.addRole(global.partner._id, 'CUSTOMER');
+            _customer.addRole(context.partner._id, 'CUSTOMER');
             amq.raiseWorkFlowEvent('startWorkFlow', {
               id: 'LasecSyncCustomer',
               version: 1,
@@ -394,10 +400,10 @@ export default {
               data: {
                 reference: customer_id,
                 id: _customer.id,
-                owner: global.partner.key,
-                user: global.user.id,
+                owner: context.partner.key,
+                user: context.user.id,
               },
-            }, global.partner);
+            }, context.partner);
 
             return _customer;
           }
@@ -411,10 +417,10 @@ export default {
         email: '404@customer.reactory.net'
       }
     },
-    headers: async (quote: LasecQuote): Promise<LasecQuoteHeader[]> => {
+    headers: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext): Promise<LasecQuoteHeader[]> => {
 
       let headers: LasecQuoteHeader[] = [];
-      const quoteService: IQuoteService = getService(QUOTE_SERVICE_ID) as IQuoteService;
+      const quoteService: IQuoteService = context.getService(QUOTE_SERVICE_ID, {}, context) as IQuoteService;
       let quote_headers = await quoteService.getQuoteHeaders(quote.code).then()
 
       headers = [{
@@ -441,18 +447,18 @@ export default {
       if (!quote.item_paging) quote = await $PagedLineItemsResponse(quote, context, info).then()
       return quote.item_paging;
     },
-    statusName: (quote) => {
+    statusName: (quote: LasecQuote) => {
       const { source } = quote.meta;
       return quote.statusName || source.status_name;
     },
-    status: ({ status, meta }) => {
+    status: ({ status, meta }: LasecQuote) => {
       return status || meta.source ? meta.source.status_id : 'unset';
     },
-    statusGroup: ({ meta }) => {
+    statusGroup: ({ meta }: LasecQuote) => {
       return meta.source &&
         meta.source.substatus_id ? meta.source.substatus_id : '1';
     },
-    allowed_statuses: (quote) => {
+    allowed_statuses: (quote: LasecQuote) => {
       const { meta } = quote;
 
       if (meta && meta.source && meta.source.allowed_status_ids) {
@@ -461,7 +467,7 @@ export default {
 
       return []
     },
-    statusGroupName: (quote) => {
+    statusGroupName: (quote: LasecQuote) => {
       const { statusGroupName, meta } = quote;
 
       if (statusGroupName) return statusGroupName;
@@ -474,7 +480,7 @@ export default {
 
       return null;
     },
-    totals: (quote) => {
+    totals: (quote: LasecQuote) => {
       const { meta, totals } = quote;
 
       if (totals) return totals;
@@ -505,10 +511,10 @@ export default {
         totalDiscountPercent: 0,
       };
     },
-    allowedStatus: ({ meta }) => {
+    allowedStatus: ({ meta }: LasecQuote) => {
       return meta && meta.source && meta.source.allowed_status_ids
     },
-    company: async (quote) => {
+    company: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext) => {
       const { meta } = quote;
 
 
@@ -527,8 +533,8 @@ export default {
         const { company_id, company_trading_name } = meta.source;
         if (company_trading_name && company_id) {
           //check if a customer with this reference exists?
-          logger.debug(`No organization, checking foreign reference ${company_id} ${global.partner.key}`);
-          let _company = await Organization.findByForeignId(company_id, global.partner.key).then();
+          logger.debug(`No organization, checking foreign reference ${company_id} ${context.partner.key}`);
+          let _company = await Organization.findByForeignId(company_id, context.partner.key).then();
 
           if (_company !== null) {
             if (typeof quote.save === "function") {
@@ -543,7 +549,7 @@ export default {
             _company = new Organization({
               _id: new ObjectId(),
               meta: {
-                owner: global.partner.key,
+                owner: context.partner.key,
                 reference: company_id,
                 mustSync: true,
                 lastSync: null,
@@ -551,13 +557,13 @@ export default {
               name: company_trading_name,
               tradingName: company_trading_name,
               clients: {
-                active: [global.partner.key]
+                active: [context.partner.key]
               },
               code: company_id,
               createdAt: new Date().valueOf(),
               updatedAt: new Date().valueOf(),
               public: false,
-              updatedBy: global.user._id
+              updatedBy: context.user._id
             });
 
             if (typeof quote.save === "function") {
@@ -576,10 +582,10 @@ export default {
               data: {
                 reference: company_id,
                 id: _company._id,
-                owner: global.partner.key,
-                user: global.user.id,
+                owner: context.partner.key,
+                user: context.user.id,
               },
-            }, global.partner);
+            }, context.partner);
 
             _company.save();
 
@@ -590,7 +596,7 @@ export default {
 
       throw new ApiError('No Company Info')
     },
-    totalVATExclusive: (quote) => {
+    totalVATExclusive: (quote: LasecQuote) => {
       const { totals, meta } = quote;
 
       if (totals && totals.totalVATExclusive) return totals.totalVATExclusive;
@@ -603,7 +609,7 @@ export default {
 
       return 0;
     },
-    totalVAT: (quote) => {
+    totalVAT: (quote: LasecQuote) => {
       const { totals, meta } = quote;
 
       if (totals && totals.totalVAT) return totals.totalVAT;
@@ -617,7 +623,7 @@ export default {
 
       return 0;
     },
-    totalVATInclusive: (quote) => {
+    totalVATInclusive: (quote: LasecQuote) => {
       const { totals, meta } = quote;
 
       if (totals && totals.totalVATInclusive) return totals.totalVATInclusive;
@@ -630,7 +636,7 @@ export default {
 
       return 0;
     },
-    GP: (quote) => {
+    GP: (quote: LasecQuote) => {
       const { totals, meta } = quote;
 
       if (totals && totals.GP) return totals.GP;
@@ -643,7 +649,7 @@ export default {
 
       return 0;
     },
-    actualGP: (quote) => {
+    actualGP: (quote: LasecQuote) => {
       const { totals, meta } = quote;
 
       if (totals && totals.actualGP) return totals.actualGP;
@@ -656,22 +662,22 @@ export default {
 
       return 0;
     },
-    created: ({ created }) => { return moment(created); },
-    modified: ({ modified }) => { return moment(modified); },
-    expirationDate: ({ expirationDate, meta }) => {
+    created: ({ created }: LasecQuote) => { return moment(created); },
+    modified: ({ modified }: LasecQuote) => { return moment(modified); },
+    expirationDate: ({ expirationDate, meta }: LasecQuote) => {
       if (expirationDate) return moment(expirationDate);
       if (meta && meta.source && meta.source.expiration_date) return moment(meta.source.expiration_date);
       return null;
     },
-    note: ({ note }) => (note),
+    note: ({ note }: LasecQuote) => (note),
     timeline: getQuoteTimeline,
-    lastAction: async (quote) => {
+    lastAction: async (quote: LasecQuote) => {
       let items = await getQuoteTimeline(quote, { bypassEmail: true }, null, null).then();
       if (items && items.length > 0) {
         return items[0];
       }
     },
-    meta: (quote) => {
+    meta: (quote: LasecQuote) => {
       return quote.meta || {}
     },
     active_option: (quote: LasecQuote): String => {
@@ -690,11 +696,11 @@ export default {
     incoterms: (quote: LasecQuote) => {
       return (getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms();
     },
-    options: async (quote: LasecQuote): Promise<LasecQuoteOption[]> => {
+    options: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext): Promise<LasecQuoteOption[]> => {
       let result: LasecQuoteOption[] = [];
 
       const { source } = quote.meta;
-      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0');
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0');
 
       if (source.quote_option_ids.length > 0) {
         try {
@@ -721,21 +727,21 @@ export default {
     }
   },
   LasecCompany: {
-    id: ({ id }) => (id),
+    id: ({ id }: LasecQuote) => (id),
   },
   LasecCustomer: {
-    id: ({ id }) => (id),
+    id: ({ id }: LasecQuote) => (id),
   },
   LasecQuoteDashboard: {
     id: ({
       period, periodStart, periodEnd, status,
-    }) => {
+    }: any) => {
       return `${period}.${moment(periodStart).valueOf()}.${moment(periodEnd).valueOf()}`;
     },
   },
   LasecQuoteComment: {
-    id: ({ id, _id }) => id || _id,
-    who: async ({ who }) => {
+    id: ({ id, _id }: any) => id || _id,
+    who: async ({ who }: any) => {
       if (ObjectId.isValid(who)) {
         return User.findById(who);
       }
@@ -745,79 +751,79 @@ export default {
 
   },
   FreightRequestProductDetail: {
-    length: async (item: FreightRequestProductDetail): Promise<number> => {
+    length: async (item: FreightRequestProductDetail, args: any, context: Reactory.IReactoryContext): Promise<number> => {
       const { length } = item;
 
       if (length && length > 0) return length;
 
 
       if (!item._dimensions) {
-        item._dimensions = await PopulateProductDimensions(item);
+        item._dimensions = await PopulateProductDimensions(item, context);
         item = { ...item, ...item._dimensions };
       }
 
       return item.length;
     },
-    width: async (item: FreightRequestProductDetail): Promise<number> => {
+    width: async (item: FreightRequestProductDetail, args: any, context: Reactory.IReactoryContext): Promise<number> => {
       const { width } = item;
 
       if (width && width > 0) return width;
 
 
       if (!item._dimensions) {
-        item._dimensions = await PopulateProductDimensions(item);
+        item._dimensions = await PopulateProductDimensions(item, context);
         item = { ...item, ...item._dimensions };
       }
 
       return item.width;
     },
-    height: async (item: FreightRequestProductDetail): Promise<number> => {
+    height: async (item: FreightRequestProductDetail, args: any, context: Reactory.IReactoryContext): Promise<number> => {
       const { height } = item;
 
       if (height && height > 0) return height;
 
 
       if (!item._dimensions) {
-        item._dimensions = await PopulateProductDimensions(item);
+        item._dimensions = await PopulateProductDimensions(item, context);
         item = { ...item, ...item._dimensions };
       }
 
       return item.height;
     },
-    volume: async (item: FreightRequestProductDetail): Promise<number> => {
+    volume: async (item: FreightRequestProductDetail, args: any, context: Reactory.IReactoryContext): Promise<number> => {
       const { volume } = item;
 
       if (volume && volume > 0) return volume;
 
 
       if (!item._dimensions) {
-        item._dimensions = await PopulateProductDimensions(item);
+        item._dimensions = await PopulateProductDimensions(item, context);
         item = { ...item, ...item._dimensions };
       }
 
       return item.volume;
     },
-    weight: async (item: FreightRequestProductDetail): Promise<number> => {
+    weight: async (item: FreightRequestProductDetail, args: any, context: Reactory.IReactoryContext): Promise<number> => {
       const { weight } = item;
 
       if (weight && weight > 0) return weight;
 
 
       if (!item._dimensions) {
-        item._dimensions = await PopulateProductDimensions(item);
+        item._dimensions = await PopulateProductDimensions(item, context);
         item = { ...item, ...item._dimensions };
       }
 
       return item.weight;
     },
-    unitOfMeasure: async (item: FreightRequestProductDetail): Promise<string> => {
+    unitOfMeasure: async (item: FreightRequestProductDetail, args: any, context: Reactory.IReactoryContext): Promise<string> => {
       const { unitOfMeasure } = item;
 
       if (unitOfMeasure && unitOfMeasure !== "") return unitOfMeasure;
 
 
       if (!item._dimensions) {
-        item._dimensions = await PopulateProductDimensions(item);
+        item._dimensions = await PopulateProductDimensions(item, context);
         item = { ...item, ...item._dimensions };
       }
 
@@ -825,21 +831,21 @@ export default {
     },
   },
   Query: {
-    LasecTransportationModes: async (): Promise<LasecTransportationMode[]> => {
-      return (getService(QUOTE_SERVICE_ID) as IQuoteService).getQuoteTransportModes();
+    LasecTransportationModes: async (obj: any, params: any, context: Reactory.IReactoryContext): Promise<LasecTransportationMode[]> => {
+      return (context.getService(QUOTE_SERVICE_ID, {}, context) as IQuoteService).getQuoteTransportModes();
     },
-    LasecGetQuoteList: async (obj, { search }) => {
-      return getQuotes({ search });
+    LasecGetQuoteList: async (obj: any, { search }: any, context: Reactory.IReactoryContext) => {
+      return getQuotes({ search }, context);
     },
-    LasecGetProductDashboard: async (obj, { dashparams }) => {
-      return lasecGetProductDashboard(dashparams);
+    LasecGetProductDashboard: async (obj: any, { dashparams }: any, context: Reactory.IReactoryContext) => {
+      return lasecGetProductDashboard(dashparams, context);
     },
-    LasecGetQuoteById: async (obj, params: { quote_id: string, option_id?: string, item_paging: PagingRequest }, context: any) => {
+    LasecGetQuoteById: async (obj: any, params: { quote_id: string, option_id?: string, item_paging: PagingRequest }, context: Reactory.IReactoryContext) => {
 
       const { quote_id, option_id, item_paging } = params;
 
       if (isNil(quote_id) === true) throw new ApiError('This method requies a quote id to work');
-      const result = await getLasecQuoteById(quote_id).then();
+      const result = await getLasecQuoteById(quote_id, context.partner, context).then();
 
       result.active_option = option_id || result.meta.source.quote_option_ids[0]
       logger.debug(`QUOTE RESULT:: ${JSON.stringify(result)}`);
@@ -849,48 +855,56 @@ export default {
       return result;
     },
 
-    LasecGetQuoteComments: async (obj, params) => {
-      return getQuoteComments(params);
+    LasecGetQuoteComments: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getQuoteComments(params, context);
     },
-    LasecGetCRMQuoteList: async (obj: any, args: any) => {
-      return getPagedQuotes(args);
+    LasecGetCRMQuoteList: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getPagedQuotes(args, context);
     },
-    LasecGetCRMClientQuoteList: async (obj, args) => {
-      return getPagedClientQuotes(args);
+    LasecGetCRMClientQuoteList: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getPagedClientQuotes(args, context);
     },
-    LasecGetCRMSalesOrders: async (obj, args) => {
-      return getSalesOrders(args);
+    LasecGetCRMSalesOrders: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getSalesOrders(args, context);
     },
 
-    LasecGetCRMClientInvoices: async (obj, args) => {
-      return getClientInvoices(args);
+    LasecGetCRMClientInvoices: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getClientInvoices(args, context);
     },
-    LasecGetCRMInvoices: async (obj: any, args: any) => {
-      return getCRMInvoices(args);
+    LasecGetCRMInvoices: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getCRMInvoices(args, context);
     },
 
     // CLIENT SALES HISTORY
-    LasecGetCRMClientSalesHistory: async (obj, args) => {
-      return getClientSalesHistory(args);
+    LasecGetCRMClientSalesHistory: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getClientSalesHistory(args, context);
     },
 
     // ALL SALES HISTORY
-    LasecGetCRMSalesHistory: async (obj, args) => {
-      return getCRMSalesHistory(args);
+    LasecGetCRMSalesHistory: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getCRMSalesHistory(args, context);
     },
 
     // MONTHLY TOTALS
     // FOR ALL SALES HISTORY AND FOR CLIENT SPECIFIC SALES HISTORY
-    LasecGetSalesHistoryMonthTotals: async (obj, args) => {
-      return getSalesHistoryMonthlyCount(args);
+    LasecGetSalesHistoryMonthTotals: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getSalesHistoryMonthlyCount(args, context);
     },
 
-    LasecGetSalesOrderDocumentBySlug: async (obj, args) => {
-      return getSalesOrderDocBySlug(args);
+    /**
+     * It does not appear like this resolver is being called anywhere.
+     * @param obj 
+     * @param args 
+     * @param context 
+     */
+    LasecGetSalesOrderDocumentBySlug: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      /// return getSalesOrderDocBySlug(args, context);
+
+      throw new ApiError("NOT IMPLMENTED")
     },
-    LasecGetFreightRequestQuoteDetail: async (obj: any, args: LasecGetFreightRequestQuoteParams): Promise<FreightRequestQuoteDetail> => {
+    LasecGetFreightRequestQuoteDetail: async (obj: any, args: LasecGetFreightRequestQuoteParams, context: Reactory.IReactoryContext): Promise<FreightRequestQuoteDetail> => {
       try {
-        const result: FreightRequestQuoteDetail = await getFreightRequetQuoteDetails(args).then();
+        const result: FreightRequestQuoteDetail = await getFreightRequetQuoteDetails(args, context).then();
         return result;
       } catch (unhandledError) {
         if (unhandledError instanceof ApiError) throw ApiError;
@@ -899,12 +913,12 @@ export default {
         throw new ApiError('Unandled Error', unhandledError);
       }
     },
-    LasecGetCompanyDetailsforQuote: async (obj, args) => {
-      return getCompanyDetails(args);
+    LasecGetCompanyDetailsforQuote: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getCompanyDetails(args, context);
     },
-    LasecGetQuotePDFUrl: async (obj: any, args: { quote_id: String }) => {
+    LasecGetQuotePDFUrl: async (obj: any, args: { quote_id: string }, context: Reactory.IReactoryContext) => {
 
-      const pdfresult = await lasecApi.Quotes.getQuotePDF(args.quote_id).then();
+      const pdfresult = await lasecApi.Quotes.getQuotePDF(args.quote_id, false, context).then();
 
       let result = {
         id: args.quote_id,
@@ -915,9 +929,9 @@ export default {
 
       return result;
     },
-    LasecGetQuoteProformaPDFUrl: async (obj: any, args: { quote_id: String }) => {
+    LasecGetQuoteProformaPDFUrl: async (obj: any, args: { quote_id: string }, context: Reactory.IReactoryContext) => {
 
-      const pdfresult = await lasecApi.Quotes.getQuoteProforma(args.quote_id).then();
+      const pdfresult = await lasecApi.Quotes.getQuoteProforma(args.quote_id, false, context).then();
 
       let result = {
         id: args.quote_id,
@@ -928,10 +942,10 @@ export default {
 
       return result;
     },
-    LasecGetCurrencies: async (parent: any, params: any) => {
+    LasecGetCurrencies: async (parent: any, params: any, context: Reactory.IReactoryContext) => {
 
       try {
-        return await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+        return await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360', undefined, context).then();
       } catch (err) {
         return []
       }
@@ -939,7 +953,7 @@ export default {
   },
   Mutation: {
 
-    LasecUpdateQuoteStatus: async (parent, { quote_id, input }) => {
+    LasecUpdateQuoteStatus: async (parent: any, { quote_id, input }: any, context: Reactory.IReactoryContext) => {
 
       logger.debug('Mutation.LasecUpdateQuoteStatus(...)', { quote_id, input });
 
@@ -948,23 +962,23 @@ export default {
       const timelineEntry: any = {
         when: new Date().valueOf(),
         what: '',
-        who: global.user._id,
+        who: context.user._id,
         notes: input.note,
         reason: input.reason
       };
 
       if (input.status) {
         try {
-          let status_update_result = await lasecApi.Quotes.updateQuote({ "item_id": quote_id, "values": { status_id: input.status } }).then()
+          let status_update_result = await lasecApi.Quotes.updateQuote({ "item_id": quote_id, "values": { status_id: input.status } }, context).then()
           logger.debug(`Quote Status Update Result ${JSON.stringify(status_update_result)}`)
           _message = status_update_result.status !== "success" ? 'Quote status not updated' : _message;
-          timelineEntry.what = `Quote status updated to ${input.status_name} by ${global.user.fullName()}`;
+          timelineEntry.what = `Quote status updated to ${input.status_name} by ${context.user.fullName(false)}`;
         } catch (apiError) {
           logger.error(`Api Error when updating quote status`);
         }
       }
 
-      const quote = await getLasecQuoteById(quote_id).then();
+      const quote = await getLasecQuoteById(quote_id, context.partner, context).then();
 
       if (!quote) {
         const message = `Quote with quote id ${quote_id}, not found`;
@@ -975,9 +989,9 @@ export default {
         quote.note = input.note;
       }
 
-      const { user } = global;
+      const { user } = context;
 
-      let reminder = null;
+      let reminder: any = null;
 
       if (lodash.isArray(quote.timeline) === false) quote.timeline = [];
 
@@ -1002,11 +1016,11 @@ export default {
           src: 'QuoteResolver:LasecUpdateQuoteStatus',
           data: {
             reminder: reminder,
-            partner: global.partner,
-            user: global.user,
+            partner: context.partner,
+            user: context.user,
             quote: quote
           },
-        }, global.partner);
+        }, context.partner);
         timelineEntry.reminder = reminder._id;
       }
       quote.timeline.push(timelineEntry);
@@ -1031,7 +1045,7 @@ export default {
         let taskCreated = false;
 
         if (user.getAuthentication("microsoft") !== null) {
-          const taskCreateResult = await clientFor(user, global.partner).mutate({
+          const taskCreateResult: any = await clientFor(user, context.partner).mutate({
             mutation: gql`
             mutation createOutlookTask($task: CreateTaskInput!) {
               createOutlookTask(task: $task) {
@@ -1089,11 +1103,11 @@ export default {
       };
     },
 
-    LasecUpdateQuote: async (parent: any, args: any) => {
-      return updateQuote(args);
+    LasecUpdateQuote: async (parent: any, args: any, context: Reactory.IReactoryContext) => {
+      return updateQuote(args, context);
     },
 
-    LasecCreateClientEnquiry: async (parent, params) => {
+    LasecCreateClientEnquiry: async (parent: any, params: any, context: Reactory.IReactoryContext) => {
       const { customerId: String } = params;
 
       return {
@@ -1108,22 +1122,22 @@ export default {
         }
       }
     },
-    SynchronizeNextActionsToOutloook: async (parent, { nextActions }) => {
+    SynchronizeNextActionsToOutloook: async (parent: any, { nextActions }: any, context: Reactory.IReactoryContext) => {
 
       // TODO - at a later stage
       // Add categories to the task, so we can pull all tasks for that period and then delete
       // tasks that have been actioned
 
-      const { user } = global;
+      const { user } = context;
 
-      nextActions.forEach(async action => {
-        const quoteReminder = await QuoteReminder.findById(action.id).then();
+      nextActions.forEach(async (action: any) => {
+        const quoteReminder: any = await QuoteReminder.findById(action.id).then();
 
         if ((!quoteReminder.meta || !quoteReminder.meta.reference || !quoteReminder.meta.reference.source || quoteReminder.meta.reference.source != 'microsoft')) {
           logger.debug(`CREATING TASK FOR:: ${action.id}`);
           if (!quoteReminder.actioned) {
             if (user.getAuthentication("microsoft") !== null) {
-              const taskCreateResult = await clientFor(user, global.partner).mutate({
+              const taskCreateResult: any = await clientFor(user, context.partner).mutate({
                 mutation: gql`
                   mutation createOutlookTask($task: CreateTaskInput!) {
                     createOutlookTask(task: $task) {
@@ -1168,7 +1182,7 @@ export default {
           // If is actioned delete task from outlook
           // This wont run as actioned items arent in the list
           if (action.actioned) {
-            const taskDeleteResult = await clientFor(user, global.partner).mutate({
+            const taskDeleteResult = await clientFor(user, context.partner).mutate({
               mutation: gql`
                 mutation deleteOutlookTask($task: DeleteTaskInput!) {
                   deleteOutlookTask(task: $task) {
@@ -1200,9 +1214,9 @@ export default {
       }
 
     },
-    LasecMarkNextActionAsActioned: async (parent, { id }) => {
-      const { user } = global;
-      const quoteReminder = await QuoteReminder.findById(id).then();
+    LasecMarkNextActionAsActioned: async (parent: any, { id }: any, context: Reactory.IReactoryContext) => {
+      const { user } = context;
+      const quoteReminder: any = await QuoteReminder.findById(id).then();
       if (!quoteReminder) {
         return {
           success: false,
@@ -1212,7 +1226,7 @@ export default {
       quoteReminder.actioned = true;
       const result = await quoteReminder.save()
         .then()
-        .catch(error => {
+        .catch((error: Error) => {
           return {
             success: false,
             message: `Could not update this quote reminder.`
@@ -1221,7 +1235,7 @@ export default {
 
 
       if (quoteReminder.meta && quoteReminder.meta.reference && quoteReminder.meta.reference.source && quoteReminder.meta.reference.source == 'microsoft') {
-        const taskDeleteResult = await clientFor(user, global.partner).mutate({
+        const taskDeleteResult = await clientFor(user, context.partner).mutate({
           mutation: gql`
               mutation deleteOutlookTask($task: DeleteTaskInput!) {
                 deleteOutlookTask(task: $task) {
@@ -1249,14 +1263,14 @@ export default {
         message: `Quote reminder marked as actioned.`
       }
     },
-    LasecSendQuoteEmail: async (obj: any, args: LasecSendMailParams) => {
+    LasecSendQuoteEmail: async (obj: any, args: LasecSendMailParams, context: Reactory.IReactoryContext) => {
 
       try {
 
         logger.debug(`💌 Sending Quote Email for quote: ${args.code}`, { message: args.mailMessage });
 
-        const quoteService: IQuoteService = global.getService("lasec-crm.LasecQuoteService") as IQuoteService;
-        const fileService: Reactory.Service.IReactoryFileService = global.getService("core.ReactoryFileService") as Reactory.Service.IReactoryFileService;
+        const quoteService: IQuoteService = context.getService("lasec-crm.LasecQuoteService") as IQuoteService;
+        const fileService: Reactory.Service.IReactoryFileService = context.getService("core.ReactoryFileService") as Reactory.Service.IReactoryFileService;
         const { subject, contentType, body, saveToSentItems = true, to, via, userId, attachments, bcc = [], cc = [], id } = args.mailMessage;
 
         const response: Reactory.EmailSentResult = await quoteService.sendQuoteEmail(args.code, subject, body, to, cc, bcc, attachments).then();
@@ -1284,20 +1298,20 @@ export default {
 
       //return LasecSendQuoteEmail(args);
     },
-    LasecDeleteSaleOrderDocument: async (obj, args) => {
-      return deleteSalesOrdersDocument(args);
+    LasecDeleteSaleOrderDocument: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return deleteSalesOrdersDocument(args, context);
     },
-    LasecUploadSaleOrderDocument: async (obj, args) => {
-      return uploadSalesOrderDoc(args);
+    LasecUploadSaleOrderDocument: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      // return uploadSalesOrderDoc(args, context);
     },
 
-    LasecCRMUpdateFreightRequestDetails: async (obj: any, args: { freightRequestDetailInput: FreightRequestQuoteDetail }) => {
+    LasecCRMUpdateFreightRequestDetails: async (obj: any, args: { freightRequestDetailInput: FreightRequestQuoteDetail }, context: Reactory.IReactoryContext) => {
       return updateFreightRequestDetails(args);
     },
-    LasecCRMDuplicateQuoteForClient: async (obj, args) => {
-      return duplicateQuoteForClient(args);
+    LasecCRMDuplicateQuoteForClient: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return duplicateQuoteForClient(args, context);
     },
-    LasecCreateNewQuoteForClient: async (obj: any, args: LasecNewQuoteInputArgs): Promise<LasecNewQuoteResponse> => {
+    LasecCreateNewQuoteForClient: async (obj: any, args: LasecNewQuoteInputArgs, context: Reactory.IReactoryContext): Promise<LasecNewQuoteResponse> => {
 
       const { newQuoteInput } = args;
       const { clientId, repCode } = newQuoteInput;
@@ -1305,7 +1319,7 @@ export default {
       logger.debug(`LasecCreateNewQuoteForClient()`, newQuoteInput);
 
       try {
-        const response = await createNewQuote({ clientId, repCode }).then();
+        const response = await createNewQuote({ clientId, repCode }, context).then();
 
         logger.debug(`[RESOLVER] NEW QUOTE RESPONSE ${JSON.stringify(response)}`);
 
@@ -1327,11 +1341,11 @@ export default {
 
       }
     },
-    LasecSaveQuoteComment: async (obj, args) => {
-      return saveQuoteComment(args);
+    LasecSaveQuoteComment: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return saveQuoteComment(args, context);
     },
-    LasecDeleteQuoteComment: async (obj, args) => {
-      return deleteQuoteComment(args);
+    LasecDeleteQuoteComment: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return deleteQuoteComment(args, context);
     },
     LasecDuplicateQuoteOption: async (obj: any, params: LasecDuplicateQuoteOptionArgs): Promise<LasecQuoteOption> => {
       let result: LasecQuoteOption = null;
@@ -1358,11 +1372,11 @@ export default {
 
       return result;
     },
-    LasecQuoteAddProductToQuote: async (obj: any, params: { quote_id: string, option_id: string, product_id: string }): Promise<[LasecQuoteItem]> => {
+    LasecQuoteAddProductToQuote: async (obj: any, params: { quote_id: string, option_id: string, product_id: string }, context: Reactory.IReactoryContext): Promise<[LasecQuoteItem]> => {
       try {
         const { quote_id, option_id, product_id } = params;
         let result: [LasecQuoteItem] = null;
-        result = await lasecApi.Quotes.addProductToQuote(quote_id, option_id, product_id).then();
+        result = await lasecApi.Quotes.addProductToQuote(quote_id, option_id, product_id, context).then();
         return result;
       } catch (err) {
         logger.error(`Error communicating with Lasec API`);
@@ -1370,7 +1384,7 @@ export default {
       }
 
     },
-    LasecQuoteItemUpdate: async (obj: any, params: { quote_id: string, option_id: string, quote_item_input: LasecQuoteItem }): Promise<LasecQuoteItem> => {
+    LasecQuoteItemUpdate: async (obj: any, params: { quote_id: string, option_id: string, quote_item_input: LasecQuoteItem }, context: Reactory.IReactoryContext): Promise<LasecQuoteItem> => {
 
       try {
         let result: LasecQuoteItem = null;
@@ -1404,7 +1418,7 @@ export default {
         const apiResult = await lasecApi.Quotes.updateQuoteItems({
           item_id: params.quote_item_input.quote_item_id,
           values: fields
-        });
+        }, context);
 
         logger.debug(`LasecQuoteItemUpdate result from apiResult`, { apiResult })
 
@@ -1413,7 +1427,7 @@ export default {
           quote_item_id: params.quote_item_input.quote_item_id,
         }
 
-        result = await lasecGetQuoteLineItem(params.quote_item_input.quote_item_id).then()
+        result = await lasecGetQuoteLineItem(params.quote_item_input.quote_item_id, context).then()
 
         return result;
 
@@ -1421,27 +1435,27 @@ export default {
         logger.debug(`Error updateding LasecQuoteItemUpdate ${error.message}`, { error })
       }
     },
-    LasecQuoteDeleteQuoteItem: async (obj: any, params: { quote_item_id: string }): Promise<SimpleResponse> => {
+    LasecQuoteDeleteQuoteItem: async (obj: any, params: { quote_item_id: string }, context: Reactory.IReactoryContext): Promise<SimpleResponse> => {
       let result: SimpleResponse = null;
 
       try {
-        result = await lasecApi.Quotes.deleteQuoteItem(params.quote_item_id).then();
+        result = await lasecApi.Quotes.deleteQuoteItem(params.quote_item_id, context).then();
       } catch (deleteError) {
         logger.error(`🚨 Error deleting quote item`, { deleteError });
       }
 
       return result;
     },
-    LasecSetQuoteHeader: async (parent, params: { quote_id: string, input: LasecQuoteHeaderInput }): Promise<LasecQuoteHeader> => {
+    LasecSetQuoteHeader: async (parent, params: { quote_id: string, input: LasecQuoteHeaderInput }, context: Reactory.IReactoryContext): Promise<LasecQuoteHeader> => {
 
       const { input, quote_id } = params
 
       switch (input.action) {
         case 'NEW': {
-          return lasecApi.Quotes.createQuoteHeader({ quote_id, header_text: input.heading, quote_item_id: input.quote_item_id });
+          return lasecApi.Quotes.createQuoteHeader({ quote_id, header_text: input.heading, quote_item_id: input.quote_item_id }, context);
         }
         case 'REMOVE_HEADER': {
-          await lasecApi.Quotes.removeQuoteHeader({ quote_id, quote_heading_id: input.quote_header_id }).then();
+          await lasecApi.Quotes.removeQuoteHeader({ quote_id, quote_heading_id: input.quote_header_id }, context).then();
           return {
             header_id: input.quote_header_id,
             heading: input.heading,
@@ -1450,7 +1464,7 @@ export default {
           }
         }
         case 'UPDATE_TEXT': {
-          return lasecApi.Quotes.setQuoteHeadingText({ quote_id, ...input });
+          return lasecApi.Quotes.setQuoteHeadingText({ quote_id, ...input }, context);
         }
         default: {
           throw new ApiError(`The ${input.action} action is not supported`);
@@ -1459,11 +1473,11 @@ export default {
     },
 
 
-    LasecDeleteQuote: async (parent, params) => {
-      return deleteQuote(params);
+    LasecDeleteQuote: async (parent: any, params: any, context: Reactory.IReactoryContext) => {
+      return deleteQuote(params, context);
     },
 
-    LasecDeleteQuotes: async (parent, params) => {
+    LasecDeleteQuotes: async (parent: any, params: any, context: Reactory.IReactoryContext) => {
       const { quoteIds } = params;
 
 
@@ -1473,7 +1487,7 @@ export default {
       };
 
       try {
-        const promises = quoteIds.map((id: string) => deleteQuote({ id }))
+        const promises: Promise<any>[] = quoteIds.map((id: string) => deleteQuote({ id }, context))
         const results = await Promise.all(promises).then();
         let successCount: number, failCount: number = 0;
 
@@ -1490,7 +1504,7 @@ export default {
             response.success = false;
           }
         } else {
-          if (successCount === deactivation_promises.length) {
+          if (successCount === promises.length) {
             response.message = `🥇 Deactivated all ${successCount} clients.`
           }
         }
@@ -1502,10 +1516,10 @@ export default {
 
     },
 
-    LasecCreateNewQuoteOption: async (parent: any, params: LasecCreateQuoteOptionParams) => {
+    LasecCreateNewQuoteOption: async (parent: any, params: LasecCreateQuoteOptionParams, context: Reactory.IReactoryContext) => {
       const { quote_id, copy_from } = params;
 
-      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0', {}, context) as IQuoteService;
 
       if (copy_from) {
         return quoteService.copyQuoteOption(quote_id, copy_from)
@@ -1514,9 +1528,9 @@ export default {
       }
     },
 
-    LasecPatchQuoteOption: async (parent: any, params: LasecPatchQuoteOptionsParams): Promise<LasecQuoteOption> => {
+    LasecPatchQuoteOption: async (parent: any, params: LasecPatchQuoteOptionsParams, context: Reactory.IReactoryContext): Promise<LasecQuoteOption> => {
 
-      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0', {}, context) as IQuoteService;
       const { option, quote_id, option_id } = params
 
       const response = await quoteService.patchQuoteOption(quote_id, option_id, option).then();
@@ -1538,9 +1552,9 @@ export default {
       throw new ApiError('Could not update this quote option');
     },
 
-    LasecDeleteQuoteOption: async (parent: any, params: LasecDeleteQuoteOptionParams): Promise<SimpleResponse> => {
+    LasecDeleteQuoteOption: async (parent: any, params: LasecDeleteQuoteOptionParams, context: Reactory.IReactoryContext): Promise<SimpleResponse> => {
 
-      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0', {}, context) as IQuoteService;
 
       const { quote_id, option_id } = params;
 

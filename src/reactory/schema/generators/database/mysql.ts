@@ -1,18 +1,20 @@
 
 import { isArray } from 'lodash';
-import { 
-  queryAsync as mysql,   
-} from '../../../../database/mysql'; 
-import logger from '../../../../logging';
+import {
+  queryAsync as mysql,
+} from '@reactory/server-core/database/mysql';
+import logger from '@reactory/server-core/logging';
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { 
-  GeneratorConfig, 
-  GeneratorTableDefinition, 
-  GeneratorDatabaseDefinition, 
-  GeneratorColumnDefinition} from 'reactory/types';
+import {
+  GeneratorConfig,
+  GeneratorTableDefinition,
+  GeneratorDatabaseDefinition,
+  GeneratorColumnDefinition
+} from 'reactory/types';
+
 import { ReactoryApplicationsForm } from 'data/forms/core/dashboard';
 
-const listSchemas = async ( props: GeneratorConfig ): Promise<GeneratorDatabaseDefinition> => {
+const listSchemas = async (props: GeneratorConfig): Promise<GeneratorDatabaseDefinition> => {
 
   const sql = `
   select 
@@ -25,7 +27,7 @@ const listSchemas = async ( props: GeneratorConfig ): Promise<GeneratorDatabaseD
   return await mysql(sql, props.connectionId).then();
 };
 
-const listTables = async( schema: GeneratorDatabaseDefinition ): Promise<GeneratorTableDefinition[]> =>  {
+const listTables = async (schema: GeneratorDatabaseDefinition): Promise<GeneratorTableDefinition[]> => {
   logger.debug(`Listing Tables for ${schema.name}`);
   return await mysql(`
     SELECT 
@@ -37,7 +39,7 @@ const listTables = async( schema: GeneratorDatabaseDefinition ): Promise<Generat
     `, schema.connectionId).then()
 };
 
-const listColumns = async( connectionId: string, table: GeneratorTableDefinition ) => {
+const listColumns = async (connectionId: string, table: GeneratorTableDefinition) => {
   const columns = await mysql(`
   SELECT 
 	  COLUMN_NAME as name, 
@@ -67,39 +69,39 @@ const MySqlDataTypeMap: Map<string, string> = new Map<string, string>()
 
 const getTypeFromDBType = (dbType: string): string => {
   logger.debug(`Mapping MySQL DataType ${dbType}`)
-  switch(dbType.toLowerCase()) {
-    case 'bool': 
+  switch (dbType.toLowerCase()) {
+    case 'bool':
     case 'bit': {
       return 'boolean'
     }
-    case 'int': 
+    case 'int':
     case 'int32':
     case 'int64':
     case 'decimal':
     case 'float':
-    case 'tinyint':   
+    case 'tinyint':
     case 'bigint': {
       return 'number'
     }
     case 'date':
     case 'date-time':
     case 'datetime':
-    case 'varchar': 
-    case 'nvarchar': 
+    case 'varchar':
+    case 'nvarchar':
     case 'char':
     default: {
       return 'string'
     }
-  }  
+  }
 }
 
 const nameFactory = (databaseName: string, entityType: string): string => {
-  switch(entityType) {
-    case 'table': 
+  switch (entityType) {
+    case 'table':
     default: {
       return databaseName.toLocaleUpperCase()
     }
-  }  
+  }
 };
 
 const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, connectionId: string = 'mysql.default'): any => {
@@ -110,9 +112,9 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
   let defaultSelectedColumns: any[] = [];
 
   let formRootPoperties: any = {
-    filters: {      
+    filters: {
       type: 'array',
-      title: 'Column Filter',      
+      title: 'Column Filter',
       items: {
         type: 'object',
         title: 'Column Filter',
@@ -195,13 +197,13 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
           type: 'string',
           title: 'Schema name'
         },
-        table: { 
+        table: {
           type: 'string',
           title: 'Table name'
         },
         commandText: {
           type: 'string',
-          title: 'Command Text',          
+          title: 'Command Text',
         },
         provider: {
           type: 'string',
@@ -225,7 +227,7 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
     },
   };
 
-  
+
   let tableWidgetColumns: any[] = [];
   let propertiesUISchema: any = {
     'ui:field': 'GridLayout',
@@ -248,7 +250,7 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
       },
     },
     columns: {
-      'ui:widget': 'ColumnSelectorWidget',      
+      'ui:widget': 'ColumnSelectorWidget',
     },
     filters: {
       'ui:widget': 'ColumnFilterWidget',
@@ -257,7 +259,7 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
           'ui:widget': 'SelectWidget',
           'ui:options': {
             selectOptions: [
-              
+
             ],
           },
         },
@@ -278,13 +280,13 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
         },
         value: {
 
-        },        
+        },
         modifier: {
           'ui:widget': 'SelectWidget',
           'ui:options': {
             selectOptions: [
               { key: 'AND', value: 'AND', label: 'AND' },
-              { key: 'OR', value: 'OR', label: 'OR' },              
+              { key: 'OR', value: 'OR', label: 'OR' },
             ],
           },
         },
@@ -312,20 +314,20 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
         }
       },
       items: {
-        
-      },      
-    },    
+
+      },
+    },
   };
 
   let exportColumns: any[] = [];
 
-  if(table.columns && table.columns.length > 0) {
-    
+  if (table.columns && table.columns.length > 0) {
+
     table.columns.forEach((tableColumn: GeneratorColumnDefinition, index: number) => {
       const columnName = nameFactory(tableColumn.name, 'column');
 
-      if(tableColumn.isNullable === false) _required.push(tableColumn.name);
-            
+      if (tableColumn.isNullable === false) _required.push(tableColumn.name);
+
       formRootPoperties.data.items.properties[tableColumn.name] = {
         type: getTypeFromDBType(tableColumn.dataType),
         default: tableColumn.defaultValue || null,
@@ -359,20 +361,20 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
       },
       */
 
-      propertiesUISchema.filters.items.field["ui:options"].selectOptions.push({ 
-          key: tableColumn.name, 
-          value: tableColumn.name, 
-          label: columnName
-        });
-      
-      if(tableColumn.isNullable === false) {
+      propertiesUISchema.filters.items.field["ui:options"].selectOptions.push({
+        key: tableColumn.name,
+        value: tableColumn.name,
+        label: columnName
+      });
+
+      if (tableColumn.isNullable === false) {
         propertiesUISchema.filters.items.field["ui:options"].selectOptions.push({
-          key: 'null', 
-          value: null, 
+          key: 'null',
+          value: null,
           label: 'Null (Empty / None)'
         })
       };
-      
+
       defaultSelectedColumns.push({
         field: tableColumn.name,
         title: columnName,
@@ -382,20 +384,20 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
     });
 
     propertiesUISchema.data["ui:options"].columns = tableWidgetColumns;
-  }; 
-  
+  };
+
   return {
     id: `Generated.LIST_${table.schemaName}_${table.tableName}@${connectionId}`,
-    uiFramework: 'material',        
+    uiFramework: 'material',
     uiSupport: ['material'],
     title: `${table.tableName.toUpperCase()} Table Access Form`,
-    backButton: true,  
+    backButton: true,
     uiResources: [],
-    name: `ReactoryConnectedTableList_${connectionId ? connectionId.replace('.','_') : 'mysql_default'}_${table.tableName}`,
+    name: `ReactoryConnectedTableList_${connectionId ? connectionId.replace('.', '_') : 'mysql_default'}_${table.tableName}`,
     nameSpace: 'core-generated',
     version: '1.0.0',
     componentDefs: [],
-    description: `${table.tableName}@${connectionId}`,    
+    description: `${table.tableName}@${connectionId}`,
     helpTopics: [
       `Help.Generated.${table.tableName}@${connectionId}`,
     ],
@@ -403,7 +405,7 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
     schema: {
       type: 'object',
       title: `List Access For ${table.tableName}`,
-      properties: formRootPoperties,           
+      properties: formRootPoperties,
     },
     graphql: {
       query: {
@@ -448,11 +450,11 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
         edit: false,
         new: false,
         queryMessage: 'Executing Query',
-        resultMap: { 
+        resultMap: {
 
         },
-        options: { }
-      },      
+        options: {}
+      },
     },
     defaultExport: {
       title: `Table ${table.tableName} Excel Export`,
@@ -464,12 +466,12 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
           width: '100%',
         },
         url: `blob`,
-        method: 'get'      
+        method: 'get'
       },
-      engine: 'excel',    
+      engine: 'excel',
       useClient: true,
       mappingType: 'om',
-      mapping: {        
+      mapping: {
         'formData': 'sheets.Export',
       },
       exportOptions: {
@@ -480,8 +482,8 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
             index: 0,
             arrayField: 'data',
             startRow: 1,
-            columns: exportColumns,                            
-          }        
+            columns: exportColumns,
+          }
         ]
       }
     },
@@ -498,26 +500,26 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
         pageSize: 100,
         page: 1
       }
-    },        
+    },
     uiSchema: propertiesUISchema,
     uiSchemas: [
-      { 
+      {
         id: 'default',
-        key: 'default', 
-        description: `Table View for ${table.tableName}`, 
+        key: 'default',
+        description: `Table View for ${table.tableName}`,
         title: 'Table View',
-        uiSchema: propertiesUISchema, 
+        uiSchema: propertiesUISchema,
         icon: 'table_chart'
       },
-      { 
+      {
         id: 'list_view',
-        key: 'list_view', 
-        description: `List View for ${table.tableName}`, 
+        key: 'list_view',
+        description: `List View for ${table.tableName}`,
         title: 'List View',
-        uiSchema: propertiesUISchema, 
+        uiSchema: propertiesUISchema,
         icon: 'view_list'
       },
-    ],     
+    ],
   };
 };
 
@@ -528,12 +530,12 @@ const formDefinitionFromTableConnection = (table: GeneratorTableDefinition, conn
 
   let propertiesUISchema: any = {};
 
-  if(table.columns && table.columns.length > 0) {
+  if (table.columns && table.columns.length > 0) {
     table.columns.forEach((tableColumn: GeneratorColumnDefinition, index: number) => {
 
-      if(tableColumn.isNullable === false) _required.push(tableColumn.name);
+      if (tableColumn.isNullable === false) _required.push(tableColumn.name);
 
-      let propertySchema : Reactory.ISchema = {
+      let propertySchema: Reactory.ISchema = {
         type: 'string',
         default: '',
         description: '',
@@ -544,7 +546,7 @@ const formDefinitionFromTableConnection = (table: GeneratorTableDefinition, conn
       propertySchema.type = getTypeFromDBType(tableColumn.dataType);
       propertySchema.description = `${tableColumn.metaData}`;
       propertySchema.default = tableColumn.defaultValue;
-      properties[tableColumn.name] = propertySchema;      
+      properties[tableColumn.name] = propertySchema;
 
       propertiesUISchema[tableColumn.name] = {
         'ordinal': index,
@@ -553,24 +555,24 @@ const formDefinitionFromTableConnection = (table: GeneratorTableDefinition, conn
         },
       }
     });
-  }; 
+  };
 
-  
+
 
   return {
     id: `Generated.Connected_${table.schemaName}_${table.tableName}@${connectionId}`,
-    uiFramework: 'material',        
+    uiFramework: 'material',
     uiSupport: ['material'],
     title: `${table.tableName.toUpperCase()} Table Access Form`,
-    backButton: true,  
+    backButton: true,
     uiResources: [
       //add your resources
     ],
-    name: `ReactoryConnectedTableForm_${connectionId ? connectionId.replace('.','_') : 'mysql_default'}_${table.tableName}`,
+    name: `ReactoryConnectedTableForm_${connectionId ? connectionId.replace('.', '_') : 'mysql_default'}_${table.tableName}`,
     nameSpace: 'core-generated',
     version: '1.0.0',
     componentDefs: [],
-    description: `${table.tableName}@${connectionId}`,    
+    description: `${table.tableName}@${connectionId}`,
     helpTopics: [
       `Reactory ${table.tableName}`,
     ],
@@ -578,48 +580,48 @@ const formDefinitionFromTableConnection = (table: GeneratorTableDefinition, conn
     schema: {
       type: 'object',
       title: `Table Access For ${table.tableName}`,
-      properties: properties,                  
-    },        
+      properties: properties,
+    },
     uiSchema: propertiesUISchema,
     uiSchemas: [
-      { 
+      {
         id: 'default',
-        key: 'default', 
-        description: "List View", 
+        key: 'default',
+        description: "List View",
         title: 'default',
-        uiSchema: propertiesUISchema, 
+        uiSchema: propertiesUISchema,
         icon: 'view_stream'
       },
-    ],     
+    ],
   };
 };
 
 export const generate = async (props: GeneratorConfig): Promise<Reactory.IReactoryForm[]> => {
-  
-  const schemas: GeneratorDatabaseDefinition[] = await listSchemas( props ).then();
+
+  const schemas: GeneratorDatabaseDefinition[] = await listSchemas(props).then();
   let tables: GeneratorTableDefinition[] = [];
 
   const tableResults = await Promise.all(schemas.map((schema) => {
-    return listTables( schema );
+    return listTables(schema);
   })).then();
 
   tableResults.forEach(result => {
-    if(isArray(result) === true) {  
+    if (isArray(result) === true) {
       tables = [...tables, ...result];
     }
   });
-    
+
   await Promise.all(tables.map((table) => {
     return listColumns(props.connectionId, table);
   })).then();
 
-  
+
   const generatedForms: Reactory.IReactoryForm[] = [];
 
-  tables.forEach( table => {
+  tables.forEach(table => {
     const instanceForm = formDefinitionFromTableConnection(table, props.connectionId || 'mysql.default');
-    const listForm =  arrayListFormFromTableConnection(table, props.connectionId || 'mysql.default');
-    
+    const listForm = arrayListFormFromTableConnection(table, props.connectionId || 'mysql.default');
+
     generatedForms.push(
       instanceForm,
       listForm,

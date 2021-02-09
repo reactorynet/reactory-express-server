@@ -1,3 +1,4 @@
+import { Reactory } from "types/reactory";
 
 
 export enum Operator {
@@ -25,10 +26,10 @@ export interface SQLFilter {
 }
 
 export interface SQLContext {
-  schema: string,
-  table: string,
-  commandText: string,
-  provider: string,
+  schema?: string,
+  table?: string,
+  commandText?: string,
+  provider?: string,
   connectionId: string
 }
 
@@ -40,7 +41,7 @@ export interface SQLFilter {
 
 export interface PagingRequest {
   page: number
-  pageSize: number  
+  pageSize: number
 }
 
 export interface PagingResult {
@@ -78,23 +79,23 @@ export interface SQLQuery {
   paging?: PagingRequest
   columns?: SQLColumn[]
   filters?: SQLFilter[]
-  context: SQLContext, 
+  context: SQLContext,
 }
 
 export interface SQLInsert {
-  columns: SQLColumn[ ]
-  values: any[  ]
+  columns: SQLColumn[]
+  values: any[]
   context: SQLContext
 }
 
 export interface SQLUpdate {
-  columns: SQLColumn[  ]
-  values: any[  ]
+  columns: SQLColumn[]
+  values: any[]
   context: SQLContext
 }
 
-export interface SQLDelete {  
-  filter: SQLFilter[  ]
+export interface SQLDelete {
+  filter: SQLFilter[]
   context: SQLContext
 }
 
@@ -120,14 +121,14 @@ export interface QueryStringGenerator {
   fromUpdate(updateCommand: SQLUpdate): string;
   fromDelete(deleteCommand: SQLDelete): string;
 }
-  
+
 
 export interface IReactoryDatabase {
   Create: {
-    [key: string]: ( insertCommand: SQLInsert ) => Promise<any>
+    [key: string]: (insertCommand: SQLInsert, request_context: Reactory.IReactoryContext) => Promise<any>
   },
   Read: {
-    [key: string]: (queryCommand: SQLQuery) => Promise<any>
+    [key: string]: (queryCommand: SQLQuery, request_context: Reactory.IReactoryContext) => Promise<any>
   },
   Update: {
     [key: string]: SQLUpdate
@@ -137,6 +138,6 @@ export interface IReactoryDatabase {
   }
   StoredProcedures: {
     [key: string]: SQLProcedure
-  },  
+  },
 }
 

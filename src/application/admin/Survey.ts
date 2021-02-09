@@ -10,6 +10,7 @@ import emails from '../../emails';
 import Organization from './Organization';
 import { TowerStone } from '@reactory/server-modules/towerstone/towerstone';
 import ApiError from '@reactory/server-core/exceptions';
+import { Reactory } from 'types/reactory';
 
 
 /**
@@ -446,7 +447,7 @@ export const sendPeerNominationNotifications = async (user, organigram) => {
  * @param {UserModel} delegateEntry
  * @param {OrganigramModel} organigram
  */
-export const launchForSingleAssessor = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, peer: any) => {
+export const launchForSingleAssessor = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, peer: any, context: Reactory.IReactoryContext) => {
 
   logger.info(`Launching Survey for single assessor: ${survey.title} for delegate ${delegateEntry.delegate.fullName()}`);
 
@@ -475,7 +476,7 @@ export const launchForSingleAssessor = async (survey: TowerStone.ISurveyDocument
     const assessment = new Assessment({
       id: new ObjectId(),
       organization: new ObjectId(survey.organization._id),
-      client: new ObjectId(global.partner._id),
+      client: new ObjectId(context.partner._id),
       delegate: new ObjectId(delegateEntry.delegate._id),
       team: null,
       assessor: new ObjectId(_peer.user),
@@ -512,7 +513,7 @@ export const launchForSingleAssessor = async (survey: TowerStone.ISurveyDocument
  * @param {UserModel} delegateEntry
  * @param {OrganigramModel} organigram
  */
-export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, relaunch: boolean = false) => {
+export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, relaunch: boolean = false, context: Reactory.IReactoryContext) => {
   // options for the launch
   logger.info(`Launching Survey: ${survey.title} for delegate ${delegateEntry.delegate.fullName()} (is-relaunch: ${relaunch})`);
   const result = (message: string, success = false, assessments: any[]) => ({
@@ -608,7 +609,7 @@ export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument
         const assessment = new Assessment({
           id: new ObjectId(),
           organization: new ObjectId(survey.organization._id),
-          client: new ObjectId(global.partner._id),
+          client: new ObjectId(context.partner._id),
           delegate: new ObjectId(delegateEntry.delegate._id),
           team: team,
           assessor: new ObjectId(delegateEntry.delegate._id),
@@ -671,7 +672,7 @@ export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument
               const assessment = new Assessment({
                 id: new ObjectId(),
                 organization: new ObjectId(survey.organization._id),
-                client: new ObjectId(global.partner._id),
+                client: new ObjectId(context.partner._id),
                 delegate: new ObjectId(delegateEntry.delegate._id),
                 team: null,
                 assessor: new ObjectId(peer.user),
@@ -690,7 +691,7 @@ export const launchSurveyForDelegate = async (survey: TowerStone.ISurveyDocument
           const selfAssessment = new Assessment({
             id: new ObjectId(),
             organization: new ObjectId(survey.organization._id),
-            client: new ObjectId(global.partner._id),
+            client: new ObjectId(context.partner._id),
             delegate: new ObjectId(delegateEntry.delegate._id),
             team: null,
             assessor: new ObjectId(delegateEntry.delegate._id),

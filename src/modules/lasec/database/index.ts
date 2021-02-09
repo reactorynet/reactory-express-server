@@ -14,10 +14,10 @@ import ApiError from 'exceptions';
 import { fileAsString } from 'utils/io';
 import logger from 'logging';
 
-const syncActiveCompany = async (lasecAuthentication: LasecAuthentication) : Promise<LasecAuthentication> => {
+const syncActiveCompany = async (lasecAuthentication: LasecAuthentication, context: Reactory.IReactoryContext): Promise<LasecAuthentication> => {
 
-  if(isNil(lasecAuthentication) === false) {
-    if(isNil(lasecAuthentication.props.activeCompany) === true) {                              
+  if (isNil(lasecAuthentication) === false) {
+    if (isNil(lasecAuthentication.props.activeCompany) === true) {
       const commandText = `
       SELECT 
         live_company as activeCompany 
@@ -25,26 +25,26 @@ const syncActiveCompany = async (lasecAuthentication: LasecAuthentication) : Pro
         StaffUser
       WHERE
         staffuserid = ${lasecAuthentication.props.payload.user_id}`;
-      const activeCompanyResult: any[] = await mysql(commandText, 
-      'mysql.lasec360').then();
+      const activeCompanyResult: any[] = await mysql(commandText,
+        'mysql.lasec360', null, context).then();
 
-      if(isArray(activeCompanyResult) === true && activeCompanyResult.length >= 1) {
+      if (isArray(activeCompanyResult) === true && activeCompanyResult.length >= 1) {
         lasecAuthentication.props.activeCompany = activeCompanyResult[0].activeCompany;
       }
     }
-  } 
+  }
 
   return lasecAuthentication;
 }
 
-const database: IReactoryDatabase = {  
+const database: IReactoryDatabase = {
   Create: {
 
   },
   Read: {
-    LasecGet360User: async (queryCommand: SQLQuery): Promise<any> => {
-      const { context } = queryCommand;          
-        return await mysql(`
+    LasecGet360User: async (queryCommand: SQLQuery, request_context: Reactory.IReactoryContext): Promise<any> => {
+      const { context } = queryCommand;
+      return await mysql(`
         SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED ;
         SELECT 
           usr.username, 
@@ -55,22 +55,24 @@ const database: IReactoryDatabase = {
             usr.department,
             usr.live_company
           from StaffUser as usr WHERE staffuserid = ${queryCommand.filters};
-        COMMIT;`, 
-          context.connectionId || 'mysql.lasec360'
-        ).then();      
+        COMMIT;`,
+        context.connectionId || 'mysql.lasec360',
+        undefined,
+        request_context
+      ).then();
     },
     /**
      * Returns a list of product classes for the currently logged in user
      */
-    LasecGetProductClasses: async (queryCommand: SQLQuery): Promise<ProductClass[]> => {
-      const { user } = global;
+    LasecGetProductClasses: async (queryCommand: SQLQuery, request_context: Reactory.IReactoryContext): Promise<ProductClass[]> => {
+      const { user } = request_context;
       const { context } = queryCommand;
       let activeCompany: number = 2; //default to SysProCompany2
 
-      if(user && user.getAuthentication) {
+      if (user && user.getAuthentication) {
         const lasecAuth: LasecAuthentication = user.getAuthentication('lasec') as LasecAuthentication;
-        if(isNil(lasecAuth) === false) {
-          if(isNil(lasecAuth.props.activeCompany) === true) {                              
+        if (isNil(lasecAuth) === false) {
+          if (isNil(lasecAuth.props.activeCompany) === true) {
             const commandText = `
             SELECT 
               live_company as activeCompany 
@@ -78,10 +80,10 @@ const database: IReactoryDatabase = {
               StaffUser
             WHERE
               staffuserid = ${lasecAuth.props.payload.user_id}`;
-            const activeCompanyResult: any[] = await mysql(commandText, 
-            'mysql.lasec360').then();
+            const activeCompanyResult: any[] = await mysql(commandText,
+              'mysql.lasec360', undefined, request_context).then();
 
-            if(isArray(activeCompanyResult) === true) {
+            if (isArray(activeCompanyResult) === true) {
               lasecAuth.props.activeCompany = activeCompanyResult[0].activeCompany;
               activeCompany = lasecAuth.props.activeCompany;
               user.setAuthentication('lasec', lasecAuth);
@@ -89,8 +91,8 @@ const database: IReactoryDatabase = {
           }
         }
 
-        let company: LasecCompany =  CONSTANTS.GetCompanyWithId(activeCompany);
-                
+        let company: LasecCompany = CONSTANTS.GetCompanyWithId(activeCompany);
+
         return await mysql(`
           SELECT 
             ProductClass as id, 
@@ -99,27 +101,29 @@ const database: IReactoryDatabase = {
             SalProductClassDes
           WHERE
             SysProCompany = '${company.sysproCompany}'
-          `, 
-          context.connectionId || 'mysql.lasec360'
+          `,
+          context.connectionId || 'mysql.lasec360',
+          undefined,
+          request_context,
         ).then()
       } else {
         throw new ApiError('User not authenticated');
       }
-      
+
     },
-    LasecGetUserTargets: async (queryCommand: SQLQuery): Promise<any[]> => {
-      logger.debug(`lasec/database.Read.LasecGetUserTargets(querCommand)`, {queryCommand});
-      const { user } = global;
+    LasecGetUserTargets: async (queryCommand: SQLQuery, request_context: Reactory.IReactoryContext): Promise<any[]> => {
+      logger.debug(`lasec/database.Read.LasecGetUserTargets(querCommand)`, { queryCommand });
+      const { user } = request_context;
       const { context } = queryCommand;
 
-      if(user && user.getAuthentication) {
+      if (user && user.getAuthentication) {
         let lasecAuth: LasecAuthentication = user.getAuthentication('lasec') as LasecAuthentication;
-        lasecAuth = await syncActiveCompany(lasecAuth);
-        user.setAuthentication('lasec', lasecAuth);                
+        lasecAuth = await syncActiveCompany(lasecAuth, request_context);
+        user.setAuthentication('lasec', lasecAuth);
         return await mysql(`
         SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
         ${context.commandText}
-        COMMIT;`, context.connectionId || 'mysql.lasec360').then();  
+        COMMIT;`, context.connectionId || 'mysql.lasec360', undefined, request_context).then();
       }
       return [];
     }

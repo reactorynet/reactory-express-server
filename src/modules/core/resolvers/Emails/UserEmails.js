@@ -9,7 +9,7 @@ import {
 import O365 from '@reactory/server-core/azure/graph';
 import ApiError from '@reactory/server-core/exceptions';
 
-const getLocalMail = async (user, filter = {size: 10, page: 0, search: ''}) => {
+const getLocalMail = async (user, filter = { size: 10, page: 0, search: '' }) => {
   return await EmailQueue.UserEmailsWithTextSearch(user, filter).then();
 };
 
@@ -20,7 +20,7 @@ const getMicrosoftMail = async (user, filter) => {
     if (found) {
       logger.debug('Found Authentication Info For MS, check messages via graph', { token: found.props.accessToken, filter });
       const emails = await O365.getEmails(found.props.accessToken, filter);
-      logger.debug('Received Email Payload',  { emails:  emails.value });
+      logger.debug('Received Email Payload', { emails: emails.value });
       const mailmaps = om(emails, {
         'value[].id': 'emails[].id',
         'value[].body.contentType': 'emails[].format',
@@ -46,20 +46,20 @@ const getMicrosoftMail = async (user, filter) => {
 };
 
 
-export default {  
+export default {
   Query: {
-    userEmails: async (parent, { mailFilter })=>{
+    userEmails: async (parent, { mailFilter }, context) => {
       logger.debug(`Fetching ${user.fullName(true)} Emails with mail filter`, { mailFilter });
       let localmail = [];
       let microsoftmail = [];
 
-      if(lodash.isArray(mailFilter.via) === true) {
-        if(lodash.indexOf(mailFilter.via, 'local') >= 0) {
-          localmail = await getLocalMail(global.user, mailFilter).then();
+      if (lodash.isArray(mailFilter.via) === true) {
+        if (lodash.indexOf(mailFilter.via, 'local') >= 0) {
+          localmail = await getLocalMail(context.user, mailFilter).then();
         }
 
-        if(lodash.indexOf(mailFilter.via, 'microsoft') >= 0) {
-          microsoftmail = await getMicrosoftMail(global.user, mailFilter).then();
+        if (lodash.indexOf(mailFilter.via, 'microsoft') >= 0) {
+          microsoftmail = await getMicrosoftMail(context.user, mailFilter).then();
         }
 
         return lodash.sortBy([...localmail, ...microsoftmail], ['createdAt']);
@@ -68,6 +68,6 @@ export default {
       throw new ApiError('Please indicate via which search provider you want to search');
     },
   },
-  Mutation: {    
+  Mutation: {
   }
 };

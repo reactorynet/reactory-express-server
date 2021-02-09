@@ -78,7 +78,7 @@ const TemplateSchema = new mongoose.Schema({
     enum: ['html', 'text', 'wrapper', 'image'],
     default: 'html',
   },
-  original: String,  
+  original: String,
   content: {
     type: String,
     required: false,
@@ -94,7 +94,7 @@ const TemplateSchema = new mongoose.Schema({
   },
   created: {
     type: Date,
-    required: false,  
+    required: false,
   },
   createdBy: {
     type: ObjectId,
@@ -103,7 +103,7 @@ const TemplateSchema = new mongoose.Schema({
   },
   updated: {
     type: Date,
-    required: false,  
+    required: false,
   },
   updatedBy: {
     type: ObjectId,
@@ -116,17 +116,17 @@ const TemplateSchema = new mongoose.Schema({
   }],
 });
 
-TemplateSchema.post('init', function(template: any){
+TemplateSchema.post('init', function (template: any) {
   template.content = template.contentFromFile()
 })
 
 
-TemplateSchema.methods.contentFromFile = function(templateType: string) {  
+TemplateSchema.methods.contentFromFile = function (templateType: string) {
   if (`${this.content}`.indexOf('$ref://') >= 0) {
     logger.debug(`${this._id} has FILE reference, loading.`)
     this.original = this.content;
     const filename = `${APP_DATA_ROOT}/templates/${templateType || 'email'}/${this.content.replace('$ref://', '')}`;
-    logger.info(`Loading template filename: ${filename}`);    
+    logger.info(`Loading template filename: ${filename}`);
     if (existsSync(filename) === true) {
       let templateString = readFileSync(filename).toString('utf8');
       try {
@@ -135,16 +135,16 @@ TemplateSchema.methods.contentFromFile = function(templateType: string) {
         return templateString;
 
       } catch (renderErr) {
-        logger.error('::TEMPLATE RENDER ERROR::', { templateString, renderErr });        
+        logger.error('::TEMPLATE RENDER ERROR::', { templateString, renderErr });
         return `::TEMPLATE RENDER ERROR::${renderErr.message}`;
       }
     } else {
       return `::TEMPLATE RENDER ERROR::${filename} NOT FOUND`
-    }        
+    }
   }
 
   return this.content;
-} 
+}
 
 // eslint-disable-next-line max-len
 TemplateSchema.statics.findClientTemplate = function findClientTemplate(template: Reactory.ITemplate, organization: Reactory.IOrganizationDocument, client: Reactory.IPartner) {
@@ -153,7 +153,7 @@ TemplateSchema.statics.findClientTemplate = function findClientTemplate(template
   return this.findOne(qry).then();
 };
 
-TemplateSchema.statics.templates = async (client = null, organization = null) => {
+TemplateSchema.statics.templates = async (client: any, organization: any = null) => {
   const { isNil } = lodash;
   logger.info('Listing templates using search criteria', client, organization);
   if (isNil(client) === false && ObjectId.isValid(client)) {
@@ -169,7 +169,7 @@ TemplateSchema.statics.templates = async (client = null, organization = null) =>
     }).then();
   }
   // use default partner tempaltes
-  return this.find({ client: global.partner._id }).then();
+  return [];
 };
 
 const TemplateModel = mongoose.model('Template', TemplateSchema);

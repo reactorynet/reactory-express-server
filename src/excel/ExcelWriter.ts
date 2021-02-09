@@ -8,9 +8,9 @@ const {
   CDN_ROOT,
   API_DATA_ROOT
 } = process.env;
- 
 
-export const getWorkbook = async (user: Reactory.IUser, appender: (workbook: ExcelJS.Workbook)=> Promise<ExcelJS.Workbook> ): Promise<ExcelJS.Workbook> => {
+
+export const getWorkbook = async (user: Reactory.IUser, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<ExcelJS.Workbook> => {
 
   let workbook = new ExcelJS.Workbook();
   const modfiedBy = `${(user as Reactory.IUser).fullName(true)}`;
@@ -20,9 +20,9 @@ export const getWorkbook = async (user: Reactory.IUser, appender: (workbook: Exc
   workbook.lastModifiedBy = modfiedBy;
   workbook.created = now.toDate();
   workbook.modified = now.toDate();
-  workbook.lastPrinted = now.toDate();  
+  workbook.lastPrinted = now.toDate();
   // write to a file  
-  if(appender) workbook = await appender(workbook);
+  if (appender) workbook = await appender(workbook);
 
   return workbook;
 }
@@ -36,7 +36,7 @@ DefaultExcelWriterOptions = {
   params: {
 
   },
-  query: '',  
+  query: '',
 };
 
 class ReactoryExcelWriterService implements Reactory.Service.IExcelWriterService {
@@ -47,10 +47,10 @@ class ReactoryExcelWriterService implements Reactory.Service.IExcelWriterService
 
   executionContext: Reactory.ReactoryExecutionContext = null;
 
-  constructor(){
-    this.setExecutionContext({ 
-      partner: global.partner,
-      user: global.user
+  constructor(props: any, context: Reactory.IReactoryContext) {
+    this.setExecutionContext({
+      partner: context.partner,
+      user: context.user
     });
   }
 
@@ -64,12 +64,12 @@ class ReactoryExcelWriterService implements Reactory.Service.IExcelWriterService
 
   async writeAsStream(options: Reactory.Service.IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<Boolean> {
 
-    const workbook = await getWorkbook(this.getExecutionContext().user, appender);    
+    const workbook = await getWorkbook(this.getExecutionContext().user, appender);
     // write to a stream
     await workbook.xlsx.write(options.stream).then();
-    
+
     // write to a new buffer 
-    return true;  
+    return true;
   }
 
   async writeToBuffer(options: Reactory.Service.IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<Buffer> {
@@ -80,15 +80,15 @@ class ReactoryExcelWriterService implements Reactory.Service.IExcelWriterService
 
     return buffer;
   }
-  
-  async writeAsFile(options: Reactory.Service.IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook)=> Promise<ExcelJS.Workbook>): Promise<boolean> {
-    const workbook = await getWorkbook(global.user, appender).then();
-    
+
+  async writeAsFile(options: Reactory.Service.IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<boolean> {
+    const workbook = await getWorkbook(this.executionContext.user, appender).then();
+
     await workbook.xlsx.writeFile(options.filename).then();
 
-    return true;    
+    return true;
   };
-  
+
 };
 
 export const ReactoryExcelWriterServiceDefinition: Reactory.IReactoryServiceDefinition = {
@@ -98,7 +98,7 @@ export const ReactoryExcelWriterServiceDefinition: Reactory.IReactoryServiceDefi
   dependencies: [],
   serviceType: 'file',
   service: (props: any, context: any) => {
-      return new ReactoryExcelWriterService();
+    return new ReactoryExcelWriterService(props, context);
   }
 }
 

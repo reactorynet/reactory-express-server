@@ -16,7 +16,7 @@ const defaultData = () => ({
   ],
 
   backgroundColor: [
-    `${global.partner.themeOptions.palette.primary.main}`,
+    `${context.partner.themeOptions.palette.primary.main}`,
     'rgba(0,0,0,0)',
   ],
 });
@@ -55,8 +55,8 @@ export const DefaultPieChart = (props) => {
       return chartNode.writeImageToFile('image/png', outputpath);
     })
       .then(() => {
-      // chart is now written to the file path
-      // ./testimage.png
+        // chart is now written to the file path
+        // ./testimage.png
         chartNode.destroy();
         let additional = {};
         if (resolveCDN === true) {

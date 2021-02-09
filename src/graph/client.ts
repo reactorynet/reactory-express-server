@@ -9,13 +9,13 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 
 const httpLink = createHttpLink({
   uri: `${process.env.API_URI_ROOT}${process.env.API_URI_ROOT.endsWith('/') ? 'api' : '/api'}`,
-  fetch: fetch 
+  fetch: fetch
 });
 
 const authLink = setContext((_, { headers }) => {
   // get the authentication token from local storage if it exists  
   // return the headers to the context so httpLink can read them
-  
+
   return {
     headers: {
       ...headers,
@@ -29,8 +29,8 @@ const client = new ApolloClient({
   cache: new InMemoryCache()
 });
 
-export const clientFor = (user: Reactory.IUser, partner: Reactory.IPartner) => {
-  
+export const clientFor = (user: Reactory.IUser, partner: Reactory.IReactoryClient) => {
+
   return new ApolloClient({
     link: setContext((_, { headers }) => {
       // get the authentication token from local storage if it exists  
@@ -58,14 +58,14 @@ export const clientFor = (user: Reactory.IUser, partner: Reactory.IPartner) => {
 
 export const ql = gql;
 
-export const execql = async (query: string, variables = {}, options = {}, user = global.user, partner = global.partner) => {  
+export const execql = async (query: string, variables = {}, options = {}, user: Reactory.IUserDocument, partner: Reactory.IReactoryClientDocument) => {
   return await clientFor(user, partner).query({
-    query: gql(query), 
+    query: gql(query),
     variables
   }).then();
 
 };
 
-export const execml = async (mutation: string, variables = {}, options = {}, user = global.user, partner = global.partner) => {
+export const execml = async (mutation: string, variables = {}, options = {}, user: Reactory.IUserDocument, partner: Reactory.IReactoryClientDocument) => {
   return await clientFor(user, partner).mutate({ mutation: gql(mutation), variables, ...options }).then();
 };

@@ -13,7 +13,7 @@ export const MicrosoftOpenIDAuthentication = {
   },
 };
 
-export const MicrosoftOpenIDAuthenticationUISchema = {  
+export const MicrosoftOpenIDAuthenticationUISchema = {
   'ui:options': {
     showSubmit: false,
     showHelp: false,
@@ -22,12 +22,12 @@ export const MicrosoftOpenIDAuthenticationUISchema = {
     style: {
       textAlign: 'center',
       border: 'none'
-    }    
+    }
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      route: { xs: 12, sm: 12, md: 12, lg:12 },
+      route: { xs: 12, sm: 12, md: 12, lg: 12 },
     },
   ],
   'ui:grid-options': {
@@ -39,19 +39,20 @@ export const MicrosoftOpenIDAuthenticationUISchema = {
   route: {
     'ui:widget': 'LinkFieldWidget',
     'ui:options': {
-      fullWidth: false,      
+      showLabel: false,
+      fullWidth: false,
       format: '${formData}/${formContext.api.CLIENT_KEY}?x-client-key=${formContext.api.CLIENT_KEY}&x-client-pwd=${formContext.api.CLIENT_PWD}', //eslint-disable-line
       title: 'Login With Microsoft O365',
       name: 'office-365-login-button',
       id: 'reactory-security::office-365-login-button',
-      icon: 'O365',      
+      icon: 'O365',
       iconType: 'reactory',
       iconProps: {
         color: 'primary',
         style: {
           marginLeft: '16px',
         },
-      },      
+      },
       userouter: false, // use browser navigator
     },
   },

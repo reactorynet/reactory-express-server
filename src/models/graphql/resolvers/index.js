@@ -81,24 +81,24 @@ const resolvers = {
       logger.debug('Getting menus');
       return Menu.find({ client: ObjectId(status.menus) });
     },
-    server: (status) => {
+    server: (status, args, context) => {
 
       return {
         id: process.env.SERVER_ID || 'reactory.local',
-        version:  packageJson.version,
-        started:  global.REACTORY_SERVER_STARTUP,
+        version: packageJson.version,
+        started: global.REACTORY_SERVER_STARTUP,
         license: packageJson.license || 'NONE',
         access: 'open',
         administrator: process.env.REACTORY_ADMIN || 'none',
         contact: process.env.REACTORY_ADMIN_CONTANCT || 'none',
         mode: process.env.MODE,
-        clients: ReactoryClient.find({ _id: { $in: global.user.memberships.map((m) => m.clientId) }}).then()
+        clients: ReactoryClient.find({ _id: { $in: context.user.memberships.map((m) => m.clientId) } }).then()
       }
     }
   },
   Query: {
     apiStatus: async (obj, args, context, info) => {
-      const { user, partner } = global;   
+      const { user, partner } = context;
       let skipResfresh = false;
       let _user = user;
       let isAnon = false;
@@ -108,16 +108,16 @@ const resolvers = {
       const alt_roles = [];
       const memberships = isArray(user.memberships) === true ? user.memberships : [];
 
-      if(user.anon === true) {
+      if (user.anon === true) {
         skipResfresh = true;
         isAnon = true;
         roles.push('ANON');
       }
 
-      
-      if(skipResfresh === false && isAnon === false) {
+
+      if (skipResfresh === false && isAnon === false) {
         logger.debug(`apiStatus called for ${user.firstName} ${user.lastName}, performing profile refresh`);
-         
+
         try {
           const refreshResult = await execql(`
           query RefreshProfile($id:String, $skipImage: Boolean) {
@@ -154,18 +154,18 @@ const resolvers = {
             }
           }
         `).then();
-        
-        if(refreshResult && refreshResult.data && refreshResult.data.refreshProfileData) {          
-          const { user, messages } = refreshResult.data.refreshProfileData;          
-          uxmessages = [ ...uxmessages, ...messages ];
-          logger.debug(`Result from profile refresh ${user.fullNameWithEmail}, has ${uxmessages.length} messages`);
-        }
+
+          if (refreshResult && refreshResult.data && refreshResult.data.refreshProfileData) {
+            const { user, messages } = refreshResult.data.refreshProfileData;
+            uxmessages = [...uxmessages, ...messages];
+            logger.debug(`Result from profile refresh ${user.fullNameWithEmail}, has ${uxmessages.length} messages`);
+          }
         } catch (profileRefreshError) {
           logger.error(`Error refreshing profile data for user ${user.firstName}`, profileRefreshError);
-        }                        
+        }
       }
-      
-      if(isAnon === false) {
+
+      if (isAnon === false) {
 
         const login_partner_keys_setting = partner.getSetting("login_partner_keys", {
           partner_keys: [partner.key, 'reactory'],
@@ -173,61 +173,61 @@ const resolvers = {
           organization_excludes: [],
           organization_includes: [],
         }, true, "core.ReactoryPartnerKeysConfig");
-  
-        const login_partner_keys = login_partner_keys_setting.data; 
-  
+
+        const login_partner_keys = login_partner_keys_setting.data;
+
         logger.debug(`Partner has Keys (${login_partner_keys.partner_keys.length})`);
         //get a list of all partner / cross partner logins allowed
-        const partnerLogins = await ReactoryClient.find({ key: { $in: [ ...login_partner_keys.partner_keys ] } }).then();
-      
+        const partnerLogins = await ReactoryClient.find({ key: { $in: [...login_partner_keys.partner_keys] } }).then();
+
         let root_partner_memberships = filter(memberships, { clientId: partner._id });
         logger.debug(`${user.firstName} has (${root_partner_memberships.length})`);
-                
-        root_partner_memberships.forEach((membership) => {        
+
+        root_partner_memberships.forEach((membership) => {
           if (isArray(membership.roles)) {
-            membership.roles.forEach((r) => { 
-              roles.push(r); 
+            membership.roles.forEach((r) => {
+              roles.push(r);
             });
-          }        
-        });       
-        
-  
+          }
+        });
+
+
         partnerLogins.forEach((alt_partner) => {
           const alt_partner_memberships = filter(memberships, { clientId: alt_partner._id });
-          
+
           alt_partner_memberships.forEach((alt_partner_membership) => {
             if (isArray(alt_partner_membership.roles)) {
-              
-              if(roles.length === 0) {
+
+              if (roles.length === 0) {
                 logger.debug(`${user.fullName} did not have a membership for ${partner.name} - assigning default roles`);
                 //we have no roles in the primary partner, 
                 //but we have one or more roles on the alt_partner
                 //so we create our OWN PARTNER default role for the user and add the membership.
                 let _default_roles = partner.getSetting('new_user_roles', ['USER'], true, 'core.SecurityNewUserRolesForReactoryClient');
                 roles.push(_default_roles || 'USER');
-                _default_roles.data.forEach(r => user.addRole(partner._id,r, null, null ));              
+                _default_roles.data.forEach(r => user.addRole(partner._id, r, null, null));
               }
-  
-              alt_partner_membership.roles.forEach((r) => { 
-                alt_roles.push(`${r}\\${alt_partner._id.toString()}\\${alt_partner_membership.clientId}\\${alt_partner_membership.organizationId || '*'}\\${alt_partner_membership.organizationId || '*'}`);           
+
+              alt_partner_membership.roles.forEach((r) => {
+                alt_roles.push(`${r}\\${alt_partner._id.toString()}\\${alt_partner_membership.clientId}\\${alt_partner_membership.organizationId || '*'}\\${alt_partner_membership.organizationId || '*'}`);
               });
             }
-          });        
+          });
         });
 
-      }      
-      
+      }
+
       let navigationComponents = [];
       const settingKey = `navigation_components/${process.env.MODE}`;
-      const navigationComponentsSetting = partner.getSetting(settingKey, [], false);      
+      const navigationComponentsSetting = partner.getSetting(settingKey, [], false);
 
-      if(navigationComponentsSetting && navigationComponentsSetting.data) {
-        navigationComponents = [ ...navigationComponentsSetting.data ];
+      if (navigationComponentsSetting && navigationComponentsSetting.data) {
+        navigationComponents = [...navigationComponentsSetting.data];
       }
 
       const api_status_result = {
         when: moment(),
-        status: 'API OK',        
+        status: 'API OK',
         firstName: isNil(user) === false ? user.firstName : 'An',
         lastName: isNil(user) === false ? user.lastName : 'Anon',
         avatar: isNil(user) === false ? user.avatar : null,
@@ -238,8 +238,8 @@ const resolvers = {
         memberships: isNil(user) === false && isArray(user.memberships) ? user.memberships : [],
         organization: user.organization,
         routes: (partner.routes || []).map((route) => {
-          if(!route.roles) return route;          
-          if(intersection(route.roles, route.roles).length > 0) return route;
+          if (!route.roles) return route;
+          if (intersection(route.roles, route.roles).length > 0) return route;
         }),
         applicationAvatar: partner.avatar,
         applicationName: partner.name,
@@ -251,8 +251,8 @@ const resolvers = {
           primary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
           secondary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
         },
-        messages: uxmessages, 
-        navigationComponents       
+        messages: uxmessages,
+        navigationComponents
       };
 
       logger.debug(`${user.firstName} Api Status Call Result:\n${JSON.stringify(api_status_result)}`);
@@ -338,7 +338,7 @@ modules.enabled.forEach((installedModule) => {
 
 
 merge(
-  resolvers,  
+  resolvers,
   orgnizationResolvers,
   assessmentResolvers,
   reactoryClientResolver,

@@ -57,10 +57,10 @@ const greyscalePng = (path, outpath) => {
     });
 };
 
-const resolveData = async ({ surveyId, delegateId }) => {
+const resolveData = async ({ surveyId, delegateId, context }) => {
   logger.info(`Resolving data for delegate-360-assessment Survey: ${surveyId}  DelegateEntry: ${delegateId} - DOES NOT MATTER`);
   // const assessment = await Assessment.findById(assessment_id).then();
-  const { partner, user } = global;
+  const { partner, user } = context;
 
   const survey = await Survey.findById(surveyId)
     .populate('organization')

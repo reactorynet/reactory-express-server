@@ -25,8 +25,8 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
 
     constructor(props: any, context: any) {
         this.executionContext = {
-            partner: props.partner || context.partner || global.partner,
-            user: props.user || context.user || global.user
+            partner: props.partner || context.partner,
+            user: props.user || context.user
         };
     }
 
@@ -52,14 +52,14 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
         return Promise.resolve(true);
     }
 
-    async sendEmail(message: Reactory.IEmailMessage): Promise<any> {
+    async sendEmail(message: Reactory.IEmailMessage, context: Reactory.IReactoryContext): Promise<any> {
 
         const { userId, via, subject, contentType = "html", body, to, cc, bcc, saveToSentItems, attachments } = message;
-        const { user } = global;
+        const { user } = context;
         if (isNil(user) === true) throw new ApiError('Not Authorized');
         logger.info(`USER ID ${userId} via ${via}`);
 
-        const fileService = getService("core.ReactoryFileService") as Reactory.Service.IReactoryFileService;        
+        const fileService = context.getService("core.ReactoryFileService") as Reactory.Service.IReactoryFileService;
 
         switch (via) {
             case 'microsoft': {
@@ -110,20 +110,20 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
                             saveToSentItems,
                             $cc,
                             $bcc,
-                            $attachments) 
+                            $attachments)
                             .then()
-                                    .catch(error => {
-                                        if (error.statusCode == 401) {
-                                            throw new ApiError(`Error Sending Mail. Invalid Authentication Token`, {
-                                                statusCode: error.statusCode,
-                                                type: "MSAuthenticationFailure"
-                                            });
-                                        } else {
-                                            throw new ApiError(`Error Sending Mail: ${error.code} - ${error.message}`, {
-                                                statusCode: error.statusCode
-                                            });
-                                        }
+                            .catch(error => {
+                                if (error.statusCode == 401) {
+                                    throw new ApiError(`Error Sending Mail. Invalid Authentication Token`, {
+                                        statusCode: error.statusCode,
+                                        type: "MSAuthenticationFailure"
                                     });
+                                } else {
+                                    throw new ApiError(`Error Sending Mail: ${error.code} - ${error.message}`, {
+                                        statusCode: error.statusCode
+                                    });
+                                }
+                            });
 
                         if (result && result.statusCode && result.statusCode != 400) {
                             throw new ApiError(`${result.code}. ${result.message}`);
