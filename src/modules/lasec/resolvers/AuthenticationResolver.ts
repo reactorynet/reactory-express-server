@@ -1,6 +1,6 @@
-import Lasec360Api from "../api";
+import Lasec360Api from '@reactory/server-core/modules/lasec/api';
 import logger from '@reactory/server-core/logging';
-import User from "@reactory/server-core/application/admin/User";
+import User from '@reactory/server-core/application/admin/User';
 
 export default {
   Query: {
@@ -15,10 +15,12 @@ export default {
           await context.user.setAuthentication({
             provider: 'lasec',
             props: {
-              username, password, ...loginResult,
+              username,
+              password,
+              ...loginResult,
               lastStatus: 200,
             },
-            lastLogin: new Date().valueOf()
+            lastLogin: new Date().valueOf(),
           }).then();
           return {
             success: true,
@@ -29,7 +31,7 @@ export default {
         return {
           success: false,
           message: `Lasec 360 Authentication Error ${loginError.message}`,
-          error: loginError
+          error: loginError,
         };
       }
     },
@@ -44,14 +46,14 @@ export default {
         return {
           success: true,
           message: 'Lasec 360 Authentication has been removed',
-        }
+        };
       } catch (error) {
         return {
           success: false,
-          message: `Could not remove the Lasec 360 authentication for the user`,
-          error: loginError
+          message: 'Could not remove the Lasec 360 authentication for the user',
+          error: loginError,
         };
       }
-    }
-  }
+    },
+  },
 };
