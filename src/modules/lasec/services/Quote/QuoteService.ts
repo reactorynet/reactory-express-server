@@ -31,15 +31,28 @@ class LasecQuoteService implements IQuoteService {
   version: string = '1.0.0';
 
   registry: Reactory.IReactoryServiceRegister
+  context: Reactory.ReactoryExecutionContext
 
-  constructor(props: Reactory.IReactoryServiceProps, context: any) {
+  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
     this.registry = props.$services;
+    this.context = {
+      partner: context.partner,
+      user: context.user,
+      getService: context.getService
+    }
+  }
+  getExecutionContext(): Reactory.ReactoryExecutionContext {
+    return this.context;
+  }
+  setExecutionContext(executionContext: Reactory.ReactoryExecutionContext): boolean {
+    this.context = executionContext;
+    return true;
   }
 
   async createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<any> {
 
     try {
-      const result = await LAPI.SalesOrders.createSalesOrder(sales_order_input).then();
+      const result = await LAPI.SalesOrders.createSalesOrder(sales_order_input, this.context).then();
 
       logger.debug('Create new sales order api result', result);
 
@@ -64,7 +77,7 @@ class LasecQuoteService implements IQuoteService {
 
   async getQuoteHeaders(quote_id: string): Promise<any> {
     try {
-      return await LAPI.Quotes.getQuoteHeaders(quote_id).then();
+      return await LAPI.Quotes.getQuoteHeaders(quote_id, this.context).then();
     } catch (err) {
       logger.error(`Error returning headers`);
       return [];
@@ -74,14 +87,14 @@ class LasecQuoteService implements IQuoteService {
   async getQuoteTransportModes(): Promise<any> {
     try {
       let cache_key = 'lasec-crm.data.all-transport-modes';
-      let items = await getCacheItem(cache_key).then()
+      let items = await getCacheItem(cache_key, null, 180 * 3, this.context.partner).then()
 
 
 
       if (!items) {
-        items = await LAPI.Quotes.getQuoteTransportModes().then()
+        items = await LAPI.Quotes.getQuoteTransportModes(this.context).then()
         logger.debug(`↔ [FETCHED] lasec-crm.QuoteService getQuoteTransportModes()`, { fetched: items });
-        setCacheItem(cache_key, items, 180 * 3);
+        setCacheItem(cache_key, items, 180 * 3, this.context.partner);
       } else {
         logger.debug(`🔄[CACHED] lasec-crm.QuoteService getQuoteTransportModes()`, { cached: items });
       }
@@ -96,7 +109,7 @@ class LasecQuoteService implements IQuoteService {
   async getQuoteOptionDetail(quote_id: string, option_id: string): Promise<LasecQuoteOption> {
     try {
       logger.debug(`Calling LAPI.Quote.getQuoteOption(${option_id})`);
-      const payload = await LAPI.Quotes.getQuoteOption(option_id).then()
+      const payload = await LAPI.Quotes.getQuoteOption(option_id, this.context).then()
 
       return om.merge(payload, {
         "id": ["id", "quote_option_id"],
@@ -111,7 +124,7 @@ class LasecQuoteService implements IQuoteService {
         "grant_total_vat_cents": "vat",
         "gp_percent": "gp_percent",
         "actual_gp_percent": "gp",
-      }) as LasecQuoteOption;
+      }) as LasecQuoteOption; // eslint-disable-line
     } catch (convertError) {
       logger.error(`💥 Could not get quote option details ${convertError.message}`, { error: convertError })
     }
@@ -120,7 +133,7 @@ class LasecQuoteService implements IQuoteService {
   async getQuoteOptionsDetail(quote_id: string, option_ids: string[]): Promise<LasecQuoteOption[]> {
     try {
       logger.debug(`Calling LAPI.Quote.getQuoteOption(${option_ids})`);
-      const payload = await LAPI.Quotes.getQuoteOptions(option_ids).then()
+      const payload = await LAPI.Quotes.getQuoteOptions(option_ids, this.context).then()
 
       logger.debug(`Payload received LAPI.Quote.getQuoteOption(${option_ids})`, { payload })
 
@@ -152,15 +165,15 @@ class LasecQuoteService implements IQuoteService {
   async getIncoTerms(): Promise<string[]> {
     try {
       let cache_key = 'lasec-crm.data.all-incoterms';
-      let items = await getCacheItem(cache_key).then()
+      let items = await getCacheItem(cache_key, null, 180 * 3, context).then()
       logger.debug(`lasec-crm.QuoteService getIncoterms()`, { cached: items });
 
       if (!items) {
-        const payload = await LAPI.Quotes.getIncoTerms().then()
+        const payload = await LAPI.Quotes.getIncoTerms(this.context).then()
         items = payload || [];
 
         logger.debug(`lasec-crm.QuoteService getIncoterms()`, { fetched: items });
-        setCacheItem(cache_key, items, 180 * 3);
+        setCacheItem(cache_key, items, 180 * 3, this.context.partner);
       }
 
       return items || [];
@@ -171,7 +184,7 @@ class LasecQuoteService implements IQuoteService {
   }
 
   async createNewQuoteOption(quote_id: string): Promise<LasecQuoteOption> {
-    const payload = await LAPI.Quotes.createQuoteOption(quote_id).then()
+    const payload = await LAPI.Quotes.createQuoteOption(quote_id, this.context).then()
 
     return {
       id: payload.id,
@@ -193,7 +206,7 @@ class LasecQuoteService implements IQuoteService {
       named_place: option.named_place,
       transport_mode: option.transport_mode,
       currency: option.currency
-    }).then()
+    }, this.context).then()
 
     logger.debug(`Payload Response ==> patchQuoteOption`, payload);
 
@@ -203,7 +216,7 @@ class LasecQuoteService implements IQuoteService {
   async deleteQuoteOption(quote_id: string, quote_option_id: string): Promise<SimpleResponse> {
 
     try {
-      await LAPI.Quotes.deleteQuoteOption(quote_id, quote_option_id);
+      await LAPI.Quotes.deleteQuoteOption(quote_id, quote_option_id, this.context);
 
       return {
         message: `Deleted quote option ${quote_option_id}`,
@@ -219,13 +232,17 @@ class LasecQuoteService implements IQuoteService {
   async copyQuoteOption(quote_id: string, quote_option_id: string): Promise<LasecQuoteOption> {
 
     try {
-      const payload = await LAPI.Quotes.copyQuoteOption(quote_id, quote_option_id).then();
+      const payload = await LAPI.Quotes.copyQuoteOption(quote_id, quote_option_id, this.context).then();
       logger.debug(`Payload Response ==> copyQuoteOption`, payload);
+
       return {
         id: payload.new_quote_option_id,
         quote_option_id: payload.new_quote_option_id,
         quote_id: quote_id,
+        gp: 0,
+        gp_percent: 0
       };
+
     } catch (apiError) {
       logger.error(apiError.message, apiError)
       throw new ApiError('Could not copy quote option', apiError);
@@ -233,14 +250,16 @@ class LasecQuoteService implements IQuoteService {
 
   }
 
-  sendQuoteEmail = async (quote_id: string, subject: string, message: string, to: Reactory.ToEmail[], cc: Reactory.ToEmail[], bcc: Reactory.ToEmail[], attachments: Reactory.EmailAttachment[], from: Lasec360User): Promise<Reactory.EmailSentResult> => {
+  sendQuoteEmail = async (quote_id: string, subject: string, message: string,
+    to: Reactory.ToEmail[], cc: Reactory.ToEmail[], bcc: Reactory.ToEmail[],
+    attachments: Reactory.EmailAttachment[], from: Lasec360User): Promise<Reactory.EmailSentResult> => {
 
     let result: Reactory.EmailSentResult = {
       message: `Email for quote ${quote_id} sent to`,
       success: true
     }
 
-    const { user } = global;
+    const { user, getService } = this.context;
 
     const emailService: Reactory.Service.ICoreEmailService = getService('core.EmailService@1.0.0') as Reactory.Service.ICoreEmailService;
 
@@ -271,7 +290,7 @@ class LasecQuoteService implements IQuoteService {
   }
 
   getQuoteById = async (quote_id: string): Promise<LasecQuote> => {
-    return await getLasecQuoteById(quote_id).then();
+    return await getLasecQuoteById(quote_id, this.context.partner, this.context).then();
   }
 
   getQuoteEmail = async (quote_id: string, email_type: string): Promise<Reactory.IEmailMessage> => {
@@ -279,14 +298,14 @@ class LasecQuoteService implements IQuoteService {
   }
 
   setQuoteEmail = async (quote_id: string, email_type: string, message: Reactory.IEmailMessage): Promise<Reactory.IEmailMessage> => {
-    return await setCacheItem(`${email_type}::${quote_id}::${user._id}`, message, (24 * 60 * 60)).then() as Reactory.IEmailMessage;
+    return await setCacheItem(`${email_type}::${quote_id}::${user._id}`, message, (24 * 60 * 60), this.context.partner).then() as Reactory.IEmailMessage;
   }
 
   getSalesOrder = async (sales_order_id: string): Promise<LasecSalesOrder> => {
 
     try {
       logger.debug(`QuoteService.ts getSalesOrders ${sales_order_id} 🟠`);
-      const sales_order_result = await LAPI.SalesOrders.item(sales_order_id).then();
+      const sales_order_result = await LAPI.SalesOrders.item(sales_order_id, this.context).then();
       logger.debug(`QuoteService.ts getSalesOrders ${sales_order_id} 🟢`, sales_order_result);
       return sales_order_result;
     } catch (get_error) {

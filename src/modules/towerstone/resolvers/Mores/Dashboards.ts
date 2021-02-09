@@ -5,7 +5,7 @@ import { ReactoryChart, ReactoryChartType } from '@reactory/server-modules/core/
 
 interface MoresPeriodFilter {
   period: string | 'today' | 'yesterday' | 'this-week' | 'last-week' |
-  'this-month'| 'last-month' | 'this-year' | 'last-year';
+  'this-month' | 'last-month' | 'this-year' | 'last-year';
   periodStart?: Moment,
   periodEnd?: Moment
 }
@@ -20,7 +20,7 @@ interface MoresOrganizationDashboard {
   totalAssessments: Number,
   completedAssessments: Number,
   responseRate: Number,
-  nextActions: any[],  
+  nextActions: any[],
   charts: {
     culture: ReactoryChart,
     leadership360: ReactoryChart,
@@ -38,22 +38,22 @@ interface MoresOrganizationDashboardParams {
 const DashboardsResolver = {
 
   Query: {
-    MoresGetOrganizationAdminDashboard: async (obj: any, params: MoresOrganizationDashboardParams): Promise<MoresOrganizationDashboard> => {
-      const { 
+    MoresGetOrganizationAdminDashboard: async (obj: any, params: MoresOrganizationDashboardParams, context: any): Promise<MoresOrganizationDashboard> => {
+      const {
         organizationDashboardFilter
       } = params;
 
       const {
         user,
         partner,
-      } = global;
-      
+      } = context;
+
       const now = moment();
 
       const response: MoresOrganizationDashboard = {
         toolbar: {
           period: 'today',
-          periodStart: moment().subtract(1,'day').startOf('day'),
+          periodStart: moment().subtract(1, 'day').startOf('day'),
           periodEnd: moment(now).endOf('day')
         },
         activeSurveys: 0,
@@ -90,8 +90,8 @@ const DashboardsResolver = {
         assessments: [],
       }
 
-      return response;      
-    } 
+      return response;
+    }
   },
   Mutation: {
 

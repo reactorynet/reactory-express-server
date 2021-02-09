@@ -25,9 +25,9 @@ const ReactoryMongo = {
 
     },
     Mutation: {
-        ReactoryMongoBackup: async (params: IReactoryMongoBackupParams): Promise<IReactoryMongoBackupResult> => {
+        ReactoryMongoBackup: async (params: IReactoryMongoBackupParams, context: Reactory.IReactoryContext): Promise<IReactoryMongoBackupResult> => {
 
-            const $user: Reactory.IUserDocument = global.user;
+            const $user: Reactory.IUserDocument = context.user;
 
             const backup = (database: string = 'reactory'): Promise<IReactoryMongoBackupResult> => {
 
@@ -54,29 +54,29 @@ const ReactoryMongo = {
 
                                 reject(result);
                             } else {
-    
+
                                 let output = '';
                                 if (stdout instanceof Buffer) {
                                     result.log = stdout.toString('utf8').split('\n');
                                 }
-    
+
                                 if (typeof stdout === 'string') {
                                     result.log = (stdout as string).split('\n');
                                 }
-    
+
                                 result.file = result.log[0];
                                 result.url = `${result.file}`.replace('file://', `${CDN_ROOT.indexOf('https') === 0 ? "https://" : "http://"}`)
                                 result.url = result.url.replace(APP_DATA_ROOT, CDN_ROOT.substring(CDN_ROOT.indexOf("://"), CDN_ROOT.length - CDN_ROOT.indexOf("://")))
-                                
+
                                 logger.error(`[REACTORY-DEVOPS] 🟢 Backup ${database} Complete | USER: ${$user.fullName(true)}`);
 
                                 resolve(result);
                             }
                         });
-                    } catch(childProcessError) {
+                    } catch (childProcessError) {
                         result.message = childProcessError.message
                         reject(result);
-                    }                    
+                    }
                 });
 
             }

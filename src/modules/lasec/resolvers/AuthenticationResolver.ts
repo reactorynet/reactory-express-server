@@ -1,24 +1,25 @@
 import Lasec360Api from "../api";
-import logger from '../../../logging';
-import User from "../../../application/admin/User";
+import logger from '@reactory/server-core/logging';
+import User from "@reactory/server-core/application/admin/User";
 
 export default {
   Query: {
 
   },
   Mutation: {
-    Lasec360Authenticate: async (parent, { username, password }) => {
+    Lasec360Authenticate: async (parent, { username, password }, context) => {
       try {
         const loginResult = await Lasec360Api.Authentication.login(username, password).then();
         logger.debug('Login result after authenticating with lasec360', { loginResult });
-        if (global.user.setAuthentication && loginResult) {          
-          await global.user.setAuthentication({ 
-            provider: 'lasec', 
-            props: { 
+        if (context.user.setAuthentication && loginResult) {
+          await context.user.setAuthentication({
+            provider: 'lasec',
+            props: {
               username, password, ...loginResult,
-              lastStatus: 200, 
-            }, 
-            lastLogin: new Date().valueOf() }).then();
+              lastStatus: 200,
+            },
+            lastLogin: new Date().valueOf()
+          }).then();
           return {
             success: true,
             message: 'You have been authenticated and logged in with Lasec 360',
@@ -32,11 +33,11 @@ export default {
         };
       }
     },
-    Lasec360RemoveAuthentication: async(parent, { email = '' }) => {
+    Lasec360RemoveAuthentication: async (parent, { email = '' }, context) => {
       try {
-        if(email === '') await global.user.removeAuthentication('lasec');
+        if (email === '') await context.user.removeAuthentication('lasec');
         const foundUser = await User.UserModel.findOne({ email }).then();
-        if(foundUser) {
+        if (foundUser) {
           await foundUser.removeAuthentication('lasec').then();
         }
 

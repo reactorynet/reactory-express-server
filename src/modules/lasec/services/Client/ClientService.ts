@@ -10,13 +10,11 @@ import {
 
 } from '@reactory/server-modules/lasec/resolvers/Helpers'
 
-import {
-    getService
-} from '@reactory/server-core/services'
 import { Reactory } from '@reactory/server-core/types/reactory';
 import logger from '@reactory/server-core/logging';
 
 import LasecApi from '@reactory/server-modules/lasec/api'
+import { getCacheItem, setCacheItem } from 'modules/lasec/models';
 
 
 
@@ -27,13 +25,26 @@ class LasecClientService implements ILasecClientService {
     nameSpace: string = 'lasec-crm';
     version: string = '1.0.0';
 
-    constructor(props: any, context: any) {
+    executionContext: Reactory.ReactoryExecutionContext;
 
+    constructor(props: any, context: any) {
+        this.executionContext = context;
+    }
+    getExecutionContext(): Reactory.ReactoryExecutionContext {
+        return this.executionContext;
+    }
+    setExecutionContext(executionContext: Reactory.ReactoryExecutionContext): boolean {
+        this.executionContext = executionContext;
+        return true;
     }
 
     async getClientById(id: string): Promise<LasecClient> {
-
-        const client_detail_api_response = await LasecApi.Customers.list({ filter: { ids: [id] }, ordering: {}, pagination: { enabled: false, current_page: 1, page_size: 10  } });
+        // eslint-disable-next-line
+        const client_detail_api_response: any = await LasecApi.Customers.list({
+            filter: { ids: [id] },
+            ordering: {},
+            pagination: { enabled: false, current_page: 1, page_size: 10 },
+        }, this.executionContext).then();
 
         /**
          *
@@ -86,70 +97,71 @@ class LasecClientService implements ILasecClientService {
             // logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
 
 
-            let clientResponse = om(clients[0], {
-                'id': 'id',
-                'first_name': [{
-                    "key":'fullName',
-                    "transform": (sourceValue: any, sourceObject: any, destinationObject: any, destinationKey: any) => `${sourceValue} ${sourceObject.surname}`,
-                }, "firstName"],
-                'surname': 'lastName',
-                'activity_status': { key: 'clientStatus', transform: (sourceValue: string) => `${sourceValue}`.toLowerCase() },
-                'email': 'emailAddress',
-                'alternate_email': 'alternateEmail',
-                'mobile_number': 'mobileNumber',
-                'office_number': 'officeNumber',
-                'alternate_office_number': 'alternateOfficeNumber',
-                'special_notes': 'note',
-                'sales_team_id': 'salesTeam',
-                'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src: any) => src == true },
-                'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src: any) => src == true },
-                'department': ['department', 'jobTitle'],
-                'ranking_id': ['customer.rankingId',
-                    {
-                        key: 'customer.ranking',
-                        transform: (sourceValue) => {
-                            /**
-                             * 1	A - High Value
-                               2	B - Medium Value
-                               3	C - Low Value
-                             */
-                            const rankings = {
-                                "1": 'A - High Value',
-                                "2": 'B - Medium Value',
-                                "3": 'C - Low Value'
-                            };
-                            return rankings[sourceValue];
+            let clientResponse: any = om.merge(clients[0],
+                {
+                    'id': 'id',
+                    'first_name': [{
+                        "key": 'fullName',
+                        "transform": (sourceValue: any, sourceObject: any, destinationObject: any, destinationKey: any) => `${sourceValue} ${sourceObject.surname}`,
+                    }, "firstName"],
+                    'surname': 'lastName',
+                    'activity_status': { key: 'clientStatus', transform: (sourceValue: string) => `${sourceValue}`.toLowerCase() },
+                    'email': 'emailAddress',
+                    'alternate_email': 'alternateEmail',
+                    'mobile_number': 'mobileNumber',
+                    'office_number': 'officeNumber',
+                    'alternate_office_number': 'alternateOfficeNumber',
+                    'special_notes': 'note',
+                    'sales_team_id': 'salesTeam',
+                    'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src: any) => src == true },
+                    'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src: any) => src == true },
+                    'department': ['department', 'jobTitle'],
+                    'ranking_id': ['customer.rankingId',
+                        {
+                            key: 'customer.ranking',
+                            transform: (sourceValue) => {
+                                /**
+                                 * 1	A - High Value
+                                   2	B - Medium Value
+                                   3	C - Low Value
+                                 */
+                                const rankings = {
+                                    "1": 'A - High Value',
+                                    "2": 'B - Medium Value',
+                                    "3": 'C - Low Value'
+                                };
+                                return rankings[sourceValue];
+                            }
                         }
-                    }
-                ],
-                'company_id': 'customer.id',
-                'company_account_number': 'customer.accountNumber',
-                'company_trading_name': 'customer.tradingName',
-                'company_sales_team': 'customer.salesTeam',
-                'customer_class_id': ['customer.classId',
-                    {
-                        key: 'customer.customerClass',
-                        transform: (sourceValue) => `${sourceValue} => Lookup Pending`
-                    }
-                ],
-                'account_type': ['accountType', 'customer.accountType'],
-                'company_on_hold': {
-                    'key': 'customer.customerStatus',
-                    'transform': (val) => (`${val === true ? 'on-hold' : 'not-on-hold'}`)
-                },
-                'currency_code': 'customer.currencyCode',
-                'currency_symbol': 'customer.currencySymbol',
-                'physical_address_id': 'customer.physicalAddressId',
-                'physical_address': 'customer.physicalAddress',
-                'delivery_address_id': 'customer.deliveryAddressId',
-                'delivery_address': 'customer.deliveryAddress',
-                'billing_address': "customer.billingAddress",
-                'country': ['country', 'customer.country']
-            });
+                    ],
+                    'company_id': 'customer.id',
+                    'company_account_number': 'customer.accountNumber',
+                    'company_trading_name': 'customer.tradingName',
+                    'company_sales_team': 'customer.salesTeam',
+                    'customer_class_id': ['customer.classId',
+                        {
+                            key: 'customer.customerClass',
+                            transform: (sourceValue) => `${sourceValue} => Lookup Pending`
+                        }
+                    ],
+                    'account_type': ['accountType', 'customer.accountType'],
+                    'company_on_hold': {
+                        'key': 'customer.customerStatus',
+                        'transform': (val) => (`${val === true ? 'on-hold' : 'not-on-hold'}`)
+                    },
+                    'currency_code': 'customer.currencyCode',
+                    'currency_symbol': 'customer.currencySymbol',
+                    'physical_address_id': 'customer.physicalAddressId',
+                    'physical_address': 'customer.physicalAddress',
+                    'delivery_address_id': 'customer.deliveryAddressId',
+                    'delivery_address': 'customer.deliveryAddress',
+                    'billing_address': "customer.billingAddress",
+                    'country': ['country', 'customer.country']
+                });
 
             try {
                 let hashkey = Hash(`LASEC_COMPANY::${clientResponse.customer.id}`);
-                let found = await getCacheItem(hashkey).then();
+                let found = await getCacheItem(hashkey, null, 180, this.getExecutionContext().partner).then();
                 logger.debug(`Found Cached Item for LASEC_COMPANY::${clientResponse.customer.id} ==> ${found}`)
                 if (found === null || found === undefined) {
                     let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }).then()
@@ -222,7 +234,7 @@ class LasecClientService implements ILasecClientService {
                                 })
                             };
 
-                            setCacheItem(hashkey, customerObject, 10);
+                            setCacheItem(hashkey, customerObject, 180, context.partner);
                             clientResponse.customer = customerObject;
                         }
                     }

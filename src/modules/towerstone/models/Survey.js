@@ -81,7 +81,7 @@ const SurveySchema = new mongoose.Schema({
     trim: true,
     enum: ['new', 'not-ready', 'ready', 'launched', 'paused', 'complete'],
   },
-  options: { },
+  options: {},
   calendar: [
     {
       entryType: {
@@ -169,7 +169,7 @@ SurveySchema.methods.addTimelineEntry = async function addTimelineEntry(
     when: moment().valueOf(),
     eventType,
     eventDetail,
-    who: !who ? global.user.id : who,
+    who: who,
   };
 
   if (!this.timeline) this.timeline = [];

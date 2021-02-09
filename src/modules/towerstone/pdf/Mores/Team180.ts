@@ -122,12 +122,12 @@ const greyscalePng = (path, outpath) => {
 };
 
 
-const resolveData = async ({ surveyId, delegateId, print_scores }) => {
+const resolveData = async ({ surveyId, delegateId, print_scores, context }) => {
   logger.info(`Resolving data for MoresIndividual360 Survey: ${surveyId}  DelegateEntry: ${delegateId} Print SCores ${print_scores}`);
   // const assessment = await Assessment.findById(assessment_id).then();
 
   try {
-    const { partner, user } = global;
+    const { partner, user } = context;
 
     logger.info(`GLOBAL DATA - USER ${JSON.stringify(user)}  PARTNER: ${partner}`);
 

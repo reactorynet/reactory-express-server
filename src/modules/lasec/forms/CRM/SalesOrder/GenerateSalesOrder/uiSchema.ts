@@ -143,8 +143,8 @@ const SalesOrderDocumentSchema = {
 const GOOGLE_MAPS_API_KEY_DEVELOPMENT = '<GOOGLE MAPS API KEY>';
 
 const GOOGLE_PLACE_TO_ADDRESS_MAP = {
-  'address': 'fullAddress',
-  'placeId': 'map.place_id'
+  'address.fullAddress': 'fullAddress',
+  'address.id': 'id',
 };
 
 const DEFAULT_ADDRESS_PROPS = {
@@ -170,9 +170,6 @@ const DEFAULT_ADDRESS_PROPS = {
     'formData': 'input'
   },
   resultName: 'LasecCheckAddressExists',
-  resultMap: {
-    '*': '*'
-  }
 };
 
 

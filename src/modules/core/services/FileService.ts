@@ -19,7 +19,7 @@ const {
 
 const writeFilePromise = promisify(writeFile);
 
-const getExtension =  (filename: string) => {
+const getExtension = (filename: string) => {
     return filename.split('.').pop();
 }
 
@@ -53,7 +53,7 @@ const downloadFile = async (url: string, options?: RequestInit, outputPath?: str
                     logger.debug(`${name} -> ${value}`)
                     switch (name) {
                         case 'content-type': {
-                            result.mimetype = value;                            
+                            result.mimetype = value;
                             break
                         }
                         case 'content-length': {
@@ -62,13 +62,13 @@ const downloadFile = async (url: string, options?: RequestInit, outputPath?: str
                         }
                     }
                 });
-                
+
                 return response.arrayBuffer()
             })
             .then((buff: ArrayBuffer) => writeFilePromise(filename, Buffer.from(buff)))
             .then()
 
-        
+
         result.original = path.basename(url);
         result.success = true;
         result.savedAs = filename;
@@ -81,7 +81,7 @@ const downloadFile = async (url: string, options?: RequestInit, outputPath?: str
     }
 }
 
-const catalogFile = async (filename: string, mimetype: string, alias: string, context: string = 'downloaded'): Promise<Reactory.IReactoryFileModel> => {
+const catalogFile = async (filename: string, mimetype: string, alias: string, context: string = 'downloaded', partner, owner): Promise<Reactory.IReactoryFileModel> => {
     // Check if image is valid
     const fileStats: fs.Stats = fs.statSync(filename);
     logger.debug(`SAVING FILE:: DONE ${fileStats} ${fileStats.size} --> CATALOGGING`);
@@ -93,9 +93,9 @@ const catalogFile = async (filename: string, mimetype: string, alias: string, co
         filename: path.basename(filename),
         mimetype,
         alias,
-        partner: new ObjectID(global.partner.id),
-        owner: new ObjectID(global.user.id),
-        uploadedBy: new ObjectID(global.user.id),
+        partner: partner._id,
+        owner: owner._id,
+        uploadedBy: owner._id,
         size: fileStats.size,
         hash: Hash(link),
         link: link,
@@ -103,7 +103,7 @@ const catalogFile = async (filename: string, mimetype: string, alias: string, co
         uploadContext: context,
         public: false,
         published: false,
-    });    
+    });
 
     return reactoryFileModel;
 }
@@ -119,13 +119,13 @@ const downloadAndCatalog = async (args: { url: string, options: RequestInit, fil
 
     return downloadFile(url, options, `/temp/${randomName}`).then((downloadResult: IFileDownloadResult) => {
         logger.debug(`File download result 🟢`, { downloadResult });
-        
-        return catalogFile(downloadResult.savedAs,  downloadResult.mimetype || '', downloadResult.savedAs, '').then((fileModel: Reactory.IReactoryFileModel) => {                        
+
+        return catalogFile(downloadResult.savedAs, downloadResult.mimetype || '', downloadResult.savedAs, '').then((fileModel: Reactory.IReactoryFileModel) => {
 
             fileModel.filename = downloadResult.original;
             fileModel.alias = downloadResult.savedAs;
             fileModel.link = `${downloadResult.savedAs}`.replace(APP_DATA_ROOT, CDN_ROOT);
-            fileModel.created = new Date(); 
+            fileModel.created = new Date();
             fileModel.ttl = fileModel.ttl || -1;
 
             logger.debug(`downloadAndCatalog(url: ${args.url}) = end`, fileModel);
@@ -145,14 +145,14 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
 
     constructor(props: any, context: any) {
         this.executionContext = {
-            partner: props.partner || context.partner || global.partner,
-            user: props.user || context.partner || global.user
+            partner: props.partner || context.partner,
+            user: props.user || context.partner
         }
     }
-    getContentBytes(path: string): number {                
+    getContentBytes(path: string): number {
         throw new Error('Method not implemented.');
     }
-    getContentBytesAsString(path: string, encoding: BufferEncoding): string {                
+    getContentBytesAsString(path: string, encoding: BufferEncoding): string {
         let contentString: string = null;
 
         if (fs.existsSync(path)) {
@@ -165,25 +165,29 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
 
     }
     async removeFilesForContext(context: string): Promise<Reactory.IReactoryFileModel[]> {
-        let fordeletion: Reactory.IReactoryFileModel[] = await this.getFileModelsForContext(context).then(); 
+        let fordeletion: Reactory.IReactoryFileModel[] = await this.getFileModelsForContext(context).then();
 
         if (fordeletion.length > 0) {
             const removedResult = await ReactoryFileModel.deleteMany({ uploadContext: context }).then()
             if (removedResult.deletedCount === fordeletion.length) {
-                return fordeletion;        
+                return fordeletion;
             } else {
                 throw new ApiError(`Files for removal (${fordeletion.length}) and removed file count (${removedResult.deletedCount}) mismatch.`)
-            }        
+            }
         }
 
-        
-        
+
+
     }
     async getFileModelsForContext(context: string): Promise<Reactory.IReactoryFileModel[]> {
         return ReactoryFileModel.find({ uploadContext: context })
     }
 
-    async getRemote(url: string, method: string = 'GET', headers: HeadersInit | any = {}, save: boolean, options?: { ttl?: number; sync?: boolean; owner?: ObjectId; permissions?: Reactory.IReactoryFilePermissions; public: boolean; }): Promise<Reactory.IReactoryFileModel> {
+    async getRemote(url: string,
+        method: string = 'GET',
+        headers: HeadersInit | any = {},
+        save: boolean,
+        options?: { ttl?: number; sync?: boolean; owner?: ObjectId; permissions?: Reactory.IReactoryFilePermissions; public: boolean; }): Promise<Reactory.IReactoryFileModel> {
 
         try {
 
@@ -196,11 +200,11 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                     headers
                 },
                 fileOptions: {
-                    
+
                 }
             }).then();
 
-            reactoryFile.uploadedBy = global.user._id;
+            reactoryFile.uploadedBy = this.executionContext.user._id;
             reactoryFile.tags = ['downloaded'];
 
             await reactoryFile.save().then();;
@@ -239,100 +243,98 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         this.executionContext = executionContext;
         return true;
     }
-    
 
-    uploadFile = async (args: Reactory.Service.FileUploadArgs) : Promise<Reactory.IReactoryFileModel> => {
+
+    uploadFile = async (args: Reactory.Service.FileUploadArgs): Promise<Reactory.IReactoryFileModel> => {
         return new Promise(async (resolve, reject) => {
-      
-          const { createReadStream, filename, mimetype, encoding } = await args.file;
-          logger.debug(`UPLOADED FILE:: ${filename} - ${mimetype} ${encoding}`);
-      
-          const stream: NodeJS.ReadStream = createReadStream();
-      
-          const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
-      
-          const link = `${process.env.CDN_ROOT}content/files/${randomName}`;
-      
-      
-          // Flag to tell if a stream had an error.
-          let hadStreamError: boolean = null;
-      
-          //ahndles any errors during upload / processing of file
-          const handleStreamError = (error: any) => {
-            // Do not enter twice in here.
-            if (hadStreamError) {
-              return;
-            }
-      
-            hadStreamError = true;
-      
-            // Cleanup: delete the saved path.
-            if (saveToPath) {
-              // eslint-disable-next-line consistent-return
-              return fs.unlink(saveToPath, () => {
+
+            const { createReadStream, filename, mimetype, encoding } = await args.file;
+            logger.debug(`UPLOADED FILE:: ${filename} - ${mimetype} ${encoding}`);
+
+            const stream: NodeJS.ReadStream = createReadStream();
+
+            const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
+
+            const link = `${process.env.CDN_ROOT}content/files/${randomName}`;
+
+
+            // Flag to tell if a stream had an error.
+            let hadStreamError: boolean = null;
+
+            //ahndles any errors during upload / processing of file
+            const handleStreamError = (error: any) => {
+                // Do not enter twice in here.
+                if (hadStreamError) {
+                    return;
+                }
+
+                hadStreamError = true;
+
+                // Cleanup: delete the saved path.
+                if (saveToPath) {
+                    // eslint-disable-next-line consistent-return
+                    return fs.unlink(saveToPath, () => {
+                        reject(error)
+                    });
+                }
+
+                // eslint-disable-next-line consistent-return
                 reject(error)
-              });
             }
-      
-            // eslint-disable-next-line consistent-return
-            reject(error)
-          }
-      
-      
-          const catalogFile = () => {
-            // Check if image is valid
-            const fileStats: fs.Stats = fs.statSync(saveToPath);
-      
-            logger.debug(`SAVING FILE:: DONE ${filename} ${fileStats.size} --> CATALOGGING`);
-      
-            const reactoryFile: any = {
-              id: new ObjectID(),
-              filename,
-              mimetype,
-              alias: randomName,
-              partner: new ObjectID(global.partner.id),
-              owner: global.user,
-              // owner: new ObjectID(global.user.id),
-              uploadedBy: global.user,
-              // uploadedBy: new ObjectID(global.user.id),
-              size: fileStats.size,
-              hash: Hash(link),
-              link: link,
-              path: 'content/files/',
-              uploadContext: args.uploadContext || 'lasec-crm::company-document',
-              public: false,
-              published: false,
-            };
-      
-            if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
-              reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
+
+
+            const catalogFile = () => {
+                // Check if image is valid
+                const fileStats: fs.Stats = fs.statSync(saveToPath);
+
+                logger.debug(`SAVING FILE:: DONE ${filename} ${fileStats.size} --> CATALOGGING`);
+
+                const reactoryFile: any = {
+                    id: new ObjectID(),
+                    filename,
+                    mimetype,
+                    alias: randomName,
+                    partner: this.executionContext.partner._id,
+                    owner: this.executionContext.user._id,
+                    uploadedBy: this.executionContext.user._id,
+                    size: fileStats.size,
+                    hash: Hash(link),
+                    link: link,
+                    path: 'content/files/',
+                    uploadContext: args.uploadContext || 'lasec-crm::company-document',
+                    public: false,
+                    published: false,
+                };
+
+                if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
+                    reactoryFile.uploadContext = `lasec-crm::new-company::document::${this.executionContext.user._id}`;
+                }
+
+                const savedDocument = new ReactoryFileModel(reactoryFile);
+
+                savedDocument.save().then();
+
+                logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
+
+                resolve(savedDocument);
             }
-      
-            const savedDocument = new ReactoryFileModel(reactoryFile);
-      
-            savedDocument.save().then();
-      
-            logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
-      
-            resolve(savedDocument);
-          }
-      
-          // Generate path where the file will be saved.
-          // const appDir = path.dirname(require.main.filename);
-          const saveToPath = path.join(process.env.APP_DATA_ROOT, 'content', 'files', randomName);
-      
-          logger.debug(`SAVING FILE:: ${filename} --> ${saveToPath}`);
-      
-          const diskWriterStream: NodeJS.WriteStream = fs.createWriteStream(saveToPath);
-          diskWriterStream.on('error', handleStreamError);
-      
-          // Validate image after it is successfully saved to disk.
-          diskWriterStream.on('finish', catalogFile);
-      
-          // Save image to disk.
-          stream.pipe(diskWriterStream);    
+
+            // Generate path where the file will be saved.
+            // const appDir = path.dirname(require.main.filename);
+            const saveToPath = path.join(process.env.APP_DATA_ROOT, 'content', 'files', randomName);
+
+            logger.debug(`SAVING FILE:: ${filename} --> ${saveToPath}`);
+
+            const diskWriterStream: NodeJS.WriteStream = fs.createWriteStream(saveToPath);
+            diskWriterStream.on('error', handleStreamError);
+
+            // Validate image after it is successfully saved to disk.
+            diskWriterStream.on('finish', catalogFile);
+
+            // Save image to disk.
+            stream.pipe(diskWriterStream);
         });
-      };
+    };
 }
 
 export const ReactoryFileServiceDefinition: Reactory.IReactoryServiceDefinition = {

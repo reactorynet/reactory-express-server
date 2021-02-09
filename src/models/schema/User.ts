@@ -6,13 +6,15 @@ import * as lodash from 'lodash';
 
 import logger from '@reactory/server-core/logging';
 import { Reactory } from '@reactory/server-core/types/reactory';
+import { ReactoryTemplateService } from 'modules/core/services/TemplateService';
+import { parse } from 'graphql';
 
 const ObjectIdFunc = mongodb.ObjectID;
 const { ObjectId } = mongoose.Schema.Types;
 const { isArray, find, filter } = lodash;
 
 const meta = new mongoose.Schema({
-  source: { },
+  source: {},
   owner: String, // indicates what system owns this record
   reference: String, // a lookup string to use for the remote system
   lastSync: Date,
@@ -99,7 +101,7 @@ const UserSchema = new mongoose.Schema({
   authentications: [
     {
       provider: String,
-      props: { },
+      props: {},
       lastLogin: Date,
     },
   ],
@@ -117,7 +119,7 @@ const UserSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     required: true,
-  },  
+  },
   meta
 });
 
@@ -131,7 +133,7 @@ UserSchema.methods.validatePassword = function validatePassword(password) {
 };
 
 UserSchema.methods.fullName = function fullName(email = false) {
-  return `${this.firstName} ${this.lastName}${email ? '<'+this.email+'>' : ''}`.trim();
+  return `${this.firstName} ${this.lastName}${email ? '<' + this.email + '>' : ''}`.trim();
 };
 
 /**
@@ -188,7 +190,7 @@ UserSchema.methods.hasRole = function hasRole(clientId: mongoose.Schema.Types.Ob
     const matched = lodash.filter(
       matches,
       membership => isArray(membership.roles) === true
-                    && lodash.intersection(membership.roles, [role]).length > 0,
+        && lodash.intersection(membership.roles, [role]).length > 0,
     );
     if (isArray(matched) === true && matched.length >= 1) return true;
     if (lodash.isObject(matched) === true && isArray(matched.roles) === true) {
@@ -199,7 +201,7 @@ UserSchema.methods.hasRole = function hasRole(clientId: mongoose.Schema.Types.Ob
   return false;
 };
 
-UserSchema.methods.hasAnyRole = function(clientId, organizationId, businessUnitId) {
+UserSchema.methods.hasAnyRole = function (clientId, organizationId, businessUnitId) {
   logger.info(`User.hasAnyRole 
     ReactoryClient:[${clientId}]     
     Organization: [${organizationId || '**'}]
@@ -362,12 +364,12 @@ UserSchema.methods.deleteUser = function deleteUser() {
   this.save();
 };
 
-UserSchema.methods.setAuthentication = async function setAuthentication(authentication = { provider: 'local', props: { }, lastLogin: new Date().valueOf() }) {
+UserSchema.methods.setAuthentication = async function setAuthentication(authentication = { provider: 'local', props: {}, lastLogin: new Date().valueOf() }) {
   const instance = this;
   const { props, provider, lastLogin } = authentication;
 
   let dirty = false;
-  if(instance.$patching === true) {
+  if (instance.$patching === true) {
     return;
   } else {
     instance.$patching = true;
@@ -385,7 +387,7 @@ UserSchema.methods.setAuthentication = async function setAuthentication(authenti
           if (provider === _authentication.provider) {
             // patch the properties of the authentication
             instance.authentications[index].props = { ..._authentication.props, ...authentication.props };
-            if(lastLogin) {
+            if (lastLogin) {
               instance.authentications[index].lastLogin = lastLogin;
             }
             dirty = true;
@@ -393,15 +395,15 @@ UserSchema.methods.setAuthentication = async function setAuthentication(authenti
         });
       }
     }
-  
-    if (dirty === true) {        
+
+    if (dirty === true) {
       await this.save();
       instance.$patching = false;
-      return true;    
+      return true;
     }
-  
+
     return false;
-  }  
+  }
 };
 
 UserSchema.methods.removeAuthentication = async function removeAuthentication(provider: string) {
@@ -426,8 +428,8 @@ UserSchema.methods.getAuthentication = function getAuthentication(provider: stri
   return null;
 };
 
-UserSchema.statics.findByForeignId = async function findByForeignId(id: string, owner: string){
-  return await this.findOne({ 'meta.reference' : id, 'meta.owner':  owner}).then();
+UserSchema.statics.findByForeignId = async function findByForeignId(id: string, owner: string) {
+  return await this.findOne({ 'meta.reference': id, 'meta.owner': owner }).then();
 };
 
 /**
@@ -437,7 +439,7 @@ UserSchema.statics.findByForeignId = async function findByForeignId(id: string, 
  *    id: ObjectId()
  *    firstName: 'james', 
  *    lastName: 'van der Beeck',
- *    email: 'james.v+@{global.partner.key}.reactory.net, 
+ *    email: 'james.v.reactory.net, 
  *  }   
  *
  *  - Name and lastname: 'James van der Beeck<james@mail.com>' -> 
@@ -445,39 +447,39 @@ UserSchema.statics.findByForeignId = async function findByForeignId(id: string, 
  *    id: ObjectId()
  *    firstName: 'james', 
  *    lastName: 'van der Beeck',
- *    email: 'james.v+@{global.partner.key}.reactory.net, 
+ *    email: 'james.v+@{key}.reactory.net, 
  *  }   
  */
-UserSchema.statics.parse = (inputString: string) => {  
-  if(typeof inputString === 'string') {
+UserSchema.statics.parse = (inputString: string): any => {
+  if (typeof inputString === 'string') {
     let _s = inputString.trim();
     let _name = _s;
     let _email = '';
 
-    if(_s.indexOf('<') > 0 && _s.indexOf('>')) {
+    if (_s.indexOf('<') > 0 && _s.indexOf('>')) {
       //contains email
       _name = _s.split('<')[0];
-      _email = _s.split('<')[1].replace('>','');
-    } 
+      _email = _s.split('<')[1].replace('>', '');
+    }
 
     let parts = _name.split(" ").reverse();
-    
+
     const parsed = {
       firstName: parts.pop(),
       lastName: '',
-      email: _email,      
+      email: _email,
       createdAt: new Date().valueOf(),
       updatedAt: new Date().valueOf()
-    };    
+    };
 
-    while(parts.length > 0) {
+    while (parts.length > 0) {
       parsed.lastName = `${parsed.lastName} ${parts.pop()}`;
     }
 
     parsed.lastName = parsed.lastName.trim();
 
     return parsed;
-  } 
+  }
 
   return {};
 };

@@ -1,5 +1,6 @@
 import mongoose, { MongooseDocument } from 'mongoose';
 import logger from '@reactory/server-core/logging';
+import { Reactory } from 'types/reactory';
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -32,16 +33,16 @@ const PersonalDemographicSchema = new mongoose.Schema({
   },
 });
 
-PersonalDemographicSchema.statics.GetLoggedInUserDemograpics = async function GetLoggedInUserDemograpics(): Promise<any> {
-  const { user, partner } = global;
+PersonalDemographicSchema.statics.GetLoggedInUserDemograpics = async function GetLoggedInUserDemograpics(context: Reactory.IReactoryContext): Promise<any> {
+  const { user, partner } = context;
   return await this.findOne({ userId: user._id });
 };
 
-PersonalDemographicSchema.statics.SetLoggedInUserDemograpics = async function SetLoggedInUserDemograpics(args: any): Promise<any> {
+PersonalDemographicSchema.statics.SetLoggedInUserDemograpics = async function SetLoggedInUserDemograpics(args: any, context: Reactory.IReactoryContext): Promise<any> {
 
   logger.debug(`PERSONAL DEMOGRAPHICS SCHEMA:: ${JSON.stringify(args)}`);
 
-  const { user, partner } = global;
+  const { user, partner } = context;
   const { race, age, gender, position, region, operationalGroup, businessUnit, team } = args;
 
   const saveResponse = await this.findOneAndUpdate(

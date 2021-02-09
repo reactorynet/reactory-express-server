@@ -1,4 +1,11 @@
-import { ObjectID, ObjectId } from "mongodb";
+/**
+ * Lasec CRM Sales Order Resolver.
+ * 
+ * Contains most of the helpers, and functions for handling sales order related 
+ * data objects.
+ * 
+ * Authors: W. Weber, D. Murphy
+ */
 import logger from "@reactory/server-core/logging";
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import LasecApi from '../api';
@@ -19,10 +26,9 @@ import {
 } from "./Helpers";
 import {
   IQuoteService,
-  Lasec360User, LasecClient, LasecCreateSalesOrderInput, LasecCRMCustomer, LasecQuote, LasecSalesOrder, LasecSalesOrderCreateResponse, SimpleResponse
+  Lasec360User, LasecCertificateOfConformance, LasecCertificateOfConformanceResponse, LasecClient, LasecCommercialInvcoice, LasecCommercialInvoiceResponse, LasecCreateSalesOrderInput, LasecCRMCustomer, LasecQuote, LasecSalesOrder, LasecSalesOrderCreateResponse, SimpleResponse
 } from "../types/lasec";
 import { execql } from "@reactory/server-core/graph/client";
-import { LasecCompany } from "../constants";
 import { getCacheItem, setCacheItem } from "../models";
 import moment from "moment";
 import { getProductById } from "./ProductResolver";
@@ -43,7 +49,7 @@ const SalesOrderResolver = {
 
   SalesOrder: {
 
-    crmCustomer: async (salesOrder: any) => {
+    crmCustomer: async (salesOrder: any, args: any, context: Reactory.IReactoryContext) => {
 
       try {
         logger.debug(`SalesOrderResolver.crmCustomer`, { salesOrder });
@@ -58,7 +64,7 @@ const SalesOrderResolver = {
             LEFT JOIN ArCustomer AC on cust.company_id=AC.Customer
             WHERE qt.quoteid = '${salesOrder.quoteId}';`;
 
-        let sqlresult: any = await mysql(query, 'mysql.lasec360').then()
+        let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
         let customerObject = sqlresult[0];
 
         logger.debug(`SalesOrderResolver.crmCustomer Results from mysql query`, sqlresult);
@@ -76,13 +82,13 @@ const SalesOrderResolver = {
     },
 
     details: async (salesOrder: LasecSalesOrder, context: any, info: any) => {
-      return getISODetails({ orderId: salesOrder.id, quoteId: salesOrder.quoteId });
+      return getISODetails({ orderId: salesOrder.id, quoteId: salesOrder.quoteId }, context);
     },
 
     documents: async (sales_order: LasecSalesOrder, context: any, info: any) => {
 
       try {
-        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::${sales_order.id}`] }).then()
+        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::${sales_order.id}`] }, context).then()
       } catch (exception) {
         logger.error('Could not get the document for the sales order', exception);
         throw exception;
@@ -104,7 +110,7 @@ const SalesOrderResolver = {
 
   LasecSalesOrderCreateResponse: {
     salesOrder: async (response: LasecSalesOrderCreateResponse, args: any) => {
-      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
       if (response.success === true && response.salesOrder === null || response.salesOrder === undefined)
         return quoteService.getSalesOrder(response.iso_id);
 
@@ -112,9 +118,9 @@ const SalesOrderResolver = {
     }
   },
   Query: {
-    LasecGetPagedCRMSalesOrders: async (obj, args) => {
+    LasecGetPagedCRMSalesOrders: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
       try {
-        return getCRMSalesOrders(args);
+        return getCRMSalesOrders(args, context);
       } catch (err) {
         logger.error(`Error Fetching CRM SalesOrders`)
         throw new ApiError('Could not fetch sales order data', { error: err, displayInAppNotification: true });
@@ -128,7 +134,7 @@ const SalesOrderResolver = {
       } = params;
 
       try {
-        const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+        const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
         const sales_order = await quoteService.getSalesOrder(sales_order_id).then();
 
         return sales_order;
@@ -141,26 +147,26 @@ const SalesOrderResolver = {
 
     },
 
-    LasecGetCRMPurchaseOrders: async (obj, args) => {
-      return getPurchaseOrders(args);
+    LasecGetCRMPurchaseOrders: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getPurchaseOrders(args, context);
     },
 
-    LasecGetCRMPurchaseOrderDetail: async (obj, args) => {
-      return getPurchaseOrderDetails(args)
+    LasecGetCRMPurchaseOrderDetail: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getPurchaseOrderDetails(args, context)
     },
 
-    LasecGetCRMClientSalesOrders: async (obj, args) => {
-      return getClientSalesOrders(args);
+    LasecGetCRMClientSalesOrders: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getClientSalesOrders(args, context);
     },
 
-    LasecGetSaleOrderDocument: async (obj, args) => {
-      return getSODocuments(args);
+    LasecGetSaleOrderDocument: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getSODocuments(args, context);
     },
-    LasecGetISODetail: async (obj: any, args: any) => {
-      return getISODetails(args);
+    LasecGetISODetail: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getISODetails(args, context);
     },
 
-    LasecGetSaleOrderComments: async (obj, args) => {
+    LasecGetSaleOrderComments: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
 
       return {
         orderId: args.orderId,
@@ -169,9 +175,7 @@ const SalesOrderResolver = {
 
     },
 
-
-
-    LasecGetPreparedSalesOrder: async (parent: any, params: { quote_id: string, active_option: string }): Promise<any> => {
+    LasecGetPreparedSalesOrder: async (parent: any, params: { quote_id: string, active_option: string }, context: Reactory.IReactoryContext): Promise<any> => {
 
       try {
 
@@ -192,7 +196,7 @@ const SalesOrderResolver = {
         if (prepared_sales_order === null || prepared_sales_order === undefined) {
 
           try {
-            lasec_user = await getLoggedIn360User().then();
+            lasec_user = await getLoggedIn360User(false, context).then();
           } catch (loggedInUserError) {
             logger.error(`Error Getting the logged in user details ${loggedInUserError.message}`);
             throw new ApiError(`Could not get the logged in user.`);
@@ -221,7 +225,7 @@ const SalesOrderResolver = {
             }`, {
               quote_id,
               option_id: active_option
-            }).then();
+            }, {}, context.user, context.partner).then();
 
             if (quote_detail.data) {
               if (quote_detail.data && quote_detail.data.LasecGetQuoteById) {
@@ -256,7 +260,7 @@ const SalesOrderResolver = {
                   currentBalance
                 }                
               }
-            }`, { id: lasec_quote.customer_id }).then();
+            }`, { id: lasec_quote.customer_id }, {}, context.user, context.partner).then();
             client = customer_query.data.LasecGetClientDetail;
             customer = client.customer;
             logger.debug(`LasecGetCompanyDetailsforQuote(id: $id)`, customer);
@@ -283,7 +287,7 @@ const SalesOrderResolver = {
             shipping_date: moment().add(14, 'days').toISOString()
           }
 
-          setCacheItem(cache_key, prepared_sales_order, 60);
+          setCacheItem(cache_key, prepared_sales_order, 60, context.partner);
         };
 
         return prepared_sales_order;
@@ -292,18 +296,18 @@ const SalesOrderResolver = {
         throw new ApiError(`Unhandled Error Processing Sales Order Prep ${error.message}`);
       }
     },
-    LasecIncoTerms: async (): Promise<any> => {
+    LasecIncoTerms: async (parent: any, args: any, context: Reactory.IReactoryContext): Promise<any> => {
       try {
-        return (getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms();
+        return (context.getService(QUOTE_SERVICE_ID, {}, context) as IQuoteService).getIncoTerms();
       } catch (inco_terms_error) {
         logger.error(`Could not get the inco terms: ${inco_terms_error.message}`, inco_terms_error)
         return [];
       }
     },
-    LasecCheckPurchaseOrderExists: async (parent: any, params: { company_id: string, purchase_order_number: string }): Promise<any> => {
+    LasecCheckPurchaseOrderExists: async (parent: any, params: { company_id: string, purchase_order_number: string }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
         logger.debug('SalesOrderResolver.ts => LasecCheckPurchaseOrderExists ');
-        const check_result = await LasecApi.SalesOrders.checkPONumberExists(params.company_id, params.purchase_order_number).then();
+        const check_result = await LasecApi.SalesOrders.checkPONumberExists(params.company_id, params.purchase_order_number, context).then();
         logger.debug('SalesOrderResolver.ts => LasecCheckPurchaseOrderExists => check_result ', check_result);
         return check_result;
       } catch (purchaseOrderError) {
@@ -314,10 +318,10 @@ const SalesOrderResolver = {
     /***
      * Get Create Certificate of Conformance for Sales Order
      */
-    LasecCertificateOfConformanceForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
+    LasecCertificateOfConformanceForSalesOrder: async (parent: any, params: { sales_order_id: string }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
         logger.debug(`SalesOrderResovler.ts => LasecCertificateOfConformanceForSalesOrder`);
-        const certificate = await LasecApi.SalesOrders.get_certificate_of_conformance(params.sales_order_id).then()
+        const certificate = await LasecApi.SalesOrders.get_certificate_of_conformance(params.sales_order_id, context).then()
         logger.debug(`Returning sales order certificate ${certificate.id}`);
 
         return certificate;
@@ -328,10 +332,10 @@ const SalesOrderResolver = {
       }
     },
 
-    LasecCommercialInvoiceForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
+    LasecCommercialInvoiceForSalesOrder: async (parent: any, params: { sales_order_id: string }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
         logger.debug(`SalesOrderResovler.ts => LasecCertificateOfConformanceForSalesOrder`);
-        const commercial_invoice = await LasecApi.SalesOrders.get_commercial_invoice(params.sales_order_id).then()
+        const commercial_invoice = await LasecApi.SalesOrders.get_commercial_invoice(params.sales_order_id, context).then()
         logger.debug(`Commercial invoice for for sales order`, commercial_invoice);
         return commercial_invoice
       } catch (err) {
@@ -340,10 +344,10 @@ const SalesOrderResolver = {
       }
     },
 
-    LasecPackingListForSalesOrder: async (parent: any, params: { sales_order_id: string }): Promise<any> => {
+    LasecPackingListForSalesOrder: async (parent: any, params: { sales_order_id: string }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
         logger.debug(`SalesOrderResovler.ts => LasecPackingListForSalesOrder`);
-        const packing_list = await LasecApi.SalesOrders.get_packing_list(params.sales_order_id).then()
+        const packing_list = await LasecApi.SalesOrders.get_packing_list(params.sales_order_id, context).then()
         logger.debug(`Packing list for sales order`, packing_list);
 
         return packing_list;
@@ -353,13 +357,13 @@ const SalesOrderResolver = {
       }
     },
 
-    LasecGetSalesOrderDocuments: async (parent: any, params: { sales_order_id: string, paging: PagingRequest }) => {
+    LasecGetSalesOrderDocuments: async (parent: any, params: { sales_order_id: string, paging: PagingRequest }, context: Reactory.IReactoryContext) => {
 
       try {
 
-        const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+        const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
         const sales_order = await quoteService.getSalesOrder(params.sales_order_id).then();
-        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::${sales_order.id}`], paging: params.paging });
+        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::${sales_order.id}`], paging: params.paging }, context);
 
       } catch (exception) {
         logger.error('Could not get the document for the sales order', exception);
@@ -369,7 +373,7 @@ const SalesOrderResolver = {
     }
   },
   Mutation: {
-    LasecCreateSalesOrder: async (parent: any, params: { sales_order_input: LasecCreateSalesOrderInput }): Promise<LasecSalesOrderCreateResponse> => {
+    LasecCreateSalesOrder: async (parent: any, params: { sales_order_input: LasecCreateSalesOrderInput }, context: Reactory.IReactoryContext): Promise<LasecSalesOrderCreateResponse> => {
 
       const { sales_order_input } = params;
       logger.debug(`Sales Order Resolver ${sales_order_input.customer_name}`, sales_order_input);
@@ -381,7 +385,7 @@ const SalesOrderResolver = {
         success: false,
       };
 
-      const check_result = await LasecApi.SalesOrders.checkPONumberExists(params.sales_order_input.company_id, params.sales_order_input.purchase_order_number).then();
+      const check_result = await LasecApi.SalesOrders.checkPONumberExists(params.sales_order_input.company_id, params.sales_order_input.purchase_order_number, context).then();
 
       if (check_result.exists) {
         createResult.iso_id = params.sales_order_input.purchase_order_number;
@@ -391,7 +395,7 @@ const SalesOrderResolver = {
         return createResult;
       }
 
-      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
       createResult = await quoteService.createSalesOrder(params.sales_order_input).then();
 
       return createResult;
@@ -400,29 +404,33 @@ const SalesOrderResolver = {
     /***
      * Create Certificate of Conformance 
      */
-    LasecCreateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: any }, context: any, info: any): Promise<any> => {
+    LasecCreateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: LasecCertificateOfConformance }, context: Reactory.IReactoryContext, info: any): Promise<LasecCertificateOfConformanceResponse> => {
+
+      const response: LasecCertificateOfConformanceResponse = {
+        success: true,
+        message: '',
+        certificate: params.certificate
+      }
+
       try {
         logger.debug("Creating certificate of conformance", { params });
-        const result = await LasecApi.SalesOrders.post_certificate_of_conformance(params.sales_order_id, params.certificate).then();
+        const result = await LasecApi.SalesOrders.post_certificate_of_conformance(params.sales_order_id, params.certificate, context).then();
 
-        let certificate = {
-          ...params.certificate,
-        };
-
-        certificate.pdf_url = result.pdf_url;
-        certificate.id = result.id || `CERTIFICATE_OF_CONFORMANCE-${params.sales_order_id}`;
-
-        return {
-          success: true,
-          message: 'Certificate of conformance created',
-          certificate
+        if (result.pdf_url === null || result.pdf_url === undefined || result.pdf_url === "") {
+          response.message = 'No url / pdf document available for this document.'
+          response.certificate.pdf_url = 'about:blank';
+          response.success = false;
+          response.certificate.id = result.id || `CERTIFICATE_OF_CONFORMANCE-${params.sales_order_id}`
+        } else {
+          response.certificate.pdf_url = result.pdf_url;
+          response.message = `New Certificate of Conformance Created at ${result.pdf_url}`
         }
+        return response;
 
       } catch (error) {
-
         return {
           success: false,
-          message: error.message,
+          message: `Could not create the certificate LASEC API ERROR: ${error.message}`,
           certificate: params.certificate
         }
       }
@@ -431,7 +439,14 @@ const SalesOrderResolver = {
     /***
      * Update a certificate of conformance
      */
-    LasecUpdateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: any }, context: any, info: any): Promise<any> => {
+    LasecUpdateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: LasecCertificateOfConformance }, context: any, info: any): Promise<LasecCertificateOfConformanceResponse> => {
+
+      const response: LasecCertificateOfConformanceResponse = {
+        success: true,
+        message: '',
+        certificate: { ...params.certificate }
+      }
+
 
       try {
         logger.debug("Updating certificate of conformance", { params });
@@ -459,17 +474,17 @@ const SalesOrderResolver = {
     /***
      * 
      */
-    LasecCreateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
+    LasecCreateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: LasecCommercialInvcoice }, context: Reactory.IReactoryContext): Promise<LasecCommercialInvoiceResponse> => {
 
       try {
 
-        const result = await LasecApi.SalesOrders.post_commercial_invoice(params.sales_order_id, params.invoice).then();
+        const result = await LasecApi.SalesOrders.post_commercial_invoice(params.sales_order_id, params.invoice, context).then();
 
         if (result.error) {
           return {
             success: false,
             message: `Could not create the commercial invoice [${result.error.message}]`,
-            commercial_invoice: null
+            commercial_invoice: { ...params.invoice }
           }
         }
 
@@ -495,10 +510,10 @@ const SalesOrderResolver = {
     /***
      * 
      */
-    LasecUpdateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }): Promise<any> => {
+    LasecUpdateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
 
-        const result = await LasecApi.SalesOrders.put_commercial_invoice(params.sales_order_id, params.invoice).then();
+        const result = await LasecApi.SalesOrders.put_commercial_invoice(params.sales_order_id, params.invoice, context).then();
         return {
           success: true,
           message: 'Certificate of conformance updated',
@@ -522,16 +537,16 @@ const SalesOrderResolver = {
     /**
      * 
      */
-    LasecCreatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }): Promise<any> => {
+    LasecCreatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
 
-        const result = await LasecApi.SalesOrders.post_packing_list(params.sales_order_id, params.packing_list).then();
+        const result = await LasecApi.SalesOrders.post_packing_list(params.sales_order_id, params.packing_list, context).then();
         return {
           success: true,
-          message: 'Certificate of conformance created',
+          message: result.pdf_url === null || result.pdf_url === undefined ? "No valid pdf url returned from Lasec API" : 'Certificate of conformance created',
           packing_list: {
             ...params.packing_list,
-            pdf_url: result.pdf_url || "http://document.notready.com/empty.pdf"
+            pdf_url: result.pdf_url || "about:blank"
           }
         }
 
@@ -549,10 +564,10 @@ const SalesOrderResolver = {
     /***
      * 
      */
-    LasecUpdatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }): Promise<any> => {
+    LasecUpdatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
 
-        const result = await LasecApi.SalesOrders.put_packing_list(params.sales_order_id, params.packing_list).then();
+        const result = await LasecApi.SalesOrders.put_packing_list(params.sales_order_id, params.packing_list, context).then();
         return {
           success: true,
           message: 'Certificate of conformance created',
@@ -575,15 +590,15 @@ const SalesOrderResolver = {
     /***
      * Adds a comment to a Sales Order Document
      */
-    LasecAddSaleOrderComment: async (parent: any, params: { orderId: string, comment: string }) => {
+    LasecAddSaleOrderComment: async (parent: any, params: { orderId: string, comment: string }, context: Reactory.IReactoryContext) => {
       logger.debug('🟠 LasecAddSaleOrderComment', { ...params });
-      return saveSalesOrderComment(params);
+      return saveSalesOrderComment(params, context);
     },
 
-    LasecAddSalesOrderDocument: async (parent: any, params: { file: any, sales_order_id: string }) => {
+    LasecAddSalesOrderDocument: async (parent: any, params: { file: any, sales_order_id: string }, context: Reactory.IReactoryContext) => {
 
       try {
-        const fileService: Reactory.Service.IReactoryFileService = getService('core.ReactoryFileService@1.0.0') as Reactory.Service.IReactoryFileService;
+        const fileService: Reactory.Service.IReactoryFileService = context.getService('core.ReactoryFileService@1.0.0') as Reactory.Service.IReactoryFileService;
         logger.debug(`Uploading File using Reactory File Service`, { filename: params.file.filename });
         let uploadResult = await fileService.uploadFile({ file: params.file, uploadContext: `lasec-crm::sales-order::${params.sales_order_id}` }).then();
 

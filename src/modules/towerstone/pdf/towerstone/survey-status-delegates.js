@@ -55,9 +55,9 @@ const greyscalePng = (path, outpath) => {
     });
 }
 
-const resolveData = async ({ surveyId, delegateId }) => {
+const resolveData = async ({ surveyId, delegateId, context }) => {
   logger.info(`Resolving data for Survey Status Survey: ${surveyId}`);
-  const { partner, user } = global;
+  const { partner, user } = context;
 
   const survey = await Survey.findById(surveyId)
     .populate('organization')

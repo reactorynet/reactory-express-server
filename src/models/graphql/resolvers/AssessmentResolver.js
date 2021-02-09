@@ -29,19 +29,19 @@ const assessmentResolver = {
       qualityId, behaviourId,
       custom, behaviourText,
       deleteRating = false,
-    }) => {
-      
+    }, context) => {
+
       const assessment = await Assessment.findById(id).then();
       const isNew = lodash.isString(ratingId) === true && ratingId === 'NEW';
 
-      logger.log('info',`Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${global.user.fullName()} => ${rating}`, { when: new Date().valueOf() } );
-      if (assessment && ratingId && isNew === false) {        
+      logger.log('info', `Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${context.user.fullName()} => ${rating}`, { when: new Date().valueOf() });
+      if (assessment && ratingId && isNew === false) {
         const ratingDoc = assessment.ratings.id(ratingId);
         if (ratingDoc && deleteRating === false) {
           ratingDoc.rating = rating;
           ratingDoc.comment = comment;
           ratingDoc.updatedAt = new Date().valueOf();
-          ratingDoc.updateBy = global.user._id;
+          ratingDoc.updateBy = context.user._id;
         }
 
         if (ratingDoc && deleteRating === true) {
@@ -49,9 +49,9 @@ const assessmentResolver = {
         }
 
         assessment.updatedAt = new Date().valueOf();
-        assessment.updateBy = global.user._id;
+        assessment.updateBy = context.user._id;
         await assessment.save().then();
-        logger.log('info', `Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${global.user.fullName()} ✅ `);
+        logger.log('info', `Setting Rating ${ratingId} for Assessment ${id} -> Survey: ${assessment.survey} Delegate: ${assessment.delegate} by ${context.user.fullName()} ✅ `);
         return ratingDoc;
       }
 
@@ -109,12 +109,11 @@ const assessmentResolver = {
 
       throw new ApiError('Should have returned already');
     },
-    setAssessmentComplete: async (obj, { id, complete = true }) => {
+    setAssessmentComplete: async (obj, { id, complete = true }, { user }) => {
       const assessment = await Assessment.findById(id).populate('assessor').populate('delegate').then();
       const surveyDoc = await Survey.findById(assessment.survey).then();
       assessment.complete = complete;
       await assessment.save().then();
-      const { user } = global;
 
       if (complete === true) {
         if (user._id.equals(assessment.assessor._id) === true) {

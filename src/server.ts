@@ -33,6 +33,7 @@ import { ExcelRouter } from './excel';
 import amq from './amq';
 // import bots from './bot/server';
 import startup from './utils/startup';
+import { getService } from './services';
 import logger from './logging';
 import { split } from 'lodash';
 
@@ -62,10 +63,10 @@ const {
   SERVER_ID
 } = process.env;
 
-mongooseConnection.then((connectionResult) => { 
+mongooseConnection.then((connectionResult) => {
   logger.debug(`✅Connection to mongoose complete`);
 }).catch((error) => {
-  
+
   logger.error(`
   ################################################
   💥Could not connect to mongoose - shutting down
@@ -107,7 +108,7 @@ if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/asciilogo.txt`)) {
 }
 
 let asterisks = '';
-for(let si:number = 0;si < SECRET_SAUCE.length - 2; si += 1){ asterisks = `${asterisks}*` };
+for (let si: number = 0; si < SECRET_SAUCE.length - 2; si += 1) { asterisks = `${asterisks}*` };
 
 const ENV_STRING_DEBUG = `
 Environment Settings: 
@@ -121,7 +122,7 @@ Environment Settings:
   DOMAIN_NAME: ${DOMAIN_NAME}
   MODE: ${MODE}
   MONGOOSE: ${MONGOOSE}
-  SECRET_SAUCE: '${SECRET_SAUCE.substr(0,1)}${asterisks}${SECRET_SAUCE.substr(SECRET_SAUCE.length -1,1)}',
+  SECRET_SAUCE: '${SECRET_SAUCE.substr(0, 1)}${asterisks}${SECRET_SAUCE.substr(SECRET_SAUCE.length - 1, 1)}',
   
   =========================================
          Microsoft OAuth2 Settings
@@ -165,6 +166,23 @@ try {
   let expressConfig: ApolloServerExpressConfig = {
     typeDefs,
     resolvers,
+    context: ($session: any, currentContext: any) => {
+
+      const newContext: any = {
+        ...currentContext,
+        user: $session.req.user,
+        partner: $session.req.partner,
+      };
+
+      const $getService = (id: string, props: any = undefined) => {
+        return getService(id, props, newContext);
+      };
+
+      return {
+        ...newContext,
+        getService: $getService,
+      };
+    },
     uploads: {
       maxFileSize: 20000000,
       maxFiles: 10,
@@ -200,7 +218,7 @@ const sessionOptions: session.SessionOptions = {
     //httpOnly: NODE_ENV === 'development' ? true : false,
     //sameSite: 'lax',
     //secure: NODE_ENV === 'development' ? false : true,
-  },  
+  },
 };
 
 logger.debug(`Session Configuration`, sessionOptions);
@@ -230,7 +248,7 @@ if (apolloServer) {
 amq.raiseSystemEvent('server.startup.begin');
 
 startup().then((startResult) => {
-  
+
   AuthConfig.Configure(reactoryExpress);
   reactoryExpress.use(userAccountRouter);
   reactoryExpress.use('/reactory', reactory);
@@ -239,8 +257,8 @@ startup().then((startResult) => {
   reactoryExpress.use('/workflow', workflow);
   reactoryExpress.use('/resources', resources);
   reactoryExpress.use('/pdf', passport.authenticate(
-    ['jwt'], 
-    { session: false }), 
+    ['jwt'],
+    { session: false }),
     bodyParser.urlencoded({ extended: true }
     ), pdf);
   reactoryExpress.use('/excel', ExcelRouter);
@@ -259,7 +277,7 @@ startup().then((startResult) => {
   logger.info(asciilogo);
   if (graphcompiled === true) logger.info(`✅ Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
   else logger.info(`🩺 GraphQL API not available - ${graphError}`);
-  
+
   logger.info(`✅ System Initialized/Ready, enabling app`);
   global.REACTORY_SERVER_STARTUP = new Date();
   amq.raiseSystemEvent('server.startup.complete');

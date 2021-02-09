@@ -64,7 +64,7 @@ const TemplateResolvers = {
         }
     },
     Query: {
-        ReactoryTemplates: async (obj, { client = null, organization = null }) => {
+        ReactoryTemplates: async (obj, { client = null, organization = null }, context: Reactory.IReactoryContext) => {
             logger.info(`Listing templates using search criteria client id: ${client || 'null'} orgnization: ${organization || 'null'}`);
             if (isNil(client) === false && ObjectId.isValid(client)) {
                 logger.debug('Filtering templates by client and organization id');
@@ -81,22 +81,22 @@ const TemplateResolvers = {
                 }).then();
             }
             // use default partner tempaltes
-            logger.debug(`Returning template list for authenticated partner id ${global.partner._id}`);
-            return Template.find({ client: global.partner._id }).then();
+            logger.debug(`Returning template list for authenticated partner id ${context.partner._id}`);
+            return Template.find({ client: context.partner._id }).then();
         },
         ReactoryTemplate: (obj, { id }) => { return Template.findById(id).then(); },
-        
-        ReactoryGetEmailTemplate: async (obj: any, params: any): Promise<Reactory.IEmailTemplate> => {
+
+        ReactoryGetEmailTemplate: async (obj: any, params: any, context: Reactory.IReactoryContext): Promise<Reactory.IEmailTemplate> => {
 
             logger.debug('🟠 Query.ReactoryGetEmailTemplate(parent, params)', { obj, params });
-            
-            const templateService: Reactory.Service.IReactoryTemplateService = getService('core.TemplateService@1.0.0'); 
-            
+
+            const templateService: Reactory.Service.IReactoryTemplateService = context.getService('core.TemplateService@1.0.0');
+
             const { view, clientId, organizationId, businessUnitId, userId } = params;
             const templateObject: Reactory.ITemplateDocument = await templateService.getTemplate(view, clientId, organizationId, businessUnitId, userId).then()
 
             if (templateObject) {
-                return templateService.hydrateEmail(templateObject).then();    
+                return templateService.hydrateEmail(templateObject).then();
             } else {
                 return {
                     view: view,
@@ -104,15 +104,15 @@ const TemplateResolvers = {
                     businessUnit: ObjectID.isValid(params.businessUnitId) ? new ObjectID(params.businessUnitId) : null,
                     organization: ObjectID.isValid(params.organizationId) ? new ObjectID(params.organizationId) : null,
                     userId: ObjectID.isValid(params.userId) ? new ObjectID(params.userId) : null,
-                    client: ObjectID.isValid(params.clientId) ? new ObjectID(params.clientId) : (global.partner as Reactory.IReactoryClientDocument)._id,
+                    client: ObjectID.isValid(params.clientId) ? new ObjectID(params.clientId) : context.partner._id,
                     visiblity: 'user',
                     subject: 'Your subject line',
                     body: '<p>Enter your email body</p>',
                     description: 'Add a description for this template',
-                    name: 'Add a name',                    
+                    name: 'Add a name',
                 }
-            }                        
-        }                
+            }
+        }
     },
     Mutation: {
         ReactoryUpdateTemplateContent: async (parent, { id, content }) => {
@@ -121,16 +121,16 @@ const TemplateResolvers = {
 
             return template;
         },
-        
-        ReactorySetEmailTemplate: async (parent: any, params: ReactorySetEmailTemplateParams): Promise<Reactory.IEmailTemplate> => {
-            const templateService: Reactory.Service.IReactoryTemplateService = getService('core.TemplateService@1.0.0');
-            
+
+        ReactorySetEmailTemplate: async (parent: any, params: ReactorySetEmailTemplateParams, context: Reactory.IReactoryContext): Promise<Reactory.IEmailTemplate> => {
+            const templateService: Reactory.Service.IReactoryTemplateService = context.getService('core.TemplateService@1.0.0');
+
             logger.debug('🟠 Mutation.ReactorySetEmailTemplate(parent, params)', { parent, params });
 
             let $emailTemplate: Reactory.IEmailTemplate = {
                 id: params.emailTemplate.id,
                 body: params.emailTemplate.body,
-                client: ObjectID.isValid(params.emailTemplate.clientId) ? new ObjectID(params.emailTemplate.clientId) : (global.partner as Reactory.IReactoryClientDocument)._id,
+                client: ObjectID.isValid(params.emailTemplate.clientId) ? new ObjectID(params.emailTemplate.clientId) : context.partner._id,
                 subject: params.emailTemplate.subject,
                 name: params.emailTemplate.name,
                 description: params.emailTemplate.description,
@@ -140,13 +140,13 @@ const TemplateResolvers = {
                 visiblity: params.emailTemplate.visibility,
                 view: params.emailTemplate.view
             };
-                        
+
             try {
                 let templateObject: Reactory.ITemplateDocument = await templateService.dehydrateEmail($emailTemplate).then();
                 logger.debug(`Template service returned template document ${templateObject.baseModelName} id: ${templateObject.id || templateObject._id}, version: ${templateObject.__v}`)
-                
-                if (templateObject) {   
-    
+
+                if (templateObject) {
+
                     let validationResult = templateObject.validateSync();
 
                     if (validationResult && Object.keys(validationResult.errors).length > 0) {
@@ -163,11 +163,11 @@ const TemplateResolvers = {
                         await templateObject.save().then()
 
                         let emailTemplate: Reactory.IEmailTemplate = await templateService.hydrateEmail(templateObject);
-                        logger.debug(`🟢 Mutation.ReactorySetEmailTemplate(parent, params) - done`, {emailTemplate});
-                        return emailTemplate;                        
-                    }                                                                                                                                                        
+                        logger.debug(`🟢 Mutation.ReactorySetEmailTemplate(parent, params) - done`, { emailTemplate });
+                        return emailTemplate;
+                    }
                 }
-                
+
                 throw new ApiError('Could not successfully dehydrate email returned an empty template.');
 
             } catch (dehydrateError) {
@@ -175,7 +175,7 @@ const TemplateResolvers = {
                 throw dehydrateError;
             }
         }
-        
+
     },
 };
 

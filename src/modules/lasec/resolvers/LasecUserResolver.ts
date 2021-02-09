@@ -8,6 +8,7 @@ import { Quote, QuoteReminder } from '../schema/Quote';
 import { getLoggedIn360User, setLoggedInUserProps } from './Helpers';
 import { Lasec360User } from '../types/lasec';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
+import { Reactory } from 'types/reactory';
 
 
 
@@ -39,7 +40,7 @@ export default {
     repId: (lasec360User: any) => lasec360User.sales_team_id,
     activeCompany: (lasec360User: any) => lasec360User.user_type,
     companyName: (lasec360User: Lasec360User) => {
-      switch (lasec360User.user_type) {        
+      switch (lasec360User.user_type) {
         case "lasec_education":
         case "LasecEducation": {
           return 'Lasec Education';
@@ -60,51 +61,52 @@ export default {
       return lasec360User.sales_team_ids || []
     },
 
-  },  
+  },
   Query: {
-    LasecGetRemoteUsers: async (pbj: any, params: Lasec360UserSearch) => {
-      logger.debug(`LasecGetRemoteUsers() ${global.user.fullName()}`);
-      
-      return LasecApi.User.getLasecUsers(params.repIds, "staff_user_id")                  
+    LasecGetRemoteUsers: async (pbj: any, params: Lasec360UserSearch, context: Reactory.IReactoryContext) => {
+      logger.debug(`LasecGetRemoteUsers() ${context.user.fullName()}`);
+
+      return LasecApi.User.getLasecUsers(params.repIds, "staff_user_id", context)
     },
-    LasecGetRemoteUser: async (obj, params: any) => {      
+    LasecGetRemoteUser: async (obj, params: any, context: Reactory.IReactoryContext) => {
       const search: Lasec360User = params.search;
-      logger.debug(`LasecGetRemoteUser() ${ search } ${global.user.fullName()}`);
+      logger.debug(`LasecGetRemoteUser() ${search} ${context.user.fullName()}`);
       let userResult: Lasec360User = null;
-            
+
       return userResult;
     },
-    LasecGetUserNextActions: async (obj, params: any): Promise<IObjectSchema> => {
+    LasecGetUserNextActions: async (obj, params: any, context: Reactory.IReactoryContext): Promise<IObjectSchema> => {
       const id: String = params.id;
       const filter: LasecNextActionsFilter = params.filter || { actioned: false };
-      return QuoteReminder.find({}).then()      
+      return QuoteReminder.find({}).then()
     },
-    LasecLoggedInUser: async( obj, params: any): Promise<Lasec360User> => {     
-      logger.debug('Query LasecLoggedInUser Called')
-      return await getLoggedIn360User().then();
+    LasecLoggedInUser: async (obj, params: any, context: any, info: any): Promise<Lasec360User> => {
+      logger.debug('Query LasecLoggedInUser Called');
+      debugger
+      return await getLoggedIn360User(false, context).then();
     }
   },
   Mutation: {
-    LasecSyncRemoteUserData: async ({ search: Lasec360UserSearch }) => {
+    LasecSyncRemoteUserData: async ({ search: Lasec360UserSearch }, context: Reactory.IReactoryContext) => {
 
     },
-    LasecReset360Credentials: async (object: any, params: any ): Promise<boolean> => {
+    LasecReset360Credentials: async (object: any, params: any, context: Reactory.IReactoryContext): Promise<boolean> => {
       logger.debug(`Resetting credetials`, { params })
-      if(isEmpty(params.email) === true) {
+      if (isEmpty(params.email) === true) {
         //we have no user email, use loged in user
-        return user.removeAuthentication("lasec");
+        return context.user.removeAuthentication("lasec");
       } else {
         const foundUser: Reactory.IUser = await User.findOne({ email: params.email }).then();
-        if(foundUser) {
+        if (foundUser) {
           logger.debug(`Found user`, { fullName: foundUser.fullName(false) })
-          return foundUser.removeAuthentication("lasec");          
+          return foundUser.removeAuthentication("lasec");
         }
         return false;
       }
     },
-    LasecSetMy360: async (parent: any, params: { rep_code: string, active_company: string }) => {
+    LasecSetMy360: async (parent: any, params: { rep_code: string, active_company: string }, context: Reactory.IReactoryContext) => {
       logger.debug(`Setting Active Company and Rep Code ${params.rep_code} ${params.active_company}`)
-      return setLoggedInUserProps(params.rep_code, params.active_company);
+      return setLoggedInUserProps(params.rep_code, params.active_company, context);
     }
   }
 };

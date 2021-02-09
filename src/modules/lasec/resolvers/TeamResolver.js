@@ -4,11 +4,11 @@ import LasecAPI from '@reactory/server-modules/lasec/api';
 import logger from '@reactory/server-core/logging';
 export default {
   Query: {
-    LasecSalesTeamsFromApi: async () => {
+    LasecSalesTeamsFromApi: async (obj, params, context) => {
 
       logger.debug(`TeamResolver.LasecSalesTeams()`);
 
-      const teamsPayload = await LasecAPI.Teams.list().then();
+      const teamsPayload = await LasecAPI.Teams.list(context).then();
 
       logger.debug(`TEAMS PAYLOAD:: :: ${JSON.stringify(teamsPayload)}`);
 

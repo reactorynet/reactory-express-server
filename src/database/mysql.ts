@@ -11,6 +11,7 @@ import {
   SQLColumn,
   QueryStringResultWithCount
 } from './types';
+import { Reactory } from 'types/reactory';
 
 let pool: mysql.Pool = null;
 
@@ -26,10 +27,10 @@ const defaultConnectionObject: MySqlConnectionObject = {
   database: 'reactory',
   user: 'reactory',
   password: 'reactory',
-  port: 3306,  
+  port: 3306,
 };
 
-export const getPool = (database = 'plc', host = 'localhost', user = 'towerstone', password = process.end.DATABASE_PASSWORD_LEGACY, port = 3306, clientKey = 'plc') : mysql.Pool => {
+export const getPool = (database = 'plc', host = 'localhost', user = 'towerstone', password = process.end.DATABASE_PASSWORD_LEGACY, port = 3306, clientKey = 'plc'): mysql.Pool => {
   if (pool === null) {
     pool = mysql.createPool({
       connectionLimit: 100,
@@ -43,12 +44,12 @@ export const getPool = (database = 'plc', host = 'localhost', user = 'towerstone
   return pool;
 };
 
-export const getPoolWithObject = ({ 
-  host = 'localhost', 
-  user = 'reactory', 
-  password = 'reactory', 
-  database = 'reactory', 
-  port = 3306, 
+export const getPoolWithObject = ({
+  host = 'localhost',
+  user = 'reactory',
+  password = 'reactory',
+  database = 'reactory',
+  port = 3306,
   connectionLimit = 100
 }) => {
   if (pool === null) {
@@ -64,20 +65,20 @@ export const getPoolWithObject = ({
   return pool;
 };
 
-export const getConnection = (connectionId = 'mysql.default') => {
-  if(!global.partner) throw new ApiError('Cannot get a connection without an active partner');
+export const getConnection = (connectionId = 'mysql.default', context: Reactory.IReactoryContext) => {
+  if (!context.partner) throw new ApiError('Cannot get a connection without an active partner');
 
-  const setting = global.partner.getSetting(connectionId, { 
+  const setting = context.partner.getSetting(connectionId, {
     host: 'localhost',
     user: 'reactory',
     database: 'reactory',
     password: 'reactory',
     port: 3306,
-    connectionLimit: 100    
+    connectionLimit: 100
   }, true);
 
   logger.debug(`Creating connection with configuration`, setting.data);
-  return getPoolWithObject(setting.data);    
+  return getPoolWithObject(setting.data);
 };
 
 export const testConnection = (tenant = 'plc') => {
@@ -93,7 +94,7 @@ export const testConnection = (tenant = 'plc') => {
 
 
 const whereClause = (filter: SQLFilter[]) => {
-  if(filter && filter.length > 0) {
+  if (filter && filter.length > 0) {
 
     const formatValue = (filter: SQLFilter) => {
 
@@ -102,8 +103,8 @@ const whereClause = (filter: SQLFilter[]) => {
     return `
       WHERE
         ${filter.map((columnFilter: SQLFilter) => {
-          return ` ${columnFilter.field} ${columnFilter.operator} ${columnFilter.value} `
-        })
+      return ` ${columnFilter.field} ${columnFilter.operator} ${columnFilter.value} `
+    })
       }
     `
   } else {
@@ -112,69 +113,67 @@ const whereClause = (filter: SQLFilter[]) => {
 };
 
 export const MySQLQueryStringGenerator: QueryStringGenerator = {
-  fromQuery: async (queryCommand: SQLQuery): Promise<QueryStringResultWithCount> => {
-    logger.debug('Generating SQL Query using queryCommand', queryCommand);    
-    let queryStringResultWithCount: QueryStringResultWithCount = {
+  fromQuery: async (queryCommand: SQLQuery, context: Reactory.IReactoryContext): Promise<QueryStringResultWithCount> => {
+    logger.debug('Generating SQL Query using queryCommand', queryCommand);
+    const queryStringResultWithCount: QueryStringResultWithCount = {
       query: `
         SELECT
-          ${queryCommand.columns.map((sqlColumn: SQLColumn, index: number) => {
-            return `${sqlColumn.field}`
-          })}
+          ${queryCommand.columns.map((sqlColumn: SQLColumn) => { return `${sqlColumn.field}` })}
         FROM 
           ${queryCommand.context.schema}.${queryCommand.context.table}
         ${whereClause(queryCommand.filters)}
         LIMIT ${queryCommand.paging.pageSize || 100}
         OFFSET ${((queryCommand.paging.page || 1) - 1) * (queryCommand.paging.pageSize || 100)}
       `,
-      count: 0
+      count: 0,
     };
 
     const countResult: any[] = await queryAsync(`
       SELECT 
         COUNT(1) as total
       FROM ${queryCommand.context.schema}.${queryCommand.context.table}
-      ${whereClause(queryCommand.filters)}`, queryCommand.context.connectionId).then();
+      ${whereClause(queryCommand.filters)}`, queryCommand.context.connectionId, null, context).then();
 
     queryStringResultWithCount.count = countResult[0].total;
 
     return queryStringResultWithCount;
   },
-  fromInsert: (insertCommand: SQLInsert): string => {
+  fromInsert: (insertCommand: SQLInsert, context: Reactory.IReactoryContext): string => {
     return `
       INSERT 
       ${insertCommand.columns.map((sqlColumn: SQLColumn, index: number) => {
-        return `${sqlColumn.field} ${index < insertCommand.columns.length ? ',' : ''}`
-      })}
+      return `${sqlColumn.field} ${index < insertCommand.columns.length ? ',' : ''}`
+    })}
       INTO
         ${insertCommand.context.table}
       VALUES (
-        ${insertCommand.values.map((columnValue: any, cIndex: number) => {  
-          return `'${columnValue}'`
-        })}
+        ${insertCommand.values.map((columnValue: any, cIndex: number) => {
+      return `'${columnValue}'`
+    })}
       )
     `;
   },
-  fromUpdate: (updateCommand: SQLUpdate): string => {
+  fromUpdate: (updateCommand: SQLUpdate, context: Reactory.IReactoryContext): string => {
     return `
       UPDATE
 
       SET
       ${updateCommand.columns.map((sqlColumn: SQLColumn, index: number) => {
-        return `${sqlColumn.field} ${index < updateCommand.columns.length ? ',' : ''}`
-      })}
+      return `${sqlColumn.field} ${index < updateCommand.columns.length ? ',' : ''}`
+    })}
     `;
   },
-  fromDelete: (deleteCommand: SQLDelete): string => {
+  fromDelete: (deleteCommand: SQLDelete, context: Reactory.IReactoryContext): string => {
     return `
       DELETE        
       FROM
         ${deleteCommand.context.table}      
         ${whereClause(deleteCommand.filter)}
     `;
-  },  
+  },
 };
 
-export const queryAsync = async (query: string, connectionId: string = 'mysql.default', values?: any ) => {
+export const queryAsync = async (query: string, connectionId: string = 'mysql.default', values: any, context: Reactory.IReactoryContext) => {
   logger.debug('queryAsync', { query, connectionId });
 
   return new Promise((resolve, reject) => {
@@ -182,20 +181,20 @@ export const queryAsync = async (query: string, connectionId: string = 'mysql.de
       if (error === null || error === undefined) {
         resolve(results);
       } else {
-        logger.error(`Results from query`, { error, fields } )
+        logger.error('Results from query', { error, fields });
         reject(error);
       }
     };
-    const connection =  getConnection(connectionId);
-    if(connection) {
-      
-      connection.query( { sql: query, values  }, resultCallback);
-      
+    const connection = getConnection(connectionId, context);
+    if (connection) {
+
+      connection.query({ sql: query, values }, resultCallback);
+
     } else {
       reject(new ApiError(`Could not establish a connection using the connection details for ${connectionId}`));
     }
-      
-  });  
+
+  });
 };
 
 

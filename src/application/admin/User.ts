@@ -40,7 +40,7 @@ export const userWithId = co.wrap(function* userWithIdGenerator(id) {
 export const createUserForOrganization = co.wrap(function* createUserForOrganization(user, password, organization, roles = [], provider = 'LOCAL', partner, businessUnit) { // eslint-disable-line max-len
   const result = new CreateUserResult();
   try {
-    const partnerToUse = partner || global.partner;
+    const partnerToUse = partner;
     let foundUser = yield User.findOne({ email: user.email }, {
       _id: 1, memberships: 1, firstName: 1, lastName: 1,
     }).then();
@@ -155,8 +155,8 @@ export const listAllForOrganization = async (organizationId: string | ObjectID,
     }
   }
 
-  let users: Reactory.IUserDocument[] = [];  
-  
+  let users: Reactory.IUserDocument[] = [];
+
   try {
 
     if (organization) {
@@ -166,7 +166,7 @@ export const listAllForOrganization = async (organizationId: string | ObjectID,
         query.$or = [{ deleted: false }, { deleted: { $exists: false } }]
       }
 
-      
+
 
       if (searchString.length > 0) {
         if (searchString.indexOf('@') > 0) {
@@ -180,11 +180,11 @@ export const listAllForOrganization = async (organizationId: string | ObjectID,
       }
 
       response.paging.total = await User.count(query).then();
-      if (response.paging.total > 0) {        
-        response.items = await User.find(query).sort('firstName lastName').skip((paging.page -1)  * paging.pageSize).limit(paging.pageSize).then();    
+      if (response.paging.total > 0) {
+        response.items = await User.find(query).sort('firstName lastName').skip((paging.page - 1) * paging.pageSize).limit(paging.pageSize).then();
         response.users = response.items; //alias
-      }      
-      response.paging.hasNext = response.paging.total > paging.pageSize;            
+      }
+      response.paging.hasNext = response.paging.total > paging.pageSize;
     }
   } catch (userListError) {
 

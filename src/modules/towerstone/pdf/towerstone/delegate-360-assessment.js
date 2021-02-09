@@ -76,12 +76,12 @@ const greyscalePng = (path, outpath) => {
  * TODO: This data resolver needs to be split up into smaller segments with more precise error handling
  * @param {*} param0
  */
-const resolveData = async ({ surveyId, delegateId }) => {
+const resolveData = async ({ surveyId, delegateId, context }) => {
   logger.info(`Resolving data for delegate-360-assessment Survey: ${surveyId}  DelegateEntry: ${delegateId}`);
   // const assessment = await Assessment.findById(assessment_id).then();
 
   try {
-    const { partner, user } = global;
+    const { partner, user } = context;
 
     const survey = await Survey.findById(surveyId)
       .populate('organization')

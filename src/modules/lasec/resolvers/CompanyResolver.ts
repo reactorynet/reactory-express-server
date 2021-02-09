@@ -64,10 +64,10 @@ export interface GetClientsParams {
   selectedClient?: any;
 };
 
-const getClients = async (params: GetClientsParams) => {
+const getClients = async (params: GetClientsParams, context: Reactory.IReactoryContext) => {
+  if (context === null) throw new ApiError(`Context is required`)
 
-
-  let logged_in: Lasec360User = await getLoggedIn360User().then();
+  let logged_in: Lasec360User = await getLoggedIn360User(false, context).then();
 
   if (logged_in === null) throw new ApiError('No Valid Lasec User Logged In');
 
@@ -205,7 +205,7 @@ const getClients = async (params: GetClientsParams) => {
             id
           }
         }
-      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1, filter, repCode }).then();
+      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1, filter, repCode }, {}, context.user, context.partner).then();
     }
     logger.debug(`Returning cached item ${cachekey}`);
     return _cachedResults;
@@ -219,7 +219,7 @@ const getClients = async (params: GetClientsParams) => {
     format: { ids_only: true },
     pagination:
       { enabled: true, page_size: paging.pageSize || 10, current_page: paging.page }
-  }).then();
+  }, context).then();
 
   let ids: any[] = [];
 
@@ -237,7 +237,7 @@ const getClients = async (params: GetClientsParams) => {
 
   logger.debug(`Loading (${ids.length}) client ids`);
 
-  const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids }, ordering: {}, pagination: { enabled: false, current_page: paging.page, page_size: paging.pageSize } });
+  const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids }, ordering: {}, pagination: { enabled: false, current_page: paging.page, page_size: paging.pageSize } }, context);
   logger.debug(`Fetched Expanded View for (${clientDetails.items.length}) Clients from API`);
   let clients = [...clientDetails.items];
   clients = clients.map(client => {
@@ -245,21 +245,21 @@ const getClients = async (params: GetClientsParams) => {
       'id': 'id',
       'first_name': [{
         "key": 'fullName',
-        "transform": (sourceValue, sourceObject) => `${sourceValue} ${sourceObject.surname}`,
+        "transform": (sourceValue: string, sourceObject: any) => `${sourceValue} ${sourceObject.surname}`,
       }, "firstName"],
       'surname': 'lastName',
       'sales_team_id': 'salesTeam',
-      'activity_status': { key: 'clientStatus', transform: (sourceValue) => `${sourceValue}`.toLowerCase() },
+      'activity_status': { key: 'clientStatus', transform: (sourceValue: string) => `${sourceValue}`.toLowerCase() },
       'email': 'emailAddress',
       'company_id': 'customer.id',
       'company_account_number': 'customer.accountNumber',
       'company_trading_name': 'customer.tradingName',
       'company_sales_team': 'customer.salesTeam',
-      'duplicate_name_flag': { key: 'isNameDuplicate', transform: (src) => src == true },
-      'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
+      'duplicate_name_flag': { key: 'isNameDuplicate', transform: (src: boolean) => src === true },
+      'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src: boolean) => src === true },
       'company_on_hold': {
         'key': 'customer.customerStatus',
-        'transform': (val) => (`${val === true ? 'on-hold' : 'not-on-hold'}`)
+        'transform': (val: true) => (`${val === true ? 'on-hold' : 'not-on-hold'}`)
       },
       'currency_code': 'customer.currencyCode',
       'currency_symbol': 'customer.currencySymbol',
@@ -287,11 +287,11 @@ const getClients = async (params: GetClientsParams) => {
     // create segments for page size 5 and 10
     if (result.paging.pageSize === 20) {
       const cachekeys_10 = `client_list_${search}_page_${paging.page || 1}_page_size_10`.toLowerCase();
-      setCacheItem(cachekeys_10, { paging: { ...result.paging, pageSize: 10, hasNext: true }, clients: lodash.take(result.products, 10) });
+      setCacheItem(cachekeys_10, { paging: { ...result.paging, pageSize: 10, hasNext: true }, clients: lodash.take(result.clients, 10) }, 120, context.partner);
     }
 
     const cachekeys_5 = `client_list_${search}_page_${paging.page || 1}_page_size_5`.toLowerCase();
-    setCacheItem(cachekeys_5, { paging: { ...result.paging, pageSize: 5, hasNext: true }, clients: lodash.take(result.products, 5) });
+    setCacheItem(cachekeys_5, { paging: { ...result.paging, pageSize: 5, hasNext: true }, clients: lodash.take(result.clients, 5) }, 120, context.partner);
   }
 
   if (result.paging.hasNext === true && iter === 0) {
@@ -310,7 +310,7 @@ const getClients = async (params: GetClientsParams) => {
             id
           }
         }
-      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
+      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }, {}, context.user, context.partner).then();
     } catch (cacheFetchError) {
       logger.error('An error occured attempting to cache next page', cacheFetchError);
     }
@@ -323,21 +323,21 @@ const getClients = async (params: GetClientsParams) => {
   return result;
 }
 
-export const getClient = async (params: any) => {
+export const getClient = async (params: any, context: Reactory.IReactoryContext) => {
 
-  const clientDetails = await lasecApi.Customers.list({ filter: { ids: [params.id] } });
+  const clientDetails = await lasecApi.Customers.list({ filter: { ids: [params.id] } }, context);
 
   let clients = [...clientDetails.items];
   if (clients.length === 1) {
 
     logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
 
-    let clientResponse = om(clients[0], {
+    let clientResponse: any = om.merge(clients[0], {
       'id': 'id',
       'title_id': ['title', 'titleLabel'],
-      'first_name': [{ "key": 'fullName', "transform": (sourceValue, sourceObject) => `${sourceValue} ${sourceObject.surname}` }, "firstName"],
+      'first_name': [{ "key": 'fullName', "transform": (sourceValue: string, sourceObject: any) => `${sourceValue} ${sourceObject.surname}` }, "firstName"],
       'surname': 'lastName',
-      'activity_status': { key: 'clientStatus', transform: (sourceValue) => `${sourceValue}`.toLowerCase() },
+      'activity_status': { key: 'clientStatus', transform: (sourceValue: string) => `${sourceValue}`.toLowerCase() },
       'email': 'emailAddress',
       'alternate_email': 'alternateEmail',
       'mobile_number': 'mobileNumber',
@@ -345,12 +345,12 @@ export const getClient = async (params: any) => {
       'alternate_office_number': 'alternateOfficeNumber',
       'special_notes': 'note',
       'sales_team_id': 'salesTeam',
-      'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src) => src == true },
-      'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
+      'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src: boolean) => src == true },
+      'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src: boolean) => src == true },
       'department': ['department', 'jobTitle'],
 
       'ranking_id': ['customer.ranking', {
-        key: 'customer.rankingLabel', "transform": (srcVal, srcObj) => {
+        key: 'customer.rankingLabel', "transform": (srcVal: string, srcObj: any) => {
           switch (srcVal) {
             case '1':
               return 'A - High Value';
@@ -365,14 +365,14 @@ export const getClient = async (params: any) => {
       }],
 
       // 'faculty': 'faculty',
-      'faculty': { 'key': 'faculty', 'transform': (srcVal) => srcVal == null ? '' : srcVal },
+      'faculty': { 'key': 'faculty', 'transform': (srcVal: string) => srcVal == null ? '' : srcVal },
       // 'customer_type': 'customerType',
-      'customer_type': { 'key': 'customerType', 'transform': (srcVal) => srcVal == null ? '' : srcVal },
+      'customer_type': { 'key': 'customerType', 'transform': (srcVal: string) => srcVal == null ? '' : srcVal },
 
       // 'line_manager_id': 'lineManager',
-      'line_manager_id': { 'key': 'lineManager', 'transform': (srcVal) => srcVal == '0' || srcVal == '0' ? '' : srcVal },
+      'line_manager_id': { 'key': 'lineManager', 'transform': (srcVal: string) => srcVal == '0' || srcVal == '0' ? '' : srcVal },
       // 'line_manager_name': 'lineManagerLabel',
-      'line_manager_name': { 'key': 'lineManagerLabel', 'transform': (srcVal) => srcVal == null ? '' : srcVal },
+      'line_manager_name': { 'key': 'lineManagerLabel', 'transform': (srcVal: string) => srcVal == null ? '' : srcVal },
 
       'role_id': 'jobType',
       'company_id': 'customer.id',
@@ -383,7 +383,7 @@ export const getClient = async (params: any) => {
       'account_type': ['accountType', 'customer.accountType'],
       'company_on_hold': {
         'key': 'customer.customerStatus',
-        'transform': (val) => (`${val === true ? 'On-hold' : 'Active'}`)
+        'transform': (val: boolean) => (`${val === true ? 'On-hold' : 'Active'}`)
       },
       'currency_code': 'customer.currencyCode',
       'currency_symbol': 'customer.currencySymbol',
@@ -397,15 +397,15 @@ export const getClient = async (params: any) => {
 
     try {
       let hashkey = Hash(`LASEC_COMPANY::${clientResponse.customer.id}`);
-      let found = await getCacheItem(hashkey).then();
+      let found = await getCacheItem(hashkey, null, 60, context.partner).then();
       logger.debug(`Found Cached Item for LASEC_COMPANY::${clientResponse.customer.id} ==> ${found}`)
       if (found === null || found === undefined) {
-        let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }).then()
+        let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }, context).then()
         // logger.debug(`LASEC_COMPANY DETAILS::${JSON.stringify(companyPayloadResponse.items[0])}`);
         if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
           if (companyPayloadResponse.items.length === 1) {
             let customerObject = {
-              ...clientResponse.customer, ...om(companyPayloadResponse.items[0], {
+              ...clientResponse.customer, ...om.merge(companyPayloadResponse.items[0], {
                 'company_id': 'id',
                 'registered_name': 'registeredName',
                 'description': 'description',
@@ -424,12 +424,12 @@ export const getClient = async (params: any) => {
                 "90_day_invoice_total_cents": "balance90Days",
                 "120_day_invoice_total_cents": "balance120Days",
                 "credit_invoice_total_cents": "creditTotal",
-                'special_requirements': { key: 'specialRequirements', transform: (srcVal) => srcVal == null || srcVal == '' ? 'No special requirements set.' : srcVal },
+                'special_requirements': { key: 'specialRequirements', transform: (srcVal: string) => srcVal == null || srcVal == '' ? 'No special requirements set.' : srcVal },
               })
             };
             // "special_requirements": "specialRequirements"
 
-            setCacheItem(hashkey, customerObject, 10);
+            setCacheItem(hashkey, customerObject, 10, context.partner);
             clientResponse.customer = customerObject;
           }
         }
@@ -441,18 +441,18 @@ export const getClient = async (params: any) => {
     }
 
     // SET PERSON TITLE STRING VALUE
-    const titles = await getPersonTitles();
-    const setTitle = titles.find(t => t.id == clientResponse.titleLabel)
+    const titles = await getPersonTitles(context);
+    const setTitle = titles.find((t: any) => t.id == clientResponse.titleLabel)
     clientResponse.titleLabel = setTitle ? setTitle.title : clientResponse.titleLabel;
 
     // SET ROLE STRING VALUE
-    const roles = await getCustomerRoles({}).then();
-    const employeeRole = roles.find(t => t.id == clientResponse.jobType);
+    const roles = await getCustomerRoles(context).then();
+    const employeeRole = roles.find((t: any) => t.id == clientResponse.jobType);
     clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.jobType;
 
     // CUSTOMER CLASS
-    const customerClasses = await getCustomerClass().then();
-    const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
+    const customerClasses = await getCustomerClass(context).then();
+    const customerClass = customerClasses.find((c: any) => c.id == clientResponse.customer.customerClass);
 
     clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.customer.customerClass;
 
@@ -493,14 +493,14 @@ interface ClientUpdateInput {
 /**
  * @param args client object
  */
-const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
+const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.IReactoryContext) => {
 
   logger.debug(`CompanyResolver.ts >> updateClientDetail(args)`, args);
 
   try {
     const params = args.clientInfo;
 
-    const preFetchClientDetails = await lasecApi.Customers.list({ filter: { ids: [params.clientId] } });
+    const preFetchClientDetails = await lasecApi.Customers.list({ filter: { ids: [params.clientId] } }, context);
 
     let clients = [...preFetchClientDetails.items];
     if (clients.length === 1) {
@@ -570,20 +570,20 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
 
       logger.debug(`UPDATE PARAMS:: ${JSON.stringify(updateParams)}`);
 
-      const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams);
+      const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams, context);
 
       if (apiResponse.success && apiResponse.customer) {
         // map customer
-        let clientResponse = om(apiResponse.customer, {
+        let clientResponse: any = om.merge(apiResponse.customer, {
           'id': 'id',
           'title_id': ['title', 'titleLabel'],
           'first_name': [{
             "key":
               'fullName',
-            "transform": (sourceValue, sourceObject) => `${sourceValue} ${sourceObject.surname}`,
+            "transform": (sourceValue: string, sourceObject: any) => `${sourceValue} ${sourceObject.surname}`,
           }, "firstName"],
           'surname': 'lastName',
-          'activity_status': { key: 'clientStatus', transform: (sourceValue) => `${sourceValue}`.toLowerCase() },
+          'activity_status': { key: 'clientStatus', transform: (sourceValue: string) => `${sourceValue}`.toLowerCase() },
           'email': 'emailAddress',
           'alternate_email': 'alternateEmail',
           'mobile_number': 'mobileNumber',
@@ -591,8 +591,8 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
           'alternate_office_number': 'alternateOfficeNumber',
           'special_notes': 'note',
           'sales_team_id': 'salesTeam',
-          'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src) => src == true },
-          'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src) => src == true },
+          'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src: any) => src == true },
+          'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src: any) => src == true },
           'department': ['department', 'jobTitle'],
           'ranking_id': 'customer.ranking',
 
@@ -615,7 +615,7 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
           'account_type': ['accountType', 'customer.accountType'],
           'company_on_hold': {
             'key': 'customer.customerStatus',
-            'transform': (val) => (`${val === true ? 'on-hold' : 'not-on-hold'}`)
+            'transform': (val: boolean) => (`${val === true ? 'on-hold' : 'not-on-hold'}`)
           },
           'currency_code': 'customer.currencyCode',
           'currency_symbol': 'customer.currencySymbol',
@@ -629,15 +629,15 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
 
         try {
           let hashkey = Hash(`LASEC_COMPANY::${clientResponse.customer.id}`);
-          let found = await getCacheItem(hashkey).then();
+          let found = await getCacheItem(hashkey, null, 60, context.partner).then();
           logger.debug(`Found Cached Item for LASEC_COMPANY::${clientResponse.customer.id} ==> ${found}`)
           if (found === null || found === undefined) {
-            let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }).then()
+            let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }, context).then()
             if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
               if (companyPayloadResponse.items.length === 1) {
 
                 let customerObject = {
-                  ...clientResponse.customer, ...om(companyPayloadResponse.items[0], {
+                  ...clientResponse.customer, ...om.merge(companyPayloadResponse.items[0], {
                     'company_id': 'id',
                     'registered_name': 'registeredName',
                     'description': 'description',
@@ -659,7 +659,7 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
                   })
                 };
 
-                setCacheItem(hashkey, customerObject, 10);
+                setCacheItem(hashkey, customerObject, 10, context);
                 clientResponse.customer = customerObject;
               }
             }
@@ -671,19 +671,19 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
         }
 
         // SET PERSON TITLE STRING VALUE
-        const titles = await getPersonTitles();
-        const setTitle = titles.find(t => t.id == clientResponse.titleLabel)
+        const titles = await getPersonTitles(context);
+        const setTitle = titles.find((t: any) => t.id == clientResponse.titleLabel)
         clientResponse.titleLabel = setTitle ? setTitle.title : clientResponse.titleLabel;
 
         // SET ROLE STRING VALUE
-        const roles = await getCustomerRoles({}).then();
-        const employeeRole = roles.find(t => t.id == clientResponse.jobType);
+        const roles = await getCustomerRoles(context).then();
+        const employeeRole = roles.find((t: any) => t.id == clientResponse.jobType);
         clientResponse.jobTypeLabel = employeeRole ? employeeRole.name : clientResponse.clientResponse.jobType;
 
         // CUSTOMER CLASS
 
-        const customerClasses = await getCustomerClass({}).then();
-        const customerClass = customerClasses.find(c => c.id == clientResponse.customer.customerClass);
+        const customerClasses = await getCustomerClass(context).then();
+        const customerClass = customerClasses.find((c: any) => c.id == clientResponse.customer.customerClass);
         clientResponse.customerClassLabel = customerClass ? customerClass.name : clientResponse.clientResponse.customer.customerClass;
 
         return {
@@ -709,17 +709,17 @@ const updateClientDetail = async (args: { clientInfo: ClientUpdateInput }) => {
 
 const LASEC_ROLES_KEY = 'LASEC_CUSTOMER_ROLES';
 
-const getCustomerRoles = async () => {
+const getCustomerRoles = async (context: Reactory.IReactoryContext) => {
 
-  const cached = await getCacheItem(Hash(LASEC_ROLES_KEY)).then();
+  const cached = await getCacheItem(Hash(LASEC_ROLES_KEY), null, 60, context).then();
   if (cached) return cached.items;
 
-  const idsResponse = await lasecApi.Customers.GetCustomerRoles();
+  const idsResponse = await lasecApi.Customers.GetCustomerRoles({}, context);
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetCustomerRoles({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    const details = await lasecApi.Customers.GetCustomerRoles({ filter: { ids: [...idsResponse.ids] }, pagination: {} }, context);
     if (details && details.items) {
-      setCacheItem(Hash(LASEC_ROLES_KEY), details, 60);
+      setCacheItem(Hash(LASEC_ROLES_KEY), details, 60, context.partner);
       return details.items;
     }
   }
@@ -728,18 +728,18 @@ const getCustomerRoles = async () => {
 
 };
 
-const getCustomerRanking = async () => {
+const getCustomerRanking = async (context: Reactory.IReactoryContext) => {
 
-  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_RANKING')).then();
+  const cached = await getCacheItem(Hash('LASEC_CUSTOMER_RANKING'), null, 60, context.partner).then();
 
   if (cached && cached.items) return cached.items;
 
-  const idsResponse = await lasecApi.Customers.GetCustomerRankings();
+  const idsResponse = await lasecApi.Customers.GetCustomerRankings({}, context);
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetCustomerRankings({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    const details = await lasecApi.Customers.GetCustomerRankings({ filter: { ids: [...idsResponse.ids] }, pagination: {} }, context);
     if (details && details.items) {
-      setCacheItem('LASEC_CUSTOMER_RANKING', details, 60);
+      setCacheItem('LASEC_CUSTOMER_RANKING', details, 60, context.partner);
       return details.items;
     }
   }
@@ -748,14 +748,14 @@ const getCustomerRanking = async () => {
 
 };
 
-const getCustomerClass = async () => {
+const getCustomerClass = async (context: Reactory.IReactoryContext) => {
   //if (cached && cached.items) return cached.items;
-  const idsResponse = await lasecApi.Customers.GetCustomerClass();
+  const idsResponse = await lasecApi.Customers.GetCustomerClass({}, context);
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetCustomerClass({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    const details = await lasecApi.Customers.GetCustomerClass({ filter: { ids: [...idsResponse.ids] }, pagination: {} }, context);
     if (details && details.items) {
-      setCacheItem(Hash('LASEC_CUSTOMER_CLASS'), details, 60);
+      setCacheItem(Hash('LASEC_CUSTOMER_CLASS'), details, 60, context);
       return details.items;
     }
   }
@@ -763,9 +763,9 @@ const getCustomerClass = async () => {
   return [];
 };
 
-const getFacultyList = async () => {
+const getFacultyList = async (context: Reactory.IReactoryContext) => {
   try {
-    const faculty_list: { faculty: string }[] = await mysql(`SELECT faculty FROM CustomerFaculty ORDER by faculty ASC`, 'mysql.lasec360').then();
+    const faculty_list: { faculty: string }[] = await mysql(`SELECT faculty FROM CustomerFaculty ORDER by faculty ASC`, 'mysql.lasec360', undefined, context).then();
     // logger.debug(`Results from Faculty Query`, { faculty_list })
 
     if (faculty_list && faculty_list.length > 0) {
@@ -786,9 +786,9 @@ const getFacultyList = async () => {
 
 };
 
-const getCustomerTypeList = async () => {
+const getCustomerTypeList = async (context: Reactory.IReactoryContext) => {
   try {
-    const type_list: { customer_type: string }[] = await mysql(`SELECT type as customer_type FROM CustomerType ORDER by customer_type ASC`, 'mysql.lasec360').then();
+    const type_list: { customer_type: string }[] = await mysql(`SELECT type as customer_type FROM CustomerType ORDER by customer_type ASC`, 'mysql.lasec360', undefined, context).then();
     // logger.debug(`Results from CustomerType Query`, { customer_type_list: type_list })
 
     if (type_list && type_list.length > 0) {
@@ -825,8 +825,8 @@ const getCustomerTypeList = async () => {
   */
 };
 
-const getCustomerLineManagerOptions = async (params) => {
-  const response = await lasecApi.Customers.GetCustomerLineManagers(params).then();
+const getCustomerLineManagerOptions = async (params: any, context: Reactory.IReactoryContext) => {
+  const response = await lasecApi.Customers.GetCustomerLineManagers(params, context).then();
   if (response.items) {
     return response.items.map(item => {
       return { id: item.line_manager_id, name: item.line_manager_name };
@@ -836,17 +836,17 @@ const getCustomerLineManagerOptions = async (params) => {
   return [];
 };
 
-const getCustomerClassById = async (id) => {
-  const customerClasses = await getCustomerClass({}).then();
+const getCustomerClassById = async (id: string, context: Reactory.IReactoryContext) => {
+  const customerClasses = await getCustomerClass(context).then();
   logger.debug(`Searching in ${customerClasses.length} classes for id ${id}`)
   const found = lodash.find(customerClasses, { id: id });
   return found;
 };
 
-const getCustomerCountries = async () => {
+const getCustomerCountries = async (context: Reactory.IReactoryContext) => {
   try {
     logger.info("Retrieving countries from remote api")
-    let countries = await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country[]': ['[].id', '[].name'] }).then();
+    let countries = await lasecApi.get(lasecApi.URIS.customer_country.url, undefined, { 'country[]': ['[].id', '[].name'] }, context).then();
     logger.debug("Retrieved and mapped remote data to ", { countries });
     return lodash.uniqWith(countries, lodash.isEqual);
   } catch (countryListError) {
@@ -855,11 +855,11 @@ const getCustomerCountries = async () => {
   }
 };
 
-const getCustomerRepCodes = async () => {
-  const idsResponse = await lasecApi.Customers.GetRepCodes();
+const getCustomerRepCodes = async (context: Reactory.IReactoryContext) => {
+  const idsResponse = await lasecApi.Customers.GetRepCodes({}, context);
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetRepCodes({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    const details = await lasecApi.Customers.GetRepCodes({ filter: { ids: [...idsResponse.ids] }, pagination: {} }, context);
     if (details && details.items) {
       return details.items;
     }
@@ -871,18 +871,18 @@ const getCustomerRepCodes = async () => {
 
 const CLIENT_TITLES_KEY = "LasecClientTitles";
 
-const getPersonTitles = async () => {
+const getPersonTitles = async (context: Reactory.IReactoryContext) => {
   logger.debug(`CompanyResolver.ts getPersonTitles()`);
 
-  const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY)).then();
+  const cached = await getCacheItem(Hash(CLIENT_TITLES_KEY), null, 60, context.partner).then();
   if (cached) return cached.items;
 
-  const idsResponse = await lasecApi.Customers.GetPersonTitles();
+  const idsResponse = await lasecApi.Customers.GetPersonTitles({}, context);
 
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: { enabled: false, page_size: 10 } });
+    const details = await lasecApi.Customers.GetPersonTitles({ filter: { ids: [...idsResponse.ids] }, pagination: { enabled: false, page_size: 10 } }, context);
     if (details && details.items) {
-      setCacheItem(Hash(CLIENT_TITLES_KEY), details, 60);
+      setCacheItem(Hash(CLIENT_TITLES_KEY), details, 60, context.partner);
       return details.items;
     }
   }
@@ -891,9 +891,9 @@ const getPersonTitles = async () => {
 
 }
 
-const getPersonTitle = async (params) => {
+const getPersonTitle = async (params: any, context: Reactory.IReactoryContext) => {
   logger.debug(`Looking for title with id ${params.id}`)
-  const titles = await getPersonTitles(params).then();
+  const titles = await getPersonTitles(context).then();
 
   if (titles.length > 0) {
     const found = lodash.find(titles, { id: params.id });
@@ -905,32 +905,32 @@ const getPersonTitle = async (params) => {
 
 const CLIENT_JOBTYPES_KEY = "LasecClientJobTypesLookup";
 
-const getCustomerJobTypes = async () => {
+const getCustomerJobTypes = async (context: Reactory.IReactoryContext) => {
 
-  //const cached = await getCacheItem(Hash(CLIENT_JOBTYPES_KEY)).then();
+  const cached = await getCacheItem(Hash(CLIENT_JOBTYPES_KEY), null, 60, context.partner).then();
 
-  //if (cached) return cached.items;
+  if (cached) return cached.items;
 
-  const idsResponse = await lasecApi.Customers.GetCustomerJobTypes();
+  const idsResponse = await lasecApi.Customers.GetCustomerJobTypes({}, context);
   if (isArray(idsResponse.ids) === true && idsResponse.ids.length > 0) {
-    const details = await lasecApi.Customers.GetCustomerJobTypes({ filter: { ids: [...idsResponse.ids] }, pagination: {} });
+    const details = await lasecApi.Customers.GetCustomerJobTypes({ filter: { ids: [...idsResponse.ids] }, pagination: {} }, context);
     if (details && details.items) {
-      setCacheItem(Hash(CLIENT_JOBTYPES_KEY), details, 60);
+      setCacheItem(Hash(CLIENT_JOBTYPES_KEY), details, 60, context.partner);
       return details.items;
     }
   }
   return [];
 }
 
-const getLasecSalesTeamsForLookup = async () => {
+const getLasecSalesTeamsForLookup = async (context: Reactory.IReactoryContext) => {
   logger.debug(`GETTING SALES TEAMS`);
   // const salesTeamsResults = await lasecApi.get(lasecApi.URIS.groups, undefined).then();
-  const teamsPayload = await LasecAPI.Teams.list().then();
+  const teamsPayload = await LasecAPI.Teams.list(context).then();
   logger.debug(`SALES TEAM PAYLOAD :: ${JSON.stringify(teamsPayload)}`);
   if (teamsPayload.status === "success") {
     const { items } = teamsPayload.payload || [];
     logger.debug(`SALES TEAM:: ${JSON.stringify(items[0])}`);
-    const teams = items.map((sales_team) => {
+    const teams = items.map((sales_team: any) => {
       return {
         id: sales_team.id,
         name: sales_team.sales_team_id,
@@ -939,10 +939,11 @@ const getLasecSalesTeamsForLookup = async () => {
 
     return teams;
   }
-  logger.debug('SalesTeamsLookupResult >> ', salesTeamsResults);
+
+  return [];
 }
 
-const getCustomerList = async (params) => {
+const getCustomerList = async (params: any, context: Reactory.IReactoryContext) => {
 
   const { search = "   ", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter, orderBy = 'name', orderDirection = "asc" } = params;
 
@@ -955,7 +956,7 @@ const getCustomerList = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  let _filter = {};
+  let _filter: any = {};
 
   _filter[filterBy] = filter || search;
 
@@ -968,7 +969,7 @@ const getCustomerList = async (params) => {
 
   const cachekey = Hash(`company_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
-  let _cachedResults = null; //await getCacheItem(cachekey);
+  let _cachedResults = await getCacheItem(cachekey);
 
   if (_cachedResults) {
 
@@ -988,7 +989,7 @@ const getCustomerList = async (params) => {
             accountNumber
           }
         }
-      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }, {}, context.user, context.partner).then();
     }
     logger.debug(`Returning cached item ${cachekey}`);
     return _cachedResults;
@@ -1014,11 +1015,11 @@ const getCustomerList = async (params) => {
 
   filterParams.ordering[orderBy] = orderDirection;
 
-  const companyResult = await lasecApi.Company.list(filterParams).then();
+  const companyResult = await lasecApi.Company.list(filterParams, context).then();
 
   logger.debug(`Returning ids ${companyResult.ids}`);
 
-  let ids = [];
+  let ids: string[] = [];
 
   if (isArray(companyResult.ids) === true) {
     ids = [...companyResult.ids];
@@ -1034,7 +1035,7 @@ const getCustomerList = async (params) => {
 
   logger.debug(`Loading (${ids.length}) company ids`);
 
-  const companyDetails = await lasecApi.Company.list({ filter: { ids: ids } });
+  const companyDetails = await lasecApi.Company.list({ filter: { ids: ids } }, context);
   logger.debug(`Fetched Expanded View for (${companyDetails.items.length}) Companies from API`);
   let customers = [...companyDetails.items];
 
@@ -1093,11 +1094,11 @@ const getCustomerList = async (params) => {
   if (result.paging.pageSize >= 10 && result.paging.hasNext === true) {
     if (result.paging.pageSize === 20) {
       const cachekeys_10 = `company_list_${search}_page_${paging.page || 1}_page_size_10`.toLowerCase();
-      setCacheItem(cachekeys_10, { paging: { ...result.paging, pageSize: 10, hasNext: true }, clients: lodash.take(result.products, 10) });
+      setCacheItem(cachekeys_10, { paging: { ...result.paging, pageSize: 10, hasNext: true }, clients: lodash.take(result.customers, 10) }, 120, context.partner);
     }
 
     const cachekeys_5 = `company_list_${search}_page_${paging.page || 1}_page_size_5`.toLowerCase();
-    setCacheItem(cachekeys_5, { paging: { ...result.paging, pageSize: 5, hasNext: true }, clients: lodash.take(result.products, 5) });
+    setCacheItem(cachekeys_5, { paging: { ...result.paging, pageSize: 5, hasNext: true }, clients: lodash.take(result.customers, 5) }, 120, context.partner);
   }
 
   if (result.paging.hasNext === true && iter === 0) {
@@ -1116,25 +1117,25 @@ const getCustomerList = async (params) => {
             accountNumber
           }
         }
-      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
+      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }, {}, context.user, context.partner).then();
     } catch (cacheFetchError) {
       logger.error('An error occured attempting to cache next page', cacheFetchError);
     }
   }
 
-  setCacheItem(cachekey, result, 60 * 10);
+  setCacheItem(cachekey, result, 60 * 10, context);
 
   return result;
 
 };
 
-const getCustomerById = async (id: string) => {
-  const companyDetails = await lasecApi.Company.list({ filter: { ids: [id] } }).then();
+const getCustomerById = async (id: string, context: Reactory.IReactoryContext) => {
+  const companyDetails = await lasecApi.Company.list({ filter: { ids: [id] } }, context).then();
   logger.debug(`Fetched Expanded View for (${companyDetails.items.length}) Companies from API`);
   if (companyDetails.items[0]) return companyDetails.items[0];
 };
 
-const getOrganisationList = async (params) => {
+const getOrganisationList = async (params: any, context: Reactory.IReactoryContext) => {
 
   const { search = "", paging = { page: 1, pageSize: 10 }, filterBy = "", iter = 0, filter } = params;
 
@@ -1147,7 +1148,7 @@ const getOrganisationList = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  let _filter = {};
+  let _filter: any = {};
 
   _filter[filterBy] = filter || search;
 
@@ -1177,7 +1178,7 @@ const getOrganisationList = async (params) => {
             registeredName
           }
         }
-      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }).then();
+      }`, { search, filterBy, paging: { page: paging.page + 1, pageSize: paging.pageSize }, iter: 1 }, {}, context.user, context.partner).then();
     }
     logger.debug(`Returning cached item ${cachekey}`);
     return _cachedResults;
@@ -1199,7 +1200,7 @@ const getOrganisationList = async (params) => {
     },
   };
 
-  const organisationResult = await lasecApi.Organisation.list(filterParams).then();
+  const organisationResult = await lasecApi.Organisation.list(filterParams, context).then();
 
   logger.debug(`Returning ids ${organisationResult.ids}`);
 
@@ -1266,20 +1267,20 @@ const getOrganisationList = async (params) => {
             registeredName
           }
         }
-      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }).then();
+      }`, { search, paging: { page: paging.page + 1, pageSize: paging.pageSize }, filterBy, iter: 1, filter }, {}, context.user, context.partner).then();
     } catch (cacheFetchError) {
       logger.error('An error occured attempting to cache next page', cacheFetchError);
     }
   }
 
-  setCacheItem(cachekey, result, 60 * 10);
+  setCacheItem(cachekey, result, 60 * 10, context.partner);
 
   return result;
 
 };
 
 
-const createNewOrganisation = async (args: ILasecCreateOrganisationArgs): Promise<LasecCreateNeworganisationResponse> => {
+const createNewOrganisation = async (args: ILasecCreateOrganisationArgs, context: Reactory.IReactoryContext): Promise<LasecCreateNeworganisationResponse> => {
 
   try {
 
@@ -1287,7 +1288,7 @@ const createNewOrganisation = async (args: ILasecCreateOrganisationArgs): Promis
       customer_id: args.customerId,
       name: args.name,
       description: args.description,
-    }).then();
+    }, context).then();
 
     logger.debug(`RESOLVER API RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
@@ -1322,10 +1323,10 @@ const getExtension = (filename: string) => {
   return filename.split('.').pop();
 }
 
-const uploadRemote = async (file: Reactory.IReactoryFile, customer: any): Promise<Reactory.IReactoryFile> => {
+const uploadRemote = async (file: Reactory.IReactoryFile, customer: any, context: Reactory.IReactoryContext): Promise<Reactory.IReactoryFile> => {
   try {
     //set upload files if any and clear local cache (delete files)
-    const uploadResult = await lasecApi.Documents.upload(file, customer);
+    const uploadResult = await lasecApi.Documents.upload(file, customer, false, context);
     logger.debug(`♻ File upload result: FILE SYNCH ${uploadResult.timeline.map((tl) => `\n\t * ${tl.timestamp} => ${tl.message}`)}`);
 
     return file;
@@ -1339,7 +1340,7 @@ const uploadRemote = async (file: Reactory.IReactoryFile, customer: any): Promis
 const allowedExts = ['txt', 'pdf', 'doc', 'zip'];
 const allowedMimeTypes = ['text/plain', 'application/msword', 'application/x-pdf', 'application/pdf', 'application/zip'];
 
-const uploadDocument = async (args: any) => {
+const uploadDocument = async (args: any, context: Reactory.IReactoryContext) => {
 
   return new Promise(async (resolve, reject) => {
 
@@ -1381,11 +1382,9 @@ const uploadDocument = async (args: any) => {
         filename,
         mimetype,
         alias: randomName,
-        partner: new ObjectID(global.partner.id),
-        owner: global.user,
-        // owner: new ObjectID(global.user.id),
-        uploadedBy: global.user,
-        // uploadedBy: new ObjectID(global.user.id),
+        partner: new ObjectID(context.partner.id),
+        owner: context.user,
+        uploadedBy: context.user,
         size: fileStats.size,
         hash: Hash(link),
         link: link,
@@ -1399,8 +1398,7 @@ const uploadDocument = async (args: any) => {
       if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
         if (clientId && clientId == 'new_client') {
           // NEW CLIENT
-          reactoryFile.uploadContext = `lasec-crm::client::document::${clientId}::${global.user._id}`;
-          // reactoryFile.uploadContext = `lasec-crm::new-company::document::${global.user._id}`;
+          reactoryFile.uploadContext = `lasec-crm::client::document::${clientId}::${context.user._id}`;
         } else {
           // INCOMPLETE CLIENT
           reactoryFile.uploadContext = `lasec-crm::client::document::${clientId}`;
@@ -1417,7 +1415,7 @@ const uploadDocument = async (args: any) => {
 
       const savedDocument = new ReactoryFileModel(reactoryFile);
 
-      uploadRemote(savedDocument, clientId).then((fileResult) => {
+      uploadRemote(savedDocument, clientId, context).then((fileResult) => {
         logger.debug(`File has been synched with remote API`, { fileResult });
         fileResult.save();
         resolve(fileResult)
@@ -1446,20 +1444,20 @@ const uploadDocument = async (args: any) => {
   });
 };
 
-const deleteDocuments = async (args: any) => {
+const deleteDocuments = async (args: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`FILE DELETE ARGS: ${JSON.stringify(args)}`);
   const { clientId, fileIds } = args;
   const _fileIds = [...fileIds];
 
   if (clientId) {
-    const clientDetails = await lasecApi.Customers.list({ filter: { ids: [clientId] } });
+    const clientDetails = await lasecApi.Customers.list({ filter: { ids: [clientId] } }, context);
     if (clientDetails && clientDetails.items.length > 0) {
       let client = clientDetails.items[0];
       if (client.document_ids.length > 0) {
         const docIds = [...client.document_ids]; // clone to edit
 
-        fileIds.forEach(fileId => {
+        fileIds.forEach((fileId: string) => {
           const indexOfId = docIds.indexOf(fileId);
           if (indexOfId > -1) {
             docIds.splice(indexOfId, 1);
@@ -1467,7 +1465,7 @@ const deleteDocuments = async (args: any) => {
           }
         });
 
-        const updateResult = await lasecApi.Documents.updateDocumentIds(docIds, clientId);
+        const updateResult = await lasecApi.Documents.updateDocumentIds(docIds, clientId, context);
 
         logger.debug(`UPDATE RESULT:: ${JSON.stringify(updateResult)}`);
         logger.debug(`FILE IDS:: ${_fileIds}`);
@@ -1578,18 +1576,18 @@ interface LasecPagedAddressResults {
   addresses: LasecAddress[]
 }
 
-const getAddress = async (args: { searchTerm: string, paging: Reactory.IPagingRequest }): Promise<LasecPagedAddressResults> => {
+const getAddress = async (args: { searchTerm: string, paging: Reactory.IPagingRequest }, context: Reactory.IReactoryContext): Promise<LasecPagedAddressResults> => {
 
   const { paging } = args;
 
   try {
     logger.debug(`GETTING ADDRESS:: ${JSON.stringify(args)}`);
-    const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true }, pagination: { enabled: true, page_size: paging.pageSize || 10, current_page: paging.page } });
+    const addressIds = await lasecApi.Customers.getAddress({ filter: { any_field: args.searchTerm }, format: { ids_only: true }, pagination: { enabled: true, page_size: paging.pageSize || 10, current_page: paging.page } }, context);
 
     let _ids = [];
     if (isArray(addressIds.ids) === true && addressIds.ids.length > 0) {
       _ids = [...addressIds.ids];
-      const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: true, page_size: paging.pageSize || 10, current_page: paging.page } });
+      const addressDetails = await lasecApi.Customers.getAddress({ filter: { ids: _ids }, pagination: { enabled: true, page_size: paging.pageSize || 10, current_page: paging.page } }, context);
       const addresses = [...addressDetails.items];
       logger.debug(`Found ${addresses.length || 0} that matches the search term "${args.searchTerm}"`, { addressDetails });
       return {
@@ -1624,7 +1622,7 @@ const getAddress = async (args: { searchTerm: string, paging: Reactory.IPagingRe
 
 }
 
-const createNewAddress = async (args) => {
+const createNewAddress = async (args, context: Reactory.IReactoryContext) => {
   // {
   //   "building_description_id": "1",
   //   "building_floor_number_id": "2",
@@ -1679,7 +1677,7 @@ const createNewAddress = async (args) => {
       confirm_address: true,
     };
 
-    const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address, paging: { page: 1, pageSize: 100 } }).then();
+    const existingAddress = await getAddress({ searchTerm: addressParams.map.formatted_address, paging: { page: 1, pageSize: 100 } }, context).then();
 
     logger.debug(`Found ${existingAddress.addresses.length} matches: ${existingAddress}`);
 
@@ -1693,7 +1691,7 @@ const createNewAddress = async (args) => {
     }
 
     //not found create it
-    const apiResponse = await lasecApi.Customers.createNewAddress(addressParams).then();
+    const apiResponse = await lasecApi.Customers.createNewAddress(addressParams, context).then();
 
     if (apiResponse) {
       return {
@@ -1722,8 +1720,8 @@ const createNewAddress = async (args) => {
 };
 
 interface ILasecGetPlaceParams { placeId: string, lat?: number, lng?: number }
-const getPlaceDetails = async (args: ILasecGetPlaceParams) => {
-  const apiResponse = await lasecApi.Customers.getPlaceDetails(args.placeId);
+const getPlaceDetails = async (args: ILasecGetPlaceParams, context: Reactory.IReactoryContext) => {
+  const apiResponse = await lasecApi.Customers.getPlaceDetails(args.placeId, context);
 
   logger.debug(`Results from Google GetPlaceDetails 🌍`, { apiResponse })
 
@@ -1768,12 +1766,12 @@ const getPlaceDetails = async (args: ILasecGetPlaceParams) => {
   };
 };
 
-const getRepCodesForFilter = async () => {
-  const teamsPayload = await LasecAPI.Teams.list().then();
+const getRepCodesForFilter = async (context: Reactory.IReactoryContext) => {
+  const teamsPayload = await LasecAPI.Teams.list(context).then();
   if (teamsPayload.status === "success") {
     const { items } = teamsPayload.payload || [];
     logger.debug(`SALES TEAM:: ${JSON.stringify(items[0])}`);
-    const teams = items.map((sales_team) => {
+    const teams = items.map((sales_team: any) => {
       return {
         id: sales_team.id,
         name: sales_team.sales_team_id,
@@ -1784,9 +1782,9 @@ const getRepCodesForFilter = async () => {
   }
 }
 
-const getRepCodesForLoggedInUser = async () => {
+const getRepCodesForLoggedInUser = async (context: Reactory.IReactoryContext) => {
 
-  let me = await getLoggedIn360User().then();
+  let me = await getLoggedIn360User(false, context).then();
 
   logger.debug(`LOGGED IN USER DATA ${JSON.stringify(me)}`);
 
@@ -1801,9 +1799,9 @@ const getRepCodesForLoggedInUser = async () => {
   return teams;
 }
 
-const getUsersRepCodes = async () => {
+const getUsersRepCodes = async (context: Reactory.IReactoryContext): Promise<any[]> => {
 
-  const { user } = global;
+  const { user } = context;
 
   logger.debug(`LOGGED IN USER DATA ${JSON.stringify(user)}`);
 
@@ -1811,9 +1809,9 @@ const getUsersRepCodes = async () => {
 
 }
 
-const getClientComments = async (args) => {
+const getClientComments = async (args: any, context: Reactory.IReactoryContext) => {
   logger.debug(`FIND COMMENTS:: ${JSON.stringify(args)}`);
-  const comments = await CRMClientComment.find({ client: args.clientId }).sort({ when: -1 });
+  const comments: any[] = await CRMClientComment.find({ client: args.clientId }).sort({ when: -1 });
 
   return {
     id: args.clientId,
@@ -1828,13 +1826,13 @@ const getClientComments = async (args) => {
   }
 }
 
-const saveComment = async (args) => {
+const saveComment = async (args: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`NEW COMMENT:: ${JSON.stringify(args)}`);
 
   try {
     let newComment = new CRMClientComment({
-      who: global.user._id,
+      who: context.user._id,
       client: args.clientId,
       comment: args.comment,
       when: new Date()
@@ -1854,7 +1852,7 @@ const saveComment = async (args) => {
   }
 }
 
-const deleteComment = async (args) => {
+const deleteComment = async (args: any) => {
 
   logger.debug(`DELETE COMMENT:: ${JSON.stringify(args)}`);
 
@@ -1876,10 +1874,10 @@ const deleteComment = async (args) => {
   }
 }
 
-const updateClientSpecialRequirements = async (args) => {
+const updateClientSpecialRequirements = async (args: any, context: Reactory.IReactoryContext) => {
   try {
     let updateParams = { special_requirements: args.requirement == 'No special requirements set.' ? '' : args.requirement }
-    const apiResponse = await lasecApi.Customers.UpdateClientSpecialRequirements(args.id, updateParams);
+    const apiResponse = await lasecApi.Customers.UpdateClientSpecialRequirements(args.id, updateParams, context);
 
     return {
       success: apiResponse.success,
@@ -1894,7 +1892,7 @@ const updateClientSpecialRequirements = async (args) => {
 
 export default {
   LasecAddress: {
-    building_description: async (address: LasecAddress) => {
+    building_description: async (address: LasecAddress, args: any, context: Reactory.IReactoryContext) => {
 
       if (address.building_description && address.building_description.length > 0) return address.building_description
 
@@ -1916,7 +1914,7 @@ export default {
           SELECT
             floor_number as description
           FROM
-            BuildingFloorNumber WHERE buildingfloornumberid = ${building_description_id}`, 'mysql.lasec360').then();
+            BuildingFloorNumber WHERE buildingfloornumberid = ${building_description_id}`, 'mysql.lasec360', undefined, context).then();
         logger.debug(`LasecAddress.building_description`, { result_rows });
 
         if (result_rows.length === 1 && result_rows[0]) return result_rows[0].description || "";
@@ -1928,7 +1926,7 @@ export default {
         return ""
       }
     },
-    linked_companies_count: async (address: LasecAddress): Promise<number> => {
+    linked_companies_count: async (address: LasecAddress, args: any, context: Reactory.IReactoryContext): Promise<number> => {
       let count = 0;
 
       if (lodash.isNil(address)) return count;
@@ -1937,7 +1935,7 @@ export default {
       const query = ``
 
       try {
-        let result_rows: any[] = await mysql(query, 'mysql.lasec360').then();
+        let result_rows: any[] = await mysql(query, 'mysql.lasec360', undefined, context).then();
         logger.debug(`LasecAddress linked_companies_count`, { result_rows });
 
         if (result_rows.length === 1 && result_rows[0]) return result_rows[0].description || "";
@@ -1949,7 +1947,7 @@ export default {
         return count
       }
     },
-    linked_clients_count: async (address: LasecAddress): Promise<number> => {
+    linked_clients_count: async (address: LasecAddress, args: any, context: Reactory.IReactoryContext): Promise<number> => {
       let count = 0;
 
       if (lodash.isNil(address)) return count;
@@ -1964,7 +1962,7 @@ export default {
         WHERE a.addressid = ${parseInt(address.id)};`;
 
       try {
-        let result_rows: any[] = await mysql(query, 'mysql.lasec360').then();
+        let result_rows: any[] = await mysql(query, 'mysql.lasec360', undefined, context).then();
         logger.debug(`LasecAddress linked_clients_count`, { result_rows });
 
         if (result_rows.length === 1 && result_rows[0]) return result_rows[0].linked_customers || 0;
@@ -1976,7 +1974,7 @@ export default {
         return count
       }
     },
-    linked_sales_orders_count: async (address: LasecAddress): Promise<number> => {
+    linked_sales_orders_count: async (address: LasecAddress, args: any, context: Reactory.IReactoryContext): Promise<number> => {
       let count = 0;
 
       if (lodash.isNil(address)) return count;
@@ -1992,7 +1990,7 @@ export default {
       `;
 
       try {
-        let result_rows: any[] = await mysql(query, 'mysql.lasec360').then();
+        let result_rows: any[] = await mysql(query, 'mysql.lasec360', undefined, context).then();
         logger.debug(`LasecAddress linked_sales_orders_count`, { result_rows });
 
         if (result_rows.length === 1 && result_rows[0]) return result_rows[0].linked_sales_orders_count || 0;
@@ -2006,7 +2004,7 @@ export default {
     },
   },
   LasecDocument: {
-    owner: async ({ owner }) => {
+    owner: async ({ owner }: any) => {
       if (ObjectId.isValid(owner)) {
         const _owner = await User.findById(owner).then();
         logger.debug(`OWNER:: ${owner} ${_owner ? _owner.email : 'no-owner'}`);
@@ -2026,29 +2024,29 @@ export default {
     availableBalance: async (parent: any, { currentBalance = 0 }) => currentBalance,
   },
   LasecNewClient: {
-    customer: async (parent) => {
+    customer: async (parent: any, obj: any, context: Reactory.IReactoryContext) => {
       logger.debug('Finding new Customer for LasecNewClient', parent);
 
-      if (parent.customer && parent.customer.id) return getCustomerById(parent.customer.id);
+      if (parent.customer && parent.customer.id) return getCustomerById(parent.customer.id, context);
 
       return {
         id: '',
         registeredName: ''
       };
     },
-    clientDocuments: async (parent: any) => {
+    clientDocuments: async (parent: any, obj: any, context: Reactory.IReactoryContext) => {
 
       // if(parent.clientDocuments && Array.isArray(parent.clientDocuments) === true) return parent.clientDocuments;
 
-      let _result = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }).then();
+      let _result = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }, context).then();
       return _result.documents || [];
     },
   },
   LasecCRMCustomer: {
-    customerClass: async (parent) => {
+    customerClass: async (parent: any, obj: any, context: Reactory.IReactoryContext) => {
       if (parent.classId) {
         try {
-          const customerClass = getCustomerClassById(parent.classId);
+          const customerClass: any = getCustomerClassById(parent.classId, context);
           return customerClass.name;
         } catch (dbError) {
           return parent.customerClass;
@@ -2056,7 +2054,7 @@ export default {
       }
       return parent.customerClass;
     },
-    currencyDisplay: (customerObject) => {
+    currencyDisplay: (customerObject: any, obj: any, context: Reactory.IReactoryContext) => {
       let code = '???', symbol = '?';
       if (customerObject) {
         code = customerObject.currencyCode || code;
@@ -2065,10 +2063,10 @@ export default {
 
       return `${code} (${symbol})`;
     },
-    documents: async (parent) => {
-      return getCustomerDocuments({ id: parent.id });
+    documents: async (parent: any, obj: any, context: Reactory.IReactoryContext) => {
+      return getCustomerDocuments({ id: parent.id }, context);
     },
-    registeredName: (parent) => {
+    registeredName: (parent: any, obj: any, context: Reactory.IReactoryContext) => {
       return parent.registered_name || parent.registeredName
     },
     deliveryAddress: (parent: LasecCRMCustomer) => {
@@ -2087,20 +2085,20 @@ export default {
     }
   },
   Query: {
-    LasecGetClientList: async (obj: any, args: GetClientsParams) => {
-      return getClients(args);
+    LasecGetClientList: async (obj: any, args: GetClientsParams, context: Reactory.IReactoryContext) => {
+      return getClients(args, context);
     },
-    LasecGetClientDetail: async (obj, args) => {
-      return getClient(args);
+    LasecGetClientDetail: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getClient(args, context);
     },
-    LasecGetClientComments: async (obj, args) => {
-      return getClientComments(args);
+    LasecGetClientComments: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getClientComments(args, context);
     },
-    LasecGetCustomerRoles: async (obj, args) => {
-      return getCustomerRoles(args);
+    LasecGetCustomerRoles: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getCustomerRoles(context);
     },
-    LasecGetCustomerClass: async (obj, args) => {
-      return getCustomerClass(args);
+    LasecGetCustomerClass: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getCustomerClass(context);
     },
     LasecGetFacultyList: async () => {
       return getFacultyList();
@@ -2108,16 +2106,16 @@ export default {
     LasecGetCustomerType: async () => {
       return getCustomerTypeList();
     },
-    LasecGetCustomerLineManagerOptions: async (obj, args) => {
-      return getCustomerLineManagerOptions(args);
+    LasecGetCustomerLineManagerOptions: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getCustomerLineManagerOptions(args, context);
     },
-    LasecGetCustomerClassById: async (obj, args) => {
-      return getCustomerClassById(args.id);
+    LasecGetCustomerClassById: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getCustomerClassById(args.id, context);
     },
-    LasecGetCustomerRanking: async (object, args) => {
-      return getCustomerRanking(args);
+    LasecGetCustomerRanking: async (object: any, args: any, context: Reactory.IReactoryContext) => {
+      return getCustomerRanking(context);
     },
-    LasecGetCustomerRankingById: async (object, args) => {
+    LasecGetCustomerRankingById: async (object: any, args: any, context: Reactory.IReactoryContext) => {
       switch (args.id) {
         case "1": return {
           id: '1',
@@ -2135,19 +2133,19 @@ export default {
       }
 
     },
-    LasecGetCustomerCountries: async (object: anty, params: any) => {
-      return getCustomerCountries();
+    LasecGetCustomerCountries: async (object: any, params: any, context: Reactory.IReactoryContext) => {
+      return getCustomerCountries(context);
     },
-    LasecGetCustomerRepCodes: async (object, args) => {
+    LasecGetCustomerRepCodes: async (object: any, args: any, context: Reactory.IReactoryContext) => {
       return getCustomerRepCodes(args);
     },
-    LasecGetCustomerDocuments: async (object, args) => {
-      return getCustomerDocuments(args);
+    LasecGetCustomerDocuments: async (object: any, args: any, context: Reactory.IReactoryContext) => {
+      return getCustomerDocuments(args, context);
     },
-    LasecSalesTeams: async () => {
-      return getRepCodesForLoggedInUser();
+    LasecSalesTeams: async (object: any, args: any, context: Reactory.IReactoryContext) => {
+      return getRepCodesForLoggedInUser(context);
     },
-    LasecGetCustomerFilterLookup: async (object, args) => {
+    LasecGetCustomerFilterLookup: async (object: any, args: any, context: Reactory.IReactoryContext) => {
       switch (args.filterBy) {
         case 'country': {
           return getCustomerCountries(args);
@@ -2221,54 +2219,53 @@ export default {
           ];
         }
         case 'company_sales_team': {
-          return getLasecSalesTeamsForLookup();
+          return getLasecSalesTeamsForLookup(context);
         }
         case 'rep_code': {
-          return getRepCodesForFilter();
+          return getRepCodesForFilter(context);
         }
         case 'sales_team_id': {
-          return getRepCodesForLoggedInUser();
+          return getRepCodesForLoggedInUser(context);
         }
         case 'user_sales_team_id': {
-          return getRepCodesForLoggedInUser();
+          return getRepCodesForLoggedInUser(context);
         }
         case 'users_repcodes': {
-          return getUsersRepCodes();
+          return getUsersRepCodes(context);
         }
         default: {
           return [];
         }
       }
     },
-    LasecGetCurrencyLookup: async (object, args) => {
+    LasecGetCurrencyLookup: async (object: any, args: any, context: Reactory.IReactoryContext) => {
       try {
-        const currencies = await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+        const currencies = await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360', undefined, context).then();
         logger.debug(`CURRENCIES - ${JSON.stringify(currencies)}`);
-        return currencies.map(currency => { return { id: currency.code, name: currency.name } });
+        return currencies.map((currency: any) => { return { id: currency.code, name: currency.name } });
 
       } catch (err) {
         logger.debug(`ERROR GETTING CURRENCIES`);
         return []
       }
     },
-    LasecGetPersonTitles: async (object, args) => {
+    LasecGetPersonTitles: async (object: any, args: any, context: Reactory.IReactoryContext) => {
       return getPersonTitles(args);
     },
-    LasecGetPersonTitleById: async (object, args) => {
-      return getPersonTitle(args);
+    LasecGetPersonTitleById: async (object: any, args: any, context: Reactory.IReactoryContext) => {
+      return getPersonTitle(args, context);
     },
-    LasecGetCustomerList: async (obj, args) => {
-      return getCustomerList(args);
+    LasecGetCustomerList: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getCustomerList(args, context);
     },
-    LasecGetOrganisationList: async (obj, args) => {
-      return getOrganisationList(args);
+    LasecGetOrganisationList: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getOrganisationList(args, context);
     },
-    LasecGetCustomerJobTypes: async (obj, args) => {
+    LasecGetCustomerJobTypes: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
       return getCustomerJobTypes(args);
     },
-    LasecGetCustomerJobTypeById: async (obj, args) => {
-      const jobtypes = await getCustomerJobTypes().then()
-
+    LasecGetCustomerJobTypeById: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      const jobtypes = await getCustomerJobTypes(context).then()
       const lookupItem = lodash.find(jobtypes, { id: args.id });
 
       return lookupItem;
@@ -2285,7 +2282,7 @@ export default {
       reset - If true, the current data will be reset in the cache and a default new
        customer object is returned
      */
-    LasecGetNewClient: async (obj: any, args: { id?: string, reset?: boolean }) => {
+    LasecGetNewClient: async (obj: any, args: { id?: string, reset?: boolean }, context: Reactory.IReactoryContext) => {
 
 
 
@@ -2297,12 +2294,12 @@ export default {
 
       const cacheLifeSpan = 60 * 60 * 12; //12 hours
 
-      hash = Hash(`__LasecNewClient::${global.user._id}`);
+      hash = Hash(`__LasecNewClient::${context.user._id}`);
 
 
       //check if the call requires a clean slate
       if (args.reset === true) {
-        await setCacheItem(hash, lodash.cloneDeep(remote_client), cacheLifeSpan).then();
+        await setCacheItem(hash, lodash.cloneDeep(remote_client), cacheLifeSpan, context.partner).then();
         logger.debug(`Reset requested - new client data cache data overwrite`, { remote_client: remote_client });
         return lodash.cloneDeep(remote_client);
       }
@@ -2315,7 +2312,7 @@ export default {
       //there is no cache and there is no ID, just return the new blank item
       if (hasCached === false && !args.id) {
         //set the cache item and return the new empty state
-        await setCacheItem(hash, remote_client, cacheLifeSpan).then();
+        await setCacheItem(hash, remote_client, cacheLifeSpan, context.partner).then();
         return remote_client;
       }
 
@@ -2362,7 +2359,7 @@ export default {
 
           if (intcheck === true && objectIdCheck === false) {
             logger.debug(`Fetching remote customer data for client id: ${args.id}`)
-            existingCustomer = await getClient({ id: args.id });
+            existingCustomer = await getClient({ id: args.id }, context);
             logger.debug(`Response for Client Id ${args.id} Result`, { existingCustomer });
             //sanity check
             if (existingCustomer && existingCustomer.id === args.id) {
@@ -2401,7 +2398,7 @@ export default {
               remote_client.jobDetails.lineManager = existingCustomer.lineManager || '';
               remote_client.jobDetails.jobType = existingCustomer.jobType || '';
 
-              const roles = await getCustomerRoles().then();
+              const roles = await getCustomerRoles(context).then();
               const employeeRole = roles.find((t: any) => (t.id == existingCustomer.jobType));
               remote_client.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : existingCustomer.jobType;
 
@@ -2457,14 +2454,14 @@ export default {
 
 
 
-      setCacheItem(hash, client_to_return, cacheLifeSpan).then();
+      setCacheItem(hash, client_to_return, cacheLifeSpan, context).then();
 
       return client_to_return;
 
     },
-    LasecGetAddressById: async (obj: any, args: { id: string }): Promise<LasecAddress> => {
+    LasecGetAddressById: async (obj: any, args: { id: string }, context: Reactory.IReactoryContext): Promise<LasecAddress> => {
 
-      let result = await lasecApi.Customers.getAddress({ filter: { ids: [args.id] } }).then();
+      let result = await lasecApi.Customers.getAddress({ filter: { ids: [args.id] } }, context).then();
 
       if (result.items && result.items.length === 1) {
         return result.items[0];
@@ -2473,7 +2470,7 @@ export default {
       return null;
     },
     LasecGetAddress: async (obj: any, args: { searchTerm: string, paging: Reactory.IPagingRequest }) => {
-      const search_results = await getAddress(args);
+      const search_results = await getAddress(args, context);
 
       return {
         paging: search_results.paging,
@@ -2504,25 +2501,25 @@ export default {
         })
       }
     },
-    LasecGetPlaceDetails: async (obj, args) => {
+    LasecGetPlaceDetails: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
       return getPlaceDetails(args);
     },
   },
   Mutation: {
-    LasecUpdateClientDetails: async (obj, args: { clientInfo: ClientUpdateInput }) => {
+    LasecUpdateClientDetails: async (obj: any, args: { clientInfo: ClientUpdateInput }, context: Reactory.IReactoryContext) => {
       logger.debug(`UPDATING CLIENT DETAILS WITH ARGS ${args}`);
-      return updateClientDetail(args);
+      return updateClientDetail(args, context);
     },
-    LasecCreateNewOrganisation: async (onj, args) => {
-      return createNewOrganisation(args);
+    LasecCreateNewOrganisation: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return createNewOrganisation(args, context);
     },
-    LasecUploadDocument: async (obj, args) => {
-      return uploadDocument(args);
+    LasecUploadDocument: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return uploadDocument(args, context);
     },
-    LasecDeleteNewClientDocuments: async (obj, args) => {
-      return deleteDocuments(args);
+    LasecDeleteNewClientDocuments: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return deleteDocuments(args, context);
     },
-    LasecUpdateNewClient: async (obj: any, args: { id: string, newClient: any }) => {
+    LasecUpdateNewClient: async (obj: any, args: { id: string, newClient: any }, context: Reactory.IReactoryContext) => {
 
       const { newClient } = args;
       logger.debug(`Updating new client address details with input:\n ${JSON.stringify(newClient, null, 2)}`);
@@ -2530,7 +2527,7 @@ export default {
 
       let touched = false;
       let hash;
-      hash = Hash(`__LasecNewClient::${global.user._id}`);
+      hash = Hash(`__LasecNewClient::${context.user._id}`);
 
       let _newClient = await getCacheItem(hash).then();
 
@@ -2554,7 +2551,7 @@ export default {
           touched = true;
           _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
 
-          const roles = await getCustomerRoles().then();
+          const roles = await getCustomerRoles(context).then();
           const employeeRole = roles.find((t: any) => t.id == _newClient.jobDetails.jobType);
           _newClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : _newClient.jobDetails.jobType;
 
@@ -2594,7 +2591,7 @@ export default {
       if (touched) {
         _newClient.clientId = newClient.id;
         _newClient.updated = new Date().valueOf()
-        await setCacheItem(hash, _newClient, 60 * 60 * 12).then();
+        await setCacheItem(hash, _newClient, 60 * 60 * 12, context.partner).then();
       }
 
       return _newClient;
@@ -2606,9 +2603,9 @@ export default {
       return { success: true, message: 'Updated successfully' };
 
     },
-    LasecCreateNewClient: async (obj: any, args: { id: string, newClient: LasecNewClientInput }) => {
+    LasecCreateNewClient: async (obj: any, args: { id: string, newClient: LasecNewClientInput }, context: Reactory.IReactoryContext) => {
 
-      let hash = Hash(`__LasecNewClient::${global.user._id}`);
+      let hash = Hash(`__LasecNewClient::${context.user._id}`);
       const _newClient: LasecNewClientInput = await getCacheItem(hash).then();
 
       logger.debug(`Current Data Stored In NewClientCache:\n ${JSON.stringify({ client_data: _newClient, newClientParam: args.newClient }, null, 2)}`)
@@ -2628,7 +2625,7 @@ export default {
 
         //check if the customer exist using email address
         if (iz.email(args.newClient.contactDetails.emailAddress) === true) {
-          const customer_ids: string[] = await mysql(`SELECT customerid, first_name, surname FROM Customer C where C.email = '${args.newClient.contactDetails.emailAddress.trim()}';`, 'mysql.lasec360').then()
+          const customer_ids: string[] = await mysql(`SELECT customerid, first_name, surname FROM Customer C where C.email = '${args.newClient.contactDetails.emailAddress.trim()}';`, 'mysql.lasec360', undefined, context).then()
           if (customer_ids.length > 0) {
             if (customer_ids.length > 1) throw new ApiError(`Multiple Email Addresses are registered with email ${args.newClient.contactDetails.emailAddress}`);
             existing_client_id = customer_ids[0];
@@ -2672,14 +2669,14 @@ export default {
                   officeNumber: _newClient.contactDetails.officeNumber,
                   ranking: _newClient.jobDetails.ranking
                 }
-              });
+              }, context);
               //toggle the active status
               await mysql(`
             UPDATE Customer SET
               activity_status = 'active',
               organisation_id = ${args.newClient.organization.id},
               company_id = '${args.newClient.customer.id}'
-            WHERE customerid = ${existing_client_id}`, 'mysql.lasec360').then()
+            WHERE customerid = ${existing_client_id}`, 'mysql.lasec360', undefined, context).then()
 
               response.client = args;
             } catch (setStatusError) {
@@ -2766,7 +2763,7 @@ export default {
             inputData.activity_status = 'active';
 
             logger.debug(`🟠 Create new client on LasecAPI using input data:\n ${JSON.stringify(inputData, null, 2)}`)
-            customer = await post(URIS.customer_create.url, inputData, null, true).then()
+            customer = await post(URIS.customer_create.url, inputData, null, true, context).then()
             debugger
             logger.debug(`👀 Result in creating user`, customer);
 
@@ -2791,7 +2788,7 @@ export default {
               activity_status = 'active',
               organisation_id = ${_newClient.organization.id},
               company_id = '${_newClient.customer.id}'
-            WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
+            WHERE customerid = ${customer.id};`, 'mysql.lasec360', undefined, context).then()
             logger.debug(`🟢 Updated user activity status complete`, update_result);
 
             response.messages.push({ text: '🟢 Success.', description: `Client ${args.newClient.contactDetails.emailAddress} activity status set to active`, type: 'success', inAppNotification: true });
@@ -2821,7 +2818,7 @@ export default {
                 const update_result = await mysql(`
               UPDATE Customer SET
                 physical_address_id = '${physicalAddress.id}'                
-              WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
+              WHERE customerid = ${customer.id};`, 'mysql.lasec360', undefined, context).then()
 
                 logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
               } catch (exc) {
@@ -2837,7 +2834,7 @@ export default {
                 await mysql(`
               UPDATE Customer SET
                 delivery_address_id = '${deliveryAddress.id}'                
-                WHERE customerid = ${customer.id};`, 'mysql.lasec360').then()
+                WHERE customerid = ${customer.id};`, 'mysql.lasec360', undefined, context).then()
               } catch (exc) {
                 logger.error(`Could not save the delivery address against the customer`, exc);
                 response.messages.push({ text: 'Warning.', description: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });
@@ -2853,7 +2850,7 @@ export default {
                 documents: Reactory.IReactoryFile[]
               }
 
-              let clientDocuments: client_documents_results = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }).then();
+              let clientDocuments: client_documents_results = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }, context).then();
               let ids: string[] = [];
               if (clientDocuments && clientDocuments.documents) {
                 clientDocuments.documents.forEach((doc) => {
@@ -2869,7 +2866,7 @@ export default {
                 });
 
                 if (ids.length > 0) {
-                  let link_result = await lasecApi.Documents.updateDocumentIds(ids, customer.id).then();
+                  let link_result = await lasecApi.Documents.updateDocumentIds(ids, customer.id, context).then();
                   logger.debug(`LasecCreateNewClient :: result from updating document list. ${JSON.stringify(link_result)}`);
                 }
               }
@@ -2887,7 +2884,7 @@ export default {
               response.messages.push({ text: `Client ${customer.first_name} ${customer.last_name} encountered errors while setting activity status`, type: 'warning', inAppNotification: true });
             }
 
-            setCacheItem(hash, lodash.cloneDeep(DEFAULT_NEW_CLIENT), 60 * 60 * 12);
+            setCacheItem(hash, lodash.cloneDeep(DEFAULT_NEW_CLIENT), 60 * 60 * 12, context.partner);
 
           } else {
             response.messages.push({ text: `Could not create the new client on Lasec API`, type: 'success', inAppNotification: true });
@@ -2926,10 +2923,10 @@ export default {
 
       return response;
     },
-    LasecCreateNewAddress: async (obj, args) => {
-      return createNewAddress(args);
+    LasecCreateNewAddress: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return createNewAddress(args, context);
     },
-    LasecEditAddress: async (obj: any, args: { address_input: LasecAddress }): Promise<LasecAddressUpdateResponse> => {
+    LasecEditAddress: async (obj: any, args: { address_input: LasecAddress }, context: Reactory.IReactoryContext): Promise<LasecAddressUpdateResponse> => {
       try {
 
         let address: LasecAddress = null;
@@ -2962,7 +2959,7 @@ export default {
         }
 
 
-        const me: Lasec360User = await getLoggedIn360User();
+        const me: Lasec360User = await getLoggedIn360User(false, context);
 
         let query = `
           SELECT
@@ -2988,7 +2985,7 @@ export default {
 
         try {
           //read the record
-          const find_result: any = await mysql(query, 'mysql.lasec360').then();
+          const find_result: any = await mysql(query, 'mysql.lasec360', undefined, context).then();
           logger.debug(`results for lookup of address ${address_input.id}`, { find_result })
           if (find_result && find_result.length === 1) {
             return existing_data = { ...find_result[0] }
@@ -3014,9 +3011,9 @@ export default {
             addressid = ${address_input.id};`
 
         try {
-          const update_result = await mysql(query, 'mysql.lasec360').then();
+          const update_result = await mysql(query, 'mysql.lasec360', undefined, context).then();
           logger.debug("Results from database update", update_result)
-          let result = await lasecApi.Customers.getAddress({ filter: { ids: [args.address_input.id] } }).then();
+          let result = await lasecApi.Customers.getAddress({ filter: { ids: [args.address_input.id] } }, context).then();
 
           if (result.items && result.items.length === 1) {
             address = result.items[0];
@@ -3040,7 +3037,7 @@ export default {
 
 
     },
-    LasecDeleteAddress: async (obj: any, args: { address_input: LasecAddress }): Promise<SimpleResponse> => {
+    LasecDeleteAddress: async (obj: any, args: { address_input: LasecAddress }, context: Reactory.IReactoryContext): Promise<SimpleResponse> => {
       try {
 
         if (args.address_input === null) throw new ApiError(`address_input cannot be null`);
@@ -3049,7 +3046,7 @@ export default {
         const delete_response = await mysql(`
           UPDATE Address set deleted = 1
           WHERE addressid = ${args.address_input.id};
-        `, 'mysql.lasec360').then();
+        `, 'mysql.lasec360', undefined, context).then();
 
         if (delete_response) {
           logger.debug(`Lasec API Response for Address DELETE`, { delete_response });
@@ -3064,13 +3061,13 @@ export default {
       }
 
     },
-    LasecCRMSaveComment: async (obj, args) => {
-      return saveComment(args);
+    LasecCRMSaveComment: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return saveComment(args, context);
     },
-    LasecCRMDeleteComment: async (obj, args) => {
+    LasecCRMDeleteComment: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
       return deleteComment(args);
     },
-    LasecDeactivateClients: async (obj: any, params: { clientIds: string[] }): Promise<SimpleResponse> => {
+    LasecDeactivateClients: async (obj: any, params: { clientIds: string[] }, context: Reactory.IReactoryContext): Promise<SimpleResponse> => {
 
       let response: SimpleResponse = {
         message: `Deactivated ${params.clientIds.length} clients`,
@@ -3086,7 +3083,7 @@ export default {
           },
         }
 
-        return updateClientDetail(args);
+        return updateClientDetail(args, context);
 
       });
 
@@ -3118,8 +3115,8 @@ export default {
 
       return response;
     },
-    LasecUpdateSpecialRequirements: async (obj: any, args: any) => {
-      return updateClientSpecialRequirements(args);
+    LasecUpdateSpecialRequirements: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return updateClientSpecialRequirements(args, context);
     }
   },
 };
