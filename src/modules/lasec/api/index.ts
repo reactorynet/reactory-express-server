@@ -393,7 +393,7 @@ const Api = {
   URIS: SECONDARY_API_URLS,
   get: async (uri: string, params: any = null, shape: any = null, context: Reactory.IReactoryContext) => {
 
-    logger.debug(`🟠 GET PARAMS ${uri}  -   ${JSON.stringify(params)} `)
+    logger.debug(`🟠 GET PARAMS ${uri}- ${JSON.stringify(params)} `)
 
     const resp = await FETCH(uri, params ? { params } : undefined, true, false, 0, context).then();
     const {
@@ -1567,7 +1567,7 @@ const Api = {
      */
     get_certificate_of_conformance: async (sales_order_id: string, context: Reactory.IReactoryContext): Promise<any> => {
 
-      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`, {}, null, context).then();
+      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`, undefined, undefined, context).then();
       /**
        *
        * Result is HashMap
@@ -1621,7 +1621,7 @@ const Api = {
       let payment_terms: any[] = [];
 
       try {
-        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`, {}, null, context).then();
+        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`, undefined, undefined, context).then();
         /**
          * Result is hash map
          *
@@ -1729,7 +1729,7 @@ const Api = {
 
       let certificate_results = null;
       try {
-        certificate_results = await Api.get(`api/cert_of_conf/${sales_order_id}`, {}, null, context).then();
+        certificate_results = await Api.get(`api/cert_of_conf/${sales_order_id}`, undefined, undefined, context).then();
         let is_new = true;
         let converted: any = om.merge(certificate_results, is_new === true ? new_shape : existing_shape);
 
@@ -2051,7 +2051,7 @@ const Api = {
 
 
 
-      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`, {}, null, context).then();
+      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`, null, null, context).then();
       /**
        *
        * Result is HashMap
@@ -2105,7 +2105,7 @@ const Api = {
       let payment_terms: any[] = [];
 
       try {
-        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`, {}, null, context).then();
+        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`, null, null, context).then();
         /**
          * Result is hash map
          *
@@ -2478,7 +2478,7 @@ NB: note the addition of the detail_id for the line been updated
       //const payment_terms = await Api.get(`api/packing_list/payment_terms`).then();
       //logger.debug(`Payment Terms Result`, payment_terms);
 
-      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`, {}, null, context).then();
+      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`, null, null, context).then();
       /**
        *
        * Result is HashMap
@@ -2532,7 +2532,7 @@ NB: note the addition of the detail_id for the line been updated
       let payment_terms: any[] = [];
 
       try {
-        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`, {}, null, context).then();
+        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`, null, null, context).then();
         /**
          * Result is hash map
          *
@@ -2775,7 +2775,7 @@ NB: note the addition of the detail_id for the line been updated
 
 
     deleteDocument: async (params: any, context: Reactory.IReactoryContext) => {
-      const deleteDocumentResult = await DELETE(SECONDARY_API_URLS.file_upload.url + params.id, {}, true, context).then();
+      const deleteDocumentResult = await DELETE(SECONDARY_API_URLS.file_upload.url + params.id, null, true, context).then();
       return deleteDocumentResult;
     },
     createSalesOrder: async (sales_order_input: LasecCreateSalesOrderInput, context: Reactory.IReactoryContext) => {
