@@ -518,6 +518,7 @@ type PurchaseOrderItem {
 }
 
 type PagedCRMInvoices {
+  clientId: String
   paging: PagingResult
   invoices: [Invoice]
 }

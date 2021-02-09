@@ -2517,25 +2517,10 @@ export const getClientInvoices = async (params: any, context: Reactory.IReactory
     pageSize: paging.pageSize || 10
   };
 
-  // -- POSSIBLE FILTERS --
-  // any_field - done
-  // date_range - done
-  // invoice_date - done
-  // invoice_number - done
-  // po_number - done
-  // quote_number - done
-  // sales_team_id - done
-  // iso_number - done
-  // account_number - done
-
-  // invoice_value -  Error
-  // customer
-  // client
-
   let apiFilter: any = {
     customer_id: clientId,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('month'),
   };
 
   if (filterBy == 'invoice_date') {
@@ -2546,6 +2531,10 @@ export const getClientInvoices = async (params: any, context: Reactory.IReactory
 
   if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
     apiFilter[filterBy] = search;
+
+    // remove date range on specific search values
+    delete apiFilter.start_date;
+    delete apiFilter.end_date;
   }
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
@@ -2594,6 +2583,7 @@ export const getClientInvoices = async (params: any, context: Reactory.IReactory
   });
 
   let result = {
+    clientId,
     paging: pagingResult,
     invoices,
   };
@@ -2625,12 +2615,10 @@ export const getCRMInvoices = async (params: any, context: Reactory.IReactoryCon
     pageSize: paging.pageSize || 10
   };
 
-  let me = await getLoggedIn360User(false, context).then();
 
   let apiFilter: any = {
-    //customer_id: me.id,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('month'),
   };
 
   if (filterBy == 'invoice_date') {

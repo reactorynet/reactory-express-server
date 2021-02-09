@@ -10,6 +10,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         fullName
         emailAddress
         country
+        salesTeam
         customer {
           id
           tradingName
@@ -28,6 +29,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'fullName': 'client.fullName',
       'country': 'client.country',
       'customer': 'client.customer',
+      'salesTeam': 'salesTeam',
       'tabs': 'tabs',
     },
     options: {
