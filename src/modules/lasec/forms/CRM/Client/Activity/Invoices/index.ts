@@ -165,7 +165,6 @@ const uiSchema: any = {
         },
         { title: 'Account Number', field: 'accountNumber' },
         { title: 'Customer', field: 'customer' },
-        { title: 'PO Number', field: 'poNumber' },
 
       ],
       options: {

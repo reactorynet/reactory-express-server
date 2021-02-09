@@ -2520,11 +2520,7 @@ export const getClientInvoices = async (params: any, context: Reactory.IReactory
   let apiFilter: any = {
     customer_id: clientId,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
-
-    // REMOVE THIS - TEST
-    // start_date: moment().startOf('year'),
-    // end_date: moment().endOf('month'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('month'),
   };
 
   if (filterBy == 'invoice_date') {
@@ -2535,6 +2531,10 @@ export const getClientInvoices = async (params: any, context: Reactory.IReactory
 
   if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
     apiFilter[filterBy] = search;
+
+    // remove date range on specific search values
+    delete apiFilter.start_date;
+    delete apiFilter.end_date;
   }
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
@@ -2615,18 +2615,10 @@ export const getCRMInvoices = async (params: any, context: Reactory.IReactoryCon
     pageSize: paging.pageSize || 10
   };
 
-  let me = await getLoggedIn360User(false, context).then();
 
   let apiFilter: any = {
-    //customer_id: me.id,
-    // start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    // end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
-
-
-    start_date: moment().startOf('year'),
-    end_date: moment().endOf('month'),
-
-
+    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('month'),
   };
 
   if (filterBy == 'invoice_date') {
