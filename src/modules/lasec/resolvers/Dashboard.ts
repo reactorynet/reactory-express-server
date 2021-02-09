@@ -104,7 +104,7 @@ export default {
       logger.debug(`repIdsFilterHash ${repIdsFilterHash}`, repIds);
 
       const cacheKey = Hash(`quote.dashboard.${user._id}.${agentSelection}.${teamFilterHash}.${repIdsFilterHash}.${periodStart.valueOf()}.${periodEnd.valueOf()}`);
-      const _cached = await getCacheItem(`${cacheKey}`);
+      const _cached = await getCacheItem(`${cacheKey}`, null, 60, context.partner);
       if (_cached) {
         logger.debug(`Found results in cache using ${cacheKey}`);
         periodLabel = `${periodLabel} [cache]`;

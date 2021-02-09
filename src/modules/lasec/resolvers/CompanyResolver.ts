@@ -969,7 +969,7 @@ const getCustomerList = async (params: any, context: Reactory.IReactoryContext) 
 
   const cachekey = Hash(`company_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
-  let _cachedResults = await getCacheItem(cachekey);
+  let _cachedResults = await getCacheItem(cachekey, null, 60, context.partner);
 
   if (_cachedResults) {
 
@@ -1159,7 +1159,7 @@ const getOrganisationList = async (params: any, context: Reactory.IReactoryConte
 
   const cachekey = Hash(`organization_list_${search}_page_${paging.page || 1}_page_size_${paging.pageSize || 10}_filterBy_${filterBy}`.toLowerCase());
 
-  let _cachedResults = await getCacheItem(cachekey);
+  let _cachedResults = await getCacheItem(cachekey, null, 60, context.partner);
 
   if (_cachedResults) {
 
@@ -2304,7 +2304,7 @@ export default {
         return lodash.cloneDeep(remote_client);
       }
 
-      let cachedClient = await getCacheItem(hash).then(); //get whatever is in the cache;
+      let cachedClient = await getCacheItem(hash, null, 60, context.partner).then(); //get whatever is in the cache;
       let hasCached = !iz.nil(cachedClient);
 
       logger.debug(`CompanyResolver.ts LasecGetNewClient => CACHED CLIENT ${hasCached === true ? `FOUND [last fetch: ${cachedClient.fetched ? moment(cachedClient.fetched).toString() : 'NO FETCHED TIME STAMP'}]` : 'NONE'}`, { cachedClient });
@@ -2529,7 +2529,7 @@ export default {
       let hash;
       hash = Hash(`__LasecNewClient::${context.user._id}`);
 
-      let _newClient = await getCacheItem(hash).then();
+      let _newClient = await getCacheItem(hash, null, 60, context.partner).then();
 
       if (isNil(newClient.personalDetails) === false && Object.keys(newClient.personalDetails).length > 0) {
         if (deepEquals(newClient.personalDetails, _newClient.personalDetails) === false) {
@@ -2606,7 +2606,7 @@ export default {
     LasecCreateNewClient: async (obj: any, args: { id: string, newClient: LasecNewClientInput }, context: Reactory.IReactoryContext) => {
 
       let hash = Hash(`__LasecNewClient::${context.user._id}`);
-      const _newClient: LasecNewClientInput = await getCacheItem(hash).then();
+      const _newClient: LasecNewClientInput = await getCacheItem(hash, null, 60, context.partner).then();
 
       logger.debug(`Current Data Stored In NewClientCache:\n ${JSON.stringify({ client_data: _newClient, newClientParam: args.newClient }, null, 2)}`)
       debugger

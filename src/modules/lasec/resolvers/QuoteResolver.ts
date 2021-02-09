@@ -324,7 +324,7 @@ export default {
         const cacheKey = 'lasec-crm.Quote.Currencies.All';
         let results = await getCacheItem(cacheKey, null, 60, context.partner).then();
         if (!results) {
-          results = await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360').then();
+          results = await queryAsync(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360', null, context).then();
           if (results) setCacheItem(cacheKey, results, 60, context.partner);
         }
 

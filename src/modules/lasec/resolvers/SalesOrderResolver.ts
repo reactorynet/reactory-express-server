@@ -191,7 +191,7 @@ const SalesOrderResolver = {
 
         let cache_key = `${quote_id}-${active_option}-SALESORDER`;
 
-        let prepared_sales_order: any = await getCacheItem(cache_key).then()
+        let prepared_sales_order: any = await getCacheItem(cache_key, null, 60, context.partner).then()
 
         if (prepared_sales_order === null || prepared_sales_order === undefined) {
 

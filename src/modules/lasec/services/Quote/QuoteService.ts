@@ -165,7 +165,7 @@ class LasecQuoteService implements IQuoteService {
   async getIncoTerms(): Promise<string[]> {
     try {
       let cache_key = 'lasec-crm.data.all-incoterms';
-      let items = await getCacheItem(cache_key, null, 180 * 3, context).then()
+      let items = await getCacheItem(cache_key, null, 180 * 3, this.context.partner).then()
       logger.debug(`lasec-crm.QuoteService getIncoterms()`, { cached: items });
 
       if (!items) {
@@ -294,7 +294,7 @@ class LasecQuoteService implements IQuoteService {
   }
 
   getQuoteEmail = async (quote_id: string, email_type: string): Promise<Reactory.IEmailMessage> => {
-    return await getCacheItem(`${email_type}::${quote_id}::${user._id}`).then() as Reactory.IEmailMessage;
+    return await getCacheItem(`${email_type}::${quote_id}::${user._id}`, null, (24 * 60 * 60), this.context.partner).then() as Reactory.IEmailMessage;
   }
 
   setQuoteEmail = async (quote_id: string, email_type: string, message: Reactory.IEmailMessage): Promise<Reactory.IEmailMessage> => {
