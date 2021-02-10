@@ -35,6 +35,7 @@ import { reporters } from 'mocha';
 
 import { partnerStyles } from './styles';
 import { numberWords, graph_palette, graph_label_color, cpr } from './constants';
+import { Reactory } from 'types/reactory';
 
 const { APP_DATA_ROOT } = process.env;
 
@@ -96,7 +97,7 @@ const greyscalePng = (path, outpath) => {
 };
 
 
-const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = false, selectionTitle = '', selectionDescription = '', }) => {
+const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = false, selectionTitle = '', selectionDescription = '', }, context: Reactory.IReactoryContext) => {
   logger.info(`Resolving data for MoresCulture Survey: ${surveyId}
     DelegateEntry Ids: ${delegateIds}
     Print Scores ${print_scores}
@@ -105,7 +106,7 @@ const resolveData = async ({ surveyId = null, delegateIds = [], print_scores = f
   // const assessment = await Assessment.findById(assessment_id).then();
   if (surveyId === null) throw new ApiError(`surveyId cannot be null`)
   try {
-    const { partner, user } = global;
+    const { partner, user } = context;
 
     const survey: TowerStone.ISurveyDocument = await Survey.findById(surveyId)
       .populate('organization')

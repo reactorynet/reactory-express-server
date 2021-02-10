@@ -1,3 +1,4 @@
+'use strict'
 import moment, { Moment } from 'moment';
 import lodash, { isArray, isNil, isString } from 'lodash';
 import { ObjectID, ObjectId } from 'mongodb';
@@ -34,7 +35,10 @@ import {
   LasecGetFreightRequestQuoteParams,
   LasecQuoteOption,
   FreightRequestOption,
-  LasecGetPageQuotesParams
+  LasecGetPageQuotesParams,
+  IQuoteService,
+  ILasecLoggingService,
+  LasecCurrency
 } from '../types/lasec';
 
 
@@ -54,7 +58,7 @@ const maps = { ...OBJECT_MAPS };
  * Transforms meta data into totals object
  * @param meta meta data to use for transformation
  */
-export const totalsFromMetaData = (meta: any) => {
+export const totalsFromMetaData: any = (meta: any) => {
   return om.merge(meta.source, {
     "grand_total_excl_vat_cents": "totalVATExclusive",
     "grand_total_vat_cents": "totalVAT",
@@ -66,7 +70,7 @@ export const totalsFromMetaData = (meta: any) => {
   });
 };
 
-export const synchronizeQuote = async (quote_id: string, owner: any, source: any = null, map: any = true) => {
+export const synchronizeQuote = async (quote_id: string, owner: any, source: any = null, map: any = true, context: Reactory.IReactoryContext) => {
   logger.debug(`synchronizeQuote called ${quote_id}`)
   const quoteSyncTimeout = 3;
 
@@ -75,7 +79,7 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
   let _quoteDoc: LasecQuote | null;
   const _predicate = {
     'meta.reference': quote_id,
-    'meta.owner': owner || global.partner.key,
+    'meta.owner': owner || context.partner.key,
   }
 
   const now = moment();
@@ -83,7 +87,7 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
   const _existing: LasecQuote = await Quote.findOne(_predicate).then();
 
   if (_source === null) {
-    _source = await lasecApi.Quotes.getByQuoteId(quote_id).then();
+    _source = await lasecApi.Quotes.getByQuoteId(quote_id, undefined, context).then();
   }
 
   if (_source === null && _existing !== null) {
@@ -113,8 +117,8 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
         owner,
         reference: quote_id,
         source: { ..._source },
-        lastSync: now.valueOf(),
-        nextSync: moment(now).add(quoteSyncTimeout, 'minutes').valueOf(),
+        lastSync: now.toDate(),
+        nextSync: moment(now).add(quoteSyncTimeout, 'minutes').toDate(),
         mustSync: true,
       };
       _existing.totals = _quoteDoc.totals;
@@ -138,8 +142,8 @@ export const synchronizeQuote = async (quote_id: string, owner: any, source: any
 
       await _newQuote.addTimelineEntry({
         when: now.valueOf(),
-        what: `Initial Sync with reactory trigger by ${global.user.fullName(true)}`,
-        who: global.user._id,
+        what: `Initial Sync with reactory trigger by ${context.user.fullName(true)}`,
+        who: context.user._id,
         notes: `Initial import from Lasec360 API.`
       });
 
@@ -164,64 +168,64 @@ const credsFromAuthentication = (authentication: Reactory.IAuthentication) => {
 }
 
 export const LoggedInLasecUserHashKey = ($partner: Reactory.IReactoryClientDocument, $user: Reactory.IUserDocument) => {
-  if ($user === null || $user === undefined || global.user === null) throw new ApiError(`$user us a required parameter`, user)
+  if ($user === null || $user === undefined) throw new ApiError(`$user us a required parameter`, user)
   let _authentication: Reactory.IAuthentication = null;
 
   if ($user) {
-    _authentication = user.getAuthentication("lasec");
+    _authentication = $user.getAuthentication("lasec");
   }
 
   if (!_authentication) {
     throw new LasecNotAuthenticatedException(`User is not currently authentication with 360`);
   }
 
-
+  debugger
   const lasec_creds: Lasec360Credentials = credsFromAuthentication(_authentication);
   if (lasec_creds && lasec_creds.payload) {
     let staff_user_id: string = "";
     staff_user_id = `${_authentication.props.payload.user_id}`;
-    return `LOGGED_IN_360_USER_${global.partner._id}_${user._id}_${staff_user_id}`;
+    return `LOGGED_IN_360_USER_${$partner._id}_${$user._id}_${staff_user_id}`;
   } else {
     throw new LasecNotAuthenticatedException("User does not have 360 credentials, please try logging in");
   }
 
 }
 
-export const getLoggedIn360User: Function = async function (skip_cache: boolean = false): Promise<Lasec360User> {
-  const { user } = global;
+export const getLoggedIn360User = async function (skip_cache: boolean = false, context: Reactory.IReactoryContext): Promise<Lasec360User> {
+  const { user } = context;
   if (user._id === "ANON" || user.id === 'ANON') {
     logger.debug("🚨 Anon User Cannot Retrieve Authentications");
     return null;
   }
   if (user === null || user === undefined) throw new ApiError(`GLOBAL USER OBJECT IS NULL`, user)
 
-  if(typeof user.getAuthentication === 'function') {
+  if (typeof user.getAuthentication === 'function') {
     const _authentication = user.getAuthentication("lasec");
-  
+
     if (!_authentication) {
       throw new LasecNotAuthenticatedException('User has no authentication entry for Lasec');
     }
-    
+
     const _lasec_creds: Lasec360Credentials = credsFromAuthentication(_authentication);
     if (_lasec_creds && _lasec_creds.payload) {
       let staff_user_id: string = "";
       staff_user_id = `${_lasec_creds.payload.user_id}`;
-  
-      const hashkey = LoggedInLasecUserHashKey(global.partner, user);
-      let me360 = await getCacheItem(hashkey).then();
+
+      const hashkey = LoggedInLasecUserHashKey(context.partner, user);
+      let me360 = await getCacheItem(hashkey, null, 60, context.partner).then();
       if (me360 === null || skip_cache === true) {
-        me360 = await lasecApi.User.getLasecUsers([staff_user_id], "ids").then();
+        me360 = await lasecApi.User.getLasecUsers([staff_user_id], "ids", context).then();
         if (me360.length === 1) {
           me360 = me360[0];
           //fetch any other data that may be required for the data fetch
         }
       }
-  
+
       if (me360) {
-        setCacheItem(hashkey, me360, 60);
+        setCacheItem(hashkey, me360, 60, context.partner);
         logger.debug(`Updated Cache item for ${hashkey} 🟢`)
       }
-  
+
       logger.debug(`me360 ===>`, me360)
       return me360;
     }
@@ -233,7 +237,7 @@ export const getLoggedIn360User: Function = async function (skip_cache: boolean 
 
 };
 
-export const setLoggedInUserProps = async (active_rep_code: string, active_company: string): Promise<Lasec360User> => {
+export const setLoggedInUserProps = async (active_rep_code: string, active_company: string, context: Reactory.IReactoryContext): Promise<Lasec360User> => {
   logger.debug(`Helpers.ts setLoggedInUserProps(active_rep_code, active_company)`, { active_rep_code, active_company })
 
   let company_id = 2; // sa
@@ -262,19 +266,19 @@ export const setLoggedInUserProps = async (active_rep_code: string, active_compa
     }
   }
 
-  let result = await lasecApi.User.setActiveCompany(company_id).then()
+  let result = await lasecApi.User.setActiveCompany(company_id, context).then()
   logger.debug(`Result from setting active company`, { result });
-  return getLoggedIn360User(true);
+  return getLoggedIn360User(true, context);
 
 };
 
-export const getTargets = async (params: LasecDashboardSearchParams) => {
+export const getTargets = async (params: LasecDashboardSearchParams, context: Reactory.IReactoryContext) => {
   const { periodStart, periodEnd, teamIds, repIds, agentSelection } = params;
   logger.debug(`QuoteResolver.getTargets(params)`, params);
   let userTargets: number = 0;
   try {
 
-    const { user } = global;
+    const { user } = context;
     const lasecCreds = user.getAuthentication("lasec");
     if (!lasecCreds) {
       logger.error(`agentSelection: ${agentSelection} and user has no Lasec Credentials? Should not happen`, lasecCreds);
@@ -289,18 +293,18 @@ export const getTargets = async (params: LasecDashboardSearchParams) => {
     switch (agentSelection) {
       case "team": {
         logger.debug(`Finding Targets for REP_CODES `, teamIds);
-        userTargets = await lasecApi.User.getUserTargets(teamIds, 'sales_team_id').then();
+        userTargets = await lasecApi.User.getUserTargets(teamIds, 'sales_team_id', context).then();
         break;
       }
       case "custom": {
         logger.debug(`Finding Targets for USERS `, repIds);
-        userTargets = await lasecApi.User.getUserTargets(repIds, 'ids').then();
+        userTargets = await lasecApi.User.getUserTargets(repIds, 'ids', context).then();
         break;
       }
       case "me":
       default: {
         logger.debug(`Finding Targets for LOGGED IN USER `, repIds);
-        userTargets = await lasecApi.User.getUserTargets([`${staff_user_id}`], 'ids').then();
+        userTargets = await lasecApi.User.getUserTargets([`${staff_user_id}`], 'ids', context).then();
       }
     }
 
@@ -317,10 +321,10 @@ export const getTargets = async (params: LasecDashboardSearchParams) => {
  * Finds and / or synchronizes a record
  * @param {String} quote_id
  */
-export const getLasecQuoteById = async (quote_id: string) => {
+export const getLasecQuoteById = async (quote_id: string, partner: Reactory.IReactoryClientDocument, context: Reactory.IReactoryContext) => {
   try {
-    const owner = global.partner.key;
-    let quote = await synchronizeQuote(quote_id, owner, null, true).then();
+    const owner = partner.key;
+    let quote = await synchronizeQuote(quote_id, owner, null, true, context).then();
     logger.debug(`QUOTE RESULT:: ${JSON.stringify(quote)}`);
     return quote;
 
@@ -344,9 +348,9 @@ interface SalesDashboardDataResult {
   quotesByStatus: any[],
 }
 
-export const getSalesDashboardData = async (params) => {
+export const getSalesDashboardData = async (params: any, context: Reactory.IReactoryContext) => {
 
-  let me = await getLoggedIn360User().then();
+  let me: any = await getLoggedIn360User(false, context).then();
   logger.debug(`Fetching Lasec Sales Dashboard Data as ${me.first_name} `, params, me);
   let _params = params;
 
@@ -377,7 +381,7 @@ export const getSalesDashboardData = async (params) => {
     }
   }
 
-  const debresults: any = await mysql(`CALL LasecGetSalesDashboardData ('${moment(apiFilter.start_date).format('YYYY-MM-DD HH:mm:ss')}', '${moment(apiFilter.end_date).format('YYYY-MM-DD HH:mm:ss')}',  ${me.id}, 'me');`, 'mysql.lasec360').then()
+  const debresults: any = await mysql(`CALL LasecGetSalesDashboardData ('${moment(apiFilter.start_date).format('YYYY-MM-DD HH:mm:ss')}', '${moment(apiFilter.end_date).format('YYYY-MM-DD HH:mm:ss')}',  ${me.id}, 'me');`, 'mysql.lasec360', undefined, context).then()
 
   let quotes: any[] = debresults[1];
   let invoices: any[] = debresults[2];
@@ -390,7 +394,7 @@ export const getSalesDashboardData = async (params) => {
 
   //perform a lightweight map
   const quoteSyncResult = await Promise.all(quotes.map((quote: any) => {
-    return synchronizeQuote(quote.id, global.partner.key, quote, true);
+    return synchronizeQuote(quote.id, context.partner.key, quote, true, context);
   })).then();
 
   quotes = quoteSyncResult.map(doc => doc);
@@ -408,10 +412,10 @@ export const getSalesDashboardData = async (params) => {
 };
 
 
-export const getQuotes = async (params) => {
+export const getQuotes = async (params: any, context: Reactory.IReactoryContext) => {
 
-  let me = await getLoggedIn360User().then();
-  logger.debug(`Fetching Lasec Dashboard Data as ${me.first_name} `, params, me);
+  let me = await getLoggedIn360User(false, context).then();
+  logger.debug(`Fetching Lasec Dashboard Data as ${me.firstName} `, params, me);
   let _params = params;
 
   if (!_params) {
@@ -441,7 +445,7 @@ export const getQuotes = async (params) => {
     }
   }
 
-  const debresults: any = await mysql(`CALL LasecGetSalesDashboardData ('${moment(apiFilter.start_date).format('YYYY-MM-DD HH:mm:ss')}', '${moment(apiFilter.end_date).format('YYYY-MM-DD HH:mm:ss')}',  ${me.id}, 'me');`, 'mysql.lasec360').then()
+  const debresults: any = await mysql(`CALL LasecGetSalesDashboardData ('${moment(apiFilter.start_date).format('YYYY-MM-DD HH:mm:ss')}', '${moment(apiFilter.end_date).format('YYYY-MM-DD HH:mm:ss')}',  ${me.id}, 'me');`, 'mysql.lasec360', undefined, context).then()
 
 
   /*
@@ -481,21 +485,21 @@ export const getQuotes = async (params) => {
 
   //perform a lightweight map
   const quoteSyncResult = await Promise.all(quotes.map((quote: any) => {
-    return synchronizeQuote(quote.id, global.partner.key, quote, true);
+    return synchronizeQuote(quote.id, context.partner.key, quote, true, context);
   })).then();
 
   quotes = quoteSyncResult.map(doc => doc);
 
   // logger.debug(`QUOTES ${JSON.stringify(quotes.slice(0, 5))}`);
 
-  amq.raiseWorkFlowEvent('quote.list.refresh', quotes, global.partner);
+  amq.raiseWorkFlowEvent('quote.list.refresh', quotes, context.partner);
 
   return quotes;
 
 
 };
 
-export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds = [], agentSelection = 'me' }) => {
+export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds = [], agentSelection = 'me' }: any, context: Reactory.IReactoryContext) => {
 
   //holds a list of our detail promises
   let idsQueryResults: any = null;
@@ -508,7 +512,7 @@ export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds
     end_date: periodEnd
   };
 
-  const me360 = await getLoggedIn360User().then();
+  const me360 = await getLoggedIn360User(false, context).then();
 
   switch (agentSelection) {
     case "team": {
@@ -530,7 +534,7 @@ export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds
    */
   try {
     logger.debug(`QuoteResolver getInvoices({ ${periodStart}, ${periodEnd}, ${teamIds} })`);
-    idsQueryResults = await lasecApi.Invoices.list({ filter: filter, pagination: { page_size: 10, enabled: true, current_page: 1 }, ordering: { "invoice_date": "asc" } }).then();
+    idsQueryResults = await lasecApi.Invoices.list({ filter: filter, pagination: { page_size: 10, enabled: true, current_page: 1 }, ordering: { "invoice_date": "asc" } }, context).then();
     if (lodash.isArray(idsQueryResults.ids) === true) {
       ids_to_request = [...idsQueryResults.ids] //spread em
     }
@@ -542,7 +546,7 @@ export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds
       const max_pages = idsQueryResults.pagination.num_pages;
       logger.debug(`Period requires paged invoice result fetching ${max_pages} id pages`)
       for (let pageIndex = idsQueryResults.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
-        more_ids_promises.push(lasecApi.Invoices.list({ filter: filter, pagination: { page_size: 10, enabled: true, current_page: pageIndex }, ordering: { "invoice_date": "asc" } }));
+        more_ids_promises.push(lasecApi.Invoices.list({ filter: filter, pagination: { page_size: 10, enabled: true, current_page: pageIndex }, ordering: { "invoice_date": "asc" } }, context));
       }
 
       try {
@@ -571,7 +575,7 @@ export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds
       //trim
       ids_to_request = lodash.slice(ids_to_request, 0, ids_to_request.length - _batch_size);
       //add invoice list with ids promise
-      invoice_details_promises.push(lasecApi.Invoices.list({ filter: { ids: _ids_to_fetch }, ordering: { "invoice_date": "asc" }, pagination: { page_size: _ids_to_fetch.length, current_page: 1, enabled: true } }));
+      invoice_details_promises.push(lasecApi.Invoices.list({ filter: { ids: _ids_to_fetch }, ordering: { "invoice_date": "asc" }, pagination: { page_size: _ids_to_fetch.length, current_page: 1, enabled: true } }, context));
       ids_left = ids_to_request.length;
     }
 
@@ -603,7 +607,7 @@ export const getInvoices = async ({ periodStart, periodEnd, teamIds = [], repIds
 
 };
 
-export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedIds = []) => {
+export const getISOs = async (dashparams: LasecDashboardSearchParams, context: Reactory.IReactoryContext) => {
 
   const { periodStart, periodEnd, agentSelection, teamIds } = dashparams;
   logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd} })`);
@@ -615,13 +619,13 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
   let iso_items: any[] = [];
 
 
-  let isoQueryParams = {
+  let isoQueryParams: any = {
     filter: { order_status: "1", start_date: periodStart, end_date: periodEnd },
     ordering: { order_date: "desc" },
     pagination: { enabled: true, page_size: 20 }
   };
 
-  const me360 = await getLoggedIn360User().then();
+  const me360 = await getLoggedIn360User(false, context).then();
 
   switch (agentSelection) {
     case "team": {
@@ -642,7 +646,7 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
    */
   try {
     logger.debug(`QuoteResolver getISOs({ ${periodStart}, ${periodEnd}, ${teamIds} })`);
-    idsQueryResults = await lasecApi.PurchaseOrders.list({ filter: isoQueryParams.filter, pagination: { page_size: 10, enabled: true, current_page: 1 }, ordering: { order_date: "desc" } }).then();
+    idsQueryResults = await lasecApi.PurchaseOrders.list({ filter: isoQueryParams.filter, pagination: { page_size: 10, enabled: true, current_page: 1 }, ordering: { order_date: "desc" } }, context).then();
     if (lodash.isArray(idsQueryResults.ids) === true) {
       ids_to_request = [...idsQueryResults.ids] //spread em
     }
@@ -654,7 +658,7 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
       const max_pages = idsQueryResults.pagination.num_pages;
       logger.debug(`Period requires paged invoice result fetching ${max_pages} id pages`)
       for (let pageIndex = idsQueryResults.pagination.current_page + 1; pageIndex <= max_pages; pageIndex += 1) {
-        more_ids_promises.push(lasecApi.PurchaseOrders.list({ filter: isoQueryParams.filter, pagination: { page_size: 10, enabled: true, current_page: pageIndex }, ordering: { "order_date": "asc" } }));
+        more_ids_promises.push(lasecApi.PurchaseOrders.list({ filter: isoQueryParams.filter, pagination: { page_size: 10, enabled: true, current_page: pageIndex }, ordering: { "order_date": "asc" } }, context));
       }
 
       try {
@@ -683,7 +687,7 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
       //trim
       ids_to_request = lodash.slice(ids_to_request, 0, ids_to_request.length - _batch_size);
       //add invoice list with ids promise
-      iso_fetch_promises.push(lasecApi.PurchaseOrders.list({ filter: { ids: _ids_to_fetch }, ordering: { "order_date": "asc" }, pagination: { page_size: _ids_to_fetch.length, current_page: 1, enabled: true } }));
+      iso_fetch_promises.push(lasecApi.PurchaseOrders.list({ filter: { ids: _ids_to_fetch }, ordering: { "order_date": "asc" }, pagination: { page_size: _ids_to_fetch.length, current_page: 1, enabled: true } }, context));
       ids_left = ids_to_request.length;
     }
 
@@ -715,15 +719,18 @@ export const getISOs = async (dashparams: LasecDashboardSearchParams, collectedI
 };
 
 //retrieves next actions for a user
-export const getNextActionsForUser = async ({ periodStart, periodEnd, user = global.user, actioned = false }) => {
+export const getNextActionsForUser = async ({ periodStart, periodEnd, user, actioned = false }: any, context: Reactory.IReactoryContext) => {
+
+  let $user = user;
+  if (!$user) $user = context.user;
 
   try {
-    if (!user) throw new ApiError("Invalid user data", user);
-    logger.debug(`Fetching nextActions (Quote Reminders) for user:: ${user.firstName} ${user.lastName} [${user.email}]`);
+    if (!$user) throw new ApiError("Invalid user data", user);
+    logger.debug(`Fetching nextActions (Quote Reminders) for user:: ${$user.firstName} ${$user.lastName} [${$user.email}]`);
     logger.debug(`Fetching nextActions (Period) for user:: ${periodStart} - ${periodEnd}`);
     const reminders = await QuoteReminder.find({
       // owner: user._id,
-      who: user._id,
+      who: $user._id,
       next: {
         $gte: moment(periodStart).toDate(),
         $lte: moment(periodEnd).endOf('day').toDate()
@@ -755,10 +762,10 @@ export const getNextActionById = async (id) => {
  * Fetches emails where content / subject matches the quote
  * @param {*} quote_id
  */
-export const getQuoteEmails = async (quote_id) => {
+export const getQuoteEmails = async (quote_id: string, context: Reactory.IReactoryContext) => {
 
   return new Promise((resolve, reject) => {
-    clientFor(global.user, global.partner).query({
+    clientFor(context.user, context.partner).query({
       query: gql`
         query EmailForQuote($mailFilter: MailFilter) {
           userEmails(mailFilter: $mailFilter) {
@@ -799,8 +806,8 @@ export const groupQuotesByStatus = (quotes: any[]) => {
 
     const { totals } = quote;
 
-    const titleFromKey = (_k) => {
-      const _m = {
+    const titleFromKey = (_k: string) => {
+      const _m: any = {
         "1": "Draft",
         "2": "Open",
         "3": "Accepted",
@@ -873,11 +880,13 @@ export interface ProductClassQuotes {
   QuoteLineItems: any[],
 }
 
-export const groupQuotesByProduct = async (quotes: LasecQuote[]) => {
+export const groupQuotesByProduct = async (quotes: LasecQuote[], context: Reactory.IReactoryContext) => {
+
+  const groupsByKey: any = {};
 
   const quotesByProductClass: QuotesByProductClassMap = {};
   try {
-    const lineitemsPromises = quotes.map((quote: LasecQuote) => { lasecGetQuoteLineItems(quote.id) })
+    const lineitemsPromises = quotes.map((quote: LasecQuote) => { lasecGetQuoteLineItems(quote.id, null, 1, 100, context) })
     const LineItemResults = await Promise.all(lineitemsPromises).then();
   } catch (e) {
     logger.error(`Error Getting Line Items For Quote(s) ${e.message}`, e);
@@ -934,7 +943,7 @@ export const groupQuotesByProduct = async (quotes: LasecQuote[]) => {
   return groupedByProduct;
 };
 
-export const lasecGetProductDashboard = async (dashparams = defaultProductDashboardParams,) => {
+export const lasecGetProductDashboard = async (dashparams: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`GET PRODUCT DASHBOARD QUERIED: ${JSON.stringify(dashparams)}`);
   let {
@@ -1007,7 +1016,7 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
     }
   }
 
-  let periodLabel = `Product Quotes Dashboard ${periodStart.format('DD MM YY')} till ${periodEnd.format('DD MM YY')} For ${global.user.firstName} ${global.user.lastName}`;
+  let periodLabel = `Product Quotes Dashboard ${periodStart.format('DD MM YY')} till ${periodEnd.format('DD MM YY')} For ${context.user.firstName} ${context.user.lastName}`;
 
   /*
     let cacheKey = `productQuote.dashboard.${user._id}.${periodStart.valueOf()}.${periodEnd.valueOf()}`;
@@ -1020,36 +1029,36 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
     }
   */
 
-  let palette = global.partner.colorScheme();
+  let palette = context.partner.colorScheme();
   logger.debug('Fetching Quote Data');
-  let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection, productClass }).then();
+  let quotes = await getQuotes({ periodStart, periodEnd, teamIds, repIds, agentSelection, productClass }, context).then();
   logger.debug(`QUOTES:: (${quotes.length})`);
-  const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  const targets = await getTargets({ periodStart, periodEnd, teamIds, repIds, agentSelection, period: DATE_FILTER_PRESELECT.CUSTOM }, context).then();
   logger.debug('Fetching Next Actions for User, targets loaded', { targets });
-  const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: global.user }).then();
-  logger.debug(`Fetching invoice data ${periodStart.format('YYYY-MM-DD HH:mm')} ${periodEnd.format('YYYY-MM-DD HH:mm')} ${global.user.firstName} ${global.user.lastName}`);
+  const nextActionsForUser = await getNextActionsForUser({ periodStart, periodEnd, user: context.user }, context).then();
+  logger.debug(`Fetching invoice data ${periodStart.format('YYYY-MM-DD HH:mm')} ${periodEnd.format('YYYY-MM-DD HH:mm')} ${context.user.firstName} ${context.user.lastName}`);
   const invoices = await getInvoices({
     periodStart,
     periodEnd,
     teamIds: teamIds.length === 0 ? null : teamIds,
     repIds,
     agentSelection
-  }).then();
+  }, context).then();
   logger.debug(`Found ${isArray(invoices) ? invoices.length : '##'} invoices`)
   logger.debug('Fetching isos');
-  const isos = await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection }).then();
+  const isos = await getISOs({ periodStart, periodEnd, teamIds, repIds, agentSelection, period: DATE_FILTER_PRESELECT.CUSTOM }, context).then();
   logger.debug(`Found ${isArray(isos) ? isos.length : '##'} isos`);
 
 
 
-  const quoteProductFunnel = {
+  const quoteProductFunnel: any = {
     chartType: 'FUNNEL',
     data: [],
     options: {},
     key: `quote-product/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/funnel`,
   };
 
-  const quoteProductPie = {
+  const quoteProductPie: any = {
     chartType: 'PIE',
     data: [],
     options: {
@@ -1062,7 +1071,7 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
     key: `quote-status/product-dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`,
   };
 
-  const quoteISOPie = {
+  const quoteISOPie: any = {
     chartType: 'PIE',
     data: isos.map((iso) => {
       return iso;
@@ -1077,7 +1086,7 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
     key: `quote-iso/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
   };
 
-  const quoteINVPie = {
+  const quoteINVPie: any = {
     chartType: 'PIE',
     data: invoices.map((invoice) => {
       return invoice;
@@ -1092,7 +1101,7 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
     key: `quote-inv/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/pie`
   };
 
-  const quoteStatusComposed = {
+  const quoteStatusComposed: any = {
     chartType: 'COMPOSED',
     data: [],
     options: {
@@ -1109,13 +1118,13 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
         dataKey: 'invoiced',
         dataLabel: 'Total Invoiced',
         name: 'Total Invoiced',
-        stroke: `${global.partner.themeOptions.palette.primary1Color}`,
+        stroke: `${context.partner.themeOptions.palette.primary1Color}`,
       },
       bar: {
         dataKey: 'isos',
         dataLabel: 'Total ISO',
         name: 'Sales Orders',
-        stroke: `${global.partner.themeOptions.palette.primary2Color}`,
+        stroke: `${context.partner.themeOptions.palette.primary2Color}`,
       }
     },
     key: `quote-status/dashboard/${periodStart.valueOf()}/${periodEnd.valueOf()}/composed`
@@ -1129,7 +1138,7 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
 
   lodash.orderBy(quotes, ['productClass'], ['asc']);
 
-  const productDashboardResult = {
+  const productDashboardResult: any = {
     period,
     periodLabel,
     periodStart,
@@ -1140,7 +1149,7 @@ export const lasecGetProductDashboard = async (dashparams = defaultProductDashbo
     target: targets || 0,
     targetPercent: 0,
     nextActions: {
-      owner: global.user,
+      owner: context.user,
       actions: nextActionsForUser
     },
     totalQuotes: 0,
@@ -1262,8 +1271,8 @@ const line_item_map = {
   'product_class_description': 'productClassDescription',
 }
 
-export const lasecGetQuoteLineItem = async (id: string): Promise<LasecQuoteItem> => {
-  const line_item_result: Lasec360QuoteLineItem = await lasecApi.Quotes.getLineItem(id).then();
+export const lasecGetQuoteLineItem = async (id: string, context: Reactory.IReactoryContext): Promise<LasecQuoteItem> => {
+  const line_item_result: Lasec360QuoteLineItem = await lasecApi.Quotes.getLineItem(id, context).then();
 
   const line_item: LasecQuoteItem = om.merge(line_item_result, line_item_map) as LasecQuoteItem;
   line_item.meta.source = line_item_result;
@@ -1272,7 +1281,7 @@ export const lasecGetQuoteLineItem = async (id: string): Promise<LasecQuoteItem>
 };
 
 
-export const lasecGetQuoteLineItems = async (code: string, active_option: string = 'all', page = 1, pageSize = 25): Promise<any> => {
+export const lasecGetQuoteLineItems = async (code: string, active_option: string = 'all', page = 1, pageSize = 25, context: Reactory.IReactoryContext): Promise<any> => {
   const keyhash = `quote.${code}-${active_option}.lineitems.${page}-${pageSize}`;
 
   //let cached = await getCacheItem(keyhash);
@@ -1280,7 +1289,7 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: string
 
   //if (lodash.isNil(cached) === true) {
   let lineItems = []
-  let result = await lasecApi.Quotes.getLineItems(code, active_option, pageSize, page).then();
+  let result = await lasecApi.Quotes.getLineItems(code, active_option, pageSize, page, context).then();
 
   logger.debug(`Helpers.ts -> lasecGetQuoteLineItems() => Got results from API`, { records: result.line_items.length, paging: result.item_paging })
 
@@ -1302,18 +1311,18 @@ export const lasecGetQuoteLineItems = async (code: string, active_option: string
   return { lineItems, item_paging: result.item_paging };
 }
 
-export const LasecSendQuoteEmail = async (params: { code: string, mailMessage: any }) => {
+export const LasecSendQuoteEmail = async (params: { code: string, mailMessage: any }, context: Reactory.IReactoryContext) => {
   const { code, mailMessage } = params;
 
   const { subject, message, to, cc = [], bcc = [], from, attachments = [] } = mailMessage;
-  const { user } = global;
+  const { user } = context;
 
   if (user.email !== from.email) throw new ApiError('Cannot send an email on behalf of another account. You can only send emails on behalf of yourself.', { HereBeDragons: true });
 
   let mailResponse = { success: true, message: `Customer mail sent successfully!` };
 
   if (user.getAuthentication("microsoft") !== null) {
-    await clientFor(user, global.partner).mutate({
+    await clientFor(user, context.partner).mutate({
       mutation: gql`
         mutation sendMail($message: SendMailInput!) {
           sendMail(message: $message) {
@@ -1378,24 +1387,24 @@ const quote_field_maps: any = {
  * Function that returns paged quote data from the lasec api.
  * @param params
  */
-export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
+export const getPagedQuotes = async (params: LasecGetPageQuotesParams, context: Reactory.IReactoryContext) => {
 
   const {
     search = "",
     periodStart,
     periodEnd,
     quoteDate,
-    filterBy = "rep_code",
+    filterBy = "any_field",
     filter,
     paging = { page: 1, pageSize: 10 },
     orderBy = 'code',
     orderDirection = 'asc',
     iter = 0 } = params;
 
-  logger.debug(`🚨🚨getPagedQuotes(${JSON.stringify(params)})`);
+  logger.debug(`🚨🚨getPagedQuotes(${JSON.stringify(params, null, 2)})`);
 
   let ordering: { [key: string]: string } = {}
-  let lasec_user: Lasec360User = await getLoggedIn360User().then();
+  let lasec_user: Lasec360User = await getLoggedIn360User(false, context).then();
 
   if (orderBy) {
     let fieldKey: string = quote_field_maps[orderBy];
@@ -1410,16 +1419,26 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
   };
 
   let apiFilter: any = {
+    sales_team_id: lasec_user.sales_team_id,
   };
 
   const DEFAULT_FILTER = {
-    rep_code: lasec_user.repId,
+    rep_id: lasec_user.sales_team_id,
   }
 
-  const empty_result = {
+  const empty_result: any = {
     paging: pagingResult,
     quotes: [],
   }
+
+  const empty_response: any = {
+    paging: pagingResult,
+    periodStart,
+    periodEnd,
+    filter,
+    filterBy,
+    quotes: []
+  };
 
   switch (filterBy) {
     case "any_field": {
@@ -1432,6 +1451,10 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
       } else {
         apiFilter.any_field = search;
       }
+
+      if (search.length > 0) delete apiFilter.sales_team_id;
+
+
       break;
     }
     case "date_range": {
@@ -1444,60 +1467,63 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
         apiFilter.any_field = search;
       }
 
+      delete apiFilter.sales_team_id;
+
       break;
     }
     case "quote_number": {
 
       if (isString(search) === false && filter === undefined) {
-        return {
-          paging: pagingResult,
-          periodStart,
-          periodEnd,
-          filter,
-          filterBy,
-          quotes: []
-        };
+        return empty_response;
       }
 
       apiFilter.ids = [search];
-
+      delete apiFilter.sales_team_id;
 
       break;
     }
     case "quote_date": {
       apiFilter.created = moment(filter).format('YYYY-MM-DD')
+      delete apiFilter.sales_team_id;
       break;
     }
     case "quote_status": {
-      apiFilter.quote_status_id = filter;
+      //HACK to ensure the quote status filter works
+      apiFilter.quote_status = `${filter},${filter}`;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "total_value": {
       let total_value: number = parseInt(parseFloat(search || "100").toFixed(2)) * 10;
       apiFilter.total_value = total_value;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "client": {
       //apiFilter.full_name = search;
-      apiFilter.any_field = search;
+      apiFilter.customer_name = search;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "customer": {
       //apiFilter.registered_name = search;
-      apiFilter.any_field = search;
+      apiFilter.company_name = search;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "account_number": {
       //apiFilter.account_number = search;
-      apiFilter.any_field = search;
+      apiFilter.account_number = search;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "quote_type": {
-      apiFilter.quote_type = filter
+      apiFilter.quote_type = filter;
+      delete apiFilter.sales_team_id;
       break;
     }
     case "rep_code": {
-      apiFilter.sales_team_id = filter || lasec_user.repId
+      apiFilter.sales_team_id = filter || lasec_user.sales_team_id
       break;
     }
   }
@@ -1515,7 +1541,7 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
       pagination: { page_size: paging.pageSize || 10, current_page: paging.page },
       ordering,
       format: { "ids_only": true },
-    }).then();
+    }, context).then();
 
 
     if (isArray(quoteResult.ids) === true) {
@@ -1536,7 +1562,7 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
 
   // logger.debug(`Loading (${ids.length}) quote ids`);
 
-  let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }).then();
+  let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }, context).then();
   logger.debug(`Fetched Expanded View for (${quoteDetails.items.length}) Quotes from API`);
   let quotes = [...quoteDetails.items];
 
@@ -1544,7 +1570,7 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams) => {
   logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
 
   const quoteSyncResult = await Promise.all(quotes.map((quote) => {
-    return synchronizeQuote(quote.id, global.partner.key, quote, true);
+    return synchronizeQuote(quote.id, context.partner.key, quote, true, context);
   })).then();
 
   logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
@@ -1581,7 +1607,7 @@ interface PagedClientQuotesParams {
 
 
 
-export const getPagedClientQuotes = async (params: PagedClientQuotesParams): Promise<any> => {
+export const getPagedClientQuotes = async (params: PagedClientQuotesParams, context: Reactory.IReactoryContext): Promise<any> => {
 
   logger.debug(`GETTING PAGED CLIENT QUOTES:: ${JSON.stringify(params)}`);
 
@@ -1602,9 +1628,9 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams): Pro
     pageSize: paging.pageSize || 10
   };
 
-  const empy_result = {
+  const empy_result: any = {
     paging: pagingResult,
-    quotes: []
+    quotes: [],
   };
 
 
@@ -1644,9 +1670,9 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams): Pro
   //   },
   // }
 
-  let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }).then();
+  let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }, context).then();
 
-  let ids = [];
+  let ids: string[] = [];
 
   if (isArray(quoteResult.ids) === true) {
     ids = [...quoteResult.ids];
@@ -1659,12 +1685,12 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams): Pro
     pagingResult.page = quoteResult.pagination.current_page || 1;
   }
 
-  let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }).then();
+  let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }, context).then();
   logger.debug(`Fetched Expanded View for (${quoteDetails.items.length}) Quotes from API`);
   let quotes = [...quoteDetails.items];
 
   const quoteSyncResult = await Promise.all(quotes.map((quote) => {
-    return synchronizeQuote(quote.id, global.partner.key, quote, true);
+    return synchronizeQuote(quote.id, context.partner.key, quote, true, context);
   })).then();
 
   quotes = quoteSyncResult.map(doc => doc);
@@ -1679,7 +1705,7 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams): Pro
   return result;
 }
 
-export const getSalesOrders = async (params) => {
+export const getSalesOrders = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`GETTING PAGED SALES ORDERS:: ${JSON.stringify(params)}`);
 
@@ -1710,17 +1736,17 @@ export const getSalesOrders = async (params) => {
       // format: { ids_only: true },
       ordering: { order_date: "desc" },
       pagination: paging
-    }).then();
+    }, context).then();
 
   logger.debug(`GOT IDS:: ${salesOrdersIds.ids.length}`);
 
-  let ids = [];
+  let ids: string[] = [];
 
   if (isArray(salesOrdersIds.ids) === true) {
     ids = [...salesOrdersIds.ids];
   }
 
-  let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
+  let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }, context).then();
   logger.debug(`GOT DETAILS:: ${JSON.stringify(salesOrdersDetails.items[0])}`);
   let salesOrders = [...salesOrdersDetails.items];
 
@@ -1782,7 +1808,7 @@ export const getSalesOrders = async (params) => {
 
 }
 
-export const getPurchaseOrders = async (params) => {
+export const getPurchaseOrders = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`GETTING PAGED PURCHASE ORDERS:: ${JSON.stringify(params)}`);
 
@@ -1806,17 +1832,17 @@ export const getPurchaseOrders = async (params) => {
       ordering: {},
       format: { ids_only: true },
       pagination: paging
-    }).then();
+    }, context).then();
 
   logger.debug(`GOT PO IDS:: ${purchaseOrdersIds.ids.length}`);
 
-  let ids = [];
+  let ids: string[] = [];
 
   if (isArray(purchaseOrdersIds.ids) === true) {
     ids = [...purchaseOrdersIds.ids];
   }
 
-  let purchaseOrdersDetails = await lasecApi.PurchaseOrders.list({ filter: { ids: ids } }).then();
+  let purchaseOrdersDetails = await lasecApi.PurchaseOrders.list({ filter: { ids: ids } }, context).then();
   logger.debug(`GOT PO DETAILS:: ${JSON.stringify(purchaseOrdersDetails.items[0])}`);
   let purchaseOrders = [...purchaseOrdersDetails.items];
 
@@ -1841,11 +1867,11 @@ export const getPurchaseOrders = async (params) => {
   return result;
 }
 
-export const getPurchaseOrderDetails = async (params) => {
+export const getPurchaseOrderDetails = async (params: any, context: Reactory.IReactoryContext) => {
   try {
     const { orderId, quoteId } = params;
     let apiFilter = { purchase_order_id: orderId };
-    let purchaseOrdersItems = await lasecApi.PurchaseOrders.detail({ filter: apiFilter }).then();
+    let purchaseOrdersItems = await lasecApi.PurchaseOrders.detail({ filter: apiFilter }, context).then();
     let purchaseOrderItems = [...purchaseOrdersItems.items];
 
     purchaseOrderItems = purchaseOrderItems.map(item => {
@@ -1865,11 +1891,11 @@ export const getPurchaseOrderDetails = async (params) => {
 
 };
 
-export const getPagedSalesOrders = async (params: any) => {
+export const getPagedSalesOrders = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`GETTING PAGED SALES ORDERS:: ${JSON.stringify(params)}`);
 
-  const { paging, apiFilter } = params;
+  const { paging, apiFilter, ordering } = params;
 
   let pagingResult = {
     total: 0,
@@ -1883,16 +1909,16 @@ export const getPagedSalesOrders = async (params: any) => {
     format: {
       ids_only: true,
     },
-    ordering: { order_date: "desc" },
+    ordering: ordering || { order_date: "desc" },
     pagination: {
       page_size: paging.pageSize || 10,
       current_page: paging.page
     }
-  }).then();
+  }, context).then();
 
   logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ${JSON.stringify(salesOrdersIds)}`);
 
-  let ids = [];
+  let ids: string[] = [];
 
   if (isArray(salesOrdersIds.ids) === true) {
     ids = [...salesOrdersIds.ids];
@@ -1917,7 +1943,7 @@ export const getPagedSalesOrders = async (params: any) => {
       }
     }
 
-    let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
+    let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }, context).then();
 
     logger.debug(`SALES ORDER DETAILS RESPONSE:: ${JSON.stringify(salesOrdersDetails)}`);
 
@@ -1964,7 +1990,7 @@ export const getPagedSalesOrders = async (params: any) => {
 
 }
 
-export const getClientSalesOrders = async (params) => {
+export const getClientSalesOrders = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(` -- GETTING CLIENT SALES ORDERS --  ${JSON.stringify(params)}`);
 
@@ -2006,7 +2032,7 @@ export const getClientSalesOrders = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  let apiFilter = {
+  let apiFilter: any = {
     customer_id: clientId,
     // [filterBy]: filter || search,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
@@ -2034,9 +2060,9 @@ export const getClientSalesOrders = async (params) => {
       page_size: paging.pageSize || 10,
       current_page: paging.page
     }
-  }).then();
+  }, context).then();
 
-  let ids = [];
+  let ids: string[] = [];
 
   if (isArray(salesOrdersIds.ids) === true) {
     ids = [...salesOrdersIds.ids];
@@ -2049,7 +2075,7 @@ export const getClientSalesOrders = async (params) => {
     pagingResult.page = salesOrdersIds.pagination.current_page || 1;
   }
 
-  let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }).then();
+  let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }, context).then();
   let salesOrders = [...salesOrdersDetails.items];
 
   logger.debug(`SALES ORDER:: ${JSON.stringify(salesOrders[0])}`);
@@ -2090,7 +2116,7 @@ export const getClientSalesOrders = async (params) => {
 
 }
 
-export const getCRMSalesOrders = async (params) => {
+export const getCRMSalesOrders = async (params: any, context: Reactory.IReactoryContext) => {
 
   // -- POSSIBLE FILTERS --
   // any_field - done
@@ -2120,48 +2146,56 @@ export const getCRMSalesOrders = async (params) => {
     periodEnd,
     filterBy = "any_field",
     filter,
-    customer = [],
-    client = [],
-    orderStatus,
-    dateFilter,
+    orderBy = 'order_date',
+    orderDirection = 'desc',
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
-  let me: Lasec360User = await getLoggedIn360User().then() as Lasec360User;
+  let me: Lasec360User = await getLoggedIn360User(false, context).then() as Lasec360User;
 
-  let apiFilter: any = {
-    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
-    ordering: { order_date: "desc" },
-    sales_team_id: me.sales_team_ids[0]
-  };
+  let apiFilter: any = {};
 
   if (filterBy == 'order_date' || filterBy == 'shipping_date' || filterBy == 'quote_date') {
     apiFilter.using = filterBy;
-    apiFilter.start_date = moment(dateFilter).startOf('day');
-    apiFilter.end_date = moment(dateFilter).endOf('day');
+    apiFilter.start_date = moment(filter).startOf('day');
+    apiFilter.end_date = moment(filter).endOf('day');
   }
 
-  if (filterBy == 'order_type')
+  if (filterBy == 'order_type') {
     apiFilter[filterBy] = filter;
+  }
 
   if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id') {
     apiFilter[filterBy] = search;
   }
 
   if (filterBy === 'customer') {
-    apiFilter.customer_id = customer;
+    apiFilter.customer = search;
   }
 
   if (filterBy === 'client') {
-    apiFilter.client_id = client
+    apiFilter.client = search
   }
 
   if (filterBy == 'sales_team_id') {
     apiFilter[filterBy] = filter;
   }
 
-  const result = await getPagedSalesOrders({ paging, apiFilter });
+  if (filterBy === 'date_range') {
+    apiFilter = {
+      ...apiFilter,
+      using: 'order_date',
+      start_date: periodStart ? moment(periodStart).toISOString() : moment().add(-1, 'year'),
+      end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    }
+  }
+
+  if (search.trim() === "" && filterBy === "any_field") apiFilter.sales_team_id = me.sales_team_id;
+
+  let ordering: any = {};
+  ordering[orderBy] = orderDirection;
+
+  const result = await getPagedSalesOrders({ paging, apiFilter, ordering: { order_date: "desc" }, }, context);
   return result;
 }
 
@@ -2202,7 +2236,7 @@ const mimeTypeForFilename = (filename: string) => {
 };
 
 
-export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) => {
+export const getCustomerDocuments = async (params: CustomerDocumentQueryParams, context: Reactory.IReactoryContext) => {
 
   logger.debug(`GET CUSTOMER DOCUMENT PARAMS:: ${JSON.stringify(params)}`);
 
@@ -2213,7 +2247,7 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
     documentFilter.uploadContext = {
       $in: params.uploadContexts.map((ctx: string) => {
         if (ctx === 'lasec-crm::new-company::document') {
-          if (params.id == 'new_client') return `lasec-crm::client::document::new_client::${global.user._id}`; // NEW CLIENT
+          if (params.id == 'new_client') return `lasec-crm::client::document::new_client::${context.user._id}`; // NEW CLIENT
           else return `lasec-crm::client::document::${params.id}`; // INCOMPLETE CLIENT - EXISTING CLIENT
         }
         else if (ctx === 'lasec-crm::client::document') {
@@ -2231,8 +2265,8 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
   logger.debug(`lasec-crm::CompanyResovler.ts --> getCustomerDocuments() --> documentFilter`, documentFilter);
 
   let reactoryFiles: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find(documentFilter).then();
-  
-  reactoryFiles.forEach((rfile) => {    
+
+  reactoryFiles.forEach((rfile) => {
     rfile.fromApi = false;
     _docs.push(rfile);
   });
@@ -2240,28 +2274,28 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
 
   // GET DOCS FROM LASEC API
   if (params.id && params.id !== 'new_client') {
-    const clientDetails = await lasecApi.Customers.list({ filter: { ids: [params.id] } });
+    const clientDetails = await lasecApi.Customers.list({ filter: { ids: [params.id] } }, context);
     if (clientDetails && clientDetails.items.length > 0) {
       let client = clientDetails.items[0];
       if (client.document_ids.length > 0) {
-        let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: client.document_ids }, paging: { enabled: false } });
-        
+        let documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: client.document_ids }, paging: { enabled: false } }, null, context);
+
         documents.items.forEach((documentItem: any) => {
-          
+
           let found = false;
 
           _docs.forEach((loaded: Reactory.IReactoryFile) => {
-            if(loaded.remotes && loaded.remotes.length === 1) {
-              if(loaded.remotes[0].id.indexOf(`${documentItem.id}@`) === 0) {
+            if (loaded.remotes && loaded.remotes.length === 1) {
+              if (loaded.remotes[0].id.indexOf(`${documentItem.id}@`) === 0) {
                 found = true;
               }
             }
           });
-          
-          if(found === false) {
+
+          if (found === false) {
             _docs.push({
               id: documentItem.id,
-              partner: global.partner,
+              partner: context.partner,
               filename: documentItem.name,
               link: documentItem.url,
               hash: Hash(documentItem.url),
@@ -2271,11 +2305,11 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
               size: 0,
               uploadContext: 'lasec-crm::company-document::remote',
               mimetype: mimeTypeForFilename(documentItem.name),
-              uploadedBy: global.user._id,
-              owner: global.user._id,
+              uploadedBy: context.user._id,
+              owner: context.user._id,
               fromApi: true
             });
-          }          
+          }
         });
       }
     }
@@ -2283,11 +2317,11 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
 
   // ID IDS IS AN ARRAY (NOT SURE WHEN THIS OCCURS)
   if (params.ids && params.ids.length > 0) {
-    let remote_documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: params.ids }, paging: { enabled: false } });
+    let remote_documents = await lasecApi.get(lasecApi.URIS.file_upload.url, { filter: { ids: params.ids }, paging: { enabled: false } }, null, context);
     remote_documents.items.forEach((documentItem: any) => {
       _docs.push({
         id: new ObjectID(),
-        partner: global.partner,
+        partner: context.partner,
         filename: documentItem.name,
         link: documentItem.url,
         hash: Hash(documentItem.url),
@@ -2297,16 +2331,16 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
         size: 0,
         uploadContext: 'lasec-crm::company-document::remote',
         mimetype: mimeTypeForFilename(documentItem.name),
-        uploadedBy: global.user._id,
-        // owner: global.user.id
-        owner: global.user._id,
+        uploadedBy: context.user._id,
+        // owner: context.user.id
+        owner: context.user._id,
         fromApi: true
       })
     });
 
   }
 
-  
+
 
   logger.debug(`Files found (${_docs.length})`);
 
@@ -2335,16 +2369,16 @@ export const getCustomerDocuments = async (params: CustomerDocumentQueryParams) 
 };
 
 
-export const getSODocuments = async (args) => {
+export const getSODocuments = async (args: any, context: Reactory.IReactoryContext) => {
   logger.debug(`GETTING DOCUMENTS:: ${JSON.stringify(args)}`)
 
   const { ids } = args;
 
   if (ids && ids.length > 0) {
 
-    let documents = await lasecApi.SalesOrders.documents({ filter: { ids: ids } }).then();
+    let documents = await lasecApi.SalesOrders.documents({ filter: { ids: ids } }, context).then();
     documents = [...documents.items];
-    documents = documents.map(doc => {
+    documents = documents.map((doc: any) => {
       return {
         id: doc.id,
         name: doc.name,
@@ -2358,7 +2392,7 @@ export const getSODocuments = async (args) => {
   return [];
 }
 
-export const deleteSalesOrdersDocument = async (args) => {
+export const deleteSalesOrdersDocument = async (args: any, context: Reactory.IReactoryContext) => {
 
   const { id } = args;
 
@@ -2382,11 +2416,11 @@ export const getSalesOrderComments = async (params: { orderId: string }) => {
  * Save Sales Order Comment
  * @param params
  */
-export const saveSalesOrderComment = async (params: { orderId: string, comment: string }) => {
+export const saveSalesOrderComment = async (params: { orderId: string, comment: string }, context: Reactory.IReactoryContext) => {
   try {
     const sales_order_comment = new LasecSalesOrderComment({
       _id: new ObjectId(),
-      who: global.user._id,
+      who: context.user._id,
       salesOrderId: params.orderId,
       comment: params.comment,
       when: moment()
@@ -2408,7 +2442,7 @@ export const saveSalesOrderComment = async (params: { orderId: string, comment: 
  * get the iso details
  * @param params
  */
-export const getISODetails = async (params: { orderId: string, quoteId: string }) => {
+export const getISODetails = async (params: { orderId: string, quoteId: string }, context: Reactory.IReactoryContext) => {
 
   const {
     orderId,
@@ -2416,15 +2450,15 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
   } = params;
 
   let apiFilter = { sales_order_id: orderId };
-  let salesOrdersIds = await lasecApi.SalesOrders.detail({ filter: apiFilter }).then();
+  let salesOrdersIds = await lasecApi.SalesOrders.detail({ filter: apiFilter }, context).then();
 
-  let ids = [];
+  let ids: string[] = [];
 
   if (isArray(salesOrdersIds.ids) === true) {
     ids = [...salesOrdersIds.ids];
   }
 
-  let salesOrdersDetail = await lasecApi.SalesOrders.detail({ filter: { ids: ids } }).then();
+  let salesOrdersDetail = await lasecApi.SalesOrders.detail({ filter: { ids: ids } }, context).then();
   let salesOrders = [...salesOrdersDetail.items];
 
 
@@ -2464,7 +2498,7 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
   };
 }
 
-export const getClientInvoices = async (params) => {
+export const getClientInvoices = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`GETTING PAGED CLIENT INVOICES:: ${JSON.stringify(params)}`);
 
@@ -2486,25 +2520,10 @@ export const getClientInvoices = async (params) => {
     pageSize: paging.pageSize || 10
   };
 
-  // -- POSSIBLE FILTERS --
-  // any_field - done
-  // date_range - done
-  // invoice_date - done
-  // invoice_number - done
-  // po_number - done
-  // quote_number - done
-  // sales_team_id - done
-  // iso_number - done
-  // account_number - done
-
-  // invoice_value -  Error
-  // customer
-  // client
-
   let apiFilter: any = {
     customer_id: clientId,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('month'),
   };
 
   if (filterBy == 'invoice_date') {
@@ -2515,6 +2534,10 @@ export const getClientInvoices = async (params) => {
 
   if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
     apiFilter[filterBy] = search;
+
+    // remove date range on specific search values
+    delete apiFilter.start_date;
+    delete apiFilter.end_date;
   }
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
@@ -2523,11 +2546,11 @@ export const getClientInvoices = async (params) => {
       page_size: paging.pageSize || 10, current_page: paging.page
     },
     ordering: { "invoice_date": "desc" }
-  }).then();
+  }, context).then();
 
   logger.debug(`INVOICE COUNT:: ${invoiceIdsResponse.ids.length}`);
 
-  let ids = [];
+  let ids: string[] = [];
 
   if (isArray(invoiceIdsResponse.ids) === true) {
     ids = [...invoiceIdsResponse.ids];
@@ -2540,7 +2563,7 @@ export const getClientInvoices = async (params) => {
     pagingResult.page = invoiceIdsResponse.pagination.current_page || 1;
   }
 
-  let invoiceDetails = await lasecApi.Invoices.list({ filter: { ids: ids } }).then();
+  let invoiceDetails = await lasecApi.Invoices.list({ filter: { ids: ids } }, context).then();
   let invoices = [...invoiceDetails.items];
 
   logger.debug(`INVOICE DETAIL:: ${JSON.stringify(invoices[0])}`);
@@ -2563,6 +2586,7 @@ export const getClientInvoices = async (params) => {
   });
 
   let result = {
+    clientId,
     paging: pagingResult,
     invoices,
   };
@@ -2573,7 +2597,7 @@ export const getClientInvoices = async (params) => {
 
 
 
-export const getCRMInvoices = async (params: any) => {
+export const getCRMInvoices = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`GETTING PAGED CRM INVOICES:: ${JSON.stringify(params)}`);
 
@@ -2594,12 +2618,10 @@ export const getCRMInvoices = async (params: any) => {
     pageSize: paging.pageSize || 10
   };
 
-  let me = await getLoggedIn360User().then();
 
   let apiFilter: any = {
-    //customer_id: me.id,
     start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('month'),
   };
 
   if (filterBy == 'invoice_date') {
@@ -2622,7 +2644,7 @@ export const getCRMInvoices = async (params: any) => {
       page_size: paging.pageSize || 10, current_page: paging.page
     },
     ordering: { "invoice_date": "desc" }
-  }).then();
+  }, context).then();
 
   logger.debug(`INVOICE COUNT:: ${invoiceIdsResponse.ids.length}`);
 
@@ -2639,7 +2661,15 @@ export const getCRMInvoices = async (params: any) => {
     pagingResult.page = invoiceIdsResponse.pagination.current_page || 1;
   }
 
-  let invoiceDetails = await lasecApi.Invoices.list({ filter: { ids: ids } }).then();
+  if (ids.length === 0) {
+    logger.debug('🚨 QUERY PARAMETERS RETURNED NO RESULTS 🚨')
+    return {
+      paging: pagingResult,
+      invoices: []
+    }
+  }
+
+  let invoiceDetails = await lasecApi.Invoices.list({ filter: { ids: ids } }, context).then();
   let invoices = [...invoiceDetails.items];
 
   invoices = invoices.map(invoice => {
@@ -2668,7 +2698,7 @@ export const getCRMInvoices = async (params: any) => {
 
 }
 
-export const getClientSalesHistory = async (params: any) => {
+export const getClientSalesHistory = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`GETTING PAGED CLIENT SALES HISTORY:: ${JSON.stringify(params)}`);
 
@@ -2680,6 +2710,11 @@ export const getClientSalesHistory = async (params: any) => {
     filterBy = "any_field",
     filter,
     paging = { page: 1, pageSize: 10 },
+
+    year,
+    month,
+    years,
+
     iter = 0 } = params;
 
   let pagingResult = {
@@ -2689,7 +2724,7 @@ export const getClientSalesHistory = async (params: any) => {
     pageSize: paging.pageSize || 10
   };
 
-  let apiFilter = {
+  let apiFilter: any = {
     customer_id: clientId,
     order_status: 9,
     // [filterBy]: filter || search,
@@ -2697,17 +2732,33 @@ export const getClientSalesHistory = async (params: any) => {
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
 
+  if (search != '')
+    apiFilter[filterBy] = search;
+
+  if (year) {
+    logger.debug(`SETTING DATES PER YEAR:: ${month}`);
+    apiFilter.start_date = moment([year]).startOf('year').toISOString();
+    apiFilter.end_date = moment([year]).endOf('year').toISOString();
+  }
+
+  if (month != undefined) {
+    logger.debug(`SETTING DATES PER MONTH:: ${month}`);
+    let _year = year || moment().year();
+    apiFilter.start_date = moment([_year, month - 1]).startOf('month').toISOString();
+    apiFilter.end_date = moment([_year, month - 1]).endOf('month').toISOString();
+  }
+
   const salesHistoryResponse = await lasecApi.Products.sales_orders({
     filter: apiFilter,
     pagination: {
       page_size: paging.pageSize || 10,
       current_page: paging.page
     },
-  }).then();
+  }, context).then();
 
   logger.debug(`SALES HISTORY COUNT:: ${salesHistoryResponse.ids.length}`);
 
-  let ids = [];
+  let ids: string[] = [];
 
   if (isArray(salesHistoryResponse.ids) === true) {
     ids = [...salesHistoryResponse.ids];
@@ -2720,21 +2771,31 @@ export const getClientSalesHistory = async (params: any) => {
     pagingResult.page = salesHistoryResponse.pagination.current_page || 1;
   }
 
-  let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
+  let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }, context).then();
   let salesHistory = [...saleshistoryDetails.items];
 
   salesHistory = salesHistory.map(order => {
     return {
+
       id: order.id,
-      orderType: order.order_type,
-      orderDate: order.order_date,
-      quoteDate: order.quote_date,
-      quoteNumber: order.quote_id || '',
-      iso: order.sales_order_id,
-      dispatches: order.dispatch_note_ids.join(', '),
+      accountNumber: order.account_number,
       customer: order.company_trading_name,
       client: order.customer_name,
-      poNumber: order.sales_order_number,
+      invoiceNumber: order.invoice_ids.length > 0 ? order.invoice_ids[0] : '', // THESE ARE IDS AND CAN BE MULTIPLE
+      iso: order.sales_order_id,
+      poNumber: order.customerponumber,
+      orderDate: order.order_date,
+
+      // id: order.id,
+      orderType: order.order_type,
+      // orderDate: order.order_date,
+      quoteDate: order.quote_date,
+      quoteNumber: order.quote_id || '',
+      // iso: order.sales_order_id,
+      dispatches: order.dispatch_note_ids.join(', '),
+      // customer: order.company_trading_name,
+      // client: order.customer_name,
+      // poNumber: order.sales_order_number,
       value: order.order_value,
       salesTeamId: order.sales_team_id,
 
@@ -2752,19 +2813,23 @@ export const getClientSalesHistory = async (params: any) => {
   let result = {
     paging: pagingResult,
     salesHistory,
+    year,
+    month,
+    years,
   };
 
   return result;
 
 }
 
-export const getSalesHistoryMonthlyCount = async (params: any) => {
+export const getSalesHistoryMonthlyCount = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`GET TOTALS PARAMS:: ${JSON.stringify(params)}`);
 
   try {
 
     const {
+      clientId,
       search = "",
       filterBy = "any_field",
     } = params;
@@ -2776,12 +2841,18 @@ export const getSalesHistoryMonthlyCount = async (params: any) => {
       totals: true
     };
 
+    // CATER FOR SPECIFIC CLIENT
+    if (clientId && clientId != '') {
+      _filter.customer_id = clientId;
+    }
+
     _filter[filterBy] = search;
 
+    //TODO: TEST AND CHECK the SalesHistoryMonthlyCount
     const salesHistoryResponse = await lasecApi.Products.sales_orders({
       filter: _filter,
-      pagination: { page: 1, pageSize: 50 },
-    }).then();
+      pagination: { enabled: true, current_page: 1, page_size: 50 },
+    }, context).then();
 
     logger.debug(`SALES HISTORY TOTALS:: ${JSON.stringify(salesHistoryResponse)}`);
 
@@ -2813,7 +2884,7 @@ const fieldMaps: any = {
   "customer": "company_trading_name",
 };
 
-export const getCRMSalesHistory = async (params) => {
+export const getCRMSalesHistory = async (params: any, context: Reactory.IReactoryContext) => {
 
   let periodStart;
   let periodEnd;
@@ -2879,11 +2950,11 @@ export const getCRMSalesHistory = async (params) => {
     filter: _filter,
     pagination: { page_size: paging.pageSize || 10, current_page: paging.page },
     // ordering,
-  }).then();
+  }, context).then();
 
   logger.debug(`SALES HISTORY RESPONSE:: ${JSON.stringify(salesHistoryResponse)}`);
 
-  let ids = [];
+  let ids: string[] = [];
 
   if (isArray(salesHistoryResponse.ids) === true) {
     ids = [...salesHistoryResponse.ids];
@@ -2896,7 +2967,7 @@ export const getCRMSalesHistory = async (params) => {
     pagingResult.page = salesHistoryResponse.pagination.current_page || 1;
   }
 
-  let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }).then();
+  let saleshistoryDetails = await lasecApi.Products.sales_orders({ filter: { ids: ids } }, context).then();
 
   logger.debug(`SALES HISTORY DETAILS:: ${JSON.stringify(saleshistoryDetails)}`);
 
@@ -2929,7 +3000,7 @@ export const getCRMSalesHistory = async (params) => {
 
 }
 
-export const getFreightRequetQuoteDetails = async (params: LasecGetFreightRequestQuoteParams) => {
+export const getFreightRequetQuoteDetails = async (params: LasecGetFreightRequestQuoteParams, context: Reactory.IReactoryContext) => {
 
 
   logger.debug(`
@@ -2940,7 +3011,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
 
   const { quoteId } = params;
 
-  let quoteDetail: LasecQuote = await lasecApi.Quotes.getByQuoteId(quoteId).then();
+  let quoteDetail: LasecQuote = await lasecApi.Quotes.getByQuoteId(quoteId, null, context).then();
 
   logger.debug(`Fetched Quote Results :\n${JSON.stringify(quoteDetail)}\nLoading Quote Options`);
 
@@ -2949,7 +3020,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
     promises = quoteDetail.quote_option_ids.map((option_id: string): Promise<FreightRequestOption> => {
       return new Promise((resolve, reject) => {
 
-        lasecApi.Quotes.getQuoteOption(option_id).then((option_result) => {
+        lasecApi.Quotes.getQuoteOption(option_id, context).then((option_result) => {
           logger.debug(`QUOTE [${quoteId}] OPTION [${option_id}]\n ${JSON.stringify(option_result, null, 2)}`);
           if (option_result.id) {
 
@@ -2986,7 +3057,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
             };
 
 
-            lasecGetQuoteLineItems(quoteId, option_id).then((paged_results: { lineItems: LasecQuoteItem[], item_paging: PagingResult }) => {
+            lasecGetQuoteLineItems(quoteId, option_id, 1, 100, context).then((paged_results: { lineItems: LasecQuoteItem[], item_paging: PagingResult }) => {
               if (paged_results && paged_results.lineItems && paged_results.lineItems.length > 0) {
                 freight_request_option.item_paging = paged_results.item_paging,
 
@@ -3004,8 +3075,6 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
                       weight: 0,
                       volume: 0
                     });
-
-
                   });
               }
 
@@ -3025,7 +3094,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
 
   return {
     id: params.quoteId,
-    email: global.user.email,
+    email: context.user.email,
     communicationMethod: 'attach_pdf',
     options: await Promise.all(promises).then()
   };
@@ -3054,7 +3123,7 @@ export const updateFreightRequestDetails = async (params: any) => {
   }
 }
 
-export const duplicateQuoteForClient = async (params) => {
+export const duplicateQuoteForClient = async (params: any, context: Reactory.IReactoryContext) => {
   try {
     const { quoteId, clientId } = params;
 
@@ -3064,14 +3133,14 @@ export const duplicateQuoteForClient = async (params) => {
         current_page: 0,
         page_size: 10
       }
-    }).then()
+    }, context).then()
 
     if (!lasecClient) {
       logger.error(`No Client found`);
       throw new ApiError('Error copying quote. No client found.')
     }
 
-    const copiedQuoteResponse = await lasecApi.Quotes.copyQuoteToCustomer({ quote_id: quoteId, customer_id: clientId }).then();
+    const copiedQuoteResponse = await lasecApi.Quotes.copyQuoteToCustomer({ quote_id: quoteId, customer_id: clientId }, context).then();
     if (!copiedQuoteResponse || copiedQuoteResponse.status != 'success') throw new ApiError('Error copying quote.');
 
     return {
@@ -3092,11 +3161,11 @@ export const duplicateQuoteForClient = async (params) => {
 
 }
 
-export const createNewQuote = async (params) => {
+export const createNewQuote = async (params: any, context: Reactory.IReactoryContext) => {
   try {
     const { clientId, repCode } = params;
 
-    const newQuoteResponse = await lasecApi.Quotes.createNewQuoteForClient({ customer_id: clientId, secondary_api_staff_user_id: repCode }).then();
+    const newQuoteResponse = await lasecApi.Quotes.createNewQuoteForClient({ customer_id: clientId, secondary_api_staff_user_id: repCode }, context).then();
     if (!newQuoteResponse || newQuoteResponse.status != 'success') throw new ApiError('Error creating new quote.');
 
     return {
@@ -3116,11 +3185,11 @@ export const createNewQuote = async (params) => {
   }
 }
 
-export const getQuoteComments = async (params) => {
+export const getQuoteComments = async (params: any, context: Reactory.IReactoryContext) => {
   return await LasecQuoteComment.find({ quoteId: params.quote_id }).exec();
 }
 
-export const saveQuoteComment = async (params) => {
+export const saveQuoteComment = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`NEW COMMENT :: ${JSON.stringify(params)}`);
 
@@ -3138,7 +3207,7 @@ export const saveQuoteComment = async (params) => {
     } else {
 
       saveResult = await new LasecQuoteComment({
-        who: global.user._id,
+        who: context.user._id,
         quoteId: params.quoteId,
         comment: params.comment,
         when: new Date()
@@ -3158,7 +3227,7 @@ export const saveQuoteComment = async (params) => {
   }
 }
 
-export const deleteQuoteComment = async (params) => {
+export const deleteQuoteComment = async (params: any, context: Reactory.IReactoryContext) => {
   try {
     await LasecQuoteComment.findByIdAndRemove(params.commentId);
 
@@ -3184,7 +3253,7 @@ interface ILasecUpdateQuoteExpectedParams {
   currency_code: String
 };
 
-export const updateQuote = async (params: ILasecUpdateQuoteExpectedParams) => {
+export const updateQuote = async (params: ILasecUpdateQuoteExpectedParams, context: Reactory.IReactoryContext) => {
 
   logger.debug(`UPDATING QUOTE:: ${JSON.stringify(params)}`);
 
@@ -3198,15 +3267,36 @@ export const updateQuote = async (params: ILasecUpdateQuoteExpectedParams) => {
       currency_code
     } = params;
 
-    const updateParams = { item_id, values: {} };
+    const updateParams: any = { item_id, values: {} };
+
+    const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0');
+    const lasecLogging: ILasecLoggingService = context.getService('lasec-crm.LasecLoggingService@1.0.0');
+
+    lasecLogging.writeLog(`${context.user.fullName(false)}, is updating quote ${item_id}`, 'Helpers => updateQuote', 0, params);
+
 
     if (quote_type) updateParams.values.quote_type = quote_type;
     if (rep_code) updateParams.values.sales_team_id = rep_code;
     if (client_id) updateParams.values.customer_id = client_id;
-    if (currency_code) updateParams.values.currency_id = currency_code;
+    if (currency_code) {
+
+      let _id = 0;
+
+      const currencies = await quoteService.getCurrencies().then();
+      debugger
+      currencies.forEach((c) => {
+        if (c.code === currency_code) {
+          updateParams.values.currency_id = c.id;
+        }
+      })
+
+      if (updateParams.values.currency_id) lasecLogging.writeLog(`${context.user.fullName(false)} could not read / find correct currency selection`, "Helpers => updateQuote => currency_code_set", 5, { currencies, currency_code })
+    }
+
+
     if (valid_until) updateParams.values.valid_until = moment(valid_until, 'YYYY-MM-DD').toISOString();
 
-    const updateResult = await lasecApi.Quotes.updateQuote(updateParams).then();
+    const updateResult = await lasecApi.Quotes.updateQuote(updateParams, context).then();
 
     if (!updateResult)
       throw new ApiError(`Error updating quote. Error from api.`);
@@ -3229,7 +3319,7 @@ export const updateQuote = async (params: ILasecUpdateQuoteExpectedParams) => {
 
 }
 
-export const updateQuoteLineItems = async (params) => {
+export const updateQuoteLineItems = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`UPDATING QUOTE LINE ITEMS:: ${JSON.stringify(params)}`);
 
@@ -3248,7 +3338,7 @@ export const updateQuoteLineItems = async (params) => {
           agent_commission: agentCom,
         }
       }
-      return lasecApi.Quotes.updateQuoteItems(updateParams);
+      return lasecApi.Quotes.updateQuoteItems(updateParams, context);
     });
 
     const freightParams = {
@@ -3257,7 +3347,7 @@ export const updateQuoteLineItems = async (params) => {
         unit_price_cents: freight * 100
       }
     }
-    const freightItemPromise = lasecApi.Quotes.updateQuoteItems(freightParams);
+    const freightItemPromise = lasecApi.Quotes.updateQuoteItems(freightParams, context);
     itemPromises.push(freightItemPromise);
 
     await Promise.all(itemPromises)
@@ -3278,9 +3368,9 @@ export const updateQuoteLineItems = async (params) => {
   }
 }
 
-export const getCompanyDetails = async (params: { id: string }) => {
+export const getCompanyDetails = async (params: { id: string }, context: Reactory.IReactoryContext) => {
   try {
-    let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [params.id] } }).then();
+    let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [params.id] } }, context).then();
     let customerObject = {};
 
     logger.debug(`Results from Helpers.ts -> getCompanyDetails(params)`, { params, companyPayloadResponse });
@@ -3319,10 +3409,10 @@ export const getCompanyDetails = async (params: { id: string }) => {
   }
 }
 
-export const deleteQuote = async (params) => {
+export const deleteQuote = async (params: any, context: Reactory.IReactoryContext) => {
 
   try {
-    let companyPayloadResponse = await lasecApi.Quotes.deleteQuote(params.id).then();
+    let companyPayloadResponse = await lasecApi.Quotes.deleteQuote(params.id, context).then();
 
     if (!companyPayloadResponse) throw new ApiError(`Error deleting quote!`);
 

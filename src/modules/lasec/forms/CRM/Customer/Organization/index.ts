@@ -27,7 +27,7 @@ const displayUiSchema: any = {
         fontSize: '1em'
       }
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSubmit: true,
@@ -49,6 +49,7 @@ const displayUiSchema: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         top: '10px',
         right: '10px',
@@ -137,6 +138,7 @@ const editUiSchema: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         top: '10px',
         right: '10px',

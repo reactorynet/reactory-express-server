@@ -131,10 +131,10 @@ const renderTemplate = (template, properties = {}) => {
   throw new ApiError(`Invalid type for template.content, expected string, but got ${typeof template.content}`);
 };
 
-const generate = async (props, res, usepdfkit = false, req) => {
+const generate = async (props: any, res: any, usepdfkit = false, req: any) => {
   logger.info(`Generating Report ${props.definition.name || 'unnamed report'}`);
   const { data, definition } = props;
-  const { partner, user } = global;
+  const { partner, user } = req;
   // Create a document
 
 
@@ -273,14 +273,14 @@ router.options('/', (req, res) => {
 router.post('/:nameSpace/:name', async (req: any, res: any) => {
 
   let reportPdfComponent: Reactory.IReactoryPdfComponent = find(PdfComponents, { nameSpace: req.params.nameSpace, name: req.params.name });
-  
-  if(reportPdfComponent && reportPdfComponent.component) {
+
+  if (reportPdfComponent && reportPdfComponent.component) {
     try {
       generate({ data: { ...req.params, ...req.body }, definition: reportPdfComponent.component, debug: true }, res, false, req);
     } catch (pdfError) {
       logger.debug(`Error Generating The PDF ${pdfError.message}`, { pdfError })
       res.status(503).send(new ApiError(pdfError.message, pdfError));
-    }    
+    }
   } else {
     res.status(404).send(new RecordNotFoundError(`The report ${req.params.report}, was not found, please make sure you specified the correct report name`));
   }
@@ -305,45 +305,45 @@ router.get('/:nameSpace/:name', async (req, res) => {
   // const reportPath = `./reports/${req.params.nameSpace || 'core'}/${req.params.report || 'api-status'}.js`;
 
 
-    let reportPdfComponent: Reactory.IReactoryPdfComponent = find(PdfComponents, { nameSpace: req.params.nameSpace, name: req.params.name });
-    
-    if(reportPdfComponent && reportPdfComponent.component) {
-      try {
-        const resolvedData = await reportPdfComponent.component.resolver(req.query).then();
-        generate({ data: resolvedData, definition: reportPdfComponent.component }, res, false, req);
-      } catch (pdfError) {
-        logger.debug(`Error Generating The PDF ${pdfError.message}`, { pdfError });
-        res.status(503).send(new ApiError(pdfError.message, pdfError));
-      }    
-    } else {
-      
-      res.status(404).send(new RecordNotFoundError(`The report ${req.params.nameSpace}.${req.params.name}, was not found, please make sure you specified the correct report name`));
-    }
+  let reportPdfComponent: Reactory.IReactoryPdfComponent = find(PdfComponents, { nameSpace: req.params.nameSpace, name: req.params.name });
 
-    /*
-    const reportSchema = require(reportPath).default; // eslint-disable-line;
-    if (reportSchema) {
-      try {
-        if (reportSchema.resolver) {
-          const resolvedData = await reportSchema.resolver(req.query).then();
-          generate({ data: resolvedData, definition: reportSchema }, res, false, req);
-        } else {
-          generate({ data: req.params, definition: reportSchema }, res, false, req);
-        }
-      } catch (reportError) {
-        logger.error(reportError.message, reportError);
-        res.status(503).send(new ApiError(reportError.message, reportError));
-      }
-    } else {
-      res.status(404).send(new RecordNotFoundError(`The report ${reportPath}, has no valid schema, please make sure you specified the correct report name or that the report is correctly configured`));
+  if (reportPdfComponent && reportPdfComponent.component) {
+    try {
+      const resolvedData = await reportPdfComponent.component.resolver(req.query).then();
+      generate({ data: resolvedData, definition: reportPdfComponent.component }, res, false, req);
+    } catch (pdfError) {
+      logger.debug(`Error Generating The PDF ${pdfError.message}`, { pdfError });
+      res.status(503).send(new ApiError(pdfError.message, pdfError));
     }
-    */ 
+  } else {
+
+    res.status(404).send(new RecordNotFoundError(`The report ${req.params.nameSpace}.${req.params.name}, was not found, please make sure you specified the correct report name`));
+  }
+
+  /*
+  const reportSchema = require(reportPath).default; // eslint-disable-line;
+  if (reportSchema) {
+    try {
+      if (reportSchema.resolver) {
+        const resolvedData = await reportSchema.resolver(req.query).then();
+        generate({ data: resolvedData, definition: reportSchema }, res, false, req);
+      } else {
+        generate({ data: req.params, definition: reportSchema }, res, false, req);
+      }
+    } catch (reportError) {
+      logger.error(reportError.message, reportError);
+      res.status(503).send(new ApiError(reportError.message, reportError));
+    }
+  } else {
+    res.status(404).send(new RecordNotFoundError(`The report ${reportPath}, has no valid schema, please make sure you specified the correct report name or that the report is correctly configured`));
+  }
+  */
 });
 
-router.get('/', (req, res) => {
+router.get('/', (req: any, res) => {
   logger.info('Running GET for /pdf/');
   // return a test pdf page with instructions on how to use the api
-  const { partner } = global;
+  const { partner } = req;
   // Create a document
   const doc = new PDFDocument();
 

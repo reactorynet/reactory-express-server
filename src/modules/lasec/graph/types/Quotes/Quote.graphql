@@ -518,6 +518,7 @@ type PurchaseOrderItem {
 }
 
 type PagedCRMInvoices {
+  clientId: String
   paging: PagingResult
   invoices: [Invoice]
 }
@@ -775,7 +776,15 @@ extend type Query {
 
   LasecGetFilteredQuotes(filterparams: LasecFilteredQuoteQueryInput): [Quote]
 
-  LasecGetCRMSalesOrders(productId: String, image: String, code:  String, description: String, unitOfMeasure: String, price: Int, paging: PagingRequest): PagedCRMSalesOrders
+  LasecGetCRMSalesOrders(
+    productId: String
+    image: String
+    code: String
+    description: String
+    unitOfMeasure: String
+    price: Int
+    paging: PagingRequest
+  ): PagedCRMSalesOrders
   LasecGetCRMPurchaseOrders(
     productId: String
     paging: PagingRequest
@@ -831,16 +840,29 @@ extend type Query {
     dateFilter: String
     iter: Int
   ): PagedCRMInvoices
+
+  # DREW WORKING ON THIS
+
   LasecGetCRMClientSalesHistory(
     clientId: String
     search: String
     paging: PagingRequest
     filterBy: String
     filter: String
+
+
     periodStart: String
     periodEnd: String
+    year: Int
+    month: Int
+    years: [Any]
     iter: Int
+
+
   ): PagedCRMSalesHistory
+
+
+
   LasecGetCRMSalesHistory(
     clientId: String
     search: String
@@ -860,10 +882,10 @@ extend type Query {
   LasecGetFreightRequestQuoteDetail(quoteId: String!): FreightRequestQuoteDetail
   LasecGetCompanyDetailsforQuote(id: String!): LasecCRMCustomer
 
-  # LasecGetSalesHistoryMonthTotals(search: String!, filterBy: String): [SalesHistoryMonthlyCount]
   LasecGetSalesHistoryMonthTotals(
     search: String!
     filterBy: String
+    clientId: String
   ): [SalesHistoryYearlyCount]
   LasecGetQuotePDFUrl(quote_id: String!): DocumentUrl
   LasecGetQuoteProformaPDFUrl(quote_id: String!): DocumentUrl

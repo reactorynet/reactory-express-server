@@ -28,7 +28,7 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       quotes: { sm: 12, md: 12, lg: 12 }
     }
@@ -64,6 +64,7 @@ const uiSchema: any = {
   selectFilter: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
+      showLabel: false,
       multiSelect: false,
       query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
         LasecGetCustomerFilterLookup(filterBy: $filterBy) {
@@ -674,12 +675,12 @@ const uiSchema: any = {
         toolbar: true,
       },
       componentMap: {
-        Toolbar: 'lasec-crm.QuoteGridToolbar@1.0.0',        
-      },      
+        Toolbar: 'lasec-crm.QuoteGridToolbar@1.0.0',
+      },
       toobarPropsMap: {
         'toolbarProps.filterBy': 'query.filterBy',
         'formContext.formData.filter': 'query.filter',
-        'toolbarProps.use_case': 'use_case', 
+        'toolbarProps.use_case': 'use_case',
       },
       toolbarProps: {
         filterBy: 'client_id',

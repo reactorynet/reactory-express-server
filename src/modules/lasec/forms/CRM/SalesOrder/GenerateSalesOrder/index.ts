@@ -61,7 +61,7 @@ const GenerateSalesOrderForm: Reactory.IReactoryForm = {
     title: 'Generate Sales Order Form',
     uiFramework: 'material',
     uiSupport: ['material'],
-    helpTopics: ['lasec-sales-order-generation'],    
+    helpTopics: ['lasec-sales-order-generation'],
     backButton: false,
     schema,
     uiSchema,
@@ -69,6 +69,7 @@ const GenerateSalesOrderForm: Reactory.IReactoryForm = {
     widgetMap: [
         { componentFqn: 'lasec-crm.SalesOrderHeaderWidget@1.0.0', widget: 'SalesOrderHeaderWidget' },
         { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
+        { componentFqn: 'lasec-crm.ClientDocuments@1.0.0', widget: 'ClientDocuments' },
     ]
 }
 

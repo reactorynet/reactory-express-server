@@ -34,6 +34,7 @@ export const uiSchemaTable: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         width: '100%',
         float: "right"
@@ -598,6 +599,7 @@ export const uiSchemaGrid: any = {
   view: {
     'ui:widget': 'SchemaSelectorWidget',
     'ui:options': {
+      showLabel: false,
       style: {
         width: '100%',
         float: "right"

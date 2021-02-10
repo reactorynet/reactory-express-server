@@ -7,18 +7,20 @@ const corsOptions = {
    * Function - set origin to a function implementing some custom logic.
    * The function takes the request origin as the first parameter and a callback
    * (which expects the signature err [object], allow [bool]) as the second.
+   * 
+   * The CORS White List needs to include all the configured whitelisted items 
+   * for all configured Reactory Clients
    */
   origin(origin, callback) {
     //console.log('checking origin', origin);
-    const { user, partner } = global;
-    logger.debug(`
-      Validatinging CORS:
-        ORIGIN => ${origin}
-        PARTNER => ${partner ? partner.key : 'NO PARTNER'} 
-        USER => ${user ? `${user.firstName} ${user.lastName}` : 'NO USER'}`);
-    
+    // logger.debug(`
+    //   Validatinging CORS:
+    //     ORIGIN => ${origin}
+    //     PARTNER => ${partner ? partner.key : 'NO PARTNER'} 
+    //     USER => ${user ? `${user.firstName} ${user.lastName}` : 'NO USER'}`);
+
     callback(null, true);
-    
+
     /*
     if (whitelist.indexOf(origin) !== -1) {
       callback(null, true)

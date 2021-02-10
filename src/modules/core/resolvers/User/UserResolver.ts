@@ -29,8 +29,8 @@ import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
 
 const uuid = require('uuid');
 
-const userAssessments = async (id: any) => {
-  const { user, partner } = global;
+const userAssessments = async (id: any, context: Reactory.IReactoryContext) => {
+  const { user, partner } = context;
   const findUser = isNil(id) === true ? await User.findById(id).then() : user;
   if (findUser && findUser._id) {
     logger.info(`Fetching assessments for user ${user.firstName} [${user.email}] - for partner key: ${partner.key}`);
@@ -61,8 +61,8 @@ const userAssessments = async (id: any) => {
   throw new RecordNotFoundError('No user matching id');
 };
 
-const MoresAssessmentsForUser = async (userId: any, status = ['ready']) => {
-  const { user, partner } = global;
+const MoresAssessmentsForUser = async (userId: any, status = ['ready'], context: Reactory.IReactoryContext) => {
+  const { user, partner } = context;
   const findUser = isNil(userId) === true ? await User.findById(userId).then() : user;
   if (findUser && findUser._id) {
     logger.info(`Fetching assessments for user ${user.firstName} [${user.email}] - for partner key: ${partner.key}`);
@@ -322,9 +322,9 @@ const userResolvers = {
     peers(usr: { _id: any; memberships: { organizationId: any; }[]; }) {
       return Organigram.findOne({ user: usr._id, organization: usr.memberships[0].organizationId });
     },
-    memberships(usr: { memberships: any; }) {
+    memberships(usr: { memberships: any; }, context: Reactory.IReactoryContext) {
       if (lodash.isArray(usr.memberships)) {
-        return lodash.filter(usr.memberships, { clientId: global.partner._id });
+        return lodash.filter(usr.memberships, { clientId: context.partner._id });
       }
 
       return [];
@@ -365,10 +365,10 @@ const userResolvers = {
       return Organigram.findOne({ user: user._id, organization: orgId }).then();
     },
     authenticatedUser(obj: any, args: any, context: any, info: any) {
-      return global.user;
+      return context.user;
     },
     async userInbox(obj: any, { id, sort, via = 'local' }: any, context: any, info: any) {
-      const { user } = global;
+      const { user } = context;
       if (isNil(user) === true) throw new ApiError('Not Authorized');
       const userId = isNil(id) ? user._id : ObjectId(id);
       logger.info(`Finding emails for userId ${userId} via ${via}`);
@@ -412,23 +412,23 @@ const userResolvers = {
     },
     userSurveys(obj: any, { id, sort }: any, context: any, info: any) {
       logger.info(`Finding surveys for user ${id}, ${sort}`);
-      return userAssessments(id);
+      return userAssessments(id, context);
     },
     MoresUserSurvey(obj: any, { id }: any, context: any, info: any) {
-      const { partner } = global;
+      const { partner } = context;
       switch (partner.key) {
         case 'mores': {
-          return MoresAssessmentsForUser(id);
+          return MoresAssessmentsForUser(id, ['ready'], context);
         }
         default: {
-          return userAssessments(id);
+          return userAssessments(id, context);
         }
       }
 
     },
     userReports(obj: any, { id, sort }: any, context: any, info: any) {
       return new Promise((resolve, reject) => {
-        const { user } = global;
+        const { user } = context;
         Admin.User.surveysForUser(id).then((userSurveys) => {
           if (userSurveys && userSurveys.length === 0) resolve([]);
           const surveyReports = [];
@@ -458,7 +458,7 @@ const userResolvers = {
       });
     },
     async reportDetailForUser(object: any, { userId, surveyId }: any, context: any, info: any) {
-      const { user } = global;
+      const { user } = context;
       const reportResult = {
         overall: 0,
         status: 'BUSY',
@@ -501,8 +501,8 @@ const userResolvers = {
         .populate('assessor')
         .then();
     },
-    userTasks(obj: any, { id, status }: any) {
-      return Task.find({ user: ObjectId(id || global.user._id), status }).then();
+    userTasks(obj: any, { id, status }: any, context: Reactory.IReactoryContext) {
+      return Task.find({ user: ObjectId(id || context.user._id), status }).then();
     },
     taskDetail(parent: any, { id }: any) {
       logger.info(`Finding Task For Id ${id}`);
@@ -511,17 +511,17 @@ const userResolvers = {
     async searchUser(parent: any, { searchString, sort = 'email' }: any) {
       return User.find({ email: `/${searchString}/i` }).sort(`-${sort}`).then();
     },
-    async getUserCredentials(parent: any, { provider }: any) {
-      logger.info(`Getting user credentials for ${global.user.fullName(true)}`);
-      if (global.user) {
-        return global.user.getAuthentication(provider);
+    async getUserCredentials(parent: any, { provider }: any, context: Reactory.IReactoryContext) {
+      logger.info(`Getting user credentials for ${context.user.fullName(true)}`);
+      if (context.user) {
+        return context.user.getAuthentication(provider);
       }
       return null;
     },
   },
   Mutation: {
     createUser: async (obj: any, { input, organizationId, password }: any, context: any, info: any) => {
-      const { partner, user } = global;
+      const { partner, user } = context;
 
       logger.info(`Create user mutation called ${input.email}`);
       const existing: Reactory.IUserDocument = await User.findOne({ email: input.email }).then();
@@ -557,9 +557,9 @@ const userResolvers = {
       logger.info('Update user mutation called', { id, profileData });
       return Admin.User.updateProfile(id, profileData);
     },
-    setPassword(obj: any, { input: { password, confirmPassword, authToken } }: any) {
+    setPassword(obj: any, { input: { password, confirmPassword, authToken } }: any, context: Reactory.IReactoryContext) {
       return new Promise((resolve, reject) => {
-        const { user } = global;
+        const { user } = context;
         if (typeof password !== 'string') reject(new ApiError('password expects string input'));
         if (password === confirmPassword && user) {
           logger.info(`Setting user password ${user.email}, ${authToken}`);
@@ -570,8 +570,8 @@ const userResolvers = {
         }
       });
     },
-    createTask(obj: any, { id, taskInput }: any) {
-      const { _id } = global.user;
+    createTask(obj: any, { id, taskInput }: any, context: Reactory.IReactoryContext) {
+      const { _id } = context.user;
       return co.wrap(function* createTaskGenerator(userId, task) {
         const created = yield new Task({
           ...task,
@@ -582,7 +582,7 @@ const userResolvers = {
         return created;
       })(id || _id.toString(), taskInput);
     },
-    async confirmPeers(obj: any, { id, organization, surveyId }: any) {
+    async confirmPeers(obj: any, { id, organization, surveyId }: any, context: Reactory.IReactoryContext) {
 
       logger.debug(`CONFIRMING PEERS - ID: ${id}  ORG: ${organization}  SURVEY ID: ${surveyId}`);
 
@@ -653,7 +653,7 @@ const userResolvers = {
 
       return Organigram.findById(userOrganigram._id);
     },
-    async removePeer(obj: any, { id, peer, organization }: any) {
+    async removePeer(obj: any, { id, peer, organization }: any, context: Reactory.IReactoryContext) {
       const userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
         organization: ObjectId(organization),
@@ -682,7 +682,7 @@ const userResolvers = {
     },
     async setPeerRelationShip(obj: any, {
       id, peer, organization, relationship,
-    }: any) {
+    }: any, context: Reactory.IReactoryContext) {
       let userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
         organization: ObjectId(organization),
@@ -737,8 +737,8 @@ const userResolvers = {
     },
     async removeUserRole(obj: any, {
       id, email, organization, role, clientId,
-    }: any) {
-      const { user, partner } = global;
+    }: any, context: Reactory.IReactoryContext) {
+      const { user, partner } = context;
       let clientToUse = partner; // use the default partner
       let userToUpdate = null;
 
@@ -773,8 +773,8 @@ const userResolvers = {
     },
     async addUserRole(obj: any, {
       id, email, organization, role, clientId,
-    }: any) {
-      const { user, partner } = global;
+    }: any, context: Reactory.IReactoryContext) {
+      const { user, partner } = context;
       logger.info(`Adding role => EMAIL: ${email}  ROLE: ${role} ORG: ${organization} CLIENT: ${clientId}`);
       let clientToUse = partner; // use the default partner
       let userToUpdate = null;
@@ -811,7 +811,7 @@ const userResolvers = {
 
       return userToUpdate.memberships;
     },
-    async deleteUser(parent: any, { id }: any) {
+    async deleteUser(parent: any, { id }: any, context: Reactory.IReactoryContext) {
       const user = await User.findById(id).then();
       if (isNil(user) === true) throw new RecordNotFoundError(`Could not locate the user with the id ${id}`);
       user.deleted = true;
@@ -820,23 +820,23 @@ const userResolvers = {
     },
     async addUserCredentials(parent: any, {
       provider, props,
-    }: any) {
-      return global.user.setAuthentication({
+    }: any, context: Reactory.IReactoryContext) {
+      return context.user.setAuthentication({
         provider,
         props,
         lastLogin: new Date().valueOf(),
       });
     },
-    async removeUserCredentials(parent: any, { provider }: any) {
-      if (global.user) {
-        await global.user.removeAuthentication(provider);
+    async removeUserCredentials(parent: any, { provider }: any, context: Reactory.IReactoryContext) {
+      if (context.user) {
+        await context.user.removeAuthentication(provider);
         return true;
       }
       return false;
     },
-    async sendMail(parent: any, { message }: any) {
+    async sendMail(parent: any, { message }: any, context: Reactory.IReactoryContext) {
       const { id, via, subject, contentType, content, recipients, ccRecipients, bcc, saveToSentItems, attachments = [] } = message;
-      const { user } = global;
+      const { user } = context;
       if (isNil(user) === true) throw new ApiError('Not Authorized');
       const userId = isNil(id) ? user._id : ObjectId(id);
       logger.info(`USER ID ${userId} via ${via}`);
@@ -854,9 +854,9 @@ const userResolvers = {
                 recipients,
                 saveToSentItems,
                 ccRecipients,
-                bcc, 
+                bcc,
                 attachments
-                )
+              )
                 .then()
                 .catch(error => {
                   if (error.statusCode == 401) {
@@ -885,9 +885,9 @@ const userResolvers = {
         }
       }
     },
-    async createOutlookTask(parent: any, { task }: any) {
+    async createOutlookTask(parent: any, { task }: any, context: Reactory.IReactoryContext) {
       const { id, via, subject, startDate, dueDate, timeZone } = task;
-      const { user } = global;
+      const { user } = context;
       if (isNil(user) === true) throw new ApiError('Not Authorized');
       const userId = isNil(id) ? user._id : new ObjectId(id);
       logger.info(`USER ID ${userId} via ${via}`);
@@ -930,9 +930,9 @@ const userResolvers = {
         }
       }
     },
-    async deleteOutlookTask(parent: any, { task }: any) {
+    async deleteOutlookTask(parent: any, { task }: any, context: Reactory.IReactoryContext) {
       const { id, via, taskId } = task;
-      const { user } = global;
+      const { user } = context;
       if (isNil(user) === true) throw new ApiError('Not Authorized');
       const userId = isNil(id) ? user._id : ObjectId(id);
       switch (via) {

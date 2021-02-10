@@ -174,7 +174,7 @@ const uiSchema: any = {
         {
           title: 'ISO Number',
           field: 'salesOrderNumber',
-          component: 'lasec-crm.SalesOrderActionButton',          
+          component: 'lasec-crm.SalesOrderActionButton',
           propsMap: {
             'rowData.salesOrderNumber': 'sales_order_number'
           }
@@ -213,13 +213,11 @@ const uiSchema: any = {
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
-                'color': 'black'
               }
             },
             backNavigationConfig: {
               showAppBar: false,
               backNavigationItems: ['Sales Orders', 'Quote', '${rowData.quoteId}'],
-              containerProps: { PaperProps: { style: { background: '#FFFFFF' } }}
             }
           },
           propsMap: {
@@ -231,7 +229,13 @@ const uiSchema: any = {
           field: 'customer',
           component: 'lasec-crm.CustomerLabel@1.0.0',
           props: {
-            context: 'sales-order-grid'
+            context: 'sales-order-grid',
+            uiSchema: {
+              'ui:options': {
+                displayField: 'registeredName'
+              }
+            }
+
           },
           propsMap: {
             'rowData.crmCustomer': 'customer',
@@ -275,6 +279,11 @@ const uiSchema: any = {
           title: 'Order Value',
           field: 'value',
           component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            style: {
+              fontSize: '0.75rem'
+            }
+          },
           propsMap: {
             'rowData.value': 'value',
           },
@@ -283,6 +292,11 @@ const uiSchema: any = {
           title: 'Reserve Value',
           field: 'reserveValue',
           component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            style: {
+              fontSize: '0.75rem'
+            }
+          },
           propsMap: {
             'rowData.reserveValue': 'value',
           },
@@ -291,6 +305,11 @@ const uiSchema: any = {
           title: 'Shipped Value',
           field: 'shipValue',
           component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            style: {
+              fontSize: '0.75rem'
+            }
+          },
           propsMap: {
             'rowData.shipValue': 'value',
           },
@@ -299,6 +318,11 @@ const uiSchema: any = {
           title: 'Back Order Value',
           field: 'backorderValue',
           component: 'core.CurrencyLabel@1.0.0',
+          props: {
+            style: {
+              fontSize: '0.75rem'
+            }
+          },
           propsMap: {
             'rowData.backorderValue': 'value',
           },
@@ -331,7 +355,7 @@ const uiSchema: any = {
         actionsColumnIndex: -1,
         pageSize: 10,
       },
-      remoteData: true,    
+      remoteData: true,
       query: 'sales_orders',
       componentMap: {
         Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0'

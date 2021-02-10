@@ -32,27 +32,27 @@ interface LasecPreparedQuoteEmailPropertyBag {
 
 const QuoteEmailResolver = {
     Query: {
-        LasecPrepareQuoteEmail: async (obj: any, params: LasecPreparedEmailParams): Promise<Reactory.IEmailMessage> => {
+        LasecPrepareQuoteEmail: async (obj: any, params: LasecPreparedEmailParams, context: Reactory.IReactoryContext): Promise<Reactory.IEmailMessage> => {
 
             try {
 
-                const { partner, getService } = global;
+                const { partner } = context;
 
                 let result: Reactory.IEmailMessage = null;
 
                 logger.debug(`Query.LasecPrepareQuoteEmail(obj, params)`, { obj, params });
 
-                const lasecUser: Lasec.Lasec360User = await getLoggedIn360User().then();
+                const lasecUser: Lasec.Lasec360User = await getLoggedIn360User(false, context).then();
 
                 // const emailService: Reactory.Service.ICoreEmailService = getService('core.EmailService@1.0.0');
-                const templateService: Reactory.Service.IReactoryTemplateService = getService('core.TemplateService@1.0.0');
-                const quoteService: Lasec.IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0');
-                const fileService: Reactory.Service.IReactoryFileService = getService('core.ReactoryFileService@1.0.0');
+                const templateService: Reactory.Service.IReactoryTemplateService = context.getService('core.TemplateService@1.0.0');
+                const quoteService: Lasec.IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0');
+                const fileService: Reactory.Service.IReactoryFileService = context.getService('core.ReactoryFileService@1.0.0');
 
                 const templateDocument: Reactory.ITemplateDocument = await templateService.getTemplate(params.email_type, partner._id, null, null, null).then();
                 const file_context = `${params.email_type}::${params.quote_id}::${user._id}::file-attachments`;
                 const attached_files: Reactory.IReactoryFileModel[] = await fileService.getFileModelsForContext(file_context).then();
-                                
+
 
                 if (templateDocument) {
                     let emailTemplate: Reactory.IEmailTemplate = await templateService.hydrateEmail(templateDocument).then();
@@ -71,15 +71,15 @@ const QuoteEmailResolver = {
                         logger.error(`No customer found for quote ${params.quote_id} customer id: ${lasec360Quote.customer_id}`);
                     }
 
-                    const  downloadQuotePDF = async () => {
+                    const downloadQuotePDF = async () => {
 
                         const pdfresult = await LasecAPI.Quotes.getQuotePDF(params.quote_id, true).then();
-                        let pdfFileModel: Reactory.IReactoryFileModel = null;                        
+                        let pdfFileModel: Reactory.IReactoryFileModel = null;
                         try {
                             pdfFileModel = await fileService.getRemote(pdfresult.url, 'GET', {}, true,
                                 {
                                     public: false,
-                                    owner: global.user._id,
+                                    owner: context.user._id,
                                     ttl: (24 * 60 * 60),
                                     permissions: {
                                         roles: ['USER'],
@@ -112,12 +112,12 @@ const QuoteEmailResolver = {
                             await downloadQuotePDF();
                         }
                     }
-                                        
+
                     logger.debug(`Retrieved customer`, { quote_customer });
                     const propertyBag: LasecPreparedQuoteEmailPropertyBag = {
                         quote: lasec360Quote,
                         user: {
-                            id: (global.user as Reactory.IUserDocument)._id,
+                            id: (context.user as Reactory.IUserDocument)._id,
                             email: lasecUser.email,
                             firstName: lasecUser.firstName,
                             lastName: lasecUser.lastName,
@@ -142,7 +142,7 @@ const QuoteEmailResolver = {
                         try {
                             bodyText = templateService.renderTemplate(emailTemplate.body, propertyBag)
                         }
-                        catch (e){
+                        catch (e) {
                             bodyText = e.message;
                         };
 

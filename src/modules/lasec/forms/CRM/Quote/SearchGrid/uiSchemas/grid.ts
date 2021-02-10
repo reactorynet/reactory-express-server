@@ -35,7 +35,7 @@ const uiSchema: any = {
         {
           title: 'Quote Number',
           field: 'code',
-          width: '160px',
+          //width: '160px',
           component: 'lasec-crm.QuoteActionButton',
           props: {
             variant: 'body2',
@@ -95,7 +95,7 @@ const uiSchema: any = {
           },
         },
         {
-          title: 'Client', field: 'client', breakpoint: 'sm',
+          title: 'Client', field: 'client', breakpoint: 'xs',
           component: 'core.LabelComponent@1.0.0',
           props: {
             uiSchema: {
@@ -131,7 +131,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${rowData && rowData.companyTradingName ? rowData.companyTradingName : "No Company"}'
+                format: '${rowData && rowData.accountNumber ? rowData.accountNumber : "No Account Number"}'
               }
             },
           },

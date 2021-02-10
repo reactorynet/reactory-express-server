@@ -1,6 +1,6 @@
 import { Moment } from 'moment';
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { PagingRequest, PagingResult } from '@reactory/server-core/database/types';
+import { PagingRequest, PagingResult, IReactoryDatabase } from '@reactory/server-core/database/types';
 
 /**
  * Meta type interface
@@ -325,14 +325,19 @@ export interface LasecCRMCustomer {
 }
 
 export interface Lasec360Quote {
+  quote_options: any[];
   id: string
   customer_id: string
   name?: string
   number_of_items: number
   description?: string
+
   status: string
   status_name: string
+  status_id: string,
+  substatus_id: string
   allowed_status_ids: string[]
+
   organisation_id?: string | number
   grand_total_excl_vat_cents: number
   grand_total_vat_cents: number
@@ -341,17 +346,20 @@ export interface Lasec360Quote {
   grand_total_douscount_percent: number
   gp_percent: number
   actual_gp_percent: number
+
   date_sent?: Date
   created: Date
   modified: Date
   expiration_date: Date
+  valid_until?: Date
+
   note?: string
+
   quote_option_ids: string[]
   site_inspection_status: boolean
   site_evaluation_required: boolean
   transportation_evaluation_required: boolean
   show_quote_totals: boolean
-  valid_until?: Date
   primary_api_staff_user_id: string
   secondary_api_staff_user_id: string
   sales_team_id: string
@@ -377,6 +385,7 @@ export interface Lasec360Quote {
   company_trading_name: string
   authorisation_requested_by_staff_user: string
   staff_user_full_name: string
+
 }
 
 export interface ProductClass {
@@ -597,6 +606,13 @@ export interface LasecDeleteQuoteOptionParams {
   option_id: string
 }
 
+export interface LasecSalesOrderCreateResponse {
+  success: boolean,
+  message: string,
+  iso_id: string,
+  salesOrder: LasecSalesOrder
+}
+
 export interface LasecCreateSalesOrderInput {
   id: string
   quote_id: string
@@ -605,6 +621,7 @@ export interface LasecCreateSalesOrderInput {
   confirm_number: string
   customer_name: string
   company_name: string
+  company_id: string
   rep_code: string
   vat_number: string
   quoted_amount: number
@@ -727,7 +744,7 @@ export interface LasecAddress {
 
 export interface LasecAddressUpdateResponse { success: boolean, message: string, address: LasecAddress }
 
-export interface IQuoteService extends Reactory.Service.IReactoryService {
+export interface IQuoteService extends Reactory.Service.IReactoryContextAwareService {
 
   /**
    * Sends an email to the list of users regarding the quote with the quote id.
@@ -764,16 +781,18 @@ export interface IQuoteService extends Reactory.Service.IReactoryService {
 
   getIncoTerms(): Promise<any>;
 
+  getCurrencies(): Promise<LasecCurrency[]>
+
   getQuoteHeaders(quote_id: string): Promise<any>;
 
   getQuoteTransportModes(): Promise<any>;
 
-  createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<SimpleResponse>;
+  createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<LasecSalesOrderCreateResponse>;
 
   getSalesOrder(sales_order_id: String): Promise<LasecSalesOrder>
 }
 
-export interface ILasecClientService extends Reactory.Service.IReactoryService {
+export interface ILasecClientService extends Reactory.Service.IReactoryContextAwareService {
 
   /**
    * Returns a lasec client object
@@ -782,6 +801,9 @@ export interface ILasecClientService extends Reactory.Service.IReactoryService {
   getClientById(id: string): Promise<LasecClient>;
 }
 
+export interface ILasecLoggingService extends Reactory.Service.IReactoryContextAwareService {
+  writeLog(messsage: string, source?: string, severity?: number, data?: any): void
+}
 
 export interface LasecGetFreightRequestQuoteParams {
   quoteId: string
@@ -868,4 +890,115 @@ export interface LasecGetPageQuotesParams {
   orderBy: string
   orderDirection: string
   iter: number
+}
+
+export interface LasecInternationalExportDocument {
+  id: String
+  pdf_url: String
+  emailAddress: String
+  sendOptionsVia: String
+
+  date_of_issue: Date
+  certification: Date
+  date_of_expiry: Date
+  date_of_expiry_na: Boolean
+
+  terms: String
+  final_destination: String
+  export_reason: String
+  document_number: String
+  inco_terms: String
+  po_number: String
+
+  bill_to_company: String
+  bill_to_street_address: String
+  bill_to_suburb: String
+  bill_to_city: String
+  bill_to_province: String
+  bill_to_country: String
+
+  ship_to_company: String
+  ship_to_street_address: String
+  ship_to_suburb: String
+  ship_to_city: String
+  ship_to_province: String
+  ship_to_country: String
+
+  consignee_company: String
+  consignee_street_address: String
+  consignee_suburb: String
+  consignee_city: String
+  consignee_province: String
+  consignee_country: String
+  consignee_contact: String
+  consignee_number: String
+
+  notify_company: String
+  notify_street_address: String
+  notify_suburb: String
+  notify_city: String
+  notify_province: String
+  notify_country: String
+  notify_contact: String
+  notify_number: String
+
+  comments: String
+
+  lookups: any
+
+  products: any[]
+}
+export interface LasecCertificateOfConformance extends LasecInternationalExportDocument { }
+
+export interface LasecCommercialInvcoice extends LasecInternationalExportDocument { }
+
+export interface LasecPackingList extends LasecInternationalExportDocument { }
+
+export interface LasecCertificateOfConformanceResponse {
+  message: string
+  success: boolean
+  certificate: LasecCertificateOfConformance
+}
+
+export interface LasecCommercialInvoiceResponse {
+  message: string
+  success: boolean
+  commercial_invoice: LasecCommercialInvcoice
+}
+
+export interface LasecPackingListResponse {
+  message: string
+  success: boolean
+  packing_list: LasecPackingList
+}
+
+export interface LasecCurrency {
+  id: number
+  code: string
+  name: string
+  symbol: string
+  spot_rate: string
+  web_rate: string
+}
+
+export interface LasecLogData {
+  timestamp: number
+  username: string
+  message: string
+  data: any
+  severity: number
+  source: string
+}
+
+
+export interface LasecDatabase extends IReactoryDatabase {
+  Install: {
+    LasecLog: (context: Reactory.IReactoryContext) => Promise<boolean>
+  },
+  Create: {
+    WriteLog: (value: LasecLogData, context: Reactory.IReactoryContext) => Promise<boolean>
+  },
+  Read: {
+    LasecGetCurrencies: (queryCommand: any, context: Reactory.IReactoryContext) => Promise<LasecCurrency[]>
+  }
 }

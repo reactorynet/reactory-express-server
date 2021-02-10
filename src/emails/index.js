@@ -40,8 +40,8 @@ const {
  * @param {UserModel} user
  * @param {ReactorClient} partner
  */
-export const resolveUserEmailAddress = (user, reactoryClient = null) => {
-  const { partner } = global;
+export const resolveUserEmailAddress = (user, reactoryClient = null, context) => {
+  const { partner } = context;
   const { MODE } = process.env;
 
   let partnerToUse = partner;
@@ -66,10 +66,10 @@ export const resolveUserEmailAddress = (user, reactoryClient = null) => {
   };
 };
 
-const sendActivationEmail = (user) => {
+const sendActivationEmail = (user, context) => {
   return new Promise((resolve, reject) => {
     try {
-      const { partner } = global;
+      const { partner } = context;
       loadEmailTemplate(TemplateViews.ActivationEmail, null, partner._id).then((templateResult) => {
         sgMail.setApiKey(partner.emailApiKey);
         const properties = {
@@ -111,9 +111,9 @@ const sendActivationEmail = (user) => {
   });
 };
 
-const sendProductQueryEmail = async ({ to, from, subject, message }) => {
+const sendProductQueryEmail = async ({ to, from, subject, message }, context) => {
   return new Promise((resolve, reject) => {
-    const { partner } = global;
+    const { partner } = context;
     sgMail.setApiKey(partner.emailApiKey);
     const msg = {
       to,
@@ -139,9 +139,9 @@ const sendProductQueryEmail = async ({ to, from, subject, message }) => {
   });
 };
 
-const sendSimpleEmail = async ({ to, from, subject, message }) => {
+const sendSimpleEmail = async ({ to, from, subject, message }, context) => {
   return new Promise((resolve, reject) => {
-    const { partner } = global;
+    const { partner } = context;
     sgMail.setApiKey(partner.emailApiKey);
     const msg = {
       to,
@@ -216,7 +216,7 @@ const queueMail = async (user, msg, options = DefaultQueueOptions) => {
     format: 'html',
     user: user._id,
     survey: isNil(survey) ? null : survey._id,
-    client: isNil(client) ? global.partner._id : client._id,
+    client: isNil(client) ? context.partner._id : client._id,
   };
 
   try {
@@ -261,10 +261,10 @@ export const renderTemplate = (template, properties) => {
 /**
  * @param {*} user
  */
-const sendForgotPasswordEmail = (user, organization = null) => {
+const sendForgotPasswordEmail = (user, organization = null, context) => {
   return new Promise((resolve, reject) => {
     try {
-      const { partner } = global;
+      const { partner } = context;
       loadEmailTemplate(TemplateViews.ForgotPassword, organization, partner).then((templateResult) => {
         if (lodash.isNil(templateResult)) throw new RecordNotFoundError('Could not find a template matching the search criteria', 'Template', { criteria: { view: TemplateViews.ForgotPassword, organization } });
         logger.info(`Template Found ${templateResult._id}`, templateResult);
@@ -435,7 +435,7 @@ export const surveyEmails = {
   /**
    * Sends initial email to assessor
    */
-  launchForDelegate: async (assessor, delegate, survey, assessment, organization = null) => {
+  launchForDelegate: async (assessor, delegate, survey, assessment, organization = null, context) => {
     // final object item to return
     logger.info(`Sending email to assessor ${assessor}`, assessor);
     if (lodash.isNil(assessor)) throw new ApiError('assessor parameter for launchForDelegate cannot be null / undefined');
@@ -462,7 +462,7 @@ export const surveyEmails = {
     const viewName = `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-launch`;
 
     try {
-      const { partner } = global;
+      const { partner } = context;
       const templateResult = await loadEmailTemplate(viewName, organization, partner).then();
 
       if (lodash.isNil(templateResult) === true) {
@@ -584,10 +584,10 @@ export const surveyEmails = {
     let assessorModel = null;
     if (ObjectId.isValid(assessor) === true) {
       assessorModel = await User.findById(assessor).then();
-    } else  {
-      if(!assessor.firstName || !assessor.lastName || !assessor.email) {
-        if(ObjectId.isValid(assessor.id) || ObjectId.isValid(assessor._id))
-        assessorModel = await User.findById(assessor._id).then();
+    } else {
+      if (!assessor.firstName || !assessor.lastName || !assessor.email) {
+        if (ObjectId.isValid(assessor.id) || ObjectId.isValid(assessor._id))
+          assessorModel = await User.findById(assessor._id).then();
       } else {
         assessorModel = assessor;
       }
@@ -604,7 +604,7 @@ export const surveyEmails = {
 
 
     try {
-      const { partner } = global;
+      const { partner } = context;
       let isSelfAssessment = ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true;
       //TODO: this should be changed by changing all the keys for the emails on the 360s
       //mail template
@@ -731,7 +731,7 @@ export const surveyEmails = {
     };
 
     try {
-      const { partner } = global;
+      const { partner } = context;
       let viewName = `towerstone-${survey.surveyType}-delegate-invite`;
       const templateResult = await loadEmailTemplate(viewName, organization, partner).then();
       if (lodash.isNil(templateResult) === true) {
@@ -761,8 +761,8 @@ export const surveyEmails = {
         link: `${partner.siteUrl}/profile/?auth_token=${authToken}&peerconfig=true`,
       };
 
-      if(survey.options) {
-        if(survey.options.autoLaunchOnPeerConfirm === true) {
+      if (survey.options) {
+        if (survey.options.autoLaunchOnPeerConfirm === true) {
           properties.link = `${properties.link}&survey=${survey._id.toString()}`;
         }
       }
@@ -860,7 +860,7 @@ export const organigramEmails = {
     };
 
     try {
-      const { partner } = global;
+      const { partner } = context;
       const templateResult = await loadEmailTemplate(TemplateViews.InvitePeers, organization, partner).then();
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');

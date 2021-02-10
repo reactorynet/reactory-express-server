@@ -2,6 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import $graphql from './graphql';
 import $schema from './schema';
 import { SalesHistoryFilterByOptions } from '../shared';
+import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
 const uiSchema: any = {
   'ui:options': {
@@ -28,7 +29,7 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       salesHistory: { xs: 12 }
     }
@@ -111,24 +112,53 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        { title: 'Order Type', field: 'orderType' },
+        { title: 'Account Number', field: 'accountNumber' },
+        { title: 'Customer', field: 'customer' },
+        { title: 'Invoice Number', field: 'invoiceNumber' },
         {
-          title: 'Quote Date',
-          field: 'quoteDate',
-          component: 'core.LabelComponent@1.0.0',
+          title: 'ISO No.',
+          field: 'salesOrderNumber',
+          component: 'core.SlideOutLauncher@1.0.0',
           props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${rowData.quoteDate ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
+            componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
+            componentProps: {
+              'rowData.quoteId': ['formData.quoteId', 'query.quoteId'],
+              'rowData.salesOrderNumber': ['formData.orderId', 'query.orderId'],
+              'rowData.poNumber': ['formData.poNumber', 'query.poNumber'],
+              'rowData.orderDate': ['formData.orderDate', 'query.orderDate'],
+              'rowData.customer': ['formData.customer', 'query.customer'],
+              'rowData.client': ['formData.header.client', 'query.client'],
+              'rowData.orderStatus': ['formData.orderStatus', 'query.orderStatus'],
+              'rowData.currency': ['formData.currency', 'query.currency'],
+              'rowData.orderType': ['formData.orderType', 'query.orderType'],
+              'rowData.deliveryAddress': ['formData.deliveryAddress', 'query.deliveryAddress'],
+              'rowData.warehouseNote': ['formData.warehouseNote', 'query.warehouseNote'],
+              'rowData.deliveryNote': ['formData.deliveryNote', 'query.deliveryNote'],
+              'rowData.salesTeam': ['formData.salesTeam', 'query.salesTeam'],
+            },
+            slideDirection: 'down',
+            buttonTitle: '${rowData.salesOrderNumber}',
+            buttonVariant: 'Typography',
+            buttonProps: {
+              variant: 'body1',
+              style: {
+                'textDecoration': 'underline',
+                'cursor': 'pointer',
+                'color': 'black'
               }
             },
+            windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
+            backNavigationConfig: {
+              showAppBar: false,
+              backNavigationItems: ['Sales Order', '${rowData.salesOrderNumber}'],
+              containerProps: { PaperProps: { style: { background: '#F6F6F6' } } }
+            }
           },
           propsMap: {
-            'rowData.quoteDate': 'value',
+            'rowData': 'rowData'
           }
         },
-        { title: 'Quote Number', field: 'quoteNumber' },
+        { title: 'PO Number', field: 'poNumber' },
         {
           title: 'Order Date',
           field: 'orderDate',
@@ -136,7 +166,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1',
                 format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
               }
             },
@@ -145,34 +175,19 @@ const uiSchema: any = {
             'rowData.orderDate': 'value',
           }
         },
-        { title: 'ISO No.', field: 'isoNumber' },
-        { title: 'Dispatches', field: 'dispatches' },
-        { title: 'Customer', field: 'customer' },
-        { title: 'Client', field: 'client' },
-        { title: 'PO Number', field: 'poNumber' },
-        {
-          title: 'Inv Value',
-          field: 'value',
-          component: 'core.CurrencyLabel@1.0.0',
-          propsMap: {
-            'rowData.value': 'value',
-          },
-        },
-        { title: 'Client Rep Code', field: 'salesTeamId' },
       ],
       options: {
         grouping: false,
         search: false,
         showTitle: false,
-        toolbar: false,
+        toolbar: true,
       },
       componentMap: {
-        Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0',        
-      },      
-      toobarPropsMap: {
-        'toolbarProps.filterBy': 'query.filterBy',
-        'formContext.formData.filter': 'query.filter',
-        'toolbarProps.use_case': 'use_case', 
+        Toolbar: 'lasec-crm.SalesHistoryGridToolbar@1.0.0',
+      },
+      toolbarPropsMap: {
+        'formContext.formData.id': 'query.id',
+        'formContext.formData.search': 'query.search',
       },
       toolbarProps: {
         filterBy: 'client_id',
@@ -180,32 +195,28 @@ const uiSchema: any = {
       },
       remoteData: true,
       query: 'client_sales_history',
-      variables: {        
+      variables: {
+        'query.id': 'clientId',
         'query.search': 'search',
         'query.filter': ['filter', 'clientId'],
         'query.filterBy': 'filterBy',
         'query.paging': 'paging',
         'query.periodStart': 'periodStart',
         'query.periodEnd': 'periodEnd',
+        'query.year': 'year',
+        'query.years': 'years',
+        'query.month': 'month',
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'salesHistory.[].id': 'data.[].id',
-        'salesHistory.[].orderType': 'data.[].orderType',
-        'salesHistory.[].quoteDate': 'data.[].quoteDate',
-        'salesHistory.[].quoteNumber': 'data.[].quoteNumber',
-        'salesHistory.[].orderDate': 'data.[].orderDate',
-        'salesHistory.[].iso': 'data.[].isoNumber',
-        'salesHistory.[].dispatches': 'data.[].dispatches',
-        'salesHistory.[].customer': 'data.[].customer',
-        'salesHistory.[].client': 'data.[].client',
-        'salesHistory.[].poNumber': 'data.[].poNumber',
-        'salesHistory.[].value': 'data.[].value',
-        'salesHistory.[].salesTeamId': 'data.[].salesTeamId',
-
+        'year': 'year',
+        'years': 'years',
+        'month': 'month',
+        'salesHistory': 'data'
       },
+
     },
   }
 };
@@ -214,7 +225,14 @@ const LasecCRMClientSalesHistory: Reactory.IReactoryForm = {
   id: 'LasecCRMClientSalesHistory',
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [],
+  uiResources: [
+    {
+      id: 'reactory.plugin.lasec360',
+      name: 'reactory.plugin.lasec360',
+      type: 'script',
+      uri: `${ENVIRONMENT.CDN_ROOT}plugins/lasec-crm/lib/reactory.plugin.lasec360.js`,
+    },
+  ],
   title: 'CMS Client Activities Sales History',
   tags: ['CMS Client Activities Sales History'],
   registerAsComponent: true,

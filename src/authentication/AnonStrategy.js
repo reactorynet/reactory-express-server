@@ -41,9 +41,10 @@ util.inherits(Strategy, passport.Strategy);
  * @param {Object} req
  * @api protected
  */
-Strategy.prototype.authenticate = function(req) {
+Strategy.prototype.authenticate = function (req) {
   logger.debug(`Executing anon strategy`)
-  const _anonUser = { id: -1,
+  const _anonUser = {
+    id: -1,
     firstName: 'Guest',
     lastName: 'User',
     roles: ['ANON'],
@@ -51,7 +52,7 @@ Strategy.prototype.authenticate = function(req) {
     avatar: null,
     anon: true,
   };
-  global.user = _anonUser;
+
   this.success(_anonUser);
 };
 

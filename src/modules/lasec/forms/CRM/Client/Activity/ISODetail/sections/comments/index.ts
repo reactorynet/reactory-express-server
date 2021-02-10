@@ -21,12 +21,11 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-      'formData.orderId': 'orderId',
+      'data.orderId': 'orderId',
     },
     resultType: 'object',
     resultMap: {
       'orderId': 'orderId',
-      'newComment': 'newComment',
       'comments': 'comments'
     },
     queryMessage: 'Loading order comments',
@@ -63,7 +62,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       variables: {
         'formData.orderId': 'orderId',
         'formData.newComment': 'comment',
-      },      
+      },
       onSuccessMethod: 'notification',
       notification: {
         inAppNotification: true,
@@ -72,7 +71,7 @@ const graphql: Reactory.IFormGraphDefinition = {
           type: 'success',
           timeOut: 2500,
           canDismiss: false,
-        }        
+        }
       },
       onSuccessEvent: {
         name: 'lasec-crm:sales-order-comment-added'
@@ -100,8 +99,8 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.orderId': 'orderId',
         'formData.newComment': 'comment',
       },
-     
-      
+
+
     }
   }
 };
@@ -170,7 +169,7 @@ const uiSchema: any = {
   comments: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
-      columns: [        
+      columns: [
         {
           title: "Who", field: "fullName",
           component: 'core.LabelComponent@1.0.0',

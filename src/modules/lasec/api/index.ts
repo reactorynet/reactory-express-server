@@ -13,8 +13,6 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 import SECONDARY_API_URLS from './SecondaryApiUrls';
 import logger from '@reactory/server-core/logging';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
-import AuthenticationSchema from '../schema/Authentication';
-import { jzon } from '../../../utils/validators';
 
 import LasecDatabase from '../database';
 import LasecQueries from '../database/queries';
@@ -33,6 +31,7 @@ import {
   LasecSalesOrder,
   LasecAddress,
   LasecAPIParams,
+  ILasecLoggingService,
 } from '../types/lasec';
 import { deleteSalesOrdersDocument, getCustomerDocuments } from '../resolvers/Helpers';
 
@@ -48,7 +47,7 @@ const config = {
 };
 
 export class LasecNotAuthenticatedException extends ApiError {
-  constructor(message) {
+  constructor(message: string) {
     super(message || 'Please login with your 360 Credentials', {
       __typename: 'lasec.api.LasecNotAuthenticatedException',
       redirect: '/360',
@@ -58,7 +57,7 @@ export class LasecNotAuthenticatedException extends ApiError {
 }
 
 export class TokenExpiredException extends ApiError {
-  constructor(message) {
+  constructor(message: string) {
     super(message, {
       __typename: 'lasec.api.TokenExpiredException',
       redirect: '/360',
@@ -78,11 +77,20 @@ export class LasecApiException extends ApiError {
   }
 }
 
+interface LasecAPIFetchArgs {
+  headers?: any,
+  credentials?: string,
+  params?: any
+  body?: any
+  [key: string]: any
+};
+
+
 export const DUPLICATE_LOADING_ERROR_MESSAGE = 'DUPLICATE_LOADING_ERROR_MESSAGE';
 export const DUPLICATE_SAVING_ERROR_MESSAGE = 'DUPLICATE_SAVING_ERROR_MESSAGE';
 export const SETTINGS_NOT_CONFIGURED = 'SETTINGS_NOT_CONFIGURED';
 
-export function stringifyIds(ids) {
+export function stringifyIds(ids: any[]) {
   const x = map(ids, (id) => { return `${id}`; });
   return x;
 }
@@ -97,13 +105,9 @@ const safe_date_transform = (value: any) => {
   }
 };
 
-const isCredentialsValid = (authentication) => {
-  // return jzon.validate(AuthenticationSchema, authentication);
 
-};
-
-const getStorageItem = async (key) => {
-  const { user } = global;
+const getStorageItem = async (key: string, context: Reactory.IReactoryContext) => {
+  const { user } = context;
   logger.debug(`Lookup Security Storage ${key} on ${user.firstName} ${user.lastName}`);
   let must_login = true;
   if (user._id) {
@@ -121,7 +125,7 @@ const getStorageItem = async (key) => {
 
       let { lastLogin } = lasecAuth;
       const now = moment();
-      if (lastLogin) lastLogin = moment(lastLogin);
+      if (lastLogin) lastLogin = moment(lastLogin).toDate();
 
       if (payload && payload.token) {
         const timeout = 1;
@@ -145,7 +149,7 @@ const getStorageItem = async (key) => {
         try {
           user.is_logging_in = true;
           logger.debug('No token / Token expired / Invalid, checking username and password');
-          const loginResult = await Api.Authentication.login(username, password).then();
+          const loginResult = await Api.Authentication.login(username, password, context).then();
           logger.debug('Login result after authenticating with lasec360', loginResult);
           if (user.setAuthentication && loginResult) {
             await user.setAuthentication({
@@ -177,30 +181,10 @@ const getStorageItem = async (key) => {
   return null;
 };
 
-export async function POST(url, data, auth = true) {
-  const args = { body: data, method: 'POST' };
-  return await FETCH(url, args, auth);
-}
 
-export function DELETE(url, data, auth = true) {
-  const args = { body: data, method: 'DELETE' };
-  return FETCH(url, args, auth);
-}
-
-export function PUT(url, data, auth = true) {
-  const args = { body: data, method: 'PUT' };
-  return FETCH(url, args, auth);
-}
-
-interface LasecAPIFetchArgs {
-  headers?: any,
-  credentials?: string,
-  params?: any
-  [key: string]: any
-};
-
-export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = true, failed = false, attempt = 0): Promise<any> {
+export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = true, failed = false, attempt = 0, context: Reactory.IReactoryContext): Promise<any> {
   // url = `${url}`;
+  const loggingService: ILasecLoggingService = context.getService('lasec-crm.LasecLoggingService@1.0.0');
   let absoluteUrl = `${config.SECONDARY_API_URL}/${url}`;
 
   const kwargs: LasecAPIFetchArgs = fethArguments || {};
@@ -210,7 +194,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   }
 
   if (mustAuthenticate === true) {
-    const token = await getStorageItem('secondary_api_token').then();
+    const token = await getStorageItem('secondary_api_token', context).then();
     if (token) {
       kwargs.headers.Authorization = `Token ${token}`;
       kwargs.headers.Origin = 'http://localhost:3000';
@@ -241,7 +225,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     kwargs.body = JSON.stringify(kwargs.body, null, 2);
   }
 
-  logger.debug(`API CALL: curl '${absoluteUrl}' \\
+  const $curlformat = `API CALL: curl '${absoluteUrl}' \\
   -H 'Connection: keep-alive' \\
   -H 'Authorization: ${kwargs.headers.Authorization}' \\
   -H 'X-LASEC-AUTH: ${kwargs.headers.Authorization}' \\
@@ -252,7 +236,9 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   -H 'Origin: ${process.env.API_URI_ROOT}' \\
   -H 'Accept-Language: en-US,en;q=0.9,af;q=0.8,nl;q=0.7' \\
   ${kwargs.body ? `--data-binary '${kwargs.body}' \\` : ''}
-  --compressed`);
+  --compressed`;
+
+  logger.debug($curlformat);
 
   let apiResponse = null;
 
@@ -260,17 +246,42 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     apiResponse = await fetch(absoluteUrl, kwargs).then();
   } catch (apiError) {
     logger.error(`🚨 Error Getting Responsefrom LASEC API ${apiError.message}`)
-    return {
+
+    let _result = {
       status: 'failed',
       payload: null,
       message: `FETCH api threw error ${apiError}`
     };
+
+    loggingService.writeLog(`
+        ------------------------------------------------------------------ 
+        🚨🚨           Invalid Response CALLING LASEC API             🚨🚨
+        ------------------------------------------------------------------ 
+        MESSAGE: ${apiError.message}
+        ENDPOINT: ${absoluteUrl}
+        METHOD: ${kwargs.method || "GET"}
+        ------------------------------------------------------------------ 
+        `, 'LasecAPI.FETCH', 10, kwargs);
+
+    return _result;
+
   }
+
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
     try {
       return apiResponse.json().catch((invalidJsonErr) => {
+        const msg = `
+        ------------------------------------------------------------------ 
+        🚨🚨           Invalid Response Type from LASEC API           🚨🚨
+        ------------------------------------------------------------------ 
+        MESSAGE: ${invalidJsonErr.message}
+        ENDPOINT: ${absoluteUrl}
+        FETCH ARGS: ${JSON.stringify(kwargs, null, 2)}
+        ------------------------------------------------------------------ 
+        `
+        logger.error(msg);
 
-        logger.error(`🚨 Error Getting JSON Response from LASEC API ${invalidJsonErr.message}`);
+        loggingService.writeLog(msg, 'LasecAPI.FETCH => result.json()', 10, {});
 
         return {
           status: 'failed',
@@ -279,7 +290,20 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
         };
       });
     } catch (jsonError) {
-      logger.error("JSON Error From API", jsonError);
+      const msg = `
+        ------------------------------------------------------------------ 
+        🚨🚨        Error Getting JSON Response from LASEC API        🚨🚨
+        ------------------------------------------------------------------ 
+        MESSAGE: ${jsonError.message}
+        ENDPOINT:${url}
+        METHOD: ${kwargs.method || "GET"}
+        FETCH ARGS: ${JSON.stringify(kwargs, null, 2)}
+        ------------------------------------------------------------------ 
+        `;
+      logger.error(msg);
+
+      loggingService.writeLog(msg, 'LasecAPI.FETCH => result.json()', 10, {});
+
       return {
         status: 'failed',
         payload: null,
@@ -288,39 +312,70 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     }
   } else {
     logger.warn(`Failed API call to ${absoluteUrl}`, { apiResponse, status: apiResponse.status || 'xxx', statusText: apiResponse.statusText });
+
+
+
     switch (apiResponse.status) {
       case 400: {
+        const msg = `
+        ------------------------------------------------------------------ 
+        🚨🚨        Warning BAD REQUEST RESPONSE / Token Failed       🚨🚨
+        ------------------------------------------------------------------ 
+        MESSAGE: Access Forbidden
+        ENDPOINT: ${absoluteUrl}
+        METHOD: ${kwargs.method || "GET"}
+        ------------------------------------------------------------------        
+        Q & A: POSSIBLE REASONS: User logged in on another device
+        ------------------------------------------------------------------ 
+        `;
+
+        loggingService.writeLog(msg, 'API.FETCH.result = 400 BAD', 5, kwargs);
+
         throw new ApiError('Could not execute fetch against Lasec API, Bad Request', { status: apiResponse, statusText: apiResponse.statusText });
       }
       case 401:
       case 403: {
 
+        const msg = `
+        ------------------------------------------------------------------ 
+        🚨🚨        Warning User Not Authenticated / Token Failed     🚨🚨
+        ------------------------------------------------------------------ 
+        MESSAGE: Access Forbidden
+        ENDPOINT: ${absoluteUrl}
+        METHOD: ${kwargs.method || "GET"}
+        ------------------------------------------------------------------ 
+        `;
+
+        logger.warn(msg);
+
+        loggingService.writeLog(msg, 'API.FETCH.result FORBIDDEN', 1, kwargs);
+
         const retry = async function retry() {
           logger.debug('Attempting to refetch', { attempt });
           if (attempt < 3) {
-            return await FETCH(url, fethArguments, mustAuthenticate, true, attempt ? attempt + 1 : 1).then();
+            return await FETCH(url, fethArguments, mustAuthenticate, true, attempt ? attempt + 1 : 1, context).then();
           } else {
             throw new TokenExpiredException('Authentication Credentials cannot log in');
           }
         };
 
         if (failed === false) {
-          const currentAuthentication = global.user.getAuthentication('lasec');
+          const currentAuthentication = context.user.getAuthentication('lasec');
           try {
             // get the current authentication details
-            const currentAuthentication = global.user.getAuthentication('lasec');
+            const currentAuthentication = context.user.getAuthentication('lasec');
             if (currentAuthentication && currentAuthentication.props) {
               // clear the login
               const authprops = { ...currentAuthentication.props };
               delete authprops.payload;
-              await global.user.setAuthentication(authprops).then();
+              await context.user.setAuthentication(authprops).then();
               return await retry();
             }
           } catch (err) {
             logger.error('Cannot log user in,  clearing credentials', err);
             if (currentAuthentication && currentAuthentication.props) {
               // clear the login
-              await global.user.removeAuthentication('lasec').then();
+              await context.user.removeAuthentication('lasec').then();
               return await retry();
             }
           }
@@ -329,18 +384,49 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
         break;
       }
       case 404: {
+
+        const msg = `
+        ------------------------------------------------------------------ 
+        🚨🚨        Warning Resource Not Found 404 STATUS             🚨🚨
+        ------------------------------------------------------------------ 
+        MESSAGE: Not Found
+        ENDPOINT:  ${url}
+        METHOD: ${kwargs.method || "GET"}
+        ------------------------------------------------------------------
+        Q & A: Item deleted or removed from API
+        ------------------------------------------------------------------ 
+        `;
+
+        loggingService.writeLog(msg, 'API.FETCH.result = 404 BAD', 3, kwargs);
+
         throw new RecordNotFoundError(`Could not fetch record for at ${absoluteUrl}`, 'LASEC_API', {
           url,
           fethArguments,
           mustAuthenticate,
           failed,
           attempt
-        })
+        });
+
+        break;
       }
       default: {
+
+        const msg = `
+        ------------------------------------------------------------------ 
+        🚨🚨             OTHER SERVER - UNSPECIFIED ERROR             🚨🚨
+        ------------------------------------------------------------------ 
+        MESSAGE: Access Forbidden
+        ENDPOINT:  ${url}
+        METHOD: ${kwargs.method || "GET"}
+        ------------------------------------------------------------------ 
+        `;
+
+        loggingService.writeLog(msg, 'API.FETCH.result = XXX UNDEFINED', 3, kwargs);
+
         await execml(`mutation LasecReset360Credentials {
           LasecReset360Credentials
-        }`);
+        }`, {}, {}, context.user, context.partner);
+
         throw new ApiError('Could not execute fetch against Lasec API', { status: apiResponse, statusText: apiResponse.statusText });
       }
     }
@@ -348,7 +434,20 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   }
 }
 
+export async function POST(url: string, data: any, auth = true, context: Reactory.IReactoryContext) {
+  const args = { body: data, method: 'POST' };
+  return await FETCH(url, args, auth, false, 0, context);
+}
 
+export function DELETE(url: string, data: any, auth = true, context: Reactory.IReactoryContext) {
+  const args = { body: data, method: 'DELETE' };
+  return FETCH(url, args, auth, false, 0, context);
+}
+
+export function PUT(url: string, data: any, auth = true, context: Reactory.IReactoryContext) {
+  const args = { body: data, method: 'PUT' };
+  return FETCH(url, args, auth, false, 0, context);
+}
 
 const defaultParams: LasecAPIParams = {
   filter: {},
@@ -364,11 +463,11 @@ const defaultQuoteObjectMap = {
 const Api = {
   FETCH,
   URIS: SECONDARY_API_URLS,
-  get: async (uri: string, params: any = null, shape: any = null) => {
+  get: async (uri: string, params: any = null, shape: any = null, context: Reactory.IReactoryContext) => {
 
-    logger.debug(`🟠 GET PARAMS ${uri}  -   ${JSON.stringify(params)} `)
+    logger.debug(`🟠 GET PARAMS ${uri}- ${JSON.stringify(params)} `)
 
-    const resp = await FETCH(uri, params ? { params } : undefined).then();
+    const resp = await FETCH(uri, params ? { params } : undefined, true, false, 0, context).then();
     const {
       status, payload,
     } = resp;
@@ -395,10 +494,10 @@ const Api = {
       return { pagination: {}, ids: [], items: [], status };
     }
   },
-  post: async (uri: string, params: any, shape: any, auth: boolean = true) => {
+  post: async (uri: string, params: any, shape: any, auth: boolean = true, context: Reactory.IReactoryContext) => {
 
     try {
-      const resp = await POST(uri, params, auth).then();
+      const resp = await POST(uri, params, auth, context).then();
       const {
         status, payload,
       } = resp;
@@ -430,10 +529,10 @@ const Api = {
     }
 
   },
-  delete: async (uri: string, params: any, shape: any, auth: boolean = true) => {
+  delete: async (uri: string, params: any, shape: any, auth: boolean = true, context: Reactory.IReactoryContext) => {
 
     try {
-      const resp = await DELETE(uri, params, auth).then();
+      const resp = await DELETE(uri, params, auth, context).then();
       const {
         status, payload,
       } = resp;
@@ -465,8 +564,8 @@ const Api = {
     }
 
   },
-  put: async (uri: string, params: any, shape: any): Promise<any> => {
-    const resp = await PUT(uri, params).then();
+  put: async (uri: string, params: any, shape: any, context: Reactory.IReactoryContext): Promise<any> => {
+    const resp = await PUT(uri, params, true, context).then();
     const {
       status, payload,
     } = resp;
@@ -484,7 +583,7 @@ const Api = {
     }
   },
   Documents: {
-    upload: async (reactoryFile: Reactory.IReactoryFile, customerInfo: any, link_only: boolean = false): Promise<Reactory.IReactoryFile> => {
+    upload: async (reactoryFile: Reactory.IReactoryFile, customerInfo: any, link_only: boolean = false, context: Reactory.IReactoryContext): Promise<Reactory.IReactoryFile> => {
       logger.debug(`Uploading document to LasecAPI`, { reactoryFile, customerInfo });
       let _client_id = customerInfo && customerInfo.id ? customerInfo.id : customerInfo;
       /**
@@ -521,7 +620,7 @@ const Api = {
         let isNewClient = _client_id === 'new_client';
         if (_client_id && remote_id && isNewClient === false) {
           logger.debug(`Linking file to customer using input \n file:\n${remote_id}\ncustomer id: ${_client_id} `);
-          const link_result = await POST(`${SECONDARY_API_URLS.customer_documents.url(_client_id)}`, { document_ids: [remote_id] });
+          const link_result = await POST(`${SECONDARY_API_URLS.customer_documents.url(_client_id)}`, { document_ids: [remote_id] }, true, context);
           logger.debug(`Linking file to customer Results \n  ${JSON.stringify(link_result)} `);
           if (link_result.success) {
             //reactoryFile.uploadContext = 'lasec'
@@ -540,7 +639,6 @@ const Api = {
       }
 
       if (link_only === true) {
-        debugger
         if (reactoryFile.remotes && reactoryFile.remotes.length === 1) {
           link_to_client(reactoryFile.remotes[0].id.split('@')[0]);
         }
@@ -555,7 +653,7 @@ const Api = {
 
       try {
 
-        const token = await getStorageItem('secondary_api_token').then();
+        const token = await getStorageItem('secondary_api_token', context).then();
         if (token) {
           kwargs.headers.Authorization = `Token ${token}`;
           kwargs.headers.Origin = 'http://localhost:3000';
@@ -643,13 +741,13 @@ const Api = {
 
       return reactoryFile;
     },
-    updateDocumentIds: async (documentIds: any, customerId: any) => {
-      return await POST(`${SECONDARY_API_URLS.customer_documents.url(customerId)}`, { document_ids: documentIds, customer_id: customerId }).then();
+    updateDocumentIds: async (documentIds: any, customerId: any, context: Reactory.IReactoryContext) => {
+      return await POST(`${SECONDARY_API_URLS.customer_documents.url(customerId)}`, { document_ids: documentIds, customer_id: customerId }, true, context).then();
     }
   },
   Customers: {
-    list: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.customers.url, { params: { ...defaultParams, ...params } }).then();
+    list: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.customers.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -664,8 +762,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    Documents: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.file_upload.url, { params: { ...defaultParams, ...params } }).then();
+    Documents: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.file_upload.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -676,12 +774,12 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    UpdateClientDetails: async (clientId, params) => {
+    UpdateClientDetails: async (clientId: string, params: any, context: Reactory.IReactoryContext) => {
       try {
 
         // logger.debug(`PARAMS: `, params);
 
-        const apiResponse = await POST(`api/customer/${clientId}/update/`, params).then();
+        const apiResponse = await POST(`api/customer/${clientId}/update/`, params, true, context).then();
 
         const {
           status, payload, id,
@@ -708,9 +806,9 @@ const Api = {
         };
       }
     },
-    GetCustomerRoles: async (params = {}) => {
+    GetCustomerRoles: async (params = {}, context: Reactory.IReactoryContext) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } }).then();
+      const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = resp;
@@ -722,9 +820,9 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
-    GetCustomerRankings: async (params = defaultParams) => {
+    GetCustomerRankings: async (params = defaultParams, context: Reactory.IReactoryContext) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_ranking.url, { params: { ...defaultParams, ...params } }).then();
+      const resp = await FETCH(SECONDARY_API_URLS.customer_ranking.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = resp;
@@ -736,9 +834,9 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
-    GetCustomerClass: async (params = defaultParams) => {
+    GetCustomerClass: async (params = defaultParams, context: Reactory.IReactoryContext) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { ...defaultParams, ...params } }).then();
+      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = resp;
@@ -750,8 +848,8 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
-    GetFacultyList: async (params = defaultParams) => {
-      const resp = await FETCH(SECONDARY_API_URLS.faculty_list.url, { params: { ...defaultParams, ...params } }).then();
+    GetFacultyList: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const resp = await FETCH(SECONDARY_API_URLS.faculty_list.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = resp;
@@ -762,8 +860,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    GetCustomerType: async (params = defaultParams) => {
-      const resp = await FETCH(SECONDARY_API_URLS.customer_type.url, { params: { ...defaultParams, ...params } }).then();
+    GetCustomerType: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const resp = await FETCH(SECONDARY_API_URLS.customer_type.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = resp;
@@ -774,11 +872,11 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    GetCustomerLineManagers: async (params = defaultParams) => {
+    GetCustomerLineManagers: async (params: any = defaultParams, context: Reactory.IReactoryContext) => {
 
       logger.debug(`[INDEX] GET LINE MANAGERS:: ${JSON.stringify(params)}`);
 
-      const resp = await FETCH(`api/customer/${params.customerId}/line_manager_list/`, { params: { ...defaultParams } }).then();
+      const resp = await FETCH(`api/customer/${params.customerId}/line_manager_list/`, { params: { ...defaultParams } }, true, false, 0, context).then();
       const {
         status, payload,
       } = resp;
@@ -789,9 +887,9 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    GetCustomerClassById: async (id) => {
+    GetCustomerClassById: async (id: string, context: Reactory.IReactoryContext) => {
 
-      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { filter: { ids: [id] }, paging: {} } }).then();
+      const resp = await FETCH(SECONDARY_API_URLS.customer_class.url, { params: { filter: { ids: [id] }, paging: {} } }, true, false, 0, context).then();
       const {
         status, payload,
       } = resp;
@@ -805,8 +903,8 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
-    GetPersonTitles: async (personTitleParams = {}) => {
-      const resp = await FETCH(SECONDARY_API_URLS.person_title.url, { params: { ...defaultParams, ...personTitleParams } }).then();
+    GetPersonTitles: async (personTitleParams = {}, context: Reactory.IReactoryContext) => {
+      const resp = await FETCH(SECONDARY_API_URLS.person_title.url, { params: { ...defaultParams, ...personTitleParams } }, true, false, 0, context).then();
       const {
         status, payload,
       } = resp;
@@ -824,8 +922,8 @@ const Api = {
 
 
     },
-    GetCustomerJobTypes: async (params = defaultParams) => {
-      const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } }).then();
+    GetCustomerJobTypes: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const resp = await FETCH(SECONDARY_API_URLS.customer_roles.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = resp;
@@ -838,8 +936,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    GetRepCodes: async (params = defaultParams) => {
-      const resp = await FETCH(SECONDARY_API_URLS.rep_code.url, { params: { ...defaultParams, ...params } }).then();
+    GetRepCodes: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const resp = await FETCH(SECONDARY_API_URLS.rep_code.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = resp;
@@ -852,8 +950,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    UploadDocument: async (params) => {
-      const apiResponse = await POST(SECONDARY_API_URLS.file_uploads.url, { params: { ...defaultParams, ...params } }).then();
+    UploadDocument: async (params: any, context: Reactory.IReactoryContext) => {
+      const apiResponse = await POST(SECONDARY_API_URLS.file_uploads.url, { params: { ...defaultParams, ...params } }, true, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -867,9 +965,9 @@ const Api = {
       }
 
     },
-    UpdateAddress: async (edit_address: LasecAddress): Promise<LasecAddress> => {
+    UpdateAddress: async (edit_address: LasecAddress, context: Reactory.IReactoryContext): Promise<LasecAddress> => {
       //get the existing address for
-      let api_result = await Api.Customers.getAddress({ filter: { ids: [edit_address.id] } }).then();
+      let api_result = await Api.Customers.getAddress({ filter: { ids: [edit_address.id] } }, context).then();
       logger.debug(`Existing Address Lookup Returned`, api_result);
       let existing_address = null;
 
@@ -879,7 +977,7 @@ const Api = {
 
       if (existing_address !== null) {
         try {
-          const update_result = await PUT(`${SECONDARY_API_URLS.address.url}${edit_address.id}`, edit_address).then();
+          const update_result = await PUT(`${SECONDARY_API_URLS.address.url}${edit_address.id}`, edit_address, true, context).then();
           logger.debug(`Address update result`, { update_result })
 
           if (update_result.status === "success") {
@@ -895,8 +993,8 @@ const Api = {
       }
       throw new RecordNotFoundError(`The address with the id ${edit_address.id} was not found`)
     },
-    getAddress: async (params) => {
-      const resp = await FETCH(SECONDARY_API_URLS.address.url, { params: { ...defaultParams, ...params } }).then()
+    getAddress: async (params: any, context: Reactory.IReactoryContext) => {
+      const resp = await FETCH(SECONDARY_API_URLS.address.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then()
       const {
         status, payload,
       } = resp;
@@ -911,16 +1009,16 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    createNewAddress: async (params) => {
+    createNewAddress: async (params: any, context: Reactory.IReactoryContext) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.new_address.url, { ...params }).then();
+        const apiResponse = await POST(SECONDARY_API_URLS.new_address.url, { ...params }, true, context).then();
         return apiResponse; //{"status":"success","payload":{"id":31907}}
       } catch (lasecApiError) {
         logger.error(`ERROR CREATING NEW ADDRESS:: ${lasecApiError}`);
         return null;
       }
     },
-    getPlaceDetails: async (placeId) => {
+    getPlaceDetails: async (placeId: string, context: Reactory.IReactoryContext) => {
 
       const drewsTempApiKey = '<GOOGLE MAPS API KEY>';
       const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=address_component&key=${drewsTempApiKey}`;
@@ -933,12 +1031,12 @@ const Api = {
         return response.text();
       }
     },
-    UpdateClientSpecialRequirements: async (clientId, params) => {
+    UpdateClientSpecialRequirements: async (clientId: string, params: any, context: Reactory.IReactoryContext) => {
       try {
         logger.debug(`PARAMS: `, params);
 
         // const apiResponse = await POST(`api/company/${clientId}`, params).then();
-        const apiResponse = await PUT(`api/company/${clientId}`, params).then();
+        const apiResponse = await PUT(`api/company/${clientId}`, params, true, context).then();
         const { status, payload, id, } = apiResponse;
 
         logger.debug(`API UPDATE RESPONSE: ${JSON.stringify(apiResponse)}`);
@@ -966,9 +1064,9 @@ const Api = {
     },
   },
   Company: {
-    list: async (params) => {
+    list: async (params: any, context: Reactory.IReactoryContext) => {
 
-      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } }).then();
+      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -980,8 +1078,8 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
-    getById: async (params) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } }).then();
+    getById: async (params: any, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -992,8 +1090,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    getAddress: async (params) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } }).then();
+    getAddress: async (params: any, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -1004,11 +1102,11 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    uploadFile: async (params) => {
+    uploadFile: async (params: any, context: Reactory.IReactoryContext) => {
       try {
         logger.debug(`BEGINNING DOCUMENT UPLOAD:: ${params}`);
 
-        const apiResponse = await POST(SECONDARY_API_URLS.file_uploads, { body: { ...params } }).then();
+        const apiResponse = await POST(SECONDARY_API_URLS.file_uploads.url, { body: { ...params } }, true, context).then();
         const { status, payload } = apiResponse;
         // payload - name id url
 
@@ -1027,8 +1125,8 @@ const Api = {
     }
   },
   Organisation: {
-    list: async (params: any = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.organisation.url, { params: { ...defaultParams, ...params } }).then();
+    list: async (params: any = defaultParams, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.organisation.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -1039,13 +1137,13 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    createNew: async (params) => {
+    createNew: async (params: any, context: Reactory.IReactoryContext) => {
       try {
         // const url = 'api/organisation/0/';
         // const apiResponse = await PUT(url, { ...params });
 
         const url = 'api/customer/create_organisation_and_save_to_customer/';
-        const apiResponse = await POST(url, { ...params });
+        const apiResponse = await POST(url, { ...params }, true, context);
 
         const { status } = apiResponse;
 
@@ -1053,14 +1151,14 @@ const Api = {
           return apiResponse;
         }
       } catch (lasecApiError) {
-        logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`).then();
+        logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`);
         return null;
       }
     }
   },
   Products: {
-    list: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } }).then();
+    list: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -1071,8 +1169,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    byId: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } }).then();
+    byId: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_get.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -1086,8 +1184,8 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
-    warehouse_stock: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.warehouse_strock.url, { params: { ...defaultParams, ...params } }).then();
+    warehouse_stock: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.warehouse_strock.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -1098,8 +1196,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    warehouse: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.warehouse.url, { params: { ...defaultParams, ...params } }).then();
+    warehouse: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.warehouse.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -1110,8 +1208,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    sales_orders: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } }).then();
+    sales_orders: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -1122,22 +1220,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    costings: async (params) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.product_costing_get.url, { params: { ...defaultParams, ...params } }).then();
-      const {
-        status, payload,
-      } = apiResponse;
-
-      // logger.debug(`PRODUCT COSTINGS RESPONSE::  ${JSON.stringify(apiResponse)}`);
-
-      if (status === 'success') {
-        return payload;
-      }
-
-      return { pagination: {}, ids: [], items: [] };
-    },
-    contracts: async (params) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.product_contracts_get.url, { params: { ...defaultParams, ...params } }).then();
+    costings: async (params: any, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_costing_get.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -1150,8 +1234,22 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    tenders: async (params) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.product_tenders_get.url, { params: { ...defaultParams, ...params } }).then();
+    contracts: async (params: any, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_contracts_get.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
+      const {
+        status, payload,
+      } = apiResponse;
+
+      // logger.debug(`PRODUCT COSTINGS RESPONSE::  ${JSON.stringify(apiResponse)}`);
+
+      if (status === 'success') {
+        return payload;
+      }
+
+      return { pagination: {}, ids: [], items: [] };
+    },
+    tenders: async (params: any, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.product_tenders_get.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -1167,9 +1265,9 @@ const Api = {
   },
   Invoices: {
 
-    list: async (params = defaultParams) => {
+    list: async (params = defaultParams, context: Reactory.IReactoryContext) => {
       try {
-        const invoiceResult = await FETCH(SECONDARY_API_URLS.invoices.url, { params: { ...defaultParams, ...params } });
+        const invoiceResult = await FETCH(SECONDARY_API_URLS.invoices.url, { params: { ...defaultParams, ...params } }, true, false, 0, context);
         if (invoiceResult.status === 'success') {
           logger.debug('Invoice Results', invoiceResult);
           return invoiceResult.payload;
@@ -1182,8 +1280,8 @@ const Api = {
     }
   },
   PurchaseOrders: {
-    list: async (params = defaultParams) => {
-      const poResult = await FETCH(SECONDARY_API_URLS.purchase_order.url, { params: { ...defaultParams, ...params } }).then();
+    list: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const poResult = await FETCH(SECONDARY_API_URLS.purchase_order.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status,
         payload,
@@ -1195,8 +1293,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    detail: async (params = defaultParams) => {
-      const isoResult = await FETCH(SECONDARY_API_URLS.purchase_order_item.url, { params: { ...defaultParams, ...params } }).then();
+    detail: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const isoResult = await FETCH(SECONDARY_API_URLS.purchase_order_item.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
 
       const {
         status,
@@ -1212,11 +1310,11 @@ const Api = {
   },
   SalesOrders: {
 
-    item: async (sales_order_id: string): Promise<LasecSalesOrder> => {
+    item: async (sales_order_id: string, context: Reactory.IReactoryContext): Promise<LasecSalesOrder> => {
       try {
 
         let sales_order: LasecSalesOrder = null;
-        const cached = await getCacheItem(`lasec-sales-order::${sales_order_id}`).then()
+        const cached = await getCacheItem(`lasec-sales-order::${sales_order_id}`, null, 30, context.partner).then()
 
         if (cached === null || cached === undefined) {
 
@@ -1232,7 +1330,7 @@ const Api = {
                 current_page: 1
               }
             }
-          }).then();
+          }, true, false, 0, context).then();
 
           logger.debug(`Result from API`, iso_api_result);
           if (iso_api_result.payload) {
@@ -1330,13 +1428,15 @@ const Api = {
                 //documents: item.document_ids.map((id: string) => ({ id })),
                 documentIds: [...item.document_ids],
 
+                documents: [],
+
                 details: {
                   lineItems: [],
                   comments: []
                 }
               };
 
-              setCacheItem(`lasec-sales-order::${sales_order_id}`, sales_order, 15);
+              setCacheItem(`lasec-sales-order::${sales_order_id}`, sales_order, 15, context.partner);
               return sales_order;
             }
           }
@@ -1350,8 +1450,8 @@ const Api = {
       }
     },
 
-    list: async (params = defaultParams) => {
-      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } }).then();
+    list: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status,
         payload,
@@ -1363,8 +1463,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    detail: async (params = defaultParams) => {
-      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order_item.url, { params: { ...defaultParams, ...params } }).then();
+    detail: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const isoResult = await FETCH(SECONDARY_API_URLS.sales_order_item.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status,
         payload,
@@ -1376,8 +1476,8 @@ const Api = {
 
       return { pagination: {}, ids: [], items: [] };
     },
-    documents: async (params) => {
-      const documentResult = await FETCH(SECONDARY_API_URLS.file_upload.url, { params: { ...defaultParams, ...params } }).then();
+    documents: async (params: any, context: Reactory.IReactoryContext) => {
+      const documentResult = await FETCH(SECONDARY_API_URLS.file_upload.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const { status, payload } = documentResult;
 
       if (status === 'success') return payload;
@@ -1537,9 +1637,9 @@ const Api = {
             "date_of_expiry_na" => "N"
         )));
      */
-    get_certificate_of_conformance: async (sales_order_id: string): Promise<any> => {
+    get_certificate_of_conformance: async (sales_order_id: string, context: Reactory.IReactoryContext): Promise<any> => {
 
-      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`).then();
+      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`, undefined, undefined, context).then();
       /**
        *
        * Result is HashMap
@@ -1593,7 +1693,7 @@ const Api = {
       let payment_terms: any[] = [];
 
       try {
-        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`).then();
+        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`, undefined, undefined, context).then();
         /**
          * Result is hash map
          *
@@ -1627,7 +1727,11 @@ const Api = {
 
       const new_shape = {
         'header.salesorder': 'id',
-        'header.date_of_isse': 'date_of_issue',
+        'header.date_of_isse': {
+          key: 'date_of_issue', transform: (v) => {
+            return moment(v).format("YYYY-MM-DD");
+          }, default: moment().format('YYYY-MM-DD')
+        },
         'header.certification': 'certification_date',
         'header.payment_terms': 'terms',
         'header.inco_terms': "inco_terms",
@@ -1697,7 +1801,7 @@ const Api = {
 
       let certificate_results = null;
       try {
-        certificate_results = await Api.get(`api/cert_of_conf/${sales_order_id}`).then();
+        certificate_results = await Api.get(`api/cert_of_conf/${sales_order_id}`, undefined, undefined, context).then();
         let is_new = true;
         let converted: any = om.merge(certificate_results, is_new === true ? new_shape : existing_shape);
 
@@ -1770,7 +1874,7 @@ const Api = {
      * @param sales_order_id
      * @param certificate
      */
-    post_certificate_of_conformance: async (sales_order_id: string, certificate: any): Promise<any> => {
+    post_certificate_of_conformance: async (sales_order_id: string, certificate: any, context: Reactory.IReactoryContext): Promise<any> => {
 
       const input_data: any = om.merge(certificate, {
         'id': 'header.salesorder',
@@ -1834,7 +1938,7 @@ const Api = {
 
       try {
         logger.debug(`Sending certificate input to API`, { input_data });
-        let certificate_result = await Api.post(`api/cert_of_conf/${sales_order_id}`, input_data, undefined, true).then();
+        let certificate_result = await Api.post(`api/cert_of_conf/${sales_order_id}`, input_data, undefined, true, context).then();
         logger.debug(`🔢Certificate Result`, { certificate_result });
         return {
           id: sales_order_id,
@@ -2009,7 +2113,7 @@ const Api = {
      *
      */
 
-    get_commercial_invoice: async (sales_order_id: string): Promise<any> => {
+    get_commercial_invoice: async (sales_order_id: string, context: Reactory.IReactoryContext): Promise<any> => {
 
       //const inco_terms = await Api.get(`api/com_invoice/inco_terms`, {}).then();
       //logger.debug(`Inco Terms Result`, inco_terms);
@@ -2019,7 +2123,7 @@ const Api = {
 
 
 
-      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`).then();
+      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`, null, null, context).then();
       /**
        *
        * Result is HashMap
@@ -2073,7 +2177,7 @@ const Api = {
       let payment_terms: any[] = [];
 
       try {
-        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`).then();
+        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`, null, null, context).then();
         /**
          * Result is hash map
          *
@@ -2164,7 +2268,7 @@ const Api = {
       };
 
       try {
-        const commercial_invoice = await Api.get(`api/com_invoice/${sales_order_id}`, null, shape).then();
+        const commercial_invoice = await Api.get(`api/com_invoice/${sales_order_id}`, null, shape, context).then();
         logger.debug(`Commercial Invoice Response From API ${commercial_invoice.status}`, { commercial_invoice: commercial_invoice });
         return {
           id: sales_order_id,
@@ -2183,7 +2287,7 @@ const Api = {
       }
     },
 
-    post_commercial_invoice: async (sales_order_id: string, commercial_invoice: any): Promise<any> => {
+    post_commercial_invoice: async (sales_order_id: string, commercial_invoice: any, context: Reactory.IReactoryContext): Promise<any> => {
 
       /**
        *
@@ -2292,7 +2396,7 @@ const Api = {
 
       try {
         logger.debug(`Sending invoice input to API`, { input_data });
-        let invoice_result = await Api.post(`api/com_invoice/${sales_order_id}`, input_data, undefined, true).then();
+        let invoice_result = await Api.post(`api/com_invoice/${sales_order_id}`, input_data, undefined, true, context).then();
         logger.debug(`🔢 Invoice Result`, { invoice_result });
         return {
           id: sales_order_id,
@@ -2305,7 +2409,7 @@ const Api = {
 
     },
 
-    put_commercial_invoice: async (sales_order_id: string, certificate: any): Promise<any> => {
+    put_commercial_invoice: async (sales_order_id: string, certificate: any, context: Reactory.IReactoryContext): Promise<any> => {
 
       return {
         id: sales_order_id,
@@ -2438,7 +2542,7 @@ NB: note the addition of the detail_id for the line been updated
      *
      */
 
-    get_packing_list: async (sales_order_id: string): Promise<any> => {
+    get_packing_list: async (sales_order_id: string, context: Reactory.IReactoryContext): Promise<any> => {
 
       //const inco_terms = await Api.get(`api/packing_list/inco_terms`, {}).then();
       //logger.debug(`Inco Terms Result`, inco_terms);
@@ -2446,7 +2550,7 @@ NB: note the addition of the detail_id for the line been updated
       //const payment_terms = await Api.get(`api/packing_list/payment_terms`).then();
       //logger.debug(`Payment Terms Result`, payment_terms);
 
-      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`).then();
+      const inco_terms_for_sales_order = await Api.get(`api/cert_of_conf/inco_terms`, null, null, context).then();
       /**
        *
        * Result is HashMap
@@ -2500,7 +2604,7 @@ NB: note the addition of the detail_id for the line been updated
       let payment_terms: any[] = [];
 
       try {
-        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`).then();
+        const payment_terms_for_sales_orders = await Api.get(`api/cert_of_conf/payment_terms`, null, null, context).then();
         /**
          * Result is hash map
          *
@@ -2586,7 +2690,7 @@ NB: note the addition of the detail_id for the line been updated
       };
 
       try {
-        const packing_list_result = await Api.get(`api/packing_list/${sales_order_id}`, null, shape).then();
+        const packing_list_result = await Api.get(`api/packing_list/${sales_order_id}`, null, shape, context).then();
 
         logger.debug(`Pakcing list Response From API ${packing_list_result.status}`, { certificate_results: packing_list_result });
 
@@ -2649,7 +2753,7 @@ NB: note the addition of the detail_id for the line been updated
      * @param sales_order_id
      * @param packing_list
      */
-    post_packing_list: async (sales_order_id: string, packing_list: any): Promise<any> => {
+    post_packing_list: async (sales_order_id: string, packing_list: any, context: Reactory.IReactoryContext): Promise<any> => {
 
 
       const input_data: any = om.merge(packing_list, {
@@ -2721,7 +2825,7 @@ NB: note the addition of the detail_id for the line been updated
 
       try {
         logger.debug(`Sending certificate input to API`, { input_data });
-        let packing_list_result = await Api.post(`api/packing_list/${sales_order_id}`, input_data, undefined, true).then();
+        let packing_list_result = await Api.post(`api/packing_list/${sales_order_id}`, input_data, undefined, true, context).then();
         logger.debug(`🔢Certificate Result`, { packing_list_result });
         return {
           id: sales_order_id,
@@ -2733,7 +2837,7 @@ NB: note the addition of the detail_id for the line been updated
       }
     },
 
-    put_packing_list: async (sales_order_id: string, certificate: any): Promise<any> => {
+    put_packing_list: async (sales_order_id: string, certificate: any, context: Reactory.IReactoryContext): Promise<any> => {
 
       return {
         id: sales_order_id,
@@ -2742,11 +2846,11 @@ NB: note the addition of the detail_id for the line been updated
     },
 
 
-    deleteDocument: async (params) => {
-      const deleteDocumentResult = await DELETE(SECONDARY_API_URLS.file_upload.url + params.id, {}).then();
+    deleteDocument: async (params: any, context: Reactory.IReactoryContext) => {
+      const deleteDocumentResult = await DELETE(SECONDARY_API_URLS.file_upload.url + params.id, null, true, context).then();
       return deleteDocumentResult;
     },
-    createSalesOrder: async (sales_order_input: LasecCreateSalesOrderInput) => {
+    createSalesOrder: async (sales_order_input: LasecCreateSalesOrderInput, context: Reactory.IReactoryContext) => {
 
       const data = {
         warehouse_id: sales_order_input.preffered_warehouse,
@@ -2803,7 +2907,7 @@ NB: note the addition of the detail_id for the line been updated
       try {
         logger.debug(`Creating new Sales Order input =>`, { data });
 
-        const create_api_result = await POST(SECONDARY_API_URLS.sales_order.url, data).then();
+        const create_api_result = await POST(SECONDARY_API_URLS.sales_order.url, data, true, context).then();
         logger.debug(`Result from new Sales Order =>`, { create_api_result });
 
         if (create_api_result.status === 'success') {
@@ -2818,7 +2922,7 @@ NB: note the addition of the detail_id for the line been updated
             }
           };
 
-          const put_result = await PUT(`api/sales_order/${create_api_result.payload.id}/`, update_data).then();
+          const put_result = await PUT(`api/sales_order/${create_api_result.payload.id}/`, update_data, true, context).then();
           if (put_result.status === 'success') {
             return put_result.payload
           } else {
@@ -2834,10 +2938,10 @@ NB: note the addition of the detail_id for the line been updated
       }
 
     },
-    checkPONumberExists: async (company_id: string, purchase_order_number: string): Promise<{ exists: boolean, sales_order_id?: string }> => {
+    checkPONumberExists: async (company_id: string, purchase_order_number: string, context: Reactory.IReactoryContext): Promise<{ exists: boolean, sales_order_id?: string }> => {
       try {
         logger.debug(`Checking if Purchase Order number exists: company id: ${company_id}, ${purchase_order_number}`);
-        const { payload = null, status = 'failed' }: { payload: { po_number_exists: boolean, sales_order_id?: string }, status: string } = await POST(SECONDARY_API_URLS.check_po_number_exists.url, { company_id, purchase_order_number }).then();
+        const { payload = null, status = 'failed' }: { payload: { po_number_exists: boolean, sales_order_id?: string }, status: string } = await POST(SECONDARY_API_URLS.check_po_number_exists.url, { company_id, purchase_order_number }, true, context).then();
         if (status === 'success' && payload) {
           logger.debug('Results from checking if purchase order exists', { status, payload });
           return {
@@ -2854,8 +2958,8 @@ NB: note the addition of the detail_id for the line been updated
     },
   },
   Quotes: {
-    list: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } }).then();
+    list: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -2866,9 +2970,9 @@ NB: note the addition of the detail_id for the line been updated
 
       return { pagination: {}, ids: [], items: [] };
     },
-    getLineItem: async (id: string) => {
+    getLineItem: async (id: string, context: Reactory.IReactoryContext) => {
       try {
-        const result = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: [id] } } }).then()
+        const result = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: [id] } } }, true, false, 0, context).then()
 
         const { status, payload } = result;
         if (status === 'success' && payload.items && payload.items.length === 1) {
@@ -2882,7 +2986,7 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    getLineItems: async (code: string, active_option: string, page_size: number = 25, page: number = 1): Promise<any> => {
+    getLineItems: async (code: string, active_option: string, page_size: number = 25, page: number = 1, context: Reactory.IReactoryContext): Promise<any> => {
 
       let filter: any = { quote_id: code }
       if (typeof active_option === 'string') {
@@ -2902,7 +3006,7 @@ NB: note the addition of the detail_id for the line been updated
             current_page: page
           }
         }
-      }).then();
+      }, true, false, 0, context).then();
 
       logger.debug(`QUOTE ITEM IDS RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
@@ -2933,7 +3037,7 @@ NB: note the addition of the detail_id for the line been updated
             pageSize: payload.pagination.page_size
           }
 
-          const lineItemsExpanded = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: payload.ids } } }).then()
+          const lineItemsExpanded = await FETCH(SECONDARY_API_URLS.quote_items.url, { params: { ...defaultParams, filter: { ids: payload.ids } } }, true, false, 0, context).then()
 
           logger.debug(`QUOTE ITEM PAYLOAD RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
@@ -2946,8 +3050,8 @@ NB: note the addition of the detail_id for the line been updated
 
       return { line_items: [], item_paging: null };
     },
-    get: async (params = defaultParams) => {
-      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } }).then();
+    get: async (params = defaultParams, context: Reactory.IReactoryContext) => {
+      const apiResponse = await FETCH(SECONDARY_API_URLS.quote_get.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
@@ -2958,9 +3062,9 @@ NB: note the addition of the detail_id for the line been updated
 
       return { pagination: {}, ids: [], items: [] };
     },
-    getByQuoteId: async (quote_id: string, objectMap: any = undefined) => {
+    getByQuoteId: async (quote_id: string, objectMap: any = undefined, context: Reactory.IReactoryContext) => {
       try {
-        const payload = await Api.Quotes.get({ filter: { ids: [quote_id] }, pagination: { enabled: false } }).then();
+        const payload = await Api.Quotes.get({ filter: { ids: [quote_id] }, pagination: { enabled: false } }, context).then();
         if (payload) {
           logger.debug(`Api Response successful fetching quote id ${quote_id}`, JSON.stringify(payload, null, 2));
           const quotes = payload.items || [];
@@ -2989,9 +3093,9 @@ NB: note the addition of the detail_id for the line been updated
         throw quoteFetchError;
       }
     },
-    getQuoteOption: async (optionId: string) => {
+    getQuoteOption: async (optionId: string, context: Reactory.IReactoryContext) => {
       try {
-        const apiResponse = await FETCH(SECONDARY_API_URLS.quote_option.url, { params: { filter: { ids: [optionId] } } }).then();
+        const apiResponse = await FETCH(SECONDARY_API_URLS.quote_option.url, { params: { filter: { ids: [optionId] } } }, true, false, 0, context).then();
         const {
           status, payload,
         } = apiResponse;
@@ -3009,9 +3113,9 @@ NB: note the addition of the detail_id for the line been updated
         throw error;
       }
     },
-    getQuoteOptions: async (optionIds: string[]) => {
+    getQuoteOptions: async (optionIds: string[], context: Reactory.IReactoryContext) => {
       try {
-        const apiResponse = await FETCH(SECONDARY_API_URLS.quote_option.url, { params: { filter: { ids: optionIds } } }).then();
+        const apiResponse = await FETCH(SECONDARY_API_URLS.quote_option.url, { params: { filter: { ids: optionIds } } }, true, false, 0, context).then();
         const {
           status, payload,
         } = apiResponse;
@@ -3027,9 +3131,9 @@ NB: note the addition of the detail_id for the line been updated
         throw error;
       }
     },
-    createQuoteOption: async (quote_id: string) => {
+    createQuoteOption: async (quote_id: string, context: Reactory.IReactoryContext) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.quote_option.url, { quote_id }).then();
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_option.url, { quote_id }, true, context).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -3043,14 +3147,14 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    patchQuoteOption: async (quote_id: string, quote_option_id: string, option: any) => {
+    patchQuoteOption: async (quote_id: string, quote_option_id: string, option: any, context: Reactory.IReactoryContext) => {
       try {
         const apiResponse = await PUT(`${SECONDARY_API_URLS.quote_option.url}1/`, {
           item_ids: quote_option_id, field_name: {
             name: option.option_name,
             ...option,
           }
-        }).then();
+        }, true, context).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -3064,9 +3168,9 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    copyQuoteOption: async (quote_id: string, quote_option_id: string) => {
+    copyQuoteOption: async (quote_id: string, quote_option_id: string, context: Reactory.IReactoryContext) => {
       try {
-        const apiResponse = await POST(`${SECONDARY_API_URLS.quote_option.url}${quote_option_id}/duplicate_quote_option/`, { quote_option_id, quote_id }).then();
+        const apiResponse = await POST(`${SECONDARY_API_URLS.quote_option.url}${quote_option_id}/duplicate_quote_option/`, { quote_option_id, quote_id }, true, context).then();
         const {
           status, payload,
         } = apiResponse;
@@ -3080,9 +3184,9 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    deleteQuoteOption: async (quote_id: string, quote_option_id: string) => {
+    deleteQuoteOption: async (quote_id: string, quote_option_id: string, context: Reactory.IReactoryContext) => {
       try {
-        const apiResponse = await DELETE(`${SECONDARY_API_URLS.quote_option.url}${quote_option_id}`, { quote_id }).then();
+        const apiResponse = await DELETE(`${SECONDARY_API_URLS.quote_option.url}${quote_option_id}`, { quote_id }, true, context).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -3096,7 +3200,7 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    getQuoteHeaders: async (quote_id: string) => {
+    getQuoteHeaders: async (quote_id: string, context: Reactory.IReactoryContext) => {
       try {
         const header_response = await FETCH(SECONDARY_API_URLS.quote_section_header.url, {
           params:
@@ -3106,7 +3210,7 @@ NB: note the addition of the detail_id for the line been updated
             ordering: { heading: 'asc' },
             pagination: { current_page: 1, page_size: 100, enabled: false }
           }
-        })
+        }, true, false, 0, context)
         logger.debug(`🟠 getQuoteHeaders ids response`, { header_response });
         if (header_response.payload.ids) {
           let details = await FETCH(SECONDARY_API_URLS.quote_section_header.url,
@@ -3116,7 +3220,7 @@ NB: note the addition of the detail_id for the line been updated
                 ordering: {},
                 pagination: { current_page: 1, page_size: 100 }
               }
-            });
+            }, true, false, 0, context);
           logger.debug(`🟢 getQuoteHeaders details response`, { details });
           if (details && details.payload && details.payload.items) {
             return details.payload.items
@@ -3131,15 +3235,15 @@ NB: note the addition of the detail_id for the line been updated
         return [];
       }
     },
-    addItemToQuoteHeader: async (params: { quote_id: string, quote_item_id: number, heading_id: string, heading: string }) => {
+    addItemToQuoteHeader: async (params: { quote_id: string, quote_item_id: number, heading_id: string, heading: string }, context: Reactory.IReactoryContext) => {
 
     },
-    setQuoteHeadingText: async (params: { quote_id: string, quote_item_id: number, heading_id: string, heading: string }) => {
+    setQuoteHeadingText: async (params: { quote_id: string, quote_item_id: number, heading_id: string, heading: string }, context: Reactory.IReactoryContext) => {
 
       const { quote_id, quote_item_id, heading } = params;
 
       try {
-        const apiResponse = await PUT(SECONDARY_API_URLS.quote_section_header.url, { body: { quote_id, quote_item_id, heading: heading } }).then();
+        const apiResponse = await PUT(SECONDARY_API_URLS.quote_section_header.url, { body: { quote_id, quote_item_id, heading: heading } }, true, context).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -3153,9 +3257,9 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    createQuoteHeader: async ({ quote_id, quote_item_id, header_text }) => {
+    createQuoteHeader: async ({ quote_id, quote_item_id, header_text }: any, context: Reactory.IReactoryContext) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.quote_section_header.url, { quote_id, quote_item_id, heading: header_text }).then();
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_section_header.url, { quote_id, quote_item_id, heading: header_text }, true, context).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -3169,9 +3273,9 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    removeItemFromHeader: async ({ quote_id, quote_item_id, quote_heading_id }) => {
+    removeItemFromHeader: async ({ quote_id, quote_item_id, quote_heading_id }: any, context: Reactory.IReactoryContext) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.quote_section_header, { body: { id: quote_heading_id, quote_id, quote_item_id } }).then();
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_section_header.url, { body: { id: quote_heading_id, quote_id, quote_item_id } }, true, context).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -3186,9 +3290,9 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    removeQuoteHeader: async ({ quote_heading_id }) => {
+    removeQuoteHeader: async ({ quote_heading_id }: any, context: Reactory.IReactoryContext): Promise<any> => {
       try {
-        const apiResponse = await DELETE(SECONDARY_API_URLS.quote_section_header.url, { id: quote_heading_id }).then();
+        const apiResponse = await DELETE(SECONDARY_API_URLS.quote_section_header.url, { id: quote_heading_id }, false, context).then();
         const {
           status,
           payload
@@ -3205,28 +3309,28 @@ NB: note the addition of the detail_id for the line been updated
       }
     },
 
-    createNewQuoteForClient: async (params) => {
+    createNewQuoteForClient: async (params: any, context: Reactory.IReactoryContext) => {
       try {
         // api/create_quote/
         // {customer_id: "18231", secondary_api_staff_user_id: "335", status: "draft"}
         params.status = 'draft';
         const url = `api/create_quote/`;
-        const apiResponse = await POST(url, { ...params });
+        const apiResponse = await POST(url, { ...params }, true, context);
 
         const { status } = apiResponse;
         if (status === 'success') return apiResponse;
 
       } catch (lasecApiError) {
-        logger.error(`[INDEX] Error creating new quote for client :: ${JSON.stringify(lasecApiError)}`).then();
+        logger.error(`[INDEX] Error creating new quote for client :: ${JSON.stringify(lasecApiError)}`);
         return null;
       }
     },
 
-    copyQuoteToCustomer: async (params) => {
+    copyQuoteToCustomer: async (params: any, context: Reactory.IReactoryContext) => {
       try {
         // api/quote/2008-104335000/copy_quote_to_customer/
         const url = `api/quote/${params.quoteId}/copy_quote_to_customer/`;
-        const apiResponse = await POST(url, { ...params }); // {quote_id: "2008-104335000", customer_id: "14826"}
+        const apiResponse = await POST(url, { ...params }, true, context); // {quote_id: "2008-104335000", customer_id: "14826"}
 
         logger.debug(`COPY QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
@@ -3237,13 +3341,13 @@ NB: note the addition of the detail_id for the line been updated
         }
 
       } catch (lasecApiError) {
-        logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`).then();
+        logger.error(`Error creating new organisation:: ${JSON.stringify(lasecApiError)}`);
         return null;
       }
     },
 
 
-    addProductToQuote: async (quote_id: string, option_id: string, product_id: string) => {
+    addProductToQuote: async (quote_id: string, option_id: string, product_id: string, context: Reactory.IReactoryContext) => {
       try {
         const url = `api/quote_item/`;
         const apiResponse = await POST(url, {
@@ -3251,7 +3355,7 @@ NB: note the addition of the detail_id for the line been updated
           quantity: 1,
           quote_id: quote_id,
           quote_option_id: option_id
-        });
+        }, true, context);
         logger.debug(`ADDING QUOTE ITEM RESPONSE:: ${JSON.stringify(apiResponse)}`);
         const { status } = apiResponse;
         if (status === 'success') {
@@ -3263,7 +3367,7 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    updateQuote: async (params) => {
+    updateQuote: async (params: any, context: Reactory.IReactoryContext) => {
       try {
         // {"item_id":"2008-335010","values":{"quote_type":"Normal"}}
         const url = `api/quote/${params.item_id}`;
@@ -3271,7 +3375,7 @@ NB: note the addition of the detail_id for the line been updated
         params.item_ids = [params.item_id];
         delete params.item_id;
 
-        const apiResponse = await PUT(url, { ...params });
+        const apiResponse = await PUT(url, { ...params }, true, context);
         logger.debug(`UPDATE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
         const { status } = apiResponse;
         if (status === 'success') {
@@ -3283,13 +3387,13 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    updateQuoteItems: async (params) => {
+    updateQuoteItems: async (params: any, context: Reactory.IReactoryContext) => {
       try {
         // expected params
         // {item_id: "2008", values: { quantity: 1, unit_price_cents: 123, gp_percent: 2, mark_up: 20, total_price_cents: 100 }}
         logger.debug(`CALLING WITH PARAMS:: ${JSON.stringify(params)}`);
         const url = `api/quote_item/${params.item_id}`;
-        const apiResponse = await PUT(url, { ...params });
+        const apiResponse = await PUT(url, { ...params }, true, context);
         logger.debug(`UPDATE LINEITEMS RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
         const { status } = apiResponse;
@@ -3303,11 +3407,11 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    deleteQuoteItem: async (quote_item_id: string) => {
+    deleteQuoteItem: async (quote_item_id: string, context: Reactory.IReactoryContext) => {
       try {
         logger.debug(`DELETE QUOTE ITEM ${quote_item_id}`);
         const url = `api/quote_item/${quote_item_id}/`;
-        const apiResponse = await DELETE(url, {}).then();
+        const apiResponse = await DELETE(url, {}, true, context).then();
         logger.debug(`DELETE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
         const { status } = apiResponse;
@@ -3323,11 +3427,11 @@ NB: note the addition of the detail_id for the line been updated
         return { success: false, message: `Quote item not deleted` };;
       }
     },
-    deleteQuote: async (id) => {
+    deleteQuote: async (id: string, context: Reactory.IReactoryContext) => {
       try {
         logger.debug(`DELETE QUOTE :: ${id}`);
         const url = `api/quote/${id}/`;
-        const apiResponse = await DELETE(url, {}).then();
+        const apiResponse = await DELETE(url, {}, true, context).then();
 
         logger.debug(`DELETE QUOTE RESPONSE:: ${JSON.stringify(apiResponse)}`);
 
@@ -3342,9 +3446,9 @@ NB: note the addition of the detail_id for the line been updated
         return null;
       }
     },
-    getQuotePDF: async (quote_id: string, download: boolean = false) => {
+    getQuotePDF: async (quote_id: string, download: boolean = false, context: Reactory.IReactoryContext) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.quote_create_pdf.url(quote_id), { quote_id }).then();
+        const apiResponse = await POST(SECONDARY_API_URLS.quote_create_pdf.url(quote_id), { quote_id }, true, context).then();
         logger.debug(`Get Quote PDF response`, apiResponse)
         const {
           status, payload,
@@ -3356,13 +3460,13 @@ NB: note the addition of the detail_id for the line been updated
 
         return { pagination: {}, ids: [], items: [] };
       } catch (error) {
-        logger.error(`An error occured while fetching the quote document ${optionId}`, error);
+        logger.error(`An error occured while fetching the quote document ${quote_id}`, error);
         throw error;
       }
     },
-    getQuoteProforma: async (quote_id: string, download: boolean = false) => {
+    getQuoteProforma: async (quote_id: string, download: boolean = false, context: Reactory.IReactoryContext) => {
       try {
-        const apiResponse = await POST(SECONDARY_API_URLS.quote_request_create_proforma.url(quote_id), { quote_id }).then();
+        const apiResponse = await Api.post(SECONDARY_API_URLS.quote_request_create_proforma.url(quote_id), { quote_id }, null, true, context).then();
         logger.debug(`Get Quote Proforma response`, apiResponse)
         const {
           status, payload,
@@ -3377,33 +3481,33 @@ NB: note the addition of the detail_id for the line been updated
 
         return { pagination: {}, ids: [], items: [] };
       } catch (error) {
-        logger.error(`An error occured while fetching the quote document ${optionId}`, error);
+        logger.error(`An error occured while fetching the quote document ${quote_id}`, error);
         throw error;
       }
     },
-    getIncoTerms: async () => {
-      let incoterms_response = await FETCH(SECONDARY_API_URLS.incoterms.url).then();
+    getIncoTerms: async (context: Reactory.IReactoryContext) => {
+      let incoterms_response = await Api.get(SECONDARY_API_URLS.incoterms.url, null, null, context).then();
       const { payload } = incoterms_response;
 
       logger.debug(`IncoTerms API Response:\n${JSON.stringify(incoterms_response, null, 2)}`)
 
       let results: any[] = [];
-      if (payload && Object.keys(payload).length > 0) {
-        Object.keys(payload).forEach((prop) => {
+      if (incoterms_response && Object.keys(incoterms_response).length > 0) {
+        Object.keys(incoterms_response).forEach((prop) => {
 
-          if (`${payload[prop]}`.indexOf("=>") > 0) {
+          if (`${incoterms_response[prop]}`.indexOf("=>") > 0) {
             results.push({
               id: prop,
               key: prop,
-              title: payload[prop].split('=>')[1].trim(),
-              name: payload[prop].split('=>')[1].trim()
+              title: incoterms_response[prop].split('=>')[1].trim(),
+              name: incoterms_response[prop].split('=>')[1].trim()
             })
           } else {
             results.push({
               id: prop,
               key: prop,
-              title: payload[prop],
-              name: payload[prop]
+              title: incoterms_response[prop],
+              name: incoterms_response[prop]
             });
           }
         })
@@ -3413,8 +3517,8 @@ NB: note the addition of the detail_id for the line been updated
 
       return results;
     },
-    getQuoteTransportModes: async () => {
-      let transport_modes = await FETCH(SECONDARY_API_URLS.transport_modes.url).then();
+    getQuoteTransportModes: async (context: Reactory.IReactoryContext) => {
+      let transport_modes = await FETCH(SECONDARY_API_URLS.transport_modes.url, {}, true, false, 0, context).then();
       logger.debug(`Get quote transport modes returned:\n${JSON.stringify(transport_modes, null, 2)}`);
       const { payload } = transport_modes;
 
@@ -3426,7 +3530,7 @@ NB: note the addition of the detail_id for the line been updated
     },
   },
   Teams: {
-    list: async () => {
+    list: async (context: Reactory.IReactoryContext) => {
       try {
         const teamIdsResponse = await FETCH(SECONDARY_API_URLS.sales_teams.url, {
           params: {
@@ -3434,7 +3538,7 @@ NB: note the addition of the detail_id for the line been updated
             ordering: {},
             pagination: { enabled: false }
           }
-        }, true).then();
+        }, true, false, 0, context).then();
 
         const teamDetailsResponse = await FETCH(SECONDARY_API_URLS.sales_teams.url, {
           params: {
@@ -3445,7 +3549,7 @@ NB: note the addition of the detail_id for the line been updated
             ordering: {},
             pagination: { enabled: false }
           }
-        }, true).then();
+        }, true, false, 0, context).then();
 
         return teamDetailsResponse;
 
@@ -3456,7 +3560,7 @@ NB: note the addition of the detail_id for the line been updated
     },
   },
   User: {
-    getLasecUser: async (staff_user_id) => {
+    getLasecUser: async (staff_user_id: string, context: Reactory.IReactoryContext) => {
       try {
         logger.debug(`Getting Lasec User With Staff User Id ${staff_user_id}`)
         const lasecStaffUserResponse = await FETCH(SECONDARY_API_URLS.staff_user_data.url, {
@@ -3464,7 +3568,7 @@ NB: note the addition of the detail_id for the line been updated
           filter: {
             staff_user_id: [staff_user_id]
           }
-        }, true, false, 0)
+        }, true, false, 0, context)
           .then();
 
         if (lasecStaffUserResponse.status === 'success' && lasecStaffUserResponse.payload) {
@@ -3483,11 +3587,11 @@ NB: note the addition of the detail_id for the line been updated
 
     },
 
-    getLasecUsers: async (ids = [], fieldName = "ids") => {
+    getLasecUsers: async (ids: string[] = [], fieldName = "ids", context: Reactory.IReactoryContext) => {
 
-      let params = { filter: {} };
-      let users = [];
-      let user_ids_to_request = [];
+      let params: any = { filter: {} };
+      let users: any[] = [];
+      let user_ids_to_request: string[] = [];
       params.filter[fieldName] = ids;
 
       logger.debug(`LasecAPI.User.getLasecUsers(ids = ${ids}, fieldName = ${fieldName})`)
@@ -3498,7 +3602,7 @@ NB: note the addition of the detail_id for the line been updated
           enabled: true,
           page_size: 20,
         }
-      }, true, false, 0).then();
+      }, true, false, 0, context).then();
 
       if (lasecStaffUserResponse.status === "success" && lasecStaffUserResponse.payload) {
 
@@ -3538,7 +3642,7 @@ NB: note the addition of the detail_id for the line been updated
                   current_page: pageIndex,
                   page_size: pagination.page_size,
                 }
-              }, true, false, 0));
+              }, true, false, 0, context));
             }
 
 
@@ -3565,7 +3669,7 @@ NB: note the addition of the detail_id for the line been updated
                 "ids": user_ids_to_request
               },
             }
-          }, true, false, 0).then();
+          }, true, false, 0, context).then();
 
           if (allItemResponse && allItemResponse.status === "success" && allItemResponse.payload.items) {
             users = [...users, ...allItemResponse.payload.items];
@@ -3581,10 +3685,10 @@ NB: note the addition of the detail_id for the line been updated
       return users;
     },
 
-    getUserTargets: async (ids = [], fieldName = "ids") => {
+    getUserTargets: async (ids: string[] = [], fieldName = "ids", context: Reactory.IReactoryContext) => {
       try {
         logger.debug(`LasecApi.User.getUserTargets( ids = ${ids} , fieldName = ${fieldName} )`);
-        const users = await Api.User.getLasecUsers(ids, fieldName).then();
+        const users = await Api.User.getLasecUsers(ids, fieldName, context).then();
         logger.debug(`Found ${users.length} results for user targets`, users);
         let total = 0;
         users.forEach(user => total += (user.target | 0));
@@ -3595,13 +3699,13 @@ NB: note the addition of the detail_id for the line been updated
       }
     },
 
-    setActiveCompany: async (company = 3) => {
-      return await POST(`${SECONDARY_API_URLS.staff_user_data.url}set_active_company`, { company }).then();
+    setActiveCompany: async (company: number, context: Reactory.IReactoryContext) => {
+      return await POST(`${SECONDARY_API_URLS.staff_user_data.url}set_active_company`, { company }, true, context).then();
     }
   },
   Authentication: {
-    login: async (username, password) => {
-      return await POST(SECONDARY_API_URLS.login_lasec_user.url, { username, password }, false).then();
+    login: async (username: string, password: string, context: Reactory.IReactoryContext) => {
+      return await POST(SECONDARY_API_URLS.login_lasec_user.url, { username, password }, false, context).then();
     },
   },
   Exceptions: {

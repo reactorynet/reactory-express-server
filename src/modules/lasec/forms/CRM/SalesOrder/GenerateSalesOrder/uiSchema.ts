@@ -25,7 +25,7 @@ export const DocumentsUISchema: Reactory.IUISchema = {
   'ui:grid-layout': [
     {
       upload: { lg: 6, md: 6, sm: 12, },
-      uploadedDocuments: { lg: 6, md: 6, sm: 12 },      
+      uploadedDocuments: { lg: 6, md: 6, sm: 12 },
     }
   ],
   view: {
@@ -88,56 +88,63 @@ export const DocumentsUISchema: Reactory.IUISchema = {
   },
 
   uploadedDocuments: {
-    ...DocumentGridWidget,
+    //   ...DocumentGridWidget,
+    //   'ui:options': {
+    //     ...DocumentGridWidget['ui:options'],
+    //     options: {
+    //       ...DocumentGridWidget['ui:options'].options,
+    //       toolbar: true,
+    //       title: 'Files uploaded for sales order',
+    //       selection: true,
+
+    //     },
+    //     refreshEvents: [
+    //       { name: 'lasec-crm::sales-order::document::uploaded' }
+    //     ],
+    //     actions: [
+    //       {
+    //         icon: 'remove_circle',
+    //         tooltip: 'Remove Files',
+    //         iconProps: {
+    //           color: 'error'
+    //         },
+    //         mutation: 'delete',
+    //         variables: {
+    //           'selected[].id': 'fileIds',
+    //         },
+    //         resultMap: {
+
+    //         },
+    //         resultAction: 'refresh',
+    //       },
+    //     ]
+    //   }
+    // },
+    'ui:widget': 'ClientDocuments',
     'ui:options': {
-      ...DocumentGridWidget['ui:options'],
-      options: {
-        ...DocumentGridWidget['ui:options'].options,
-        toolbar: true,
-        title: 'Files uploaded for sales order',
-        selection: true,
-        
+      props: {
+        use_case: 'sales_orders',
       },
-      refreshEvents: [
-        { name: 'lasec-crm::sales-order::document::uploaded' }
-      ],      
-      actions: [
-        {
-          icon: 'remove_circle',
-          tooltip: 'Remove Files',
-          iconProps: {
-            color: 'error'
-          },
-          mutation: 'delete',
-          variables: {            
-            'selected[].id': 'fileIds',
-          },
-          resultMap: {
-
-          },
-          resultAction: 'refresh',
-        },
-      ]
+      propsMap: {
+        'formData.quote_id': 'quote_id'
+      }
     }
-  },
+  }
 };
-
-
-
 
 const SalesOrderDocumentSchema = {
   ...DocumentsUISchema
 };
 
-SalesOrderDocumentSchema.uploadedDocuments["ui:options"].query = 'documents_list';
-delete SalesOrderDocumentSchema.uploadedDocuments["ui:options"].variables;
-delete SalesOrderDocumentSchema.uploadedDocuments["ui:options"].resultMap;
+// SalesOrderDocumentSchema.uploadedDocuments["ui:options"].query = 'documents_list';
+// delete SalesOrderDocumentSchema.uploadedDocuments["ui:options"].variables;
+// delete SalesOrderDocumentSchema.uploadedDocuments["ui:options"].resultMap;
 
 const GOOGLE_MAPS_API_KEY_DEVELOPMENT = '<GOOGLE MAPS API KEY>';
 
 const GOOGLE_PLACE_TO_ADDRESS_MAP = {
-  'address': 'fullAddress',
-  'placeId': 'map.place_id'
+  'address.fullAddress': 'fullAddress',
+  'address.id': 'id',
 };
 
 const DEFAULT_ADDRESS_PROPS = {
@@ -158,14 +165,11 @@ const DEFAULT_ADDRESS_PROPS = {
       lat
       long
     }
-  }`,  
+  }`,
   variables: {
     'formData': 'input'
   },
   resultName: 'LasecCheckAddressExists',
-  resultMap: {
-    '*':'*'
-  }
 };
 
 
@@ -175,7 +179,6 @@ const GenerateSalesOrderUISchema: Reactory.IUISchema = {
     showSubmit: true,
     showHelp: true,
     showRefresh: true,
-    container: "div",
     containerStyles: {
       padding: '0px',
       marginTop: '16px'
@@ -200,7 +203,7 @@ const GenerateSalesOrderUISchema: Reactory.IUISchema = {
     },
     {
       documents: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
-      $upload_documents: {xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
+      $upload_documents: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
     }
   ],
   header: {
@@ -208,6 +211,9 @@ const GenerateSalesOrderUISchema: Reactory.IUISchema = {
   },
   customer_detail: {
     'ui:field': 'GridLayout',
+    'ui:titleStyle': {
+      marginBottom: '16px'
+    },
     'ui:grid-layout': [
       {
         purchase_order_number: { xs: 12, md: 4, lg: 3, xl: 2 },
@@ -311,12 +317,12 @@ const GenerateSalesOrderUISchema: Reactory.IUISchema = {
   },
   $upload_documents: {
     'ui:widget': 'SelectWidget',
-      'ui:options': {
-        selectOptions: [
-          { key: 'yes', value: 'yes', label: 'Yes, I have the documents' },
-          { key: 'no', value: 'no', label: 'No, I will upload them later' },
-        ],
-      },
+    'ui:options': {
+      selectOptions: [
+        { key: 'yes', value: 'yes', label: 'Yes, I have the documents' },
+        { key: 'no', value: 'no', label: 'No, I will upload them later' },
+      ],
+    },
   },
   documents: SalesOrderDocumentSchema
 }

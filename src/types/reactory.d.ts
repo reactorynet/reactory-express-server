@@ -72,7 +72,8 @@ declare namespace Reactory {
     users?: any[],
     allowCustomTheme?: boolean,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
+    colorScheme: () => any
   }
 
   export interface IReactoryClientDocument extends Mongoose.Document, IReactoryClient { }
@@ -299,7 +300,7 @@ declare namespace Reactory {
     hasAnyRole(clientId: string, organizationId?: string, businessUnitId?: string): boolean,
     addRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean
     removeRole(clientId: string, role: string, organizationId: string): IMemberShip[],
-    removeAuthentication(provider: string): boolean
+    removeAuthentication(provider: string): Promise<boolean>
     getAuthentication(provider: string): IAuthentication
     [key: string]: any
   }
@@ -323,7 +324,7 @@ declare namespace Reactory {
     url: string
     lastSync: Date
     success: boolean,
-    verified?: boolean, 
+    verified?: boolean,
     syncMessage: string,
     priority?: number,
     modified?: Date
@@ -369,10 +370,7 @@ declare namespace Reactory {
   export interface IReactoryFileModel extends IReactoryFile, IReactoryFileStatic { }
   /** ReactoryFile Management Models Interface -- End */
 
-  export interface ReactoryExecutionContext {
-    user: IUser
-    partner: IReactoryClient
-  }
+  export interface ReactoryExecutionContext extends IReactoryContext { }
 
   export interface ISchemaObjectProperties {
     [key: string]: ISchema
@@ -750,7 +748,7 @@ declare namespace Reactory {
 
   export namespace Service {
 
-   
+
 
     export interface IExcelReaderService {
       readFile(file: string): Promise<ExcelJS.Workbook>
@@ -786,12 +784,12 @@ declare namespace Reactory {
       getExecutionContext(): ReactoryExecutionContext
       setExecutionContext(executionContext: ReactoryExecutionContext): boolean
     }
-    
+
 
     export interface IExcelWriterService extends IReactoryContextAwareService {
-      writeAsFile(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook> ): Promise<Boolean>
-      writeAsStream(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook> ): Promise<Boolean>
-      writeToBuffer(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook> ): Promise<Buffer>
+      writeAsFile(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<Boolean>
+      writeAsStream(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<Boolean>
+      writeToBuffer(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<Buffer>
     }
 
     export interface ICoreEmailService extends IReactoryStartupAwareService, IReactoryContextAwareService {
@@ -799,7 +797,7 @@ declare namespace Reactory {
     }
 
     export interface IErrorHandlerServer extends IReactoryContextAwareService {
-      handle<T>( FunctionPointer: Promise<T> ): T
+      handle<T>(FunctionPointer: Promise<T>): T
     }
 
     export interface IReactoryDefaultService extends IReactoryStartupAwareService, IReactoryContextAwareService { }
@@ -856,22 +854,22 @@ declare namespace Reactory {
     export interface FileUploadArgs {
 
       file: {
-        createReadStream:  Function,
+        createReadStream: Function,
         filename: string,
         mimetype: string,
         encoding: string
       },
       uploadContext?: string
-      
+
     }
     export interface IReactoryFileService extends Reactory.Service.IReactoryDefaultService {
-      
+
       uploadFile(uploadArgs: FileUploadArgs): Promise<Reactory.IReactoryFileModel>
 
       getContentBytes(path: string): number;
 
       getContentBytesAsString(path: string, encoding: BufferEncoding): string;
-      
+
       removeFilesForContext(context: string): Promise<Reactory.IReactoryFileModel[]>;
 
       getFileModelsForContext(context: string): Promise<Reactory.IReactoryFileModel[]>;
@@ -888,7 +886,7 @@ declare namespace Reactory {
       setFileModel(file: IReactoryFileModel): Promise<Reactory.IReactoryFileModel>;
 
       getFileModel(id: string): Promise<Reactory.IReactoryFileModel>;
-      
+
       sync(): Promise<Reactory.IReactoryFileModel[]>;
 
       clean(): Promise<Reactory.IReactoryFileModel[]>;
@@ -910,6 +908,13 @@ declare namespace Reactory {
   export interface IPagedResponse<T> {
     paging: IPagingResult,
     items: T[]
+    [key: string]: any
+  }
+
+  export interface IReactoryContext {
+    user: Reactory.IUserDocument
+    partner: Reactory.IReactoryClientDocument
+    getService: (fqn: string, props?: any, context?: Reactory.IReactoryContext) => any,
     [key: string]: any
   }
 }

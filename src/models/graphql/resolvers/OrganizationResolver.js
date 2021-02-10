@@ -7,7 +7,7 @@ import pngToJpeg from 'png-to-jpeg';
 import * as dotenv from 'dotenv';
 import legacy from '../../../database';
 import { Organization, BusinessUnit } from '../../index';
-import { migrateOrganization, migrateCoreData, updateOrganizationLogo } from '../../../application/admin/Organization';
+import { updateOrganizationLogo } from '../../../application/admin/Organization';
 import * as UserService from '../../../application/admin/User';
 import ApiError, { OrganizationNotFoundError } from '../../../exceptions';
 import logger from '../../../logging';
@@ -26,20 +26,20 @@ const organizationResolver = {
   },
   Organization: {
     id({ _id }) {
-      
+
       return _id ? `${_id.toString()}` : 'organization-no-id';
     },
     avatar() {
       return null;
     },
     tradingName(organization) {
-      if(!organization) return 'Null Organization';
+      if (!organization) return 'Null Organization';
 
       return organization.tradingName || organization.name;
     },
     logoURL: (organization) => {
-      
-      if(organization && organization.logo) {
+
+      if (organization && organization.logo) {
         return `${CDN_ROOT}organization/${organization.id}/${organization.logo}?t=${moment().format('YYYMMDDhh')}`
       }
     },
@@ -58,7 +58,7 @@ const organizationResolver = {
       return Organization.findOne({ _id: args.id }).then();
     },
     CoreUsersForOrganization(obj, { id, searchString, excludeSelf = false, showDeleted = false, paging = null }, context, info) {
-      logger.debug(`CoreUsersForOrganization`, {id, searchString, excludeSelf, showDeleted, paging});
+      logger.debug(`CoreUsersForOrganization`, { id, searchString, excludeSelf, showDeleted, paging });
       return UserService.listAllForOrganization(id, searchString, excludeSelf, showDeleted, paging || { page: 1, pageSize: 25 }).then();
     },
     organizationsForUser: async (obj, { id }) => {
@@ -104,9 +104,7 @@ const organizationResolver = {
       return organization;
     },
     migrateOrganization(obj, { id, options }) {
-      if (!options.clientKey) options.clientKey = global.partner.key;
-      logger.debug(`Mutation migrationOrganization ${id}`, options);
-      return migrateOrganization(id, options);
+      throw new ApiError("Deprecated")
     },
     updateOrganization: async (parent, args) => {
       const { input, id } = args;
@@ -134,10 +132,7 @@ const organizationResolver = {
       throw new OrganizationNotFoundError(`Organization with the id ${id} could not be found `);
     },
     migrateCore(obj, arg, context, info) {
-      const { options } = arg;
-      if (!options.clientKey) options.clientKey = global.partner.key;
-      logger.info('migrateCore mutation called', options);
-      return migrateCoreData(options);
+      throw new ApiError("Deprecated")
     },
   },
 };

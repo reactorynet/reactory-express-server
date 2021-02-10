@@ -5,6 +5,7 @@ const displayUiSchema: any = {
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'bottom',
+    submitIcon: 'sms',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -41,7 +42,8 @@ const displayUiSchema: any = {
       componentProps: {
         multiline: true,
         variant: 'outlined',
-        submitOnEnter: true
+        submitOnEnter: true,
+        fullWidth: true,
       }
     }
   }

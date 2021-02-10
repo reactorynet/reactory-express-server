@@ -1,12 +1,12 @@
 import { template } from 'lodash';
 import { fileAsString } from 'utils/io';
-import logger from 'logging';
+import logger from '@reactory/server-core/logging';
 
 export default {
   LasecGetUserTargets: (params: any = {}) => {
     try {
-      //const fileContent = fileAsString('LasecGetUserTargets.text');
-      //logger.debug('File Content', {fileContent});
+      const fileContent: string = fileAsString('LasecGetUserTargets.sql');
+      logger.debug('File Content', { fileContent });
       const sql = template(`
           SELECT
         staff.staffuserid as staffUserId,
@@ -38,12 +38,12 @@ export default {
             AND staff.staffuserid IN (\${staffuserids})
                 ORDER BY staff.surname, staff.first_name;
         `)(params);
-      logger.debug('LasecGetUserTargets(params) => ', {sql, params});
+      logger.debug('LasecGetUserTargets(params) => ', { sql, params });
       return sql;
-    } catch(parserError) {
-      logger.error('Could not parse the SQL command text', parserError);      
+    } catch (parserError) {
+      logger.error('Could not parse the SQL command text', parserError);
       throw parserError;
     }
-    
-  }
-}
+  },
+  LasecCreateLogTable: fileAsString('LasecCreateLogTable')
+};

@@ -51,8 +51,8 @@ export const ViewUiSchema: any = {
       edit: false,
       new: false,
       refreshEvents: [
-        {name: 'lasec-crm::client::document'},
-        {name: 'lasec-crm::client::document::uploaded'}
+        { name: 'lasec-crm::client::document' },
+        { name: 'lasec-crm::client::document::uploaded' }
       ],
     },
   },
@@ -107,11 +107,12 @@ export const ViewUiSchema: any = {
     hidden: true
   },
   documents: {
-    'ui:widget': 'ClientDocumentsWidget'
+    'ui:widget': 'ClientDocumentsWidget',
   },
   upload: {
     'ui:widget': 'ReactoryDropZoneWidget',
     'ui:options': {
+      showLabel: false,
       style: {},
       ReactoryDropZoneProps: {
         text: `Drop files here, or click to select files to upload`,
@@ -159,7 +160,7 @@ export const ViewUiSchema: any = {
   },
 };
 
-export const ConfirmUiSchema: any = {  
+export const ConfirmUiSchema: any = {
   'ui:options': {
     componentType: 'div',
     toolbarPosition: 'none',

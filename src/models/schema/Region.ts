@@ -25,16 +25,16 @@ const Region = new mongoose.Schema({
 
 //Return all regions with organizaiton filter
 // Region.statics.GetRegions = async (organization?: string | ObjectId | Reactory.IOrganization ): Promise<Array<Reactory.IRegion>> => {
-Region.statics.GetRegions = async function GetRegions(): Promise<Array<Reactory.IRegion>> {
-  const { user, partner } = global;
+Region.statics.GetRegions = async function GetRegions(context: Reactory.IReactoryContext): Promise<Array<Reactory.IRegion>> {
+  const { user, partner } = context;
 
   // return await this.find({ organisation: organization.id });
   return await this.find();
 };
 
 
-Region.statics.AddRegion = async (organization?: string | ObjectId | Reactory.IOrganization ): Promise<Reactory.IRegion> => {
-  const { user, partner } = global;
+Region.statics.AddRegion = async (organization: string | ObjectId | Reactory.IOrganization, context: Reactory.IReactoryContext): Promise<Reactory.IRegion> => {
+  const { user, partner } = context;
 
   return {
     title: '',
