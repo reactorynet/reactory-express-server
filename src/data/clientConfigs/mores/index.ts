@@ -833,7 +833,7 @@ const config: Reactory.IReactoryClient = {
     {
       name: 'email_redirect/DEVELOP',
       data: {
-        email: 'werner.weber+moresredirect@gmail.com',
+        email: 'cmwakio@gmail.com',
         enabled: true,
       },
     },

@@ -44,6 +44,14 @@ Files matching `<root>/config/*/.env*.local` will be ignored by git by default.
 
 _** Running the start command without any parameters will start with 'reactory' and 'local' as the parameters for key and environment._
 
+
+`npm install -g env-cmd`
+
+# mongo --port 27017 -u "reactorycore" -p "abc123" \ --authenticationDatabase "admin"
+# mongo --port 27017  --authenticationDatabase "admin" -u "reactorycore" -p <MONGO_PASSWORD>
+# MONGO_USER=reactorycore
+# MONGO_PASSWORD=<MONGO_PASSWORD>
+
 ## Production / Other
 
 Create a user account under which to run the server. 
