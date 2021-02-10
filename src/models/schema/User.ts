@@ -105,7 +105,7 @@ const UserSchema = new mongoose.Schema({
       lastLogin: Date,
     },
   ],
-  //TODO: the legacy id must be depracated
+  // TODO: the legacy id must be depracated
   legacyId: Number,
   lastLogin: Date,
   deleted: {
@@ -120,7 +120,7 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-  meta
+  meta,
 });
 
 UserSchema.methods.setPassword = function setPassword(password) {
@@ -133,7 +133,7 @@ UserSchema.methods.validatePassword = function validatePassword(password) {
 };
 
 UserSchema.methods.fullName = function fullName(email = false) {
-  return `${this.firstName} ${this.lastName}${email ? '<' + this.email + '>' : ''}`.trim();
+  return `${this.firstName} ${this.lastName}${email ? `<${this.email}>` : ''}`.trim();
 };
 
 /**
@@ -249,8 +249,6 @@ UserSchema.methods.hasAnyRole = function (clientId, organizationId, businessUnit
 };
 
 
-
-
 // eslint-disable-next-line max-len
 UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId) {
   logger.info(`Adding user membership ${clientId} ${role} ${organizationId} ${businessUnitId}`);
@@ -357,56 +355,56 @@ UserSchema.methods.hasMembership = function hasMembership(clientId, organization
   return true;
 };
 
-UserSchema.methods.fullName = function fullName() { return `${this.firstName} ${this.lastName}`; };
+UserSchema.methods.fullName = function fullName(email: boolean = false) { return `${this.firstName} ${this.lastName}${email ? ` <${this.email}>` : ''}`; };
 
 UserSchema.methods.deleteUser = function deleteUser() {
   this.deleted = true;
   this.save();
 };
 
-UserSchema.methods.setAuthentication = async function setAuthentication(authentication = { provider: 'local', props: {}, lastLogin: new Date().valueOf() }) {
+UserSchema.methods.setAuthentication = async function setAuthentication(authentication = { provider: 'local', props: {}, lastLogin: new Date().valueOf() }): Promise<boolean> {
   const instance = this;
   const { props, provider, lastLogin } = authentication;
 
   let dirty = false;
   if (instance.$patching === true) {
-    return;
-  } else {
-    instance.$patching = true;
-    logger.debug(`Adding new authentication details provider: ${provider} username: ${props ? props.username || this.fullName() : 'NO PROPS'}`);
-    if (instance.authentications === undefined || instance.authentications === null) {
-      instance.authentications = [authentication];
-      dirty = true;
-    } else if (isArray(instance.authentications) === true) {
-      const found = find(instance.authentications, { provider });
-      if (found === undefined || found === null) {
-        instance.authentications.push(authentication);
-        dirty = true;
-      } else {
-        instance.authentications.forEach((_authentication, index) => {
-          if (provider === _authentication.provider) {
-            // patch the properties of the authentication
-            instance.authentications[index].props = { ..._authentication.props, ...authentication.props };
-            if (lastLogin) {
-              instance.authentications[index].lastLogin = lastLogin;
-            }
-            dirty = true;
-          }
-        });
-      }
-    }
-
-    if (dirty === true) {
-      await this.save();
-      instance.$patching = false;
-      return true;
-    }
-
     return false;
   }
+
+  instance.$patching = true;
+  logger.debug(`Adding new authentication details provider: ${provider} username: ${props ? props.username || this.fullName() : 'NO PROPS'}`);
+  if (instance.authentications === undefined || instance.authentications === null) {
+    instance.authentications = [authentication];
+    dirty = true;
+  } else if (isArray(instance.authentications) === true) {
+    const found = find(instance.authentications, { provider });
+    if (found === undefined || found === null) {
+      instance.authentications.push(authentication);
+      dirty = true;
+    } else {
+      instance.authentications.forEach((_authentication: any, index) => {
+        if (provider === _authentication.provider) {
+          // patch the properties of the authentication
+          instance.authentications[index].props = { ..._authentication.props, ...authentication.props };
+          if (lastLogin) {
+            instance.authentications[index].lastLogin = lastLogin;
+          }
+          dirty = true;
+        }
+      });
+    }
+  }
+
+  if (dirty === true) {
+    await this.save();
+    instance.$patching = false;
+    return true;
+  }
+
+  return false;
 };
 
-UserSchema.methods.removeAuthentication = async function removeAuthentication(provider: string) {
+UserSchema.methods.removeAuthentication = async function removeAuthentication(provider: string): Promise<boolean> {
   if (provider && this.authentications) {
     const found = find(this.authentications, { provider });
     if (found) {
@@ -433,43 +431,47 @@ UserSchema.statics.findByForeignId = async function findByForeignId(id: string, 
 };
 
 /**
- * Supports: 
- *  - Name and lastname: 'James van der Beeck' -> 
- *  { 
+ * Supports:
+ *  - Name and lastname: 'James van der Beeck' ->
+ *  {
  *    id: ObjectId()
- *    firstName: 'james', 
+ *    firstName: 'james',
  *    lastName: 'van der Beeck',
- *    email: 'james.v.reactory.net, 
- *  }   
+ *    email: 'james.v.reactory.net,
+ *  }
  *
- *  - Name and lastname: 'James van der Beeck<james@mail.com>' -> 
- *  { 
+ *  - Name and lastname: 'James van der Beeck<james@mail.com>' ->
+ *  {
  *    id: ObjectId()
- *    firstName: 'james', 
+ *    firstName: 'james',
  *    lastName: 'van der Beeck',
- *    email: 'james.v+@{key}.reactory.net, 
- *  }   
+ *    email: 'james.v+@{key}.reactory.net,
+ *  }
  */
 UserSchema.statics.parse = (inputString: string): any => {
   if (typeof inputString === 'string') {
-    let _s = inputString.trim();
+    const _s = inputString.trim();
     let _name = _s;
     let _email = '';
 
     if (_s.indexOf('<') > 0 && _s.indexOf('>')) {
-      //contains email
-      _name = _s.split('<')[0];
-      _email = _s.split('<')[1].replace('>', '');
+      // contains email
+      try {
+        [_name, _email] = _s.split('<');
+        _email = _email.replace('>', '');
+      } catch (parseErr) {
+        logger.debug(`User.parse(inputString = "${inputString}") could not be parsed.`);
+      }
     }
 
-    let parts = _name.split(" ").reverse();
+    const parts = _name.split(' ').reverse();
 
     const parsed = {
       firstName: parts.pop(),
-      lastName: '',
+      lastName: parts.length > 0 ? parts.pop() : '',
       email: _email,
       createdAt: new Date().valueOf(),
-      updatedAt: new Date().valueOf()
+      updatedAt: new Date().valueOf(),
     };
 
     while (parts.length > 0) {

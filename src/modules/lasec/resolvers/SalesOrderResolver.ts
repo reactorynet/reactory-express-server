@@ -298,7 +298,7 @@ const SalesOrderResolver = {
     },
     LasecIncoTerms: async (parent: any, args: any, context: Reactory.IReactoryContext): Promise<any> => {
       try {
-        return (context.getService(QUOTE_SERVICE_ID, {}, context) as IQuoteService).getIncoTerms();
+        return (context.getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms();
       } catch (inco_terms_error) {
         logger.error(`Could not get the inco terms: ${inco_terms_error.message}`, inco_terms_error)
         return [];

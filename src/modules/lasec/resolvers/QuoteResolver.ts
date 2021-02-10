@@ -359,9 +359,17 @@ export default {
         if (customer_full_name && customer_id) {
           // Check if a customer with this reference exists?          
           // eslint-disable-next-line / tslint:disable-next-line 
+          debugger
           let _customer = await User.findByForeignId(customer_id, context.partner.key).then();
           if (_customer !== null) {
-            logger.debug(`Customer ${_customer.fullName()} found via foreign reference`);
+            logger.debug(`Customer ${_customer.fullName(false)} found via foreign reference`);
+            let $parsed = User.parse(customer_full_name);
+
+            _customer.firstName = $parsed.firstName;
+            _customer.lastName = $parsed.lastName;
+
+            _customer.save()
+
             quote.customer = _customer._id;
             if (typeof quote.save === 'function') {
               try { await quote.save() } catch (parallelSaveError) {
@@ -420,7 +428,7 @@ export default {
     headers: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext): Promise<LasecQuoteHeader[]> => {
 
       let headers: LasecQuoteHeader[] = [];
-      const quoteService: IQuoteService = context.getService(QUOTE_SERVICE_ID, {}, context) as IQuoteService;
+      const quoteService: IQuoteService = context.getService(QUOTE_SERVICE_ID) as IQuoteService;
       let quote_headers = await quoteService.getQuoteHeaders(quote.code).then()
 
       headers = [{
@@ -695,12 +703,13 @@ export default {
 
       return null
     },
-    incoterms: (quote: LasecQuote) => {
-      return (getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms();
+    incoterms: (quote: LasecQuote, args: any, context: Reactory.IReactoryContext) => {
+      return (context.getService(QUOTE_SERVICE_ID) as IQuoteService).getIncoTerms();
     },
     options: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext): Promise<LasecQuoteOption[]> => {
       let result: LasecQuoteOption[] = [];
 
+      debugger
       const { source } = quote.meta;
       const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0');
 
@@ -733,6 +742,18 @@ export default {
   },
   LasecCustomer: {
     id: ({ id }: LasecQuote) => (id),
+    // fullName: (customer: any, args: any, context: Reactory.IReactoryContext) => {
+    //   debugger
+
+    //   if (customer.fullName && typeof customer.fullName === 'function') {
+    //     return customer.fullName(false);
+    //   }
+
+    //   if (customer.fullName && typeof customer.fullName === 'string') return customer.fullName;
+
+    //   return customer
+
+    // }
   },
   LasecQuoteDashboard: {
     id: ({
@@ -1521,7 +1542,7 @@ export default {
     LasecCreateNewQuoteOption: async (parent: any, params: LasecCreateQuoteOptionParams, context: Reactory.IReactoryContext) => {
       const { quote_id, copy_from } = params;
 
-      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0', {}, context) as IQuoteService;
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
 
       if (copy_from) {
         return quoteService.copyQuoteOption(quote_id, copy_from)
@@ -1532,7 +1553,7 @@ export default {
 
     LasecPatchQuoteOption: async (parent: any, params: LasecPatchQuoteOptionsParams, context: Reactory.IReactoryContext): Promise<LasecQuoteOption> => {
 
-      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0', {}, context) as IQuoteService;
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
       const { option, quote_id, option_id } = params
 
       const response = await quoteService.patchQuoteOption(quote_id, option_id, option).then();
@@ -1556,7 +1577,7 @@ export default {
 
     LasecDeleteQuoteOption: async (parent: any, params: LasecDeleteQuoteOptionParams, context: Reactory.IReactoryContext): Promise<SimpleResponse> => {
 
-      const quoteService: IQuoteService = getService('lasec-crm.LasecQuoteService@1.0.0', {}, context) as IQuoteService;
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0', {}) as IQuoteService;
 
       const { quote_id, option_id } = params;
 

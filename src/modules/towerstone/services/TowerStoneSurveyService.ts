@@ -9,8 +9,8 @@ import { ObjectId } from 'bson';
 import { Survey } from '@reactory/server-core/models'
 
 
-const getSurveyService = (props: TowerStone.ITowerStoneServiceParameters, context: any): TowerStone.ITowerStoneSurveyService =>  {
-  logger.debug("TowerStoneEmailService Constructor", {props, context});
+const getSurveyService = (props: TowerStone.ITowerStoneServiceParameters, context: any): TowerStone.ITowerStoneSurveyService => {
+  logger.debug("TowerStoneEmailService Constructor", { props });
   return {
     get: (id: String) => {
       return Survey.findById(id)

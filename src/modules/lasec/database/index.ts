@@ -1,6 +1,6 @@
 import { isNil, isArray, template } from 'lodash';
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { IReactoryDatabase, SQLQuery, Operator } from '@reactory/server-core/database/types';
+import { IReactoryDatabase, SQLQuery, Operator, SQLInsert } from '@reactory/server-core/database/types';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import CONSTANTS, { LasecCompany } from '@reactory/server-modules/lasec/constants';
 
@@ -8,11 +8,17 @@ import CONSTANTS, { LasecCompany } from '@reactory/server-modules/lasec/constant
 import {
   ProductClass,
   LasecAuthentication,
+  LasecDatabase,
+  LasecCurrency,
+
 } from '@reactory/server-modules/lasec/types/lasec';
 
 import ApiError from 'exceptions';
 import { fileAsString } from 'utils/io';
 import logger from 'logging';
+import { encode } from 'jwt-simple';
+import ReactoryUserModel from 'models/schema/User';
+import { getCacheItem } from '../models';
 
 const syncActiveCompany = async (lasecAuthentication: LasecAuthentication, context: Reactory.IReactoryContext): Promise<LasecAuthentication> => {
 
@@ -37,9 +43,71 @@ const syncActiveCompany = async (lasecAuthentication: LasecAuthentication, conte
   return lasecAuthentication;
 }
 
-const database: IReactoryDatabase = {
-  Create: {
+const database: LasecDatabase = {
+  Install: {
+    LasecLog: async (context: Reactory.IReactoryContext): Promise<boolean> => {
 
+      try {
+
+        const table_exists_sql = `
+        SELECT count(1) as count 
+        FROM information_schema.tables
+        WHERE table_schema = 'Lasec360' 
+            AND table_name = 'ReactoryLog'
+        LIMIT 1;`;
+
+        let count_results: any[] = await mysql(table_exists_sql, 'mysql.lasec360', null, context).then();
+
+        if (count_results.length === 1) {
+          if (count_results[0].count === 0) {
+            await mysql(`CREATE TABLE \`Lasec360\`.\`ReactoryLog\` (
+          \`id\` INT AUTO_INCREMENT NOT NULL,
+          \`timestamp\` BIGINT NOT NULL,
+          \`username\` VARCHAR(500) NOT NULL,
+          \`message\` VARCHAR(8000) CHARACTER SET 'utf8mb4' NOT NULL,
+          \`data\` JSON NULL,
+          \`severity\` INT NOT NULL,
+          \`source\` VARCHAR(45) NOT NULL,
+          PRIMARY KEY (\`id\`));
+        `, 'mysql.lasec360', null, context);
+          }
+        }
+
+        return true;
+      } catch (installFail) {
+        logger.error('Could not install ReactoryLog for lasec', installFail);
+
+        return false
+      }
+
+
+
+    }
+  },
+  Create: {
+    WriteLog: async (values: any, context: Reactory.IReactoryContext): Promise<boolean> => {
+
+      try {
+        mysql(`
+      INSERT INTO Lasec360.ReactoryLog(timestamp, username, message, data, severity, source) 
+      VALUES ( 
+        ${new Date().valueOf()}, 
+        '${context.user.fullName(true)}', 
+        '${values.message}', 
+        '${JSON.stringify(values.data || {})}',
+        ${values.severity || 0},
+        '${values.source || 'not-set'}')`, 'mysql.lasec360', null, context).then().catch((sqlErr) => {
+          logger.error('Could not insert log value');
+          return false
+        })
+
+        return true;
+      } catch (sqlError) {
+        logger.error('Could not insert log value');
+        return false
+      }
+
+    },
   },
   Read: {
     LasecGet360User: async (queryCommand: SQLQuery, request_context: Reactory.IReactoryContext): Promise<any> => {
@@ -126,7 +194,11 @@ const database: IReactoryDatabase = {
         COMMIT;`, context.connectionId || 'mysql.lasec360', undefined, request_context).then();
       }
       return [];
-    }
+    },
+    LasecGetCurrencies: async (querycommand: SQLQuery, context: Reactory.IReactoryContext): Promise<LasecCurrency[]> => {
+      //return getCacheItem(`lasec-crm.Currencies`, , 180, context.partner);
+      return mysql(`SELECT currencyid as id, code, name, symbol, spot_rate, web_rate FROM Currency`, 'mysql.lasec360', undefined, context);
+    },
   },
   Update: {
 

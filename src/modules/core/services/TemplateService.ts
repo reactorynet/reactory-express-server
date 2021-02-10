@@ -472,7 +472,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
 
   onStartup(): Promise<any> {
     //throw new Error('Method not implemented.');
-    logger.debug(`[core.ReactoryTemplateService].onStartup() 🟢`, { executionContext: this.executionContext })
+    logger.debug(`[core.ReactoryTemplateService].onStartup() 🟢`)
     return Promise.resolve(true);
   }
 }

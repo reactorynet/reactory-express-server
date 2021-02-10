@@ -6,7 +6,7 @@ import LasecApi from '@reactory/server-modules/lasec/api';
 import { User } from "@reactory/server-core/models";
 import { Quote, QuoteReminder } from '../schema/Quote';
 import { getLoggedIn360User, setLoggedInUserProps } from './Helpers';
-import { Lasec360User } from '../types/lasec';
+import { ILasecLoggingService, Lasec360User } from '../types/lasec';
 import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 import { Reactory } from 'types/reactory';
 
@@ -82,7 +82,6 @@ export default {
     },
     LasecLoggedInUser: async (obj, params: any, context: any, info: any): Promise<Lasec360User> => {
       logger.debug('Query LasecLoggedInUser Called');
-      debugger
       return await getLoggedIn360User(false, context).then();
     }
   },
@@ -91,18 +90,22 @@ export default {
 
     },
     LasecReset360Credentials: async (object: any, params: any, context: Reactory.IReactoryContext): Promise<boolean> => {
-      logger.debug(`Resetting credetials`, { params })
+      logger.debug('Resetting credetials', { params });
+
+      const loggingService: ILasecLoggingService = context.getService('lasec-crm.LasecLoggingService@1.0.0', null, context);
       if (isEmpty(params.email) === true) {
-        //we have no user email, use loged in user
-        return context.user.removeAuthentication("lasec");
-      } else {
-        const foundUser: Reactory.IUser = await User.findOne({ email: params.email }).then();
-        if (foundUser) {
-          logger.debug(`Found user`, { fullName: foundUser.fullName(false) })
-          return foundUser.removeAuthentication("lasec");
-        }
-        return false;
+        // we have no user email, use loged in user
+        loggingService.writeLog(`User ${context.user.fullName(true)} resetting their own account credentials`, 'LasecReset360Credentials', 0, { user_id: context.user.id });
+        return context.user.removeAuthentication('lasec');
       }
+
+      const foundUser: Reactory.IUser = await User.findOne({ email: params.email }).then();
+      if (foundUser) {
+        loggingService.writeLog(`User ${context.user.fullName(true)} resetting account for ${foundUser.fullName(true)} credentials`, 'LasecReset360Credentials', 0, { user_id: context.user.id });
+        return foundUser.removeAuthentication('lasec');
+      }
+
+      return false;
     },
     LasecSetMy360: async (parent: any, params: { rep_code: string, active_company: string }, context: Reactory.IReactoryContext) => {
       logger.debug(`Setting Active Company and Rep Code ${params.rep_code} ${params.active_company}`)

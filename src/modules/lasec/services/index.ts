@@ -1,10 +1,10 @@
-
-
-import QuoteService from './Quote/QuoteService';
 import { Reactory } from '@reactory/server-core/types/reactory';
+import QuoteService from './Quote/QuoteService';
+import LoggingService from './LoggingService';
 
 const services: Reactory.IReactoryServiceDefinition[] = [
-    QuoteService
+    QuoteService,
+    LoggingService,
 ];
 
 export default services;

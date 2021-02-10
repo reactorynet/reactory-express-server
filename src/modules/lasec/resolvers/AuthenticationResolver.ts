@@ -1,15 +1,18 @@
 import Lasec360Api from '@reactory/server-core/modules/lasec/api';
 import logger from '@reactory/server-core/logging';
 import User from '@reactory/server-core/application/admin/User';
+import { Reactory } from '@reactory/server-core/types/reactory';
+import ApiError from '@reactory/server-core/exceptions';
 
 export default {
   Query: {
 
   },
   Mutation: {
-    Lasec360Authenticate: async (parent, { username, password }, context) => {
+    async Lasec360Authenticate(parent: any, { username, password }: any,
+      context: Reactory.IReactoryContext): Promise<any> {
       try {
-        const loginResult = await Lasec360Api.Authentication.login(username, password).then();
+        const loginResult = await Lasec360Api.Authentication.login(username, password, context).then();
         logger.debug('Login result after authenticating with lasec360', { loginResult });
         if (context.user.setAuthentication && loginResult) {
           await context.user.setAuthentication({
@@ -22,11 +25,14 @@ export default {
             },
             lastLogin: new Date().valueOf(),
           }).then();
+
           return {
             success: true,
             message: 'You have been authenticated and logged in with Lasec 360',
           };
         }
+
+        throw new ApiError('Could not authenticate');
       } catch (loginError) {
         return {
           success: false,

@@ -1,6 +1,6 @@
 import { Moment } from 'moment';
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { PagingRequest, PagingResult } from '@reactory/server-core/database/types';
+import { PagingRequest, PagingResult, IReactoryDatabase } from '@reactory/server-core/database/types';
 
 /**
  * Meta type interface
@@ -781,6 +781,8 @@ export interface IQuoteService extends Reactory.Service.IReactoryContextAwareSer
 
   getIncoTerms(): Promise<any>;
 
+  getCurrencies(): Promise<LasecCurrency[]>
+
   getQuoteHeaders(quote_id: string): Promise<any>;
 
   getQuoteTransportModes(): Promise<any>;
@@ -799,6 +801,9 @@ export interface ILasecClientService extends Reactory.Service.IReactoryContextAw
   getClientById(id: string): Promise<LasecClient>;
 }
 
+export interface ILasecLoggingService extends Reactory.Service.IReactoryContextAwareService {
+  writeLog(messsage: string, source?: string, severity?: number, data?: any): void
+}
 
 export interface LasecGetFreightRequestQuoteParams {
   quoteId: string
@@ -965,4 +970,35 @@ export interface LasecPackingListResponse {
   message: string
   success: boolean
   packing_list: LasecPackingList
+}
+
+export interface LasecCurrency {
+  id: number
+  code: string
+  name: string
+  symbol: string
+  spot_rate: string
+  web_rate: string
+}
+
+export interface LasecLogData {
+  timestamp: number
+  username: string
+  message: string
+  data: any
+  severity: number
+  source: string
+}
+
+
+export interface LasecDatabase extends IReactoryDatabase {
+  Install: {
+    LasecLog: (context: Reactory.IReactoryContext) => Promise<boolean>
+  },
+  Create: {
+    WriteLog: (value: LasecLogData, context: Reactory.IReactoryContext) => Promise<boolean>
+  },
+  Read: {
+    LasecGetCurrencies: (queryCommand: any, context: Reactory.IReactoryContext) => Promise<LasecCurrency[]>
+  }
 }

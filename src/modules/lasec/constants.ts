@@ -12,7 +12,7 @@ export interface LasecCompanyMap {
   [key: string]: LasecCompany,
 }
 
-const DefaultLasecCompanyMap : LasecCompanyMap = {
+const DefaultLasecCompanyMap: LasecCompanyMap = {
   LasecSA: {
     sysproCompany: 'SysProCompany2',
     title: 'Lasec SA',
@@ -29,17 +29,17 @@ const DefaultLasecCompanyMap : LasecCompanyMap = {
     sysproCompany: 'SysProCompany5',
     title: 'Lasec Education',
     companyId: 5,
-    defaultCurrency: 'ZAR',    
+    defaultCurrency: 'ZAR',
   }
 };
 
 const GetCompanyWithId = (id: number = 2) => {
-  switch(id) {    
+  switch (id) {
     case 4: return DefaultLasecCompanyMap["LasecInternational"]
     case 5: return DefaultLasecCompanyMap["LasecEducation"]
-    case 2: 
+    case 2:
     default:
-    return DefaultLasecCompanyMap["LasecSA"]
+      return DefaultLasecCompanyMap["LasecSA"]
   }
 };
 
@@ -95,10 +95,6 @@ export const OBJECT_MAPS = {
     "actual_gp_percent": ["actualGP", "totals.actualGP"],
   },
 }
-
-
-
-
 
 export default {
   DefaultLasecCompanyMap,
