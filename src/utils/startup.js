@@ -247,8 +247,6 @@ const startup = async () => {
         return getService(id, props, { user: userResponse, partner: context_partner });
       };
 
-      debugger;
-
       await initialiseStartupAwareServices({ user: userResponse, partner: context_partner, getService: $getService });
     }
 
