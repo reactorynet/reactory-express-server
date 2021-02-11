@@ -31,6 +31,7 @@ import {
   LasecSalesOrder,
   LasecAddress,
   LasecAPIParams,
+  ILasecLoggingService,
 } from '../types/lasec';
 import { deleteSalesOrdersDocument, getCustomerDocuments } from '../resolvers/Helpers';
 
@@ -183,6 +184,7 @@ const getStorageItem = async (key: string, context: Reactory.IReactoryContext) =
 
 export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = true, failed = false, attempt = 0, context: Reactory.IReactoryContext): Promise<any> {
   // url = `${url}`;
+  const loggingService: ILasecLoggingService = context.getService('lasec-crm.LasecLoggingService@1.0.0');
   let absoluteUrl = `${config.SECONDARY_API_URL}/${url}`;
 
   const kwargs: LasecAPIFetchArgs = fethArguments || {};
@@ -223,7 +225,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     kwargs.body = JSON.stringify(kwargs.body, null, 2);
   }
 
-  logger.debug(`API CALL: curl '${absoluteUrl}' \\
+  const $curlformat = `API CALL: curl '${absoluteUrl}' \\
   -H 'Connection: keep-alive' \\
   -H 'Authorization: ${kwargs.headers.Authorization}' \\
   -H 'X-LASEC-AUTH: ${kwargs.headers.Authorization}' \\
@@ -234,7 +236,9 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
   -H 'Origin: ${process.env.API_URI_ROOT}' \\
   -H 'Accept-Language: en-US,en;q=0.9,af;q=0.8,nl;q=0.7' \\
   ${kwargs.body ? `--data-binary '${kwargs.body}' \\` : ''}
-  --compressed`);
+  --compressed`;
+
+  logger.debug($curlformat);
 
   let apiResponse = null;
 
@@ -242,27 +246,42 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     apiResponse = await fetch(absoluteUrl, kwargs).then();
   } catch (apiError) {
     logger.error(`🚨 Error Getting Responsefrom LASEC API ${apiError.message}`)
-    return {
+
+    let _result = {
       status: 'failed',
       payload: null,
       message: `FETCH api threw error ${apiError}`
     };
+
+    loggingService.writeLog(`
+        ------------------------------------------------------------------ 
+        🚨🚨           Invalid Response CALLING LASEC API             🚨🚨
+        ------------------------------------------------------------------ 
+        MESSAGE: ${apiError.message}
+        ENDPOINT: ${absoluteUrl}
+        METHOD: ${kwargs.method || "GET"}
+        ------------------------------------------------------------------ 
+        `, 'LasecAPI.FETCH', 10, kwargs);
+
+    return _result;
+
   }
+
   if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
     try {
       return apiResponse.json().catch((invalidJsonErr) => {
-
-        logger.error(`
-        ################################################################## 
+        const msg = `
+        ------------------------------------------------------------------ 
         🚨🚨           Invalid Response Type from LASEC API           🚨🚨
-        ################################################################## 
+        ------------------------------------------------------------------ 
         MESSAGE: ${invalidJsonErr.message}
         ENDPOINT: ${absoluteUrl}
-        METHOD: ${kwargs.method || "GET"}
-        PARAMS: ${kwargs.params}
-        BODY:\n${kwargs.body ? JSON.stringify(kwargs.body, null, 2) : null}
-        ################################################################## 
-        `);
+        FETCH ARGS: ${JSON.stringify(kwargs, null, 2)}
+        ------------------------------------------------------------------ 
+        `
+        logger.error(msg);
+
+        loggingService.writeLog(msg, 'LasecAPI.FETCH => result.json()', 10, {});
 
         return {
           status: 'failed',
@@ -271,17 +290,20 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
         };
       });
     } catch (jsonError) {
-      logger.error(`
-        ################################################################## 
+      const msg = `
+        ------------------------------------------------------------------ 
         🚨🚨        Error Getting JSON Response from LASEC API        🚨🚨
-        ################################################################## 
+        ------------------------------------------------------------------ 
         MESSAGE: ${jsonError.message}
-        ENDPOINT: ${absoluteUrl}
+        ENDPOINT:${url}
         METHOD: ${kwargs.method || "GET"}
-        PARAMS: ${kwargs.params}
-        BODY:\n${kwargs.body ? JSON.stringify(kwargs.body, null, 2) : null}
-        ################################################################## 
-        `);
+        FETCH ARGS: ${JSON.stringify(kwargs, null, 2)}
+        ------------------------------------------------------------------ 
+        `;
+      logger.error(msg);
+
+      loggingService.writeLog(msg, 'LasecAPI.FETCH => result.json()', 10, {});
+
       return {
         status: 'failed',
         payload: null,
@@ -290,24 +312,43 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     }
   } else {
     logger.warn(`Failed API call to ${absoluteUrl}`, { apiResponse, status: apiResponse.status || 'xxx', statusText: apiResponse.statusText });
+
+
+
     switch (apiResponse.status) {
       case 400: {
+        const msg = `
+        ------------------------------------------------------------------ 
+        🚨🚨        Warning BAD REQUEST RESPONSE / Token Failed       🚨🚨
+        ------------------------------------------------------------------ 
+        MESSAGE: Access Forbidden
+        ENDPOINT: ${absoluteUrl}
+        METHOD: ${kwargs.method || "GET"}
+        ------------------------------------------------------------------        
+        Q & A: POSSIBLE REASONS: User logged in on another device
+        ------------------------------------------------------------------ 
+        `;
+
+        loggingService.writeLog(msg, 'API.FETCH.result = 400 BAD', 5, kwargs);
+
         throw new ApiError('Could not execute fetch against Lasec API, Bad Request', { status: apiResponse, statusText: apiResponse.statusText });
       }
       case 401:
       case 403: {
 
-        logger.warn(`
-        ################################################################## 
+        const msg = `
+        ------------------------------------------------------------------ 
         🚨🚨        Warning User Not Authenticated / Token Failed     🚨🚨
-        ################################################################## 
+        ------------------------------------------------------------------ 
         MESSAGE: Access Forbidden
         ENDPOINT: ${absoluteUrl}
         METHOD: ${kwargs.method || "GET"}
-        PARAMS: ${kwargs.params}
-        BODY:\n${kwargs.body ? JSON.stringify(kwargs.body, null, 2) : null}
-        ################################################################## 
-        `);
+        ------------------------------------------------------------------ 
+        `;
+
+        logger.warn(msg);
+
+        loggingService.writeLog(msg, 'API.FETCH.result FORBIDDEN', 1, kwargs);
 
         const retry = async function retry() {
           logger.debug('Attempting to refetch', { attempt });
@@ -343,18 +384,49 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
         break;
       }
       case 404: {
+
+        const msg = `
+        ------------------------------------------------------------------ 
+        🚨🚨        Warning Resource Not Found 404 STATUS             🚨🚨
+        ------------------------------------------------------------------ 
+        MESSAGE: Not Found
+        ENDPOINT:  ${url}
+        METHOD: ${kwargs.method || "GET"}
+        ------------------------------------------------------------------
+        Q & A: Item deleted or removed from API
+        ------------------------------------------------------------------ 
+        `;
+
+        loggingService.writeLog(msg, 'API.FETCH.result = 404 BAD', 3, kwargs);
+
         throw new RecordNotFoundError(`Could not fetch record for at ${absoluteUrl}`, 'LASEC_API', {
           url,
           fethArguments,
           mustAuthenticate,
           failed,
           attempt
-        })
+        });
+
+        break;
       }
       default: {
+
+        const msg = `
+        ------------------------------------------------------------------ 
+        🚨🚨             OTHER SERVER - UNSPECIFIED ERROR             🚨🚨
+        ------------------------------------------------------------------ 
+        MESSAGE: Access Forbidden
+        ENDPOINT:  ${url}
+        METHOD: ${kwargs.method || "GET"}
+        ------------------------------------------------------------------ 
+        `;
+
+        loggingService.writeLog(msg, 'API.FETCH.result = XXX UNDEFINED', 3, kwargs);
+
         await execml(`mutation LasecReset360Credentials {
           LasecReset360Credentials
         }`, {}, {}, context.user, context.partner);
+
         throw new ApiError('Could not execute fetch against Lasec API', { status: apiResponse, statusText: apiResponse.statusText });
       }
     }
@@ -3414,28 +3486,28 @@ NB: note the addition of the detail_id for the line been updated
       }
     },
     getIncoTerms: async (context: Reactory.IReactoryContext) => {
-      let incoterms_response = await Api.get(SECONDARY_API_URLS.incoterms.url, {}, null, context).then();
+      let incoterms_response = await Api.get(SECONDARY_API_URLS.incoterms.url, null, null, context).then();
       const { payload } = incoterms_response;
 
       logger.debug(`IncoTerms API Response:\n${JSON.stringify(incoterms_response, null, 2)}`)
 
       let results: any[] = [];
-      if (payload && Object.keys(payload).length > 0) {
-        Object.keys(payload).forEach((prop) => {
+      if (incoterms_response && Object.keys(incoterms_response).length > 0) {
+        Object.keys(incoterms_response).forEach((prop) => {
 
-          if (`${payload[prop]}`.indexOf("=>") > 0) {
+          if (`${incoterms_response[prop]}`.indexOf("=>") > 0) {
             results.push({
               id: prop,
               key: prop,
-              title: payload[prop].split('=>')[1].trim(),
-              name: payload[prop].split('=>')[1].trim()
+              title: incoterms_response[prop].split('=>')[1].trim(),
+              name: incoterms_response[prop].split('=>')[1].trim()
             })
           } else {
             results.push({
               id: prop,
               key: prop,
-              title: payload[prop],
-              name: payload[prop]
+              title: incoterms_response[prop],
+              name: incoterms_response[prop]
             });
           }
         })

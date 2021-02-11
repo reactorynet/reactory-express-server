@@ -64,6 +64,7 @@ const uiSchema: any = {
   selectFilter: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
+      showLabel: false,
       multiSelect: false,
       query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
         LasecGetCustomerFilterLookup(filterBy: $filterBy) {

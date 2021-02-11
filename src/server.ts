@@ -175,7 +175,10 @@ try {
       };
 
       const $getService = (id: string, props: any = undefined) => {
-        return getService(id, props, newContext);
+        return getService(id, props, {
+          ...newContext,
+          getService: $getService,
+        });
       };
 
       return {

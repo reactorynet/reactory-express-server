@@ -35,7 +35,10 @@ import {
   LasecGetFreightRequestQuoteParams,
   LasecQuoteOption,
   FreightRequestOption,
-  LasecGetPageQuotesParams
+  LasecGetPageQuotesParams,
+  IQuoteService,
+  ILasecLoggingService,
+  LasecCurrency
 } from '../types/lasec';
 
 
@@ -3253,10 +3256,31 @@ export const updateQuote = async (params: ILasecUpdateQuoteExpectedParams, conte
 
     const updateParams: any = { item_id, values: {} };
 
+    const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0');
+    const lasecLogging: ILasecLoggingService = context.getService('lasec-crm.LasecLoggingService@1.0.0');
+
+    lasecLogging.writeLog(`${context.user.fullName(false)}, is updating quote ${item_id}`, 'Helpers => updateQuote', 0, params);
+
+
     if (quote_type) updateParams.values.quote_type = quote_type;
     if (rep_code) updateParams.values.sales_team_id = rep_code;
     if (client_id) updateParams.values.customer_id = client_id;
-    if (currency_code) updateParams.values.currency_id = currency_code;
+    if (currency_code) {
+
+      let _id = 0;
+
+      const currencies = await quoteService.getCurrencies().then();
+      debugger
+      currencies.forEach((c) => {
+        if (c.code === currency_code) {
+          updateParams.values.currency_id = c.id;
+        }
+      })
+
+      if (updateParams.values.currency_id) lasecLogging.writeLog(`${context.user.fullName(false)} could not read / find correct currency selection`, "Helpers => updateQuote => currency_code_set", 5, { currencies, currency_code })
+    }
+
+
     if (valid_until) updateParams.values.valid_until = moment(valid_until, 'YYYY-MM-DD').toISOString();
 
     const updateResult = await lasecApi.Quotes.updateQuote(updateParams, context).then();

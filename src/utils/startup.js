@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import lodash, { isArray } from 'lodash';
 import ReactoryApi from '../application';
-
+import uuid from 'uuid';
 import { Application, User, ReactoryClient, Menu, ClientComponent } from '../models';
 import { installDefaultEmailTemplates } from '../emails';
 import data from '../data';
@@ -58,13 +58,13 @@ const configureApplication = async () => {
 
 
 const installSystemUser = async () => {
-  let sysAdminUser = await User.findOne({ email: process.env.SYSADMIN_EMAIL || 'werner.weber+reactory-sysadmin@gmail.com' }).then();
+  let sysAdminUser = await User.findOne({ email: process.env.SYSADMIN_EMAIL || 'reactory-sysadmin@mail.com' }).then();
   if (sysAdminUser === null) {
     sysAdminUser = new User({
       username: 'sysadmin',
       firstName: 'System',
       lastName: 'User',
-      email: 'werner.weber+reactory-sysadmin@gmail.com',
+      email: process.env.SYSADMIN_EMAIL || 'reactory-sysadmin@mail.com',
       authProvider: 'LOCAL',
       providerId: 'reactory-system',
       lastLogin: new Date(),
@@ -74,7 +74,7 @@ const installSystemUser = async () => {
       updatedAt: new Date(),
     });
 
-    sysAdminUser.setPassword('XXXXXXXXXXXXX');
+    sysAdminUser.setPassword(uuid());
     await sysAdminUser.save().then();
   }
   return sysAdminUser;
@@ -225,9 +225,9 @@ const installClients = async (configs) => {
   }
 };
 
-const initialiseStartupAwareServices = async () => {
-  global.getService = getService
-  return await startServices().then()
+const initialiseStartupAwareServices = async (context) => {
+  // xxxxx.getService = getService
+  return startServices({}, context).then();
 };
 
 
@@ -237,15 +237,25 @@ const startup = async () => {
     const applicationResponse = await configureApplication().then();
     const userResponse = await installSystemUser();
     const componentsResponse = await installComponents(components);
-    const clientsInstallResponse = await installClients(clients);    
+    const clientsInstallResponse = await installClients(clients);
 
-    await initialiseStartupAwareServices();
+    let context_partner = await ReactoryClient.findOne({ key: process.env.DEFAULT_CLIENT_KEY || "reactory" }).then();// eslint-disable-line
+
+
+    if (userResponse && context_partner) { // eslint-disable-line
+      const $getService = (id, props = undefined) => {
+        return getService(id, props, { user: userResponse, partner: context_partner });
+      };
+
+      await initialiseStartupAwareServices({ user: userResponse, partner: context_partner, getService: $getService });
+    }
+
 
     const result = {
       application: applicationResponse,
       system_user: userResponse,
       clientsLoaded: clientsInstallResponse,
-      components: componentsResponse,      
+      components: componentsResponse,
     };
 
     logger.info('Startup Complete', JSON.stringify(result, null, 2));

@@ -65,6 +65,7 @@ input LasecQuoteItemInput {
   included_in_quote_option: Boolean
   markup: Float
   agent_commission: Float
+  gp_percent: Float
   comment: String
   ignore_duplicates: Boolean
 }

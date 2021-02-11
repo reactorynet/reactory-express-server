@@ -9,7 +9,7 @@ import {
   SQLUpdate,
   SQLFilter,
   SQLColumn,
-  QueryStringResultWithCount
+  QueryStringResultWithCount,
 } from './types';
 import { Reactory } from 'types/reactory';
 
@@ -50,7 +50,7 @@ export const getPoolWithObject = ({
   password = 'reactory',
   database = 'reactory',
   port = 3306,
-  connectionLimit = 100
+  connectionLimit = 100,
 }) => {
   if (pool === null) {
     pool = mysql.createPool({
@@ -60,6 +60,7 @@ export const getPoolWithObject = ({
       password,
       database,
       port,
+      charset: 'utf8mb4',
     });
   }
   return pool;
@@ -74,10 +75,10 @@ export const getConnection = (connectionId = 'mysql.default', context: Reactory.
     database: 'reactory',
     password: 'reactory',
     port: 3306,
-    connectionLimit: 100
+    connectionLimit: 100,
   }, true);
 
-  logger.debug(`Creating connection with configuration`, setting.data);
+  logger.debug('Creating connection with configuration', setting.data);
   return getPoolWithObject(setting.data);
 };
 
@@ -95,7 +96,6 @@ export const testConnection = (tenant = 'plc') => {
 
 const whereClause = (filter: SQLFilter[]) => {
   if (filter && filter.length > 0) {
-
     const formatValue = (filter: SQLFilter) => {
 
     };
@@ -103,13 +103,12 @@ const whereClause = (filter: SQLFilter[]) => {
     return `
       WHERE
         ${filter.map((columnFilter: SQLFilter) => {
-      return ` ${columnFilter.field} ${columnFilter.operator} ${columnFilter.value} `
+      return ` ${columnFilter.field} ${columnFilter.operator} ${columnFilter.value} `;
     })
       }
-    `
-  } else {
-    return '';
+    `;
   }
+  return '';
 };
 
 export const MySQLQueryStringGenerator: QueryStringGenerator = {
@@ -118,7 +117,7 @@ export const MySQLQueryStringGenerator: QueryStringGenerator = {
     const queryStringResultWithCount: QueryStringResultWithCount = {
       query: `
         SELECT
-          ${queryCommand.columns.map((sqlColumn: SQLColumn) => { return `${sqlColumn.field}` })}
+          ${queryCommand.columns.map((sqlColumn: SQLColumn) => { return `${sqlColumn.field}`; })}
         FROM 
           ${queryCommand.context.schema}.${queryCommand.context.table}
         ${whereClause(queryCommand.filters)}
@@ -142,13 +141,13 @@ export const MySQLQueryStringGenerator: QueryStringGenerator = {
     return `
       INSERT 
       ${insertCommand.columns.map((sqlColumn: SQLColumn, index: number) => {
-      return `${sqlColumn.field} ${index < insertCommand.columns.length ? ',' : ''}`
+      return `${sqlColumn.field} ${index < insertCommand.columns.length ? ',' : ''}`;
     })}
       INTO
         ${insertCommand.context.table}
       VALUES (
         ${insertCommand.values.map((columnValue: any, cIndex: number) => {
-      return `'${columnValue}'`
+      return `'${columnValue}'`;
     })}
       )
     `;
@@ -159,7 +158,7 @@ export const MySQLQueryStringGenerator: QueryStringGenerator = {
 
       SET
       ${updateCommand.columns.map((sqlColumn: SQLColumn, index: number) => {
-      return `${sqlColumn.field} ${index < updateCommand.columns.length ? ',' : ''}`
+      return `${sqlColumn.field} ${index < updateCommand.columns.length ? ',' : ''}`;
     })}
     `;
   },
@@ -173,7 +172,7 @@ export const MySQLQueryStringGenerator: QueryStringGenerator = {
   },
 };
 
-export const queryAsync = async (query: string, connectionId: string = 'mysql.default', values: any, context: Reactory.IReactoryContext) => {
+export const queryAsync = async (query: string, connectionId: string = 'mysql.default', values: any, context: Reactory.IReactoryContext): Promise<any> => {
   logger.debug('queryAsync', { query, connectionId });
 
   return new Promise((resolve, reject) => {
@@ -187,14 +186,9 @@ export const queryAsync = async (query: string, connectionId: string = 'mysql.de
     };
     const connection = getConnection(connectionId, context);
     if (connection) {
-
       connection.query({ sql: query, values }, resultCallback);
-
     } else {
       reject(new ApiError(`Could not establish a connection using the connection details for ${connectionId}`));
     }
-
   });
 };
-
-

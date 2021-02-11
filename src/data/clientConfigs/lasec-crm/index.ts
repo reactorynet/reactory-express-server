@@ -22,8 +22,8 @@ const {
   LASEC360DB_HOST = 'localhost',
   LASEC360DB_USER = 'reactory',
   LASEC360DB_PASSWORD = 'reactory_password',
-  LASEC360DB_DATABASE = 'lasec360',
-  LASEC360DB_PORT = 3306
+  LASEC360DB_DATABASE = 'Lasec360',
+  LASEC360DB_PORT = 3306,
 } = process.env;
 
 let siteUrl = REACTORY_CLIENT_URL;
@@ -178,7 +178,7 @@ const Menus = {
           icon: 'accessible',
           roles: ['USER'],
         },
-     
+
         {
           ordinal: 1,
           title: 'Quotes',
@@ -186,7 +186,7 @@ const Menus = {
           icon: 'add_shopping_cart',
           roles: ['USER'],
         },
-   
+
         {
           ordinal: 2,
           title: 'ISO',
@@ -194,7 +194,7 @@ const Menus = {
           icon: 'shopping_cart',
           roles: ['USER'],
         },
- 
+
         {
           ordinal: 3,
           title: 'Invoices',
@@ -202,7 +202,7 @@ const Menus = {
           icon: 'attach_money',
           roles: ['USER'],
         },
-        
+
         {
           ordinal: 4,
           title: 'Sales History',
@@ -233,7 +233,7 @@ const Menus = {
           link: '/product-catalogue/product-overview/',
           icon: 'book',
           roles: ['USER'],
-        },      
+        },
       ]
     },
     {
@@ -241,10 +241,10 @@ const Menus = {
       items: [
         {
           ordinal: 8, title: 'Reactory Forms', link: '/reactory/', icon: 'code', roles: ['DEVELOPER', 'ADMIN']
-        },        
+        },
         {
           ordinal: 11, title: 'GraphQL', link: '/graphiql/', icon: 'offline_bolt', roles: ['DEVELOPER', 'ADMIN'],
-        },        
+        },
       ]
     },
     {
@@ -270,7 +270,7 @@ const Menus = {
           link: '/admin/customer/',
           icon: 'business',
           roles: ['ADMIN', 'DEVELOPER'],
-        },        
+        },
         {
           ordinal: 5,
           title: 'AR Invoices',
@@ -716,7 +716,7 @@ const LASEC_CONFIG = {
         },
       ],
     },
-        
+
 
     {
       key: 'crm-client',
@@ -775,7 +775,7 @@ const LASEC_CONFIG = {
         }
       ],
     },
-   
+
     {
       key: 'crm-client',
       title: 'Lasec CRM',
@@ -805,8 +805,8 @@ const LASEC_CONFIG = {
       componentFqn: `${key}.ProductTabbedSearch@1.0.0`,
       args: [
         { key: 'mode', value: { type: 'string', mode: 'view' } },
-        { key: 'use_case', value: { type: 'string', use_case: 'default' }  },
-        { key: 'via', value: { type: 'string', via: 'route' }  }
+        { key: 'use_case', value: { type: 'string', use_case: 'default' } },
+        { key: 'via', value: { type: 'string', via: 'route' } }
       ],
     },
 
@@ -992,7 +992,7 @@ const LASEC_CONFIG = {
       exact: true,
       public: false,
       roles: ['ADMIN', 'DEVELOPER'],
-      componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'    
+      componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
     },
 
     {
@@ -1095,7 +1095,7 @@ const LASEC_CONFIG = {
         user: LASEC360DB_USER || 'reactory',
         password: LASEC360DB_PASSWORD || 'reactory_password',
         database: 'reactory',
-        port: 3306
+        port: 3306,
       },
     },
     {
@@ -1106,7 +1106,7 @@ const LASEC_CONFIG = {
         user: LASEC360DB_USER || 'reactory',
         password: LASEC360DB_PASSWORD || 'reactory_password',
         database: LASEC360DB_DATABASE || 'lasec360',
-        port: LASEC360DB_PORT || 3306
+        port: LASEC360DB_PORT || 3306,
       },
     },
     {
@@ -1118,10 +1118,10 @@ const LASEC_CONFIG = {
             target: 'self',
           },
           componentPropertyMap: {},
-          componentKey: "LasecUserProfileWidget",          
+          componentKey: "LasecUserProfileWidget",
           contextType: "DEFAULT_HEADER_AVATAR",
-        },        
-      ],      
+        },
+      ],
     },
     {
       name: 'navigation_components/QA',
@@ -1132,10 +1132,10 @@ const LASEC_CONFIG = {
             target: 'self',
           },
           componentPropertyMap: {},
-          componentKey: "LasecUserProfileWidget",          
+          componentKey: "LasecUserProfileWidget",
           contextType: "DEFAULT_HEADER_AVATAR",
-        },        
-      ],      
+        },
+      ],
     },
     {
       name: 'navigation_components/PRODUCTION',
@@ -1146,10 +1146,10 @@ const LASEC_CONFIG = {
             target: 'self',
           },
           componentPropertyMap: {},
-          componentKey: "LasecUserProfileWidget",          
+          componentKey: "LasecUserProfileWidget",
           contextType: "DEFAULT_HEADER_AVATAR",
-        },        
-      ],      
+        },
+      ],
     },
     {
       name: 'navigation_components/PRODUCTION',

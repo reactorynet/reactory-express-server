@@ -300,7 +300,7 @@ declare namespace Reactory {
     hasAnyRole(clientId: string, organizationId?: string, businessUnitId?: string): boolean,
     addRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean
     removeRole(clientId: string, role: string, organizationId: string): IMemberShip[],
-    removeAuthentication(provider: string): boolean
+    removeAuthentication(provider: string): Promise<boolean>
     getAuthentication(provider: string): IAuthentication
     [key: string]: any
   }

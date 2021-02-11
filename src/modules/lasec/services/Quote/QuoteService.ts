@@ -6,7 +6,8 @@ import {
   LasecQuoteOption,
   SimpleResponse,
   LasecCreateSalesOrderInput,
-  LasecSalesOrder
+  LasecSalesOrder,
+  LasecCurrency
 } from '@reactory/server-modules/lasec/types/lasec';
 
 import {
@@ -22,7 +23,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 
-
+import LasecDatabase from '../../database';
 
 class LasecQuoteService implements IQuoteService {
 
@@ -34,6 +35,7 @@ class LasecQuoteService implements IQuoteService {
   context: Reactory.ReactoryExecutionContext
 
   constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
+    debugger
     this.registry = props.$services;
     this.context = {
       partner: context.partner,
@@ -248,6 +250,10 @@ class LasecQuoteService implements IQuoteService {
       throw new ApiError('Could not copy quote option', apiError);
     }
 
+  }
+
+  async getCurrencies(): Promise<LasecCurrency[]> {
+    return LasecDatabase.Read.LasecGetCurrencies(null, this.context);
   }
 
   sendQuoteEmail = async (quote_id: string, subject: string, message: string,
