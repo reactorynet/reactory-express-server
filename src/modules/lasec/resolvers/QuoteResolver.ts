@@ -1421,6 +1421,7 @@ export default {
           quote_heading_id: params.quote_item_input.quote_heading_id,
           included_in_quote_option: params.quote_item_input.included_in_quote_option,
           note: params.quote_item_input.note,
+          comment: params.quote_item_input.comment,
           mark_up: params.quote_item_input.markup,
           agent_commission: params.quote_item_input.agent_commission,
           gp_percent: params.quote_item_input.GP || params.quote_item_input.gp_percent,
