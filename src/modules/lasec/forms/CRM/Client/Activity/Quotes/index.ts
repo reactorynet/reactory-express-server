@@ -678,6 +678,8 @@ const uiSchema: any = {
         Toolbar: 'lasec-crm.QuoteGridToolbar@1.0.0',
       },
       toobarPropsMap: {
+        'formContext.formData.id': 'query.id',
+        'formContext.formData.search': 'query.search',
         'toolbarProps.filterBy': 'query.filterBy',
         'formContext.formData.filter': 'query.filter',
         'toolbarProps.use_case': 'use_case',
@@ -687,7 +689,8 @@ const uiSchema: any = {
         use_case: 'client_activity',
       },
       remoteData: true,
-      query: 'query',
+      // query: 'query',
+      query: 'quotes',
       variables: {
         'query.id': 'clientId',
         'query.search': 'search',
@@ -701,15 +704,8 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
-        'quotes[].code': 'data[].code',
-        'quotes[].created': 'data[].date',
-        'quotes[].statusName': 'data[].status',
-        'quotes[].totalVATInclusive': 'data[].total',
-        'quotes[].customer.fullName': 'data[].client',
-        'quotes[].company.tradingName': 'data[].companyTradingName',
-        'quotes[].company.code': 'data[].accountNumber',
-        'quotes[].meta.source.sales_team_id': 'data[].repCode',
-        'quotes[].meta.source.quote_type': 'data[].quoteType',
+        'clientId': ['id', 'query.id'],
+        'quotes': 'data'
       },
     },
   }

@@ -1611,6 +1611,7 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
 
   logger.debug(`GETTING PAGED CLIENT QUOTES:: ${JSON.stringify(params)}`);
 
+
   const {
     clientId,
     search = "",
@@ -1634,28 +1635,15 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
   };
 
 
-  if (filterBy === "any_field" || search.length < 3) {
-    return empy_result;
-  }
-
-  // -- POSSIBLE FILTERS --
-  // Date Range
-  // Quote Number
-  // Quote Date
-  // Quote Status
-  // Quote Value
-  // Customer
-  // Client
-  // Account Number
-  // Quote Type
-  // Rep Code
+  // if (filterBy === "any_field" || search.length < 3) {
+    // return empy_result;
+  // }
 
   let apiFilter = {
     customer_id: clientId,
-    // sales_team_id: "100",
     [filterBy]: search,
-    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    // start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    // end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
 
   if (quoteDate) {
@@ -1663,14 +1651,13 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
     apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
   }
 
-  // const exampleFilter = {
-  //   "filter": {
-  //     "sales_team_id": "100",
-  //     "customer_id": "15366"
-  //   },
-  // }
+  // const exampleFilter = { "filter": { "sales_team_id": "100", "customer_id": "15366" }, }
+
+  logger.debug(`GETTING QUOTE RESULTS:: ${JSON.stringify(apiFilter)}`);
 
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }, context).then();
+
+  logger.debug(`QUOTE RESULTS:: ${JSON.stringify(quoteResult)}`);
 
   let ids: string[] = [];
 
@@ -2728,8 +2715,8 @@ export const getClientSalesHistory = async (params: any, context: Reactory.IReac
     customer_id: clientId,
     order_status: 9,
     // [filterBy]: filter || search,
-    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    // start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    // end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
 
   if (search != '')
@@ -2836,8 +2823,8 @@ export const getSalesHistoryMonthlyCount = async (params: any, context: Reactory
 
     let _filter: any = {
       order_status: 9,
-      start_date: moment().startOf('year').toISOString(),
-      end_date: moment().endOf('day').toISOString(),
+      // start_date: moment().startOf('year').toISOString(),
+      // end_date: moment().endOf('day').toISOString(),
       totals: true
     };
 

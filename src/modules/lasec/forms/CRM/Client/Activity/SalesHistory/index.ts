@@ -188,6 +188,7 @@ const uiSchema: any = {
       toolbarPropsMap: {
         'formContext.formData.id': 'query.id',
         'formContext.formData.search': 'query.search',
+        'formContext.formData.filterBy': 'query.filterBy',
       },
       toolbarProps: {
         filterBy: 'client_id',
