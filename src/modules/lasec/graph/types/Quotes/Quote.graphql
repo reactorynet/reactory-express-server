@@ -436,6 +436,7 @@ type SimpleResponse {
 }
 
 type PagedCRMQuote {
+  clientId: String
   search: String
   filterBy: String
   paging: PagingResult
@@ -759,7 +760,7 @@ extend type Query {
     filterBy: String
     periodStart: String
     periodEnd: String
-    quoteDate: String
+    dateFilter: String
     iter: Int
   ): PagedCRMQuote
   LasecGetDashboard(dashparams: LasecQuoteQueryInput): LasecQuoteDashboard

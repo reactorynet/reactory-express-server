@@ -115,7 +115,6 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-        // { title: 'Quote Number', field: 'code' },
         {
           title: 'Quote Number',
           field: 'code',
@@ -158,502 +157,21 @@ const uiSchema: any = {
           }
         },
         {
-          title: 'Quote Status', field: 'status',
+          title: 'Quote Status',
+          field: 'status',
+          width: '100px',
           components: [
             {
-              component: 'core.ConditionalIconComponent@1.0.0',
+              component: 'lasec-crm.QuoteStatus@1.0.0',
               props: {
-                'ui:options': {},
-                conditions: [
-                  {
-                    key: 'Draft - Pending Submission',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'Draft - Pending Submission'
-                  },
-                  {
-                    key: 'Draft - Awaiting Approval',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'Draft - Awaiting Approval'
-                  },
-                  {
-                    key: 'Draft - Approved',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'Draft - Approved'
-                  },
-                  {
-                    key: 'Draft - Declined',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'Draft - Declined'
-                  },
-                  {
-                    key: 'Open - Submitted Quote',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'Open - Submitted Quote'
-                  },
-                  {
-                    key: 'Open - Under Assessement',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'Open - Under Assessement'
-                  },
-                  {
-                    key: 'Open - Budget Timeline',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#5EB848'
-                    },
-                    tooltip: 'Open - Budget Timeline'
-                  },
-                  {
-                    key: 'Open - Price Negotiation',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'Open - Price Negotiation'
-                  },
-                  {
-                    key: 'Open - Awaiting PO',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'Open - Awaiting PO'
-                  },
-                  {
-                    key: 'Open - PO Received',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'Open - PO Received'
-                  },
-                  {
-                    key: 'Lost - Price',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'Lost - Price'
-                  },
-                  {
-                    key: 'Lost - No Funds',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'Lost - No Funds'
-                  },
-                  {
-                    key: 'Lost - No Stock',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'Lost - No Stock'
-                  },
-                  {
-                    key: 'Lost - No Info',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'Lost - No Info'
-                  },
-                  {
-                    key: 'Lost - Lead Time',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'Lost - Lead Time'
-                  },
-                  {
-                    key: 'Lost - Other',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#FF9901'
-                    },
-                    tooltip: 'Lost - Other'
-                  },
-                  {
-                    key: 'Accepted',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#AB1257'
-                    },
-                    tooltip: 'Accepted'
-                  },
-                  {
-                    key: 'Accepted - Fully',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#AB1257'
-                    },
-                    tooltip: 'Accepted - Fully'
-                  },
-                  {
-                    key: 'Accepted - Partially',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#AB1257'
-                    },
-                    tooltip: 'Accepted - Partially'
-                  },
-                  {
-                    key: 'Accepted - Jobcard',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#AB1257'
-                    },
-                    tooltip: 'Accepted - Jobcard'
-                  },
-                  {
-                    key: 'Expired',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#AB1257'
-                    },
-                    tooltip: 'Expired'
-                  },
-                  {
-                    key: 'Expired - Waiting Feedback',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#AB1257'
-                    },
-                    tooltip: 'Expired - Waiting Feedback'
-                  },
-                  {
-                    key: 'Expired - Waiting Budget',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#AB1257'
-                    },
-                    tooltip: 'Expired - Waiting Budget'
-                  },
-                  {
-                    key: 'Expired - Submitted Quote',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#AB1257'
-                    },
-                    tooltip: 'Expired - Submitted Quote'
-                  },
-                  {
-                    key: 'Deleted',
-                    icon: 'trip_origin',
-                    style: {
-                      color: '#AB1257'
-                    },
-                    tooltip: 'Deleted'
-                  },
-                ]
-              },
-              style: {
-                marginRight: '8px',
-                marginTop: '8px',
+                usecase: 'grid'
               },
               propsMap: {
                 'rowData.status': 'value',
+                'rowData': 'quote'
               },
             },
-            {
-              component: 'core.DropDownMenu',
-              props: {
-                style: {
-                  marginTop: '-10px',
-                },
-                menus: [
-                  {
-                    id: 'Draft - Pending Submission',
-                    key: 'Draft - Pending Submission',
-                    title: 'Draft - Pending Submission',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#5EB848'
-                      }
-                    }
-                  },
-                  {
-                    id: 'Draft - Awaiting Approval',
-                    key: 'Draft - Awaiting Approval',
-                    title: 'Draft - Awaiting Approval',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#FF9901'
-                      }
-                    }
-
-                  },
-                  {
-                    id: 'Draft - Approved',
-                    key: 'Draft - Approved',
-                    title: 'Draft - Approved',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Draft - Declined',
-                    key: 'Draft - Declined',
-                    title: 'Draft - Declined',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Open - Submitted Quote',
-                    key: 'Open - Submitted Quote',
-                    title: 'Open - Submitted Quote',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Open - Under Assessement',
-                    key: 'Open - Under Assessement',
-                    title: 'Open - Under Assessement',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Open - Budget Timeline',
-                    key: 'Open - Budget Timeline',
-                    title: 'Open - Budget Timeline',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Open - Price Negotiation',
-                    key: 'Open - Price Negotiation',
-                    title: 'Open - Price Negotiation',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Open - Awaiting PO',
-                    key: 'Open - Awaiting PO',
-                    title: 'Open - Awaiting PO',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Open - PO Received',
-                    key: 'Open - PO Received',
-                    title: 'Open - PO Received',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Lost - Price',
-                    key: 'Lost - Price',
-                    title: 'Lost - Price',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Lost - No Funds',
-                    key: 'Lost - No Funds',
-                    title: 'Lost - No Funds',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Lost - No Stock',
-                    key: 'Lost - No Stock',
-                    title: 'Lost - No Stock',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Lost - No Info',
-                    key: 'Lost - No Info',
-                    title: 'Lost - No Info',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Lost - Lead Time',
-                    key: 'Lost - Lead Time',
-                    title: 'Lost - Lead Time',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Lost - Other',
-                    key: 'Lost - Other',
-                    title: 'Lost - Other',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Accepted',
-                    key: 'Accepted',
-                    title: 'Accepted',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Accepted - Fully',
-                    key: 'Accepted - Fully',
-                    title: 'Accepted - Fully',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Accepted - Partially',
-                    key: 'Accepted - Partially',
-                    title: 'Accepted - Partially',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Accepted - Jobcard',
-                    key: 'Accepted - Jobcard',
-                    title: 'Accepted - Jobcard',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Expired',
-                    key: 'Expired',
-                    title: 'Expired',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Expired - Waiting Feedback',
-                    key: 'Expired - Waiting Feedback',
-                    title: 'Expired - Waiting Feedback',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Expired - Waiting Budget',
-                    key: 'Expired - Waiting Budget',
-                    title: 'Expired - Waiting Budget',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                  {
-                    id: 'Deleted',
-                    key: 'Deleted',
-                    title: 'Deleted',
-                    icon: 'trip_origin',
-                    iconProps: {
-                      style: {
-                        color: '#AB1257'
-                      }
-                    },
-                  },
-                ]
-              }
-            }
           ],
-          propsMap: {
-            'rowData.status': 'selectedKey'
-          }
         },
         {
           title: 'Total Quote Value', field: 'total',
@@ -662,7 +180,6 @@ const uiSchema: any = {
             'rowData.total': 'value',
           },
         },
-        { title: 'Client', field: 'client' },
         { title: 'Customer', field: 'companyTradingName' },
         { title: 'Account Number', field: 'accountNumber' },
         { title: 'Quote Type', field: 'quoteType' },
@@ -689,23 +206,33 @@ const uiSchema: any = {
         use_case: 'client_activity',
       },
       remoteData: true,
-      // query: 'query',
       query: 'quotes',
       variables: {
         'query.id': 'clientId',
         'query.search': 'search',
+        'query.filter': 'filter',
         'query.filterBy': 'filterBy',
         'query.paging': 'paging',
         'query.periodStart': 'periodStart',
         'query.periodEnd': 'periodEnd',
-        'query.dateFilter': 'quoteDate',
+        'query.dateFilter': 'dateFilter',
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
         'clientId': ['id', 'query.id'],
-        'quotes': 'data'
+        'quotes[].code': 'data[].code',
+        'quotes[].created': 'data[].date',
+        'quotes[].statusName': 'data[].statusName',
+        'quotes[].allowed_statuses[]': 'data[].allowed_statuses',
+        'quotes[].status': 'data[].status',
+        'quotes[].totalVATInclusive': 'data[].total',
+        'quotes[].customer.fullName': 'data[].client',
+        'quotes[].company.tradingName': 'data[].companyTradingName',
+        'quotes[].company.code': 'data[].accountNumber',
+        'quotes[].meta.source.sales_team_id': 'data[].repCode',
+        'quotes[].meta.source.quote_type': 'data[].quoteType',
       },
     },
   }

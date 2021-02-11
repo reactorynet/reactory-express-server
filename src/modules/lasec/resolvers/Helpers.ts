@@ -1595,9 +1595,11 @@ interface PagedClientQuotesParams {
   clientId: string,
   search?: string,
   periodStart: string,
-  periodEnd: string,
+  periodEnd: any,
   quoteDate: string,
+  dateFilter: string,
   filterBy?: string,
+  filter?: string,
   paging: {
     page: number,
     pageSize: number
@@ -1618,7 +1620,9 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
     periodStart,
     periodEnd,
     quoteDate,
+    dateFilter,
     filterBy = "any_field",
+    filter,
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
@@ -1634,24 +1638,87 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
     quotes: [],
   };
 
-
-  // if (filterBy === "any_field" || search.length < 3) {
-    // return empy_result;
-  // }
-
-  let apiFilter = {
+  let apiFilter: any = {
     customer_id: clientId,
-    [filterBy]: search,
+    // [filterBy]: search,
     // start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     // end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
-
-  if (quoteDate) {
-    apiFilter.start_date = moment(quoteDate).startOf('day').toISOString();
-    apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
+  const DEFAULT_FILTER = {
+    customer_id: clientId,
   }
 
-  // const exampleFilter = { "filter": { "sales_team_id": "100", "customer_id": "15366" }, }
+  const empty_response: any = {
+    paging: pagingResult,
+    periodStart,
+    periodEnd,
+    filter,
+    filterBy,
+    clientId,
+    quotes: []
+  };
+
+  switch (filterBy) {
+    case 'any_field': {
+      delete apiFilter.start_date
+      delete apiFilter.end_date
+      if (isString(search) === false && filter === undefined) {
+        apiFilter = DEFAULT_FILTER;
+      } else {
+        apiFilter.any_field = search;
+      }
+      // if (search.length > 0) delete apiFilter.sales_team_id;
+      break;
+    }
+    case "date_range": {
+      delete apiFilter.date_range;
+      apiFilter.start_date = periodStart ? moment(periodStart).toISOString() : moment().startOf('year');
+      apiFilter.end_date = periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day');
+      // if (search && search.length >= 3) apiFilter.any_field = search;
+      // delete apiFilter.sales_team_id;
+      break;
+    }
+    case "quote_number": {
+      // if (isString(search) === false && filter === undefined) {
+      //   return empty_response;
+      // }
+      // delete apiFilter.customer_id;
+      apiFilter[filterBy] = search;
+      // apiFilter.ids = [search];
+      // delete apiFilter.sales_team_id;
+      break;
+    }
+    case "quote_date": {
+      apiFilter.created = moment(filter).format('YYYY-MM-DD')
+      delete apiFilter.sales_team_id;
+      break;
+    }
+    case "quote_status": {
+      apiFilter.quote_status = `${filter},${filter}`;
+      delete apiFilter.sales_team_id;
+      break;
+    }
+    default:
+      break;
+  }
+
+
+  // if (filterBy == 'date_range') {
+  //   apiFilter.start_date = moment(periodStart).toISOString();
+  //   apiFilter.end_date = moment(periodEnd).toISOString();
+  // }
+
+  // if (filterBy == 'quote_date') {
+    // apiFilter.created = moment(dateFilter).format('YYYY-MM-DD')
+    // apiFilter.start_date = moment(dateFilter).startOf('day').toISOString();
+    // apiFilter.end_date = moment(dateFilter).endOf('day').toISOString();
+  // }
+
+  // if (filterBy == 'any_field' || filterBy == 'quote_number' || filterBy == 'quote_status' || filterBy == 'account_number' || filterBy == 'quote_type' || filterBy == 'quote_number') {
+  //   apiFilter[filterBy] = search;
+  //   delete apiFilter.start_date;
+  //   delete apiFilter.end_date;
+  // }
 
   logger.debug(`GETTING QUOTE RESULTS:: ${JSON.stringify(apiFilter)}`);
 
@@ -1683,6 +1750,7 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
   quotes = quoteSyncResult.map(doc => doc);
 
   let result = {
+    clientId,
     paging: pagingResult,
     search,
     filterBy,
