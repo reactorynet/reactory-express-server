@@ -28,7 +28,7 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       salesOrders: { xs: 12 }
     }
@@ -301,12 +301,14 @@ const uiSchema: any = {
         toolbar: true,
       },
       componentMap: {
-        Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0',        
-      },      
+        Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0',
+      },
       toobarPropsMap: {
-        'toolbarProps.filterBy': 'query.filterBy',
+        'formContext.formData.id': 'query.id',
+        'formContext.formData.search': 'query.search',
+        'formContext.formData.filterBy': 'query.filterBy',
         'formContext.formData.filter': 'query.filter',
-        'toolbarProps.use_case': 'use_case', 
+        'toolbarProps.use_case': 'use_case',
       },
       toolbarProps: {
         filterBy: 'client_id',
@@ -315,6 +317,7 @@ const uiSchema: any = {
       remoteData: true,
       query: 'client_sales_orders',
       variables: {
+        'query.id': 'clientId',
         'query.search': 'search',
         'query.filter': 'filter',
         'query.filterBy': 'filterBy',

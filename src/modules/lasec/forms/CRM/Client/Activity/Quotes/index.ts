@@ -197,8 +197,8 @@ const uiSchema: any = {
       toobarPropsMap: {
         'formContext.formData.id': 'query.id',
         'formContext.formData.search': 'query.search',
-        'toolbarProps.filterBy': 'query.filterBy',
         'formContext.formData.filter': 'query.filter',
+        'toolbarProps.filterBy': 'query.filterBy',
         'toolbarProps.use_case': 'use_case',
       },
       toolbarProps: {

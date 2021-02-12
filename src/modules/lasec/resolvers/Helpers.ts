@@ -1416,7 +1416,7 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams, context: 
     page: paging.page || 1,
     hasNext: false,
     pageSize: paging.pageSize || 10
-  };
+  }; RepCodeFilter
 
   let apiFilter: any = {
     sales_team_id: lasec_user.sales_team_id,
@@ -1442,18 +1442,13 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams, context: 
 
   switch (filterBy) {
     case "any_field": {
-      //make sure we have a search value
-      delete apiFilter.start_date
-      delete apiFilter.end_date
+      delete apiFilter.start_date;
+      delete apiFilter.end_date;
 
-      if (isString(search) === false && filter === undefined) {
-        apiFilter = DEFAULT_FILTER;
-      } else {
-        apiFilter.any_field = search;
-      }
+      if (isString(search) === false && filter === undefined) apiFilter = DEFAULT_FILTER;
+      else apiFilter.any_field = search;
 
       if (search.length > 0) delete apiFilter.sales_team_id;
-
 
       break;
     }
@@ -1638,6 +1633,8 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
     quotes: [],
   };
 
+  let lasec_user: Lasec360User = await getLoggedIn360User(false, context).then();
+
   let apiFilter: any = {
     customer_id: clientId,
     // [filterBy]: search,
@@ -1662,63 +1659,59 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
     case 'any_field': {
       delete apiFilter.start_date
       delete apiFilter.end_date
-      if (isString(search) === false && filter === undefined) {
-        apiFilter = DEFAULT_FILTER;
-      } else {
-        apiFilter.any_field = search;
-      }
-      // if (search.length > 0) delete apiFilter.sales_team_id;
+      if (isString(search) === false && filter === undefined) apiFilter = DEFAULT_FILTER;
+      else apiFilter.any_field = search;
       break;
     }
     case "date_range": {
       delete apiFilter.date_range;
       apiFilter.start_date = periodStart ? moment(periodStart).toISOString() : moment().startOf('year');
       apiFilter.end_date = periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day');
-      // if (search && search.length >= 3) apiFilter.any_field = search;
-      // delete apiFilter.sales_team_id;
-      break;
-    }
-    case "quote_number": {
-      // if (isString(search) === false && filter === undefined) {
-      //   return empty_response;
-      // }
-      // delete apiFilter.customer_id;
-      apiFilter[filterBy] = search;
-      // apiFilter.ids = [search];
-      // delete apiFilter.sales_team_id;
+      if (search && search.length >= 3) apiFilter.any_field = search;
       break;
     }
     case "quote_date": {
-      apiFilter.created = moment(filter).format('YYYY-MM-DD')
-      delete apiFilter.sales_team_id;
+      apiFilter.start_date = moment(dateFilter).startOf('day').toISOString();
+      apiFilter.end_date = moment(dateFilter).endOf('day').toISOString();
+      break;
+    }
+    case "quote_number": {
+      if (search === '') return empty_response;
+      delete apiFilter.customer_id;
+      apiFilter[filterBy] = search;
       break;
     }
     case "quote_status": {
+      if (filter === undefined) return empty_response;
       apiFilter.quote_status = `${filter},${filter}`;
-      delete apiFilter.sales_team_id;
+      delete apiFilter.customer_id;
       break;
     }
-    default:
+    case "customer": {
+      if (search === '') return empty_response;
+      apiFilter.company_name = search;
+      // delete apiFilter.customer_id;
       break;
+    }
+    case "account_number": {
+      apiFilter.account_number = search;
+      // delete apiFilter.customer_id;
+      break;
+    }
+    case "quote_type": {
+      apiFilter.quote_type = filter;
+      // delete apiFilter.customer_id;
+      break;
+    }
+    case "rep_code": {
+      apiFilter.sales_team_id = filter || lasec_user.sales_team_id
+      break;
+    }
+    default: {
+      logger.error(`NO MATCHING FILTERBY OPTIONS!!!!!`);
+      break;
+    }
   }
-
-
-  // if (filterBy == 'date_range') {
-  //   apiFilter.start_date = moment(periodStart).toISOString();
-  //   apiFilter.end_date = moment(periodEnd).toISOString();
-  // }
-
-  // if (filterBy == 'quote_date') {
-    // apiFilter.created = moment(dateFilter).format('YYYY-MM-DD')
-    // apiFilter.start_date = moment(dateFilter).startOf('day').toISOString();
-    // apiFilter.end_date = moment(dateFilter).endOf('day').toISOString();
-  // }
-
-  // if (filterBy == 'any_field' || filterBy == 'quote_number' || filterBy == 'quote_status' || filterBy == 'account_number' || filterBy == 'quote_type' || filterBy == 'quote_number') {
-  //   apiFilter[filterBy] = search;
-  //   delete apiFilter.start_date;
-  //   delete apiFilter.end_date;
-  // }
 
   logger.debug(`GETTING QUOTE RESULTS:: ${JSON.stringify(apiFilter)}`);
 
@@ -2581,18 +2574,34 @@ export const getClientInvoices = async (params: any, context: Reactory.IReactory
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('month'),
   };
 
-  if (filterBy == 'invoice_date') {
-    apiFilter.using = filterBy;
-    apiFilter.start_date = moment(dateFilter).startOf('day');
-    apiFilter.end_date = moment(dateFilter).endOf('day');
-  }
+  switch (filterBy) {
 
-  if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
-    apiFilter[filterBy] = search;
+    case 'any_field':
+    case 'invoice_number':
+    case 'po_number':
+    case 'invoice_value':
+    case 'account_number':
+    case 'dispatch_number':
+    case 'iso_number':
+    case 'quote_number':
+    case 'sales_team_id': {
 
-    // remove date range on specific search values
-    delete apiFilter.start_date;
-    delete apiFilter.end_date;
+      apiFilter[filterBy] = search;
+      delete apiFilter.start_date;
+      delete apiFilter.end_date;
+
+      break;
+    }
+    case "invoice_date": {
+      apiFilter.using = filterBy;
+      apiFilter.start_date = moment(dateFilter).startOf('day');
+      apiFilter.end_date = moment(dateFilter).endOf('day');
+      break;
+    }
+    default: {
+      logger.error(`NO MATCHING FILTERBY OPTIONS!!!!!`);
+      break;
+    }
   }
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
