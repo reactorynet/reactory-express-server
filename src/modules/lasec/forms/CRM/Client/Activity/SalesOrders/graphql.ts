@@ -30,6 +30,7 @@ const graphql: Reactory.IFormGraphDefinition = {
             hasNext
             pageSize
           }
+          clientId
           salesOrders {
             id
             salesOrderNumber
@@ -48,16 +49,16 @@ const graphql: Reactory.IFormGraphDefinition = {
             warehouseNote
             deliveryNote
             salesTeam
-  
+
             value,
             reserveValue
             shipValue
             backorderValue
-  
+
             documentIds
           }
         }
-      }`,      
+      }`,
       autoQuery: false,
       resultType: 'object',
       edit: false,

@@ -140,12 +140,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
+                format: '${rowData.orderDate != "" ? api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
           },
           propsMap: {
-            'rowData.date': 'value',
+            'rowData.orderDate': 'value',
           }
         },
         {
@@ -156,7 +156,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
+                format: '${rowData.shippingDate != "" ? api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
           },
@@ -172,7 +172,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
+                format: '${rowData.quoteDate != "" ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
           },
@@ -212,7 +212,6 @@ const uiSchema: any = {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
                 'color': 'black',
-                'fontSize': '1rem'
               }
             },
             windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
@@ -245,7 +244,6 @@ const uiSchema: any = {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
                 'color': 'black',
-                'fontSize': '1rem'
               }
             },
             backNavigationConfig: {
@@ -330,6 +328,7 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
+        'clientId': ['id', 'query.id'],
         'salesOrders.[].id': 'data.[].id',
         'salesOrders.[].salesOrderNumber': 'data.[].salesOrderNumber',
         'salesOrders.[].orderDate': 'data.[].orderDate',

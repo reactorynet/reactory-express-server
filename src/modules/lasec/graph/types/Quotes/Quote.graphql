@@ -489,6 +489,7 @@ type PagedCRMSalesOrders {
   salesOrders: [SalesOrder]
   totals: Any
   id: String
+  clientId: String
   image: String
   code: String
   description: String
