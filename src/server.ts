@@ -1,3 +1,4 @@
+// eslint-disable
 import fs from 'fs';
 import dotenv from 'dotenv';
 import moment from 'moment';
@@ -7,15 +8,10 @@ import https from 'https';
 import sslrootcas from 'ssl-root-cas/latest';
 import express, { Application } from 'express';
 import session from 'express-session';
-
 import bodyParser from 'body-parser';
 import passport from 'passport';
 import { ApolloServer, gql, ApolloServerExpressConfig } from 'apollo-server-express';
-import { Reactory } from '@reactory/server-core/types/reactory';
-// import { makeExecutableSchema } from 'graphql-tools';
-
 import flash from 'connect-flash';
-// import { graphqlUploadExpress } from 'graphql-upload';
 import mongooseConnection from './mongoose';
 import corsOptions from './config/cors';
 import reactoryClientAuthenticationMiddleware from './middleware/ReactoryClient';
@@ -28,6 +24,7 @@ import typeDefs from './models/graphql/types';
 import resolvers from './models/graphql/resolvers';
 import AuthConfig from './authentication';
 import workflow from './workflow';
+import uuid from 'uuid';
 import pdf from './pdf';
 import { ExcelRouter } from './excel';
 import amq from './amq';
@@ -36,7 +33,7 @@ import startup from './utils/startup';
 import { getService } from './services';
 import logger from './logging';
 import { split } from 'lodash';
-
+import { Reactory } from 'types/reactory';
 
 
 const {
@@ -60,12 +57,13 @@ const {
   OAUTH_AUTHORIZE_ENDPOINT,
   OAUTH_TOKEN_ENDPOINT,
   SECRET_SAUCE,
-  SERVER_ID
+  SERVER_ID,
+  MAX_FILE_UPLOAD = '20mb',
 } = process.env;
 
-mongooseConnection.then((connectionResult) => {
-  logger.debug(`✅Connection to mongoose complete`);
-}).catch((error) => {
+mongooseConnection.then(() => {
+  logger.debug('✅Connection to mongoose complete');
+}).catch((error: Error) => {
 
   logger.error(`
   ################################################
@@ -77,10 +75,12 @@ mongooseConnection.then((connectionResult) => {
   db: ${MONGOOSE}
   user: ${MONGO_USER || '!!NOT-SET!!'}
   pass: ${MONGO_PASSWORD ? '****' : '!!NOT-SET!!'}
+  err: ${error.messagte}
   ################################################
+
   `);
   process.exit(0);
-})
+});
 
 const ca = sslrootcas.create();
 https.globalAgent.options.ca = ca;
@@ -141,11 +141,8 @@ Environment Settings:
 logger.info(ENV_STRING_DEBUG);
 
 const queryRoot = '/api';
-const graphiql = '/q';
 const resourcesPath = '/cdn';
 const publicFolder = path.join(__dirname, 'public');
-
-
 
 let apolloServer: ApolloServer = null;
 let graphcompiled: boolean = false;
@@ -156,22 +153,23 @@ const reactoryExpress: Application = express();
 reactoryExpress.use('*', cors(corsOptions));
 reactoryExpress.use(reactoryClientAuthenticationMiddleware);
 reactoryExpress.use(queryRoot,
-  //authentication
+  // authentication
   passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
-  //bodyparser options
-  bodyParser.json({ limit: '20mb' }));
+  bodyParser.json({ limit: MAX_FILE_UPLOAD }));
 
 try {
   //app.use(queryRoot, graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
   let expressConfig: ApolloServerExpressConfig = {
     typeDefs,
     resolvers,
-    context: ($session: any, currentContext: any) => {
+    context: async ($session: any, currentContext: any) => {
 
-      const newContext: any = {
+      let newContext: any = {
         ...currentContext,
         user: $session.req.user,
         partner: $session.req.partner,
+        $request: $session.req,
+        $response: $session.res,
       };
 
       const $getService = (id: string, props: any = undefined) => {
@@ -181,7 +179,16 @@ try {
         });
       };
 
+      const executionContextServiceName = newContext.partner.getSetting('execution_context_service');
+      if (executionContextServiceName && executionContextServiceName.data && `${executionContextServiceName.data}`.indexOf('@') > 0) {
+        const partnerContextService: Reactory.IExecutionContextProvider = $getService(executionContextServiceName.data);
+        if (partnerContextService && partnerContextService.getContext) {
+          newContext = await partnerContextService.getContext(newContext).then();
+        }
+      }
+
       return {
+        id: uuid(),
         ...newContext,
         getService: $getService,
       };
@@ -192,7 +199,6 @@ try {
     },
   };
   apolloServer = new ApolloServer(expressConfig);
-  //schema = makeExecutableSchema({ typeDefs, resolvers });
   graphcompiled = true;
   logger.info('Graph Schema Compiled, starting express');
 } catch (schemaCompilationError) {
@@ -207,31 +213,31 @@ try {
 
 reactoryExpress.set('trust proxy', NODE_ENV == "development" ? 0 : 1);
 
-//TODO: Werner Weber - investigate session and session management for auth.
+// TODO: Werner Weber - investigate session and session management for auth.
 const sessionOptions: session.SessionOptions = {
-  //name: "connect.sid",
+  // name: "connect.sid",
   secret: SECRET_SAUCE,
   resave: false,
   saveUninitialized: false,
   unset: 'destroy',
-  //proxy: NODE_ENV === 'development' ? false : true,
+  // proxy: NODE_ENV === 'development' ? false : true,
   cookie: {
     domain: DOMAIN_NAME,
     maxAge: 60 * 5 * 1000,
-    //httpOnly: NODE_ENV === 'development' ? true : false,
-    //sameSite: 'lax',
-    //secure: NODE_ENV === 'development' ? false : true,
+    // httpOnly: NODE_ENV === 'development' ? true : false,
+    // sameSite: 'lax',
+    // secure: NODE_ENV === 'development' ? false : true,
   },
 };
 
-logger.debug(`Session Configuration`, sessionOptions);
+logger.debug('Session Configuration', sessionOptions);
 
 const oldOptions = {
   secret: SECRET_SAUCE,
   resave: false,
   saveUninitialized: false,
   unset: 'destroy',
-}
+};
 
 reactoryExpress.use(session(oldOptions));
 reactoryExpress.use(bodyParser.urlencoded({ extended: false }));
@@ -250,7 +256,10 @@ if (apolloServer) {
 
 amq.raiseSystemEvent('server.startup.begin');
 
-startup().then((startResult) => {
+// TODO: Werner Weber - Update the start result object to contain
+// more useful information about the server environment, configuration
+// output.
+startup().then((startResult: any) => {
 
   AuthConfig.Configure(reactoryExpress);
   reactoryExpress.use(userAccountRouter);
@@ -260,19 +269,14 @@ startup().then((startResult) => {
   reactoryExpress.use('/workflow', workflow);
   reactoryExpress.use('/resources', resources);
   reactoryExpress.use('/pdf', passport.authenticate(
-    ['jwt'],
-    { session: false }),
-    bodyParser.urlencoded({ extended: true }
-    ), pdf);
+    ['jwt'], { session: false }),
+    bodyParser.urlencoded({ extended: true }), pdf);
   reactoryExpress.use('/excel', ExcelRouter);
   reactoryExpress.use('/charts', charts);
   reactoryExpress.use('/amq', amq.router);
   reactoryExpress.use(resourcesPath,
-    passport.authenticate(
-      ['jwt', 'anonymous'],
-      { session: false }),
-    bodyParser.urlencoded({ extended: true }
-    ),
+    passport.authenticate(['jwt', 'anonymous'], { session: false }),
+    bodyParser.urlencoded({ extended: true }),
     express.static(APP_DATA_ROOT || publicFolder));
   reactoryExpress.listen(API_PORT);
   reactoryExpress.use(flash());
@@ -281,8 +285,10 @@ startup().then((startResult) => {
   if (graphcompiled === true) logger.info(`✅ Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
   else logger.info(`🩺 GraphQL API not available - ${graphError}`);
 
-  logger.info(`✅ System Initialized/Ready, enabling app`);
+  logger.info('✅ System Initialized/Ready, enabling app');
   global.REACTORY_SERVER_STARTUP = new Date();
   amq.raiseSystemEvent('server.startup.complete');
-
+}).catch((startupError) => {
+  logger.error('Server was unable to start successfully.', startupError);
+  process.exit(0);
 });

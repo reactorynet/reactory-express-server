@@ -188,7 +188,7 @@
     "@types/chart.js": "2.7.15",
     "@types/co": "^4.6.2",
     "@types/connect-flash": "0.0.34",
-    "@types/dotenv": "8.2.0",
+    "@types/dotenv": "^8.2.0",
     "@types/ejs": "^2.5.1",
     "@types/elliptic": "^6.4.12",
     "@types/express": "^4.17.2",

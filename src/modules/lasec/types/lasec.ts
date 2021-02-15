@@ -332,6 +332,9 @@ export interface Lasec360Quote {
   number_of_items: number
   description?: string
 
+  currency_symbol: string,
+  currency_id: string
+
   status: string
   status_name: string
   status_id: string,
@@ -977,8 +980,8 @@ export interface LasecCurrency {
   code: string
   name: string
   symbol: string
-  spot_rate: string
-  web_rate: string
+  spot_rate: number
+  web_rate: number
 }
 
 export interface LasecLogData {
@@ -1002,3 +1005,5 @@ export interface LasecDatabase extends IReactoryDatabase {
     LasecGetCurrencies: (queryCommand: any, context: Reactory.IReactoryContext) => Promise<LasecCurrency[]>
   }
 }
+
+export interface ILasecContextProvider extends Reactory.Service.IReactoryContextAwareService, Reactory.IExecutionContextProvider { }

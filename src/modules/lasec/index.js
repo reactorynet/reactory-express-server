@@ -19,5 +19,5 @@ export default {
   },
   workflows: [...lasecWorkflows],
   forms: [...lasecForms],
-  services: [...lasecServices]
+  services: [...lasecServices],
 };

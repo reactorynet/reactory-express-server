@@ -1037,6 +1037,10 @@ const LASEC_CONFIG = {
       data: ['USER'],
     },
     {
+      name: 'execution_context_service',
+      data: 'lasec-crm.LasecExecutionContextProvider@1.0.0',
+    },
+    {
       name: 'email_redirect/DEVELOP',
       data: {
         email: 'werner.weber+lasecredirect@gmail.com',

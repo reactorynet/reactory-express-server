@@ -27,7 +27,9 @@ const {
   MYSQL_DB_USER = 'mores',
   MYSQL_DB_PASSWORD = 'mores_password',
   MYSQL_DB_DATABASE = 'mores_local',
-  MYSQL_DB_PORT = 3306
+  MYSQL_DB_PORT = 3306,
+  MAIL_REDIRECT_ENABLED = 'development',
+  MAIL_REDIRECT_ADDRESS = null,
 } = process.env;
 
 /**
@@ -50,7 +52,7 @@ const APPLICATION_ROLES = {
 
 };
 
-const  applicationRoles = [
+const applicationRoles = [
   APPLICATION_ROLES.USER,
   APPLICATION_ROLES.DEVELOPER,
   APPLICATION_ROLES.ADMIN,
@@ -195,22 +197,22 @@ const Menus = {
           icon: 'assessment',
           roles: [APPLICATION_ROLES.ORGANIZATION_ADMIN, APPLICATION_ROLES.DEVELOPER],
         },
-       /* {
-          ordinal: 2,
-          title: 'Partner Dashboard',
-          link: '/dashboard/partner/',
-          icon: 'assessment',
-          roles: [APPLICATION_ROLES.PARTNER_ADMIN,  APPLICATION_ROLES.DEVELOPER],
-        },
-
-        {
-          ordinal: 3,
-          title: 'Facilitator Dashboard',
-          link: '/dashboard/facilitator/',
-          icon: 'assessment',
-          roles: [APPLICATION_ROLES.FACILITATOR,  APPLICATION_ROLES.DEVELOPER],
-        },
-        */
+        /* {
+           ordinal: 2,
+           title: 'Partner Dashboard',
+           link: '/dashboard/partner/',
+           icon: 'assessment',
+           roles: [APPLICATION_ROLES.PARTNER_ADMIN,  APPLICATION_ROLES.DEVELOPER],
+         },
+ 
+         {
+           ordinal: 3,
+           title: 'Facilitator Dashboard',
+           link: '/dashboard/facilitator/',
+           icon: 'assessment',
+           roles: [APPLICATION_ROLES.FACILITATOR,  APPLICATION_ROLES.DEVELOPER],
+         },
+         */
         {
           ordinal: 4,
           title: 'Administrator Dashboard',
@@ -756,7 +758,7 @@ const routes = [
     componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
   },
 
-  ...staticContentMappings.map(( m ) => ({...m, componentFqn: 'core.StaticContent@1.0.0'})),
+  ...staticContentMappings.map((m) => ({ ...m, componentFqn: 'core.StaticContent@1.0.0' })),
 
 
 ];

@@ -46,6 +46,7 @@ import {
   FreightRequestQuoteDetail,
   LasecTransportationMode,
   FreightRequestProductDetail,
+  LasecCurrency,
 
 } from '../types/lasec';
 
@@ -359,7 +360,6 @@ export default {
         if (customer_full_name && customer_id) {
           // Check if a customer with this reference exists?          
           // eslint-disable-next-line / tslint:disable-next-line 
-          debugger
           let _customer = await User.findByForeignId(customer_id, context.partner.key).then();
           if (_customer !== null) {
             logger.debug(`Customer ${_customer.fullName(false)} found via foreign reference`);
@@ -448,12 +448,10 @@ export default {
       return headers;
     },
     lineItems: async (quote: any, args: any, context: Reactory.IReactoryContext, info: any) => {
-      debugger
       if (!quote.lineItems || quote.lineItems.length === 0) quote = await $PagedLineItemsResponse(quote, context, info).then()
       return quote.lineItems;
     },
     item_paging: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext, info: any) => {
-      debugger
       if (!quote.item_paging) quote = await $PagedLineItemsResponse(quote, context, info).then()
       return quote.item_paging;
     },
@@ -633,13 +631,73 @@ export default {
 
       return 0;
     },
-    totalVATInclusive: (quote: LasecQuote) => {
+    totalVATInclusive: async (quote: LasecQuote, fieldArgs: any, context: Reactory.IReactoryContext): Promise<number> => {
       const { totals, meta } = quote;
+      const _totals = totalsFromMeta(meta);
+      let _totalVATInclusive = _totals.totalVATInclusive;
+
+      if (_totalVATInclusive === 0) return _totalVATInclusive;
+
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0');
+      const currencies = await quoteService.getCurrencies().then();
+
+      if (currencies) {
+        const currency_id = parseInt(meta.source.currency_id || "1");
+        if (currency_id !== 1) {
+          let activeCurrency = lodash.find(currencies, { id: currency_id });
+          if (activeCurrency.web_rate) {
+            logger.debug(`Currency is ${meta.source.currency_symbol} with rate ${activeCurrency.web_rate}`)
+            _totalVATInclusive = _totals.totalVATInclusive / activeCurrency.web_rate;
+          }
+        }
+      }
+
+      logger.debug(`Total for Quote Inclusive ${meta.source.currency_symbol} ${_totalVATInclusive}`);
+      return _totalVATInclusive;
+    },
+    totalVATExclusiveQuoteCurrency: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext): Promise<number> => {
+      const { totals, meta } = quote;
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0');
+      const currencies = await quoteService.getCurrencies().then();
+
+      if (currencies) {
+        let activeCurrency = lodash.find(currencies, { code: quote.activeCurrency });
+        if (activeCurrency.web_rate) {
+          const _totals = totalsFromMeta(meta);
+          return _totals.totalVATInclusive / activeCurrency.web_rate
+        }
+      }
 
       if (totals && totals.totalVATInclusive) return totals.totalVATInclusive;
 
       if (meta.source) {
         const _totals = totalsFromMeta(meta);
+        quote.totals = _totals;
+        return _totals.totalVATInclusive;
+      }
+
+      return 0;
+    },
+    totalVATInclusiveQuoteCurrency: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext): Promise<number> => {
+      const { totals, meta } = quote;
+
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0');
+      const _totals = totalsFromMeta(meta);
+
+
+      const currencies = await quoteService.getCurrencies().then();
+
+      if (currencies) {
+        let activeCurrency = lodash.find(currencies, { symbol: quote.meta.source.currency_symbol });
+        if (activeCurrency && activeCurrency.web_rate) {
+          return _totals.totalVATExclusive / activeCurrency.web_rate
+        }
+      }
+
+
+      if (totals && totals.totalVATExclusive) return totals.totalVATExclusive;
+
+      if (meta.source) {
         quote.totals = _totals;
         return _totals.totalVATInclusive;
       }
@@ -709,7 +767,7 @@ export default {
     options: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext): Promise<LasecQuoteOption[]> => {
       let result: LasecQuoteOption[] = [];
 
-      debugger
+
       const { source } = quote.meta;
       const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0');
 
@@ -735,6 +793,19 @@ export default {
       }
 
       return result;
+    },
+    activeCurrency: async (quote: LasecQuote, args: any, context: Reactory.IReactoryContext): Promise<LasecCurrency> => {
+
+      const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0');
+      const currencies = await quoteService.getCurrencies().then();
+
+      if (currencies) {
+        let activeCurrency = lodash.find(currencies, { symbol: quote.meta.source.currency_symbol });
+
+        return activeCurrency;
+      }
+
+      throw new ApiError(`No active currency information found for quote ${quote.code}`)
     }
   },
   LasecCompany: {

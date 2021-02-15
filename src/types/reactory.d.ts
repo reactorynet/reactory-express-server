@@ -370,6 +370,9 @@ declare namespace Reactory {
   export interface IReactoryFileModel extends IReactoryFile, IReactoryFileStatic { }
   /** ReactoryFile Management Models Interface -- End */
 
+  /**
+   * @deprecated - Use IReactoryContext instead.
+   */
   export interface ReactoryExecutionContext extends IReactoryContext { }
 
   export interface ISchemaObjectProperties {
@@ -910,13 +913,15 @@ declare namespace Reactory {
     items: T[]
     [key: string]: any
   }
-
   export interface IReactoryContext {
+    id: string,
     user: Reactory.IUserDocument
     partner: Reactory.IReactoryClientDocument
     getService: (fqn: string, props?: any, context?: Reactory.IReactoryContext) => any,
     [key: string]: any
   }
-}
 
-// declare module 'human-number';
+  export interface IExecutionContextProvider {
+    getContext: (currentContext: IReactoryContext) => Promise<IReactoryContext>
+  }
+}

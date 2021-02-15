@@ -179,7 +179,6 @@ export const LoggedInLasecUserHashKey = ($partner: Reactory.IReactoryClientDocum
     throw new LasecNotAuthenticatedException(`User is not currently authentication with 360`);
   }
 
-  debugger
   const lasec_creds: Lasec360Credentials = credsFromAuthentication(_authentication);
   if (lasec_creds && lasec_creds.payload) {
     let staff_user_id: string = "";
@@ -1560,22 +1559,25 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams, context: 
   }
 
 
-  // logger.debug(`Loading (${ids.length}) quote ids`);
+  let quotes = [];
 
-  let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }, context).then();
-  logger.debug(`Fetched Expanded View for (${quoteDetails.items.length}) Quotes from API`);
-  let quotes = [...quoteDetails.items];
+  if (ids.length > 0) {
+    let quoteDetails = await lasecApi.Quotes.list({ filter: { ids: ids } }, context).then();
+    logger.debug(`Fetched Expanded View for (${quoteDetails.items.length}) Quotes from API`);
+    quotes = [...quoteDetails.items];
 
 
-  logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
+    logger.debug(`QUOTE DOC:: ${JSON.stringify(quotes[0])}`);
 
-  const quoteSyncResult = await Promise.all(quotes.map((quote) => {
-    return synchronizeQuote(quote.id, context.partner.key, quote, true, context);
-  })).then();
+    const quoteSyncResult = await Promise.all(quotes.map((quote) => {
+      return synchronizeQuote(quote.id, context.partner.key, quote, true, context);
+    })).then();
 
-  logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
+    logger.debug(`QUOTE DOC:: ${JSON.stringify(quoteSyncResult[0])}`);
 
-  quotes = quoteSyncResult.map(doc => doc);
+    quotes = quoteSyncResult.map(doc => doc);
+
+  }
 
   let result = {
     paging: pagingResult,
@@ -1636,7 +1638,7 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
 
 
   // if (filterBy === "any_field" || search.length < 3) {
-    // return empy_result;
+  // return empy_result;
   // }
 
   let apiFilter = {
@@ -3270,7 +3272,6 @@ export const updateQuote = async (params: ILasecUpdateQuoteExpectedParams, conte
       let _id = 0;
 
       const currencies = await quoteService.getCurrencies().then();
-      debugger
       currencies.forEach((c) => {
         if (c.code === currency_code) {
           updateParams.values.currency_id = c.id;

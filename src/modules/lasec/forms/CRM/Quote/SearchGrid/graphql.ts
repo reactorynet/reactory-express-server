@@ -1,7 +1,7 @@
 import { Reactory } from "@reactory/server-core/types/reactory";
 import { fileAsString } from "@reactory/server-core/utils/io";
 
-const graphql: Reactory.IFormGraphDefinition = { 
+const graphql: Reactory.IFormGraphDefinition = {
   queries: {
     quotes: {
       name: 'LasecGetCRMQuoteList',
@@ -40,7 +40,12 @@ const graphql: Reactory.IFormGraphDefinition = {
             statusName
             status
             allowed_statuses
-            totalVATInclusive
+            activeCurrency {
+              id
+              code
+              symbol
+              web_rate
+            }
             customer {
               id
               fullName
@@ -52,13 +57,14 @@ const graphql: Reactory.IFormGraphDefinition = {
               tradingName
               code
             }
+            totalVATInclusive
             totalVATExclusive
             repCode
             meta
           }
         }
       }`,
-            
+
       autoQuery: false,
       options: {
         fetchPolicy: 'cache-first'
@@ -66,7 +72,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       queryMessage: 'Search for quote',
       resultType: 'object',
       //waitUntil: '${api.utils.lodash.isNil(api.$LasecUser)===false}',
-      waitTimeout: 4500,      
+      waitTimeout: 4500,
       edit: false,
       new: false,
       onError: {
@@ -85,17 +91,17 @@ const graphql: Reactory.IFormGraphDefinition = {
         }
       }`,
       variables: {
-        'selected[].code': 'quoteIds' 
+        'selected[].code': 'quoteIds'
       },
       objectMap: true,
       onSuccessMethod: 'notification',
       notification: {
         inAppNotification: true,
-        title: 'Successfully deleted ${selected.length} ${selected.length > 1 ? "quotes" : "quote"}',        
+        title: 'Successfully deleted ${selected.length} ${selected.length > 1 ? "quotes" : "quote"}',
       },
-      refreshEvents: [ 
+      refreshEvents: [
         { name: 'LasecQuotesDeleted' }
-       ]
+      ]
     }
   }
 };

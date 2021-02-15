@@ -687,9 +687,7 @@ const Api = {
           if (apiResponse.ok && apiResponse.status === 200 || apiResponse.status === 201) {
             try {
               const json_result = await apiResponse.json().then();
-
               const { status, payload } = json_result;
-              debugger
 
               let remote_file: Reactory.IReactoryFileRemoteEntry = {
                 id: `${payload.id}@${config.SECONDARY_API_URL}`,
@@ -720,7 +718,6 @@ const Api = {
                  * id: number
                  * url: string
                  */
-                debugger
                 link_to_client(payload.id);
                 return reactoryFile;
               } else {

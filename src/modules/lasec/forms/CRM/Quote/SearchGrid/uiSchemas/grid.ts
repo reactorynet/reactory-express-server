@@ -92,6 +92,10 @@ const uiSchema: any = {
           component: 'core.CurrencyLabel@1.0.0',
           propsMap: {
             'rowData.total': 'value',
+            'rowData.activeCurrency.code': 'currency',
+          },
+          props: {
+            variant: 'body2',
           },
         },
         {
@@ -242,6 +246,7 @@ const uiSchema: any = {
         'quotes[].allowed_statuses[]': 'data[].allowed_statuses',
         'quotes[].status': 'data[].status',
         'quotes[].totalVATInclusive': 'data[].total',
+        'quotes[].activeCurrency': 'data[].activeCurrency',
         'quotes[].customer.fullName': 'data[].client',
         'quotes[].company.tradingName': 'data[].companyTradingName',
         'quotes[].company.code': 'data[].accountNumber',

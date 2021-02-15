@@ -169,7 +169,7 @@ const uiSchema: any = {
                     key: 'Draft - Pending Submission',
                     icon: 'trip_origin',
                     style: {
-                      color: '#5EB848'
+                      color: '#5EB848',
                     },
                     tooltip: 'Draft - Pending Submission'
                   },
@@ -179,15 +179,15 @@ const uiSchema: any = {
                     style: {
                       color: '#5EB848'
                     },
-                    tooltip: 'Draft - Awaiting Approval'
+                    tooltip: 'Draft - Awaiting Approval',
                   },
                   {
                     key: 'Draft - Approved',
                     icon: 'trip_origin',
                     style: {
-                      color: '#5EB848'
+                      color: '#5EB848',
                     },
-                    tooltip: 'Draft - Approved'
+                    tooltip: 'Draft - Approved',
                   },
                   {
                     key: 'Draft - Declined',

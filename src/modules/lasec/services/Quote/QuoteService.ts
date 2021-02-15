@@ -32,10 +32,9 @@ class LasecQuoteService implements IQuoteService {
   version: string = '1.0.0';
 
   registry: Reactory.IReactoryServiceRegister
-  context: Reactory.ReactoryExecutionContext
+  context: Reactory.IReactoryContext
 
   constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
-    debugger
     this.registry = props.$services;
     this.context = {
       partner: context.partner,

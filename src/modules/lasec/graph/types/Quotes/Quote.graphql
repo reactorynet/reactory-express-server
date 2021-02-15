@@ -226,8 +226,10 @@ type Quote {
 
   totals: QuoteTotals
   totalVATExclusive: Float
+  totalVATExclusiveQuoteCurrency: Float
   totalVAT: Float
   totalVATInclusive: Float
+  totalVATInclusiveQuoteCurrency: Float
 
   GP: Float
   actualGP: Float
