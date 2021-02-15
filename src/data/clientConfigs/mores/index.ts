@@ -29,7 +29,7 @@ const {
   MYSQL_DB_DATABASE = 'mores_local',
   MYSQL_DB_PORT = 3306,
   MAIL_REDIRECT_ENABLED = 'development',
-  MAIL_REDIRECT_ADDRESS = null,
+  MAIL_REDIRECT_ADDRESS = 'redirected@domain.com',
 } = process.env;
 
 /**
@@ -835,15 +835,15 @@ const config: Reactory.IReactoryClient = {
     {
       name: 'email_redirect/DEVELOP',
       data: {
-        email: 'cmwakio@gmail.com',
-        enabled: true,
+        email: MAIL_REDIRECT_ADDRESS,
+        enabled: MAIL_REDIRECT_ENABLED.indexOf('development') >= 0,
       },
     },
     {
       name: 'email_redirect/PRODUCTION',
       data: {
-        email: 'werner.weber+moreredirect@gmail.com',
-        enabled: false,
+        email: MAIL_REDIRECT_ADDRESS,
+        enabled: MAIL_REDIRECT_ENABLED.indexOf('production') >= 0,
       },
     },
     {

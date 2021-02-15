@@ -232,9 +232,10 @@ export const registerUser = (user) => {
   });
 };
 
-export const sendResetPasswordEmail = (user, partner, options) => {
+// eslint-disable-next-line
+export const sendResetPasswordEmail = (user: Reactory.IUserDocument, partner: Reactory.IReactoryClientDocument, options) => {
   logger.info('sendResetPasswordEmail', { user, partner, options });
-  return emails.sendForgotPasswordEmail(user, null);
+  return emails.sendForgotPasswordEmail(user, null, { user, partner });
 };
 
 /**
@@ -242,6 +243,7 @@ export const sendResetPasswordEmail = (user, partner, options) => {
  * @param {*} user
  * @param {*} imageData
  */
+// eslint-disable-next-line
 export const updateUserProfileImage = (user: any, imageData: string = null, isBuffer = false, isPng = false) => {
 
   if (imageData === null || imageData === undefined) return null;
@@ -254,8 +256,8 @@ export const updateUserProfileImage = (user: any, imageData: string = null, isBu
   const filename = `${APP_DATA_ROOT}/profiles/${user._id}/profile_${user._id}_default.jpeg`;
 
   if (isBuffer === false && typeof imageData === 'string') {
-    if (imageData.startsWith('data:image/png' && isPng === true)) {
-      pngToJpeg({ quality: 90 })(buffer).then(output => writeFileSync(filename, output));
+    if (imageData.startsWith('data:image/png') && isPng === true) {
+      pngToJpeg({ quality: 90 })(buffer).then((output: any) => writeFileSync(filename, output));
     } else writeFileSync(filename, buffer);
   } else {
     writeFileSync(filename, buffer);

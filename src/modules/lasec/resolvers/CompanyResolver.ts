@@ -2609,8 +2609,6 @@ export default {
       const _newClient: LasecNewClientInput = await getCacheItem(hash, null, 60, context.partner).then();
 
       logger.debug(`Current Data Stored In NewClientCache:\n ${JSON.stringify({ client_data: _newClient, newClientParam: args.newClient }, null, 2)}`)
-      debugger
-
 
       let response: NewClientResponse = {
         client: _newClient,
@@ -2764,7 +2762,6 @@ export default {
 
             logger.debug(`🟠 Create new client on LasecAPI using input data:\n ${JSON.stringify(inputData, null, 2)}`)
             customer = await post(URIS.customer_create.url, inputData, null, true, context).then()
-            debugger
             logger.debug(`👀 Result in creating user`, customer);
 
             return customer;
@@ -2778,8 +2775,6 @@ export default {
         };
 
         const doStatusUpdate = async () => {
-
-          debugger
 
           try {
             logger.debug(`🟠 Updating user activity and organization and company details status complete via mysql`, { organization: _newClient.organization, customer: _newClient.customer });
@@ -2917,7 +2912,6 @@ export default {
         }
 
       } catch (error) {
-        debugger
         logger.error(`🚨🚨 Error while processing onboarding ${error.message}`);
       }
 

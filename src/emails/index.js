@@ -40,15 +40,10 @@ const {
  * @param {UserModel} user
  * @param {ReactorClient} partner
  */
-export const resolveUserEmailAddress = (user, reactoryClient = null, context) => {
-  const { partner } = context;
+export const resolveUserEmailAddress = (user, reactoryClient) => {
   const { MODE } = process.env;
 
-  let partnerToUse = partner;
-
-  if (lodash.isNil(reactoryClient) === true) {
-    partnerToUse = reactoryClient;
-  }
+  const partnerToUse = reactoryClient;
 
   // check if we have a redirect setting for this mode
   const redirectSetting = partnerToUse.getSetting(`email_redirect/${MODE}`);
@@ -66,6 +61,13 @@ export const resolveUserEmailAddress = (user, reactoryClient = null, context) =>
   };
 };
 
+
+/**
+ * Activation email sender, currently not in use. Only reference is in prototype
+ * MS based chat bot.
+ * @param {*} user 
+ * @param {*} context 
+ */
 const sendActivationEmail = (user, context) => {
   return new Promise((resolve, reject) => {
     try {
@@ -991,7 +993,7 @@ export const organigramEmails = {
 
 export const queueSurveyEmails = (survey, surveyEmailTask = 'delegateInvites') => {
   const emails = survey.delegates.map((delegate) => {
-    delegateEmail = surveyEmails[surveyEmailTask](delegate, survey);
+    let delegateEmail = surveyEmails[surveyEmailTask](delegate, survey);
     return delegateEmail;
   });
 };
@@ -1006,5 +1008,5 @@ export default {
   organigramEmails,
   surveyEmails,
   renderTemplate,
-  resolveUserEmailAddress
+  resolveUserEmailAddress,
 };
