@@ -2097,6 +2097,7 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
     case 'shipped_value':
     case 'back_order_value':
     case 'quote_id':
+    case 'customer':
     case 'sales_team_id': {
       delete apiFilter.start_date
       delete apiFilter.end_date
@@ -2109,31 +2110,23 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
       apiFilter.start_date = periodStart ? moment(periodStart).toISOString() : moment().startOf('year');
       apiFilter.end_date = periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day');
       if (search && search.length >= 3) apiFilter.any_field = search;
-
-      // delete apiFilter.customer_id;
-
       break;
     }
     case "order_date":
     case "quote_date":
     case "shipping_date": {
       apiFilter.using = filterBy;
-      apiFilter.start_date = moment(dateFilter).startOf('day').toISOString();
-      apiFilter.end_date = moment(dateFilter).endOf('day').toISOString();
-      delete apiFilter.customer_id;
-      // apiFilter.start_date = moment(dateFilter).startOf('day');
-      // apiFilter.end_date = moment(dateFilter).endOf('day');
+      apiFilter.start_date = moment(filter).startOf('day').toISOString();
+      apiFilter.end_date = moment(filter).endOf('day').toISOString();
       break;
     }
     case "order_type":
     case "order_status": {
       if (filter === undefined) return empty_response;
-
       delete apiFilter.start_date
       delete apiFilter.end_date
       apiFilter[filterBy] = filter;
       // apiFilter.quote_status = `${filter},${filter}`;
-      // delete apiFilter.customer_id;
       break;
     }
     default: {
@@ -2209,26 +2202,6 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
 }
 
 export const getCRMSalesOrders = async (params: any, context: Reactory.IReactoryContext) => {
-
-  // -- POSSIBLE FILTERS --
-  // any_field - done
-  // date_range - done
-  // order_date - done
-  // shipping_date - done
-  // quote_date - done
-  // order_type - done
-  // order_status - done
-  // iso_number - done
-  // po_number - done
-  // quote_number - done
-  // rep_code - done
-  // order_value - done
-  // reserve_value - done
-  // ship_value - done
-  // backorder_value - 3428.00
-
-  // customer
-  // client
 
   logger.debug(` -- GETTING CRM SALES ORDERS --  ${JSON.stringify(params)}`);
 
