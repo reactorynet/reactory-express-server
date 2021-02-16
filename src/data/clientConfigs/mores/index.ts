@@ -428,7 +428,10 @@ const routes = [
     public: false,
     exact: false,
     roles: ['USER'],
-    componentFqn: `${key}.DashboardOrganizationHOC@1.0.0`,
+    componentFqn: `${key}.MoresAdminTabbedNavigation@1.0.0`,
+    args: [
+      { key: 'use_case', value: { use_case: 'organization_admin' } },
+    ],
   },
 
   {
@@ -437,8 +440,8 @@ const routes = [
     path: '/dashboard/facilitator/**',
     public: false,
     exact: false,
-    roles: [APPLICATION_ROLES.FACILITATOR, APPLICATION_ROLES.DEVELOPER],
-    componentFqn: `${key}.DashboardFacilitatorHOC@1.0.0`,
+    roles: [APPLICATION_ROLES.FACILITATOR, APPLICATION_ROLES.DEVELOPER, APPLICATION_ROLES.ORGANIZATION_ADMIN],
+    componentFqn: `${key}.MoresAdminTabbedNavigation@1.0.0`,
   },
 
   {

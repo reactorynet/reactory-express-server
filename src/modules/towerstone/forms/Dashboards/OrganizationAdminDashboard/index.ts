@@ -17,7 +17,7 @@ const OrganizationAdminDashboard: Reactory.IReactoryForm = {
   ...defaultFormProps,
   uiFramework: 'material',
   uiSupport: ['material'],
-  uiResources: [  ],
+  uiResources: [],
   title: 'Organization Administrator Dashboard',
   tags: ['Mores Organization', 'Dashboard', 'Admin'],
   schema: $schema,
@@ -35,8 +35,8 @@ const OrganizationAdminDashboard: Reactory.IReactoryForm = {
     onChange: [
       'period',
       'periodStart',
-      'periodEnd'
-    ]
+      'periodEnd',
+    ],
   },
   defaultFormValue: {
     toolbar: {

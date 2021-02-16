@@ -3,12 +3,11 @@ const key = 'mores';
 
 const {
     CDN_ROOT,
-  } = process.env;
-  
+} = process.env;
 
-  
+
 const theme_base = {
-    key,    
+    key,
     type: 'material',
     palette: {
         primary1Color: '#52687b',
@@ -52,7 +51,7 @@ const theme_base = {
             light: '#7d983c',
             main: '#7d983c',
             dark: '#7d983c',
-            contrastText: '#000000',
+            contrastText: '#ffffff',
         },
         report: {
             empty: '#ffffd2',
@@ -73,6 +72,6 @@ const theme_base = {
     },
 };
 
-const theme = { ...theme_base }
+const theme = { ...theme_base };
 
 export default theme;
