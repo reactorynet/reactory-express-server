@@ -1671,8 +1671,9 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
       break;
     }
     case "quote_date": {
-      apiFilter.start_date = moment(dateFilter).startOf('day').toISOString();
-      apiFilter.end_date = moment(dateFilter).endOf('day').toISOString();
+      apiFilter.using = filterBy;
+      apiFilter.start_date = moment(filter).startOf('day').toISOString();
+      apiFilter.end_date = moment(filter).endOf('day').toISOString();
       break;
     }
     case "quote_number": {
@@ -1684,23 +1685,19 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
     case "quote_status": {
       if (filter === undefined) return empty_response;
       apiFilter.quote_status = `${filter},${filter}`;
-      delete apiFilter.customer_id;
       break;
     }
     case "customer": {
       if (search === '') return empty_response;
       apiFilter.company_name = search;
-      // delete apiFilter.customer_id;
       break;
     }
     case "account_number": {
       apiFilter.account_number = search;
-      // delete apiFilter.customer_id;
       break;
     }
     case "quote_type": {
       apiFilter.quote_type = filter;
-      // delete apiFilter.customer_id;
       break;
     }
     case "rep_code": {
@@ -1713,11 +1710,7 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
     }
   }
 
-  logger.debug(`GETTING QUOTE RESULTS:: ${JSON.stringify(apiFilter)}`);
-
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }, context).then();
-
-  logger.debug(`QUOTE RESULTS:: ${JSON.stringify(quoteResult)}`);
 
   let ids: string[] = [];
 

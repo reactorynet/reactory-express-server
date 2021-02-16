@@ -129,6 +129,7 @@ const uiSchema: any = {
             windowTitle: 'Details view for ${rowData.code}',
             buttonVariant: 'Typography',
             buttonProps: {
+              variant: 'body1',
               style: {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
@@ -147,7 +148,7 @@ const uiSchema: any = {
           props: {
             uiSchema: {
               'ui:options': {
-                variant: 'body2',
+                variant: 'body1s',
                 format: '${api.utils.moment(rowData.date).format(\'DD MMM YYYY HH:mm\')}'
               }
             },
