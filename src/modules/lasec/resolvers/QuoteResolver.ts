@@ -170,7 +170,7 @@ const $PagedLineItemsResponse = async (quote: any, context: Reactory.IReactoryCo
     pageSize: 25
   };
 
-  logger.debug(`🟠 $PagedLineItemsResponse() =>  Paged Line Items Request ${quote.code || quote.id}`, { context })
+  logger.debug(`🟠 $PagedLineItemsResponse() =>  Paged Line Items Request ${quote.code || quote.id}`)
 
   if (quote && quote.item_paging_request) {
     item_paging = { ...item_paging, ...quote.item_paging_request };

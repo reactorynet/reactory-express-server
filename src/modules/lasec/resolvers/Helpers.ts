@@ -2658,7 +2658,7 @@ export const getCRMInvoices = async (params: any, context: Reactory.IReactoryCon
     }
   }
 
-  let invoiceDetails = await lasecApi.Invoices.list({ filter: { ids: ids } }, context).then();
+  let invoiceDetails = await lasecApi.Invoices.list({ filter: { ids: ids }, ordering: undefined }, context).then();
   let invoices = [...invoiceDetails.items];
 
   invoices = invoices.map(invoice => {

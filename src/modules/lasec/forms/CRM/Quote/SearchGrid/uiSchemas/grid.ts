@@ -47,7 +47,8 @@ const uiSchema: any = {
           },
           propsMap: {
             'rowData.code': 'quote_id',
-            'rowData': 'formData'
+            'rowData': 'formData',
+            'rowData.status': 'status',
           }
         },
         {
