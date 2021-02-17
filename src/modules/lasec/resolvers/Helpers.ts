@@ -1415,7 +1415,7 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams, context: 
     page: paging.page || 1,
     hasNext: false,
     pageSize: paging.pageSize || 10
-  }; RepCodeFilter
+  };
 
   let apiFilter: any = {
     sales_team_id: lasec_user.sales_team_id,
