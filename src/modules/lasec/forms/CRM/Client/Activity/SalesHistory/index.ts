@@ -107,7 +107,6 @@ const uiSchema: any = {
       componentProps: {},
     },
   },
-
   salesHistory: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {

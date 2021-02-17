@@ -438,6 +438,7 @@ type SimpleResponse {
 }
 
 type PagedCRMQuote {
+  clientId: String
   search: String
   filterBy: String
   paging: PagingResult
@@ -490,6 +491,7 @@ type PagedCRMSalesOrders {
   salesOrders: [SalesOrder]
   totals: Any
   id: String
+  clientId: String
   image: String
   code: String
   description: String
@@ -761,7 +763,7 @@ extend type Query {
     filterBy: String
     periodStart: String
     periodEnd: String
-    quoteDate: String
+    dateFilter: String
     iter: Int
   ): PagedCRMQuote
   LasecGetDashboard(dashparams: LasecQuoteQueryInput): LasecQuoteDashboard

@@ -28,7 +28,7 @@ const uiSchema: any = {
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       salesOrders: { xs: 12 }
     }
@@ -140,12 +140,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
+                format: '${rowData.orderDate != "" ? api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
           },
           propsMap: {
-            'rowData.date': 'value',
+            'rowData.orderDate': 'value',
           }
         },
         {
@@ -156,7 +156,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
+                format: '${rowData.shippingDate != "" ? api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
           },
@@ -172,7 +172,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
+                format: '${rowData.quoteDate != "" ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
           },
@@ -212,7 +212,6 @@ const uiSchema: any = {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
                 'color': 'black',
-                'fontSize': '1rem'
               }
             },
             windowTitle: 'Details view for Order # ${rowData.salesOrderNumber}',
@@ -245,7 +244,6 @@ const uiSchema: any = {
                 'textDecoration': 'underline',
                 'cursor': 'pointer',
                 'color': 'black',
-                'fontSize': '1rem'
               }
             },
             backNavigationConfig: {
@@ -259,7 +257,7 @@ const uiSchema: any = {
           }
         },
         { title: 'Customer', field: 'customer' },
-        { title: 'Client', field: 'client' },
+        // { title: 'Client', field: 'client' },
         { title: 'Client Rep Code', field: 'salesTeam' },
         {
           title: 'Order Value',
@@ -301,12 +299,14 @@ const uiSchema: any = {
         toolbar: true,
       },
       componentMap: {
-        Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0',        
-      },      
+        Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0',
+      },
       toobarPropsMap: {
-        'toolbarProps.filterBy': 'query.filterBy',
+        'formContext.formData.id': 'query.id',
+        'formContext.formData.search': 'query.search',
+        'formContext.formData.filterBy': 'query.filterBy',
         'formContext.formData.filter': 'query.filter',
-        'toolbarProps.use_case': 'use_case', 
+        'toolbarProps.use_case': 'use_case',
       },
       toolbarProps: {
         filterBy: 'client_id',
@@ -315,6 +315,7 @@ const uiSchema: any = {
       remoteData: true,
       query: 'client_sales_orders',
       variables: {
+        'query.id': 'clientId',
         'query.search': 'search',
         'query.filter': 'filter',
         'query.filterBy': 'filterBy',
@@ -327,6 +328,7 @@ const uiSchema: any = {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
+        'clientId': ['id', 'query.id'],
         'salesOrders.[].id': 'data.[].id',
         'salesOrders.[].salesOrderNumber': 'data.[].salesOrderNumber',
         'salesOrders.[].orderDate': 'data.[].orderDate',

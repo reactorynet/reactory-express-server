@@ -31,11 +31,9 @@ const uiSchema: any = {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
-
         {
           title: 'Quote Number',
           field: 'code',
-          //width: '160px',
           component: 'lasec-crm.QuoteActionButton',
           props: {
             variant: 'body2',

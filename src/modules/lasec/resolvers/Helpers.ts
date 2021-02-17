@@ -1415,7 +1415,7 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams, context: 
     page: paging.page || 1,
     hasNext: false,
     pageSize: paging.pageSize || 10
-  };
+  }; RepCodeFilter
 
   let apiFilter: any = {
     sales_team_id: lasec_user.sales_team_id,
@@ -1441,18 +1441,13 @@ export const getPagedQuotes = async (params: LasecGetPageQuotesParams, context: 
 
   switch (filterBy) {
     case "any_field": {
-      //make sure we have a search value
-      delete apiFilter.start_date
-      delete apiFilter.end_date
+      delete apiFilter.start_date;
+      delete apiFilter.end_date;
 
-      if (isString(search) === false && filter === undefined) {
-        apiFilter = DEFAULT_FILTER;
-      } else {
-        apiFilter.any_field = search;
-      }
+      if (isString(search) === false && filter === undefined) apiFilter = DEFAULT_FILTER;
+      else apiFilter.any_field = search;
 
       if (search.length > 0) delete apiFilter.sales_team_id;
-
 
       break;
     }
@@ -1597,9 +1592,11 @@ interface PagedClientQuotesParams {
   clientId: string,
   search?: string,
   periodStart: string,
-  periodEnd: string,
+  periodEnd: any,
   quoteDate: string,
+  dateFilter: string,
   filterBy?: string,
+  filter?: string,
   paging: {
     page: number,
     pageSize: number
@@ -1620,7 +1617,9 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
     periodStart,
     periodEnd,
     quoteDate,
+    dateFilter,
     filterBy = "any_field",
+    filter,
     paging = { page: 1, pageSize: 10 },
     iter = 0 } = params;
 
@@ -1636,6 +1635,7 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
     quotes: [],
   };
 
+  let lasec_user: Lasec360User = await getLoggedIn360User(false, context).then();
 
   // if (filterBy === "any_field" || search.length < 3) {
   // return empy_result;
@@ -1643,23 +1643,80 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
 
   let apiFilter = {
     customer_id: clientId,
-    [filterBy]: search,
+    // [filterBy]: search,
     // start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
     // end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
   };
-
-  if (quoteDate) {
-    apiFilter.start_date = moment(quoteDate).startOf('day').toISOString();
-    apiFilter.end_date = moment(quoteDate).endOf('day').toISOString();
+  const DEFAULT_FILTER = {
+    customer_id: clientId,
   }
 
-  // const exampleFilter = { "filter": { "sales_team_id": "100", "customer_id": "15366" }, }
+  const empty_response: any = {
+    paging: pagingResult,
+    periodStart,
+    periodEnd,
+    filter,
+    filterBy,
+    clientId,
+    quotes: []
+  };
 
-  logger.debug(`GETTING QUOTE RESULTS:: ${JSON.stringify(apiFilter)}`);
+  switch (filterBy) {
+    case 'any_field': {
+      delete apiFilter.start_date
+      delete apiFilter.end_date
+      if (isString(search) === false && filter === undefined) apiFilter = DEFAULT_FILTER;
+      else apiFilter.any_field = search;
+      break;
+    }
+    case "date_range": {
+      delete apiFilter.date_range;
+      apiFilter.start_date = periodStart ? moment(periodStart).toISOString() : moment().startOf('year');
+      apiFilter.end_date = periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day');
+      if (search && search.length >= 3) apiFilter.any_field = search;
+      break;
+    }
+    case "quote_date": {
+      apiFilter.using = filterBy;
+      apiFilter.start_date = moment(filter).startOf('day').toISOString();
+      apiFilter.end_date = moment(filter).endOf('day').toISOString();
+      break;
+    }
+    case "quote_number": {
+      if (search === '') return empty_response;
+      delete apiFilter.customer_id;
+      apiFilter[filterBy] = search;
+      break;
+    }
+    case "quote_status": {
+      if (filter === undefined) return empty_response;
+      apiFilter.quote_status = `${filter},${filter}`;
+      break;
+    }
+    case "customer": {
+      if (search === '') return empty_response;
+      apiFilter.company_name = search;
+      break;
+    }
+    case "account_number": {
+      apiFilter.account_number = search;
+      break;
+    }
+    case "quote_type": {
+      apiFilter.quote_type = filter;
+      break;
+    }
+    case "rep_code": {
+      apiFilter.sales_team_id = filter || lasec_user.sales_team_id
+      break;
+    }
+    default: {
+      logger.error(`NO MATCHING FILTERBY OPTIONS!!!!!`);
+      break;
+    }
+  }
 
   let quoteResult = await lasecApi.Quotes.list({ filter: apiFilter, pagination: { page_size: paging.pageSize || 10, current_page: paging.page } }, context).then();
-
-  logger.debug(`QUOTE RESULTS:: ${JSON.stringify(quoteResult)}`);
 
   let ids: string[] = [];
 
@@ -1685,6 +1742,7 @@ export const getPagedClientQuotes = async (params: PagedClientQuotesParams, cont
   quotes = quoteSyncResult.map(doc => doc);
 
   let result = {
+    clientId,
     paging: pagingResult,
     search,
     filterBy,
@@ -1983,26 +2041,6 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
 
   logger.debug(` -- GETTING CLIENT SALES ORDERS --  ${JSON.stringify(params)}`);
 
-  // -- POSSIBLE FILTERS --
-  // any_field - done
-  // date_range - done
-  // order_date - done
-  // shipping_date - done
-  // quote_date - done
-  // order_type - done
-  // order_status - done
-  // iso_number - done
-  // po_number - done
-  // quote_number - done
-  // rep_code - done
-  // order_value - done
-  // reserve_value - done
-  // ship_value - done
-  // backorder_value - done
-
-  // customer
-  // client
-
   const {
     clientId,
     search = "",
@@ -2024,23 +2062,76 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
   let apiFilter: any = {
     customer_id: clientId,
     // [filterBy]: filter || search,
-    start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
-    end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
+    // start_date: periodStart ? moment(periodStart).toISOString() : moment().startOf('year'),
+    // end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day'),
     ordering: { order_date: "desc" },
   };
-
-  if (filterBy == 'order_date' || filterBy == 'shipping_date' || filterBy == 'quote_date') {
-    apiFilter.using = filterBy;
-    apiFilter.start_date = moment(dateFilter).startOf('day');
-    apiFilter.end_date = moment(dateFilter).endOf('day');
+  const DEFAULT_FILTER = {
+    customer_id: clientId,
+    ordering: { order_date: "desc" },
   }
 
-  if (filterBy == 'order_type' || filterBy == 'order_status')
-    apiFilter[filterBy] = filter;
+  const empty_response: any = {
+    paging: pagingResult,
+    periodStart,
+    periodEnd,
+    filter,
+    filterBy,
+    clientId,
+    salesOrders: [],
+  };
 
-  if (filterBy == 'any_field' || filterBy == 'iso_number' || filterBy == 'po_number' || filterBy == 'order_value' || filterBy == 'reserved_value' || filterBy == 'shipped_value' || filterBy == 'back_order_value' || filterBy == 'dispatches' || filterBy == 'quote_id' || filterBy == 'sales_team_id') {
-    // if (search || search != '') apiFilter[filterBy] = search;
-    apiFilter[filterBy] = search;
+  switch (filterBy) {
+    case 'any_field': {
+      delete apiFilter.start_date
+      delete apiFilter.end_date
+      if (isString(search) === false && filter === undefined) apiFilter = DEFAULT_FILTER;
+      else apiFilter.any_field = search;
+      break;
+    }
+    case 'iso_number':
+    case 'po_number':
+    case 'order_value':
+    case 'reserved_value':
+    case 'shipped_value':
+    case 'back_order_value':
+    case 'quote_id':
+    case 'customer':
+    case 'sales_team_id': {
+      delete apiFilter.start_date
+      delete apiFilter.end_date
+      if (search === '') apiFilter = empty_response;
+      else apiFilter.any_field = search;
+      break;
+    }
+    case "date_range": {
+      delete apiFilter.date_range;
+      apiFilter.start_date = periodStart ? moment(periodStart).toISOString() : moment().startOf('year');
+      apiFilter.end_date = periodEnd ? moment(periodEnd).toISOString() : moment().endOf('day');
+      if (search && search.length >= 3) apiFilter.any_field = search;
+      break;
+    }
+    case "order_date":
+    case "quote_date":
+    case "shipping_date": {
+      apiFilter.using = filterBy;
+      apiFilter.start_date = moment(filter).startOf('day').toISOString();
+      apiFilter.end_date = moment(filter).endOf('day').toISOString();
+      break;
+    }
+    case "order_type":
+    case "order_status": {
+      if (filter === undefined) return empty_response;
+      delete apiFilter.start_date
+      delete apiFilter.end_date
+      apiFilter[filterBy] = filter;
+      // apiFilter.quote_status = `${filter},${filter}`;
+      break;
+    }
+    default: {
+      logger.error(`NO MATCHING FILTERBY OPTIONS!!!!!`);
+      break;
+    }
   }
 
   let salesOrdersIds = await lasecApi.SalesOrders.list({
@@ -2073,9 +2164,12 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
     return {
       id: order.id,
       salesOrderNumber: order.sales_order_number,
-      orderDate: order.order_date,
-      shippingDate: order.req_ship_date,
-      quoteDate: order.quote_date,
+      // orderDate: order.order_date,
+      orderDate: order.order_date ? moment(order.order_date).toISOString() : '',
+      // shippingDate: order.req_ship_date,
+      shippingDate: order.req_ship_date ? moment(order.req_ship_date).toISOString() : '',
+      // quoteDate: order.quote_date,
+      quoteDate: order.quote_date ? moment(order.quote_date).toISOString() : '',
       orderType: order.order_type,
       orderStatus: order.order_status,
       iso: order.sales_order_id,
@@ -2099,6 +2193,7 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
   let result = {
     paging: pagingResult,
     salesOrders,
+    clientId
   };
 
   return result;
@@ -2106,26 +2201,6 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
 }
 
 export const getCRMSalesOrders = async (params: any, context: Reactory.IReactoryContext) => {
-
-  // -- POSSIBLE FILTERS --
-  // any_field - done
-  // date_range - done
-  // order_date - done
-  // shipping_date - done
-  // quote_date - done
-  // order_type - done
-  // order_status - done
-  // iso_number - done
-  // po_number - done
-  // quote_number - done
-  // rep_code - done
-  // order_value - done
-  // reserve_value - done
-  // ship_value - done
-  // backorder_value - 3428.00
-
-  // customer
-  // client
 
   logger.debug(` -- GETTING CRM SALES ORDERS --  ${JSON.stringify(params)}`);
 
@@ -2515,18 +2590,34 @@ export const getClientInvoices = async (params: any, context: Reactory.IReactory
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('month'),
   };
 
-  if (filterBy == 'invoice_date') {
-    apiFilter.using = filterBy;
-    apiFilter.start_date = moment(dateFilter).startOf('day');
-    apiFilter.end_date = moment(dateFilter).endOf('day');
-  }
+  switch (filterBy) {
 
-  if (filterBy == 'any_field' || filterBy == 'invoice_number' || filterBy == 'po_number' || filterBy == 'invoice_value' || filterBy == 'account_number' || filterBy == 'dispatch_number' || filterBy == 'iso_number' || filterBy == 'quote_number' || filterBy == 'sales_team_id') {
-    apiFilter[filterBy] = search;
+    case 'any_field':
+    case 'invoice_number':
+    case 'po_number':
+    case 'invoice_value':
+    case 'account_number':
+    case 'dispatch_number':
+    case 'iso_number':
+    case 'quote_number':
+    case 'sales_team_id': {
 
-    // remove date range on specific search values
-    delete apiFilter.start_date;
-    delete apiFilter.end_date;
+      apiFilter[filterBy] = search;
+      delete apiFilter.start_date;
+      delete apiFilter.end_date;
+
+      break;
+    }
+    case "invoice_date": {
+      apiFilter.using = filterBy;
+      apiFilter.start_date = moment(dateFilter).startOf('day');
+      apiFilter.end_date = moment(dateFilter).endOf('day');
+      break;
+    }
+    default: {
+      logger.error(`NO MATCHING FILTERBY OPTIONS!!!!!`);
+      break;
+    }
   }
 
   const invoiceIdsResponse = await lasecApi.Invoices.list({
