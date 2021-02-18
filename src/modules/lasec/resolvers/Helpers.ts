@@ -2590,9 +2590,24 @@ export const getClientInvoices = async (params: any, context: Reactory.IReactory
     end_date: periodEnd ? moment(periodEnd).toISOString() : moment().endOf('month'),
   };
 
+  const empty_response: any = {
+    paging: pagingResult,
+    periodStart,
+    periodEnd,
+    filter,
+    filterBy,
+    clientId,
+    invoices: []
+  };
+
   switch (filterBy) {
 
-    case 'any_field':
+    case 'any_field': {
+      apiFilter[filterBy] = search;
+      delete apiFilter.start_date;
+      delete apiFilter.end_date;
+      break;
+    }
     case 'invoice_number':
     case 'po_number':
     case 'invoice_value':
@@ -2600,12 +2615,12 @@ export const getClientInvoices = async (params: any, context: Reactory.IReactory
     case 'dispatch_number':
     case 'iso_number':
     case 'quote_number':
+    case 'customer':
     case 'sales_team_id': {
-
+      if (search === '') return empty_response;
       apiFilter[filterBy] = search;
       delete apiFilter.start_date;
       delete apiFilter.end_date;
-
       break;
     }
     case "invoice_date": {
