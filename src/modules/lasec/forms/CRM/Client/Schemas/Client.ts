@@ -52,12 +52,12 @@ const ClientSchema: Reactory.ISchema = {
     },
     firstName: {
       type: "string",
-      title: "Firstname",
+      title: "First name",
       minLength: 2
     },
     lastName: {
       type: "string",
-      title: "Lastname",
+      title: "Last name",
       minLength: 2
     },
     fullName: {

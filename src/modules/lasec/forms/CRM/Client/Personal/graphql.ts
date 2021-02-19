@@ -41,7 +41,6 @@ const graphql: Reactory.IFormGraphDefinition = {
       'country': 'country',
       'firstName': 'firstName',
       'lastName': 'lastName',
-
       'accountType': 'accountType',
       'salesTeam': 'repCode',
 
