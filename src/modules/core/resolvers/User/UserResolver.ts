@@ -322,7 +322,7 @@ const userResolvers = {
     peers(usr: { _id: any; memberships: { organizationId: any; }[]; }) {
       return Organigram.findOne({ user: usr._id, organization: usr.memberships[0].organizationId });
     },
-    memberships(usr: { memberships: any; }, context: Reactory.IReactoryContext) {
+    memberships(usr: { memberships: any; }, args: any, context: Reactory.IReactoryContext) {
       if (lodash.isArray(usr.memberships)) {
         return lodash.filter(usr.memberships, { clientId: context.partner._id });
       }
