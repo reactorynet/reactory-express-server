@@ -93,16 +93,8 @@ const newUiSchema: any = {
           marginTop: '3px'
         }
       },
-      modalProps: {
-        fullScreen: false,
-        closeOnEvents: [
-          'CloseModal:LasecCRMCustomerLookupTable'
-        ]
-      }
     },
     props: {
-      componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
-      handleOnChange: true,
       componentProps: {},
       componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',
@@ -111,36 +103,6 @@ const newUiSchema: any = {
       },
     },
   },
-  // registeredName: {
-  //   'ui:widget': 'LookupComponent',
-  //   'ui:options': {
-  //     label: 'Customer Registered Name',
-  //     title: 'Search for a Customer',
-  //     labelProps: {
-  //       style: {
-  //         fontWeight: 'bold',
-  //         color: 'rgba(0,0,0,1)',
-  //         marginTop: '3px'
-  //       }
-  //     },
-  //     modalProps: {
-  //       fullScreen: false,
-  //       closeOnEvents: [
-  //         'CloseModal:LasecCRMCustomerLookupTable'
-  //       ]
-  //     }
-  //   },
-  //   props: {
-  //     componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
-  //     handleOnChange: true,
-  //     componentProps: {},
-  //     componentPropertyMap: {
-  //       'LookupComponent.props.formContext.$formData': 'formData.selected',
-  //       'LookupComponent.props.formContext': 'LookupComponentFormContext',
-  //       'LookupComponent.props.formData': 'formData.selected.registeredName'
-  //     },
-  //   },
-  // },
 };
 
 export const CustomerConfirmUISchema: any = {
@@ -217,18 +179,6 @@ const schema: Reactory.ISchema = {
   }
 };
 
-/**
- * A basic form that holds the schema
- * for a customer object
- *
- * id
- * registeredName
- * tradingName
- *
- * Does not have a default query to lookup customer for the given data input
- * Only the new UI Schema configuration has graphql forms and components to lookup
- * and set the form schema.
- */
 const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
   id: 'LasecCRMCustomerLookup',
   uiFramework: 'material',
@@ -270,7 +220,6 @@ const LasecCRMCustomerLookupForm: Reactory.IReactoryForm = {
   ],
   widgetMap: [
     { componentFqn: 'core.SlideOutLauncher@1.0.0', widget: 'SlideOutLauncher' },
-    // { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
     { componentFqn: 'lasec-crm.CustomerLookupComponent@1.0.0', widget: 'CustomerLookupComponent' },
   ],
 };

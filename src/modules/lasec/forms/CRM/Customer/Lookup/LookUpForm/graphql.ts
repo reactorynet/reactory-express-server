@@ -16,9 +16,12 @@ const graphql: Reactory.IFormGraphDefinition = {
           registeredName
           country
           accountNumber
+          description
+          bankName
+          bankAccountNumber
         }
       }
-    }`,    
+    }`,
     autoQuery: false,
     queryMessage: 'Search for customers',
     resultType: 'object',
@@ -37,18 +40,18 @@ const graphql: Reactory.IFormGraphDefinition = {
           id
           customer {
             id
-            registeredName            
+            registeredName
           }
         }
       }`,
       objectMap: true,
       updateMessage: 'Selecting Organization',
-      variables: {    
+      variables: {
         'selected.id': 'newClient.customer.id',
         'selected.registeredName': 'newClient.customer.registeredName'
-      },      
+      },
       onSuccessEvent: {
-        name: 'CloseModal:LasecCRMCustomerLookupTable',        
+        name: 'CloseModal:LasecCRMCustomerLookupTable',
       }
     }
   }
@@ -56,7 +59,7 @@ const graphql: Reactory.IFormGraphDefinition = {
 
 /**
  * Query definition returns a list of customer based on the search input and paging.*
- * 
+ *
  * Used in the Customer Lookup Table remote data query.
  */
 export const newClientGraphQL: Reactory.IFormGraphDefinition = {
@@ -84,12 +87,16 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
           registrationNumber
           taxNumber
           importVATNumber
+
+          description
+          bankName
+          bankAccountNumber
         }
       }
     }`,
     variables: {
       'props.formContext.$formData.search': 'search',
-      'props.formContext.$formData.paging': 'paging',        
+      'props.formContext.$formData.paging': 'paging',
     },
     resultMap: {
       'paging': 'paging',
@@ -122,12 +129,15 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
             registeredName
             country
             accountNumber
+            description
+            bankName
+            bankAccountNumber
           }
         }
       }`,
       variables: {
         'props.formContext.$formData.search': 'search',
-        'props.formContext.$formData.paging': 'paging',        
+        'props.formContext.$formData.paging': 'paging',
       },
       resultMap: {
         'paging': 'paging',
@@ -159,7 +169,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       }`,
       objectMap: true,
       updateMessage: 'Updating Customer For Client',
-      variables: {            
+      variables: {
         'selected': 'newClient.customer',
       },
       resultType: 'object',
@@ -167,15 +177,15 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       onSuccessEvent: {
         name: 'onChange',
         dataMap: {
-          'customer.registeredName': 'formData',  
-        },        
-      },      
+          'customer.registeredName': 'formData',
+        },
+      },
       resultMap: {
         'customer.id': 'id',
         'customer.registeredName': 'registeredName',
       },
     }
-  },  
+  },
 };
 
 export default graphql;
