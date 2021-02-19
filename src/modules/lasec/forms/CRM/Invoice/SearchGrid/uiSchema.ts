@@ -1,12 +1,10 @@
-import { InvoiceFilterByOptions } from '../shared';
-
 const uiSchema: any = {
   'ui:options': {
-    componentType: "div",
+    componentType: 'div',
     containerStyles: {
       padding: '0px',
       margin: '0px',
-      paddingBottom: '8px'
+      paddingBottom: '8px',
     },
     schemaSelector: {
       variant: 'icon-button',
@@ -14,8 +12,8 @@ const uiSchema: any = {
       activeColor: 'secondary',
       style: {
         display: 'flex',
-        justifyContent: 'flex-end'
-      }
+        justifyContent: 'flex-end',
+      },
     },
     style: {
       marginTop: '16px',
@@ -27,96 +25,10 @@ const uiSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-      invoices: { xs: 12 }
-    }
+      invoices: { xs: 12 },
+    },
   ],
 
-  paging: {
-    'ui:widget': 'HiddenWidget'
-  },
-  search: {
-    'ui:options': {
-      showLabel: false,
-      icon: 'search',
-      component: "TextField",
-      componentProps: {
-        placeholder: 'Search',
-        variant: "outlined",
-        type: 'search',
-        style: {
-          minWidth: '180px'
-        }
-      }
-    }
-  },
-  filterBy: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      selectOptions: InvoiceFilterByOptions,
-    },
-  },
-  filter: {
-    'ui:widget': 'SelectWithDataWidget',
-    'ui:options': {
-      multiSelect: false,
-      query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
-        LasecGetCustomerFilterLookup(filterBy: $filterBy) {
-          id
-          name
-        }
-      }`,
-      propertyMap: {
-        'formContext.$formData.filterBy': 'filterBy'
-      },
-      resultItem: 'LasecGetCustomerFilterLookup',
-      resultsMap: {
-        'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
-        'LasecGetCustomerFilterLookup.[].name': '[].label',
-      },
-    },
-  },
-  periodStart: {
-    'ui:widget': 'DateSelectorWidget',
-  },
-  periodEnd: {
-    'ui:widget': 'DateSelectorWidget',
-  },
-  dateFilter: {
-    'ui:widget': 'DateSelectorWidget',
-  },
-  // client: {
-  //   'ui:widget': 'LookupComponent',
-  //   'ui:options': {
-  //     label: 'Select a Client',
-  //     title: 'Search for a Client'
-  //   },
-  //   props: {
-  //     componentFqn: 'lasec-crm.LasecCRMClientLookupTable@1.0.0',
-  //     componentProps: {},
-  //   },
-  // },
-  // customer: {
-  //   'ui:widget': 'LookupComponent',
-  //   'ui:options': {
-  //     label: 'Select a Customer',
-  //     title: 'Search for a Customer',
-  //     modalProps: {
-  //       fullScreen: false,
-  //       closeOnEvents: [
-  //         'CloseModal:LasecCRMCustomerLookupTable'
-  //       ]
-  //     }
-  //   },
-  //   props: {
-  //     componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
-  //     componentProps: {},
-  //     componentPropertyMap: {
-  //       'LookupComponent.props.formContext.$formData': 'formData.selected',
-  //       'LookupComponent.props.onChange': 'onCustomerSelect',
-  //       'LookupComponent.props.formContext': 'LookupComponentFormContext',
-  //     },
-  //   },
-  // },
   invoices: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -130,13 +42,13 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${rowData.invoiceDate ? api.utils.moment(rowData.invoiceDate).format(\'DD-MM-YYYY\') : ""}'
-              }
+                format: '${rowData.invoiceDate ? api.utils.moment(rowData.invoiceDate).format(\'DD-MM-YYYY\') : ""}', // eslint-disable-line
+              },
             },
           },
           propsMap: {
             'rowData.invoiceDate': 'value',
-          }
+          },
         },
         // { title: 'Invoice Number', field: 'id' },
         {
@@ -165,31 +77,31 @@ const uiSchema: any = {
               'rowData.salesTeam': ['data.salesTeam', 'query.salesTeam'],
             },
             slideDirection: 'down',
-            buttonTitle: '${rowData.id}',
+            buttonTitle: '${rowData.id}', // eslint-disable-line
             buttonVariant: 'Typography',
             buttonProps: {
-              variant: "body2",
+              variant: 'body2',
               style: {
-                'textDecoration': 'underline',
-                'cursor': 'pointer',
-                'color': 'black',
-                maxWidth: '140px'
-              }
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                color: 'black',
+                maxWidth: '140px',
+              },
             },
-            windowTitle: 'Details view for Invoice # ${rowData.id}',
+            windowTitle: 'Details view for Invoice # ${rowData.id}', // eslint-disable-line
             backNavigationConfig: {
               showAppBar: false,
-              backNavigationItems: ['Invoices', '${rowData.id}'],
-              containerProps: { PaperProps: { style: { background: '#F6F6F6' } } }
-            }
+              backNavigationItems: ['Invoices', '${rowData.id}'], // eslint-disable-line
+              containerProps: { PaperProps: { style: { background: '#F6F6F6' } } },
+            },
           },
           propsMap: {
-            'rowData': 'rowData'
-          }
+            rowData: 'rowData',
+          },
         },
-        { title: 'P.O. #', field: 'poNumber', breakpoint: 'sm', },
+        { title: 'Purchase Order #', field: 'poNumber', breakpoint: 'sm' },
         {
-          title: 'S.O. #',
+          title: 'Sales Order #',
           field: 'isoNumber',
           width: '140px',
           component: 'core.SlideOutLauncher@1.0.0',
@@ -214,28 +126,47 @@ const uiSchema: any = {
               'rowData.salesTeam': ['data.salesTeam', 'query.salesTeam'],
             },
             slideDirection: 'down',
-            buttonTitle: '${rowData.isoNumber}',
+            buttonTitle: '${rowData.isoNumber}', // eslint-disable-line
             buttonVariant: 'Typography',
             buttonProps: {
-              variant: "body2",
+              variant: 'body2',
               style: {
-                'textDecoration': 'underline',
-                'cursor': 'pointer',
-                'color': 'black',
-                maxWidth: '140px'
-              }
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                color: 'black',
+                maxWidth: '140px',
+              },
             },
-            windowTitle: 'Sales Order# ${rowData.isoNumber} - Detail View',
+            windowTitle: 'Sales Order# ${rowData.isoNumber} - Detail View', // eslint-disable-line
             backNavigationConfig: {
               showAppBar: false,
-              backNavigationItems: ['Invoices', '${rowData.id}'],
-              containerProps: { PaperProps: { style: { background: '#F6F6F6' } } }
-            }
+              backNavigationItems: ['Invoices', '${rowData.id}'], // eslint-disable-line
+              containerProps: { PaperProps: { style: { background: '#F6F6F6' } } },
+            },
           },
           propsMap: {
-            'rowData': 'rowData'
-          }
+            rowData: 'rowData',
+          },
         },
+        {
+          title: 'Quote Number',
+          field: 'quoteId',
+          component: 'core.LabelComponent@1.0.0',
+          breakpoint: 'sm',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData.quoteId}' // eslint-disable-line
+              },
+            },
+          },
+        },
+
+        { title: 'Customer', field: 'customer', breakpoint: 'md' },
+        { title: 'Account Number', field: 'accountNumber', breakpoint: 'md' },
+        { title: 'Client', field: 'client', breakpoint: 'md' },
+        { title: 'Client Rep Code', field: 'salesTeamId', breakpoint: 'md' },
         {
           title: 'Inv Value',
           field: 'value',
@@ -244,60 +175,20 @@ const uiSchema: any = {
             'rowData.value': 'value',
           },
         },
-        {
-          title: 'Quote Number', field: 'quoteId',
-          component: 'core.LabelComponent@1.0.0',
-          breakpoint: 'sm',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${rowData.quoteId}'
-              }
-            },
-          },
-        },
-        /*
-        {
-          title: 'Quote Date',
-          field: 'quoteDate',
-          component: 'core.LabelComponent@1.0.0',
-          breakpoint: 'sm',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${rowData.quoteDate ? api.utils.moment(rowData.quoteDate).format(\'DD-MM-YYYY\') : ""}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.quoteDate': 'value',
-          }
-        },
-        */
-        { title: 'Account Number', field: 'accountNumber', breakpoint: 'md', },
-        { title: 'Customer', field: 'customer', breakpoint: 'md', },
-        { title: 'Client', field: 'client', breakpoint: 'md', },
-        // { title: 'Dispatches', field: 'dispatches' },
-        { title: 'Client Rep Code', field: 'salesTeamId', breakpoint: 'md', },
-        { title: 'GP %', field: 'gp', breakpoint: 'md', },
-        { title: 'MUP %', field: 'mup', breakpoint: 'md', },
-        // { title: 'ISO Number', field: 'isoNumber' },
-
-
+        { title: 'MUP %', field: 'mup', breakpoint: 'md' },
+        { title: 'GP %', field: 'gp', breakpoint: 'md' },
       ],
       options: {
         grouping: false,
         search: false,
         showTitle: false,
         toolbar: true,
-        pageSize: 10
+        pageSize: 10,
       },
       remoteData: true,
       query: 'invoices',
       componentMap: {
-        Toolbar: 'lasec-crm.InvoiceGridToolbar@1.0.0'
+        Toolbar: 'lasec-crm.InvoiceGridToolbar@1.0.0',
       },
       variables: {
         'query.search': 'search',
@@ -328,7 +219,7 @@ const uiSchema: any = {
         'invoices.[].mup': 'data.[].mup',
       },
     },
-  }
+  },
 };
 
 export default uiSchema;
