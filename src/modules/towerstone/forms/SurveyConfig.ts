@@ -77,7 +77,7 @@ export const schema = {
       type: 'string',
       title: 'Leadership Brand',
       name: 'Leadership Brand'
-    },    
+    },
     title: {
       type: 'string',
       title: 'Survey Title',
@@ -94,7 +94,7 @@ export const schema = {
         'l360',
         'culture',
         'team180'
-      ],      
+      ],
     },
     startDate: {
       type: 'string',
@@ -336,7 +336,7 @@ export const uiSchema = {
       color: 'primary',
       iconAlign: 'left'
     },
-    showSchemaSelectorInToolbar: true,
+    showSchemaSelectorInToolbar: false,
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -350,7 +350,7 @@ export const uiSchema = {
       assessorTeamName: { md: 6 },
     },
     {
-      title: { md: 12 },      
+      title: { md: 12 },
     },
     {
       startDate: { md: 6 },
@@ -451,13 +451,13 @@ export const uiSchema = {
 export const moresUISchema = {
   submitIcon: 'save',
   'ui:options': {
-    
+
     submitProps: {
       variant: 'button',
       text: '${props.mode === "edit" ? "Update" : "Create" }',
       color: 'primary',
       iconAlign: 'left'
-    },    
+    },
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
@@ -468,14 +468,14 @@ export const moresUISchema = {
       surveyType: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
     },
     {
-      title: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12},
+      title: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
     },
     {
       startDate: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
       endDate: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
       delegateTeamName: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
       assessorTeamName: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
-    },        
+    },
   ],
   id: {
     'ui:widget': 'HiddenWidget',
@@ -689,7 +689,7 @@ export const TowerStoneSurveyConfigForm: Reactory.IReactoryForm = {
       description: 'Mores assessments survey perspective - Edit',
       icon: 'api',
       key: 'mores-edit',
-      title: 'Mores Edit',    
+      title: 'Mores Edit',
       uiSchema: moresEditUiSchema,
       graphql: $graphql,
       modes: 'edit'

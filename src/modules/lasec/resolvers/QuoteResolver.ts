@@ -271,6 +271,45 @@ export default {
     }
 
   },
+  Invoice: {
+
+    gp: async (invoice: any, params: any, context: Reactory.IReactoryContext): Promise<number> => {
+
+
+      if (context && context.quote) {
+        if (context.quote && context.quote.meta && context.quote.meta.source) return context.quote.meta.source.gp_percent || 0;
+      }
+
+      const quoteService: IQuoteService = context.getService(QUOTE_SERVICE_ID);
+
+      const quote = await quoteService.getQuoteById(invoice.quoteId).then();
+
+      context.quote = quote;
+
+      if (quote && quote.meta && quote.meta.source) return quote.meta.source.gp_percent || 0;
+
+      return 0;
+    },
+
+    mup: async (invoice: any, params: any, context: Reactory.IReactoryContext): Promise<number> => {
+
+
+      if (context && context.quote) {
+        if (context.quote && context.quote.meta && context.quote.meta.source) return context.quote.meta.source.mup_percent || 0;
+      }
+
+      const quoteService: IQuoteService = context.getService(QUOTE_SERVICE_ID);
+
+      const quote = await quoteService.getQuoteById(invoice.quoteId).then();
+
+      context.quote = quote;
+
+      if (quote && quote.meta && quote.meta.source) return quote.meta.source.mup_percent || 0;
+
+      return 0;
+    },
+
+  },
   LasecQuoteItem: {
     id: ({ id, _id }: any) => (id || _id),
     product: async (line_item: LasecQuoteItem, args: any, context: Reactory.IReactoryContext): Promise<LasecProduct> => {

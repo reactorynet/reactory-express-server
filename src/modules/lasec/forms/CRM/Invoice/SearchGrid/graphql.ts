@@ -41,6 +41,8 @@ const graphql: Reactory.IFormGraphDefinition = {
             poNumber
             isoNumber
             value
+            mup
+            gp
           }
         }
       }`,
@@ -68,6 +70,8 @@ const graphql: Reactory.IFormGraphDefinition = {
         'invoices.[].poNumber': 'invoices.[].poNumber',
         'invoices.[].isoNumber': 'invoices.[].isoNumber',
         'invoices.[].value': 'invoices.[].value',
+        'invoices.[].gp': 'invoices.[].gp',
+        'invoices.[].mup': 'invoices.[].mup',
       },
       autoQuery: false,
       resultType: 'object',
@@ -76,7 +80,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       edit: false,
       new: false,
     },
-  },  
+  },
 };
 
 export default graphql;

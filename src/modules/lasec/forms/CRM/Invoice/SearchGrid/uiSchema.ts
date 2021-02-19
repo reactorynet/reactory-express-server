@@ -180,7 +180,7 @@ const uiSchema: any = {
             backNavigationConfig: {
               showAppBar: false,
               backNavigationItems: ['Invoices', '${rowData.id}'],
-              containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
+              containerProps: { PaperProps: { style: { background: '#F6F6F6' } } }
             }
           },
           propsMap: {
@@ -229,7 +229,7 @@ const uiSchema: any = {
             backNavigationConfig: {
               showAppBar: false,
               backNavigationItems: ['Invoices', '${rowData.id}'],
-              containerProps: { PaperProps: { style: { background: '#F6F6F6' } }}
+              containerProps: { PaperProps: { style: { background: '#F6F6F6' } } }
             }
           },
           propsMap: {
@@ -257,6 +257,7 @@ const uiSchema: any = {
             },
           },
         },
+        /*
         {
           title: 'Quote Date',
           field: 'quoteDate',
@@ -274,11 +275,14 @@ const uiSchema: any = {
             'rowData.quoteDate': 'value',
           }
         },
+        */
         { title: 'Account Number', field: 'accountNumber', breakpoint: 'md', },
         { title: 'Customer', field: 'customer', breakpoint: 'md', },
         { title: 'Client', field: 'client', breakpoint: 'md', },
         // { title: 'Dispatches', field: 'dispatches' },
         { title: 'Client Rep Code', field: 'salesTeamId', breakpoint: 'md', },
+        { title: 'GP %', field: 'gp', breakpoint: 'md', },
+        { title: 'MUP %', field: 'mup', breakpoint: 'md', },
         // { title: 'ISO Number', field: 'isoNumber' },
 
 
@@ -320,6 +324,8 @@ const uiSchema: any = {
         'invoices.[].poNumber': 'data.[].poNumber',
         'invoices.[].isoNumber': 'data.[].isoNumber',
         'invoices.[].value': 'data.[].value',
+        'invoices.[].gp': 'data.[].gp',
+        'invoices.[].mup': 'data.[].mup',
       },
     },
   }

@@ -201,7 +201,7 @@ UserSchema.methods.hasRole = function hasRole(clientId: mongoose.Schema.Types.Ob
   return false;
 };
 
-UserSchema.methods.hasAnyRole = function (clientId, organizationId, businessUnitId) {
+UserSchema.methods.hasAnyRole = function hasAnyRole(clientId, organizationId, businessUnitId) {
   logger.info(`User.hasAnyRole 
     ReactoryClient:[${clientId}]     
     Organization: [${organizationId || '**'}]

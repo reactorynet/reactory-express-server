@@ -445,19 +445,92 @@ type PagedCRMQuote {
   quotes: [Quote]
 }
 
+"""
+
+
+Invoice number
+
+Purchase order number
+
+Sales order number
+
+Quote number
+
+Customer
+
+Account number
+
+Client
+
+Client rep code
+
+Invoice value
+
+MUP%
+
+GP%
+
+
+"""
 type Invoice {
+  """
+  The invoice id and invoice number will overlap, invoice number is an alias
+  """
   id: String
+  """
+  Invoice date - The date the invoice was raised / generated
+  """
   invoiceDate: String
+  """
+  Invoice number - The number for the invoice
+  """
+  invoiceNumber: String
+  """
+  ISO Number loaded against the invoice
+  """
+  isoNumber: String
+  """
+  Purchase Order Number
+  """
+  poNumber: String
+  """
+  Quote Date
+  """
   quoteDate: String
   quoteId: String
+  """
+  The trading name of the customer
+  """
   customer: String
+  """
+  The client fullname
+  """
   client: String
+  """
+  Dispatches associated with this invoice
+  """
   dispatches: String
+  """
+  Account number linked to this invoice
+  """
   accountNumber: String
+  """
+  Sales Team (rep code) linked to this invoice
+  """
   salesTeamId: String
-  poNumber: String
+  """
+  Value is given ZAR?
+  """
   value: Int
-  isoNumber: String
+  """
+  Markup Percentage
+  """
+  mup: Float
+  """
+  GP Percentage
+  """
+  gp: Float
+
 }
 
 type SalesHistory {

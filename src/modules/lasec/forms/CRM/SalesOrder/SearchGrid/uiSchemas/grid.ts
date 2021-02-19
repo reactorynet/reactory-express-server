@@ -328,29 +328,29 @@ const uiSchema: any = {
           },
         },
       ],
-      actions: [
-        {
-          icon: 'remove_circle',
-          tooltip: 'Deactivate Client(s)',
-          iconProps: {
-            color: 'error'
-          },
-          mutation: 'deactivate',
-          variables: {
+      // actions: [
+      //   {
+      //     icon: 'remove_circle',
+      //     tooltip: 'Deactivate Client(s)',
+      //     iconProps: {
+      //       color: 'error'
+      //     },
+      //     mutation: 'deactivate',
+      //     variables: {
 
-          },
-          resultMap: {
+      //     },
+      //     resultMap: {
 
-          },
-          resultAction: 'refresh'
-        },
-      ],
+      //     },
+      //     resultAction: 'refresh'
+      //   },
+      // ],
       options: {
         grouping: false,
         search: false,
         showTitle: false,
         toolbar: true,
-        selection: true,
+        selection: false,
         toolbarButtonAlignment: 'left',
         actionsColumnIndex: -1,
         pageSize: 10,

@@ -22,7 +22,6 @@ const typeDefs = [];
   'Project/Task',
   'Organization/Organization',
   'Organization/BusinessUnit',
-  'Organization/LeadershipBrand',
   'System/Email',
   'System/Template',
   'System/Statistics',

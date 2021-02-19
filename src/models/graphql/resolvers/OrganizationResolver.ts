@@ -29,7 +29,16 @@ const organizationResolver = {
 
       return _id ? `${_id.toString()}` : 'organization-no-id';
     },
-    avatar() {
+    avatar(organization) {
+      if (organization && organization.avatar) return organization.avatar;
+
+      return null;
+    },
+    avatarURL(organization) {
+      if (organization && organization.logo) {
+        return `${CDN_ROOT}organization/${organization._id}/${organization.avatar}?t=${moment().format('YYYMMDDhh')}`;
+      }
+
       return null;
     },
     tradingName(organization) {
@@ -38,10 +47,11 @@ const organizationResolver = {
       return organization.tradingName || organization.name;
     },
     logoURL: (organization) => {
-
       if (organization && organization.logo) {
-        return `${CDN_ROOT}organization/${organization.id}/${organization.logo}?t=${moment().format('YYYMMDDhh')}`
+        return `${CDN_ROOT}organization/${organization._id}/${organization.logo}?t=${moment().format('YYYMMDDhh')}`;
       }
+
+      return null;
     },
     createdAt(obj) {
       return obj.createdAt || moment().unix();
