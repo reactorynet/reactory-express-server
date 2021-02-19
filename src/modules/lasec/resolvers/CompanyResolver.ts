@@ -1224,7 +1224,7 @@ const getOrganisationList = async (params: any, context: Reactory.IReactoryConte
 
   if (ids.length > 0) {
 
-    const organisationDetails = await lasecApi.Organisation.list({ filter: { ids: ids } }).then();
+    const organisationDetails = await lasecApi.Organisation.list({ filter: { ids: ids } }, context).then();
 
     logger.debug(`Fetched Expanded View for (${organisationDetails.organisations.length}) ORGANISATIONS from API`);
     organisations = [...organisationDetails.organisations];
@@ -2469,7 +2469,7 @@ export default {
 
       return null;
     },
-    LasecGetAddress: async (obj: any, args: { searchTerm: string, paging: Reactory.IPagingRequest }) => {
+    LasecGetAddress: async (obj: any, args: { searchTerm: string, paging: Reactory.IPagingRequest }, context: Reactory.IReactoryContext) => {
       const search_results = await getAddress(args, context);
 
       return {
@@ -2502,7 +2502,7 @@ export default {
       }
     },
     LasecGetPlaceDetails: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
-      return getPlaceDetails(args);
+      return getPlaceDetails(args, context);
     },
   },
   Mutation: {
