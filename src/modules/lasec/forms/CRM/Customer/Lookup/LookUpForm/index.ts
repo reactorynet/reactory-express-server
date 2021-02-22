@@ -4,6 +4,7 @@ import $graphql, { newClientGraphQL } from './graphql';
 const uiSchema: any = {
   'ui:graphql': newClientGraphQL,
   'ui:options': {
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -12,12 +13,12 @@ const uiSchema: any = {
     style: {
       marginTop: '0',
     },
-    componentType: 'div',    
+    componentType: 'div',
     showSubmit: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       selected: { xs: 12, sm: 12, md: 6, lg: 4 },
     },
@@ -68,9 +69,9 @@ const uiSchema: any = {
               }
             },
           },
-          breakpoint: 'md',
+          // breakpoint: 'md',
         },
-        { title: "Account Number", field: "accountNumber" },
+        { title: "Account Number", field: "accountNumber", breakpoint: 'md', },
       ],
       options: {
         grouping: false,
@@ -90,16 +91,12 @@ const uiSchema: any = {
           iconProps: {
             color: '#5fb848'
           },
-          mutation: 'onSelectCustomer',
-          variables: {
-            'selected': 'newClient.customer',
-          },
           event: {
+            via: 'api',
             name: 'onCustomerSelect',
-            via: 'form', // make either "form" || "amq"
             paramsMap: {
-              'selected': 'formData.selected',
-            },
+              'selected': 'formData.selected'
+            }
           }
         },
       ],

@@ -1040,6 +1040,7 @@ const getCustomerList = async (params: any, context: Reactory.IReactoryContext) 
   let customers = [...companyDetails.items];
 
   logger.debug(`CUSTOMER RESOLVER - CUSTOMER:: Found (${customers.length}) for request`, customers);
+  logger.debug(`CUSTOMER RESOLVER - CUSTOMER:: ${JSON.stringify(customers[0])}`);
 
   customers = customers.map(customer => {
     let _customer = om(customer, {
@@ -1078,6 +1079,10 @@ const getCustomerList = async (params: any, context: Reactory.IReactoryContext) 
       },
       'currency_symbol': 'currencySymbol',
       'vat_number': ['taxNumber', 'vatNumber'],
+      'description': 'description',
+      'bankName': 'bank_name',
+      'bankAccountNumber': 'bank_account_number',
+
     });
     return _customer;
   });
@@ -2812,7 +2817,7 @@ export default {
               try {
                 const update_result = await mysql(`
               UPDATE Customer SET
-                physical_address_id = '${physicalAddress.id}'                
+                physical_address_id = '${physicalAddress.id}'
               WHERE customerid = ${customer.id};`, 'mysql.lasec360', undefined, context).then()
 
                 logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
@@ -2828,7 +2833,7 @@ export default {
                 logger.debug(`Set delivery address ${deliveryAddress.fullAddress}`);
                 await mysql(`
               UPDATE Customer SET
-                delivery_address_id = '${deliveryAddress.id}'                
+                delivery_address_id = '${deliveryAddress.id}'
                 WHERE customerid = ${customer.id};`, 'mysql.lasec360', undefined, context).then()
               } catch (exc) {
                 logger.error(`Could not save the delivery address against the customer`, exc);

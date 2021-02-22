@@ -34,6 +34,9 @@ type LasecCRMCustomer {
   creditTotal: Float
   documents: [LasecDocument]
   specialRequirements: String
+
+  bankName: String
+  bankAccountNumber: String
 }
 
 type LasecCRMOrganisation {
