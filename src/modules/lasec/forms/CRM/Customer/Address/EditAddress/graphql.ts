@@ -49,7 +49,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       'suburb': 'suburb',
       'city': 'city',
       'metro': 'metro',
-      'province_name': 'province',      
+      'province_name': 'province',
       'country_name': 'country',
       'created_by': 'created_by',
       'last_editied_by': 'editied_by'
@@ -80,9 +80,10 @@ const graphql: Reactory.IFormGraphDefinition = {
       objectMap: true,
       updateMessage: 'Updating Address / Place Details',
       variables: {
+        'formData.id': 'address_input.id',
         'formData.buildingType': 'address_input.building_description_id',
         'formData.floorNumber': 'address_input.building_floor_number_id',
-        
+
         'formData.unitNumber': 'address_input.unit_number',
         'formData.unitName': 'address_input.unit_name',
 
@@ -94,6 +95,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.province': 'address_input.province',
         'formData.postalCode': 'address_input.postal_code',
         'formData.country': 'address_input.country',
+
       },
       onSuccessMethod: "notification",
       notification: {
@@ -101,7 +103,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         type: "success",
         inAppNotification: true
       },
-    },    
+    },
   }
 };
 

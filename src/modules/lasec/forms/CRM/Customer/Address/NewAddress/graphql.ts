@@ -71,9 +71,9 @@ const graphql: Reactory.IFormGraphDefinition = {
       notification: {
         title: "Address [${mutation_result.fullAddress}] has been added with id: ${mutation_result.id}",
         type: "success",
-        inAppNotification: true
-      }
-    },    
+        inAppNotification: true,
+      },
+    },
   }
 };
 

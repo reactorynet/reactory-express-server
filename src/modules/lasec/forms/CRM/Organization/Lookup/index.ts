@@ -74,7 +74,7 @@ export const newUiSchema: any = {
   'ui:grid-options': {
     containerStyles: {
       padding: '24px',
-      marginBottom: '16px'
+      marginBottom: '16px',
     }
   },
   'ui:grid-layout': [
@@ -83,8 +83,10 @@ export const newUiSchema: any = {
     },
   ],
   name: {
+    'ui:title': '',
     'ui:widget': 'LookupComponent',
     'ui:options': {
+      showLabel: false,
       label: 'Organisation Name',
       title: 'Search for an Organisation',
       labelProps: {
@@ -102,15 +104,13 @@ export const newUiSchema: any = {
       }
     },
     props: {
-      componentFqn: 'lasec-crm.LasecCRMOrganisationLookupTable@1.0.0',      
+      componentFqn: 'lasec-crm.LasecCRMOrganisationLookupTable@1.0.0',
       componentProps: {},
       handleOnChange: true,
       componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',
         'LookupComponent.props.formContext': 'LookupComponentFormContext',
         'LookupComponent.props.formData': 'formData.selected.name'
-        //'LookupComponent.props.mode': 'mode',
-        //'LookupComponent.props.uiSchemaKey': 'uiSchemaKey',
       },
     },
   },
@@ -173,15 +173,15 @@ export const ConfirmNewUISchema: any = {
 
 export const schema: Reactory.ISchema = {
   type: 'object',
-  title: "Select an Organization",
+  title: 'Select an Organization',
   properties: {
     id: {
       type: 'string',
-      title: 'Organization Id'
+      title: 'Organization Id',
     },
     name: {
       title: 'Name',
-      type: 'string'
+      type: 'string',
     },
   }
 };

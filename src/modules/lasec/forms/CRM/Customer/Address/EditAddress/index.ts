@@ -111,9 +111,9 @@ const uiSchema: any = {
       FormControl: {
         props: {
           style: {
-            maxWidth: '400px'
-          }
-        }
+            maxWidth: '400px',
+          },
+        },
       },
       selectOptions: [
         {
@@ -195,19 +195,19 @@ const schema: Reactory.ISchema = {
   properties: {
     id: {
       title: 'Id',
-      type: 'string'
+      type: 'string',
     },
     unitNumber: {
       title: 'Room/Unit Number',
-      type: 'string'
+      type: 'string',
     },
     unitName: {
       title: 'Unit Name',
-      type: 'string'
+      type: 'string',
     },
     suburb: {
       title: 'Suburb',
-      type: 'string'
+      type: 'string',
     },
     province: {
       title: 'Province',
