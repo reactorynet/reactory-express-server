@@ -114,28 +114,15 @@ const uiSchema: any = {
       padding: '0px',
       margin: '0px'
     },
-    schemaSelector: {
-      variant: 'icon-button',
-      showTitle: false,
-      activeColor: 'secondary',
-      style: {
-        display: 'flex',
-        justifyContent: 'flex-end'
-      }
-    },
-    style: {
-      marginTop: '16px',
-    },
     showSchemaSelectorInToolbar: false,
   },
-  product: {
-    hidden: true,
-    'ui:widget': 'HiddenWidget'
+  'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
   },
-  view: {
-    hidden: true,
-    'ui:widget': 'HiddenWidget'
-  },
+  'ui:grid-layout': [
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0, marginTop: '16px' } },
+  ],
   products: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -145,90 +132,15 @@ const uiSchema: any = {
           field: 'onSyspro',
           components: [
             {
-              component: 'core.ConditionalIconComponent@1.0.0',
-              props: {
-                'ui:options': {},
-                conditions: [
-                  {
-                    key: 'on_syspro',
-                    icon: 'OnSyspro',
-                    iconType: 'reactory',
-                    style: {
-                      color: '#9AD86E'
-                    },
-                    tooltip: 'ON SYSPRO'
-                  },
-                  {
-                    key: 'not_on_syspro',
-                    icon: 'OnSyspro',
-                    iconType: 'reactory',
-                    style: {
-                      color: '#D22D2C'
-                    },
-                    tooltip: 'NOT ON SYSPRO'
-                  },
-                  {
-                    key: 'on_hold',
-                    icon: 'OnSyspro',
-                    iconType: 'reactory',
-                    style: {
-                      color: '#D22D2C'
-                    },
-                    tooltip: 'ON HOLD'
-                  },
-                  {
-                    key: 'on_partial_hold',
-                    icon: 'OnSyspro',
-                    iconType: 'reactory',
-                    style: {
-                      color: '#f7b425'
-                    },
-                    tooltip: 'ON PARTIAL HOLD'
-                  },
-                ]
-              },
+              title: '',
+              field: 'onSyspro',
+              component: 'lasec-crm.LasecProductAddToQuoteComponent@1.0.0',
+              props: {},
               propsMap: {
-                'rowData.onSyspro': 'value',
+                'rowData': 'product',
               },
             },
-            {
-              component: 'core.ImageComponent@1.0.0',
-              props: {
-                'ui:options': {
-                  variant: 'rounded',
-                  style: {
-                    marginLeft: '16px'
-                  }
-                },
-              },
-              propsMap: {
-                'rowData.image': 'value',
-              },
-            },
-            {
-              component: 'core.SlideOutLauncher@1.0.0',
-              props: {
-                componentFqn: 'lasec-crm.LasecAddProductToQuote@1.0.0',
-                componentProps: {
-                  'rowData.code': 'formData.id'
-                },
-                slideDirection: 'down',
-                buttonVariant: 'Fab',
-                buttonProps: {
-                  color: "#23A06A",
-                  size: 'small',
-                  style: {
-                    marginLeft: '16px',
-                    backgroundColor: "#23A06A",
-                    color: '#fff'
-                  }
-                },
-                buttonIcon: 'add',
-                windowTitle: 'Add to quote ${rowData.code}',
-              },
-            }
           ],
-          width: '150px',
           cellStyle: {
             maxWidth: '150px',
             width: '150px'

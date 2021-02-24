@@ -10,41 +10,18 @@ export const uiSchemaTable: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
-    schemaSelector: {
-      variant: 'icon-button',
-      showTitle: false,
-      activeColor: 'secondary',
-      style: {
-        display: 'flex',
-        justifyContent: 'flex-end'
-      }
-    },
-    style: {
-      marginTop: '16px',
-    },
+
     showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+  },
   'ui:grid-layout': [
-    { view: { sm: 12, md: 12, lg: 12 } },
-    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0, marginTop: '16px' } }
   ],
-  view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      showLabel: false,
-      style: {
-        width: '100%',
-        float: "right"
-      },
-    }
-  },
-  product: {
-    hidden: true,
-    'ui:widget': 'HiddenWidget'
-  },
   products: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -52,104 +29,12 @@ export const uiSchemaTable: any = {
         {
           title: '',
           field: 'onSyspro',
-          components: [
-            {
-              component: 'core.ConditionalIconComponent@1.0.0',
-              props: {
-                'ui:options': {},
-                conditions: [
-                  {
-                    key: 'on_syspro',
-                    // icon: 'error',
-                    icon: 'OnSyspro',
-                    iconType: 'reactory',
-                    style: {
-                      color: '#9AD86E'
-                    },
-                    tooltip: 'ON SYSPRO'
-                  },
-                  {
-                    key: 'not_on_syspro',
-                    // icon: 'error',
-                    icon: 'OnSyspro',
-                    iconType: 'reactory',
-                    style: {
-                      color: '#D22D2C'
-                    },
-                    tooltip: 'NOT ON SYSPRO'
-                  },
-                  {
-                    key: 'on_hold',
-                    // icon: 'error',
-                    icon: 'OnSyspro',
-                    iconType: 'reactory',
-                    style: {
-                      color: '#D22D2C'
-                    },
-                    tooltip: 'ON HOLD'
-                  },
-                  {
-                    key: 'on_partial_hold',
-                    // icon: 'error',
-                    icon: 'OnSyspro',
-                    iconType: 'reactory',
-                    style: {
-                      color: '#f7b425'
-                    },
-                    tooltip: 'ON PARTIAL HOLD'
-                  },
-                ]
-              },
-              propsMap: {
-                'rowData.onSyspro': 'value',
-              },
-            },
-            {
-              component: 'core.ImageComponent@1.0.0',
-              props: {
-                'ui:options': {
-                  variant: 'rounded',
-                  style: {
-                    marginLeft: '16px'
-                  }
-                },
-              },
-              propsMap: {
-                'rowData.image': 'value',
-              },
-            },
-            {
-              component: 'core.SlideOutLauncher@1.0.0',
-              props: {
-                componentFqn: 'lasec-crm.LasecAddProductToQuote@1.0.0',
-                componentProps: {
-                  'rowData.code': 'formData.id'
-                },
-                slideDirection: 'down',
-                buttonVariant: 'Fab',
-                buttonProps: {
-                  color: "#23A06A",
-                  size: 'small',
-                  style: {
-                    marginLeft: '16px',
-                    backgroundColor: "#23A06A",
-                    color: '#fff'
-                  }
-                },
-                buttonIcon: 'add',
-                windowTitle: 'Add to quote ${rowData.code}',
-              },
-            }
-          ],
-          width: '150px',
-          cellStyle: {
-            maxWidth: '150px',
-            width: '150px'
+          component: 'lasec-crm.LasecProductAddToQuoteComponent@1.0.0',
+          props: {},
+          propsMap: {
+            'rowData': 'product',
           },
-          headerStyles: {
-            maxWidth: '150px',
-            width: '150px'
-          }
+          width: '140px',
         },
         {
           title: 'Stock Code',

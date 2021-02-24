@@ -15,41 +15,16 @@ const uiSchemaTable: any = {
       margin: '0px',
       paddingBottom: '8px'
     },
-    schemaSelector: {
-      variant: 'icon-button',
-      showTitle: false,
-      activeColor: 'secondary',
-      style: {
-        display: 'flex',
-        justifyContent: 'flex-end'
-      }
-    },
-    style: {
-      marginTop: '16px',
-    },
-    showSchemaSelectorInToolbar: false,
     showSubmit: false,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+  },
   'ui:grid-layout': [
-    { view: { sm: 12, md: 12, lg: 12 } },
-    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
+    { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0, marginTop: '16px' } },
   ],
-  view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      showLabel: false,
-      style: {
-        width: '100%',
-        float: "right"
-      },
-    }
-  },
-  product: {
-    hidden: true,
-    'ui:widget': 'HiddenWidget'
-  },
   products: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
