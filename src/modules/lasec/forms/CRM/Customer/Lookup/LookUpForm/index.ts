@@ -78,8 +78,6 @@ const uiSchema: any = {
         search: true,
         showTitle: false,
         toolbar: true,
-        // selection: true,
-        // multiSelect: false,
         toolbarButtonAlignment: 'left',
         actionsColumnIndex: -1
       },

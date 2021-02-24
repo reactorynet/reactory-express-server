@@ -31,7 +31,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
     refreshEvents: [
       { name: 'NewClient.onCustomerSelected'},
       { name: "LasecNewClient::onResetForm" }
-    ]    
+    ]
   },
   mutation: {
     onCustomerSelected: {

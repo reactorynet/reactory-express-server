@@ -377,6 +377,10 @@ input ClientUpdateInput {
   lineManager: String
   jobType: String
 
+
+  customer: Any
+  customerId: String
+
   customerCompanyName: String
   customerTradingName: String
   customerTradingCurrency: String
