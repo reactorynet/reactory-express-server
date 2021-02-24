@@ -979,6 +979,7 @@ extend type Mutation {
     quote_id: String!
     input: LasecQuoteHeaderInput
   ): LasecQuoteHeader
+  LasecSetQuoteAgentCommission(quote_id: String!, commission: Int!): SimpleResponse
   LasecUpdateQuoteStatus(
     quote_id: String!
     input: LasecQuoteStatusUpdate
