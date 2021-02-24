@@ -88,6 +88,7 @@ const displayUiSchema: any = {
   currentBalance: {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
+      showLabel: false,
       inlineLabel: true,
       label: "Current Balance:"
     },
@@ -96,6 +97,7 @@ const displayUiSchema: any = {
   creditLimit: {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
+      showLabel: false,
       inlineLabel: true,
       label: "Credit Limit:"
     },
@@ -104,6 +106,7 @@ const displayUiSchema: any = {
   currentInvoice: {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
+      showLabel: false,
       inlineLabel: true,
       label: "Current Invoice"
     },
@@ -112,6 +115,7 @@ const displayUiSchema: any = {
   balance30Days: {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
+      showLabel: false,
       inlineLabel: true,
       label: "30 Day Invoice"
     },
@@ -120,6 +124,7 @@ const displayUiSchema: any = {
   balance60Days: {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
+      showLabel: false,
       inlineLabel: true,
       label: "60 Day Invoice"
     },
@@ -128,6 +133,7 @@ const displayUiSchema: any = {
   balance90Days: {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
+      showLabel: false,
       inlineLabel: true,
       label: "90 Day Invoice"
     },
@@ -136,6 +142,7 @@ const displayUiSchema: any = {
   credits: {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
+      showLabel: false,
       inlineLabel: true,
       label: "Credits"
     },

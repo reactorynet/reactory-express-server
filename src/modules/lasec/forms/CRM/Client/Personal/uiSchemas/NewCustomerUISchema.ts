@@ -1,16 +1,16 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { AccountTypeDropdownUISchema } from '@reactory/server-modules/lasec/forms/widgets'
+import { AccountTypeDropdownUISchema } from '@reactory/server-modules/lasec/forms/widgets';
 import { newClientGraphQL } from '../graphql';
 
 const uiSchema: Reactory.IUISchema = {
   'ui:graphql': newClientGraphQL,
   'ui:options': {
-    componentType: "div",
+    componentType: 'div',
     toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
-      paddingBottom: '8px'
+      paddingBottom: '8px',
     },
     style: {
       marginTop: '16px',
@@ -22,24 +22,42 @@ const uiSchema: Reactory.IUISchema = {
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
     paddingBottom: '15px',
-    marginBottom: '45px'
+    marginBottom: '45px',
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
     containerStyles: {
-      padding: '24px 24px 60px'
-    }
+      padding: '24px 24px 60px',
+    },
   },
   'ui:grid-layout': [
     {
-      clientTitle: { xs: 12, sm: 12, md: 6, lg: 4 },
-      firstName: { xs: 12, sm: 12, md: 6, lg: 8 },
-      lastName: { xs: 12, sm: 12, md: 6, lg: 6 },
-      country: { xs: 12, sm: 12, md: 6, lg: 6 },
-      accountType: { xs: 12, sm: 12, md: 6, lg: 6 },
-      repCode: { xs: 12, sm: 12, md: 6, lg: 6 },
-      style: { padding: '25px 32px 0 32px' }
-    }
+      clientTitle: {
+        xs: 12, sm: 12, md: 3, lg: 3,
+      },
+      firstName: {
+        xs: 12, sm: 12, md: 3, lg: 3,
+      },
+      style: {
+        padding: '25px 32px 0 32px',
+      },
+    },
+    {
+      lastName: {
+        xs: 12, sm: 12, md: 3, lg: 3,
+      },
+      country: {
+        xs: 12, sm: 12, md: 3, lg: 3,
+      },
+    },
+    {
+      accountType: {
+        xs: 12, sm: 12, md: 6, lg: 3,
+      },
+      repCode: {
+        xs: 12, sm: 12, md: 3, lg: 3,
+      },
+    },
   ],
 
   clientTitle: {
@@ -60,9 +78,9 @@ const uiSchema: Reactory.IUISchema = {
       selectProps: {
       },
       labelStyle: {
-      }
+      },
     },
-    'ui:description': "Select the client title",
+    'ui:description': 'Select the client title',
   },
 
   firstName: {
@@ -73,7 +91,7 @@ const uiSchema: Reactory.IUISchema = {
         placeholder: 'First Name',
       },
     },
-    'ui:description': "Please provide the client first name",
+    'ui:description': 'Please provide the client first name',
   },
   lastName: {
     'ui:options': {
@@ -83,7 +101,7 @@ const uiSchema: Reactory.IUISchema = {
         placeholder: 'Last Name',
       },
     },
-    'ui:description': "Please provide the client Lastname",
+    'ui:description': 'Please provide the client Lastname',
   },
   country: {
     'ui:widget': 'SelectWithDataWidget',
@@ -104,7 +122,7 @@ const uiSchema: Reactory.IUISchema = {
     },
   },
   accountType: {
-    ...AccountTypeDropdownUISchema
+    ...AccountTypeDropdownUISchema,
   },
   repCode: {
     'ui:widget': 'SelectWithDataWidget',
