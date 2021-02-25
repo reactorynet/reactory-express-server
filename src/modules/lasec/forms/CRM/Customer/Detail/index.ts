@@ -66,18 +66,20 @@ const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      customerStatus: { md: 6, sm: 12 },
-      registeredCompanyName: { md: 6, sm: 12 },
-      tradingName: { md: 6, sm: 12 },
-      tradingCurrency: { md: 6, sm: 12 },
-      description: { md: 6, sm: 12 },
+      customerStatus: { md: 3, sm: 12 },
+      registeredCompanyName: { md: 3, sm: 12 },
+    }, {
+      tradingName: { md: 3, sm: 12 },
+      tradingCurrency: { md: 3, sm: 12 },
+    }, {
+      description: { md: 3, sm: 12 },
       // physicalAddress: { md: 6, sm: 12 },
       // deliveryAddress: { md: 6, sm: 12 },
       // billingAddress: { md: 6, sm: 12 },
-      registrationNumber: { md: 6, sm: 12 },
-      taxNumber: { md: 6, sm: 12 },
-      style: { padding: '25px 32px 0 32px' }
-    }
+      registrationNumber: { md: 3, sm: 12 },
+    }, {
+      taxNumber: { md: 3, sm: 12 },
+    },
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',

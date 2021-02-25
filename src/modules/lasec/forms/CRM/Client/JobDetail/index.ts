@@ -50,16 +50,18 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      jobTitle: { md: 6, sm: 12 },
-      jobTypeLabel: { md: 6, sm: 12 },
-      lineManagerLabel: { md: 6, sm: 12 },
-      customerType: { md: 6, sm: 12 },
-      customerClassLabel: { md: 6, sm: 12 },
-      faculty: { md: 6, sm: 12 },
-      clientDepartment: { md: 6, sm: 12 },
-      rankingLabel: { md: 6, sm: 12 },
-      style: { padding: '25px 32px 0 32px' }
-    }
+      jobTitle: { md: 3, sm: 12 },
+      jobTypeLabel: { md: 3, sm: 12 },
+    }, {
+      lineManagerLabel: { md: 3, sm: 12 },
+      customerType: { md: 3, sm: 12 },
+    }, {
+      customerClassLabel: { md: 3, sm: 12 },
+      faculty: { md: 3, sm: 12 },
+    }, {
+      clientDepartment: { md: 3, sm: 12 },
+      rankingLabel: { md: 3, sm: 12 },
+    },
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
@@ -365,14 +367,16 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      jobType: { md: 6, sm: 12 },
-      lineManager: { md: 6, sm: 12 },
-      customerType: { md: 6, sm: 12 },
-      customerClass: { md: 6, sm: 12 },
-      faculty: { md: 6, sm: 12 },
-      clientDepartment: { md: 6, sm: 12 },
-      ranking: { md: 6, sm: 12 },
-      style: { padding: '25px 32px 0 32px' }
+      jobType: { md: 3, sm: 12 },
+      lineManager: { md: 3, sm: 12 },
+    }, {
+      customerType: { md: 3, sm: 12 },
+      customerClass: { md: 3, sm: 12 },
+    }, {
+      faculty: { md: 3, sm: 12 },
+      clientDepartment: { md: 3, sm: 12 },
+    }, {
+      ranking: { md: 3, sm: 12 },
     }
   ],
   view: {
@@ -557,14 +561,19 @@ export const ConfirmUiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      jobTitle: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
-      jobType: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
-      customerType: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
+      jobTitle: { xs: 12, sm: 12, md: 3, lg: 3, xl: 3 },
+      jobType: { xs: 12, sm: 12, md: 3, lg: 3, xl: 3 },
+    },
+    {
+      customerType: { xs: 12, sm: 12, md: 3, lg: 3, xl: 3 },
       customerClass: { sm: 12, md: 6 },
-      faculty: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
-      clientDepartment: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
-      ranking: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
-      style: { padding: '25px 32px 0 32px' }
+    },
+    {
+      faculty: { xs: 12, sm: 12, md: 6, lg: 3, xl: 3 },
+      clientDepartment: { xs: 12, sm: 12, md: 3, lg: 3, xl: 3 },
+    },
+    {
+      ranking: { xs: 12, sm: 12, md: 3, lg: 3, xl: 3 },
     }
   ],
   jobTitle: {
@@ -858,14 +867,20 @@ const newUiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      jobTitle: { sm: 12, md: 6 },
-      jobType: { sm: 12, md: 6 },
+      jobTitle: { sm: 12, md: 3 },
+      jobType: { sm: 12, md: 3 },
+    },
+    {
       // WHAT ABOUT LINE MANAGER
-      customerType: { sm: 12, md: 6 },
-      customerClass: { sm: 12, md: 6 },
-      faculty: { md: 6, sm: 12 },
-      clientDepartment: { sm: 12, md: 6 },
-      ranking: { sm: 12, md: 6 },
+      customerType: { sm: 12, md: 3 },
+      customerClass: { sm: 12, md: 3 },
+    },
+    {
+      faculty: { md: 3, sm: 12 },
+      clientDepartment: { sm: 12, md: 3 },
+    },
+    {
+      ranking: { sm: 12, md: 3 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],

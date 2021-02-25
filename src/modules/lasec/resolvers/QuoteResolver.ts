@@ -1707,6 +1707,34 @@ export default {
           success: false
         }
       }
+    },
+
+    LasecSetQuoteAgentCommission: async (parent: any, params: { quote_id: string, commission: number }, context: Reactory.IReactoryContext): Promise<SimpleResponse> => {
+
+      try {
+        const { status, payload } = await lasecApi.Quotes.updateQuote({ item_id: params.quote_id, values: { agent_commission: params.commission } }, context).then();;
+
+        if (status !== 'success') {
+          return {
+            success: false,
+            message: 'Commission update failed'
+          };
+        }
+
+        logger.debug(`Quote ${params.quote_id} commission updated ${params.commission}`);
+
+        return {
+          success: true,
+          message: 'Commission has been updated',
+        };
+
+      } catch (e) {
+        logger.error(`Could not update the commission for quote ${params.quote_id}`);
+        return {
+          success: false,
+          message: 'Commision could not be updated, please try again.',
+        }
+      }
     }
   }
 };

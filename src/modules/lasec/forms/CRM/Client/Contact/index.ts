@@ -50,13 +50,16 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { md: 6, sm: 12 },
-      alternateEmail: { md: 6, sm: 12 },
-      officeNumber: { md: 6, sm: 12 },
-      mobileNumber: { md: 6, sm: 12 },
-      alternateNumber: { md: 6, sm: 12 },
-      style: { padding: '25px 32px 0 32px' }
-    }
+      emailAddress: { md: 3, sm: 12 },
+      alternateEmail: { md: 3, sm: 12 },
+    },
+    {
+      officeNumber: { md: 3, sm: 12 },
+      mobileNumber: { md: 3, sm: 12 },
+    },
+    {
+      alternateNumber: { md: 3, sm: 12 },
+    },
   ],
   view: {
     'ui:widget': 'SchemaSelectorWidget',
@@ -238,12 +241,15 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { md: 6, sm: 12 },
-      alternateEmail: { md: 6, sm: 12 },
-      mobileNumber: { md: 6, sm: 12 },
-      officeNumber: { md: 6, sm: 12 },
-      alternateNumber: { md: 6, sm: 12 },
-      style: { padding: '25px 32px 0 32px' }
+      emailAddress: { md: 3, sm: 12 },
+      alternateEmail: { md: 3, sm: 12 },
+    },
+    {
+      mobileNumber: { md: 3, sm: 12 },
+      officeNumber: { md: 3, sm: 12 },
+    },
+    {
+      alternateNumber: { md: 3, sm: 12 },
     }
   ],
   view: {
@@ -399,18 +405,21 @@ export const newConfirmSchema: any = {
   'ui:field': 'GridLayout',
   'ui:grid-options': {
     containerStyles: {
-      padding: '24px 24px 60px'
-    }
+      padding: '24px 24px 60px',
+    },
   },
   'ui:grid-layout': [
     {
-      emailAddress: { sm: 12, md: 6 },
-      alternateEmail: { sm: 12, md: 6 },
-      officeNumber: { sm: 12, md: 6 },
-      mobileNumber: { sm: 12, md: 6 },
-      alternateNumber: { sm: 12, md: 6 },
-      style: { padding: '25px 32px 0 32px' }
-    }
+      emailAddress: { sm: 12, md: 3 },
+      alternateEmail: { sm: 12, md: 3 },
+    },
+    {
+      officeNumber: { sm: 12, md: 3 },
+      mobileNumber: { sm: 12, md: 3 },
+    },
+    {
+      alternateNumber: { sm: 12, md: 3 }
+    },
   ],
   emailAddress: {
     'ui:widget': 'LabelWidget',
@@ -549,17 +558,24 @@ const newUiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      emailAddress: { sm: 12, md: 6 },
-      confirmEmail: { sm: 12, md: 6 },
-      alternateEmail: { sm: 12, md: 6 },
-      confirmAlternateEmail: { sm: 12, md: 6 },
-      mobileNumber: { sm: 12, md: 6 },
-      alternateMobileNumber: { sm: 12, md: 6 },
-      officeNumber: { sm: 12, md: 6 },
-      alternateNumber: { sm: 12, md: 6 },
-      prefferedMethodOfContact: { sm: 12, md: 6 },
-      style: { padding: '25px 32px 0 32px' }
-    }
+      emailAddress: { sm: 12, md: 3 },
+      confirmEmail: { sm: 12, md: 3 },
+    },
+    {
+      alternateEmail: { sm: 12, md: 3 },
+      confirmAlternateEmail: { sm: 12, md: 3 },
+    },
+    {
+      mobileNumber: { sm: 12, md: 3 },
+      alternateMobileNumber: { sm: 12, md: 3 },
+    },
+    {
+      officeNumber: { sm: 12, md: 3 },
+      alternateNumber: { sm: 12, md: 3 },
+    },
+    {
+      prefferedMethodOfContact: { sm: 12, md: 3 },
+    },
   ],
   emailAddress: {
     'ui:options': {

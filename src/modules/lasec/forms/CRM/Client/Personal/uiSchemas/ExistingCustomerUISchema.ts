@@ -60,13 +60,14 @@ const uiSchema: Reactory.IUISchema = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      title: { md: 6, sm: 12 },
-      firstName: { md: 6, sm: 12 },
-      lastName: { md: 6, sm: 12 },
-      country: { md: 6, sm: 12 },
-      accountType: { sm: 12, md: 6 },
-      repCode: { sm: 12, md: 6 },
-      style: { padding: '25px 32px 0 32px' }
+      title: { md: 3, sm: 12 },
+      firstName: { md: 3, sm: 12 },
+    }, {
+      lastName: { md: 3, sm: 12 },
+      country: { md: 3, sm: 12 },
+    }, {
+      accountType: { sm: 12, md: 3 },
+      repCode: { sm: 12, md: 3 },
     }
   ],
   view: {

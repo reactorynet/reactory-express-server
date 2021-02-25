@@ -3,12 +3,12 @@ import { newClientGraphQL } from '../graphql';
 
 const uiSchema: Reactory.IUISchema = {
     'ui:options': {
-        componentType: "div",
+        componentType: 'div',
         toolbarPosition: 'none',
         containerStyles: {
             padding: '0px',
             margin: '0px',
-            paddingBottom: '8px'
+            paddingBottom: '8px',
         },
         style: {
             marginTop: '16px',
@@ -19,24 +19,30 @@ const uiSchema: Reactory.IUISchema = {
     'ui:titleStyle': {
         borderBottom: '2px solid #D5D5D5',
         paddingBottom: '10px',
-        marginBottom: '30px'
+        marginBottom: '30px',
     },
     'ui:field': 'GridLayout',
     'ui:grid-options': {
         containerStyles: {
-            padding: '24px 24px 60px'
-        }
+            padding: '24px 24px 60px',
+        },
     },
     'ui:grid-layout': [
         {
-            clientTitle: { md: 6, sm: 12 },
-            firstName: { md: 6, sm: 12 },
-            lastName: { md: 6, sm: 12 },
-            country: { md: 6, sm: 12 },
-            accountType: { md: 6, sm: 12 },
-            repCode: { md: 6, sm: 12 },
-            style: { padding: '25px 32px 0 32px' }
-        }
+            clientTitle: { md: 3, sm: 12 },
+            firstName: { md: 3, sm: 12 },
+            style: { padding: '25px 32px 0 32px' },
+        },
+        {
+            lastName: { md: 3, sm: 12 },
+            country: { md: 3, sm: 12 },
+            style: { padding: '25px 32px 0 32px' },
+        },
+        {
+            accountType: { md: 3, sm: 12 },
+            repCode: { md: 3, sm: 12 },
+            style: { padding: '25px 32px 0 32px' },
+        },
     ],
     clientTitle: {
         'ui:graphql': {
@@ -48,13 +54,13 @@ const uiSchema: Reactory.IUISchema = {
                 }
             }`,
             variables: {
-                'formData': 'id'
+                formData: 'id',
             },
             resultType: 'string',
             resultKey: 'title',
             resultMap: {
-                'id': 'id',
-                'title': 'title',
+                id: 'id',
+                title: 'title',
             },
         },
         'ui:widget': 'LabelWidget',
@@ -67,16 +73,16 @@ const uiSchema: Reactory.IUISchema = {
                 style: {
                     display: 'content',
                     minWidth: '200px',
-                    color: "#9A9A9A",
-                }
+                    color: '#9A9A9A',
+                },
             },
             bodyProps: {
                 style: {
                     display: 'flex',
-                    justifyContent: 'flex-end'
-                }
+                    justifyContent: 'flex-end',
+                },
             },
-        }
+        },
     },
     clientStatus: {
         'ui:widget': 'LabelWidget',
@@ -89,20 +95,20 @@ const uiSchema: Reactory.IUISchema = {
                 style: {
                     display: 'content',
                     minWidth: '200px',
-                    color: "#9A9A9A",
-                }
+                    color: '#9A9A9A',
+                },
             },
             bodyProps: {
                 style: {
                     display: 'flex',
-                    justifyContent: 'flex-end'
-                }
+                    justifyContent: 'flex-end',
+                },
             },
-        }
+        },
     },
     firstName: {
         'ui:widget': 'LabelWidget',
-  
+
         'ui:options': {
             readOnly: true,
             format: '${formData}',
@@ -112,24 +118,24 @@ const uiSchema: Reactory.IUISchema = {
                 style: {
                     display: 'content',
                     minWidth: '200px',
-                    color: "#9A9A9A",
-                }
+                    color: '#9A9A9A',
+                },
             },
             bodyProps: {
                 style: {
                     display: 'flex',
-                    justifyContent: 'flex-end'
-                }
-            }
-        }
+                    justifyContent: 'flex-end',
+                },
+            },
+        },
     },
     lastName: {
         'ui:widget': 'LabelWidget',
         'ui:options': {
             readOnly: true,
-            component: "TextField",
+            component: 'TextField',
             componentProps: {
-                variant: "outlined"
+                variant: 'outlined',
             },
             format: '${formData}',
             variant: 'subtitle1',
@@ -138,16 +144,16 @@ const uiSchema: Reactory.IUISchema = {
                 style: {
                     display: 'content',
                     minWidth: '200px',
-                    color: "#9A9A9A",
-                }
+                    color: '#9A9A9A',
+                },
             },
             bodyProps: {
                 style: {
                     display: 'flex',
-                    justifyContent: 'flex-end'
-                }
-            }
-        }
+                    justifyContent: 'flex-end',
+                },
+            },
+        },
     },
     country: {
         'ui:widget': 'LabelWidget',
@@ -159,16 +165,16 @@ const uiSchema: Reactory.IUISchema = {
                 style: {
                     display: 'content',
                     minWidth: '200px',
-                    color: "#9A9A9A",
-                }
+                    color: '#9A9A9A',
+                },
             },
             bodyProps: {
                 style: {
                     display: 'flex',
-                    justifyContent: 'flex-end'
-                }
-            }
-        }
+                    justifyContent: 'flex-end',
+                },
+            },
+        },
     },
     accountType: {
         'ui:widget': 'LabelWidget',
@@ -181,21 +187,21 @@ const uiSchema: Reactory.IUISchema = {
                 style: {
                     display: 'content',
                     minWidth: '200px',
-                    color: "#9A9A9A",
-                }
+                    color: '#9A9A9A',
+                },
             },
             bodyProps: {
                 style: {
                     display: 'flex',
-                    justifyContent: 'flex-end'
-                }
+                    justifyContent: 'flex-end',
+                },
             },
-        }
+        },
     },
     repCode: {
         'ui:widget': 'LabelWidget',
         'ui:options': {
-  
+
             readOnly: true,
             format: '${formData}',
             variant: 'subtitle1',
@@ -204,16 +210,16 @@ const uiSchema: Reactory.IUISchema = {
                 style: {
                     display: 'content',
                     minWidth: '200px',
-                    color: "#9A9A9A",
-                }
+                    color: '#9A9A9A',
+                },
             },
             bodyProps: {
                 style: {
                     display: 'flex',
-                    justifyContent: 'flex-end'
-                }
+                    justifyContent: 'flex-end',
+                },
             },
-        }
+        },
     },
 };
 
