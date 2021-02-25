@@ -842,9 +842,16 @@ const getCustomerLineManagerOptions = async (params: any, context: Reactory.IRea
 
 const getCustomerClassById = async (id: string, context: Reactory.IReactoryContext) => {
   const customerClasses = await getCustomerClass(context).then();
-  logger.debug(`Searching in ${customerClasses.length} classes for id ${id}`)
+  logger.debug(`Searching in ${customerClasses.length} classes for id ${id}`);
   const found = lodash.find(customerClasses, { id: id });
-  return found;
+
+  if (!found) return null;
+
+  return {
+    id: found.id,
+    key: found.id,
+    name: found.name
+  };
 };
 
 const getCustomerCountries = async (context: Reactory.IReactoryContext) => {

@@ -562,7 +562,8 @@ export const ConfirmUiSchema: any = {
   'ui:grid-layout': [
     {
       jobTitle: { xs: 12, sm: 12, md: 3, lg: 3, xl: 3 },
-      jobType: { xs: 12, sm: 12, md: 3, lg: 3, xl: 3 },
+      // jobType: { xs: 12, sm: 12, md: 3, lg: 3, xl: 3 },
+      jobTypeLabel: { xs: 12, sm: 12, md: 3, lg: 3, xl: 3 },
     },
     {
       customerType: { xs: 12, sm: 12, md: 3, lg: 3, xl: 3 },
@@ -731,7 +732,8 @@ export const ConfirmUiSchema: any = {
       resultType: 'string',
       resultKey: 'name',
       resultMap: {
-        'name': 'formData',
+        // 'name': 'formData',
+        'name': 'name',
       },
     },
     'ui:widget': 'LabelWidget',
@@ -769,7 +771,7 @@ export const ConfirmUiSchema: any = {
       resultType: 'string',
       resultKey: 'name',
       resultMap: {
-        'name': 'formData',
+        'name': 'name',
       },
     },
     'ui:widget': 'LabelWidget',
