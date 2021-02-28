@@ -507,6 +507,8 @@ const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.I
 
       const client = clients[0];
 
+      logger.debug(`CLIENT [0]:: ${JSON.stringify(client)}`);
+
       let updateParams = {
         // first_name: params.firstName || (client.first_name || ''),
         // first_name: params.personalDetails && params.personalDetails.firstName || (client.first_name || ''),
@@ -564,7 +566,9 @@ const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.I
         faculty: params.faculty || (client.faculty || ''),
         customer_type: params.customerType || (client.customer_type || ''),
         line_manager_id: params.lineManager || (client.line_manager_id || ''),
-        role_id: params.jobType || (client.role_id || ''),// role_id: client.role_id,
+        role_id: params.jobType || (client.role_id || ''),
+
+        company_id: params.customer.id
 
       }
 
@@ -838,9 +842,16 @@ const getCustomerLineManagerOptions = async (params: any, context: Reactory.IRea
 
 const getCustomerClassById = async (id: string, context: Reactory.IReactoryContext) => {
   const customerClasses = await getCustomerClass(context).then();
-  logger.debug(`Searching in ${customerClasses.length} classes for id ${id}`)
+  logger.debug(`Searching in ${customerClasses.length} classes for id ${id}`);
   const found = lodash.find(customerClasses, { id: id });
-  return found;
+
+  if (!found) return null;
+
+  return {
+    id: found.id,
+    key: found.id,
+    name: found.name
+  };
 };
 
 const getCustomerCountries = async (context: Reactory.IReactoryContext) => {

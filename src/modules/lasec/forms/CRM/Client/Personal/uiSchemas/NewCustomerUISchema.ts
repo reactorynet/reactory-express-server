@@ -39,7 +39,7 @@ const uiSchema: Reactory.IUISchema = {
         xs: 12, sm: 12, md: 3, lg: 3,
       },
       style: {
-        padding: '25px 32px 0 32px',
+        padding: '25px 32px',
       },
     },
     {
@@ -82,7 +82,6 @@ const uiSchema: Reactory.IUISchema = {
     },
     'ui:description': 'Select the client title',
   },
-
   firstName: {
     'ui:options': {
       component: 'TextField',
@@ -131,7 +130,7 @@ const uiSchema: Reactory.IUISchema = {
       query: `query LasecLoggedInUser {
           LasecLoggedInUser {
             id
-            repCodes            
+            repCodes
           }
         }`,
       resultItem: 'LasecLoggedInUser',

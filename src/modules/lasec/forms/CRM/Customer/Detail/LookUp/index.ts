@@ -4,6 +4,7 @@ import $graphql, { newClientGraphQL } from './graphql';
 const uiSchema: any = {
   'ui:graphql': newClientGraphQL,
   'ui:options': {
+    toolbarPosition: 'none',
     containerStyles: {
       padding: '0px',
       margin: '0px',
@@ -19,9 +20,9 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    {
-      search: { xs: 12, sm: 12, md: 6, lg: 4 },
-    },
+    // {
+    //   search: { xs: 12, sm: 12, md: 6, lg: 4 },
+    // },
     {
       selected: { xs: 12, sm: 12, md: 6, lg: 4 },
     },
@@ -72,17 +73,14 @@ const uiSchema: any = {
               }
             },
           },
-          breakpoint: 'md',
         },
-        { title: "Account Number", field: "accountNumber" },
+        { title: "Account Number", field: "accountNumber", breakpoint: 'md', },
       ],
       options: {
+        toolbar: true,
+        search: true,
         grouping: false,
-        search: false,
         showTitle: false,
-        toolbar: false,
-        // selection: true,
-        // multiSelect: false,
         toolbarButtonAlignment: 'left',
         actionsColumnIndex: -1
       },
@@ -93,10 +91,10 @@ const uiSchema: any = {
           id: 'select_customer',
           iconProps: {
             color: '#5fb848'
-          },          
+          },
           event: {
+            via: 'api',
             name: 'onCustomerSelect',
-            via: 'form', // make either "form" || "amq"
             paramsMap: {
               'selected': 'formData.selected',
             },
@@ -106,8 +104,12 @@ const uiSchema: any = {
       remoteData: true,
       query: 'query',
       variables: {
-        'props.formContext.$formData.search': 'search',
-        'props.formContext.$formData.paging': 'paging',
+        'query.search': 'search',
+        'query.paging': 'paging',
+        'query.orderBy': 'orderBy',
+        'query.orderDirection': 'orderDirection'
+        // 'props.formContext.$formData.search': 'search',
+        // 'props.formContext.$formData.paging': 'paging',
       },
       resultMap: {
         'paging.page': 'page',

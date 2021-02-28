@@ -31,17 +31,17 @@ const uiSchema: Reactory.IUISchema = {
         {
             clientTitle: { md: 3, sm: 12 },
             firstName: { md: 3, sm: 12 },
-            style: { padding: '25px 32px 0 32px' },
+            style: { padding: '25px 32px' },
         },
         {
             lastName: { md: 3, sm: 12 },
             country: { md: 3, sm: 12 },
-            style: { padding: '25px 32px 0 32px' },
+            style: { padding: '25px 32px' },
         },
         {
             accountType: { md: 3, sm: 12 },
             repCode: { md: 3, sm: 12 },
-            style: { padding: '25px 32px 0 32px' },
+            style: { padding: '25px 32px' },
         },
     ],
     clientTitle: {
@@ -49,7 +49,7 @@ const uiSchema: Reactory.IUISchema = {
             name: 'LasecGetPersonTitleById',
             text: `query LasecGetPersonTitleById($id: String){
                 LasecGetPersonTitleById(id: $id) {
-                    id          
+                    id
                     title
                 }
             }`,

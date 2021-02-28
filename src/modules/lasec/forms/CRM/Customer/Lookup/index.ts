@@ -95,6 +95,7 @@ const newUiSchema: any = {
       },
     },
     props: {
+      use_case: 'new_client',
       componentProps: {},
       componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',
@@ -168,7 +169,6 @@ const schema: Reactory.ISchema = {
       type: 'string'
     },
     registeredName: {
-      // title: 'Registered Name',
       title: '',
       type: 'string'
     },
