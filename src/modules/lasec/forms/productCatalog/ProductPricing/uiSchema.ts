@@ -195,26 +195,8 @@ const gridUiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    { view: { xs: 12, sm: 12, md: 12, lg: 12 } },
     { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
   ],
-  view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      showLabel: false,
-      style: {
-        width: '100%',
-        float: "right"
-      },
-    }
-  },
-  paging: {
-    'ui:widget': 'HiddenWidget'
-  },
-  product: {
-    hidden: true,
-    'ui:widget': 'HiddenWidget'
-  },
   products: {
     'ui:widget': 'ProductGrid',
     'ui:options': {
