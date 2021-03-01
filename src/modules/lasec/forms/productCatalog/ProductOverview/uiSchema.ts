@@ -247,9 +247,8 @@ const tableUiSchema: any = {
             region: 'en-IN',
             uiSchema: {
               'ui:options': {
-                prependText: '(ZAR)',
                 defaultStyle: {
-                  borderBottom: '1px solid #E1E1E4'
+                  borderBottom: '1px solid #E1E1E4',
                 },
                 conditionalStyles: [
                   {
