@@ -28,9 +28,9 @@ const LasecSalesOrderGrid: Reactory.IReactoryForm = {
   uiSchema: GridUISchema,
   defaultFormValue: {
     paging: { page: 1, pageSize: 10 },
-    search: "",
-    filterBy: "any_field",    
-    salesOrders: []
+    search: '',
+    filterBy: 'any_field',
+    salesOrders: [],
   },
   widgetMap: [
     { componentFqn: 'core.Label@1.0.0', widget: 'LabelWidget' },

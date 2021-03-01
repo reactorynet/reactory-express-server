@@ -28,11 +28,11 @@ type Quality {
 }
 
 type LeadershipBrand {
-    id: ObjID!,
-    description: String!
+    id: String,
+    description: String
     key: String
-    title: String!
-    scale: Scale!
+    title: String
+    scale: Scale
     qualityDisplay: String
     archived: Boolean
     qualities: [Quality]

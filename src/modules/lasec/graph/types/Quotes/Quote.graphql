@@ -892,7 +892,9 @@ extend type Query {
     orderStatus: String
     periodStart: String
     periodEnd: String
-    dateFilter: String
+    dateFilter: String,
+    orderBy: String
+    orderDirection: String
     iter: Int
   ): PagedCRMSalesOrders
 

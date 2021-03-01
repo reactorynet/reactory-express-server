@@ -2200,6 +2200,19 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
 
 }
 
+const sales_order_field_maps: any = {
+  "code": "id",
+  "created": "created",
+  "status": "quote_status_id",
+  "total": "grand_total_excl_vat_cents",
+  "companyTradingName": "organisation_id",
+  "accountNumber": "account_number",
+  "customer": "company_trading_name",
+  "repCode": "company_sales_team",
+  "client": "client",
+};
+
+
 export const getCRMSalesOrders = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(` -- GETTING CRM SALES ORDERS --  ${JSON.stringify(params)}`);
@@ -2259,7 +2272,7 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
   let ordering: any = {};
   ordering[orderBy] = orderDirection;
 
-  const result = await getPagedSalesOrders({ paging, apiFilter, ordering: { order_date: "desc" }, }, context);
+  const result = await getPagedSalesOrders({ paging, apiFilter, ordering }, context);
   return result;
 }
 

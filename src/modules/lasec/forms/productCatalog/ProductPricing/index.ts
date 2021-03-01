@@ -2,7 +2,7 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import $schema from './schema';
 // import $uiSchema from './uiSchema';
 import $graphql, { product_table_graph } from './graphql';
-import { tableUiSchema, gridUiSchema} from './uiSchema';
+import { tableUiSchema, gridUiSchema } from './uiSchema';
 
 const LasecCMSProductPricing: Reactory.IReactoryForm = {
   id: 'LasecProductPricingTable',
@@ -23,8 +23,8 @@ const LasecCMSProductPricing: Reactory.IReactoryForm = {
       page: 1,
       pageSize: 10,
     },
-    product: "",
-    products: []
+    product: '',
+    products: [],
   },
   uiSchemas: [
     {
