@@ -2118,11 +2118,11 @@ export default {
     LasecGetCustomerClass: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
       return getCustomerClass(context);
     },
-    LasecGetFacultyList: async () => {
-      return getFacultyList();
+    LasecGetFacultyList: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getFacultyList(context);
     },
-    LasecGetCustomerType: async () => {
-      return getCustomerTypeList();
+    LasecGetCustomerType: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
+      return getCustomerTypeList(context);
     },
     LasecGetCustomerLineManagerOptions: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
       return getCustomerLineManagerOptions(args, context);

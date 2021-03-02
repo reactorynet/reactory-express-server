@@ -233,7 +233,7 @@ const uiSchema: any = {
         'query.periodEnd': 'periodEnd',
         'query.dateFilter': 'quoteDate',
         'query.orderBy.field': 'orderBy',
-        'query.orderDirection': 'orderDirection'
+        'query.orderDirection': 'orderDirection',
       },
       resultMap: {
         'paging.page': 'page',

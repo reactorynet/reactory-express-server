@@ -349,6 +349,9 @@ export default {
     surveysForOrganization(obj, { organizationId }) {
       return Admin.Survey.getSurveysForOrganization(organizationId);
     },
+    MoresSurveysForOrganisation(parent: any, args: { id: string }, context: Reactory.IReactoryContext) {
+      return Admin.Survey.getSurveysForOrganization(args.id);
+    },
     surveysList(obj, { sort }) {
       return Admin.Survey.getSurveys();
     },

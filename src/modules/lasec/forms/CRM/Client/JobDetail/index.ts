@@ -366,16 +366,21 @@ const editUiSchema: any = {
     {
       view: { sm: 12, md: 12, lg: 12 },
     },
+
     {
+      jobTitle: { md: 3, sm: 12 },
       jobType: { md: 3, sm: 12 },
+
+    }, {
       lineManager: { md: 3, sm: 12 },
-    }, {
       customerType: { md: 3, sm: 12 },
+
+    }, {
       customerClass: { md: 3, sm: 12 },
-    }, {
       faculty: { md: 3, sm: 12 },
-      clientDepartment: { md: 3, sm: 12 },
+
     }, {
+      clientDepartment: { md: 3, sm: 12 },
       ranking: { md: 3, sm: 12 },
     }
   ],
@@ -578,27 +583,9 @@ export const ConfirmUiSchema: any = {
     }
   ],
   jobTitle: {
-    'ui:graphql': {
-      name: 'LasecGetCustomerJobTypeById',
-      text: `query LasecGetCustomerJobTypeById($id: String){
-        LasecGetCustomerJobTypeById(id: $id) {
-          id
-          name
-        }
-      }`,
-      variables: {
-        'formData': 'id'
-      },
-      resultType: 'string',
-      resultKey: 'name',
-      resultMap: {
-        'id': 'id',
-        'name': 'name',
-      },
-    },
     'ui:widget': 'LabelWidget',
     'ui:options': {
-      format: '$LOOKUP$',
+      format: '${formData}',
       variant: 'subtitle1',
       title: 'Job Title',
       titleProps: {
@@ -887,23 +874,7 @@ const newUiSchema: any = {
     }
   ],
 
-  jobTitle: {
-    'ui:widget': 'SelectWithDataWidget',
-    'ui:options': {
-      multiSelect: false,
-      query: `query LasecGetCustomerRoles {
-        LasecGetCustomerRoles {
-          id
-          name
-        }
-      }`,
-      resultItem: 'LasecGetCustomerRoles',
-      resultsMap: {
-        'LasecGetCustomerRoles.[].id': ['[].key', '[].value'],
-        'LasecGetCustomerRoles.[].name': '[].label',
-      },
-    },
-  },
+  jobTitle: {},
   jobType: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {

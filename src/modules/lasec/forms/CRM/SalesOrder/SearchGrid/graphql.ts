@@ -1,6 +1,6 @@
 import { Reactory } from "@reactory/server-core/types/reactory";
 
-const graphql: Reactory.IFormGraphDefinition =  {
+const graphql: Reactory.IFormGraphDefinition = {
   queries: {
     sales_orders: {
       name: 'LasecGetPagedCRMSalesOrders',
@@ -15,6 +15,8 @@ const graphql: Reactory.IFormGraphDefinition =  {
         $periodStart: String,
         $periodEnd: String,
         $dateFilter: String,
+        $orderBy: String, 
+        $orderDirection: String
       ){
         LasecGetPagedCRMSalesOrders(
           search: $search,
@@ -27,6 +29,8 @@ const graphql: Reactory.IFormGraphDefinition =  {
           dateFilter: $dateFilter,
           customer: $customer,
           client: $client,
+          orderBy: $orderBy,
+          orderDirection: $orderDirection
         ){
           paging {
             total
@@ -65,14 +69,14 @@ const graphql: Reactory.IFormGraphDefinition =  {
             backorderValue
           }
         }
-      }`,      
+      }`,
       autoQuery: false,
       resultType: 'object',
       options: {
         fetchPolicy: 'cache-first'
       }
-    },  
-  },  
+    },
+  },
 };
 
 export default graphql;
