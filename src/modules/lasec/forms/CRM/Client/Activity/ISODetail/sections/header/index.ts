@@ -27,7 +27,7 @@ const uiSchema: any = {
     componentType: "div",
     toolbarPosition: 'none',
     containerStyles: {
-      padding: 0,
+      padding: '1rem',
       margin: 0,
     },
     style: {
@@ -52,6 +52,22 @@ const uiSchema: any = {
     'ui:options': {
       format: '${api.utils.moment(formData).format("DD MMM YYYY")}',
       title: 'Order Date',
+      variant: 'subtitle1',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+          paddingLeft: '8px',
+          paddingTop: '5px',
+          fontSize: '1em'
+        }
+      },
+      labelProps: {
+        fontWeight: 'bold',
+        marginTop: '0.5em',
+        color: '#000000'
+      },
     },
   },
   customer: {
@@ -59,6 +75,22 @@ const uiSchema: any = {
     'ui:options': {
       format: '${formData}',
       title: 'Customer',
+      variant: 'subtitle1',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+          paddingLeft: '8px',
+          paddingTop: '5px',
+          fontSize: '1em'
+        }
+      },
+      labelProps: {
+        fontWeight: 'bold',
+        marginTop: '0.5em',
+        color: '#000000'
+      },
     },
   },
   client: {
@@ -66,6 +98,22 @@ const uiSchema: any = {
     'ui:options': {
       format: '${formData}',
       title: 'Client',
+      variant: 'subtitle1',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+          paddingLeft: '8px',
+          paddingTop: '5px',
+          fontSize: '1em'
+        }
+      },
+      labelProps: {
+        fontWeight: 'bold',
+        marginTop: '0.5em',
+        color: '#000000'
+      },
     },
   },
   currency: {
@@ -73,6 +121,22 @@ const uiSchema: any = {
     'ui:options': {
       format: '${formData}',
       title: 'Currency',
+      variant: 'subtitle1',
+      titleProps: {
+        style: {
+          display: 'content',
+          minWidth: '150px',
+          color: "#9A9A9A",
+          paddingLeft: '8px',
+          paddingTop: '5px',
+          fontSize: '1em'
+        }
+      },
+      labelProps: {
+        fontWeight: 'bold',
+        marginTop: '0.5em',
+        color: '#000000'
+      },
     },
   },
 

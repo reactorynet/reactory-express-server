@@ -1,12 +1,12 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 
-/*
 const schema: Reactory.ISchema = {
-  type: 'object',
   title: 'PRODUCT SUMMARY',
+  type: 'object',
   properties: {
     lineItems: {
       type: 'array',
+      title: 'Products',
       items: {
         type: 'object',
         properties: {
@@ -51,7 +51,6 @@ const schema: Reactory.ISchema = {
           },
         }
       },
-      title: 'Line Items',
     }
   }
 };
@@ -65,8 +64,8 @@ const uiSchema: any = {
       margin: 0,
     },
     style: {
-      padding: 0,
       margin: 0,
+      padding: 0
     },
     showSchemaSelectorInToolbar: false,
     showSubmit: false,
@@ -74,200 +73,28 @@ const uiSchema: any = {
   },
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
-    paddingBottom: '8px',
-    marginBottom: '20px',
-    fontSize: '1.1rem',
-    fontWeight: 'bold'
+    paddingBottom: '10px',
+    marginBottom: '30px',
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 36px'
+    }
+  },
   'ui:grid-layout': [
     {
       lineItems: { xs: 12 },
+      style: { padding: '24px 32px' }
     },
   ],
-
   lineItems: {
-    'ui:widget': 'MaterialTableWidget',
+    'ui:widget': 'SalesOrdersProductSummary',
     'ui:options': {
-      columns: [
-        {
-          title: '', field: 'image',
-          width: '200px',
-          component: 'core.ImageComponent@1.0.0',
-          props: {
-            'ui:options': {
-              variant: 'rounded',
-              style: {
-                marginLeft: '16px'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.image': 'value',
-          },
-          cellStyle: {
-            maxWidth: '200px',
-            width: '200px'
-          },
-          headerStyles: {
-            maxWidth: '200px',
-            width: '200px'
-          }
-        },
-        { title: 'Stock Code', field: 'productCode' },
-        { title: 'Product Description', field: 'productDescription' },
-        { title: 'Unit of Measure', field: 'unitOfMeasure' },
-        {
-          title: 'Unit Price',
-          field: 'value',
-          component: 'core.CurrencyLabel@1.0.0',
-          propsMap: {
-            'rowData.price': 'value',
-          },
-        },
-        {
-          title: 'Total Price',
-          field: 'value',
-          component: 'core.CurrencyLabel@1.0.0',
-          propsMap: {
-            'rowData.totalPrice': 'value',
-          },
-        },
-        { title: 'Order Qty', field: 'orderQty' },
-        { title: 'Reserved Qty', field: 'reservedQty' },
-        { title: 'Shipped Qty', field: 'shippedQty' },
-        { title: 'Back Order', field: 'backOrderQty' },
-      ],
-      options: {
-        grouping: false,
-        search: false,
-        showTitle: false,
-        toolbar: false,
-      },
-      remoteData: false,
-    }
-  }
-};
-*/
 
-const schema: Reactory.ISchema = {  
-  title: 'Line Items',
-  type: 'array',
-  items: {
-    type: 'object',
-    properties: {
-      id: {
-        type: 'string'
-      },
-      line: {
-        type: 'string'
-      },
-      productCode: {
-        type: 'string'
-      },
-      productDescription: {
-        type: 'string'
-      },
-      unitOfMeasure: {
-        type: 'string'
-      },
-      price: {
-        type: 'string'
-      },
-      totalPrice: {
-        type: 'string'
-      },
-      orderQty: {
-        type: 'string'
-      },
-      shippedQty: {
-        type: 'string'
-      },
-      backOrderQty: {
-        type: 'string'
-      },
-      reservedQty: {
-        type: 'string'
-      },
-      comment: {
-        type: 'string'
-      },
-      image: {
-        type: 'string'
-      },
     }
   },
-  
 };
-
-const uiSchema: any = {
-  'ui:widget': 'MaterialTableWidget',
-  'ui:options': {
-    showSubmit: false,
-    showRefresh: false,
-    showSubmitButton: false,
-    columns: [
-      {
-        title: '',
-        field: 'image',
-        width: '200px',
-        component: 'core.ImageComponent@1.0.0',
-        props: {
-          'ui:options': {
-            variant: 'rounded',
-            style: {
-              marginLeft: '16px'
-            }
-          },
-        },
-        propsMap: {
-          'rowData.product.image': 'value',
-        },
-        cellStyle: {
-          maxWidth: '200px',
-          width: '200px'
-        },
-        headerStyles: {
-          maxWidth: '200px',
-          width: '200px'
-        }
-      },
-      { title: 'Stock Code', field: 'productCode' },
-      { title: 'Product Description', field: 'productDescription' },
-      { title: 'Unit of Measure', field: 'unitOfMeasure' },
-      {
-        title: 'Unit Price',
-        field: 'value',
-        component: 'core.CurrencyLabel@1.0.0',
-        propsMap: {
-          'rowData.price': 'value',
-        },
-      },
-      {
-        title: 'Total Price',
-        field: 'value',
-        component: 'core.CurrencyLabel@1.0.0',
-        props: {
-          variant: 'body2'
-        },
-        propsMap: {
-          'rowData.totalPrice': 'value',
-        },
-      },
-      { title: 'Order Qty', field: 'orderQty' },
-      { title: 'Reserved Qty', field: 'reservedQty' },
-      { title: 'Shipped Qty', field: 'shippedQty' },
-      { title: 'Back Order', field: 'backOrderQty' },
-    ],
-    options: {
-      grouping: false,
-      search: false,
-      showTitle: false,
-      toolbar: false,
-    },
-    remoteData: false,
-  }
-}; 
 
 const LasecCRMISODetailLineItems: Reactory.IReactoryForm = {
   id: 'LasecCRMISODetailLineItems',
@@ -285,6 +112,7 @@ const LasecCRMISODetailLineItems: Reactory.IReactoryForm = {
   defaultFormValue: [],
   widgetMap: [
     { componentFqn: 'core.ImageComponent@1.0.0', widget: 'ImageComponent' },
+    { componentFqn: 'lasec-crm.SalesOrdersProductSummary@1.0.0', widget: 'SalesOrdersProductSummary' },
   ],
 };
 

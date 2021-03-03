@@ -307,7 +307,6 @@ class LasecQuoteService implements IQuoteService {
   }
 
   getSalesOrder = async (sales_order_id: string): Promise<LasecSalesOrder> => {
-
     try {
       logger.debug(`QuoteService.ts getSalesOrders ${sales_order_id} 🟠`);
       const sales_order_result = await LAPI.SalesOrders.item(sales_order_id, this.context).then();
@@ -317,7 +316,6 @@ class LasecQuoteService implements IQuoteService {
       logger.error(`QuoteService.ts getSalesOrders ${sales_order_id} 🔴`, get_error);
       throw get_error;
     }
-
   }
 };
 

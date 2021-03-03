@@ -1963,7 +1963,7 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
     }
   }, context).then();
 
-  logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ${JSON.stringify(salesOrdersIds)}`);
+  logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ${salesOrdersIds.length} ORDERS FOUND`);
 
   let ids: string[] = [];
 
@@ -2270,7 +2270,70 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
   if (search.trim() === "" && filterBy === "any_field") apiFilter.sales_team_id = me.sales_team_id;
 
   let ordering: any = {};
-  ordering[orderBy] = orderDirection;
+
+  switch (orderBy) {
+    case 'orderType':
+      ordering['order_type'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'orderDate':
+      ordering['order_date'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'shippingDate':
+      ordering['shipping_date'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'salesOrderNumber':
+      ordering['iso_number'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'poNumber':
+      ordering['po_number'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'quoteId':
+      ordering['quote_id'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'customer':
+      ordering['customer_name'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'client':
+      ordering['client_name'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'salesTeam':
+      ordering['sales_team_id'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'value':
+      ordering['order_value'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'reserveValue':
+      ordering['reserved_value'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+
+    default:
+      break;
+  }
+
+
+  logger.debug(`ORDERING::  ${JSON.stringify(ordering)}`);
 
   const result = await getPagedSalesOrders({ paging, apiFilter, ordering }, context);
   return result;
