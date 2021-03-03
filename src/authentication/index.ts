@@ -89,6 +89,7 @@ class AuthConfig {
               email: user.mail, firstName: user.givenName, lastName: user.surname, avatarProvider: 'microsoft',
             };
             logger.info(`Must create new user with email ${user.mail}`, loggedInUser);
+            debugger;
             const createResult = await createUserForOrganization(loggedInUser, profile.oid, null, ['USER'], 'microsoft', req.partner, null);
             if (createResult.user) {
               _existing = createResult.user;
@@ -186,6 +187,7 @@ class AuthConfig {
         // ;
         logger.debug(`Response from login.live received for ${req.params.clientKey}`);
         const reactory_client = await ReactoryClient.findOne({ key: req.params.clientKey }).then();
+        req.partner = reactory_client;
         passport.authenticate(
           'azuread-openidconnect',
           {
@@ -197,6 +199,7 @@ class AuthConfig {
       async (req, res) => {
         logger.debug(`Completing Signing For User`, { user: req.user })
         const reactory_client: any = await ReactoryClient.findOne({ key: req.params.clientKey }).then();
+        req.partner = reactory_client;
         const token = AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(req.user));
         res.clearCookie("connect.sid");
         res.redirect(`${reactory_client.siteUrl}/?auth_token=${token}`);
