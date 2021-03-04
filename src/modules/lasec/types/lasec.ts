@@ -80,6 +80,8 @@ export interface LasecQuoteOption {
   gp: number
   gp_percent: number
   vat?: number
+  vat_exempt?: boolean
+  from_sa?: boolean
 }
 
 export interface LasecQuoteHeader {
@@ -258,6 +260,12 @@ export interface LasecQuote {
   id: string
   code: string
   meta: QuoteMeta
+  company: LasecCRMCustomer,
+  customer: LasecClient,
+  statusGroup: string,
+  statusGroupName: string,
+  allowedStatus: string[],
+  options: LasecQuoteOption[],
   [key: string]: any
 }
 
@@ -667,7 +675,7 @@ export interface LasecSalesOrder {
   poNumber: string
   currency: string
 
-  deliveryAddress: string
+  deliveryAddress: string | any
   deliveryNote: string
   warehouseNote: string
 
@@ -833,6 +841,7 @@ export interface FreightRequestProductDetail {
 }
 
 export interface FreightRequestOption {
+  id: string
   name: string
   transportMode: String
   incoTerm: String

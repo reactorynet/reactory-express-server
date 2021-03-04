@@ -160,6 +160,8 @@ input LasecQuoteOptionPatchInput {
   active: Boolean
   quote_option_id: String
   quote_id: String
+  vat_exempt: Boolean
+  from_sa: Boolean
 }
 
 type Incoterm {
@@ -687,6 +689,7 @@ type FreightRequestQuoteDetail {
 }
 
 type FreightRequestOption {
+  id: String
   name: String
   transportMode: String
   incoTerm: String

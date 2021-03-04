@@ -14,10 +14,10 @@ export const defaultFormValue = {
 
 export const TowerStoneLeadershipBrandConfigForm: Reactory.IReactoryForm = {
   id: 'TowerStoneLeadershipBrandConfig',
-  title: 'TowerStone Leadership Brand Configuration',  
+  title: 'TowerStone Leadership Brand Configuration',
   nameSpace: FormNameSpace,
   uiFramework: UIFrameWork.material,
-  uiSupport: [ UIFrameWork.material ],
+  uiSupport: [UIFrameWork.material],
   name: 'TowerStoneLeadershipBrandConfig',
   helpTopics: ['Create Leadership Brand'],
   version: '1.0.0',
@@ -35,7 +35,4 @@ export const TowerStoneLeadershipBrandConfigForm: Reactory.IReactoryForm = {
     },
   },
   graphql: $graphql,
-
 };
-
-

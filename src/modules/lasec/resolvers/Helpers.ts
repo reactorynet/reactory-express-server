@@ -1979,8 +1979,6 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
 
   }
 
-
-
   try {
 
     if (ids.length === 0) {
@@ -1996,31 +1994,30 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
 
     let salesOrders = salesOrdersDetails && salesOrdersDetails.items ? [...salesOrdersDetails.items] : [];
 
-    logger.debug(`SALES ORDER:: ${JSON.stringify(salesOrders[0])}`);
 
-    salesOrders = salesOrders.map(order => {
+    salesOrders = salesOrders.map((order, idx) => {
       return {
-        id: order.id,
+        id: order.id || idx,
         salesOrderNumber: order.sales_order_number,
-        orderType: order.order_type,
-        orderStatus: order.order_status,
+        orderType: order.type_of_order,
+        orderStatus: order.status,
         orderDate: order.order_date,
-        shippingDate: order.req_ship_date,
+        shippingDate: order.shipping_date,
         quoteDate: order.quote_date,
-        iso: order.sales_order_id,
+        iso: order.id,
         customer: order.company_trading_name,
         client: order.customer_name,
-        poNumber: order.customerponumber,
+        poNumber: order.purchase_order_number,
         quoteId: order.quote_id,
         currency: order.currency,
-        deliveryAddress: order.delivery_address,
+        deliveryAddress: { id: order.delivery_address_id },
         warehouseNote: order.warehouse_note,
-        deliveryNote: order.delivery_note,
+        deliveryNote: order.delivery_instructions,
         salesTeam: order.sales_team_id,
-        value: order.order_value,
-        reserveValue: order.reserved_value,
-        shipValue: order.shipped_value,
-        backorderValue: order.back_order_value,
+        value: order.purchase_order_amount || 0,
+        reserveValue: order.reserved_value || 0,
+        shipValue: order.shipped_value || 0,
+        backorderValue: order.back_order_value || 0,
       }
     });
 
@@ -3131,12 +3128,12 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
         lasecApi.Quotes.getQuoteOption(option_id, context).then((option_result) => {
           logger.debug(`QUOTE [${quoteId}] OPTION [${option_id}]\n ${JSON.stringify(option_result, null, 2)}`);
           if (option_result.id) {
-
             let quoteOptionResponse = option_result;
 
             let freight_request_option: FreightRequestOption = {
+              id: quoteOptionResponse.id || option_id,
               name: quoteOptionResponse.name,
-              transportMode: '',
+              transportMode: quoteOptionResponse.transport_mode || '',
               incoTerm: quoteOptionResponse.inco_terms || '',
               place: quoteOptionResponse.named_place || '',
               fromSA: false,
@@ -3170,7 +3167,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
                 freight_request_option.item_paging = paged_results.item_paging,
 
                   paged_results.lineItems.forEach((line_item: LasecQuoteItem) => {
-
+                    debugger;
                     freight_request_option.productDetails.push({
                       code: line_item.code,
                       description: line_item.title,

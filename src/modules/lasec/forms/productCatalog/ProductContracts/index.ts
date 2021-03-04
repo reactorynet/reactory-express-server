@@ -1,37 +1,37 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 
-const $schema : Reactory.ISchema = {
-    type: 'object',
-    properties: {
-        id: {
-            type: 'string',
-            title: 'ID'
-        },
-        contracts: {
-            type: 'array',
-            items: {
-                type: 'object',
-                properties: {
-                    id: { type: 'string', title: 'id'},
-                    company_id: { type: 'string', title: 'Company'},
-                    description: { type: 'string', title: 'Description'},
-                    expiry_date: { type: 'string', title: 'Expiry Date'},
-                    grand_total_excl_vat_cents: { type: 'number', title: 'Price'},
-                    name: { type: 'string', title: 'Name'},
-                    reference: { type: 'string', title: 'Reference'},
-                    unit_of_measure: { type: 'string', title: 'Company'},
-                }
-            }
+const $schema: Reactory.ISchema = {
+  type: 'object',
+  properties: {
+    id: {
+      type: 'string',
+      title: 'ID'
+    },
+    contracts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', title: 'id' },
+          company_id: { type: 'string', title: 'Company' },
+          description: { type: 'string', title: 'Description' },
+          expiry_date: { type: 'string', title: 'Expiry Date' },
+          grand_total_excl_vat_cents: { type: 'number', title: 'Price' },
+          name: { type: 'string', title: 'Name' },
+          reference: { type: 'string', title: 'Reference' },
+          unit_of_measure: { type: 'string', title: 'Company' },
         }
+      }
     }
+  }
 }
 
 
 const $graphql = {
-    query: {
-      name: 'LasecGetProductList',
-      autoQuery: false,
-      text: `query LasecGetProductById($productId: String!) {
+  query: {
+    name: 'LasecGetProductList',
+    autoQuery: false,
+    text: `query LasecGetProductById($productId: String!) {
         LasecGetProductById(productId: $productId) {
                 id
                 contracts {
@@ -46,24 +46,22 @@ const $graphql = {
                 }
             }
         }`,
-      variables: {
-        'formData.id': 'productId',        
-      },
-      resultMap: {
-        'id': 'id',
-        'contracts': 'data'
-      },
-      resultType: 'object',
-      edit: false,
-      new: false,
-      onError: {
-        componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
-        method: 'onGraphQLQueryError',
-      },
+    variables: {
+      'formData.id': 'productId',
     },
-  };
-  
-
+    resultMap: {
+      'id': 'id',
+      'contracts': 'data'
+    },
+    resultType: 'object',
+    edit: false,
+    new: false,
+    onError: {
+      componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
+      method: 'onGraphQLQueryError',
+    },
+  },
+};
 
 const uiSchema: any = {
   'ui:options': {
@@ -73,19 +71,19 @@ const uiSchema: any = {
   },
   id: {
     hidden: true,
-    'ui:widget': 'HiddenWidget'
+    'ui:widget': 'HiddenWidget',
   },
-  
+
   contracts: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
       columns: [
         {
-          title: 'Contract Name', field: 'name',          
+          title: 'Contract Name', field: 'name',
         },
         {
-          title: 'Client Reference', field: 'company_id',          
-        },        
+          title: 'Client Reference', field: 'company_id',
+        },
         { title: 'Description', field: 'description' },
         {
           title: 'Unit of Measure',
@@ -97,13 +95,13 @@ const uiSchema: any = {
                 icon: 'square_foot',
                 iconPosition: 'left',
                 variant: 'p',
-                format: '${rowData.unit_of_measure}'
-              }
+                format: '${rowData.unit_of_measure}',
+              },
             },
           },
         },
         { title: 'Price', field: 'grand_total_excl_vat_cents' },
-        { title: 'Expiry Date', field: 'expiry_date' },        
+        { title: 'Expiry Date', field: 'expiry_date' },
       ],
       options: {
         grouping: false,
