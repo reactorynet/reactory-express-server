@@ -2601,9 +2601,7 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
   let salesOrdersDetail = await lasecApi.SalesOrders.detail({ filter: { ids: ids } }, context).then();
   let salesOrders = [...salesOrdersDetail.items];
 
-
-
-  logger.debug(`SALES ORDERS:: ${JSON.stringify(salesOrders)}`);
+  logger.debug(`LINE ITEMS:: ${JSON.stringify(salesOrders)}`);
 
   let lineItems: any[] = [];
   salesOrders.forEach(so => {
