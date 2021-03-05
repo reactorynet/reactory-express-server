@@ -2621,6 +2621,8 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
         backOrderQty: so.back_order_qty,
         reservedQty: so.reserved_qty,
         comment: so.comment,
+        dispatchQty: so.dispatch_qty,
+        invoiceQty: so.invoice_qty
       }
 
       lineItems.push(item);

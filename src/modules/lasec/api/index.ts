@@ -1418,7 +1418,11 @@ const Api = {
                 details: {
                   lineItems: [],
                   comments: []
-                }
+                },
+
+                gpPercentage: item.gp_percent,
+                mupPercentage: item.mup_percent,
+
               };
 
               setCacheItem(`lasec-sales-order::${sales_order_id}`, sales_order, 15, context.partner);

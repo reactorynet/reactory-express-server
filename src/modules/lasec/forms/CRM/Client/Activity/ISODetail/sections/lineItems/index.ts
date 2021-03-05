@@ -4,7 +4,7 @@ const schema: Reactory.ISchema = {
   title: 'PRODUCT SUMMARY',
   type: 'object',
   properties: {
-    lineItems: {
+    products: {
       type: 'array',
       title: 'Products',
       items: {
@@ -74,7 +74,7 @@ const uiSchema: any = {
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
     paddingBottom: '10px',
-    marginBottom: '30px',
+    marginBottom: '20px',
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
@@ -84,15 +84,13 @@ const uiSchema: any = {
   },
   'ui:grid-layout': [
     {
-      lineItems: { xs: 12 },
+      products: { xs: 12 },
       style: { padding: '24px 32px' }
     },
   ],
-  lineItems: {
+  products: {
     'ui:widget': 'SalesOrdersProductSummary',
-    'ui:options': {
-
-    }
+    'ui:options': {}
   },
 };
 

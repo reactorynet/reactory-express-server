@@ -31,6 +31,21 @@ const schema: Reactory.ISchema = {
 
       }
     },
+    lineItems: {
+      type: 'object',
+      title: 'LineItems',
+      properties: {
+        id: {
+          type: 'string'
+        },
+        gp: {
+          type: 'string'
+        },
+        mup: {
+          type: 'string'
+        },
+      }
+    },
     deliveryDetails: {
       type: 'object',
       title: 'Delivery Details',
@@ -68,64 +83,64 @@ const schema: Reactory.ISchema = {
       }
     },
     documents: documents,
-    lineItems: {
-      type: 'array',
-      items: {
-        type: 'object',
-        title: 'Line Items',
-        properties: {
-          id: {
-            type: 'string',
-            title: 'line item id'
-          },
-          line: {
-            type: 'string',
-            title: 'Line #'
-          },
-          productCode: {
-            type: 'string',
-            title: 'Product Code'
-          },
-          productDescription: {
-            type: 'string',
-            title: 'Product Description'
-          },
-          unitOfMeasure: {
-            type: 'string',
-            title: 'Unit of Measure'
-          },
-          price: {
-            type: 'number',
-            title: 'Price'
-          },
-          totalPrice: {
-            type: 'number',
-            title: 'Total Price'
-          },
-          orderQty: {
-            type: 'number',
-            title: 'Order Quantity'
-          },
-          backOrderQty: {
-            type: 'number',
-            title: 'Back Order Quantity'
-          },
-          reservedQty: {
-            type: 'number',
-            title: 'Reserve Quantity'
-          },
-          comment: {
-            type: 'string',
-            title: 'Comment'
-          }
-        }
-      }
-    },
+    // lineItems: {
+    //   type: 'array',
+    //   items: {
+    //     type: 'object',
+    //     title: 'Line Items',
+    //     properties: {
+    //       id: {
+    //         type: 'string',
+    //         title: 'line item id'
+    //       },
+    //       line: {
+    //         type: 'string',
+    //         title: 'Line #'
+    //       },
+    //       productCode: {
+    //         type: 'string',
+    //         title: 'Product Code'
+    //       },
+    //       productDescription: {
+    //         type: 'string',
+    //         title: 'Product Description'
+    //       },
+    //       unitOfMeasure: {
+    //         type: 'string',
+    //         title: 'Unit of Measure'
+    //       },
+    //       price: {
+    //         type: 'number',
+    //         title: 'Price'
+    //       },
+    //       totalPrice: {
+    //         type: 'number',
+    //         title: 'Total Price'
+    //       },
+    //       orderQty: {
+    //         type: 'number',
+    //         title: 'Order Quantity'
+    //       },
+    //       backOrderQty: {
+    //         type: 'number',
+    //         title: 'Back Order Quantity'
+    //       },
+    //       reservedQty: {
+    //         type: 'number',
+    //         title: 'Reserve Quantity'
+    //       },
+    //       comment: {
+    //         type: 'string',
+    //         title: 'Comment'
+    //       }
+    //     }
+    //   }
+    // },
     comments: {
       type: 'object',
       title: 'Sales Order Comments',
       properties: {
-        
+
         orderId: {
           type: 'string',
           title: 'Order Id'
@@ -141,10 +156,10 @@ const schema: Reactory.ISchema = {
           title: 'Comments',
 
           items: {
-            type: 'object',            
+            type: 'object',
             title: 'Comment',
             properties: {
-              
+
               id: {
                 type: 'string',
                 title: 'Comment Id'

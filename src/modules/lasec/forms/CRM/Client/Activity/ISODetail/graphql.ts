@@ -9,64 +9,67 @@ const graphql: Reactory.IFormGraphDefinition = {
         orderDate
         salesOrderNumber
         shippingDate
-        
+
         quoteId
         quoteDate
-        
+
         orderType
         orderStatus
-    
-        iso  
-        
+
+        iso
+
         customer
-        
+
         crmCustomer {
           id
           registeredName
           tradingName
         }
-        
+
         poNumber
         currency
-        
+
         deliveryAddress
         deliveryNote
         warehouseNote
-        
+
         salesTeam
         value
         reserveValue
         shipValue
         backorderValue
-        
+
         dispatchCount
         dispatches
-        
+
         orderQty
         shipQty
         reservedQty
         backOrderQty
-        
+
         documents
-        
-        details {    
+
+        gpPercentage
+        mupPercentage
+
+        details {
           lineItems {
             id
             line
             productCode
             productDescription
-            
+
             price
             totalPrice
             unitOfMeasure
-            
+
             orderQty
-            shippedQty                              
+            shippedQty
             reservedQty
             backOrderQty
-            
-            comment 
-            
+
+            comment
+
             product {
               id
               image
@@ -105,8 +108,12 @@ const graphql: Reactory.IFormGraphDefinition = {
       'orderType': 'orderSummary.orderType',
       'poNumber': 'orderSummary.poNumber',
       'salesTeam': 'orderSummary.salesPerson',
-      'quoteId': 'orderSummary.quoteNumber',      
-      'details.lineItems': 'lineItems',
+      'quoteId': 'orderSummary.quoteNumber',
+
+      // 'details.lineItems': 'lineItems',
+
+      'gpPercentage': 'lineItems.gp',
+      'mupPercentage': 'lineItems.mup',
 
       'details.comments': 'comments.comments',
     },

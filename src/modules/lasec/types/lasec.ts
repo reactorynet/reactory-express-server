@@ -694,6 +694,9 @@ export interface LasecSalesOrder {
     lineItems: any[],
     comments: any[]
   }
+
+  gpPercentage: number,
+  mupPercentage: number,
 }
 
 export interface LasecAddress {

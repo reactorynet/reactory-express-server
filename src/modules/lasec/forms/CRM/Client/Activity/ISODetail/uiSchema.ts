@@ -57,7 +57,11 @@ const uiSchema: any = {
     'ui:options': {
       propsMap: {
         'formData': 'formData.$SalesOrder',
-        'formData.orderId': 'sales_order_id'
+        'formData.orderId': ['sales_order_id', 'orderId'],
+
+        'formData.lineItems.gp': 'formData.gp',
+        'formData.lineItems.mup': 'formData.mup',
+
       }
     }
   },
