@@ -669,6 +669,7 @@ export interface LasecSalesOrder {
 
   iso: number
 
+  client: string
   customer: string
   crmCustomer: LasecCRMCustomer
 

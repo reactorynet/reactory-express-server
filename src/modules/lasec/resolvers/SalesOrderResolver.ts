@@ -54,6 +54,11 @@ const SalesOrderResolver = {
       return `${salesOrder.orderType || 'none'}`.toUpperCase()
     },
 
+    salesOrderNumber: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
+      return `${salesOrder.salesOrderNumber || salesOrder.iso}`.toUpperCase()
+    },
+
+
     crmCustomer: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
 
       try {
@@ -90,6 +95,8 @@ const SalesOrderResolver = {
     },
 
     client: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
+
+      if (salesOrder.client && typeof salesOrder.client === 'string') return salesOrder.client;
 
       if (isNil(salesOrder.quoteId) === true) return 'No quote id';
 
