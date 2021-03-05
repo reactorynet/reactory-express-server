@@ -254,13 +254,13 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     };
 
     loggingService.writeLog(`
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         🚨🚨           Invalid Response CALLING LASEC API             🚨🚨
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         MESSAGE: ${apiError.message}
         ENDPOINT: ${absoluteUrl}
         METHOD: ${kwargs.method || "GET"}
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         `, 'LasecAPI.FETCH', 10, kwargs);
 
     return _result;
@@ -271,13 +271,13 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     try {
       return apiResponse.json().catch((invalidJsonErr) => {
         const msg = `
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         🚨🚨           Invalid Response Type from LASEC API           🚨🚨
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         MESSAGE: ${invalidJsonErr.message}
         ENDPOINT: ${absoluteUrl}
         FETCH ARGS: ${JSON.stringify(kwargs, null, 2)}
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         `
         logger.error(msg);
 
@@ -291,14 +291,14 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
       });
     } catch (jsonError) {
       const msg = `
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         🚨🚨        Error Getting JSON Response from LASEC API        🚨🚨
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         MESSAGE: ${jsonError.message}
         ENDPOINT:${url}
         METHOD: ${kwargs.method || "GET"}
         FETCH ARGS: ${JSON.stringify(kwargs, null, 2)}
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         `;
       logger.error(msg);
 
@@ -318,15 +318,15 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     switch (apiResponse.status) {
       case 400: {
         const msg = `
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         🚨🚨        Warning BAD REQUEST RESPONSE / Token Failed       🚨🚨
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         MESSAGE: Access Forbidden
         ENDPOINT: ${absoluteUrl}
         METHOD: ${kwargs.method || "GET"}
-        ------------------------------------------------------------------        
+        ------------------------------------------------------------------
         Q & A: POSSIBLE REASONS: User logged in on another device
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         `;
 
         loggingService.writeLog(msg, 'API.FETCH.result = 400 BAD', 5, kwargs);
@@ -337,13 +337,13 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
       case 403: {
 
         const msg = `
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         🚨🚨        Warning User Not Authenticated / Token Failed     🚨🚨
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         MESSAGE: Access Forbidden
         ENDPOINT: ${absoluteUrl}
         METHOD: ${kwargs.method || "GET"}
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         `;
 
         logger.warn(msg);
@@ -386,15 +386,15 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
       case 404: {
 
         const msg = `
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         🚨🚨        Warning Resource Not Found 404 STATUS             🚨🚨
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         MESSAGE: Not Found
         ENDPOINT:  ${url}
         METHOD: ${kwargs.method || "GET"}
         ------------------------------------------------------------------
         Q & A: Item deleted or removed from API
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         `;
 
         loggingService.writeLog(msg, 'API.FETCH.result = 404 BAD', 3, kwargs);
@@ -412,13 +412,13 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
       default: {
 
         const msg = `
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         🚨🚨             OTHER SERVER - UNSPECIFIED ERROR             🚨🚨
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         MESSAGE: Access Forbidden
         ENDPOINT:  ${url}
         METHOD: ${kwargs.method || "GET"}
-        ------------------------------------------------------------------ 
+        ------------------------------------------------------------------
         `;
 
         loggingService.writeLog(msg, 'API.FETCH.result = XXX UNDEFINED', 3, kwargs);
@@ -1335,6 +1335,8 @@ const Api = {
 
               let item = iso_api_result.payload.items[0];
 
+              logger.debug(`ITEMS:: ${JSON.stringify(item)}`);
+
               /**
                * ***************************
                *   Results from Lasec API
@@ -1378,55 +1380,41 @@ const Api = {
 
               sales_order = {
                 id: item.id,
-
                 orderDate: item.order_date,
                 salesOrderNumber: sales_order_id,
                 shippingDate: item.req_ship_date,
-
                 quoteId: item.quote_id,
                 quoteDate: item.quote_date,
-
-
                 orderType: item.order_type,
                 orderStatus: item.order_status,
-
                 iso: item.id,
-
                 customer: item.customer_name,
                 crmCustomer: {
                   id: '',
                   tradingName: item.company_trading_name,
                   registeredName: item.company_trading_name
                 },
-
                 poNumber: item.customerponumber,
                 currency: item.currency,
-
                 deliveryAddress: item.delivery_address,
                 deliveryNote: item.delivery_note,
                 warehouseNote: item.warehouse_note,
-
                 salesTeam: item.sales_team_id,
                 value: item.order_value,
                 reserveValue: item.reserved_value,
                 shipValue: item.shipped_value,
                 backorderValue: item.back_order_value,
-
                 dispatchCount: item.dispatch_note_ids.length,
                 invoiceCount: item.invoice_ids.length,
-
                 orderQty: item.order_qty,
                 shipQty: item.ship_qty,
                 reservedQty: item.reserved_qty,
                 backOrderQty: item.back_order_qty,
-
                 invoices: item.invoice_ids.map((id: string) => ({ id })),
                 dispatches: item.dispatch_note_ids.map((id: string) => ({ id })),
                 //documents: item.document_ids.map((id: string) => ({ id })),
                 documentIds: [...item.document_ids],
-
                 documents: [],
-
                 details: {
                   lineItems: [],
                   comments: []

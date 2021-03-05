@@ -133,7 +133,6 @@ class LasecQuoteService implements IQuoteService {
       logger.error(`💥 Could not get quote option details ${convertError.message}`, { error: convertError })
     }
   }
-
   async getQuoteOptionsDetail(quote_id: string, option_ids: string[]): Promise<LasecQuoteOption[]> {
     try {
       logger.debug(`Calling LAPI.Quote.getQuoteOption(${option_ids})`);
@@ -164,8 +163,6 @@ class LasecQuoteService implements IQuoteService {
       logger.error(`💥 Could not get quote option details ${convertError.message}`, { error: convertError })
     }
   }
-
-
   async getIncoTerms(): Promise<string[]> {
     try {
       let cache_key = 'lasec-crm.data.all-incoterms';
@@ -186,7 +183,6 @@ class LasecQuoteService implements IQuoteService {
       return [];
     }
   }
-
   async createNewQuoteOption(quote_id: string): Promise<LasecQuoteOption> {
     const payload = await LAPI.Quotes.createQuoteOption(quote_id, this.context).then()
 
@@ -198,7 +194,6 @@ class LasecQuoteService implements IQuoteService {
       gp_percent: 0
     }
   }
-
   async patchQuoteOption(quote_id: string, quote_option_id: string, option: LasecQuoteOption): Promise<LasecQuoteOption> {
 
 
@@ -239,7 +234,6 @@ class LasecQuoteService implements IQuoteService {
     logger.debug(`Payload Response ==> patchQuoteOption`, payload);
     return payload;
   }
-
   async deleteQuoteOption(quote_id: string, quote_option_id: string): Promise<SimpleResponse> {
 
     try {
@@ -255,7 +249,6 @@ class LasecQuoteService implements IQuoteService {
     }
 
   }
-
   async copyQuoteOption(quote_id: string, quote_option_id: string): Promise<LasecQuoteOption> {
 
     try {
@@ -276,11 +269,9 @@ class LasecQuoteService implements IQuoteService {
     }
 
   }
-
   async getCurrencies(): Promise<LasecCurrency[]> {
     return LasecDatabase.Read.LasecGetCurrencies(null, this.context);
   }
-
   sendQuoteEmail = async (quote_id: string, subject: string, message: string,
     to: Reactory.ToEmail[], cc: Reactory.ToEmail[], bcc: Reactory.ToEmail[],
     attachments: Reactory.EmailAttachment[], from: Lasec360User): Promise<Reactory.EmailSentResult> => {
@@ -319,21 +310,17 @@ class LasecQuoteService implements IQuoteService {
 
     return result;
   }
-
   getQuoteById = async (quote_id: string): Promise<LasecQuote> => {
     return await getLasecQuoteById(quote_id, this.context.partner, this.context).then();
   }
-
   getQuoteEmail = async (quote_id: string, email_type: string): Promise<Reactory.IEmailMessage> => {
     return await getCacheItem(`${email_type}::${quote_id}::${user._id}`, null, (24 * 60 * 60), this.context.partner).then() as Reactory.IEmailMessage;
   }
-
   setQuoteEmail = async (quote_id: string, email_type: string, message: Reactory.IEmailMessage): Promise<Reactory.IEmailMessage> => {
     return await setCacheItem(`${email_type}::${quote_id}::${user._id}`, message, (24 * 60 * 60), this.context.partner).then() as Reactory.IEmailMessage;
   }
 
   getSalesOrder = async (sales_order_id: string): Promise<LasecSalesOrder> => {
-
     try {
       logger.debug(`QuoteService.ts getSalesOrders ${sales_order_id} 🟠`);
       const sales_order_result = await LAPI.SalesOrders.item(sales_order_id, this.context).then();
@@ -343,7 +330,6 @@ class LasecQuoteService implements IQuoteService {
       logger.error(`QuoteService.ts getSalesOrders ${sales_order_id} 🔴`, get_error);
       throw get_error;
     }
-
   }
 };
 

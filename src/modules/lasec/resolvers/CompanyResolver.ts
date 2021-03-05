@@ -134,11 +134,13 @@ const getClients = async (params: GetClientsParams, context: Reactory.IReactoryC
       break;
     };
     case "first_name": {
-      _filter["first_name"] = search;
+      // _filter.full_name = search;
+      _filter.any_field = search;  // SEARCHS FIRST AND SURNAME
       break;
     };
     case "full_name": {
-      _filter["full_name"] = search;
+      // _filter.full_name = search;
+      _filter.any_field = search;  // SEARCHS FIRST AND SURNAME
       break;
     }
     case "email": {

@@ -1,9 +1,9 @@
 /**
  * Lasec CRM Sales Order Resolver.
- * 
- * Contains most of the helpers, and functions for handling sales order related 
+ *
+ * Contains most of the helpers, and functions for handling sales order related
  * data objects.
- * 
+ *
  * Authors: W. Weber, D. Murphy
  */
 import logger from "@reactory/server-core/logging";
@@ -253,9 +253,7 @@ const SalesOrderResolver = {
   LasecSalesOrderCreateResponse: {
     salesOrder: async (response: LasecSalesOrderCreateResponse, args: any) => {
       const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
-      if (response.success === true && response.salesOrder === null || response.salesOrder === undefined)
-        return quoteService.getSalesOrder(response.iso_id);
-
+      if (response.success === true && response.salesOrder === null || response.salesOrder === undefined) return quoteService.getSalesOrder(response.iso_id);
       if (response.salesOrder) return response.salesOrder;
     }
   },
@@ -283,7 +281,6 @@ const SalesOrderResolver = {
 
       } catch (sales_order_fetch_error) {
         logger.error(`Error getting sales order details`, sales_order_fetch_error);
-
         throw new ApiError('Could not load the sales order, if this problem persists, contact your administrator')
       }
 
@@ -349,14 +346,14 @@ const SalesOrderResolver = {
             const quote_detail: { errors: any[], data: any } = await execql(`query LasecGetQuoteById($quote_id: String!, $option_id: String, $item_paging: PagingRequest){
               LasecGetQuoteById(quote_id: $quote_id, option_id: $option_id, item_paging: $item_paging){
                   id
-                  meta 
+                  meta
                   customer {
                     firstName
                     lastName
                   }
                   company {
-                    id                  
-                    name                
+                    id
+                    name
                   }
                   totals {
                     GP
@@ -400,7 +397,7 @@ const SalesOrderResolver = {
                   importVATNumber
                   creditLimit
                   currentBalance
-                }                
+                }
               }
             }`, { id: lasec_quote.customer_id }, {}, context.user, context.partner).then();
             client = customer_query.data.LasecGetClientDetail;
@@ -544,7 +541,7 @@ const SalesOrderResolver = {
     },
 
     /***
-     * Create Certificate of Conformance 
+     * Create Certificate of Conformance
      */
     LasecCreateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: LasecCertificateOfConformance }, context: Reactory.IReactoryContext, info: any): Promise<LasecCertificateOfConformanceResponse> => {
 
@@ -614,7 +611,7 @@ const SalesOrderResolver = {
     },
 
     /***
-     * 
+     *
      */
     LasecCreateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: LasecCommercialInvcoice }, context: Reactory.IReactoryContext): Promise<LasecCommercialInvoiceResponse> => {
 
@@ -650,7 +647,7 @@ const SalesOrderResolver = {
     },
 
     /***
-     * 
+     *
      */
     LasecUpdateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
@@ -677,7 +674,7 @@ const SalesOrderResolver = {
     },
 
     /**
-     * 
+     *
      */
     LasecCreatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
@@ -704,7 +701,7 @@ const SalesOrderResolver = {
     },
 
     /***
-     * 
+     *
      */
     LasecUpdatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
