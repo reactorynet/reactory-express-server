@@ -53,6 +53,7 @@ const SalesOrderResolver = {
     orderType: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
       return `${salesOrder.orderType || 'none'}`.toUpperCase()
     },
+
     crmCustomer: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
 
       try {
@@ -124,7 +125,7 @@ const SalesOrderResolver = {
         let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
         let resultObject = sqlresult[0] || { shipValue: 0 };
 
-        salesOrder.shipValue = Math.floor(resultObject.shipValue * 100);
+        salesOrder.shipValue = Math.floor((resultObject.shipValue || 0) * 100);
 
         return salesOrder.shipValue;
       }
@@ -147,7 +148,7 @@ const SalesOrderResolver = {
         let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
         let resultObject = sqlresult[0] || { shipValue: 0 };
 
-        salesOrder.reserveValue = Math.floor(resultObject.reserveValue * 100);
+        salesOrder.reserveValue = Math.floor((resultObject.reserveValue || 0) * 100);
 
         return salesOrder.reserveValue;
       }
@@ -171,7 +172,7 @@ const SalesOrderResolver = {
         let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
         let resultObject = sqlresult[0] || { shipValue: 0 };
 
-        salesOrder.backorderValue = Math.floor((resultObject.backorderValue * 100));
+        salesOrder.backorderValue = Math.floor(((resultObject.backorderValue || 0) * 100));
 
         return salesOrder.backorderValue;
       }
@@ -191,6 +192,27 @@ const SalesOrderResolver = {
         logger.error('Could not get the document for the sales order', exception);
         throw exception;
       }
+    },
+
+    salesTeam: async (sales_order: LasecSalesOrder, args: any, context: Reactory.IReactoryContext, info: any) => {
+
+
+      if (isNil(sales_order.quoteId) === true) return 'NO QUOTE ID';
+
+      const query = `      
+          SELECT 
+            qt.sales_team_id as salesTeam
+          FROM Quote as qt            
+            WHERE qt.quoteid = '${sales_order.quoteId}';
+      `;
+
+      let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
+      if (sqlresult.length >= 1) {
+        sales_order.salesTeam = sqlresult[0].salesTeam || 'NOT FOUND';
+      }
+
+      return sales_order.salesTeam;
+
     },
 
     deliveryAddress: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext, info: any) => {

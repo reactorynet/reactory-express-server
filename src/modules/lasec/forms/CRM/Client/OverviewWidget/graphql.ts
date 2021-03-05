@@ -25,19 +25,22 @@ const graphql: Reactory.IFormGraphDefinition = {
       }      
     }`,
     variables: {
-      'formData.id': 'id',            
+      'formData.id': 'id',
     },
-    resultMap: {      
+    resultMap: {
       'id': 'id',
       'clientStatus': 'clientStatus',
       'fullName': 'fullName',
       'accountType': 'accountType',
-      'customer.customerStatus': 'customerStatus', 
-      'customer.accountNumber':'accountNumber',
+      'customer.customerStatus': 'customerStatus',
+      'customer.accountNumber': 'accountNumber',
       'customer.tradingName': 'customer',
       'customer.currentBalance': 'currentBalance',
       'customer.creditLimit': 'creditLimit',
       'customer.currencyCode': 'currency',
+    },
+    options: {
+      fetchOptions: 'cache-first',
     },
     autoQuery: true,
     queryMessage: 'Loading customer details',
