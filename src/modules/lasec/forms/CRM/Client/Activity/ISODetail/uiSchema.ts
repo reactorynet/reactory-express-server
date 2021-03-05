@@ -76,7 +76,7 @@ const uiSchema: any = {
         use_case: 'existing',
       },
       propsMap: {
-        'formData.orderSummary.orderId': 'sales_order_id',
+        'formContext.formData.orderSummary.orderId': 'sales_order_id',
       },
     }
   },

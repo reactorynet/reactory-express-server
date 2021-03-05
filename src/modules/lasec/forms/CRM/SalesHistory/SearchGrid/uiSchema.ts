@@ -111,7 +111,43 @@ const uiSchema: any = {
         { title: 'Account Number', field: 'accountNumber' },
         { title: 'Customer', field: 'customer' },
         { title: 'Client Full Name', field: 'client' },
-        { title: 'Invoice Number', field: 'invoiceNumber' },
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          width: '140px',
+          component: 'core.SlideOutLauncher@1.0.0',
+          props: {
+            componentFqn: 'lasec-crm.LasecCRMISODetail@1.0.0',
+            componentProps: {
+              'rowData.id': ['data.id'],
+              'rowData.isoNumber': ['data.orderId', 'query.orderId'],
+              'rowData.iso': ['data.iso', 'query.iso'],
+              'rowData.customer': ['data.customer', 'query.customer'],
+              'rowData.client': ['data.client', 'query.client'],
+            },
+            slideDirection: 'down',
+            buttonTitle: '${rowData.invoiceNumber}', // eslint-disable-line
+            buttonVariant: 'Typography',
+            buttonProps: {
+              variant: 'body2',
+              style: {
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                color: 'black',
+                maxWidth: '140px',
+              },
+            },
+            windowTitle: 'Details view for Invoice # ${rowData.invoiceNumber}', // eslint-disable-line
+            backNavigationConfig: {
+              showAppBar: false,
+              backNavigationItems: ['Invoices', '${rowData.invoiceNumber}'], // eslint-disable-line
+              containerProps: { PaperProps: { style: { background: '#F6F6F6' } } },
+            },
+          },
+          propsMap: {
+            rowData: 'rowData',
+          },
+        },
         // { title: 'ISO No.', field: 'isoNumber' },
         {
           title: 'ISO No.',
@@ -186,7 +222,7 @@ const uiSchema: any = {
       },
       componentMap: {
         Toolbar: 'lasec-crm.SalesHistoryGridToolbar@1.0.0',
-        DetailsPanel: 'lasec-crm.salesHistoryTableDetailPanel@1.0.0'
+        DetailsPanel: 'lasec-crm.salesHistoryTableDetailPanel@1.0.0',
       },
       remoteData: true,
       query: 'sales_history',
