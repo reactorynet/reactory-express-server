@@ -727,6 +727,8 @@ export interface LasecSalesOrder {
 
   gpPercentage: number,
   mupPercentage: number,
+  subTotal: number,
+  orderValue: number,
 }
 
 export interface LasecAddress {

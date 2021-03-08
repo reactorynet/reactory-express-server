@@ -2625,9 +2625,13 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
   logger.debug(`LINE ITEMS:: ${JSON.stringify(salesOrders)}`);
 
   let lineItems: any[] = [];
+  let freight = 0;
+  let comments: any[] = [];
+
   salesOrders.forEach(so => {
 
-    if (so.product_code != '') {
+    // NORMAL STOCK LINE
+    if (so.line_type == 1) {
       const item = {
         id: so.id,
         line: so.line,
@@ -2648,13 +2652,32 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
 
       lineItems.push(item);
     }
-  })
+
+    // FREIGHT ITEM
+    if (so.line_type == 4) {
+      freight = so.total_price;
+    }
+
+    // TODO - DREW - NOT BEING USED RIGHT NOW
+    // COMMENTS
+    if (so.line_type == 6) {
+      comments.push({ comment: so.comment});
+    }
+  });
 
   logger.debug(`LINE ITEMS TO RETURN :: ${JSON.stringify(lineItems)}`);
+
+  const totalSellingPrice = lineItems.reduce((total, lineItem) => {
+    return total + lineItem.totalPrice;
+  }, 0);
+
+  logger.debug(`SELLING PRICE TOTAL :: ${totalSellingPrice}`);
 
   let existing_comments = await LasecSalesOrderComment.find({ salesOrderId: params.orderId }).populate('who').then();
   return {
     lineItems,
+    sellingPrice: totalSellingPrice,
+    freight,
     comments: existing_comments
   };
 }

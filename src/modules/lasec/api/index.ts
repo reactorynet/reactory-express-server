@@ -1335,48 +1335,7 @@ const Api = {
 
               let item = iso_api_result.payload.items[0];
 
-              logger.debug(`ITEMS:: ${JSON.stringify(item)}`);
-
-              /**
-               * ***************************
-               *   Results from Lasec API
-               * ***************************
-                  {
-                    "id": "509376",
-                    "document_ids": [
-                      "89778"
-                    ],
-                    "order_date": "2020-11-16T00:00:00Z",
-                    "account_number": "31718",
-                    "order_type": "Normal",
-                    "req_ship_date": "2020-11-16T00:00:00Z",
-                    "order_status": "Open Order",
-                    "sales_order_number": "509376",
-                    "sales_order_id": "509376",
-                    "company_trading_name": "LANCET LABORATORIES (PTY) LTD",
-                    "sales_team_id": "LAB301",
-                    "currency": "R",
-                    "quote_id": "2011-301135111",
-                    "quote_date": "2020-11-16T10:09:00Z",
-                    "order_value": 0,
-                    "back_order_value": 0,
-                    "reserved_value": 0,
-                    "shipped_value": 105472,
-                    "delivery_address": "Lancet Stores , 11 Heron Park,  80,Corobrik Rd,  Riverhorse Valley,,Newlands East,  4017,  South Africa",
-                    "customer_name": "Sipho  Ngema",
-                    "customerponumber": "PTYPO315315",
-                    "dispatch_note_ids": [
-                      "509376/0001"
-                    ],
-                    "invoice_ids": [],
-                    "warehouse_note": "",
-                    "delivery_note": "",
-                    "order_qty": 0,
-                    "ship_qty": 0,
-                    "back_order_qty": 0,
-                    "reserved_qty": 0
-                  }
-               */
+              logger.debug(`SALES ORDER ITEM:: ${JSON.stringify(item)}`);
 
               sales_order = {
                 id: item.id,
@@ -1422,6 +1381,8 @@ const Api = {
 
                 gpPercentage: item.gp_percent,
                 mupPercentage: item.mup_percent,
+                subTotal: item.sub_total,
+                orderValue: item.order_value
 
               };
 

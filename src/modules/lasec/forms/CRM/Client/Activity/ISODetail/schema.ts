@@ -44,6 +44,12 @@ const schema: Reactory.ISchema = {
         mup: {
           type: 'string'
         },
+        subTotal: {
+          type: 'string'
+        },
+        orderValue: {
+          type: 'string'
+        },
       }
     },
     deliveryDetails: {

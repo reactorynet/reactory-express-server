@@ -38,6 +38,8 @@ Sales Order Line Item Detail
 """
 type SalesOrderDetails {
   lineItems: [SalesOrderLineItem]
+  sellingPrice: Float
+  freight: Float
   comments: [CRMSaleOrderComment]
 }
 
@@ -95,6 +97,8 @@ type SalesOrder {
 
   gpPercentage: Int
   mupPercentage: Int
+  subTotal: Int
+  orderValue: Int
 }
 
 """

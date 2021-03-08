@@ -51,6 +51,8 @@ const graphql: Reactory.IFormGraphDefinition = {
 
         gpPercentage
         mupPercentage
+        subTotal
+        orderValue
 
         details {
           lineItems {
@@ -114,6 +116,8 @@ const graphql: Reactory.IFormGraphDefinition = {
 
       'gpPercentage': 'lineItems.gp',
       'mupPercentage': 'lineItems.mup',
+      'subTotal': 'lineItems.subTotal',
+      'orderValue': 'lineItems.orderValue',
 
       'details.comments': 'comments.comments',
     },
