@@ -50,7 +50,7 @@ const uiSchema: any = {
 
   header: {
     'ui:widget': 'LasecCRMISODetailHeader',
-    'ui:options': { }
+    'ui:options': {}
   },
   lineItems: {
     'ui:widget': 'LasecCRMISODetailLineItems',
@@ -67,11 +67,11 @@ const uiSchema: any = {
   },
   deliveryDetails: {
     'ui:widget': 'LasecCRMISODetailDeliveryDetails',
-    'ui:options': { }
+    'ui:options': {},
   },
   orderSummary: {
     'ui:widget': 'LasecCRMISODetailOrderSummary',
-    'ui:options': { }
+    'ui:options': {},
   },
   documents: {
     'ui:widget': 'LasecSalesOrderDocuments',
@@ -80,7 +80,7 @@ const uiSchema: any = {
         use_case: 'existing',
       },
       propsMap: {
-        'formData.orderSummary.orderId': 'sales_order_id'
+        'formContext.formData.orderSummary.orderId': 'sales_order_id',
       },
     }
   },

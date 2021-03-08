@@ -23,7 +23,10 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 
+import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quote';
+
 import LasecDatabase from '../../database';
+import { MongooseDocument } from 'mongoose';
 
 class LasecQuoteService implements IQuoteService {
 
@@ -196,16 +199,39 @@ class LasecQuoteService implements IQuoteService {
 
     logger.debug(`STARTING!!! ==> patchQuoteOption ${quote_id}, ${quote_option_id},  ${JSON.stringify(option)}`);
 
+
     const payload = await LAPI.Quotes.patchQuoteOption(quote_id, quote_option_id, {
       name: option.option_name,
       inco_terms: option.inco_terms,
       named_place: option.named_place,
       transport_mode: option.transport_mode,
       currency: option.currency
-    }, this.context).then()
+    }, this.context).then();
+
+
+    const quote: any = await Quote.find({ code: quote_id }).then();
+
+    let patched: boolean = null;
+    if (quote && quote.options) {
+      quote.options.forEach(($option: LasecQuoteOption) => {
+        if ($option.quote_option_id === quote_option_id) {
+          if (option.inco_terms) $option.incoterm = option.inco_terms;
+          if (option.named_place) $option.named_place = option.named_place;
+          if (option.transport_mode) $option.transport_mode = option.transport_mode;
+          if (option.currency) $option.currency;
+          if (option.vat_exempt) $option.vat_exempt = option.vat_exempt;
+          if (option.from_sa) $option.from_sa = option.from_sa;
+
+          patched = true;
+        }
+      });
+
+      if (patched === true) {
+        quote.save().then()
+      }
+    }
 
     logger.debug(`Payload Response ==> patchQuoteOption`, payload);
-
     return payload;
   }
   async deleteQuoteOption(quote_id: string, quote_option_id: string): Promise<SimpleResponse> {

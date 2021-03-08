@@ -2522,6 +2522,22 @@ export default {
     LasecGetPlaceDetails: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
       return getPlaceDetails(args, context);
     },
+    LasecClientEmailExists: async (obj: any, args: { emailAddress: string, excludeIds: string[] }, context: Reactory.IReactoryContext) => {
+      let sql = '';
+      if (args.excludeIds) {
+        sql = `SELECT customerid as id FROM Customer WHERE email = '${args.emailAddress}' AND customerid NOT IN (${args.excludeIds.map((id) => `${id}`)})`;
+      } else {
+        sql = `SELECT customerid as id FROM Customer WHERE email = '${args.emailAddress}'`;
+      }
+
+      let countResult: any[] = await mysql(sql, 'mysql.lasec360', {}, context).then();
+
+      if (countResult && countResult.length > 0) {
+        return Promise.all(countResult.map((row: any) => getClient({ id: row.id }, context))).then();
+      }
+
+      return [];
+    },
   },
   Mutation: {
     LasecUpdateClientDetails: async (obj: any, args: { clientInfo: ClientUpdateInput }, context: Reactory.IReactoryContext) => {

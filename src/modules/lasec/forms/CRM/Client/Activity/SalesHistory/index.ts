@@ -183,6 +183,7 @@ const uiSchema: any = {
       },
       componentMap: {
         Toolbar: 'lasec-crm.SalesHistoryGridToolbar@1.0.0',
+        DetailsPanel: 'lasec-crm.salesHistoryTableDetailPanel@1.0.0',
       },
       toolbarPropsMap: {
         'formContext.formData.id': 'query.id',

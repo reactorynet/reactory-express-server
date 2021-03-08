@@ -4,7 +4,7 @@ import lodash from 'lodash';
 const { ObjectId } = mongoose.Schema.Types;
 
 const meta = new mongoose.Schema({
-  source: { },
+  source: {},
   owner: String, // indicates what system owns this record
   reference: String, // a lookup string to use for the remote system
   sync: String,
@@ -39,7 +39,7 @@ const QuoteReminderShema = new mongoose.Schema({
   next: Date,
   actionType: String,
   actioned: Boolean,
-  result: { },
+  result: {},
   via: [String],
   text: String,
   importance: String,
@@ -165,7 +165,15 @@ const QuoteSchema = new mongoose.Schema({
     gp: Number,
     gp_percent: Number,
     vat: Number,
-    modified: Date
+    modified: Date,
+    vat_exempt: {
+      type: Boolean,
+      default: false,
+    },
+    from_sa: {
+      type: Boolean,
+      default: false,
+    },
   }],
   created: {
     type: Date,
@@ -197,8 +205,8 @@ const QuoteSchema = new mongoose.Schema({
   }],
 });
 
-QuoteSchema.methods.addTimelineEntry = async function addTimelineEntry(entry){
-  if(lodash.isEmpty(this.timeline) === false) {
+QuoteSchema.methods.addTimelineEntry = async function addTimelineEntry(entry) {
+  if (lodash.isEmpty(this.timeline) === false) {
     this.timeline = [entry];
   } else {
     this.timeline.push(entry);
