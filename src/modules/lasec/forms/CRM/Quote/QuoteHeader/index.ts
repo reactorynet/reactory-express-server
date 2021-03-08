@@ -20,7 +20,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         'eventData.formData.currencyCode': 'currency_code',
       },
       throttle: 1500,
-    },    
+    },
   },
 };
 
@@ -100,12 +100,12 @@ const uiSchema: any = {
       component: 'TextField',
       componentProps: {
         variant: 'outlined',
-        placeholder: 'Client Name',        
+        placeholder: 'Client Name',
       },
-      inputProps:{
+      inputProps: {
         readOnly: true,
-      },      
-    }
+      },
+    },
   },
   repCode: {
     'ui:options': {
@@ -117,9 +117,9 @@ const uiSchema: any = {
           marginTop: '1.3rem'
         }
       },
-      inputProps:{
+      inputProps: {
         readOnly: true,
-      },      
+      },
     }
   },
   quoteType: {
@@ -128,15 +128,16 @@ const uiSchema: any = {
       FormControl: {
         props: {
           style: {
-            maxWidth: '400px'
-          }
-        }
-      },      
+            maxWidth: '400px',
+          },
+        },
+      },
       selectOptions: [
         { key: 'Normal', value: 'Normal', label: 'Normal' },
         { key: 'Contract', value: 'Contract', label: 'Contract' },
         { key: 'Tender', value: 'Tender', label: 'Tender' },
         { key: 'Budget', value: 'Budget', label: 'Budget' },
+        { key: 'Cross Trade', value: 'Cross Trade', label: 'Cross Trade' },
       ],
     }
   },
@@ -145,7 +146,7 @@ const uiSchema: any = {
     'ui:options': {
       variant: 'outlined',
       typography: {
-        variant: 'subtitle1',        
+        variant: 'subtitle1',
       }
     }
   },
