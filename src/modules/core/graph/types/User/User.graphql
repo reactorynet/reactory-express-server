@@ -69,6 +69,7 @@ type User {
   fullNameWithEmail: String
   lastName: String
   email: String
+  mobileNumber: String
   deleted: Boolean
   peers: UserPeers,
   salt: String,
@@ -121,6 +122,7 @@ input CreateUserInput {
   email: String!
   firstName: String!
   lastName: String!
+  mobileNumber: String
   avatar: String
   businessUnit: String
   authProvider: AuthProvider
@@ -137,6 +139,7 @@ input UpdateUserInput {
   avatar: String
   firstName: String
   lastName: String
+  mobileNumber: String
   authProvider: String
   businessUnit: String
   providerId: String

@@ -332,6 +332,9 @@ const userResolvers = {
     deleted(user: { deleted: any; }) {
       return user.deleted || false;
     },
+    mobileNumber(user: { mobileNumber: any; }) {
+      return user.mobileNumber || "Not Set";
+    },
   },
   UserMembership: {
     client({ clientId }) {

@@ -17,18 +17,19 @@ const uiSchema: any = {
     },
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    spacing: 4,
+  },
   'ui:grid-layout': [
     {
       id: { xs: 12 },
     },
     {
-      age: { xs: 12, sm: 6, md: 4 },
-      gender: { xs: 12, sm: 6, md: 4 },
-      race: { xs: 12, sm: 6, md: 4 },
-    },
-    {
-      position: { xs: 12, sm: 6, md: 4 },
-      region: { xs: 12, sm: 6, md: 4 },
+      age: { xs: 12, sm: 6, md: 6 },
+      gender: { xs: 12, sm: 6, md: 6 },
+      race: { xs: 12, sm: 6, md: 6 },
+      position: { xs: 12, sm: 6, md: 6 },
+      region: { xs: 12, sm: 6, md: 6 },
       operationalGroup: { xs: 12, sm: 6 },
       businessUnit: { xs: 12, sm: 6 },
       team: { xs: 12, sm: 6 },

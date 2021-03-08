@@ -8,7 +8,7 @@ const MoresMyPersonalDemographics: Reactory.IReactoryForm = {
   uiFramework: 'material',
   uiSupport: ['material'],
   uiResources: [],
-  title: 'My Personal Demographics',
+  title: '',
   tags: ['Mores', 'My Personal Demographics'],
   registerAsComponent: true,
   name: 'MoresMyPersonalDemographics',
