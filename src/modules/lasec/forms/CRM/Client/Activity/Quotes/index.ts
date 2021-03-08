@@ -118,28 +118,20 @@ const uiSchema: any = {
         {
           title: 'Quote Number',
           field: 'code',
-          component: 'core.SlideOutLauncher@1.0.0',
+          component: 'lasec-crm.QuoteActionButton',
           props: {
-            componentFqn: 'lasec-crm.QuoteDetail@1.0.0',
-            componentProps: {
-              'rowData.code': ['data.quote_id', 'data.code', 'query.quote_id']
-            },
-            slideDirection: 'down',
-            buttonTitle: '${rowData.code}',
-            windowTitle: 'Details view for ${rowData.code}',
-            buttonVariant: 'Typography',
-            buttonProps: {
-              variant: 'body1',
-              style: {
-                'textDecoration': 'underline',
-                'cursor': 'pointer',
-                'color': 'black'
-              }
+            variant: 'body2',
+            style: {
+              maxWidth: '170px',
+              textDecoration: 'underline',
+              cursor: 'pointer',
             },
           },
           propsMap: {
-            'rowData': 'rowData'
-          }
+            'rowData.code': 'quote_id',
+            rowData: 'formData',
+            'rowData.status': 'status',
+          },
         },
         {
           title: 'Quote Date',
@@ -149,13 +141,13 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1s',
-                format: '${api.utils.moment(rowData.date).format(\'DD MMM YYYY HH:mm\')}'
-              }
+                format: '${api.utils.moment(rowData.date).format(\'DD MMM YYYY HH:mm\')}',
+              },
             },
           },
           propsMap: {
             'rowData.date': 'value',
-          }
+          },
         },
         {
           title: 'Quote Status',
@@ -252,7 +244,7 @@ const LasecCRMClientQuoteActivities: Reactory.IReactoryForm = {
   version: '1.0.0',
   schema: $schema,
   graphql: $graphql,
-  uiSchema: uiSchema,
+  uiSchema,
   defaultFormValue: {
     paging: { page: 1, pageSize: 10 },
     search: "",
