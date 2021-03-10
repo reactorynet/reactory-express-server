@@ -17,34 +17,39 @@ const graphql: Reactory.IFormGraphDefinition = {
             fullName
             avatar
           }
+          imageUrl
         }
       }
     }`,
     variables: {
-      'data.orderId': 'orderId',
+      // 'data.orderId': 'orderId',
+      // 'formData.orderId': 'orderId',
+      // 'formContext.$formData.orderId': 'orderId',
+      'formData.orderId': 'orderId',
     },
     resultType: 'object',
     resultMap: {
-      'orderId': 'orderId',
+      // 'orderId': 'orderId',
+      'orderId': ['orderId', 'formData.orderId', 'formContext.$formData.orderId'],
       'comments': 'comments'
     },
     queryMessage: 'Loading order comments',
-    refreshEvents: [
-      { name: 'lasec-crm:sales-order-comment-added' }
-    ],
+    // refreshEvents: [
+    //   { name: 'lasec-crm:sales-order-comment-added' }
+    // ],
     edit: false,
     new: true,
     onError: {
       componentRef: 'lasec-crm.Lasec360Plugin@1.0.0',
       method: 'onGraphQLQueryError',
     },
-    // autoQuery: true,
+    autoQuery: true,
   },
   mutation: {
     new: {
       name: "LasecAddSaleOrderComment",
       text: `mutation LasecAddSaleOrderComment($orderId: String!, $comment: String!){
-        LasecAddSaleOrderComment(orderId: $orderId, comment: $comment) {          
+        LasecAddSaleOrderComment(orderId: $orderId, comment: $comment) {
           id
           comment
           who {
@@ -63,7 +68,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.orderId': 'orderId',
         'formData.newComment': 'comment',
       },
-      onSuccessMethod: 'notification',
+      onSuccessMethod: 'refresh',
       notification: {
         inAppNotification: true,
         title: 'Comment has been added to sales order ${formData.orderId}',
@@ -73,9 +78,9 @@ const graphql: Reactory.IFormGraphDefinition = {
           canDismiss: false,
         }
       },
-      onSuccessEvent: {
-        name: 'lasec-crm:sales-order-comment-added'
-      }
+      // onSuccessEvent: {
+      //   name: 'lasec-crm:sales-order-comment-added'
+      // }
     },
     edit: {
       name: "LasecAddSaleOrderComment",
@@ -95,6 +100,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       }`,
       objectMap: true,
       updateMessage: 'Save order comment',
+      onSuccessMethod: 'refresh',
       variables: {
         'formData.orderId': 'orderId',
         'formData.newComment': 'comment',
@@ -135,7 +141,7 @@ const schema: Reactory.ISchema = {
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
-    // toolbarPosition: 'bottom',
+    toolbarPosition: 'bottom',
     containerStyles: {
       padding: 0,
       margin: 0,
@@ -144,10 +150,9 @@ const uiSchema: any = {
       padding: 0,
       margin: 0,
     },
-    submitIcon: 'chat',
     showSchemaSelectorInToolbar: false,
     showSubmit: true,
-    showRefresh: true,
+    showRefresh: false,
   },
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
@@ -167,60 +172,65 @@ const uiSchema: any = {
   ],
 
   comments: {
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
-      columns: [
-        {
-          title: "Who", field: "fullName",
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${rowData.who.fullName}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData': 'rowData',
-          }
-        },
-        {
-          title: 'When',
-          field: 'when',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body2',
-                format: '${api.utils.moment(rowData.when).format(\'DD MMM YYYY HH:mm\')}'
-              }
-            },
-          },
-          propsMap: {
-            'rowData.date': 'value',
-          }
-        },
-        {
-          title: "Comment", field: "comment"
-        },
-      ],
-      options: {
-        grouping: false,
-        search: false,
-        showTitle: false,
-        toolbar: false,
-      },
-      remoteData: false,
-    }
+    'ui:widget': 'SalesOrderCommentGrid',
   },
+
+  // comments: {
+  //   'ui:widget': 'MaterialTableWidget',
+  //   'ui:options': {
+  //     columns: [
+  //       {
+  //         title: "Who", field: "fullName",
+  //         component: 'core.LabelComponent@1.0.0',
+  //         props: {
+  //           uiSchema: {
+  //             'ui:options': {
+  //               variant: 'body2',
+  //               format: '${rowData.who.fullName}'
+  //             }
+  //           },
+  //         },
+  //         propsMap: {
+  //           'rowData': 'rowData',
+  //         }
+  //       },
+  //       {
+  //         title: 'When',
+  //         field: 'when',
+  //         component: 'core.LabelComponent@1.0.0',
+  //         props: {
+  //           uiSchema: {
+  //             'ui:options': {
+  //               variant: 'body2',
+  //               format: '${api.utils.moment(rowData.when).format(\'DD MMM YYYY HH:mm\')}'
+  //             }
+  //           },
+  //         },
+  //         propsMap: {
+  //           'rowData.date': 'value',
+  //         }
+  //       },
+  //       {
+  //         title: "Comment", field: "comment"
+  //       },
+  //     ],
+  //     options: {
+  //       grouping: false,
+  //       search: false,
+  //       showTitle: false,
+  //       toolbar: false,
+  //     },
+  //     remoteData: false,
+  //   }
+  // },
   newComment: {
     'ui:options': {
       component: 'TextField',
       componentProps: {
         multiline: true,
         variant: 'outlined',
-        //submitOnEnter: true
+        submitOnEnter: true,
+        fullWidth: true,
       }
     }
   }
@@ -241,10 +251,12 @@ const LasecCRMISODetailComments: Reactory.IReactoryForm = {
   uiSchema: uiSchema,
   graphql: graphql,
   defaultFormValue: {},
-  widgetMap: [],
-  eventBubbles: [
-    { eventName: "onChange", action: "swallow" }
-  ]
+  widgetMap: [
+    { componentFqn: 'lasec-crm.SalesOrderComments@1.0.0', widget: 'SalesOrderCommentGrid' },
+  ],
+  // eventBubbles: [
+  //   { eventName: "onChange", action: "swallow" }
+  // ]
 };
 
 export default LasecCRMISODetailComments;

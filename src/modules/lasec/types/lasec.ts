@@ -702,6 +702,7 @@ export interface LasecSalesOrder {
   warehouseNote: string
 
   salesTeam: string
+  salesPerson: string
   value: number
   reserveValue: number
   shipValue: number

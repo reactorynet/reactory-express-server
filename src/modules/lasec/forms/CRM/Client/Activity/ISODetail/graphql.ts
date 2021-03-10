@@ -10,6 +10,8 @@ const graphql: Reactory.IFormGraphDefinition = {
         salesOrderNumber
         shippingDate
 
+        salesTeam
+
         quoteId
         quoteDate
 
@@ -34,6 +36,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         warehouseNote
 
         salesTeam
+        salesPerson
         value
         reserveValue
         shipValue
@@ -88,6 +91,7 @@ const graphql: Reactory.IFormGraphDefinition = {
             }
             when
             comment
+            imageUrl
           }
         }
       }
@@ -109,10 +113,8 @@ const graphql: Reactory.IFormGraphDefinition = {
       'iso': ['orderSummary.orderId', 'comments.orderId'],
       'orderType': 'orderSummary.orderType',
       'poNumber': 'orderSummary.poNumber',
-      'salesTeam': 'orderSummary.salesPerson',
+      'salesPerson': 'orderSummary.salesPerson',
       'quoteId': 'orderSummary.quoteNumber',
-
-      // 'details.lineItems': 'lineItems',
 
       'gpPercentage': 'lineItems.gp',
       'mupPercentage': 'lineItems.mup',

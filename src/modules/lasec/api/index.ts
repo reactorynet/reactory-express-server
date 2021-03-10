@@ -1355,10 +1355,13 @@ const Api = {
                 },
                 poNumber: item.customerponumber,
                 currency: item.currency,
+
                 deliveryAddress: item.delivery_address,
-                deliveryNote: item.delivery_note,
-                warehouseNote: item.warehouse_note,
+                deliveryNote: item.delivery_note || 'N/A',
+                warehouseNote: item.warehouse_note || 'N/A',
+
                 salesTeam: item.sales_team_id,
+                salesPerson: item.sales_team_id || 'N/A',
                 value: item.order_value,
                 reserveValue: item.reserved_value,
                 shipValue: item.shipped_value,
@@ -1386,6 +1389,7 @@ const Api = {
 
               };
 
+              logger.debug(`SALES ORDER ITEM TO RETURN:: ${JSON.stringify(sales_order)}`);
               setCacheItem(`lasec-sales-order::${sales_order_id}`, sales_order, 15, context.partner);
               return sales_order;
             }

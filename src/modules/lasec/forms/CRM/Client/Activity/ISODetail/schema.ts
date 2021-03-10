@@ -38,18 +38,18 @@ const schema: Reactory.ISchema = {
         id: {
           type: 'string'
         },
-        gp: {
-          type: 'string'
-        },
-        mup: {
-          type: 'string'
-        },
-        subTotal: {
-          type: 'string'
-        },
-        orderValue: {
-          type: 'string'
-        },
+        // gp: {
+        //   type: 'string'
+        // },
+        // mup: {
+        //   type: 'string'
+        // },
+        // subTotal: {
+        //   type: 'string'
+        // },
+        // orderValue: {
+        //   type: 'string'
+        // },
       }
     },
     deliveryDetails: {
@@ -171,34 +171,12 @@ const schema: Reactory.ISchema = {
                 title: 'Comment Id'
               },
 
-              who: {
-                type: 'object',
-                title: 'Who',
-                properties: {
-                  id: {
-                    type: 'string',
-                    title: 'Id'
-                  },
-                  firstName: {
-                    type: 'string',
-                    title: 'First name'
-                  },
-                  lastName: {
-                    type: 'string',
-                    title: 'Last name'
-                  },
-                  fullName: {
-                    type: 'string',
-                    title: 'Fullname'
-                  },
-                  avatar: {
-                    type: 'string',
-                    title: 'Avatar'
-                  }
-                }
+              comment: {
+                type: 'string',
+                title: ''
               },
 
-              comment: {
+              imageUrl: {
                 type: 'string',
                 title: ''
               },

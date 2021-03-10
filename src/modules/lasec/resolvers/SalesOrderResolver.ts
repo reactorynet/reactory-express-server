@@ -66,9 +66,9 @@ const SalesOrderResolver = {
 
         if (isNil(salesOrder.quoteId) === true) return null;
 
-        const query = `      
-          SELECT 
-            qt.customer_id as id, 
+        const query = `
+          SELECT
+            qt.customer_id as id,
             AC.Name as registeredName,
             AC.CustomerOnHold as customerStatus
           FROM Quote as qt
@@ -100,13 +100,13 @@ const SalesOrderResolver = {
 
       if (isNil(salesOrder.quoteId) === true) return 'No quote id';
 
-      const query = `      
-          SELECT 
-            qt.customer_id as id, 
+      const query = `
+          SELECT
+            qt.customer_id as id,
             cust.first_name as firstName,
             cust.surname as lastName
           FROM Quote as qt
-            INNER JOIN Customer as cust on qt.customer_id = cust.customerid            
+            INNER JOIN Customer as cust on qt.customer_id = cust.customerid
             WHERE qt.quoteid = '${salesOrder.quoteId}';
       `;
 
@@ -122,10 +122,10 @@ const SalesOrderResolver = {
       if (salesOrder.shipValue && salesOrder.shipValue > 0) return salesOrder.shipValue;
 
       if (typeof salesOrder.poNumber === 'string' && isNil(salesOrder.poNumber) === false) {
-        const query = `      
-              SELECT 
-                SalesOrderShippedValue as shipValue                        
-              FROM SorMaster            
+        const query = `
+              SELECT
+                SalesOrderShippedValue as shipValue
+              FROM SorMaster
               WHERE CustomerPoNumber = '${salesOrder.poNumber}';
         `;
 
@@ -145,8 +145,8 @@ const SalesOrderResolver = {
       if (salesOrder.reserveValue && salesOrder.reserveValue > 0) return salesOrder.reserveValue;
 
       if (typeof salesOrder.poNumber === 'string' && isNil(salesOrder.poNumber) === false) {
-        const query = `      
-              SELECT 
+        const query = `
+              SELECT
                 SalesOrderReservedValue as reserveValue
               FROM SorMaster
               WHERE CustomerPoNumber = '${salesOrder.poNumber}';
@@ -169,10 +169,10 @@ const SalesOrderResolver = {
 
 
       if (typeof salesOrder.poNumber === 'string' && isNil(salesOrder.poNumber) === false) {
-        const query = `      
-              SELECT 
-                SalesOrderBackOrderValue as backorderValue 
-              FROM SorMaster            
+        const query = `
+              SELECT
+                SalesOrderBackOrderValue as backorderValue
+              FROM SorMaster
               WHERE CustomerPoNumber = '${salesOrder.poNumber}';
       `;
 
@@ -206,10 +206,10 @@ const SalesOrderResolver = {
 
       if (isNil(sales_order.quoteId) === true) return 'NO QUOTE ID';
 
-      const query = `      
-          SELECT 
+      const query = `
+          SELECT
             qt.sales_team_id as salesTeam
-          FROM Quote as qt            
+          FROM Quote as qt
             WHERE qt.quoteid = '${sales_order.quoteId}';
       `;
 
@@ -226,8 +226,8 @@ const SalesOrderResolver = {
       if (salesOrder.deliveryAddress && typeof salesOrder.deliveryAddress === 'string') return salesOrder.deliveryAddress;
 
       if (salesOrder.deliveryAddress && salesOrder.deliveryAddress.id) {
-        const query = `      
-              SELECT 
+        const query = `
+              SELECT
                 formatted_address as deliveryAddress
               FROM Address
               WHERE addressid = ${salesOrder.deliveryAddress.id};
@@ -311,16 +311,12 @@ const SalesOrderResolver = {
     LasecGetISODetail: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
       return getISODetails(args, context);
     },
-
     LasecGetSaleOrderComments: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
-
       return {
         orderId: args.orderId,
-        comments: await getSalesOrderComments(args).then()
+        comments: await getSalesOrderComments(args, context).then()
       }
-
     },
-
     LasecGetPreparedSalesOrder: async (parent: any, params: { quote_id: string, active_option: string }, context: Reactory.IReactoryContext): Promise<any> => {
 
       try {

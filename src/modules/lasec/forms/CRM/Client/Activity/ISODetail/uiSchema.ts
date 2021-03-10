@@ -35,13 +35,13 @@ const uiSchema: any = {
       lineItems: { xs: 12 },
     },
     {
-      deliveryDetails: { xs: 12 },
-    },
-    {
       orderSummary: { xs: 12 },
     },
     {
       documents: { xs: 12 },
+    },
+    {
+      deliveryDetails: { xs: 12 },
     },
     {
       comments: { xs: 12 },
@@ -90,9 +90,8 @@ const uiSchema: any = {
     'ui:widget': 'LasecCRMISODetailComments',
     'ui:options': {
       propsMap: {
-        'formData.orderSummary.orderId': 'orderId',
-        'formData.new_comment': 'formData.new_comment',
-        'formData.comments': 'formData.comments',
+        'formData.orderId': ['orderId', 'formData.orderId'],
+        'formData.comments.comments': 'formData.comments',
       },
     },
   },

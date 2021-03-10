@@ -2567,10 +2567,41 @@ export const deleteSalesOrdersDocument = async (args: any, context: Reactory.IRe
  * Fetches sales order comments for the order id
  * @param params
  */
-export const getSalesOrderComments = async (params: { orderId: string }) => {
-  return LasecSalesOrderComment.find({
-    salesOrderId: params.orderId
-  }).populate('who').then();
+export const getSalesOrderComments = async (params: { orderId: string }, context: Reactory.IReactoryContext) => {
+  // GET COMMENTS FROM API AND FROM SERVER
+
+  let _comments: any[] = [];
+
+  logger.debug(`GETTING API COMMENTS FROM API:: ${JSON.stringify(params)}`);
+  const apiComments = await getISODetails({ orderId: params.orderId, quoteId: '' }, context).then();
+  logger.debug(`GOT API COMMENTS FROM API:: ${JSON.stringify(apiComments)}`);
+
+  if (apiComments) {
+    _comments.concat(apiComments.comments);
+    logger.debug(`COMMENTS AFTER API CONCAT:: ${JSON.stringify(_comments)}`);
+  }
+
+  const dbComments = await LasecSalesOrderComment.find({ salesOrderId: params.orderId }).populate('who').then();
+  logger.debug(`DB COMMENTS:: ${JSON.stringify(dbComments)}`);
+  if (dbComments) {
+    // _comments.concat(dbComments);
+
+    dbComments.forEach(comment => {
+      _comments.push({
+        id: comment._id,
+        // @ts-ignore
+        comment: comment.comment,
+        // @ts-ignore
+        who: comment.who,
+        // @ts-ignore
+        when: comment.when,
+      });
+    })
+
+    logger.debug(`COMMENTS AFTER DB CONCAT:: ${JSON.stringify(_comments)}`);
+  }
+
+  return _comments;
 };
 
 /**
@@ -2604,6 +2635,9 @@ export const saveSalesOrderComment = async (params: { orderId: string, comment: 
  * @param params
  */
 export const getISODetails = async (params: { orderId: string, quoteId: string }, context: Reactory.IReactoryContext) => {
+
+  logger.debug(`GETTING ISO DETAILS:: ${params.orderId} | ${context}`);
+  // logger.debug(`GETTING ISO DETAILS:: ${params.orderId} | ${params.quoteId} | ${JSON.stringify(context)}`)
 
   const {
     orderId,
@@ -2661,24 +2695,22 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
     // TODO - DREW - NOT BEING USED RIGHT NOW
     // COMMENTS
     if (so.line_type == 6) {
-      comments.push({ comment: so.comment});
+      comments.push({ id: '', who: {}, when: '', imageUrl: so.image_url, comment: so.comment });
     }
   });
 
   logger.debug(`LINE ITEMS TO RETURN :: ${JSON.stringify(lineItems)}`);
+  logger.debug(`LINE ITEM COMMENTS TO RETURN :: ${JSON.stringify(comments)}`);
 
   const totalSellingPrice = lineItems.reduce((total, lineItem) => {
     return total + lineItem.totalPrice;
   }, 0);
 
-  logger.debug(`SELLING PRICE TOTAL :: ${totalSellingPrice}`);
-
-  let existing_comments = await LasecSalesOrderComment.find({ salesOrderId: params.orderId }).populate('who').then();
   return {
     lineItems,
     sellingPrice: totalSellingPrice,
     freight,
-    comments: existing_comments
+    comments
   };
 }
 
