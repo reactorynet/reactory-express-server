@@ -4,12 +4,10 @@ import schema from './schema';
 import uiSchema from './uiSchema';
 import graphql from './graphql';
 
-
-
 const default_value = (quote_id: string): LasecGenerateSalesOrderFormData => ({
     $paging: {
         page: 1,
-        pageSize: 10
+        pageSize: 10,
     },
     header: {
         company_name: '',
@@ -20,18 +18,18 @@ const default_value = (quote_id: string): LasecGenerateSalesOrderFormData => ({
     customer_detail: {
         purchase_order_number: '',
         confirm_number: '',
-        vat_number: ''
+        vat_number: '',
     },
     delivery_detail: {
         contact_number: '',
         delivery_address: {
             id: '',
-            fullAddress: ''
+            fullAddress: '',
         },
         method_of_contact: 'call',
         on_day_contact: '',
         special_instruction: '',
-        special_instructions_warehouse: ''
+        special_instructions_warehouse: '',
     },
     $upload_documents: 'no',
     documents: {
@@ -39,7 +37,7 @@ const default_value = (quote_id: string): LasecGenerateSalesOrderFormData => ({
         upload: '',
         uploadContext: null,
         uploadedDocuments: [],
-        view: 'lasec-crm.GenerateSalesOrder'
+        view: 'lasec-crm.GenerateSalesOrder',
     },
     order_detail: {
         amounts_confirmed: false,
@@ -47,12 +45,11 @@ const default_value = (quote_id: string): LasecGenerateSalesOrderFormData => ({
         part_supply: false,
         preferred_warehouse: '',
         quoted_amount: '',
-        shipping_date: ''
-    }
+        shipping_date: '',
+    },
 });
 
 const GenerateSalesOrderForm: Reactory.IReactoryForm = {
-
     id: 'lasec-crm.GenerateSalesOrderForm',
     name: 'LasecGenerateSalesOrderForm',
     nameSpace: 'lasec-crm',
@@ -69,8 +66,8 @@ const GenerateSalesOrderForm: Reactory.IReactoryForm = {
     widgetMap: [
         { componentFqn: 'lasec-crm.SalesOrderHeaderWidget@1.0.0', widget: 'SalesOrderHeaderWidget' },
         { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
-        { componentFqn: 'lasec-crm.ClientDocuments@1.0.0', widget: 'ClientDocuments' },
-    ]
-}
+        { componentFqn: 'lasec-crm.LasecSalesOrderDocuments@1.0.0', widget: 'SalesOrderDocuments' },
+    ],
+};
 
 export default GenerateSalesOrderForm;

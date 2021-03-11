@@ -12,7 +12,7 @@ const header: Reactory.ISchema = {
             type: 'string',
             title: 'Quote Id'
         },
-        
+
         sales_order_date: {
             type: 'string',
             title: 'Quote Id'
@@ -76,7 +76,7 @@ const order_detail: Reactory.ISchema = {
         },
         amounts_confirmed: {
             type: 'boolean',
-            title: 'Confirm order amount',            
+            title: 'Confirm order amount',
         },
         order_type: {
             type: 'string',
@@ -92,7 +92,7 @@ const order_detail: Reactory.ISchema = {
         },
         part_supply: {
             type: 'boolean',
-            title: 'Part Supply',            
+            title: 'Part Supply',
         },
     }
 };
@@ -145,7 +145,7 @@ const $paging: Reactory.IObjectSchema = {
 
 const $upload_documents: Reactory.ISchema = {
     type: "string",
-    title: "Upload PO documents",
+    title: "Upload Purchase Order Documents",
     default: 'no',
     enum: ['yes', 'no'],
 }
@@ -165,10 +165,10 @@ const schema: Reactory.ISchema = {
             oneOf: [
                 {
                     properties: {
+                        documents,
                         $upload_documents: {
                             enum: ['yes']
                         },
-                        documents
                     }
                 }
             ]
@@ -179,7 +179,7 @@ const schema: Reactory.ISchema = {
         header,
         customer_detail,
         order_detail,
-        delivery_detail,        
+        delivery_detail,
         $upload_documents,
     }
 };
