@@ -744,6 +744,11 @@ extend type Mutation {
   LasecUpdateSaleOrderComment( id: String!, comment: String! ): CRMSaleOrderComment
 
   """
+  Delete the Sales Order Comment attached to a sales order
+  """
+  LasecDeleteSalesOrderComment(id: String!) : SimpleResponse
+
+  """
   Delete the Sales Order Document attached to a sales order
   """
   LasecDeleteSalesOrderDocument(id: String!, sales_order_id: String!) : SimpleResponse

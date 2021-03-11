@@ -22,7 +22,8 @@ import {
   getSODocuments,
   getSalesOrderComments,
   saveSalesOrderComment,
-  getCustomerDocuments
+  getCustomerDocuments,
+  deleteSalesOrderComment
 } from "./Helpers";
 import {
   IQuoteService,
@@ -43,9 +44,10 @@ const SalesOrderResolver = {
 
 
   CRMSaleOrderComment: {
-    id: (parent: any) => {
-      return parent._id ? parent._id.toString() : null;
-    }
+    // id: (parent: any) => {
+    //   return parent._id ? parent._id.toString() : null;
+    // }
+    id: ({ id, _id }: any) => id || _id,
   },
 
   SalesOrder: {
@@ -735,6 +737,11 @@ const SalesOrderResolver = {
     LasecAddSaleOrderComment: async (parent: any, params: { orderId: string, comment: string }, context: Reactory.IReactoryContext) => {
       logger.debug('🟠 LasecAddSaleOrderComment', { ...params });
       return saveSalesOrderComment(params, context);
+    },
+
+    LasecDeleteSalesOrderComment: async (parent: any, params: { orderId: string, comment: string }, context: Reactory.IReactoryContext) => {
+      logger.debug('🟠 LasecDeleteSaleOrderComment', { ...params });
+      return deleteSalesOrderComment(params, context);
     },
 
     LasecAddSalesOrderDocument: async (parent: any, params: { file: any, sales_order_id: string }, context: Reactory.IReactoryContext) => {

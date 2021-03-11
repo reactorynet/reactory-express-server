@@ -22,14 +22,10 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-      // 'data.orderId': 'orderId',
-      // 'formData.orderId': 'orderId',
-      // 'formContext.$formData.orderId': 'orderId',
       'formData.orderId': 'orderId',
     },
     resultType: 'object',
     resultMap: {
-      // 'orderId': 'orderId',
       'orderId': ['orderId', 'formData.orderId', 'formContext.$formData.orderId'],
       'comments': 'comments'
     },
@@ -156,18 +152,23 @@ const uiSchema: any = {
   },
   'ui:titleStyle': {
     borderBottom: '2px solid #D5D5D5',
-    paddingBottom: '8px',
-    marginBottom: '20px',
-    fontSize: '1.1rem',
-    fontWeight: 'bold'
+    paddingBottom: '10px',
+    marginBottom: '30px',
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    containerStyles: {
+      padding: '24px 24px 36px'
+    }
+  },
   'ui:grid-layout': [
     {
       comments: { xs: 12 },
+      style: { padding: '24px 32px' }
     },
     {
-      newComment: { sm: 12, md: 12, lg: 12, style: { paddingTop: 0 } },
+      newComment: { sm: 12, md: 12, lg: 12 },
+      style: { padding: '24px 32px' }
     },
   ],
 

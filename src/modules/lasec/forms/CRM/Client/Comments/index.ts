@@ -36,6 +36,7 @@ const displayUiSchema: any = {
   comments: {
     'ui:widget': 'ClientCommentGrid',
   },
+  
   newComment: {
     'ui:options': {
       component: 'TextField',

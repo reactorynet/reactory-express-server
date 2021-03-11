@@ -2573,7 +2573,11 @@ export const getSalesOrderComments = async (params: { orderId: string }, context
   let _comments: any[] = [];
 
   logger.debug(`GETTING API COMMENTS FROM API:: ${JSON.stringify(params)}`);
+
+  // TESTING
+  // const apiComments = await getISODetails({ orderId: '513238', quoteId: '' }, context).then();
   const apiComments = await getISODetails({ orderId: params.orderId, quoteId: '' }, context).then();
+
   logger.debug(`GOT API COMMENTS FROM API:: ${JSON.stringify(apiComments)}`);
 
   if (apiComments) {
@@ -2584,8 +2588,6 @@ export const getSalesOrderComments = async (params: { orderId: string }, context
   const dbComments = await LasecSalesOrderComment.find({ salesOrderId: params.orderId }).populate('who').then();
   logger.debug(`DB COMMENTS:: ${JSON.stringify(dbComments)}`);
   if (dbComments) {
-    // _comments.concat(dbComments);
-
     dbComments.forEach(comment => {
       _comments.push({
         id: comment._id,
@@ -2597,8 +2599,6 @@ export const getSalesOrderComments = async (params: { orderId: string }, context
         when: comment.when,
       });
     })
-
-    logger.debug(`COMMENTS AFTER DB CONCAT:: ${JSON.stringify(_comments)}`);
   }
 
   return _comments;
@@ -2628,7 +2628,16 @@ export const saveSalesOrderComment = async (params: { orderId: string, comment: 
   }
 };
 
+export const deleteSalesOrderComment = async (args: any, context: Reactory.IReactoryContext) => {
+  const { id } = args;
+  logger.debug(`DELETING SALES ORDER COMMENT: ${id}`);
 
+  const deleteResponse = await LasecSalesOrderComment.findByIdAndDelete(id).exec();
+  return {
+    success: deleteResponse || deleteResponse._id != '' ? true : false,
+    message: deleteResponse || deleteResponse._id != '' ? 'Comment successfully deleted.' : 'Could not delete comment.'
+  }
+};
 
 /**
  * get the iso details
