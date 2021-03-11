@@ -428,7 +428,7 @@ const routes = [
     public: false,
     exact: false,
     roles: ['USER'],
-    componentFqn: `${key}.MoresAdminTabbedNavigation@1.0.0`,
+    componentFqn: `${key}.AdminRouter@1.0.0`,
     args: [
       { key: 'use_case', value: { use_case: 'organization_admin' } },
     ],

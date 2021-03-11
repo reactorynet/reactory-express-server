@@ -523,7 +523,7 @@ const userResolvers = {
     },
   },
   Mutation: {
-    createUser: async (obj: any, { input, organizationId, password }: any, context: any, info: any) => {
+    createUser: async (obj: any, { input, organizationId, password }: any, context: Reactory.IReactoryContext, info: any) => {
       const { partner, user } = context;
 
       logger.info(`Create user mutation called ${input.email}`);
@@ -543,7 +543,7 @@ const userResolvers = {
 
       if (isNil(organizationId) === false && isNil(input) === false) {
         const organization = await Organization.findById(organizationId);
-        const createResult = await Admin.User.createUserForOrganization(input, password || 'Password123!', organization).then();
+        const createResult = await Admin.User.createUserForOrganization(input, password || 'Password123!', organization, ["USER"], 'LOCAL', context.partner, null).then();
         return createResult.user;
       }
       throw new Error('Organization Id is required');

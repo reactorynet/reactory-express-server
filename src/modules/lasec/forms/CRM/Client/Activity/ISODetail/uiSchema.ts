@@ -32,13 +32,13 @@ const uiSchema: any = {
       header: { xs: 12 },
     },
     {
+      lineItems: { xs: 12 },
+    },
+    {
       deliveryDetails: { xs: 12 },
     },
     {
       orderSummary: { xs: 12 },
-    },    
-    {
-      lineItems: { xs: 12 },
     },
     {
       documents: { xs: 12 },
@@ -50,25 +50,24 @@ const uiSchema: any = {
 
   header: {
     'ui:widget': 'LasecCRMISODetailHeader',
-    'ui:options': { }
-  },
-  deliveryDetails: {
-    'ui:widget': 'LasecCRMISODetailDeliveryDetails',
-    'ui:options': { }
-  },
-  orderSummary: {
-    'ui:widget': 'LasecCRMISODetailOrderSummary',
-    'ui:options': { }
+    'ui:options': {}
   },
   lineItems: {
     'ui:widget': 'LasecCRMISODetailLineItems',
     'ui:options': {
-      
       propsMap: {
         'formData': 'formData.$SalesOrder',
         'formData.orderId': 'sales_order_id'
       }
     }
+  },
+  deliveryDetails: {
+    'ui:widget': 'LasecCRMISODetailDeliveryDetails',
+    'ui:options': {},
+  },
+  orderSummary: {
+    'ui:widget': 'LasecCRMISODetailOrderSummary',
+    'ui:options': {},
   },
   documents: {
     'ui:widget': 'LasecSalesOrderDocuments',
@@ -77,14 +76,14 @@ const uiSchema: any = {
         use_case: 'existing',
       },
       propsMap: {
-        'formData.orderSummary.orderId': 'sales_order_id'
+        'formContext.formData.orderSummary.orderId': 'sales_order_id',
       },
     }
   },
   comments: {
-    'ui:widget': 'LasecCRMISODetailComments',    
-    'ui:options': { 
-      propsMap: {        
+    'ui:widget': 'LasecCRMISODetailComments',
+    'ui:options': {
+      propsMap: {
         'formData.orderSummary.orderId': 'orderId',
         'formData.new_comment': 'formData.new_comment',
         'formData.comments': 'formData.comments',

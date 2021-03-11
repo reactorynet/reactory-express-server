@@ -128,7 +128,7 @@ const displayUiSchema: any = {
     'ui:widget': 'LabelWidget',
     'ui:options': {
       title: 'Registered Company Name',
-      ...labelProps
+      ...labelProps,
     }
   },
   tradingName: {
@@ -258,35 +258,67 @@ const editUiSchema: any = {
     }
   },
   registeredCompanyName: {
-    'ui:widget': 'LookupComponent',
+    'ui:widget': 'CustomerLookupComponent',
     'ui:options': {
-      label: 'Select a Customer',
+      showLabel: false,
+      label: 'Customer Registered Name',
       title: 'Search for a Customer',
-      modalProps: {
-        fullScreen: false,
-        closeOnEvents: [
-          'CloseModal:LasecCRMCustomerCompanyLookupTable'
-        ]
-      }
+      labelProps: {
+        style: {
+          fontWeight: 'bold',
+          color: 'rgba(0,0,0,1)',
+          marginTop: '3px'
+        }
+      },
     },
     props: {
-      refreshOnChange: false,
-      handleOnChange: true,
-      eventMaps: {
-        onChange: {
-          'evt.selected.registeredName': 'formData?'
-        },
-      },
-      componentFqn: 'lasec-crm.LasecCRMCustomerCompanyLookupTable@1.0.0',
+      use_case: 'existing_client',
       componentProps: {},
       componentPropertyMap: {
         'LookupComponent.props.formContext.$formData': 'formData.selected',
-        'LookupComponent.props.onChange': 'onCustomerSelect',
         'LookupComponent.props.formContext': 'LookupComponentFormContext',
         'LookupComponent.props.formData': 'formData.selected.registeredName'
       },
     },
   },
+  // registeredCompanyName: {
+  //   'ui:widget': 'LookupComponent',
+  //   'ui:options': {
+  //     showLabel: false,
+  //     label: 'Select a Customer',
+  //     title: 'Search for a Customer',
+  //     labelProps: {
+  //       style: {
+  //         fontWeight: 'bold',
+  //         color: 'rgba(0,0,0,1)',
+  //         marginTop: '3px'
+  //       }
+  //     },
+  //     modalProps: {
+  //       fullScreen: false,
+  //       closeOnEvents: [
+  //         'CloseModal:LasecCRMCustomerCompanyLookupTable'
+  //       ]
+  //     }
+  //   },
+  //   props: {
+  //     refreshOnChange: false,
+  //     handleOnChange: true,
+  //     eventMaps: {
+  //       onChange: {
+  //         'evt.selected.registeredName': 'formData?'
+  //       },
+  //     },
+  //     componentFqn: 'lasec-crm.LasecCRMCustomerCompanyLookupTable@1.0.0',
+  //     componentProps: {},
+  //     componentPropertyMap: {
+  //       'LookupComponent.props.formContext.$formData': 'formData.selected',
+  //       'LookupComponent.props.onChange': 'onCustomerSelect',
+  //       'LookupComponent.props.formContext': 'LookupComponentFormContext',
+  //       'LookupComponent.props.formData': 'formData.selected.registeredName'
+  //     },
+  //   },
+  // },
 };
 
 const schema: Reactory.ISchema = {
@@ -307,7 +339,7 @@ const schema: Reactory.ISchema = {
     },
     registeredCompanyName: {
       type: 'string',
-      title: 'Registered Company Name'
+      title: ''
     },
     tradingName: {
       type: 'string',
@@ -381,7 +413,8 @@ const LasecCRMCustomerDetails: Reactory.IReactoryForm = {
   },
   defaultUiSchemaKey: 'display',
   widgetMap: [
-    { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
+    // { componentFqn: 'core.LookupComponent@1.0.0', widget: 'LookupComponent' },
+    { componentFqn: 'lasec-crm.CustomerLookupComponent@1.0.0', widget: 'CustomerLookupComponent' },
   ],
 };
 

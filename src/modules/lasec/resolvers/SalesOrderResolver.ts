@@ -1,9 +1,9 @@
 /**
  * Lasec CRM Sales Order Resolver.
- * 
- * Contains most of the helpers, and functions for handling sales order related 
+ *
+ * Contains most of the helpers, and functions for handling sales order related
  * data objects.
- * 
+ *
  * Authors: W. Weber, D. Murphy
  */
 import logger from "@reactory/server-core/logging";
@@ -34,6 +34,7 @@ import moment from "moment";
 import { getProductById } from "./ProductResolver";
 import { PagingRequest } from "@reactory/server-core/database/types";
 import { Reactory } from "@reactory/server-core/types/reactory";
+import { isNil } from "lodash";
 
 
 const QUOTE_SERVICE_ID = 'lasec-crm.LasecQuoteService@1.0.0';
@@ -49,10 +50,21 @@ const SalesOrderResolver = {
 
   SalesOrder: {
 
-    crmCustomer: async (salesOrder: any, args: any, context: Reactory.IReactoryContext) => {
+    orderType: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
+      return `${salesOrder.orderType || 'none'}`.toUpperCase()
+    },
+
+    salesOrderNumber: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
+      return `${salesOrder.salesOrderNumber || salesOrder.iso}`.toUpperCase()
+    },
+
+
+    crmCustomer: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
 
       try {
         logger.debug(`SalesOrderResolver.crmCustomer`, { salesOrder });
+
+        if (isNil(salesOrder.quoteId) === true) return null;
 
         const query = `      
           SELECT 
@@ -62,7 +74,8 @@ const SalesOrderResolver = {
           FROM Quote as qt
             INNER JOIN Customer as cust on qt.customer_id = cust.customerid
             LEFT JOIN ArCustomer AC on cust.company_id=AC.Customer
-            WHERE qt.quoteid = '${salesOrder.quoteId}';`;
+            WHERE qt.quoteid = '${salesOrder.quoteId}';
+        `;
 
         let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
         let customerObject = sqlresult[0];
@@ -81,11 +94,104 @@ const SalesOrderResolver = {
       }
     },
 
-    details: async (salesOrder: LasecSalesOrder, context: any, info: any) => {
+    client: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
+
+      if (salesOrder.client && typeof salesOrder.client === 'string') return salesOrder.client;
+
+      if (isNil(salesOrder.quoteId) === true) return 'No quote id';
+
+      const query = `      
+          SELECT 
+            qt.customer_id as id, 
+            cust.first_name as firstName,
+            cust.surname as lastName
+          FROM Quote as qt
+            INNER JOIN Customer as cust on qt.customer_id = cust.customerid            
+            WHERE qt.quoteid = '${salesOrder.quoteId}';
+      `;
+
+      let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
+      let customerObject = sqlresult[0] || { firstName: 'NOT', lastName: 'FOUND' };
+
+      return `${customerObject.firstName} ${customerObject.lastName} `
+    },
+
+
+    shipValue: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
+
+      if (salesOrder.shipValue && salesOrder.shipValue > 0) return salesOrder.shipValue;
+
+      if (typeof salesOrder.poNumber === 'string' && isNil(salesOrder.poNumber) === false) {
+        const query = `      
+              SELECT 
+                SalesOrderShippedValue as shipValue                        
+              FROM SorMaster            
+              WHERE CustomerPoNumber = '${salesOrder.poNumber}';
+        `;
+
+        let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
+        let resultObject = sqlresult[0] || { shipValue: 0 };
+
+        salesOrder.shipValue = Math.floor((resultObject.shipValue || 0) * 100);
+
+        return salesOrder.shipValue;
+      }
+
+      return 0;
+    },
+
+    reserveValue: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
+
+      if (salesOrder.reserveValue && salesOrder.reserveValue > 0) return salesOrder.reserveValue;
+
+      if (typeof salesOrder.poNumber === 'string' && isNil(salesOrder.poNumber) === false) {
+        const query = `      
+              SELECT 
+                SalesOrderReservedValue as reserveValue
+              FROM SorMaster
+              WHERE CustomerPoNumber = '${salesOrder.poNumber}';
+      `;
+
+        let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
+        let resultObject = sqlresult[0] || { shipValue: 0 };
+
+        salesOrder.reserveValue = Math.floor((resultObject.reserveValue || 0) * 100);
+
+        return salesOrder.reserveValue;
+      }
+
+      return 0;
+    },
+
+    backorderValue: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext) => {
+
+      if (salesOrder.backorderValue && salesOrder.backorderValue > 0) return salesOrder.backorderValue;
+
+
+      if (typeof salesOrder.poNumber === 'string' && isNil(salesOrder.poNumber) === false) {
+        const query = `      
+              SELECT 
+                SalesOrderBackOrderValue as backorderValue 
+              FROM SorMaster            
+              WHERE CustomerPoNumber = '${salesOrder.poNumber}';
+      `;
+
+        let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
+        let resultObject = sqlresult[0] || { shipValue: 0 };
+
+        salesOrder.backorderValue = Math.floor(((resultObject.backorderValue || 0) * 100));
+
+        return salesOrder.backorderValue;
+      }
+
+      return 0;
+    },
+
+    details: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext, info: any) => {
       return getISODetails({ orderId: salesOrder.id, quoteId: salesOrder.quoteId }, context);
     },
 
-    documents: async (sales_order: LasecSalesOrder, context: any, info: any) => {
+    documents: async (sales_order: LasecSalesOrder, args: any, context: Reactory.IReactoryContext, info: any) => {
 
       try {
         return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::${sales_order.id}`] }, context).then()
@@ -93,6 +199,49 @@ const SalesOrderResolver = {
         logger.error('Could not get the document for the sales order', exception);
         throw exception;
       }
+    },
+
+    salesTeam: async (sales_order: LasecSalesOrder, args: any, context: Reactory.IReactoryContext, info: any) => {
+
+
+      if (isNil(sales_order.quoteId) === true) return 'NO QUOTE ID';
+
+      const query = `      
+          SELECT 
+            qt.sales_team_id as salesTeam
+          FROM Quote as qt            
+            WHERE qt.quoteid = '${sales_order.quoteId}';
+      `;
+
+      let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
+      if (sqlresult.length >= 1) {
+        sales_order.salesTeam = sqlresult[0].salesTeam || 'NOT FOUND';
+      }
+
+      return sales_order.salesTeam;
+
+    },
+
+    deliveryAddress: async (salesOrder: LasecSalesOrder, args: any, context: Reactory.IReactoryContext, info: any) => {
+      if (salesOrder.deliveryAddress && typeof salesOrder.deliveryAddress === 'string') return salesOrder.deliveryAddress;
+
+      if (salesOrder.deliveryAddress && salesOrder.deliveryAddress.id) {
+        const query = `      
+              SELECT 
+                formatted_address as deliveryAddress
+              FROM Address
+              WHERE addressid = ${salesOrder.deliveryAddress.id};
+      `;
+
+        let sqlresult: any = await mysql(query, 'mysql.lasec360', undefined, context).then()
+        let resultObject = sqlresult[0] || { deliveryAddress: 'Not Found' };
+
+        salesOrder.deliveryAddress = resultObject.deliveryAddress;
+
+        return salesOrder.deliveryAddress;
+      }
+
+      return "No Address";
     }
   },
   SalesOrderLineItem: {
@@ -111,9 +260,7 @@ const SalesOrderResolver = {
   LasecSalesOrderCreateResponse: {
     salesOrder: async (response: LasecSalesOrderCreateResponse, args: any) => {
       const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
-      if (response.success === true && response.salesOrder === null || response.salesOrder === undefined)
-        return quoteService.getSalesOrder(response.iso_id);
-
+      if (response.success === true && response.salesOrder === null || response.salesOrder === undefined) return quoteService.getSalesOrder(response.iso_id);
       if (response.salesOrder) return response.salesOrder;
     }
   },
@@ -141,7 +288,6 @@ const SalesOrderResolver = {
 
       } catch (sales_order_fetch_error) {
         logger.error(`Error getting sales order details`, sales_order_fetch_error);
-
         throw new ApiError('Could not load the sales order, if this problem persists, contact your administrator')
       }
 
@@ -207,14 +353,14 @@ const SalesOrderResolver = {
             const quote_detail: { errors: any[], data: any } = await execql(`query LasecGetQuoteById($quote_id: String!, $option_id: String, $item_paging: PagingRequest){
               LasecGetQuoteById(quote_id: $quote_id, option_id: $option_id, item_paging: $item_paging){
                   id
-                  meta 
+                  meta
                   customer {
                     firstName
                     lastName
                   }
                   company {
-                    id                  
-                    name                
+                    id
+                    name
                   }
                   totals {
                     GP
@@ -258,7 +404,7 @@ const SalesOrderResolver = {
                   importVATNumber
                   creditLimit
                   currentBalance
-                }                
+                }
               }
             }`, { id: lasec_quote.customer_id }, {}, context.user, context.partner).then();
             client = customer_query.data.LasecGetClientDetail;
@@ -402,7 +548,7 @@ const SalesOrderResolver = {
     },
 
     /***
-     * Create Certificate of Conformance 
+     * Create Certificate of Conformance
      */
     LasecCreateCertificateOfConformance: async (parent: any, params: { sales_order_id: string, certificate: LasecCertificateOfConformance }, context: Reactory.IReactoryContext, info: any): Promise<LasecCertificateOfConformanceResponse> => {
 
@@ -472,7 +618,7 @@ const SalesOrderResolver = {
     },
 
     /***
-     * 
+     *
      */
     LasecCreateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: LasecCommercialInvcoice }, context: Reactory.IReactoryContext): Promise<LasecCommercialInvoiceResponse> => {
 
@@ -508,7 +654,7 @@ const SalesOrderResolver = {
     },
 
     /***
-     * 
+     *
      */
     LasecUpdateCommercialInvoice: async (parent: any, params: { sales_order_id: string, invoice: any }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
@@ -535,7 +681,7 @@ const SalesOrderResolver = {
     },
 
     /**
-     * 
+     *
      */
     LasecCreatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }, context: Reactory.IReactoryContext): Promise<any> => {
       try {
@@ -562,7 +708,7 @@ const SalesOrderResolver = {
     },
 
     /***
-     * 
+     *
      */
     LasecUpdatePackingList: async (parent: any, params: { sales_order_id: string, packing_list: any }, context: Reactory.IReactoryContext): Promise<any> => {
       try {

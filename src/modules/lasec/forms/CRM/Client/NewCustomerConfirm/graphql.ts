@@ -34,6 +34,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         jobDetails {
           jobTitle
           jobType
+          jobTypeLabel
           salesTeam
           lineManager
           customerType
@@ -105,8 +106,8 @@ const graphql: Reactory.IFormGraphDefinition = {
     edit: false,
     new: true,
     refreshEvents: [
-      { name: 'lasec-crm::new-document::uploaded' },      
-      { name: "LasecNewClient::onResetForm" }      
+      { name: 'lasec-crm::new-document::uploaded' },
+      { name: "LasecNewClient::onResetForm" }
     ],
   },
   mutation: {

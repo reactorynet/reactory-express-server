@@ -1963,7 +1963,7 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
     }
   }, context).then();
 
-  logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ${JSON.stringify(salesOrdersIds)}`);
+  logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ${salesOrdersIds.length} ORDERS FOUND`);
 
   let ids: string[] = [];
 
@@ -1978,8 +1978,6 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
     pagingResult.page = salesOrdersIds.pagination.current_page || 1;
 
   }
-
-
 
   try {
 
@@ -1996,10 +1994,32 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
 
     let salesOrders = salesOrdersDetails && salesOrdersDetails.items ? [...salesOrdersDetails.items] : [];
 
-    logger.debug(`SALES ORDER:: ${JSON.stringify(salesOrders[0])}`);
 
-    salesOrders = salesOrders.map(order => {
+    salesOrders = salesOrders.map((order, idx) => {
       return {
+        // id: order.id || idx,
+        // salesOrderNumber: order.sales_order_number,
+        // orderType: order.type_of_order,
+        // orderStatus: order.status,
+        // orderDate: order.order_date,
+        // shippingDate: order.shipping_date,
+        // quoteDate: order.quote_date,
+        // iso: order.id,
+        // customer: order.company_trading_name,
+        // client: order.customer_name,
+        // poNumber: order.customerponumber || order.purchase_order_number,
+        // quoteId: order.quote_id,
+        // currency: order.currency,
+        // deliveryAddress: { id: order.delivery_address_id },
+        // warehouseNote: order.warehouse_note,
+        // deliveryNote: order.delivery_instructions,
+        // salesTeam: order.sales_team_id,
+        // value: order.purchase_order_amount || 0,
+        // reserveValue: order.reserved_value || 0,
+        // shipValue: order.shipped_value || 0,
+        // backorderValue: order.back_order_value || 0,
+
+
         id: order.id,
         salesOrderNumber: order.sales_order_number,
         orderType: order.order_type,
@@ -2021,6 +2041,7 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
         reserveValue: order.reserved_value,
         shipValue: order.shipped_value,
         backorderValue: order.back_order_value,
+
       }
     });
 
@@ -2200,6 +2221,19 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
 
 }
 
+const sales_order_field_maps: any = {
+  "code": "id",
+  "created": "created",
+  "status": "quote_status_id",
+  "total": "grand_total_excl_vat_cents",
+  "companyTradingName": "organisation_id",
+  "accountNumber": "account_number",
+  "customer": "company_trading_name",
+  "repCode": "company_sales_team",
+  "client": "client",
+};
+
+
 export const getCRMSalesOrders = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(` -- GETTING CRM SALES ORDERS --  ${JSON.stringify(params)}`);
@@ -2257,9 +2291,72 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
   if (search.trim() === "" && filterBy === "any_field") apiFilter.sales_team_id = me.sales_team_id;
 
   let ordering: any = {};
-  ordering[orderBy] = orderDirection;
 
-  const result = await getPagedSalesOrders({ paging, apiFilter, ordering: { order_date: "desc" }, }, context);
+  switch (orderBy) {
+    case 'orderType':
+      ordering['order_type'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'orderDate':
+      ordering['order_date'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'shippingDate':
+      ordering['shipping_date'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'salesOrderNumber':
+      ordering['iso_number'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'poNumber':
+      ordering['po_number'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'quoteId':
+      ordering['quote_id'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'customer':
+      ordering['customer_name'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'client':
+      ordering['client_name'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'salesTeam':
+      ordering['sales_team_id'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'value':
+      ordering['order_value'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+    case 'reserveValue':
+      ordering['reserved_value'] = orderDirection;
+      // delete apiFilter['any_field'];
+      delete apiFilter['sales_team_id'];
+      break;
+
+    default:
+      break;
+  }
+
+
+  logger.debug(`ORDERING::  ${JSON.stringify(ordering)}`);
+
+  const result = await getPagedSalesOrders({ paging, apiFilter, ordering }, context);
   return result;
 }
 
@@ -2525,9 +2622,7 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
   let salesOrdersDetail = await lasecApi.SalesOrders.detail({ filter: { ids: ids } }, context).then();
   let salesOrders = [...salesOrdersDetail.items];
 
-
-
-  logger.debug(`SALES ORDERS:: ${JSON.stringify(salesOrders)}`);
+  logger.debug(`LINE ITEMS:: ${JSON.stringify(salesOrders)}`);
 
   let lineItems: any[] = [];
   salesOrders.forEach(so => {
@@ -3118,12 +3213,12 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
         lasecApi.Quotes.getQuoteOption(option_id, context).then((option_result) => {
           logger.debug(`QUOTE [${quoteId}] OPTION [${option_id}]\n ${JSON.stringify(option_result, null, 2)}`);
           if (option_result.id) {
-
             let quoteOptionResponse = option_result;
 
             let freight_request_option: FreightRequestOption = {
+              id: quoteOptionResponse.id || option_id,
               name: quoteOptionResponse.name,
-              transportMode: '',
+              transportMode: quoteOptionResponse.transport_mode || '',
               incoTerm: quoteOptionResponse.inco_terms || '',
               place: quoteOptionResponse.named_place || '',
               fromSA: false,
@@ -3157,7 +3252,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
                 freight_request_option.item_paging = paged_results.item_paging,
 
                   paged_results.lineItems.forEach((line_item: LasecQuoteItem) => {
-
+                    debugger;
                     freight_request_option.productDetails.push({
                       code: line_item.code,
                       description: line_item.title,

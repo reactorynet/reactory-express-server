@@ -417,9 +417,9 @@ export const newConfirmSchema: any = {
       officeNumber: { sm: 12, md: 3 },
       mobileNumber: { sm: 12, md: 3 },
     },
-    {
-      alternateNumber: { sm: 12, md: 3 }
-    },
+    // {
+    //   alternateNumber: { sm: 12, md: 3 }
+    // },
   ],
   emailAddress: {
     'ui:widget': 'LabelWidget',

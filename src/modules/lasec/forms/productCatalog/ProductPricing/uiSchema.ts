@@ -34,9 +34,17 @@ const tableUiSchema: any = {
           component: 'lasec-crm.LasecProductAddToQuoteComponent@1.0.0',
           props: {},
           propsMap: {
-            'rowData': 'product',
+            rowData: 'product',
           },
-          width: '140px',
+          width: '100px',
+          cellStyle: {
+            maxWidth: '100px',
+            width: '100px',
+          },
+          headerStyles: {
+            maxWidth: '100px',
+            width: '100px',
+          },
         },
         {
           title: 'Stock Code',
@@ -47,7 +55,7 @@ const tableUiSchema: any = {
               props: {
                 componentFqn: 'lasec-crm.LasecProductDetails@1.0.0',
                 componentProps: {
-                  'rowData': 'formData',
+                  rowData: 'formData',
                 },
                 slideDirection: 'left',
                 buttonVariant: 'button',
@@ -68,37 +76,28 @@ const tableUiSchema: any = {
                     format: '${rowData.code}',
                     bodyProps: {
 
-                    }
-                  }
+                    },
+                  },
                 },
               },
               propsMap: {
                 'rowData.code': 'value',
-              }
+              },
             },
           ],
           width: '180px',
           cellStyle: {
             maxWidth: '180px',
-            width: '180px'
+            width: '180px',
           },
           headerStyles: {
             maxWidth: '180px',
-            width: '180px'
+            width: '180px',
           },
         },
         {
           title: 'Description',
           field: 'name',
-          width: '200px',
-          cellStyle: {
-            maxWidth: '200px',
-            width: '200px'
-          },
-          headerStyles: {
-            maxWidth: '200px',
-            width: '200px'
-          }
         },
         {
           title: 'Unit of Measure',
@@ -111,7 +110,7 @@ const tableUiSchema: any = {
           },
           headerStyles: {
             maxWidth: '150px',
-            width: '150px'
+            width: '150px',
           },
           component: 'core.LabelComponent@1.0.0',
           props: {
@@ -122,27 +121,21 @@ const tableUiSchema: any = {
                 iconPosition: 'left',
                 variant: 'p',
                 format: '${rowData.unitOfMeasure}',
-              }
+              },
             },
           },
         },
         {
           title: 'Price',
           field: 'id',
-          component: 'core.PricingLineChartComponent@1.0.0',
+          component: 'lasec-crm.ProductCostingInfoWidget@1.0.0',
           props: {
-            uiSchema: {
-              'ui:options': {
-                currencySymbol: 'R',
-                region: 'en-ZA',
-                containerStyles: {
-                  minWidth: '350px'
-                }
-              }
-            },
+            style: {
+              minWidth: '400px',
+            }
           },
           propsMap: {
-            'rowData': ['value', 'formData'],
+            rowData: 'product',
           },
         },
       ],
@@ -151,17 +144,18 @@ const tableUiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
-        searchText: '${formContext.$formData.product}'
+        tableLayout: 'auto',
+        searchText: '${formContext.$formData.product}',
       },
       propsMap: {
-        'formContext.$formData.product': 'searchText'
+        'formContext.$formData.product': 'searchText',
       },
       remoteData: true,
       query: 'product_pricing',
       variables: {
         'query.search': 'product',
         'query.page': 'paging.page',
-        'query.pageSize': 'paging.pageSize'
+        'query.pageSize': 'paging.pageSize',
       },
       resultMap: {
         'paging.page': 'page',
@@ -201,26 +195,8 @@ const gridUiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
-    { view: { xs: 12, sm: 12, md: 12, lg: 12 } },
     { products: { sm: 12, md: 12, lg: 12 }, style: { paddingTop: 0 } }
   ],
-  view: {
-    'ui:widget': 'SchemaSelectorWidget',
-    'ui:options': {
-      showLabel: false,
-      style: {
-        width: '100%',
-        float: "right"
-      },
-    }
-  },
-  paging: {
-    'ui:widget': 'HiddenWidget'
-  },
-  product: {
-    hidden: true,
-    'ui:widget': 'HiddenWidget'
-  },
   products: {
     'ui:widget': 'ProductGrid',
     'ui:options': {

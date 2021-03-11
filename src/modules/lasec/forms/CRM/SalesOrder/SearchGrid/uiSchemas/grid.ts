@@ -3,122 +3,26 @@ import { FilterByOptions, FilterOptions } from '../shared';
 const uiSchema: any = {
   'ui:options': {
     submitIcon: 'search',
-    componentType: "form",
+    componentType: 'form',
     showSubmit: false,
     showRefresh: false,
-    container: "div",
+    container: 'div',
     containerStyles: {
       padding: '0px',
-      marginTop: '16px'
+      marginTop: '16px',
     },
     style: {
-      marginTop: '16px'
-    }
+      marginTop: '16px',
+    },
   },
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
       salesOrders: {
-        xs: 12, sm: 12, md: 12, lg: 12
-      }
-    }
+        xs: 12, sm: 12, md: 12, lg: 12,
+      },
+    },
   ],
-  search: {
-    'ui:options': {
-      showLabel: false,
-      icon: 'search',
-      component: "TextField",
-      componentProps: {
-        placeholder: 'Search',
-        variant: "outlined",
-        type: 'search',
-        style: {
-          minWidth: '180px'
-        }
-      }
-    }
-  },
-  paging: {
-    'ui:widget': 'HiddenWidget'
-  },
-  submit: {
-    'ui:widget': 'FormSubmitWidget',
-    'ui:options': {
-      text: 'SEARCH',
-      color: 'default',
-      props: {
-        color: 'default',
-        style: {
-          maxWidth: '180px',
-          width: '180px'
-        }
-      }
-    }
-  },
-  filterBy: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      selectOptions: FilterByOptions,
-    },
-  },
-  orderStatus: {
-    'ui:widget': 'SelectWidget',
-    'ui:options': {
-      selectOptions: FilterOptions,
-    },
-  },
-  filter: {
-    'ui:widget': 'SelectWithDataWidget',
-    'ui:options': {
-      multiSelect: false,
-      query: `query LasecGetCustomerFilterLookup($filterBy: String!) {
-        LasecGetCustomerFilterLookup(filterBy: $filterBy) {
-          id
-          name
-        }
-      }`,
-      propertyMap: {
-        'formContext.$formData.filterBy': 'filterBy'
-      },
-      resultItem: 'LasecGetCustomerFilterLookup',
-      resultsMap: {
-        'LasecGetCustomerFilterLookup.[].id': ['[].key', '[].value'],
-        'LasecGetCustomerFilterLookup.[].name': '[].label',
-      },
-    },
-  },
-  periodStart: {
-    'ui:widget': 'DateSelectorWidget',
-  },
-  periodEnd: {
-    'ui:widget': 'DateSelectorWidget',
-  },
-  dateFilter: {
-    'ui:widget': 'DateSelectorWidget',
-  },
-  client: {
-    'ui:widget': 'ClientFilter',
-    'ui:options': {
-      label: 'Select a Client',
-      title: 'Search for a Client'
-    },
-    props: {
-      componentFqn: 'lasec-crm.ClientFilter@1.0.0',
-      componentProps: {},
-    },
-  },
-  customer: {
-    'ui:widget': 'CustomerFilter',
-    'ui:options': {
-      label: 'Select a Customer',
-      title: 'Search for a Customer'
-    },
-    props: {
-      label: 'Select a Customer',
-      //componentFqn: 'lasec-crm.LasecCRMCustomerLookupTable@1.0.0',
-      //componentProps: {},
-    },
-  },
   salesOrders: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -131,12 +35,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${data.orderType}'
+                format: '${data.orderType}',
               },
             },
           },
           propsMap: {
-            'rowData': 'data',
+            rowData: 'data',
           },
         },
         {
@@ -147,13 +51,13 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
-              }
+                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}', // eslint-disable-line
+              },
             },
           },
           propsMap: {
             'rowData.date': 'value',
-          }
+          },
         },
         {
           title: 'Shipping Date',
@@ -163,21 +67,21 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
-              }
+                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}', // eslint-disable-line
+              },
             },
           },
           propsMap: {
             'rowData.date': 'value',
-          }
+          },
         },
         {
           title: 'ISO Number',
           field: 'salesOrderNumber',
           component: 'lasec-crm.SalesOrderActionButton',
           propsMap: {
-            'rowData.salesOrderNumber': 'sales_order_number'
-          }
+            'rowData.salesOrderNumber': 'sales_order_number',
+          },
         },
         {
           title: 'Purchase Order Number',
@@ -187,12 +91,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${data.poNumber}'
+                format: '${data.poNumber}',
               },
             },
           },
           propsMap: {
-            'rowData': 'data',
+            rowData: 'data',
           },
         },
         {
@@ -202,7 +106,7 @@ const uiSchema: any = {
           props: {
             componentFqn: 'lasec-crm.QuoteForm@1.0.0',
             componentProps: {
-              'rowData.quoteId': ['quote_id']
+              'rowData.quoteId': ['quote_id'],
             },
             slideDirection: 'down',
             buttonTitle: '${rowData.quoteId}',
@@ -211,18 +115,18 @@ const uiSchema: any = {
             buttonProps: {
               variant: 'body2',
               style: {
-                'textDecoration': 'underline',
-                'cursor': 'pointer',
-              }
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              },
             },
             backNavigationConfig: {
               showAppBar: false,
               backNavigationItems: ['Sales Orders', 'Quote', '${rowData.quoteId}'],
-            }
+            },
           },
           propsMap: {
-            'rowData': 'rowData'
-          }
+            rowData: 'rowData',
+          },
         },
         {
           title: 'Customer',
@@ -232,15 +136,15 @@ const uiSchema: any = {
             context: 'sales-order-grid',
             uiSchema: {
               'ui:options': {
-                displayField: 'registeredName'
-              }
-            }
+                displayField: 'registeredName',
+              },
+            },
 
           },
           propsMap: {
             'rowData.crmCustomer': 'customer',
-            'rowData': 'data',
-          }
+            rowData: 'data',
+          },
 
         },
         {
@@ -251,12 +155,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${data.client}'
-              }
+                format: '${data.client}',
+              },
             },
           },
           propsMap: {
-            'rowData': 'data',
+            rowData: 'data',
           },
         },
         {
@@ -267,12 +171,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${data.salesTeam}'
-              }
+                format: '${data.salesTeam}',
+              },
             },
           },
           propsMap: {
-            'rowData': 'data',
+            rowData: 'data',
           },
         },
         {
@@ -281,8 +185,8 @@ const uiSchema: any = {
           component: 'core.CurrencyLabel@1.0.0',
           props: {
             style: {
-              fontSize: '0.75rem'
-            }
+              fontSize: '0.75rem',
+            },
           },
           propsMap: {
             'rowData.value': 'value',
@@ -294,8 +198,8 @@ const uiSchema: any = {
           component: 'core.CurrencyLabel@1.0.0',
           props: {
             style: {
-              fontSize: '0.75rem'
-            }
+              fontSize: '0.75rem',
+            },
           },
           propsMap: {
             'rowData.reserveValue': 'value',
@@ -307,8 +211,8 @@ const uiSchema: any = {
           component: 'core.CurrencyLabel@1.0.0',
           props: {
             style: {
-              fontSize: '0.75rem'
-            }
+              fontSize: '0.75rem',
+            },
           },
           propsMap: {
             'rowData.shipValue': 'value',
@@ -320,8 +224,8 @@ const uiSchema: any = {
           component: 'core.CurrencyLabel@1.0.0',
           props: {
             style: {
-              fontSize: '0.75rem'
-            }
+              fontSize: '0.75rem',
+            },
           },
           propsMap: {
             'rowData.backorderValue': 'value',
@@ -358,10 +262,10 @@ const uiSchema: any = {
       remoteData: true,
       query: 'sales_orders',
       componentMap: {
-        Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0'
+        Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0',
       },
 
-      //some comment
+      // some comment
       variables: {
         'query.search': 'search',
         'query.customer': 'customer',
@@ -374,6 +278,8 @@ const uiSchema: any = {
         'query.periodStart': 'periodStart',
         'query.periodEnd': 'periodEnd',
         'query.dateFilter': 'dateFilter',
+        'query.orderBy.field': 'orderBy',
+        'query.orderDirection': 'orderDirection',
       },
       resultMap: {
         'paging.page': 'page',
@@ -404,7 +310,7 @@ const uiSchema: any = {
       },
       resultType: 'object',
     },
-  }
+  },
 };
 
 export default uiSchema;

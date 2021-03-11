@@ -171,6 +171,10 @@ input MoresLeadershipBrandPatchArgs {
 }
 
 extend type Query {
+  """
+  Returns a list of surveys for the given organisation.
+  """
+  MoresSurveysForOrganisation(id: String!): [Survey]
   surveysForOrganization(organizationId: String!): [Survey]
   surveysList: [Survey]
   surveyDetail(surveyId: String!): Survey

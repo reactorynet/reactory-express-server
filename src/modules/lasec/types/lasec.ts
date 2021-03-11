@@ -80,6 +80,8 @@ export interface LasecQuoteOption {
   gp: number
   gp_percent: number
   vat?: number
+  vat_exempt?: boolean
+  from_sa?: boolean
 }
 
 export interface LasecQuoteHeader {
@@ -258,6 +260,12 @@ export interface LasecQuote {
   id: string
   code: string
   meta: QuoteMeta
+  company: LasecCRMCustomer,
+  customer: LasecClient,
+  statusGroup: string,
+  statusGroupName: string,
+  allowedStatus: string[],
+  options: LasecQuoteOption[],
   [key: string]: any
 }
 
@@ -325,69 +333,90 @@ export interface LasecCRMCustomer {
 }
 
 export interface Lasec360Quote {
-  quote_options: any[];
   id: string
-  customer_id: string
-  name?: string
-  number_of_items: number
-  description?: string
 
-  currency_symbol: string,
-  currency_id: string
-
-  status: string
-  status_name: string
-  status_id: string,
-  substatus_id: string
-  allowed_status_ids: string[]
-
-  organisation_id?: string | number
-  grand_total_excl_vat_cents: number
-  grand_total_vat_cents: number
-  grant_total_incl_vat_cents: number
-  grand_total_discount_cents: number
-  grand_total_douscount_percent: number
-  gp_percent: number
   actual_gp_percent: number
+  agent_commision: number
+  allowed_status_ids: string[]
+  approvers_note: string
+  authorisation_requested_by_staff_user: string
+  authorisation_requested_date: Date
+  authorisation_status: string
+
+  can_create_sales_order: boolean
+  cc_self: boolean
+
+  company_id: string
+  company_trading_name: string
+
+  currency_id: string
+  currency_symbol: string
+
+  customer_id: string
+  customer_full_name: string
+  created: Date
 
   date_sent?: Date
-  created: Date
-  modified: Date
-  expiration_date: Date
-  valid_until?: Date
+  description?: string
 
-  note?: string
 
-  quote_option_ids: string[]
-  site_inspection_status: boolean
-  site_evaluation_required: boolean
-  transportation_evaluation_required: boolean
-  show_quote_totals: boolean
-  primary_api_staff_user_id: string
-  secondary_api_staff_user_id: string
-  sales_team_id: string
-  cc_self: boolean
-  expired: boolean
   email?: string
+  expiration_date: Date
   email_recipient_ids: string[]
-  eta_of_order?: any
-  can_create_sales_order: boolean
-  quote_type: string
-  requires_authorisation: boolean
   emailed_as_staff_user_id: string
-  last_updated_as_staff_user_id: string
-  authorisation_status: string
-  on_hold: string | "Y" | "N"
+  eta_of_order?: any
+  expired: boolean
+
+  gp_percent: number
+  grand_total_discount_cents: number
+  grand_total_discount_percent: number
+  grand_total_excl_vat_cents: number
+  grant_total_incl_vat_cents: number
+  grand_total_vat_cents: number
+
   has_requested_authorisation: boolean
+
+  incoterms: string
   is_quote_authorised: boolean
   is_quote_locked: boolean
-  approvers_note: string
+
+  organisation_id?: string | number
+
+  last_updated_as_staff_user_id?: string
+
+  modified?: string | Date
+
+  name?: string
+  named_place?: string
+  note?: string
+  number_of_items: number
+
+  on_hold: string | "Y" | "N"
+
+  primary_api_staff_user_id: string
+  print_date?: string | Date
+  quote_option_ids: string[]
+  quote_type: string
+
+
   request_auth_note: string
-  company_id: string
-  customer_full_name: string
-  company_trading_name: string
-  authorisation_requested_by_staff_user: string
+  requires_authorisation: boolean
+
+
+  sales_team_id: string
+  secondary_api_staff_user_id: string
+  show_quote_totals: boolean
+  site_evaluation_required: boolean
+  site_inspection_status: boolean
+  status: string
+  status_id: string
+  status_name: string
   staff_user_full_name: string
+
+  transport_mode: string
+  transportation_evaluation_required: boolean
+
+  valid_until?: Date
 
 }
 
@@ -661,13 +690,14 @@ export interface LasecSalesOrder {
 
   iso: number
 
+  client: string
   customer: string
   crmCustomer: LasecCRMCustomer
 
   poNumber: string
   currency: string
 
-  deliveryAddress: string
+  deliveryAddress: string | any
   deliveryNote: string
   warehouseNote: string
 
@@ -833,6 +863,7 @@ export interface FreightRequestProductDetail {
 }
 
 export interface FreightRequestOption {
+  id: string
   name: string
   transportMode: String
   incoTerm: String

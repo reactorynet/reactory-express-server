@@ -25,18 +25,14 @@ export const FilterByEnumArray: string[] = [
   FilterByEnumsKeys.currency_symbol,
   FilterByEnumsKeys.email,
   FilterByEnumsKeys.full_name,
-]; 
+];
 
 export const FilterByOptions =  [
   { key: 'any_field', value: FilterByEnumsKeys.any_field, label: 'All Categories' },
   { key: 'activity_status', value: FilterByEnumsKeys.activity_status, label: 'Client Status' },
   { key: 'full_name', value: FilterByEnumsKeys.full_name, label: 'Client Full name' },
   { key: 'email', value: FilterByEnumsKeys.email, label: 'Email Address' },
-  { 
-    key: 'company_trading_name', 
-    value: FilterByEnumsKeys.company_trading_name, 
-    label: 'Customer' 
-  },
+  { key: 'company_trading_name', value: FilterByEnumsKeys.company_trading_name, label: 'Customer' },
   { key: 'company_account_number', value: FilterByEnumsKeys.company_account_number, label: 'Account Number' },
   { key: 'activity_status', value: FilterByEnumsKeys.company_on_hold, label: 'Company Status' },
   { key: 'country', value: FilterByEnumsKeys.country, label: 'Country' },

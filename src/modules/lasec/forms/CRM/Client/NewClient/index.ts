@@ -193,11 +193,11 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
           title: 'CONFIRM & SAVE',
           color: 'primary',
           style: {
-            display: 'none'
-          }
+            display: 'none',
+          },
         },
       },
-    ]
+    ],
   },
   widgetMap: [
     { componentFqn: 'core.AccordionComponent@1.0.0', widget: 'AccordionComponent' },

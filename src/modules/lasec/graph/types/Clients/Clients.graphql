@@ -377,6 +377,10 @@ input ClientUpdateInput {
   lineManager: String
   jobType: String
 
+
+  customer: Any
+  customerId: String
+
   customerCompanyName: String
   customerTradingName: String
   customerTradingCurrency: String
@@ -543,6 +547,14 @@ extend type Query {
   particular id
   """
   LasecGetAddressById(id: String!): LasecAddress
+
+  """
+  This query can be used to find a client with a specific email address. This should also
+  be used to validate and check email addresses when being captured.  It is possible for 
+  some users to share an email address within the Lasec Context but this is discouraged and 
+  the input filters and validators should prevent users from inadvertandly adding new clients.
+  """
+  LasecClientEmailExists(emailAddress: String!, excludeIds: [String]): [LasecCRMClient]
 }
 
 extend type Mutation {
