@@ -2568,38 +2568,13 @@ export const deleteSalesOrdersDocument = async (args: any, context: Reactory.IRe
  * @param params
  */
 export const getSalesOrderComments = async (params: { orderId: string }, context: Reactory.IReactoryContext) => {
-  // GET COMMENTS FROM API AND FROM SERVER
-
   let _comments: any[] = [];
 
-  logger.debug(`GETTING API COMMENTS FROM API:: ${JSON.stringify(params)}`);
-
-  // TESTING
-  // const apiComments = await getISODetails({ orderId: '513238', quoteId: '' }, context).then();
   const apiComments = await getISODetails({ orderId: params.orderId, quoteId: '' }, context).then();
-
-  logger.debug(`GOT API COMMENTS FROM API:: ${JSON.stringify(apiComments)}`);
-
-  if (apiComments) {
-    _comments.concat(apiComments.comments);
-    logger.debug(`COMMENTS AFTER API CONCAT:: ${JSON.stringify(_comments)}`);
-  }
+  if (apiComments) { _comments = [...apiComments.comments]; }
 
   const dbComments = await LasecSalesOrderComment.find({ salesOrderId: params.orderId }).populate('who').then();
-  logger.debug(`DB COMMENTS:: ${JSON.stringify(dbComments)}`);
-  if (dbComments) {
-    dbComments.forEach(comment => {
-      _comments.push({
-        id: comment._id,
-        // @ts-ignore
-        comment: comment.comment,
-        // @ts-ignore
-        who: comment.who,
-        // @ts-ignore
-        when: comment.when,
-      });
-    })
-  }
+  if (dbComments) { _comments = [..._comments, ...dbComments]; }
 
   return _comments;
 };
@@ -2701,7 +2676,6 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
       freight = so.total_price;
     }
 
-    // TODO - DREW - NOT BEING USED RIGHT NOW
     // COMMENTS
     if (so.line_type == 6) {
       comments.push({ id: '', who: {}, when: '', imageUrl: so.image_url, comment: so.comment });
