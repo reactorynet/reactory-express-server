@@ -42,6 +42,10 @@ const UserSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
+  mobileNumber: {
+    type: String,
+    required: true,
+  },
   salt: {
     type: String,
     required: true,

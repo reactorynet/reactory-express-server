@@ -10,6 +10,7 @@ import ApiError, { UserExistsError, UserValidationError, UserNotFoundException, 
 import emails from '../../emails';
 import logger from '../../logging';
 import { Reactory } from '@reactory/server-core/types/reactory';
+import { isThrowStatement } from 'typescript';
 
 dotenv.config();
 
@@ -277,10 +278,33 @@ function* updateProfileGenerator(id, profileData) {
   found.firstName = profileData.firstName;
   found.lastName = profileData.lastName;
   found.email = profileData.email;
+  found.mobileNumber = profileData.mobileNumber;
   return yield found.save();
 }
 
-export const updateProfile = co.wrap(updateProfileGenerator);
+export const updateProfile = async(id: string, profileData: any) =>{
+  logger.info('Updating user profile', { id, profileData });
+  try {
+    const found = await User.findById(id).then();
+
+    if (!found) throw new UserNotFoundException('User not found', { id });
+    if (profileData.avatar !== found.avatar) {
+      found.avatar = updateUserProfileImage(found, profileData.avatar);
+    }
+    found.firstName = profileData.firstName;
+    found.lastName = profileData.lastName;
+    found.email = profileData.email;
+    found.mobileNumber = profileData.mobileNumber;
+    return await found.save().then();
+    
+  } catch (error) {
+    throw new ApiError(`Could not update user due to an error: ${error.message}`);
+  }
+  
+}
+
+// co.wrap(updateProfileGenerator);
+
 /**
  * Sets the peers for a user after they have been validate.
  * @param {User} user
