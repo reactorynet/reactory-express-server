@@ -1075,13 +1075,16 @@ const Api = {
       return { pagination: {}, ids: [], items: [] };
 
     },
-    getById: async (params: any, context: Reactory.IReactoryContext) => {
+    getById: async (params: any, context: Reactory.IReactoryContext, shape: any = null) => {
       const apiResponse = await FETCH(SECONDARY_API_URLS.company.url, { params: { ...defaultParams, ...params } }, true, false, 0, context).then();
       const {
         status, payload,
       } = apiResponse;
 
+      logger.debug(`Result Fetching Company By Id`, { status, payload })
+
       if (status === 'success') {
+        if (shape) return om.merge(payload, shape);
         return payload;
       }
 

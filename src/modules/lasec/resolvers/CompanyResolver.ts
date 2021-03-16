@@ -2267,6 +2267,32 @@ export default {
         return []
       }
     },
+    LasecGetCustomerDetail: async (parent: any, args: { id: string }, context: Reactory.IReactoryContext) => {
+      let shape: any = {
+        'company_id': 'id',
+        'registered_name': 'registeredName',
+        'description': 'description',
+        'trading_name': 'tradingName',
+        "registration_number": 'registrationNumber',
+        "vat_number": "taxNumber",
+        'organization_id': 'organizationId',
+        'currency_code': 'currencyCode',
+        'currency_symbol': 'currencySymbol',
+        'currency_description': 'currencyDescription',
+        "credit_limit_total_cents": "creditLimit",
+        "current_balance_total_cents": "currentBalance",
+        "current_invoice_total_cents": "currentInvoice",
+        "30_day_invoice_total_cents": "balance30Days",
+        "60_day_invoice_total_cents": "balance60Days",
+        "90_day_invoice_total_cents": "balance90Days",
+        "120_day_invoice_total_cents": "balance120Days",
+        "credit_invoice_total_cents": "creditTotal",
+        'special_requirements': { key: 'specialRequirements', transform: (srcVal: string) => srcVal == null || srcVal == '' ? 'No special requirements set.' : srcVal },
+      }
+      const result = await LasecAPI.Company.getById({ filter: { ids: [args.id] } }, context, shape).then();
+
+      return result;
+    },
     LasecGetPersonTitles: async (object: any, args: any, context: Reactory.IReactoryContext) => {
       return getPersonTitles(context);
     },

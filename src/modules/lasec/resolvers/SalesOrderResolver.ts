@@ -195,7 +195,7 @@ const SalesOrderResolver = {
     documents: async (sales_order: LasecSalesOrder, args: any, context: Reactory.IReactoryContext, info: any) => {
 
       try {
-        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::${sales_order.id}`] }, context).then()
+        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::document::${sales_order.quoteId}-${sales_order.id}`] }, context).then()
       } catch (exception) {
         logger.error('Could not get the document for the sales order', exception);
         throw exception;
@@ -204,6 +204,7 @@ const SalesOrderResolver = {
 
     salesTeam: async (sales_order: LasecSalesOrder, args: any, context: Reactory.IReactoryContext, info: any) => {
 
+      if (sales_order.salesTeam) return sales_order.salesTeam
 
       if (isNil(sales_order.quoteId) === true) return 'NO QUOTE ID';
 
