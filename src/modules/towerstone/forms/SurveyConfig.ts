@@ -61,18 +61,7 @@ export const schema = {
       title: 'Id',
       name: 'Id'
     },
-    organization: {
-      type: 'object',
-      title: 'Organization',
-      properties: {
-        id: {
-          type: 'string'
-        },
-        logo: {
-          type: 'string'
-        }
-      }
-    },
+
     leadershipBrand: {
       type: 'string',
       title: 'Leadership Brand',
@@ -135,7 +124,7 @@ mutation MoresAssessementsCreateSurvey($moresSurveyCreateArgs: MoresSurveyCreate
     id
   } 
 }
-`
+`;
 
 const moresMutationMap = {
   'formData.organization.id': 'moresSurveyCreateArgs.organizationId',
@@ -334,11 +323,14 @@ export const uiSchema = {
       variant: 'button',
       text: '${props.mode === "edit" ? "Update" : "Create" }',
       color: 'primary',
-      iconAlign: 'left'
+      iconAlign: 'left',
     },
     showSchemaSelectorInToolbar: false,
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+  },
   'ui:grid-layout': [
     {
       organization: { md: 12 },
@@ -356,36 +348,12 @@ export const uiSchema = {
       startDate: { md: 6 },
       endDate: { md: 6 },
     },
-    {
-      mode: { md: 6 },
-      status: { md: 6 },
-    },
   ],
   id: {
     'ui:widget': 'HiddenWidget',
     'ui:emptyValue': '',
   },
-  organization: {
-    'ui:widget': 'CompanyLogoWidget',
-    'ui:options': {
-      widget: 'CompanyLogoWidget',
-      readOnly: true,
-      noLookup: true,
-      mapping: {
-        'formData.id': 'id',
-        'formData.logo': 'logo',
-      },
-      style: {
-        maxWidth: '512px',
-        width: '512px',
-        marginRight: 'auto',
-        marginLeft: 'auto',
-        marginTop: '8px',
-        marginBottom: '8px',
-        display: 'flex',
-      },
-    },
-  },
+
   startDate: {
     'ui:widget': 'DateSelectorWidget',
   },
@@ -580,10 +548,6 @@ export const moresEditUiSchema = {
       delegateTeamName: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
       assessorTeamName: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
     },
-    {
-      status: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
-      mode: { xs: 12, sm: 12, md: 6, lg: 6, xl: 6 },
-    }
   ]
 }
 

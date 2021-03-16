@@ -644,8 +644,14 @@ type SalesOrderCommentResponse {
 
 
 extend type Query {
-  LasecGetPreparedSalesOrder(quote_id: String!): LasecPreparedSalesOrder
-
+  """
+  Returns a structured document6 that represents a Pre Prepared Sales Order document
+  Requires a quote id and active option as optional variable.
+  """
+  LasecGetPreparedSalesOrder(quote_id: String!, active_option: String): LasecPreparedSalesOrder
+  """
+  Returns a completed ISO Document.
+  """
   LasecGetISODetail(orderId: String!): SalesOrderDetails
 
   """

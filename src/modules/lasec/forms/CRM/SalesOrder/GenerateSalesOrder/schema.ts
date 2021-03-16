@@ -13,6 +13,11 @@ const header: Reactory.ISchema = {
             title: 'Quote Id'
         },
 
+        active_option: {
+            type: 'string',
+            title: 'Active Option',
+        },
+
         sales_order_date: {
             type: 'string',
             title: 'Quote Id'

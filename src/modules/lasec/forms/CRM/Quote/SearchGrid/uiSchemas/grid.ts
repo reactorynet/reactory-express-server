@@ -14,17 +14,18 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
-    spacing: 0
+    spacing: 0,
+    container: 'div',
   },
   'ui:grid-layout': [
     {
       quotes: {
-        md: 12
-      }
-    }
+        md: 12,
+      },
+    },
   ],
   paging: {
-    'ui:widget': 'HiddenWidget'
+    'ui:widget': 'HiddenWidget',
   },
 
   quotes: {
@@ -244,7 +245,7 @@ const uiSchema: any = {
         'quotes[].statusName': 'data[].statusName',
         'quotes[].allowed_statuses[]': 'data[].allowed_statuses',
         'quotes[].status': 'data[].status',
-        'quotes[].totalVATInclusive': 'data[].total',
+        'quotes[].totalVATExclusive': 'data[].total',
         'quotes[].activeCurrency': 'data[].activeCurrency',
         'quotes[].customer.fullName': 'data[].client',
         'quotes[].company.tradingName': 'data[].companyTradingName',

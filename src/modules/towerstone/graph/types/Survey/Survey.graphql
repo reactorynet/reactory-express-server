@@ -67,6 +67,18 @@ input TowerStoneSurveyTemplatesInput {
   generalTemplates:  [TowerStoneEmailTemplateInput]
 }
 
+type SurveyStatistics {
+  id: String  
+  launched: Int
+  peersConfirmed: Int
+  complete: Int
+  delegates: Int
+  nominationsComplete: Int
+  pendingInvites: Int
+  started: Int
+  daysRunning: Int
+  daysLeft: Int
+}
 
 type Survey {
   id: ObjID!
@@ -80,7 +92,7 @@ type Survey {
   endDate: Date
   mode: String
   status: String
-  statistics: Any
+  statistics: SurveyStatistics
   options: Any
   delegates: [DelegateEntry]
   assessments: [Assessment]
@@ -177,7 +189,7 @@ extend type Query {
   MoresSurveysForOrganisation(id: String!): [Survey]
   surveysForOrganization(organizationId: String!): [Survey]
   surveysList: [Survey]
-  surveyDetail(surveyId: String!): Survey
+  surveyDetail(surveyId: String!): Survey  
   TowerStoneGetDemographicLookup(lookupType: String!): [TowerStoneLookupItem]
 }
 

@@ -2295,60 +2295,38 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
   switch (orderBy) {
     case 'orderType':
       ordering['order_type'] = orderDirection;
-      // delete apiFilter['any_field'];
-      delete apiFilter['sales_team_id'];
-      break;
-    case 'orderDate':
-      ordering['order_date'] = orderDirection;
-      // delete apiFilter['any_field'];
-      delete apiFilter['sales_team_id'];
       break;
     case 'shippingDate':
       ordering['shipping_date'] = orderDirection;
-      // delete apiFilter['any_field'];
-      delete apiFilter['sales_team_id'];
       break;
     case 'salesOrderNumber':
       ordering['iso_number'] = orderDirection;
-      // delete apiFilter['any_field'];
-      delete apiFilter['sales_team_id'];
       break;
     case 'poNumber':
       ordering['po_number'] = orderDirection;
-      // delete apiFilter['any_field'];
-      delete apiFilter['sales_team_id'];
       break;
     case 'quoteId':
       ordering['quote_id'] = orderDirection;
-      // delete apiFilter['any_field'];
-      delete apiFilter['sales_team_id'];
       break;
     case 'customer':
       ordering['customer_name'] = orderDirection;
-      // delete apiFilter['any_field'];
-      delete apiFilter['sales_team_id'];
       break;
     case 'client':
       ordering['client_name'] = orderDirection;
-      // delete apiFilter['any_field'];
-      delete apiFilter['sales_team_id'];
       break;
     case 'salesTeam':
       ordering['sales_team_id'] = orderDirection;
-      // delete apiFilter['any_field'];
-      delete apiFilter['sales_team_id'];
       break;
     case 'value':
       ordering['order_value'] = orderDirection;
-      // delete apiFilter['any_field'];
-      delete apiFilter['sales_team_id'];
       break;
     case 'reserveValue':
       ordering['reserved_value'] = orderDirection;
-      // delete apiFilter['any_field'];
-      delete apiFilter['sales_team_id'];
       break;
 
+    case 'orderDate':
+      ordering['order_date'] = orderDirection;
+      break;
     default:
       break;
   }

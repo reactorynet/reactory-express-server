@@ -26,6 +26,7 @@ import {
 } from "./Helpers";
 import {
   IQuoteService,
+  Lasec360Quote,
   Lasec360User, LasecCertificateOfConformance, LasecCertificateOfConformanceResponse, LasecClient, LasecCommercialInvcoice, LasecCommercialInvoiceResponse, LasecCreateSalesOrderInput, LasecCRMCustomer, LasecQuote, LasecSalesOrder, LasecSalesOrderCreateResponse, SimpleResponse
 } from "../types/lasec";
 import { execql } from "@reactory/server-core/graph/client";
@@ -258,7 +259,7 @@ const SalesOrderResolver = {
   },
 
   LasecSalesOrderCreateResponse: {
-    salesOrder: async (response: LasecSalesOrderCreateResponse, args: any) => {
+    salesOrder: async (response: LasecSalesOrderCreateResponse, args: any, context: Reactory.IReactoryContext) => {
       const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
       if (response.success === true && response.salesOrder === null || response.salesOrder === undefined) return quoteService.getSalesOrder(response.iso_id);
       if (response.salesOrder) return response.salesOrder;
@@ -335,7 +336,7 @@ const SalesOrderResolver = {
         let client: LasecClient = null;
         let lasec_user: Lasec360User = null;
 
-        let cache_key = `${quote_id}-${active_option}-SALESORDER`;
+        let cache_key = `${quote_id}-${active_option || 'default'}-SALESORDER`;
 
         let prepared_sales_order: any = await getCacheItem(cache_key, null, 60, context.partner).then()
 
@@ -383,7 +384,7 @@ const SalesOrderResolver = {
             logger.error(`Error getting the quote details ${quoteFetchError.message}`);
           }
 
-          const lasec_quote = quote.meta.source;
+          const lasec_quote: Lasec360Quote = quote.meta.source;
 
           try {
             const customer_query: { errors: any[], data: { LasecGetClientDetail: LasecClient } } = await execql(`query LasecGetClientDetail($id: String!){
@@ -416,14 +417,14 @@ const SalesOrderResolver = {
           }
 
           prepared_sales_order = {
-            id: `${quote_id}-SALESORDER`,
+            id: `${cache_key}`,
             quote_id,
             sales_order_date: new Date().toISOString(),
             customer_name: lasec_quote.customer_full_name || "No Customer Found",
             company_name: lasec_quote.company_trading_name || "No Company Name",
             company_id: lasec_quote.company_id,
             rep_code: client.salesTeam,
-            order_type: 'normal',
+            order_type: lasec_quote.quote_type,
             vat_number: customer.taxNumber,
             quoted_amount: lasec_quote.grand_total_excl_vat_cents,
             delivery_address_id: customer.deliveryAddressId,
@@ -509,7 +510,7 @@ const SalesOrderResolver = {
 
         const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
         const sales_order = await quoteService.getSalesOrder(params.sales_order_id).then();
-        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::${sales_order.id}`], paging: params.paging }, context);
+        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::document-${sales_order.quoteId}-${sales_order.id}`], paging: params.paging }, context);
 
       } catch (exception) {
         logger.error('Could not get the document for the sales order', exception);

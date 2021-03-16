@@ -3,8 +3,8 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
     query: {
         name: 'LasecGetPreparedSalesOrder',
-        text: `query LasecGetPreparedSalesOrder($quote_id: String!){
-            LasecGetPreparedSalesOrder(quote_id: $quote_id) {
+        text: `query LasecGetPreparedSalesOrder($quote_id: String!, $active_option: String){
+            LasecGetPreparedSalesOrder(quote_id: $quote_id, active_option: $active_option) {
                 id        
                 quote_id
                 sales_order_date
@@ -27,26 +27,26 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
             }
         }`,
         variables: {
-            'formData.header.quote_id': 'quote_id'
+            'formData.header.quote_id': 'quote_id',
         },
         autoQuery: true,
         new: true,
         resultMap: {
-            'quote_id': 'header.quote_id',
-            'sales_order_date': 'header.sales_order_date',
-            'customer_name': ['header.customer_name', 'delivery_detail.on_day_contact'],
-            'company_name': 'header.company_name',
-            'company_id': 'header.company_id',
-            'rep_code': 'header.rep_code',
-            'vat_number': 'customer.vat_number',
-            'quoted_amount': 'order_detail.quoted_amount',
-            'delivery_address_id': 'delivery_detail.delivery_address.id',
-            'delivery_address': 'delivery_detail.delivery_address.fullAddress',
-            'preferred_warehouse': 'order_detail.preffered_warehouse',
-            'order_type': 'order_detail.order_type',
+            quote_id: 'header.quote_id',
+            sales_order_date: 'header.sales_order_date',
+            customer_name: ['header.customer_name', 'delivery_detail.on_day_contact'],
+            company_name: 'header.company_name',
+            company_id: 'header.company_id',
+            rep_code: 'header.rep_code',
+            vat_number: 'customer.vat_number',
+            quoted_amount: 'order_detail.quoted_amount',
+            delivery_address_id: 'delivery_detail.delivery_address.id',
+            delivery_address: 'delivery_detail.delivery_address.fullAddress',
+            preferred_warehouse: 'order_detail.preffered_warehouse',
+            order_type: 'order_detail.order_type',
             'client.mobileNumber': 'delivery_detail.contact_number',
-            'shipping_date': 'order_detail.shipping_date',
-            'method_of_contact': 'delivery_detail.method_of_contact'
+            shipping_date: 'order_detail.shipping_date',
+            method_of_contact: 'delivery_detail.method_of_contact',
         },
         resultType: 'object',
     },
@@ -82,7 +82,7 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
                 'paging.page': 'page',
                 'paging.total': 'totalCount',
                 'paging.pageSize': 'pageSize',
-                'documents': 'data',
+                documents: 'data',
             },
             resultType: 'object',
         },
@@ -143,14 +143,14 @@ const GenerateSalesOrderGraphQL: Reactory.IFormGraphDefinition = {
               }
             `,
             variables: {
-                'selected.[].id': 'fileIds'
+                'selected.[].id': 'fileIds',
             },
             objectMap: true,
             onSuccessEvent: {
-                name: 'lasec-crm::sales-orders::documents::delete'
+                name: 'lasec-crm::sales-orders::documents::delete',
             },
-        }
-    }
+        },
+    },
 };
 
 export default GenerateSalesOrderGraphQL;
