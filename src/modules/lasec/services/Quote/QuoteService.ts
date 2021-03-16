@@ -28,7 +28,7 @@ import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quot
 import LasecDatabase from '../../database';
 import { MongooseDocument } from 'mongoose';
 import { execql } from 'graph/client';
-import ReactoryFileModel from '@reactory/seerver-core/modules/core/models/CoreFile';
+import ReactoryFileModel from '@reactory/server-core/modules/core/models/CoreFile';
 
 class LasecQuoteService implements IQuoteService {
 
