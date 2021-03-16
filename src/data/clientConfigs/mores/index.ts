@@ -193,11 +193,11 @@ const Menus = {
         {
           ordinal: 1,
           title: 'Organization Dashboard',
-          link: '/dashboard/organization/',
+          link: '/dashboard/',
           icon: 'assessment',
           roles: [APPLICATION_ROLES.ORGANIZATION_ADMIN, APPLICATION_ROLES.DEVELOPER],
         },
-        /* {
+        /* {/dashboard/
            ordinal: 2,
            title: 'Partner Dashboard',
            link: '/dashboard/partner/',
@@ -424,7 +424,7 @@ const routes = [
   {
     key: 'dashboard-organization',
     title: 'Dashboard Organization',
-    path: '/dashboard/organization/**',
+    path: '/dashboard/**',
     public: false,
     exact: false,
     roles: ['USER'],
@@ -432,26 +432,6 @@ const routes = [
     args: [
       { key: 'use_case', value: { use_case: 'organization_admin' } },
     ],
-  },
-
-  {
-    key: 'dashboard-organization',
-    title: 'Dashboard Facilitator',
-    path: '/dashboard/facilitator/**',
-    public: false,
-    exact: false,
-    roles: [APPLICATION_ROLES.FACILITATOR, APPLICATION_ROLES.DEVELOPER, APPLICATION_ROLES.ORGANIZATION_ADMIN],
-    componentFqn: `${key}.MoresAdminTabbedNavigation@1.0.0`,
-  },
-
-  {
-    key: 'dashboard-administrator',
-    title: 'Dashboard Administrator',
-    path: '/dashboard/administrator/**',
-    public: false,
-    exact: false,
-    roles: [APPLICATION_ROLES.ADMIN],
-    componentFqn: `${key}.DashboardAdministratorHOC@1.0.0`,
   },
 
   {
@@ -607,113 +587,126 @@ const routes = [
   },
 
   {
-    key: 'survey-admin',
-    title: 'Survey Admin',
-    path: '/admin/org/:organizationId/surveys/:surveyId?',
-    exact: true,
-    public: false,
-    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
-    componentFqn: 'core.Administration@1.0.0',
-    args: [
-      {
-        key: 'tab',
-        value: {
-          type: 'string',
-          tab: 'survey'
-        }
-      }
-    ]
-  },
-  {
-    key: 'survey-admin',
-    title: 'Survey Admin',
-    path: '/admin/org/:organizationId/general',
-    exact: true,
-    public: false,
-    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
-    componentFqn: 'core.Administration@1.0.0',
-    args: [
-      {
-        key: 'tab',
-        value: {
-          type: 'string',
-          tab: 'general'
-        }
-      }
-    ]
-  },
-  {
-    key: 'survey-admin',
-    title: 'Survey Admin',
-    path: '/admin/org/:organizationId/brands',
-    exact: true,
-    public: false,
-    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
-    componentFqn: 'core.Administration@1.0.0',
-    args: [
-      {
-        key: 'tab',
-        value: {
-          type: 'string',
-          tab: 'brands'
-        }
-      }
-    ]
-  },
-  {
-    key: 'survey-admin',
-    title: 'Survey Admin',
-    path: '/admin/org/:organizationId/business-units/:businessUnitId?',
-    exact: true,
-    public: false,
-    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
-    componentFqn: 'core.Administration@1.0.0',
-    args: [
-      {
-        key: 'tab',
-        value: {
-          type: 'string',
-          tab: 'business-units'
-        }
-      }
-    ]
-  },
-  {
-    key: 'survey-admin',
-    title: 'Survey Admin',
-    path: '/admin/org/:organizationId/employees/:employeeId?',
-    exact: true,
-    public: false,
-    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
-    componentFqn: 'core.Administration@1.0.0',
-    args: [
-      {
-        key: 'tab',
-        value: {
-          type: 'string',
-          tab: 'survey'
-        }
-      }
-    ]
-  },
-  {
-    key: 'survey-admin',
-    title: 'Survey Admin',
+    key: 'admin',
+    title: 'Admin',
     path: '/admin/',
-    exact: true,
+    exact: false,
     public: false,
     roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
-    componentFqn: 'core.Administration@1.0.0',
+    componentFqn: `${key}.AdminRouter@1.0.0`,
     args: [
-      {
-        key: 'mode',
-        value: {
-          type: 'string',
-          mode: 'overview'
-        }
-      }
-    ]
+      { key: 'use_case', value: { use_case: 'organization_admin' } },
+    ],
   },
+
+  // {
+  //   key: 'survey-admin',
+  //   title: 'Survey Admin',
+  //   path: '/admin/org/:organizationId/surveys/:surveyId?',
+  //   exact: true,
+  //   public: false,
+  //   roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+  //   componentFqn: 'core.Administration@1.0.0',
+  //   args: [
+  //     {
+  //       key: 'tab',
+  //       value: {
+  //         type: 'string',
+  //         tab: 'survey'
+  //       }
+  //     }
+  //   ]
+  // },
+  // {
+  //   key: 'survey-admin',
+  //   title: 'Survey Admin',
+  //   path: '/admin/org/:organizationId/general',
+  //   exact: true,
+  //   public: false,
+  //   roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+  //   componentFqn: 'core.Administration@1.0.0',
+  //   args: [
+  //     {
+  //       key: 'tab',
+  //       value: {
+  //         type: 'string',
+  //         tab: 'general'
+  //       }
+  //     }
+  //   ]
+  // },
+  // {
+  //   key: 'survey-admin',
+  //   title: 'Survey Admin',
+  //   path: '/admin/org/:organizationId/brands',
+  //   exact: true,
+  //   public: false,
+  //   roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+  //   componentFqn: 'core.Administration@1.0.0',
+  //   args: [
+  //     {
+  //       key: 'tab',
+  //       value: {
+  //         type: 'string',
+  //         tab: 'brands'
+  //       }
+  //     }
+  //   ]
+  // },
+  // {
+  //   key: 'survey-admin',
+  //   title: 'Survey Admin',
+  //   path: '/admin/org/:organizationId/business-units/:businessUnitId?',
+  //   exact: true,
+  //   public: false,
+  //   roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+  //   componentFqn: 'core.Administration@1.0.0',
+  //   args: [
+  //     {
+  //       key: 'tab',
+  //       value: {
+  //         type: 'string',
+  //         tab: 'business-units'
+  //       }
+  //     }
+  //   ]
+  // },
+  // {
+  //   key: 'survey-admin',
+  //   title: 'Survey Admin',
+  //   path: '/admin/org/:organizationId/employees/:employeeId?',
+  //   exact: true,
+  //   public: false,
+  //   roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+  //   componentFqn: 'core.Administration@1.0.0',
+  //   args: [
+  //     {
+  //       key: 'tab',
+  //       value: {
+  //         type: 'string',
+  //         tab: 'survey'
+  //       }
+  //     }
+  //   ]
+  // },
+  // {
+  //   key: 'survey-admin',
+  //   title: 'Survey Admin',
+  //   path: '/admin/',
+  //   exact: true,
+  //   public: false,
+  //   roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+  //   componentFqn: 'core.Administration@1.0.0',
+  //   args: [
+  //     {
+  //       key: 'mode',
+  //       value: {
+  //         type: 'string',
+  //         mode: 'overview'
+  //       }
+  //     }
+  //   ]
+  // },
   {
     key: 'content-list',
     title: 'Content List',

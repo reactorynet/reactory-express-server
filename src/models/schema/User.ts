@@ -44,7 +44,7 @@ const UserSchema = new mongoose.Schema({
   },
   mobileNumber: {
     type: String,
-    required: true,
+    required: false,
   },
   salt: {
     type: String,

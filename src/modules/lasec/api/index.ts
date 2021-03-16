@@ -2877,6 +2877,7 @@ NB: note the addition of the detail_id for the line been updated
           };
 
           const put_result = await PUT(`api/sales_order/${create_api_result.payload.id}/`, update_data, true, context).then();
+          logger.debug(`Result From Updating Sales Order For Quote: ${sales_order_input.quote_id}`, { put_result })
           if (put_result.status === 'success') {
             return put_result.payload
           } else {

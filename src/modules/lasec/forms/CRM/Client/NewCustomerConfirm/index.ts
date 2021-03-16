@@ -4,9 +4,9 @@ import graphql from './graphql';
 import LasecPersonalForm, { PersonalFormUiSchemas as PersonalDisplayUISchema } from '../Personal/';
 import LasecContactForm, { newConfirmSchema as ContactDisplayUISchema } from '../Contact';
 import LasecJobDetailForm, { ConfirmUiSchema as JobDetailUISchema } from '../JobDetail';
-import LasecCRMCustomerLookupForm, { CustomerConfirmUISchema  } from '../../Customer/Lookup';
-import LasecCRMOrganizationLookupForm, { ConfirmNewUISchema as OrganizationConfirmUISchema  } from '../../Organization/Lookup';
-import LasecCRMCustomerAddress, { AddressSchemaObject,  ReadOnlyUiSchema as CustomerAddressUISchema } from '../../Customer/Address';
+import LasecCRMCustomerLookupForm, { CustomerConfirmUISchema } from '../../Customer/Lookup';
+import LasecCRMOrganizationLookupForm, { ConfirmNewUISchema as OrganizationConfirmUISchema } from '../../Organization/Lookup';
+import LasecCRMCustomerAddress, { AddressSchemaObject, ReadOnlyUiSchema as CustomerAddressUISchema } from '../../Customer/Address';
 import LasecCRMDocuments from '../Documents';
 
 const displayUiSchema: any = {
@@ -25,7 +25,7 @@ const displayUiSchema: any = {
       marginTop: '16px',
       paddingBottom: '8px'
     },
-    style:{
+    style: {
       marginTop: '16px',
     },
     showSubmit: true,
@@ -51,8 +51,8 @@ const displayUiSchema: any = {
       jobDetails: { xs: 12, sm: 12, md: 12, lg: 12 },
       customer: { xs: 12, sm: 12, md: 12, lg: 12 },
       organization: { xs: 12, sm: 12, md: 12, lg: 12 },
-      address: { xs: 12,  sm: 12, md: 12, lg: 12 },
-      uploadedDocuments: { xs: 12,  sm: 12, md: 12, lg: 12 },      
+      address: { xs: 12, sm: 12, md: 12, lg: 12 },
+      uploadedDocuments: { xs: 12, sm: 12, md: 12, lg: 12 },
     },
   ],
   personalDetails: PersonalDisplayUISchema.ConfirmDetailsUISchema,
@@ -197,7 +197,7 @@ const LasecCRMNewCustomerConfirm: Reactory.IReactoryForm = {
   name: 'LasecCRMNewCustomerConfirm',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: schema,
+  schema,
   graphql,
   uiSchema: displayUiSchema,
   helpTopics: ["Customer Onboarding"],
@@ -218,8 +218,8 @@ const LasecCRMNewCustomerConfirm: Reactory.IReactoryForm = {
   defaultFormValue: {
     uploadContext: [
       'lasec-crm::new-company::document',
-    ]
-  }
+    ],
+  },
 };
 
 export default LasecCRMNewCustomerConfirm;

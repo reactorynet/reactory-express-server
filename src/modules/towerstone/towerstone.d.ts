@@ -7,10 +7,10 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 
 declare namespace TowerStone {
 
-export interface ISimpleResponse {
-  success: boolean,
-  message: String
-}
+  export interface ISimpleResponse {
+    success: boolean,
+    message: String
+  }
 
   export interface IRatingScaleEntry {
     rating: number,
@@ -93,6 +93,7 @@ export interface ISimpleResponse {
     deleted: boolean,
     complete: boolean,
     ratings: IRatingEntry[]
+
   }
 
   export interface ILeadershipBrandDocument extends Mongoose.Document, ILeadershipBrand { }
@@ -122,7 +123,7 @@ export interface ISimpleResponse {
   export interface ISurveyTemplates {
     assessorTemplates?: Array<ISurveyEmailTemplate>,
     delegateTemplates?: Array<ISurveyEmailTemplate>,
-    generalTemplates?:  Array<ISurveyEmailTemplate>
+    generalTemplates?: Array<ISurveyEmailTemplate>
   }
 
 
@@ -140,7 +141,8 @@ export interface ISimpleResponse {
     status: String,
     updatedAt: Date | Number,
     createdAt: Date | Number,
-    peers: any,
+    peers: Reactory.IOrganigramDocument,
+    organigram: Reactory.IOrganigramDocument,
     actions: [
       {
         action: String,
@@ -163,11 +165,10 @@ export interface ISimpleResponse {
   }
 
   export interface ISurvey {
-    _id: ISurvey;
-    id: string | number | ObjectId;
+    id?: any,
     title: string,
     status: string,
-    surveyType: string | '180'| '360' | 'plc' | 'custom' | 'l360' | 'i360' | 'culture' | 'team180' | 'other',
+    surveyType: string | '180' | '360' | 'plc' | 'custom' | 'l360' | 'i360' | 'culture' | 'team180' | 'other',
     organization: Reactory.IOrganizationDocument,
     leadershipBrand?: TowerStone.ILeadershipBrand,
     assessorTeamName?: string,
@@ -179,11 +180,23 @@ export interface ISimpleResponse {
     calendar: any[],
     delegates: any,
     templates: TowerStone.ISurveyTemplates
-    addTimelineEntry( eventType: string, eventDetail: string, who: ObjectID, save: boolean): Promise<void>
+    addTimelineEntry(eventType: string, eventDetail: string, who: ObjectID, save: boolean): Promise<void>
   }
 
-
-
+  export interface ISurveyStatistics {
+    id: any,
+    launched: number,
+    $survey?: ISurvey | ISurveyDocument,
+    $assessments?: IAssessment[]
+    peersConfirmed?: number,
+    complete: number,
+    delegates: number
+    nominationsComplete?: number,
+    pendingInvites?: number,
+    started?: number,
+    daysRunning?: number
+    daysLeft?: number
+  }
 
   export interface ISurveyDocument extends Mongoose.Document, ISurvey { }
 
@@ -208,16 +221,16 @@ export interface ISimpleResponse {
   }
 
   export interface ITowerStoneEmailService {
-    send: (survey: ISurvey, activity: string, target: string, users: Reactory.IUser[], properties: any ) => Promise<IEmailSendResult>
+    send: (survey: ISurvey, activity: string, target: string, users: Reactory.IUser[], properties: any) => Promise<IEmailSendResult>
     templates: (survey: ISurvey) => Promise<TowerStone.ISurveyTemplates>
-    patchTemplates: (survey: ISurvey, templates:  TowerStone.ISurveyTemplates) => Promise<TowerStone.ISurveyTemplates>
+    patchTemplates: (survey: ISurvey, templates: TowerStone.ISurveyTemplates) => Promise<TowerStone.ISurveyTemplates>
   }
 
   export interface ITowerStoneEmailServiceProvider {
-    ( props: ITowerStoneServiceParameters, context: any ) : ITowerStoneEmailService
+    (props: ITowerStoneServiceParameters, context: any): ITowerStoneEmailService
   }
 
   export interface ITowerStoneSurveyServiceProvider {
-    ( props: ITowerStoneServiceParameters, context:  any ) : ITowerStoneSurveyService
+    (props: ITowerStoneServiceParameters, context: any): ITowerStoneSurveyService
   }
 }

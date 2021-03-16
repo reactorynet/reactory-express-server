@@ -205,9 +205,11 @@ declare namespace Reactory {
   export interface IOrganizationDocument extends Mongoose.Document, IOrganization { }
 
   export interface IBusinessUnit {
-    id: string
+    [key: string]: any,
     name: string
   }
+
+  export interface IBusinessUnitDocument extends Mongoose.Document, IBusinessUnit { }
 
   export interface IMemberShip {
     id: string
@@ -308,6 +310,29 @@ declare namespace Reactory {
   export interface IUserDocument extends Mongoose.Document, IUser {
 
   }
+
+  export interface IPeerEntry {
+    user: ObjectId | Reactory.IUserDocument
+    relationship: string
+    isInternal: boolean
+    inviteSent: boolean
+    confirmed?: boolean
+    confirmedAt?: Date
+  }
+
+  export interface IOrganigram {
+    organization: ObjectId | Reactory.IOrganizationDocument
+    user: ObjectId | Reactory.IUserDocument
+    businessUnit: ObjectId | Reactory.IBusinessUnitDocument
+    position: string
+    allowEdit: Boolean
+    peers: IPeerEntry[]
+    createdAt: Date
+    updatedAt: Date
+    confirmedAt: Date
+  }
+
+  export interface IOrganigramDocument extends Mongoose.Document, IOrganigram
 
   /** ReactoryFile Management Models Interface */
   export interface IReactoryFilePermissions {

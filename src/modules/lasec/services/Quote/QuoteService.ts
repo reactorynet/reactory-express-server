@@ -27,6 +27,8 @@ import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quot
 
 import LasecDatabase from '../../database';
 import { MongooseDocument } from 'mongoose';
+import { execql } from 'graph/client';
+import ReactoryFileModel from 'modules/core/models/CoreFile';
 
 class LasecQuoteService implements IQuoteService {
 
@@ -58,7 +60,16 @@ class LasecQuoteService implements IQuoteService {
     try {
       const result = await LAPI.SalesOrders.createSalesOrder(sales_order_input, this.context).then();
 
-      logger.debug('Create new sales order api result', result);
+      logger.debug(`Create Sales Order Result: ${sales_order_input.quote_id}`, JSON.stringify(result, null, 2));
+      //get all the documents we associated with the quote and now link it to the sales order id
+
+      const documents: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find({ uploadContext: `lasec-crm::sales-order::document-${sales_order_input.quote_id}` }).then();
+      if (documents.length > 0) {
+        documents.forEach((isoDoc) => {
+          isoDoc.uploadContext = `lasec-crm::sales-order::document-${sales_order_input.quote_id}-${result.id}`;
+          isoDoc.save();
+        });
+      }
 
       return {
         message: `Sales order ${result.id} has been created. `,

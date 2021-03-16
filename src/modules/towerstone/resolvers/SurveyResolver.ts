@@ -37,6 +37,7 @@ import AuthConfig from '@reactory/server-core/authentication';
 import { Reactory } from '@reactory/server-core/types/reactory';
 
 import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
+import { GraphQLResolveInfo } from 'graphql';
 
 const { findIndex, pullAt } = lodash;
 
@@ -179,6 +180,8 @@ const SetOrganisationLookupData = async (args) => {
   }
 }
 
+
+
 export default {
   SurveyCalendarEntry: {
     title(sce) { return sce.title; },
@@ -294,6 +297,18 @@ export default {
       return entry.message;
     },
   },
+  SurveyStatistics: {
+    launched: async (statistics: TowerStone.ISurveyStatistics, args: any, context: Reactory.IReactoryContext): Promise<number> => {
+      let launched: number = statistics.launched;
+      if (statistics.$survey.delegates) {
+        launched = lodash.countBy(statistics.$survey.delegates, 'launched')['true']
+      }
+
+      return launched;
+    },
+
+
+  },
   Survey: {
     id(survey: TowerStone.ISurvey) {
       if (survey && survey._id)
@@ -327,15 +342,29 @@ export default {
     assessments(survey: TowerStone.ISurvey) {
       return Assessment.find({ survey: new ObjectId(survey.id) }).populate('assessor').then();
     },
-    statistics(survey: TowerStone.ISurvey) {
-      const statistics = {
-        launched: 0,
-        peersConfirmed: 0,
-        complete: 0,
-        total: survey.delegates.length,
-      };
+    statistics: async (survey: TowerStone.ISurvey, args: any, context: Reactory.IReactoryContext): Promise<TowerStone.ISurveyStatistics> => {
 
-      statistics.launched = lodash.countBy(survey.delegates, 'launched')['true'];
+      debugger;
+
+      const active_assessments: TowerStone.IAssessment[] = await Assessment.find({ survey: survey.id, deleted: false }).then();
+      const assessments_by_delegates = lodash.groupBy(active_assessments, 'delegate');
+      const assessments_by_complete = lodash.groupBy(active_assessments, 'complete');
+      const { delegates } = survey;
+      const delegates_by_status = lodash.groupBy(delegates, 'status');
+      let statistics: TowerStone.ISurveyStatistics = {
+        id: `${survey._id}`,
+        $survey: survey,
+        $assessments: active_assessments,
+        launched: active_assessments.length,
+        peersConfirmed: Object.keys(assessments_by_delegates).length,
+        complete: assessments_by_complete && assessments_by_complete.true ? assessments_by_complete.true.length : 0,
+        delegates: delegates.length,
+        nominationsComplete: Object.keys(assessments_by_delegates).length,
+        pendingInvites: delegates_by_status.invite_sent ? delegates_by_status.invite_sent.length : 0,
+        started: assessments_by_complete && assessments_by_complete.false ? assessments_by_complete.false.length : 0,
+        daysLeft: moment().isAfter(moment(survey.endDate)) === true ? 0 : moment(survey.endDate).diff(moment(), 'days'),
+        daysRunning: moment().diff(moment(survey.startDate), 'days'),
+      };
 
       return statistics;
     },
@@ -355,8 +384,9 @@ export default {
     surveysList(obj, { sort }) {
       return Admin.Survey.getSurveys();
     },
-    async surveyDetail(parent, { surveyId }, context, info) {
-      const survey = await Survey.findById(surveyId).then();
+    async surveyDetail(parent: any, args: { surveyId: string }, context: Reactory.IReactoryContext, info: GraphQLResolveInfo) {
+      const survey = await Survey.findById(args.surveyId).then();
+      info.fragments
       if (survey != null) {
         context.organization = survey.organization;
       }

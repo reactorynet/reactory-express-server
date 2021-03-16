@@ -187,7 +187,7 @@ const GetTableOptions = () => {
   }
 };
 
-export const SurveyDelegatesUISchema = {  
+export const SurveyDelegatesUISchema = {
   'ui:options': {
     showSubmit: false,
     showSchemaSelectorInToolbar: true,
@@ -299,7 +299,17 @@ const graphql = {
       surveyDetail(surveyId: $surveyId){
         id
         title
-        statistics
+        statistics {
+          launched
+          peersConfirmed
+          complete
+          delegates
+          nominationsComplete
+          pendingInvites
+          started
+          daysRunning
+          daysLeft
+        }
         delegateTeamName
         assessorTeamName
         surveyType
@@ -468,7 +478,7 @@ export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
   defaultExport: $defaultExport,
   uiSchema: SurveyDelegatesUISchema,
   uiSchemas: [
-    { 
+    {
       id: 'SurveyDelegateWidget',
       description: 'Use the delegate list view',
       icon: 'list',
@@ -476,7 +486,7 @@ export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
       title: 'Survey Delegate List',
       uiSchema: SurveyDelegatesUISchema
     },
-    { 
+    {
       id: 'SurveyDelegateGrid',
       description: 'Use the delegate grid view',
       icon: 'table',

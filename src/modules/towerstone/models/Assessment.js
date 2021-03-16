@@ -20,7 +20,7 @@ const AssessmentSchema = mongoose.Schema({
     ref: 'User',
   },
   team: {
-    type: String
+    type: String,
   },
   assessor: {
     type: ObjectId,
@@ -65,7 +65,7 @@ const AssessmentSchema = mongoose.Schema({
   updatedAt: Date,
   updatedBy: {
     type: ObjectId,
-    ref: 'User'
+    ref: 'User',
   }
 });
 
