@@ -279,6 +279,7 @@ const getProducts = async (params: any, context: Reactory.IReactoryContext) => {
 export const getProductById = async (params: any,
   load_costings = true, context: Reactory.IReactoryContext) => {
   const { productId } = params;
+
   const productResult = await lasecApi.Products.list({
     filter: { ids: [productId] },
     pagination: { page_size: 5 },
@@ -286,8 +287,10 @@ export const getProductById = async (params: any,
 
   if (productResult && productResult.items) {
     if (productResult.items.length === 1) {
-      let product = productResult.items[0];
 
+
+      let product = productResult.items[0];
+      logger.debug(` 🚨 Loaded PRODUCT DETAILS:  ${productId}`, { product });
 
       let costingResults = null;
       let costing = null;
@@ -371,13 +374,15 @@ export const getProductById = async (params: any,
         currencyCode: product.currency_code,
 
         ...product_costing, // eslint-disable-line
-
+        productPricing: [],
         notes: '',
       };
 
-      if (product.currency_pricing && Object.keys(product.currency_pricing).length > 0) {
-        productResult.productPricing = Object.keys(product.currency_pricing)
-          .map(key => product.currency_pricing[key]);
+      if (productResult.items[0].currency_pricing && Object.keys(productResult.items[0].currency_pricing).length > 0) {
+        Object.keys(productResult.items[0].currency_pricing)
+          .forEach((key: string) => {
+            product.productPricing.push(productResult.items[0].currency_pricing[key]);
+          });
       }
 
       return product;

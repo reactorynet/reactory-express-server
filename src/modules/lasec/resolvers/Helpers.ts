@@ -1963,7 +1963,7 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
     }
   }, context).then();
 
-  logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ${salesOrdersIds.length} ORDERS FOUND`);
+  logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ORDERS FOUND`, { sales_orders: JSON.stringify(salesOrdersIds) });
 
   let ids: string[] = [];
 
@@ -2062,6 +2062,8 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
 
   logger.debug(` -- GETTING CLIENT SALES ORDERS --  ${JSON.stringify(params)}`);
 
+  debugger
+
   const {
     clientId,
     search = "",
@@ -2155,6 +2157,8 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
     }
   }
 
+  debugger
+
   let salesOrdersIds = await lasecApi.SalesOrders.list({
     filter: apiFilter,
     pagination: {
@@ -2163,6 +2167,8 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
     }
   }, context).then();
 
+
+  logger.debug(`Results searching for Sales Orders`, { result: JSON.stringify(salesOrdersIds, null, 2), apiFilter: JSON.stringify(apiFilter, null, 2) });
   let ids: string[] = [];
 
   if (isArray(salesOrdersIds.ids) === true) {
@@ -2237,6 +2243,8 @@ const sales_order_field_maps: any = {
 export const getCRMSalesOrders = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(` -- GETTING CRM SALES ORDERS --  ${JSON.stringify(params)}`);
+
+  debugger
 
   const {
     search = "",
