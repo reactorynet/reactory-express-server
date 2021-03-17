@@ -233,23 +233,6 @@ const uiSchema: any = {
           },
         },
       ],
-      // actions: [
-      //   {
-      //     icon: 'remove_circle',
-      //     tooltip: 'Deactivate Client(s)',
-      //     iconProps: {
-      //       color: 'error'
-      //     },
-      //     mutation: 'deactivate',
-      //     variables: {
-
-      //     },
-      //     resultMap: {
-
-      //     },
-      //     resultAction: 'refresh'
-      //   },
-      // ],
       options: {
         grouping: false,
         search: false,
@@ -265,8 +248,6 @@ const uiSchema: any = {
       componentMap: {
         Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0',
       },
-
-      // some comment
       variables: {
         'query.search': 'search',
         'query.customer': 'customer',

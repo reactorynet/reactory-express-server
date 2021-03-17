@@ -1995,7 +1995,7 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
     let salesOrders = salesOrdersDetails && salesOrdersDetails.items ? [...salesOrdersDetails.items] : [];
 
     /**
-     * 
+     *
      {
       "items": [
         {
@@ -2037,8 +2037,8 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
         ..,
         ..,
       }
-     * 
-     * 
+     *
+     *
      */
 
 
@@ -2083,13 +2083,13 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
         orderType: order.order_type,
         orderStatus: order.order_status,
 
-        iso: order.sales_order_id,
+        iso: order.sales_order_id ? order.sales_order_id : '',
 
-        customer: order.company_trading_name,
+        customer: order.company_trading_name ? order.company_trading_name : '',
 
-        client: order.customer_name,
+        client: order.customer_name ? order.customer_name : '',
 
-        poNumber: order.customerponumber,
+        poNumber: order.customerponumber ? order.customerponumber: '',
         currency: order.currency,
 
         deliveryAddress: order.delivery_address,
@@ -2102,11 +2102,11 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
         shipValue: order.shipped_value,
         backorderValue: order.back_order_value,
 
-        dispatchCount: order.dispatch_note_ids.length,
+        dispatchCount: order.dispatch_note_ids ? order.dispatch_note_ids.length : 0,
         dispatches: order.dispatch_note_ids,
 
         invoices: order.invoice_ids,
-        invoiceCount: order.invoice_ids.length
+        invoiceCount: order.invoice_ids ? order.invoice_ids.length : 0
       }
     });
 
