@@ -2414,7 +2414,7 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
 
 interface CustomerDocumentQueryParams {
   id?: string,
-  ids?: string[],
+  ids?: any[],
   uploadContexts?: string[],
   paging?: {
     page: number,

@@ -34,6 +34,7 @@ import {
   ILasecLoggingService,
 } from '../types/lasec';
 import { deleteSalesOrdersDocument, getCustomerDocuments } from '../resolvers/Helpers';
+import { ReactoryFileModel } from '@reactory/server-core/modules/core/models/CoreFile';
 
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
@@ -583,9 +584,12 @@ const Api = {
     }
   },
   Documents: {
-    upload: async (reactoryFile: Reactory.IReactoryFile, customerInfo: any, link_only: boolean = false, context: Reactory.IReactoryContext): Promise<Reactory.IReactoryFile> => {
+    upload: async (reactoryFile: Reactory.IReactoryFile, customerInfo: any, link_only: boolean = false, context: Reactory.IReactoryContext, document_type: string = 'client'): Promise<Reactory.IReactoryFile> => {
       logger.debug(`Uploading document to LasecAPI`, { reactoryFile, customerInfo });
       let _client_id = customerInfo && customerInfo.id ? customerInfo.id : customerInfo;
+
+
+
       /**
        *
         {
@@ -616,7 +620,7 @@ const Api = {
        *
        */
 
-      const link_to_client = async (remote_id: string) => {
+      const link_to_client = async (remote_id: string): Promise<Reactory.IReactoryFile> => {
         let isNewClient = _client_id === 'new_client';
         if (_client_id && remote_id && isNewClient === false) {
           logger.debug(`Linking file to customer using input \n file:\n${remote_id}\ncustomer id: ${_client_id} `);
@@ -638,9 +642,29 @@ const Api = {
         }
       }
 
+
+      let do_link_file = async (remote_id: string) => {
+        return reactoryFile;
+      };
+
+      switch (document_type) {
+        case 'sales-order': {
+
+          break;
+        }
+        case 'invoice': {
+          break;
+        }
+        case 'client':
+        default: {
+          //do the thing
+          do_link_file = link_to_client;
+        }
+      }
+
       if (link_only === true) {
         if (reactoryFile.remotes && reactoryFile.remotes.length === 1) {
-          link_to_client(reactoryFile.remotes[0].id.split('@')[0]);
+          do_link_file(reactoryFile.remotes[0].id.split('@')[0]);
         }
       }
 
@@ -681,6 +705,31 @@ const Api = {
 
           let absoluteUrl = `${config.SECONDARY_API_URL}/${SECONDARY_API_URLS.file_uploads.url}`;
           // In Node.js environment you need to set boundary in the header field 'Content-Type' by calling method `getHeaders`
+
+          /**
+           * 
+           fetch("https://bapi.lasec.co.za/api/file_uploads/", {
+            "headers": {
+              "accept": "*\/* ",
+              "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
+              "authorization": "Token WYAIAFoq4Yqqa8UaVytH3wdFdN",
+              "content-type": "multipart/form-data; boundary=----WebKitFormBoundaryDnHPUByTyEkQRqRM",
+              "sec-fetch-dest": "empty",
+              "sec-fetch-mode": "cors",
+              "sec-fetch-site": "same-site",
+              "sec-gpc": "1",
+              "x-lasec-auth": "Token WYAIAFoq4Yqqa8UaVytH3wdFdN"
+            },
+            "referrer": "https://b360.lasec.co.za/",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": "------WebKitFormBoundaryDnHPUByTyEkQRqRM\r\nContent-Disposition: form-data; name=\"files\"; filename=\"elephant_in_the_room.png\"\r\nContent-Type: image/png\r\n\r\n\r\n------WebKitFormBoundaryDnHPUByTyEkQRqRM--\r\n",
+            "method": "POST",
+            "mode": "cors"
+          });
+           * 
+           * 
+           */
+
           const formHeaders = form.getHeaders();
           let apiResponse = await fetch(absoluteUrl, { method: 'post', body: form, headers: { ...kwargs.headers, ...formHeaders } }).then()
 
@@ -2855,6 +2904,7 @@ NB: note the addition of the detail_id for the line been updated
         has_confirmed_purchase_order_amount: sales_order_input.amounts_confirmed === true,
         delivery_address_id: sales_order_input.delivery_address_id,
         quote_id: sales_order_input.quote_id,
+        document_ids: sales_order_input.document_ids
       };
       /*
       {
@@ -2893,12 +2943,12 @@ NB: note the addition of the detail_id for the line been updated
 
 
       try {
-        logger.debug(`Creating new Sales Order input =>`, { data });
+        logger.debug(`🚨 CREATING NEW ISO =>`, { data });
 
         const create_api_result = await POST(SECONDARY_API_URLS.sales_order.url, data, true, context).then();
-        logger.debug(`Result from new Sales Order =>`, { create_api_result });
 
         if (create_api_result.status === 'success') {
+          logger.debug(`✅ CREATING NEW ISO =>`, { create_api_result });
 
           const update_data = {
             item_id: [create_api_result.payload.id],
@@ -2918,12 +2968,13 @@ NB: note the addition of the detail_id for the line been updated
             throw new ApiError(`Could not complete sales order: ${put_result.message}`, put_result);
           }
         } else {
+          logger.error('⛔ CREATING NEW ISO FAILED', create_api_result);
           throw new ApiError(`Created Sales Order ${create_api_result.payload.id} but could not update the data.`);
         }
-      } catch (createSalesOrder) {
-        logger.error('Could not create sales order', createSalesOrder);
-        if (createSalesOrder instanceof ApiError) throw createSalesOrder;
-        else throw new ApiError('Could not create a new sales order - remote API error', { createSalesOrder });
+      } catch (createSalesOrderError) {
+        logger.error('Could not create sales order', createSalesOrderError);
+        if (createSalesOrderError instanceof ApiError) throw createSalesOrderError;
+        else throw new ApiError('Could not create a new sales order - remote API error', { createSalesOrder: createSalesOrderError });
       }
 
     },

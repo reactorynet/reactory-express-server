@@ -68,7 +68,7 @@ class AuthConfig {
     // Callback function called once the sign-in is complete
     // and an access token has been obtained
     async function signInComplete(req: Request, iss: string, sub: string, profile: Reactory.IUser, accessToken: string, refreshToken: string, params: any, done: Function) {
-      logger.info(`Sign in Complete ${profile && profile.displayName ? profile.displayName : 'NO DISPLAY NAME FOR USER'} : EXPIRES ${moment().add(params.expires_in, 'seconds').format('YYYY-MM-DD HH:mm:ss')}`, { req });
+      logger.info(`Sign in Complete ${profile && profile.displayName ? profile.displayName : 'NO DISPLAY NAME FOR USER'} : EXPIRES ${moment().add(params.expires_in, 'seconds').format('YYYY-MM-DD HH:mm:ss')}`);
       if (!profile.oid) {
         // return done(new Error('No OID found in user profile.'), null);
         logger.info('There is no oid, bad login, redirect to client with failure');
