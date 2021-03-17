@@ -17,6 +17,9 @@ type SalesOrderLineItem {
   comment: String
   image: String
   product: Product
+
+  dispatchQty: Int
+  invoiceQty: Int
 }
 
 """
@@ -27,6 +30,7 @@ type CRMSaleOrderComment {
   who: User
   comment: String
   when: Date
+  imageUrl: String
 }
 
 
@@ -35,6 +39,8 @@ Sales Order Line Item Detail
 """
 type SalesOrderDetails {
   lineItems: [SalesOrderLineItem]
+  sellingPrice: Float
+  freight: Float
   comments: [CRMSaleOrderComment]
 }
 
@@ -50,36 +56,37 @@ type SalesOrder {
 
   quoteId: String
   quoteDate: String
-  
+
   orderType: String
   orderStatus: String
-  
+
   iso: String
-  
+
   customer: String
-  
+
   crmCustomer: LasecCRMCustomer
   client: String
-  
+
   poNumber: String
   currency: String
-  
+
   deliveryAddress: String
   deliveryNote: String
   warehouseNote: String
-  
+
   salesTeam: String
+  salesPerson: String
   value: Int
   reserveValue: Int
   shipValue: Int
   backorderValue: Int
-  
+
   dispatchCount: Int
   dispatches: [Any]
-  
+
   invoiceCount: Int
   invoices: [Any]
-  
+
   documents: [Any]
   documentIds: [String]
 
@@ -89,10 +96,15 @@ type SalesOrder {
   backOrderQty: Float
 
   details: SalesOrderDetails
+
+  gpPercentage: Int
+  mupPercentage: Int
+  subTotal: Int
+  orderValue: Int
 }
 
 """
-Prepared Sales Order that is used to create a Sales Order 
+Prepared Sales Order that is used to create a Sales Order
 """
 type LasecPreparedSalesOrder {
   id: String
@@ -100,7 +112,7 @@ type LasecPreparedSalesOrder {
   sales_order_date: String
   customer_name: String
   company_name: String
-  client: LasecCRMClient  
+  client: LasecCRMClient
   company_id: String
   rep_code: String
   vat_number: String
@@ -133,8 +145,8 @@ input LasecCreateSalesOrderInput {
   preffered_warehouse: String
   shipping_date: Date
   part_supply: Boolean
-  delivery_address: String  
-  delivery_address_id: String  
+  delivery_address: String
+  delivery_address_id: String
   special_instructions: String
   special_instructions_warehouse: String
   on_day_contact: String
@@ -147,7 +159,7 @@ input LasecCreateSalesOrderInput {
 
 type LasecSalesOrderExistsResult {
   exists: Boolean
-  sales_order_id: String 
+  sales_order_id: String
 }
 
 """
@@ -215,14 +227,14 @@ type LasecPackingListItem {
 
 
 type LasecIncoTermsLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
 }
 
 type LasecPaymentTermsLookupItem {
-  id: String  
+  id: String
   key: String
   name: String
   description: String
@@ -246,20 +258,20 @@ type LasecPackingListLookups {
 
 
 """
-Document that represent the Certificate of Conformance 
-for PDF document. 
+Document that represent the Certificate of Conformance
+for PDF document.
 """
 type LasecCertificateOfConformance {
-  id: String  
+  id: String
   pdf_url: String
   emailAddress: String
   sendOptionsVia: String
-  
+
   date_of_issue: Date
   certification: Date
   date_of_expiry: Date
   date_of_expiry_na: Boolean
-  
+
   terms: String
   final_destination: String
   export_reason: String
@@ -314,7 +326,7 @@ type LasecPackingList {
   pdf_url: String
   emailAddress: String
   sendOptionsVia: String
-  
+
   date_of_issue: String
   terms: String
   final_destination: String
@@ -370,7 +382,7 @@ type LasecCommercialInvoice {
   pdf_url: String
   emailAddress: String
   sendOptionsVia: String
-  
+
   date_of_issue: String
   terms: String
   final_destination: String
@@ -466,7 +478,7 @@ input LasecCertificateOfConformanceInput {
   id: String
   emailAddress: String
   sendOptionsVia: String
-  
+
 
   date_of_issue: Date
   certification_date: Date
@@ -520,7 +532,7 @@ input LasecCommercialInvoiceInput {
   id: String
   emailAddress: String
   sendOptionsVia: String
-  
+
   date_of_issue: String
   terms: String
   final_destination: String
@@ -570,7 +582,7 @@ input LasecPackingListInput {
   id: String
   emailAddress: String
   sendOptionsVia: String
-  
+
   date_of_issue: String
   terms: String
   final_destination: String
@@ -618,21 +630,21 @@ input LasecPackingListInput {
 
 type LasecCertificateOfConformanceResponse {
   message: String
-  success: Boolean  
+  success: Boolean
   certificate: LasecCertificateOfConformance
 }
 
-type LasecCommercialInvoiceResponse {  
+type LasecCommercialInvoiceResponse {
   message: String
-  success: Boolean  
+  success: Boolean
   pdf_url: String
   commercial_invoice: LasecCommercialInvoice
 }
 
-type LasecPackingListResponse {  
+type LasecPackingListResponse {
   message: String
   success: Boolean
-  pdf_url: String  
+  pdf_url: String
   packing_list: LasecPackingList
 }
 
@@ -655,7 +667,7 @@ extend type Query {
   LasecGetISODetail(orderId: String!): SalesOrderDetails
 
   """
-  Query to return Comments for a particular sales order 
+  Query to return Comments for a particular sales order
   """
   LasecGetSaleOrderComments(orderId: String!): SalesOrderCommentResponse
 
@@ -699,7 +711,7 @@ extend type Query {
 
 extend type Mutation {
   LasecCreateSalesOrder(sales_order_input: LasecCreateSalesOrderInput): LasecSalesOrderCreateResponse
-  
+
   """
   Create Certificate of Conformance
   """
@@ -708,7 +720,7 @@ extend type Mutation {
   Update Existing of Conformance
   """
   LasecUpdateCertificateOfConformance(sales_order_id: String!, certificate: LasecCertificateOfConformanceInput): LasecCertificateOfConformanceResponse
-  
+
   """
   Create Commercial Invoice
   """
@@ -738,12 +750,17 @@ extend type Mutation {
   LasecUpdateSaleOrderComment( id: String!, comment: String! ): CRMSaleOrderComment
 
   """
+  Delete the Sales Order Comment attached to a sales order
+  """
+  LasecDeleteSalesOrderComment(id: String!) : SimpleResponse
+
+  """
   Delete the Sales Order Document attached to a sales order
   """
   LasecDeleteSalesOrderDocument(id: String!, sales_order_id: String!) : SimpleResponse
 
   """
-  Add a document to the sales order.  
+  Add a document to the sales order.
   This will save a local copy then sync with the lasec api once the file is cataloged
   """
   LasecAddSalesOrderDocument(file: Upload!, sales_order_id: String!) : LasecDocument

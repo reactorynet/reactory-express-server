@@ -2618,10 +2618,16 @@ export const deleteSalesOrdersDocument = async (args: any, context: Reactory.IRe
  * Fetches sales order comments for the order id
  * @param params
  */
-export const getSalesOrderComments = async (params: { orderId: string }) => {
-  return LasecSalesOrderComment.find({
-    salesOrderId: params.orderId
-  }).populate('who').then();
+export const getSalesOrderComments = async (params: { orderId: string }, context: Reactory.IReactoryContext) => {
+  let _comments: any[] = [];
+
+  const apiComments = await getISODetails({ orderId: params.orderId, quoteId: '' }, context).then();
+  if (apiComments) { _comments = [...apiComments.comments]; }
+
+  const dbComments = await LasecSalesOrderComment.find({ salesOrderId: params.orderId }).populate('who').then();
+  if (dbComments) { _comments = [..._comments, ...dbComments]; }
+
+  return _comments;
 };
 
 /**
@@ -2648,13 +2654,25 @@ export const saveSalesOrderComment = async (params: { orderId: string, comment: 
   }
 };
 
+export const deleteSalesOrderComment = async (args: any, context: Reactory.IReactoryContext) => {
+  const { id } = args;
+  logger.debug(`DELETING SALES ORDER COMMENT: ${id}`);
 
+  const deleteResponse = await LasecSalesOrderComment.findByIdAndDelete(id).exec();
+  return {
+    success: deleteResponse || deleteResponse._id != '' ? true : false,
+    message: deleteResponse || deleteResponse._id != '' ? 'Comment successfully deleted.' : 'Could not delete comment.'
+  }
+};
 
 /**
  * get the iso details
  * @param params
  */
 export const getISODetails = async (params: { orderId: string, quoteId: string }, context: Reactory.IReactoryContext) => {
+
+  logger.debug(`GETTING ISO DETAILS:: ${params.orderId} | ${context}`);
+  // logger.debug(`GETTING ISO DETAILS:: ${params.orderId} | ${params.quoteId} | ${JSON.stringify(context)}`)
 
   const {
     orderId,
@@ -2676,9 +2694,13 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
   logger.debug(`LINE ITEMS:: ${JSON.stringify(salesOrders)}`);
 
   let lineItems: any[] = [];
+  let freight = 0;
+  let comments: any[] = [];
+
   salesOrders.forEach(so => {
 
-    if (so.product_code != '') {
+    // NORMAL STOCK LINE
+    if (so.line_type == 1) {
       const item = {
         id: so.id,
         line: so.line,
@@ -2693,18 +2715,36 @@ export const getISODetails = async (params: { orderId: string, quoteId: string }
         backOrderQty: so.back_order_qty,
         reservedQty: so.reserved_qty,
         comment: so.comment,
+        dispatchQty: so.dispatch_qty,
+        invoiceQty: so.invoice_qty
       }
 
       lineItems.push(item);
     }
-  })
+
+    // FREIGHT ITEM
+    if (so.line_type == 4) {
+      freight = so.total_price;
+    }
+
+    // COMMENTS
+    if (so.line_type == 6) {
+      comments.push({ id: '', who: {}, when: '', imageUrl: so.image_url, comment: so.comment });
+    }
+  });
 
   logger.debug(`LINE ITEMS TO RETURN :: ${JSON.stringify(lineItems)}`);
+  logger.debug(`LINE ITEM COMMENTS TO RETURN :: ${JSON.stringify(comments)}`);
 
-  let existing_comments = await LasecSalesOrderComment.find({ salesOrderId: params.orderId }).populate('who').then();
+  const totalSellingPrice = lineItems.reduce((total, lineItem) => {
+    return total + lineItem.totalPrice;
+  }, 0);
+
   return {
     lineItems,
-    comments: existing_comments
+    sellingPrice: totalSellingPrice,
+    freight,
+    comments
   };
 }
 

@@ -9,64 +9,72 @@ const graphql: Reactory.IFormGraphDefinition = {
         orderDate
         salesOrderNumber
         shippingDate
-        
+
+        salesTeam
+
         quoteId
         quoteDate
-        
+
         orderType
         orderStatus
-    
-        iso  
-        
+
+        iso
+
         customer
-        
+
         crmCustomer {
           id
           registeredName
           tradingName
         }
-        
+
         poNumber
         currency
-        
+
         deliveryAddress
         deliveryNote
         warehouseNote
-        
+
         salesTeam
+        salesPerson
         value
         reserveValue
         shipValue
         backorderValue
-        
+
         dispatchCount
         dispatches
-        
+
         orderQty
         shipQty
         reservedQty
         backOrderQty
-        
+
         documents
-        
-        details {    
+
+        gpPercentage
+        mupPercentage
+        subTotal
+        orderValue
+
+        details {
           lineItems {
             id
             line
             productCode
             productDescription
-            
+
             price
             totalPrice
             unitOfMeasure
-            
+
             orderQty
-            shippedQty                              
+            shippedQty
             reservedQty
             backOrderQty
-            
-            comment 
-            
+
+            comment
+
             product {
               id
               image
@@ -83,6 +91,7 @@ const graphql: Reactory.IFormGraphDefinition = {
             }
             when
             comment
+            imageUrl
           }
         }
       }
@@ -104,9 +113,13 @@ const graphql: Reactory.IFormGraphDefinition = {
       'iso': ['orderSummary.orderId', 'comments.orderId'],
       'orderType': 'orderSummary.orderType',
       'poNumber': 'orderSummary.poNumber',
-      'salesTeam': 'orderSummary.salesPerson',
-      'quoteId': 'orderSummary.quoteNumber',      
-      'details.lineItems': 'lineItems',
+      'salesPerson': 'orderSummary.salesPerson',
+      'quoteId': 'orderSummary.quoteNumber',
+
+      'gpPercentage': 'lineItems.gp',
+      'mupPercentage': 'lineItems.mup',
+      'subTotal': 'lineItems.subTotal',
+      'orderValue': 'lineItems.orderValue',
 
       'details.comments': 'comments.comments',
     },

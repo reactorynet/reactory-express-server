@@ -35,13 +35,13 @@ const uiSchema: any = {
       lineItems: { xs: 12 },
     },
     {
-      deliveryDetails: { xs: 12 },
-    },
-    {
       orderSummary: { xs: 12 },
     },
     {
       documents: { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 },
+    },
+    {
+      deliveryDetails: { xs: 12 },
     },
     {
       comments: { xs: 12 },
@@ -57,7 +57,13 @@ const uiSchema: any = {
     'ui:options': {
       propsMap: {
         'formData': 'formData.$SalesOrder',
-        'formData.orderId': 'sales_order_id'
+        'formData.orderId': ['sales_order_id', 'orderId', 'formData.orderId'],
+
+        'formData.lineItems.gp': 'formData.gp',
+        'formData.lineItems.mup': 'formData.mup',
+        'formData.lineItems.subTotal': 'formData.subTotal',
+        'formData.lineItems.orderValue': 'formData.orderValue',
+
       }
     }
   },
@@ -162,9 +168,8 @@ const uiSchema: any = {
     'ui:widget': 'LasecCRMISODetailComments',
     'ui:options': {
       propsMap: {
-        'formData.orderSummary.orderId': 'orderId',
-        'formData.new_comment': 'formData.new_comment',
-        'formData.comments': 'formData.comments',
+        'formData.orderId': ['orderId', 'formData.orderId'],
+        'formData.comments.comments': 'formData.comments',
       },
     },
   },

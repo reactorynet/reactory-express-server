@@ -703,6 +703,7 @@ export interface LasecSalesOrder {
   warehouseNote: string
 
   salesTeam: string
+  salesPerson: string
   value: number
   reserveValue: number
   shipValue: number
@@ -725,6 +726,11 @@ export interface LasecSalesOrder {
     lineItems: any[],
     comments: any[]
   }
+
+  gpPercentage: number,
+  mupPercentage: number,
+  subTotal: number,
+  orderValue: number,
 }
 
 export interface LasecAddress {
