@@ -2622,7 +2622,11 @@ export const getSalesOrderComments = async (params: { orderId: string }, context
   let _comments: any[] = [];
 
   const apiComments = await getISODetails({ orderId: params.orderId, quoteId: '' }, context).then();
-  if (apiComments) { _comments = [...apiComments.comments]; }
+  if (apiComments && apiComments.comments) {
+    apiComments.comments.forEach((comment_item) => {
+      _comments.push({ ...comment_item, when: new Date(), who: context.user })
+    });
+  }
 
   const dbComments = await LasecSalesOrderComment.find({ salesOrderId: params.orderId }).populate('who').then();
   if (dbComments) { _comments = [..._comments, ...dbComments]; }

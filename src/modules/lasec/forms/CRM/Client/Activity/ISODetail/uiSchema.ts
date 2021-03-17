@@ -166,6 +166,9 @@ const uiSchema: any = {
 
   comments: {
     'ui:widget': 'LasecCRMISODetailComments',
+    'ui:props': {
+      mode: 'new',
+    },
     'ui:options': {
       propsMap: {
         'formData.orderId': ['orderId', 'formData.orderId'],
