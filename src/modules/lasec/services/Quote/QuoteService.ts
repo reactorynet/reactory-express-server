@@ -84,7 +84,7 @@ class LasecQuoteService implements IQuoteService {
 
       if (documents.length > 0) {
         documents.forEach((isoDoc) => {
-          isoDoc.uploadContext = `lasec-crm::sales-order::document-${iso_input.quote_id}-${result.id}`;
+          isoDoc.uploadContext = `lasec-crm::sales-order::document-${iso_input.quote_id}-${`${result.id}`.padStart(15, '0')}`;
           isoDoc.save();
         });
       }

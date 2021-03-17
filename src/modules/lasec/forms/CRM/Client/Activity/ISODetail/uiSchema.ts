@@ -127,7 +127,7 @@ const uiSchema: any = {
                       }
                   }`,
             variables: {
-              uploadContext: 'lasec-crm::sales-order::document-${props.formContext.quote_id}-${props.formContext.iso_id}', // eslint-disable-line
+              uploadContext: 'lasec-crm::sales-order::document-${props.formContext.quote_id}-${props.formContext.iso_id.padStart(15, "0")}', // eslint-disable-line
             },
             onSuccessEvent: {
               name: 'lasec-crm::sales-order::document::uploaded',
