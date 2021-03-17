@@ -35,12 +35,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${data.orderType}',
+                format: '${formData}',
               },
             },
           },
           propsMap: {
-            rowData: 'data',
+            'rowData.orderType': 'formData',
           },
         },
         {
@@ -81,6 +81,7 @@ const uiSchema: any = {
           component: 'lasec-crm.SalesOrderActionButton',
           propsMap: {
             'rowData.salesOrderNumber': 'sales_order_number',
+            'rowData.quoteId': 'quote_id',
           },
         },
         {
@@ -91,12 +92,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${data.poNumber}',
+                format: '${formData}',
               },
             },
           },
           propsMap: {
-            rowData: 'data',
+            'rowData.poNumber': 'formData',
           },
         },
         {
@@ -155,12 +156,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${data.client}',
+                format: '${formData}',
               },
             },
           },
           propsMap: {
-            rowData: 'data',
+            'rowData.client': 'formData',
           },
         },
         {

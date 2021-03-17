@@ -1963,7 +1963,7 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
     }
   }, context).then();
 
-  logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ${salesOrdersIds.length} ORDERS FOUND`);
+  logger.debug(`PAGED SALES ORDERS IDS RESPONSE:: ORDERS FOUND`, { sales_orders: JSON.stringify(salesOrdersIds) });
 
   let ids: string[] = [];
 
@@ -1994,8 +1994,59 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
 
     let salesOrders = salesOrdersDetails && salesOrdersDetails.items ? [...salesOrdersDetails.items] : [];
 
+    /**
+     * 
+     {
+      "items": [
+        {
+          "id": "513222",
+          "document_ids": [],
+          "order_date": "2021-01-14T00:00:00Z",
+          "account_number": "14502",
+          "order_type": "Normal",
+          "req_ship_date": "2021-01-14T00:00:00Z",
+          "order_status": "Completed",
+          "sales_order_number": "513222",
+          "sales_order_id": "513222",
+          "company_trading_name": "NEUBERG GLOBAL LABORATORIES SA (PTY) LTD",
+          "sales_team_id": "LAB107",
+          "currency": "R",
+          "quote_id": null,
+          "quote_date": "",
+          "order_value": 0,
+          "order_qty": 0,
+          "ship_qty": 0,
+          "back_order_qty": 0,
+          "reserved_qty": 0,
+          "back_order_value": 0,
+          "reserved_value": 0,
+          "shipped_value": 9000000,
+          "delivery_address": "Shop L4,  The View,  Tygervalley Health,Care,  43 Old Oak Rd,  Bellville,  Cape,Town,  7530,  South Africa",
+          "customer_name": "Chris Haller",
+          "customerponumber": "NGLLAS001",
+          "dispatch_note_ids": [],
+          "invoice_ids": [
+            "598166"
+          ],
+          "warehouse_note": "",
+          "delivery_note": "",
+          "sub_total": 9000000,
+          "gp_percent": 0,
+          "mup_percent": 0
+        },
+        ..,
+        ..,
+      }
+     * 
+     * 
+     */
+
 
     salesOrders = salesOrders.map((order, idx) => {
+
+
+
+
       return {
         // id: order.id || idx,
         // salesOrderNumber: order.sales_order_number,
@@ -2018,30 +2069,44 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
         // reserveValue: order.reserved_value || 0,
         // shipValue: order.shipped_value || 0,
         // backorderValue: order.back_order_value || 0,
-
+        ...order,
 
         id: order.id,
+        orderDate: order.order_date,
+
         salesOrderNumber: order.sales_order_number,
+        shippingDate: order.req_ship_date,
+
+        quoteId: order.quote_id,
+        quoteDate: order.quote_date,
+
         orderType: order.order_type,
         orderStatus: order.order_status,
-        orderDate: order.order_date,
-        shippingDate: order.req_ship_date,
-        quoteDate: order.quote_date,
+
         iso: order.sales_order_id,
+
         customer: order.company_trading_name,
+
         client: order.customer_name,
+
         poNumber: order.customerponumber,
-        quoteId: order.quote_id,
         currency: order.currency,
+
         deliveryAddress: order.delivery_address,
-        warehouseNote: order.warehouse_note,
         deliveryNote: order.delivery_note,
+        warehouseNote: order.warehouse_note,
+
         salesTeam: order.sales_team_id,
         value: order.order_value,
         reserveValue: order.reserved_value,
         shipValue: order.shipped_value,
         backorderValue: order.back_order_value,
 
+        dispatchCount: order.dispatch_note_ids.length,
+        dispatches: order.dispatch_note_ids,
+
+        invoices: order.invoice_ids,
+        invoiceCount: order.invoice_ids.length
       }
     });
 
@@ -2061,6 +2126,8 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
 export const getClientSalesOrders = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(` -- GETTING CLIENT SALES ORDERS --  ${JSON.stringify(params)}`);
+
+  debugger
 
   const {
     clientId,
@@ -2155,6 +2222,8 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
     }
   }
 
+  debugger
+
   let salesOrdersIds = await lasecApi.SalesOrders.list({
     filter: apiFilter,
     pagination: {
@@ -2163,6 +2232,8 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
     }
   }, context).then();
 
+
+  logger.debug(`Results searching for Sales Orders`, { result: JSON.stringify(salesOrdersIds, null, 2), apiFilter: JSON.stringify(apiFilter, null, 2) });
   let ids: string[] = [];
 
   if (isArray(salesOrdersIds.ids) === true) {
@@ -2237,6 +2308,8 @@ const sales_order_field_maps: any = {
 export const getCRMSalesOrders = async (params: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(` -- GETTING CRM SALES ORDERS --  ${JSON.stringify(params)}`);
+
+  debugger
 
   const {
     search = "",
@@ -2341,7 +2414,7 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
 
 interface CustomerDocumentQueryParams {
   id?: string,
-  ids?: string[],
+  ids?: any[],
   uploadContexts?: string[],
   paging?: {
     page: number,
@@ -2549,7 +2622,11 @@ export const getSalesOrderComments = async (params: { orderId: string }, context
   let _comments: any[] = [];
 
   const apiComments = await getISODetails({ orderId: params.orderId, quoteId: '' }, context).then();
-  if (apiComments) { _comments = [...apiComments.comments]; }
+  if (apiComments && apiComments.comments) {
+    apiComments.comments.forEach((comment_item) => {
+      _comments.push({ ...comment_item, when: new Date(), who: context.user })
+    });
+  }
 
   const dbComments = await LasecSalesOrderComment.find({ salesOrderId: params.orderId }).populate('who').then();
   if (dbComments) { _comments = [..._comments, ...dbComments]; }

@@ -22,7 +22,7 @@ const graphql: Reactory.IFormGraphDefinition = {
       }
     }`,
     variables: {
-      'formData.orderId': 'orderId',
+      'formContext.iso_id': 'orderId',
     },
     resultType: 'object',
     resultMap: {
@@ -98,13 +98,11 @@ const graphql: Reactory.IFormGraphDefinition = {
       updateMessage: 'Save order comment',
       onSuccessMethod: 'refresh',
       variables: {
-        'formData.orderId': 'orderId',
+        'formContext.iso_id': 'orderId',
         'formData.newComment': 'comment',
       },
-
-
-    }
-  }
+    },
+  },
 };
 
 const schema: Reactory.ISchema = {
@@ -129,7 +127,7 @@ const schema: Reactory.ISchema = {
     },
     newComment: {
       type: 'string',
-      title: 'Add a Comment'
+      title: 'Add a Comment',
     }
   }
 };
@@ -137,7 +135,9 @@ const schema: Reactory.ISchema = {
 const uiSchema: any = {
   'ui:options': {
     componentType: "div",
+    container: "div",
     toolbarPosition: 'bottom',
+    submitIcon: 'speaker_notes',
     containerStyles: {
       padding: 0,
       margin: 0,
@@ -176,54 +176,6 @@ const uiSchema: any = {
     'ui:widget': 'SalesOrderCommentGrid',
   },
 
-  // comments: {
-  //   'ui:widget': 'MaterialTableWidget',
-  //   'ui:options': {
-  //     columns: [
-  //       {
-  //         title: "Who", field: "fullName",
-  //         component: 'core.LabelComponent@1.0.0',
-  //         props: {
-  //           uiSchema: {
-  //             'ui:options': {
-  //               variant: 'body2',
-  //               format: '${rowData.who.fullName}'
-  //             }
-  //           },
-  //         },
-  //         propsMap: {
-  //           'rowData': 'rowData',
-  //         }
-  //       },
-  //       {
-  //         title: 'When',
-  //         field: 'when',
-  //         component: 'core.LabelComponent@1.0.0',
-  //         props: {
-  //           uiSchema: {
-  //             'ui:options': {
-  //               variant: 'body2',
-  //               format: '${api.utils.moment(rowData.when).format(\'DD MMM YYYY HH:mm\')}'
-  //             }
-  //           },
-  //         },
-  //         propsMap: {
-  //           'rowData.date': 'value',
-  //         }
-  //       },
-  //       {
-  //         title: "Comment", field: "comment"
-  //       },
-  //     ],
-  //     options: {
-  //       grouping: false,
-  //       search: false,
-  //       showTitle: false,
-  //       toolbar: false,
-  //     },
-  //     remoteData: false,
-  //   }
-  // },
   newComment: {
     'ui:options': {
       component: 'TextField',

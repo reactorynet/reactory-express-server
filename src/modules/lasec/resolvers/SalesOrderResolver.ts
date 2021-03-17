@@ -197,7 +197,7 @@ const SalesOrderResolver = {
     documents: async (sales_order: LasecSalesOrder, args: any, context: Reactory.IReactoryContext, info: any) => {
 
       try {
-        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::${sales_order.id}`] }, context).then()
+        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::document::${sales_order.quoteId}-${sales_order.id}`] }, context).then()
       } catch (exception) {
         logger.error('Could not get the document for the sales order', exception);
         throw exception;
@@ -206,6 +206,7 @@ const SalesOrderResolver = {
 
     salesTeam: async (sales_order: LasecSalesOrder, args: any, context: Reactory.IReactoryContext, info: any) => {
 
+      if (sales_order.salesTeam) return sales_order.salesTeam
 
       if (isNil(sales_order.quoteId) === true) return 'NO QUOTE ID';
 
@@ -505,10 +506,11 @@ const SalesOrderResolver = {
     LasecGetSalesOrderDocuments: async (parent: any, params: { sales_order_id: string, paging: PagingRequest }, context: Reactory.IReactoryContext) => {
 
       try {
-
         const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
         const sales_order = await quoteService.getSalesOrder(params.sales_order_id).then();
-        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::document-${sales_order.quoteId}-${sales_order.id}`], paging: params.paging }, context);
+
+        let document_context = `lasec-crm::sales-order::document-${sales_order.quoteId}-${sales_order.id.padStart(15, '0')}`
+        return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [document_context], paging: params.paging }, context);
 
       } catch (exception) {
         logger.error('Could not get the document for the sales order', exception);

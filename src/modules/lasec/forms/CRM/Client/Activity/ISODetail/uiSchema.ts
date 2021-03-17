@@ -118,16 +118,16 @@ const uiSchema: any = {
           mutation: {
             name: 'LasecUploadDocument',
             text: `mutation LasecUploadDocument($file: Upload!, $uploadContext: String){
-                                        LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
-                                            id
-                                            filename
-                                            link
-                                            mimetype
-                                            size
-                                        }
-                                    }`,
+                      LasecUploadDocument(file: $file, uploadContext: $uploadContext) {
+                          id
+                          filename
+                          link
+                          mimetype
+                          size
+                      }
+                  }`,
             variables: {
-              uploadContext: 'lasec-crm::sales-order::document-${props.formContext.quote_id}-${props.formContext.iso_id}', // eslint-disable-line
+              uploadContext: 'lasec-crm::sales-order::document-${props.formContext.quote_id}-${props.formContext.iso_id.padStart(15, "0")}', // eslint-disable-line
             },
             onSuccessEvent: {
               name: 'lasec-crm::sales-order::document::uploaded',
@@ -155,6 +155,9 @@ const uiSchema: any = {
 
     uploadedDocuments: {
       'ui:widget': 'LasecSalesOrderDocuments',
+      'ui:options': {
+
+      },
       'ui:props': {
         mode: 'existing',
       },
@@ -163,6 +166,9 @@ const uiSchema: any = {
 
   comments: {
     'ui:widget': 'LasecCRMISODetailComments',
+    'ui:props': {
+      mode: 'new',
+    },
     'ui:options': {
       propsMap: {
         'formData.orderId': ['orderId', 'formData.orderId'],

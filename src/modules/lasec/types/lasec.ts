@@ -672,6 +672,7 @@ export interface LasecCreateSalesOrderInput {
   contact_number: string
   document_context: string,
   documents: any[]
+  document_ids: number[]
 }
 
 

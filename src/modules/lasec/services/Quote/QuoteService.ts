@@ -28,7 +28,7 @@ import { Quote, QuoteReminder } from '@reactory/server-modules/lasec/schema/Quot
 import LasecDatabase from '../../database';
 import { MongooseDocument } from 'mongoose';
 import { execql } from 'graph/client';
-import ReactoryFileModel from 'modules/core/models/CoreFile';
+import ReactoryFileModel from '@reactory/server-core/modules/core/models/CoreFile';
 
 class LasecQuoteService implements IQuoteService {
 
@@ -58,15 +58,33 @@ class LasecQuoteService implements IQuoteService {
   async createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<any> {
 
     try {
-      const result = await LAPI.SalesOrders.createSalesOrder(sales_order_input, this.context).then();
 
-      logger.debug(`Create Sales Order Result: ${sales_order_input.quote_id}`, JSON.stringify(result, null, 2));
+      let iso_input = { ...sales_order_input };
+
+
+      //collect the documents that are related the this item.
+      const documents: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find({ uploadContext: `lasec-crm::sales-order::document-${sales_order_input.quote_id}` }).then();
+
+      iso_input.document_ids = [];
+      documents.forEach((iso_doc) => {
+        if (iso_doc.remotes && iso_doc.remotes.length > 0) {
+          if (iso_doc.remotes[0].id && iso_doc.remotes[0].id.indexOf('@') > 0) {
+            let id = parseInt(iso_doc.remotes[0].id.split("@")[0]);
+            if (id > 0) {
+              iso_input.document_ids.push(id);
+            }
+          }
+        }
+      });
+
+      const result = await LAPI.SalesOrders.createSalesOrder(iso_input, this.context).then();
+
+      logger.debug(`Create Sales Order Result: ${iso_input.quote_id}`, JSON.stringify(result, null, 2));
       //get all the documents we associated with the quote and now link it to the sales order id
 
-      const documents: Reactory.IReactoryFileModel[] = await ReactoryFileModel.find({ uploadContext: `lasec-crm::sales-order::document-${sales_order_input.quote_id}` }).then();
       if (documents.length > 0) {
         documents.forEach((isoDoc) => {
-          isoDoc.uploadContext = `lasec-crm::sales-order::document-${sales_order_input.quote_id}-${result.id}`;
+          isoDoc.uploadContext = `lasec-crm::sales-order::document-${iso_input.quote_id}-${`${result.id}`.padStart(15, '0')}`;
           isoDoc.save();
         });
       }
