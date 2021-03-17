@@ -35,6 +35,7 @@ import {
 } from '../types/lasec';
 import { deleteSalesOrdersDocument, getCustomerDocuments } from '../resolvers/Helpers';
 import { ReactoryFileModel } from '@reactory/server-core/modules/core/models/CoreFile';
+import { queryAsync as mysql } from '@reactory/server-core/database/mysql';
 
 const config = {
   WEBSOCKET_BASE_URL: process.env.LASEC_WSS_BASE_URL || 'wss://api.lasec.co.za/ws/',
@@ -643,13 +644,38 @@ const Api = {
       }
 
 
+
       let do_link_file = async (remote_id: string) => {
         return reactoryFile;
       };
 
       switch (document_type) {
         case 'sales-order': {
+          do_link_file = async (remote_id: string) => {
+            //lasec-crm::sales-order::document-2102-107367000-000000000510735
+            debugger
+            try {
+              let document_key = reactoryFile.uploadContext.split("::")[2];
+              let iso_key = document_key.split("-")[3];
+              const db_result = await mysql(`SELECT salesorderid FROM QuoteToSalesOrder WHERE salesorder = '${iso_key}';`, 'mysql.lasec360', null, context).then();
 
+              if (db_result[0] && db_result[0].salesorderid) {
+                const existing_document_ids = await mysql(`SELECT document_ids FROM SalesOrder where salesorderid = ${db_result[0].salesorderid};`, 'mysql.lasec360', null, context).then();
+                debugger
+                if (existing_document_ids[0].document_ids && existing_document_ids[0].document_ids.length > 0) {
+
+                  await mysql(`UPDATE SalesOrder SET document_ids = '${existing_document_ids[0].document_ids},${remote_id}' WHERE salesorderid = ${db_result[0].salesorderid}`, 'mysql.lasec360', null, context).then();
+                } else {
+                  await mysql(`UPDATE SalesOrder SET document_ids = '${remote_id}' WHERE salesorderid = ${db_result[0].salesorderid}`, 'mysql.lasec360', null, context).then();
+                }
+              }
+            } catch (badKeyError) {
+              logger.error('Could not extract ISO number to patch it')
+            }
+
+
+            return reactoryFile;
+          }
           break;
         }
         case 'invoice': {

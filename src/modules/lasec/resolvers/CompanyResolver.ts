@@ -1344,7 +1344,16 @@ const getExtension = (filename: string) => {
 const uploadRemote = async (file: Reactory.IReactoryFile, customer: any, context: Reactory.IReactoryContext): Promise<Reactory.IReactoryFile> => {
   try {
     //set upload files if any and clear local cache (delete files)
-    const uploadResult = await lasecApi.Documents.upload(file, customer, false, context);
+    let document_type = 'client';
+    if (file.uploadContext.indexOf('lasec-crm::sales-order::document') >= 0) {
+      document_type = 'sales_order'
+    }
+
+    if (file.uploadContext.indexOf('lasec-crm::sales-order::invoice') >= 0) {
+      document_type = 'invoice'
+    }
+
+    const uploadResult = await lasecApi.Documents.upload(file, customer, false, context, document_type);
     logger.debug(`♻ File upload result: FILE SYNCH ${uploadResult.timeline.map((tl) => `\n\t * ${tl.timestamp} => ${tl.message}`)}`);
 
     return file;

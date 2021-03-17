@@ -81,6 +81,7 @@ const uiSchema: any = {
           component: 'lasec-crm.SalesOrderActionButton',
           propsMap: {
             'rowData.salesOrderNumber': 'sales_order_number',
+            'rowData.quoteId': 'quote_id',
           },
         },
         {

@@ -508,7 +508,7 @@ const SalesOrderResolver = {
     LasecGetSalesOrderDocuments: async (parent: any, params: { sales_order_id: string, paging: PagingRequest }, context: Reactory.IReactoryContext) => {
 
       try {
-
+        debugger
         const quoteService: IQuoteService = context.getService('lasec-crm.LasecQuoteService@1.0.0') as IQuoteService;
         const sales_order = await quoteService.getSalesOrder(params.sales_order_id).then();
         return getCustomerDocuments({ ids: sales_order.documentIds, uploadContexts: [`lasec-crm::sales-order::document-${sales_order.quoteId}-${sales_order.id}`], paging: params.paging }, context);
