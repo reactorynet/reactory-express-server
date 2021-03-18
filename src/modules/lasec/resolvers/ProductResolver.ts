@@ -13,6 +13,7 @@ import Hash from '@reactory/server-core/utils/hash';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import { getLoggedIn360User } from './Helpers';
 import lasecApi from '../api';
+import { LasecPriceRequest, SimpleResponse } from '../types/lasec';
 
 
 const WarehouseIds: any = {
@@ -165,6 +166,8 @@ const getProducts = async (params: any, context: Reactory.IReactoryContext) => {
     const loggedInUser = await getLoggedIn360User(false, context).then();
     const currencies = loggedInUser && loggedInUser.user_type === 'lasec_international' ? ['USD', 'ZAR'] : ['ZAR'];
 
+
+
     products = products.map(($product: any) => {
       let priceAdditionalInfo = '';
 
@@ -172,6 +175,11 @@ const getProducts = async (params: any, context: Reactory.IReactoryContext) => {
       if ($product.price_is_expired === true) priceAdditionalInfo = 'EXPIRED';
 
       const $productResult: any = {
+        meta: {
+          owner: 'lasec-crm',
+          ref: $product.id,
+          source: $product,
+        },
         id: $product.id,
         name: $product.name,
         code: $product.code,
@@ -179,6 +187,7 @@ const getProducts = async (params: any, context: Reactory.IReactoryContext) => {
         qtyAvailable: $product.QtyAvailable,
         qtyOnHand: $product.QtyOnHand,
         qtyOnOrder: $product.QtyOnOrder,
+        priceIsExpired: $product.price_is_expired,
         unitOfMeasure: $product.pack_size,
         price: $product.list_price_cents,
         priceAdditionalInfo,
@@ -331,6 +340,11 @@ export const getProductById = async (params: any,
 
 
       product = {
+        meta: {
+          owner: 'lasec-crm',
+          ref: product.id,
+          source: product,
+        },
         id: product.id,
         name: product.name,
         code: product.code,
@@ -340,6 +354,7 @@ export const getProductById = async (params: any,
         qtyOnOrder: product.QtyOnOrder,
         unitOfMeasure: product.pack_size,
         price: product.list_price_cents,
+        priceIsExpired: product.price_is_expired,
         priceAdditionalInfo: product.price_is_expired ? 'EXPIRED' : (product.on_special ? 'ON_SPECIAL' : ''), // eslint-disable-line
         image: product.image_url,
         onSyspro: product.is_in_syspro,
@@ -699,6 +714,25 @@ export default {
     },
   },
   Mutation: {
+    LasecRequestNewProductPricing: async (parent: any, args: { priceRequest: LasecPriceRequest }, context: Reactory.IReactoryContext): Promise<SimpleResponse> => {
+
+
+      const { status = 'failed', buyer_name = 'NONE' } = await lasecApi.post(`api/product/${args.priceRequest.product_id}/request_new_product_price/`, args.priceRequest, undefined, null, context).then();
+
+      if (status === 'success') {
+        return {
+          message: `Price Request sent to ${buyer_name}`,
+          success: true,
+        };
+      }
+
+      logger.error('Could not send price request', { status, buyer_name });
+
+      return {
+        success: false,
+        message: 'Did not get a successful response from API',
+      };
+    },
     LasecSendProductQuery: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
       return sendProductQuery(args, context);
     },

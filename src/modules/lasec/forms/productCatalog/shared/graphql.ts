@@ -13,6 +13,7 @@ export default {
         product
         products {
           id
+          meta
           name
           code
           description
@@ -21,6 +22,7 @@ export default {
           qtyOnOrder
           unitOfMeasure
           price
+          priceIsExpired
           priceAdditionalInfo
           image
           onSyspro
@@ -137,6 +139,7 @@ export default {
           product
           products {
             id
+            meta
             name
             code
             description
@@ -145,6 +148,7 @@ export default {
             qtyOnOrder
             unitOfMeasure
             price
+            priceIsExpired
             priceAdditionalInfo
             image
             onSyspro

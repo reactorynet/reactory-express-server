@@ -1,7 +1,7 @@
 import { Reactory } from "@reactory/server-core/types/reactory";
 
 export const table_graph: Reactory.IFormGraphDefinition = {
-  
+
   queries: {
     products_table: {
       name: 'LasecGetProductList',
@@ -17,6 +17,7 @@ export const table_graph: Reactory.IFormGraphDefinition = {
           product
           products {
             id
+            meta
             name
             code
             description
@@ -25,6 +26,7 @@ export const table_graph: Reactory.IFormGraphDefinition = {
             qtyOnOrder
             unitOfMeasure
             price
+            priceIsExpired
             priceAdditionalInfo
             image
             landedPrice
@@ -50,7 +52,7 @@ export const table_graph: Reactory.IFormGraphDefinition = {
             availableCurrencies
           }
         }
-      }`,      
+      }`,
       resultType: 'object',
       edit: false,
       new: false,
@@ -80,6 +82,7 @@ export const cards_graph: Reactory.IFormGraphDefinition = {
         product
         products {
           id
+          meta
           name
           code
           description
@@ -88,6 +91,7 @@ export const cards_graph: Reactory.IFormGraphDefinition = {
           qtyOnOrder
           unitOfMeasure
           price
+          priceIsExpired
           priceAdditionalInfo
           image
           landedPrice

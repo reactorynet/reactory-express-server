@@ -126,6 +126,7 @@ export const cards_graph: Reactory.IFormGraphDefinition = {
         product
         products {
           id
+          meta
           name
           code
           description
@@ -134,6 +135,7 @@ export const cards_graph: Reactory.IFormGraphDefinition = {
           qtyOnOrder
           unitOfMeasure
           price
+          priceIsExpired
           priceAdditionalInfo
           image
           landedPrice

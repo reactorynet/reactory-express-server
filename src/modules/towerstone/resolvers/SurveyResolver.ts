@@ -297,18 +297,40 @@ export default {
       return entry.message;
     },
   },
-  SurveyStatistics: {
-    launched: async (statistics: TowerStone.ISurveyStatistics, args: any, context: Reactory.IReactoryContext): Promise<number> => {
-      let launched: number = statistics.launched;
-      if (statistics.$survey.delegates) {
-        launched = lodash.countBy(statistics.$survey.delegates, 'launched')['true']
-      }
+  // SurveyStatistics: {
+  //   launched: async (statistics: TowerStone.ISurveyStatistics, args: any, context: Reactory.IReactoryContext): Promise<number> => {
+  //     let launched: number = statistics.launched;
+  //     if (statistics.$survey.delegates) {
+  //       launched = lodash.countBy(statistics.$survey.delegates, 'launched')['true']
+  //     }
 
-      return launched;
-    },
+  //     return launched;
+  //   },
+  //   complete: async (statistics: TowerStone.ISurveyStatistics, args: any, context: Reactory.IReactoryContext): Promise<number> => {
+  //     let complete_count = 0;
+  //     
+  //     if (statistics.$survey) {
+  //       const survey: TowerStone.ISurvey = statistics.$survey;
 
+  //       if (survey.delegates) {
+  //         survey.delegates.forEach((delegateEntry: TowerStone.ISurveyDelegateEntry) => {
+  //           if (delegateEntry.assessments && delegateEntry.assessments.length > 0) {
+  //             let delegate_completed_count = 0;
+  //             delegateEntry.assessments.forEach((assessment: TowerStone.IAssessment) => {
+  //               if (assessment.complete === true) {
+  //                 delegate_completed_count += 1;
+  //               }
+  //             });
+  //             if (delegate_completed_count === delegateEntry.assessments.length) complete_count += 1;
+  //           }
+  //         });
+  //       }
+  //     }
 
-  },
+  //     return complete_count;
+  //   }
+
+  // },
   Survey: {
     id(survey: TowerStone.ISurvey) {
       if (survey && survey._id)
@@ -344,9 +366,9 @@ export default {
     },
     statistics: async (survey: TowerStone.ISurvey, args: any, context: Reactory.IReactoryContext): Promise<TowerStone.ISurveyStatistics> => {
 
-      debugger;
+      ;
 
-      const active_assessments: TowerStone.IAssessment[] = await Assessment.find({ survey: survey.id, deleted: false }).then();
+      const active_assessments: TowerStone.IAssessment[] = await Assessment.find({ survey: survey._id, deleted: false }).then();
       const assessments_by_delegates = lodash.groupBy(active_assessments, 'delegate');
       const assessments_by_complete = lodash.groupBy(active_assessments, 'complete');
       const { delegates } = survey;

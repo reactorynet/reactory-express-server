@@ -11,7 +11,7 @@ const uiSchema: any = {
     },
     style: {
       marginTop: '0',
-    },        
+    },
     componentType: "div",
     showSubmit: false,
     showRefresh: false,
@@ -23,10 +23,10 @@ const uiSchema: any = {
       addNew: { xs: 12, sm: 12, md: 6, lg: 6 },
       selected: { xs: 12, sm: 12, md: 6, lg: 6 },
     },
-    { 
+    {
       organisations: { xs: 12, sm: 12, md: 12, lg: 12 }
     },
-  ],  
+  ],
   addNew: {
     'ui:widget': 'SlideOutLauncher',
     'ui:options': {
@@ -50,7 +50,7 @@ const uiSchema: any = {
       propertyMap: {
         'formContext.formData.customer.id': 'formData.customerId'
       },
-      fullWidth:false
+      fullWidth: false
     }
   },
   selected: {
@@ -96,14 +96,14 @@ const uiSchema: any = {
       actions: [
         {
           icon: 'done_outline',
-          tooltip: 'Select Organization',          
+          tooltip: 'Select Organization',
           iconProps: {
             color: 'success'
           },
           mutation: 'onSelectOrganization',
           successMessage: 'Organization ${selected.name} selected',
           errorMessage: 'Could not set ${selected.name} organization',
-          variables: {            
+          variables: {
             'selected': 'newClient.organization',
           },
           event: {
@@ -112,11 +112,11 @@ const uiSchema: any = {
             paramsMap: {
               'selected': 'formData.selected',
             },
-          }                                         
-        },           
+          }
+        },
       ],
       remoteData: true,
-      query: 'organizations',      
+      query: 'organizations',
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
@@ -138,14 +138,14 @@ const newUiSchema: any = {
     },
     style: {
       marginTop: '0',
-    },    
+    },
     submitIcon: 'search',
     componentType: "div",
     showSubmit: true,
     showRefresh: false,
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       addNew: { sm: 12, md: 6 },
       selected: { sm: 12, md: 6 },
@@ -157,8 +157,7 @@ const newUiSchema: any = {
     'ui:widget': 'SlideOutLauncher',
     'ui:options': {
       props: {
-        debugger: true,
-        componentFqn: 'lasec-crm.LasecCRMNewOrganisation@1.0.0',        
+        componentFqn: 'lasec-crm.LasecCRMNewOrganisation@1.0.0',
         slideDirection: 'down',
         buttonVariant: 'Typography',
         buttonTitle: 'Add New Organisation',
@@ -169,14 +168,14 @@ const newUiSchema: any = {
             fontSize: '16px'
           }
         },
-        windowTitle: 'Add New Organisation ${formContext.uiSchemaKey}',        
+        windowTitle: 'Add New Organisation ${formContext.uiSchemaKey}',
         componentProps: {
           'formContext.mode': 'mode',
           'formData.customerId': 'formData.customerId',
           'formContext.uiSchemaKey': 'uiSchemaKey'
         }
-      },      
-      fullWidth:false
+      },
+      fullWidth: false
     }
   },
   selected: {
@@ -222,25 +221,25 @@ const newUiSchema: any = {
       actions: [
         {
           icon: 'done_outline',
-          tooltip: 'Select Organization',          
+          tooltip: 'Select Organization',
           iconProps: {
             color: 'success'
           },
           mutation: 'onSelectOrganization',
-          variables: {            
+          variables: {
             'selected': 'newClient.organization',
           },
           event: {
             name: 'onOrganizationSelected',
             via: 'form', // make either "form" || "amq"
-            paramsMap: {            
+            paramsMap: {
               'selected': 'formData.selected',
             },
-          }                                 
-        },   
+          }
+        },
       ],
       remoteData: true,
-      query: 'organizations',      
+      query: 'organizations',
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
@@ -293,7 +292,7 @@ const schema: Reactory.ISchema = {
         name: {
           type: "string",
           title: "Organization Name"
-        },       
+        },
       }
     },
     organisations: {

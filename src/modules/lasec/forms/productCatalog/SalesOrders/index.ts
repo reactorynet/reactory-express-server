@@ -18,6 +18,7 @@ const $graphql = {
           product
           products {
             id
+            meta
             name
             code
             description
@@ -26,6 +27,7 @@ const $graphql = {
             qtyOnOrder
             unitOfMeasure
             price
+            priceIsExpired
             priceAdditionalInfo
             image
             onSyspro

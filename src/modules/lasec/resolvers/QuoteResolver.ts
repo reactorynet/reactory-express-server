@@ -853,7 +853,7 @@ export default {
   LasecCustomer: {
     id: ({ id }: LasecQuote) => (id),
     // fullName: (customer: any, args: any, context: Reactory.IReactoryContext) => {
-    //   debugger
+    //   
 
     //   if (customer.fullName && typeof customer.fullName === 'function') {
     //     return customer.fullName(false);

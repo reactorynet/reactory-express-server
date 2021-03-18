@@ -33,7 +33,10 @@ type LasecProductContract {
   unif_of_measure: String
 }
 
+
+
 type Product {
+  meta: Any
   id: String
   name: String
   code: String
@@ -43,6 +46,7 @@ type Product {
   qtyOnOrder: Float
   unitOfMeasure: String
   price: Int
+  priceIsExpired: Boolean
   priceAdditionalInfo: String
   image: String
   onSyspro: String
@@ -167,6 +171,13 @@ type PagedProductResult {
   products: [Product]
 }
 
+input LasecPriceRequest {
+  product_id: String!
+  quantity: String!
+  quote_id: String!  
+  company: String
+}
+
 extend type Query {
   LasecGetProductList(
     product: String
@@ -179,6 +190,7 @@ extend type Query {
   LasecGetWarehouseStockLevels(productId: String): WarehouseStockDetails
 }
 extend type Mutation {
+  LasecRequestNewProductPricing(priceRequest: LasecPriceRequest): SimpleResponse
   LasecSendProductQuery(
     toEmail: String!
     subject: String!
