@@ -56,7 +56,7 @@ const uiSchema: any = {
             },
           },
           propsMap: {
-            'rowData.date': 'value',
+            'rowData.orderDate': 'value',
           },
         },
         {
@@ -72,7 +72,7 @@ const uiSchema: any = {
             },
           },
           propsMap: {
-            'rowData.date': 'value',
+            'rowData.shippingDate': 'value',
           },
         },
         {

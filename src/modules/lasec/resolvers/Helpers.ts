@@ -1993,89 +1993,15 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
     logger.debug(`SALES ORDER DETAILS RESPONSE:: ${JSON.stringify(salesOrdersDetails)}`);
 
     let salesOrders = salesOrdersDetails && salesOrdersDetails.items ? [...salesOrdersDetails.items] : [];
-
-    /**
-     *
-     {
-      "items": [
-        {
-          "id": "513222",
-          "document_ids": [],
-          "order_date": "2021-01-14T00:00:00Z",
-          "account_number": "14502",
-          "order_type": "Normal",
-          "req_ship_date": "2021-01-14T00:00:00Z",
-          "order_status": "Completed",
-          "sales_order_number": "513222",
-          "sales_order_id": "513222",
-          "company_trading_name": "NEUBERG GLOBAL LABORATORIES SA (PTY) LTD",
-          "sales_team_id": "LAB107",
-          "currency": "R",
-          "quote_id": null,
-          "quote_date": "",
-          "order_value": 0,
-          "order_qty": 0,
-          "ship_qty": 0,
-          "back_order_qty": 0,
-          "reserved_qty": 0,
-          "back_order_value": 0,
-          "reserved_value": 0,
-          "shipped_value": 9000000,
-          "delivery_address": "Shop L4,  The View,  Tygervalley Health,Care,  43 Old Oak Rd,  Bellville,  Cape,Town,  7530,  South Africa",
-          "customer_name": "Chris Haller",
-          "customerponumber": "NGLLAS001",
-          "dispatch_note_ids": [],
-          "invoice_ids": [
-            "598166"
-          ],
-          "warehouse_note": "",
-          "delivery_note": "",
-          "sub_total": 9000000,
-          "gp_percent": 0,
-          "mup_percent": 0
-        },
-        ..,
-        ..,
-      }
-     *
-     *
-     */
-
-
     salesOrders = salesOrders.map((order, idx) => {
-
-
-
-
       return {
-        // id: order.id || idx,
-        // salesOrderNumber: order.sales_order_number,
-        // orderType: order.type_of_order,
-        // orderStatus: order.status,
-        // orderDate: order.order_date,
-        // shippingDate: order.shipping_date,
-        // quoteDate: order.quote_date,
-        // iso: order.id,
-        // customer: order.company_trading_name,
-        // client: order.customer_name,
-        // poNumber: order.customerponumber || order.purchase_order_number,
-        // quoteId: order.quote_id,
-        // currency: order.currency,
-        // deliveryAddress: { id: order.delivery_address_id },
-        // warehouseNote: order.warehouse_note,
-        // deliveryNote: order.delivery_instructions,
-        // salesTeam: order.sales_team_id,
-        // value: order.purchase_order_amount || 0,
-        // reserveValue: order.reserved_value || 0,
-        // shipValue: order.shipped_value || 0,
-        // backorderValue: order.back_order_value || 0,
         ...order,
 
         id: order.id,
         orderDate: order.order_date,
 
         salesOrderNumber: order.sales_order_number,
-        shippingDate: order.req_ship_date,
+        shippingDate: order.req_ship_date ? order.req_ship_date : '',
 
         quoteId: order.quote_id,
         quoteDate: order.quote_date,
