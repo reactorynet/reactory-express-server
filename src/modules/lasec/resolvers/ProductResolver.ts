@@ -717,7 +717,7 @@ export default {
     LasecRequestNewProductPricing: async (parent: any, args: { priceRequest: LasecPriceRequest }, context: Reactory.IReactoryContext): Promise<SimpleResponse> => {
 
 
-      const { status = 'failed', buyer_name = 'NONE' } = await lasecApi.post(`api/product/${args.priceRequest.product_id}/request_new_product_price/`, args.priceRequest, undefined, null, context).then();
+      const { status = 'failed', buyer_name = 'NONE' } = await lasecApi.post(`api/product/${args.priceRequest.product_id}/request_new_product_price/`, args.priceRequest, undefined, true, context).then();
 
       if (status === 'success') {
         return {
