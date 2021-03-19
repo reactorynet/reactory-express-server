@@ -51,7 +51,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}', // eslint-disable-line
+                format: '${rowData.orderDate != "" ? api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\') : ""}', // eslint-disable-line
               },
             },
           },
@@ -67,7 +67,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}', // eslint-disable-line
+                format: '${rowData.shippingDate != "" ? api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\') : ""}', // eslint-disable-line
               },
             },
           },
@@ -134,18 +134,21 @@ const uiSchema: any = {
           field: 'customer',
           component: 'lasec-crm.CustomerLabel@1.0.0',
           props: {
-            context: 'sales-order-grid',
+            'use_case': 'grid',
+            // context: 'sales-order-grid',
             uiSchema: {
               'ui:options': {
-                displayField: 'registeredName',
+                displayField: 'tradingName',
               },
             },
-
           },
           propsMap: {
-            'rowData.crmCustomer': 'customer',
-            rowData: 'data',
+            'rowData.customer': ['customer.tradingName', 'formData'],
           },
+          // propsMap: {
+          //   'rowData.crmCustomer': 'customer',
+          //   rowData: 'data',
+          // },
 
         },
         {

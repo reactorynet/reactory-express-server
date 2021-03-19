@@ -2291,6 +2291,16 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
 
   let ordering: any = {};
 
+    // iso_number
+    // po_number
+    // quote_id
+    // customer_name
+    // client is customer_name
+    // rep code is sales_team_id
+    // order_value
+    // reserved_value
+
+
   switch (orderBy) {
     case 'orderType':
       ordering['order_type'] = orderDirection;
