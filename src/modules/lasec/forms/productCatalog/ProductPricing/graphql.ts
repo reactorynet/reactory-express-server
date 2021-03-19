@@ -14,6 +14,7 @@ export const product_card_graph: Reactory.IFormGraphDefinition = {
         }
         products {
           id
+          meta
           name
           code
           description
@@ -22,6 +23,7 @@ export const product_card_graph: Reactory.IFormGraphDefinition = {
           qtyOnOrder
           unitOfMeasure
           price
+          priceIsExpired
           priceAdditionalInfo
           image
           onSyspro
@@ -90,7 +92,7 @@ export const product_card_graph: Reactory.IFormGraphDefinition = {
   }
 };
 
-export const product_table_graph: Reactory.IFormGraphDefinition = { 
+export const product_table_graph: Reactory.IFormGraphDefinition = {
   queries: {
     product_pricing: {
       name: 'LasecGetProductList',
@@ -105,6 +107,7 @@ export const product_table_graph: Reactory.IFormGraphDefinition = {
         }
         products {
           id
+          meta
           name
           code
           description
@@ -113,6 +116,7 @@ export const product_table_graph: Reactory.IFormGraphDefinition = {
           qtyOnOrder
           unitOfMeasure
           price
+          priceIsExpired
           priceAdditionalInfo
           image
           onSyspro

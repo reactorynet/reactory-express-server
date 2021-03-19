@@ -13,8 +13,15 @@ export interface Meta {
   owner: string;
 }
 
+export interface LasecPriceRequest {
+  product_id: string;
+  quote_id: string;
+  quantity: string;
+  company?: string;
+};
+
 export interface SimpleResponse {
-  success: boolean
+  success: boolean;
   message: string
 }
 

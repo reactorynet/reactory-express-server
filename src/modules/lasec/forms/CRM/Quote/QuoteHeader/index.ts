@@ -64,8 +64,9 @@ const uiSchema: any = {
       margin: 0,
     },
     style: {
-      margin: 0,
-      padding: 0
+      margin: '-32px',
+      padding: '32px',
+      marginTop: '0',
     },
     showSchemaSelectorInToolbar: false,
     showSubmit: false,

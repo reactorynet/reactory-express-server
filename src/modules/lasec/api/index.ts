@@ -506,6 +506,8 @@ const Api = {
 
       logger.debug(`API POST Response`, { status, payload });
 
+      if (payload === null || payload === undefined) return resp;
+
       if (payload && !status) {
         if (shape && Object.keys(shape).length > 0) {
           return om.merge(payload, shape);
@@ -653,7 +655,7 @@ const Api = {
         case 'sales-order': {
           do_link_file = async (remote_id: string) => {
             //lasec-crm::sales-order::document-2102-107367000-000000000510735
-            debugger
+
             try {
               let document_key = reactoryFile.uploadContext.split("::")[2];
               let iso_key = document_key.split("-")[3];
@@ -661,7 +663,7 @@ const Api = {
 
               if (db_result[0] && db_result[0].salesorderid) {
                 const existing_document_ids = await mysql(`SELECT document_ids FROM SalesOrder where salesorderid = ${db_result[0].salesorderid};`, 'mysql.lasec360', null, context).then();
-                debugger
+
                 if (existing_document_ids[0].document_ids && existing_document_ids[0].document_ids.length > 0) {
 
                   await mysql(`UPDATE SalesOrder SET document_ids = '${existing_document_ids[0].document_ids},${remote_id}' WHERE salesorderid = ${db_result[0].salesorderid}`, 'mysql.lasec360', null, context).then();

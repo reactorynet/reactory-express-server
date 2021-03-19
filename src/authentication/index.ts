@@ -89,7 +89,7 @@ class AuthConfig {
               email: user.mail, firstName: user.givenName, lastName: user.surname, avatarProvider: 'microsoft',
             };
             logger.info(`Must create new user with email ${user.mail}`, loggedInUser);
-            debugger;
+
             const createResult = await createUserForOrganization(loggedInUser, profile.oid, null, ['USER'], 'microsoft', req.partner, null);
             if (createResult.user) {
               _existing = createResult.user;

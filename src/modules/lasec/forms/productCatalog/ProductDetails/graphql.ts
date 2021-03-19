@@ -1,7 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 
 const product_detail_table_graph: Reactory.IFormGraphDefinition = {
-  
+
   queries: {
     product_details: {
       name: 'LasecGetProductList',
@@ -16,6 +16,7 @@ const product_detail_table_graph: Reactory.IFormGraphDefinition = {
           }
           products {
             id
+            meta
             name
             code
             description
@@ -24,6 +25,7 @@ const product_detail_table_graph: Reactory.IFormGraphDefinition = {
             qtyOnOrder
             unitOfMeasure
             price
+            priceIsExpired
             priceAdditionalInfo
             image
             onSyspro
@@ -113,6 +115,7 @@ const product_detail_card_graph = {
         }
         products {
           id
+          meta
           name
           code
           description
@@ -121,6 +124,7 @@ const product_detail_card_graph = {
           qtyOnOrder
           unitOfMeasure
           price
+          priceIsExpired
           priceAdditionalInfo
           image
           onSyspro

@@ -2053,7 +2053,7 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
 
   logger.debug(` -- GETTING CLIENT SALES ORDERS --  ${JSON.stringify(params)}`);
 
-  debugger
+
 
   const {
     clientId,
@@ -2148,7 +2148,7 @@ export const getClientSalesOrders = async (params: any, context: Reactory.IReact
     }
   }
 
-  debugger
+
 
   let salesOrdersIds = await lasecApi.SalesOrders.list({
     filter: apiFilter,
@@ -2235,7 +2235,7 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
 
   logger.debug(` -- GETTING CRM SALES ORDERS --  ${JSON.stringify(params)}`);
 
-  debugger
+
 
   const {
     search = "",
@@ -3283,7 +3283,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
                 freight_request_option.item_paging = paged_results.item_paging,
 
                   paged_results.lineItems.forEach((line_item: LasecQuoteItem) => {
-                    debugger;
+
                     freight_request_option.productDetails.push({
                       code: line_item.code,
                       description: line_item.title,
