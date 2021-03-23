@@ -425,6 +425,7 @@ export default {
   Mutation: {
     updateSurvey: async (obj: any, params: { id: string, surveyData: any }) => {
       logger.info('Updating Survey Config', params);
+
       const { id, surveyData } = params;
       const survey: any = await Survey.findById(new ObjectId(params.id)).then();
 

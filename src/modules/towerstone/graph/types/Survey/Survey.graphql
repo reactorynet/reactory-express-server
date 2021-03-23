@@ -130,6 +130,16 @@ input MoresSurveyCreateInput {
   endDate: Date
 }
 
+input MoresSurveyUpdateInput {
+  title: String
+  delegateTeamName: String
+  assessorTeamName: String
+  startDate: Date
+  endDate: Date
+  status: String
+  mode: String
+}
+
 
 input DelegateInput {
   id: String
@@ -196,6 +206,7 @@ extend type Query {
 extend type Mutation {
   createSurvey(id: String!, surveyData: SurveyInput): Survey
   MoresAssessementsCreateSurvey(moresSurveyCreateArgs: MoresSurveyCreateInput!): Survey
+  MoresAssessmentsUpdateSurvey(id: String!, surveyData: MoresSurveyUpdateInput!): Survey
   MoresUpdateQuestionLibrary(organization_id: String!): MoresUpdateQuestionLibraryResponse
   MoresAssessmentsPatchGeneratedLeadershipBrand(moresLeadershipPatchArgs: MoresLeadershipBrandPatchArgs!): LeadershipBrand
   MoresAssessmentsDeleteSurvey(id: String!, hard: Boolean): Survey

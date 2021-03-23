@@ -22,7 +22,8 @@ export const EVENTS_TO_TRACK = {
   ASSESSMENT_COMPLETED: 'Assessment Completed',
   ASSESSMENT_REOPENED: 'Assessment Re-opened',
   REPORT_GENERATED: 'Report Generated',
-
+  SURVEY_CREATED: 'Survey Created',
+  SURVEY_UDPDATED: 'Survey Updated',
 };
 
 const SurveySchema = new mongoose.Schema({
@@ -79,7 +80,7 @@ const SurveySchema = new mongoose.Schema({
     type: String,
     lowercase: true,
     trim: true,
-    enum: ['new', 'not-ready', 'ready', 'launched', 'paused', 'complete'],
+    enum: ['new', 'not-ready', 'ready', 'launched', 'paused', 'complete', 'deleted', 'removed'],
   },
   options: {},
   calendar: [
@@ -166,10 +167,10 @@ SurveySchema.methods.addTimelineEntry = async function addTimelineEntry(
   save = false,
 ) {
   const entry = {
-    when: moment().valueOf(),
+    when: new Date(),
     eventType,
     eventDetail,
-    who: who,
+    who,
   };
 
   if (!this.timeline) this.timeline = [];
@@ -177,7 +178,9 @@ SurveySchema.methods.addTimelineEntry = async function addTimelineEntry(
   this.timeline.push(entry);
 
   // if (save) await this.save().then();
-  if (save) return this.save().then();
+  if (save) await this.save().then();
+
+  return this;
 };
 
 SurveySchema.methods.clearedForLaunchBySurvey = function clearedForLaunchBySurvey() {

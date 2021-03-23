@@ -11,11 +11,11 @@ export const SurveyDelegatesSchema = {
   properties: {
     title: {
       type: 'string',
-      title: 'Survey Title'
+      title: 'Survey Title',
     },
     surveyType: {
       type: 'string',
-      title: 'Survey Type'
+      title: 'Survey Type',
     },
     launched: {
       type: 'number',
@@ -73,7 +73,7 @@ export const SurveyDelegatesSchema = {
           },
           message: {
             type: 'string',
-            title: 'Message'
+            title: 'Message',
           },
           assessments: {
             type: 'array',
@@ -116,7 +116,7 @@ const GetTableOptions = () => {
             'ui:options': {
               variant: 'body2',
               format: '${rowData.delegate.firstName} ${rowData.delegate.lastName}'
-            }
+            },
           },
         },
       },
@@ -141,8 +141,8 @@ const GetTableOptions = () => {
           uiSchema: {
             'ui:options': {
               variant: 'body2',
-              format: '${rowData.removed === true ? "Removed" : "Active"}'
-            }
+              format: '${rowData.removed === true ? "Removed" : "Active"}',
+            },
           },
         },
       },
@@ -154,8 +154,8 @@ const GetTableOptions = () => {
           uiSchema: {
             'ui:options': {
               variant: 'body2',
-              format: '${rowData.launched === true ? "Launched" : "Waiting"}'
-            }
+              format: '${rowData.launched === true ? "Launched" : "Waiting"}',
+            },
           },
         },
       },
@@ -167,11 +167,11 @@ const GetTableOptions = () => {
           uiSchema: {
             'ui:options': {
               variant: 'body2',
-              format: '${rowData.lastAction}'
-            }
+              format: '${rowData.lastAction}',
+            },
           },
         },
-      }
+      },
     ],
     options: {
       grouping: true,
@@ -182,7 +182,7 @@ const GetTableOptions = () => {
       pageSize: 10,
     },
     componentMap: {
-      Toolbar: 'mores.SurveyDelegateAdminToolbar@1.0.0'
+      Toolbar: 'mores.SurveyDelegateAdminToolbar@1.0.0',
     },
   }
 };
@@ -232,6 +232,7 @@ export const SurveyDelegatesUISchema = {
   },
   total: {
     'ui:widget': 'LabelWidget',
+    'ui:options': {}
   },
   delegates: {
     'ui:widget': 'SurveyDelegatesWidget',
@@ -464,16 +465,16 @@ export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
   version: '1.0.0',
   helpTopics: ['survey-delegate-config'],
   widgetMap: [
-    { widget: 'MoresSurveyDelegateWidget', componentFqn: 'mores.MoresSurveyDelegateWidget@1.0.0' }
+    { widget: 'MoresSurveyDelegateWidget', componentFqn: 'mores.MoresSurveyDelegateWidget@1.0.0' },
   ],
   exports: [
     $defaultExport,
-    $TeamSurveyDelegateExport
+    $TeamSurveyDelegateExport,
   ],
   defaultPdfReport: SurveyDelegateStatusReport,
   reports: [
     SurveyDelegateStatusReport,
-    Survey180Report
+    Survey180Report,
   ],
   defaultExport: $defaultExport,
   uiSchema: SurveyDelegatesUISchema,
@@ -484,7 +485,7 @@ export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
       icon: 'list',
       key: 'list',
       title: 'Survey Delegate List',
-      uiSchema: SurveyDelegatesUISchema
+      uiSchema: SurveyDelegatesUISchema,
     },
     {
       id: 'SurveyDelegateGrid',
@@ -492,8 +493,8 @@ export const TowerStoneSurveyDelegateConfig: Reactory.IReactoryForm = {
       icon: 'table',
       key: 'table',
       title: 'Survey Delegate Grid',
-      uiSchema: SurveyDelegatesGridUISchema
-    }
+      uiSchema: SurveyDelegatesGridUISchema,
+    },
   ],
   defaultFormValue: {
     launched: 0,

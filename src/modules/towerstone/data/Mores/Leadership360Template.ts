@@ -1,12 +1,13 @@
 import { ObjectID } from "mongodb";
 import moment from "moment";
+import { Reactory } from "types/reactory";
 
 const MORES_ASSESSMENT_LEADERSHIP360_BRAND_TITLE = "Leadership 360";
 const MORES_ASSESSMENT_INDIVIDUAL360_BRAND_TITLE = "Individual 360";
 const MORES_ASSESSMENT_CULTURE_BRAND_TITLE = "Culture Survey";
 const MORES_ASSESSMENT_TEAM180_BRAND_TITLE = "Team 180";
 
-export const Indvidual360Template = (organizationId: string | ObjectID, scaleId: string | ObjectID) => ({
+export const Indvidual360Template = (organizationId: string | ObjectID, scaleId: string | ObjectID, user: Reactory.IUserDocument) => ({
   "_id": new ObjectID(),
   "organization": new ObjectID(organizationId),
   "title": MORES_ASSESSMENT_INDIVIDUAL360_BRAND_TITLE,
@@ -14,14 +15,14 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
   "scale": new ObjectID(scaleId),
   "createdAt": moment(),
   "updatedAt": moment(),
-  "createdBy": global.user._id,
+  "createdBy": user._id,
   "qualities": [
     {
       "_id": new ObjectID(),
-      
+
       "title": "My Space",
       "description": "My Space - how do I belong?",
-      
+
       "assessor_title": "",
       "assessor_description": "",
 
@@ -223,7 +224,7 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} is goal-driven, professional and efficient. ",          
+          "title": "${employee.firstName} is goal-driven, professional and efficient. ",
           "description": "${employee.firstName} cares about quality results. ",
 
           "assessor_title": "",
@@ -405,21 +406,22 @@ export const Indvidual360Template = (organizationId: string | ObjectID, scaleId:
     }],
 });
 
-export const Leadership360Template = (organizationId: string | ObjectID, scaleId: string | ObjectID) => ({
+export const Leadership360Template = (organizationId: string | ObjectID, scaleId: string | ObjectID, user: Reactory.IUserDocument) => ({
   "_id": new ObjectID(),
   "organization": new ObjectID(organizationId),
   "title": MORES_ASSESSMENT_LEADERSHIP360_BRAND_TITLE,
   "description": "",
   "scale": new ObjectID(scaleId),
   "createdAt": moment(),
-  "updatedAt": moment(),  
+  "updatedAt": moment(),
+  "createdBy": user._id,
   "qualities": [
     {
       "_id": new ObjectID(),
-      
+
       "title": "My Space",
       "description": "My Space - how do I belong?",
-      
+
       "assessor_title": "",
       "assessor_description": "",
 
@@ -621,7 +623,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "${employee.firstName} is relentless in driving the actions needed to achieve our goals.",          
+          "title": "${employee.firstName} is relentless in driving the actions needed to achieve our goals.",
           "description": "${employee.firstName} achieves results.",
 
           "assessor_title": "",
@@ -803,7 +805,7 @@ export const Leadership360Template = (organizationId: string | ObjectID, scaleId
     }],
 });
 
-export const CultureLeadershipTemplate = (organizationId: string | ObjectID, scaleId: string | ObjectID) => ({
+export const CultureLeadershipTemplate = (organizationId: string | ObjectID, scaleId: string | ObjectID, user: Reactory.IUserDocument) => ({
   "_id": new ObjectID(),
   "organization": new ObjectID(organizationId),
   "title": MORES_ASSESSMENT_CULTURE_BRAND_TITLE,
@@ -811,14 +813,14 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
   "scale": new ObjectID(scaleId),
   "createdAt": moment(),
   "updatedAt": moment(),
-  
+  "createdBy": user._id,
   "qualities": [
     {
       "_id": new ObjectID(),
-      
+
       "title": "My Space",
       "description": "My Space - how do I belong?",
-      
+
       "assessor_title": "",
       "assessor_description": "",
 
@@ -1020,7 +1022,7 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "We are goal-driven, professional and efficient.",          
+          "title": "We are goal-driven, professional and efficient.",
           "description": "We care about quality results.",
 
           "assessor_title": "",
@@ -1202,19 +1204,20 @@ export const CultureLeadershipTemplate = (organizationId: string | ObjectID, sca
     }],
 });
 
-export const TeamLeadership180Template = (organizationId: string | ObjectID, scaleId: string | ObjectID) => ({
+export const TeamLeadership180Template = (organizationId: string | ObjectID, scaleId: string | ObjectID, user: Reactory.IUserDocument) => ({
   "_id": new ObjectID(),
   "organization": new ObjectID(organizationId),
   "title": MORES_ASSESSMENT_TEAM180_BRAND_TITLE,
   "description": "",
-  "scale": new ObjectID(scaleId),  
+  "scale": new ObjectID(scaleId),
+  "createdBy": user._id,
   "qualities": [
     {
       "_id": new ObjectID(),
-      
+
       "title": "My Space",
       "description": "My Space - how do I belong?",
-      
+
       "assessor_title": "",
       "assessor_description": "",
 
@@ -1416,7 +1419,7 @@ export const TeamLeadership180Template = (organizationId: string | ObjectID, sca
       "behaviours": [
         {
           "_id": new ObjectID(),
-          "title": "The ${survey.delegateTeamName} has a focused and professional work ethic, driven by clear goals and targets.",          
+          "title": "The ${survey.delegateTeamName} has a focused and professional work ethic, driven by clear goals and targets.",
           "description": "They deliver results.",
 
           "assessor_title": "",

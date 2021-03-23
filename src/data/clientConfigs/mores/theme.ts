@@ -21,7 +21,7 @@ const theme_base = {
             light: '#C7212D',
             main: '#C7212D',
             dark: '#C7212D',
-            contrastText: '#C7212D',
+            contrastText: '#FFFFFF',
         },
         success: {
             light: '#6DB84A',
