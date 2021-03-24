@@ -51,12 +51,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}', // eslint-disable-line
+                format: '${rowData.orderDate != "" ? api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\') : ""}', // eslint-disable-line
               },
             },
           },
           propsMap: {
-            'rowData.date': 'value',
+            'rowData.orderDate': 'value',
           },
         },
         {
@@ -67,12 +67,12 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}', // eslint-disable-line
+                format: '${rowData.shippingDate != "" ? api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\') : ""}', // eslint-disable-line
               },
             },
           },
           propsMap: {
-            'rowData.date': 'value',
+            'rowData.shippingDate': 'value',
           },
         },
         {
@@ -134,18 +134,21 @@ const uiSchema: any = {
           field: 'customer',
           component: 'lasec-crm.CustomerLabel@1.0.0',
           props: {
-            context: 'sales-order-grid',
+            'use_case': 'grid',
+            // context: 'sales-order-grid',
             uiSchema: {
               'ui:options': {
-                displayField: 'registeredName',
+                displayField: 'tradingName',
               },
             },
-
           },
           propsMap: {
-            'rowData.crmCustomer': 'customer',
-            rowData: 'data',
+            'rowData.customer': ['customer.tradingName', 'formData'],
           },
+          // propsMap: {
+          //   'rowData.crmCustomer': 'customer',
+          //   rowData: 'data',
+          // },
 
         },
         {
@@ -233,23 +236,6 @@ const uiSchema: any = {
           },
         },
       ],
-      // actions: [
-      //   {
-      //     icon: 'remove_circle',
-      //     tooltip: 'Deactivate Client(s)',
-      //     iconProps: {
-      //       color: 'error'
-      //     },
-      //     mutation: 'deactivate',
-      //     variables: {
-
-      //     },
-      //     resultMap: {
-
-      //     },
-      //     resultAction: 'refresh'
-      //   },
-      // ],
       options: {
         grouping: false,
         search: false,
@@ -265,8 +251,6 @@ const uiSchema: any = {
       componentMap: {
         Toolbar: 'lasec-crm.SalesOrderGridToolbar@1.0.0',
       },
-
-      // some comment
       variables: {
         'query.search': 'search',
         'query.customer': 'customer',
