@@ -159,12 +159,14 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body2',
-                format: '${formData}',
+                format: '${rowData.client && rowData.client != "" ? rowData.client : ""}',
+                // format: '${formData ? formData : ""}',
               },
             },
           },
           propsMap: {
-            'rowData.client': 'formData',
+            'rowData.client': 'value'
+            // 'rowData.client': 'formData',
           },
         },
         {
