@@ -1,154 +1,57 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 
 const graphql: Reactory.IFormGraphDefinition = {
-  query: {
-    name: 'LasecGetCRMSalesOrders',
-    text: `query LasecGetCRMSalesOrders($productId: String, $image: String, $code: String, $description: String, $unitOfMeasure: String, $price: Int, $paging: PagingRequest){
-      LasecGetCRMSalesOrders(productId: $productId, image: $image, code: $code, description: $description, unitOfMeasure: $unitOfMeasure, price: $price, paging: $paging){
-        paging {
-          total
-          page
-          hasNext
-          pageSize
-        }
-        totals
-        id
-        image
-        code
-        description
-        unitOfMeasure
-        price
-        salesOrders {
-          id
-          orderDate
-          salesOrderNumber,
-          shippingDate
-          quoteId
-          quoteDate
-          orderType
-          orderStatus
-          iso
-          customer
-          client
-          poNumber
-          currency
-          value
-          deliveryAddress
-          warehouseNote
-          deliveryNote
-          salesTeam
-          reserveValue
-          shipValue
-          backorderValue
-          dispatchCount
-          invoiceCount
-
-          orderQty
-          shipQty
-          reservedQty
-          backOrderQty
-        }
-      }
-    }`,
-    autoQuery: false,
-    resultType: 'object',
-    edit: false,
-    new: false,
-    variables: {
-      'formData.id': 'productId',
-      'formData.paging': 'paging',
-      'formData.image': 'image',
-      'formData.code': 'code',
-      'formData.description': 'description',
-      'formData.unitOfMeasure': 'unitOfMeasure',
-      'formData.price': 'price',
-    },
-    resultMap: {
-      'paging': 'paging',
-      'totals': 'totals',
-      'salesOrders': 'salesOrders',
-      'id': ['id', 'product'],
-      'image': 'image',
-      'code': 'code',
-      'description': 'description',
-      'unitOfMeasure': 'unitofMeasure',
-      'price': 'price'
-    },
-  },
   queries: {
     sales_orders: {
       name: 'LasecGetCRMSalesOrders',
       text: `query LasecGetCRMSalesOrders($productId: String, $image: String, $code: String, $description: String, $unitOfMeasure: String, $price: Int, $paging: PagingRequest){
-      LasecGetCRMSalesOrders(productId: $productId, image: $image, code: $code, description: $description, unitOfMeasure: $unitOfMeasure, price: $price, paging: $paging){
-        paging {
-          total
-          page
-          hasNext
-          pageSize
-        }
-        totals
-        id
-        image
-        code
-        description
-        unitOfMeasure
-        price
-        salesOrders {
+        LasecGetCRMSalesOrders(productId: $productId, image: $image, code: $code, description: $description, unitOfMeasure: $unitOfMeasure, price: $price, paging: $paging){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          totals
           id
-          orderDate
-          salesOrderNumber,
-          shippingDate
-          quoteId
-          quoteDate
-          orderType
-          orderStatus
-          iso
-          customer
-          client
-          poNumber
-          currency
-          value
-          deliveryAddress
-          warehouseNote
-          deliveryNote
-          salesTeam
-          reserveValue
-          shipValue
-          backorderValue
-          dispatchCount
-          invoiceCount
+          image
+          code
+          description
+          unitOfMeasure
+          price
+          salesOrders {
+            id
+            orderDate
+            salesOrderNumber,
+            shippingDate
+            quoteId
+            quoteDate
+            orderType
+            orderStatus
+            iso
+            customer
+            client
+            poNumber
+            currency
+            value
+            deliveryAddress
+            warehouseNote
+            deliveryNote
+            salesTeam
+            reserveValue
+            shipValue
+            backorderValue
+            dispatchCount
+            invoiceCount
 
-          orderQty
-          shipQty
-          reservedQty
-          backOrderQty
+            orderQty
+            shipQty
+            reservedQty
+            backOrderQty
+          }
         }
-      }
-    }`,
-      autoQuery: false,
+      }`,
       resultType: 'object',
-      edit: false,
-      new: false,
-      variables: {
-        'formData.id': 'productId',
-        'formData.paging': 'paging',
-        'formData.image': 'image',
-        'formData.code': 'code',
-        'formData.description': 'description',
-        'formData.unitOfMeasure': 'unitOfMeasure',
-        'formData.price': 'price',
-      },
-      resultMap: {
-        'paging': 'paging',
-        'totals': 'totals',
-        'salesOrders': 'salesOrders',
-        'id': ['id', 'product'],
-        'image': 'image',
-        'code': 'code',
-        'description': 'description',
-        'unitOfMeasure': 'unitofMeasure',
-        'price': 'price'
-      },
     },
   },
 };
@@ -622,9 +525,12 @@ const GridOnlyUISchema: any = {
         toolbar: false,
       },
       remoteData: true,
-      query: 'query',
+      query: 'sales_orders',
+
       variables: {
         'formContext.formData.id': 'productId',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize',
       },
       resultMap: {
         'paging.page': 'page',

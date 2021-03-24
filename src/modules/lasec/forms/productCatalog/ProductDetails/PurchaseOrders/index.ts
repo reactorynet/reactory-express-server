@@ -1,47 +1,31 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 
-const graphql = {
-  query: {
-    name: 'LasecGetCRMPurchaseOrders',
-    text: `query LasecGetCRMPurchaseOrders($productId: String, $paging: PagingRequest){
-      LasecGetCRMPurchaseOrders(productId: $productId, paging: $paging){
-        paging {
-          total
-          page
-          hasNext
-          pageSize
+const graphql: Reactory.IFormGraphDefinition = {
+  queries: {
+    purchase_orders: {
+      name: 'LasecGetCRMPurchaseOrders',
+      text: `query LasecGetCRMPurchaseOrders($productId: String, $paging: PagingRequest){
+        LasecGetCRMPurchaseOrders(productId: $productId, paging: $paging){
+          paging {
+            total
+            page
+            hasNext
+            pageSize
+          }
+          purchaseOrders {
+            id
+            dueDate
+            entryDate
+            lastUpdateDate
+            poNumber
+            shipInfo
+            orderQuantity
+            receiptedQuantity
+          }
         }
-        purchaseOrders {
-          id
-          dueDate
-          entryDate
-          lastUpdateDate
-          poNumber
-          shipInfo
-          orderQuantity
-          receiptedQuantity
-        }
-      }
-    }`,
-    variables: {
-      'formData.id': 'productId',
-      'formData.paging': 'paging'
+      }`,
+      resultType: 'object',
     },
-    resultMap: {
-      'paging': 'paging',
-      'purchaseOrders.[].id': 'purchaseOrders.[].id',
-      'purchaseOrders.[].dueDate': 'purchaseOrders.[].dueDate',
-      'purchaseOrders.[].entryDate': 'purchaseOrders.[].entryDate',
-      'purchaseOrders.[].lastUpdateDate': 'purchaseOrders.[].lastUpdateDate',
-      'purchaseOrders.[].poNumber': 'purchaseOrders.[].poNumber',
-      'purchaseOrders.[].shipInfo': 'purchaseOrders.[].shipInfo',
-      'purchaseOrders.[].orderQuantity': 'purchaseOrders.[].orderQuantity',
-      'purchaseOrders.[].receiptedQuantity': 'purchaseOrders.[].receiptedQuantity',
-    },
-    autoQuery: false,
-    resultType: 'object',
-    edit: false,
-    new: false,
   },
 };
 
@@ -296,9 +280,11 @@ const uiSchema: any = {
         toolbar: false,
       },
       remoteData: true,
-      query: 'query',
+      query: 'purchase_orders',
       variables: {
         'formContext.formData.id': 'productId',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize',
       },
       resultMap: {
         'paging.page': 'page',
@@ -338,111 +324,7 @@ const GridOnlyUISchema: any = {
       purchaseOrders: { xs: 12, lg: 12 }
     }
   ],
-  product: {
-    hidden: true,
-    'ui:widget': 'HiddenWidget'
-  },
-  image: {
-    'ui:widget': 'HiddenWidget',
-    props: {
-      'ui:options': {
-        variant: 'rounded',
-        style: {
-          marginLeft: '16px'
-        }
-      },
-    },
-    propsMap: {
-      'formData.image': 'value',
-    },
-  },
-  code: {
-    'ui:widget': 'HiddenWidget',
-    'ui:options': {
-      readOnly: true,
-      format: '${formData}',
-      variant: 'body2',
-      title: 'Stock Code',
-      titleProps: {
-        style: {
-          display: 'content',
-          color: "#a8a8a8",
-          fontSize: "0.7rem",
-        }
-      },
-      bodyProps: {
-        style: {
-          fontSize: "0.9rem"
-        }
-      },
-    },
-  },
-  description: {
-    'ui:widget': 'HiddenWidget',
-    'ui:options': {
-      readOnly: true,
-      format: '${formData}',
-      variant: 'body2',
-      title: 'Description',
-      titleProps: {
-        style: {
-          display: 'content',
-          color: "#a8a8a8",
-          fontSize: "0.7rem",
-        }
-      },
-      bodyProps: {
-        style: {
-          fontSize: "0.9rem"
-        }
-      },
-    },
-  },
-  unitOfMeasure: {
-    'ui:widget': 'HiddenWidget',
-    'ui:options': {
-      readOnly: true,
-      format: '${formData}',
-      variant: 'body2',
-      title: 'Unit of Measure',
-      icon: 'square_foot',
-      iconPosition: 'inline',
-      titleProps: {
-        style: {
-          display: 'content',
-          color: "#a8a8a8",
-          fontSize: "0.7rem",
-        }
-      },
-      bodyProps: {
-        style: {
-          fontSize: "0.9rem"
-        }
-      },
-    },
-  },
-  price: {
-    'ui:widget': 'HiddenWidget',
-    'ui:options': {
-      readOnly: true,
-      format: '<strong>From:</strong> R ${ ((formData * 1) / 100 ).toFixed(2)}',
-      variant: 'body2',
-      renderHtml: true,
-      title: 'Stock Price',
-      titleProps: {
-        style: {
-          display: 'content',
-          color: "#a8a8a8",
-          fontSize: "0.7rem",
-        }
-      },
-      bodyProps: {
-        style: {
-          fontSize: "0.9rem"
-        }
-      },
-    },
-  },
+
   purchaseOrders: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -525,14 +407,17 @@ const GridOnlyUISchema: any = {
         toolbar: false,
       },
       remoteData: true,
-      query: 'query',
+      query: 'purchase_orders',
       variables: {
-        'props.formContext.$formData.id': 'productId'
+        'formContext.formData.id': 'productId',
+        'query.page': 'paging.page',
+        'query.pageSize': 'paging.pageSize',
       },
       resultMap: {
         'paging.page': 'page',
         'paging.total': 'totalCount',
         'paging.pageSize': 'pageSize',
+
         'purchaseOrders.[].id': 'data.[].id',
         'purchaseOrders.[].dueDate': 'data.[].dueDate',
         'purchaseOrders.[].entryDate': 'data.[].entryDate',
@@ -578,14 +463,6 @@ const LasecCMSProductPurchaseOrders: Reactory.IReactoryForm = {
       uiSchema: GridOnlyUISchema,
     }
   ],
-  defaultFormValue: {
-    paging: {
-      page: 1,
-      pageSize: 10,
-    },
-    product: "",
-    products: []
-  },
   widgetMap: [
     { componentFqn: 'core.LabelComponent@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },

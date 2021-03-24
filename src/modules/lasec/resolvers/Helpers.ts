@@ -1787,57 +1787,69 @@ export const getSalesOrders = async (params: any, context: Reactory.IReactoryCon
 
   logger.debug(`GOT IDS:: ${salesOrdersIds.ids.length}`);
 
+  pagingResult.total = salesOrdersIds.pagination.num_items;
+  pagingResult.pageSize = salesOrdersIds.pagination.page_size || 10;
+  pagingResult.hasNext = salesOrdersIds.pagination.has_next_page === true;
+  pagingResult.page = salesOrdersIds.pagination.current_page || 1;
+
   let ids: string[] = [];
 
   if (isArray(salesOrdersIds.ids) === true) {
     ids = [...salesOrdersIds.ids];
   }
 
-  let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }, context).then();
-  logger.debug(`GOT DETAILS:: ${JSON.stringify(salesOrdersDetails.items[0])}`);
-  let salesOrders = [...salesOrdersDetails.items];
+  let salesOrders: any = [];
+  let totals: any = [];
 
-  salesOrders = salesOrders.map(order => {
-    return {
-      id: order.id,
-      orderDate: moment(order.order_date).toDate(),
-      salesOrderNumber: order.sales_order,
-      shippingDate: order.req_ship_date,
-      quoteId: order.quote_id || 'none',
-      quoteDate: order.quote_date,
-      orderType: order.order_type,
-      orderStatus: order.order_status,
-      iso: order.sales_order_id,
-      salesTeam: order.sales_team_id,
-      customer: order.company_trading_name,
-      client: order.customer_name,
-      poNumber: order.customerponumber,
-      currency: order.currency,
-      deliveryAddress: order.delivery_address,
-      warehouseNote: order.warehouse_note,
-      shipValue: order.shipped_value,
-      value: order.order_value,
-      reserveValue: order.reserved_value,
-      backorderValue: order.back_order_value,
-      dispatchCount: (order.dispatch_note_ids || []).length,
-      invoiceCount: (order.invoices || []).length,
-      dispatches: order.dispatch_note_ids || [],
-      invoices: order.dispatch_invoices || [],
-      orderQty: order.order_qty,
-      shipQty: order.ship_qty,
-      reservedQty: order.reserved_qty,
-      backOrderQty: order.back_order_qty
-    }
-  });
+  if (ids.length > 0) {
+    let salesOrdersDetails = await lasecApi.SalesOrders.list({ filter: { ids: ids } }, context).then();
+    logger.debug(`GOT DETAILS:: ${JSON.stringify(salesOrdersDetails.items[0])}`);
+    salesOrders = [...salesOrdersDetails.items];
 
-  const totals = salesOrders.reduce((acc, obj) => {
-    return {
-      orderQty: acc.orderQty + obj.orderQty,
-      shipQty: acc.shipQty + obj.shipQty,
-      reservedQty: acc.reservedQty + obj.reservedQty,
-      backOrderQty: acc.backOrderQty + obj.backOrderQty
-    }
-  }, { orderQty: 0, shipQty: 0, reservedQty: 0, backOrderQty: 0 });
+    salesOrders = salesOrders.map(order => {
+      return {
+        id: order.id,
+        orderDate: moment(order.order_date).toDate(),
+        salesOrderNumber: order.sales_order,
+        shippingDate: order.req_ship_date,
+        quoteId: order.quote_id || 'none',
+        quoteDate: order.quote_date,
+        orderType: order.order_type,
+        orderStatus: order.order_status,
+        iso: order.sales_order_id,
+        salesTeam: order.sales_team_id,
+        customer: order.company_trading_name,
+        client: order.customer_name,
+        poNumber: order.customerponumber,
+        currency: order.currency,
+        deliveryAddress: order.delivery_address,
+        warehouseNote: order.warehouse_note,
+        shipValue: order.shipped_value,
+        value: order.order_value,
+        reserveValue: order.reserved_value,
+        backorderValue: order.back_order_value,
+        dispatchCount: (order.dispatch_note_ids || []).length,
+        invoiceCount: (order.invoices || []).length,
+        dispatches: order.dispatch_note_ids || [],
+        invoices: order.dispatch_invoices || [],
+        orderQty: order.order_qty,
+        shipQty: order.ship_qty,
+        reservedQty: order.reserved_qty,
+        backOrderQty: order.back_order_qty
+      }
+    });
+
+    totals = salesOrders.reduce((acc, obj) => {
+      return {
+        orderQty: acc.orderQty + obj.orderQty,
+        shipQty: acc.shipQty + obj.shipQty,
+        reservedQty: acc.reservedQty + obj.reservedQty,
+        backOrderQty: acc.backOrderQty + obj.backOrderQty
+      }
+    }, { orderQty: 0, shipQty: 0, reservedQty: 0, backOrderQty: 0 });
+  }
+
+
 
   let result = {
     paging: pagingResult,
@@ -1881,7 +1893,7 @@ export const getPurchaseOrders = async (params: any, context: Reactory.IReactory
       pagination: paging
     }, context).then();
 
-  logger.debug(`GOT PO IDS:: ${purchaseOrdersIds.ids.length}`);
+  logger.debug(`GOT PO IDS::`, { ids: purchaseOrdersIds.ids });
 
   let ids: string[] = [];
 
@@ -1889,22 +1901,49 @@ export const getPurchaseOrders = async (params: any, context: Reactory.IReactory
     ids = [...purchaseOrdersIds.ids];
   }
 
-  let purchaseOrdersDetails = await lasecApi.PurchaseOrders.list({ filter: { ids: ids } }, context).then();
-  logger.debug(`GOT PO DETAILS:: ${JSON.stringify(purchaseOrdersDetails.items[0])}`);
-  let purchaseOrders = [...purchaseOrdersDetails.items];
+  let purchaseOrders: any = [];
 
-  purchaseOrders = purchaseOrders.map(order => {
-    return {
-      id: order.id,
-      dueDate: moment(order.due_date).toDate(),
-      entryDate: moment(order.entry_date).toDate(),
-      lastUpdateDate: moment(order.last_updated).toDate(),
-      poNumber: order.purchase_order_number,
-      shipInfo: order.ship_information,
-      orderQuantity: order.order_quantity,
-      receiptedQuantity: order.receipted_quantity
+  if (ids.length > 0) {
+
+    pagingResult.total = purchaseOrdersIds.pagination.num_items;
+    pagingResult.pageSize = purchaseOrdersIds.pagination.page_size || 10;
+    pagingResult.hasNext = purchaseOrdersIds.pagination.has_next_page === true;
+    pagingResult.page = purchaseOrdersIds.pagination.current_page || 1;
+
+
+    let purchaseOrdersDetails = await lasecApi.PurchaseOrders.list({ filter: { ids: ids } }, context).then();
+    logger.debug(`GOT PO DETAILS:: ${JSON.stringify(purchaseOrdersDetails.items[0])}`);
+    /**
+    *
+    {
+      "purchase_order_number": "100596",
+      "entry_date": "2020-03-06 00:00:00",
+      "due_date": "2021-01-29 00:00:00",
+      "last_updated": "2021-01-04 00:00:00",
+      "ship_information": "SB 2448",
+      "order_quantity": 6000,
+      "receipted_quantity": 0,
+      "eta_status": "NA",
+      "id": "100596-RLAS1GL014-0000M"
     }
-  });
+     *
+     */
+    purchaseOrders = [...purchaseOrdersDetails.items];
+
+    purchaseOrders = purchaseOrders.map(order => {
+      return {
+        id: order.id,
+        dueDate: moment(order.due_date).toDate(),
+        entryDate: moment(order.entry_date).toDate(),
+        lastUpdateDate: moment(order.last_updated).toDate(),
+        poNumber: order.purchase_order_number,
+        shipInfo: order.ship_information,
+        orderQuantity: order.order_quantity,
+        receiptedQuantity: order.receipted_quantity
+      }
+    });
+  }
+
 
   let result = {
     paging: pagingResult,
@@ -2015,7 +2054,7 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
 
         client: order.customer_name ? order.customer_name : '',
 
-        poNumber: order.customerponumber ? order.customerponumber: '',
+        poNumber: order.customerponumber ? order.customerponumber : '',
         currency: order.currency,
 
         deliveryAddress: order.delivery_address,
@@ -2291,14 +2330,14 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
 
   let ordering: any = {};
 
-    // iso_number
-    // po_number
-    // quote_id
-    // customer_name
-    // client is customer_name
-    // rep code is sales_team_id
-    // order_value
-    // reserved_value
+  // iso_number
+  // po_number
+  // quote_id
+  // customer_name
+  // client is customer_name
+  // rep code is sales_team_id
+  // order_value
+  // reserved_value
 
 
   switch (orderBy) {
