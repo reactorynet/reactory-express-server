@@ -298,7 +298,7 @@ const uiSchema: any = {
       remoteData: true,
       query: 'query',
       variables: {
-        'props.formContext.$formData.id': 'productId'
+        'formContext.formData.id': 'productId',
       },
       resultMap: {
         'paging.page': 'page',
@@ -333,7 +333,7 @@ const GridOnlyUISchema: any = {
     },
   },
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
       purchaseOrders: { xs: 12, lg: 12 }
     }
@@ -567,7 +567,7 @@ const LasecCMSProductPurchaseOrders: Reactory.IReactoryForm = {
       description: 'Default SALES PRODUCT SALES ORDER VIEW',
       icon: 'view_quilt',
       title: 'Default View',
-      uiSchema: uiSchema,      
+      uiSchema: uiSchema,
     },
     {
       id: 'grid_only',
@@ -575,7 +575,7 @@ const LasecCMSProductPurchaseOrders: Reactory.IReactoryForm = {
       description: 'GRID ONLY SALES PRODUCT SALES ORDER VIEW',
       icon: 'view_quilt',
       title: 'Grid Only',
-      uiSchema: GridOnlyUISchema,      
+      uiSchema: GridOnlyUISchema,
     }
   ],
   defaultFormValue: {

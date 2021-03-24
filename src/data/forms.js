@@ -14,16 +14,16 @@ let _forms = [];
 
 const getModuleForms = () => {
   _forms = [];
-  modules.enabled.forEach( ( module ) => {
+  modules.enabled.forEach((module) => {
     logger.debug(`🗄 ${module.name}  `);
-    if(isArray(module.forms) === true) {
+    if (isArray(module.forms) === true) {
       module.forms.forEach((form) => {
         logger.debug(`♻ ${form.nameSpace}.${form.name}@${form.version}  `);
         _forms.push(form);
       });
     }
   });
-  
+
   return _forms;
 };
 
@@ -245,11 +245,11 @@ const LoginForm = {
     submitIcon: 'lock',
 
     email: {
-      className: 'login-form-email'
+      className: 'login-form-email',
     },
 
     password: {
-      className: 'login-form-password'
+      className: 'login-form-password',
     },
   },
 };

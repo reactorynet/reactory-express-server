@@ -1,80 +1,80 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 
 const graphql: Reactory.IFormGraphDefinition = {
-  // query: {
-  //   name: 'LasecGetCRMSalesOrders',
-  //   text: `query LasecGetCRMSalesOrders($productId: String, $image: String, $code: String, $description: String, $unitOfMeasure: String, $price: Int, $paging: PagingRequest){
-  //     LasecGetCRMSalesOrders(productId: $productId, image: $image, code: $code, description: $description, unitOfMeasure: $unitOfMeasure, price: $price, paging: $paging){
-  //       paging {
-  //         total
-  //         page
-  //         hasNext
-  //         pageSize
-  //       }
-  //       totals
-  //       id
-  //       image
-  //       code
-  //       description
-  //       unitOfMeasure
-  //       price
-  //       salesOrders {
-  //         id
-  //         orderDate
-  //         salesOrderNumber,
-  //         shippingDate
-  //         quoteId
-  //         quoteDate
-  //         orderType
-  //         orderStatus
-  //         iso
-  //         customer
-  //         client
-  //         poNumber
-  //         currency
-  //         value
-  //         deliveryAddress
-  //         warehouseNote
-  //         deliveryNote
-  //         salesTeam
-  //         reserveValue
-  //         shipValue
-  //         backorderValue
-  //         dispatchCount
-  //         invoiceCount
+  query: {
+    name: 'LasecGetCRMSalesOrders',
+    text: `query LasecGetCRMSalesOrders($productId: String, $image: String, $code: String, $description: String, $unitOfMeasure: String, $price: Int, $paging: PagingRequest){
+      LasecGetCRMSalesOrders(productId: $productId, image: $image, code: $code, description: $description, unitOfMeasure: $unitOfMeasure, price: $price, paging: $paging){
+        paging {
+          total
+          page
+          hasNext
+          pageSize
+        }
+        totals
+        id
+        image
+        code
+        description
+        unitOfMeasure
+        price
+        salesOrders {
+          id
+          orderDate
+          salesOrderNumber,
+          shippingDate
+          quoteId
+          quoteDate
+          orderType
+          orderStatus
+          iso
+          customer
+          client
+          poNumber
+          currency
+          value
+          deliveryAddress
+          warehouseNote
+          deliveryNote
+          salesTeam
+          reserveValue
+          shipValue
+          backorderValue
+          dispatchCount
+          invoiceCount
 
-  //         orderQty
-  //         shipQty
-  //         reservedQty
-  //         backOrderQty
-  //       }
-  //     }
-  //   }`,
-  //   autoQuery: false,
-  //   resultType: 'object',
-  //   edit: false,
-  //   new: false,
-  //   variables: {
-  //     'formData.id': 'productId',
-  //     'formData.paging': 'paging',
-  //     'formData.image': 'image',
-  //     'formData.code': 'code',
-  //     'formData.description': 'description',
-  //     'formData.unitOfMeasure': 'unitOfMeasure',
-  //     'formData.price': 'price',
-  //   },
-  //   resultMap: {
-  //     'paging': 'paging',
-  //     'totals': 'totals',
-  //     'salesOrders': 'salesOrders',
-  //     'id': ['id', 'product'],
-  //     'image': 'image',
-  //     'code': 'code',
-  //     'description': 'description',
-  //     'unitOfMeasure': 'unitofMeasure',
-  //     'price': 'price'
-  //   },
-  // },
+          orderQty
+          shipQty
+          reservedQty
+          backOrderQty
+        }
+      }
+    }`,
+    autoQuery: false,
+    resultType: 'object',
+    edit: false,
+    new: false,
+    variables: {
+      'formData.id': 'productId',
+      'formData.paging': 'paging',
+      'formData.image': 'image',
+      'formData.code': 'code',
+      'formData.description': 'description',
+      'formData.unitOfMeasure': 'unitOfMeasure',
+      'formData.price': 'price',
+    },
+    resultMap: {
+      'paging': 'paging',
+      'totals': 'totals',
+      'salesOrders': 'salesOrders',
+      'id': ['id', 'product'],
+      'image': 'image',
+      'code': 'code',
+      'description': 'description',
+      'unitOfMeasure': 'unitofMeasure',
+      'price': 'price'
+    },
+  },
   queries: {
     sales_orders: {
       name: 'LasecGetCRMSalesOrders',
@@ -236,11 +236,10 @@ const schema: Reactory.ISchema = {
             type: 'string'
           },
 
-        }
+        },
       },
-    }
-  }
-
+    },
+  },
 };
 
 const uiSchema: any = {
@@ -474,14 +473,14 @@ const uiSchema: any = {
         searchText: '${formContext.$formData.product}'
       },
       remoteData: true,
-      query: 'sales_orders',
+      query: 'query',
       variables: {
         'formContext.$formData.id': 'productId',
         'formContext.$formData.image': 'image',
         'formContext.$formData.code': 'code',
         'formContext.$formData.description': 'description',
         'formContext.$formData.unitOfMeasure': 'unitOfMeasure',
-        'formContext.$formData.price': 'price'
+        'formContext.$formData.price': 'price',
       },
       resultMap: {
         'paging.page': 'page',
@@ -502,7 +501,7 @@ const uiSchema: any = {
 
 const GridOnlyUISchema: any = {
   'ui:options': {
-    componentType: "div",
+    componentType: 'div',
     showSubmit: false,
     showRefresh: false,
     toolbarPosition: 'none',
@@ -516,120 +515,17 @@ const GridOnlyUISchema: any = {
     },
   },
   'ui:field': 'GridLayout',
+  'ui:grid-options': {
+    container: 'div',
+    style: {
+      overflowY: 'hidden',
+    },
+  },
   'ui:grid-layout': [
     {
-      salesOrders: { xs: 12 }
-    }
+      salesOrders: { xs: 12 },
+    },
   ],
-  id: {
-    hidden: true,
-    'ui:widget': 'HiddenWidget'
-  },
-  // product: {
-  //   hidden: true,
-  //   'ui:widget': 'HiddenWidget'
-  // },
-  image: {
-    'ui:widget': 'HiddenWidget',
-    props: {
-      'ui:options': {
-        variant: 'rounded',
-        style: {
-          marginLeft: '16px'
-        }
-      },
-    },
-    propsMap: {
-      'formData.image': 'value',
-    },
-  },
-  code: {
-    'ui:widget': 'HiddenWidget',
-    'ui:options': {
-      readOnly: true,
-      format: '${formData}',
-      variant: 'body2',
-      title: 'Stock Code',
-      titleProps: {
-        style: {
-          display: 'content',
-          color: "#a8a8a8",
-          fontSize: "0.7rem",
-        }
-      },
-      bodyProps: {
-        style: {
-          fontSize: "0.9rem"
-        }
-      },
-    },
-  },
-  description: {
-    'ui:widget': 'HiddenWidget',
-    'ui:options': {
-      readOnly: true,
-      format: '${formData}',
-      variant: 'body2',
-      title: 'Description',
-      titleProps: {
-        style: {
-          display: 'content',
-          color: "#a8a8a8",
-          fontSize: "0.7rem",
-        }
-      },
-      bodyProps: {
-        style: {
-          fontSize: "0.9rem"
-        }
-      },
-    },
-  },
-  unitOfMeasure: {
-    'ui:widget': 'HiddenWidget',
-    'ui:options': {
-      readOnly: true,
-      format: '${formData}',
-      variant: 'body2',
-      title: 'Unit of Measure',
-      icon: 'square_foot',
-      iconPosition: 'inline',
-      titleProps: {
-        style: {
-          display: 'content',
-          color: "#a8a8a8",
-          fontSize: "0.7rem",
-        }
-      },
-      bodyProps: {
-        style: {
-          fontSize: "0.9rem"
-        }
-      },
-    },
-  },
-  price: {
-    'ui:widget': 'HiddenWidget',
-    'ui:options': {
-      readOnly: true,
-      format: '<strong>From:</strong> R ${ ((formData * 1) / 100 ).toFixed(2)}',
-      variant: 'body2',
-      renderHtml: true,
-      title: 'Stock Price',
-      titleProps: {
-        style: {
-          display: 'content',
-          color: "#a8a8a8",
-          fontSize: "0.7rem",
-        }
-      },
-      bodyProps: {
-        style: {
-          fontSize: "0.9rem"
-        }
-      },
-    },
-  },
   salesOrders: {
     'ui:widget': 'MaterialTableWidget',
     'ui:options': {
@@ -728,7 +624,7 @@ const GridOnlyUISchema: any = {
       remoteData: true,
       query: 'query',
       variables: {
-        'props.formContext.$formData.id': 'productId'
+        'formContext.formData.id': 'productId',
       },
       resultMap: {
         'paging.page': 'page',
@@ -771,9 +667,9 @@ const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
   name: 'LasecCMSProductSalesOrdersTable',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: schema,
-  graphql: graphql,
-  uiSchema: uiSchema,
+  schema,
+  graphql,
+  uiSchema,
   uiSchemas: [
     {
       id: 'default',
@@ -781,7 +677,7 @@ const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
       description: 'Default SALES PRODUCT SALES ORDER VIEW',
       icon: 'view_quilt',
       title: 'Default View',
-      uiSchema: uiSchema,
+      uiSchema,
     },
     {
       id: 'grid_only',
@@ -792,14 +688,6 @@ const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
       uiSchema: GridOnlyUISchema,
     }
   ],
-  defaultFormValue: {
-    id: '',
-    product: '',
-    paging: {
-      page: 1,
-      pageSize: 10,
-    },
-  },
   widgetMap: [
     { componentFqn: 'core.LabelComponent@1.0.0', widget: 'LabelWidget' },
     { componentFqn: 'core.StyledCurrencyLabel@1.0.0', widget: 'StyledCurrencyLabel' },
