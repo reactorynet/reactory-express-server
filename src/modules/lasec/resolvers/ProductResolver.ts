@@ -505,8 +505,10 @@ const getWarehouseStockLevels = async (params: any, partner: any, context: React
     totalOnPurchaseOrder = warehouse.QtyOnPurchaseOrder ?
       totalOnPurchaseOrder + warehouse.QtyOnPurchaseOrder : totalOnPurchaseOrder + 0;
 
+    const whName = WarehouseIds[warehouse.warehouse_id] ? WarehouseIds[warehouse.warehouse_id].title : `Warehouse ${warehouse.warehouse_id}`;
+
     return {
-      name: WarehouseIds[warehouse.warehouse_id].title,
+      name: whName,
       warehouseId: warehouse.warehouse_id,
       qtyOnHand: warehouse.QtyOnHand,
       qtyAllocated: warehouse.QtyAllocated,

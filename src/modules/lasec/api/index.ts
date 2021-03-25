@@ -2709,10 +2709,10 @@ NB: note the addition of the detail_id for the line been updated
                   syspro_company: source.SysproCompany,
                   pallet_type: source.type,
                   quantity: source.quanity,
-                  width: source.width,
-                  height: source.height,
-                  length: source.length,
-                  weight: source.weight
+                  width: source.width || 0,
+                  length: source.length || 0,
+                  height: source.height || 0,
+                  weight: source.weight || 0,
                 };
 
                 return item;
@@ -2728,9 +2728,9 @@ NB: note the addition of the detail_id for the line been updated
 
         logger.debug(`Pakcing list Response From API ${packing_list_result.status}`, { certificate_results: packing_list_result });
 
-        return {
+        const packing_list_response = {
           id: sales_order_id,
-          emailAddress: '',
+          emailAddress: context.user.email,
           sendOptionsVia: 'email',
           lookups: {
             inco_terms,
@@ -2738,6 +2738,9 @@ NB: note the addition of the detail_id for the line been updated
           },
           ...packing_list_result,
         };
+
+        return packing_list_response;
+
       } catch (get_packing_list_error) {
 
         logger.error(`Could not get the packing list from the remote server: ${get_packing_list_error.message}`, { get_packing_list_error });
