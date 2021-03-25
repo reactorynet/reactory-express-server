@@ -2,6 +2,106 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import { ClientSchema } from "../Schemas"
 import graphql, { newClientGraphQL } from './graphql';
 
+const newSchema: Reactory.ISchema = {
+  type: "object",
+  title: "CONTACT DETAILS",
+  required: ['emailAddress', 'confirmEmail', 'officeNumber'],
+  properties: {
+    view: {
+      title: '',
+      type: 'string'
+    },
+    emailAddress: {
+      type: "string",
+      title: "Email Address",
+      format: "email",
+    },
+    confirmEmail: {
+      type: "string",
+      title: "Confirm Email Address",
+    },
+    alternateEmail: {
+      type: "string",
+      title: "Alternate Email",
+    },
+    confirmAlternateEmail: {
+      type: "string",
+      title: "Confirm Alternate Email Address",
+    },
+    officeNumber: {
+      type: "string",
+      title: "Office Number",
+    },
+    mobileNumber: {
+      type: "string",
+      title: "Mobile Number",
+    },
+    alternateMobileNumber: {
+      type: "string",
+      title: "Alternate Mobile Number"
+    },
+    alternateNumber: {
+      type: "string",
+      title: "Alternate Number",
+    },
+    prefferedMethodOfContact: {
+      type: 'string',
+      title: 'Preffered Method of Communication',
+      default: 'email'
+    },
+  }
+};
+
+const editSchema: Reactory.ISchema = {
+  type: "object",
+  title: "CONTACT DETAILS",
+  required: ['emailAddress', 'officeNumber'],
+  properties: {
+    view: {
+      title: '',
+      type: 'string'
+    },
+    emailAddress: {
+      type: "string",
+      title: "Email Address",
+      // format: "email",
+    },
+    confirmEmail: {
+      type: "string",
+      title: "Confirm Email Address",
+    },
+    alternateEmail: {
+      type: "string",
+      title: "Alternate Email",
+    },
+    confirmAlternateEmail: {
+      type: "string",
+      title: "Confirm Alternate Email Address",
+    },
+    officeNumber: {
+      type: "string",
+      title: "Office Number",
+    },
+    mobileNumber: {
+      type: "string",
+      title: "Mobile Number",
+    },
+    alternateMobileNumber: {
+      type: "string",
+      title: "Alternate Mobile Number"
+    },
+    alternateNumber: {
+      type: "string",
+      title: "Alternate Number",
+    },
+    prefferedMethodOfContact: {
+      type: 'string',
+      title: 'Preffered Method of Communication',
+      default: 'email'
+    },
+  }
+};
+
 export const displayUiSchema: any = {
   'ui:graphql': graphql,
   'ui:options': {
@@ -182,6 +282,7 @@ export const displayUiSchema: any = {
 
 const editUiSchema: any = {
   'ui:graphql': graphql,
+  'ui:schema': editSchema,
   'ui:options': {
     componentType: "div",
     toolbarPosition: "none",
@@ -769,56 +870,6 @@ const newUiSchema: any = {
   },
 };
 
-const schema: Reactory.ISchema = {
-  type: "object",
-  title: "CONTACT DETAILS",
-  required: ['emailAddress', 'confirmEmail', 'officeNumber'],
-  properties: {
-    view: {
-      title: '',
-      type: 'string'
-    },
-    emailAddress: {
-      type: "string",
-      title: "Email Address",
-      format: "email",
-    },
-    confirmEmail: {
-      type: "string",
-      title: "Confirm Email Address",
-    },
-    alternateEmail: {
-      type: "string",
-      title: "Alternate Email",
-    },
-    confirmAlternateEmail: {
-      type: "string",
-      title: "Confirm Alternate Email Address",
-    },
-    officeNumber: {
-      type: "string",
-      title: "Office Number",
-    },
-    mobileNumber: {
-      type: "string",
-      title: "Mobile Number",
-    },
-    alternateMobileNumber: {
-      type: "string",
-      title: "Alternate Mobile Number"
-    },
-    alternateNumber: {
-      type: "string",
-      title: "Alternate Number",
-    },
-    prefferedMethodOfContact: {
-      type: 'string',
-      title: 'Preffered Method of Communication',
-      default: 'email'
-    },
-  }
-};
-
 const LasecCRMContactInformation: Reactory.IReactoryForm = {
   id: 'LasecCRMContactInformation',
   uiFramework: 'material',
@@ -830,7 +881,7 @@ const LasecCRMContactInformation: Reactory.IReactoryForm = {
   name: 'LasecCRMContactInformation',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: schema,
+  schema: newSchema,
   graphql,
   uiSchema: displayUiSchema,
   uiSchemas: [
