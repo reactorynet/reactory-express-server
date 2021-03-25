@@ -2274,8 +2274,6 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
 
   logger.debug(` -- GETTING CRM SALES ORDERS --  ${JSON.stringify(params)}`);
 
-
-
   const {
     search = "",
     periodStart,
@@ -2357,10 +2355,12 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
       ordering['quote_id'] = orderDirection;
       break;
     case 'customer':
-      ordering['customer_name'] = orderDirection;
+      ordering['company_trading_name'] = orderDirection;
+      // ordering['customer_name'] = orderDirection;
       break;
     case 'client':
-      ordering['client_name'] = orderDirection;
+      ordering['customer_name'] = orderDirection;
+      // ordering['client_name'] = orderDirection;
       break;
     case 'salesTeam':
       ordering['sales_team_id'] = orderDirection;
@@ -2371,7 +2371,12 @@ export const getCRMSalesOrders = async (params: any, context: Reactory.IReactory
     case 'reserveValue':
       ordering['reserved_value'] = orderDirection;
       break;
-
+    case 'shipValue':
+      ordering['shipped_value'] = orderDirection;
+      break;
+    case 'backorderValue':
+      ordering['back_order_value'] = orderDirection;
+      break;
     case 'orderDate':
       ordering['order_date'] = orderDirection;
       break;
