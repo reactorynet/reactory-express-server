@@ -3387,15 +3387,22 @@ NB: note the addition of the detail_id for the line been updated
     },
 
 
-    addProductToQuote: async (quote_id: string, option_id: string, product_id: string, context: Reactory.IReactoryContext) => {
+    addProductToQuote: async (quote_id: string, option_id: string, product_id: string, quantity: number = 1, quote_heading_id: string = null, context: Reactory.IReactoryContext) => {
       try {
         const url = `api/quote_item/`;
-        const apiResponse = await POST(url, {
+
+        const data: any = {
           product_id: product_id,
-          quantity: 1,
+          quantity: quantity || 1,
           quote_id: quote_id,
           quote_option_id: option_id
-        }, true, context);
+        };
+
+        if (quote_heading_id) {
+          data.quote_heading_id = quote_heading_id;
+        }
+
+        const apiResponse = await POST(url, data, true, context);
         logger.debug(`ADDING QUOTE ITEM RESPONSE:: ${JSON.stringify(apiResponse)}`);
         const { status } = apiResponse;
         if (status === 'success') {
