@@ -242,6 +242,11 @@ const getClients = async (params: GetClientsParams, context: Reactory.IReactoryC
   const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids }, ordering: {}, pagination: { enabled: false, current_page: paging.page, page_size: paging.pageSize } }, context);
   logger.debug(`Fetched Expanded View for (${clientDetails.items.length}) Clients from API`);
   let clients = [...clientDetails.items];
+
+
+  logger.debug(`CLIENT INFO:: ${JSON.stringify(clients[2])}`);
+
+
   clients = clients.map(client => {
     let _client = om(client, {
       'id': 'id',
@@ -261,7 +266,7 @@ const getClients = async (params: GetClientsParams, context: Reactory.IReactoryC
       'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src: boolean) => src === true },
       'company_on_hold': {
         'key': 'customer.customerStatus',
-        'transform': (val: true) => (`${val === true ? 'on-hold' : 'not-on-hold'}`)
+        'transform': (val: true) => (`${val === true || val == 'Y' ? 'on-hold' : 'not-on-hold'}`)
       },
       'currency_code': 'customer.currencyCode',
       'currency_symbol': 'customer.currencySymbol',
