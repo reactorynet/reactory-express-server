@@ -48,6 +48,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         'formData.id': 'clientInfo.clientId',
         'formData.mobileNumber': 'clientInfo.mobileNumber',
         'formData.alternateNumber': 'clientInfo.alternateOfficeNumber',
+        'formData.officeNumber': 'clientInfo.officeNumber',
         'formData.emailAddress': 'clientInfo.email',
         'formData.alternateEmail': 'clientInfo.alternateEmail',
       },
