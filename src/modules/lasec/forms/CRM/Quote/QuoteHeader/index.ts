@@ -138,7 +138,6 @@ const uiSchema: any = {
         { key: 'Contract', value: 'Contract', label: 'Contract' },
         { key: 'Tender', value: 'Tender', label: 'Tender' },
         { key: 'Budget', value: 'Budget', label: 'Budget' },
-        { key: 'Cross Trade', value: 'Cross Trade', label: 'Cross Trade' },
       ],
     }
   },
@@ -153,8 +152,8 @@ const uiSchema: any = {
   },
 };
 
-let internationalUiSchema = cloneDeep(uiSchema);
-internationalUiSchema.quoteType['ui:options'].selectOptions.push({ key: 'cross-trade', value: 'cross-trade', label: 'Cross Trade' })
+const internationalUiSchema = cloneDeep(uiSchema);
+internationalUiSchema.quoteType['ui:options'].selectOptions.push({ key: 'Cross Trade', value: 'Cross Trade', label: 'Cross Trade' })
 
 
 const LasecCRMQuoteHeaderForm: Reactory.IReactoryForm = {
@@ -177,15 +176,15 @@ const LasecCRMQuoteHeaderForm: Reactory.IReactoryForm = {
       uiSchema,
       key: 'default',
       title: 'Local',
-      description: 'Local and Education'
+      description: 'Local and Education',
     },
     {
       id: 'international',
       icon: 'language',
-      uiSchema,
+      uiSchema: internationalUiSchema,
       key: 'international',
       title: 'Local',
-      description: 'Local and Education'
+      description: 'International',
     }
   ],
   uiSchema: uiSchema,

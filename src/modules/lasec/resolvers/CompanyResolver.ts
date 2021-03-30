@@ -509,7 +509,7 @@ const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.I
 
       const client = clients[0];
 
-      logger.debug(`CLIENT [0]:: ${JSON.stringify(client)}`);
+      logger.debug(`Existing Client:: ${JSON.stringify(client, null, 2)}`);
 
       let updateParams = {
         // first_name: params.firstName || (client.first_name || ''),
@@ -570,7 +570,7 @@ const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.I
         line_manager_id: params.lineManager || (client.line_manager_id || ''),
         role_id: params.jobType || (client.role_id || ''),
 
-        company_id: params.customer.id
+        company_id: params.customer && params.customer.id ? params.customer.id : null
 
       }
 
@@ -2591,8 +2591,7 @@ export default {
     LasecUpdateNewClient: async (obj: any, args: { id: string, newClient: any }, context: Reactory.IReactoryContext) => {
 
       const { newClient } = args;
-      logger.debug(`Updating new client address details with input:\n ${JSON.stringify(newClient, null, 2)}`);
-      // logger.debug('Updating new client address details with input', { newClient });
+      logger.debug(`Updating New Client object details with input:\n ${JSON.stringify(newClient, null, 2)}`);
 
       let touched = false;
       let hash;
@@ -2660,7 +2659,7 @@ export default {
       if (touched) {
         _newClient.clientId = newClient.id;
         _newClient.updated = new Date().valueOf()
-        await setCacheItem(hash, _newClient, 60 * 60 * 12, context.partner).then();
+        setCacheItem(hash, _newClient, 60 * 60 * 12, context.partner).then();
       }
 
       return _newClient;

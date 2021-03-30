@@ -227,7 +227,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     kwargs.body = JSON.stringify(kwargs.body, null, 2);
   }
 
-  const $curlformat = `API CALL: curl '${absoluteUrl}' \\
+  const $curlformat = `API CALL: curl -X ${kwargs.method || 'GET'} '${absoluteUrl}' \\
   -H 'Connection: keep-alive' \\
   -H 'Authorization: ${kwargs.headers.Authorization}' \\
   -H 'X-LASEC-AUTH: ${kwargs.headers.Authorization}' \\
@@ -3278,12 +3278,12 @@ NB: note the addition of the detail_id for the line been updated
     addItemToQuoteHeader: async (params: { quote_id: string, quote_item_id: number, heading_id: string, heading: string }, context: Reactory.IReactoryContext) => {
 
     },
-    setQuoteHeadingText: async (params: { quote_id: string, quote_item_id: number, heading_id: string, heading: string }, context: Reactory.IReactoryContext) => {
+    setQuoteHeadingText: async (params: { quote_id: string, quote_item_id: number, quote_header_id: string, heading: string }, context: Reactory.IReactoryContext) => {
 
-      const { quote_id, quote_item_id, heading } = params;
+      const { quote_header_id, heading } = params;
 
       try {
-        const apiResponse = await PUT(SECONDARY_API_URLS.quote_section_header.url, { body: { quote_id, quote_item_id, heading: heading } }, true, context).then();
+        const apiResponse = await PUT(`${SECONDARY_API_URLS.quote_section_header.url}`, { id: quote_header_id, heading: heading }, true, context).then();
         const {
           status, payload, id,
         } = apiResponse;
