@@ -261,7 +261,7 @@ const getClients = async (params: GetClientsParams, context: Reactory.IReactoryC
       'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src: boolean) => src === true },
       'company_on_hold': {
         'key': 'customer.customerStatus',
-        'transform': (val: true) => (`${val === true ? 'on-hold' : 'not-on-hold'}`)
+        'transform': (val: string) => (`${val === 'Y' ? 'on-hold' : 'not-on-hold'}`)
       },
       'currency_code': 'customer.currencyCode',
       'currency_symbol': 'customer.currencySymbol',
