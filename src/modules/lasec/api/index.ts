@@ -227,7 +227,7 @@ export async function FETCH(url = '', fethArguments = {}, mustAuthenticate = tru
     kwargs.body = JSON.stringify(kwargs.body, null, 2);
   }
 
-  const $curlformat = `API CALL: curl '${absoluteUrl}' \\
+  const $curlformat = `API CALL: curl -X ${kwargs.method || 'GET'} '${absoluteUrl}' \\
   -H 'Connection: keep-alive' \\
   -H 'Authorization: ${kwargs.headers.Authorization}' \\
   -H 'X-LASEC-AUTH: ${kwargs.headers.Authorization}' \\
@@ -3278,12 +3278,12 @@ NB: note the addition of the detail_id for the line been updated
     addItemToQuoteHeader: async (params: { quote_id: string, quote_item_id: number, heading_id: string, heading: string }, context: Reactory.IReactoryContext) => {
 
     },
-    setQuoteHeadingText: async (params: { quote_id: string, quote_item_id: number, heading_id: string, heading: string }, context: Reactory.IReactoryContext) => {
+    setQuoteHeadingText: async (params: { quote_id: string, quote_item_id: number, quote_header_id: string, heading: string }, context: Reactory.IReactoryContext) => {
 
-      const { quote_id, quote_item_id, heading } = params;
+      const { quote_header_id, heading } = params;
 
       try {
-        const apiResponse = await PUT(SECONDARY_API_URLS.quote_section_header.url, { body: { quote_id, quote_item_id, heading: heading } }, true, context).then();
+        const apiResponse = await PUT(`${SECONDARY_API_URLS.quote_section_header.url}`, { id: quote_header_id, heading: heading }, true, context).then();
         const {
           status, payload, id,
         } = apiResponse;
@@ -3332,7 +3332,7 @@ NB: note the addition of the detail_id for the line been updated
     },
     removeQuoteHeader: async ({ quote_heading_id }: any, context: Reactory.IReactoryContext): Promise<any> => {
       try {
-        const apiResponse = await DELETE(SECONDARY_API_URLS.quote_section_header.url, { id: quote_heading_id }, false, context).then();
+        const apiResponse = await DELETE(SECONDARY_API_URLS.quote_section_header.url, { id: quote_heading_id }, true, context).then();
         const {
           status,
           payload
@@ -3387,15 +3387,22 @@ NB: note the addition of the detail_id for the line been updated
     },
 
 
-    addProductToQuote: async (quote_id: string, option_id: string, product_id: string, context: Reactory.IReactoryContext) => {
+    addProductToQuote: async (quote_id: string, option_id: string, product_id: string, quantity: number = 1, quote_heading_id: string = null, context: Reactory.IReactoryContext) => {
       try {
         const url = `api/quote_item/`;
-        const apiResponse = await POST(url, {
+
+        const data: any = {
           product_id: product_id,
-          quantity: 1,
+          quantity: quantity || 1,
           quote_id: quote_id,
           quote_option_id: option_id
-        }, true, context);
+        };
+
+        if (quote_heading_id) {
+          data.quote_heading_id = quote_heading_id;
+        }
+
+        const apiResponse = await POST(url, data, true, context);
         logger.debug(`ADDING QUOTE ITEM RESPONSE:: ${JSON.stringify(apiResponse)}`);
         const { status } = apiResponse;
         if (status === 'success') {

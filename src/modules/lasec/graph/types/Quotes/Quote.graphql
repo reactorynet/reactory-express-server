@@ -1033,7 +1033,9 @@ extend type Mutation {
   LasecQuoteAddProductToQuote(
     quote_id: String
     product_id: String
-    option_id: String
+    option_id: String,
+    quantity: Int,
+    heading_id: String
   ): LasecQuoteItem
   LasecQuoteItemUpdate(
     quote_id: String

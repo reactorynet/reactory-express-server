@@ -338,6 +338,7 @@ export default {
       return header;
     },
     position: (line_item: LasecQuoteItem) => {
+      // if(line_item) // error here failing when adding new product
       return parseInt(`${line_item.meta.source.position || 0}`)
     }
   },
@@ -1505,12 +1506,59 @@ export default {
 
       return result;
     },
-    LasecQuoteAddProductToQuote: async (obj: any, params: { quote_id: string, option_id: string, product_id: string }, context: Reactory.IReactoryContext): Promise<[LasecQuoteItem]> => {
+    LasecQuoteAddProductToQuote: async (obj: any, params: { quote_id: string, option_id: string, product_id: string, heading_id: string, quantity: number }, context: Reactory.IReactoryContext): Promise<LasecQuoteItem> => {
       try {
-        const { quote_id, option_id, product_id } = params;
-        let result: [LasecQuoteItem] = null;
-        result = await lasecApi.Quotes.addProductToQuote(quote_id, option_id, product_id, context).then();
-        return result;
+        const { quote_id, option_id, product_id, quantity = 1, heading_id = null } = params;
+        let result: any = null;
+        result = await lasecApi.Quotes.addProductToQuote(quote_id, option_id, product_id, quantity, params.heading_id, context).then();
+
+        if (result && result.payload && result.payload.id !== 0) {
+          let line_item = await lasecApi.Quotes.getLineItem(result.payload.id, context).then();
+
+          if (line_item) {
+            const line_item_map = {
+              'id': [
+                'quote_item_id',
+                '.meta.reference',
+                '.line_id',
+                'id',
+              ],
+              'quote_id': 'quoteId',
+              'code': 'code',
+              'description': 'title',
+              'quantity': 'quantity',
+              'total_price_cents': 'price',
+              'gp_percent': 'GP',
+              'total_price_before_discount_cents': [
+                'totalVATExclusive',
+                {
+                  key: 'totalVATInclusive',
+                  transform: (v: any) => (Number.parseInt(v) * 1.15)
+                }
+              ],
+              'note': 'note',
+              'quote_heading_id': 'header.meta.reference',
+              'header_name': {
+                key: 'header.text', transform: (v: any) => {
+                  if (lodash.isEmpty(v) === false) return v;
+                  return 'Uncategorised';
+                }
+              },
+              'total_discount_percent': 'discount',
+              'product_class': 'productClass',
+              'product_class_description': 'productClassDescription',
+            };
+
+
+            let mapped_item: LasecQuoteItem = om.merge(line_item, line_item_map) as LasecQuoteItem;
+            mapped_item.eta.source = line_item;
+            return mapped_item;
+          }
+
+          return null;
+        } else {
+          return null;
+        }
       } catch (err) {
         logger.error(`Error communicating with Lasec API`);
         return null;

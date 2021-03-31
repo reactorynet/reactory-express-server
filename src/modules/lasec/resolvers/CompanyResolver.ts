@@ -266,7 +266,7 @@ const getClients = async (params: GetClientsParams, context: Reactory.IReactoryC
       'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src: boolean) => src === true },
       'company_on_hold': {
         'key': 'customer.customerStatus',
-        'transform': (val: true) => (`${val === true || val == 'Y' ? 'on-hold' : 'not-on-hold'}`)
+        'transform': (val: string) => (`${val === 'Y' ? 'on-hold' : 'not-on-hold'}`)
       },
       'currency_code': 'customer.currencyCode',
       'currency_symbol': 'customer.currencySymbol',
@@ -494,7 +494,7 @@ interface ClientUpdateInput {
  */
 const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.IReactoryContext) => {
 
-  logger.debug(`CompanyResolver.ts >> updateClientDetail(args)`, args);
+  logger.debug(`CompanyResolver.ts >> updateClientDetail(args)\n${JSON.stringify(args, null, 2)}`,);
 
   try {
     const params = args.clientInfo;
@@ -506,7 +506,61 @@ const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.I
 
       const client = clients[0];
 
-      logger.debug(`CLIENT [0]:: ${JSON.stringify(client)}`);
+      logger.debug(`Existing Client:: ${JSON.stringify(client, null, 2)}`);
+      /**
+       * SAMPLE OUTPUT
+       *  {
+            "id": "50586",
+            "title_id": "1",
+            "first_name": "Cash",
+            "surname": "Master",
+            "office_number": "27 82 777 16",
+            "alternate_office_number": "",
+            "mobile_number": "082749878744",
+            "email": "werner.weber+cmaster@gmail.com",
+            "confirm_email": "werner.weber+cmaster@gmail.com",
+            "alternate_email": "",
+            "onboarding_step_completed": "6",
+            "role_id": "6",
+            "ranking_id": "1",
+            "account_type": "cod",
+            "modified": "2021-03-30T09:20:18.000000Z",
+            "activity_status": "active",
+            "special_notes": null,
+            "sales_team_id": "0",
+            "line_manager_id": "0",
+            "line_manager_name": null,
+            "customer_type": "",
+            "organisation_id": "14589",
+            "company_id": "0",
+            "delivery_address_id": "36233",
+            "delivery_address": "Study G-Unit 101 Life  Overberg District Municipality Tesselaarsdal 7523 Western Cape South Africa",
+            "physical_address_id": "36231",
+            "physical_address": "  11 Main  Overberg District Municipality Tesselaarsdal 7523 Western Cape South Africa",
+            "currency_id": "1",
+            "currency_code": null,
+            "currency_symbol": null,
+            "currency_description": null,
+            "company_trading_name": null,
+            "company_on_hold": "N",
+            "customer_class_id": "32",
+            "department": "Department",
+            "faculty": "",
+            "created": "2021-02-22T09:32:01.000000Z",
+            "document_ids": [
+              "102285"
+            ],
+            "comment_ids": null,
+            "company_account_number": "0",
+            "customer_sales_team": "0",
+            "company_sales_team": null,
+            "country": "Western Cape",
+            "billing_address": null,
+            "duplicate_name_flag": false,
+            "duplicate_email_flag": false
+          }
+       *
+       */
 
       let updateParams = {
         // first_name: params.firstName || (client.first_name || ''),
@@ -559,7 +613,7 @@ const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.I
 
         // sales_team_id: params.repCode || (client.sales_team || ''),
         // sales_team_id: params.personalDetails && params.personalDetails.repCode || (client.sales_team || ''),
-        sales_team_id: params.repCode ? params.repCode : params.jobDetails && params.jobDetails.repCode ? params.jobDetails.repCode : (client.sales_team || ''),
+        sales_team_id: params.repCode ? params.repCode : params.clientInfo && params.clientInfo.repCode ? params.clientInfo.repCode : (client.sales_team_id || ''),
 
 
         faculty: params.faculty || (client.faculty || ''),
@@ -567,11 +621,10 @@ const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.I
         line_manager_id: params.lineManager || (client.line_manager_id || ''),
         role_id: params.jobType || (client.role_id || ''),
 
-        company_id: params.customer.id
-
+        company_id: params.customer && params.customer.id ? params.customer.id : client.company_id
       }
 
-      logger.debug(`UPDATE PARAMS:: ${JSON.stringify(updateParams)}`);
+      logger.debug(`UPDATE PARAMS:: ${JSON.stringify(updateParams, null, 2)}`);
 
       const apiResponse = await lasecApi.Customers.UpdateClientDetails(params.clientId, updateParams, context);
 
@@ -1418,6 +1471,7 @@ const uploadDocument = async (args: any, context: Reactory.IReactoryContext) => 
         published: false,
       };
 
+      // lasec-crm::new-company::document
       // NEW CLIENT DOCUMENTS
       if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
         if (clientId && clientId == 'new_client') {
@@ -2062,7 +2116,7 @@ export default {
 
       // if(parent.clientDocuments && Array.isArray(parent.clientDocuments) === true) return parent.clientDocuments;
 
-      let _result = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }, context).then();
+      let _result = await getCustomerDocuments({ id: parent._id || 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }, context).then();
       return _result.documents || [];
     },
   },
@@ -2588,8 +2642,7 @@ export default {
     LasecUpdateNewClient: async (obj: any, args: { id: string, newClient: any }, context: Reactory.IReactoryContext) => {
 
       const { newClient } = args;
-      logger.debug(`Updating new client address details with input:\n ${JSON.stringify(newClient, null, 2)}`);
-      // logger.debug('Updating new client address details with input', { newClient });
+      logger.debug(`Updating New Client object details with input:\n ${JSON.stringify(newClient, null, 2)}`);
 
       let touched = false;
       let hash;
@@ -2657,7 +2710,7 @@ export default {
       if (touched) {
         _newClient.clientId = newClient.id;
         _newClient.updated = new Date().valueOf()
-        await setCacheItem(hash, _newClient, 60 * 60 * 12, context.partner).then();
+        setCacheItem(hash, _newClient, 60 * 60 * 12, context.partner).then();
       }
 
       return _newClient;
