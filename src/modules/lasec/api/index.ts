@@ -3332,7 +3332,7 @@ NB: note the addition of the detail_id for the line been updated
     },
     removeQuoteHeader: async ({ quote_heading_id }: any, context: Reactory.IReactoryContext): Promise<any> => {
       try {
-        const apiResponse = await DELETE(SECONDARY_API_URLS.quote_section_header.url, { id: quote_heading_id }, false, context).then();
+        const apiResponse = await DELETE(SECONDARY_API_URLS.quote_section_header.url, { id: quote_heading_id }, true, context).then();
         const {
           status,
           payload

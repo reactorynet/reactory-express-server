@@ -1474,6 +1474,7 @@ const uploadDocument = async (args: any, context: Reactory.IReactoryContext) => 
         published: false,
       };
 
+      // lasec-crm::new-company::document
       // NEW CLIENT DOCUMENTS
       if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
         if (clientId && clientId == 'new_client') {
@@ -2118,7 +2119,7 @@ export default {
 
       // if(parent.clientDocuments && Array.isArray(parent.clientDocuments) === true) return parent.clientDocuments;
 
-      let _result = await getCustomerDocuments({ id: 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }, context).then();
+      let _result = await getCustomerDocuments({ id: parent._id || 'new_client', uploadContexts: ['lasec-crm::new-company::document'] }, context).then();
       return _result.documents || [];
     },
   },
