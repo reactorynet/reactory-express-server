@@ -143,7 +143,8 @@ const uiSchema: any = {
             },
           },
           propsMap: {
-            'rowData.customer': ['customer.tradingName', 'formData'],
+            // 'rowData.customer': ['customer.tradingName', 'formData'],
+            'rowData.customer': ['customer', 'formData'],
           },
           // propsMap: {
           //   'rowData.crmCustomer': 'customer',

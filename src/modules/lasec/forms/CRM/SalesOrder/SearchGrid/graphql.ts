@@ -15,7 +15,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         $periodStart: String,
         $periodEnd: String,
         $dateFilter: String,
-        $orderBy: String, 
+        $orderBy: String,
         $orderDirection: String
       ){
         LasecGetPagedCRMSalesOrders(
@@ -49,12 +49,19 @@ const graphql: Reactory.IFormGraphDefinition = {
             orderType
             orderStatus
             iso
-            customer
+            customer {
+              id
+              tradingName
+              accountNumber
+              customerStatus
+              salesTeam
+              country
+            }
             client
             crmCustomer {
               id
               registeredName
-              customerStatus 
+              customerStatus
             }
             poNumber
             value,

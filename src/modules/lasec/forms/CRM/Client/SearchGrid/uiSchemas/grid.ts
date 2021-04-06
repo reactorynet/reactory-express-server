@@ -138,7 +138,12 @@ const uiSchema: any = {
             'rowData.customer': ['customer', 'formData'],
           },
           props: {
-            'use_case': 'grid'
+            'use_case': 'grid',
+            uiSchema: {
+              'ui:options': {
+                displayField: 'tradingName',
+              },
+            },
           },
           breakpoint: 'md',
         },
