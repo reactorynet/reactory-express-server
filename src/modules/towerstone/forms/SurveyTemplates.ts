@@ -5,7 +5,7 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 
 const froalaOptions = {
   key: 'SDB17hB8E7F6D3eMRPYa1c1REe1BGQOQIc1CDBREJImD6F5E4G3E1A9D7C3B4B4==',
-  imageManagerLoadMethod: 'GET',    
+  imageManagerLoadMethod: 'GET',
   imageDefaultWidth: 300,
   imageDefaultDisplay: 'inline',
   imageUploadMethod: 'POST',
@@ -40,7 +40,7 @@ const emailTemplate: Reactory.IObjectSchema = {
     },
     subject: {
       type: 'string',
-      title: 'Subject Line',      
+      title: 'Subject Line',
     },
     body: {
       type: 'string',
@@ -53,17 +53,17 @@ const emailTemplateUiSchema = {
   'ui:field': 'GridLayout',
   'ui:grid-layout': [
     {
-        activity: { md: 4 },
-        target: { md: 4 },
-        engine: { md: 4 },
+      activity: { md: 4 },
+      target: { md: 4 },
+      engine: { md: 4 },
     },
     {
-        subject: { md: 12 },
-        body: { md: 12 },
+      subject: { md: 12 },
+      body: { md: 12 },
     }
-  ],  
+  ],
   key: {
-    'ui:widget': 'HiddenWidget',    
+    'ui:widget': 'HiddenWidget',
   },
   activity: {
     'ui:widget': 'LabelWidget',
@@ -76,13 +76,13 @@ const emailTemplateUiSchema = {
     'ui:options': {
       format: 'Target: ${formData}'
     }
-  },    
+  },
   engine: {
     'ui:widget': 'SelectWidget',
     'ui:options': {
       selectOptions: [
         { key: 'ejs', value: 'ejs', label: 'EJS' },
-        { key: 'lodash', value: 'lodash', label: 'lodash Template' },        
+        { key: 'lodash', value: 'lodash', label: 'lodash Template' },
       ],
     },
   },
@@ -103,12 +103,12 @@ const $schema: Reactory.IObjectSchema = {
   properties: {
     id: {
       type: 'string',
-      title: 'Survey Id',            
+      title: 'Survey Id',
     },
     surveyType: {
       type: "string",
       title: "Survey Type",
-      enum: ['180', '360',  'plc', 'l360', 'i360', 'culture', 'team180'],
+      enum: ['180', '360', 'plc', 'l360', 'i360', 'culture', 'team180'],
       readOnly: true,
     },
     templates: {
@@ -142,17 +142,17 @@ const $schema: Reactory.IObjectSchema = {
 };
 
 
-const $uiSchema: Object = { 
+const $uiSchema: Object = {
   'ui:field': 'GridLayout',
-  'ui:grid-layout': [    
+  'ui:grid-layout': [
     {
-        templates: { md: 12 },
+      templates: { md: 12 },
     }
-  ],  
+  ],
   surveyType: {
     'ui:options': {
       readOnly: true
-    }  
+    }
   },
   templates: {
     'ui:field': 'GridLayout',
@@ -161,7 +161,7 @@ const $uiSchema: Object = {
         assessorTemplates: { md: 12 },
         delegateTemplates: { md: 12 },
         generalTemplates: { md: 12 },
-      },      
+      },
     ],
     "assessorTemplates": {
       "items": {
@@ -196,17 +196,17 @@ const $graphql: Reactory.IFormGraphDefinition = {
     },
     variables: {
       'formContext.surveyId': 'surveyId'
-    }
-  }, 
+    },
+  },
   mutation: {
     edit: {
       name: "TowerStoneSurveySetTemplates",
       text: fileAsString(require.resolve('../graph/queries/TowerStoneSetSurveyTemplates.graphql')),
       objectMap: true,
       updateMessage: 'Updating Template Content',
-      variables: {  
-        'formData.templates' : 'templates',
-        'formContext.surveyId'  : 'id'
+      variables: {
+        'formData.templates': 'templates',
+        'formContext.surveyId': 'id'
       },
       onSuccessMethod: 'notification',
       notification: {
@@ -214,11 +214,11 @@ const $graphql: Reactory.IFormGraphDefinition = {
         title: 'Survey templates updated',
         props: {
           timeOut: 3000,
-          canDismiss: true,          
+          canDismiss: true,
         }
       },
     }
-  } 
+  }
 };
 
 export const TowerStoneSurveyTemplatesForm: Reactory.IReactoryForm = {

@@ -583,7 +583,7 @@ const getTowerStoneSurveyEmailTemplate = (surveyType: string, activity: string, 
   return _template;
 };
 
-const hydrateContent = async (template: TowerStone.ISurveyEmailTemplate, survey: TowerStone.ISurveyDocument) => {
+const hydrateContent = async (template: TowerStone.ISurveyEmailTemplate, survey: TowerStone.ISurveyDocument, context: Reactory.IReactoryContext) => {
   const _template = template;
   const existing = await getReactoryTemplate(template.key, survey.organization, context.partner).then() as Reactory.ITemplateDocument
   if (existing === null) return _template
@@ -851,7 +851,7 @@ const extractSubjectAndBody = (template: Reactory.ITemplateDocument): TemplateSe
  * @param props
  * @param context
  */
-const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context: any): TowerStone.ITowerStoneEmailService => {
+const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context: Reactory.IReactoryContext): TowerStone.ITowerStoneEmailService => {
   logger.debug("TowerStoneEmailService Constructor");
   return {
     send: async (survey: TowerStone.ISurveyDocument, activity: string, target: string, users: Reactory.IUser[], properties: any = {}) => {
@@ -979,15 +979,15 @@ const getEmailService = (props: TowerStone.ITowerStoneServiceParameters, context
       });
 
       result.assessorTemplates = await Promise.all(result.assessorTemplates.map((template) => {
-        return hydrateContent(template, survey);
+        return hydrateContent(template, survey, context);
       })).then();
 
       result.delegateTemplates = await Promise.all(result.delegateTemplates.map((template) => {
-        return hydrateContent(template, survey);
+        return hydrateContent(template, survey, context);
       })).then();
 
       result.generalTemplates = await Promise.all(result.generalTemplates.map((template) => {
-        return hydrateContent(template, survey);
+        return hydrateContent(template, survey, context);
       })).then();
 
       logger.debug('Hydradted templates', { result });

@@ -459,8 +459,8 @@ export const surveyEmails = {
 
     const isSelfAssessment = ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true;
 
-    //TODO: this should be changed by changing all the keys for the emails on the 360s
-    //mail template
+    // TODO: this should be changed by changing all the keys for the emails on the 360s
+    // mail template
     const viewName = `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-launch`;
 
     try {
@@ -722,7 +722,7 @@ export const surveyEmails = {
     }
     return emailResult;
   },
-  delegateInvite: async (delegate, survey, organization) => {
+  delegateInvite: async (delegate, survey, organization, context) => {
     // final object item to return
     if (lodash.isNil(delegate)) throw new ApiError('delegate parameter for delegateInvite cannot be null / undefined');
     if (lodash.isNil(survey)) throw new ApiError('survey parameter for delegateInvite cannot be null / undefined');
@@ -752,20 +752,23 @@ export const surveyEmails = {
       logger.info('Api Key Set, configuring property bag for template.');
       // property bag for template
       // we generate the auth token and set the expiry
+
+      const $organization = await Organization.findById(survey.organization).then();
+
       const authToken = AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate, { exp: moment(survey.endDate).valueOf() }));
       const properties = {
         partner,
         delegate,
         survey,
-        organization: await Organization.findById(survey.organization).then(),
+        organization: $organization,
         applicationTitle: partner.name,
         authToken,
-        link: `${partner.siteUrl}/profile/?auth_token=${authToken}&peerconfig=true`,
+        link: `${partner.siteUrl}/profile/?auth_token=${authToken}&peerconfig=true&organization_id=${$organization._id}`,
       };
 
       if (survey.options) {
         if (survey.options.autoLaunchOnPeerConfirm === true) {
-          properties.link = `${properties.link}&survey=${survey._id.toString()}`;
+          properties.link = `${properties.link}&survey=${survey._id.toString()}&loc=1`;
         }
       }
 

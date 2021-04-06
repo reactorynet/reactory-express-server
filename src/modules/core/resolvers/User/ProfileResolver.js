@@ -298,13 +298,13 @@ export default {
       };
 
     },
-    GetPersonalDemographics: async (obj, args) => {
-      return getPersonalDemographics(args);
+    GetPersonalDemographics: async (obj, params, context) => {
+      return getPersonalDemographics(params, context);
     }
   },
   Mutation: {
-    async CoreSetPersonalDemographics(obj, args) {
-      return SetPersonalDemographics(args);
+    async CoreSetPersonalDemographics(obj, args, context) {
+      return SetPersonalDemographics(args, context);
     }
   }
 };
