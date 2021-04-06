@@ -62,8 +62,7 @@ type SalesOrder {
 
   iso: String
 
-  # customer: String
-  customer: LasecCRMCustomer
+  customer: String
 
   crmCustomer: LasecCRMCustomer
   client: String

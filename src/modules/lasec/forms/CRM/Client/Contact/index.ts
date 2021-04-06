@@ -150,15 +150,15 @@ export const displayUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { md: 3, sm: 12 },
-      alternateEmail: { md: 3, sm: 12 },
+      emailAddress: { md: 6, sm: 12 },
+      alternateEmail: { md: 6, sm: 12 },
     },
     {
-      officeNumber: { md: 3, sm: 12 },
-      mobileNumber: { md: 3, sm: 12 },
+      officeNumber: { md: 6, sm: 12 },
+      mobileNumber: { md: 6, sm: 12 },
     },
     {
-      alternateNumber: { md: 3, sm: 12 },
+      alternateNumber: { md: 6, sm: 12 },
     },
   ],
   view: {
@@ -342,15 +342,15 @@ const editUiSchema: any = {
       view: { sm: 12, md: 12, lg: 12 },
     },
     {
-      emailAddress: { md: 3, sm: 12 },
-      alternateEmail: { md: 3, sm: 12 },
+      emailAddress: { md: 6, sm: 12 },
+      alternateEmail: { md: 6, sm: 12 },
     },
     {
-      mobileNumber: { md: 3, sm: 12 },
-      officeNumber: { md: 3, sm: 12 },
+      mobileNumber: { md: 6, sm: 12 },
+      officeNumber: { md: 5, sm: 12 },
     },
     {
-      alternateNumber: { md: 3, sm: 12 },
+      alternateNumber: { md: 6, sm: 12 },
     }
   ],
   view: {
