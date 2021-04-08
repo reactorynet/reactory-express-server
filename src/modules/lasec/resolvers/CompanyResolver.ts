@@ -498,7 +498,7 @@ interface ClientUpdateInput {
 const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.IReactoryContext) => {
 
   logger.debug(`CompanyResolver.ts >> updateClientDetail(args)\n${JSON.stringify(args, null, 2)}`,);
-
+  debugger
   try {
     const params = args.clientInfo;
 

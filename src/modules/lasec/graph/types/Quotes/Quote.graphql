@@ -679,6 +679,9 @@ type FreightRequestProductDetail {
   height: Float
   weight: Float
   volume: Float
+  tarrif: Float
+  refrigerationRequired: String
+  containsLithium: String
 }
 
 type FreightRequestQuoteDetail {
@@ -710,7 +713,8 @@ type FreightRequestOption {
   containsLithium: Boolean
   sample: String
   deliveryNote: String
-  # additionalDetails: String
+  additionalNotes: String
+  quoteType: String
   productDetails: [FreightRequestProductDetail]
 }
 

@@ -665,7 +665,7 @@ export default {
     },
     notes: async (product: any, args: any, context: Reactory.IReactoryContext) => {
       try {
-        const productNotes: any[] = await mysql(`SELECT Notes FROM ProductDescription WHERE productid = ${product.id};`, 'mysql.lasec360', undefined, context).then();
+        const productNotes: any[] = await mysql(`SELECT ExtendedDescription FROM ProductDescription WHERE productid = '${product.id}';`, 'mysql.lasec360', undefined, context).then();
         logger.debug(`Product.notes --> Checking Notes for Product Id ${product.id} - ${product.code}`, productNotes);
         if (productNotes) {
           if (isArray(productNotes) === true && productNotes.length === 1) {
@@ -676,7 +676,7 @@ export default {
                   <title>Product Notes unfluff wrapper for ${product.code}</title>
                 </head>
                 <body>
-                  <p>${productNotes[0].notes || 'No note'}</p>
+                  <p>${productNotes.map((row) => { return row.ExtendedDescription; })}</p>
                 </body>
               </html>`;
             const cleared = unfluff(html, 'en');

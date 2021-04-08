@@ -874,6 +874,8 @@ export interface FreightRequestProductDetail {
   width: number
   height: number
   volume: number
+  refrigerationRequired: string | "none" | "gel-pack" | "dry-ice"
+  containsLithium: string | "none" | "in-equipment" | "separate"
 }
 
 export interface FreightRequestOption {

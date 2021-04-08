@@ -58,28 +58,28 @@ export const SurveySettingsSchema = {
       type: 'number',
       title: 'Maximum Number of reminders',
     },
-    timeline: {
-      type: 'array',
-      title: 'Timeline Entries',
-      items: {
-        type: 'object',
-        title: 'Entry',
-        properties: {
-          when: {
-            type: 'string',
-            title: 'When',
-          },
-          eventType: {
-            type: 'string',
-            title: 'Event Type',
-          },
-          eventDetail: {
-            type: 'string',
-            title: 'Event Detail',
-          },
-        },
-      },
-    },
+    // timeline: {
+    //   type: 'array',
+    //   title: 'Timeline Entries',
+    //   items: {
+    //     type: 'object',
+    //     title: 'Entry',
+    //     properties: {
+    //       when: {
+    //         type: 'string',
+    //         title: 'When',
+    //       },
+    //       eventType: {
+    //         type: 'string',
+    //         title: 'Event Type',
+    //       },
+    //       eventDetail: {
+    //         type: 'string',
+    //         title: 'Event Detail',
+    //       },
+    //     },
+    //   },
+    // },
 
   },
 };
@@ -116,10 +116,6 @@ export const SurveySetttingsUISchema = {
     {
       spreadReminders: { md: 12 },
     },
-    {
-      timeline: { md: 12 },
-    },
-
   ],
   minimumPeers: {
     'ui:widget': 'SliderWidget',
@@ -167,31 +163,6 @@ export const SurveySetttingsUISchema = {
       ],
     },
   },
-  timeline: {
-    'ui:widget': 'MaterialTableWidget',
-    'ui:options': {
-      columns: [
-        {
-          title: 'When',
-          field: 'when',
-          component: 'core.LabelComponent@1.0.0',
-          props: {
-            uiSchema: {
-              'ui:options': {
-                variant: 'body1',
-                format: '${api.utils.moment(rowData.when).format(\'DD MMM YYYY HH:mm\')}',
-              }
-            },
-          },
-          propsMap: {
-            'rowData.date': 'value',
-          }
-        },
-        { title: 'Event', field: 'eventType' },
-        { title: 'Detail', field: 'eventDetail' },
-      ],
-    },
-  },
 };
 
 const graphql = {
@@ -201,18 +172,7 @@ const graphql = {
       surveyDetail(surveyId: $surveyId){
         id
         options
-        surveyType
-        timeline {
-          when
-          eventType
-          eventDetail
-          who {
-            id
-            firstName
-            lastName
-            avatar
-          }
-        }
+        surveyType        
       }
     }`,
     variables: {
@@ -228,7 +188,7 @@ const graphql = {
       'options.mustHaveSupervisor': 'mustHaveSupervisor',
       'options.numberOfReminders': 'numberOfReminders',
       'options.spreadReminders': 'spreadReminders',
-      'options.autoLaunchOnPeerConfirm' : 'autoLaunchOnPeerConfirm',
+      'options.autoLaunchOnPeerConfirm': 'autoLaunchOnPeerConfirm',
       'surveyType': 'surveyType',
       timeline: 'timeline',
     },

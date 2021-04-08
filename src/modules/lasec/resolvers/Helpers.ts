@@ -38,7 +38,8 @@ import {
   LasecGetPageQuotesParams,
   IQuoteService,
   ILasecLoggingService,
-  LasecCurrency
+  LasecCurrency,
+  FreightRequestQuoteDetail
 } from '../types/lasec';
 
 
@@ -3338,7 +3339,9 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
                       width: 0,
                       height: 0,
                       weight: 0,
-                      volume: 0
+                      volume: 0,
+                      refrigerationRequired: 'none',
+                      containsLithium: 'none',
                     });
                   });
               }
@@ -3357,12 +3360,15 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
     })
   }
 
-  return {
+  const freight_request_quote: FreightRequestQuoteDetail = {
     id: params.quoteId,
     email: context.user.email,
     communicationMethod: 'attach_pdf',
     options: await Promise.all(promises).then()
   };
+
+
+  return freight_request_quote;
 }
 
 export const updateFreightRequestDetails = async (params: any) => {
