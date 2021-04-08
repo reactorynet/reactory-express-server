@@ -19,8 +19,7 @@ const graphql: Reactory.IFormGraphDefinition = {
         }
       `,
     variables: {
-      // 'formData.id': 'userId',
-
+      'formData.id': 'id',
     },
     resultMap: {
       'userId': 'id',

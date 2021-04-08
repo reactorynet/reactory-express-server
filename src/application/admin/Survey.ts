@@ -100,7 +100,7 @@ const getLeadershipBrand = (id) => {
  * @param {*} delegateEntry
  * @param {*} organigram
  */
-export const sendParticipationInivitationForDelegate = async (survey, delegateEntry, organigram) => {
+export const sendParticipationInivitationForDelegate = async (survey, delegateEntry, organigram, context) => {
   logger.info(`Sending Invitation Survey: ${survey.title} to ${delegateEntry.delegate.firstName} ${delegateEntry.delegate.email}`);
   const result = (message, success = false) => {
     return {
@@ -117,7 +117,7 @@ export const sendParticipationInivitationForDelegate = async (survey, delegateEn
       organization = await Organization.findById(organization).then();
     }
 
-    const emailResult = await emails.surveyEmails.delegateInvite(delegate, survey, organization).then();
+    const emailResult = await emails.surveyEmails.delegateInvite(delegate, survey, organization, context).then();
     logger.info('Email Generated', emailResult);
     return result(`Sent invitation to ${delegate.firstName} ${delegate.lastName} for ${survey.title}`, true);
   } catch (e) {
@@ -131,7 +131,12 @@ export const sendParticipationInivitationForDelegate = async (survey, delegateEn
  * @param {*} delegateEntry
  * @param {*} organigram
  */
-export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organigram, propertyBag = { assessments: [], relaunch: false }) => {
+
+export interface SurveyLaunchPropertyBag {
+  assessments: any[],
+  relaunch: boolean
+}
+export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organigram, propertyBag: SurveyLaunchPropertyBag, context: Reactory.IReactoryContext) => {
 
   logger.info('Sending launch emails for delegate', { assessmentCount: propertyBag.assessments.length });
 
@@ -144,13 +149,13 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
   let organization: any = null;
   if (ObjectId.isValid(survey.organization)) {
     organization = await Organization.findById(survey.organization).then();
-  } else if (lodash.isObject(survey.organization)) organization = survey.organization;
+  } else if (lodash.isObject(survey.organization)) organization = survey.organization; // eslint-disable-line
 
   const emailPromises: any = [];
   if (lodash.isArray(propertyBag.assessments) === true) {
     propertyBag.assessments.forEach((assessment) => {
       const { assessor } = assessment;
-      emailPromises.push(emails.surveyEmails.launchForDelegate(assessor, delegate, survey, assessment, organization));
+      emailPromises.push(emails.surveyEmails.launchForDelegate(assessor, delegate, survey, assessment, organization, context));
     });
   }
 
@@ -171,7 +176,7 @@ export const sendSurveyLaunchedForDelegate = async (survey, delegateEntry, organ
   }
 };
 
-export const sendSingleSurveyLaunchEmail = async (survey: any, delegateEntry: any, assessment: any) => {
+export const sendSingleSurveyLaunchEmail = async (survey: any, delegateEntry: any, assessment: any, context: Reactory.IReactoryContext) => {
   const result = (message, success = false) => {
     return {
       message,
@@ -182,7 +187,7 @@ export const sendSingleSurveyLaunchEmail = async (survey: any, delegateEntry: an
   try {
     let { delegate } = delegateEntry;
     const { organization } = survey;
-    const response = await emails.surveyEmails.launchForDelegate(assessment.assessor, delegate, survey, assessment, organization);
+    const response = await emails.surveyEmails.launchForDelegate(assessment.assessor, delegate, survey, assessment, organization, context);
     return result(`Sent launch emails and instructions to ${assessment.assessor.firstName} ${assessment.assessor.lastName} at ${moment().format('DD MMM YY HH:mm')} for ${survey.title}`, true);
   } catch (e) {
     // return result(e.message);
@@ -216,7 +221,7 @@ export const sendSingleReminder = async (assessment: any, delegateEntry: any, su
  * @param {*} delegateEntry
  * @param {*} organigram
  */
-export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyDocument, delegateEntry: any) => {
+export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, context: Reactory.IReactoryContext) => {
   const result = (message, success = false) => {
     return {
       message,
@@ -312,7 +317,7 @@ export const sendSurveyRemindersForDelegate = async (survey: TowerStone.ISurveyD
  * @param {*} delegateEntry
  * @param {*} organigram
  */
-export const sendSurveyClosed = async (survey, delegateEntry, organigram) => {
+export const sendSurveyClosed = async (survey, delegateEntry, organigram, context: Reactory.IReactoryContext) => {
   // console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
 
   const result = (message, success = false) => {
@@ -337,7 +342,7 @@ export const sendSurveyClosed = async (survey, delegateEntry, organigram) => {
  * @param {*} delegateEntry
  * @param {*} organigram
  */
-export const sendReportOverview = async (survey, delegateEntry, organigram) => {
+export const sendReportOverview = async (survey, delegateEntry, organigram, context: Reactory.IReactoryContext) => {
   // console.log(`Launching Survey: ${survey.title}`, delegateEntry, organigram);
 
   const result = (message, success = false) => {
@@ -365,7 +370,7 @@ export const sendReportOverview = async (survey, delegateEntry, organigram) => {
  * @param {*} emailType
  * @param {*} propertyBag
  */
-export const sendSurveyEmail = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, emailType: any = 'none', propertyBag: any = {}) => {
+export const sendSurveyEmail = async (survey: TowerStone.ISurveyDocument, delegateEntry: any, organigram: any, emailType: any = 'none', propertyBag: any = {}, context: Reactory.IReactoryContext) => {
   const result = (message: string, success: boolean = false) => {
     return {
       message,
@@ -391,22 +396,22 @@ export const sendSurveyEmail = async (survey: TowerStone.ISurveyDocument, delega
   try {
     switch (emailType) {
       case EmailTypesForSurvey.ParticipationInvite: {
-        return sendParticipationInivitationForDelegate(survey, delegateEntry, organigram);
+        return sendParticipationInivitationForDelegate(survey, delegateEntry, organigram, context);
       }
       case EmailTypesForSurvey.SurveyLaunch: {
-        return sendSurveyLaunchedForDelegate(survey, delegateEntry, organigram, propertyBag);
+        return sendSurveyLaunchedForDelegate(survey, delegateEntry, organigram, propertyBag, context);
       }
       case EmailTypesForSurvey.SurveyReminder: {
-        return sendSurveyRemindersForDelegate(survey, delegateEntry);
+        return sendSurveyRemindersForDelegate(survey, delegateEntry, context);
       }
       // case EmailTypesForSurvey.SingleSurveyReminder: {
       //   return sendSingleReminder(survey, delegateEntry);
       // }
       case EmailTypesForSurvey.SurveyClose: {
-        return sendSurveyClosed(survey, delegateEntry, organigram);
+        return sendSurveyClosed(survey, delegateEntry, organigram, context);
       }
       case EmailTypesForSurvey.SurveyReport: {
-        return sendReportOverview(survey, delegateEntry, organigram);
+        return sendReportOverview(survey, delegateEntry, organigram, context);
       }
       default: {
         return result(`Invalid Email Type For Survey, ${emailType}`);

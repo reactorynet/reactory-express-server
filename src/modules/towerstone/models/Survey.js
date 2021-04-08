@@ -51,11 +51,11 @@ const SurveySchema = new mongoose.Schema({
   },
   delegateTeamName: {
     type: String,
-    required: false
+    required: false,
   },
   assessorTeamName: {
     type: String,
-    required: false
+    required: false,
   },
   surveyModule: {
     type: String,
@@ -158,7 +158,6 @@ const SurveySchema = new mongoose.Schema({
     },
   ],
 });
-
 
 SurveySchema.methods.addTimelineEntry = async function addTimelineEntry(
   eventType,

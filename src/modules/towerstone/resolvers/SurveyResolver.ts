@@ -61,9 +61,9 @@ interface SurveyDelegateActionParams {
 
 // }
 
-function getMailService(survey: TowerStone.ISurvey, action: String = 'default') {
+function getMailService(survey: TowerStone.ISurvey, action: String = 'default', context: Reactory.IReactoryContext) {
   const emailServiceProvider: TowerStone.ITowerStoneEmailServiceProvider = TowerStoneServicesMap["towerstone.EmailService@1.0.0"].service as TowerStone.ITowerStoneEmailServiceProvider;
-  const mailService = emailServiceProvider({ partner, user }, { action: action, survey: survey });
+  const mailService = emailServiceProvider({ action: action, survey: survey }, context);
   return mailService;
 }
 
@@ -390,9 +390,9 @@ export default {
 
       return statistics;
     },
-    templates(survey: TowerStone.ISurvey) {
+    templates(survey: TowerStone.ISurvey, args: any, context: Reactory.IReactoryContext) {
       logger.debug('Survey.templates(survey: TowerSTone.ISurvey)', { survey });
-      const mailService = getMailService(survey, 'Survey.templates()');
+      const mailService = getMailService(survey, 'Survey.templates()', context);
       return mailService.templates(survey);
     }
   },
@@ -534,8 +534,8 @@ export default {
         } throw new ApiError('Survey not found!');
       })(surveyId, delegateId);
     },
-    async surveyDelegateAction(obj, params: SurveyDelegateActionParams, context: any, info: any) {
-
+    async surveyDelegateAction(parent: any, params: SurveyDelegateActionParams, context: Reactory.IReactoryContext, info: any) {
+      debugger
       logger.debug(`STARTING DELGATE ACTION:: ${JSON.stringify(params)}`);
 
       const {
@@ -544,12 +544,15 @@ export default {
 
 
       const { user, partner } = context;
-      const mailService = getMailService(survey, 'Survey.templates()');
+
       const surveyModel: TowerStone.ISurveyDocument = await Survey.findById(survey)
         .populate('delegates.delegate')
         .populate('delegates.assessments')
         .populate('organization')
         .then();
+
+      const mailService = getMailService(surveyModel, 'Survey.templates()', context);
+
 
       if (!surveyModel) throw new RecordNotFoundError('Could not find survey item', 'Survey');
 
@@ -659,7 +662,7 @@ export default {
              * SEND INVITATION FLOW
              */
             case 'send-invite': {
-              const inviteResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.ParticipationInvite);
+              const inviteResult = await sendSurveyEmail(surveyModel, entryData.entry, organigramModel, EmailTypesForSurvey.ParticipationInvite, {}, context);
               entryData.entry.message = `${inviteResult.message} @ ${moment().format('YYYY-MM-DD HH:mm:ss')}`;
               entryData.patch = true;
               entryData.entry.status = 'invite-sent';
@@ -683,7 +686,7 @@ export default {
               if ((surveyModel as TowerStone.ISurveyDocument).surveyType.endsWith('180')) {
 
                 const relaunch = inputData.relaunch === true;
-                const launchResult = await launchSurveyForDelegate(surveyModel as TowerStone.ISurveyDocument, entryData.entry, organigramModel, relaunch);
+                const launchResult = await launchSurveyForDelegate(surveyModel as TowerStone.ISurveyDocument, entryData.entry, organigramModel, relaunch, context);
 
                 entryData.entry.message = launchResult.message; // `Launched survey for delegate ${userModel.firstName} ${userModel.lastName}`;
                 if (launchResult.assessments) {
@@ -1080,11 +1083,11 @@ export default {
         throw new ApiError('Delegate action error!', error);
       }
     },
-    async TowerStoneSurveySetTemplates(parent: any, params: TowerStone.ITowerStoneSetTemplatesParameters) {
+    async TowerStoneSurveySetTemplates(parent: any, params: TowerStone.ITowerStoneSetTemplatesParameters, context: Reactory.IReactoryContext) {
       const { id, templates } = params;
       const survey = await getSurveyService().get(id).then();
       logger.debug(`Patching Templates For Survey ${survey.title}`)
-      const mailService = getMailService(survey, 'TowerStoneSurveySetTemplates');
+      const mailService = getMailService(survey, 'TowerStoneSurveySetTemplates', context);
       return await mailService.patchTemplates(survey, templates).then();
     },
     async TowerStoneLeadershipBrandCopy(parent: any, params: TowerStone.ICopyLeadershipBrandParams) {

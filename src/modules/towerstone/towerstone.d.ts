@@ -211,7 +211,7 @@ declare namespace TowerStone {
   }
 
   export interface ITowerStoneServiceParameters {
-    partner: Reactory.IPartner
+    partner: Reactory.IReactoryClient
     user: Reactory.IUser
   }
 
