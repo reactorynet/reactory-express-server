@@ -47,13 +47,15 @@ const graphql: Reactory.IFormGraphDefinition = {
             shippingDate
             quoteDate
             orderType
-            orderStatus
             iso
             customer
             client
             crmCustomer {
-              id
               registeredName
+              customerStatus
+            }
+            salesOrderCustomer {
+              tradingName
               customerStatus
             }
             poNumber

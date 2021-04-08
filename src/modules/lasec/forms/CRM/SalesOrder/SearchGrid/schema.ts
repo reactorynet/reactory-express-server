@@ -164,6 +164,17 @@ const schema: Reactory.ISchema = {
               }
             }
           },
+          salesOrderCustomer: {
+            type: 'object',
+            properties: {
+              registeredName: {
+                type: 'string',
+              },
+              customerStatus: {
+                type: 'string',
+              }
+            }
+          },
           client: {
             type: 'string'
           },

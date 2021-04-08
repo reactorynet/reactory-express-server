@@ -44,6 +44,11 @@ type SalesOrderDetails {
   comments: [CRMSaleOrderComment]
 }
 
+type SalesOrderCustomer {
+  tradingName: String
+  customerStatus: String
+}
+
 
 """
 Sales Order Line Item Detail
@@ -63,8 +68,9 @@ type SalesOrder {
   iso: String
 
   customer: String
-
+  salesOrderCustomer: SalesOrderCustomer
   crmCustomer: LasecCRMCustomer
+
   client: String
 
   poNumber: String

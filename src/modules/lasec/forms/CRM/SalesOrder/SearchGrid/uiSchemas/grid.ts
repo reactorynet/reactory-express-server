@@ -44,6 +44,22 @@ const uiSchema: any = {
           },
         },
         {
+          title: 'Order Status',
+          field: 'orderStatus',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${formData}',
+              },
+            },
+          },
+          propsMap: {
+            'rowData.orderStatus': 'formData',
+          },
+        },
+        {
           title: 'Order Date',
           field: 'orderDate',
           component: 'core.LabelComponent@1.0.0',
@@ -131,11 +147,10 @@ const uiSchema: any = {
         },
         {
           title: 'Customer',
-          field: 'customer',
+          field: 'salesOrderCustomer',
           component: 'lasec-crm.CustomerLabel@1.0.0',
           props: {
             'use_case': 'grid',
-            // context: 'sales-order-grid',
             uiSchema: {
               'ui:options': {
                 displayField: 'tradingName',
@@ -143,14 +158,8 @@ const uiSchema: any = {
             },
           },
           propsMap: {
-            // 'rowData.customer': ['customer.tradingName', 'formData'],
-            'rowData.customer': ['customer', 'formData'],
+            'rowData.salesOrderCustomer': ['customer', 'formData'],
           },
-          // propsMap: {
-          //   'rowData.crmCustomer': 'customer',
-          //   rowData: 'data',
-          // },
-
         },
         {
           title: 'Client',
@@ -249,6 +258,22 @@ const uiSchema: any = {
         actionsColumnIndex: -1,
         pageSize: 10,
       },
+      conditionalRowStyling: [
+        {
+          field: 'orderStatus',
+          condition: 'suspended',
+          style: {
+            backgroundColor: 'rgba(111 117 236 / 40%)' // light blue
+          }
+        },
+        {
+          field: 'salesOrderCustomer.customerStatus',
+          condition: 'on hold',
+          style: {
+            backgroundColor: 'rgba(252, 193, 106, 0.5)' // light orange
+          }
+        }
+      ],
       remoteData: true,
       query: 'sales_orders',
       componentMap: {
@@ -283,6 +308,7 @@ const uiSchema: any = {
         'salesOrders.[].iso': 'data.[].iso',
         'salesOrders.[].customer': 'data.[].customer',
         'salesOrders.[].crmCustomer': 'data.[].crmCustomer',
+        'salesOrders.[].salesOrderCustomer': 'data.[].salesOrderCustomer',
         'salesOrders.[].client': 'data.[].client',
         'salesOrders.[].poNumber': 'data.[].poNumber',
         'salesOrders.[].value': 'data.[].value',
