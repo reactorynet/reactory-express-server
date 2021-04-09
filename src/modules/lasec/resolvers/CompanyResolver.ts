@@ -385,7 +385,7 @@ export const getClient = async (params: any, context: Reactory.IReactoryContext)
       'account_type': ['accountType', 'customer.accountType'],
       'company_on_hold': {
         'key': 'customer.customerStatus',
-        'transform': (val: boolean) => (`${val === true ? 'On-hold' : 'Active'}`)
+        'transform': (val: any) => (`${val === 'Y' || val === true ? 'On-hold' : 'Active'}`)
       },
       'currency_code': 'customer.currencyCode',
       'currency_symbol': 'customer.currencySymbol',
