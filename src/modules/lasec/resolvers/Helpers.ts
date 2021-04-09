@@ -2053,6 +2053,11 @@ export const getPagedSalesOrders = async (params: any, context: Reactory.IReacto
 
         customer: order.company_trading_name ? order.company_trading_name : '',
 
+        salesOrderCustomer: {
+          tradingName: order.company_trading_name ? order.company_trading_name : '',
+          customerStatus: order.company_on_hold && order.company_on_hold != '' ? (order.company_on_hold == 'Y' ? 'ON HOLD' : 'NOT ON HOLD') : ''
+        },
+
         client: order.customer_name ? order.customer_name : '',
 
         poNumber: order.customerponumber ? order.customerponumber : '',

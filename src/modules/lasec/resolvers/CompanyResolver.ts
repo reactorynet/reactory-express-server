@@ -242,6 +242,11 @@ const getClients = async (params: GetClientsParams, context: Reactory.IReactoryC
   const clientDetails = await lasecApi.Customers.list({ filter: { ids: ids }, ordering: {}, pagination: { enabled: false, current_page: paging.page, page_size: paging.pageSize } }, context);
   logger.debug(`Fetched Expanded View for (${clientDetails.items.length}) Clients from API`);
   let clients = [...clientDetails.items];
+
+
+  logger.debug(`CLIENT INFO:: ${JSON.stringify(clients[2])}`);
+
+
   clients = clients.map(client => {
     let _client = om(client, {
       'id': 'id',
@@ -350,7 +355,6 @@ export const getClient = async (params: any, context: Reactory.IReactoryContext)
       'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src: boolean) => src == true },
       'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src: boolean) => src == true },
       'department': ['department', 'jobTitle'],
-
       'ranking_id': ['customer.ranking', {
         key: 'customer.rankingLabel', "transform": (srcVal: string, srcObj: any) => {
           switch (srcVal) {
@@ -365,17 +369,10 @@ export const getClient = async (params: any, context: Reactory.IReactoryContext)
           }
         }
       }],
-
-      // 'faculty': 'faculty',
       'faculty': { 'key': 'faculty', 'transform': (srcVal: string) => srcVal == null ? '' : srcVal },
-      // 'customer_type': 'customerType',
       'customer_type': { 'key': 'customerType', 'transform': (srcVal: string) => srcVal == null ? '' : srcVal },
-
-      // 'line_manager_id': 'lineManager',
       'line_manager_id': { 'key': 'lineManager', 'transform': (srcVal: string) => srcVal == '0' || srcVal == '0' ? '' : srcVal },
-      // 'line_manager_name': 'lineManagerLabel',
       'line_manager_name': { 'key': 'lineManagerLabel', 'transform': (srcVal: string) => srcVal == null ? '' : srcVal },
-
       'role_id': 'jobType',
       'company_id': 'customer.id',
       'company_account_number': 'customer.accountNumber',
@@ -385,7 +382,7 @@ export const getClient = async (params: any, context: Reactory.IReactoryContext)
       'account_type': ['accountType', 'customer.accountType'],
       'company_on_hold': {
         'key': 'customer.customerStatus',
-        'transform': (val: any) => (`${val === 'Y' || val === true ? 'On-hold' : 'Active'}`)
+        'transform': (val: any) => (`${val === true || val == 'Y' ? 'on-hold' : 'not-on-hold'}`)
       },
       'currency_code': 'customer.currencyCode',
       'currency_symbol': 'customer.currencySymbol',
@@ -562,7 +559,7 @@ const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.I
             "duplicate_name_flag": false,
             "duplicate_email_flag": false
           }
-       * 
+       *
        */
 
       let updateParams = {
