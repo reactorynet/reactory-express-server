@@ -281,10 +281,10 @@ const tableUiSchema: any = {
         search: false,
         showTitle: false,
         toolbar: false,
-        searchText: '${formContext.$formData.product}'
+        searchText: '${formContext.$formData.product}',
       },
       propsMap: {
-        'formContext.$formData.product': 'searchText'
+        'formContext.$formData.product': 'searchText',
       },
       remoteData: true,
       query: 'products_table',

@@ -375,7 +375,8 @@ export const getProductById = async (params: any,
         packedWeight: product.packed_weight,
         numberOfSalesOrders: product.no_of_salesorder || 0,
         productClass: product.class,
-        tariffCode: product.tariff_code,
+        tariffCode: parseFloat(product.tariff_code || 0),
+        tariffPercent: parseFloat(product.tariff_percentage || '0'),
         leadTime: product.lead_time,
         validPriceUntil: product.valid_price_until ? moment(product.valid_price_until).format('DD MMM YYYY') : '',
         lastUpdated: product.last_updated,
@@ -387,6 +388,7 @@ export const getProductById = async (params: any,
         onSpecial: product.on_special,
         specialPrice: product.special_price_cents,
         currencyCode: product.currency_code,
+        webRate: product.web_rate,
 
         ...product_costing, // eslint-disable-line
         productPricing: [],
@@ -665,10 +667,12 @@ export default {
     },
     notes: async (product: any, args: any, context: Reactory.IReactoryContext) => {
       try {
-        const productNotes: any[] = await mysql(`SELECT ExtendedDescription FROM ProductDescription WHERE productid = '${product.id}';`, 'mysql.lasec360', undefined, context).then();
+
+        const sql = `SELECT ExtendedDescription FROM ProductDescription WHERE productid = ${product.id};`;
+        const productNotes: any[] = await mysql(sql, 'mysql.lasec360', undefined, context).then();
         logger.debug(`Product.notes --> Checking Notes for Product Id ${product.id} - ${product.code}`, productNotes);
         if (productNotes) {
-          if (isArray(productNotes) === true && productNotes.length === 1) {
+          if (isArray(productNotes) === true && productNotes.length > 0) {
             // return productNotes[0].notes;
             const html = `
               <html>

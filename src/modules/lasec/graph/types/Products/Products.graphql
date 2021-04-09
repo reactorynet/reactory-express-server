@@ -76,7 +76,8 @@ type Product {
 
   exWorksFactor: Int
   productClass: String
-  tariffCode: String
+  tariffCode: Float
+  tariffPercent: Float
   leadTime: String
   validPriceUntil: String
   lastUpdated: String
@@ -104,6 +105,7 @@ type Product {
   landedCost: String
   markup: String
   sellingPrice: String
+  webRate: Float
 
   onSpecial: Boolean
   currencyCode: String
