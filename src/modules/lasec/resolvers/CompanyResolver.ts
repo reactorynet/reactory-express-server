@@ -495,7 +495,6 @@ interface ClientUpdateInput {
 const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.IReactoryContext) => {
 
   logger.debug(`CompanyResolver.ts >> updateClientDetail(args)\n${JSON.stringify(args, null, 2)}`,);
-  debugger
   try {
     const params = args.clientInfo;
 
@@ -2639,7 +2638,7 @@ export default {
     LasecDeleteNewClientDocuments: async (obj: any, args: any, context: Reactory.IReactoryContext) => {
       return deleteDocuments(args, context);
     },
-    LasecUpdateNewClient: async (obj: any, args: { id: string, newClient: any }, context: Reactory.IReactoryContext) => {
+    LasecUpdateNewClient: async (obj: any, args: { clientId: string, id: string, newClient: any }, context: Reactory.IReactoryContext) => {
 
       const { newClient } = args;
       logger.debug(`Updating New Client object details with input:\n ${JSON.stringify(newClient, null, 2)}`);
@@ -2650,70 +2649,112 @@ export default {
 
       let _newClient = await getCacheItem(hash, null, 60, context.partner).then();
 
-      if (isNil(newClient.personalDetails) === false && Object.keys(newClient.personalDetails).length > 0) {
-        if (deepEquals(newClient.personalDetails, _newClient.personalDetails) === false) {
-          touched = true;
-          _newClient.personalDetails = { ..._newClient.personalDetails, ...newClient.personalDetails };
+      if (_newClient === null || _newClient === undefined) {
+        //working with an existing client.
+        if (args.clientId) {
+          if (isNil(newClient.address) === false) {
+            const { deliveryAddress, physicalAddress } = newClient.address;
+
+            if (Number.parseInt(physicalAddress.id) > 0) {
+              try {
+                const update_result = await mysql(`
+              UPDATE Customer SET
+                physical_address_id = '${physicalAddress.id}'
+              WHERE customerid = ${args.clientId};`, 'mysql.lasec360', undefined, context).then()
+
+                logger.debug(`Set physical address ${physicalAddress.fullAddress}`);
+              } catch (exc) {
+                logger.error(`Could not save the physical address against the customer`, exc);
+                //response.messages.push({ text: 'Warning.', description: `Client ${customer.first_name} ${customer.last_name} could not set physical address`, type: 'warning', inAppNotification: true });
+              }
+            }
+
+
+            if (Number.parseInt(deliveryAddress.id) > 0) {
+              try {
+                logger.debug(`Set delivery address ${deliveryAddress.fullAddress}`);
+                await mysql(`
+              UPDATE Customer SET
+                delivery_address_id = '${deliveryAddress.id}'
+                WHERE customerid = ${args.clientId};`, 'mysql.lasec360', undefined, context).then()
+              } catch (exc) {
+                logger.error(`Could not save the delivery address against the customer`, exc);
+                //response.messages.push({ text: 'Warning.', description: `Client ${customer.first_name} ${customer.last_name} could not set delivery address`, type: 'warning', inAppNotification: true });
+              }
+            }
+
+            return newClient;
+          }
         }
-      }
-
-      if (isNil(newClient.contactDetails) === false && Object.keys(newClient.contactDetails).length > 0) {
-        if (deepEquals(newClient.contactDetails, _newClient.contactDetails) === false) {
-          touched = true;
-          _newClient.contactDetails = { ..._newClient.contactDetails, ...newClient.contactDetails };
+      } else {
+        if (isNil(newClient.personalDetails) === false && Object.keys(newClient.personalDetails).length > 0) {
+          if (deepEquals(newClient.personalDetails, _newClient.personalDetails) === false) {
+            touched = true;
+            _newClient.personalDetails = { ..._newClient.personalDetails, ...newClient.personalDetails };
+          }
         }
-      }
 
-      if (isNil(newClient.jobDetails) === false && Object.keys(newClient.jobDetails).length > 0) {
-
-        if (deepEquals(newClient.jobDetails, _newClient.jobDetails) === false) {
-          touched = true;
-          _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
-
-          const roles = await getCustomerRoles(context).then();
-          const employeeRole = roles.find((t: any) => t.id == _newClient.jobDetails.jobType);
-          _newClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : _newClient.jobDetails.jobType;
-
-          _newClient.jobDetails.faculty = "Science";
-          _newClient.jobDetails.customerType = "Science";
-
+        if (isNil(newClient.contactDetails) === false && Object.keys(newClient.contactDetails).length > 0) {
+          if (deepEquals(newClient.contactDetails, _newClient.contactDetails) === false) {
+            touched = true;
+            _newClient.contactDetails = { ..._newClient.contactDetails, ...newClient.contactDetails };
+          }
         }
-      }
 
-      if (isNil(newClient.customer) === false && Object.keys(newClient.customer).length > 0) {
+        if (isNil(newClient.jobDetails) === false && Object.keys(newClient.jobDetails).length > 0) {
 
-        if (deepEquals(newClient.customer, _newClient.customer) === false) {
-          touched = true;
-          _newClient.customer = { ..._newClient.customer, ...newClient.customer };
+          if (deepEquals(newClient.jobDetails, _newClient.jobDetails) === false) {
+            touched = true;
+            _newClient.jobDetails = { ..._newClient.jobDetails, ...newClient.jobDetails };
+
+            const roles = await getCustomerRoles(context).then();
+            const employeeRole = roles.find((t: any) => t.id == _newClient.jobDetails.jobType);
+            _newClient.jobDetails.jobTypeLabel = employeeRole ? employeeRole.name : _newClient.jobDetails.jobType;
+
+            _newClient.jobDetails.faculty = "Science";
+            _newClient.jobDetails.customerType = "Science";
+
+          }
         }
-      }
 
-      if (isNil(newClient.organization && Object.keys(newClient.organization).length > 0) === false) {
-        if (deepEquals(newClient.organization, _newClient.organization) === false) {
-          touched = true;
-          _newClient.organization = { ..._newClient.organization, ...newClient.organization };
+        if (isNil(newClient.customer) === false && Object.keys(newClient.customer).length > 0) {
+
+          if (deepEquals(newClient.customer, _newClient.customer) === false) {
+            touched = true;
+            _newClient.customer = { ..._newClient.customer, ...newClient.customer };
+          }
         }
-      }
 
-      if (isNil(newClient.address && Object.keys(newClient.address).length > 0) === false) {
-        if (deepEquals(newClient.address, _newClient.address) === false) {
-          touched = true;
-          _newClient.address = {
-            physicalAddress: { ..._newClient.address.physicalAddress, ...newClient.address.physicalAddress },
-            deliveryAddress: { ..._newClient.address.deliveryAddress, ...newClient.address.deliveryAddress },
-          };
+
+        if (isNil(newClient.organization && Object.keys(newClient.organization).length > 0) === false) {
+          if (deepEquals(newClient.organization, _newClient.organization) === false) {
+            touched = true;
+            _newClient.organization = { ..._newClient.organization, ...newClient.organization };
+          }
         }
+
+        if (isNil(newClient.address && Object.keys(newClient.address).length > 0) === false) {
+          if (deepEquals(newClient.address, _newClient.address) === false) {
+            touched = true;
+            _newClient.address = {
+              physicalAddress: { ..._newClient.address.physicalAddress, ...newClient.address.physicalAddress },
+              deliveryAddress: { ..._newClient.address.deliveryAddress, ...newClient.address.deliveryAddress },
+            };
+          }
+        }
+
+        logger.debug('New Client Details', _newClient, 'debug');
+
+        if (touched) {
+          _newClient.clientId = newClient.id;
+          _newClient.updated = new Date().valueOf()
+          setCacheItem(hash, _newClient, 60 * 60 * 12, context.partner).then();
+        }
+
+        return _newClient;
       }
 
-      logger.debug('New Client Details', _newClient, 'debug');
 
-      if (touched) {
-        _newClient.clientId = newClient.id;
-        _newClient.updated = new Date().valueOf()
-        setCacheItem(hash, _newClient, 60 * 60 * 12, context.partner).then();
-      }
-
-      return _newClient;
     },
     LasecUpdateCustomerCompany: async (obj: any, args: any) => {
 

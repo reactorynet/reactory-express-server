@@ -14,11 +14,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
           deliveryAddress {
             id
             fullAddress
-          }
-          billingAddress {
-            id
-            fullAddress
-          }
+          }          
         }
       }
     }`,
@@ -29,7 +25,6 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
       'id': 'id',
       'address.physicalAddress': 'physicalAddress',
       'address.deliveryAddress': 'deliveryAddress',
-      'address.billingAddress': 'billingAddress',
     },
     refreshEvents: [
       { name: "LasecNewClient::onResetForm" }
@@ -60,11 +55,7 @@ export const newClientGraphQL: Reactory.IFormGraphDefinition = {
             deliveryAddress {
               id
               fullAddress
-            }
-            billingAddress {
-              id
-              fullAddress
-            }
+            }            
           }
         }
       }`,

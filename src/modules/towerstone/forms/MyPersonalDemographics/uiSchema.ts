@@ -5,10 +5,16 @@ const uiSchema: any = {
     showRefresh: false,
     showSubmit: true,
     componentType: "form",
+    submitProps: {
+      variant: 'contained',
+      color: 'primary',
+      text: 'SAVE CHANGES',
+      iconAlign: 'none',
+    },
     containerStyles: {
       padding: '0px',
       margin: '0px',
-      paddingBottom: '8px'
+      paddingBottom: '8px',
     },
     style: {
       marginTop: '16px',
@@ -18,12 +24,10 @@ const uiSchema: any = {
   },
   'ui:field': 'GridLayout',
   'ui:grid-options': {
-    spacing: 4,
+    spacing: 2,
+    container: 'div',
   },
   'ui:grid-layout': [
-    {
-      id: { xs: 12 },
-    },
     {
       age: { xs: 12, sm: 6, md: 6 },
       gender: { xs: 12, sm: 6, md: 6 },
@@ -33,11 +37,8 @@ const uiSchema: any = {
       operationalGroup: { xs: 12, sm: 6 },
       businessUnit: { xs: 12, sm: 6 },
       team: { xs: 12, sm: 6 },
-    }
+    },
   ],
-  id: {
-    'ui:widget': 'HiddenWidget',
-  },
   race: {
     'ui:widget': 'SelectWithDataWidget',
     'ui:options': {
@@ -59,24 +60,7 @@ const uiSchema: any = {
     },
   },
   age: {
-    'ui:widget': 'SelectWithDataWidget',
-    'ui:options': {
-      multiSelect: false,
-      query: `query TowerStoneGetDemographicLookup {
-        TowerStoneGetDemographicLookup(lookupType: "age") {
-          id
-          name
-        }
-      }`,
-      propertyMap: {
-      // 'formContext.$formData.organisationId': 'orgId'
-      },
-      resultItem: 'TowerStoneGetDemographicLookup',
-      resultsMap: {
-        'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],
-        'TowerStoneGetDemographicLookup.[].name': '[].label',
-      },
-    },
+    'ui:widget': 'DateSelectorWidget',
   },
   gender: {
     'ui:widget': 'SelectWithDataWidget',
@@ -88,9 +72,6 @@ const uiSchema: any = {
           name
         }
       }`,
-      //propertyMap: {
-      // 'formContext.$formData.organisationId': 'orgId'
-      //},
       resultItem: 'TowerStoneGetDemographicLookup',
       resultsMap: {
         'TowerStoneGetDemographicLookup.[].id': ['[].key', '[].value'],

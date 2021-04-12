@@ -81,7 +81,7 @@ const LasecCRMClientDetail: Reactory.IReactoryForm = {
             componentProps: { mode: 'new', uiSchemaKey: 'new' },
             componentPropsMap: {
               'formContext.formData': 'formData',
-              'formContext.formData.id': 'formData.id'
+              'formContext.formData.id': 'formData.id',
             },
           },
           {

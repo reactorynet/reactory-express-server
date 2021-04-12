@@ -12,7 +12,7 @@ const GOOGLE_PLACE_TO_ADDRESS_MAP = {
 
 export const AddressSchemaObject = AddressSchema;
 
-const onAddressSelectedMutationDefinition : Reactory.IReactoryFormMutation = {
+const onAddressSelectedMutationDefinition: Reactory.IReactoryFormMutation = {
   name: "LasecUpdateNewClient",
   text: `mutation LasecUpdateNewClient($newClient: LasecNewClientInput!){
     LasecUpdateNewClient(newClient: $newClient) {
@@ -75,11 +75,11 @@ const DEFAULT_ADDRESS_PROPS = {
   },
   resultName: 'LasecCheckAddressExists',
   resultMap: {
-    '*':'*'
+    '*': '*'
   }
 };
 
-const baseUiSchema: any =  {
+const baseUiSchema: any = {
   'ui:options': {
     componentType: "div",
     toolbarPosition: 'none',
@@ -125,7 +125,7 @@ const baseUiSchema: any =  {
         }
       },
       inputProps: {
-        style:{ marginTop: '1.2rem'}
+        style: { marginTop: '1.2rem' }
       },
       props: DEFAULT_ADDRESS_PROPS,
       mapProps: {
@@ -144,7 +144,7 @@ const baseUiSchema: any =  {
         }
       },
       inputProps: {
-        style:{ marginTop: '1.2rem'}
+        style: { marginTop: '1.2rem' }
       },
       props: DEFAULT_ADDRESS_PROPS,
       mapProps: {
@@ -152,7 +152,7 @@ const baseUiSchema: any =  {
       }
     }
   },
-  billingAddress:{
+  billingAddress: {
     'ui:widget': 'ReactoryGoogleMapWidget',
     'ui:options': {
       labelProps: {
@@ -163,7 +163,7 @@ const baseUiSchema: any =  {
         }
       },
       inputProps: {
-        style:{ marginTop: '1.2rem'}
+        style: { marginTop: '1.2rem' }
       },
       props: DEFAULT_ADDRESS_PROPS,
       mapProps: {
@@ -285,9 +285,13 @@ let newUiSchema: any = {
   ...baseUiSchema,
   'ui:grid-layout': [
     {
-      physicalAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
-      deliveryAddress: { xs: 12, sm: 12, md: 6, lg: 6 },
-      style: { padding: '25px 32px 0 32px' }
+      physicalAddress: {
+        xs: 12, sm: 12, md: 6, lg: 6,
+      },
+      deliveryAddress: {
+        xs: 12, sm: 12, md: 6, lg: 6,
+      },
+      style: { padding: '25px 32px 0 32px' },
     },
   ],
 };
@@ -306,8 +310,8 @@ const schema: Reactory.ISchema = {
   properties: {
     physicalAddress: { ...AddressSchema, title: 'Physical Address' },
     deliveryAddress: { ...AddressSchema, title: 'Delivery Address' },
-    billingAddress: { ...AddressSchema, title: 'Billing Address' }
-  }
+    billingAddress: { ...AddressSchema, title: 'Billing Address' },
+  },
 };
 
 const GOOGLE_MAPS_API_KEY: string = '<GOOGLE MAPS API KEY>';
@@ -323,7 +327,7 @@ const LasecCRMCustomerAddress: Reactory.IReactoryForm = {
   name: 'LasecCRMCustomerAddress',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: schema,
+  schema,
   uiSchema: DisplayUISchema,
   graphql: newClientGraphQL,
   uiSchemas: [
