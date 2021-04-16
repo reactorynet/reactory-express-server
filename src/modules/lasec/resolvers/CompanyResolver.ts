@@ -2650,6 +2650,11 @@ export default {
 
       let _newClient = await getCacheItem(hash, null, 60, context.partner).then();
 
+      logger.debug(`GOT CACHED CLIENT (ID: ${hash}): ${JSON.stringify(_newClient)}`);
+
+      // if (_newClient == undefined || _newClient == null)
+      //   _newClient = {};
+
       if (isNil(newClient.personalDetails) === false && Object.keys(newClient.personalDetails).length > 0) {
         if (deepEquals(newClient.personalDetails, _newClient.personalDetails) === false) {
           touched = true;
@@ -2695,14 +2700,38 @@ export default {
         }
       }
 
+
       if (isNil(newClient.address && Object.keys(newClient.address).length > 0) === false) {
-        if (deepEquals(newClient.address, _newClient.address) === false) {
+
+
+        logger.debug(`NEW CLIENT ADDRESS: ${JSON.stringify(newClient.address)}`);
+        logger.debug(`NEXT LINE`);
+
+
+        if (_newClient.address == undefined) {
+
+          logger.debug(`SAVING NEW CLIENT ADDRESS`);
+
           touched = true;
           _newClient.address = {
-            physicalAddress: { ..._newClient.address.physicalAddress, ...newClient.address.physicalAddress },
-            deliveryAddress: { ..._newClient.address.deliveryAddress, ...newClient.address.deliveryAddress },
+            physicalAddress: { ...newClient.address.physicalAddress },
+            deliveryAddress: { ...newClient.address.deliveryAddress },
           };
+
+        } else {
+
+          if (deepEquals(newClient.address, _newClient.address) === false) {
+
+            logger.debug(`SAVING & MERGING CLIENT ADDRESS`);
+
+            touched = true;
+            _newClient.address = {
+              physicalAddress: { ..._newClient.address.physicalAddress, ...newClient.address.physicalAddress },
+              deliveryAddress: { ..._newClient.address.deliveryAddress, ...newClient.address.deliveryAddress },
+            };
+          }
         }
+
       }
 
       logger.debug('New Client Details', _newClient, 'debug');
