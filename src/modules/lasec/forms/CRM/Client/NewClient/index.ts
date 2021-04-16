@@ -64,14 +64,14 @@ const uiSchema: any = {
     containerStyles: {
       padding: 0,
       margin: 0,
-      border: "none",
-      boxShadow: "none"
-    }
+      border: 'none',
+      boxShadow: 'none',
+    },
   },
   'ui:grid-layout': [
     {
       panels: { xs: 12, sm: 12, md: 12, lg: 12 },
-    }
+    },
   ],
   panels: {
     'ui:widget': 'AccordionComponent',
@@ -82,7 +82,7 @@ const uiSchema: any = {
       },
       Header: {
         style: {
-          color: '#afafaf'
+          color: '#afafaf',
         }
       }
     }
@@ -115,11 +115,11 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
   name: 'LasecCRMNewClient',
   nameSpace: 'lasec-crm',
   version: '1.0.0',
-  schema: schema,
-  uiSchema: uiSchema,
+  schema,
+  uiSchema,
   defaultFormValue: {
     expandedPanels: [
-      'client-details'
+      'client-details',
     ],
     panels: [
       {
@@ -128,7 +128,7 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMPersonalInformation@1.0.0',
-            ...$sharedProps
+            ...$sharedProps,
           },
           {
             componentFqn: 'lasec-crm.LasecCRMContactInformation@1.0.0',
@@ -180,12 +180,14 @@ const LasecCRMNewClientForm: Reactory.IReactoryForm = {
         Components: [
           {
             componentFqn: 'lasec-crm.LasecCRMNewCustomerConfirm@1.0.0',
-            componentProps: { mode: 'new', uiSchemaKey: 'confirm', uiSchemaId: 'confirm', liveValidate: true },
+            componentProps: {
+              mode: 'new', uiSchemaKey: 'confirm', uiSchemaId: 'confirm', liveValidate: true,
+            },
             componentPropsMap: {
-              'onBeforeMutation': 'onBeforeMutation',
-              'onMutationComplete': 'onMutationComplete',
-              'onQueryComplete': 'onQueryComplete',
-              'onBeforeQuery': 'onBeforeQuery',
+              onBeforeMutation: 'onBeforeMutation',
+              onMutationComplete: 'onMutationComplete',
+              onQueryComplete: 'onQueryComplete',
+              onBeforeQuery: 'onBeforeQuery',
             },
           },
         ],
