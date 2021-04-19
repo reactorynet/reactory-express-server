@@ -811,7 +811,6 @@ export const surveyEmails = {
       }
 
       // load and set body
-      debugger
       try {
         if (lodash.isNil(bodyTemplate) === false) {
           logger.info('Rendering body');

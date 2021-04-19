@@ -105,7 +105,6 @@ const MoresAssessmentSurveyResolver = {
     },
     MoresAssessementsCreateSurvey: async (obj: any, args: any, context: Reactory.IReactoryContext, info: any): Promise<TowerStone.ISurveyDocument> => {
 
-      debugger
       const moresSurveyCreateArgs: MoresAssessmentsSurveyCreateInput = args.moresSurveyCreateArgs;
 
       let surveyItem: TowerStone.ISurveyDocument = new Survey(moresSurveyCreateArgs) as TowerStone.ISurveyDocument;

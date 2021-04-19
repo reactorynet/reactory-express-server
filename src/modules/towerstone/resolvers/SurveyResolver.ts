@@ -535,8 +535,7 @@ export default {
       })(surveyId, delegateId);
     },
     async surveyDelegateAction(parent: any, params: SurveyDelegateActionParams, context: Reactory.IReactoryContext, info: any) {
-      debugger
-      logger.debug(`STARTING DELGATE ACTION:: ${JSON.stringify(params)}`);
+      logger.debug(`STARTING DELEGATE ACTION:: ${JSON.stringify(params)}`);
 
       const {
         entryId, survey, delegate, action, inputData,
