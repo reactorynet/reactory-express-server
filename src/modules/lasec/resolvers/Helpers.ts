@@ -3188,13 +3188,13 @@ export const getCRMSalesHistory = async (params: any, context: Reactory.IReactor
     pageSize: paging.pageSize || 10
   };
 
-  if (isString(search) === false || search.length < 3 || year == null) return {
-    paging: pagingResult,
-    salesHistory: [],
-    year,
-    month,
-    years,
-  };
+  // if (isString(search) === false || search.length < 3 || year == null) return {
+  //   paging: pagingResult,
+  //   salesHistory: [],
+  //   year,
+  //   month,
+  //   years,
+  // };
 
   let _filter: any = {
     order_status: 9,
@@ -3216,6 +3216,8 @@ export const getCRMSalesHistory = async (params: any, context: Reactory.IReactor
     _filter.start_date = moment([_year, month - 1]).startOf('month').toISOString();
     _filter.end_date = moment([_year, month - 1]).endOf('month').toISOString();
   }
+
+  logger.debug(`SH MAKING CALL - FILTERS:: ${JSON.stringify(_filter)}`);
 
   const salesHistoryResponse = await lasecApi.Products.sales_orders({
     filter: _filter,
