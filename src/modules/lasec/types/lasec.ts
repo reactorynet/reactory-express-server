@@ -836,7 +836,7 @@ export interface IQuoteService extends Reactory.Service.IReactoryContextAwareSer
 
   createSalesOrder(sales_order_input: LasecCreateSalesOrderInput): Promise<LasecSalesOrderCreateResponse>;
 
-  getSalesOrder(sales_order_id: String): Promise<LasecSalesOrder>
+  getSalesOrder(sales_order_id: string): Promise<LasecSalesOrder>
 }
 
 export interface ILasecClientService extends Reactory.Service.IReactoryContextAwareService {
@@ -881,25 +881,26 @@ export interface FreightRequestProductDetail {
 export interface FreightRequestOption {
   id: string
   name: string
-  transportMode: String
-  incoTerm: String
-  place: String
+  transportMode: string
+  incoTerm: string
+  place: string
   fromSA: Boolean
   vatExempt: Boolean
-  totalValue: String
-  companyName: String
-  streetAddress: String
-  suburb: String
-  city: String
-  province: String
-  country: String
-  freightFor: String
+  totalValue: number
+  currency: string
+  companyName: string
+  streetAddress: string
+  suburb: string
+  city: string
+  province: string
+  country: string
+  freightFor: string
   offloadRequired: Boolean
-  hazardous: String
+  hazardous: string
   refrigerationRequired: Boolean
   containsLithium: Boolean
-  sample: String
-  deliveryNote: String,
+  sample: string
+  deliveryNote: string,
   item_paging: PagingResult,
   productDetails: FreightRequestProductDetail[]
 }
@@ -943,56 +944,56 @@ export interface LasecGetPageQuotesParams {
 }
 
 export interface LasecInternationalExportDocument {
-  id: String
-  pdf_url: String
-  emailAddress: String
-  sendOptionsVia: String
+  id: string
+  pdf_url: string
+  emailAddress: string
+  sendOptionsVia: string
 
   date_of_issue: Date
   certification: Date
   date_of_expiry: Date
   date_of_expiry_na: Boolean
 
-  terms: String
-  final_destination: String
-  export_reason: String
-  document_number: String
-  inco_terms: String
-  po_number: String
+  terms: string
+  final_destination: string
+  export_reason: string
+  document_number: string
+  inco_terms: string
+  po_number: string
 
-  bill_to_company: String
-  bill_to_street_address: String
-  bill_to_suburb: String
-  bill_to_city: String
-  bill_to_province: String
-  bill_to_country: String
+  bill_to_company: string
+  bill_to_street_address: string
+  bill_to_suburb: string
+  bill_to_city: string
+  bill_to_province: string
+  bill_to_country: string
 
-  ship_to_company: String
-  ship_to_street_address: String
-  ship_to_suburb: String
-  ship_to_city: String
-  ship_to_province: String
-  ship_to_country: String
+  ship_to_company: string
+  ship_to_street_address: string
+  ship_to_suburb: string
+  ship_to_city: string
+  ship_to_province: string
+  ship_to_country: string
 
-  consignee_company: String
-  consignee_street_address: String
-  consignee_suburb: String
-  consignee_city: String
-  consignee_province: String
-  consignee_country: String
-  consignee_contact: String
-  consignee_number: String
+  consignee_company: string
+  consignee_street_address: string
+  consignee_suburb: string
+  consignee_city: string
+  consignee_province: string
+  consignee_country: string
+  consignee_contact: string
+  consignee_number: string
 
-  notify_company: String
-  notify_street_address: String
-  notify_suburb: String
-  notify_city: String
-  notify_province: String
-  notify_country: String
-  notify_contact: String
-  notify_number: String
+  notify_company: string
+  notify_street_address: string
+  notify_suburb: string
+  notify_city: string
+  notify_province: string
+  notify_country: string
+  notify_contact: string
+  notify_number: string
 
-  comments: String
+  comments: string
 
   lookups: any
 

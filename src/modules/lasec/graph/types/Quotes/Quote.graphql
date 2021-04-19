@@ -691,6 +691,9 @@ type FreightRequestQuoteDetail {
   options: [FreightRequestOption]
 }
 
+"""
+" Data structure that represents a freight request option.
+"""
 type FreightRequestOption {
   id: String
   name: String
@@ -701,6 +704,10 @@ type FreightRequestOption {
   vatExempt: Boolean
   totalValue: Int
   companyName: String
+  """
+  " The currency the quote option is set in. 
+  """
+  currency: String
   streetAddress: String
   suburb: String
   city: String
