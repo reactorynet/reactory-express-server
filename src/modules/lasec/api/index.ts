@@ -1942,7 +1942,7 @@ const Api = {
                 quantity: certificate_item.qty,
                 date_of_manufacture: `${safe_date_transform(certificate_item.date_of_manufacture)}`,
                 date_of_manufacture_na: certificate_item.date_of_manufacture_na === true ? "Y" : "N",
-                lot_no: certificate_item.lot_no,
+                lot_number: certificate_item.lot_no,
                 date_of_expiry: `${safe_date_transform(certificate_item.date_of_expiry)}`,
                 date_of_expiry_na: certificate_item.date_of_expiry_na === true ? "Y" : "N",
               };
