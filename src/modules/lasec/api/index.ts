@@ -1303,7 +1303,7 @@ const Api = {
         status, payload,
       } = apiResponse;
 
-      // logger.debug(`PRODUCT COSTINGS RESPONSE::  ${JSON.stringify(apiResponse)}`);
+      logger.debug(`PRODUCT COSTINGS RESPONSE::  ${JSON.stringify(apiResponse, null, 2)}`);
 
       if (status === 'success') {
         return payload;

@@ -99,7 +99,7 @@ type Product {
   freightPrice: String
   exWorksPrice: String
   craftingFOC: String
-  netFOB: String
+  netFOB: Int
   percDuty: String
   clearance: String
   landedCost: String
