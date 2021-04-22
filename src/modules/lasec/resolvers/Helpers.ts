@@ -3188,8 +3188,8 @@ export const getCRMSalesHistory = async (params: any, context: Reactory.IReactor
     pageSize: paging.pageSize || 10
   };
 
-  // if (isString(search) === false || search.length < 3 || year == null) return {
   if (isString(search) === false || search.length < 3 && year == null) return {
+  // if (isString(search) === false || search.length < 3 || year == null) return {
     paging: pagingResult,
     salesHistory: [],
     year,
