@@ -55,6 +55,8 @@ const lookups = CONSTANTS.LOOKUPS;
 const maps = { ...OBJECT_MAPS };
 
 
+const QUOTE_SERVICE_ID = 'lasec-crm.LasecQuoteService@1.0.0';
+
 /**
  * Transforms meta data into totals object
  * @param meta meta data to use for transformation
@@ -3287,6 +3289,14 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
 
   let quoteDetail: LasecQuote = await lasecApi.Quotes.getByQuoteId(quoteId, null, context).then();
 
+  const quoteSvc: IQuoteService = context.getService(QUOTE_SERVICE_ID);
+
+  const currencies = await quoteSvc.getCurrencies();
+
+  const quote_currency: LasecCurrency = lodash.find(currencies, (c) => { return c.id === parseInt(quoteDetail.currency_id) });
+  debugger
+
+
   logger.debug(`Fetched Quote Results :\n${JSON.stringify(quoteDetail)}\nLoading Quote Options`);
 
   let promises: Promise<any>[] = [];
@@ -3308,6 +3318,7 @@ export const getFreightRequetQuoteDetails = async (params: LasecGetFreightReques
               fromSA: false,
               vatExempt: false,
               totalValue: quoteOptionResponse.grand_total_incl_vat_cents || 0,
+              currency: quote_currency ? quote_currency.code : 'ZAR',
               companyName: '',
               streetAddress: '',
               suburb: '',

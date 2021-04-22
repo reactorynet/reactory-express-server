@@ -337,7 +337,7 @@ export const getClient = async (params: any, context: Reactory.IReactoryContext)
   let clients = [...clientDetails.items];
   if (clients.length === 1) {
 
-    logger.debug(`CLIENT::: ${JSON.stringify(clients[0])}`);
+    logger.debug(`CLIENT::: ${JSON.stringify(clients[0], null, 2)}`);
 
     let clientResponse: any = om.merge(clients[0], {
       'id': 'id',
@@ -354,7 +354,8 @@ export const getClient = async (params: any, context: Reactory.IReactoryContext)
       'sales_team_id': 'salesTeam',
       'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src: boolean) => src == true },
       'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src: boolean) => src == true },
-      'department': ['department', 'jobTitle'],
+      'department': ['department'],
+      'job_title': 'jobTitle',
       'ranking_id': ['customer.ranking', {
         key: 'customer.rankingLabel', "transform": (srcVal: string, srcObj: any) => {
           switch (srcVal) {
@@ -560,6 +561,7 @@ const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.I
           }
        *
        */
+      debugger
 
       let updateParams = {
         // first_name: params.firstName || (client.first_name || ''),
@@ -620,7 +622,9 @@ const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.I
         line_manager_id: params.lineManager || (client.line_manager_id || ''),
         role_id: params.jobType || (client.role_id || ''),
 
-        company_id: params.customer && params.customer.id ? params.customer.id : client.company_id
+        company_id: params.customer && params.customer.id ? params.customer.id : client.company_id,
+
+        job_title: params.jobTitle ? params.jobTitle : params.jobDetails && params.jobDetails.jobTitle || (client.job_title || 'NONE'),
       }
 
       logger.debug(`UPDATE PARAMS:: ${JSON.stringify(updateParams, null, 2)}`);
@@ -648,9 +652,9 @@ const updateClientDetail = async (args: { clientInfo: any }, context: Reactory.I
           'sales_team_id': 'salesTeam',
           'duplicate_name_flag': { key: 'isNameDuplucate', transform: (src: any) => src == true },
           'duplicate_email_flag': { key: 'isEmailDuplicate', transform: (src: any) => src == true },
-          'department': ['department', 'jobTitle'],
+          'department': ['department'],
           'ranking_id': 'customer.ranking',
-
+          'job_title': 'jobTitle',
           'faculty': 'faculty',
           'customer_type': 'customerType',
           'line_manager_id': 'lineManager',
