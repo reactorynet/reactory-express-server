@@ -70,7 +70,7 @@ const displayUiSchema: any = {
       balance30Days: { sm: 12, md: 6, lg: 4 },
       balance60Days: { sm: 12, md: 6, lg: 4 },
       balance90Days: { sm: 12, md: 6, lg: 4 },
-      credits: { sm: 12, md: 6, lg: 4 },
+      creditTotal: { sm: 12, md: 6, lg: 4 },
       style: { padding: '25px 32px 0 32px' }
     }
   ],
@@ -139,7 +139,7 @@ const displayUiSchema: any = {
     },
   },
 
-  credits: {
+  creditTotal: {
     'ui:widget': 'StyledCurrencyLabel',
     'ui:options': {
       showLabel: false,
@@ -451,7 +451,7 @@ const schema: Reactory.ISchema = {
       type: 'number',
       title: '30 Day Invoice'
     },
-    credits: {
+    creditTotal: {
       type: 'number',
       title: 'Credits'
     },
