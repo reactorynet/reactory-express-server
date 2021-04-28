@@ -10,36 +10,25 @@ import { TowerStone } from "../towerstone";
 
 
 
-const EmailServiceDefinition : Reactory.IReactoryServiceDefinition = {
+const EmailServiceDefinition: Reactory.IReactoryServiceDefinition = {
   id: `${FormNameSpace}.EmailService@1.0.0`,
   name: 'Towerstone Email Services',
   description: "Provides all email service functions for TowerStone and PLC Services",
   service: (props: TowerStone.ITowerStoneServiceParameters, context: any): TowerStone.ITowerStoneEmailService => {
-    logger.debug("Executing TowerStone Email Service Provider");    
+    logger.debug("Executing TowerStone Email Service Provider");
     return TowerStoneEmailService(props, context);
   },
   serviceType: 'TowerStone.ITowerStoneEmailServiceProvider',
 };
 
-const SurveyServiceDefinition: Reactory.IReactoryServiceDefinition = {
-  id: `${FormNameSpace}.SurveyService@1.0.0`,
-  name: 'Towerstone Survey Service',
-  description: "Provides all Survey Related Service functions for TowerStone and PLC Services",
-  service: (props: TowerStone.ITowerStoneServiceParameters, context: any): TowerStone.ITowerStoneSurveyService => {
-    logger.debug("Executing TowerStone Email Service Provider");    
-    return TowerStoneSurveyService(props, context);
-  },
-  serviceType: 'TowerStone.ITowerStoneSurveyService',
-}
-
 export const services: Reactory.IReactoryServiceDefinition[] = [
   EmailServiceDefinition,
-  SurveyServiceDefinition,    
+  TowerStoneSurveyService,
 ];
 
 export const TowerStoneServicesMap = {
   "towerstone.EmailService@1.0.0": EmailServiceDefinition,
-  "towerstone.SurveyService@1.0.0": SurveyServiceDefinition
+  "towerstone.SurveyService@1.0.0": TowerStoneSurveyService,
 };
 
 export default services;

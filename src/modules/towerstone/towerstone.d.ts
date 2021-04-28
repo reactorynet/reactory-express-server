@@ -4,6 +4,7 @@ import Mongoose from "mongoose";
 import { ObjectId } from "mongodb";
 import { Moment } from "moment";
 import { Reactory } from "@reactory/server-core/types/reactory";
+import { PagingRequest, PagingResult } from "@reactory/server-core/database/types";
 
 declare namespace TowerStone {
 
@@ -154,7 +155,21 @@ declare namespace TowerStone {
   }
 
   export interface IDelegateEntryDataStruct {
-    entryData: { id: ObjectID; delegate: Reactory.IUserDocument; notifications: any[]; assessments: any[]; launched: boolean; complete: boolean; removed: boolean; message: string; lastAction: string; status: string; actions: [...]; updatedAt: number; createdAt: number; };
+    entryData: {
+      id: ObjectID;
+      delegate: Reactory.IUserDocument;
+      notifications: any[];
+      assessments: any[];
+      launched: boolean;
+      complete: boolean;
+      removed: boolean;
+      message: string;
+      lastAction: string;
+      status: string;
+      actions: [any];
+      updatedAt: number;
+      createdAt: number;
+    };
     complete: boolean;
     entry: ISurveyDelegateEntry,
     entryIdx: number,
@@ -200,8 +215,13 @@ declare namespace TowerStone {
 
   export interface ISurveyDocument extends Mongoose.Document, ISurvey { }
 
-  export interface ITowerStoneSurveyService {
+  export interface IPagedSurveyTimeline { id: string, paging: PagingResult, timeline: any[] }
+  export interface IPagedSurveyDelegates { id: string, paging: PagingResult, delegates: ISurveyDelegateEntry[] }
+
+  export interface ITowerStoneSurveyService extends Reactory.Service.IReactoryContextAwareService {
     get(id: string): Promise<ISurveyDocument>
+    pagedTimeline(id: string, paging: PagingRequest): Promise<IPagedSurveyTimeline>
+    pagedDelegates(id: string, paging: PagingRequest): Promise<IPagedSurveyDelegates>
   }
 
   export interface IEmailSendResult {
@@ -223,7 +243,7 @@ declare namespace TowerStone {
   export interface ITowerStoneEmailService {
     send: (survey: ISurvey, activity: string, target: string, users: Reactory.IUser[], properties: any) => Promise<IEmailSendResult>
     templates: (survey: ISurvey) => Promise<TowerStone.ISurveyTemplates>
-    patchTemplates: (survey: ISurvey, templates: TowerStone.ISurveyTemplates) => Promise<TowerStone.ISurveyTemplates>
+    patchTemplates: (survey: ISurvey, templates: TowerStone.ISurveyTemplates, context: Reactory.IReactoryContext) => Promise<TowerStone.ISurveyTemplates>
   }
 
   export interface ITowerStoneEmailServiceProvider {
@@ -232,5 +252,15 @@ declare namespace TowerStone {
 
   export interface ITowerStoneSurveyServiceProvider {
     (props: ITowerStoneServiceParameters, context: any): ITowerStoneSurveyService
+  }
+
+  export interface IMoresUpdateOrganizationInput {
+    name: string
+    settings: any[]
+  }
+
+  export interface IMoresSetOrganizationParams {
+    id: string
+    updates: IMoresUpdateOrganizationInput
   }
 }

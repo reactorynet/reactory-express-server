@@ -1,40 +1,54 @@
-// eslint-disable
 import fs from 'fs';
+// @ts-ignore
 import dotenv from 'dotenv';
 import moment from 'moment';
 import cors from 'cors';
 import path from 'path';
 import https from 'https';
+// @ts-ignore
 import sslrootcas from 'ssl-root-cas/latest';
 import express, { Application } from 'express';
 import session from 'express-session';
 import bodyParser from 'body-parser';
 import passport from 'passport';
-import { ApolloServer, gql, ApolloServerExpressConfig } from 'apollo-server-express';
-import flash from 'connect-flash';
-import mongooseConnection from './mongoose';
-import corsOptions from './config/cors';
-import reactoryClientAuthenticationMiddleware from './middleware/ReactoryClient';
-import userAccountRouter from './useraccount';
-import reactory from './reactory';
-import froala from './froala';
-import charts from './charts';
-import resources from './resources';
-import typeDefs from './models/graphql/types';
-import resolvers from './models/graphql/resolvers';
-import AuthConfig from './authentication';
-import workflow from './workflow';
+import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
 import uuid from 'uuid';
-import pdf from './pdf';
-import { ExcelRouter } from './excel';
-import amq from './amq';
+import flash from 'connect-flash';
+/**
+ * Disabling the linting for the import statements
+ * as eslint is not configure to deal with the
+ * correct aliasing configured in tsconfig and package.json
+ */
+import mongooseConnection from '@reactory/server-core/mongoose'; // eslint-disable-line
+import corsOptions from '@reactory/server-core/config/cors'; // eslint-disable-line
+import reactoryClientAuthenticationMiddleware from '@reactory/server-core/middleware/ReactoryClient'; // eslint-disable-line
+import userAccountRouter from '@reactory/server-core/useraccount'; // eslint-disable-line
+import reactory from '@reactory/server-core/reactory'; // eslint-disable-line
+import froala from '@reactory/server-core/froala'; // eslint-disable-line
+import charts from '@reactory/server-core/charts'; // eslint-disable-line
+import resources from '@reactory/server-core/resources'; // eslint-disable-line
+import typeDefs from '@reactory/server-core/models/graphql/types'; // eslint-disable-line
+import resolvers from '@reactory/server-core/models/graphql/resolvers'; // eslint-disable-line
+import AuthConfig from '@reactory/server-core/authentication'; // eslint-disable-line
+import workflow from '@reactory/server-core/workflow'; // eslint-disable-line
+import pdf from '@reactory/server-core/pdf'; // eslint-disable-line
+import { ExcelRouter } from '@reactory/server-core/excel'; // eslint-disable-line
+import amq from '@reactory/server-core/amq';// eslint-disable-line
 // import bots from './bot/server';
-import startup from './utils/startup';
-import { getService } from './services';
-import logger from './logging';
-import { split } from 'lodash';
-import { Reactory } from 'types/reactory';
+import startup from '@reactory/server-core/utils/startup'; // eslint-disable-line
+import { getService } from '@reactory/server-core/services'; // eslint-disable-line
+import logger from '@reactory/server-core/logging'; // eslint-disable-line
+import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContextProvider'; // eslint-disable-line
+// @ts-ignore
+import { Reactory } from '@reactory/server/core/types/reactory'; // eslint-disable-line
 
+const hideText = (text: string = '') => {
+  let asterisks = '';
+  for (let ai: number = 0; ai < text.length - 2; ai += 1) {
+    asterisks = `${asterisks}*`;
+  }
+  return `${text.substr(0, 1)}${asterisks}${text.substr(text.length - 1, 1)}}`;
+};
 
 const {
   APP_DATA_ROOT,
@@ -74,8 +88,8 @@ mongooseConnection.then(() => {
   ################################################
   db: ${MONGOOSE}
   user: ${MONGO_USER || '!!NOT-SET!!'}
-  pass: ${MONGO_PASSWORD ? '****' : '!!NOT-SET!!'}
-  err: ${error.messagte}
+  pass: ${MONGO_PASSWORD ? hideText(MONGO_PASSWORD) : '!!NOT-SET!!'}
+  err: ${error.message}
   ################################################
 
   `);
@@ -107,9 +121,6 @@ if (fs.existsSync(`${APP_DATA_ROOT}/themes/reactory/asciilogo.txt`)) {
   asciilogo = `${asciilogo}\n\n${logo}`;
 }
 
-let asterisks = '';
-for (let si: number = 0; si < SECRET_SAUCE.length - 2; si += 1) { asterisks = `${asterisks}*` };
-
 const ENV_STRING_DEBUG = `
 Environment Settings: 
   NODE_ENV: ${NODE_ENV}
@@ -122,13 +133,14 @@ Environment Settings:
   DOMAIN_NAME: ${DOMAIN_NAME}
   MODE: ${MODE}
   MONGOOSE: ${MONGOOSE}
-  SECRET_SAUCE: '${SECRET_SAUCE.substr(0, 1)}${asterisks}${SECRET_SAUCE.substr(SECRET_SAUCE.length - 1, 1)}',
+  MAX_FILE_UPLOAD (size): ${MAX_FILE_UPLOAD} !NOTE! This affects all file uploads.
+  SECRET_SAUCE: '${hideText(SECRET_SAUCE)}',
   
   =========================================
          Microsoft OAuth2 Settings
   =========================================
   OAUTH_APP_ID: ${OAUTH_APP_ID}
-  OAUTH_APP_PASSWORD: ${OAUTH_APP_PASSWORD}
+  OAUTH_APP_PASSWORD: ${hideText(OAUTH_APP_PASSWORD)}
   OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI}
   OAUTH_SCOPES: ${OAUTH_SCOPES}
   OAUTH_AUTHORITY: ${OAUTH_AUTHORITY}
@@ -150,49 +162,22 @@ let graphError: String = '';
 
 const reactoryExpress: Application = express();
 
+// For all routes we rune the cors middleware with options
 reactoryExpress.use('*', cors(corsOptions));
 reactoryExpress.use(reactoryClientAuthenticationMiddleware);
-reactoryExpress.use(queryRoot,
-  // authentication
+reactoryExpress.use(
+  queryRoot,
   passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
-  bodyParser.json({ limit: MAX_FILE_UPLOAD }));
+  bodyParser.json({
+    limit: MAX_FILE_UPLOAD,
+  }),
+);
 
 try {
-  //app.use(queryRoot, graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
-  let expressConfig: ApolloServerExpressConfig = {
+  const expressConfig: ApolloServerExpressConfig = {
     typeDefs,
     resolvers,
-    context: async ($session: any, currentContext: any) => {
-
-      let newContext: any = {
-        ...currentContext,
-        user: $session.req.user,
-        partner: $session.req.partner,
-        $request: $session.req,
-        $response: $session.res,
-      };
-
-      const $getService = (id: string, props: any = undefined) => {
-        return getService(id, props, {
-          ...newContext,
-          getService: $getService,
-        });
-      };
-
-      const executionContextServiceName = newContext.partner.getSetting('execution_context_service');
-      if (executionContextServiceName && executionContextServiceName.data && `${executionContextServiceName.data}`.indexOf('@') > 0) {
-        const partnerContextService: Reactory.IExecutionContextProvider = $getService(executionContextServiceName.data);
-        if (partnerContextService && partnerContextService.getContext) {
-          newContext = await partnerContextService.getContext(newContext).then();
-        }
-      }
-
-      return {
-        id: uuid(),
-        ...newContext,
-        getService: $getService,
-      };
-    },
+    context: ReactoryContextProvider,
     uploads: {
       maxFileSize: 20000000,
       maxFiles: 10,
@@ -211,11 +196,13 @@ try {
   logger.error(graphError);
 }
 
-reactoryExpress.set('trust proxy', NODE_ENV == "development" ? 0 : 1);
+reactoryExpress.set('trust proxy', NODE_ENV === 'development' ? 0 : 1);
 
 // TODO: Werner Weber - investigate session and session management for auth.
+// This session ONLY applies to authentication when authenticating via the
+// passportjs authentication module.
 const sessionOptions: session.SessionOptions = {
-  // name: "connect.sid",
+  // name: "connect.sid", 
   secret: SECRET_SAUCE,
   resave: false,
   saveUninitialized: false,
@@ -230,8 +217,6 @@ const sessionOptions: session.SessionOptions = {
   },
 };
 
-logger.debug('Session Configuration', sessionOptions);
-
 const oldOptions = {
   secret: SECRET_SAUCE,
   resave: false,
@@ -241,7 +226,7 @@ const oldOptions = {
 
 reactoryExpress.use(session(oldOptions));
 reactoryExpress.use(bodyParser.urlencoded({ extended: false }));
-reactoryExpress.use(bodyParser.json({ limit: '20mb' }));
+reactoryExpress.use(bodyParser.json({ limit: MAX_FILE_UPLOAD }));
 
 if (apolloServer) {
   apolloServer.applyMiddleware({ app: reactoryExpress, path: queryRoot });

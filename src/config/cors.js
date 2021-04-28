@@ -12,7 +12,7 @@ const corsOptions = {
    * for all configured Reactory Clients
    */
   origin(origin, callback) {
-    //console.log('checking origin', origin);
+    //debugger;
     // logger.debug(`
     //   Validatinging CORS:
     //     ORIGIN => ${origin}

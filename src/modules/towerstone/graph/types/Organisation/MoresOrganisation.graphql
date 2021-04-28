@@ -3,3 +3,14 @@
 extend type Query {
   MyOrganisationMemberships: [Organization]
 }
+
+extend type Mutation {
+  """
+  Upload image for Mores Organization
+  """
+  MoresUploadOrganizationImage(id: String!, file: Upload!, imageType: String): Organization
+  """
+  Set Organization Info
+  """
+  MoresSetOrganizationInfo(id: String!, updates: UpdateOrganizationInput!): Organization
+}

@@ -102,10 +102,12 @@ input CreateOrganizationInput {
   legacyId: Int
 }
 
+
 input UpdateOrganizationInput {
   code: String
   name: String
   logo: String
+  settings: [Any]
   legacyId: Int
 }
 

@@ -38,6 +38,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 
 import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
 import { GraphQLResolveInfo } from 'graphql';
+import { PagingRequest } from 'database/types';
 
 const { findIndex, pullAt } = lodash;
 
@@ -67,11 +68,12 @@ function getMailService(survey: TowerStone.ISurvey, action: String = 'default', 
   return mailService;
 }
 
-function getSurveyService(): TowerStone.ITowerStoneSurveyService {
-  return TowerStoneServicesMap["towerstone.SurveyService@1.0.0"].service({ user, partner });
+function getSurveyService(context: Reactory.IReactoryContext): TowerStone.ITowerStoneSurveyService {
+  debugger
+  return TowerStoneServicesMap["towerstone.SurveyService@1.0.0"].service({ user: context.user, partner: context.partner }, context);
 }
 
-const TowerStoneGetDemographicLookup = async (args) => {
+const TowerStoneGetDemographicLookup = async (args: any, context: Reactory.IReactoryContext) => {
 
   logger.debug(`GET DEMOGRAPHIC LOOKUP :: ${JSON.stringify(args)}`, args);
 
@@ -195,8 +197,9 @@ export default {
     when(sce) { return moment(sce.when); },
     eventType(sce) { return sce.eventType; },
     eventDetail(sce) { return sce.eventDetail; },
-    who(sce) {
-      if (sce.who) return User.findById(sce.who);
+    who(parent) {
+      debugger
+      if (parent.who) return User.findById(parent.who);
       return null;
     },
   },
@@ -415,11 +418,22 @@ export default {
 
       return survey;
     },
-    async TowerStoneGetDemographicLookup(obj, args) {
+    async TowerStoneGetDemographicLookup(obj, args: any, context: Reactory.IReactoryContext,) {
       return TowerStoneGetDemographicLookup(args);
     },
     async GetOrganisationLookupData(obj, args) {
       return GetOrganisationLookupData(args);
+    },
+    async MoresPagedSurveyTimeline(obj: any, args: { surveyId: string, paging: PagingRequest }, context: Reactory.IReactoryContext): Promise<TowerStone.IPagedSurveyTimeline> {
+
+      const surveySvc: TowerStone.ITowerStoneSurveyService = context.getService('towerstone.SurveyService@1.0.0');
+
+      return surveySvc.pagedTimeline(args.surveyId, args.paging);
+    },
+    async MoresPagedSurveyDelegates(parent: any, args: { surveyId: string, paging: PagingRequest }, context: Reactory.IReactoryContext): Promise<TowerStone.IPagedSurveyDelegateEntries> {
+      const surveySvc: TowerStone.ITowerStoneSurveyService = context.getService('towerstone.SurveyService@1.0.0');
+
+      return surveySvc.pagedDelegates(args.surveyId, args.paging);
     }
   },
   Mutation: {
@@ -1084,10 +1098,10 @@ export default {
     },
     async TowerStoneSurveySetTemplates(parent: any, params: TowerStone.ITowerStoneSetTemplatesParameters, context: Reactory.IReactoryContext) {
       const { id, templates } = params;
-      const survey = await getSurveyService().get(id).then();
+      const survey = await getSurveyService(context).get(id).then();
       logger.debug(`Patching Templates For Survey ${survey.title}`)
       const mailService = getMailService(survey, 'TowerStoneSurveySetTemplates', context);
-      return await mailService.patchTemplates(survey, templates).then();
+      return await mailService.patchTemplates(survey, templates, context).then();
     },
     async TowerStoneLeadershipBrandCopy(parent: any, params: TowerStone.ICopyLeadershipBrandParams) {
 

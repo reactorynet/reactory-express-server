@@ -295,7 +295,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${rowData.orderDate != "" ? api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\'): ""}'
+                format: '${api.utils.lodash.isNil(rowData.orderDate) === false ? api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
           },
@@ -311,7 +311,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${rowData.shippingDate != "" ? api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\'): ""}'
+                format: '${api.utils.lodash.isNil(rowData.shippingDate) === false ? api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
           },
@@ -329,7 +329,7 @@ const uiSchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${rowData.quoteDate != "" ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\'): ""}'
+                format: '${api.utils.lodash.isNil(rowData.quoteDate) === false ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : ""}'
               }
             },
           },
@@ -359,13 +359,21 @@ const uiSchema: any = {
         { title: 'Status', field: 'orderStatus' },
       ],
       footerColumns: [
-        { field: 'orderType' }, { field: 'orderDate' }, { field: 'shippingDate' }, { field: 'id' }, { field: 'quoteId' }, { field: 'quoteDate' }, { field: 'customer' }, { field: 'client' },
-        { field: 'poNumber', text: 'Totals' },
-        { field: 'orderQty', value: '${totals.orderQty}' },
-        { field: 'shipQty', value: '${totals.shipQty}' },
-        { field: 'reservedQty', value: '${totals.reservedQty}' },
-        { field: 'backOrderQty', value: '${totals.backOrderQty}' },
-        { field: 'value' }, { field: 'orderStatus' }
+        { field: 'orderType' },
+        { field: 'orderDate' },
+        { field: 'shippingDate' },
+        { field: 'id' },
+        { field: 'quoteId' },
+        { field: 'quoteDate' },
+        { field: 'customer' },
+        { field: 'client' },
+        { field: 'poNumber' },
+        { field: 'orderQty', value: 'SUM' },
+        { field: 'shipQty', value: 'SUM' },
+        { field: 'reservedQty', value: 'SUM' },
+        { field: 'backOrderQty', value: 'SUM' },
+        { field: 'value', value: 'SUM' },
+        { field: 'orderStatus' },
       ],
       options: {
         grouping: false,
@@ -442,13 +450,13 @@ const GridOnlyUISchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\')}'
-              }
+                format: '${api.utils.lodash.isNil(rowData.orderDate) === false ? api.utils.moment(rowData.orderDate).format(\'DD MMM YYYY\') : null}'
+              },
             },
           },
           propsMap: {
             'rowData.date': 'value',
-          }
+          },
         },
         {
           title: 'Shipping Date',
@@ -458,15 +466,30 @@ const GridOnlyUISchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\')}'
-              }
+                format: '${api.utils.lodash.isNil(rowData.shippingDate) === false ? api.utils.moment(rowData.shippingDate).format(\'DD MMM YYYY\') : null}'
+              },
             },
           },
           propsMap: {
             'rowData.date': 'value',
-          }
+          },
         },
-        { title: 'ISO Number', field: 'id' },
+        {
+          title: 'ISO Number',
+          field: 'id',
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body1',
+                format: '${rowData.id.replace(rowData.iso + "-", "")}'
+              },
+            },
+          },
+          propsMap: {
+            'rowData.date': 'value',
+          },
+        },
         { title: 'Quote', field: 'quoteId' },
         {
           title: 'Quote Date',
@@ -476,13 +499,13 @@ const GridOnlyUISchema: any = {
             uiSchema: {
               'ui:options': {
                 variant: 'body1',
-                format: '${api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\')}'
-              }
+                format: '${rowData.quoteDate.trim() !== "" && api.utils.moment(rowData.quoteData).isMoment() === true ? api.utils.moment(rowData.quoteDate).format(\'DD MMM YYYY\') : null}'
+              },
             },
           },
           propsMap: {
             'rowData.date': 'value',
-          }
+          },
         },
         { title: 'Customer', field: 'customer' },
         { title: 'Client', field: 'client' },
@@ -499,7 +522,7 @@ const GridOnlyUISchema: any = {
           component: 'core.CurrencyLabel@1.0.0',
           props: {
             region: 'en-ZA',
-            currency: 'ZAR'
+            currency: 'ZAR',
           },
           propsMap: {
             'rowData.value': 'value',
@@ -510,13 +533,21 @@ const GridOnlyUISchema: any = {
 
       ],
       footerColumns: [
-        { field: 'orderType' }, { field: 'orderDate' }, { field: 'shippingDate' }, { field: 'id' }, { field: 'quoteId' }, { field: 'quoteDate' }, { field: 'customer' }, { field: 'client' },
-        { field: 'poNumber', text: 'Totals' },
-        { field: 'totals.orderQty', value: '${totals.orderQty}' },
-        { field: 'shipQty', value: '${totals.shipQty}' },
-        { field: 'reservedQty', value: '${totals.reservedQty}' },
-        { field: 'backOrderQty', value: '${totals.backOrderQty}' },
-        { field: 'value' }, { field: 'orderStatus' }
+        { field: 'orderType' },
+        { field: 'orderDate' },
+        { field: 'shippingDate' },
+        { field: 'id' },
+        { field: 'quoteId' },
+        { field: 'quoteDate' },
+        { field: 'customer' },
+        { field: 'client' },
+        { field: 'poNumber' },
+        { field: 'orderQty', value: 'SUM' },
+        { field: 'shipQty', value: 'SUM' },
+        { field: 'reservedQty', value: 'SUM' },
+        { field: 'backOrderQty', value: 'SUM' },
+        { field: 'value', value: 'SUM' },
+        { field: 'orderStatus' },
       ],
       options: {
         grouping: false,

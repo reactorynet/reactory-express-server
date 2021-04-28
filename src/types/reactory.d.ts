@@ -74,6 +74,7 @@ declare namespace Reactory {
     createdAt?: Date,
     updatedAt?: Date,
     colorScheme: () => any
+    getSetting: (key: string) => any;
   }
 
   export interface IReactoryClientDocument extends Mongoose.Document, IReactoryClient { }
@@ -195,11 +196,20 @@ declare namespace Reactory {
     [key: string]: any
   }
 
+  export interface IOrganizationSetting {
+    name: string,
+    componentFqn: string,
+    data: any
+  }
   export interface IOrganization {
+    [key: string]: any
     name: string
     code: string
     logo: string
     businessUnits: Array<IBusinessUnit>
+    settings: [IOrganizationSetting]
+    getSetting(name: string): IOrganizationSetting
+    setSetting(name: string, data: any, componentFqn: string): IOrganizationSetting
   }
 
   export interface IOrganizationDocument extends Mongoose.Document, IOrganization { }
@@ -332,7 +342,7 @@ declare namespace Reactory {
     confirmedAt: Date
   }
 
-  export interface IOrganigramDocument extends Mongoose.Document, IOrganigram
+  export interface IOrganigramDocument extends Mongoose.Document, IOrganigram { }
 
   /** ReactoryFile Management Models Interface */
   export interface IReactoryFilePermissions {
@@ -809,8 +819,8 @@ declare namespace Reactory {
     }
 
     export interface IReactoryContextAwareService extends IReactoryService {
-      getExecutionContext(): ReactoryExecutionContext
-      setExecutionContext(executionContext: ReactoryExecutionContext): boolean
+      getExecutionContext(): IReactoryContext
+      setExecutionContext(executionContext: IReactoryContext): boolean
     }
 
 
@@ -879,17 +889,20 @@ declare namespace Reactory {
 
     export interface IReactoryTemplateService extends Reactory.Service.ITemplateService, Reactory.Service.ITemplateRenderingService, Reactory.Service.IEmailTemplateService { }
 
+    export interface IFile {
+      createReadStream: Function,
+      filename: string,
+      mimetype: string,
+      encoding: string
+    }
     export interface FileUploadArgs {
 
-      file: {
-        createReadStream: Function,
-        filename: string,
-        mimetype: string,
-        encoding: string
-      },
+      file: IFile,
       uploadContext?: string
 
     }
+
+
     export interface IReactoryFileService extends Reactory.Service.IReactoryDefaultService {
 
       uploadFile(uploadArgs: FileUploadArgs): Promise<Reactory.IReactoryFileModel>
@@ -919,6 +932,17 @@ declare namespace Reactory {
 
       clean(): Promise<Reactory.IReactoryFileModel[]>;
     }
+
+    export type OrganizationImageType = string | "logo" | "avatar";
+    export interface IReactoryOrganizationService extends Reactory.Service.IReactoryDefaultService {
+
+      setOrganization(id: string, updates: { name?: string, code?: string, color?: string, logo?: string }): Promise<IOrganizationDocument>
+
+      uploadOrganizationImage(id: string, file: IFile, imageType: OrganizationImageType): Promise<IOrganizationDocument>
+
+      get(id: string): Promise<IOrganizationDocument>
+
+    }
   }
 
   export interface IPagingRequest {
@@ -943,6 +967,7 @@ declare namespace Reactory {
     user: Reactory.IUserDocument
     partner: Reactory.IReactoryClientDocument
     getService: (fqn: string, props?: any, context?: Reactory.IReactoryContext) => any,
+    hasRole: (role: string, partner?: Reactory.IReactoryClientDocument) => boolean
     [key: string]: any
   }
 
