@@ -3190,13 +3190,14 @@ export const getCRMSalesHistory = async (params: any, context: Reactory.IReactor
     pageSize: paging.pageSize || 10
   };
 
+  if (isString(search) === false || search.length < 3 && year == null) return {
   // if (isString(search) === false || search.length < 3 || year == null) return {
-  //   paging: pagingResult,
-  //   salesHistory: [],
-  //   year,
-  //   month,
-  //   years,
-  // };
+    paging: pagingResult,
+    salesHistory: [],
+    year,
+    month,
+    years,
+  };
 
   let _filter: any = {
     order_status: 9,
@@ -3227,7 +3228,7 @@ export const getCRMSalesHistory = async (params: any, context: Reactory.IReactor
     // ordering,
   }, context).then();
 
-  logger.debug(`SALES HISTORY RESPONSE:: ${JSON.stringify(salesHistoryResponse)}`);
+  // logger.debug(`SALES HISTORY RESPONSE:: ${JSON.stringify(salesHistoryResponse)}`);
 
   let ids: string[] = [];
 

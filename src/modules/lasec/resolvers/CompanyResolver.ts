@@ -401,11 +401,14 @@ export const getClient = async (params: any, context: Reactory.IReactoryContext)
       logger.debug(`Found Cached Item for LASEC_COMPANY::${clientResponse.customer.id} ==> ${found}`)
       if (found === null || found === undefined) {
         let companyPayloadResponse = await lasecApi.Company.getById({ filter: { ids: [clientResponse.customer.id] } }, context).then()
+
         // logger.debug(`LASEC_COMPANY DETAILS::${JSON.stringify(companyPayloadResponse.items[0])}`);
+
         if (companyPayloadResponse && isArray(companyPayloadResponse.items) === true) {
           if (companyPayloadResponse.items.length === 1) {
             let customerObject = {
-              ...clientResponse.customer, ...om.merge(companyPayloadResponse.items[0], {
+              ...clientResponse.customer,
+              ...om.merge(companyPayloadResponse.items[0], {
                 'company_id': 'id',
                 'registered_name': 'registeredName',
                 'description': 'description',
