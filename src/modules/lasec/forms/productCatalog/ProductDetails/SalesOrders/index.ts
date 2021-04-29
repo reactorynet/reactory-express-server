@@ -609,6 +609,59 @@ const LasecCMSProductSalesOrders: Reactory.IReactoryForm = {
   uiSchema,
   uiSchemas: [
     {
+      graphql: {
+        query: {
+          name: 'LasecGetCRMSalesOrders',
+          text: `query LasecGetCRMSalesOrders($productId: String, $image: String, $code: String, $description: String, $unitOfMeasure: String, $price: Int, $paging: PagingRequest){
+            LasecGetCRMSalesOrders(productId: $productId, image: $image, code: $code, description: $description, unitOfMeasure: $unitOfMeasure, price: $price, paging: $paging){
+              paging {
+                total
+                page
+                hasNext
+                pageSize
+              }
+              totals
+              id
+              image
+              code
+              description
+              unitOfMeasure
+              price
+              salesOrders {
+                id
+                orderDate
+                salesOrderNumber,
+                shippingDate
+                quoteId
+                quoteDate
+                orderType
+                orderStatus
+                iso
+                customer
+                client
+                poNumber
+                currency
+                value
+                deliveryAddress
+                warehouseNote
+                deliveryNote
+                salesTeam
+                reserveValue
+                shipValue
+                backorderValue
+                dispatchCount
+                invoiceCount
+
+                orderQty
+                shipQty
+                reservedQty
+                backOrderQty
+              }
+            }
+          }`,
+          resultType: 'object',
+        },
+      },
       id: 'default',
       key: 'default',
       description: 'Default SALES PRODUCT SALES ORDER VIEW',

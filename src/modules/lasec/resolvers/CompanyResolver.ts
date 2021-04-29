@@ -115,7 +115,7 @@ const getClients = async (params: GetClientsParams, context: Reactory.IReactoryC
   switch (filterBy) {
     case "sales_team_id": {
       _filter['sales_team_id'] = filter || logged_in.sales_team_id;
-      if (search.trim().length >= 0) _filter.any_field = search;
+      if (search.trim().length > 0) _filter.any_field = search;
       break;
     }
     case "country":
@@ -153,6 +153,7 @@ const getClients = async (params: GetClientsParams, context: Reactory.IReactoryC
       if (search.length > 0) {
         delete _filter.sales_team_id;
       } else {
+        delete _filter.any_field;
         _filter['sales_team_id'] = logged_in.sales_team_id;
       }
 
@@ -2633,6 +2634,7 @@ export default {
   },
   Mutation: {
     LasecUpdateClientDetails: async (obj: any, args: { clientInfo: ClientUpdateInput }, context: Reactory.IReactoryContext) => {
+      debugger
       logger.debug(`UPDATING CLIENT DETAILS WITH ARGS ${args}`);
       return updateClientDetail(args, context);
     },
