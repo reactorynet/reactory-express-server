@@ -1,13 +1,12 @@
 node_modules/
 dist/
-    //
 /*-audit.json
-scratch.txt
 package-lock.json
 config/*/.env*local*
 config/*/pm2.local*
 build/*
 lib/*
 yarn.lock
-src/modules/enabled*.json
+src/modules/*
+!src/modules/index.js
 ~/develop/reactory/data/*
