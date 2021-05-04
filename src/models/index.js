@@ -1,6 +1,6 @@
 
 import './plugins';
-import AssessmentModel from '../modules/mores/models/Assessment';
+import AssessmentModel from '@reactory/server-modules/mores/models/Assessment';
 import ApplicationModel from './schema/Application';
 import EmailQueueModel from './schema/EmailQueue';
 import LeadershipBrandModel from '../modules/mores/models/LeadershipBrand';
