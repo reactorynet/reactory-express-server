@@ -11,4 +11,5 @@ src/modules/*
 !src/modules/core
 !src/modules/index.ts
 !src/modules/README.md
+!src/modules/available.json
 ~/develop/reactory/data/*
