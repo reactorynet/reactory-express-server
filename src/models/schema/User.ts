@@ -6,8 +6,6 @@ import * as lodash from 'lodash';
 
 import logger from '@reactory/server-core/logging';
 import { Reactory } from '@reactory/server-core/types/reactory';
-import { ReactoryTemplateService } from 'modules/core/services/TemplateService';
-import { parse } from 'graphql';
 
 const ObjectIdFunc = mongodb.ObjectID;
 const { ObjectId } = mongoose.Schema.Types;

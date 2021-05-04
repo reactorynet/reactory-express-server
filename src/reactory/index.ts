@@ -17,7 +17,7 @@ import logger from '../logging';
 import { isArray } from 'util';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import * as ReactorySchemaTypes from './types';
-import { ICacheStatic } from 'modules/core/models/CoreCache';
+import { ICacheStatic } from '@reactory/server-modules/core/models/CoreCache';
 
 
 
@@ -43,7 +43,7 @@ router.get('/schema', async (req: any, res) => {
     }
   } catch (staticSchemaError) {
     logger.error('Error while return static form schemas', staticSchemaError);
-    res.status(501).send({ error: `Could not get schemas. Server Error.` })
+    res.status(501).send({ error: `Could not get schemas. Server Error.` });
   }
 
   if (req.partner) {
