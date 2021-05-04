@@ -742,6 +742,16 @@ declare namespace Reactory {
     component: IReactoryPdGenerator
   }
 
+  export interface IReactoryModuleDefinition {
+    id: string
+    name: string
+    key: string
+    fqn: string
+    license: string
+    moduleEntry: string
+    shop: string
+  }
+
   export interface IReactoryModule {
     nameSpace: string
     name: string
@@ -973,5 +983,18 @@ declare namespace Reactory {
 
   export interface IExecutionContextProvider {
     getContext: (currentContext: IReactoryContext) => Promise<IReactoryContext>
+  }
+
+  export interface IUserImportFile {
+    id: string,
+    organization: { id: string, name: string },
+    options: any,
+    files: IReactoryFileModel[],
+    status: string,
+    processors: any[],
+    preview: any[],
+    completed: boolean,
+    rows: number,
+    started: Date,
   }
 }

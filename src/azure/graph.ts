@@ -1,18 +1,11 @@
 'use strict';
 import "isomorphic-fetch";
+import moment from 'moment';
+import { response } from "express";
 import { Client, ResponseType } from "@microsoft/microsoft-graph-client";
 import * as Microsoft from "@microsoft/microsoft-graph-types";
-import logger from '../logging';
-import { PNG } from 'pngjs';
-import { updateUserProfileImage } from '../application/admin/User';
-import om from 'object-mapper';
-import { Stream } from "stream";
-import ApiError from "exceptions";
-import { Reactory } from "@reactory/server-core/types/reactory";
-import { sendSurveyEmail } from "application/admin/Survey";
-import { response } from "express";
-import moment from 'moment';
-
+import logger from '@reactory/server-core/logging';
+import ApiError from '@reactory/server-core/exceptions';
 
 const getAuthenticatedClient = (accessToken: string, apiVersion = 'v1.0') => {
   // Initialize Graph client
@@ -204,29 +197,29 @@ const MSGraph = {
     saveToSentItems: boolean = false,
     ccRecipients?: Microsoft.Recipient[],
     bccRecipients?: Microsoft.Recipient[],
-    attachments?: Microsoft.Attachment[]) {    
+    attachments?: Microsoft.Attachment[]) {
 
     const message: Microsoft.Message = {
       subject,
       body: {
         contentType,
         content
-      },      
+      },
       toRecipients: recipients,
-      ccRecipients: ccRecipients,      
+      ccRecipients: ccRecipients,
       bccRecipients: bccRecipients,
       attachments: attachments
     };
 
-    try { 
+    try {
       const response = await getAuthenticatedClient(accessToken, 'beta')
-      .api('/me/sendMail')
-      .post(message)
-      .then();  
+        .api('/me/sendMail')
+        .post(message)
+        .then();
     } catch (msGraphError) {
       logger.error(`Could not send the email due to an error ${msGraphError}`);
     }
-    
+
     return response;
   }
 };

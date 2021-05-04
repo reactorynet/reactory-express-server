@@ -1,9 +1,9 @@
 
 import './plugins';
-import AssessmentModel from '../modules/towerstone/models/Assessment';
+import AssessmentModel from '../modules/mores/models/Assessment';
 import ApplicationModel from './schema/Application';
 import EmailQueueModel from './schema/EmailQueue';
-import LeadershipBrandModel from '../modules/towerstone/models/LeadershipBrand';
+import LeadershipBrandModel from '../modules/mores/models/LeadershipBrand';
 import NotificationModel from './schema/Notification';
 import OrganizationModel from './schema/Organization';
 import BusinessUnitModel from './schema/BusinessUnit';
@@ -11,7 +11,7 @@ import OrganigramModel from './schema/Organigram';
 import MenuModel, { MenuItemModel } from './schema/Menu';
 import ClientComponentModel from './schema/ClientComponent';
 import ReactoryClientModel from './schema/ReactoryClient';
-import SurveyModel, { EVENTS_TO_TRACK } from '../modules/towerstone/models/Survey';
+import SurveyModel, { EVENTS_TO_TRACK } from '../modules/mores/models/Survey';
 import ScaleModel from './schema/Scale';
 import TemplateModel from './schema/Template';
 import TeamModel from './schema/Team';

@@ -24,7 +24,7 @@ modules.enabled.forEach((installedModule: Reactory.IReactoryModule) => {
       "name": "Lasec",
       "key": "lasec",
       "fqn": "lasec.LasecCRM@1.0.0",
-      "moduleEntry": "./lasec/index.js",
+      "moduleEntry": "./lasec-crm/index.js",
       "license": "commercial",
       "shop": "https://reactory.net/shop/modules/0c22819f-bca0-4947-b662-9190063c8277/"
    */

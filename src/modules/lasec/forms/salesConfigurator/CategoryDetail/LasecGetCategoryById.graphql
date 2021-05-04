@@ -1,7 +1,0 @@
-query LasecGetCategoryById($id: String!) {
-  LasecGetCategoryById(id: $id){
-    id
-    name
-    description
-  }
-}

@@ -1687,5 +1687,5 @@ export default [
   TemplateEditor,
   UserPeers,
   MicrosoftOpenIDAuthenticationForm,
-  ...getModuleForms()
+  ...getModuleForms(),
 ];

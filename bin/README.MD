@@ -1,63 +1,37 @@
-# Running Reactory Server
-The reactory core server is a node js based server, that can be started by using the commands provided in this folder.
+# Reactory Server Utilities
+The server has several utilities that makes managing your reactory instance and deployments easier.
+These utils are generally shortcut wrappers for more complex node command instructions.
+### Active utilities
 
-It is advised to install nvm as your node version manager.
+1. [start.sh](./start.sh) - used to start a local development instance
+2. [debug.sh](./start.sh) - used to start a local development instance but with a node debugger listening
+3. [backup.sh](./start.sh) - used to make a backup of particular mongo db instance 
+4. [restore2.sh](./restore2.sh) - used to restore a set of backups from one database to another
+5. [run.sh](./run.sh) - same as [start.sh](./start.sh) (reserved for later use)
+6. [serve.sh](./serve.sh) - used to start the service using pm2
+7. [test.sh](./test.sh) - used to launch the test suite
 
-The server is currently being maintained on Node 10.16.3 and can be run on Windows using the Ubuntu on Windows feature.
+### In Progress
+8. [upgrade.sh](./upgrade.sh) - pulls the latest version of the server installs dependencies and starts server again
 
-Checkout the source code
+## Starting server in development mode
 
-`> git clone git@bitbucket.org:reactory/reactory-server.git`
+When the server is running in development mode it checks for file changes in either js, ts and json files. So with every file save your development server should restart without a problem.
 
-## Dependencies
-The PDF rendering require some specific configuration and has a requirement on build-essential and libss1-dev and is installed using 
+bin/[start.sh](./start.sh)
 
-
-`> sudo apt-get update`
-
-`> sudo apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev`
-
-### mongodb
-You need to have a mongodb instance the server can connect to.  MongoDB is currently use via mongoose as the core data storage.  It is however not limited to it and mysql, sqlserver and postgress drivers can be used for storage for custom resolvers and plugins.
-
-## Install nvm (optional)
-You can install nvm using the curl command below:
-
-`> curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.0/install.sh | bash`
-
-Latest releases of nvm can be found on [github](
-https://github.com/nvm-sh/nvm/releases)
-
-## Install Node and NPM
-If you installed nvm you can install node using 
-`> nvm install 10.16.3`
-
-run `> npm install` this will install all the dependencies for the server.
-
-## Development
-To run the application in development mode in your terminal run:
-`> bin/start.sh <key> <environment>` where"key" is the specific environment configuration folder within `<root>/config/<key>/.env.<environment>`
-
-Files matching `<root>/config/*/.env*.local` will be ignored by git by default. 
-
-<b>Note:</b> Do not commit and env files that are used for local use.
-
-_** Running the start command without any parameters will start with 'reactory' and 'local' as the parameters for key and environment._
+`server>bin/start.sh <client-key> <environment-key>`
 
 
-`npm install -g env-cmd`
+## Production mode
+In a production mode using pm2
 
-# mongo --port 27017 -u "reactorycore" -p "abc123" \ --authenticationDatabase "admin"
-# mongo --port 27017  --authenticationDatabase "admin" -u "reactorycore" -p <MONGO_PASSWORD>
-# MONGO_USER=reactorycore
-# MONGO_PASSWORD=<MONGO_PASSWORD>
+`reactory-server>bin/serve.sh <client-key> <target> <environment>`
 
-## Production / Other
 
-Create a user account under which to run the server. 
-
-* `sudo adduser -d /var/reactory -m reactory`
-* `sudo usermod -aG sudo reactory`
-* ensure the reactory user is the 
-* check out the code into the reactory-api folder
-* install pm2 or alternatively use the service definition file to register your service
+bin/[serve.sh](./serve.sh) 
+```
+echo Starting Reactory Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-development}
+pm2 start ./config/${1:-reactory}/pm2.${2:-local}.config.js --env ${3:-development}
+pm2 monit
+```

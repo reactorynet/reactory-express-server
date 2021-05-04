@@ -49,7 +49,7 @@ const ReactoryFileSchema: Schema<Reactory.IReactoryFileModel> = new Schema<React
       message: String
     }
   ],
-uploadContext: {
+  uploadContext: {
     type: String,
     default: 'none',
   },
@@ -69,6 +69,10 @@ uploadContext: {
   published: {
     type: Boolean,
     default: false,
+  },
+  status: {
+    type: String,
+    default: 'created'
   },
   tags: {
     type: [String],

@@ -1,4 +1,6 @@
-import { Reactory } from '@reactory/server-core/types/reactory'
+/* eslint-disable import/extensions */
+/* eslint-disable import/no-unresolved */
+import { Reactory } from '@reactory/server-core/types/reactory';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
 const MoresPluginForm: Reactory.IReactoryForm = {
@@ -21,8 +23,8 @@ const MoresPluginForm: Reactory.IReactoryForm = {
             plugin: {
                 title: 'Plugin',
                 type: 'string',
-            }
-        }
+            },
+        },
     },
     registerAsComponent: true,
     components: ['reactory-core.ReactoryCoreClientPlugin.@1.0.0'],
@@ -41,11 +43,11 @@ const MoresPluginForm: Reactory.IReactoryForm = {
             },
         },
         plugin: {
-            'ui:widget': 'HiddenWidget'
-        }
+            'ui:widget': 'HiddenWidget',
+        },
     },
     defaultFormValue: {
-        plugin: 'plugins/mores/lib/reactory.plugin.mores.js'
+        plugin: 'plugins/mores/lib/reactory.plugin.mores.js',
     },
 };
 
