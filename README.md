@@ -67,10 +67,6 @@ _** Running the start command without any parameters will start with 'reactory' 
 
 `npm install -g env-cmd`
 
-# mongo --port 27017 -u "reactorycore" -p "abc123" \ --authenticationDatabase "admin"
-# mongo --port 27017  --authenticationDatabase "admin" -u "reactorycore" -p <MONGO_PASSWORD>
-# MONGO_USER=reactorycore
-# MONGO_PASSWORD=<MONGO_PASSWORD>
 
 ## Production / Other
 

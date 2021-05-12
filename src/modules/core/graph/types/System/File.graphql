@@ -1,0 +1,48 @@
+type ReactoryFilePermissions {
+  id: String,
+  roles: [String]
+  partnersIncluded: [ReactoryClient],
+  partnersExcluded: [ReactoryClient],
+  usersIndcluded: [User],
+  usersExcluded: [User]
+}
+
+type ReactoryFileRemoteEntry {
+  id: String
+  url: String
+  lastSync: Date
+  success: Boolean
+  verified: Boolean
+  syncMessage: String
+  priority: Int
+  modified: Date
+}
+
+type Timeline {
+  timestamp: Int
+  message: String
+}
+
+type ReactoryFile {
+  id: String
+  hash: Int
+  partner: ReactoryClient
+  ttl: Int
+  path: String
+  alias: String
+  filename: String
+  alt: [String]
+  link: String
+  mimetype: String
+  size: Int
+  created: Date
+  uploadContext: String
+  uploadedBy: User
+  owner: User
+  public: Boolean
+  published: Boolean
+  permissions: [ReactoryFilePermissions]
+  tags: [String]
+  remotes: [ReactoryFileRemoteEntry]
+  timeline: [Timeline]
+}

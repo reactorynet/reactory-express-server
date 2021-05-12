@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import mongoose, { MongooseDocument } from 'mongoose';
+import mongoose, { MongooseDocument, Schema } from 'mongoose';
 import * as lodash from 'lodash';
 import { readFileSync, existsSync } from 'fs';
 import logger from '@reactory/server-core/logging';
@@ -19,12 +19,14 @@ const FileOptionsSchema = new mongoose.Schema({
     default: ',',
   },
   textQualifier: String,
-  firstRow: { type: String, default: 'header' },
+  firstRow: {
+    type: String,
+    default: 'header',
+  },
   columnMappings: [ColumnMappingSchema],
 });
 
 const UserPreviewSchema = new mongoose.Schema({
-  id: String,
   firstName: String,
   lastName: String,
   email: String,
@@ -40,9 +42,12 @@ const UserPreviewSchema = new mongoose.Schema({
 
 const ImportProcessorSchema = new mongoose.Schema({
   name: String,
+  serviceFqn: String,
   order: Number,
   started: Date,
   finished: Date,
+  status: String,
+  fields: [String],
   responses: [{ line: Number, error: String }],
 });
 
@@ -51,8 +56,16 @@ ImportProcessorSchema.methods.addError = function addError(line: number, error: 
   this.responses.push({ line, error });
 };
 
-const UserImportFileUploadSchema = new mongoose.Schema<Reactory.IUserImportFile>({
-  id: ObjectId,
+const UserImportFileSchema: mongoose.Schema<Reactory.IUserImportFile> = new mongoose.Schema<Reactory.IUserImportFile>({
+  file: { type: ObjectId, ref: 'ReactoryFile' },
+  preview: [UserPreviewSchema],
+  options: FileOptionsSchema,
+  status: String,
+  processors: [ImportProcessorSchema],
+  rows: Number,
+});
+
+const ReactoryFileImportPackageSchema: mongoose.Schema<Reactory.IReactoryFileImportPackage> = new mongoose.Schema<Reactory.IReactoryFileImportPackage>({
   organization: {
     type: ObjectId,
     required: true,
@@ -63,24 +76,34 @@ const UserImportFileUploadSchema = new mongoose.Schema<Reactory.IUserImportFile>
     required: true,
     ref: 'User',
   },
+  /**
+   * Default file options
+   */
   options: FileOptionsSchema,
-  files: [
-    { type: ObjectId, ref: 'ReactoryFile' },
-  ],
+  /**
+   * File list for the package
+   */
+  files: [UserImportFileSchema],
+  /**
+   * status for the package.
+   */
   status: {
     type: String,
     default: 'added',
   },
+  /**
+   * Processors for the items.
+   */
   processors: [ImportProcessorSchema],
-  preview: [UserPreviewSchema],
+  /**
+   * Indicates whether the package is done 
+   */
   completed: { type: Boolean, default: false },
-  rows: { type: Number, default: 0 },
   response: {
     type: ObjectId,
     ref: 'ReactoryFile',
   },
 });
 
-
-const UserImportFile = mongoose.model('UserImportFile', UserImportFileUploadSchema);
-export default UserImportFile;
+const ReactoryFileImportPackage = mongoose.model('ReactoryFileImportPackage', ReactoryFileImportPackageSchema);
+export default ReactoryFileImportPackage;

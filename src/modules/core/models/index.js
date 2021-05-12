@@ -1,10 +1,10 @@
 
 import Cache from './CoreCache';
 import CoreCategory from './CoreCategory';
-import UserImportFile from './UserImportFile';
+import ReactoryFileImportPackage from './ReactoryFileImportPackage';
 
 export {
   Cache,
   CoreCategory,
-  UserImportFile,
+  ReactoryFileImportPackage,
 };

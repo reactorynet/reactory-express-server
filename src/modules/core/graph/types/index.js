@@ -13,11 +13,13 @@ const typeDefs = [];
   'System/ReactoryClient',
   'System/Workflow',
   'System/Cache',
-  'Forms/Form',
+  'System/File',
   'System/UX',
+  'Forms/Form',
   'User/User',
   'User/Team',
   'User/Profile',
+  'User/UserImport',
   'Project/Project',
   'Project/Task',
   'Organization/Organization',
@@ -28,7 +30,7 @@ const typeDefs = [];
   'System/ReactoryContent',
   'Communications/Notification',
   'SQL/ReactorySQL',
-  'Custom/FuniSaveGateway',
+  'Finance/Payments',
 ].forEach((name) => {
   try {
     const fileName = `./${name}.graphql`;

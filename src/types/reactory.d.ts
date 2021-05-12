@@ -1,5 +1,6 @@
 import { ObjectID, ObjectId } from "mongodb";
 import Mongoose from "mongoose";
+import fs from 'fs';
 import ExcelJS from 'exceljs';
 import { TemplateType, UIFrameWork } from "./constants";
 import { Stream } from "stream";
@@ -379,6 +380,7 @@ declare namespace Reactory {
     alias: string,
     filename: string,
     alt: string[],
+    algo: string,
     link: string,
     mimetype: string,
     size: number,
@@ -392,6 +394,9 @@ declare namespace Reactory {
     tags?: string[],
     remotes?: IReactoryFileRemoteEntry[],
     timeline?: ITimeline[],
+    status?: string,
+    readLines(start: number, lines: number): Promise<string[]>,
+    stats(): fs.Stats
     [key: string]: any
   }
 
@@ -906,10 +911,9 @@ declare namespace Reactory {
       encoding: string
     }
     export interface FileUploadArgs {
-
       file: IFile,
       uploadContext?: string
-
+      isUserSpecific?: boolean
     }
 
 
@@ -985,16 +989,68 @@ declare namespace Reactory {
     getContext: (currentContext: IReactoryContext) => Promise<IReactoryContext>
   }
 
-  export interface IUserImportFile {
-    id: string,
-    organization: { id: string, name: string },
-    options: any,
-    files: IReactoryFileModel[],
-    status: string,
-    processors: any[],
+  /**
+   * Interface for the 
+   */
+  export interface IFileImportProcessorEntry {
+    id: string
+    name: string
+    order: number
+    serviceFqn: string
+    started?: Date
+    finished?: Date
+    status: string
+    responses: any[]
+  }
+
+  /**
+   * Interface for the UserImportFile type.
+   * Used in upload and processing user data from 
+   * external file sources.
+   */
+  export interface IUserImportFile extends Mongoose.Document {
+    id: string
+    file: IReactoryFile | IReactoryFileModel,
     preview: any[],
-    completed: boolean,
+    options?: {
+      delimeter: string
+      textQualifier: string
+      firstRow: string
+      columnMappings: any[]
+    }
+    status: string
+    processors: IFileImportProcessorEntry[]
+    rows: number
+  }
+
+  /**
+   * Interface for User File Import
+   */
+  export interface IReactoryFileImportPackage {
+    organization: any
+    owner: any
+    options?: {
+      delimeter: string
+      textQualifier: string
+      firstRow: string
+      columnMappings: any[]
+    }
+    files: IUserImportFile[]
+    status: string,
+    processors: IFileImportProcessorEntry[],
     rows: number,
     started: Date,
+  }
+
+  export interface IReactoryFileImportPackageDocument extends Mongoose.Document, IReactoryFileImportPackage { }
+
+  export type ReactoryFileImportPackageDocument = Mongoose.Model<IReactoryFileImportPackageDocument>;
+
+  export interface IReactoryImportPackageManager extends Service.IReactoryContextAwareService {
+    start(workload_id: string, file_ids: string[], processors: string[]): Promise<any>
+    stop(workload_id: string, file_ids: string[]): Promise<any>
+    delete(workload_id: string): Promise<any>
+    addFile(workload_id: string, file: IReactoryFileModel): Promise<any>
+    removeFile(workload_id: string, file_id: string): Promise<any>
   }
 }

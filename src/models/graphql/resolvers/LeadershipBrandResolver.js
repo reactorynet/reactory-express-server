@@ -36,7 +36,7 @@ const leadershipBrandResolver = {
     },
   },
   Query: {
-    brandListForOrganization(obj, args, context, info) {
+    MoresLeadershipBrands(obj, args, context, info) {
       logger.debug('Finding leadership brands for organization');
       return LeadershipBrand.find({ organization: ObjectId(args.organizationId) });
     },

@@ -100,7 +100,6 @@ const resolvers = {
     apiStatus: async (obj, args, context, info) => {
       const { user, partner } = context;
       let skipResfresh = false;
-      let _user = user;
       let isAnon = false;
       let uxmessages = [];
 
@@ -156,9 +155,9 @@ const resolvers = {
         `).then();
 
           if (refreshResult && refreshResult.data && refreshResult.data.refreshProfileData) {
-            const { user, messages } = refreshResult.data.refreshProfileData;
+            const { user: profile, messages } = refreshResult.data.refreshProfileData;
             uxmessages = [...uxmessages, ...messages];
-            logger.debug(`Result from profile refresh ${user.fullNameWithEmail}, has ${uxmessages.length} messages`);
+            logger.debug(`Result from profile refresh ${profile.fullNameWithEmail}, has ${uxmessages.length} messages`);
           }
         } catch (profileRefreshError) {
           logger.error(`Error refreshing profile data for user ${user.firstName}`, profileRefreshError);
@@ -252,7 +251,7 @@ const resolvers = {
           secondary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
         },
         messages: uxmessages,
-        navigationComponents
+        navigationComponents,
       };
 
       logger.debug(`${user.firstName} Api Status Call Result:\n${JSON.stringify(api_status_result)}`);

@@ -10,7 +10,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 import ApiError from '@reactory/server-core/exceptions';
 import ReactoryFileModel from '@reactory/server-modules/core/models/CoreFile';
 import logger from '@reactory/server-core/logging';
-
+import { template } from 'lodash';
 const {
     APP_DATA_ROOT,
     CDN_ROOT
@@ -146,7 +146,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     constructor(props: any, context: any) {
         this.executionContext = {
             partner: props.partner || context.partner,
-            user: props.user || context.partner
+            user: props.user || context.user
         }
     }
     getContentBytes(path: string): number {
@@ -248,15 +248,35 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     uploadFile = async (args: Reactory.Service.FileUploadArgs): Promise<Reactory.IReactoryFileModel> => {
         return new Promise(async (resolve, reject) => {
 
-            const { createReadStream, filename, mimetype, encoding } = await args.file;
-            logger.debug(`UPLOADED FILE:: ${filename} - ${mimetype} ${encoding}`);
+            debugger
+            const { uploadContext, file, isUserSpecific = false } = args;
+            const { createReadStream, filename, mimetype, encoding } = await file;
+            const { user, partner } = this.executionContext;
+
+            logger.debug(`ReactoryFileServer.uploadFile() - start ⭕ ${filename} - ${mimetype} ${encoding}`);
 
             const stream: NodeJS.ReadStream = createReadStream();
 
             const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
 
-            const link = `${process.env.CDN_ROOT}content/files/${randomName}`;
+            let virtualPath = `profiles/${user._id}/files/${partner._id}/`;
+            //general path                        
+            if (isUserSpecific === false) {
+                //general file            
+                virtualPath = 'content/files/';
+            }
 
+            let physicalPath = path.join(process.env.APP_DATA_ROOT, virtualPath);
+
+            let virtualFilePath = path.join(virtualPath, randomName);
+            let phyicalFilePath = path.join(physicalPath, randomName);
+
+            let web_link = path.join(process.env.CDN_ROOT, virtualFilePath);
+
+            debugger
+            if (fs.existsSync(physicalPath) === false) {
+                fs.mkdirSync(physicalPath, { recursive: true });
+            }
 
             // Flag to tell if a stream had an error.
             let hadStreamError: boolean = null;
@@ -264,6 +284,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
             //ahndles any errors during upload / processing of file
             const handleStreamError = (error: any) => {
                 // Do not enter twice in here.
+                logger.error(`ReactoryFileServer.uploadFile() - start ⭕ ${filename} ==> 🚨 Error in stream`, { error })
                 if (hadStreamError) {
                     return;
                 }
@@ -271,9 +292,9 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                 hadStreamError = true;
 
                 // Cleanup: delete the saved path.
-                if (saveToPath) {
+                if (phyicalFilePath) {
                     // eslint-disable-next-line consistent-return
-                    return fs.unlink(saveToPath, () => {
+                    return fs.unlink(phyicalFilePath, () => {
                         reject(error)
                     });
                 }
@@ -285,9 +306,18 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
 
             const catalogFile = () => {
                 // Check if image is valid
-                const fileStats: fs.Stats = fs.statSync(saveToPath);
+                const fileStats: fs.Stats = fs.statSync(phyicalFilePath);
+                logger.debug(`ReactoryFileServer.uploadFile() - ✅ ${filename} ${fileStats.size} received ==> CATALOGGING`);
 
-                logger.debug(`SAVING FILE:: DONE ${filename} ${fileStats.size} --> CATALOGGING`);
+                let upload_context = uploadContext;
+                if (upload_context.indexOf('${') >= 0) {
+                    try {
+                        upload_context = template(upload_context)({ user_id: this.executionContext.user._id, partner_id: this.executionContext.partner._id })
+                    } catch (templateError) {
+                        upload_context = `reactory::failed::context`
+                    }
+                }
+
 
                 const reactoryFile: any = {
                     id: new ObjectID(),
@@ -298,40 +328,37 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                     owner: this.executionContext.user._id,
                     uploadedBy: this.executionContext.user._id,
                     size: fileStats.size,
-                    hash: Hash(link),
-                    link: link,
-                    path: 'content/files/',
-                    uploadContext: args.uploadContext || 'lasec-crm::company-document',
+                    hash: Hash(web_link),
+                    link: web_link,
+                    path: virtualPath,
+                    uploadContext: uploadContext,
                     public: false,
                     published: false,
                 };
 
-                if (reactoryFile.uploadContext === 'lasec-crm::new-company::document') {
-                    reactoryFile.uploadContext = `lasec-crm::new-company::document::${this.executionContext.user._id}`;
-                }
+
 
                 const savedDocument = new ReactoryFileModel(reactoryFile);
 
-                savedDocument.save().then();
-
-                logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
-
-                resolve(savedDocument);
+                savedDocument.save().then(() => {
+                    logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
+                    resolve(savedDocument);
+                }).catch((err) => { reject(err) });
             }
 
-            // Generate path where the file will be saved.
-            // const appDir = path.dirname(require.main.filename);
-            const saveToPath = path.join(process.env.APP_DATA_ROOT, 'content', 'files', randomName);
+            // Generate path where the file will be saved.            
+            // the default location.            
 
-            logger.debug(`SAVING FILE:: ${filename} --> ${saveToPath}`);
+            logger.debug(`SAVING FILE:: ${filename} --> ${physicalPath}`);
 
-            const diskWriterStream: NodeJS.WriteStream = fs.createWriteStream(saveToPath);
+            const diskWriterStream: NodeJS.WriteStream = fs.createWriteStream(phyicalFilePath);
             diskWriterStream.on('error', handleStreamError);
 
             // Validate image after it is successfully saved to disk.
             diskWriterStream.on('finish', catalogFile);
 
-            // Save image to disk.
+            // Save file to disk.
+            logger.debug(`ReactoryFileServer.uploadFile() ${filename} ==> starting pipe 🚰`)
             stream.pipe(diskWriterStream);
         });
     };
