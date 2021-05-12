@@ -1,4 +1,4 @@
-import logger from '../logging';
+// import logger from '../logging';
 
 const allowedHeadersString = 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,origin,authorization,x-client-name,x-client-version';
 const proxyHeaderString = 'X-Real-IP,X-Forwarded-For,X-Forwarded-Host,X-Forwarded-Proto';
@@ -12,7 +12,7 @@ const corsOptions = {
    * for all configured Reactory Clients
    */
   origin(origin, callback) {
-    //debugger;
+    //;
     // logger.debug(`
     //   Validatinging CORS:
     //     ORIGIN => ${origin}

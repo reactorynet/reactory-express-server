@@ -248,7 +248,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     uploadFile = async (args: Reactory.Service.FileUploadArgs): Promise<Reactory.IReactoryFileModel> => {
         return new Promise(async (resolve, reject) => {
 
-            debugger
+
             const { uploadContext, file, isUserSpecific = false } = args;
             const { createReadStream, filename, mimetype, encoding } = await file;
             const { user, partner } = this.executionContext;
@@ -273,7 +273,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
 
             let web_link = path.join(process.env.CDN_ROOT, virtualFilePath);
 
-            debugger
+
             if (fs.existsSync(physicalPath) === false) {
                 fs.mkdirSync(physicalPath, { recursive: true });
             }

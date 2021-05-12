@@ -181,7 +181,7 @@ ReactoryFileSchema.methods.readLines = async function readLines(start: number = 
   if (fstats.size === 0) return [];
 
   return new Promise<string[]>((resolve, reject) => {
-    debugger
+
     const rs = fs.createReadStream($path, { encoding: 'utf8' });
     const lines = [];
     let linesRead = -1;
@@ -190,7 +190,7 @@ ReactoryFileSchema.methods.readLines = async function readLines(start: number = 
     let index = -1;
 
     rs.on('data', (chunk) => {
-      debugger
+
       index = chunk.indexOf('\n');
       acc += chunk;
       if (index >= 0) {
@@ -206,7 +206,7 @@ ReactoryFileSchema.methods.readLines = async function readLines(start: number = 
         index = -1;
       }
     }).on('close', () => {
-      debugger
+
       const parts = acc.split(acc.split('\n'));
       acc = parts[1];
       lines.push(parts[0]);

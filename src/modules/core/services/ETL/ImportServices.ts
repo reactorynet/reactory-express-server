@@ -129,7 +129,7 @@ class UserFileImportProcessGeneral {
    * @param params - paramters can include row offset
    */
   async process(params: any): Promise<any> {
-    debugger
+
     return new Promise((resolve, reject) => {
       const { offset = 0, file, import_package, process_index, next } = params;
 
@@ -193,7 +193,7 @@ class UserFileImportProcessDemographics {
    * @param params - paramters can include row offset
    */
   async process(params: any): Promise<any> {
-    debugger
+
     const { offset = 0, file } = params;
     this.context.user.hasAnyRole(this.context.partner._id);
     return 'done';
@@ -226,7 +226,7 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
 
     const { files } = pkg;
     // 2. check if there are files
-    debugger
+
     if (files && files.length === 0) {
       return {
         success: false,
@@ -246,7 +246,7 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
       $processors = filterProcessors(processors, $processors);
     }
 
-    debugger
+
     // 4. iterate through each file and execute
     let processor_promises: Promise<any>[] = [];
     $files.forEach((file_item: any) => {
@@ -264,7 +264,7 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
       }
     });
 
-    debugger
+
     if (processor_promises.length > 0) await Promise.all(processor_promises).then();
     // the processors in sequence
     // and set the status to 'running' if it
