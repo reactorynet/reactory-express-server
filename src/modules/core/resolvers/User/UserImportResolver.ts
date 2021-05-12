@@ -4,7 +4,7 @@ import logger from '@reactory/server-core/logging';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import ReactoryFile from '@reactory/server-modules/core/models/CoreFile';
 import Organization from '@reactory/server-core/models/schema/Organization';
-import ReactoryFileImportPackage from 'modules/core/models/ReactoryFileImportPackage';
+import ReactoryFileImportPackage from '@reactory/server-modules/core/models/ReactoryFileImportPackage';
 import ApiError, { InsufficientPermissions, OrganizationNotFoundError } from '@reactory/server-core/exceptions';
 import { ObjectId } from 'bson';
 import mongoose from 'mongoose';
