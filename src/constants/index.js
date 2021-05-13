@@ -2,7 +2,6 @@
 const {
   NODE_ENV,
   APP_DATA_ROOT,
-  LEGACY_APP_DATA_ROOT,
   MONGOOSE,
   API_PORT,
   SENDGRID_API_KEY,
@@ -20,7 +19,6 @@ export default {
   env: {
     NODE_ENV: NODE_ENV || 'development',
     APP_DATA_ROOT: APP_DATA_ROOT || '/data/reactory',
-    LEGACY_APP_DATA_ROOT: LEGACY_APP_DATA_ROOT || '/data/legacy',
     MONGOOSE: MONGOOSE || 'mongodb://localhost:27017/reactory',
     API_PORT: API_PORT || 4000,
     SENDGRID_API_KEY: SENDGRID_API_KEY || process.env.SENDGRID_API_KEY,

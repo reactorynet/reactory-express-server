@@ -24,7 +24,6 @@ dotenv.config();
 
 const {
   APP_DATA_ROOT,
-  LEGACY_APP_DATA_ROOT,
 } = process.env;
 
 
@@ -75,7 +74,7 @@ export const updateOrganizationLogo = (organization, imageData) => {
  * 
  * Deprecated
  */
-export const migrateOrganization = (id, options = { clientKey: 'plc', dataPath: LEGACY_APP_DATA_ROOT }) => {
+export const migrateOrganization = (id, options = { clientKey: 'plc', dataPath: APP_DATA_ROOT }) => {
   throw new ApiError("Deperecated");
 };
 
@@ -88,7 +87,7 @@ export class CoreMigrationResult {
   }
 }
 
-export const migrateCoreData = async (options = { clientKey: 'plc', dataPath: LEGACY_APP_DATA_ROOT }) => {
+export const migrateCoreData = async (options = { clientKey: 'plc', dataPath: APP_DATA_ROOT }) => {
   logger.info(`Migrating Core Data: ${options.clientKey}, ${options.dataPath}`);
   const coreMigrateResult = new CoreMigrationResult();
 

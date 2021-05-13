@@ -15,7 +15,6 @@ module.exports = {
       NODE_PATH: '.',
       NODE_ENV: 'development',
       APP_DATA_ROOT: '/mnt/d/data/reactory',
-      LEGACY_APP_DATA_ROOT: '/mnt/d/data',
       MONGOOSE: 'mongodb://localhost:27017/reactory',
       WORKFLOW_MONGO: 'mongodb://localhost:27017/reactory-workflow',
       API_PORT: 4000,
@@ -37,7 +36,6 @@ module.exports = {
       NODE_PATH: '.',
       NODE_ENV: 'production',
       APP_DATA_ROOT: '/data/reactory',
-      LEGACY_APP_DATA_ROOT: '/data/legacy',
       MONGOOSE: 'mongodb://localhost:27017/reactory',
       WORKFLOW_MONGO: 'mongodb://localhost:27017/reactory-workflow',
       API_PORT: 4000,
@@ -58,7 +56,6 @@ module.exports = {
     env_staging: {
       NODE_ENV: 'staging',
       APP_DATA_ROOT: '/data/reactory',
-      LEGACY_APP_DATA_ROOT: '/data/legacy',
       MONGOOSE: 'mongodb://localhost:27017/reactory',
       WORKFLOW_MONGO: 'mongodb://localhost:27017/reactory-workflow',
       API_PORT: 4000,

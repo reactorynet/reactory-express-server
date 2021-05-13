@@ -31,7 +31,6 @@ dotenv.config();
 
 const {
   APP_DATA_ROOT,
-  //  LEGACY_APP_DATA_ROOT,
 } = process.env;
 
 

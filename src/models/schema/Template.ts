@@ -12,7 +12,6 @@ const { ObjectId } = mongoose.Schema.Types;
 
 const {
   APP_DATA_ROOT,
-  //  LEGACY_APP_DATA_ROOT,
 } = process.env;
 
 const TemplateSchema = new mongoose.Schema({
