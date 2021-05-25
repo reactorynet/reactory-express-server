@@ -76,6 +76,7 @@ declare namespace Reactory {
     updatedAt?: Date,
     colorScheme: () => any
     getSetting: (key: string) => any;
+    getDefaultUserRoles: () => string[];
   }
 
   export interface IReactoryClientDocument extends Mongoose.Document, IReactoryClient { }
@@ -1052,5 +1053,11 @@ declare namespace Reactory {
     delete(workload_id: string): Promise<any>
     addFile(workload_id: string, file: IReactoryFileModel): Promise<any>
     removeFile(workload_id: string, file_id: string): Promise<any>
+  }
+
+  export interface CoreSimpleResponse {
+    success: Boolean
+    message: String
+    payload?: any
   }
 }

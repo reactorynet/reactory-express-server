@@ -20,6 +20,11 @@ const {
 } = process.env;
 
 export class CreateUserResult {
+
+  organization: any;
+  user: any;
+  errors: any[];
+
   constructor() {
     this.organization = null;
     this.user = null;
@@ -34,15 +39,26 @@ export const defaultUserCreateOptions = {
   clientId: null,
 };
 
-export const userWithId = co.wrap(function* userWithIdGenerator(id) {
-  return yield User.findById(ObjectId(id)).then();
-});
+export const userWithId = async (id: string | ObjectId | number) => {
+  return await User.findById(id).then();
+};
 
-export const createUserForOrganization = co.wrap(function* createUserForOrganization(user, password, organization, roles = [], provider = 'LOCAL', partner, businessUnit) { // eslint-disable-line max-len
+/**
+ * Functions used to Create a new user for an organization and assign a default membership
+ * @param user - the user object on which to base the user
+ * @param password - password string for the user
+ * @param organization - organization object 
+ * @param roles - string array of allowed roles
+ * @param provider - login / avatar provider 
+ * @param partner - reactory client partner
+ * @param businessUnit - business unit to assign to the user
+ * @returns 
+ */
+export const createUserForOrganization = async (user: Reactory.IUser, password: string, organization: Reactory.IOrganizationDocument, roles: string[] = [], provider: string = 'LOCAL', partner: Reactory.IReactoryClientDocument, businessUnit: Reactory.IBusinessUnit) => { // eslint-disable-line max-len
   const result = new CreateUserResult();
   try {
     const partnerToUse = partner;
-    let foundUser = yield User.findOne({ email: user.email }, {
+    let foundUser = await User.findOne({ email: user.email }, {
       _id: 1, memberships: 1, firstName: 1, lastName: 1,
     }).then();
     logger.info(`Using partner ${partnerToUse.name} to create user ${user.email} ${foundUser ? 'EXISTING' : 'NEW'}`);
@@ -56,14 +72,14 @@ export const createUserForOrganization = co.wrap(function* createUserForOrganiza
           updatedAt: new Date(),
         });
         foundUser.setPassword(password);
-        yield foundUser.save().then();
+        await foundUser.save().then();
       }
 
-      const membership = {
+      const membership: any = {
         // eslint-disable-line      
-        clientId: ObjectId(partnerToUse._id), // eslint-disable-line no-underscore-dangle
-        organizationId: organization && organization._id ? ObjectId(organization._id) : null, // eslint-disable-line no-underscore-dangle
-        businessUnitId: businessUnit && businessUnit._id ? ObjectId(businessUnit._id) : null, // eslint-disable-line no-underscore-dangle
+        clientId: new ObjectId(partnerToUse._id), // eslint-disable-line no-underscore-dangle
+        organizationId: organization && organization._id ? organization._id : null, // eslint-disable-line no-underscore-dangle
+        businessUnitId: businessUnit && businessUnit._id ? businessUnit._id : null, // eslint-disable-line no-underscore-dangle
         provider,
         enabled: true,
         roles: union(isFunction(partnerToUse.getDefaultUserRoles) ? partnerToUse.getDefaultUserRoles() : [], roles),
@@ -72,7 +88,7 @@ export const createUserForOrganization = co.wrap(function* createUserForOrganiza
       logger.debug('Checking Membership', { user, membership });
       if (foundUser.hasMembership(membership.clientId, membership.organizationId, membership.businessUnitId) === false) {
         foundUser.memberships.push(membership);
-        result.user = yield foundUser.save().then();
+        result.user = await foundUser.save().then();
       }
 
       return result;
@@ -83,7 +99,7 @@ export const createUserForOrganization = co.wrap(function* createUserForOrganiza
     result.errors.push(createError.message);
     return result;
   }
-});
+};
 
 export const createMembership = (user, membership) => {
   return new Promise((resolve, reject) => {
@@ -282,7 +298,7 @@ function* updateProfileGenerator(id, profileData) {
   return yield found.save();
 }
 
-export const updateProfile = async(id: string, profileData: any) =>{
+export const updateProfile = async (id: string, profileData: any) => {
   logger.info('Updating user profile', { id, profileData });
   try {
     const found = await User.findById(id).then();
@@ -296,11 +312,11 @@ export const updateProfile = async(id: string, profileData: any) =>{
     found.email = profileData.email;
     found.mobileNumber = profileData.mobileNumber;
     return await found.save().then();
-    
+
   } catch (error) {
     throw new ApiError(`Could not update user due to an error: ${error.message}`);
   }
-  
+
 }
 
 // co.wrap(updateProfileGenerator);

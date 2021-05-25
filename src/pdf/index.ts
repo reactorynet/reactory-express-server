@@ -137,6 +137,7 @@ const generate = async (props: any, res: any, usepdfkit = false, req: any) => {
   const { partner, user } = req;
   // Create a document
 
+  debugger;
 
   if (_.isFunction(definition.content) === true && usepdfkit === false) {
     try {
@@ -148,7 +149,7 @@ const generate = async (props: any, res: any, usepdfkit = false, req: any) => {
       res.status(503).send(error.message);
     }
   } else {
-    logger.ERROR('Generating Document using PDFkit --- DEPRECATE');
+    logger.error('Generating Document using PDFkit --- DEPRECATE');
     const doc = new PDFDocument();
 
     if (definition.props.fonts) {
@@ -309,7 +310,8 @@ router.get('/:nameSpace/:name', async (req, res) => {
 
   if (reportPdfComponent && reportPdfComponent.component) {
     try {
-      const resolvedData = await reportPdfComponent.component.resolver(req.query).then();
+      debugger
+      const resolvedData = await reportPdfComponent.component.resolver(req.query, { user: req.user, partner: req.partner }).then();
       generate({ data: resolvedData, definition: reportPdfComponent.component }, res, false, req);
     } catch (pdfError) {
       logger.debug(`Error Generating The PDF ${pdfError.message}`, { pdfError });

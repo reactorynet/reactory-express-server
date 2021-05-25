@@ -2,6 +2,7 @@
 type CoreSimpleResponse {
   success: Boolean
   message: String
+  payload: Any
 }
 
 type PersonalDemographics {

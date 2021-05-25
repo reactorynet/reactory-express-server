@@ -1,7 +1,6 @@
 import { ObjectId } from 'mongodb';
 import moment from 'moment';
-import { LeadershipBrand, Scale } from '../../../models';
-// import { migrateOrganization } from '../../../application/admin/Organization';
+import { LeadershipBrand, Scale, User, Survey } from '@reactory/server-core/models';
 import logger from '../../../logging';
 
 const leadershipBrandResolver = {
@@ -12,13 +11,22 @@ const leadershipBrandResolver = {
   },
   LeadershipBrand: {
     id(obj) {
-      return obj.id;
+      return obj._id;
     },
     title(obj) {
-      return obj.title || 'NOT SET';
+      return obj.title ? obj.title : 'NOT SET';
     },
     description(obj) {
       return obj.description || 'NOT SET';
+    },
+    locked: async (brand, params, context) => {
+      const count = await Survey.count({ leadershipBrand: brand._id }).then();
+      if (count && count > 0) return true;
+
+      return false;
+    },
+    label: (brand) => {
+      return `${brand.title} - ${brand.version || "1.0.0"}`
     },
     qualities(brand) {
       if (brand.qualities) return brand.qualities;
@@ -28,11 +36,18 @@ const leadershipBrandResolver = {
       if (brand.scale) return Scale.findById(brand.scale);
       return null;
     },
+    createdBy: async (brand, params, context, info) => {
+      return User.findById(brand.createdBy);
+    },
+    version: (brand) => {
+      if (brand.version) return brand.version;
+      return '1.0.0'
+    },
     createdAt(obj) {
-      return obj.createdAt || moment().unix();
+      return obj.createdAt;
     },
     updatedAt(obj) {
-      return obj.updatedAt || moment().unix();
+      return obj.updatedAt;
     },
   },
   Query: {
@@ -40,9 +55,9 @@ const leadershipBrandResolver = {
       logger.debug('Finding leadership brands for organization');
       return LeadershipBrand.find({ organization: ObjectId(args.organizationId) });
     },
-    brandWithId(obj, args, context, info) {
-      logger.debug('Getting leadership brand with id', args.brandId);
-      return LeadershipBrand.findById(args.brandId);
+    MoresLeadershipBrand(obj, args, context, info) {
+      logger.debug('Getting leadership brand with id', args.id);
+      return LeadershipBrand.findById(args.id);
     },
     allScales() {
       return Scale.find({});

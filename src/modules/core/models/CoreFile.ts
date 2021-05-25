@@ -2,6 +2,7 @@ import mongoose, { Schema, MongooseDocument, Model, Document } from 'mongoose';
 const { ObjectId } = mongoose.Schema.Types;
 import crypto from 'crypto';
 import fs from 'fs';
+
 import moment from 'moment';
 import path from 'path';
 import { ObjectID } from 'mongodb';
@@ -150,16 +151,23 @@ ReactoryFileSchema.methods.stats = function stats() {
 
 // eslint-disable-next-line max-len
 ReactoryFileSchema.methods.lineCount = async function lineCount() {
+  const LINE_FEED = '\n'.charCodeAt(0);
   const file: Reactory.IReactoryFileModel = this;
-  const $path = path.join(process.env.CDN_ROOT, file.path, file.alias);
+  const $path = path.join(process.env.APP_DATA_ROOT, file.path, file.alias);
+
+  if (fs.existsSync($path) === false) {
+    logger.error(`Cannot read lines for file ${$path}. File does not exist.`);
+    throw new RecordNotFoundError(`The file ${$path} does not exist.`);
+  }
+
   return new Promise((resolve, reject) => {
-    let lineCount = 0;
+    let lineCount = -1;
     fs.createReadStream($path)
       .on("data", (buffer) => {
         let idx = -1;
-        lineCount--; // Because the loop will run once for idx=-1
+        // lineCount--; // Because the loop will run once for idx=-1        
         do {
-          idx = buffer.indexOf(10, idx + 1);
+          idx = buffer.indexOf(LINE_FEED, idx + 1);
           lineCount++;
         } while (idx !== -1);
       }).on("end", () => {
@@ -168,48 +176,88 @@ ReactoryFileSchema.methods.lineCount = async function lineCount() {
   });
 };
 
+ReactoryFileSchema.methods.getServerFilename = function getServerFilename() {
+  const file: Reactory.IReactoryFileModel = this;
+  return path.join(process.env.APP_DATA_ROOT, file.path, file.alias);
+}
+
 ReactoryFileSchema.methods.readLines = async function readLines(start: number = 0, rows: number = -1): Promise<string[]> {
 
   const file: Reactory.IReactoryFileModel = this;
-  const $path = path.join(process.env.CDN_ROOT, file.path, file.alias);
-  if (!fs.existsSync($path) === false) {
+  const $path = path.join(process.env.APP_DATA_ROOT, file.path, file.alias);
+  if (fs.existsSync($path) === false) {
     logger.error(`Cannot read lines for file ${$path}. File does not exist.`);
     throw new RecordNotFoundError(`The file ${$path} does not exist.`);
   }
 
   const fstats = fs.statSync($path);
+
   if (fstats.size === 0) return [];
+
+  const LINE_FEED = '\n'.charCodeAt(0);
 
   return new Promise<string[]>((resolve, reject) => {
 
     const rs = fs.createReadStream($path, { encoding: 'utf8' });
-    const lines = [];
-    let linesRead = -1;
+
+    const lines: string[] = [];
+    let linesRead = 0;
     let acc = '';
     let pos = 0;
     let index = -1;
+    let bytesread = 0
+    rs.on('data', (buffer) => {
+      //get the first index
+      index = buffer.indexOf(LINE_FEED);
+      acc += buffer;
+      bytesread += buffer.length;
 
-    rs.on('data', (chunk) => {
+      debugger
 
-      index = chunk.indexOf('\n');
-      acc += chunk;
-      if (index >= 0) {
-        const parts = acc.split(acc.split('\n'));
-        acc = parts[1];
-        linesRead += 1;
-        if (linesRead >= start && lines.length < rows) {
-          lines.push(parts[0]);
-          if (lines.length === rows) {
-            rs.close();
-          }
+      //no newline characters
+      if (index === -1) {
+        //we've reached the end of the file and no more newline chars available
+        debugger;
+        rs.close();
+      } else {
+
+        if (index >= 0) {
+          let parts = acc.split('\n');
+
+          do {
+            lines.push(parts[0]);
+            if (parts.length > 1) {
+              parts = parts.slice(1, parts.length);
+            }
+            linesRead += 1;
+          } while (parts.length > 0)
+
+
+          // acc = parts[0];
+
+          // if (linesRead >= start && lines.length < rows) {
+          //   lines.push(parts[0]);
+          //   debugger
+          //   if (lines.length === rows) {
+          //     rs.close();
+          //   }
+          // }
+          // index = -1;
         }
-        index = -1;
+
       }
+
+      if (bytesread === fstats.size) rs.close();
+
+
     }).on('close', () => {
 
-      const parts = acc.split(acc.split('\n'));
-      acc = parts[1];
-      lines.push(parts[0]);
+      // debugger
+      // const parts = acc.split(acc.split('\n'));
+      // acc = parts[1];
+      // lines.push(parts[0]);
+      debugger;
+
       resolve(lines);
     }).on('error', (err) => {
       reject(err);
