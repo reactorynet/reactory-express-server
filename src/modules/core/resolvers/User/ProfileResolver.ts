@@ -9,8 +9,9 @@ import { updateUserProfileImage } from '@reactory/server-core/application/admin/
 import logger from '@reactory/server-core/logging';
 import ApiError from "exceptions";
 import moment from "moment";
+import { Reactory } from "types/reactory";
 
-const refreshMicrosoftToken = async (msauth) => {
+const refreshMicrosoftToken = async (msauth: any) => {
   logger.debug('Refreshing Microsoft Token')
   /**
    *https://login.microsoftonline.com/common/oauth2/v2.0/token
@@ -95,11 +96,11 @@ const refreshMicrosoftToken = async (msauth) => {
  * @param {*} refresh
  * @param {*} userToCheck
  */
-const isTokenValid = async (msauth, refresh = true, userToCheck = null) => {
+const isTokenValid = async (msauth: any, refresh: boolean = true, userToCheck: Reactory.IUserDocument = null) => {
 
   if (isNil(msauth)) throw new ApiError('Invalid Null Parameter input for msauth', { parameter: 'msauth', 'method': 'isTokenValid', 'source': 'modules.core.resolvers.User.ProfileResolver' });
   if (isNil(msauth.props) || isNil(msauth.provider) || isNil(msauth.lastLogin)) throw new ApiError('Invalid Parameter Shape for msauth', { parameter: 'msauth', 'method': 'isTokenValid', 'source': 'modules.core.resolvers.User.ProfileResolver' });
-  logger.debug(`Checking if Microsoft Authentication token for ${user.fullName(true)} is valid`);
+  logger.debug(`Checking if Microsoft Authentication token for ${userToCheck.fullName(true)} is valid`);
   const {
     expires_at,
     refresh_token,
@@ -124,31 +125,33 @@ const isTokenValid = async (msauth, refresh = true, userToCheck = null) => {
           msauth,
           message: `Your Microsoft login expired ${Math.abs(expiresInMinutes)} minutes ago. Please login to continue using Microsoft Features.`
         };
-      }
+      } else {
+        if (expiresInMinutes <= 7 && refresh === true && userToCheck && userToCheck.setAuthentication) {
+          logger.debug(`The token expires in (${now.diff(expiresWhen, "minute")}) minutes. Will try a refresh using refresh token.`)
+          try {
+            const _auth = await refreshMicrosoftToken(msauth).then();
+            await userToCheck.setAuthentication(_auth);
 
-      if (expiresInMinutes <= 5 && refresh === true && userToCheck && userToCheck.setAuthentication) {
-        logger.debug(`The token expires in (${now.diff(expiresWhen, "minute")}) minutes. Will try a refresh using refresh token.`)
-        try {
-          const _auth = await refreshMicrosoftToken(msauth);
-          await userToCheck.setAuthentication(_auth);
-
-          // await userToCheck.save();
-          return {
-            valid: true,
-            msauth: _auth,
-            message: `Your Microsoft token authentication has been refreshed`
-          };
-        } catch (tokenRefreshError) {
-          logger.error(`Token refresh failed ${tokenRefreshError} - user will need to login again`, { tokenRefreshError });
-          return {
-            valid: false,
-            msauth,
-            message: `Your Microsoft refresh token has failed, please login using your Microsoft Account in order to keep using Microsoft Features`
-          };
+            await userToCheck.save().then();
+            return {
+              valid: true,
+              msauth: _auth,
+              message: `Your Microsoft token authentication has been refreshed`
+            };
+          } catch (tokenRefreshError) {
+            logger.error(`Token refresh failed ${tokenRefreshError} - user will need to login again`, { tokenRefreshError });
+            return {
+              valid: false,
+              msauth,
+              message: `Your Microsoft refresh token has failed, please login using your Microsoft Account in order to keep using Microsoft Features`
+            };
+          }
         }
       }
 
-      if (expiresInMinutes > 5) {
+
+
+      if (expiresInMinutes > 7) {
         logger.debug(`The token is valid and expires in ${expiresInMinutes} minutes`);
         return {
           valid: true,
@@ -187,11 +190,12 @@ const getPersonalDemographics = async (args) => {
 
 export default {
   Query: {
-    refreshProfileData: async (parent, { id, skipImage = true }, context) => {
+    refreshProfileData: async (parent: any, params: { id: string, skipImage: boolean }, context: Reactory.IReactoryContext) => {
       let userToRefresh = context.user;
+      const { id, skipImage } = params;
       const uxmessages = [];
       if (id && typeof id === 'string') {
-        userToRefresh = await User.findById(id);
+        userToRefresh = await User.findById(id).then();
       }
 
       //for each available external provider we fetch the profile and
@@ -219,13 +223,13 @@ export default {
         */
         let msuser = null;
         //check if the token is valid, do a refresh if needed
-        const tokenValidation = await isTokenValid(msauth, true, userToRefresh);
+        const tokenValidation = await isTokenValid(msauth, true, userToRefresh).then();
         if (tokenValidation.valid === true) {
           //our token is valid and we possibly refreshed the refresh and access tokens.
           try {
             msuser = await MSGraph.getUserDetails(msauth.props.accessToken, { imageSize: '120x120', profileImage: skipImage === false });
             logger.debug('microsoft user response received', msuser);
-            uxmessage.push({
+            uxmessages.push({
               title: 'Microsoft Authentication',
               text: 'Login valid',
               status: 'success',
@@ -267,6 +271,7 @@ export default {
           }
         } else {
           const now = moment().valueOf();
+
           uxmessages.push({
             id: `ms-auth-expired-${now}`,
             title: 'Login Expired',
@@ -278,7 +283,7 @@ export default {
               {
                 id: `ms-auth-login-${now}`,
                 title: 'Re-Authenticate',
-                action: `${process.env.API_URI_ROOT}/auth/microsoft/openid/${context.partner.key}?x-client-key=${context.partner.key}&x-reactory-pass=${context.partner.password}+${context.partner.salt}`,
+                action: `${process.env.API_URI_ROOT}auth/microsoft/openid/start/${context.partner.key}?x-client-key=${context.partner.key}&x-client-pwd=${context.partner.password}+${context.partner.salt}`,
               }
             ],
             via: 'notification',
