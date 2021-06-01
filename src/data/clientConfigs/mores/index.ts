@@ -67,8 +67,8 @@ let MSOAuthRedirect = 'http://localhost:4000/auth/microsoft/openid/complete/more
 
 switch (MODE) {
   case 'QA': {
-    siteUrl = 'https://mores.reactory.net';
-    MSOAuthRedirect = 'https://api.reactory.net/auth/microsoft/openid/complete/mores';
+    siteUrl = 'https://bapp.mores-assessments.com';
+    MSOAuthRedirect = 'https://bio.mores-assessments.com/auth/microsoft/openid/complete/mores';
     break;
   }
   case 'PRODUCTION': {
