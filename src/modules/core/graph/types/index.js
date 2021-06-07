@@ -15,6 +15,7 @@ const typeDefs = [];
   'System/Cache',
   'System/File',
   'System/UX',
+  'System/Region',
   'Forms/Form',
   'User/User',
   'User/Team',

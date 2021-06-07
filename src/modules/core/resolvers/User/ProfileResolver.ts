@@ -10,6 +10,8 @@ import logger from '@reactory/server-core/logging';
 import ApiError from "exceptions";
 import moment from "moment";
 import { Reactory } from "types/reactory";
+import Organization from "application/admin/Organization";
+import { RecordNotFoundError } from "@reactory/server-core/exceptions";
 
 const refreshMicrosoftToken = async (msauth: any) => {
   logger.debug('Refreshing Microsoft Token')
@@ -305,7 +307,7 @@ export default {
     },
     GetPersonalDemographics: async (obj, params, context) => {
       return getPersonalDemographics(params, context);
-    }
+    },
   },
   Mutation: {
     async CoreSetPersonalDemographics(obj, args, context) {

@@ -11,7 +11,7 @@ import { execql } from '@reactory/server-core/graph/client';
 import orgnizationResolvers from './OrganizationResolver';
 import assessmentResolvers from './AssessmentResolver';
 import reactoryClientResolver from './ReactoryClient';
-import leadershipBrandResolver from './LeadershipBrandResolver';
+
 import projectResolver from './ProjectResolver';
 import scaleResolver from './ScaleResolver';
 import { MenuItem, Menu, ClientComponent, User, ReactoryClient } from '../../../models';
@@ -341,13 +341,11 @@ merge(
   orgnizationResolvers,
   assessmentResolvers,
   reactoryClientResolver,
-  leadershipBrandResolver,
   scaleResolver,
   projectResolver,
   require('./BusinessUnitResolver').default,
   require('./Custom/PaymentGatewayResolver').default,
   require('./TeamResolver').default,
-  //require('./Template').default,
   require('./System/Statistics').default,
   ...installedModulesResolvers,
 );

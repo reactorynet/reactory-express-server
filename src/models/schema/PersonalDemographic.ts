@@ -1,6 +1,7 @@
 import mongoose, { MongooseDocument } from 'mongoose';
+import moment from 'moment';
 import logger from '@reactory/server-core/logging';
-import { Reactory } from 'types/reactory';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -11,7 +12,7 @@ const PersonalDemographicSchema = new mongoose.Schema({
     ref: 'User'
   },
   race: String,
-  age: String,
+  dob: Date,
   gender: String,
   pronoun: String,
   position: String,
@@ -37,6 +38,21 @@ PersonalDemographicSchema.statics.GetLoggedInUserDemograpics = async function Ge
   const { user, partner } = context;
   return await this.findOne({ userId: user._id });
 };
+
+PersonalDemographicSchema.methods.age = function age() {
+  debugger;
+
+  const { dob } = this;
+
+  if (dob === null) return -1;
+
+  const $dob = moment(dob);
+  if (moment.isMoment($dob) === true) {
+    return moment().diff($dob, 'years')
+  }
+
+  return -1;
+}
 
 PersonalDemographicSchema.statics.SetLoggedInUserDemograpics = async function SetLoggedInUserDemograpics(args: any, context: Reactory.IReactoryContext): Promise<any> {
 

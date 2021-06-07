@@ -1,0 +1,16 @@
+type Location {
+  id: String
+  title: String
+  country: String
+  countryCode: String
+  province: String
+  district: String
+  city: String
+  meta: Any
+}
+
+type Region {
+  id: String
+  title: String
+  locations: [Location]
+}
