@@ -5,7 +5,6 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 import { ReactoryApplicationsForm } from 'data/forms/core/dashboard';
 
 const Region = new mongoose.Schema({
-  id: mongoose.Schema.Types.ObjectId,
   title: String,
   // Regions with no organization will be considered public regions
   organization: {
@@ -20,7 +19,12 @@ const Region = new mongoose.Schema({
       district: String,
       city: String
     }
-  ]
+  ],
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+
+  }
 });
 
 //Return all regions with organizaiton filter
@@ -33,12 +37,24 @@ Region.statics.GetRegions = async function GetRegions(context: Reactory.IReactor
 };
 
 
-Region.statics.AddRegion = async (organization: string | ObjectId | Reactory.IOrganization, context: Reactory.IReactoryContext): Promise<Reactory.IRegion> => {
-  const { user, partner } = context;
+Region.statics.AddRegion = async (organization: string | ObjectId, title: string, locations: any[], context: Reactory.IReactoryContext,): Promise<Reactory.IRegion> => {
+  if (locations.length === 0) return null;
 
-  return {
-    title: '',
+
+  let input: any = {
+    organization: null,
+    locations,
+    createdBy: context.user._id
   }
+
+  if (organization) {
+    input.organization = new ObjectId(organization);
+    input.locations = locations;
+  }
+
+  const region = new RegionModel(input);
+
+  await region.save().then();
 };
 
 

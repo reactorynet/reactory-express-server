@@ -12,9 +12,9 @@ type PersonalDemographics {
   gender: String
   position: String
   region: String
-  operationalGroup: String
-  businessUnit: String
-  team: String
+  operationalGroup: Organization
+  businessUnit: BusinessUnit
+  team: Team
 }
 
 input PersonalDemographicsInput {  

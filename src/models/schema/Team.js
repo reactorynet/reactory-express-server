@@ -2,8 +2,11 @@ import mongoose from 'mongoose';
 
 const { ObjectId } = mongoose.Schema.Types;
 const TeamSchema = mongoose.Schema({
-  id: ObjectId,
   title: String,
+  organization: {
+    type: ObjectId,
+    ref: 'Organization',
+  },
   members: [
     {
       type: ObjectId,

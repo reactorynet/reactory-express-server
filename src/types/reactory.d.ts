@@ -274,14 +274,20 @@ declare namespace Reactory {
         district: String,
         city: String
       }
-    ]
+    ],
+    AddRegion: () => Promise<IRegionDocument>
   }
 
   export interface IOperationalGroup {
     title: String,
   }
 
-  export interface IRegionDocument extends Mongoose.Document, IRegion { }
+  export interface IRegionDocument extends Mongoose.Document, IRegion {
+
+  }
+
+
+
   export interface IOperationalGroupDocument extends Mongoose.Document, IRegion { }
 
   export interface IReactoryLoginResponse {
