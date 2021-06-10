@@ -576,7 +576,7 @@ export const surveyEmails = {
     }
     return emailResult;
   },
-  reminder: async (assessor, delegate, survey, assessment, organization, surveyoptions = null) => {
+  reminder: async (assessor, delegate, survey, assessment, organization, surveyoptions = null, context) => {
     // final object item to return
     if (lodash.isNil(assessor)) throw new ApiError('assessor parameter for delegateInvite cannot be null / undefined');
     if (lodash.isNil(survey)) throw new ApiError('survey parameter for delegateInvite cannot be null / undefined');

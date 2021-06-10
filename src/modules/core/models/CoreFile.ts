@@ -212,12 +212,12 @@ ReactoryFileSchema.methods.readLines = async function readLines(start: number = 
       acc += buffer;
       bytesread += buffer.length;
 
-      debugger
+
 
       //no newline characters
       if (index === -1) {
         //we've reached the end of the file and no more newline chars available
-        debugger;
+        ;
         rs.close();
       } else {
 
@@ -237,7 +237,7 @@ ReactoryFileSchema.methods.readLines = async function readLines(start: number = 
 
           // if (linesRead >= start && lines.length < rows) {
           //   lines.push(parts[0]);
-          //   debugger
+          //   
           //   if (lines.length === rows) {
           //     rs.close();
           //   }
@@ -252,11 +252,11 @@ ReactoryFileSchema.methods.readLines = async function readLines(start: number = 
 
     }).on('close', () => {
 
-      // debugger
+      // 
       // const parts = acc.split(acc.split('\n'));
       // acc = parts[1];
       // lines.push(parts[0]);
-      debugger;
+      ;
 
       resolve(lines);
     }).on('error', (err) => {
