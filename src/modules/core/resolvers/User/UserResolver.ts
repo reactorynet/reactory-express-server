@@ -589,9 +589,11 @@ const userResolvers = {
 
       logger.debug(`CONFIRMING PEERS - ID: ${id}  ORG: ${organization}  SURVEY ID: ${surveyId}`);
 
+
+
       const userOrganigram = await Organigram.findOne({
-        user: ObjectId(id),
-        organization: ObjectId(organization),
+        user: new ObjectId(id),
+        organization: new ObjectId(organization),
       })
         .populate('user')
         .populate('organization')
@@ -612,11 +614,14 @@ const userResolvers = {
         }
       }
 
+
+
       userOrganigram.confirmedAt = new Date().valueOf();
       userOrganigram.updatedAt = new Date().valueOf();
 
       const emailPromises = [];
       for (let peerIndex = 0; peerIndex < userOrganigram.peers.length; peerIndex += 1) {
+
         logger.info(`Sending peer notification to ${userOrganigram.peers[peerIndex].user.firstName}`);
         let mustSend = userOrganigram.peers[peerIndex].inviteSent !== true;
 

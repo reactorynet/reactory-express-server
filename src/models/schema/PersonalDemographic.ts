@@ -40,7 +40,7 @@ PersonalDemographicSchema.statics.GetLoggedInUserDemograpics = async function Ge
 };
 
 PersonalDemographicSchema.methods.age = function age() {
-  debugger;
+  ;
 
   const { dob } = this;
 
