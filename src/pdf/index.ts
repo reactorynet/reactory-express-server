@@ -137,7 +137,7 @@ const generate = async (props: any, res: any, usepdfkit = false, req: any) => {
   const { partner, user } = req;
   // Create a document
 
-  debugger;
+  ;
 
   if (_.isFunction(definition.content) === true && usepdfkit === false) {
     try {
@@ -310,7 +310,7 @@ router.get('/:nameSpace/:name', async (req, res) => {
 
   if (reportPdfComponent && reportPdfComponent.component) {
     try {
-      debugger
+
       const resolvedData = await reportPdfComponent.component.resolver(req.query, { user: req.user, partner: req.partner }).then();
       generate({ data: resolvedData, definition: reportPdfComponent.component }, res, false, req);
     } catch (pdfError) {
