@@ -278,7 +278,7 @@ const sendForgotPasswordEmail = (user, organization = null, context) => {
           partner,
           user,
           applicationTitle: partner.name,
-          resetLink: `${partner.siteUrl}${partner.resetEmailRoute}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(user))}`,
+          resetLink: `${partner.siteUrl}${partner.resetEmailRoute}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(user, { exp: moment().add('1', 'h').valueOf(), }))}`,
         };
 
         let bodyTemplate = null;
