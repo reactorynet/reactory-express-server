@@ -37,10 +37,12 @@ import amq from '@reactory/server-core/amq';// eslint-disable-line
 // import bots from './bot/server';
 import startup from '@reactory/server-core/utils/startup'; // eslint-disable-line
 import { getService } from '@reactory/server-core/services'; // eslint-disable-line
+import { User } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging'; // eslint-disable-line
 import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContextProvider'; // eslint-disable-line
 // @ts-ignore
-import { Reactory } from '@reactory/server/core/types/reactory'; // eslint-disable-line
+import { Reactory } from '@reactory/server-core/types/reactory'; // eslint-disable-line
+import resolveUrl from '@reactory/server-core/utils/url/resolve';
 
 const hideText = (text: string = '') => {
   let asterisks = '';
@@ -49,6 +51,7 @@ const hideText = (text: string = '') => {
   }
   return `${text.substr(0, 1)}${asterisks}${text.substr(text.length - 1, 1)}}`;
 };
+
 
 const {
   APP_DATA_ROOT,
@@ -60,7 +63,7 @@ const {
   API_URI_ROOT,
   CDN_ROOT,
   MODE,
-  NODE_ENV,
+  NODE_ENV = 'development',
   DOMAIN_NAME,
   OAUTH_APP_ID,
   OAUTH_APP_PASSWORD,
@@ -73,6 +76,8 @@ const {
   SECRET_SAUCE,
   SERVER_ID,
   MAX_FILE_UPLOAD = '20mb',
+  DEVELOPER_ID,
+  SYSTEM_USER_ID = 'not-set',
 } = process.env;
 
 mongooseConnection.then(() => {
@@ -241,6 +246,10 @@ if (apolloServer) {
 
 amq.raiseSystemEvent('server.startup.begin');
 
+if (SYSTEM_USER_ID === 'not-set') {
+  logger.warn("SYSTEM_USER_ID env variable is not set - please configure in env variables");
+}
+
 // TODO: Werner Weber - Update the start result object to contain
 // more useful information about the server environment, configuration
 // output.
@@ -267,7 +276,18 @@ startup().then((startResult: any) => {
   reactoryExpress.use(flash());
 
   logger.info(asciilogo);
-  if (graphcompiled === true) logger.info(`✅ Running a GraphQL API server at ${API_URI_ROOT}${queryRoot}`);
+  if (graphcompiled === true) {
+    const graphql_api_root = resolveUrl(API_URI_ROOT, queryRoot);
+
+    logger.info(`✅ Running a GraphQL API server at ${graphql_api_root}`);
+    if (NODE_ENV === 'development' && DEVELOPER_ID) {
+      User.find({ email: DEVELOPER_ID }).then((user_result) => {
+        const auth_token = AuthConfig.jwtTokenForUser(user_result, { exp: moment().add(1, 'hour').unix() })
+        logger.debug(`Developer id ${DEVELOPER_ID} access graphiql docs ${resolveUrl(API_URI_ROOT, `cdn/graphiql/index.html?auth_token=${auth_token}`)}`)
+      });
+
+    }
+  }
   else logger.info(`🩺 GraphQL API not available - ${graphError}`);
 
   logger.info('✅ System Initialized/Ready, enabling app');
