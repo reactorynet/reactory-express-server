@@ -658,9 +658,23 @@ declare namespace Reactory {
   }
 
   export interface IReactoryForm {
+    /**
+     * A unique id for the form. When the form is defined on the server side, the id has to be unique
+     * across all forms!
+     */
     id: String,
+    /**
+     * Indicates what UI framework the form is built / designed to use.
+     * options will be "material" and later "bootstrap" / others.
+     */
     uiFramework: String,
+    /**
+     * This indicates the ui framekworks that the form is intended to support.
+     */
     uiSupport: String[],
+    /**
+     * List of scripts or styles sheets that get loaded async for the application to use.
+     */
     uiResources?: any[],
     title: String,
     tags?: String[],

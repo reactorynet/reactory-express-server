@@ -33,7 +33,7 @@ const theme_base = {
             light: '#F6950F',
             main: '#F6950F',
             dark: '#F6950F',
-            contrastText: '#F6950F',
+            contrastText: '#323e49',
         },
         info: {
             light: '#49B4D4',
