@@ -78,6 +78,7 @@ const {
   MAX_FILE_UPLOAD = '20mb',
   DEVELOPER_ID,
   SYSTEM_USER_ID = 'not-set',
+  MAIL_REDIRECT_ADDRESS
 } = process.env;
 
 mongooseConnection.then(() => {
@@ -140,6 +141,7 @@ Environment Settings:
   MONGOOSE: ${MONGOOSE}
   MAX_FILE_UPLOAD (size): ${MAX_FILE_UPLOAD} !NOTE! This affects all file uploads.
   SECRET_SAUCE: '${hideText(SECRET_SAUCE)}',
+  MAIL_REDIRECT_ADDRESS: ${MAIL_REDIRECT_ADDRESS}
   
   =========================================
          Microsoft OAuth2 Settings
