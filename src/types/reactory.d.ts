@@ -997,12 +997,15 @@ declare namespace Reactory {
     items: T[]
     [key: string]: any
   }
+
+  export type LOG_TYPE = string | "debug" | "warn" | "error"
   export interface IReactoryContext {
     id: string,
     user: Reactory.IUserDocument
     partner: Reactory.IReactoryClientDocument
     getService: (fqn: string, props?: any, context?: Reactory.IReactoryContext) => any,
     hasRole: (role: string, partner?: Reactory.IReactoryClientDocument) => boolean
+    log: (message: string, meta?: any, type?: LOG_TYPE) => void
     [key: string]: any
   }
 

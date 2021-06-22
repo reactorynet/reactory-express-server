@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
+import { Reactory } from 'types/reactory';
 
 const { ObjectId } = mongoose.Schema.Types;
 
-const OrganigramSchema = mongoose.Schema({
+const OrganigramSchema = new mongoose.Schema<Reactory.IOrganigram>({
   id: ObjectId,
   organization: {
     type: ObjectId,
@@ -41,5 +42,5 @@ const OrganigramSchema = mongoose.Schema({
   confirmedAt: Date,
 });
 
-const OrganigramModel = mongoose.model('Organigram', OrganigramSchema);
+const OrganigramModel = mongoose.model<Reactory.IOrganigramDocument>('Organigram', OrganigramSchema);
 export default OrganigramModel;

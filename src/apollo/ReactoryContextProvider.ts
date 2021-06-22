@@ -1,6 +1,7 @@
 import uuid from 'uuid';
 import { Reactory } from "@reactory/server-core/types/reactory"; // eslint-disable-line
 import { getService } from '@reactory/server-core/services';  // eslint-disable-line
+import logger from '@reactory/server-core/logging';
 
 export default async ($session: any, currentContext: any): Promise<Reactory.IReactoryContext> => {
   /**
@@ -37,9 +38,37 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     }
   }
 
+  const $id = uuid();
+
+  const { email } = $session.req.user;
+
   return {
-    id: uuid(),
+    id: $id,
     ...newContext,
     getService: $getService,
+    log: (message: string, meta: any = null, type: Reactory.LOG_TYPE = "debug",) => {
+      //281e99d1-bc61-4a2e-b007-33a3befaff12
+      const $message = `(${$id.substr(30, 6)}) ${email}: ${message}`;
+      switch (type) {
+        case "e":
+        case "err":
+        case "error": {
+          logger.error($message, meta);
+
+          break;
+        }
+        case "w":
+        case "warn":
+        case "warning": {
+          logger.warn($message, meta);
+          break;
+        }
+        case "d":
+        case "debug":
+        default: {
+          logger.debug($message, meta);
+        }
+      }
+    }
   };
 };
