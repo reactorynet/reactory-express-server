@@ -13,3 +13,5 @@ src/modules/*
 !src/modules/README.md
 !src/modules/available.json
 ~/develop/reactory/data/*
+
+src/workflow/.sample_env

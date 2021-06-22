@@ -79,6 +79,7 @@ const UserSchema = new mongoose.Schema({
       authProvider: String,
       providerId: String,
       lastLogin: Date,
+      created: Date,
       roles: [String],
     },
   ],

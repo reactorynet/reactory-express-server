@@ -42,6 +42,8 @@ type UserMembership {
   businessUnit: BusinessUnit
   roles: [String]
   enabled: Boolean
+  created: Date
+  lastLogin: Date 
 }
 
 type UserAuthentication {
