@@ -17,10 +17,10 @@ export default {
           field: 'id',
           component: 'core.Link@1.0.0',
           props: {
-            link: '/Forms\/${rowData.nameSpace}.${rowData.name}@${rowData.version}\/',
+            link: '/${formContext.root_path}\/${rowData.nameSpace}.${rowData.name}@${rowData.version}\/',
             uiSchema: {
               'ui:options': {
-                format: '/Forms\/${rowData.nameSpace}.${rowData.name}@${rowData.version}\/',
+                format: '/${formContext.root_path}\/${rowData.nameSpace}.${rowData.name}@${rowData.version}\/',
                 title: '${rowData.nameSpace}.${rowData.name}@${rowData.version}',
                 userouter: false,
               },
@@ -34,6 +34,21 @@ export default {
       options: {
         grouping: true,
       },
+      actions: [{
+        icon: 'aadd',
+        tooltip: 'ADD NEW FORM',
+        iconProps: {
+          color: 'success'
+        },
+        variables: {
+          'selected': 'newClient.organization',
+        },
+        isFreeAction: true,
+        event: {
+          name: 'onNewFormClicked',
+          via: 'form',
+        }
+      },],
       title: 'Reactory Forms',
     },
   },
