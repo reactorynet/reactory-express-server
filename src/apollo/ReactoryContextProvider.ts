@@ -24,6 +24,31 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     });
   };
 
+  const $log = (message: string, meta: any = null, type: Reactory.LOG_TYPE = "debug",) => {
+    //281e99d1-bc61-4a2e-b007-33a3befaff12
+    const $message = `(${$id.substr(30, 6)}) ${email}: ${message}`;
+    switch (type) {
+      case "e":
+      case "err":
+      case "error": {
+        logger.error($message, meta);
+
+        break;
+      }
+      case "w":
+      case "warn":
+      case "warning": {
+        logger.warn($message, meta);
+        break;
+      }
+      case "d":
+      case "debug":
+      default: {
+        logger.debug($message, meta);
+      }
+    }
+  };
+
   /**
    * We check in the configuration settings if there is a "execution_context_service" key.
    * if the key is found and if it is a string with an @ in the indicator then we can assume
@@ -35,6 +60,7 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     const partnerContextService: Reactory.IExecutionContextProvider = $getService(executionContextServiceName.data);
     if (partnerContextService && partnerContextService.getContext) {
       newContext = await partnerContextService.getContext(newContext).then();
+      newContext.log = $log;
     }
   }
 
@@ -46,29 +72,6 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     id: $id,
     ...newContext,
     getService: $getService,
-    log: (message: string, meta: any = null, type: Reactory.LOG_TYPE = "debug",) => {
-      //281e99d1-bc61-4a2e-b007-33a3befaff12
-      const $message = `(${$id.substr(30, 6)}) ${email}: ${message}`;
-      switch (type) {
-        case "e":
-        case "err":
-        case "error": {
-          logger.error($message, meta);
-
-          break;
-        }
-        case "w":
-        case "warn":
-        case "warning": {
-          logger.warn($message, meta);
-          break;
-        }
-        case "d":
-        case "debug":
-        default: {
-          logger.debug($message, meta);
-        }
-      }
-    }
+    log: $log
   };
 };
