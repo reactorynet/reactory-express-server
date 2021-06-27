@@ -203,16 +203,6 @@ declare namespace Reactory {
     componentFqn: string,
     data: any
   }
-  export interface IOrganization {
-    [key: string]: any
-    name: string
-    code: string
-    logo: string
-    businessUnits: Array<IBusinessUnit>
-    settings: [IOrganizationSetting]
-    getSetting(name: string): IOrganizationSetting
-    setSetting(name: string, data: any, componentFqn: string): IOrganizationSetting
-  }
 
   export interface IOrganizationDocument extends Mongoose.Document, IOrganization { }
 
@@ -223,17 +213,35 @@ declare namespace Reactory {
 
   export interface IBusinessUnitDocument extends Mongoose.Document, IBusinessUnit { }
 
-  export interface IMemberShip {
-    id: string
+  export interface IOrganization {
+    [key: string]: any
+    name: string
+    code: string
+    logo: string
+    businessUnits: IBusinessUnit[] | IBusinessUnitDocument[] | any[],
+    settings: IOrganizationSetting[] | any[]
+    getSetting(name: string): IOrganizationSetting
+    setSetting(name: string, data: any, componentFqn: string): IOrganizationSetting
+  }
+
+
+  export interface IMembership {
+    id?: any
+    client?: IPartner
     clientId: string | any
+    organization?: IOrganigramDocument,
     organizationId: string | any
+    businessUnit?: IBusinessUnitDocument,
     businessUnitId: string | any
     enabled: boolean
     authProvider: string
     providerId: string
-    lastLogin: Date
-    roles: [String]
+    lastLogin: Date,
+    user?: IUserDocument
+    roles: string[]
   }
+
+  export interface IMembershipDocument extends Mongoose.Types.Subdocument, IMembership { }
 
   export interface ISessionInfo {
     id: ObjectId | string
@@ -306,7 +314,7 @@ declare namespace Reactory {
     avatar: string,
     avatarProvider: string,
     organization: ObjectId | Reactory.IOrganizationDocument,
-    memberships: Reactory.IMemberShip[],
+    memberships: Reactory.IMembership[] | Mongoose.Types.Array<Reactory.IMembership>,
     sessionInfo: Reactory.ISessionInfo,
     authentications: Reactory.IAuthentication[],
     deleted: boolean,
@@ -319,7 +327,7 @@ declare namespace Reactory {
     hasRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean,
     hasAnyRole(clientId: string, organizationId?: string, businessUnitId?: string): boolean,
     addRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean
-    removeRole(clientId: string, role: string, organizationId: string): IMemberShip[],
+    removeRole(clientId: string, role: string, organizationId: string): IMembership[],
     removeAuthentication(provider: string): Promise<boolean>
     getAuthentication(provider: string): IAuthentication
     [key: string]: any
@@ -1082,5 +1090,18 @@ declare namespace Reactory {
     success: Boolean
     message: String
     payload?: any
+  }
+
+  export interface ReactorySetRolesArgs {
+    user_id: ObjectID,
+    id: ObjectID,
+    roles: string[]
+  }
+
+  export interface ReactoryCreateMembershipArgs {
+    user_id: ObjectID,
+    organization?: ObjectID,
+    businessUnit?: ObjectID,
+    roles: string[]
   }
 }

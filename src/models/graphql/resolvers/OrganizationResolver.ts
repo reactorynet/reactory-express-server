@@ -58,6 +58,11 @@ const organizationResolver = {
 
       return null;
     },
+    businessUnits: async (organization: Reactory.IOrganizationDocument, args: any, context: Reactory.IReactoryContext) => {
+      if (organization.businessUnits && organization.businessUnits.length > 0) return organization.businessUnits;
+
+      return BusinessUnit.find({ organization: organization._id }).then();
+    },
     createdAt(obj) {
       return obj.createdAt || moment().unix();
     },
@@ -70,7 +75,13 @@ const organizationResolver = {
       return Organization.find({}).sort('name').then();
     },
     organizationWithId(obj, args, context, info) {
-      return Organization.findOne({ _id: args.id }).then();
+      if (ObjectId.isValid(args.id) === true) return Organization.findById(args.id).then();
+      else return null;
+    },
+    CoreOrganization(obj: any, params: { id: string }, context: Reactory.IReactoryContext, info: any) {
+
+      if (ObjectId.isValid(params.id) === true) return Organization.findById(params.id).then();
+      else return null;
     },
     CoreUsersForOrganization(obj, { id, searchString, excludeSelf = false, showDeleted = false, paging = null }, context, info) {
       logger.debug(`CoreUsersForOrganization`, { id, searchString, excludeSelf, showDeleted, paging });
