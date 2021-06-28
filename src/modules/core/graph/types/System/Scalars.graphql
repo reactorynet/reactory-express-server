@@ -13,6 +13,12 @@ type Meta {
   source: Any
 }
 
+type CoreSimpleResponse {
+  success: Boolean
+  message: String
+  payload: Any
+}
+
 type DocumentUrl {
     id: String!
     url: String!

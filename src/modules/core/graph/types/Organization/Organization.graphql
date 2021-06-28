@@ -183,7 +183,8 @@ extend type Query {
   allTennants: [Tennant]
   allOrganizations(legacy: Boolean): [Organization]
   organizationsForUser(id: String!): [Organization]
-  organizationWithId(id: String!): Organization  
+  organizationWithId(id: String!): Organization
+  CoreOrganization(id: String!): Organization
   CoreUsersForOrganization(id: String!, searchString: String, paging: PagingRequest): PagedUserResults
   GetOrganisationLookupData(orgId: String!): OrganizationLookupData
 }

@@ -142,7 +142,7 @@ UserSchema.methods.fullName = function fullName(email = false) {
 /**
  * Extension Method on Model to check for a particular role / claim
  */
-UserSchema.methods.hasRole = function hasRole(clientId: mongoose.Schema.Types.ObjectId, role = 'USER', organizationId: mongoose.Schema.Types.ObjectId = null, businessUnitId: mongoose.Schema.Types.ObjectId = null) {
+UserSchema.methods.hasRole = function hasRole(clientId: string | mongodb.ObjectID, role = 'USER', organizationId: string | mongodb.ObjectID = null, businessUnitId: string | mongodb.ObjectID = null) {
   logger.info(`Checking user membership 
     ReactoryClient:[${clientId}] 
     Role: [${role}]
@@ -158,14 +158,14 @@ UserSchema.methods.hasRole = function hasRole(clientId: mongoose.Schema.Types.Ob
   }
 
   matches = filter(this.memberships, (membership) => {
-    return ObjectIdFunc(membership.clientId).equals(ObjectIdFunc(clientId));
+    return new ObjectIdFunc(membership.clientId).equals(new ObjectIdFunc(clientId));
   });
 
   if (ObjectIdFunc.isValid(organizationId) === true) {
     logger.info('Filtering by organization');
     matches = filter(
       matches,
-      membership => ObjectIdFunc(membership.organizationId).equals(ObjectIdFunc(organizationId)),
+      membership => new ObjectIdFunc(membership.organizationId).equals(new ObjectIdFunc(organizationId)),
     );
   } else {
     matches = filter(
@@ -178,7 +178,7 @@ UserSchema.methods.hasRole = function hasRole(clientId: mongoose.Schema.Types.Ob
     logger.info('Filtering by business unit id');
     matches = filter(
       matches,
-      membership => ObjectIdFunc(membership.businessUnitId).equals(ObjectIdFunc(businessUnitId)),
+      membership => new ObjectIdFunc(membership.businessUnitId).equals(new ObjectIdFunc(businessUnitId)),
     );
   } else {
     matches = filter(
@@ -204,12 +204,13 @@ UserSchema.methods.hasRole = function hasRole(clientId: mongoose.Schema.Types.Ob
   return false;
 };
 
-UserSchema.methods.hasAnyRole = function hasAnyRole(clientId, organizationId, businessUnitId) {
+UserSchema.methods.hasAnyRole = function hasAnyRole(clientId: string | mongodb.ObjectID, organizationId: string | mongodb.ObjectID, businessUnitId: string | mongodb.ObjectID) {
   logger.info(`User.hasAnyRole 
     ReactoryClient:[${clientId}]     
     Organization: [${organizationId || '**'}]
     BusinessUnit: [${businessUnitId || '**'}]`);
   if (this.memberships.length === 0) return false;
+
 
   let matches = [];
 
@@ -219,34 +220,36 @@ UserSchema.methods.hasAnyRole = function hasAnyRole(clientId, organizationId, bu
   }
 
   matches = filter(this.memberships, (membership) => {
-    return ObjectIdFunc(membership.clientId).equals(ObjectIdFunc(clientId));
+    return new ObjectIdFunc(membership.clientId).equals(new ObjectIdFunc(clientId));
   });
 
   if (ObjectIdFunc.isValid(organizationId) === true) {
     logger.info('Filtering by organization');
     matches = filter(
       matches,
-      membership => ObjectIdFunc(membership.organizationId).equals(ObjectIdFunc(organizationId)),
-    );
-  } else {
-    matches = filter(
-      matches,
-      membership => lodash.isNil(membership.organizationId) === true,
+      membership => new ObjectIdFunc(membership.organizationId).equals(new ObjectIdFunc(organizationId)),
     );
   }
+  // } else {
+  //   matches = filter(
+  //     matches,
+  //     membership => lodash.isNil(membership.organizationId) === true,
+  //   );
+  // }
 
   if (ObjectIdFunc.isValid(businessUnitId)) {
     logger.info('Filtering by business unit id');
     matches = filter(
       matches,
-      membership => ObjectIdFunc(membership.businessUnitId).equals(ObjectIdFunc(businessUnitId)),
-    );
-  } else {
-    matches = filter(
-      matches,
-      membership => lodash.isNil(membership.businessUnitId) === true,
+      membership => new ObjectIdFunc(new membership.businessUnitId).equals(new ObjectIdFunc(businessUnitId)),
     );
   }
+  // } else {
+  //   matches = filter(
+  //     matches,
+  //     membership => lodash.isNil(membership.businessUnitId) === true,
+  //   );
+  // }
 
   return (isArray(matches) === true && matches.length > 0) === true;
 };

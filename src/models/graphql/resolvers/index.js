@@ -3,7 +3,7 @@ import co from 'co';
 import { ObjectId } from 'mongodb';
 import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
-import { merge, isNil, isArray, sortBy, filter, intersection } from 'lodash';
+import { merge, isNil, isArray, sortBy, filter, intersection, uniq } from 'lodash';
 import moment from 'moment';
 
 import { execql } from '@reactory/server-core/graph/client';
@@ -94,7 +94,7 @@ const resolvers = {
         mode: process.env.MODE,
         clients: ReactoryClient.find({ _id: { $in: context.user.memberships.map((m) => m.clientId) } }).then()
       }
-    }
+    },
   },
   Query: {
     apiStatus: async (obj, args, context, info) => {
@@ -232,7 +232,7 @@ const resolvers = {
         avatar: isNil(user) === false ? user.avatar : null,
         email: isNil(user) === false ? user.email : null,
         id: isNil(user) === false ? user._id : null,
-        roles,
+        roles: uniq(roles),
         alt_roles,
         memberships: isNil(user) === false && isArray(user.memberships) ? user.memberships : [],
         organization: user.organization,
@@ -242,6 +242,7 @@ const resolvers = {
         }),
         applicationAvatar: partner.avatar,
         applicationName: partner.name,
+        applicationRoles: partner.applicationRoles,
         menus: partner._id,
         theme: partner.theme,
         themeOptions: partner.themeOptions || {},

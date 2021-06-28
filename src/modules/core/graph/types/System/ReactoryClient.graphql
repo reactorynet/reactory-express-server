@@ -127,13 +127,16 @@ type ApiStatus {
     menus: [Menu]
     routes: [ClientRoute]
     memberships: [UserMembership]
+    applicationRoles: [String]
     applicationAvatar: String
     applicationName: String
     theme: String
     themes: [Any]
     themeOptions: Any
     colorSchemes: Any
-    messages: [ReactoryUXMessage]        
+    messages: [ReactoryUXMessage]
+    signature: String
+    publicKey: String
 }
 
 extend type Query {
