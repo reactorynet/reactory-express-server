@@ -15,6 +15,12 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     partner: $session.req.partner,
     $request: $session.req,
     $response: $session.res,
+    hasRole: (role: string, partner?: Reactory.IPartner, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => {
+      return $session.req.user.hasRole(partner && partner._id ? partner._id : $session.req.partner._id,
+        role,
+        organization && organization._id ? organization._id : undefined,
+        businessUnit && businessUnit._id ? businessUnit._id : undefined)
+    }
   };
 
   const $getService = (id: string, props: any = undefined) => {

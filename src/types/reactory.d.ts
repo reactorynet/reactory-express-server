@@ -208,7 +208,14 @@ declare namespace Reactory {
 
   export interface IBusinessUnit {
     [key: string]: any,
+    id?: any,
     name: string
+    description?: string,
+    avatar?: string,
+    members: Reactory.IUser[] | Reactory.IUserDocument[],
+    createdAt: Date,
+    updatedAt: Date,
+    owner?: Reactory.IUser | Reactory.IUserDocument
   }
 
   export interface IBusinessUnitDocument extends Mongoose.Document, IBusinessUnit { }
@@ -272,7 +279,11 @@ declare namespace Reactory {
   }
 
   export interface IRegion {
+    id?: any,
     title: String,
+    description: String,
+    icon: String,
+    deleted: Boolean,
     organization?: IOrganization,
     locations?: [
       {
@@ -283,7 +294,6 @@ declare namespace Reactory {
         city: String
       }
     ],
-    AddRegion: () => Promise<IRegionDocument>
   }
 
   export interface IOperationalGroup {
@@ -291,9 +301,22 @@ declare namespace Reactory {
   }
 
   export interface IRegionDocument extends Mongoose.Document, IRegion {
-
+    new(): IRegionDocument;
+    AddRegion(region: IRegion): void;
   }
 
+
+
+
+  export interface ITeam {
+    id?: any,
+    name: String
+    description: String
+    avatar: String
+    deleted: Boolean
+  }
+
+  export interface ITeamDocument extends Mongoose.Document, ITeam { }
 
 
   export interface IOperationalGroupDocument extends Mongoose.Document, IRegion { }
@@ -941,8 +964,12 @@ declare namespace Reactory {
     }
     export interface FileUploadArgs {
       file: IFile,
+      rename: boolean
+      catalog?: boolean
       uploadContext?: string
       isUserSpecific?: boolean
+      virtualPath?: string
+      filename?: string
     }
 
 
@@ -985,6 +1012,28 @@ declare namespace Reactory {
 
       get(id: string): Promise<IOrganizationDocument>
 
+    }
+
+    /**
+     * interface definition for a form service that will manage access to forms for users.
+     */
+    export interface IReactoryFormService extends Reactory.Service.IReactoryDefaultService {
+      /**
+       * Provide a list of forms for the current logged in user context / partner context
+       */
+      list(): Promise<Reactory.IReactoryForm[]>
+
+      /**
+       * Persists the form to storage
+       * @param form 
+       */
+      save(form: Reactory.IReactoryForm, user_options?: any): Reactory.IReactoryForm;
+
+      /**
+       * 
+       * @param form 
+       */
+      delete(form: Reactory.IReactoryForm): boolean
     }
   }
 
