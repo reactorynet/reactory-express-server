@@ -4,8 +4,10 @@ import { ObjectId, ObjectID } from 'mongodb';
 import { Reactory } from '@reactory/server-core/types/reactory'
 import { ReactoryApplicationsForm } from 'data/forms/core/dashboard';
 
-const Region = new mongoose.Schema({
+const Region = new mongoose.Schema<Reactory.IRegion>({
   title: String,
+  description: String,
+  icon: String,
   // Regions with no organization will be considered public regions
   organization: {
     type: mongoose.Schema.Types.ObjectId,
@@ -20,10 +22,17 @@ const Region = new mongoose.Schema({
       city: String
     }
   ],
+  deleted: {
+    type: Boolean,
+    default: false,
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-
+  },
+  created: {
+    type: Number,
+    default: new Date().valueOf()
   }
 });
 
@@ -37,13 +46,14 @@ Region.statics.GetRegions = async function GetRegions(context: Reactory.IReactor
 };
 
 
-Region.statics.AddRegion = async (organization: string | ObjectId, title: string, locations: any[], context: Reactory.IReactoryContext,): Promise<Reactory.IRegion> => {
-  if (locations.length === 0) return null;
-
+Region.statics.AddRegion = async (organization: string | ObjectId, title: string, description: string, icon: string, locations: any[] = [], context: Reactory.IReactoryContext,): Promise<Reactory.IRegion> => {
 
   let input: any = {
-    organization: null,
+    organization,
     locations,
+    title,
+    description,
+    icon,
     createdBy: context.user._id
   }
 
@@ -53,8 +63,8 @@ Region.statics.AddRegion = async (organization: string | ObjectId, title: string
   }
 
   const region = new RegionModel(input);
-
   await region.save().then();
+  return region;
 };
 
 

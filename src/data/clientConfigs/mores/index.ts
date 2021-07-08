@@ -592,7 +592,7 @@ const routes = [
     path: '/admin/',
     exact: false,
     public: false,
-    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER],
+    roles: [APPLICATION_ROLES.ADMIN, APPLICATION_ROLES.DEVELOPER, APPLICATION_ROLES.ORGANIZATION_ADMIN,],
     componentFqn: `${key}.AdminRouter@1.0.0`,
     args: [
       { key: 'use_case', value: { use_case: 'organization_admin' } },

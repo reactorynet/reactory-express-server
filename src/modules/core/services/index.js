@@ -5,9 +5,11 @@ import FileService from './FileService';
 import { ReactoryExcelWriterServiceDefinition } from '@reactory/server-core/excel/ExcelWriter';
 import OrganizationServiceDefinition from '@reactory/server-modules/core/services/OrganizationService';
 import ImportServices from './ETL/ImportServices';
+import GoogleMapsService from "./location/GoogleMapsService";
 //custom services to be expressed here
 
 const services = [
+  GoogleMapsService,
   ...ImportServices,
   EmailService,
   TemplateService,

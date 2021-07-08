@@ -15,6 +15,12 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     partner: $session.req.partner,
     $request: $session.req,
     $response: $session.res,
+    hasRole: (role: string, partner?: Reactory.IPartner, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => {
+      return $session.req.user.hasRole(partner && partner._id ? partner._id : $session.req.partner._id,
+        role,
+        organization && organization._id ? organization._id : undefined,
+        businessUnit && businessUnit._id ? businessUnit._id : undefined)
+    }
   };
 
   const $getService = (id: string, props: any = undefined) => {
@@ -22,6 +28,31 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
       ...newContext,
       getService: $getService,
     });
+  };
+
+  const $log = (message: string, meta: any = null, type: Reactory.LOG_TYPE = "debug",) => {
+    //281e99d1-bc61-4a2e-b007-33a3befaff12
+    const $message = `(${$id.substr(30, 6)}) ${email}: ${message}`;
+    switch (type) {
+      case "e":
+      case "err":
+      case "error": {
+        logger.error($message, meta);
+
+        break;
+      }
+      case "w":
+      case "warn":
+      case "warning": {
+        logger.warn($message, meta);
+        break;
+      }
+      case "d":
+      case "debug":
+      default: {
+        logger.debug($message, meta);
+      }
+    }
   };
 
   /**
@@ -35,6 +66,7 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     const partnerContextService: Reactory.IExecutionContextProvider = $getService(executionContextServiceName.data);
     if (partnerContextService && partnerContextService.getContext) {
       newContext = await partnerContextService.getContext(newContext).then();
+      newContext.log = $log;
     }
   }
 
@@ -46,29 +78,6 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     id: $id,
     ...newContext,
     getService: $getService,
-    log: (message: string, meta: any = null, type: Reactory.LOG_TYPE = "debug",) => {
-      //281e99d1-bc61-4a2e-b007-33a3befaff12
-      const $message = `(${$id.substr(30, 6)}) ${email}: ${message}`;
-      switch (type) {
-        case "e":
-        case "err":
-        case "error": {
-          logger.error($message, meta);
-
-          break;
-        }
-        case "w":
-        case "warn":
-        case "warning": {
-          logger.warn($message, meta);
-          break;
-        }
-        case "d":
-        case "debug":
-        default: {
-          logger.debug($message, meta);
-        }
-      }
-    }
+    log: $log
   };
 };

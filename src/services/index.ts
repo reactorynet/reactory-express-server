@@ -10,7 +10,7 @@ const serviceRegister: Reactory.IReactoryServiceRegister = {
 
 }
 
-export const getService = (id: string, props: any = {}, context: any = {}): any => {
+export const getService = (id: string, props: any = {}, context: Reactory.IReactoryContext): any => {
   if (serviceRegister[id]) {
     return serviceRegister[id].service({ ...props, $services: serviceRegister }, context);
   } else {

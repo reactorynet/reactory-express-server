@@ -1,0 +1,1 @@
+These folders should contain static data, that you want to load / make available at startup.

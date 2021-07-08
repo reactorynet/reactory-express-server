@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 const { ObjectId } = mongoose.Schema.Types;
 
-const meta = new mongoose.Schema({
+const meta = new mongoose.Schema<Reactory.IRecordMeta>({
   source: {},
   owner: String, // indicates what system owns this record
   reference: String, // a lookup string to use for the remote system
@@ -14,7 +15,7 @@ const meta = new mongoose.Schema({
   },
 });
 
-const OrganizationSchema = new mongoose.Schema({
+const OrganizationSchema = new mongoose.Schema<Reactory.IOrganization>({
   id: ObjectId,
   code: String,
   name: String,
@@ -59,7 +60,7 @@ OrganizationSchema.methods.isPublic = function isPublic() {
   return this.public === true;
 };
 
-OrganizationSchema.methods.clientActive = function clientActive(clientKey) {
+OrganizationSchema.methods.clientActive = function clientActive(clientKey: string) {
   if (this.isPublic() === true) return true; // is public organization
   let keyFound = null;
   if (this.clients) {
@@ -122,5 +123,5 @@ OrganizationSchema.methods.setSetting = function getSettings(name, data, compone
 };
 
 
-const OrganizationModel = mongoose.model('Organization', OrganizationSchema);
+const OrganizationModel = mongoose.model<Reactory.IOrganizationDocument>('Organization', OrganizationSchema);
 export default OrganizationModel;

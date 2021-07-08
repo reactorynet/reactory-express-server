@@ -3,7 +3,7 @@ import moment from 'moment';
 import { ObjectId } from 'mongodb';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import Organization from '@reactory/server-core/models/schema/Organization';
-import { OrganizationNotFoundError } from '@reactory/server-core/exceptions';
+import ApiError, { OrganizationNotFoundError } from '@reactory/server-core/exceptions';
 import logger from '@reactory/server-core/logging';
 
 class OrganizationService implements Reactory.Service.IReactoryOrganizationService {
@@ -81,34 +81,41 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     }
   }
 
-  uploadOrganizationImage(id: string, file: Reactory.Service.FileUploadArgs, imageType: string): Promise<Reactory.IOrganizationDocument> {
-    throw new Error('Method not implemented.');
+  async uploadOrganizationImage(id: string, file: Reactory.Service.IFile, imageType: string): Promise<Reactory.IOrganizationDocument> {
 
 
-    /*
-      export const updateOrganizationLogo = (organization, imageData) => {
-        try {
-          const isPng = imageData.startsWith('data:image/png');
-          const buffer = Buffer.from(imageData.split(/,\s*<<REMOVE>>/)[1], 'base64');
-          if (!existsSync(`${APP_DATA_ROOT}/organization`)) mkdirSync(`${APP_DATA_ROOT}/organization`);
-          const path = `${APP_DATA_ROOT}/organization/${organization._id}/`;
- 
-          if (!existsSync(path)) mkdirSync(path);
-          const filename = `${APP_DATA_ROOT}/organization/${organization._id}/logo_${organization._id}_default.${isPng === true ? 'png' : 'jpeg'}`;
- 
-          // if (isPng === true) {
-          //  logger.info(`Converting logo for ${organization} from png to jpg`);
-          //  pngToJpeg({ quality: 70 })(buffer).then(output => writeFileSync(filename, output));
-          // } else writeFileSync(filename, buffer);
- 
-          writeFileSync(filename, buffer);
-          return `logo_${organization._id}_default.${isPng === true ? 'png' : 'jpeg'}`;
-        } catch(organizationLogoUpdate) {
-          logger.error('Could not update the company logo', organizationLogoUpdate);
-          return null;
-        }
-      };
-    */
+    if (!id) {
+      throw new ApiError('Cannot upload image for null id')
+    }
+
+    const organization = await Organization.findById(id).then();
+
+    if (!organization) throw new ApiError(`Organization with id ${id} not found`);
+
+
+    let virtualPath = `/organization/${organization._id}/`;
+    let filename = `${imageType}_${organization._id}_default`;
+
+    const fileSvc: Reactory.Service.IReactoryFileService = this.executionContext.getService('core.ReactoryFileService@1.0.0');
+
+    const reactoryFile: Reactory.IReactoryFile = await fileSvc.uploadFile({
+      catalog: false,
+      file: file,
+      rename: false,
+      filename,
+      isUserSpecific: false,
+      uploadContext: `mores::organization::${organization._id}::logo`,
+      virtualPath
+    }).then();
+
+    if (reactoryFile.id && reactoryFile.hash) {
+      if (imageType === 'logo') organization.logo = reactoryFile.alias;
+      if (imageType === 'avatar') organization.avatar = reactoryFile.alias;
+    }
+
+    organization.save();
+
+    return organization;
   }
 
   get(id: string): Promise<Reactory.IOrganizationDocument> {

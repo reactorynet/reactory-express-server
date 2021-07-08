@@ -249,7 +249,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         return new Promise(async (resolve, reject) => {
 
 
-            const { uploadContext, file, isUserSpecific = false } = args;
+            const { uploadContext, file, isUserSpecific = false, rename = true, catalog = true } = args;
             const { createReadStream, filename, mimetype, encoding } = await file;
             const { user, partner } = this.executionContext;
 
@@ -257,23 +257,42 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
 
             const stream: NodeJS.ReadStream = createReadStream();
 
-            const randomName = `${sha1(new Date().getTime().toString())}.${getExtension(filename)}`;
+            let extension = getExtension(filename);
 
+            let $filename = rename === true ? `${sha1(new Date().getTime().toString())}.${extension}` : filename;
+
+            if (args.filename) {
+                if (args.filename.indexOf('.') === -1)
+                    $filename = `${args.filename}.${extension}`;
+                else
+                    $filename = args.filename;
+            }
+
+            //set the default path/folder to the user/files/partner/            
             let virtualPath = `profiles/${user._id}/files/${partner._id}/`;
+
+
             //general path                        
             if (isUserSpecific === false) {
                 //general file            
                 virtualPath = 'content/files/';
             }
 
-            let physicalPath = path.join(process.env.APP_DATA_ROOT, virtualPath);
+            debugger
 
-            let virtualFilePath = path.join(virtualPath, randomName);
-            let phyicalFilePath = path.join(physicalPath, randomName);
+            // if there is a virtual path, use it.
+            if (args.virtualPath) virtualPath = args.virtualPath;
+
+            // establish physical path
+            let physicalPath = path.join(process.env.APP_DATA_ROOT, virtualPath);
+            // get the virtual path
+            let virtualFilePath = path.join(virtualPath, $filename);
+            // get the physical file and pathname
+            let phyicalFilePath = path.join(physicalPath, $filename);
 
             let web_link = path.join(process.env.CDN_ROOT, virtualFilePath);
 
-
+            //make sure the folder structure exists before attemptying the write
             if (fs.existsSync(physicalPath) === false) {
                 fs.mkdirSync(physicalPath, { recursive: true });
             }
@@ -323,7 +342,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                     id: new ObjectID(),
                     filename,
                     mimetype,
-                    alias: randomName,
+                    alias: $filename,
                     partner: this.executionContext.partner._id,
                     owner: this.executionContext.user._id,
                     uploadedBy: this.executionContext.user._id,
@@ -336,14 +355,19 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                     published: false,
                 };
 
+                if (args.catalog === true) {
+                    const savedDocument = new ReactoryFileModel(reactoryFile);
+
+                    savedDocument.save().then(() => {
+                        logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
+                        resolve(savedDocument);
+                    }).catch((err) => { reject(err) });
+                } else {
+                    //if we 
+                    resolve(reactoryFile);
+                }
 
 
-                const savedDocument = new ReactoryFileModel(reactoryFile);
-
-                savedDocument.save().then(() => {
-                    logger.debug(`SAVING FILE:: DONE ${filename} --> CATALOGGING`);
-                    resolve(savedDocument);
-                }).catch((err) => { reject(err) });
             }
 
             // Generate path where the file will be saved.            

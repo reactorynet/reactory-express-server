@@ -37,6 +37,7 @@ type UserPeers {
 }
 
 type UserMembership {
+  id: String
   client: ReactoryClient
   organization: Organization
   businessUnit: BusinessUnit
@@ -209,8 +210,16 @@ extend type Mutation {
   addUserCredentials(provider: String!, props: Any): Boolean
   removeUserCredentials(provider: String!): Boolean
   sendMail(message: SendMailInput!): SendMailResult
-  createOutlookTask(task: CreateTaskInput!): SendMailResult
+  createOutlookTask(task: CreateTaskInput!): SendMailResult  
   deleteOutlookTask(task: DeleteTaskInput!): SendMailResult
+  """
+  Used to update a user permission set
+  """
+  ReactoryCoreSetRolesForMembership(user_id: String!, id: String!, roles: [String]!): CoreSimpleResponse
+  """
+  Used to create a new user permission
+  """
+  ReactoryCoreCreateUserMembership(user_id: String!, organization: String, businessUnit: String, roles: [String]): UserMembership
 }
 
 extend type Subscription {

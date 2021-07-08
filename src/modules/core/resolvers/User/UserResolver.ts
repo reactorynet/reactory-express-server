@@ -22,10 +22,10 @@ import { organigramEmails } from '@reactory/server-core/emails';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
 import logger from '@reactory/server-core/logging';
 
-import { isObject, isNull } from 'util';
 import { Reactory } from '@reactory/server-core/types/reactory';
 
 import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
+import Mongoose from "mongoose";
 
 const uuid = require('uuid');
 
@@ -247,10 +247,10 @@ const userResolvers = {
       const { assessor, delegate } = assessment;
 
       if (ObjectId.isValid(assessor) === true && ObjectId.isValid(delegate) === true) {
-        return ObjectId(assessor).equals(ObjectId(delegate));
+        return new ObjectId(assessor).equals(new ObjectId(delegate));
       }
 
-      if (isObject(assessor) === true && assessor._id && isObject(delegate) === true && delegate._id) {
+      if (typeof assessor === 'object' && assessor._id && typeof delegate === 'object' && delegate._id) {
         return assessor._id.equals(delegate._id);
       }
 
@@ -322,7 +322,7 @@ const userResolvers = {
     peers(usr: { _id: any; memberships: { organizationId: any; }[]; }) {
       return Organigram.findOne({ user: usr._id, organization: usr.memberships[0].organizationId });
     },
-    memberships(usr: { memberships: any; }, args: any, context: Reactory.IReactoryContext) {
+    memberships(usr: { memberships: Reactory.IMembership[] }, args: any, context: Reactory.IReactoryContext) {
       if (lodash.isArray(usr.memberships)) {
         return lodash.filter(usr.memberships, { clientId: context.partner._id });
       }
@@ -337,6 +337,9 @@ const userResolvers = {
     },
   },
   UserMembership: {
+    id: ({ _id }) => {
+      return _id.toString()
+    },
     client({ clientId }) {
       return ReactoryClient.findById(clientId);
     },
@@ -346,6 +349,20 @@ const userResolvers = {
     businessUnit({ businessUnitId }) {
       return BusinessUnit.findById(businessUnitId);
     },
+    lastLogin: ({ lastLogin, user }) => {
+      if (lastLogin) return lastLogin;
+
+      if (user && user.lastLogin) return user.lastLogin;
+
+      return null;
+    },
+    created: ({ created, user }) => {
+      if (created) return created;
+
+      if (user && user.createdAt) return user.createdAt;
+
+      return null;
+    }
   },
   Query: {
     allUsers(obj: any, args: any, context: any, info: any) {
@@ -979,6 +996,105 @@ const userResolvers = {
           throw new ApiError('Not Implemented Yet');
         }
       }
+    },
+    ReactoryCoreSetRolesForMembership: async (parent: any, args: Reactory.ReactorySetRolesArgs, context: Reactory.IReactoryContext): Promise<Reactory.CoreSimpleResponse> => {
+
+      const { partner } = context;
+      /**
+       * Check if the the user executing this has the ADMIN role for the application
+       */
+      if (context.user.hasRole(`${partner._id}`, 'ADMIN') === false) {
+        return {
+          message: 'You do not have sufficient permissions to perform this activity',
+          success: false,
+          payload: null
+        };
+      }
+
+
+      const { id, user_id, roles } = args;
+
+      const user = await User.findById(user_id).then();
+
+      if (!user) {
+        return {
+          message: 'User with that id is not found',
+          success: false,
+          payload: null
+        };
+      }
+
+      const membership = (user.memberships as Mongoose.Types.DocumentArray<Reactory.IMembershipDocument>).id(id);
+      if (membership) {
+        membership.roles = roles;
+      }
+
+      await user.save().then()
+
+      return {
+        message: 'Roles for user has been successfully updated.',
+        success: true,
+        payload: null
+      }
+
+    },
+    ReactoryCoreCreateUserMembership: async (parent: any, args: Reactory.ReactoryCreateMembershipArgs, context: Reactory.IReactoryContext): Promise<Reactory.IMembership> => {
+      const { partner } = context;
+      /**
+      * Check if the the user executing this has the ADMIN role for the application
+      */
+      if (context.user.hasRole(`${partner._id}`, 'ADMIN') === false) {
+        throw new ApiError('You do not have permissions to perform this function', {});
+      }
+
+      const userToUpdate = await User.findById(args.user_id).then();
+
+      if (userToUpdate) {
+        let existing = lodash.filter(userToUpdate.memberships, (membership: Reactory.IMembershipDocument) => {
+          let org_match = false;
+          let bu_match = false;
+
+          if (args.organization && membership.organizationId) {
+            if (membership.organizationId.equals(new ObjectId(args.organization)) === true) {
+              org_match = true;
+            }
+
+            if (org_match === true) {
+              if (args.businessUnit && membership.businessUnitId)
+                if (membership.businessUnitId.equals(new ObjectId(args.businessUnit)) === true) {
+                  bu_match = true;
+                }
+            }
+
+          }
+
+          return org_match && bu_match;
+        });
+
+        if (existing.length === 0) {
+          //no matching combos add it to the users profile
+          userToUpdate.memberships.push({
+            clientId: partner._id,
+            organizationId: args.organization ? new ObjectId(args.organization) : null,
+            businessUnitId: args.businessUnit ? new ObjectId(args.businessUnit) : null,
+            roles: args.roles,
+            enabled: true,
+            authProvider: '',
+            providerId: '',
+            lastLogin: null,
+            user: userToUpdate,
+          });
+
+          await userToUpdate.save().then();
+          return userToUpdate.memberships[userToUpdate.memberships.length - 1];
+        }
+
+        if (existing.length > 0) {
+          throw new ApiError('User already has a membership with this combination.')
+        }
+      }
+
+      throw new RecordNotFoundError('Could not load the user with the given id', 'User', { id: args.user_id })
     },
   },
 };

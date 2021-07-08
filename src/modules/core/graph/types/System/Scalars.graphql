@@ -13,6 +13,22 @@ type Meta {
   source: Any
 }
 
+type CoreSimpleResponse {
+  success: Boolean
+  message: String
+  payload: Any
+}
+
+"""
+This type can be used as a generic wrapper for data queries
+"""
+type CorePagedResponse {
+  success: Boolean
+  message: String
+  paging: PagingResult
+  items: [Any]
+}
+
 type DocumentUrl {
     id: String!
     url: String!
