@@ -61,7 +61,7 @@ Region.statics.AddRegion = async (organization: string | ObjectId, title: string
     input.organization = new ObjectId(organization);
     input.locations = locations;
   }
-
+debugger
   const region = new RegionModel(input);
   await region.save().then();
   return region;
