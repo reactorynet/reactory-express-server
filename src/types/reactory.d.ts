@@ -47,22 +47,22 @@ declare namespace Reactory {
   }
 
   export interface IReactoryClient {
-    key: String,
-    name: String,
-    username: String,
-    email: String,
-    salt: String,
-    siteUrl: String,
-    emailSendVia: String,
-    emailApiKey: String,
-    resetEmailRoute: String,
-    password: String,
-    avatar: String, // application avatar
-    theme: String, // theme title
-    mode: String,
+    key: string,
+    name: string,
+    username: string,
+    email: string,
+    salt: string,
+    siteUrl: string,
+    emailSendVia: string,
+    emailApiKey: string,
+    resetEmailRoute: string,
+    password: string,
+    avatar: string, // application avatar
+    theme: string, // theme title
+    mode: string,
     themeOptions: any,
-    applicationRoles: String[],
-    billingType: String,
+    applicationRoles: string[],
+    billingType: string,
     modules?: any[],
     menus: any[],
     routes: any[],
@@ -1060,9 +1060,9 @@ declare namespace Reactory {
     id: string,
     user: Reactory.IUserDocument
     partner: Reactory.IReactoryClientDocument
-    getService: (fqn: string, props?: any, context?: Reactory.IReactoryContext) => any,
-    hasRole: (role: string, partner?: Reactory.IReactoryClientDocument) => boolean
-    log: (message: string, meta?: any, type?: LOG_TYPE) => void
+    getService<T extends Reactory.Service.IReactoryService>(fqn: string, props?: any, context?: Reactory.IReactoryContext): T,
+    hasRole(role: string, partner?: Reactory.IReactoryClientDocument): boolean
+    log(message: string, meta?: any, type?: LOG_TYPE): void
     [key: string]: any
   }
 
