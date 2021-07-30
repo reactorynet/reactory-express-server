@@ -218,6 +218,22 @@ const Menus = {
           icon: 'gavel',
           roles: ['ADMIN', 'QUOTE_APPROVER'],
         },
+
+        {
+          ordinal: 6,
+          title: 'Quote Authorisations',
+          link: '/authorisations/quote',
+          icon: 'gavel',
+          roles: ['ADMIN', 'QUOTE_APPROVER'],
+        },
+
+        {
+          ordinal: 7,
+          title: 'Freight Request Approvals',
+          link: '/authorisations/freight',
+          icon: 'delivery',
+          roles: ['ADMIN', 'QUOTE_APPROVER'],
+        }
       ]
     },
     {
@@ -715,6 +731,38 @@ const LASEC_CONFIG = {
           },
         },
       ],
+    },
+
+    {
+      key: 'authorisations',
+      title: 'Authorsations Route',
+      path: '/authorisations/:tab/',
+      public: false,
+      roles: ['ADMIN', 'QUOTE_APPROVER'],
+      componentFqn: 'lasec-crm.ApprovalsHome@1.0.0',
+      args: {
+        key: 'rootPath',
+        value: {
+          type: 'string',
+          rootPath: '/authorisations/'
+        }
+      }
+    },
+
+    {
+      key: 'authorisations',
+      title: 'Authorsations Route',
+      path: '/authorisations/:tab/:item/',
+      public: false,
+      roles: ['ADMIN', 'QUOTE_APPROVER'],
+      componentFqn: 'lasec-crm.ApprovalsHome@1.0.0',
+      args: {
+        key: 'rootPath',
+        value: {
+          type: 'string',
+          rootPath: '/authorisations/'
+        }
+      }
     },
 
 
