@@ -22,6 +22,9 @@ import ProjectModel from './schema/Project';
 import BoardModel from './schema/ProjectBoard';
 import CommentModel from './schema/Comment';
 
+//Christian
+import UserDemographicsModel from './schema/UserDemographics';
+
 // DREW
 import ContentModel from './schema/Content';
 import PersonalDemographicModel from './schema/PersonalDemographic';
@@ -54,6 +57,8 @@ export const Theme = ThemeModel;
 export const BusinessUnit = BusinessUnitModel;
 export const Board = BoardModel;
 
+//Christian
+export const UserDemographic = UserDemographicsModel
 // DREW
 export const Content = ContentModel;
 export const PersonalDemographic = PersonalDemographicModel;
@@ -83,6 +88,7 @@ const models = {
   Template,
   User,
   Task,
+  UserDemographic,
 };
 
 export default models;
