@@ -61,7 +61,7 @@ const userAssessments = async (id: any, context: Reactory.IReactoryContext) => {
   throw new RecordNotFoundError('No user matching id');
 };
 
-const MoresAssessmentsForUser = async (userId: any, status = ['ready'], context: Reactory.IReactoryContext) => {
+const MoresAssessmentsForUser = async (userId: any, status = ['launched'], context: Reactory.IReactoryContext) => {
   const { user, partner } = context;
   const findUser = isNil(userId) === true ? await User.findById(userId).then() : user;
   if (findUser && findUser._id) {
@@ -87,15 +87,17 @@ const MoresAssessmentsForUser = async (userId: any, status = ['ready'], context:
       }
     }
 
-    let modeFilters = ['live'];
-    if (user.hasRole(partner._id, 'DEVELOPER') === true || user.hasRole(partner._id, 'ADMIN') === true || user.hasRole(partner._id, 'ORGANIZATION_ADMIN') === true) modeFilters.push('test');
+    let $statuses = status;
+    if (user.hasRole(partner._id, 'DEVELOPER') === true || user.hasRole(partner._id, 'ADMIN') === true || user.hasRole(partner._id, 'ORGANIZATION_ADMIN') === true) {
+      $statuses.push('new');
+      $statuses.push('paused');
+    }
 
     const surveys = await Survey.find({
       surveyType: {
         $in: assessmentTypes
       },
-      mode: { $in: modeFilters },
-
+      status: { $in: status },
       endDate: {
         $gte: moment().subtract(1, 'month').startOf('month').toDate()
       },
@@ -278,8 +280,12 @@ const userResolvers = {
     },
   },
   UserPeers: {
-    id(obj: { id: { toString: () => any; }; }) {
-      return obj.id ? obj.id.toString() : '';
+    id(obj: Reactory.IOrganigramDocument) {
+
+      debugger
+
+      if (obj._id)
+        return obj._id.toString();
     },
     allowEdit(obj: { allowEdit: boolean; }) {
       return obj.allowEdit === true;
@@ -438,7 +444,7 @@ const userResolvers = {
       const { partner } = context;
       switch (partner.key) {
         case 'mores': {
-          return MoresAssessmentsForUser(id, ['ready'], context);
+          return MoresAssessmentsForUser(id, ['launched'], context);
         }
         default: {
           return userAssessments(id, context);
