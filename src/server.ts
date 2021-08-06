@@ -43,7 +43,7 @@ import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContex
 // @ts-ignore
 import { Reactory } from '@reactory/server-core/types/reactory'; // eslint-disable-line
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
-
+import generate_index from '@reactory/server-modules/generate_index';
 const hideText = (text: string = '') => {
   let asterisks = '';
   for (let ai: number = 0; ai < text.length - 2; ai += 1) {
@@ -101,6 +101,9 @@ mongooseConnection.then(() => {
   `);
   process.exit(0);
 });
+
+//generate the modules index.
+generate_index();
 
 const ca = sslrootcas.create();
 https.globalAgent.options.ca = ca;
