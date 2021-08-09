@@ -1,5 +1,3 @@
-
-import co from 'co';
 import { ObjectId } from 'mongodb';
 import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';

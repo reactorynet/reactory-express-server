@@ -767,82 +767,136 @@ const LASEC_CONFIG = {
 
 
     {
-      key: 'crm-client',
+      key: 'crm-client-tab-item-detail-activity',
       title: 'Lasec CRM',
       path: '/crm/:tab/:item/:detail/:activity/',
       exact: true,
       public: false,
       roles: ['USER'],
-      componentFqn: `${key}.LasecCRMComponent@1.0.0`,
-      args: [
-        {
-          key: 'defaultTab',
-          value: {
-            type: 'string',
-            defaultTab: 'clients'
-          }
-        }
-      ],
+      componentFqn: `${key}.CRMRouter@1.0.0`,
     },
 
     {
-      key: 'crm-client',
+      key: 'crm-client-tab-item-detail',
       title: 'Lasec CRM',
       path: '/crm/:tab/:item/:detail/',
       exact: true,
       public: false,
       roles: ['USER'],
-      componentFqn: `${key}.LasecCRMComponent@1.0.0`,
-      args: [
-        {
-          key: 'defaultTab',
-          value: {
-            type: 'string',
-            defaultTab: 'clients'
-          }
-        }
-      ],
+      componentFqn: `${key}.CRMRouter@1.0.0`,
     },
 
-
     {
-      key: 'crm-client',
+      key: 'crm-client-tab-item',
       title: 'Lasec CRM',
       path: '/crm/:tab/:item/',
       exact: true,
       public: false,
       roles: ['USER'],
-      componentFqn: `${key}.LasecCRMComponent@1.0.0`,
-      args: [
-        {
-          key: 'defaultTab',
-          value: {
-            type: 'string',
-            defaultTab: 'clients'
-          }
-        }
-      ],
+      componentFqn: `${key}.CRMRouter@1.0.0`,
     },
 
+
     {
-      key: 'crm-client',
+      key: 'crm-client-tab',
       title: 'Lasec CRM',
       path: '/crm/:tab/',
       exact: true,
       public: false,
       roles: ['USER'],
-      componentFqn: `${key}.LasecCRMComponent@1.0.0`,
-      args: [
-        {
-          key: 'defaultTab',
-          value: {
-            type: 'string',
-            defaultTab: 'clients'
-          }
-        }
-      ],
+      componentFqn: `${key}.CRMRouter@1.0.0`,
     },
 
+    {
+      key: 'crm-client',
+      title: 'Lasec CRM',
+      path: '/crm/',
+      exact: true,
+      public: false,
+      roles: ['USER'],
+      componentFqn: `${key}.CRMRouter@1.0.0`,
+    },
+
+
+
+    /*
+        {
+          key: 'crm-client',
+          title: 'Lasec CRM',
+          path: '/crm/:tab/:item/:detail/:activity/',
+          exact: true,
+          public: false,
+          roles: ['USER'],
+          componentFqn: `${key}.LasecCRMComponent@1.0.0`,
+          args: [
+            {
+              key: 'defaultTab',
+              value: {
+                type: 'string',
+                defaultTab: 'clients'
+              }
+            }
+          ],
+        },
+    
+        {
+          key: 'crm-client',
+          title: 'Lasec CRM',
+          path: '/crm/:tab/:item/:detail/',
+          exact: true,
+          public: false,
+          roles: ['USER'],
+          componentFqn: `${key}.LasecCRMComponent@1.0.0`,
+          args: [
+            {
+              key: 'defaultTab',
+              value: {
+                type: 'string',
+                defaultTab: 'clients'
+              }
+            }
+          ],
+        },
+    
+    
+        {
+          key: 'crm-client',
+          title: 'Lasec CRM',
+          path: '/crm/:tab/:item/',
+          exact: true,
+          public: false,
+          roles: ['USER'],
+          componentFqn: `${key}.LasecCRMComponent@1.0.0`,
+          args: [
+            {
+              key: 'defaultTab',
+              value: {
+                type: 'string',
+                defaultTab: 'clients'
+              }
+            }
+          ],
+        },
+    
+        {
+          key: 'crm-client',
+          title: 'Lasec CRM',
+          path: '/crm/:tab/',
+          exact: true,
+          public: false,
+          roles: ['USER'],
+          componentFqn: `${key}.LasecCRMComponent@1.0.0`,
+          args: [
+            {
+              key: 'defaultTab',
+              value: {
+                type: 'string',
+                defaultTab: 'clients'
+              }
+            }
+          ],
+        },
+    */
     {
       key: 'product-catalog',
       title: 'Product Catelog',
