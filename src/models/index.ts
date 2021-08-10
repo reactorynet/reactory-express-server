@@ -1,9 +1,10 @@
 
 import './plugins';
-import AssessmentModel from '@reactory/server-modules/mores/models/Assessment';
 import ApplicationModel from './schema/Application';
 import EmailQueueModel from './schema/EmailQueue';
 import LeadershipBrandModel from '@reactory/server-modules/mores/models/LeadershipBrand';
+import AssessmentModel from '@reactory/server-modules/mores/models/Assessment';
+import SurveyModel, { EVENTS_TO_TRACK } from '@reactory/server-modules/mores/models/Survey';
 import NotificationModel from './schema/Notification';
 import OrganizationModel from './schema/Organization';
 import BusinessUnitModel from './schema/BusinessUnit';
@@ -11,7 +12,6 @@ import OrganigramModel from './schema/Organigram';
 import MenuModel, { MenuItemModel } from './schema/Menu';
 import ClientComponentModel from './schema/ClientComponent';
 import ReactoryClientModel from './schema/ReactoryClient';
-import SurveyModel, { EVENTS_TO_TRACK } from '@reactory/server-modules/mores/models/Survey';
 import ScaleModel from './schema/Scale';
 import TemplateModel from './schema/Template';
 import TeamModel from './schema/Team';
@@ -33,8 +33,9 @@ import OperationalGroupModel from './schema/OperationalGroup';
 
 import { Cache } from '../modules/core/models';
 
-export const Assessment = AssessmentModel;
+//export const Assessment = AssessmentModel;
 export const Application = ApplicationModel;
+export const Assessment = AssessmentModel;
 export const Comment = CommentModel;
 export const Organization = OrganizationModel;
 export const Organigram = OrganigramModel;

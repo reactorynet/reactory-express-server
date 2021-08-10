@@ -1,22 +1,9 @@
-/* eslint-disable import/no-dynamic-require */
-import path from 'path';
-import { Reactory } from 'types/reactory';
-import logger from '../logging';
-
+'use strict'
+// The below import may indicate not found before your first 
+// compile / run is done as it is generated at startup based on the configuration.
+//@ts-ignore
+import resolved from './__index';
 const available = require('./available.json');
-
-const enabled = require(`./${process.env.MODULES_ENABLED || 'enabled'}.json`);
-
-const resolved: any = [];
-
-enabled.forEach((moduleDefinition: Reactory.IReactoryModuleDefinition) => {
-  logger.debug(`Loading [${moduleDefinition.name}] ⭕`);
-  // eslint-disable-next-line global-require
-  const resolvedItem = require(path.resolve(path.join('src', 'modules', `${moduleDefinition.moduleEntry}`))).default; // @ts-ignore // es-lint:disable-line
-  resolved.push(resolvedItem);
-  logger.debug(`Loading [${moduleDefinition.name}] ✅`);
-});
-
 
 export default {
   available,
