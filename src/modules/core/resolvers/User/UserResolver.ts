@@ -18,7 +18,8 @@ import {
   BusinessUnit,
 } from "@reactory/server-core/models/index";
 import O365 from "@reactory/server-core/azure/graph";
-
+import { launchSurveyForDelegate } from '@reactory/server-modules/mores/services/Survey';
+import { Mores } from '@reactory/server-modules/mores/types/mores';
 import { organigramEmails } from "@reactory/server-core/emails";
 import ApiError, {
   RecordNotFoundError,
@@ -29,6 +30,7 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 
 import { SURVEY_EVENTS_TO_TRACK } from "@reactory/server-core/models/index";
 import Mongoose from "mongoose";
+import { execml } from "@reactory/server-core/graph/client";
 
 const uuid = require("uuid");
 
@@ -781,29 +783,91 @@ const userResolvers = {
         throw new RecordNotFoundError("User Organigram Record Not Found");
 
       let survey: ISurveyDocument = null;
-
+      userOrganigram.confirmedAt = new Date().valueOf();
+      userOrganigram.updatedAt = new Date().valueOf();
+      await userOrganigram.save().then()
+      
       if (surveyId) {
-        survey = await Survey.findById(new ObjectId(surveyId)).then();
+        survey = await Survey.findById(new ObjectId(surveyId))
+        .populate("delegates.assessments")
+        .populate("delegates.delegate").then();
+        const params = {
+          query: {
+            _id: new ObjectId(surveyId),
+            "delegates.delegate": new ObjectId(id),
+          },
+          data: { "delegates.$.nomineeConfirmed": true },
+        };
+        let delegate = survey.delegates.filter((delegate: any) => delegate.delegate._doc._id.toString() === id)
+        delegate = delegate.length > 0 ? delegate[0] : null
         if (survey && survey.delegates.length > 0) {
-          const params = {
-            query: {
-              _id: new ObjectId(surveyId),
-              "delegates.delegate": new ObjectId(id),
-            },
-            data: { "delegates.$.nomineeConfirmed": true },
-          };
-          await Survey.updateOne(params.query, { $set: params.data });
+          if(delegate.status !== 'new') await Survey.updateOne(params.query, { $set: params.data });
         }else throw new ApiError('No Peers to confirm')
+        
         if (survey && survey.options) {
-          if (survey.options.autoLaunchOnPeerConfirm === true) {
-            // execml(``, {}, user, partner)
+          //@ts-ignore
+          const entryData: Mores.IDelegateEntryDataStruct = {
+            entry: null,
+            entryIdx: -1,
+            message: 'Awaiting instruction',
+            error: false,
+            success: true,
+            patch: false,
+          };
+          if (survey.options.autoLaunchOnPeerConfirm === true && delegate && delegate.status !== 'new') {
+            entryData.entry = delegate
+            const variables = {
+              survey: survey._id.toString(),
+              entryId:  entryData.entry._id.toString(),
+              delegate:  entryData.entry.delegate._id.toString(),
+              action : 'launch',
+              inputData: {
+                relaunch: false,
+              }
+            };
+            const result = await execml(`mutation SurveyDelegateAction($entryId: String!, $survey: String!, $delegate: String!, $action: String!, $inputData: Any){
+              surveyDelegateAction(entryId: $entryId, survey: $survey, delegate: $delegate, action: $action, inputData: $inputData) {
+                id
+                delegate {
+                  id
+                  firstName
+                  lastName
+                  email
+                  avatar
+                }
+                team
+                peers {
+                  id
+                  peers{
+                    user {
+                      id
+                      firstName
+                      lastName
+                    }
+                  }
+                }
+                notifications {
+                  id
+                }
+                assessments {
+                  id
+                }
+                status
+                launched
+                complete
+                removed
+                message
+                updatedAt
+                lastAction
+              }
+            }`, variables , {}, context.user, context.partner).then()
             logger.debug(`NEED TO IMPLEMENT AUTO LAUNCH FEATURE HERE`);
+           
           }
         }
       }else throw new ApiError('No survey found')
 
-      userOrganigram.confirmedAt = new Date().valueOf();
-      userOrganigram.updatedAt = new Date().valueOf();
+      
 
       const emailPromises = [];
       for (
@@ -876,8 +940,8 @@ const userResolvers = {
       context: Reactory.IReactoryContext
     ) {
       const userOrganigram = await Organigram.findOne({
-        user: ObjectId(id),
-        organization: ObjectId(organization),
+        user:  ObjectId(id),
+        organization:  ObjectId(organization),
       }).then();
 
       let modified = false;
