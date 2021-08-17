@@ -767,7 +767,7 @@ export const surveyEmails = {
 
       if (survey.options) {
         if (survey.options.autoLaunchOnPeerConfirm === true) {
-          properties.link = `${properties.link}&survey=${survey._id.toString()}&loc=1`;
+          properties.link = `${properties.link}&loc=1`;
         }
       }
 
