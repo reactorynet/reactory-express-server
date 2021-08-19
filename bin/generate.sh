@@ -10,7 +10,5 @@
 #$SECONDS - The number of seconds since the script was started.
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
-echo "Starting Reactory Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-development}"
-sh ./bin/generate.sh ${1:-reactory}
-pm2 start ./config/${1:-reactory}/pm2.${2:-local}.config.js --env ${3:-development}
-pm2 monit
+echo "Running Generate Process For: ./config/${1:-reactory}/${2:-local} "
+NODE_PATH=./src env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx babel-node ./src/utils/code/index.ts --presets @babel/env --extensions ".js,.ts" --max_old_space_size=2000000

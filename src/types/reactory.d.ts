@@ -7,6 +7,9 @@ import { Stream } from "stream";
 import { Application } from "express";
 declare namespace Reactory {
 
+  export interface IStartupOptions {
+    [key: string]: any
+  }
   export namespace Client {
 
     export interface IFrameProperties {
@@ -77,6 +80,7 @@ declare namespace Reactory {
     colorScheme: () => any
     getSetting: (key: string) => any;
     getDefaultUserRoles: () => string[];
+    setPassword: (password: string) => void;
   }
 
   export interface IReactoryClientDocument extends Mongoose.Document, IReactoryClient { }
@@ -465,6 +469,7 @@ declare namespace Reactory {
     required?: any | undefined,
     properties?: ISchemaObjectProperties | any | undefined,
     dependencies?: any | undefined,
+    definitions?: any,
     items?: ISchema,
     format?: string | "email" | "password" | "date" | "date-time",
     enum?: string[]
