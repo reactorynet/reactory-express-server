@@ -1,10 +1,11 @@
 
-import { default as ReactoryClientConfig } from './reactory';
-import { default as TowerstoneClientConfig } from './towerstone';
-import { default as MoresClientConfig } from './mores/index';
-import { default as PlcClientConfig } from './plc';
-import { default as LasecCrmClientConfig } from './lasec-crm';
-import { default as ThinkleadClientConfig } from './thinklead';
+import fs from 'fs';
 
-const clients: any[] = [ReactoryClientConfig, TowerstoneClientConfig, MoresClientConfig, PlcClientConfig, LasecCrmClientConfig, ThinkleadClientConfig];
-export default clients;
+let enabled_clients: string[] = [];
+
+if (fs.existsSync('./src/data/clientConfigs/__index.ts')) {
+  enabled_clients = require('./__index').default;
+}
+
+
+export default enabled_clients;

@@ -281,9 +281,6 @@ const userResolvers = {
   },
   UserPeers: {
     id(obj: Reactory.IOrganigramDocument) {
-
-      debugger
-
       if (obj._id)
         return obj._id.toString();
     },
