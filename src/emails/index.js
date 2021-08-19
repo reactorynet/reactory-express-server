@@ -762,12 +762,12 @@ export const surveyEmails = {
         organization: $organization,
         applicationTitle: partner.name,
         authToken,
-        link: `${partner.siteUrl}/profile/?auth_token=${authToken}&peerconfig=true&organization_id=${$organization._id}`,
+        link: `${partner.siteUrl}/profile/?auth_token=${authToken}&peerconfig=true&organization_id=${$organization._id}&survey_id=${survey._id}`,
       };
 
       if (survey.options) {
         if (survey.options.autoLaunchOnPeerConfirm === true) {
-          properties.link = `${properties.link}&survey=${survey._id.toString()}&loc=1`;
+          properties.link = `${properties.link}&loc=1`;
         }
       }
 
