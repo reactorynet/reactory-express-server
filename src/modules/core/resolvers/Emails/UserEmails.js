@@ -6,7 +6,7 @@ import {
   EmailQueue,
 } from '@reactory/server-core/models';
 
-import O365 from '@reactory/server-core/azure/graph';
+import O365 from '@reactory/server-modules/reactory-azure/services/graph';
 import ApiError from '@reactory/server-core/exceptions';
 
 const getLocalMail = async (user, filter = { size: 10, page: 0, search: '' }) => {

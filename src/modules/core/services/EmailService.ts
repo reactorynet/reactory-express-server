@@ -6,7 +6,7 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 import { User } from '@reactory/server-core/models';
-import O365 from '@reactory/server-core/azure/graph';
+import O365 from '@reactory/server-modules/reactory-azure/services/graph';
 import path from 'path';
 import * as Microsoft from '@microsoft/microsoft-graph-types'
 
@@ -18,16 +18,10 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
     nameSpace: string = 'core';
     version: string = '1.0.0';
 
-    executionContext: Reactory.ReactoryExecutionContext = {
-        user: null,
-        partner: null,
-    };
+    executionContext: Reactory.IReactoryContext;
 
     constructor(props: any, context: any) {
-        this.executionContext = {
-            partner: props.partner || context.partner,
-            user: props.user || context.user
-        };
+        this.executionContext = context;
     }
 
     getExecutionContext(): Reactory.ReactoryExecutionContext {
