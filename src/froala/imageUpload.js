@@ -1,4 +1,4 @@
-import AzureBlobStorage, { defaultAzureProps } from '../azure/storage';
+import AzureBlobStorage, { defaultAzureProps } from '@reactory/server-modules/reactory-azure/storage';
 
 const Busboy = require('busboy');
 const path = require('path');

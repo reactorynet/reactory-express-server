@@ -1,4 +1,3 @@
-import { ISurveyDocument } from "./../../../mores/types/mores.d";
 import { ObjectId } from "mongodb";
 import co from "co";
 import moment from "moment";
@@ -17,7 +16,7 @@ import {
   ReactoryClient,
   BusinessUnit,
 } from "@reactory/server-core/models/index";
-import O365 from "@reactory/server-core/azure/graph";
+import O365 from "@reactory/server-modules/reactory-azure/services/graph";
 import { launchSurveyForDelegate } from '@reactory/server-modules/mores/services/Survey';
 import { Mores } from '@reactory/server-modules/mores/types/mores';
 import { organigramEmails } from "@reactory/server-core/emails";
@@ -681,10 +680,9 @@ const userResolvers = {
       }).then();
 
       logger.info(
-        `Checked user with email address ${input.email} result: ${
-          isNil(existing) === false
-            ? `Found [${existing._id.toString()}]`
-            : "Not Found"
+        `Checked user with email address ${input.email} result: ${isNil(existing) === false
+          ? `Found [${existing._id.toString()}]`
+          : "Not Found"
         }`
       );
       const organization = await Organization.findById(organizationId);
@@ -786,11 +784,11 @@ const userResolvers = {
       userOrganigram.confirmedAt = new Date().valueOf();
       userOrganigram.updatedAt = new Date().valueOf();
       await userOrganigram.save().then()
-      
+
       if (surveyId) {
         survey = await Survey.findById(new ObjectId(surveyId))
-        .populate("delegates.assessments")
-        .populate("delegates.delegate").then();
+          .populate("delegates.assessments")
+          .populate("delegates.delegate").then();
         const params = {
           query: {
             _id: new ObjectId(surveyId),
@@ -801,9 +799,9 @@ const userResolvers = {
         let delegate = survey.delegates.filter((delegate: any) => delegate.delegate._doc._id.toString() === id)
         delegate = delegate.length > 0 ? delegate[0] : null
         if (survey && survey.delegates.length > 0) {
-          if(delegate.status !== 'new') await Survey.updateOne(params.query, { $set: params.data });
-        }else throw new ApiError('No Peers to confirm')
-        
+          if (delegate.status !== 'new') await Survey.updateOne(params.query, { $set: params.data });
+        } else throw new ApiError('No Peers to confirm')
+
         if (survey && survey.options) {
           //@ts-ignore
           const entryData: Mores.IDelegateEntryDataStruct = {
@@ -818,9 +816,9 @@ const userResolvers = {
             entryData.entry = delegate
             const variables = {
               survey: survey._id.toString(),
-              entryId:  entryData.entry._id.toString(),
-              delegate:  entryData.entry.delegate._id.toString(),
-              action : 'launch',
+              entryId: entryData.entry._id.toString(),
+              delegate: entryData.entry.delegate._id.toString(),
+              action: 'launch',
               inputData: {
                 relaunch: false,
               }
@@ -860,14 +858,14 @@ const userResolvers = {
                 updatedAt
                 lastAction
               }
-            }`, variables , {}, context.user, context.partner).then()
+            }`, variables, {}, context.user, context.partner).then()
             logger.debug(`NEED TO IMPLEMENT AUTO LAUNCH FEATURE HERE`);
-           
+
           }
         }
-      }else throw new ApiError('No survey found')
+      } else throw new ApiError('No survey found')
 
-      
+
 
       const emailPromises = [];
       for (
@@ -940,8 +938,8 @@ const userResolvers = {
       context: Reactory.IReactoryContext
     ) {
       const userOrganigram = await Organigram.findOne({
-        user:  ObjectId(id),
-        organization:  ObjectId(organization),
+        user: ObjectId(id),
+        organization: ObjectId(organization),
       }).then();
 
       let modified = false;
@@ -952,8 +950,7 @@ const userResolvers = {
             remove: () => void;
           }) => {
             logger.info(
-              `Checking peer ${peerEntry.user} => ${peer}: match: ${
-                peerEntry.user.toString() === peer
+              `Checking peer ${peerEntry.user} => ${peer}: match: ${peerEntry.user.toString() === peer
               }`
             );
             if (peerEntry.user.toString() === peer) {

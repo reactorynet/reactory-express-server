@@ -24,7 +24,7 @@ import { User, ReactoryClient } from '../models/index';
 import { UserValidationError } from '../exceptions';
 import AnonStrategy from './AnonStrategy';
 import logger from '../logging';
-import graph from '../azure/graph';
+import graph from '@reactory/server-modules/reactory-azure/services/graph';
 
 import { createUserForOrganization, updateUserProfileImage } from '../application/admin/User';
 import amq from '../amq';

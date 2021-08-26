@@ -752,9 +752,23 @@ declare namespace Reactory {
   }
 
 
+  export type ReactoryResolverAsync = (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>;
+  export type ReactoryResolverSync = (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => any;
+  export type ReactoryResolverObject = {
+    [key: string]: ReactoryResolverAsync | ReactoryResolverAsync
+  }
+
   export interface IGraphShape {
-    Query: Object,
-    Mutation: Object,
+    [key: string]: ReactoryResolverAsync | ReactoryResolverAsync | ReactoryResolverObject
+    Query?: {
+      [key: string]: (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>
+    },
+    Mutation?: {
+      [key: string]: (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>
+    },
+    Subscription?: {
+      [key: string]: (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>
+    }
   }
 
   export interface IGraphDefinitions {
