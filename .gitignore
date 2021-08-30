@@ -27,7 +27,5 @@ src/data/*
 !src/data/readme.md
 !src/data/clientConfigs/reactory/index.ts
 !src/data/clientConfigs/readme.md
-!src/data/emoji/*
-!src/data/forms/defs.ts
-!src/data/forms/index.ts
-!src/data/forms/readme.md
+!src/data/emoji
+!src/data/forms
