@@ -12,6 +12,7 @@ config/*
 !config/README.MD
 
 src/modules/*
+!src/modules/helpers/moduleImportFactory.ts
 !src/modules/generate_index.ts
 !src/modules/core
 !src/modules/index.ts
