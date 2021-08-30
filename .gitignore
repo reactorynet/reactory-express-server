@@ -12,12 +12,12 @@ config/*
 !config/README.MD
 
 src/modules/*
-!src/modules/helpers/moduleImportFactory.ts
 !src/modules/generate_index.ts
 !src/modules/core
 !src/modules/index.ts
 !src/modules/README.md
 !src/modules/available.json
+!src/modules/helpers
 
 src/workflow/.sample_env
 
