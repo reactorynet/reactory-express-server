@@ -109,7 +109,7 @@ export const ReactoryServer = async (props: Reactory.IStartupOptions) => {
   try {
     mongoose_result = await mongooseConnection.then();
     logger.debug('✅Connection to mongoose complete');
-  } catch (error: any) {
+  } catch (error) {
     logger.error(`
   ################################################
   💥Could not connect to mongoose - shutting down
