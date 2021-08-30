@@ -42,8 +42,24 @@ import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContex
 // @ts-ignore
 import { Reactory } from '@reactory/server-core/types/reactory';
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
-import moduleImportFactory from '@reactory/server-modules/helpers/moduleImportFactory';
-import clientConfigFactory from '@reactory/server-core/data/clientConfigs/helpers/configImportFactory';
+import colors from 'colors/safe';
+import http from 'http';
+
+
+
+// set theme
+colors.setTheme({
+  silly: 'rainbow',
+  input: 'grey',
+  verbose: 'cyan',
+  prompt: 'grey',
+  info: 'green',
+  data: 'grey',
+  help: 'cyan',
+  warn: 'yellow',
+  debug: 'blue',
+  error: 'red'
+});
 
 
 const {
@@ -110,7 +126,7 @@ export const ReactoryServer = async (props: Reactory.IStartupOptions) => {
     mongoose_result = await mongooseConnection.then();
     logger.debug('✅Connection to mongoose complete');
   } catch (error) {
-    logger.error(`
+    logger.error(colors.red(`
   ################################################
   💥Could not connect to mongoose - shutting down
   server process. Check if the configuration 
@@ -122,7 +138,7 @@ export const ReactoryServer = async (props: Reactory.IStartupOptions) => {
   pass: ${MONGO_PASSWORD ? hideText(MONGO_PASSWORD) : '!!NOT-SET!!'}
   err: ${error.message}
   ################################################
-  `);
+  `));
     process.exit(0);
   }
 
@@ -185,6 +201,7 @@ Environment Settings:
   let graphcompiled: boolean = false;
   let graphError: String = '';
 
+  let expressServer: http.Server = null;
 
   reactoryExpress = express();
 
@@ -192,9 +209,22 @@ Environment Settings:
     logger.error(`Application reported error`);
   });
 
+  process.once('SIGUSR2', function () {
+    if (expressServer) {
+      logger.debug(colors.magenta('Interrupt Received, restarting'));
+      expressServer.close(() => {
+        process.kill(process.pid, 'SIGUSR2')
+      })
+    }
+  })
+
   process.on("SIGINT", () => {
-    console.log('Shutting down server');
-    process.exit(0);
+    if (expressServer) {
+      console.log('Shutting down server');
+      expressServer.close(() => {
+        process.exit(0);
+      })
+    }
   });
 
 
@@ -314,28 +344,35 @@ Environment Settings:
       passport.authenticate(['jwt', 'anonymous'], { session: false }),
       bodyParser.urlencoded({ extended: true }),
       express.static(APP_DATA_ROOT || publicFolder));
-    reactoryExpress.listen(API_PORT);
+
+    expressServer = reactoryExpress.listen(API_PORT, () => {
+      logger.info(asciilogo);
+      if (graphcompiled === true) {
+        const graphql_api_root = resolveUrl(API_URI_ROOT, queryRoot);
+
+        logger.info(colors.green(`✅ Running a GraphQL API server at ${graphql_api_root}`));
+        if (NODE_ENV === 'development' && DEVELOPER_ID) {
+          User.find({ email: DEVELOPER_ID }).then((user_result) => {
+            const auth_token = AuthConfig.jwtTokenForUser(user_result, { exp: moment().add(1, 'hour').unix() })
+            logger.debug(`Developer id ${DEVELOPER_ID} access graphiql docs ${resolveUrl(API_URI_ROOT, `cdn/graphiql/index.html?auth_token=${auth_token}`)}`)
+          });
+
+        }
+      }
+      else logger.info(colors.yellow(`🩺 GraphQL API not available - ${graphError}`));
+
+      logger.info(colors.green('✅ System Initialized/Ready, enabling app'));
+
+      global.REACTORY_SERVER_STARTUP = new Date();
+      amq.raiseSystemEvent('server.startup.complete');
+    }).on("error", (err) => {
+      logger.error(colors.red("Could not successfully start the express server"), err);
+      process.exit(-1)
+    });
+
     reactoryExpress.use(flash());
 
-    logger.info(asciilogo);
-    if (graphcompiled === true) {
-      const graphql_api_root = resolveUrl(API_URI_ROOT, queryRoot);
 
-      logger.info(`✅ Running a GraphQL API server at ${graphql_api_root}`);
-      if (NODE_ENV === 'development' && DEVELOPER_ID) {
-        User.find({ email: DEVELOPER_ID }).then((user_result) => {
-          const auth_token = AuthConfig.jwtTokenForUser(user_result, { exp: moment().add(1, 'hour').unix() })
-          logger.debug(`Developer id ${DEVELOPER_ID} access graphiql docs ${resolveUrl(API_URI_ROOT, `cdn/graphiql/index.html?auth_token=${auth_token}`)}`)
-        });
-
-      }
-    }
-    else logger.info(`🩺 GraphQL API not available - ${graphError}`);
-
-    logger.info('✅ System Initialized/Ready, enabling app');
-
-    global.REACTORY_SERVER_STARTUP = new Date();
-    amq.raiseSystemEvent('server.startup.complete');
   }).catch((startupError) => {
     logger.error('Server was unable to start successfully.', startupError);
     process.exit(0);

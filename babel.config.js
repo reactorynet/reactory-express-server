@@ -58,19 +58,6 @@ module.exports = function (api) {
     '@babel/plugin-transform-object-set-prototype-of-to-assign',
     '@babel/plugin-transform-arrow-functions',
 
-
-    /*
-    'add-module-exports',
-    // "babel-plugin-transform-class-properties",
-                
-    
-    
-    
-    // "@babel/plugin-transform-react-jsx-compat",
-    '@babel/plugin-transform-react-jsx',
-    '@babel/plugin-transform-react-inline-elements',
-    '@babel/plugin-transform-react-constant-elements',
-    */
   ];
 
   return {
