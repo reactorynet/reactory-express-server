@@ -21,12 +21,3 @@ src/modules/*
 
 src/workflow/.sample_env
 
-src/data/*
-!src/data/index.ts
-!src/data/clientConfigs/helpers/
-!src/data/readme.md
-!src/data/clientConfigs/reactory/index.ts
-!src/data/clientConfigs/readme.md
-!src/data/emoji
-!src/data/forms
-!src/data/clients.ts
