@@ -6,7 +6,7 @@ import ReactoryFile, { ReactoryFileModel } from "@reactory/server-modules/core/m
 import ReactoryFileImportPackage from '@reactory/server-modules/core/models/ReactoryFileImportPackage';
 import logger from "@reactory/server-core/logging";
 import { ObjectId } from "mongodb";
-import ApiError from "exceptions";
+import ApiError from "@reactory/server-core/exceptions";
 
 /**
  * Simple service class that reads in a file from a row offset and
