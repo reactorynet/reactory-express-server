@@ -15,8 +15,8 @@ import {
   QueryStringResultWithCount,
 
 } from '@reactory/server-core/database/types';
-import logger from 'logging';
-import { Reactory } from 'types/reactory';
+import logger from '@reactory/server-core/logging';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
 
 interface SQLQueryParams {

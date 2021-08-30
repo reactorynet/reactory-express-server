@@ -1,26 +1,22 @@
 
 
-import { cloneDeep } from 'lodash';
-import logger from 'logging';
-import { isNull } from 'util';
-
 const StringProperty = (
   title, description,
-  minLength = undefined, 
+  minLength = undefined,
   maxLength = undefined,
   target = {},
   propertyName = null,
 ) => {
 
-  if(target) {
-    if(!target.properties) target.properties = {};
+  if (target) {
+    if (!target.properties) target.properties = {};
     target.properties[propertyName] = {
       type: 'string',
-        title,
-        description,
-        minLength,
-        maxLength,
-      };
+      title,
+      description,
+      minLength,
+      maxLength,
+    };
 
     return target;
   }
@@ -46,8 +42,8 @@ export const ObjectProperty = (
   target = {},
   propertyName = null,
 ) => {
-  if(target) {
-    if(!target.properties) target.properties = {};
+  if (target) {
+    if (!target.properties) target.properties = {};
     target.properties[propertyName] = {
       type: 'object',
       title,
@@ -73,10 +69,10 @@ export const DateProperty = (
   max = undefined,
   target = {},
   propertyName = null,
-) => { 
+) => {
 
-  if(target) {
-    if(!target.properties) target.properties = {}
+  if (target) {
+    if (!target.properties) target.properties = {}
 
     target.properties[propertyName] = {
       type: 'string',
@@ -89,12 +85,12 @@ export const DateProperty = (
 
     return target;
   }
-  
+
   return {
     type: 'string',
     format: 'date',
     title,
-    description,  
+    description,
   };
 
 };
@@ -104,10 +100,10 @@ export const DateTimeProperty = (
   description = undefined,
   target = {},
   propertyName = null,
-) =>  {
-  
-  if(target) {
-    if(!target.properties) target.properties = {}
+) => {
+
+  if (target) {
+    if (!target.properties) target.properties = {}
 
     target.properties[propertyName] = {
       type: 'string',
@@ -125,7 +121,7 @@ export const DateTimeProperty = (
     type: 'string',
     format: 'date',
     title,
-    description,  
+    description,
   };
 };
 
@@ -135,11 +131,11 @@ export const NumberProperty = (
   min,
   max,
   target = {},
-  propertyName = null,  
-) =>  {
-  
-  if(target) {
-    if(!target.properties) target.properties = {}
+  propertyName = null,
+) => {
+
+  if (target) {
+    if (!target.properties) target.properties = {}
 
     target.properties[propertyName] = {
       type: 'number',
@@ -155,7 +151,7 @@ export const NumberProperty = (
   return {
     type: 'number',
     title,
-    description,  
+    description,
   };
 };
 
@@ -173,61 +169,61 @@ class Builder {
     this._schema = {
       type: props.type,
       title: props.title
-    };    
+    };
 
     this._uiSchema = {
     };
 
-    if(props.type === 'object') {
+    if (props.type === 'object') {
       this._schema.properties = {};
     }
 
     this._parent = props.parent;
-  }  
+  }
 
-  $string(propertyName, title, description, minLength, maxLength){ 
+  $string(propertyName, title, description, minLength, maxLength) {
     StringProperty(title, description, minLength, maxLength, this._schema, propertyName);
     return this;
   }
 
-  $date(propertyName, title, schemaProps = { description: '' }, uiSchema = {} ){
+  $date(propertyName, title, schemaProps = { description: '' }, uiSchema = {}) {
     DateProperty(title, schemaProps.description, undefined, undefined, this._schema, propertyName);
     return this;
   }
 
-  $number(propertyName, title, schemaProps = { description: '' }, uiSchema = {} ){
-    NumberProperty(title, schemaProps.description, undefined, undefined , this._schema, propertyName);
+  $number(propertyName, title, schemaProps = { description: '' }, uiSchema = {}) {
+    NumberProperty(title, schemaProps.description, undefined, undefined, this._schema, propertyName);
     return this;
   };
 
-  $object(propertyName, title, schemaProps = {description: '', uiSchema }){
+  $object(propertyName, title, schemaProps = { description: '', uiSchema }) {
     const objectProperty = ObjectProperty(title, schemaProps.description, {}, null, null);
     this._schema.properties[propertyName] = new Builder({ type: "object", parent: this });
     return this._schema.properties[propertyName]
   }
 
-  $return(){
-    if(this._parent) return this._parent.return();
+  $return() {
+    if (this._parent) return this._parent.return();
 
     return this;
   }
 
 
-  getSchema(){
+  getSchema() {
     let el = this;
 
-    while (el && el._parent){      
+    while (el && el._parent) {
       el = el._parent;
     };
-    
+
     return el._schema;
   }
 
-  getuiSchema(){
+  getuiSchema() {
     return this._uiSchema;
   }
 
-  toJsonString(){
+  toJsonString() {
     return JSON.stringify(this._schema);
   }
 }
