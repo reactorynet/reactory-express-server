@@ -13,6 +13,7 @@ These utils are generally shortcut wrappers for more complex node command instru
 
 ### In Progress
 8. [upgrade.sh](./upgrade.sh) - pulls the latest version of the server installs dependencies and starts server again
+9. [addconfig.sh](./addconfig.sh) - utility that can be used to guide you through creating a configuration file for your environment.
 
 ## Starting server in development mode
 

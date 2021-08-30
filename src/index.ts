@@ -1,7 +1,7 @@
 'use strict'
 // @ts-ignore
 import dotenv from 'dotenv';
-import { ReactoryServer } from '@reactory/server-core/server';
+import { ReactoryServer } from '@reactory/server-core/express/server';
 import logger from '@reactory/server-core/logging';
 
 dotenv.config();

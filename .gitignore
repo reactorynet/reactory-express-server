@@ -6,9 +6,10 @@ build/*
 lib/*
 yarn.lock
 
-config/*/*
+config/*
 !config/reactory/.env.sample
 !config/reactory/pm2.sample.config.js
+!config/README.MD
 
 src/modules/*
 !src/modules/generate_index.ts

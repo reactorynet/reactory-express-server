@@ -13,6 +13,8 @@ const bypassUri = [
   '/auth/microsoft/openid',
 ];
 
+
+
 const ReactoryClientAuthenticationMiddleware = (req: any, res: any, next: Function) => {
 
 

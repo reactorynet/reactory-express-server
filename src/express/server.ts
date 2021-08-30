@@ -20,7 +20,7 @@ import flash from 'connect-flash';
  * correct aliasing configured in tsconfig and package.json
  */
 import mongooseConnection from '@reactory/server-core/mongoose';
-import corsOptions from '@reactory/server-core/config/cors';
+import corsOptions from '@reactory/server-core/express/cors';
 import reactoryClientAuthenticationMiddleware from '@reactory/server-core/middleware/ReactoryClient';
 import userAccountRouter from '@reactory/server-core/useraccount';
 import reactory from '@reactory/server-core/reactory';
@@ -104,7 +104,7 @@ export const ReactoryServer = async (props: Reactory.IStartupOptions) => {
   const ca = sslrootcas.create();
   https.globalAgent.options.ca = ca;
 
-  const packageJson = require('../package.json');
+  const packageJson = require(`${process.cwd()}/package.json`);
 
   try {
     mongoose_result = await mongooseConnection.then();
@@ -191,6 +191,12 @@ Environment Settings:
   reactoryExpress.on('error', (app) => {
     logger.error(`Application reported error`);
   });
+
+  process.on("SIGINT", () => {
+    console.log('Shutting down server');
+    process.exit(0);
+  });
+
 
   reactoryExpress.use((err: Error, req: any, res: any, next: NextFunction) => {
     logger.error(`Express Error Handler`, { err });
@@ -284,6 +290,7 @@ Environment Settings:
   if (SYSTEM_USER_ID === 'not-set') {
     logger.warn("SYSTEM_USER_ID env variable is not set - please configure in env variables");
   }
+
 
   // TODO: Werner Weber - Update the start result object to contain
   // more useful information about the server environment, configuration

@@ -7,7 +7,7 @@ import TemplateList from './EmailTemplate/TemplateList';
 import ReactoryGlobalPlugin from './Global/ReactoryGlobalForm';
 import EmailForms from './EmailForms';
 import shared from './shared';
-import { Login } from './Security'
+import { Login } from './Security';
 export default [
   ReactoryGlobalPlugin,
   AboutUsPage,
