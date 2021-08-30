@@ -11,6 +11,6 @@
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
 echo "Starting Reactory Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-development}"
-sh ./bin/generate.sh ${1:-reactory}
+sh ./bin/generate.sh ${1:-reactory} ${2:-local}
 pm2 start ./config/${1:-reactory}/pm2.${2:-local}.config.js --env ${3:-development}
 pm2 monit
