@@ -7,6 +7,9 @@ import { Stream } from "stream";
 import { Application } from "express";
 declare namespace Reactory {
 
+  export interface IStartupOptions {
+    [key: string]: any
+  }
   export namespace Client {
 
     export interface IFrameProperties {
@@ -77,6 +80,7 @@ declare namespace Reactory {
     colorScheme: () => any
     getSetting: (key: string) => any;
     getDefaultUserRoles: () => string[];
+    setPassword: (password: string) => void;
   }
 
   export interface IReactoryClientDocument extends Mongoose.Document, IReactoryClient { }
@@ -465,6 +469,7 @@ declare namespace Reactory {
     required?: any | undefined,
     properties?: ISchemaObjectProperties | any | undefined,
     dependencies?: any | undefined,
+    definitions?: any,
     items?: ISchema,
     format?: string | "email" | "password" | "date" | "date-time",
     enum?: string[]
@@ -747,9 +752,23 @@ declare namespace Reactory {
   }
 
 
+  export type ReactoryResolverAsync = (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>;
+  export type ReactoryResolverSync = (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => any;
+  export type ReactoryResolverObject = {
+    [key: string]: ReactoryResolverAsync | ReactoryResolverAsync
+  }
+
   export interface IGraphShape {
-    Query: Object,
-    Mutation: Object,
+    [key: string]: ReactoryResolverAsync | ReactoryResolverAsync | ReactoryResolverObject
+    Query?: {
+      [key: string]: (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>
+    },
+    Mutation?: {
+      [key: string]: (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>
+    },
+    Subscription?: {
+      [key: string]: (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>
+    }
   }
 
   export interface IGraphDefinitions {

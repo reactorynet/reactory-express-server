@@ -1,6 +1,6 @@
 {
   "name": "@reactory/server-core",
-  "version": "0.9.45",
+  "version": "0.9.47",
   "displayName": "Reactory Server",
   "description": "Reactory Core Server",
   "main": "server.js",
@@ -99,6 +99,7 @@
     "chartjs-plugin-datalabels": "^0.7.0",
     "co": "^4.6.0",
     "color-scheme": "^1.0.1",
+    "colors": "^1.4.0",
     "connect-flash": "^0.1.1",
     "cors": "^2.8.4",
     "csv": "^5.5.0",

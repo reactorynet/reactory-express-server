@@ -493,8 +493,8 @@ export const surveyEmails = {
         applicationTitle: partner.name,
         timeEnd: moment(survey.endDate).format('HH:mm'),
         dateEnd: moment(survey.endDate).format('YYYY-MM-DD'),
-        assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
-        link: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
+        assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).add(60, 'days').valueOf() }))}`,
+        link: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).add(60, 'days').valueOf() }))}`,
       };
 
       let bodyTemplate = null;
@@ -639,8 +639,8 @@ export const surveyEmails = {
         applicationTitle: partner.name,
         timeEnd: moment(survey.endDate).format('HH:mm'),
         dateEnd: moment(survey.endDate).format('YYYY-MM-DD'),
-        assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
-        link: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).valueOf() }))}`,
+        assessmentLink: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).add(60, 'days').valueOf() }))}`,
+        link: `${partner.siteUrl}/assess/${assessment._id}?auth_token=${AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(assessorModel, { exp: moment(survey.endDate).add(60, 'days').valueOf() }))}`,
       };
 
       let bodyTemplate = null;
@@ -754,7 +754,7 @@ export const surveyEmails = {
 
       const $organization = await Organization.findById(survey.organization).then();
 
-      const authToken = AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate, { exp: moment(survey.endDate).valueOf() }));
+      const authToken = AuthConfig.jwtMake(AuthConfig.jwtTokenForUser(delegate, { exp: moment(survey.endDate).add(60, 'days').valueOf() }));
       const properties = {
         partner,
         delegate,
@@ -880,7 +880,7 @@ export const organigramEmails = {
       }
 
       logger.info('Api Key Set, configuring property bag for template.');
-      let exp = moment().add(30, 'd').valueOf();
+      let exp = moment().add(60, 'd').valueOf();
 
       if (isNil(survey) === false) {
         exp = isNil(survey.endDate) === false ? moment(survey.endDate).valueOf() : exp;

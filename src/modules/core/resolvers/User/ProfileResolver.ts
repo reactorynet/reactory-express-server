@@ -4,14 +4,12 @@ import { isNil, isString } from 'lodash';
 import refresh from 'passport-oauth2-refresh';
 import FormData from 'form-data';
 import { User, PersonalDemographic } from '@reactory/server-core/models';
-import MSGraph from '@reactory/server-core/azure/graph';
+import MSGraph from '@reactory/server-modules/reactory-azure/services/graph';
 import { updateUserProfileImage } from '@reactory/server-core/application/admin/User';
 import logger from '@reactory/server-core/logging';
-import ApiError from "exceptions";
+import ApiError from "@reactory/server-core/exceptions";
 import moment from "moment";
 import { Reactory } from "types/reactory";
-import Organization from "application/admin/Organization";
-import { RecordNotFoundError } from "@reactory/server-core/exceptions";
 
 const refreshMicrosoftToken = async (msauth: any) => {
   logger.debug('Refreshing Microsoft Token')

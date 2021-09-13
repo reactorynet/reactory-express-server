@@ -277,9 +277,6 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                 //general file            
                 virtualPath = 'content/files/';
             }
-
-            debugger
-
             // if there is a virtual path, use it.
             if (args.virtualPath) virtualPath = args.virtualPath;
 

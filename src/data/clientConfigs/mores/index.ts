@@ -2,7 +2,7 @@ import {
   profileSmall,
   towerStoneMenuDef,
   MenuItems,
-} from '../../menus';
+} from '../helpers/menus';
 
 import themeOptions from './theme';
 
@@ -13,7 +13,7 @@ import {
   resetpasswordroute,
   forgotpasswordroute,
   notfoundroute,
-} from '../defaultRoutes';
+} from '../helpers/defaultRoutes';
 import { Reactory } from 'types/reactory';
 
 const key = 'mores';

@@ -1,1 +1,3 @@
-These folders should contain static data, that you want to load / make available at startup.
+# Static data
+The ./data folder is intented to contain installation specific data files.  These may differ between environments.
+

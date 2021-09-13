@@ -2,17 +2,22 @@ node_modules/
 dist/
 /*-audit.json
 package-lock.json
-config/*/.env*local*
-config/*/pm2.local*
 build/*
 lib/*
 yarn.lock
+
+config/*
+!config/reactory/.env.sample
+!config/reactory/pm2.sample.config.js
+!config/README.MD
+
 src/modules/*
 !src/modules/generate_index.ts
 !src/modules/core
 !src/modules/index.ts
 !src/modules/README.md
 !src/modules/available.json
-~/develop/reactory/data/*
+!src/modules/helpers
 
 src/workflow/.sample_env
+

@@ -1,6 +1,6 @@
 import {
   MenuItems,
-} from '../../menus';
+} from '../helpers/menus';
 
 import {
   formsroute,
@@ -9,7 +9,7 @@ import {
   resetpasswordroute,
   forgotpasswordroute,
   notfoundroute,
-} from '../defaultRoutes';
+} from '../helpers/defaultRoutes';
 
 import theme from './theme';
 

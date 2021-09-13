@@ -7,14 +7,14 @@ const { ObjectId } = mongoose.Schema.Types;
 
 const UserDemographicSchema = new mongoose.Schema({
     membership: {
-        type: ObjectId, 
-        ref:'Membership'
+        type: ObjectId,
+        ref: 'Membership'
     },
     organisation: {
-        type: ObjectId, 
-        ref:'Membership'
+        type: ObjectId,
+        ref: 'Membership'
     },
-    user:{
+    user: {
         type: ObjectId,
         ref: 'User'
     },
@@ -42,20 +42,19 @@ const UserDemographicSchema = new mongoose.Schema({
         type: ObjectId,
         ref: 'BusinessUnit'
     },
-    team:{
+    team: {
         type: ObjectId,
         ref: 'Team'
     }
 })
 
-UserDemographicSchema.statics.updateDemographic = async function updateDemographic(userID: string | mongodb.ObjectID,demographic: String, value: String | '') {
-    if(ObjectIdFunc.isValid(userID)){
-        const data = {[`${demographic}`] : value}
-        const _d = await this.findOneAndUpdate({user: userID}, data, {new : true}).populate('')
-        debugger
+UserDemographicSchema.statics.updateDemographic = async function updateDemographic(userID: string | mongodb.ObjectID, demographic: String, value: String | '') {
+    if (ObjectIdFunc.isValid(userID)) {
+        const data = { [`${demographic}`]: value }
+        const _d = await this.findOneAndUpdate({ user: userID }, data, { new: true }).populate('')
         //@ts-ignore
-        
-        return {demographic: demographic, ...value}
+
+        return { demographic: demographic, ...value }
     }
     return false
 }
