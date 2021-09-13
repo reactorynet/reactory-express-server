@@ -803,9 +803,9 @@ const userResolvers = {
         if (survey && survey.delegates.length > 0) {
           if(delegate.status !== 'new') await Survey.updateOne(params.query, { $set: params.data });
         }else throw new ApiError('No Peers to confirm')
-        
         if (survey && survey.options) {
           //@ts-ignore
+          const {autoLaunchOnPeerConfirm, minimumPeers} = survey.options
           const entryData: Mores.IDelegateEntryDataStruct = {
             entry: null,
             entryIdx: -1,
@@ -814,7 +814,7 @@ const userResolvers = {
             success: true,
             patch: false,
           };
-          if (survey.options.autoLaunchOnPeerConfirm === true && delegate && delegate.status !== 'new') {
+          if (autoLaunchOnPeerConfirm === true && survey.delegates.length >= minimumPeers && delegate && delegate.status !== 'new') {
             entryData.entry = delegate
             const variables = {
               survey: survey._id.toString(),
@@ -861,7 +861,7 @@ const userResolvers = {
                 lastAction
               }
             }`, variables , {}, context.user, context.partner).then()
-            logger.debug(`NEED TO IMPLEMENT AUTO LAUNCH FEATURE HERE`);
+            logger.debug(`Auto launched survey ${survey.surveyType} for user ${id}`);
            
           }
         }
