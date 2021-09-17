@@ -46,13 +46,19 @@ const ReactoryClientAuthenticationMiddleware = (req: any, res: any, next: Functi
     return;
   }
 
+
+
   if (isNil(clientId) === true || clientId === '') {
     res.status(401).send({ error: 'no-client-id' });
   } else {
     logger.debug(`ReactoryClientAuthenticationMiddleware:: extracted partner key: ${clientId}`);
     try {
       ReactoryClient.findOne({ key: clientId }).then((clientResult: any) => {
-        if (isNil(clientResult)) res.status(401).send({ error: `X-Client-Key / ?clientId ${clientId} Credentials Invalid.` });
+        if (isNil(clientResult) === true ) { 
+          logger.debug(`ReactoryClientAuthenticationMiddleware:: ${clientId} no credentials / configuration entry found.`)
+          res.status(401).send({ error: `X-Client-Key / clientId ${clientId} Credentials Invalid. Please check that your client id is correct` });
+          return;
+        }
 
         if (isNil(serverBypass) === false) {
           logger.debug('Validating Server Bypass');
@@ -67,6 +73,7 @@ const ReactoryClientAuthenticationMiddleware = (req: any, res: any, next: Functi
         } else {
           if (clientResult.validatePassword(clientPwd) === false) {
             res.status(401).send({ error: 'Invalid api client credentials' });
+            return;
           }
           else {
             req.partner = clientResult;

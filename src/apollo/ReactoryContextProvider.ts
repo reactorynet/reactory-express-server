@@ -2,37 +2,15 @@ import uuid from 'uuid';
 import { Reactory } from "@reactory/server-core/types/reactory"; // eslint-disable-line
 import { getService } from '@reactory/server-core/services';  // eslint-disable-line
 import logger from '@reactory/server-core/logging';
+import colors from 'colors/safe';
 
 export default async ($session: any, currentContext: any): Promise<Reactory.IReactoryContext> => {
-  /**
-   * The Reactory Context Provider is the base provider and
-   * can be considerd as the component and user container for the
-   * duration of the exection.
-   */
-  let newContext: Reactory.IReactoryContext = {
-    ...currentContext,
-    user: $session.req.user,
-    partner: $session.req.partner,
-    $request: $session.req,
-    $response: $session.res,
-    hasRole: (role: string, partner?: Reactory.IPartner, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => {
-      return $session.req.user.hasRole(partner && partner._id ? partner._id : $session.req.partner._id,
-        role,
-        organization && organization._id ? organization._id : undefined,
-        businessUnit && businessUnit._id ? businessUnit._id : undefined)
-    }
-  };
 
-  const $getService = (id: string, props: any = undefined) => {
-    return getService(id, props, {
-      ...newContext,
-      getService: $getService,
-    });
-  };
 
-  const $log = (message: string, meta: any = null, type: Reactory.LOG_TYPE = "debug",) => {
-    //281e99d1-bc61-4a2e-b007-33a3befaff12
-    const $message = `(${$id.substr(30, 6)}) ${email}: ${message}`;
+  const $log = (message: string, meta: any = null, type: Reactory.LOG_TYPE = "debug", clazz: string = 'anon') => {
+    //281e99d1-bc61-4a2e-b007-33a3befaff12    
+
+    const $message = `${clazz}(${$id.substr(30, 6)}) ${email}: ${message}`;
     switch (type) {
       case "e":
       case "err":
@@ -55,6 +33,43 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     }
   };
 
+
+  /**
+   * The Reactory Context Provider is the base provider and
+   * can be considerd as the component and user container for the
+   * duration of the exection.
+   */
+  let newContext: Reactory.IReactoryContext = {
+    ...currentContext,
+    user: $session.req.user,
+    partner: $session.req.partner,
+    $request: $session.req,
+    $response: $session.res,
+    log: $log,
+    hasRole: (role: string, partner?: Reactory.IPartner, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => {
+      return $session.req.user.hasRole(partner && partner._id ? partner._id : $session.req.partner._id,
+        role,
+        organization && organization._id ? organization._id : undefined,
+        businessUnit && businessUnit._id ? businessUnit._id : undefined)
+    }
+  };
+
+
+  const $id = uuid();
+  let email = 'anon@local';
+  if ($session.req.user) {
+    email = $session.req.user.email;
+  }
+
+  const $getService = (id: string, props: any = undefined) => {
+    return getService(id, props, {
+      ...newContext,
+      getService: $getService,
+    });
+  };
+
+
+
   /**
    * We check in the configuration settings if there is a "execution_context_service" key.
    * if the key is found and if it is a string with an @ in the indicator then we can assume
@@ -69,10 +84,6 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
       newContext.log = $log;
     }
   }
-
-  const $id = uuid();
-
-  const { email } = $session.req.user;
 
   return {
     id: $id,

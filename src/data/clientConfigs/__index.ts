@@ -11,12 +11,12 @@
 import reactory from '@reactory/server-core/data/clientConfigs/reactory/index';
 
 /**
- * Generated import for client configuration lasec-crm
+ * Generated import for client configuration yellowspot
  * */ 
-import lasec__crm from '@reactory/server-core/data/clientConfigs/lasec-crm/index';
+import yellowspot from '@reactory/server-core/data/clientConfigs/yellowspot/index';
   
 export default [
 	reactory,
-	lasec__crm
+	yellowspot
 ];
 

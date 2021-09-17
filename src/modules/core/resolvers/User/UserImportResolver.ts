@@ -27,7 +27,7 @@ const graph: any = {
      * @param obj 
      * @returns 
      */
-    id: (obj: Reactory.IReactoryFileImportPackage) => {
+    id: (obj: Reactory.IReactoryFileImportPackageDocument) => {
       if (obj._id) return obj._id.toString();
       return null;
     },
@@ -188,19 +188,24 @@ const graph: any = {
      */
     AddFileToImportPackage: async (parent: any, params: { file: any, workload_id: string }, context: Reactory.IReactoryContext) => {
       try {
-
+        debugger
         const { workload_id, file } = params;
         const fileService: Reactory.Service.IReactoryFileService = context.getService('core.ReactoryFileService@1.0.0') as Reactory.Service.IReactoryFileService;
         //upload the file and associate with the workload package
         logger.debug(`Uploading File using Reactory File Service`, { filename: params.file.filename });
 
         let fileModel = await fileService.uploadFile({
-          file: params.file,
+          file,
+          filename: file.filename,
           uploadContext: `reactory_file_import_package::${params.workload_id}`,
           isUserSpecific: true,
+          rename: false,
+          catalog: true,
         }).then();
 
+        debugger
         try {
+          // get the package manager server.
           const packman: Reactory.IReactoryImportPackageManager = context.getService('core.ReactoryFileImportPackageManager@1.0.0') as Reactory.IReactoryImportPackageManager
           const import_file = await packman.addFile(workload_id, fileModel);
           return import_file
@@ -213,8 +218,24 @@ const graph: any = {
       }
 
     },
-    RemoveFileFromImportPackage: async (): Promise<boolean> => {
-      throw new ApiError('Not Implemented Yet');
+    RemoveFileFromImportPackage: async (parent: any, args: any, context: Reactory.IReactoryContext, info: any): Promise<boolean> => {
+      
+      type t_arg = {file_id: string, workload_id: string }
+      
+      const { 
+        file_id,
+        workload_id
+      }: t_arg = args;
+      
+      try {
+        debugger
+        const packman: Reactory.IReactoryImportPackageManager = context.getService('core.ReactoryFileImportPackageManager@1.0.0') as Reactory.IReactoryImportPackageManager
+        const start_result = await packman.removeFile(workload_id, file_id);
+        return start_result;
+      } catch (packmanError) {
+        logger.error(`Error with packman service ${packmanError.message}`, packmanError);
+        throw new ApiError(`Error with packman service ${packmanError.message}`, { original: packmanError });
+      }
     },
     StartImportPackage: async (obj: any, args: { workload_id: string }, context: Reactory.IReactoryContext): Promise<any> => {
       throw new ApiError('Not Implemented Yet');
@@ -237,6 +258,35 @@ const graph: any = {
       }
 
     },
+    /**
+     * Generates a preview of the import file
+     * @param parent 
+     * @param params 
+     * @param context 
+     * @returns 
+     */
+    PreviewImportFile: async (parent: any, params: { workload_id: string, file_id: string, processors: string[] }, context: Reactory.IReactoryContext): Promise<Reactory.CoreSimpleResponse> => {
+
+      try {
+        const packman: Reactory.IReactoryImportPackageManager = context.getService('core.ReactoryFileImportPackageManager@1.0.0') as Reactory.IReactoryImportPackageManager
+        const payload = packman.previewFile(params.workload_id, params.file_id, params.processors);
+
+        return {
+          message: 'Preview generation complete',
+          success: true,
+          payload
+        }
+      } catch (err) {
+        return {
+          message: 'Preview generation failed',
+          success: false,
+          payload: {
+            error: err.message
+          }
+        }
+      }
+
+    }
   },
 };
 

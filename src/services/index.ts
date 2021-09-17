@@ -10,9 +10,76 @@ const serviceRegister: Reactory.IReactoryServiceRegister = {
 
 }
 
-export const getService = (id: string, props: any = {}, context: Reactory.IReactoryContext): any => {
+const getAlias = (id: string) => {
+
+
+
+  const [fullname, version] = id.split('@');
+  const [nameSpace, name] = fullname.split('.');
+
+  return name;
+}
+
+export const getService = (id: string, props: any = {}, context: Reactory.IReactoryContext, dependencies: any[] = []): any => {
+
   if (serviceRegister[id]) {
-    return serviceRegister[id].service({ ...props, $services: serviceRegister }, context);
+    const svcDef = serviceRegister[id];
+    let $deps: any = {}; //holder for the dependencies.
+
+
+    const append_deps = (dep: string | { alias: string, id: string }) => {
+      let alias = null;
+      let $id: string | { alias: string, id: string } = dep;
+
+      if (typeof dep === "string") {
+        alias = getAlias(dep as string)
+        $id = dep as string
+      }
+
+      if (typeof dep === 'object') {
+        if (dep.alias) alias = dep.alias;
+        if (dep.id) $id = dep.id;
+
+      }
+
+      const hasIt = serviceRegister[$id as string] !== undefined;
+      if (hasIt === true) {
+        $deps[alias] = getService($id as string, props, context,);
+      } else {
+        context.log(`🚨 Dependency not found ${dep} 🚨`, { service_id: id, props, missing: dep }, 'warning');
+      }
+    }
+
+    if (svcDef.dependencies && svcDef.dependencies.length > 0) {
+      svcDef.dependencies.forEach((dep) => {
+        append_deps(dep);
+      })
+    }
+
+    if (dependencies && dependencies.length) {
+      dependencies.forEach(dep => append_deps(dep));
+    }
+
+    const svc = serviceRegister[id].service({ ...props, $services: serviceRegister, $dependencies: $deps }, context);
+    //try to auto bind services with property setter binders.
+    Object.keys($deps).map((dependcyAlias: string) => {
+      let isSet = false;
+
+
+      if (!isSet) {
+
+        let fn = `set${dependcyAlias.substring(0, 1).toUpperCase()}${dependcyAlias.substring(1, dependcyAlias.length)}`;
+
+        if (svc[fn] && typeof svc[fn] === 'function') {
+          //call the setter function
+          svc[fn]($deps[dependcyAlias]);
+        }
+
+      }
+
+    });
+
+    return svc;
   } else {
     throw new ApiError(`Could not get service ${id}`);
   }

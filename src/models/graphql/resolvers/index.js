@@ -114,7 +114,7 @@ const resolvers = {
 
       if (skipResfresh === false && isAnon === false) {
         logger.debug(`apiStatus called for ${user.firstName} ${user.lastName}, performing profile refresh`);
-
+        debugger
         try {
           const refreshResult = await execql(`
           query RefreshProfile($id:String, $skipImage: Boolean) {
@@ -150,7 +150,10 @@ const resolvers = {
               }
             }
           }
-        `).then();
+        `, {
+          id: user.id,
+          skipImage: true,
+        }, {}, context.user, context.partner).then();
 
           if (refreshResult && refreshResult.data && refreshResult.data.refreshProfileData) {
             const { user: profile, messages } = refreshResult.data.refreshProfileData;
@@ -253,7 +256,7 @@ const resolvers = {
         navigationComponents,
       };
 
-      logger.debug(`${user.firstName} Api Status Call Result:\n${JSON.stringify(api_status_result)}`);
+      logger.debug(`${user.firstName} Api Status Call Result:${api_status_result.status}`);
 
       return api_status_result;
     },

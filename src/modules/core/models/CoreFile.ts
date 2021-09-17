@@ -149,13 +149,20 @@ ReactoryFileSchema.methods.stats = function stats() {
   return fstats;
 };
 
+
+ReactoryFileSchema.methods.exists = function exists() {
+  return fs.existsSync((this as Reactory.IReactoryFileModel).getServerFilename());
+}
+
 // eslint-disable-next-line max-len
 ReactoryFileSchema.methods.lineCount = async function lineCount() {
+  debugger;
+
   const LINE_FEED = '\n'.charCodeAt(0);
   const file: Reactory.IReactoryFileModel = this;
-  const $path = path.join(process.env.APP_DATA_ROOT, file.path, file.alias);
+  const $path = file.getServerFilename();
 
-  if (fs.existsSync($path) === false) {
+  if (file.exists() === false) {
     logger.error(`Cannot read lines for file ${$path}. File does not exist.`);
     throw new RecordNotFoundError(`The file ${$path} does not exist.`);
   }
@@ -183,8 +190,10 @@ ReactoryFileSchema.methods.getServerFilename = function getServerFilename() {
 
 ReactoryFileSchema.methods.readLines = async function readLines(start: number = 0, rows: number = -1): Promise<string[]> {
 
+  debugger;
+
   const file: Reactory.IReactoryFileModel = this;
-  const $path = path.join(process.env.APP_DATA_ROOT, file.path, file.alias);
+  const $path = file.getServerFilename();
   if (fs.existsSync($path) === false) {
     logger.error(`Cannot read lines for file ${$path}. File does not exist.`);
     throw new RecordNotFoundError(`The file ${$path} does not exist.`);

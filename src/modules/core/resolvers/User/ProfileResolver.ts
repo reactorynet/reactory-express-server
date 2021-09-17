@@ -192,6 +192,7 @@ export default {
   Query: {
     refreshProfileData: async (parent: any, params: { id: string, skipImage: boolean }, context: Reactory.IReactoryContext) => {
       let userToRefresh = context.user;
+      debugger
       const { id, skipImage } = params;
       const uxmessages = [];
       if (id && typeof id === 'string') {
@@ -229,12 +230,12 @@ export default {
           try {
             msuser = await MSGraph.getUserDetails(msauth.props.accessToken, { imageSize: '120x120', profileImage: skipImage === false });
             logger.debug('microsoft user response received', msuser);
-            uxmessages.push({
-              title: 'Microsoft Authentication',
-              text: 'Login valid',
-              status: 'success',
-              via: 'notification'
-            });
+            // uxmessages.push({
+            //   title: 'Microsoft Authentication',
+            //   text: 'Login valid',
+            //   status: 'success',
+            //   via: 'notification'
+            // });
           } catch (microsoftGraphError) {
             logger.error(`${microsoftGraphError.message}`, microsoftGraphError);
             /**

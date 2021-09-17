@@ -196,7 +196,7 @@ type ReactoryFileImportPackage {
   """
   files(file_ids: [String]): [ImportFile]
   """
-  Overall status
+  Overall status. The available status are "added", "processing", "done", "error"
   """
   status: String
   """
@@ -273,7 +273,7 @@ extend type Mutation {
   """
   Remove file from a import package
   """
-  RemoveFileFromImportPackage(file_id: String, workload_id: String): Boolean
+  RemoveFileFromImportPackage(file_id: String!, workload_id: String!): Boolean
 
   """
   Starts a given import package
@@ -289,6 +289,13 @@ extend type Mutation {
   Starts a process for a package
   """
   StartProcessForPackage(workload_id: String!, processors: [String] file_ids: [String]): CoreSimpleResponse
+  
+  """
+  Generates a preview of the data
+  """
+  PreviewImportFile(workload_id: String!, file_id: String!, processors: [String]): CoreSimpleResponse
+
+
 }
 
 extend type Subscription {

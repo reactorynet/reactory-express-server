@@ -220,16 +220,16 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         }
 
     }
-    setFileModel(file: ReactoryFileModel): Promise<ReactoryFileModel> {
+    setFileModel(file: Reactory.IReactoryFileModel): Promise<Reactory.IReactoryFileModel> {
         throw new Error('Method not implemented.');
     }
-    getFileModel(id: string): Promise<ReactoryFileModel> {
+    getFileModel(id: string): Promise<Reactory.IReactoryFileModel> {
+        return ReactoryFileModel.findById(id).then()
+    }
+    sync(): Promise<Reactory.IReactoryFileModel[]> {
         throw new Error('Method not implemented.');
     }
-    sync(): Promise<ReactoryFileModel[]> {
-        throw new Error('Method not implemented.');
-    }
-    clean(): Promise<ReactoryFileModel[]> {
+    clean(): Promise<Reactory.IReactoryFileModel[]> {
         throw new Error('Method not implemented.');
     }
     onStartup(): Promise<any> {

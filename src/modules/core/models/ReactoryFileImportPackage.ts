@@ -56,7 +56,7 @@ ImportProcessorSchema.methods.addError = function addError(line: number, error: 
   this.responses.push({ line, error });
 };
 
-const UserImportFileSchema: mongoose.Schema<Reactory.IUserImportFile> = new mongoose.Schema<Reactory.IUserImportFile>({
+const ImportFileSchema: mongoose.Schema<Reactory.IImportFile> = new mongoose.Schema<Reactory.IImportFile>({
   file: { type: ObjectId, ref: 'ReactoryFile' },
   preview: [UserPreviewSchema],
   options: FileOptionsSchema,
@@ -83,7 +83,7 @@ const ReactoryFileImportPackageSchema: mongoose.Schema<Reactory.IReactoryFileImp
   /**
    * File list for the package
    */
-  files: [UserImportFileSchema],
+  files: [ImportFileSchema],
   /**
    * status for the package.
    */
@@ -105,5 +105,5 @@ const ReactoryFileImportPackageSchema: mongoose.Schema<Reactory.IReactoryFileImp
   },
 });
 
-const ReactoryFileImportPackage = mongoose.model('ReactoryFileImportPackage', ReactoryFileImportPackageSchema);
+const ReactoryFileImportPackage = mongoose.model<Reactory.IReactoryFileImportPackageDocument>('ReactoryFileImportPackage', ReactoryFileImportPackageSchema);
 export default ReactoryFileImportPackage;
