@@ -1,10 +1,9 @@
-# UNTESTED!!
-# This is another potential method of running the application.
 [Unit]
 Description=Reactory Server
+After=network.target
 
 [Service]
-ExecStart=NODE_PATH=./src env-cmd env-cmd -f ./config/.env.reactory.local npx nodemon --exec npx babel-node ./src/server.js --presets @babel/env --max_old_space_size=2000000
+ExecStart=NODE_PATH=./src env-cmd env-cmd -f ./config/.env.reactory.local npx nodemon --exec npx babel-node ./src/index.ts --presets @babel/env --max_old_space_size=2000000
 Restart=always
 User=reactory
 # Note Debian/Ubuntu uses 'nogroup', RHEL/Fedora uses 'nobody'

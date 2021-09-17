@@ -268,8 +268,8 @@ class AuthConfig {
       iat: moment().valueOf(),
    *
    */
-  static jwtTokenForUser = (user, options = {}) => {
-    logger.debug(`Generating jwtToken for user`, { user })
+  static jwtTokenForUser = (user: Reactory.IUser, options = {}) => {
+    logger.debug(`Generating jwtToken for user ${user.email || user.id}`)
 
     if (isNil(user)) throw new UserValidationError('User object cannot be null', { context: 'jwtTokenForUser' });
 

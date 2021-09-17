@@ -23,8 +23,8 @@ import { organigramEmails } from "@reactory/server-core/emails";
 import ApiError, {
   RecordNotFoundError,
 } from "@reactory/server-core/exceptions";
+import crypto from 'crypto';
 import logger from "@reactory/server-core/logging";
-
 import { Reactory } from "@reactory/server-core/types/reactory";
 
 import { SURVEY_EVENTS_TO_TRACK } from "@reactory/server-core/models/index";
@@ -668,10 +668,12 @@ const userResolvers = {
   Mutation: {
     createUser: async (
       obj: any,
-      { input, organizationId, password }: any,
+      params: { input: any, organizationId: string, password?: string },
       context: Reactory.IReactoryContext,
       info: any
     ) => {
+      
+      const { input, organizationId, password = crypto.randomBytes(16).toString('hex') } = params;
       const { partner, user } = context;
 
       logger.info(`Create user mutation called ${input.email}`);
@@ -698,9 +700,10 @@ const userResolvers = {
 
       if (isNil(organizationId) === false && isNil(input) === false) {
         const organization = await Organization.findById(organizationId);
+        // TODO: Core Services - Need to refactoring base Admin Interfaces into a service class with a reactory wired context
         const createResult = await Admin.User.createUserForOrganization(
           input,
-          password || "Password123!",
+          password || password,
           organization,
           ["USER"],
           "LOCAL",

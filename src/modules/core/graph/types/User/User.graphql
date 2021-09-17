@@ -195,7 +195,14 @@ type SendMailResult {
 }
 
 extend type Mutation {
-  createUser(input: CreateUserInput!, organizationId: String!): User
+  """
+  Default Create User Mutation - OrganizationId is currently required, but this will be dropped
+  as a requirement in future versions. 
+  """
+  createUser(input: CreateUserInput!, organizationId: String!, password: String): User
+  """
+  Default Update User Mutation - Used to update a user's data.
+  """
   updateUser(id: String!, profileData: UpdateUserInput!): User
   deleteUser(id: String!): Boolean
   setOrganizationForUser(id: String!, organizationId: String) : Boolean
@@ -210,6 +217,9 @@ extend type Mutation {
   addUserCredentials(provider: String!, props: Any): Boolean
   removeUserCredentials(provider: String!): Boolean
   sendMail(message: SendMailInput!): SendMailResult
+  """
+  NOTE - These must be moved to the reactory AZURE module
+  """
   createOutlookTask(task: CreateTaskInput!): SendMailResult  
   deleteOutlookTask(task: DeleteTaskInput!): SendMailResult
   """

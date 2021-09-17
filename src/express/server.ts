@@ -374,7 +374,7 @@ Environment Settings:
 
 
   }).catch((startupError) => {
-    logger.error('Server was unable to start successfully.', startupError);
+    logger.error(colors.red('Server was unable to start successfully.'), startupError);
     process.exit(0);
   });
 

@@ -1,4 +1,6 @@
-const MergeGraphResolvers = (resolvers = [])=>{
+
+
+const MergeGraphResolvers = (resolvers: any[] = [])=>{
   let merged = {
     Query: {
 
@@ -9,8 +11,9 @@ const MergeGraphResolvers = (resolvers = [])=>{
   };
 
   resolvers.forEach((resolver) => {
-    ['Query', 'Mutation'].forEach((property) => {
+    ['Query', 'Mutation', 'Subscription'].forEach((property) => {
       
+      // firt merge the Query and Mutation entries
       if(typeof resolver[property] === 'object') {
         merged[property] = {
           ...merged[property],
@@ -18,7 +21,8 @@ const MergeGraphResolvers = (resolvers = [])=>{
         };
         delete resolver[property];
       }      
-    });        
+    });
+
     merged = { ...merged, ...resolver };
   });
 

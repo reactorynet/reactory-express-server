@@ -50,10 +50,11 @@ export interface IConfigurationProperties {
 };
 
 export interface IQuestion {
+  id?: number,
   question: string,
   response?: string,
   valid?: boolean,
-  handler: (response: string) => IQuestion | null,
+  handler: (response: string, configuration: IConfigurationProperties) => { next: IQuestion | null, configuration: IConfigurationProperties }
 }
 
 export interface IQuestionGroup {
@@ -146,25 +147,34 @@ const main = (kwargs: string[]) => {
 
 
   rl.write(colors.yellow(`
--------------------------------------------------------------------------
-Welcome to the reactory configuration helper utility. This utility will
-walk you through creating a configuration file set to run a reactory
-server instance.
-
-For more help on each question, respond with ? to get more help on
-the impact of each configuration entry.
--------------------------------------------------------------------------
++---------------------------------------------------------------------------+
+| Welcome to the reactory configuration helper utility. This utility will   |\r
+| walk you through creating a configuration file set to run a reactory      |\r
+| server instance.  For more help on each question, respond with ? to get   |\r
+| more help on the impact of each configuration entry.                      |\r
+|                                                                           |\r
+|                 !!This tool is still under development!!                  |\r
++---------------------------------------------------------------------------+
 `));
 
 
-  const ask = (question: IQuestion) => {
+const persistConfiguration = ($configuration: IConfigurationProperties) => {
+  rl.write(`
+  Configuration written to file\r
+  ${JSON.stringify($configuration, null, 2)}\r
+  `);
+  rl.close();
+};
 
-    rl.question(` ${colors.yellow('[reactory] ')}${colors.green(question.question)} >`, ($response: string) => {
-      let next = question.handler($response);
+
+  const ask = (question: IQuestion, $configuration: IConfigurationProperties) => {
+
+    rl.question(`|\r${colors.yellow('+--[reactory]:: ')}${colors.green(`${question.question}`)} >`, ($response: string) => {
+      let { next, configuration } = question.handler($response, $configuration);
       if (next) {
-        ask(next);
-      } else {
-        rl.close();
+        ask(next, configuration);
+      } else {  
+        persistConfiguration(configuration);
       }
     });
 
@@ -174,12 +184,12 @@ the impact of each configuration entry.
 
   const configure_another: IQuestion = {
     question: 'Would you like to create another configuration? (y/n)',
-    handler: (response: string) => {
+    handler: (response: string, configuration) => {
       if (response === 'n') {
         return null;
       }
 
-      return questions.required.name;
+      return { next: questions.required.name, configuration }
     }
   }
 
@@ -190,25 +200,20 @@ the impact of each configuration entry.
         question: 'What is the name for this configuration?',
         response: null,
         valid: false,
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
           if (response.charCodeAt(0) === 27) {
             rl.write(colors.red('\nConfiguration name is a required field\n'));
             return questions.required.name;
           }
 
-          if (response.trim() === '?') {
+          if (response === '?') {
             rl.write(colors.gray(`
   The configuration name, would be a short concise name that describes
   the name of the application api, i.e. if you are building a shop front 
-  api, then a name might be <brand name>-shop, or just shop. 
-
+  api, then a name might be <brand name>-shop, or just shop.\n 
   A brand name can be thought of the abbreviation for your business or 
-  corporation.
-  
-  This can be useful if you intend to run multiple configurations from a 
-  single source base.
-  i.e.
-  acme-shop, acme-sales, acme-warehouse, acme-hr etc.
+  corporation.\nThis can be useful if you intend to run multiple configurations from a 
+  single source base.\ni.e.\nacme-shop, acme-sales, acme-warehouse, acme-hr etc.
   `));
 
             return questions.required.name;
@@ -235,7 +240,6 @@ the impact of each configuration entry.
   variables into the node process.env list.  When starting the server
   using "bin/start.sh ${conf.name} local", the server will load the 
   corresponding dotenv file from the config directory.
-
   The default value is "local,dev,prod".  This means the utility
   will generate 3 .env files in the follow folder. Where 
   <reactory-server>/  <-- Your root install folder
@@ -244,10 +248,8 @@ the impact of each configuration entry.
       +--> /.env.local
       +--> /.env.dev
       +--> /.env.prod
-
   If you want to know more about dotenv you can view the package
   on npm here: https://www.npmjs.com/package/dotenv
-
 `));
             return questions.required.environments;
           }
@@ -332,16 +334,12 @@ the impact of each configuration entry.
             rl.write(colors.grey(`  
   This is the name of the json file that will contain the list of modules that will 
   be used to create the src/modules/__index.ts file.
-
   The default is enabled-${conf.name}.
-
   When the server starts, first bin/generate.sh is called.  This executes a script
   that will emit the __index.ts file. The module index file. The script will use the
-  MODULES_ENABLED environment variable to look for a json file that matches it.
-  
+  MODULES_ENABLED environment variable to look for a json file that matches it.  
   i.e. if your MODULES_ENABLED environment variable is enabled-${conf.name}, there has
   to be a src/modules/enabled-${conf.name}.json file on your file system.
-
   If the file does not exist, one will be clone from the available.json file.
 `));
 

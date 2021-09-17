@@ -437,8 +437,11 @@ declare namespace Reactory {
     remotes?: IReactoryFileRemoteEntry[],
     timeline?: ITimeline[],
     status?: string,
+    deleted?: boolean,
     readLines(start: number, lines: number): Promise<string[]>,
-    stats(): fs.Stats
+    stats(): fs.Stats,
+    exists(): boolean,
+    getServerFilename(): string
     [key: string]: any
   }
 
@@ -787,7 +790,7 @@ declare namespace Reactory {
     props?: any
   }
 
-  export interface IReactoryPdGenerator {
+  export interface IReactoryPdfGenerator {
     enabled: boolean
     key: String
     name: String
@@ -815,7 +818,7 @@ declare namespace Reactory {
     nameSpace: string
     name: string
     version: string
-    component: IReactoryPdGenerator
+    component: IReactoryPdfGenerator
   }
 
   export interface IReactoryModuleDefinition {
@@ -863,7 +866,7 @@ declare namespace Reactory {
     isAsync?: boolean
     service(props: IReactoryServiceProps, context: any): any,
     serviceType?: string
-    dependencies?: string[]
+    dependencies?: string[] | any[]
   }
 
   export interface IReactoryServiceRegister {
@@ -905,8 +908,11 @@ declare namespace Reactory {
     }
 
     export interface IReactoryContextAwareService extends IReactoryService {
+
       getExecutionContext(): IReactoryContext
       setExecutionContext(executionContext: IReactoryContext): boolean
+
+
     }
 
 
@@ -1081,7 +1087,7 @@ declare namespace Reactory {
     partner: Reactory.IReactoryClientDocument
     getService<T extends Reactory.Service.IReactoryService>(fqn: string, props?: any, context?: Reactory.IReactoryContext): T,
     hasRole(role: string, partner?: Reactory.IReactoryClientDocument): boolean
-    log(message: string, meta?: any, type?: LOG_TYPE): void
+    log(message: string, meta?: any, type?: LOG_TYPE, clazz?: string): void
     [key: string]: any
   }
 
@@ -1104,11 +1110,17 @@ declare namespace Reactory {
   }
 
   /**
+   * Import file types that can potentially be supported
+   */
+  export type ImportFileEnums = string | "application/json" |
+    "text/csv" | "application/xml" | "application/octet"
+
+  /**
    * Interface for the UserImportFile type.
    * Used in upload and processing user data from 
    * external file sources.
    */
-  export interface IUserImportFile extends Mongoose.Document {
+  export interface IImportFile extends Mongoose.Document {
     id: string
     file: IReactoryFile | IReactoryFileModel,
     preview: any[],
@@ -1118,6 +1130,7 @@ declare namespace Reactory {
       firstRow: string
       columnMappings: any[]
     }
+    mime?: ImportFileEnums,
     status: string
     processors: IFileImportProcessorEntry[]
     rows: number
@@ -1135,7 +1148,7 @@ declare namespace Reactory {
       firstRow: string
       columnMappings: any[]
     }
-    files: IUserImportFile[]
+    files: IImportFile[]
     status: string,
     processors: IFileImportProcessorEntry[],
     rows: number,
@@ -1146,13 +1159,33 @@ declare namespace Reactory {
 
   export type ReactoryFileImportPackageDocument = Mongoose.Model<IReactoryFileImportPackageDocument>;
 
+  /**
+   * The IProcessor interface is a simplistic data processing interface
+   */
+  export interface IProcessor extends Service.IReactoryContextAwareService {
+    /**
+     * Used to process a request with any params.
+     * @param params - of any type, the processor itself has to be able to interpret the input
+     * @param next - if the  
+     */
+    process(params: any, next?: IProcessor): Promise<any>
+  }
   export interface IReactoryImportPackageManager extends Service.IReactoryContextAwareService {
+    /**
+     * Start a package and process all the data inputs
+     * @param workload_id 
+     * @param file_ids 
+     * @param processors 
+     */
     start(workload_id: string, file_ids: string[], processors: string[]): Promise<any>
     stop(workload_id: string, file_ids: string[]): Promise<any>
     delete(workload_id: string): Promise<any>
     addFile(workload_id: string, file: IReactoryFileModel): Promise<any>
     removeFile(workload_id: string, file_id: string): Promise<any>
+    previewFile(workload_id: string, file_id: string, processors: string[]): Promise<any>
   }
+
+
 
   export interface CoreSimpleResponse {
     success: Boolean

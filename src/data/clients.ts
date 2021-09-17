@@ -1,8 +1,5 @@
-import reactoryConfig from './clientConfigs/reactory';
-import mores from './clientConfigs/mores';
-import lasecCrm from './clientConfigs/lasec-crm';
+// import reactoryConfig from './clientConfigs/reactory';
+// import mores from './clientConfigs/mores';
+import clients from './clientConfigs';
 
-
-export default [
-  reactoryConfig, mores, lasecCrm
-];
+export default clients;
