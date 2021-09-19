@@ -807,6 +807,7 @@ const userResolvers = {
 
         if (survey && survey.options) {
           //@ts-ignore
+          const {autoLaunchOnPeerConfirm, minimumPeers} = survey.options
           const entryData: Mores.IDelegateEntryDataStruct = {
             entry: null,
             entryIdx: -1,
@@ -815,7 +816,7 @@ const userResolvers = {
             success: true,
             patch: false,
           };
-          if (survey.options.autoLaunchOnPeerConfirm === true && delegate && delegate.status !== 'new') {
+          if (autoLaunchOnPeerConfirm === true && survey.delegates.length >= minimumPeers && delegate && delegate.status !== 'new') {
             entryData.entry = delegate
             const variables = {
               survey: survey._id.toString(),
@@ -861,9 +862,9 @@ const userResolvers = {
                 updatedAt
                 lastAction
               }
-            }`, variables, {}, context.user, context.partner).then()
-            logger.debug(`NEED TO IMPLEMENT AUTO LAUNCH FEATURE HERE`);
-
+            }`, variables , {}, context.user, context.partner).then()
+            logger.debug(`Auto launched survey ${survey.surveyType} for user ${id}`);
+           
           }
         }
       } else throw new ApiError('No survey found')
