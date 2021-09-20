@@ -1,0 +1,42 @@
+
+type Task {
+  id: ObjID!
+  shortCodeId: Int  
+  project: Project
+  title: String
+  description: String
+  percentComplete: Float
+  slug: String
+  label: [String]
+  category: String,
+  workflowStatus: String  
+  status: String
+  externalUrls: [String]
+  startDate: Date
+  dueDate: Date
+  completionDate: Date    
+  comments: [Comment]
+  user: User!
+  createdAt: Date!
+  updatedAt: Date!
+}
+
+input TaskInput {
+  title: String
+  description: String
+  status: String
+  percentComplete: Float
+  startDate: Date
+  endDate: Date
+}
+
+
+extend type Query {
+  userTasks(id: String, status: String): [Task]
+  taskDetail(id: String): Task 
+}
+
+extend type Mutation {
+  createTask(id: String, taskInput: TaskInput): Task
+  updateTask(id: String, taskInput: TaskInput): Task  
+}

@@ -1,0 +1,58 @@
+type Template {
+  id: String
+  name: String
+  description: String
+  organization: Organization
+  reactoryClient: ReactoryClient
+  enabled: Boolean
+  view: String
+  locale: String
+  kind: String
+  format: String
+  content: String
+  elements: [String]
+}
+
+type EmailTemplate {
+  id: String
+  name: String
+  description: String
+  organization: Organization
+  reactoryClient: ReactoryClient
+  businessUnit: BusinessUnit
+  visibility: String
+  user: User
+  view: String
+  subject: String
+  body: String
+}
+
+input EmailTemplateLink {
+  id: String
+  name: String
+}
+
+input EmailTemplateInput {
+  id: String
+  name: String
+  description: String
+  organization: EmailTemplateLink
+  reactoryClient: EmailTemplateLink
+  businessUnit: EmailTemplateLink
+  user: EmailTemplateLink
+  visibility: String
+  view: String
+  subject: String
+  body: String
+}
+
+extend type Query {
+  ReactoryTemplates(client: String, organization: String): [Template]
+  ReactoryTemplate(id: String): Template,
+  ReactoryGetEmailTemplate(view: String, clientId: String, organizationId: String, businessUnitId: String, userId: String) : EmailTemplate
+}
+
+extend type Mutation {
+  ReactoryUpdateTemplateContent(id: String, content: String): Template  
+  ReactorySetEmailTemplate(emailTemplate: EmailTemplateInput): EmailTemplate
+}

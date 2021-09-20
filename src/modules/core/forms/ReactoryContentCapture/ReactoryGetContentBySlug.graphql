@@ -1,0 +1,15 @@
+query ReactoryGetContentBySlug($slug: String!) {
+  ReactoryGetContentBySlug(slug: $slug){
+    id
+    slug
+    title
+    content
+    published
+    topics
+    createdBy {
+      id
+      fullName
+    }
+    createdAt
+  }
+}

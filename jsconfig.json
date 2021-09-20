@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "*": ["src/*"],
+      "@reactory/server-core/*": ["src/*"],
+      "@reactory/server-modules/*": ["src/modules/*"],
+      "test/*": ["test/*"],
+    }
+  }
+}

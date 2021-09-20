@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+      "module": "esnext",
+      "noImplicitAny": true,
+      "removeComments": true,
+      "moduleResolution": "node",
+      "allowSyntheticDefaultImports": true,
+      // Process & infer types from .js files.
+      "allowJs": true,  
+      "target":"ES2017",
+      "baseUrl": "./",
+      "paths": {
+        "*": ["src/*"],
+        "@reactory/server-core/*": ["src/*"],
+        "@reactory/server-modules/*": ["src/modules/*"],
+        "test/*": ["test/*"],
+      }
+  },    
+}

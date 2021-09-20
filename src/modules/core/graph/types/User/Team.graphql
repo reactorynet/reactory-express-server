@@ -1,0 +1,30 @@
+type Team {
+  id: ObjID!
+  organization: Organization
+  owner: User
+  title: String
+  description: String
+  avatar: String
+  meta: Meta
+  members: [User]  
+  createdAt: Date!
+  updatedAt: Date!
+}
+
+input TeamInput {
+  title: String
+  description: String
+  avatar: String  
+}
+
+extend type Query {
+  team(id: String!): Team
+  teamsForOrganization(id: String!): [Team]
+}
+
+extend type Mutation {
+  createTeam(input: TeamInput): Team
+  updateTeam(input: TeamInput): Team
+  addMemberToTeam(id: String, memberId: String): Boolean
+  removeMemberFromTeam(id: String, memberId: String): Boolean
+}

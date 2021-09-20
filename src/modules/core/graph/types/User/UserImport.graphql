@@ -1,0 +1,306 @@
+"""
+Indicates to the processors which columns in the file(s) 
+map to which columns.
+"""
+type ImportColumnMapping {
+  id: String
+  sourceIndex: Int
+  fieldName: String
+}
+
+"""
+Import options specified for the file(s)
+"""
+type ImportOptions {
+  delimeter: String
+  textQualifier: String
+  firstRow: String
+  columnMappings: [ImportColumnMapping]  
+}
+
+"""
+Import processing response item. Used to give feedback on where
+files may contain errors
+"""
+type FileImportLineResponse {
+  id: String
+  timestamp: Date
+  line: Int
+  error: String
+}
+
+"""
+File import processor linked to a UserFileImport. 
+"""
+type FileImportProcessor {
+  """
+  String id for the processor
+  """
+  id: String
+  """
+  The name for the processor, i.e. DefaultUserProcessor
+  """
+  name: String
+  """
+  The fqn for the processor i.e. core.DefaultUserProcessor@1.0.0
+  """
+  serviceFqn: String
+
+  """
+  The order in which this item is executed
+  """
+  order: Int
+
+  """
+  Field names required by the processor
+  """
+  fields: [String]
+
+  """
+  What time the processor started with the file.
+  """
+  started: Date
+  """
+  When the processor finished with the file.
+  """
+  finished: Date
+  """
+  The response to the import
+  """
+  responses: [FileImportLineResponse]
+}
+
+"""
+The user import preview
+"""
+type UserImportPreview {
+  """
+  id is a combination of the file id and row number i.e. 33421Obdfe::101 would mean the file id
+  is 33421Obdfe and the row number is 101 with a 1 based index, counter to standard programming offsets
+  as this may be used by users to identify problem rows.
+  """
+  id: String
+  """
+  The firstname detected in the row
+  """
+  firstName: String
+  """
+  The lastname detected in the row
+  """
+  lastName: String
+  """
+  The email detected in the row
+  """
+  email: String
+  """
+  The date of birth detected in the row
+  """
+  dob: String
+  """
+  The gender detected in the row
+  """
+  gender: String
+  """
+  The race detected in the file
+  """
+  race: String
+  """
+  The position detected in the file
+  """
+  position: String
+  """
+  The region detected in the file
+  """
+  region: String
+  """
+  The legal entity detected in the file
+  """
+  legalEntity: String
+  """
+  The business unit detected in the file
+  """
+  businessUnit: String
+  """
+  The team detected in the file
+  """
+  team: String
+}
+
+"""
+The file and preview
+"""
+type ImportFile {
+  """
+  Same as the file id
+  """
+  id: String
+  """
+  The Reactory File item linked to the element
+  """
+  file: ReactoryFile
+  """
+  Preview data
+  """
+  preview: [UserImportPreview]
+  
+  """
+  The import options for the file - if none are set the default
+  is used.
+  """
+  options: ImportOptions
+  
+  """
+  The status for this specific file instance
+  """
+  status: String
+
+  """
+  File processors we want to apply to the file.
+  """
+  processors: [FileImportProcessor]
+
+  """
+  Contains a list of all the fields required by all the processors
+  """
+  fields: [String]
+}
+
+type PagedImportPackageFiles {
+  id: String
+  paging: PagingResult
+  files: [ImportFile]
+}
+
+"""
+User File Import work package
+"""
+type ReactoryFileImportPackage {
+  """
+  Import package id
+  """
+  id: String
+  """
+  Organization associated with the user import
+  """
+  organization: Organization
+  """
+  Owner of the process
+  """
+  owner: User
+  """
+  Import options
+  """
+  options: ImportOptions
+  """
+  The uploaded files part of this package
+  """
+  files(file_ids: [String]): [ImportFile]
+  """
+  Overall status. The available status are "added", "processing", "done", "error"
+  """
+  status: String
+  """
+  The default processors for this import.
+  """
+  processors: [FileImportProcessor]
+}
+
+
+
+extend type Query {
+  """
+  Returns a UserFileImport item based on the organization_id that is required.
+  If a workload_id is specified that workload item will be returned.  If no 
+  workload_id is specified a new workload_id is generated and assigned to the user with a status of 
+  new.  The user should only have one 'new' item.  Whenever a new one already exists it means it has
+  not yet been started.
+  """
+  ReactoryFileImportPackage(
+    """
+    The organization id is required for this call
+    """
+    organization_id: String, 
+    """
+    Workload id is optional. When blank a new item 
+    will be returned.
+    """
+    workload_id: String,
+    
+    """
+    A list of string ids that we may want to use for filtering the files.
+    """
+    file_ids: [String]
+    ): ReactoryFileImportPackage
+
+  """
+  Returns a list of the logged in user's list of file imports
+  Accepts a status array of items to include.  If there are none
+  all items are returned.
+  """
+  MyReactoryFileImportPackages(status: [String]): [ReactoryFileImportPackage]
+
+  """
+  Returns a list of ReactoryFileImportPackages for a given organization id, will only 
+  return a list if the user has a membership in the organization or if the user
+  is an administrator / developer for the application
+  """
+  ReactoryFileImportPackages(organization_id: String!, status: [String]): [ReactoryFileImportPackage] 
+
+  """
+  Returns a list of the import files for the specified workload package id.
+  """
+  PagedImportPackageFiles(workload_id: String!, paging: PagingRequest): PagedImportPackageFiles
+}
+
+extend type Mutation {
+  """
+  Mutation to update the file status. Processors will have to be invoked via a workflow
+  runner to perform any actions.
+  """
+  SetReactoryFileImportPackageStatus(workload_id: String!, status: String!): ReactoryFileImportPackage
+  """
+  Mutation to delete the workload item.  This will remove any files uploaded 
+  and associated with the upload and should attempt to cancel any workloads in 
+  progress.
+  """
+  DeleteUserFileUpload(workload_id: String!): ReactoryFileImportPackage
+
+  """
+  Upload and add a file to the package
+  """
+  AddFileToImportPackage(file: Upload!, workload_id: String!): ImportFile
+
+  """
+  Remove file from a import package
+  """
+  RemoveFileFromImportPackage(file_id: String!, workload_id: String!): CoreSimpleResponse
+
+  """
+  Starts a given import package
+  """
+  StartImportPackage(workload_id: String): CoreSimpleResponse
+
+  """
+  Stops a given import package
+  """
+  StopImportPackage(workload_id: String): CoreSimpleResponse
+
+  """
+  Starts a process for a package
+  """
+  StartProcessForPackage(workload_id: String!, processors: [String] file_ids: [String]): CoreSimpleResponse
+  
+  """
+  Generates a preview of the data
+  """
+  PreviewImportFile(workload_id: String!, file_id: String!, processors: [String]): CoreSimpleResponse
+
+
+}
+
+extend type Subscription {
+  """
+  Subscription for 
+  """
+  UserImportPackageFileStatusChanged: ReactoryFileImportPackage    
+}

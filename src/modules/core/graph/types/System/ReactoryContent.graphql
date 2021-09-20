@@ -1,0 +1,46 @@
+
+
+
+type ReactoryContent {
+  id: ObjID
+  slug: String!
+  topics: [ String ]
+  title: String!
+  content: String!
+  createdAt: Date
+  updatedAt: Date
+  createdBy: User!
+  updatedBy: User!
+  published: Boolean
+  comments: [ Comment ]
+}
+
+type ReactorySaveImageDataResponse {  
+  success: Boolean
+  pngURL: String
+  svgURL: String
+}
+
+extend type Query {
+  ReactoryGetContentBySlug(slug: String!): ReactoryContent
+  ReactoryGetContentByTags(tags: [String]!): [ ReactoryContent ]
+  ReactoryGetContentById(id: String!): [ ReactoryContent ]
+  ReactoryGetContentList: [ ReactoryContent ]
+}
+
+input CreateContentInput {
+  slug: String!
+  topics: [ String ]
+  title: String!
+  content: String!
+  createdAt: Date
+  updatedAt: Date
+  createdBy: ObjID
+  updatedBy: ObjID
+  published: Boolean
+}
+
+extend type Mutation {
+  ReactoryCreateContent(createInput: CreateContentInput!): ReactoryContent
+  ReactorySaveImageData(folder: String, filename: String, svg: String, png: String, width: Int, height: Int): ReactorySaveImageDataResponse
+}

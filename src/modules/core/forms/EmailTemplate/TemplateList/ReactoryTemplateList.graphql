@@ -1,0 +1,14 @@
+query Templates ( $client: String, $organization: String ) {
+  templates (client: $client, organization: $organization) {
+    id
+    name
+    description
+    view
+    format
+    content
+    locale
+    kind
+    content
+    elements                                 
+  }
+}

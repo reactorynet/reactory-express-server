@@ -1,0 +1,21 @@
+
+type MenuItem {
+  id: ObjID
+  ordinal: Int
+  title: String
+  link: String
+  external: Boolean
+  icon: String
+  roles: [String]
+  items: [ MenuItem ]
+}
+
+
+type Menu {
+  id: ObjID
+  name: String
+  key: String
+  target: String
+  roles: [String]
+  entries: [MenuItem]
+}

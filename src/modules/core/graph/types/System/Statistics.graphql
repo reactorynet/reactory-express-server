@@ -1,0 +1,33 @@
+
+type Statistic {
+  id: ObjID
+  key: String
+  when: Date  
+  stat: Any
+}
+
+type StatisticEntry {
+  id: ObjID
+  partner: ReactoryClient
+  user: User
+  entries: [Statistic]
+}
+
+input StatisticsFilter {
+  keys: [String],
+  from: Date,
+  till: Date
+}
+
+input StatisticsInput {
+  key: String    
+  stat: Any
+}
+
+extend type Query {
+  CoreGetStatistics(filter: StatisticsFilter): [StatisticEntry]
+}
+
+extend type Mutation {
+  CorePublishStatistics(entries: [StatisticsInput]!): Boolean
+}

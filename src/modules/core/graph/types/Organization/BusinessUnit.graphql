@@ -1,0 +1,63 @@
+
+"""
+A business unit represents a functional 
+unit within an organisation.
+"""
+type BusinessUnit {
+  """
+  The id will be represented as a string, but can be in any 
+  source data format.
+  """
+  id: String
+  """
+  The day to day business unit name as used by staff 
+  """
+  name: String
+  """
+  Detailed description of the business unit, free form text input  
+  """
+  description: String
+  """
+  The organization the business unit is linked to 
+  """
+  organization: Organization
+  """
+  Owner user
+  """
+  owner: User
+  """
+  Members of the business unit, linked users
+  """
+  members: [User]
+  """
+  An avatar for the business unit
+  """
+  avatar: String
+  """
+  A logo for the business unit
+  """
+  logo: String
+}
+
+
+input BusinessUnitInput {
+  id: String
+  name: String!
+  description: String
+  organization: String!
+  owner: String!
+  members: [String]
+  avatar: String
+}
+
+extend type Query { 
+  businessUnitsForOrganization(id: String!, searchString: String): [BusinessUnit],
+  businessUnitWithId(id: String!): BusinessUnit,
+}
+
+extend type Mutation {
+  createBusinessUnit(input: BusinessUnitInput!): BusinessUnit,
+  updateBusinessUnit(id: String!, input: BusinessUnitInput): BusinessUnit,
+  addMemberToBussinessUnit(id: String!, memberId: String!): Boolean,
+  removeMemberFromBusinessUnit(id: String!, memberId: String!): Boolean,
+}

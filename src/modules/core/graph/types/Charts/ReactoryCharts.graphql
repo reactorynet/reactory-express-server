@@ -1,0 +1,18 @@
+enum ReactoryChartType {
+  FUNNEL
+  PIE
+  AREA
+  LINE
+  RADAR
+  RADIAL
+  SCATTER
+  TREEMAP
+  COMPOSED
+}
+
+type ReactoryChart {
+  chartType: ReactoryChartType
+  data: Any
+  options: Any
+  key: String
+}

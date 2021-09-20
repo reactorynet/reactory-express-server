@@ -1,0 +1,199 @@
+type CorsWhiteList {
+  key: String!,
+  host: String!
+}
+
+type Tennant {
+  id: ObjID!
+  key: String!
+  title: String
+  theme: String
+  whitelist: [CorsWhiteList]
+  createdAt: Date!
+  updatedAt: Date!
+}
+
+input CreateTennantInput {
+  key: String!
+  title: String
+  theme: String
+}
+
+"""
+NOTE: Spelling of the entity is Organization with a Z, in the system although it is accepted that
+some spellings use Organisation with a S. The Reactory system will always prefer the Z spelling.
+
+Basic Organisation Structure, implements the basics structure 
+of an Organisations.
+"""
+type Organization {
+  """
+  internal id, when using default storage this is a BSON mongo id.
+  if the organization data is proxied from a another system this will still 
+  be a string but the format may vary from uuid to int or a standard string
+  """
+  id: String
+  """
+  the meta object represents additional unstructured meta
+  data we want to associate with the organization object.
+  in many scenarios, this would represent a foreign 
+  system meta data to create a logical link for queries 
+  and caching / syncronization purposes.
+  """
+  meta: Any
+  """
+  Any document, this currently not used in any uses cases
+  but uses cases would include, linked organizations, etc.
+  """
+  settings: Any
+  """
+  A string short code
+  """
+  code: String
+  """
+  The organization name as it is used from day to day
+  """
+  name: String
+  """
+  The trading name, this would be the full entity name as registered 
+  a regional or national business registry
+  """
+  tradingName: String
+  """
+  The logo filename, just the the filename.  This should ideally be a 16:9 ratio png / svg / jpg
+  """
+  logo: String
+  """
+  The resolved url for the logo with the timestamp of when the organization was updated.  This
+  will prevent any long term caching of assets that may have changed
+  """
+  logoURL: String
+  """
+  The avatar filename. This should ideally be a 1:1 aspect ration png / svg / jpg
+  """
+  avatar: String
+  """
+  The resolved url for the avatar with the timestamp of when the organization was updated.
+  """
+  avatarURL: String
+  """
+  A list of business units within the organization
+  """
+  businessUnits: [BusinessUnit]
+  """
+  This field is deprecated and references will be removed.
+  """
+  legacyId: Int
+  
+  """
+  The time and date the organization was created
+  """
+  createdAt: Date
+  """
+  Time and date the organization was updated
+  """
+  updatedAt: Date
+}
+
+input CreateOrganizationInput {
+  code: String
+  name: String
+  logo: String
+  legacyId: Int
+}
+
+
+input UpdateOrganizationInput {
+  code: String
+  name: String
+  logo: String
+  settings: [Any]
+  legacyId: Int
+}
+
+input MigrationOrganizationOptions {
+  migrateBrands: Boolean
+  migrateEmployees: Boolean
+  migrateSurveys: Boolean
+  migrateCommunications: Boolean
+  dataPath: String
+}
+
+type UpdateResponse {
+  id: ObjID
+  errors: [String]
+  updated: Boolean
+}
+
+type MigrationResult {
+  assessmentsMigrated: Int
+  assessmentErrors: [String]
+  organization: Organization
+  organizationErrors: [String]
+  brandsMigrated: Int
+  brandErrors: [String]
+  employeesMigrated: Int
+  employeeErrors: [String]
+  surveysMigrated: Int
+  surveyErrors: [String]
+  communicationsMigrated: Int
+  communicationsErrors: [String]
+}
+
+input CoreMigrationOptions {
+  migrateOrganizations: [Int],
+  migrateBrands: Boolean
+  migrateEmployees: Boolean
+  migrateSurveys: Boolean
+  migrateCommunications: Boolean
+  dataPath: String
+}
+
+type CoreMigrationResult {
+  errors: [String]
+  scalesMigrated: Int,
+  organizationMigrateResults: [MigrationResult]
+}
+
+type OrganizationLookup {
+  id: String
+  name: String
+}
+
+type OrganizationLookupData {
+  regions: [OrganizationLookup]
+  operationalGroups: [OrganizationLookup]
+  businessUnit: [OrganizationLookup]
+  team: [OrganizationLookup]
+}
+
+input OrganizationLookupDataInput {
+  regions: [Any]
+  operationalGroups: [Any]
+  businessUnit: [Any]
+  team: [Any]
+}
+
+type OrganizationLookupDataCaptureResponse {
+  success: Boolean
+  message: String
+}
+
+extend type Query {
+  allTennants: [Tennant]
+  allOrganizations(legacy: Boolean): [Organization]
+  organizationsForUser(id: String!): [Organization]
+  organizationWithId(id: String!): Organization
+  CoreOrganization(id: String!): Organization
+  CoreUsersForOrganization(id: String!, searchString: String, paging: PagingRequest): PagedUserResults
+  GetOrganisationLookupData(orgId: String!): OrganizationLookupData
+}
+
+extend type Mutation {
+  createOrganization(input: CreateOrganizationInput!): Organization
+  updateOrganization(id: String!, input: UpdateOrganizationInput!): Organization
+  migrateOrganization(id: String!, options: MigrationOrganizationOptions!): MigrationResult
+  migrateCore(options: CoreMigrationOptions): CoreMigrationResult
+
+  SetOrganisationLookupData(lookupData: OrganizationLookupDataInput!): OrganizationLookupData
+}

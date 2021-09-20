@@ -1,0 +1,38 @@
+enum Role {
+    REACTORY_ADMIN,
+    ADMIN,
+    ORGANIZATION_ADMIN,
+    FACILITATOR,        
+    USER,
+    HOD
+}
+
+"""
+Reactory Enum Types for Authentication Providers 
+"""
+enum AuthProvider {
+  """
+  The Google Auth provider type
+  """
+  GOOGLE,
+  """
+  The Microsoft / Office 365 universal provider type
+  """
+  MICROSOFT,
+  """
+  Facebook authentication provider type
+  """
+  FACEBOOK,
+  """
+  Linked in authentication provider type
+  """
+  LINKEDIN,
+  """
+  Any custom implementation types.
+  """
+  CUSTOM,  
+  """
+  The Default type is REACTORY
+  """
+  REACTORY,
+}

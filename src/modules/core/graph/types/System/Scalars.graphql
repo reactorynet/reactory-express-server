@@ -1,0 +1,48 @@
+#Base scalar type ObjID for MongoDB
+scalar ObjID
+scalar Date
+scalar Any
+
+type Meta {
+  id: ObjID
+  lastSync: Date
+  nextSync: Date
+  mustSync: Boolean
+  reference: String
+  owner: String
+  source: Any
+}
+
+type CoreSimpleResponse {
+  success: Boolean
+  message: String
+  payload: Any
+}
+
+"""
+This type can be used as a generic wrapper for data queries
+"""
+type CorePagedResponse {
+  success: Boolean
+  message: String
+  paging: PagingResult
+  items: [Any]
+}
+
+type DocumentUrl {
+    id: String!
+    url: String!
+}
+
+
+type Query {    
+    apiStatus: ApiStatus
+}
+
+type Subscription {
+    apiStatus: String
+}
+
+type Mutation {
+    apiStatus: String
+}

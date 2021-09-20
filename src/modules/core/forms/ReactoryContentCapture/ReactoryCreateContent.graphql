@@ -1,0 +1,15 @@
+mutation ReactoryCreateContent($createInput: CreateContentInput!){
+  ReactoryCreateContent(createInput: $createInput){
+    id
+    slug
+    title
+    content
+    topics
+    published
+    createdBy {
+      id
+      fullName
+    }
+    createdAt
+  }
+}
