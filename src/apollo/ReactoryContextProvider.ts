@@ -6,8 +6,23 @@ import colors from 'colors/safe';
 
 export default async ($session: any, currentContext: any): Promise<Reactory.IReactoryContext> => {
 
+  const $id = uuid();
+  let email = 'anon@local';
 
-  const $log = (message: string, meta: any = null, type: Reactory.LOG_TYPE = "debug", clazz: string = 'anon') => {
+  colors.setTheme({
+    silly: 'rainbow',
+    input: 'grey',
+    verbose: 'cyan',
+    prompt: 'grey',
+    info: 'green',
+    data: 'grey',
+    help: 'cyan',
+    warn: 'yellow',
+    debug: 'blue',
+    error: 'red'
+  });
+
+  const $log = (message: string, meta: any = null, type: Reactory.LOG_TYPE = "debug", clazz: string = 'any_clazz') => {
     //281e99d1-bc61-4a2e-b007-33a3befaff12    
 
     const $message = `${clazz}(${$id.substr(30, 6)}) ${email}: ${message}`;
@@ -15,20 +30,20 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
       case "e":
       case "err":
       case "error": {
-        logger.error($message, meta);
+        logger.error(colors.red($message), meta);
 
         break;
       }
       case "w":
       case "warn":
       case "warning": {
-        logger.warn($message, meta);
+        logger.warn(colors.yellow($message), meta);
         break;
       }
       case "d":
       case "debug":
       default: {
-        logger.debug($message, meta);
+        logger.debug(colors.blue($message), meta);
       }
     }
   };
@@ -51,12 +66,12 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
         role,
         organization && organization._id ? organization._id : undefined,
         businessUnit && businessUnit._id ? businessUnit._id : undefined)
-    }
+    },
+    colors,
   };
 
 
-  const $id = uuid();
-  let email = 'anon@local';
+  
   if ($session.req.user) {
     email = $session.req.user.email;
   }
@@ -82,6 +97,7 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     if (partnerContextService && partnerContextService.getContext) {
       newContext = await partnerContextService.getContext(newContext).then();
       newContext.log = $log;
+      newContext.colors = colors;
     }
   }
 
@@ -89,6 +105,7 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     id: $id,
     ...newContext,
     getService: $getService,
-    log: $log
+    log: $log,
+    colors
   };
 };

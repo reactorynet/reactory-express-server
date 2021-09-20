@@ -676,7 +676,7 @@ const userResolvers = {
       const { input, organizationId, password = crypto.randomBytes(16).toString('hex') } = params;
       const { partner, user } = context;
 
-      logger.info(`Create user mutation called ${input.email}`);
+      context.log(`Create user mutation called ${input.email}`, { params }, 'debug', 'UserResolver');
       const existing: Reactory.IUserDocument = await User.findOne({
         email: input.email,
       }).then();

@@ -8,4 +8,4 @@ Please note, no client configuration must be checked in except for the base reac
 ## Configuration Files
 The configuration files can be written in js, or ts files.
 
-The index.ts will be automatically generated at start
+The __index.ts will be automatically generated at start based on the enabled clients json file.

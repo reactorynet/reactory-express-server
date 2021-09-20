@@ -54,6 +54,19 @@ PersonalDemographicSchema.methods.age = function age() {
   return -1;
 }
 
+export interface ISetPersonalDemographicsParams {
+  userId?: string,
+  race?: string
+  dob?: Date
+  gender?: string
+  position?: string
+  region?: string
+  operationalGroup?: string
+  businessUnit?: string
+  team?: string
+}; 
+
+
 PersonalDemographicSchema.statics.SetLoggedInUserDemograpics = async function SetLoggedInUserDemograpics(args: any, context: Reactory.IReactoryContext): Promise<any> {
 
   logger.debug(`PERSONAL DEMOGRAPHICS SCHEMA:: ${JSON.stringify(args)}`);

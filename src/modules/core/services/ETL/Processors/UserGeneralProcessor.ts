@@ -7,6 +7,7 @@ import moment from 'moment';
 import { execml, execql } from '@reactory/server-core/graph/client';
 import iz from '@reactory/server-core/utils/validators';
 
+
 interface ITimelineEntry {
   when: Date,
   text: string
@@ -73,7 +74,8 @@ interface IUserImportStruct {
     region?: string,
     businessUnit?: string,
     position?: string,
-    jobTitle?: string
+    jobTitle?: string,
+    team?: string  
   }
   [key: string]: any
 }
@@ -92,18 +94,27 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
 
   fileService: Reactory.Service.IReactoryFileService = null;
 
+  clazz: string = "UserFileImportProcessGeneral";
+
   constructor(props: any, context: Reactory.IReactoryContext) {
     this.context = context;
     this.props = props;
   }
 
   mutate = async (mutation: string, variables: any = {}): Promise<MutationResult> => {
-    const { data, errors } = await execml(mutation, variables, {}, this.context.user, this.context.partner).then();
-    debugger;
-    return {
-      data,
-      errors: errors.map((e) => e.message)
+    try {
+      const { data, errors = [] } = await execml(mutation, variables, {}, this.context.user, this.context.partner).then();
+      return {
+        data,
+        errors: errors.map((e) => e.message)
+      }
+    } catch (mutationError) {
+      return {
+        data: null,
+        errors: [mutationError.message]
+      }
     }
+    
   };
 
   getExecutionContext(): Reactory.IReactoryContext {
@@ -126,23 +137,30 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
    * @param params - paramters can include row offset
    */
   async process(params: any, nextProcessor?: Reactory.IProcessor): Promise<any> {
-    debugger
     const { processors = [], offset = 0, file, import_package, process_index, next, input = [], preview = false } = params;
     const that = this;
+
+    const colors = that.context.colors;
 
     let output: IUserImportStruct[] = [];
 
     input.forEach((row_data: string[], rid: number) => {
       /**
-        Employee #,First Name,Preferred Name,Last Name,email address,Gender,Birth Date,Job Title,Reporting to,Position/Level,Region,Legal entity,Department
+        Employee #, Preferred Name, Last Name, Work Email, Gender, Birth Date, Position/Level, Region, Legal entity, Department, Functional Team
         
-        0 => EA003, 1 => Tochukwu, 2 =>  Tochukwu, 3 => Iwuora, 4 => tochukwu@entersekt.com, 5=> Male, 6 => 23-Apr-85, 7=> Pre-sales Solutions Lead, 8 => Mzukisi Rusi, 9 => Professional, 10 => Lagos, 11 => Entersekt Africa Ltd,CSO Team
+        0 EA003 
+        1 Tochukwu,
+        2 Iwuora,
+        3 tochukwu@entersekt.com,
+        4 Male
+        5 23 Apr 1985, ==> DOB
+        6 Professional => Position
+        7 Lagos, ==> Region
+        8 Entersekt Africa Ltd, ==> Legal Entity
+        9 Commercial, ==> Business Unit
+        10 Customer Success ==> team
+
         
-        F0011,Anneri,Anneri,Nieuwoudt,anneri@entersekt.com,Female,28-Jun-85,Finance Manager,Dian Gerber,Professional,Stellenbosch,Entersekt (Pty) Ltd,Finance and Legal
-        GER002,Melanie,Melanie,Maier,melanie@entersekt.com,Female,04-Oct-88,Director Channel Partnerships Europe,Frans Labuschagne,Professional,Munich,Entersekt Europe Coöperatief U.A.,CSO Team
-        ITL004,Willem,Tom,de Waal,tom@entersekt.com,Male,08-Dec-62,Senior Solutions Architect,Simon Rodway,Professional,Utrecht,Entersekt Europe Coöperatief U.A.,CSO Team
-        ITL006,Frans,Frans,Labuschagne,frans@entersekt.com,Male,26-Dec-66,Country Manager: UK & Ireland,Dewald Nolte,Senior Management,London,Entersekt Europe Coöperatief U.A.,CSO Team
-        ITL008,Janine,Janine,Willems,janine@entersekt.com,Female,23-Oct-82,Key Accounts Manager,Frans Labuschagne,Professional,Utrecht,Entersekt Europe Coöperatief U.A.,CSO Team
        */
 
 
@@ -170,23 +188,25 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
         user: {
           id: null,
           firstName: row_data[1],
-          lastName: row_data[3],
-          email: iz.email(row_data[4]) === true ? row_data[4] : `ERR_${row_data[4]}`,
-          businessUnit: row_data[11],
+          lastName: row_data[2],
+          email: iz.email(row_data[3]) === true ? row_data[3] : `ERR_EMAIL_${row_data[3]}`,
+          businessUnit: row_data[10],
           authProvider: "REACTORY"
         },
 
         demographics: {
-          gender: row_data[5],
-          dob: moment(row_data[6]).toDate(),
-          region: row_data[10],
-          businessUnit: row_data[11],
-          position: row_data[9],
-          jobTitle: row_data[7]
+          gender: row_data[4],
+          dob: moment(row_data[5]).toDate(),
+          region: row_data[7],
+          businessUnit: row_data[9],
+          position: row_data[6],
+          jobTitle: row_data[6],
+          team: row_data[10],
         }
 
       };
 
+      
       output.push(user_entry);
     });
 
@@ -203,24 +223,31 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
 
     output.forEach(async (import_struct: IUserImportStruct, index: number) => {
       try {
-        that.context.log(`Preparing Mutation #${index} for user ${import_struct.user.email}`);
-        if (preview === false) {
+        
+        that.context.log(colors.debug(`Preparing Mutation #${index} for user ${import_struct.user.email}`), {}, 'debug', 'UserGeneralProcessor');
+        if (preview === false && import_struct.user.email.indexOf('ERR') < 0) {
           const variables: any = { input: import_struct.user, organizationId: import_package.organization._id };
           delete variables.input.id;
           import_struct.onboarding_result = await this.mutate(create_user_mutation, variables).then();
-          debugger
-          
-          if (import_struct.onboarding_result.data.createUser && import_struct.onboarding_result.data.createUser.id) {
-            import_struct.user.id = import_struct.onboarding_result.data.createUser.id;
+
+          if (import_struct.onboarding_result.errors && import_struct.onboarding_result.errors.length > 0) {
+            
+            that.context.log(colors.warn(`Mutation #${index} for user ${import_struct.user.email} contains errors`), { errors: import_struct.onboarding_result.errors }, 'warning');
+
+            import_struct.user.id = 'ERROR'
           } else {
-            import_struct.errors.push(`Error while creating / updating the user ${import_struct.user.email}`);
-          }
+            if (import_struct.onboarding_result.data.createUser && import_struct.onboarding_result.data.createUser.id) {
+              import_struct.user.id = import_struct.onboarding_result.data.createUser.id;
+            } else {
+
+              import_struct.errors.push(`Error while creating / updating the user ${import_struct.user.email}`);
+            }
+          }                    
         } else {
           import_struct.user.id = 'PREVIEW_ID'
         }
       } catch (mutationError) {
-        debugger
-        that.context.log(`Error processing import ${mutationError.message}`, { error: mutationError }, 'error', 'UserGeneralProcessor')
+        that.context.log(colors.error(`Error processing import ${mutationError.message}`), { error: mutationError }, 'error', 'UserGeneralProcessor')
         import_struct.errors.push(`Error while creating / updating the user ${import_struct.user.email} ${mutationError.message}`);
       }
     });
@@ -230,7 +257,6 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
     //3. update processor state and hand off to next processor
 
     let $next: Reactory.IProcessor = null;
-    debugger
     if (nextProcessor && nextProcessor.process) {
       $next = nextProcessor;
     }

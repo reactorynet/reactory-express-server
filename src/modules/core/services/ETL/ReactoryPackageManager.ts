@@ -91,15 +91,8 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
     return pkg;
   }
 
-  /**
-   * Generates the preview data for the specific file in a package.
-   * @param workload_id 
-   * @param file_id - the file id we want to use to generate the preview
-   * @param processors - the list of processors to apply to creating a preview.
-   * @returns 
-   */
-  async previewFile(workload_id: string, file_id: string, processors: string[]): Promise<any> {
-    debugger
+
+  async processFile(workload_id: string, file_id: string, processors: string[], preview: boolean = false) {
     this.context.log(`Method call: previewFile(workload_id: string => ${workload_id}`, {}, 'debug', this.name);
     const pkg: Reactory.IReactoryFileImportPackageDocument = await this.getPackage(workload_id);
     const $packman = this;
@@ -109,12 +102,12 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
     if (files && files.length === 0) {
       return {
         success: false,
+        //@ts-ignore
         message: `No files available in this package: ${pkg._id}`
       }
     }
 
     let $files = filterFiles([file_id], files);
-    debugger;
     //we should only have one file match
     if ($files.length === 1) {
       // 3. assign processors to the files 
@@ -127,7 +120,6 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
       let start_promise: Promise<any> = null;
       let $file: Reactory.IImportFile = $files[0];
 
-      debugger;
       $file.processors = $processors;
       // only invoke the first processors
       // the first one must call the next and so forth
@@ -146,13 +138,12 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
 
       try {
         this.context.log(`Staring IProcessor (${this.nameSpace}.${this.name})`, {}, 'debug', this.name);
-        debugger
         preview = await procsvc.process({
           file: $file,
           import_package: pkg,
           process_index: 0,
           processors: $processors,
-          preview: true,
+          preview: preview,
           next: $processors.length > 1 ? $processors[1] : null
         }, nextSvc).then();
 
@@ -166,64 +157,35 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
     }
   }
 
+  /**
+   * Generates the preview data for the specific file in a package.
+   * @param workload_id 
+   * @param file_id - the file id we want to use to generate the preview
+   * @param processors - the list of processors to apply to creating a preview.
+   * @returns 
+   */
+  async previewFile(workload_id: string, file_id: string, processors: string[]): Promise<any> {    
+    return this.processFile(workload_id, file_id, processors, true);
+  }
+
   async start(workload_id: string, file_ids: string[] = [], processors: string[] = []): Promise<any> {
+  
+    try {
+      
+      const results = await Promise.all(file_ids.map((file_id, index, $file_ids) => this.processFile(workload_id, file_id, processors, false))).then();
+      debugger
 
-
-    // 1. load the workload item
-    const pkg: Reactory.IReactoryFileImportPackageDocument = await this.getPackage(workload_id);
-
-    const { files } = pkg;
-    // 2. check if there are files
-
-    if (files && files.length === 0) {
       return {
-        success: false,
-        message: `No files available in this package: ${pkg._id}`
+        success: true,
+        message: `Processed files`,
+        payload: results
       }
+    } catch(exc) {
+      const meta = { error: exc, args: { workload_id, file_ids, processors } };
+      this.context.log(`An error occured while processing the file data`, meta, 'error');
+      throw new ApiError(`Data Import Error`, meta);
     }
-
-    let $files = files;
-    if (file_ids.length > 0) {
-      $files = filterFiles(file_ids, $files);
-    }
-
-    // 3. assign processors to the files 
-    let $processors = pkg.processors;
-
-    if (processors.length > 0) {
-      $processors = filterProcessors(processors, $processors);
-    }
-
-
-    // 4. iterate through each file and execute
-    let processor_promises: Promise<any>[] = [];
-    $files.forEach((file_item: any) => {
-      file_item.processors = $processors;
-      // only invoke the first processors
-      // the first one must call the next and so forth
-      const procsvc = this.context.getService(file_item.processors[0].serviceFqn) as Reactory.IProcessor;
-      if (procsvc && procsvc.process) {
-        processor_promises.push(procsvc.process({
-          file: file_item,
-          import_package: pkg,
-          process_index: 0,
-          next: $processors.length > 1 ? $processors[1] : null
-        }));
-      }
-    });
-
-
-    if (processor_promises.length > 0) await Promise.all(processor_promises).then();
-    // the processors in sequence
-    // and set the status to 'running' if it
-    // passes the validation for the processors.
-
-    // 5. collate results
-    return {
-      success: true,
-      message: `Started (${processor_promises.length}) processes for (${$files.length}) file(s) in package ${pkg._id}`
-    }
-
+    
   }
 
   async stop(workload_id: string, file_ids: string[]): Promise<boolean> {
@@ -243,7 +205,6 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
   }
 
   async addFile(workload_id: string, file: Reactory.IReactoryFileModel): Promise<any> {
-    debugger;
     //1. validate basics, is it a CSV is there rows
     try {
       const stats = file.stats();
@@ -255,7 +216,6 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
     }
 
 
-    debugger;
     //2. add the file
     const pkg: Reactory.IReactoryFileImportPackageDocument = await ReactoryFileImportPackage.findById(workload_id).then();
     if (!pkg.files) pkg.files = [];
@@ -273,7 +233,6 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
 
     pkg.files.push(userFile);
 
-    debugger;
     pkg.save();
     //3. start the preview processor
     return userFile;

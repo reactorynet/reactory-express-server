@@ -273,7 +273,7 @@ extend type Mutation {
   """
   Remove file from a import package
   """
-  RemoveFileFromImportPackage(file_id: String!, workload_id: String!): Boolean
+  RemoveFileFromImportPackage(file_id: String!, workload_id: String!): CoreSimpleResponse
 
   """
   Starts a given import package

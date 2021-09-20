@@ -156,7 +156,6 @@ ReactoryFileSchema.methods.exists = function exists() {
 
 // eslint-disable-next-line max-len
 ReactoryFileSchema.methods.lineCount = async function lineCount() {
-  debugger;
 
   const LINE_FEED = '\n'.charCodeAt(0);
   const file: Reactory.IReactoryFileModel = this;

@@ -113,8 +113,7 @@ const resolvers = {
 
 
       if (skipResfresh === false && isAnon === false) {
-        logger.debug(`apiStatus called for ${user.firstName} ${user.lastName}, performing profile refresh`);
-        debugger
+        context.log(`apiStatus called for ${user.firstName} ${user.lastName}, performing profile refresh`, {}, 'debug');
         try {
           const refreshResult = await execql(`
           query RefreshProfile($id:String, $skipImage: Boolean) {

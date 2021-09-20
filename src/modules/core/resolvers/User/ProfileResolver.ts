@@ -192,7 +192,6 @@ export default {
   Query: {
     refreshProfileData: async (parent: any, params: { id: string, skipImage: boolean }, context: Reactory.IReactoryContext) => {
       let userToRefresh = context.user;
-      debugger
       const { id, skipImage } = params;
       const uxmessages = [];
       if (id && typeof id === 'string') {

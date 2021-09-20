@@ -218,7 +218,7 @@ const graph: any = {
       }
 
     },
-    RemoveFileFromImportPackage: async (parent: any, args: any, context: Reactory.IReactoryContext, info: any): Promise<boolean> => {
+    RemoveFileFromImportPackage: async (parent: any, args: any, context: Reactory.IReactoryContext, info: any): Promise<Reactory.CoreSimpleResponse> => {
       
       type t_arg = {file_id: string, workload_id: string }
       

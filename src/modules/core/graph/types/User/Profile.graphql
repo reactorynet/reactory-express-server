@@ -12,6 +12,7 @@ type PersonalDemographics {
 }
 
 input PersonalDemographicsInput {  
+  userId: String
   race: String
   dob: Date
   gender: String

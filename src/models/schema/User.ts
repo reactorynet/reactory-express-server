@@ -210,10 +210,7 @@ UserSchema.methods.hasRole = function hasRole(clientId: string | mongodb.ObjectI
 };
 
 UserSchema.methods.hasAnyRole = function hasAnyRole(clientId: string | mongodb.ObjectID, organizationId: string | mongodb.ObjectID, businessUnitId: string | mongodb.ObjectID) {
-  logger.info(`User.hasAnyRole 
-    ReactoryClient:[${clientId}]     
-    Organization: [${organizationId || '**'}]
-    BusinessUnit: [${businessUnitId || '**'}]`);
+  
   if (this.memberships.length === 0) return false;
 
 
@@ -229,7 +226,6 @@ UserSchema.methods.hasAnyRole = function hasAnyRole(clientId: string | mongodb.O
   });
 
   if (ObjectIdFunc.isValid(organizationId) === true) {
-    logger.info('Filtering by organization');
     matches = filter(
       matches,
       membership => new ObjectIdFunc(membership.organizationId).equals(new ObjectIdFunc(organizationId)),
@@ -243,7 +239,6 @@ UserSchema.methods.hasAnyRole = function hasAnyRole(clientId: string | mongodb.O
   // }
 
   if (ObjectIdFunc.isValid(businessUnitId)) {
-    logger.info('Filtering by business unit id');
     matches = filter(
       matches,
       membership => new ObjectIdFunc(new membership.businessUnitId).equals(new ObjectIdFunc(businessUnitId)),
