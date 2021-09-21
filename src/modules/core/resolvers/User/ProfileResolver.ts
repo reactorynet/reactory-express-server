@@ -11,6 +11,19 @@ import ApiError from "@reactory/server-core/exceptions";
 import moment from "moment";
 import { Reactory } from "types/reactory";
 
+export interface IPersonalDemographicsInput {
+  userId?: string,
+  membershi?: string,
+  race?: string,
+  dob?: string | Date
+  gender?: string
+  position?: string
+  region?: string
+  operationalGroup?: string
+  businessUnit?: String
+  team?: String
+}
+
 const refreshMicrosoftToken = async (msauth: any) => {
   logger.debug('Refreshing Microsoft Token')
   /**
@@ -168,7 +181,7 @@ const isTokenValid = async (msauth: any, refresh: boolean = true, userToCheck: R
   };
 };
 
-const SetPersonalDemographics = async (args) => {
+const SetPersonalDemographics = async (args, context: Reactory.IReactoryContext) => {
   logger.debug(`SAVING MY PERSONAL DEMOGRAPHICS :: ${JSON.stringify(args)}`);
 
   try {
@@ -308,7 +321,7 @@ export default {
     },
   },
   Mutation: {
-    async CoreSetPersonalDemographics(obj, args, context) {
+    async CoreSetPersonalDemographics(obj: any, args: IPersonalDemographicsInput, context: Reactory.IReactoryContext) {
       return SetPersonalDemographics(args, context);
     }
   }

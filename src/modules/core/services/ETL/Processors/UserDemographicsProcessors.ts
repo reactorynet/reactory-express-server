@@ -1,6 +1,6 @@
 'use strict';
 import { Reactory } from '@reactory/server-core/types/reactory';
-
+import { MutationResult, IUserImportStruct } from './types';
 
 class UserDemographicsProcessor implements Reactory.IProcessor {
 
@@ -38,6 +38,37 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
 
     let output: any[] = [...input];
 
+
+    output.forEach(async (import_struct: IUserImportStruct, index: number) => {
+      try {
+
+        that.context.log(colors.debug(`Preparing Mutation #${index} for user ${import_struct.user.email}`), {}, 'debug', 'UserGeneralProcessor');
+        if (preview === false && import_struct.user.email.indexOf('ERR') < 0) {
+          const variables: any = { input: import_struct.user, organizationId: import_package.organization._id };
+          delete variables.input.id;
+          import_struct.onboarding_result = await this.mutate(create_user_mutation, variables).then();
+
+          if (import_struct.onboarding_result.errors && import_struct.onboarding_result.errors.length > 0) {
+
+            that.context.log(colors.warn(`Mutation #${index} for user ${import_struct.user.email} contains errors`), { errors: import_struct.onboarding_result.errors }, 'warning');
+
+            import_struct.user.id = 'ERROR'
+          } else {
+            if (import_struct.onboarding_result.data.createUser && import_struct.onboarding_result.data.createUser.id) {
+              import_struct.user.id = import_struct.onboarding_result.data.createUser.id;
+            } else {
+
+              import_struct.errors.push(`Error while creating / updating the user ${import_struct.user.email}`);
+            }
+          }
+        } else {
+          import_struct.user.id = 'PREVIEW_ID'
+        }
+      } catch (mutationError) {
+        that.context.log(colors.error(`Error processing import ${mutationError.message}`), { error: mutationError }, 'error', 'UserGeneralProcessor')
+        import_struct.errors.push(`Error while creating / updating the user ${import_struct.user.email} ${mutationError.message}`);
+      }
+    });
     
     
     let $next: Reactory.IProcessor = null;
@@ -53,6 +84,7 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
     if ($next === null && processors.length > process_index + 1) {
       $next = this.context.getService(processors[process_index + 1].serviceFqn);
     }
+
 
     debugger;
 

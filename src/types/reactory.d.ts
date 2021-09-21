@@ -1055,10 +1055,22 @@ declare namespace Reactory {
       save(form: Reactory.IReactoryForm, user_options?: any): Reactory.IReactoryForm;
 
       /**
-       * 
+       * Delete a form from the data store
        * @param form 
        */
       delete(form: Reactory.IReactoryForm): boolean
+    }
+
+    export interface IReactoryUserService extends Reactory.Service.IReactoryDefaultService {
+
+      createUser(userInput: Reactory.IUser, organization: Reactory.IOrganization): Promise<Reactory.IUserDocument>;
+
+      updateUser(userInput: Reactory.IUser): Promise<Reactory.IUserDocument>
+
+      findUserWithEmail(email: string): Promise<Reactory.IUserDocument>
+
+      findUserById(id: string | ObjectID): Promise<Reactory.IUserDocument>
+            
     }
   }
 

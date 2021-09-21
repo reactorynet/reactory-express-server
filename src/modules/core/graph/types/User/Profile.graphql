@@ -11,8 +11,12 @@ type PersonalDemographics {
   team: Team
 }
 
+"""
+The input type to create personal demographics
+"""
 input PersonalDemographicsInput {  
   userId: String
+  membership: String
   race: String
   dob: Date
   gender: String
@@ -28,5 +32,8 @@ extend type Query {
 }
 
 extend type Mutation {
+  """
+  Sets or update the Personal Demographics
+  """
   CoreSetPersonalDemographics(personalDemographics: PersonalDemographicsInput!): CoreSimpleResponse
 }
