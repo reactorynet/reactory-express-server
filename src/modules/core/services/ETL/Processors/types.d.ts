@@ -35,11 +35,13 @@ export interface IUserImportStruct {
 
   demographic_promise: Promise<any>,
   demographic_result?: {
+    errors?: any[],
     data?: {
-      userDemographics?: {
-        id: string
-        gender: string
-        dob: Date,
+      MoresUpdateUserDemographic?: {
+        user: any
+        organization: any
+        gender: any
+        age: Date,
         position: string,
         jobTitle: string
       }
@@ -68,6 +70,8 @@ export interface IUserImportStruct {
     position?: string,
     jobTitle?: string,
     team?: string
+    race?: string
+    operationalGroup?: string
   }
   [key: string]: any
 }

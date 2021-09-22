@@ -9,6 +9,7 @@ import logger from '@reactory/server-core/logging';
 import { ReactoryClientValidationError } from '@reactory/server-core/exceptions';
 import { startServices, getService } from '@reactory/server-core/services';
 import { Reactory } from '@reactory/server-core/types/reactory';
+import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContextProvider';
 
 const { clients, components } = data;
 
@@ -248,11 +249,10 @@ const startup = async () => {
 
 
     if (userResponse && context_partner) { // eslint-disable-line
-      const $getService = (id, props = undefined) => {
-        return getService(id, props, { user: userResponse, partner: context_partner });
-      };
 
-      await initialiseStartupAwareServices({ user: userResponse, partner: context_partner, getService: $getService });
+      let context = await ReactoryContextProvider(null, { user: userResponse, partner: context_partner }).then();
+
+      await initialiseStartupAwareServices(context);
     }
 
 

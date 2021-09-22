@@ -73,6 +73,7 @@ declare namespace Reactory {
     settings?: any[],
     whitelist?: string[]
     components?: any[],
+    //deafult user accounts to create at startup
     users?: any[],
     allowCustomTheme?: boolean,
     createdAt?: Date,
@@ -362,6 +363,10 @@ declare namespace Reactory {
 
   export interface IUserDocument extends Mongoose.Document, IUser {
 
+  }
+
+  export interface IUserDemographics {
+    race: 
   }
 
   export interface IPeerEntry {
@@ -859,14 +864,60 @@ declare namespace Reactory {
     $services: Reactory.IReactoryServiceRegister,
   }
 
+  export type ReactoryServiceTypes = "file" | "data" | "iot" | 
+    "user" | "organization" | "businessunit" | "email" | 
+    "notification" | "workflow" | "devops" | "plugin" | 
+    "custom";
+
+  export interface IReactoryServiceDependency {
+    /**
+     * The full service id
+     */
+    id: string,
+    /**
+     * The service property alias.
+     */
+    alias: string
+  }
+
+  export type ServiceDependency = string | IReactoryServiceDependency;
+
+  export type ReactoryServiceDependencies = ServiceDependency[]
   export interface IReactoryServiceDefinition {
+    /**
+     * The service id is similar to a component FQN, 
+     * so ids, will be used as nameSpace.name@version
+     */
     id: string
+    /**
+     * A easy to ready name.
+     * i.e. My Fileservice
+     */
     name: string
+    /**
+     * Longer description, what does the service do.
+     * i.e. My Fileservice is a specific handler for persisting uploaded files to a 
+     * backup folder.
+     */
     description: string
-    isAsync?: boolean
+    /***
+     * A function that returns an instance of the service.  Your service 
+     * can either run per execution or can run in the context of the service as a singleton
+     * across all requests.  
+     * 
+     * The execution context of the startup account will be that of the server service account.
+     * So using singleton instances should be done with care and it is advised to run all services
+     * in the execution context of the user where possible.
+     */
     service(props: IReactoryServiceProps, context: any): any,
-    serviceType?: string
-    dependencies?: string[] | any[]
+    /**
+     * An optional type definition
+     */
+    serviceType?: ReactoryServiceTypes
+    /**
+     * Depenency array ['core.FileService@1.0.0', { id: 'core.UserService@1.0.0', alias: 'myUserService' }]
+     */
+    dependencies?: ReactoryServiceDependencies
   }
 
   export interface IReactoryServiceRegister {
@@ -1071,6 +1122,12 @@ declare namespace Reactory {
 
       findUserById(id: string | ObjectID): Promise<Reactory.IUserDocument>
             
+    }
+
+    export interface IReactoryUserDemographicsService extends Reactory.Service.IReactoryDefaultService {
+
+      setUserDemographics(demographics: Reactory.IUserDemographics, user: Reactory.IUser): Promise<IUserDemographicsDocument>
+      
     }
   }
 

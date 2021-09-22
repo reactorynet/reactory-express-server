@@ -1,4 +1,4 @@
-import mongoose, { MongooseDocument } from 'mongoose';
+import mongoose from 'mongoose';
 import moment from 'moment';
 import logger from '@reactory/server-core/logging';
 import { Reactory } from '@reactory/server-core/types/reactory';

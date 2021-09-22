@@ -7,6 +7,7 @@ import OrganizationServiceDefinition from '@reactory/server-modules/core/service
 import GoogleMapsService from "./location/GoogleMapsService";
 import Processors from './ETL/Processors';
 import ReactoryPackageManager from './ETL/ReactoryPackageManager';
+import UserService from './UserService';
 //custom services to be expressed here
 
 
@@ -19,6 +20,7 @@ const services = [
   ReactoryExcelWriterServiceDefinition,
   OrganizationServiceDefinition,
   ReactoryPackageManager.reactory,
+  UserService.reactory
 ]
 
 export default services;

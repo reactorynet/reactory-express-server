@@ -4,9 +4,15 @@ import { getService } from '@reactory/server-core/services';  // eslint-disable-
 import logger from '@reactory/server-core/logging';
 import colors from 'colors/safe';
 
-export default async ($session: any, currentContext: any): Promise<Reactory.IReactoryContext> => {
-
+/***
+ * The Reactory Context Provider creates a context for the execution thread which is passed through with each request
+ * 
+ * NOTE: Changes to this file only kicks in after restarting the server from cold, meaning you have to kill 
+ * the process with Ctrl+C and then restart the service with bin/start.sh
+ */
+export default async ($session: any, currentContext: any = {}): Promise<Reactory.IReactoryContext> => {
   const $id = uuid();
+  let $context = currentContext || {};
   let email = 'anon@local';
 
   colors.setTheme({
@@ -48,18 +54,33 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     }
   };
 
+  let $user = $context.user ? $context.user : null;
+  let $partner = $context.partner ? $context.partner : null;
+  let $request = null;
+  let $response = null;
 
+  //if the context is being used in the context of a session
+  if($session !== null && $session !== undefined) {
+    $user = $session.req.user;
+    $partner = $session.req.partner;
+    $request = $session.req;
+    $response = $session.res;
+
+    email = $user.email;
+
+  }
+ 
   /**
    * The Reactory Context Provider is the base provider and
    * can be considerd as the component and user container for the
    * duration of the exection.
    */
   let newContext: Reactory.IReactoryContext = {
-    ...currentContext,
-    user: $session.req.user,
-    partner: $session.req.partner,
-    $request: $session.req,
-    $response: $session.res,
+    ...$context,
+    user: $user,
+    partner: $partner,
+    $request,
+    $response,
     log: $log,
     hasRole: (role: string, partner?: Reactory.IPartner, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => {
       return $session.req.user.hasRole(partner && partner._id ? partner._id : $session.req.partner._id,
@@ -72,10 +93,7 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
 
 
   
-  if ($session.req.user) {
-    email = $session.req.user.email;
-  }
-
+  
   const $getService = (id: string, props: any = undefined) => {
     return getService(id, props, {
       ...newContext,
@@ -101,11 +119,14 @@ export default async ($session: any, currentContext: any): Promise<Reactory.IRea
     }
   }
 
-  return {
+  $context = {
     id: $id,
     ...newContext,
     getService: $getService,
     log: $log,
     colors
   };
+
+
+  return $context;
 };
