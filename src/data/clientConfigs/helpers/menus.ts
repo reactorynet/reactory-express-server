@@ -63,3 +63,4 @@ export default [
   profileSmall,
   towerStoneMenuDef,
 ];
+
