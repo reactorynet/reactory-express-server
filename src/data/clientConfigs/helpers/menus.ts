@@ -24,6 +24,7 @@ export const profileSmall = {
   ],
 };
 
+
 export const towerStoneMenuDef = {
   name: 'Main',
   key: 'left-nav',
