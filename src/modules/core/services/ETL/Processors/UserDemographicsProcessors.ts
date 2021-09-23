@@ -135,12 +135,9 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
     const colors = that.context.colors;
     let output: any[] = [...input];
 
+    const demographics_promises =  output.map((import_struct: IUserImportStruct, index: number) => {
 
-    output.forEach(async (import_struct: IUserImportStruct, index: number) => {
-      try {
-
-        that.context.log(colors.debug(`Preparing Mutation #${index} for user ${import_struct.user.email}`), {}, 'debug', 'UserDemographicsProcessor');
-
+      return new Promise((resolve) => {
         if (preview === false && import_struct.user.email.indexOf('ERR') < 0) {
 
           const variables: any = {
@@ -157,24 +154,34 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
             }
           };
 
-          import_struct.demographic_result = await this.mutate(SetUserDemographicsMutation, variables).then();
+          that.context.log(colors.debug(`Preparing Mutation #${index} for user ${import_struct.user.email}`), {}, 'debug', 'UserDemographicsProcessor');
 
-          if (import_struct.demographic_result.errors && import_struct.demographic_result.errors.length > 0) {
-            that.context.log(colors.warn(`Mutation #${index} for user ${import_struct.user.email} contains errors`), { errors: import_struct.onboarding_result.errors }, 'warning');
-            import_struct.demographics.id = 'ERROR'
-          } else {
-            if (import_struct.demographic_result.data.MoresUpdateUserDemographic) {
-              that.context.log(colors.green(`Mutation for demographics for user ${import_struct.user.email} completed without error`));
+          that.mutate(SetUserDemographicsMutation, variables).then((result) => {
+            import_struct.demographic_result = result;
+            
+            if (import_struct.demographic_result.errors && import_struct.demographic_result.errors.length > 0) {
+              that.context.log(colors.warn(`Mutation #${index} for user ${import_struct.user.email} contains errors`), { errors: import_struct.onboarding_result.errors }, 'warning');
+              import_struct.demographics.id = 'ERROR'
             } else {
-              import_struct.errors.push(`Error while processing user demographic data ${import_struct.user.email}`);
+              if (import_struct.demographic_result.data.MoresUpdateUserDemographic) {
+                that.context.log(colors.green(`Mutation for demographics for user ${import_struct.user.email} completed without error`));
+              } else {
+                import_struct.errors.push(`Error while processing user demographic data ${import_struct.user.email}`);
+              }
             }
-          }
-        } 
-      } catch (mutationError) {
-        that.context.log(colors.error(`Error processing import ${mutationError.message}`), { error: mutationError }, 'error', 'UserGeneralProcessor')
-        import_struct.errors.push(`Error while creating / updating the user ${import_struct.user.email} ${mutationError.message}`);
-      }
+            resolve(import_struct);            
+          }).catch((err) => {
+            that.context.log(`${that.context.colors.red('Errors processing demographics')} result for user ${import_struct.user.email}`, {}, 'error', 'UserDemographicsProcessor');
+            import_struct.demographic_result = {
+              errors: [err]
+            }
+            resolve(import_struct);
+          });  
+        }
+      });                       
     });
+
+    output = await Promise.all(demographics_promises).then();
 
     let $next: Reactory.IProcessor = null;
 

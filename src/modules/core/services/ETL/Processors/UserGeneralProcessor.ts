@@ -3,7 +3,7 @@
 
 import { Reactory } from '@reactory/server-core/types/reactory';
 import { ObjectId } from 'mongodb';
-import moment from 'moment';
+import moment, { isMoment } from 'moment';
 import { execml, execql } from '@reactory/server-core/graph/client';
 import iz from '@reactory/server-core/utils/validators';
 import { MutationResult, IUserImportStruct } from './types';
@@ -40,7 +40,7 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
         errors: [mutationError.message]
       }
     }
-    
+
   };
 
   getExecutionContext(): Reactory.IReactoryContext {
@@ -89,6 +89,20 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
         
        */
 
+      const dob = () => {
+        try {
+          if (row_data[5]) {
+            let m = moment(row_data[5])
+            if (m.isValid() === true) {
+              return m.toDate()
+            }
+            debugger
+            return new Date()
+          }
+        } catch (e) {
+          return new Date()
+        }
+      }
 
 
       const user_entry: IUserImportStruct = {
@@ -120,9 +134,11 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
           authProvider: "REACTORY"
         },
 
+
+
         demographics: {
           gender: row_data[4],
-          dob: moment(row_data[5]).toDate(),
+          dob: dob(),
           region: row_data[7],
           businessUnit: row_data[9],
           position: row_data[6],
@@ -132,7 +148,7 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
 
       };
 
-      
+
       output.push(user_entry);
     });
 
@@ -145,42 +161,59 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
       email
     }
   }
-`;
+    `;
 
-    output.forEach(async (import_struct: IUserImportStruct, index: number) => {
-      try {
-        
-        that.context.log(colors.debug(`Preparing Mutation #${index} for user ${import_struct.user.email}`), {}, 'debug', 'UserGeneralProcessor');
+
+    const promises = output.map((import_struct: IUserImportStruct, index: number) => {
+
+      return new Promise((resolve) => {
+
+        that.context.log(colors.debug(`Starting Mutation #${index} for user ${import_struct.user.email}`), {}, 'debug', 'UserGeneralProcessor');
         if (preview === false && import_struct.user.email.indexOf('ERR') < 0) {
           const variables: any = { input: import_struct.user, organizationId: import_package.organization._id };
           delete variables.input.id;
-          import_struct.onboarding_result = await this.mutate(create_user_mutation, variables).then();
 
-          if (import_struct.onboarding_result.errors && import_struct.onboarding_result.errors.length > 0) {
-            
-            that.context.log(colors.warn(`Mutation #${index} for user ${import_struct.user.email} contains errors`), { errors: import_struct.onboarding_result.errors }, 'warning');
+          that.mutate(create_user_mutation, variables).then((result) => {
 
-            import_struct.user.id = 'ERROR'
-          } else {
-            if (import_struct.onboarding_result.data.createUser && import_struct.onboarding_result.data.createUser.id) {
-              import_struct.user.id = import_struct.onboarding_result.data.createUser.id;
+            import_struct.onboarding_result = result;
+
+            if (import_struct.onboarding_result.errors && import_struct.onboarding_result.errors.length > 0) {
+              that.context.log(colors.warn(`Mutation #${index} for user ${import_struct.user.email} contains errors`), { errors: import_struct.onboarding_result.errors }, 'warning');
+              import_struct.user.id = 'ERROR'
             } else {
+              if (import_struct.onboarding_result.data.createUser && import_struct.onboarding_result.data.createUser.id) {
+                import_struct.user.id = import_struct.onboarding_result.data.createUser.id;
+              } else {
 
-              import_struct.errors.push(`Error while creating / updating the user ${import_struct.user.email}`);
+                import_struct.errors.push(`Error while creating / updating the user ${import_struct.user.email}`);
+              }
             }
-          }                    
+
+            resolve(import_struct);
+          }).catch((err) => {
+            that.context.log(colors.error(`Error processing import ${err.message}`), { error: err }, 'error', 'UserGeneralProcessor')
+            import_struct.errors.push(`Error while creating / updating the user ${import_struct.user.email} ${err.message}`);
+
+            resolve(import_struct);
+          });
+
         } else {
           import_struct.user.id = 'PREVIEW_ID'
+          resolve(import_struct);
         }
-      } catch (mutationError) {
-        that.context.log(colors.error(`Error processing import ${mutationError.message}`), { error: mutationError }, 'error', 'UserGeneralProcessor')
-        import_struct.errors.push(`Error while creating / updating the user ${import_struct.user.email} ${mutationError.message}`);
-      }
-    });
+        
+      });
+    })
+
+    output = await Promise.all(promises).then();
 
     //create promises 
 
+    that.context.log(`Processed all general data`, {}, 'debug', 'UserGeneralProcessor')
+
     //3. update processor state and hand off to next processor
+
+    debugger
 
     let $next: Reactory.IProcessor = null;
     if (nextProcessor && nextProcessor.process) {
@@ -196,7 +229,15 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
     }
 
     if ($next !== null && $next.process) {
-      output = await $next.process({ input: output, file, import_package, process_index: process_index + 1 }).then();
+      that.context.log(`Executing next processor in execution chain`, {}, 'debug', 'UserGeneralProcessor');
+      output = await $next.process({ 
+        input: output, 
+        file, 
+        import_package, 
+        processors,
+        next: processors.length >= process_index + 1 ? processors[process_index + 1] : null,
+        process_index: process_index + 1
+       }).then();
     }
 
     return output;

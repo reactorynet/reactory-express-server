@@ -96,7 +96,13 @@ class UserFileImportCSV2JSON implements Reactory.IProcessor {
     }
 
     if ($next !== null && $next.process) {
-      output = await $next.process({ input: output, file, import_package, process_index: process_index + 1 }).then();
+      output = await $next.process({ 
+        input: output, 
+        file, 
+        import_package, 
+        processors,
+        next: processors.length >= process_index + 2 ? processors[process_index + 2] : null,
+        process_index: process_index + 1 }).then();
     }
 
     return output;
