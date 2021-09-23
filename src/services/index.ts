@@ -20,7 +20,7 @@ const getAlias = (id: string) => {
   return name;
 }
 
-export const getService = (id: string, props: any = {}, context: Reactory.IReactoryContext, dependencies: any[] = []): any => {
+export const getService = (id: string, props: any = {}, context: Reactory.IReactoryContext, lifeCycle: Reactory.SERVICE_LIFECYCLE = "instance"): any => {
 
   if (serviceRegister[id]) {
     const svcDef = serviceRegister[id];
@@ -55,29 +55,34 @@ export const getService = (id: string, props: any = {}, context: Reactory.IReact
         append_deps(dep);
       })
     }
-
-    if (dependencies && dependencies.length) {
-      dependencies.forEach(dep => append_deps(dep));
+    
+    const singleton_key = `svc_instance::${id}`;
+    
+    if (context.state[singleton_key] !== null && context.state[singleton_key] !== undefined  && lifeCycle === "singleton") {
+      debugger
+      let $svc = context.state[singleton_key];
+      context.log(` 🔥🔥 Found Service Instance matching key ${singleton_key} 🔥🔥`, { svc: $svc }, 'debug')
+      return context.state[singleton_key];
     }
 
     const svc = serviceRegister[id].service({ ...props, $services: serviceRegister, $dependencies: $deps }, context);
     //try to auto bind services with property setter binders.
     Object.keys($deps).map((dependcyAlias: string) => {
       let isSet = false;
-
-
       if (!isSet) {
-
         let fn = `set${dependcyAlias.substring(0, 1).toUpperCase()}${dependcyAlias.substring(1, dependcyAlias.length)}`;
-
         if (svc[fn] && typeof svc[fn] === 'function') {
           //call the setter function
           svc[fn]($deps[dependcyAlias]);
         }
-
       }
-
     });
+
+    if (context.state[singleton_key] === null && context.state[singleton_key] === undefined  && lifeCycle === "singleton") {
+      
+      context.log(` 🔥🔥 Setting Singleton service key ${singleton_key} 🔥🔥`, { svc: svc }, 'debug')
+      context.state[singleton_key] = svc;
+    }
 
     return svc;
   } else {
