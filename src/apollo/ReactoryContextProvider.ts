@@ -13,6 +13,9 @@ import colors from 'colors/safe';
 export default async ($session: any, currentContext: any = {}): Promise<Reactory.IReactoryContext> => {
   const $id = uuid();
   let $context = currentContext || {};
+  
+  const context_state = {};
+
   let email = 'anon@local';
 
   colors.setTheme({
@@ -77,6 +80,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
    */
   let newContext: Reactory.IReactoryContext = {
     ...$context,
+    id: $id,
     user: $user,
     partner: $partner,
     $request,
@@ -89,18 +93,30 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
         businessUnit && businessUnit._id ? businessUnit._id : undefined)
     },
     colors,
+    state: context_state,
   };
 
 
   
   
-  const $getService = (id: string, props: any = undefined) => {
+  const $getService = (id: string, props: any = undefined, $context?: Reactory.IReactoryContext, lifeCycle?: Reactory.SERVICE_LIFECYCLE ) => {
+    $log(`Getting service ${id} [${lifeCycle || "instance"}]`)
+    if($context && Object.keys($context).length > 0) {
+      newContext = { 
+        ...newContext, 
+        ...$context 
+      }
+    }
+
+
     return getService(id, props, {
       ...newContext,
       getService: $getService,
-    });
+    }, lifeCycle);
+        
   };
 
+  newContext.getService = $getService;
 
 
   /**
@@ -114,19 +130,9 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     const partnerContextService: Reactory.IExecutionContextProvider = $getService(executionContextServiceName.data);
     if (partnerContextService && partnerContextService.getContext) {
       newContext = await partnerContextService.getContext(newContext).then();
-      newContext.log = $log;
-      newContext.colors = colors;
     }
   }
 
-  $context = {
-    id: $id,
-    ...newContext,
-    getService: $getService,
-    log: $log,
-    colors
-  };
-
-
-  return $context;
+  
+  return newContext;
 };

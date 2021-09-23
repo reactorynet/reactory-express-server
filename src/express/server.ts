@@ -19,7 +19,7 @@ import flash from 'connect-flash';
  * as eslint is not configure to deal with the
  * correct aliasing configured in tsconfig and package.json
  */
-import mongooseConnection from '@reactory/server-core/mongoose';
+import mongooseConnection from '@reactory/server-core/models/mongoose';
 import corsOptions from '@reactory/server-core/express/cors';
 import reactoryClientAuthenticationMiddleware from '@reactory/server-core/middleware/ReactoryClient';
 import userAccountRouter from '@reactory/server-core/useraccount';

@@ -1121,6 +1121,8 @@ declare namespace Reactory {
       findUserWithEmail(email: string): Promise<Reactory.IUserDocument>
 
       findUserById(id: string | ObjectID): Promise<Reactory.IUserDocument>
+
+      getUserPeers(id: string | ObjectID, organization_id: string | ObjectID): Promise<Reactory.IOrganigramDocument>
             
     }
 
@@ -1149,14 +1151,19 @@ declare namespace Reactory {
     [key: string]: any
   }
 
+  export type SERVICE_LIFECYCLE = "instance" | "singleton";
+
   export type LOG_TYPE = string | "debug" | "warn" | "error"
-  export interface IReactoryContext {
+  export interface IReactoryContext { 
     id: string,
     user: Reactory.IUserDocument
     partner: Reactory.IReactoryClientDocument
-    getService<T extends Reactory.Service.IReactoryService>(fqn: string, props?: any, context?: Reactory.IReactoryContext): T,
+    getService<T extends Reactory.Service.IReactoryService>(fqn: string, props?: any, context?: Reactory.IReactoryContext, lifeCycle?: SERVICE_LIFECYCLE): T,
     hasRole(role: string, partner?: Reactory.IReactoryClientDocument): boolean
     log(message: string, meta?: any, type?: LOG_TYPE, clazz?: string): void
+    state: {
+      [key: string]: any
+    },
     [key: string]: any
   }
 
