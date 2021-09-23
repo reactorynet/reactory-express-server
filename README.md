@@ -38,8 +38,15 @@ Checkout the source code
 The PDF rendering require some specific configuration and has a requirement on build-essential and libss1-dev and is installed using 
 
 
+Node Canvas is one of the dependencies and installation instructions for specific environments can be found here https://github.com/Automattic/node-canvas#installation
+
+
+Bellow is installation instructions for Ubuntu / Linux based systems.
+
 `> sudo apt-get update`
 `> sudo apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev`
+
+
 
 ### mongodb
 You need to have a mongodb instance the server can connect to.  MongoDB is currently use via mongoose as the core data storage.  It is however not limited to it and mysql, sqlserver and postgress drivers can be used for storage for custom resolvers and plugins.
