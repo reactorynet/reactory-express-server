@@ -256,14 +256,14 @@ UserSchema.methods.hasAnyRole = function hasAnyRole(clientId: string | mongodb.O
 
 
 // eslint-disable-next-line max-len
-UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId) {
+UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId): Promise<IMembership[]> {
   logger.info(`Adding user membership ${clientId} ${role} ${organizationId} ${businessUnitId}`);
   // const matches = [];
-  if (ObjectIdFunc.isValid(clientId) === false) return false;
+  if (ObjectIdFunc.isValid(clientId) === false) return [];
 
-  if (this.memberships.length === 0) {
+  if ((this as Reactory.IUserDocument).memberships.length === 0) {
     logger.info('User has no memberships, adding');
-    this.memberships.push({
+    (this as Reactory.IUserDocument).memberships.push({
       clientId,
       organizationId,
       businessUnitId,
@@ -275,7 +275,7 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
 
     await this.save().then();
 
-    return this.memberships;
+    return (this as Reactory.IUserDocument).memberships;
   }
 
   if (this.hasRole(clientId, role, organizationId, businessUnitId) === false) {
@@ -359,6 +359,28 @@ UserSchema.methods.hasMembership = function hasMembership(clientId, organization
   if (found === null || found === undefined) return false;
 
   return true;
+};
+
+UserSchema.methods.getMembership = function getMembership(clientId: string | mongodb.ObjectID, organizationId?: string | mongodb.ObjectID, businessUnitId?: string | mongodb.ObjectID) {
+
+  if (this.memberships.length === 0) return false;
+
+  const found = find(this.memberships, (membership) => {
+    return JSON.stringify({
+      clientId: membership.clientId.toString(),
+      organizationId: membership.organizationId ? membership.organizationId.toString() : null,
+      businessUnitId: membership.businessUnitId ? membership.businessUnitId.toString() : null,
+    }) === JSON.stringify({
+      clientId: clientId.toString(),
+      organizationId: organizationId && organizationId.toString ? organizationId.toString() : null,
+      businessUnitId: businessUnitId && businessUnitId.toString ? businessUnitId.toString() : null,
+    });
+  });
+
+  if (found === null || found === undefined) return found;
+
+  return null;
+
 };
 
 UserSchema.methods.fullName = function fullName(email: boolean = false) { return `${this.firstName} ${this.lastName}${email ? ` <${this.email}>` : ''}`; };

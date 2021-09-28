@@ -65,6 +65,11 @@ class UserService implements Reactory.Service.IReactoryUserService {
     return this.peerState[key];
   }
 
+  async setUserDemographics(user_id: string, organization_id: string, membership_id?: 
+    string, dob?: Date, businessUnit?: string, gender?: string, operationalGroup?: string) {
+
+    }
+
   createUser(userInput: Reactory.IUser, organization: Reactory.IOrganization): Promise<Reactory.IUserDocument> {
     throw new Error("Method not implemented.");
   }

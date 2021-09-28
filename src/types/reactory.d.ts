@@ -242,13 +242,13 @@ declare namespace Reactory {
     client?: IPartner
     clientId: string | any
     organization?: IOrganigramDocument,
-    organizationId: string | any
+    organizationId?: string | any
     businessUnit?: IBusinessUnitDocument,
-    businessUnitId: string | any
-    enabled: boolean
-    authProvider: string
-    providerId: string
-    lastLogin: Date,
+    businessUnitId?: string | any
+    enabled?: boolean
+    authProvider?: string
+    providerId?: string
+    lastLogin?: Date,
     user?: IUserDocument
     roles: string[]
   }
@@ -289,7 +289,7 @@ declare namespace Reactory {
     description: String,
     icon: String,
     deleted: Boolean,
-    organization?: IOrganization,
+    organization?: IOrganization | IOrganizationDocument,
     locations?: [
       {
         title: String,
@@ -315,7 +315,7 @@ declare namespace Reactory {
 
   export interface ITeam {
     id?: any,
-    name: String
+    title: String
     description: String
     avatar: String
     deleted: Boolean
@@ -338,6 +338,8 @@ declare namespace Reactory {
     lastName: string,
     email: string,
     salt: string,
+    mobileNumber?: string,
+    dateOfBirth?: Date,
     password: string,
     avatar: string,
     avatarProvider: string,
@@ -354,11 +356,30 @@ declare namespace Reactory {
     validatePassword(password: string): boolean,
     hasRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean,
     hasAnyRole(clientId: string, organizationId?: string, businessUnitId?: string): boolean,
-    addRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): boolean
-    removeRole(clientId: string, role: string, organizationId: string): IMembership[],
+    addRole(clientId: string, role: string, organizationId?: string, businessUnitId?: string): Promise<IMembership[]>
+    removeRole(clientId: string, role: string, organizationId: string): Promise<IMembershipDocument[]>,
     removeAuthentication(provider: string): Promise<boolean>
     getAuthentication(provider: string): IAuthentication
+    getMembership(clientId: string | ObjectId, organizationId?: string | ObjectId, businessUnitId?: string | ObjectId): IMembershipDocument
     [key: string]: any
+  }
+
+  /**
+ * Defines a standard demographic type
+ */
+  export interface IDemographic {
+    id?: any
+    organization: string | ObjectId | Reactory.IOrganization,
+    type: string,
+    key: string,
+    icon?: string,
+    title: string,
+    description?: string,
+    deleted: boolean
+  }
+
+  export interface IDemographicDocument extends Document, IDemographic {
+
   }
 
   export interface IUserDocument extends Mongoose.Document, IUser {

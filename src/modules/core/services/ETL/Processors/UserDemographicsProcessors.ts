@@ -23,7 +23,7 @@ const SetUserDemographicsMutation = `mutation MoresUpdateUserDemographic($input:
     user {
       id      
     }
-    organization: {
+    organization {
       id
       name
     }
@@ -33,7 +33,7 @@ const SetUserDemographicsMutation = `mutation MoresUpdateUserDemographic($input:
     }
     team {
       id
-      name
+      title
     }
     age 
     ageGroup {
@@ -91,11 +91,16 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
   mutate = async (mutation: string, variables: any = {}): Promise<MutationResult> => {
     try {
       const { data, errors = [] } = await execml(mutation, variables, {}, this.context.user, this.context.partner).then();
+      if(errors.length > 0) {
+        this.context.log(`Errors in mutation or document`, { errors }, 'error', 'UserDemographicsProcessor')
+      }
       return {
         data,
         errors: errors.map((e) => e.message)
       }
     } catch (mutationError) {
+      debugger
+      this.context.log(`Error with mutaation`, { error: mutationError }, 'error', 'UserDemographicsProcessor')
       return {
         data: null,
         errors: [mutationError.message]
@@ -143,7 +148,7 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
           const variables: any = {
             input: {
               userId: import_struct.user.id,
-              organizationId: import_package.organization._id,
+              organisationId: import_package.organization._id,
               dob: import_struct.demographics.dob,
               gender: import_struct.demographics.gender,
               race: import_struct.demographics.race,
@@ -157,10 +162,12 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
           that.context.log(colors.debug(`Preparing Mutation #${index} for user ${import_struct.user.email}`), {}, 'debug', 'UserDemographicsProcessor');
 
           that.mutate(SetUserDemographicsMutation, variables).then((result) => {
+
+            debugger
             import_struct.demographic_result = result;
             
             if (import_struct.demographic_result.errors && import_struct.demographic_result.errors.length > 0) {
-              that.context.log(colors.warn(`Mutation #${index} for user ${import_struct.user.email} contains errors`), { errors: import_struct.onboarding_result.errors }, 'warning');
+              that.context.log(colors.warn(`Mutation #${index} for user ${import_struct.user.email} contains errors`), { errors: import_struct.demographic_result.errors }, 'warning');
               import_struct.demographics.id = 'ERROR'
             } else {
               if (import_struct.demographic_result.data.MoresUpdateUserDemographic) {
@@ -197,8 +204,6 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
       $next = this.context.getService(processors[process_index + 1].serviceFqn);
     }
 
-
-    debugger;
 
     if ($next !== null && $next.process) {
       output = await $next.process({ input: output, file, import_package, process_index: process_index + 1 }).then();
