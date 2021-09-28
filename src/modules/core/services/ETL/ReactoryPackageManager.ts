@@ -134,16 +134,16 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
       }
 
 
-      let resutls: any[] = [];
+      let results: any[] = [];
 
       try {
         this.context.log(`Staring IProcessor (${this.nameSpace}.${this.name})`, {}, 'debug', this.name);
-        resutls = await procsvc.process({
+        results = await procsvc.process({
           file: $file,
           import_package: pkg,
           process_index: 0,
           processors: $processors,
-          preview: resutls,
+          preview: results,
           next: $processors.length > 1 ? $processors[1] : null
         }, nextSvc).then();
 
@@ -153,7 +153,7 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
       }
 
 
-      return resutls
+      return results
     }
   }
 
@@ -173,7 +173,6 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
     try {
       
       const results = await Promise.all(file_ids.map((file_id, index, $file_ids) => this.processFile(workload_id, file_id, processors, false))).then();
-      debugger
 
       return {
         success: true,
