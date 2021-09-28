@@ -93,7 +93,7 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
 
 
   async processFile(workload_id: string, file_id: string, processors: string[], preview: boolean = false) {
-    this.context.log(`Method call: previewFile(workload_id: string => ${workload_id}`, {}, 'debug', this.name);
+    this.context.log(`Method call: porocessFile(workload_id: string => ${workload_id}`, {}, 'debug', this.name);
     const pkg: Reactory.IReactoryFileImportPackageDocument = await this.getPackage(workload_id);
     const $packman = this;
     const { files } = pkg;
