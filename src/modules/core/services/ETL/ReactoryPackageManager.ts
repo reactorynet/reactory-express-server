@@ -169,7 +169,7 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
   }
 
   async start(workload_id: string, file_ids: string[] = [], processors: string[] = []): Promise<any> {
-  
+    this.context.log(`Starting package id ${workload_id}`, { workload_id, file_ids, processors },'debug', 'ReactoryPackageManager')
     try {
       
       const results = await Promise.all(file_ids.map((file_id, index, $file_ids) => this.processFile(workload_id, file_id, processors, false))).then();
