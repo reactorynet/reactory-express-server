@@ -34,16 +34,7 @@
     "moduleEntry": "reactory-azure/index.ts",
     "license": "commercial",
     "shop": "https://reactory.net/shop/modules/reactory-azure/"
-  },
-  {
-    "id": "reactory-devops",
-    "name": "Reactory Devops",
-    "key": "reactory-devops",
-    "fqn": "reactory-devops.Console@1.0.0",
-    "moduleEntry": "reactory-devops/index.ts",
-    "license": "commercial",
-    "shop": "https://reactory.net/shop/modules/reactory-devops/"
-  },
+  },  
   {
     "id": "onespot-swarming-live",
     "name": "OneSpot Swarming Live",
