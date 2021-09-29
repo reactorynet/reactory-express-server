@@ -10,9 +10,9 @@ const UserDemographicSchema = new mongoose.Schema({
         type: ObjectId,
         ref: 'Membership'
     },
-    organisation: {
+    organization: {
         type: ObjectId,
-        ref: 'Membership'
+        ref: 'Organization'
     },
     user: {
         type: ObjectId,

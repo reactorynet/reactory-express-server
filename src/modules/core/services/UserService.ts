@@ -1,6 +1,7 @@
 import { Reactory } from "@reactory/server-core/types/reactory";
 import { ObjectId } from "bson";
 import Organigram from "@reactory/server-core/models/schema/Organigram";
+import { User } from "@reactory/server-core/models";
 
 
 interface PeersState {
@@ -78,12 +79,12 @@ class UserService implements Reactory.Service.IReactoryUserService {
     throw new Error("Method not implemented.");
   }
 
-  findUserWithEmail(email: string): Promise<Reactory.IUserDocument> {
-    throw new Error("Method not implemented.");
+  async findUserWithEmail(email: string): Promise<Reactory.IUserDocument> {
+    return User.findOne({ email });
   }
 
-  findUserById(id: string | ObjectId): Promise<Reactory.IUserDocument> {
-    throw new Error("Method not implemented.");
+  async findUserById(id: string | ObjectId): Promise<Reactory.IUserDocument> {
+    return User.findById(id);
   }
 
   onStartup(): Promise<any> {

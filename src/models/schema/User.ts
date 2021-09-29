@@ -256,14 +256,21 @@ UserSchema.methods.hasAnyRole = function hasAnyRole(clientId: string | mongodb.O
 
 
 // eslint-disable-next-line max-len
-UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId): Promise<IMembership[]> {
+UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId): Promise<Reactory.IMembership[]> {
   logger.info(`Adding user membership ${clientId} ${role} ${organizationId} ${businessUnitId}`);
   // const matches = [];
+  const $model: Reactory.IUserDocument = this as Reactory.IUserDocument;
+  let dirty = false;
+
   if (ObjectIdFunc.isValid(clientId) === false) return [];
 
-  if ((this as Reactory.IUserDocument).memberships.length === 0) {
+  if ($model.memberships === null || $model.memberships === undefined) {
+    $model.memberships = [];
+  }
+
+  if ($model.memberships.length === 0) {
     logger.info('User has no memberships, adding');
-    (this as Reactory.IUserDocument).memberships.push({
+    $model.memberships.push({
       clientId,
       organizationId,
       businessUnitId,
@@ -273,20 +280,18 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
       lastLogin: null,
     });
 
-    await this.save().then();
-
-    return (this as Reactory.IUserDocument).memberships;
+    dirty = true;
   }
 
-  if (this.hasRole(clientId, role, organizationId, businessUnitId) === false) {
+  if ($model.hasRole(clientId, role, organizationId, businessUnitId) === false) {
     // check if there is an existing membership for the client / org / business unit
-    logger.info(`User ${this.fullName()} does not have role, adding`);
+    logger.info(`User ${$model.fullName(true)} does not have role, adding`);
     const mIndex = lodash.findIndex(
-      this.memberships,
+      $model.memberships,
       {
-        clientId: ObjectIdFunc(clientId),
-        organizationId: ObjectIdFunc.isValid(organizationId) ? ObjectIdFunc(organizationId) : null,
-        businessUnitId: ObjectIdFunc.isValid(businessUnitId) ? ObjectIdFunc(businessUnitId) : null,
+        clientId: new ObjectIdFunc(clientId),
+        organizationId: ObjectIdFunc.isValid(organizationId) ? new ObjectIdFunc(organizationId) : null,
+        businessUnitId: ObjectIdFunc.isValid(businessUnitId) ? new ObjectIdFunc(businessUnitId) : null,
       },
     );
 
@@ -294,7 +299,7 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
 
     if (mIndex < 0) {
       logger.info('User does not have matching existing memberships, adding new one');
-      this.memberships.push({
+      $model.memberships.push({
         clientId,
         organizationId,
         businessUnitId,
@@ -303,22 +308,22 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
         authProvider: 'default',
         lastLogin: null,
       });
-    } else if (mIndex >= 0 && this.memberships[mIndex]) {
-      logger.info(`User existing membership found @ ${mIndex}`, this.memberships[mIndex]);
-      if (lodash.intersection(this.memberships[mIndex].roles, [role]).length === 0) {
-        this.memberships[mIndex].roles.push(role);
+    } else if (mIndex >= 0 && $model.memberships[mIndex]) {
+      logger.info(`User existing membership found @ ${mIndex}`, $model.memberships[mIndex]);
+      if (lodash.intersection($model.memberships[mIndex].roles, [role]).length === 0) {
+        $model.memberships[mIndex].roles.push(role);
       }
     }
 
-    await this.save().then();
-    return this.memberships;
+    await $model.save().then();
+    return $model.memberships;
   }
 
-  return [];
+  return $model.memberships;
 };
 
 UserSchema.methods.removeRole = async function removeRole(clientId, role, organizationId) {
-  logger.info(`Removing role (${role}) for user ${this.fullName()}, checking (${this.memberships.length}) memberships`);
+  logger.info(`Removing role (${role}) for user ${thifalses.fullName()}, checking (${this.memberships.length}) memberships`);
   let removed = 0;
   this.memberships.map((membership) => {
     logger.info(`Checking membership ${membership._id}`, membership);
@@ -362,8 +367,7 @@ UserSchema.methods.hasMembership = function hasMembership(clientId, organization
 };
 
 UserSchema.methods.getMembership = function getMembership(clientId: string | mongodb.ObjectID, organizationId?: string | mongodb.ObjectID, businessUnitId?: string | mongodb.ObjectID) {
-
-  if (this.memberships.length === 0) return false;
+  if (this.memberships.length === 0) return null;
 
   const found = find(this.memberships, (membership) => {
     return JSON.stringify({
@@ -377,9 +381,7 @@ UserSchema.methods.getMembership = function getMembership(clientId: string | mon
     });
   });
 
-  if (found === null || found === undefined) return found;
-
-  return null;
+  return found;
 
 };
 

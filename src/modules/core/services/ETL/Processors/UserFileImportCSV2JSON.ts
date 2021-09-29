@@ -15,24 +15,27 @@ class UserFileImportCSV2JSON implements Reactory.IProcessor {
 
   context: Reactory.IReactoryContext;
 
-  name: string;
-  nameSpace: string;
-  version: string;
+  name: string = "UserFileImportCSV2JSON";
+  nameSpace: string = "core";
+  version: string = "1.0.0";
 
   props: any;
 
   fileService: Reactory.Service.IReactoryFileService;
+  packageManager: Reactory.IReactoryImportPackageManager;
 
   constructor(props: any, context: Reactory.IReactoryContext) {
     this.context = context;
     this.props = props;
     this.fileService = props.$dependencies.fileService;
+    this.packageManager = props.packman;
   }
 
-  async process(params: any, nextProcessor?: Reactory.IProcessor): Promise<any> {
+  async process(params: Reactory.IProcessorParams, nextProcessor?: Reactory.IProcessor): Promise<any> {
     const that = this;
-
+    that.context.log(`Method call UserFileImportCSV2JSON.process(params, nextProcessor?)`);
     let output: any[] = [];
+
     const {
       file,
       import_package,
@@ -81,19 +84,19 @@ class UserFileImportCSV2JSON implements Reactory.IProcessor {
 
     await processLineByLine();
 
-    let $next: Reactory.IProcessor = null;
+    let $next: Reactory.IProcessor = this.packageManager.getNextProcessor();
 
-    if (nextProcessor && nextProcessor.process) {
-      $next = nextProcessor;
-    }
+    // if (nextProcessor && nextProcessor.process) {
+    //   $next = nextProcessor;
+    // }
 
-    if ($next === null && next && next.serviceFqn) {
-      $next = this.context.getService(next.serviceFqn);
-    }
+    // if ($next === null && next && next.serviceFqn) {
+    //   $next = this.context.getService(next.serviceFqn);
+    // }
 
-    if ($next === null && processors.length > process_index + 1) {
-      $next = this.context.getService(processors[process_index + 1].serviceFqn);
-    }
+    // if ($next === null && processors.length > process_index + 1) {
+    //   $next = this.context.getService(processors[process_index + 1].serviceFqn);
+    // }
 
     if ($next !== null && $next.process) {
       output = await $next.process({ 

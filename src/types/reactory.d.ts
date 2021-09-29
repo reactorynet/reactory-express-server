@@ -378,7 +378,7 @@ declare namespace Reactory {
     deleted: boolean
   }
 
-  export interface IDemographicDocument extends Document, IDemographic {
+  export interface IDemographicDocument extends Mongoose.Document, IDemographic {
 
   }
 
@@ -1109,6 +1109,10 @@ declare namespace Reactory {
 
       get(id: string): Promise<IOrganizationDocument>
 
+      findWithName(name: string): Promise<IOrganizationDocument>
+
+      create( name: string ): Promise<IOrganizationDocument>
+
     }
 
     /**
@@ -1141,9 +1145,9 @@ declare namespace Reactory {
 
       findUserWithEmail(email: string): Promise<Reactory.IUserDocument>
 
-      findUserById(id: string | ObjectID): Promise<Reactory.IUserDocument>
+      findUserById(id: string | number | ObjectID): Promise<Reactory.IUserDocument>
 
-      getUserPeers(id: string | ObjectID, organization_id: string | ObjectID): Promise<Reactory.IOrganigramDocument>
+      getUserPeers(id: string | number | ObjectID, organization_id: string | ObjectID): Promise<Reactory.IOrganigramDocument>
             
     }
 
@@ -1151,6 +1155,13 @@ declare namespace Reactory {
 
       setUserDemographics(demographics: Reactory.IUserDemographics, user: Reactory.IUser): Promise<IUserDemographicsDocument>
       
+    }
+
+    export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefaultService {
+      async startWorkflow(workflow_id: string, input: any): Promise<any>
+      async stopWorkflow(worflow_id: string, instance: string): Promise<any>
+      async workflowStatus(worflow_id: string, instance: string): Promise<any>
+      async clearWorkflows(): Promise<any>
     }
   }
 
@@ -1256,6 +1267,12 @@ declare namespace Reactory {
 
   export type ReactoryFileImportPackageDocument = Mongoose.Model<IReactoryFileImportPackageDocument>;
 
+  export interface IProcessorParams {
+    import_package?: IReactoryFileImportPackageDocument,
+
+    [key: string]: any
+  }
+
   /**
    * The IProcessor interface is a simplistic data processing interface
    */
@@ -1267,7 +1284,20 @@ declare namespace Reactory {
      */
     process(params: any, next?: IProcessor): Promise<any>
   }
+
+  interface IPackageManagerState {
+    processors: Reactory.IFileImportProcessorEntry[],
+    file?: Reactory.IImportFile,
+    processor_index: number,
+    busy: boolean
+    started: boolean
+    [key:string]: any
+  }
+
   export interface IReactoryImportPackageManager extends Service.IReactoryContextAwareService {
+    
+    state: IPackageManagerState
+
     /**
      * Start a package and process all the data inputs
      * @param workload_id 
@@ -1280,6 +1310,12 @@ declare namespace Reactory {
     addFile(workload_id: string, file: IReactoryFileModel): Promise<any>
     removeFile(workload_id: string, file_id: string): Promise<any>
     previewFile(workload_id: string, file_id: string, processors: string[]): Promise<any>
+
+    /**
+     * Returns the next processor if the service is started.
+     * Every time this function is called the internal state of the class is updated.
+     */
+    getNextProcessor(): Reactory.IProcessor
   }
 
 

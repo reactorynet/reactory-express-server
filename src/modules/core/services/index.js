@@ -8,6 +8,7 @@ import GoogleMapsService from "./location/GoogleMapsService";
 import Processors from './ETL/Processors';
 import ReactoryPackageManager from './ETL/ReactoryPackageManager';
 import UserService from './UserService';
+import WorkflowService from './ReactoryWorkflowService';
 //custom services to be expressed here
 
 
@@ -20,7 +21,8 @@ const services = [
   ReactoryExcelWriterServiceDefinition,
   OrganizationServiceDefinition,
   ReactoryPackageManager.reactory,
-  UserService.reactory
+  UserService.reactory,
+  WorkflowService.definition
 ]
 
 export default services;

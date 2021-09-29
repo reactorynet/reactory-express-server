@@ -2,6 +2,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 import { MutationResult, QueryResult, IUserImportStruct } from './types';
 import { execml, execql } from '@reactory/server-core/graph/client';
+import { forEach } from 'lodash';
 
 
 
@@ -65,18 +66,20 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
 
   context: Reactory.IReactoryContext;
 
-  name: string;
-  nameSpace: string;
-  version: string;
+  name: string = "UserDemographicsProcessor";
+  nameSpace: string = "core";
+  version: string = "1.0.0";
 
   props: any;
 
   fileService: Reactory.Service.IReactoryFileService;
+  packageManager: Reactory.IReactoryImportPackageManager;
 
   constructor(props: any, context: Reactory.IReactoryContext) {
     this.context = context;
     this.props = props;
     this.fileService = props.$dependencies.fileService
+    this.packageManager = props.packman;
   }
 
   getExecutionContext(): Reactory.IReactoryContext {
@@ -91,7 +94,7 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
   mutate = async (mutation: string, variables: any = {}): Promise<MutationResult> => {
     try {
       const { data, errors = [] } = await execml(mutation, variables, {}, this.context.user, this.context.partner).then();
-      if(errors.length > 0) {
+      if (errors.length > 0) {
         this.context.log(`Errors in mutation or document`, { errors }, 'error', 'UserDemographicsProcessor')
       }
       return {
@@ -99,7 +102,6 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
         errors: errors.map((e) => e.message)
       }
     } catch (mutationError) {
-      debugger
       this.context.log(`Error with mutaation`, { error: mutationError }, 'error', 'UserDemographicsProcessor')
       return {
         data: null,
@@ -133,16 +135,22 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
    * 
    * @param params - paramters can include row offset
    */
-  async process(params: any, nextProcessor?: Reactory.IProcessor): Promise<any> {
+  async process(params: Reactory.IProcessorParams, nextProcessor?: Reactory.IProcessor): Promise<any> {
 
     const { offset = 0, file, import_package, process_index = 0, next, input = [], preview = false, processors = [] } = params;
     const that = this;
     const colors = that.context.colors;
     let output: any[] = [...input];
 
-    const demographics_promises =  output.map((import_struct: IUserImportStruct, index: number) => {
 
-      return new Promise((resolve) => {
+
+    let new_output = [];
+
+    async function* synchronizeDemographics() {
+      for (let i: number = 0; i < output.length; i++) {
+
+        const import_struct: IUserImportStruct = output[i];
+
         if (preview === false && import_struct.user.email.indexOf('ERR') < 0) {
 
           const variables: any = {
@@ -159,51 +167,46 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
             }
           };
 
-          that.context.log(colors.debug(`Preparing Mutation #${index} for user ${import_struct.user.email}`), {}, 'debug', 'UserDemographicsProcessor');
+          that.context.log(colors.debug(`Preparing Mutation #${i} for user ${import_struct.user.email}`), {}, 'debug', 'UserDemographicsProcessor');
+          try {
+            const result = await that.mutate(SetUserDemographicsMutation, variables);
 
-          that.mutate(SetUserDemographicsMutation, variables).then((result) => {
-
-            debugger
             import_struct.demographic_result = result;
-            
+
             if (import_struct.demographic_result.errors && import_struct.demographic_result.errors.length > 0) {
-              that.context.log(colors.warn(`Mutation #${index} for user ${import_struct.user.email} contains errors`), { errors: import_struct.demographic_result.errors }, 'warning');
+              that.context.log(colors.warn(`Mutation #${i} for user ${import_struct.user.email} contains errors`), { errors: import_struct.demographic_result.errors }, 'warning');
               import_struct.demographics.id = 'ERROR'
             } else {
               if (import_struct.demographic_result.data.MoresUpdateUserDemographic) {
-                that.context.log(colors.green(`Mutation for demographics for user ${import_struct.user.email} completed without error`));
+                that.context.log(colors.green(`Mutation for demographics for user ${import_struct.user.email} OKAY`));
               } else {
                 import_struct.errors.push(`Error while processing user demographic data ${import_struct.user.email}`);
               }
             }
-            resolve(import_struct);            
-          }).catch((err) => {
-            that.context.log(`${that.context.colors.red('Errors processing demographics')} result for user ${import_struct.user.email}`, {}, 'error', 'UserDemographicsProcessor');
+
+            setTimeout(function* (){
+              yield import_struct;
+            }, 100)
+                        
+          } catch (err) {
             import_struct.demographic_result = {
               errors: [err]
             }
-            resolve(import_struct);
-          });  
+            yield import_struct;
+          }
         }
-      });                       
-    });
+      }
 
-    output = await Promise.all(demographics_promises).then();
-
-    let $next: Reactory.IProcessor = null;
-
-    if (nextProcessor && nextProcessor.process) {
-      $next = nextProcessor;
+      return;
     }
 
-    if ($next === null && next && next.serviceFqn) {
-      $next = this.context.getService(next.serviceFqn);
+    for await (const user_import of synchronizeDemographics()) {
+      new_output.push(user_import);
     }
 
-    if ($next === null && processors.length > process_index + 1) {
-      $next = this.context.getService(processors[process_index + 1].serviceFqn);
-    }
+    let $next: Reactory.IProcessor = this.packageManager.getNextProcessor();
 
+    output = new_output;
 
     if ($next !== null && $next.process) {
       output = await $next.process({ input: output, file, import_package, process_index: process_index + 1 }).then();

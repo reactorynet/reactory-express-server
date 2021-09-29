@@ -12,10 +12,22 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   nameSpace: string = 'core';
   version: string = '1.0.0';
 
-  executionContext: Reactory.IReactoryContext;
+  context: Reactory.IReactoryContext;
 
   constructor(props: any, context: any) {
-    this.executionContext = context;
+    this.context = context;
+  }
+
+  async findWithName(name: string): Promise<Reactory.IOrganizationDocument> {
+    this.context.log(`Seaching for organization by name: ${name}`, {}, 'debug', 'OrganizationService')
+    return await Organization.findOne({ name }).then();
+  }
+
+  async create(name: string): Promise<Reactory.IOrganizationDocument> {
+    const organization = new Organization({ name });
+    await organization.save();
+
+    return organization;
   }
 
   async updateOrganizationLogo(organization: Reactory.IOrganizationDocument, imageData: string): Promise<Reactory.IOrganizationDocument> {
@@ -96,7 +108,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     let virtualPath = `/organization/${organization._id}/`;
     let filename = `${imageType}_${organization._id}_default`;
 
-    const fileSvc: Reactory.Service.IReactoryFileService = this.executionContext.getService('core.ReactoryFileService@1.0.0');
+    const fileSvc: Reactory.Service.IReactoryFileService = this.context.getService('core.ReactoryFileService@1.0.0');
 
     const reactoryFile: Reactory.IReactoryFile = await fileSvc.uploadFile({
       catalog: false,
@@ -124,16 +136,16 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
 
   onStartup(): Promise<boolean> {
     // nothing to do
-    logger.debug(`Core OrganizationService started 🟢`)
+    this.context.log(`Core OrganizationService started 🟢`)
     return Promise.resolve(true);
   }
 
   getExecutionContext(): Reactory.IReactoryContext {
-    return this.executionContext;
+    return this.context;
   }
 
   setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
-    this.executionContext = executionContext;
+    this.context = executionContext;
     return true;
   }
 }
@@ -143,7 +155,7 @@ export const ReactoryOrganizationServiceDefinition: Reactory.IReactoryServiceDef
   name: 'Reactory Organization',
   description: 'Default Organization Service.',
   dependencies: [],
-  serviceType: 'Reactory.Service.IReactoryOrganizationService',
+  serviceType: "organization",
   service: (props: Reactory.IReactoryServiceProps, context: any) => {
     return new OrganizationService(props, context);
   }
