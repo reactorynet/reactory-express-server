@@ -299,9 +299,9 @@ const REACTORY_CONFIG: any = {
       },
     },
     assets: {
-      featureImage: `${CDN_ROOT}/themes/reactory/images/phoenix.png`,
-      logo: `${CDN_ROOT}/themes/reactory/images/logo.png`,
-      favicon: `${CDN_ROOT}/themes/reactory/images/favicon.png`,
+      featureImage: `${CDN_ROOT}themes/reactory/images/phoenix.png`,
+      logo: `${CDN_ROOT}themes/reactory/images/logo.png`,
+      favicon: `${CDN_ROOT}themes/reactory/images/favicon.png`,
       avatar: `${CDN_ROOT}themes/reactory/images/avatar.png`,
     },
     content: {
