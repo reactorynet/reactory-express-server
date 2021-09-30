@@ -4,6 +4,12 @@ import { Reactory } from '@reactory/server-core/types/reactory';
 const { ObjectId } = mongoose.Schema.Types;
 const TeamSchema = new mongoose.Schema<Reactory.ITeam>({
   title: String,
+  name: {
+    type: String,
+    default: function() {
+      return this.title
+    }
+  },
   organization: {
     type: ObjectId,
     ref: 'Organization',

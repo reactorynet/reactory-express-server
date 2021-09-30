@@ -316,6 +316,7 @@ declare namespace Reactory {
   export interface ITeam {
     id?: any,
     title: String
+    name: String
     description: String
     avatar: String
     deleted: Boolean
@@ -1113,6 +1114,13 @@ declare namespace Reactory {
 
       create( name: string ): Promise<IOrganizationDocument>
 
+      findBusinessUnit(organization_id: string | number | ObjectId, search: string | number | ObjectId ): Promise<IBusinessUnitDocument>
+
+      createBusinessUnit(organization_id: string | number | ObjectId, name: string): Promise<IBusinessUnitDocument>
+
+      findTeam(organization_id: string | number | ObjectId, search: string | number | ObjectId ): Promise<Reactory.ITeamDocument>
+
+      createTeam(organization_id: string | number | ObjectId, search: string | number | ObjectId ): Promise<Reactory.ITeamDocument>
     }
 
     /**
