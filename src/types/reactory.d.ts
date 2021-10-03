@@ -285,6 +285,7 @@ declare namespace Reactory {
 
   export interface IRegion {
     id?: any,
+    key: String,
     title: String,
     description: String,
     icon: String,
@@ -379,16 +380,34 @@ declare namespace Reactory {
     deleted: boolean
   }
 
+  export interface IAgeDemographic {
+    id?: any
+    organization: String | ObjectId | Reactory.IOrganization,
+    title: String,
+    ageStart: Number,
+    ageEnd: Number,
+    deleted: Boolean
+  }
+
+  export interface IAgeDemographicDocument extends Mongoose.Document, IAgeDemographic { }
+
   export interface IDemographicDocument extends Mongoose.Document, IDemographic {
 
   }
 
   export interface IUserDocument extends Mongoose.Document, IUser {
-
+    memberships: Mongoose.Types.Array<Reactory.IMembershipDocument>
   }
 
   export interface IUserDemographics {
-    race: 
+    race: string | IDemographic | IDemographicDocument
+    gender: string | IDemographic | IDemographicDocument
+    age: string | IDemographic | IDemographicDocument
+
+  }
+
+  export interface IUserDemographicDocument extends Mongoose.Document, IUserDemographics { 
+    
   }
 
   export interface IPeerEntry {
@@ -1156,7 +1175,11 @@ declare namespace Reactory {
       findUserById(id: string | number | ObjectID): Promise<Reactory.IUserDocument>
 
       getUserPeers(id: string | number | ObjectID, organization_id: string | ObjectID): Promise<Reactory.IOrganigramDocument>
-            
+
+      setUserDemographics(userId: string, organisationId: string, membershipId?:
+      string, dob?: Date, businessUnit?: string, gender?: string, operationalGroup?: string,
+      position?: string, race?: string, region?: string, team?: string): Promise<Reactory.IUserDemographics | Reactory.IUserDemographicDocument>
+      
     }
 
     export interface IReactoryUserDemographicsService extends Reactory.Service.IReactoryDefaultService {
@@ -1166,10 +1189,10 @@ declare namespace Reactory {
     }
 
     export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefaultService {
-      async startWorkflow(workflow_id: string, input: any): Promise<any>
-      async stopWorkflow(worflow_id: string, instance: string): Promise<any>
-      async workflowStatus(worflow_id: string, instance: string): Promise<any>
-      async clearWorkflows(): Promise<any>
+      startWorkflow(workflow_id: string, input: any): Promise<any>
+      stopWorkflow(worflow_id: string, instance: string): Promise<any>
+      workflowStatus(worflow_id: string, instance: string): Promise<any>
+      clearWorkflows(): Promise<any>
     }
   }
 

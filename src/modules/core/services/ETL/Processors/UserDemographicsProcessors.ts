@@ -2,9 +2,10 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 import { MutationResult, QueryResult, IUserImportStruct } from './types';
 import { execml, execql } from '@reactory/server-core/graph/client';
-import { UserDemographic } from '@reactory/server-core/models';
-import { Demographic, Region } from '@reactory/server-modules/mores/models';
+import { BusinessUnit, UserDemographic, Region, Team } from '@reactory/server-core/models';
+import { Demographic } from '@reactory/server-modules/mores/models';
 import { find } from 'lodash';
+import e from 'connect-flash';
 
 
 const OrganizationDemographicsEnabledQuery = `query MoresGetOrgnizationDemographicsSetting($id: String!){
@@ -76,12 +77,14 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
   fileService: Reactory.Service.IReactoryFileService;
   packageManager: Reactory.IReactoryImportPackageManager;
   organizationService: Reactory.Service.IReactoryOrganizationService;
+  userService: Reactory.Service.IReactoryUserService;
 
   constructor(props: any, context: Reactory.IReactoryContext) {
     this.context = context;
     this.props = props;
     this.fileService = props.$dependencies.fileService;
     this.organizationService = props.$dependencies.organizationService;
+    this.userService = props.$dependencies.userService;
     this.packageManager = props.packman;
   }
 
@@ -145,25 +148,36 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
     const colors = that.context.colors;
     let output: any[] = [...input];
 
-    const { organization, demographics } = import_package;
+
+
+    const { organization } = import_package;
 
 
     const all_regions: Reactory.IRegionDocument[] = await Region.find({ organization: organization._id }).then();
     const all_demographics: Reactory.IDemographicDocument[] = await Demographic.find({ organization: organization._id }).then();
+    const all_business_units: Reactory.IBusinessUnitDocument[] = await BusinessUnit.find({ organization: organization._id }).then();
+    const all_teams: Reactory.ITeamDocument[] = await Team.find({ organization: organization._id }).then();
 
     async function* synchronizeBusinessUnits() {
       for (let i: number = 0; i < output.length; i++) {
         const import_struct: IUserImportStruct = output[i];
+        const { demographics } = import_struct;
         if (preview === false) {
-          debugger
-          let $business_unit = await that.organizationService.findBusinessUnit(organization._id, demographics.businessUnit);
-          
-          if($business_unit === null || $business_unit === undefined) {
-            $business_unit = await that.organizationService.createBusinessUnit(organization._id, demographics.businessUnit);
-            yield $business_unit;
+          let $business_unit = null;// await that.organizationService.findBusinessUnit(organization._id, demographics.businessUnit);
+          $business_unit = find(all_business_units, { name: demographics.businessUnit.trim() })
+
+          if ($business_unit === null || $business_unit === undefined) {
+            that.context.log(`Business unit ${demographics.businessUnit} not found creating new entry`, {}, 'debug', 'UserDemographicsProcessor');
+            $business_unit = await that.organizationService.createBusinessUnit(organization._id, demographics.businessUnit.trim());  
+            all_business_units.push($business_unit);
           } else {
-            yield $business_unit;
+            that.context.log(`Business unit ${demographics.businessUnit} found`, {}, 'debug', 'UserDemographicsProcessor')
           }
+          
+          if($business_unit._id) {
+            demographics.businessUnit = $business_unit._id;
+          }                       
+          yield $business_unit;          
         } else {
           yield `Not synchronizing ${demographics.businessUnit}`;
         }
@@ -172,11 +186,11 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
       return;
     }
 
-    for await( const $business_unit of synchronizeBusinessUnits() ) {
-      if(typeof $business_unit === "string") {
+    for await (const $business_unit of synchronizeBusinessUnits()) {
+      if (typeof $business_unit === "string") {
         that.context.log($business_unit, {}, 'debug');
       } else {
-        if($business_unit.name)  that.context.log(`sycnchronized business unit ${$business_unit.name}`, {  }, 'debug');
+        if ($business_unit.name) that.context.log(`sycnchronized business unit ${$business_unit.name}`, {}, 'debug');
       }
     }
 
@@ -184,14 +198,21 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
     async function* synchronizeTeams() {
       for (let i: number = 0; i < output.length; i++) {
         const import_struct: IUserImportStruct = output[i];
+        const { demographics } = import_struct;
         if (preview === false) {
-          let $team = await that.organizationService.findTeam(organization._id, demographics.team);
+          let $team = null;
+          //await that.organizationService.findTeam(organization._id, demographics.team);
+          $team = find(all_teams, (t) =>  t.name.trim() === demographics.team.trim() )
           if ($team === null || $team === undefined) {
-            $team = await that.organizationService.createTeam(organization._id, demographics.team);
-            yield $team;
-          } else {
-            yield $team;
+            that.context.log(`Team ${demographics.team} not found creating new entry`, {}, 'debug, "UserDemographicsProcessior');
+            $team = await that.organizationService.createTeam(organization._id, demographics.team.trim());
+            all_teams.push($team);
           }
+          
+          if($team._id) demographics.team = $team._id;
+
+          yield $team;
+          
         } else {
           yield `Not synchronizing ${import_struct.demographics.team}`;
         }
@@ -213,9 +234,12 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
 
       for (let i: number = 0; i < output.length; i++) {
         const import_struct: IUserImportStruct = output[i];
+        const { demographics } = import_struct;
         if (preview === false && demographics.gender) {
 
           let $gender = find(all_demographics, { type: 'gender', key: demographics.gender.toLowerCase() });
+          
+
           if ($gender === null || $gender === undefined) {
             $gender = new Demographic({
               organization: organization,
@@ -227,15 +251,16 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
             await $gender.save().then()
 
             all_demographics.push($gender);
-
-            yield $gender;
-          } else {
-            yield $gender;
           }
+
+          
+          if ($gender._id) demographics.gender = $gender._id;
+
+          yield $gender;
         } else {
-          yield `Not synchronizing GENDER: ${demographics.gender}`;
+          yield `Not synchronizing GENDER: ${demographics.gender || "NONE AVAILABLE"}`;
         }
-      }      
+      }
     }
 
     for await (const $genders of synchronizeGenders()) {
@@ -250,25 +275,31 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
 
       for (let i: number = 0; i < output.length; i++) {
         const import_struct: IUserImportStruct = output[i];
+        const { demographics } = import_struct;
         if (preview === false && demographics.race) {
 
-          let $gender = find(all_demographics, { type: 'race', key: demographics.race.toLowerCase() });
-          if ($gender === null || $gender === undefined) {
-            $gender = new Demographic({
+          let $race = find(all_demographics, { type: 'race', key: demographics.race.toLowerCase() });
+          if ($race === null || $race === undefined) {
+            $race = new Demographic({
               organization: organization,
               type: 'race',
               key: demographics.race.toLowerCase(),
               title: demographics.race,
             });
 
-            await $gender.save().then()
+            await $race.save().then()
 
-            all_demographics.push($gender);
+            all_demographics.push($race);                        
 
-            yield $gender;
-          } else {
-            yield $gender;
-          }
+          } 
+          
+          ;
+
+          if($race && $race._id) demographics.race = $race._id;
+          
+          yield $race;
+
+
         } else {
           yield `Not synchronizing RACE: ${demographics.race}`;
         }
@@ -287,6 +318,7 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
     async function* synchronizePosition() {
       for (let i: number = 0; i < output.length; i++) {
         const import_struct: IUserImportStruct = output[i];
+        const { demographics } = import_struct;
         if (preview === false && demographics.position) {
 
           let $position = find(all_demographics, { type: 'position', key: demographics.position.toLowerCase() });
@@ -302,10 +334,11 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
 
             all_demographics.push($position);
 
-            yield $position;
-          } else {
-            yield $position;
           }
+
+          if($position && $position._id) demographics.position = $position._id
+
+          yield $position;
         } else {
           yield `Not synchronizing POSITION: ${demographics.position}`;
         }
@@ -321,16 +354,16 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
     }
 
 
-    async function* synchronizeOperationalGroup(){
+    async function* synchronizeOperationalGroup() {      
       for (let i: number = 0; i < output.length; i++) {
         const import_struct: IUserImportStruct = output[i];
+        const { demographics } = import_struct;
         if (preview === false && demographics.operationalGroup) {
-
-          let $operationalGroup = find(all_demographics, { type: 'operationalGroup', key: demographics.operationalGroup.toLowerCase() });
+          let $operationalGroup = find(all_demographics, (e) => e.type === 'operationalgroup' && e.key === demographics.operationalGroup.toLowerCase() );
           if ($operationalGroup === null || $operationalGroup === undefined) {
             $operationalGroup = new Demographic({
               organization: organization,
-              type: 'operationalGroup',
+              type: 'operationalgroup',
               key: demographics.operationalGroup.toLowerCase(),
               title: demographics.operationalGroup,
             });
@@ -339,12 +372,12 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
 
             all_demographics.push($operationalGroup);
 
-            yield $operationalGroup;
-          } else {
-            yield $operationalGroup;
-          }
+            
+          }           
+          if ($operationalGroup && $operationalGroup._id) demographics.operationalGroup = $operationalGroup._id
+          yield $operationalGroup;
         } else {
-          yield `Not synchronizing RACE: ${demographics.operationalGroup}`;
+          yield `Not synchronizing Operational Group: ${demographics.operationalGroup || "NONE DEFINED"}`;
         }
       }
     }
@@ -358,29 +391,31 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
     }
 
 
-    async function* synchronizeRegions(){
+    async function* synchronizeRegions() {
       for (let i: number = 0; i < output.length; i++) {
         const import_struct: IUserImportStruct = output[i];
+        const { demographics } = import_struct;
         if (preview === false && demographics.region) {
-
-          let $region = find(all_regions, { title: demographics.region });
+          const key = `${demographics.region.toLowerCase().trim()}::${organization._id}`;
+          let $region: Reactory.IRegionDocument = find(all_regions, (r) =>  r.key === key);
           if ($region === null || $region === undefined) {
             $region = new Region({
-              organization: organization,
-              key: demographics.region.toLowerCase(),
+              organization: organization._id,
+              key: key,
               title: demographics.region,
             });
 
             await $region.save().then()
 
-            all_regions.push($region);
+            all_regions.push($region);            
+          } 
 
-            yield $region;
-          } else {
-            yield $region;
-          }
+          if ($region && $region._id) demographics.region = $region._id
+
+          yield $region;
+
         } else {
-          yield `Not synchronizing RACE: ${demographics.race}`;
+          yield `Not synchronizing RACE: ${demographics.race || "NOT DEFINED"}`;
         }
       }
     }
@@ -389,7 +424,7 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
       if (typeof $regions === "string") {
         that.context.log($regions, {}, 'debug');
       } else {
-        if ($regions.title) that.context.log(`Synchronized region ${$regions.title}`, {}, 'debug');
+        if ($regions) that.context.log(`Synchronized region ${$regions.title}`, {}, 'debug');
       }
     }
 
@@ -403,25 +438,40 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
 
         if (preview === false && import_struct.user.email.indexOf('ERR') < 0) {
 
-          const variables: any = {
-            input: {
-              userId: import_struct.user.id,
-              organisationId: import_package.organization._id,
-              dob: import_struct.demographics.dob,
-              gender: import_struct.demographics.gender,
-              race: import_struct.demographics.race,
-              region: import_struct.demographics.region,
-              operationalGroup: import_struct.demographics.operationalGroup,
-              team: import_struct.demographics.team,
-              businessUnit: import_struct.demographics.businessUnit
-            }
+          const variables = {
+            userId: import_struct.user.id,
+            organisationId: import_package.organization._id,
+            dob: import_struct.demographics.dob,
+            gender: import_struct.demographics.gender,
+            race: import_struct.demographics.race,
+            region: import_struct.demographics.region,
+            position: import_struct.demographics.position,
+            operationalGroup: import_struct.demographics.operationalGroup,
+            team: import_struct.demographics.team,
+            businessUnit: import_struct.demographics.businessUnit
           };
 
-          that.context.log(colors.debug(`Preparing Mutation #${i} for user ${import_struct.user.email}`), {}, 'debug', 'UserDemographicsProcessor');
-          try {
-            const result = await that.mutate(SetUserDemographicsMutation, variables);
+          that.context.log(colors.debug(`Updating User Demograhics #${i} for user ${import_struct.user.email}`), {}, 'debug', 'UserDemographicsProcessor');          
 
-            import_struct.demographic_result = result;
+          try {
+
+            //@ts-ignore
+            const result: Reactory.IUserDemographicDocument = await that.userService.setUserDemographics(
+              variables.userId,
+              variables.organisationId,
+              null,
+              variables.dob,
+              variables.businessUnit,
+              variables.gender,
+              variables.operationalGroup,
+              variables.position,
+              variables.race,
+              variables.region,
+              variables.team
+            );  // await that.mutate(SetUserDemographicsMutation, variables);
+
+            //@ts-ignore
+            import_struct.demographic_result = { data: { MoresUpdateUserDemographic: result }, errors: [] };
 
             if (import_struct.demographic_result.errors && import_struct.demographic_result.errors.length > 0) {
               that.context.log(colors.warn(`Mutation #${i} for user ${import_struct.user.email} contains errors`), { errors: import_struct.demographic_result.errors }, 'warning');
@@ -434,10 +484,10 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
               }
             }
 
-            setTimeout(function* (){
+            setTimeout(function* () {
               yield import_struct;
             }, 100)
-                        
+
           } catch (err) {
             import_struct.demographic_result = {
               errors: [err]
@@ -474,7 +524,8 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
     description: 'Reactory Service for importing demographics.',
     dependencies: [
       { id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' },
-      { id: "core.OrganizationService@1.0.0", alias: 'organizationService'}
+      { id: "core.OrganizationService@1.0.0", alias: 'organizationService' },
+      { id: "core.UserService@1.0.0", alias: 'userService' }
     ],
     serviceType: 'data',
     service: (props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) => {

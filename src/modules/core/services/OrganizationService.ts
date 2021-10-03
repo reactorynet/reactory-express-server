@@ -31,12 +31,17 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     if (ObjectId.isValid(organization_id) === false) throw new ApiError(`param organization_id is not a valid ${organization_id}`);
 
     let $business_unit: Reactory.IBusinessUnitDocument = null;
-    debugger
     if (typeof search === "string") {
-      if (trim(search).length > 0) {
+      if (trim(search).length > 0) { 
+        
         if(ObjectId.isValid(search) === false) {
-          $business_unit = await BusinessUnit.findOne({ organization: new ObjectId(organization_id), name: search.trim() }).then()          
-          debugger
+          let count = await BusinessUnit.count({ organization: new ObjectId(organization_id), name: search.trim() }).then()
+          if(count === 0) return null;
+          else {
+            let units = await BusinessUnit.find({ organization: new ObjectId(organization_id), name: search.trim() }).then()
+            $business_unit = units[0];
+          }
+          
         }
       }
     } else {
@@ -55,7 +60,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
       let $business_unit = new BusinessUnit({
         _id: new ObjectId(),
         organization: new ObjectId(organization_id),
-        name: name,
+        name: name.trim(),
         createdAt: $now,
         updatedAt: $now,
         deleted: false,
@@ -77,11 +82,15 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     if (ObjectId.isValid(organization_id) === false) throw new ApiError(`param organization_id is not a valid ${organization_id}`);
 
     let $team: Reactory.ITeamDocument = null;
-    debugger
     if (typeof search === "string") {
       if (trim(search).length > 0) {
+        const qry = { organization: new ObjectId(organization_id), name: search.trim() }
         if (ObjectId.isValid(search) === false) {
-          $team = await Team.findOne({ organization: new ObjectId(organization_id), name: search }).then()
+          let count = await Team.count(qry);
+          if(count === 0) return null;
+
+          let units = await Team.find(qry).then()
+          $team = units[0]
         }
       }
     } else {
@@ -100,8 +109,8 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     let $business_unit = new Team({
       _id: new ObjectId(),
       organization: new ObjectId(organization_id),
-      title: name,
-      name,
+      title: name.trim(),
+      name: name.trim(),
       members: [],
       createdAt: $now,
       updatedAt: $now,

@@ -51,7 +51,7 @@ const UserDemographicSchema = new mongoose.Schema({
 UserDemographicSchema.statics.updateDemographic = async function updateDemographic(userID: string | mongodb.ObjectID, demographic: String, value: String | '') {
     if (ObjectIdFunc.isValid(userID)) {
         const data = { [`${demographic}`]: value }
-        const _d = await this.findOneAndUpdate({ user: userID }, data, { new: true }).populate('')
+        const _d = await this.findOneAndUpdate({ user: userID }, data, { new: true })
         //@ts-ignore
 
         return { demographic: demographic, ...value }
