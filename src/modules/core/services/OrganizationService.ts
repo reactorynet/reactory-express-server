@@ -235,8 +235,8 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     return organization;
   }
 
-  get(id: string): Promise<Reactory.IOrganizationDocument> {
-    throw new Error('Method not implemented.');
+  async get(id: string): Promise<Reactory.IOrganizationDocument> {
+    return await Organization.findById(id).then();
   }
 
   onStartup(): Promise<boolean> {

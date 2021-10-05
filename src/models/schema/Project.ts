@@ -9,7 +9,8 @@ const { ObjectId } = mongoose.Schema.Types;
 
 const ProjectSchema = new mongoose.Schema({
   id: ObjectId,
-  title: String,
+  // title: String,
+  name: String,
   description: String,
   vision: String,
   goals: [String],
@@ -18,6 +19,7 @@ const ProjectSchema = new mongoose.Schema({
   shortCode: String, // AOT-00000001
   label: [String],
   externalUrls: [String],
+  deleted: Boolean,
   tasks: [
     {
       type: ObjectId,

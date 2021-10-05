@@ -5,6 +5,7 @@ import ExcelJS from 'exceljs';
 import { TemplateType, UIFrameWork } from "./constants";
 import { Stream } from "stream";
 import { Application } from "express";
+import moment from "moment";
 declare namespace Reactory {
 
   export interface IStartupOptions {
@@ -324,6 +325,26 @@ declare namespace Reactory {
   }
 
   export interface ITeamDocument extends Mongoose.Document, ITeam { }
+
+
+  export interface IProject {
+    id?: any,
+    name: string
+    description?: string
+    vision?: string,
+    goals?: string[],
+    slug?: string,
+    shortcode?: string
+    startDate?: Date | moment.Moment| number,
+    endDate?: Date | moment.Moment | number,
+    owner?: IUser | IUserDocument
+    avatar?: string
+    deleted: Boolean
+  }
+
+  export interface IProjectDocument extends Mongoose.Document, IProject {
+
+  }
 
 
   export interface IOperationalGroupDocument extends Mongoose.Document, IRegion { }

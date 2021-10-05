@@ -76,9 +76,11 @@ export const getConnection = (connectionId = 'mysql.default', context: Reactory.
     password: 'reactory',
     port: 3306,
     connectionLimit: 100,
+    multipleStatements: true
   }, true);
 
-  logger.debug('Creating connection with configuration', setting.data);
+  // logger.debug('Creating connection with configuration', setting.data);
+  context.log(`Creating Connection Pool with connection: ${connectionId}}`, { setting }, 'debug', 'mysql');
   return getPoolWithObject(setting.data);
 };
 
