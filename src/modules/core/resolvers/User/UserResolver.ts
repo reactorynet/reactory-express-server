@@ -687,7 +687,7 @@ const userResolvers = {
           : "Not Found"
         }`
       );
-      const organization = await Organization.findById(organizationId);
+      const organization = await Organization.findById(organizationId).then();
 
       if (isNil(existing) === false && organization) {
         /** Checking if user has role */
