@@ -293,8 +293,6 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
 
           } 
           
-          ;
-
           if($race && $race._id) demographics.race = $race._id;
           
           yield $race;

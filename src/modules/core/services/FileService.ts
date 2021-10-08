@@ -286,7 +286,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
             // get the physical file and pathname
             let phyicalFilePath = path.join(physicalPath, $filename);
 
-            let web_link = path.join(process.env.CDN_ROOT, virtualFilePath);
+            let web_link = `${process.env.CDN_ROOT}${virtualFilePath}`;
 
             //make sure the folder structure exists before attemptying the write
             if (fs.existsSync(physicalPath) === false) {
