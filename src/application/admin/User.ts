@@ -187,15 +187,14 @@ export const listAllForOrganization = async (organizationId: string | ObjectID,
 
       if (searchString.length > 0) {
         if (searchString.indexOf('@') > 0) {
-          query.email = new RegExp(`${searchString}`, 'g');
+          query.email = new RegExp(`${searchString}`, 'gi');
         } else if (searchString.indexOf(' ') > 0) {
-          query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'g');
-          query.lastName = new RegExp(`${searchString.split(' ')[1]}`, 'g');
+          query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'gi');
+          query.lastName = new RegExp(`${searchString.split(' ')[1]}`, 'gi');
         } else {
-          query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'g');
+          query.firstName = new RegExp(`${searchString.split(' ')[0]}`, 'gi');
         }
       }
-
       response.paging.total = await User.count(query).then();
       if (response.paging.total > 0) {
         response.items = await User.find(query).sort('firstName lastName').skip((paging.page - 1) * paging.pageSize).limit(paging.pageSize).then();
