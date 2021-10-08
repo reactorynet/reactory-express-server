@@ -141,13 +141,10 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     nameSpace: string = 'core';
     version: string = '1.0.0';
 
-    executionContext: Reactory.ReactoryExecutionContext;
+    context: Reactory.IReactoryContext;
 
-    constructor(props: any, context: any) {
-        this.executionContext = {
-            partner: props.partner || context.partner,
-            user: props.user || context.user
-        }
+    constructor(props: any, context: Reactory.IReactoryContext) {
+        this.context = context
     }
     getContentBytes(path: string): number {
         throw new Error('Method not implemented.');
@@ -204,7 +201,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                 }
             }).then();
 
-            reactoryFile.uploadedBy = this.executionContext.user._id;
+            reactoryFile.uploadedBy = this.context.user._id;
             reactoryFile.tags = ['downloaded'];
 
             await reactoryFile.save().then();;
@@ -233,14 +230,16 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         throw new Error('Method not implemented.');
     }
     onStartup(): Promise<any> {
-        logger.debug(`File Service ${this.nameSpace}.${this.name}@${this.version} 🟢`);
+        this.context.log(`File Service ${this.nameSpace}.${this.name}@${this.version} OKAY 🟢`);
         return Promise.resolve(true);
     }
-    getExecutionContext(): Reactory.ReactoryExecutionContext {
-        return this.executionContext;
+    
+    getExecutionContext(): Reactory.IReactoryContext {
+        return this.context;
     }
-    setExecutionContext(executionContext: Reactory.ReactoryExecutionContext): boolean {
-        this.executionContext = executionContext;
+
+    setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+        this.context = executionContext;
         return true;
     }
 
@@ -251,7 +250,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
 
             const { uploadContext, file, isUserSpecific = false, rename = true, catalog = true } = args;
             const { createReadStream, filename, mimetype, encoding } = await file;
-            const { user, partner } = this.executionContext;
+            const { user, partner } = this.context;
 
             logger.debug(`ReactoryFileServer.uploadFile() - start ⭕ ${filename} - ${mimetype} ${encoding}`);
 
@@ -287,7 +286,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
             // get the physical file and pathname
             let phyicalFilePath = path.join(physicalPath, $filename);
 
-            let web_link = path.join(process.env.CDN_ROOT, virtualFilePath);
+            let web_link = `${process.env.CDN_ROOT}${virtualFilePath}`;
 
             //make sure the folder structure exists before attemptying the write
             if (fs.existsSync(physicalPath) === false) {
@@ -328,7 +327,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                 let upload_context = uploadContext;
                 if (upload_context.indexOf('${') >= 0) {
                     try {
-                        upload_context = template(upload_context)({ user_id: this.executionContext.user._id, partner_id: this.executionContext.partner._id })
+                        upload_context = template(upload_context)({ user_id: this.context.user._id, partner_id: this.context.partner._id })
                     } catch (templateError) {
                         upload_context = `reactory::failed::context`
                     }
@@ -340,9 +339,9 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                     filename,
                     mimetype,
                     alias: $filename,
-                    partner: this.executionContext.partner._id,
-                    owner: this.executionContext.user._id,
-                    uploadedBy: this.executionContext.user._id,
+                    partner: this.context.partner._id,
+                    owner: this.context.user._id,
+                    uploadedBy: this.context.user._id,
                     size: fileStats.size,
                     hash: Hash(web_link),
                     link: web_link,

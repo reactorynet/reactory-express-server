@@ -5,6 +5,7 @@ import ExcelJS from 'exceljs';
 import { TemplateType, UIFrameWork } from "./constants";
 import { Stream } from "stream";
 import { Application } from "express";
+import moment from "moment";
 declare namespace Reactory {
 
   export interface IStartupOptions {
@@ -285,6 +286,7 @@ declare namespace Reactory {
 
   export interface IRegion {
     id?: any,
+    key: String,
     title: String,
     description: String,
     icon: String,
@@ -316,12 +318,33 @@ declare namespace Reactory {
   export interface ITeam {
     id?: any,
     title: String
+    name: String
     description: String
     avatar: String
     deleted: Boolean
   }
 
   export interface ITeamDocument extends Mongoose.Document, ITeam { }
+
+
+  export interface IProject {
+    id?: any,
+    name: string
+    description?: string
+    vision?: string,
+    goals?: string[],
+    slug?: string,
+    shortcode?: string
+    startDate?: Date | moment.Moment| number,
+    endDate?: Date | moment.Moment | number,
+    owner?: IUser | IUserDocument
+    avatar?: string
+    deleted: Boolean
+  }
+
+  export interface IProjectDocument extends Mongoose.Document, IProject {
+
+  }
 
 
   export interface IOperationalGroupDocument extends Mongoose.Document, IRegion { }
@@ -378,16 +401,34 @@ declare namespace Reactory {
     deleted: boolean
   }
 
-  export interface IDemographicDocument extends Document, IDemographic {
+  export interface IAgeDemographic {
+    id?: any
+    organization: String | ObjectId | Reactory.IOrganization,
+    title: String,
+    ageStart: Number,
+    ageEnd: Number,
+    deleted: Boolean
+  }
+
+  export interface IAgeDemographicDocument extends Mongoose.Document, IAgeDemographic { }
+
+  export interface IDemographicDocument extends Mongoose.Document, IDemographic {
 
   }
 
   export interface IUserDocument extends Mongoose.Document, IUser {
-
+    memberships: Mongoose.Types.Array<Reactory.IMembershipDocument>
   }
 
   export interface IUserDemographics {
-    race: 
+    race: string | IDemographic | IDemographicDocument
+    gender: string | IDemographic | IDemographicDocument
+    age: string | IDemographic | IDemographicDocument
+
+  }
+
+  export interface IUserDemographicDocument extends Mongoose.Document, IUserDemographics { 
+    
   }
 
   export interface IPeerEntry {
@@ -574,8 +615,9 @@ declare namespace Reactory {
     resultMap?: Object,
     resultType?: string,
     queryMessage?: String,
-    formData?: Object,
+    formData?: any,
     variables?: Object,
+    props?: Object,
     edit?: boolean,
     new?: boolean,
     delete?: boolean,
@@ -1109,6 +1151,17 @@ declare namespace Reactory {
 
       get(id: string): Promise<IOrganizationDocument>
 
+      findWithName(name: string): Promise<IOrganizationDocument>
+
+      create( name: string ): Promise<IOrganizationDocument>
+
+      findBusinessUnit(organization_id: string | number | ObjectId, search: string | number | ObjectId ): Promise<IBusinessUnitDocument>
+
+      createBusinessUnit(organization_id: string | number | ObjectId, name: string): Promise<IBusinessUnitDocument>
+
+      findTeam(organization_id: string | number | ObjectId, search: string | number | ObjectId ): Promise<Reactory.ITeamDocument>
+
+      createTeam(organization_id: string | number | ObjectId, search: string | number | ObjectId ): Promise<Reactory.ITeamDocument>
     }
 
     /**
@@ -1141,16 +1194,27 @@ declare namespace Reactory {
 
       findUserWithEmail(email: string): Promise<Reactory.IUserDocument>
 
-      findUserById(id: string | ObjectID): Promise<Reactory.IUserDocument>
+      findUserById(id: string | number | ObjectID): Promise<Reactory.IUserDocument>
 
-      getUserPeers(id: string | ObjectID, organization_id: string | ObjectID): Promise<Reactory.IOrganigramDocument>
-            
+      getUserPeers(id: string | number | ObjectID, organization_id: string | ObjectID): Promise<Reactory.IOrganigramDocument>
+
+      setUserDemographics(userId: string, organisationId: string, membershipId?:
+      string, dob?: Date, businessUnit?: string, gender?: string, operationalGroup?: string,
+      position?: string, race?: string, region?: string, team?: string): Promise<Reactory.IUserDemographics | Reactory.IUserDemographicDocument>
+      
     }
 
     export interface IReactoryUserDemographicsService extends Reactory.Service.IReactoryDefaultService {
 
       setUserDemographics(demographics: Reactory.IUserDemographics, user: Reactory.IUser): Promise<IUserDemographicsDocument>
       
+    }
+
+    export interface IReactoryWorkflowService extends Reactory.Service.IReactoryDefaultService {
+      startWorkflow(workflow_id: string, input: any): Promise<any>
+      stopWorkflow(worflow_id: string, instance: string): Promise<any>
+      workflowStatus(worflow_id: string, instance: string): Promise<any>
+      clearWorkflows(): Promise<any>
     }
   }
 
@@ -1256,6 +1320,12 @@ declare namespace Reactory {
 
   export type ReactoryFileImportPackageDocument = Mongoose.Model<IReactoryFileImportPackageDocument>;
 
+  export interface IProcessorParams {
+    import_package?: IReactoryFileImportPackageDocument,
+
+    [key: string]: any
+  }
+
   /**
    * The IProcessor interface is a simplistic data processing interface
    */
@@ -1267,7 +1337,20 @@ declare namespace Reactory {
      */
     process(params: any, next?: IProcessor): Promise<any>
   }
+
+  interface IPackageManagerState {
+    processors: Reactory.IFileImportProcessorEntry[],
+    file?: Reactory.IImportFile,
+    processor_index: number,
+    busy: boolean
+    started: boolean
+    [key:string]: any
+  }
+
   export interface IReactoryImportPackageManager extends Service.IReactoryContextAwareService {
+    
+    state: IPackageManagerState
+
     /**
      * Start a package and process all the data inputs
      * @param workload_id 
@@ -1280,6 +1363,12 @@ declare namespace Reactory {
     addFile(workload_id: string, file: IReactoryFileModel): Promise<any>
     removeFile(workload_id: string, file_id: string): Promise<any>
     previewFile(workload_id: string, file_id: string, processors: string[]): Promise<any>
+
+    /**
+     * Returns the next processor if the service is started.
+     * Every time this function is called the internal state of the class is updated.
+     */
+    getNextProcessor(): Reactory.IProcessor
   }
 
 

@@ -1,8 +1,10 @@
 import { Reactory } from "@reactory/server-core/types/reactory";
 import { ObjectId } from "bson";
 import Organigram from "@reactory/server-core/models/schema/Organigram";
-
-
+import { Demographic } from '@reactory/server-modules/mores/models';
+import { BusinessUnit, Organization, Region, Team, User, UserDemographic } from '@reactory/server-core/models';
+import ApiError, { RecordNotFoundError } from "@reactory/server-core/exceptions";
+import { trim, filter, find } from 'lodash';
 interface PeersState {
   [key: string]: Reactory.IOrganigramDocument
 }
@@ -37,14 +39,14 @@ class UserService implements Reactory.Service.IReactoryUserService {
 
 
     if (id === null) return null;
-    if (organization_id === null) return null;    
+    if (organization_id === null) return null;
 
     const key = `${id}::${organization_id}`;
 
     if (this.peerState[key]) {
       this.context.log(`Found organigram data in service state: ${this.context.colors.green(key)} ✅`)
       return this.peerState[key];
-    } 
+    }
 
     this.context.log(`Organigram document not found fetching: ${this.context.colors.green(key)} ☎`)
     this.isFetchingDocument[key] = 'fetching';
@@ -56,8 +58,8 @@ class UserService implements Reactory.Service.IReactoryUserService {
 
     const organigram: Reactory.IOrganigramDocument = await Organigram.findOne(query).then();
 
-    
-    if (!this.peerState[key]) {      
+
+    if (!this.peerState[key]) {
       this.peerState[key] = organigram;
       this.isFetchingDocument[key] = 'fetched';
     }
@@ -65,10 +67,190 @@ class UserService implements Reactory.Service.IReactoryUserService {
     return this.peerState[key];
   }
 
-  async setUserDemographics(user_id: string, organization_id: string, membership_id?: 
-    string, dob?: Date, businessUnit?: string, gender?: string, operationalGroup?: string) {
+  async setUserDemographics(userId: string, organisationId: string, membershipId?:
+    string, dob?: Date, businessUnit?: string, gender?: string, operationalGroup?: string,
+    position?: string, race?: string, region?: string, team?: string): Promise<Reactory.IUserDemographicDocument> {
+    
+    const context = this.context;
+    
+    debugger 
+    context.log(`Update Demographics start`, {
+      userId,
+      organisationId,
+      membershipId,
+      dob,
+      businessUnit,
+      gender,
+      operationalGroup,
+      position,
+      region,
+      race,
+      team
+    });
 
+    if (ObjectId.isValid(userId) === false) throw new ApiError('Bad user id - check format');
+    if (ObjectId.isValid(organisationId) === false) throw new ApiError('Bad org id - check format');
+
+
+    const organization = await Organization.findById(organisationId).then();
+
+    if (organization === null) throw new RecordNotFoundError(`Organization ${organisationId} not found`);
+
+    const user = await User.findById(new ObjectId(userId as string)).then();
+
+    if (!user) throw new RecordNotFoundError(`User not found`);
+    if(dob) user.dateOfBirth = dob;
+
+
+    context.log(`MoresUpdateUserDemographic >>  Processing User Demographics ${user.email}`,
+      { dob, businessUnit, gender, operationalGroup, position, region, race, team },
+      'debug', 'Mores.UserResolver');
+
+    // sanity check
+    //@ts-ignore
+    if (user.memberships === null || user.memberships === undefined) user.memberships = [];
+
+
+    let $business_unit: Reactory.IBusinessUnitDocument = null;
+
+    //make sure it is a string and has a length - process the business unit
+    if (trim(businessUnit).length > 0) {
+      //check if it is an id        
+      if (ObjectId.isValid(businessUnit) === true) {
+        $business_unit = await BusinessUnit.findById(businessUnit).then();
+      } 
     }
+    let $membership: Reactory.IMembership;
+
+    //check if we have a role within the org
+    if ($business_unit) {          
+      if (user.hasRole(context.partner._id.toString(), 'USER', organization._id, $business_unit._id) === false) {
+        if(user.hasRole(context.partner._id.toString(), 'USER', organization._id) === true) {
+          //update this membership and link the person the business unit.
+          $membership = user.getMembership(context.partner._id.toString(), organization._id);
+          $membership.businessUnitId = $business_unit._id;
+          await user.updateMembership($membership);
+        }
+      } else {
+        $membership = user.getMembership(context.partner._id, organization._id, $business_unit._id);
+      }
+    } else {
+      if (user.hasRole(context.partner._id.toString(), 'USER', organization._id) === true) {
+        //update this membership and link the person the business unit.
+        $membership = user.getMembership(context.partner._id.toString(), organization._id);        
+      }
+    }
+
+    if($membership === null) {
+      //use the addRole interface to add the user role
+      const $memberships = await user.addRole(context.partner._id.toString(), 'USER', organization._id, $business_unit && $business_unit._id ? $business_unit._id.toString() : null).then();
+      $membership = user.getMembership(context.partner._id, organization._id, $business_unit && $business_unit._id ? $business_unit._id : null);
+      
+      if ($memberships.length === 0 || $membership === null || $membership === undefined) //sanity check
+      {
+        context.log(`WARNING: membership should have a length of at least 1`, {}, 'warning', 'Mores.UserResolver');
+        throw new ApiError('User should have memberships, something went wrong');
+      }
+    }
+    
+    
+
+    let $membership_id = $membership._id;
+
+
+    let $gender: Reactory.IDemographicDocument = null;
+    let $race: Reactory.IDemographicDocument = null;
+    let $position: Reactory.IDemographicDocument = null;
+    let $operationalGroup: Reactory.IDemographicDocument = null;
+    let $region: Reactory.IRegionDocument = null;
+    let $team: Reactory.ITeamDocument = null;
+
+    //set them if have 'em bois 🚬
+    if (trim(gender).length > 0) {
+      //check if it is an id        
+      if (ObjectId.isValid(gender) === true) {
+        $gender = await Demographic.findById(gender).then();
+      }
+    }    
+
+    if (trim(race).length > 0) {
+      //check if it is an id        
+      if (ObjectId.isValid(race) === true) {
+        $race = await Demographic.findById(race).then();
+      }
+    }
+
+    if (trim(position).length > 0) {
+      //check if it is an id        
+      if (ObjectId.isValid(position) === true) {
+        $position = await Demographic.findById(position).then();
+      }
+    }
+    // if (position && position.length > 0) {
+    //   $position = find(all_demographics, { type: 'position', key: position.toLowerCase() });      
+    // }
+
+    if (trim(operationalGroup).length > 0) {
+      //check if it is an id        
+      if (ObjectId.isValid(position) === true) {
+        $operationalGroup = await Demographic.findById(operationalGroup).then();
+      }
+    }
+    
+    debugger;
+    if (trim(region).length > 0) {
+      //check if it is an id        
+      if (ObjectId.isValid(region) === true) {
+        $region = await Region.findById(region).then();
+      }
+    }
+    
+
+    if (trim(team).length > 0) {
+      //check if it is an id        
+      if (ObjectId.isValid(team) === true) {
+        $team = await Team.findById(team).then();
+      }
+    }
+
+    try {
+
+      const query = { user: user._id, organization: organization._id };
+
+      let doc = await UserDemographic.findOne(query).then();
+      if (doc === null || doc === undefined) {
+        context.log(`User does not have document matching params, creatintg a new entry for user ${user.email}`, {}, 'debug', 'Mores.UserResolver');
+        doc = new UserDemographic({
+          membership: $membership_id,
+          organization: organization._id,
+          user: user._id,
+          gender: $gender && $gender._id ? $gender._id : null,          
+          race: $race && $race._id ? $race._id : null,
+          position: $position && $position._id ? $position._id : null,
+          operationalGroup: $operationalGroup && $operationalGroup._id ? $operationalGroup._id : null,
+          region: $region && $region._id ? $region._id : null,
+          businessUnit: $business_unit && $business_unit._id ? $business_unit._id : null,
+          team: $team && $team._id ? $team._id : null,
+        });
+      } else {
+        context.log(`User document found updating user demographics for user ${user.email}`, {}, 'debug', 'Mores.UserResolver');
+        doc.gender = $gender && $gender._id ? $gender._id : null;
+        doc.race = $race && $race._id ? $race._id : null;
+        doc.position = $position && $position._id ? $position._id : null;
+        doc.operationalGroup = $operationalGroup && $operationalGroup._id ? $operationalGroup._id : null;
+        doc.region = $region && $region._id ? $region._id : null;
+        doc.businessUnit = $business_unit && $business_unit._id ? $business_unit._id : null;
+        doc.team = $team && $team._id ? $team._id : null;
+      }
+
+      await user.save().then();
+      await doc.save().then();
+      return doc
+    } catch (error) {
+      throw new ApiError(`User demographic not saved due to ${error}`);
+    }
+
+  }
 
   createUser(userInput: Reactory.IUser, organization: Reactory.IOrganization): Promise<Reactory.IUserDocument> {
     throw new Error("Method not implemented.");
@@ -78,12 +260,12 @@ class UserService implements Reactory.Service.IReactoryUserService {
     throw new Error("Method not implemented.");
   }
 
-  findUserWithEmail(email: string): Promise<Reactory.IUserDocument> {
-    throw new Error("Method not implemented.");
+  async findUserWithEmail(email: string): Promise<Reactory.IUserDocument> {
+    return User.findOne({ email });
   }
 
-  findUserById(id: string | ObjectId): Promise<Reactory.IUserDocument> {
-    throw new Error("Method not implemented.");
+  async findUserById(id: string | ObjectId): Promise<Reactory.IUserDocument> {
+    return User.findById(id);
   }
 
   onStartup(): Promise<any> {

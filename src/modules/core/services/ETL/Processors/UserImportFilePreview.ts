@@ -40,8 +40,8 @@ class UserImportFilePreview implements Reactory.IProcessor {
   }
 
   static reactory = {
-    id: 'core.UserFileImportValidation@1.0.0',
-    name: 'Reactory User File Import Validation',
+    id: 'core.UserFileImportPreview@1.0.0',
+    name: 'Reactory User File Import Preview Generator',
     description: 'Reactory Service for valdating an import file for users',
     dependencies: [
       { id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' }

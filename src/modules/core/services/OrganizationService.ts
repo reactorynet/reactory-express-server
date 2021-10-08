@@ -3,8 +3,11 @@ import moment from 'moment';
 import { ObjectId } from 'mongodb';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import Organization from '@reactory/server-core/models/schema/Organization';
+import BusinessUnit from '@reactory/server-core/models/schema/BusinessUnit';
+import Team from '@reactory/server-core/models/schema/Team';
 import ApiError, { OrganizationNotFoundError } from '@reactory/server-core/exceptions';
 import logger from '@reactory/server-core/logging';
+import { trim } from 'lodash';
 
 class OrganizationService implements Reactory.Service.IReactoryOrganizationService {
 
@@ -12,10 +15,124 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   nameSpace: string = 'core';
   version: string = '1.0.0';
 
-  executionContext: Reactory.IReactoryContext;
+  context: Reactory.IReactoryContext;
+  props: any;
 
   constructor(props: any, context: any) {
-    this.executionContext = context;
+    this.context = context;
+
+  }
+
+  /***
+   * Finds a business unit 
+   */
+  async findBusinessUnit(organization_id: string | number | ObjectId, search: string | number | ObjectId): Promise<Reactory.IBusinessUnitDocument> {
+
+    if (ObjectId.isValid(organization_id) === false) throw new ApiError(`param organization_id is not a valid ${organization_id}`);
+
+    let $business_unit: Reactory.IBusinessUnitDocument = null;
+    if (typeof search === "string") {
+      if (trim(search).length > 0) { 
+        
+        if(ObjectId.isValid(search) === false) {
+          let count = await BusinessUnit.count({ organization: new ObjectId(organization_id), name: search.trim() }).then()
+          if(count === 0) return null;
+          else {
+            let units = await BusinessUnit.find({ organization: new ObjectId(organization_id), name: search.trim() }).then()
+            $business_unit = units[0];
+          }
+          
+        }
+      }
+    } else {
+      if (ObjectId.isValid(search) === true) {
+        $business_unit = await BusinessUnit.findById(search).then();
+      }
+    }
+    
+    return $business_unit;    
+  }
+
+  async createBusinessUnit(organization_id: string | number | ObjectId, name: string): Promise<Reactory.IBusinessUnitDocument> {
+    
+    // add a new business unit if we do not find any matches
+      let $now = Date.now();
+      let $business_unit = new BusinessUnit({
+        _id: new ObjectId(),
+        organization: new ObjectId(organization_id),
+        name: name.trim(),
+        createdAt: $now,
+        updatedAt: $now,
+        deleted: false,
+        owner: this.context.user._id
+      });
+
+      await $business_unit.save().then()
+
+      return $business_unit;
+
+  }
+
+
+  /***
+  * Finds a business unit 
+  */
+  async findTeam(organization_id: string | number | ObjectId, search: string | number | ObjectId): Promise<Reactory.ITeamDocument> {
+
+    if (ObjectId.isValid(organization_id) === false) throw new ApiError(`param organization_id is not a valid ${organization_id}`);
+
+    let $team: Reactory.ITeamDocument = null;
+    if (typeof search === "string") {
+      if (trim(search).length > 0) {
+        const qry = { organization: new ObjectId(organization_id), name: search.trim() }
+        if (ObjectId.isValid(search) === false) {
+          let count = await Team.count(qry);
+          if(count === 0) return null;
+
+          let units = await Team.find(qry).then()
+          $team = units[0]
+        }
+      }
+    } else {
+      if (ObjectId.isValid(search) === true) {
+        $team = await Team.findById(search).then();
+      }
+    }
+
+    return $team;
+  }
+
+  async createTeam(organization_id: string | number | ObjectId, name: string): Promise<Reactory.ITeamDocument> {
+
+    // add a new business unit if we do not find any matches
+    let $now = Date.now();
+    let $business_unit = new Team({
+      _id: new ObjectId(),
+      organization: new ObjectId(organization_id),
+      title: name.trim(),
+      name: name.trim(),
+      members: [],
+      createdAt: $now,
+      updatedAt: $now,
+      deleted: false,
+      owner: this.context.user._id
+    });
+
+    await $business_unit.save().then()
+
+    return $business_unit;
+  }  
+
+  async findWithName(name: string): Promise<Reactory.IOrganizationDocument> {
+    this.context.log(`Seaching for organization by name: ${name}`, {}, 'debug', 'OrganizationService')
+    return await Organization.findOne({ name }).then();
+  }
+
+  async create(name: string): Promise<Reactory.IOrganizationDocument> {
+    const organization = new Organization({ name });
+    await organization.save();
+
+    return organization;
   }
 
   async updateOrganizationLogo(organization: Reactory.IOrganizationDocument, imageData: string): Promise<Reactory.IOrganizationDocument> {
@@ -96,7 +213,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     let virtualPath = `/organization/${organization._id}/`;
     let filename = `${imageType}_${organization._id}_default`;
 
-    const fileSvc: Reactory.Service.IReactoryFileService = this.executionContext.getService('core.ReactoryFileService@1.0.0');
+    const fileSvc: Reactory.Service.IReactoryFileService = this.context.getService('core.ReactoryFileService@1.0.0');
 
     const reactoryFile: Reactory.IReactoryFile = await fileSvc.uploadFile({
       catalog: false,
@@ -118,22 +235,22 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     return organization;
   }
 
-  get(id: string): Promise<Reactory.IOrganizationDocument> {
-    throw new Error('Method not implemented.');
+  async get(id: string): Promise<Reactory.IOrganizationDocument> {
+    return await Organization.findById(id).then();
   }
 
   onStartup(): Promise<boolean> {
     // nothing to do
-    logger.debug(`Core OrganizationService started 🟢`)
+    this.context.log(`Core OrganizationService started 🟢`)
     return Promise.resolve(true);
   }
 
   getExecutionContext(): Reactory.IReactoryContext {
-    return this.executionContext;
+    return this.context;
   }
 
   setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
-    this.executionContext = executionContext;
+    this.context = executionContext;
     return true;
   }
 }
@@ -143,7 +260,7 @@ export const ReactoryOrganizationServiceDefinition: Reactory.IReactoryServiceDef
   name: 'Reactory Organization',
   description: 'Default Organization Service.',
   dependencies: [],
-  serviceType: 'Reactory.Service.IReactoryOrganizationService',
+  serviceType: "organization",
   service: (props: Reactory.IReactoryServiceProps, context: any) => {
     return new OrganizationService(props, context);
   }

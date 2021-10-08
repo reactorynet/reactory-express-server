@@ -86,6 +86,7 @@ input MailFilter {
   user: ObjID
 }
 
+
 extend type Query {
   userEmails(mailFilter: MailFilter) : [Email]
 }

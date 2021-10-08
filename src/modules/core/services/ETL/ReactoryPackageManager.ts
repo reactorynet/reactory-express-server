@@ -68,6 +68,14 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
 
   fileService: Reactory.Service.IReactoryFileService;
 
+  state: Reactory.IPackageManagerState = { 
+    processors: [],
+    file: null,
+    processor_index: -1,
+    busy: false,
+    started: false,
+  };
+
   constructor(props: any, context: Reactory.IReactoryContext) {
     this.context = context;
     this.props = props;
@@ -80,24 +88,43 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
    * @throws - RecordNotFoundError when the record cannot be located.
    */
   async getPackage(workload_id: string): Promise<Reactory.IReactoryFileImportPackageDocument> {
-    this.context.log(`Method call: getPackage(workload_id: string => ${workload_id}`, {}, 'debug', this.name);
+    this.context.log(`Method call: getPackage(workload_id: string => ${workload_id}) START`, {}, 'debug', this.name);
     const pkg = await ReactoryFileImportPackage.findById(workload_id)
       .populate('files.file')
       .populate('organization').then()
 
-    if (!pkg)
+    if (!pkg) {
+      this.context.log(`Method call: getPackage(workload_id: string => ${workload_id}) ${this.context.colors.yellow('PAKAGE DATA NOT FOUND')}`, {}, 'error', this.name);
       throw new RecordNotFoundError(`Workload package with the id ${workload_id} does not exist.`, 'ReactoryFileImportPackage', { source: 'services.ETL.ImportServices.ReactoryFileImportPackageManager' });
+    }
 
     return pkg;
+  }
+  
+  getNextProcessor(): Reactory.IProcessor {
+    if(this.state.processor_index + 1 < this.state.file.processors.length) {      
+      //instantiate the processing via the service and pass this reference as packman property.      
+      const processor: Reactory.IProcessor = this.context.getService(this.state.file.processors[this.state.processor_index + 1].serviceFqn, { packman: this });
+      if(!processor) {
+        this.context.log(`Next Processor Not Available`, { state: this.state }, 'error', 'ReactoryPackageManager');
+      }
+
+      this.state.processor_index += 1;
+
+      return processor;
+    }
+
+    return null;
   }
 
 
   async processFile(workload_id: string, file_id: string, processors: string[], preview: boolean = false) {
-    this.context.log(`Method call: porocessFile(workload_id: string => ${workload_id}`, {}, 'debug', this.name);
+    this.context.log(`Method call: porocessFile(workload_id: string => ${workload_id}`, { workload_id, file_id, preview, processors }, 'debug', this.name);
     const pkg: Reactory.IReactoryFileImportPackageDocument = await this.getPackage(workload_id);
     const $packman = this;
     const { files } = pkg;
     // 2. check if there are files
+
 
     if (files && files.length === 0) {
       return {
@@ -117,27 +144,30 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
         $processors = filterProcessors(processors, $processors);
       }
 
-      let start_promise: Promise<any> = null;
+      this.state.processors = $processors;
+
       let $file: Reactory.IImportFile = $files[0];
 
       $file.processors = $processors;
+      this.state.file = $file;
+
       // only invoke the first processors
       // the first one must call the next and so forth
-      const procsvc: Reactory.IProcessor = this.context.getService($file.processors[0].serviceFqn, { packman: $packman });
+      const procsvc: Reactory.IProcessor = this.getNextProcessor();
 
-      let nextSvc: Reactory.IProcessor = null;
-      let nextProcessorEntry: Reactory.IFileImportProcessorEntry = null;
+      // let nextSvc: Reactory.IProcessor = null;
+      // let nextProcessorEntry: Reactory.IFileImportProcessorEntry = null;
 
-      if ($processors.length >= 2) {
-        nextProcessorEntry = $file.processors[1];
-        nextSvc = this.context.getService(nextProcessorEntry.serviceFqn, { packman: $packman });
-      }
+      // if ($processors.length >= 2) {
+      //   nextProcessorEntry = $file.processors[1];
+      //   nextSvc = this.context.getService(nextProcessorEntry.serviceFqn, { packman: $packman });
+      // }
 
 
       let results: any[] = [];
 
       try {
-        this.context.log(`Staring IProcessor (${this.nameSpace}.${this.name})`, {}, 'debug', this.name);
+        this.context.log(`Staring IProcessor (${procsvc.nameSpace}.${procsvc.name})`, {}, 'debug', this.name);
         results = await procsvc.process({
           file: $file,
           import_package: pkg,
@@ -145,7 +175,7 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
           processors: $processors,
           preview: results,
           next: $processors.length > 1 ? $processors[1] : null
-        }, nextSvc).then();
+        }).then();
 
       } catch (err) {
         this.context.log('Error caught while processing file', { file: $file }, 'error');
@@ -181,7 +211,7 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
       }
     } catch(exc) {
       const meta = { error: exc, args: { workload_id, file_ids, processors } };
-      this.context.log(`An error occured while processing the file data`, meta, 'error');
+      this.context.log(`An error occured while processing the file data: ${exc.message}`, { meta }, 'error', 'ReactoryPackageMaager');
       throw new ApiError(`Data Import Error`, meta);
     }
     

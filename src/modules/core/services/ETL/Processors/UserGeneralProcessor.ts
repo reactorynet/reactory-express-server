@@ -12,19 +12,21 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
 
   context: Reactory.IReactoryContext;
 
-  name: string;
-  nameSpace: string;
-  version: string;
+  name: string = "UserFileImportProcessGeneral";
+  nameSpace: string = "core";
+  version: string = "1.0.0";
 
   props: any;
 
   fileService: Reactory.Service.IReactoryFileService = null;
+  packageManager: Reactory.IReactoryImportPackageManager;
 
   clazz: string = "UserFileImportProcessGeneral";
 
   constructor(props: any, context: Reactory.IReactoryContext) {
     this.context = context;
     this.props = props;
+    this.packageManager = props.packman;
   }
 
   mutate = async (mutation: string, variables: any = {}): Promise<MutationResult> => {
@@ -62,7 +64,7 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
    * The main execution function is process
    * @param params - paramters can include row offset
    */
-  async process(params: any, nextProcessor?: Reactory.IProcessor): Promise<any> {
+  async process(params: Reactory.IProcessorParams, nextProcessor?: Reactory.IProcessor): Promise<any> {
     const { processors = [], offset = 0, file, import_package, process_index, next, input = [], preview = false } = params;
     const that = this;
 
@@ -82,10 +84,10 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
         5 23 Apr 1985, ==> DOB
         6 Professional => Position
         7 Lagos, ==> Region
-        8 Entersekt Africa Ltd, ==> Legal Entity
+        8 Entersekt Africa Ltd, ==> Legal Entity / Operational Group
         9 Commercial, ==> Business Unit
         10 Customer Success ==> team
-
+        11 Black => race
         
        */
 
@@ -96,7 +98,6 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
             if (m.isValid() === true) {
               return m.toDate()
             }
-            debugger
             return new Date()
           }
         } catch (e) {
@@ -137,16 +138,20 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
 
 
         demographics: {
-          gender: row_data[4],
+          gender: row_data[4] || "Unspecified",
           dob: dob(),
-          region: row_data[7],
-          businessUnit: row_data[9],
-          position: row_data[6],
-          jobTitle: row_data[6],
-          team: row_data[10],
+          region: row_data[7] || "Unspecified",
+          businessUnit: row_data[9] || "Unspecified",
+          operationalGroup: row_data[8] || "Unspecified",
+          position: row_data[6] || "Unspecified",
+          jobTitle: row_data[6] || "Unspecified",
+          team: row_data[10] || "Unspecified",
+          race: row_data[11] || "Unspecified",
         }
 
       };
+
+      
 
 
       output.push(user_entry);
@@ -213,21 +218,9 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
 
     //3. update processor state and hand off to next processor
 
-    debugger
 
-    let $next: Reactory.IProcessor = null;
-    if (nextProcessor && nextProcessor.process) {
-      $next = nextProcessor;
-    }
-
-    if ($next === null && next && next.serviceFqn) {
-      $next = this.context.getService(next.serviceFqn);
-    }
-
-    if ($next === null && processors.length > process_index + 1) {
-      $next = this.context.getService(processors[process_index + 1].serviceFqn);
-    }
-
+    let $next: Reactory.IProcessor = this.packageManager.getNextProcessor();
+    
     if ($next !== null && $next.process) {
       that.context.log(`Executing next processor in execution chain`, {}, 'debug', 'UserGeneralProcessor');
       output = await $next.process({ 

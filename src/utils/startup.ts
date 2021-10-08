@@ -245,6 +245,12 @@ const startup = async () => {
     const componentsResponse = await installComponents(components);
     const clientsInstallResponse = await installClients(clients);
 
+    if(!process.env.DEFAULT_CLIENT_KEY) {
+      logger.warn("NO DEFAULT CLIENT KEY DETECTED: falling back to reactory default 'reactory'")
+    } else {
+      logger.info(`DEFAULT CLIENT KEY (the default execution client key is ${process.env.DEFAULT_CLIENT_KEY}`)
+    }
+
     let context_partner = await ReactoryClient.findOne({ key: process.env.DEFAULT_CLIENT_KEY || "reactory" }).then();// eslint-disable-line
 
 

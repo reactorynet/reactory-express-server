@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import mongoose from 'mongoose';
+import mongoose, { Mongoose } from 'mongoose';
 import * as mongodb from 'mongodb';
 import crypto from 'crypto';
 import * as lodash from 'lodash';
@@ -256,14 +256,21 @@ UserSchema.methods.hasAnyRole = function hasAnyRole(clientId: string | mongodb.O
 
 
 // eslint-disable-next-line max-len
-UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId): Promise<IMembership[]> {
+UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId): Promise<Reactory.IMembership[]> {
   logger.info(`Adding user membership ${clientId} ${role} ${organizationId} ${businessUnitId}`);
   // const matches = [];
+  const $model: Reactory.IUserDocument = this as Reactory.IUserDocument;
+  let dirty = false;
+
   if (ObjectIdFunc.isValid(clientId) === false) return [];
 
-  if ((this as Reactory.IUserDocument).memberships.length === 0) {
+  if ($model.memberships === null || $model.memberships === undefined) {
+    $model.memberships = [];
+  }
+
+  if ($model.memberships.length === 0) {
     logger.info('User has no memberships, adding');
-    (this as Reactory.IUserDocument).memberships.push({
+    $model.memberships.push({
       clientId,
       organizationId,
       businessUnitId,
@@ -273,20 +280,18 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
       lastLogin: null,
     });
 
-    await this.save().then();
+    dirty = true;
+  }  
 
-    return (this as Reactory.IUserDocument).memberships;
-  }
-
-  if (this.hasRole(clientId, role, organizationId, businessUnitId) === false) {
+  if ($model.hasRole(clientId, role, organizationId, businessUnitId) === false) {
     // check if there is an existing membership for the client / org / business unit
-    logger.info(`User ${this.fullName()} does not have role, adding`);
+    logger.info(`User ${$model.fullName(true)} does not have role, adding`);
     const mIndex = lodash.findIndex(
-      this.memberships,
+      $model.memberships,
       {
-        clientId: ObjectIdFunc(clientId),
-        organizationId: ObjectIdFunc.isValid(organizationId) ? ObjectIdFunc(organizationId) : null,
-        businessUnitId: ObjectIdFunc.isValid(businessUnitId) ? ObjectIdFunc(businessUnitId) : null,
+        clientId: new ObjectIdFunc(clientId),
+        organizationId: ObjectIdFunc.isValid(organizationId) ? new ObjectIdFunc(organizationId) : null,
+        businessUnitId: ObjectIdFunc.isValid(businessUnitId) ? new ObjectIdFunc(businessUnitId) : null,
       },
     );
 
@@ -294,7 +299,7 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
 
     if (mIndex < 0) {
       logger.info('User does not have matching existing memberships, adding new one');
-      this.memberships.push({
+      $model.memberships.push({
         clientId,
         organizationId,
         businessUnitId,
@@ -303,22 +308,22 @@ UserSchema.methods.addRole = async function addRole(clientId, role, organization
         authProvider: 'default',
         lastLogin: null,
       });
-    } else if (mIndex >= 0 && this.memberships[mIndex]) {
-      logger.info(`User existing membership found @ ${mIndex}`, this.memberships[mIndex]);
-      if (lodash.intersection(this.memberships[mIndex].roles, [role]).length === 0) {
-        this.memberships[mIndex].roles.push(role);
+    } else if (mIndex >= 0 && $model.memberships[mIndex]) {
+      logger.info(`User existing membership found @ ${mIndex}`, $model.memberships[mIndex]);
+      if (lodash.intersection($model.memberships[mIndex].roles, [role]).length === 0) {
+        $model.memberships[mIndex].roles.push(role);
       }
     }
 
-    await this.save().then();
-    return this.memberships;
+    await $model.save().then();
+    return $model.memberships;
   }
 
-  return [];
+  return $model.memberships;
 };
 
 UserSchema.methods.removeRole = async function removeRole(clientId, role, organizationId) {
-  logger.info(`Removing role (${role}) for user ${this.fullName()}, checking (${this.memberships.length}) memberships`);
+  logger.info(`Removing role (${role}) for user ${thifalses.fullName()}, checking (${this.memberships.length}) memberships`);
   let removed = 0;
   this.memberships.map((membership) => {
     logger.info(`Checking membership ${membership._id}`, membership);
@@ -362,28 +367,78 @@ UserSchema.methods.hasMembership = function hasMembership(clientId, organization
 };
 
 UserSchema.methods.getMembership = function getMembership(clientId: string | mongodb.ObjectID, organizationId?: string | mongodb.ObjectID, businessUnitId?: string | mongodb.ObjectID) {
+  logger.info(`Getting user membership 
+    ReactoryClient:[${clientId}] 
+    Organization: [${organizationId || '**'}]
+    BusinessUnit: [${businessUnitId || '**'}]`);
+  
+  const $user: Reactory.IUserDocument = this as Reactory.IUserDocument;
+  if ($user.memberships.length === 0) return false;
 
-  if (this.memberships.length === 0) return false;
+  let matches = [];
 
-  const found = find(this.memberships, (membership) => {
-    return JSON.stringify({
-      clientId: membership.clientId.toString(),
-      organizationId: membership.organizationId ? membership.organizationId.toString() : null,
-      businessUnitId: membership.businessUnitId ? membership.businessUnitId.toString() : null,
-    }) === JSON.stringify({
-      clientId: clientId.toString(),
-      organizationId: organizationId && organizationId.toString ? organizationId.toString() : null,
-      businessUnitId: businessUnitId && businessUnitId.toString ? businessUnitId.toString() : null,
-    });
+  if (ObjectIdFunc.isValid(clientId) === false) {
+    logger.warn('clientId parameter is supposed to be ObjectId');
+    return false;
+  }
+
+  matches = filter($user.memberships, (membership) => {
+    return new ObjectIdFunc(membership.clientId).equals(new ObjectIdFunc(clientId));
   });
 
-  if (found === null || found === undefined) return found;
+  if (ObjectIdFunc.isValid(organizationId) === true) {
+    logger.info('Filtering by organization');
+    matches = filter(
+      matches,
+      membership => new ObjectIdFunc(membership.organizationId).equals(new ObjectIdFunc(organizationId)),
+    );
+  } else {
+    matches = filter(
+      matches,
+      membership => lodash.isNil(membership.organizationId) === true,
+    );
+  }
+
+  if (ObjectIdFunc.isValid(businessUnitId)) {
+    logger.info('Filtering by business unit id');
+    matches = filter(
+      matches,
+      membership => new ObjectIdFunc(membership.businessUnitId).equals(new ObjectIdFunc(businessUnitId)),
+    );
+  } else {
+    matches = filter(
+      matches,
+      membership => lodash.isNil(membership.businessUnitId) === true,
+    );
+  }
+
+  if (isArray(matches) === true && matches.length > 0) {
+    logger.debug(`Matched ${matches.length} memberships for user ${$user.email}`);
+    return matches[0];    
+  }
 
   return null;
 
 };
 
-UserSchema.methods.fullName = function fullName(email: boolean = false) { return `${this.firstName} ${this.lastName}${email ? ` <${this.email}>` : ''}`; };
+UserSchema.methods.updateMembership = async function updateMembership(membership: Reactory.IMembershipDocument) {
+  
+  const $model: Reactory.IUserDocument = this as Reactory.IUserDocument;
+  
+  if ($model.memberships.length === 0) return;
+  
+  $model.memberships.id(membership._id, membership);
+
+  return await $model.save().then();
+
+};
+
+
+
+UserSchema.methods.fullName = function fullName(email: boolean = false) { 
+
+  return `${this.firstName} ${this.lastName}${email ? ` <${this.email}>` : ''}`; 
+};
 
 UserSchema.methods.deleteUser = function deleteUser() {
   this.deleted = true;

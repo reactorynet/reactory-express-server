@@ -13,6 +13,14 @@ const TeamResolver = {
     id: (team) => {
       return team._id ? team._id.toString() : null;
     },
+    title: (team) => {
+      if(team.name && team.name.length > 0) return team.name;
+      return team.title;
+    },
+    name: (team) => {
+      if (team.name && team.name.length > 0) return team.name;
+      return team.title;
+    },
     organization: (team) => {
       if (team.organization) {
         return Organization.findById(team.organization).then();

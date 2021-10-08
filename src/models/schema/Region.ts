@@ -5,12 +5,24 @@ import { Reactory } from '@reactory/server-core/types/reactory'
 
 const Region = new mongoose.Schema<Reactory.IRegion>({
   title: String,
+  key: {
+    type: String,
+    default: ()=>{
+      let that: Reactory.IRegionDocument = this;
+      if(that !==null && that !== undefined) {              
+        let default_key = `${that.key || `${that.title.toLowerCase()}::${that.populated('organization') || that.organization}`}`;
+        return default_key;            
+      }
+
+      return null
+    }
+  },
   description: String,
   icon: String,
   // Regions with no organization will be considered public regions
   organization: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Organization'
+    ref: 'Organization',
   },
   locations: [
     {

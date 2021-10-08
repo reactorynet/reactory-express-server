@@ -35,4 +35,9 @@ enum AuthProvider {
   The Default type is REACTORY
   """
   REACTORY,
+  """
+  The LOCAL authentication provider
+  """
+  LOCAL,
+
 }

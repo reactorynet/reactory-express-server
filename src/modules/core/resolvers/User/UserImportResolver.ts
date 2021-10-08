@@ -113,6 +113,16 @@ const graph: any = {
               files: [],
               processors: [
                 {
+                  name: 'CSV2JSON',
+                  serviceFqn: 'core.UserFileImportCSV2JSON@1.0.0',
+                  order: 0,
+                  fields: ['firstName'],
+                  started: null,
+                  finished: null,
+                  responses: [],
+                  status: 'pending',
+                },
+                {
                   name: 'File Preview',
                   serviceFqn: 'core.UserFileImportPreview@1.0.0',
                   order: 0,
