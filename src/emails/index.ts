@@ -13,6 +13,9 @@ import defaultEmailTemplates from './defaultEmailTemplates';
 import AuthConfig from '../authentication';
 import logger from '../logging';
 
+import { Reactory } from '@reactory/server-core/types/reactory';
+import { Mores } from '@reactory/server-core/modules/mores/types/mores'
+
 import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';
 
 const TemplateViews = {
@@ -345,6 +348,7 @@ const sendForgotPasswordEmail = (user, organization = null, context) => {
 
 
 const loadEmailTemplate = async (view, organization, client, keys = [], templateFormat = 'html') => {
+
   let qry = {
     view,
     client: ObjectId(client._id),
@@ -436,7 +440,7 @@ export const surveyEmails = {
   /**
    * Sends initial email to assessor
    */
-  launchForDelegate: async (assessor, delegate, survey, assessment, organization = null, context) => {
+  launchForDelegate: async (assessor: Reactory.IUserDocument, delegate: Reactory.IUserDocument, survey: Mores.ISurveyDocument, assessment: Mores.IAssessmentDocument, organization: Reactory.IOrganizationDocument = null, context: Reactoy.IReactoryContext) => {
     // final object item to return
     logger.info(`Sending email to assessor ${assessor}`, assessor);
     if (lodash.isNil(assessor)) throw new ApiError('assessor parameter for launchForDelegate cannot be null / undefined');
@@ -462,9 +466,17 @@ export const surveyEmails = {
     // mail template
     const viewName = `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-launch`;
 
+    let templateResult = null;
+
+    try {
+      templateResult = await loadEmailTemplate(viewName, organization, partner).then();
+    } catch (e) {
+      context.log(`Error getting template result for view ${viewName}`)
+    }
+
     try {
       const { partner } = context;
-      const templateResult = await loadEmailTemplate(viewName, organization, partner).then();
+      
 
       if (lodash.isNil(templateResult) === true) {
         logger.info('Template Resulted in NILL record');
@@ -572,6 +584,7 @@ export const surveyEmails = {
         queueMail(assessorModel, msg, queoptions);
       }
     } catch (loadError) {
+      context.log('Error occured during email sending');
       emailResult.error = loadError.message;
     }
     return emailResult;

@@ -421,10 +421,14 @@ declare namespace Reactory {
   }
 
   export interface IUserDemographics {
-    race: string | IDemographic | IDemographicDocument
-    gender: string | IDemographic | IDemographicDocument
-    age: string | IDemographic | IDemographicDocument
-
+    race: string | ObjectID | IDemographic | IDemographicDocument
+    gender: string | ObjectID | IDemographic | IDemographicDocument
+    ageGroup: string | ObjectID | IDemographic | IDemographicDocument
+    user: string | ObjectID | IUser | IUserDocument
+    team: string | ObjectID | ITeam | ITeamDocument
+    businessUnit: string | ObjectID | IBusinessUnit | IBusinessUnitDocument,
+    region: string | ObjectID | IRegion | IRegionDocument
+    [key as string]: any
   }
 
   export interface IUserDemographicDocument extends Mongoose.Document, IUserDemographics { 
