@@ -155,6 +155,55 @@ declare namespace Reactory {
 
   }
 
+  export interface IReactoryContentComment {
+    id?: any,
+    user: ObjectID | IUser | IUserDocument,
+    comment: string,
+    when: string
+    published: boolean,
+    flagged: boolean,
+    upvoted: ObjectID[] | IUser[] | IUserDocument[]
+    downvoted: ObjectID[] | IUser[] | IUserDocument[],
+    favorite: ObjectID[] | IUser[] | IUserDocument[]
+  }
+
+  export interface IReactoryContentCommentDocument extends Mongoose.Document, IReactoryContentComment {
+    
+  }
+
+  export interface IReactoryContent {
+    id?: any,
+    slug: string,
+    title?: string,
+    description?: string,
+    content: string,
+    topics?: string[],
+
+    template?: boolean,
+    engine?: string,
+    previewInputForm?: string,
+    
+    createdAt: Date,
+    createdBy: ObjectID | IUser | IUserDocument
+
+    updatedAt: Date,
+    updatedBy: ObjectID | IUser | IUserDocument
+
+    version?: string
+    published: boolean
+
+    comments?: ObjectID[] | IReactoryContentComment | IReactoryContentCommentDocument
+  }
+
+  export interface IReactoryContentDocument extends Mongoose.Document, IReactoryContent {
+
+  }
+
+  export interface IContentTemplate {
+    id: String,
+
+  }
+
   export interface ToEmail {
     display: string,
     email: string

@@ -461,7 +461,6 @@ export const surveyEmails = {
     };
 
     const isSelfAssessment = ObjectId(delegate._id).equals(ObjectId(assessorModel._id)) === true;
-
     // TODO: this should be changed by changing all the keys for the emails on the 360s
     // mail template
     const viewName = `towerstone-${survey.surveyType}-${isSelfAssessment === true ? 'delegate' : 'assessor'}-launch`;
@@ -469,7 +468,7 @@ export const surveyEmails = {
     let templateResult = null;
 
     try {
-      templateResult = await loadEmailTemplate(viewName, organization, partner).then();
+      templateResult = await loadEmailTemplate(viewName, organization, context.partner).then();
     } catch (e) {
       context.log(`Error getting template result for view ${viewName}`)
     }

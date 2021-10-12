@@ -7,11 +7,20 @@ type ReactoryContent {
   topics: [ String ]
   title: String!
   content: String!
+  description: String
+  helpTopic: String
+  template: Boolean
+  engine: String
+  previewInputForm: String  
   createdAt: Date
   updatedAt: Date
   createdBy: User!
   updatedBy: User!
   published: Boolean
+  releaseDate: Date
+  version: String
+  publishedVersion: String
+
   comments: [ Comment ]
 }
 
@@ -33,6 +42,27 @@ input CreateContentInput {
   topics: [ String ]
   title: String!
   content: String!
+  description: String
+  template: Boolean
+  engine: String
+  previewInputForm: String
+  createdAt: Date
+  updatedAt: Date
+  createdBy: ObjID
+  updatedBy: ObjID
+  published: Boolean
+}
+
+input ReactoryContentInput {
+  slug: String!
+  topics: [ String ]
+  title: String!
+  description: String
+  content: String!
+  template: Boolean
+  engine: String
+  previewInputForm: String
+  version: String
   createdAt: Date
   updatedAt: Date
   createdBy: ObjID
@@ -42,5 +72,6 @@ input CreateContentInput {
 
 extend type Mutation {
   ReactoryCreateContent(createInput: CreateContentInput!): ReactoryContent
+  ReactorySaveContent(reactoryInput: ReactoryContentInput!): ReactoryContent
   ReactorySaveImageData(folder: String, filename: String, svg: String, png: String, width: Int, height: Int): ReactorySaveImageDataResponse
 }
