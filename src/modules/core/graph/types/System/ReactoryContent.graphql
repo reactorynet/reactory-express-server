@@ -54,6 +54,7 @@ input CreateContentInput {
 }
 
 input ReactoryContentInput {
+  id: String
   slug: String!
   topics: [ String ]
   title: String!
