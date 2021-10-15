@@ -30,6 +30,7 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 import { SURVEY_EVENTS_TO_TRACK } from "@reactory/server-core/models/index";
 import Mongoose from "mongoose";
 import { execml } from "@reactory/server-core/graph/client";
+import UserDemographics from "@reactory/server-core/models/schema/UserDemographics";
 
 const uuid = require("uuid");
 
@@ -326,6 +327,39 @@ const userResolvers = {
     ratings(assessment: { ratings: any }) {
       return assessment.ratings;
     },
+    team: async (assessment: any) => {
+      const { assessor, survey } = assessment;
+
+      let $assessor_id = null;
+
+      if(assessor._id) $assessor_id = assessor._id;
+      else {
+        if(ObjectId.isValid(assessor) === true) {
+          $assessor_id = assessor;
+        }
+      }
+
+      if(!$assessor_id) throw new ApiError('Assessor cannot be null')
+
+      if(survey.surveyType.indexOf('180') >= 0) {
+        const demographic = await UserDemographics.findOne({ user: $assessor_id, organization: survey.organization }).then();
+        if (demographic === null || demographic === undefined) return "assessor"
+
+        if (survey.delegateTeam && survey.delegateTeam._id) {
+          if (survey.delegateTeam._id.equals(demographic.team) === true) return "delegates";
+        }
+
+        if (survey.delegateTeam && !survey.delegateTeam._id) {
+          if (ObjectId.isValid(survey.delegateTeam) === true) {
+            if (new ObjectId(survey.delegateTeam).equals(demographic.team) === true) return "delegates";
+          }
+        }
+
+        return "assessor"
+      } 
+
+      return "na";
+    }
   },
   UserPeers: {
     id(obj: Reactory.IOrganigramDocument) {
