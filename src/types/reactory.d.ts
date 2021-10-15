@@ -112,12 +112,15 @@ declare namespace Reactory {
     mustSync: boolean,
   }
 
+  /**
+   * A Reactory Template Object
+   */
   export interface ITemplate {
     enabled: boolean
-    organization?: ObjectId
+    organization?: ObjectId | Reactory.IOrganization | Reactory.IOrganizationDocument
     client: any
-    businessUnit?: ObjectId
-    user?: ObjectId
+    businessUnit?: ObjectId | Reactory.IBusinessUnit | Reactory.IBusinessUnitDocument
+    user?: ObjectId  | Reactory.IUser | Reactory.IUserDocument
     visiblity?: string | "user" | "public" | "businessUnit" | "organization" | "client"
     view: string
     kind: TemplateType
@@ -133,9 +136,10 @@ declare namespace Reactory {
     created?: Date
     updated?: Date
     updatedBy?: ObjectId
+    version?: number
     [key: string]: any
   }
-
+  
   export interface IEmailTemplate {
     id: string,
     view: string

@@ -1,12 +1,13 @@
 
 
-import { find, isNil } from 'lodash';
+import lodash, { find, isNil } from 'lodash';
 import { ObjectId } from 'mongodb';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 import { User } from '@reactory/server-core/models';
 import O365 from '@reactory/server-modules/reactory-azure/services/graph';
+import SendGrid from '@sendgrid/mail';
 import path from 'path';
 import * as Microsoft from '@microsoft/microsoft-graph-types'
 
@@ -18,23 +19,53 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
     nameSpace: string = 'core';
     version: string = '1.0.0';
 
-    executionContext: Reactory.IReactoryContext;
+    context: Reactory.IReactoryContext;
+    
+    fileService: Reactory.Service.IReactoryFileService;
+
 
     constructor(props: any, context: any) {
-        this.executionContext = context;
+        this.context = context;
     }
 
-    getExecutionContext(): Reactory.ReactoryExecutionContext {
+    getExecutionContext(): Reactory.IReactoryContext {
         // throw new Error('Method not implemented.');  
-        return this.executionContext;
+        return this.context;
     }
 
-    setExecutionContext(executionContext: Reactory.ReactoryExecutionContext): boolean {
-        this.executionContext.partner = executionContext.partner;
-        this.executionContext.user = executionContext.user;
+    setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+        this.context.partner = executionContext.partner;
+        this.context.user = executionContext.user;
 
         return true;
     }
+
+    /**
+     * Return the user email address in the following format:
+     * @param {UserModel} user
+     * @param {ReactorClient} partner
+     */
+    resolveUserEmailAddress = (user: Reactory.IUserDocument) => {
+            const { MODE } = process.env;
+
+            const partnerToUse = this.context.partner;
+
+            // check if we have a redirect setting for this mode
+            const redirectSetting = partnerToUse.getSetting(`email_redirect/${MODE}`);
+            let emailAddress = user.email;
+            if (lodash.isNil(redirectSetting) === false && lodash.isNil(redirectSetting.data) === false) {
+                const { email, enabled } = redirectSetting.data;
+                if (lodash.isNil(email) === false && enabled === true) emailAddress = email;
+            }
+
+            logger.info(`Email Address has been resolved as, ${emailAddress}`, { emailAddress, redirectSetting });
+
+            return {
+                to: `${user.firstName} ${user.lastName}<${emailAddress}>`,
+                from: `${partnerToUse.name}<${partnerToUse.email}>`,
+            };
+        };
+
 
     onStartup(): Promise<any> {
         logger.debug(`CoreEmailService onStartup()`)
@@ -46,18 +77,23 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
         return Promise.resolve(true);
     }
 
-    async sendEmail(message: Reactory.IEmailMessage, context: Reactory.IReactoryContext): Promise<any> {
+    setFileService(fileService: Reactory.Service.IReactoryFileService) {
+        this.fileService = fileService;
+    }
+
+    async sendEmail(message: Reactory.IEmailMessage): Promise<any> {
 
         const { userId, via, subject, contentType = "html", body, to, cc, bcc, saveToSentItems, attachments } = message;
-        const { user } = context;
+        const { user, partner } = this.context;
         if (isNil(user) === true) throw new ApiError('Not Authorized');
+        
         logger.info(`USER ID ${userId} via ${via}`);
 
-        const fileService = context.getService("core.ReactoryFileService") as Reactory.Service.IReactoryFileService;
+        const fileService = this.fileService;
+        const emailUser = await User.findById(userId).then();
 
         switch (via) {
             case 'microsoft': {
-                const emailUser = await User.findById(userId).then();
                 if (emailUser.authentications) {
                     const found = find(emailUser.authentications, { provider: via });
                     logger.debug(`EMAIL USER FOUND: ${found}`);
@@ -133,6 +169,33 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
                     throw new ApiError('User has not authenticated via microsoft');
                 }
             }
+            case 'sendgrid': {
+                
+                if (isNil(message.subject) === false && isNil(message.body) === false) {
+                    try {
+
+                        const emailAddress = this.resolveUserEmailAddress(emailUser)
+                        SendGrid.setApiKey(partner.emailApiKey);
+                        let {
+                            subject = '',                            
+                            body = ''
+                        } = message;
+
+                        SendGrid.send({
+                            to: emailAddress.to,
+                            from: emailAddress.from,
+                            html: body,
+                            subject
+                        });
+
+                        this.context.log(`Email sent to ${emailAddress.to}`);
+                    } catch (sendError) {
+                        this.context.log(`Email error ${emailAddress.to} could not send`, { sendError }, 'error');
+                    }
+                }
+
+                return;
+            }
             default: {
                 throw new ApiError('Not Implemented Yet');
             }
@@ -146,6 +209,7 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
 export default {
     id: 'core.EmailService@1.0.0',
     name: "Reactory Email Service - 💌",
+    dependencies: [{ id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' }],
     description: "Provides a simple email service that allows you to send an email via any of the registered email providers as the logged in user.",
     service: (props: any, context: any) => {
         return new CoreEmailService(props, context);

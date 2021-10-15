@@ -6,7 +6,7 @@ import { TemplateType } from '@reactory/server-core/types/constants';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
 import { Template, ReactoryClient, EmailQueue, User, Organization } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
-import { ObjectID } from 'mongodb';
+import { ObjectId, ObjectID } from 'mongodb';
 
 const {
   APP_DATA_ROOT
@@ -54,19 +54,17 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
   nameSpace: string = 'core';
   version: string = '1.0.0';
 
-  executionContext: Reactory.ReactoryExecutionContext;
+  context: Reactory.IReactoryContext;
 
-  constructor(props: any, context: any) {
-    this.executionContext = {
-      partner: props.partner || context.partner,
-      user: props.user || context.partner
-    }
+  constructor(props: any, context: Reactory.IReactoryContext) {
+    this.context = context;
   }
 
-  async dehydrateEmail(template: Reactory.IEmailTemplate, context: Reactory.IReactoryContext): Promise<Reactory.ITemplate> {
+  async dehydrateEmail(template: Reactory.IEmailTemplate): Promise<Reactory.ITemplate> {
 
     const { view, client, organization, businessUnit, userId, id } = template
 
+    debugger
     logger.debug(`TemplateService.dehydrateEmail id: ${id} view:  ${view}, client ${client}, organization: ${organization}, business unit: ${businessUnit}, user id: ${userId}`);
 
 
@@ -75,7 +73,8 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
       let existingTemplate: Reactory.ITemplateDocument = null;
 
       if (ObjectID.isValid(id)) {
-        existingTemplate = await Template.findById(id).populate('client')
+        existingTemplate = await Template.findById(id)
+          .populate('client')
           .populate('organization')
           .populate('elements').then() as Reactory.ITemplateDocument;
         logger.debug('TemplateService fetched template using id', { found: existingTemplate !== null });
@@ -85,7 +84,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
         logger.debug('TemplateService search result', { found: existingTemplate !== null });
       }
 
-      const newTemplateAction = () => {
+      const newTemplateAction =  async () => {
         logger.debug(`core.TemplateService creating new template ${template.view}`);
 
         const _template = new Template() as Reactory.ITemplateDocument
@@ -107,6 +106,8 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
         _subjectTemplate.parameters = [];
         _subjectTemplate.elements = [];
 
+        await _subjectTemplate.save().then();
+
         _bodyTemplate._id = new ObjectID();
 
         _bodyTemplate.client = client;
@@ -122,8 +123,10 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
         _bodyTemplate.parameters = [];
         _bodyTemplate.elements = [];
 
-        _bodyTemplate.createdBy = context.user._id;
+        _bodyTemplate.createdBy = this.context.user._id;
         _bodyTemplate.created = new Date();
+
+        await _bodyTemplate.save().then();
 
         _template._id = new ObjectID();
 
@@ -139,13 +142,15 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
         _template.enabled = true
         _template.description = template.description;
 
-        _template.createdBy = context.user._id;
+        _template.createdBy = this.context.user._id;
         _template.created = new Date();
 
         _template.elements = [
           _subjectTemplate,
           _bodyTemplate
         ];
+
+        await _template.save().then()
 
         return _template;
       }
@@ -155,6 +160,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
 
         let subjectSet: boolean = false;
         let bodySet: boolean = false;
+        const that = this;
 
         if (lodash.isArray(existingTemplate.elements) === false) existingTemplate.elements = [];
 
@@ -176,7 +182,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
             }
 
             templateEl.updated = new Date();
-            templateEl.updatedBy = context.user._id
+            templateEl.updatedBy = that.context.user._id
 
             await templateEl.save().then();
 
@@ -187,6 +193,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
           }
         }
 
+        debugger
         // PATCH ALL ELEMENTS IN TEMPLATE
         await Promise.all(existingTemplate.elements.map(patchContent)).then();
 
@@ -207,6 +214,9 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
           _bodyTemplate.visiblity = template.visiblity;
           _bodyTemplate.parameters = [];
           _bodyTemplate.elements = [];
+          _bodyTemplate.content = template.body;
+
+          _bodyTemplate.save();
 
           existingTemplate.elements.push(_bodyTemplate)
         }
@@ -218,18 +228,21 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
           _subjectTemplate._id = new ObjectID();
 
           _subjectTemplate.client = client;
-          _subjectTemplate.organization = organization
-          _subjectTemplate.businessUnit = businessUnit
+          _subjectTemplate.organization = organization;
+          _subjectTemplate.businessUnit = businessUnit;
           _subjectTemplate.user = userId
 
           _subjectTemplate.kind = TemplateType.content;
           _subjectTemplate.organization = organization
           _subjectTemplate.view = `${template.view}/subject`
           _subjectTemplate.format = "text"
+          _subjectTemplate.content = template.subject;
           _subjectTemplate.enabled = true
           _subjectTemplate.parameters = [];
           _subjectTemplate.elements = [];
           _subjectTemplate.visiblity = template.visiblity;
+
+          await _subjectTemplate.save().then();
 
           existingTemplate.elements.push(_subjectTemplate)
         }
@@ -243,24 +256,28 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
         return existingTemplate;
       }
 
-
       if (existingTemplate === null || existingTemplate === undefined) {
         //null item, zero match
-        return newTemplateAction();
+        const $new_template = await newTemplateAction();
+        //await $new_template.save().then();
+
+        return $new_template;
       }
 
       //most specific to least specific logic decision.
-      if (userId !== null && userId.equals(existingTemplate.user)) return await updateExisting();
-      if (userId !== null && userId.equals(existingTemplate.user) === false) return newTemplateAction();
+      if (userId !== null && userId.equals(existingTemplate.user as ObjectId) === true) return await updateExisting();
+      if (userId !== null && userId.equals(existingTemplate.user as ObjectId) === false) return newTemplateAction();
 
-      if (businessUnit !== null && businessUnit.equals(existingTemplate.businessUnit)) return await updateExisting();
-      if (businessUnit !== null && businessUnit.equals(existingTemplate.businessUnit) === false) return newTemplateAction();
+      
+      if (businessUnit !== null && businessUnit.equals(existingTemplate.businessUnit as ObjectId) === true) return await updateExisting();
+      if (businessUnit !== null && businessUnit.equals(existingTemplate.businessUnit as ObjectId) === false) return newTemplateAction();
 
-      if (organization !== null && organization.equals(existingTemplate.organization)) return await updateExisting();
-      if (organization !== null && organization.equals(existingTemplate.organization) === false) return newTemplateAction();
+      if (organization !== null && existingTemplate.organization && organization.equals(existingTemplate.organization._id) === true) return await updateExisting();
+      if (organization !== null && existingTemplate.organization && organization.equals(existingTemplate.organization._id) === false) return newTemplateAction();
 
-      if (client !== null && client.equals(existingTemplate.client)) return await updateExisting();
-      if (client !== null && client.equals(existingTemplate.client) === false) return newTemplateAction();
+
+      if (client !== null && client.equals(existingTemplate.client._id) === true) return await updateExisting();
+      if (client !== null && client.equals(existingTemplate.client._id) === false) return newTemplateAction();
 
       logger.debug(`Descision tree should have returned, executing default newTemplateAction`)
       return newTemplateAction();
@@ -323,7 +340,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
   };
 
 
-  async getTemplate(view: string, reactoryClientId: string | ObjectID, organizationId: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID, context: Reactory.IReactoryContext): Promise<Reactory.ITemplate> {
+  async getTemplate(view: string, reactoryClientId: string | ObjectID, organizationId: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID): Promise<Reactory.ITemplate> {
 
     logger.debug(`TemplateService.ts.getTemplate()`, { view, reactoryClientId, organizationId, businessUnitId, userId });
 
@@ -338,7 +355,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
     let search_type = 'default';
 
     if (ObjectID.isValid(reactoryClientId) === true) conditions.client = new ObjectID(reactoryClientId)
-    else conditions.client = context.partner._id;
+    else conditions.client = this.context.partner._id;
 
     if (ObjectID.isValid(organizationId) === true) conditions.organization = new ObjectID(organizationId);
     else conditions.organization = null;
@@ -409,7 +426,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
 
   }
 
-  async setTemplate(view: string, template: Reactory.ITemplateDocument, reactoryClientId?: string | ObjectID, organizationId?: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID, context: Reactory.IReactoryContext): Promise<Reactory.ITemplate> {
+  async setTemplate(view: string, template: Reactory.ITemplateDocument, reactoryClientId?: string | ObjectID, organizationId?: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID): Promise<Reactory.ITemplate> {
 
     let filter: { [key: string]: any } = {
       view
@@ -420,7 +437,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
     let $businessUnitId: ObjectID;
     let $userId: ObjectID;
 
-    $clientId = ObjectID.isValid(reactoryClientId) === true ? new ObjectID(reactoryClientId) : context.partner._id; //force the partner id on the template.  better practice to not have global global templates.
+    $clientId = ObjectID.isValid(reactoryClientId) === true ? new ObjectID(reactoryClientId) : this.context.partner._id; //force the partner id on the template.  better practice to not have global global templates.
     $organizationId = ObjectID.isValid(organizationId) === true ? new ObjectID(organizationId) : null;
     $businessUnitId = ObjectID.isValid(businessUnitId) === true ? new ObjectID(businessUnitId) : null;
     $userId = ObjectID.isValid(userId) === true ? new ObjectID(userId) : null;
@@ -461,11 +478,11 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
     return $template;
   }
 
-  getExecutionContext(): Reactory.ReactoryExecutionContext {
-    return this.executionContext;
+  getExecutionContext(): Reactory.IReactoryContext {
+    return this.context;
   }
-  setExecutionContext(executionContext: Reactory.ReactoryExecutionContext): boolean {
-    this.executionContext = executionContext;
+  setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+    this.context = executionContext;
 
     return true;
   }
