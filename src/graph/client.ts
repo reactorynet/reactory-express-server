@@ -7,6 +7,7 @@ import gql from 'graphql-tag';
 import AuthConfig from '../authentication';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import { ApolloQueryResult, FetchResult } from 'apollo-boost';
+import logger from 'logging';
 
 const httpLink = createHttpLink({
   uri: `${process.env.API_URI_ROOT}${process.env.API_URI_ROOT.endsWith('/') ? 'api' : '/api'}`,
@@ -46,7 +47,10 @@ export const execql = async (query: string, variables = {}, options = {}, user: 
   return await clientFor(user, partner).query({
     query: gql(query),
     variables
-  }).then();
+  }).then().catch((err) => {
+    logger.error("ERROR EXECUTING GRAPH QUERY", { query, variable });
+    return null
+  });
 
 };
 

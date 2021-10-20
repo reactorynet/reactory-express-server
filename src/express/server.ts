@@ -68,7 +68,8 @@ const {
   MONGOOSE,
   MONGO_USER,
   MONGO_PASSWORD,
-  API_PORT,
+  API_PORT = 4000,
+  SERVER_IP,
   API_URI_ROOT,
   CDN_ROOT,
   MODE,
@@ -345,7 +346,7 @@ Environment Settings:
       bodyParser.urlencoded({ extended: true }),
       express.static(APP_DATA_ROOT || publicFolder));
 
-    expressServer = reactoryExpress.listen(API_PORT, () => {
+    expressServer = reactoryExpress.listen(API_PORT, SERVER_IP, () => {
       logger.info(asciilogo);
       if (graphcompiled === true) {
         const graphql_api_root = resolveUrl(API_URI_ROOT, queryRoot);
