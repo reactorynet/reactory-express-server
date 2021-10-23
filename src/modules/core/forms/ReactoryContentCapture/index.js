@@ -14,11 +14,7 @@ const ContentCapture = {
   name: 'ContentCapture',
   nameSpace: 'static',
   version: '1.0.0',
-  description: 'A form that represent a Content Capture page',
-  author: {
-    fullName: 'Drew Murphy',
-    email: 'drewmurphyza@gmail.com',
-  },
+  description: 'A form that represent a Content Capture page',  
   helpTopics: [
     'ContentCapture',
   ],
