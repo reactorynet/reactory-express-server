@@ -1,29 +1,13 @@
 
-const froalaOptions = {
-  key: 'SDB17hB8E7F6D3eMRPYa1c1REe1BGQOQIc1CDBREJImD6F5E4G3E1A9D7C3B4B4==',
-  imageManagerLoadMethod: 'GET',
-  toolbarInline: false,
-  toolbarVisibleWithoutSelection: false,
-  imageDefaultWidth: 300,
-  imageDefaultDisplay: 'inline',
-  imageUploadMethod: 'POST',
-  fileUploadURL: '${formContext.api.API_ROOT}/froala/upload/file',
-  videoUploadURL: '${formContext.api.API_ROOT}/froala/upload/video',
-  imageUploadURL: '${formContext.api.API_ROOT}/froala/upload/image',
-  requestHeaders: {
-    'x-client-key': '${formContext.api.CLIENT_KEY}',
-    'x-client-pwd': '${formContext.api.CLIENT_PWD}',
-  },
-};
 
-const minmalOptions = {
-  key: 'SDB17hB8E7F6D3eMRPYa1c1REe1BGQOQIc1CDBREJImD6F5E4G3E1A9D7C3B4B4==',
+const froalaOptions = {  
   imageManagerLoadMethod: 'GET',
   toolbarInline: false,
   toolbarVisibleWithoutSelection: false,
   imageDefaultWidth: 300,
   imageDefaultDisplay: 'inline',
   imageUploadMethod: 'POST',
+
   toolbarButtons: {
     'moreText': {
       'buttons': ['bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript', 'fontFamily', 'fontSize', 'textColor', 'backgroundColor', 'inlineClass', 'inlineStyle', 'clearFormatting']
@@ -31,7 +15,14 @@ const minmalOptions = {
     'moreParagraph': {
       'buttons': ['alignLeft', 'alignCenter', 'formatOLSimple', 'alignRight', 'alignJustify', 'formatOL', 'formatUL', 'paragraphFormat', 'paragraphStyle', 'lineHeight', 'outdent', 'indent', 'quote']
     },
+    'moreRich': {
+      'buttons': ['insertLink', 'insertImage', 'insertVideo', 'insertTable', 'emoticons', 'fontAwesome', 'specialCharacters', 'embedly', 'insertFile', 'insertHR']
+    },
+    'moreMisc': {
+      'buttons': ['undo', 'redo', 'fullscreen', 'print', 'getPDF', 'spellChecker', 'selectAll', 'html', 'help'],
+    }
   },
+
   fileUploadURL: '${formContext.api.API_ROOT}/froala/upload/file',
   videoUploadURL: '${formContext.api.API_ROOT}/froala/upload/video',
   imageUploadURL: '${formContext.api.API_ROOT}/froala/upload/image',
@@ -39,11 +30,9 @@ const minmalOptions = {
     'x-client-key': '${formContext.api.CLIENT_KEY}',
     'x-client-pwd': '${formContext.api.CLIENT_PWD}',
   },
-  quickInsertEnabled: false,
 };
 
-const minmalExtendedOptions = {
-  key: 'SDB17hB8E7F6D3eMRPYa1c1REe1BGQOQIc1CDBREJImD6F5E4G3E1A9D7C3B4B4==',
+const minmalOptions = {  
   imageManagerLoadMethod: 'GET',
   toolbarInline: false,
   toolbarVisibleWithoutSelection: false,
@@ -58,8 +47,11 @@ const minmalExtendedOptions = {
       'buttons': ['alignLeft', 'alignCenter', 'formatOLSimple', 'alignRight', 'alignJustify', 'formatOL', 'formatUL', 'paragraphFormat', 'paragraphStyle', 'lineHeight', 'outdent', 'indent', 'quote']
     },
     'moreRich': {
-      'buttons': ['insertFile', 'insertLink', 'insertImage', 'insertVideo']
+      'buttons': ['insertLink', 'insertImage', 'insertVideo', 'insertTable', 'emoticons', 'fontAwesome', 'specialCharacters', 'embedly', 'insertFile', 'insertHR']
     },
+    'moreMisc': {
+      'buttons': ['undo', 'redo', 'fullscreen', 'print', 'getPDF', 'spellChecker', 'selectAll', 'html', 'help'],
+    }
   },
   fileUploadURL: '${formContext.api.API_ROOT}/froala/upload/file',
   videoUploadURL: '${formContext.api.API_ROOT}/froala/upload/video',
@@ -69,6 +61,37 @@ const minmalExtendedOptions = {
     'x-client-pwd': '${formContext.api.CLIENT_PWD}',
   },
   quickInsertEnabled: false,
+};
+
+const minmalExtendedOptions = {  
+  imageManagerLoadMethod: 'GET',
+  toolbarInline: false,
+  toolbarVisibleWithoutSelection: false,
+  imageDefaultWidth: 300,
+  imageDefaultDisplay: 'inline',
+  imageUploadMethod: 'POST',
+  toolbarButtons: {
+    'moreText': {
+      'buttons': ['bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript', 'fontFamily', 'fontSize', 'textColor', 'backgroundColor', 'inlineClass', 'inlineStyle', 'clearFormatting']
+    },
+    'moreParagraph': {
+      'buttons': ['alignLeft', 'alignCenter', 'formatOLSimple', 'alignRight', 'alignJustify', 'formatOL', 'formatUL', 'paragraphFormat', 'paragraphStyle', 'lineHeight', 'outdent', 'indent', 'quote']
+    },
+    'moreRich': {
+      'buttons': ['insertLink', 'insertImage', 'insertVideo', 'insertTable', 'emoticons', 'fontAwesome', 'specialCharacters', 'embedly', 'insertFile', 'insertHR']
+    },
+    'moreMisc': {
+      'buttons': ['undo', 'redo', 'fullscreen', 'print', 'getPDF', 'spellChecker', 'selectAll', 'html', 'help'],
+    }
+  },
+  fileUploadURL: '${formContext.api.API_ROOT}/froala/upload/file',
+  videoUploadURL: '${formContext.api.API_ROOT}/froala/upload/video',
+  imageUploadURL: '${formContext.api.API_ROOT}/froala/upload/image',
+  requestHeaders: {
+    'x-client-key': '${formContext.api.CLIENT_KEY}',
+    'x-client-pwd': '${formContext.api.CLIENT_PWD}',
+  },
+  quickInsertEnabled: true,
 };
 
 export const minimalEdit = {
@@ -278,7 +301,7 @@ export default {
   content: {
     'ui:widget': 'FroalaWidget',
     'ui:options': {
-      froalaOptions,
+      froalaOptions: minmalExtendedOptions,
     },
   },
   topics: {

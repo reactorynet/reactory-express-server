@@ -42,6 +42,14 @@ export class UserExistsError extends ApiError {
   }
 }
 
+export class BadRequestError extends ApiError {
+  constructor(message, meeta ={}) {
+    this.message = message;
+    this.meta = meta;
+    this.code = '400';
+  }
+}
+
 export class InsufficientPermissions extends ApiError {
   constructor(message, meta = {}) {
     super(message);
@@ -113,3 +121,5 @@ export class SystemError extends ApiError {
     this.code = 'SYSTEM-500';
   }
 }
+
+

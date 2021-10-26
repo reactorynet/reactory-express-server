@@ -9,6 +9,7 @@ import Processors from './ETL/Processors';
 import ReactoryPackageManager from './ETL/ReactoryPackageManager';
 import UserService from './UserService';
 import WorkflowService from './ReactoryWorkflowService';
+import FetchService from './FetchService';
 //custom services to be expressed here
 
 
@@ -22,7 +23,8 @@ const services = [
   OrganizationServiceDefinition,
   ReactoryPackageManager.reactory,
   UserService.reactory,
-  WorkflowService.definition
+  WorkflowService.definition,
+  FetchService.reactory
 ]
 
 export default services;
