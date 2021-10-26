@@ -987,7 +987,7 @@ declare namespace Reactory {
   export type ReactoryServiceTypes = "file" | "data" | "iot" | 
     "user" | "organization" | "businessunit" | "email" | 
     "notification" | "workflow" | "devops" | "plugin" | 
-    "custom" | "context";
+    "custom" | "context" | "integration";
 
   export interface IReactoryServiceDependency {
     /**
@@ -1273,6 +1273,82 @@ declare namespace Reactory {
       workflowStatus(worflow_id: string, instance: string): Promise<any>
       clearWorkflows(): Promise<any>
     }
+
+    export interface IFetchAuthenticationProvder {
+
+      /**
+       * Authenticates a fetch request before the call is made.
+       * This would be used to set headers for which 
+       * we already have the request data.
+       * @param request 
+       */
+      authenticateRequestSync(request: any): void; 
+      
+      /**
+       * Authenticates a fetch request asynchronously
+       * @param request 
+       */
+      authenticateRquest(request?: any): Promise<any>
+
+    }
+
+
+    export interface IFetchHeaderProvider {
+
+      /**
+       * Decorates a Fetch request with any custom headers
+       * @param request 
+       */
+      decorateRequestHeaderSync(request: any): void;
+
+      /**
+       * decorates a fetch request with custom headers asynch
+       * @param request 
+       */
+      decorateRequestHeader(request: any): Promise<any>;
+
+    }
+
+
+    export interface IFetchService extends Reactory.Service.IReactoryDefaultService {
+
+      /**
+       * 
+       * @param provider 
+       */
+      setAuthenticationProvider(provider: IFetchAuthenticationProvder): void
+
+      /**
+       * 
+       * @param provider 
+       */
+      setHeaderProvider(provider: IFetchHeaderProvider): void;
+
+      getJSON<T>(url: string, 
+        args?: any, authenticate?: boolean, 
+        charset?: string): Promise<T>
+
+      postJSON<T>(url: string,
+        args?: any, authenticate?: boolean,
+        charset?: string): Promise<T>
+
+      putJSON<T>(url: string,
+        args?: any, authenticate?: boolean,
+        charset?: string): Promise<T>
+
+      deleteJSON<T>(url: string,
+        args?: any, authenticate?: boolean,
+        charset?: string): Promise<T>
+
+      
+      fetch<T>(url: string, 
+        args?: any, 
+        authenticate?: boolean, 
+        contentType?: string,        
+        ): Promise<Response | T>
+    }
+
+
   }
 
   export interface IPagingRequest {
