@@ -524,6 +524,7 @@ declare namespace Reactory {
   export interface IReactoryFileRemoteEntry {
     id: string
     url: string
+    name?: string,
     lastSync: Date
     success: boolean,
     verified?: boolean,
@@ -920,8 +921,8 @@ declare namespace Reactory {
     key: String
     name: String
     description: String
-    content: (params: any) => Promise<any>
-    resolver: (params: any) => Promise<any>,
+    content: (params: any, context: Reactory.IReactoryContext) => Promise<any>
+    resolver: (params: any, context: Reactory.IReactoryContext) => Promise<any>,
     props: {
       meta: {
         title: String
@@ -1344,7 +1345,8 @@ declare namespace Reactory {
       fetch<T>(url: string, 
         args?: any, 
         authenticate?: boolean, 
-        contentType?: string,        
+        contentType?: string,
+        defaultHeaders?: boolean        
         ): Promise<Response | T>
     }
 

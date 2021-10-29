@@ -1,6 +1,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory'
 import ApiError, { BadRequestError, InsufficientPermissions, RecordNotFoundError } from '@reactory/server-core/exceptions';
-import { Response } from 'node-fetch';
+import FormData from 'form-data';
+import nodeFetch, { Response } from 'node-fetch';
 
 /**
  * The fetch service is designed to work as an intermediary service wrapper
@@ -9,9 +10,9 @@ import { Response } from 'node-fetch';
 export default class FetchService implements Reactory.Service.IFetchService {
 
   static reactory: Reactory.IReactoryServiceDefinition = {
-    id: '',
-    name: '',
-    description: '',
+    id: 'core.FetchService@1.0.0',
+    name: 'Reactory Fetch API Service',
+    description: 'A service class that wraps FETCH and provides utility functions',
     service: function (props: Reactory.IReactoryServiceProps, context: any) {
       return new FetchService(props, context);
     }
@@ -49,16 +50,29 @@ export default class FetchService implements Reactory.Service.IFetchService {
     this.headerProvider = provider;
   }
 
-  postJSON<T>(url: string, args?: any, authenticate?: boolean, charset?: string): Promise<T> {
-    return this.fetch(url, { ...args, method: 'POST' }, authenticate, `application/json; charset=${charset}`);
+  postJSON<T>(url: string, args?: any, authenticate?: boolean, charset: string = 'UTF-8'): Promise<T> {
+    debugger
+    let headers: any = { };
+    if(args.headers) headers = { ...args.headers };
+    if(!headers.accept) headers.accept = 'application/json';
+
+    return this.fetch(url, { ...args, method: 'POST', headers }, authenticate, `application/json; charset=${charset}`);
   }
 
   putJSON<T>(url: string, args?: any, authenticate?: boolean, charset?: string): Promise<T> {
-    return this.fetch(url, { ...args, method: 'PUT' }, authenticate, `application/json; charset=${charset}`);
+    let headers: any = {};
+    if (args.headers) headers = { ...args.headers };
+    if (!headers.accept) headers.accept = 'application/json';
+
+    return this.fetch(url, { ...args, method: 'PUT', headers }, authenticate, `application/json; charset=${charset}`);
   }
 
   deleteJSON<T>(url: string, args?: any, authenticate?: boolean, charset?: string): Promise<T> {
-    return this.fetch(url, { ...args, method: 'DELETE' }, authenticate, `application/json; charset=${charset}`);
+    let headers: any = {};
+    if (args.headers) headers = { ...args.headers };
+    if (!headers.accept) headers.accept = 'application/json';
+
+    return this.fetch(url, { ...args, method: 'DELETE', headers }, authenticate, `application/json; charset=${charset}`);
   }
 
   setAuthenticationProvider(provider: Reactory.Service.IFetchAuthenticationProvder): void {
@@ -66,10 +80,15 @@ export default class FetchService implements Reactory.Service.IFetchService {
   }
 
   async getJSON<T>(url: string, args: any = {}, authenticate: boolean = false, charset: string = 'UTF-8'): Promise<T> {
-    return this.fetch(url, args, authenticate, `application/json; charset=${charset}`);
+    
+    let headers: any = {};
+    if (args.headers) headers = { ...args.headers };
+    if (!headers.accept) headers.accept = 'application/json';
+    debugger;
+    return this.fetch(url, { ...args, method: 'GET', headers }, authenticate, `application/json; charset=${charset}`);
   }
 
-  async fetch(url = '', args = {}, authenticate = true, contentType: string = 'application/json; charset=UTF-8'): Promise<any> {
+  async fetch(url = '', args = {}, authenticate = true, contentType: string = 'application/json; charset=UTF-8', defaultHeaders: boolean = true): Promise<any> {
 
     if (!this.context) throw new ApiError('context property cannot be null FATAL ERROR');
 
@@ -83,45 +102,56 @@ export default class FetchService implements Reactory.Service.IFetchService {
 
     kwargs.headers['content-type'] = contentType;
 
-    if (authenticate) {
+    if (authenticate && this.authProvider) {
       this.authProvider.authenticateRequestSync(kwargs);
     }
 
     kwargs.headers['user-agent'] = `ReactoryServer`;
     kwargs.headers['origin'] = process.env.API_URI_ROOT;
-    kwargs.headers['connection'] = 'keep-alive';
-    if (this.headerProvider) {
+    //kwargs.headers['connection'] = 'keep-alive';
+    if (defaultHeaders === true && this.headerProvider) {
       this.headerProvider.decorateRequestHeaderSync(kwargs);
     }
 
-    if (!kwargs.credentials) {
-      kwargs.credentials = 'same-origin';
-    }
+    // if (!kwargs.credentials) {
+    //   kwargs.credentials = 'same-origin';
+    // }
 
     if (kwargs.params) {
-      const paramPayload = JSON.stringify(kwargs.params);
-      absoluteUrl += `?${encodeURIComponent(paramPayload)}`;
+      let params = new URLSearchParams();
+      Object.keys(kwargs.params).forEach((key) => {
+        params.append(key, kwargs.params[key]);        
+      });
+
+      absoluteUrl += `?${params.toString()}`;
     }
 
-    if (kwargs.body) {
-      kwargs.body = JSON.stringify(kwargs.body, null, 2);
-    }
+    // if (contentType.indexOf('application/json') >= 0 && kwargs.body) {
+    //   debugger
+    //   const formData = new FormData();
+    //   formData.append("json", JSON.stringify(kwargs.body));
+    //   kwargs.body = formData;
+    // }
+
+    let headersText = ' ';
+    Object.keys(kwargs.headers).forEach((key) => { 
+      headersText = `${headersText}--header '${key}: ${kwargs.headers[key]}' \\\n`;
+    });
 
     const $curlformat = `
     ================ FETCH SERVICE CURL ==================
-    curl -X ${kwargs.method || 'GET'} '${absoluteUrl}' \\
-  ${Object.keys(kwargs.headers).map((key) => `-H ${key}: ${kwargs.headers[key]}`)} \\
-  ${kwargs.body ? `--data-binary '${kwargs.body}' \\` : ''}
-    --compressed
+    curl -X ${kwargs.method || 'GET'} '${absoluteUrl}'\\
+    ${headersText}
+    ${kwargs.body ? `--data-raw '${kwargs.body}'` : ''}
     ==================================++==================
   `;
 
-    this.context.log($curlformat, { kwargs }, 'debug');
+    this.context.log($curlformat, 'debug');
 
     let response: Response = null;
 
     try {
-      response = await fetch(absoluteUrl, kwargs).then();
+      response = await nodeFetch(absoluteUrl, kwargs).then();
     } catch (fetchError) {
       this.context.log(`🚨 Error Getting ${url}`, { error: fetchError }, 'error');
       throw new ApiError('Remote server could not process request', { error: fetchError.message, url });
@@ -129,10 +159,13 @@ export default class FetchService implements Reactory.Service.IFetchService {
 
     if (response.ok && response.status === 200 || response.status === 201) {
       try {
+        debugger
+        let responseType = "application/text" // response.headers.get("content-type");
+        if(response.headers) {
+          responseType = response.headers.get("content-type");
+        }
 
-        const responseType = response.headers.get("content-type");
-
-        if (kwargs.header['content-type'] && kwargs.header['content-type'].indexOf('/json') > 0) {
+        if (kwargs.headers['content-type'] && kwargs.headers['content-type'].indexOf('/json') > 0) {
 
           if (responseType.indexOf("json") > 0) {
 
@@ -143,7 +176,7 @@ export default class FetchService implements Reactory.Service.IFetchService {
 ------------------------------------------------------------------
 MESSAGE: ${invalidJsonErr.message}
 ENDPOINT: ${absoluteUrl}
-FETCH ARGS: ${JSON.stringify(kwargs, null, 2)}
+FETCH ARGS: 
 ------------------------------------------------------------------
               `
               this.context.log(msg)
@@ -179,7 +212,6 @@ FETCH ARGS: ${JSON.stringify(kwargs, null, 2)}
 MESSAGE: ${jsonError.message}
 ENDPOINT:${url}
 METHOD: ${kwargs.method || "GET"}
-FETCH ARGS: ${JSON.stringify(kwargs, null, 2)}
 ------------------------------------------------------------------
 `;
         this.context.log(msg, {}, 'error');
@@ -192,7 +224,7 @@ FETCH ARGS: ${JSON.stringify(kwargs, null, 2)}
         case 400: {
           const msg = `
 ------------------------------------------------------------------
-🚨🚨        Warning BAD REQUEST RESPONSE / Token Failed       🚨🚨
+🚨🚨        Warning BAD REQUEST RESPONSE 🚨🚨
 ------------------------------------------------------------------
 MESSAGE: Access Forbidden
 ENDPOINT: ${absoluteUrl}
@@ -201,9 +233,9 @@ METHOD: ${kwargs.method || "GET"}
 Q & A: 
 ------------------------------------------------------------------
         `;
+          this.context.log(msg, { status: response.status, statusText: response.statusText  }, 'error');
 
-
-          throw new BadRequestError(msg, response)
+          throw new BadRequestError(msg)
         }
         case 401:
         case 403: {
@@ -218,7 +250,8 @@ METHOD: ${kwargs.method || "GET"}
 ------------------------------------------------------------------
 `;
 
-          throw new InsufficientPermissions(msg, response);
+          this.context.log(msg, { status: response.status, statusText: response.statusText }, 'error');
+          throw new InsufficientPermissions(msg);
 
         }
         case 404: {
@@ -235,21 +268,42 @@ Q & A: Item deleted or removed from remote resource
 ------------------------------------------------------------------
 `;
 
+          this.context.log(msg, { status: response.status, statusText: response.statusText }, 'error');
 
-          throw new RecordNotFoundError(msg, 'cloud', { response })
+          throw new RecordNotFoundError(msg, 'cloud')
         }
+
+        case 415: {
+          const msg = `
+------------------------------------------------------------------
+🚨🚨        Warning Resource Not Found 404 STATUS             🚨🚨
+------------------------------------------------------------------
+MESSAGE: Not Found
+ENDPOINT:  ${url}
+METHOD: ${kwargs.method || "GET"}
+------------------------------------------------------------------
+Q & A: Item deleted or removed from remote resource
+------------------------------------------------------------------
+`;
+
+          this.context.log(msg, { status: response.status, statusText: response.statusText }, 'error');
+
+          throw new ApiError(`Remote API responded with unsupported media type`, { message: msg, status: response.status, statusText: response.statusText })
+
+        }
+        
         default: {
 
           const msg = `
 ------------------------------------------------------------------
 🚨🚨             OTHER SERVER - UNSPECIFIED ERROR             🚨🚨
 ------------------------------------------------------------------
-MESSAGE: Access Forbidden
+MESSAGE: ${response.status} - ${response.statusText}
 ENDPOINT:  ${url}
 METHOD: ${kwargs.method || "GET"}
 ------------------------------------------------------------------
 `;
-
+          this.context.log(msg, { status: response.status, statusText: response.statusText }, 'error');
           throw new ApiError("Did not receive complete response from remote resource");
         }
       }

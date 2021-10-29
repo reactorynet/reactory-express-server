@@ -10,6 +10,7 @@ type ReactoryFilePermissions {
 type ReactoryFileRemoteEntry {
   id: String
   url: String
+  name: String
   lastSync: Date
   success: Boolean
   verified: Boolean

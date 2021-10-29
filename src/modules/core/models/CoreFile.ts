@@ -42,6 +42,12 @@ const ReactoryFileSchema: Schema<Reactory.IReactoryFileModel> = new Schema<React
     {
       id: String,
       url: String,
+      name: { 
+        type: String,
+        default: function(){
+          return this.url
+        }
+      },
       lastSync: Date,
       success: Boolean,
       verified: { type: Boolean, default: false },

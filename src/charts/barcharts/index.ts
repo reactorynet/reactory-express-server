@@ -3,11 +3,12 @@
 import path from 'path';
 import logger from '../../logging';
 
-const ChartjsNode = require('chartjs-node');
+//@ts-ignore
+import ChartjsNode from 'chartjs-node';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 // 600x600 canvas size
-export const DefaultBarChart = (props) => {
+export const DefaultBarChart = (props: any) => {
   const {
     folder, file, width, height, resolveCDN = false, data, options,
     mime = 'image/png',
@@ -35,11 +36,11 @@ export const DefaultBarChart = (props) => {
       // chart is created
       // get image as png buffer
       return chartNode.getImageBuffer(mime);
-    }).then((buffer) => {
+    }).then((buffer: any[]) => {
       Array.isArray(buffer); // => true
       // as a stream
       return chartNode.getImageStream(mime);
-    }).then((streamResult) => {
+    }).then((streamResult: any) => {
       // using the length property you can do things like
       // directly upload the image to s3 by using the
       // stream and length properties
