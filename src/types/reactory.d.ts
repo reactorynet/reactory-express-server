@@ -263,7 +263,7 @@ declare namespace Reactory {
     data: any
   }
 
-  export interface IOrganizationDocument extends Mongoose.Document, IOrganization { }
+  export interface IOrganizationDocument extends Mongoose.Document<ObjectId>, IOrganization { }
 
   export interface IBusinessUnit {
     [key: string]: any,
