@@ -159,6 +159,7 @@
     "pngjs": "3.4.0",
     "postal": "^2.0.5",
     "pug": "^2.0.3",
+    "reflect-metadata": "^0.1.13",
     "restify": "^8.3.3",
     "rimraf": "2.6.3",
     "rollup": "^1.16.2",

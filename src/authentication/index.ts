@@ -349,4 +349,5 @@ class AuthConfig {
   };
 }
 
+export { default as Decorators } from './decorators';
 export default AuthConfig;

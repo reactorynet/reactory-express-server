@@ -6,6 +6,8 @@
       "moduleResolution": "node",
       "allowSyntheticDefaultImports": true,
       // Process & infer types from .js files.
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
       "allowJs": true,  
       "target":"ES2017",
       "baseUrl": "./",

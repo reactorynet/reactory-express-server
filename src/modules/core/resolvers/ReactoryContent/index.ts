@@ -8,6 +8,7 @@ import path from 'path';
 import { Content } from '../../../../models/index';
 // import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import logger from '../../../../logging';
+import { Reactory } from 'types/reactory';
 
 
 const {
@@ -24,9 +25,12 @@ interface ReactorySaveImageDataResponse {
 
 export default {
   ReactoryContent: {
-    id: (content) => {
+    id: (content: Reactory.IReactoryContentDocument) => {
       return content._id.toString();
-    }
+    },
+    title: (content: Reactory.IReactoryContentDocument) => {
+      return content.title === null || content.title === undefined ? content.slug : content.title;
+    },
   },
   Query: {
     ReactoryGetContentBySlug: async (parent, params) => {
