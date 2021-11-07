@@ -263,7 +263,7 @@ declare namespace Reactory {
     data: any
   }
 
-  export interface IOrganizationDocument extends Mongoose.Document, IOrganization { }
+  export interface IOrganizationDocument extends Mongoose.Document<ObjectId>, IOrganization { }
 
   export interface IBusinessUnit {
     [key: string]: any,
@@ -524,6 +524,7 @@ declare namespace Reactory {
   export interface IReactoryFileRemoteEntry {
     id: string
     url: string
+    name?: string,
     lastSync: Date
     success: boolean,
     verified?: boolean,
@@ -821,21 +822,30 @@ declare namespace Reactory {
     functionFqn?: string,
   }
 
+  export interface IReactoryFormModule {
+    id: string,
+    src: string,
+    compiler?: string | "npm" | "none" | "webpack" | "grunt" | "rollup"
+    compilerOptions: any
+  }
+
+
+
   export interface IReactoryForm {
     /**
      * A unique id for the form. When the form is defined on the server side, the id has to be unique
      * across all forms!
      */
-    id: String,
+    id: string,
     /**
      * Indicates what UI framework the form is built / designed to use.
      * options will be "material" and later "bootstrap" / others.
      */
-    uiFramework: String,
+    uiFramework: string | "material" | "bootstrap",
     /**
      * This indicates the ui framekworks that the form is intended to support.
      */
-    uiSupport: String[],
+    uiSupport: string[],
     /**
      * List of scripts or styles sheets that get loaded async for the application to use.
      */
@@ -871,6 +881,7 @@ declare namespace Reactory {
     noHtml5Validate?: boolean,
     formContext?: any,
     eventBubbles?: IEventBubbleAction[]
+    modules?: IReactoryFormModule[]
     /**
    * components to mount in the componentDef propertie
    */
@@ -920,8 +931,8 @@ declare namespace Reactory {
     key: String
     name: String
     description: String
-    content: (params: any) => Promise<any>
-    resolver: (params: any) => Promise<any>,
+    content: (params: any, context: Reactory.IReactoryContext) => Promise<any>
+    resolver: (params: any, context: Reactory.IReactoryContext) => Promise<any>,
     props: {
       meta: {
         title: String
@@ -1344,7 +1355,8 @@ declare namespace Reactory {
       fetch<T>(url: string, 
         args?: any, 
         authenticate?: boolean, 
-        contentType?: string,        
+        contentType?: string,
+        defaultHeaders?: boolean        
         ): Promise<Response | T>
     }
 

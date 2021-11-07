@@ -36,7 +36,7 @@ module.exports = function (api) {
       allowNamespaces: true,
       allExtensions: true,
     }],
-
+    ["@babel/plugin-proposal-decorators", { "legacy": true }],
     ['@babel/plugin-proposal-class-properties', { loose: false }],
 
     // stage 0
@@ -45,7 +45,6 @@ module.exports = function (api) {
     '@babel/plugin-proposal-json-strings',
 
     // Stage 2
-    ['@babel/plugin-proposal-decorators', { legacy: true }],
     '@babel/plugin-proposal-function-sent',
     '@babel/plugin-proposal-export-namespace-from',
     '@babel/plugin-proposal-numeric-separator',

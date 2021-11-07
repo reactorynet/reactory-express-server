@@ -14,6 +14,7 @@ import { isArray } from 'util';
 import _, { find } from 'lodash';
 import ApiError, { RecordNotFoundError } from '../exceptions';
 import { forInStatement } from 'babel-types';
+import ReactoryContext from '@reactory/server-core/apollo/ReactoryContextProvider';
 
 const pdfmake = require('pdfmake/build/pdfmake');
 const PdfPrinter = require('pdfmake/src/printer');
@@ -310,8 +311,9 @@ router.get('/:nameSpace/:name', async (req, res) => {
 
   if (reportPdfComponent && reportPdfComponent.component) {
     try {
-
-      const resolvedData = await reportPdfComponent.component.resolver(req.query, { user: req.user, partner: req.partner }).then();
+      debugger
+      const context = await ReactoryContext(null, { user: req.user, partner: req.partner });
+      const resolvedData = await reportPdfComponent.component.resolver(req.query, context).then();
       generate({ data: resolvedData, definition: reportPdfComponent.component }, res, false, req);
     } catch (pdfError) {
       logger.debug(`Error Generating The PDF ${pdfError.message}`, { pdfError });
