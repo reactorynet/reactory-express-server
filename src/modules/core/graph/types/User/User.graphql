@@ -18,6 +18,11 @@ type UserSession {
 
 type Peer {
   user: User
+  """
+  A virtual field added to determine whether or not an assessor has been removed from
+  an active assessment.
+  """
+  removed: Boolean
   relationship: PeerType
   isInternal: Boolean
   inviteSent: Boolean
