@@ -12,7 +12,7 @@ import OrganigramModel from './schema/Organigram';
 import MenuModel, { MenuItemModel } from './schema/Menu';
 import ClientComponentModel from './schema/ClientComponent';
 import ReactoryClientModel from './schema/ReactoryClient';
-import ScaleModel from './schema/Scale';
+import ScaleModel from '../modules/mores/models/Scale';
 import TemplateModel from './schema/Template';
 import TeamModel from './schema/Team';
 import ReactoryUserModel from './schema/User';
@@ -31,12 +31,13 @@ import PersonalDemographicModel from './schema/PersonalDemographic';
 import RegionModel from './schema/Region';
 import OperationalGroupModel from './schema/OperationalGroup';
 
-import { Cache } from '../modules/core/models';
+import CoreModels from '../modules/core/models';
 
 //export const Assessment = AssessmentModel;
 export const Application = ApplicationModel;
 export const Assessment = AssessmentModel;
 export const Comment = CommentModel;
+export const Cache = CoreModels.Cache;
 export const Organization = OrganizationModel;
 export const Organigram = OrganigramModel;
 export const Notification = NotificationModel;
@@ -67,7 +68,7 @@ export const Region = RegionModel;
 export const OperationalGroup = OperationalGroupModel;
 
 const models = {
-  Cache,
+  Cache: CoreModels.Cache,
   Assessment,
   Application,
   Board,

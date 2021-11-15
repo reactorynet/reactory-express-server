@@ -4,12 +4,13 @@ import * as lodash from 'lodash';
 //@ts-ignore
 import ColorScheme from 'color-scheme';
 import ReactoryConstants from '@reactory/server-core/constants';
+import { Reactory } from '@reactory/server-core/types/reactory';
 import logger from '@reactory/server-core/logging';
 
 const { ObjectId } = mongoose.Schema.Types;
 const { find, isArray } = lodash;
 
-const ReactoryClientSchema = new mongoose.Schema({
+const ReactoryClientSchema = new mongoose.Schema<Reactory.IReactoryClient>({
   id: ObjectId,
   key: {
     type: String,

@@ -3,6 +3,9 @@
 Reactory Support Ticket
 """
 type ReactorySupportTicket {
+  """
+  The internal id
+  """
   id: String
   """
   The user request, short title
@@ -52,6 +55,40 @@ type ReactorySupportTicket {
   The documents attached to this request
   """
   documents: [ReactoryFile]  
+  """
+  The form id from where the request originated
+  """
+  formId: String
+}
+
+"""
+Input type used to update a Reactory Support Ticket
+"""
+input ReactorySupportTicketUpdate {
+  """
+  The user request, short title
+  """
+  request: String
+  """
+  The type of user request
+  """
+  requestType: String
+  """
+  The request description, a fuller longer detailed description
+  """
+  description: String
+  """
+  Request status
+  """
+  status: String
+  """
+  id of the user to assgign the ticket to
+  """
+  assignTo: String
+  """
+  Comment
+  """
+  comment: String
 }
 
 """
@@ -65,7 +102,7 @@ type PagedReactorySupportTickets {
   """
   The ticket array
   """
-  tickets: [ReactorySupportTickets]
+  tickets: [ReactorySupportTicket]
 }
 
 """
@@ -100,13 +137,17 @@ input ReactorySupportTicketFilter {
   Date fields to search against
   """
   dateFields: [String]
+  """
+  Include a form id to keep the results to a specific form
+  """
+  formId: String 
 }
 
 extend type Query {
   """
   Returns paged tickets that were created by the logged in user
   """
-  ReactoryMySupportTickets(paging: PagingRequest): PagedReactorySupportTickets
+  ReactoryMySupportTickets(paging: PagingRequest, filter: ReactorySupportTicketFilter): PagedReactorySupportTickets
   """
   Returns support tickets based on search input
   """
@@ -117,9 +158,9 @@ extend type Mutation {
   """
   Creates a new support for the logged in user
   """
-  ReactoryCreateSupportTicket(request: String, description: String, requestType: String, meta: Any): ReactorySupportTicket
+  ReactoryCreateSupportTicket(request: String!, description: String!, requestType: String, meta: Any, formId: String): ReactorySupportTicket
   """
   Updates a ticket with either a status update, assignment change or comment add
   """
-  ReactoryUpdateSupportTicket(ticket_id: Strig, status: String, assignedTo: String, comment: String): ReactorySupportTicket   
+  ReactoryUpdateSupportTicket(ticket_id: String, updates: ReactorySupportTicketUpdate): ReactorySupportTicket
 }

@@ -14,13 +14,14 @@ const SupportForm: Reactory.IReactoryForm = {
   uiSchema,
   graphql,
   uiResources: [
-    {
-      id: `core.SupportFormController.${version}`,
-      name: `core.SupportFormController.${version}`,
-      type: 'script',
-      uri: `${process.env.CDN_ROOT}__virtuals__/core.SupportFormController.${version}.js`,
-    }
+    // {
+    //   id: `core.SupportFormController.${version}`,
+    //   name: `core.SupportFormController.${version}`,
+    //   type: 'script',
+    //   uri: `${process.env.CDN_ROOT}__virtuals__/core/forms/Support/modules/core.SupportFormController.${version}.js?minified=${process.env.node_env === 'production'? true : false}`,
+    // }
   ],
+  helpTopics: ['help-logging-a-support-ticket'],
   title: "Reactory Support Form",
   registerAsComponent: true,
   nameSpace: "core",

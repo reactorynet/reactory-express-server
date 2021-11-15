@@ -84,6 +84,6 @@ CacheSchema.statics.clean = function Clean() {
 
 };
 
-const CacheModel = mongoose.model('Cache', CacheSchema);
+const CacheModel = mongoose.model<Cache>('Cache', CacheSchema);
 
 export default CacheModel;

@@ -11,6 +11,7 @@ import ApiError from '@reactory/server-core/exceptions';
 import ReactoryFileModel from '@reactory/server-modules/core/models/CoreFile';
 import logger from '@reactory/server-core/logging';
 import { template } from 'lodash';
+import { roles } from '@reactory/server-core/authentication/decorators';
 const {
     APP_DATA_ROOT,
     CDN_ROOT
@@ -81,7 +82,7 @@ const downloadFile = async (url: string, options?: RequestInit, outputPath?: str
     }
 }
 
-const catalogFile = async (filename: string, mimetype: string, alias: string, context: string = 'downloaded', partner, owner): Promise<Reactory.IReactoryFileModel> => {
+const catalogFile = async (filename: string, mimetype: string, alias: string, context: string = 'downloaded', partner: Reactory.IReactoryClientDocument, owner: Reactory.IUserDocument): Promise<Reactory.IReactoryFileModel> => {
     // Check if image is valid
     const fileStats: fs.Stats = fs.statSync(filename);
     logger.debug(`SAVING FILE:: DONE ${fileStats} ${fileStats.size} --> CATALOGGING`);
@@ -102,6 +103,7 @@ const catalogFile = async (filename: string, mimetype: string, alias: string, co
         path: alias.replace(APP_DATA_ROOT, '').replace(path.basename(alias), ''),
         uploadContext: context,
         public: false,
+        deleted: false,
         published: false,
     });
 
@@ -230,7 +232,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         throw new Error('Method not implemented.');
     }
     onStartup(): Promise<any> {
-        this.context.log(`File Service ${this.nameSpace}.${this.name}@${this.version} OKAY 🟢`);
+        this.context.log(`File Service ${this.nameSpace}.${this.name}@${this.version} ${this.context.colors.green('STARTUP OKAY')} ✅`);
         return Promise.resolve(true);
     }
     
@@ -371,6 +373,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
 
             logger.debug(`SAVING FILE:: ${filename} --> ${physicalPath}`);
 
+            //@ts-ignore
             const diskWriterStream: NodeJS.WriteStream = fs.createWriteStream(phyicalFilePath);
             diskWriterStream.on('error', handleStreamError);
 
@@ -382,6 +385,54 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
             stream.pipe(diskWriterStream);
         });
     };
+
+    catalogFile = async (filename: string, mimetype: string, alias?: string, context?: string, partner?: Reactory.IReactoryClientDocument, owner?: Reactory.IUserDocument): Promise<Reactory.IReactoryFileModel> => {
+        // Check if image is valid
+
+        if(fs.existsSync(filename) === false) {
+            return null;
+        }
+
+        const fileStats: fs.Stats = fs.statSync(filename);
+        this.context.log(`catatlogFile(filenmae: ${filename}, ${mimetype}) ${fileStats} ${fileStats.size} --> CATALOGGING`);
+
+        const link = `${filename.replace(APP_DATA_ROOT, CDN_ROOT)}`;
+        const _id: ObjectId = new ObjectId();
+        const reactoryFileModel = new ReactoryFileModel({
+            _id,
+            id: _id,
+            filename: path.basename(filename),
+            mimetype,
+            alias: alias || path.basename(filename),
+            partner: partner ? partner._id : this.context.partner._id,
+            owner: owner ? owner._id : this.context.user._id,
+            uploadedBy: owner ? owner._id : this.context.user._id,
+            size: fileStats.size,
+            hash: Hash(link),
+            link: link,
+            path: alias.replace(APP_DATA_ROOT, '').replace(path.basename(alias), ''),
+            uploadContext: context || "system::catalog",
+            public: false,
+            deleted: false,
+            published: false,
+        });
+
+        await reactoryFileModel.save().then();
+
+        return reactoryFileModel;
+    }
+
+    /**
+     * 
+     */    
+    @roles(["ADMIN", "DEVELOPER", "${arguments[0].owner._id === context.user._id}"])
+    deleteFile( fileModel: Reactory.IReactoryFileModel ): boolean {
+        let filepath = path.join(APP_DATA_ROOT, fileModel.path, fileModel.filename);
+        if(fs.existsSync(filepath) === true)
+            fs.unlinkSync(filepath);
+
+        return fs.existsSync(filepath) === true;
+    }
 }
 
 export const ReactoryFileServiceDefinition: Reactory.IReactoryServiceDefinition = {

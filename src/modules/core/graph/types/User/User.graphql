@@ -102,7 +102,16 @@ type Comment {
   id: ObjID
   who: User
   text: String
-  when: Float
+  when: Date
+  upvoted: [User]
+  upvotes: Int
+  downvote: [User]
+  downvotes: Int
+  favorite: [User]
+  favorites: Int
+  flagged: Boolean
+  removed: Boolean
+  published: Boolean
 }
 
 type ProfileRefreshResult {

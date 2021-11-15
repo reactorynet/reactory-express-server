@@ -21,6 +21,7 @@ const typeDefs = [];
   'User/Team',
   'User/Profile',
   'User/UserImport',
+  'User/Support',
   'Project/Project',
   'Project/Task',
   'Organization/Organization',

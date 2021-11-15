@@ -287,20 +287,6 @@ router.post('/:nameSpace/:name', async (req: any, res: any) => {
     res.status(404).send(new RecordNotFoundError(`The report ${req.params.report}, was not found, please make sure you specified the correct report name`));
   }
 
-  /*
-  const reportPath = `./reports/${req.params.nameSpace || 'core'}/${req.params.name || 'api-status'}.js`;
-  const reportSchema = require(reportPath).default; // eslint-disable-line;
-  if (reportSchema) {
-    try {
-      generate({ data: { ...req.params, ...req.body }, definition: reportSchema, debug: true }, res, false, req);
-    } catch (reportError) {
-      console.error(reportError);
-      res.status(503).send(new ApiError(reportError.message, reportError));
-    }
-  } else {
-    res.status(404).send(new RecordNotFoundError(`The report ${req.params.report}, was not found, please make sure you specified the correct report name`));
-  }
-  */
 });
 
 router.get('/:nameSpace/:name', async (req, res) => {
@@ -324,24 +310,6 @@ router.get('/:nameSpace/:name', async (req, res) => {
     res.status(404).send(new RecordNotFoundError(`The report ${req.params.nameSpace}.${req.params.name}, was not found, please make sure you specified the correct report name`));
   }
 
-  /*
-  const reportSchema = require(reportPath).default; // eslint-disable-line;
-  if (reportSchema) {
-    try {
-      if (reportSchema.resolver) {
-        const resolvedData = await reportSchema.resolver(req.query).then();
-        generate({ data: resolvedData, definition: reportSchema }, res, false, req);
-      } else {
-        generate({ data: req.params, definition: reportSchema }, res, false, req);
-      }
-    } catch (reportError) {
-      logger.error(reportError.message, reportError);
-      res.status(503).send(new ApiError(reportError.message, reportError));
-    }
-  } else {
-    res.status(404).send(new RecordNotFoundError(`The report ${reportPath}, has no valid schema, please make sure you specified the correct report name or that the report is correctly configured`));
-  }
-  */
 });
 
 router.get('/', (req: any, res) => {

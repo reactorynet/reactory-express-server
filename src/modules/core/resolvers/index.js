@@ -5,6 +5,7 @@ import { ProfileResolver, UserResolver, UserImportResolver } from './User';
 import ReactorySQLResolver from './SQL/ReactorySQLResolver';
 import ReactoryCacheResolver from './Cache/CacheResolver';
 import { mergeGraphResolver } from '@reactory/server-core/utils';
+import SupportResolver from './Support/SupportResolver';
 
 export default mergeGraphResolver([
   UserResolver,
@@ -15,4 +16,5 @@ export default mergeGraphResolver([
   ReactorySQLResolver,
   ReactoryCacheResolver,
   TemplateResolver,
+  SupportResolver.istance.resolver
 ]);

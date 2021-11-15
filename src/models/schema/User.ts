@@ -148,11 +148,7 @@ UserSchema.methods.fullName = function fullName(email = false) {
  * Extension Method on Model to check for a particular role / claim
  */
 UserSchema.methods.hasRole = function hasRole(clientId: string | mongodb.ObjectID, role = 'USER', organizationId: string | mongodb.ObjectID = null, businessUnitId: string | mongodb.ObjectID = null) {
-  logger.info(`Checking user membership 
-    ReactoryClient:[${clientId}] 
-    Role: [${role}]
-    Organization: [${organizationId || '**'}]
-    BusinessUnit: [${businessUnitId || '**'}]`);
+  logger.debug(`User.hasRole() ${role}`);
   if (this.memberships.length === 0) return false;
 
   let matches = [];

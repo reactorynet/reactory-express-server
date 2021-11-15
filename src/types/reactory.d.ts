@@ -4,8 +4,12 @@ import fs from 'fs';
 import ExcelJS from 'exceljs';
 import { TemplateType, UIFrameWork } from "./constants";
 import { Stream } from "stream";
-import { Application } from "express";
+import { Application, Request, Response } from "express";
 import moment from "moment";
+import colors from 'colors';
+import { User } from "@microsoft/microsoft-graph-types";
+import { AnyMxRecord } from "dns";
+import { Ref } from "react";
 declare namespace Reactory {
 
   export interface IStartupOptions {
@@ -79,7 +83,7 @@ declare namespace Reactory {
     allowCustomTheme?: boolean,
     createdAt?: Date,
     updatedAt?: Date,
-    colorScheme: () => any
+    colorScheme: (colorvalue: string) => any
     getSetting: (key: string) => any;
     getDefaultUserRoles: () => string[];
     setPassword: (password: string) => void;
@@ -159,19 +163,24 @@ declare namespace Reactory {
 
   }
 
-  export interface IReactoryContentComment {
+  export interface IReactoryComment {
     id?: any,
     user: ObjectID | IUser | IUserDocument,
-    comment: string,
-    when: string
+    text: string,
+    context: string,
+    contextId: String,
+    createdAt: string
     published: boolean,
     flagged: boolean,
     upvoted: ObjectID[] | IUser[] | IUserDocument[]
+    upvotes: number,
     downvoted: ObjectID[] | IUser[] | IUserDocument[],
-    favorite: ObjectID[] | IUser[] | IUserDocument[]
+    downvotes: number,
+    favorite: ObjectID[] | IUser[] | IUserDocument[],
+    favorites: number,
   }
 
-  export interface IReactoryContentCommentDocument extends Mongoose.Document, IReactoryContentComment {
+  export interface IReactoryCommentDocument extends Mongoose.Document<IReactoryComment> {
     
   }
 
@@ -196,7 +205,7 @@ declare namespace Reactory {
     version?: string
     published: boolean
 
-    comments?: ObjectID[] | IReactoryContentComment | IReactoryContentCommentDocument
+    comments?: ObjectID[] | IReactoryComment | IReactoryCommentDocument
   }
 
   export interface IReactoryContentDocument extends Mongoose.Document, IReactoryContent {
@@ -740,6 +749,8 @@ declare namespace Reactory {
     clientResolvers?: any
   }
 
+  
+
   export interface IWidgetMap {
     componentFqn?: String,
     component?: String,
@@ -998,7 +1009,7 @@ declare namespace Reactory {
   export type ReactoryServiceTypes = "file" | "data" | "iot" | 
     "user" | "organization" | "businessunit" | "email" | 
     "notification" | "workflow" | "devops" | "plugin" | 
-    "custom" | "context" | "integration";
+    "custom" | "context" | "integration" | "report";
 
   export interface IReactoryServiceDependency {
     /**
@@ -1208,6 +1219,13 @@ declare namespace Reactory {
       sync(): Promise<Reactory.IReactoryFileModel[]>;
 
       clean(): Promise<Reactory.IReactoryFileModel[]>;
+
+      deleteFile(fileModel: Reactory.IReactoryFileModel): boolean
+
+      catalogFile(filename: string, mimetype?: string, alias?: string,
+        context?: string, 
+        partner?: IReactoryClient | IReactoryClientDocument, 
+        user?: IUser | IUserDocument): Promise<IReactoryFileModel>;
     }
 
     export type OrganizationImageType = string | "logo" | "avatar";
@@ -1361,6 +1379,79 @@ declare namespace Reactory {
     }
 
 
+    /**
+     * Pdf service that generates PDFs using PDF make 
+     */
+    export interface IReactoryPdfService extends Reactory.Service.IReactoryDefaultService {
+
+      generate(definition: any, stream: any): Promise<any>
+
+      pdfDefinitions(): Reactory.IReactoryPdfComponent
+
+    }
+    
+    export interface IReactorySupportService extends Reactory.Service.IReactoryDefaultService {
+
+      createRequest(request: string, description: string, requestType?: string, meta?: any, formId?: string): Promise<IReactorySupportTicket | IReactorySupportTicketDocument>
+
+      updateTicket(ticket_id: string, updates: IReactorySupportTicketUpdate): Promise<IReactorySupportTicket | IReactorySupportTicketDocument>
+
+      attachDocument(ticket_id: string, file: File, name: string): Promise<IReactorySupportTicket | IReactorySupportTicketDocument>
+
+      pagedRequest(filter: IReactorySupportTicketFilter, paging: Reactory.IPagingRequest): Promise<IPagedReactorySupportTickets>
+    }
+
+    export interface IReactorySupportServiceStatic {
+      new(): IReactorySupportServiceStatic,
+      reactory: IReactoryServiceDefinition
+    }
+
+    export type TReactorySupportService = IReactorySupportService & IReactorySupportServiceStatic
+  }
+
+  export interface IReactorySupportTicketFilter {
+    assignedTo: string[],
+    createdBy: string,
+    status: string[],
+    reference: string[],    
+    searchString: string,
+    searchFields: string[],
+    startDate: Date,
+    endDate: Date,
+    dateFields: string[]
+    formId: string    
+  }
+
+  export interface IReactorySupportTicketUpdate {
+    request?: string
+    requestType?: string
+    description?: string
+    status?: string
+    comment?: string
+    assignTo?: string    
+  }
+
+  export interface IReactorySupportTicket {
+    id?: any
+    request: string
+    requestType: string
+    description: string
+    status: string
+    reference: string
+    createdBy: IUser | IUserDocument
+    createdDate: Date
+    updatedDate: Date
+    assignedTo: User | IUserDocument
+    formId: string
+    comments: IReactoryComment[] | IReactoryCommentDocument
+    documents: IReactoryFile[] | IReactoryFileModel[]
+  }
+
+  export interface IReactorySupportTicketDocument extends Mongoose.Document, IReactorySupportTicket { }
+
+  export interface IPagedReactorySupportTickets {
+    paging: IPagingResult
+    tickets: IReactorySupportTicket[]
   }
 
   export interface IPagingRequest {
@@ -1394,6 +1485,9 @@ declare namespace Reactory {
     state: {
       [key: string]: any
     },
+    $response: Response,
+    $request: Request,
+    colors: any,
     [key: string]: any
   }
 
@@ -1536,4 +1630,15 @@ declare namespace Reactory {
     businessUnit?: ObjectID,
     roles: string[]
   }
+
+
+  export interface ChartJSDataLabelContext {
+    active: boolean,
+    chart: any,
+    dataIndex: number,
+    dataset: any,
+    datasetIndex: number
+  }
+
+
 }

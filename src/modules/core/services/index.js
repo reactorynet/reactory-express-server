@@ -10,6 +10,8 @@ import ReactoryPackageManager from './ETL/ReactoryPackageManager';
 import UserService from './UserService';
 import WorkflowService from './ReactoryWorkflowService';
 import FetchService from './FetchService';
+import PdfService from './PdfService';
+import ReactorySupportService from "./SupportService";
 //custom services to be expressed here
 
 
@@ -24,7 +26,9 @@ const services = [
   ReactoryPackageManager.reactory,
   UserService.reactory,
   WorkflowService.definition,
-  FetchService.reactory
+  FetchService.reactory,
+  PdfService.reactory,
+  ReactorySupportService.reactory
 ]
 
 export default services;
