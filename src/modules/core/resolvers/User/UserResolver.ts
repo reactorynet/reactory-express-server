@@ -850,56 +850,6 @@ const userResolvers = {
             success: true,
             patch: false,
           };
-          if (autoLaunchOnPeerConfirm === true && survey.delegates.length >= minimumPeers && delegate && delegate.status !== 'new') {
-            entryData.entry = delegate
-            const variables = {
-              survey: survey._id.toString(),
-              entryId: entryData.entry._id.toString(),
-              delegate: entryData.entry.delegate._id.toString(),
-              action: 'launch',
-              inputData: {
-                relaunch: false,
-              }
-            };
-            const result = await execml(`mutation SurveyDelegateAction($entryId: String!, $survey: String!, $delegate: String!, $action: String!, $inputData: Any){
-              surveyDelegateAction(entryId: $entryId, survey: $survey, delegate: $delegate, action: $action, inputData: $inputData) {
-                id
-                delegate {
-                  id
-                  firstName
-                  lastName
-                  email
-                  avatar
-                }
-                team
-                peers {
-                  id
-                  peers{
-                    user {
-                      id
-                      firstName
-                      lastName
-                    }
-                  }
-                }
-                notifications {
-                  id
-                }
-                assessments {
-                  id
-                }
-                status
-                launched
-                complete
-                removed
-                message
-                updatedAt
-                lastAction
-              }
-            }`, variables , {}, context.user, context.partner).then()
-            logger.debug(`Auto launched survey ${survey.surveyType} for user ${id}`);
-           
-          }
         }
       } else throw new ApiError('No survey found')
 
