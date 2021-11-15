@@ -16,5 +16,5 @@ export default mergeGraphResolver([
   ReactorySQLResolver,
   ReactoryCacheResolver,
   TemplateResolver,
-  SupportResolver.istance.resolver
+  SupportResolver
 ]);

@@ -58,12 +58,9 @@ class SupportResolver {
         ReactoryUpdateSupportTicket: this.updateTicket,
       }
     };
-  }  
-
-  static istance = new SupportResolver();
+  }    
 }
 
-
-export default SupportResolver;
-
+const instance = new SupportResolver();
+export default instance;
 

@@ -33,110 +33,6 @@ interface IFileDownloadResult {
     size?: number
 }
 
-const downloadFile = async (url: string, options?: RequestInit, outputPath?: string): Promise<IFileDownloadResult> => {
-
-    let result: IFileDownloadResult = {
-        savedAs: '',
-        error: null,
-        success: false,
-        original: null,
-        mimetype: null,
-        size: 0,
-    }
-
-    try {
-        let original = '';
-        let filename = `${APP_DATA_ROOT}${outputPath || `/temp/${new ObjectID()}.download`}`;
-
-        await fetch(url, options)
-            .then((response: Response) => {
-                response.headers.forEach((value, name) => {
-                    logger.debug(`${name} -> ${value}`)
-                    switch (name) {
-                        case 'content-type': {
-                            result.mimetype = value;
-                            break
-                        }
-                        case 'content-length': {
-                            result.size = parseInt(`${value}`, 10);
-                            break;
-                        }
-                    }
-                });
-
-                return response.arrayBuffer()
-            })
-            .then((buff: ArrayBuffer) => writeFilePromise(filename, Buffer.from(buff)))
-            .then()
-
-
-        result.original = path.basename(url);
-        result.success = true;
-        result.savedAs = filename;
-
-        return result;
-
-    } catch (downloadError) {
-        logger.error(`Could not download file ${url}`, downloadError);
-        throw downloadError
-    }
-}
-
-const catalogFile = async (filename: string, mimetype: string, alias: string, context: string = 'downloaded', partner: Reactory.IReactoryClientDocument, owner: Reactory.IUserDocument): Promise<Reactory.IReactoryFileModel> => {
-    // Check if image is valid
-    const fileStats: fs.Stats = fs.statSync(filename);
-    logger.debug(`SAVING FILE:: DONE ${fileStats} ${fileStats.size} --> CATALOGGING`);
-
-    const link = `${filename.replace(APP_DATA_ROOT, CDN_ROOT)}`;
-
-    const reactoryFileModel = new ReactoryFileModel({
-        id: new ObjectID(),
-        filename: path.basename(filename),
-        mimetype,
-        alias,
-        partner: partner._id,
-        owner: owner._id,
-        uploadedBy: owner._id,
-        size: fileStats.size,
-        hash: Hash(link),
-        link: link,
-        path: alias.replace(APP_DATA_ROOT, '').replace(path.basename(alias), ''),
-        uploadContext: context,
-        public: false,
-        deleted: false,
-        published: false,
-    });
-
-    return reactoryFileModel;
-}
-
-
-const downloadAndCatalog = async (args: { url: string, options: RequestInit, fileOptions: any }): Promise<Reactory.IReactoryFileModel> => {
-
-    const { url, options, fileOptions } = args;
-    const id = new ObjectID();
-    const randomName = `${id}.${getExtension(url)}`;
-
-    logger.debug(`FileService.ts downloadAndCatalog(url: ${args.url}) = start`)
-
-    return downloadFile(url, options, `/temp/${randomName}`).then((downloadResult: IFileDownloadResult) => {
-        logger.debug(`File download result 🟢`, { downloadResult });
-
-        return catalogFile(downloadResult.savedAs, downloadResult.mimetype || '', downloadResult.savedAs, '').then((fileModel: Reactory.IReactoryFileModel) => {
-
-            fileModel.filename = downloadResult.original;
-            fileModel.alias = downloadResult.savedAs;
-            fileModel.link = `${downloadResult.savedAs}`.replace(APP_DATA_ROOT, CDN_ROOT);
-            fileModel.created = new Date();
-            fileModel.ttl = fileModel.ttl || -1;
-
-            logger.debug(`downloadAndCatalog(url: ${args.url}) = end`, fileModel);
-
-            return fileModel.save()
-        });
-    });
-};
-
 export class ReactoryFileService implements Reactory.Service.IReactoryFileService {
 
     name: string = 'FileService';
@@ -163,6 +59,83 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         }
 
     }
+    
+    async downloadFile (url: string, options?: RequestInit, outputPath?: string): Promise<IFileDownloadResult> {
+
+        let result: IFileDownloadResult = {
+            savedAs: '',
+            error: null,
+            success: false,
+            original: null,
+            mimetype: null,
+            size: 0,
+        }
+
+        try {
+            let original = '';
+            let filename = `${APP_DATA_ROOT}${outputPath || `/temp/${new ObjectID()}.download`}`;
+
+            await fetch(url, options)
+                .then((response: Response) => {
+                    response.headers.forEach((value, name) => {
+                        logger.debug(`${name} -> ${value}`)
+                        switch (name) {
+                            case 'content-type': {
+                                result.mimetype = value;
+                                break
+                            }
+                            case 'content-length': {
+                                result.size = parseInt(`${value}`, 10);
+                                break;
+                            }
+                        }
+                    });
+
+                    return response.arrayBuffer()
+                })
+                .then((buff: ArrayBuffer) => writeFilePromise(filename, Buffer.from(buff)))
+                .then()
+
+
+            result.original = path.basename(url);
+            result.success = true;
+            result.savedAs = filename;
+
+            return result;
+
+        } catch (downloadError) {
+            logger.error(`Could not download file ${url}`, downloadError);
+            throw downloadError
+        }
+    }
+    
+    async downloadAndCatalog (args: { url: string, options: RequestInit, fileOptions: any }): Promise<Reactory.IReactoryFileModel> {
+
+        const { url, options, fileOptions } = args;
+        const id = new ObjectID();
+        const randomName = `${id}.${getExtension(url)}`;
+        const that = this;
+        logger.debug(`FileService.ts downloadAndCatalog(url: ${args.url}) = start`)
+
+        return this.downloadFile(url, options, `/temp/${randomName}`).then((downloadResult: IFileDownloadResult) => {
+            logger.debug(`File download result 🟢`, { downloadResult });
+
+            return that.catalogFile(downloadResult.savedAs, downloadResult.mimetype || '', downloadResult.savedAs, '', this.context.partner).then((fileModel: Reactory.IReactoryFileModel) => {
+
+                fileModel.filename = downloadResult.original;
+                fileModel.alias = downloadResult.savedAs;
+                fileModel.link = `${downloadResult.savedAs}`.replace(APP_DATA_ROOT, CDN_ROOT);
+                fileModel.created = new Date();
+                fileModel.ttl = fileModel.ttl || -1;
+
+                logger.debug(`downloadAndCatalog(url: ${args.url}) = end`, fileModel);
+
+                return fileModel.save()
+            });
+        });
+    };
+
+
     async removeFilesForContext(context: string): Promise<Reactory.IReactoryFileModel[]> {
         let fordeletion: Reactory.IReactoryFileModel[] = await this.getFileModelsForContext(context).then();
 
@@ -192,7 +165,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
 
             logger.debug(`🚨 Fetching Remote File. ${url}`)
 
-            const reactoryFile: Reactory.IReactoryFileModel = await downloadAndCatalog({
+            const reactoryFile: Reactory.IReactoryFileModel = await this.downloadAndCatalog({
                 url,
                 options: {
                     method,
