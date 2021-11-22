@@ -1,4 +1,5 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
+import { WriteStream } from 'fs';
 //@ts-ignore
 import PdfPrinter from 'pdfmake/src/printer';
 
@@ -26,7 +27,7 @@ class PdfService implements Reactory.Service.IReactoryPdfService {
   }
 
 
-  createPdfBinary(definition: any, stream: WritableStream) {
+  createPdfBinary(definition: any, stream: WriteStream): Promise<void> {
     this.context.log('Generating PDF')
 
     const fontDescriptors = {
@@ -61,15 +62,27 @@ class PdfService implements Reactory.Service.IReactoryPdfService {
       });
       doc.pipe(this.context.$response);
     } else {
+      
       doc.pipe(stream);
     }
     
     doc.end();
   }
 
-  generate(definition: any, stream: any): Promise<any> {
-    this.createPdfBinary(definition, stream);
-    return Promise.resolve(true);
+  generate(definition: any, stream: WriteStream): Promise<any> {
+    const that = this;
+    return new Promise((resolve, reject) => {
+      stream.on("close", () => {
+        resolve(true);
+      });
+
+      try {
+        that.createPdfBinary(definition, stream);
+      } catch (e) {
+        reject(e);
+      }
+    });
+    
   }
 
   pdfDefinitions(): Reactory.IReactoryPdfComponent {

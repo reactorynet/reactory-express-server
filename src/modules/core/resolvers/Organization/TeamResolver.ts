@@ -4,9 +4,9 @@ import {
   Team,
   Organization,
   User,
-} from '../../';
+} from '@reactory/server-core/models';
 
-import { OrganizationNotFoundError, BusinessUnitExistsError, ValidationError, RecordNotFoundError } from '../../../exceptions';
+import { OrganizationNotFoundError, BusinessUnitExistsError, ValidationError, RecordNotFoundError } from '@reactory/server-core/exceptions';
 
 const TeamResolver = {
   Team: {

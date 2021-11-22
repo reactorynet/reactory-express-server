@@ -10,6 +10,7 @@ import colors from 'colors';
 import { User } from "@microsoft/microsoft-graph-types";
 import { AnyMxRecord } from "dns";
 import { Ref } from "react";
+import { Resolver, Resolvers } from "apollo-client";
 declare namespace Reactory {
 
   export interface IStartupOptions {
@@ -1216,6 +1217,8 @@ declare namespace Reactory {
 
       getFileModel(id: string): Promise<Reactory.IReactoryFileModel>;
 
+      getFileSize(file: IReactoryFileModel): number;
+
       sync(): Promise<Reactory.IReactoryFileModel[]>;
 
       clean(): Promise<Reactory.IReactoryFileModel[]>;
@@ -1641,4 +1644,13 @@ declare namespace Reactory {
   }
 
 
+  export interface IResolverStruct {
+    Query?: Resolvers,
+    Mutation?: Resolvers,
+    [key: string]: Resolvers,
+  }
+  
+  export interface IReactoryResolver {    
+    resolver: IResolverStruct
+  }    
 }

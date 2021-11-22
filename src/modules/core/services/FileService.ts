@@ -44,6 +44,18 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     constructor(props: any, context: Reactory.IReactoryContext) {
         this.context = context
     }
+    getFileSize(file: Reactory.IReactoryFileModel): number {
+        
+        debugger
+        let filepath = path.join(APP_DATA_ROOT, file.path, file.filename);
+        if (fs.existsSync(filepath) === true) {
+            const stats = fs.statSync(filepath);
+            return stats.size;
+        }
+        
+        return file.size || -1;
+
+    }
     getContentBytes(path: string): number {
         throw new Error('Method not implemented.');
     }
@@ -127,6 +139,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
                 fileModel.link = `${downloadResult.savedAs}`.replace(APP_DATA_ROOT, CDN_ROOT);
                 fileModel.created = new Date();
                 fileModel.ttl = fileModel.ttl || -1;
+
 
                 logger.debug(`downloadAndCatalog(url: ${args.url}) = end`, fileModel);
 
@@ -369,21 +382,25 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         const fileStats: fs.Stats = fs.statSync(filename);
         this.context.log(`catatlogFile(filenmae: ${filename}, ${mimetype}) ${fileStats} ${fileStats.size} --> CATALOGGING`);
 
-        const link = `${filename.replace(APP_DATA_ROOT, CDN_ROOT)}`;
+        const link = `${filename.replace(`${APP_DATA_ROOT}/`, CDN_ROOT)}`;
         const _id: ObjectId = new ObjectId();
+        const $filename = path.basename(filename);
+        const $path = filename.replace(APP_DATA_ROOT, '').replace(path.basename(alias), '');
+        debugger
+
         const reactoryFileModel = new ReactoryFileModel({
             _id,
             id: _id,
-            filename: path.basename(filename),
+            filename: $filename,
             mimetype,
-            alias: alias || path.basename(filename),
+            alias: alias || $filename,
             partner: partner ? partner._id : this.context.partner._id,
             owner: owner ? owner._id : this.context.user._id,
             uploadedBy: owner ? owner._id : this.context.user._id,
             size: fileStats.size,
             hash: Hash(link),
             link: link,
-            path: alias.replace(APP_DATA_ROOT, '').replace(path.basename(alias), ''),
+            path: $path,
             uploadContext: context || "system::catalog",
             public: false,
             deleted: false,

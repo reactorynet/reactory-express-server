@@ -1,4 +1,4 @@
-import { getReactoryClientWithKey } from '../../../application/admin/System.js';
+import { getReactoryClientWithKey } from '../../../../application/admin/System.js';
 
 const resolver = {
   ReactoryClient: {

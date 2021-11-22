@@ -6,17 +6,10 @@ import moment from 'moment';
 
 import { execql } from '@reactory/server-core/graph/client';
 
-import orgnizationResolvers from './OrganizationResolver';
-import assessmentResolvers from './AssessmentResolver';
-import reactoryClientResolver from './ReactoryClient';
-
-import projectResolver from './ProjectResolver';
-import scaleResolver from './ScaleResolver';
-import { MenuItem, Menu, ClientComponent, User, ReactoryClient } from '../../../models';
+import { MenuItem, Menu, ClientComponent, User, ReactoryClient } from '../../';
 import logger from '../../../logging';
-import { UserValidationError } from '../../../exceptions';
-
-import modules from '../../../modules';
+import modules from '@reactory/server-core/modules';
+import { Reactory } from 'types/reactory';
 
 const packageJson = require('../../../../package.json');
 
@@ -76,7 +69,6 @@ const resolvers = {
       return status.id || 'anon'
     },
     menus: (status) => {
-      logger.debug('Getting menus');
       return Menu.find({ client: ObjectId(status.menus) });
     },
     server: (status, args, context) => {
@@ -325,31 +317,18 @@ const resolvers = {
   }),
 };
 
-const installedModulesResolvers = [];
+const installedModulesResolvers: Reactory.IReactoryModuleDefinition[] = [];
 
 modules.enabled.forEach((installedModule) => {
   if (installedModule.graphDefinitions) {
-    logger.debug(`Extending Reactory Graph Resolvers with ${installedModule.name}`);
-    if (installedModule.graphDefinitions.Resolvers) {
+    logger.debug(`Loading Module "${installedModule.name}" Resolvers`);
+    if (installedModule.graphDefinitions.Resolvers) {      
       installedModulesResolvers.push(installedModule.graphDefinitions.Resolvers);
     }
   }
 });
 
 
-merge(
-  resolvers,
-  orgnizationResolvers,
-  assessmentResolvers,
-  reactoryClientResolver,
-  scaleResolver,
-  projectResolver,
-  require('./BusinessUnitResolver').default,
-  require('./Custom/PaymentGatewayResolver').default,
-  require('./TeamResolver').default,
-  require('./System/Statistics').default,
-  ...installedModulesResolvers,
-);
-
+merge(resolvers,  ...installedModulesResolvers);
 
 export default resolvers;

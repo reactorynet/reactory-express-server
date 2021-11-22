@@ -1,19 +1,14 @@
 import { ObjectId } from 'mongodb';
-import co from 'co';
 import moment from 'moment';
 
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
-import pngToJpeg from 'png-to-jpeg';
-import * as dotenv from 'dotenv';
-import legacy from '../../../database';
-import { Organization, BusinessUnit } from '../../index';
-import { updateOrganizationLogo } from '../../../application/admin/Organization';
-import * as UserService from '../../../application/admin/User';
-import ApiError, { OrganizationNotFoundError } from '../../../exceptions';
-import logger from '../../../logging';
-import { Reactory } from 'types/reactory';
+import { Organization, BusinessUnit } from '@reactory/server-core/models';
+import { updateOrganizationLogo } from '../../../../application/admin/Organization';
+import * as UserService from '../../../../application/admin/User';
+import ApiError, { OrganizationNotFoundError } from '@reactory/server-core/exceptions';;
 
-dotenv.config();
+import { Reactory } from '@reactory/server-core/types/reactory';
+import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
+
 
 const {
   APP_DATA_ROOT,
@@ -84,7 +79,6 @@ const organizationResolver = {
       else return null;
     },
     CoreUsersForOrganization(obj, { id, searchString, excludeSelf = false, showDeleted = false, paging = null }, context, info) {
-      logger.debug(`CoreUsersForOrganization`, { id, searchString, excludeSelf, showDeleted, paging });
       return UserService.listAllForOrganization(id, searchString, excludeSelf, showDeleted, paging || { page: 1, pageSize: 25 }).then();
     },
     organizationsForUser: async (obj, { id }) => {
@@ -102,7 +96,7 @@ const organizationResolver = {
     },
   },
   Mutation: {
-    createOrganization: async (obj, args, context, info) => {
+    createOrganization: async (obj, args, context: Reactory.IReactoryContext, info) => {
       const { input } = args;
       const inputData = { ...input };
       const exists = await Organization.count({ code: inputData.code }).then() === 0;
@@ -123,7 +117,7 @@ const organizationResolver = {
           organization.logo = updateOrganizationLogo(organization, input.logo);
           await organization.save().then();
         } catch (logoErr) {
-          logger.error('Could not save the organization logo', logoErr);
+          context.log('Could not save the organization logo', logoErr, 'error');
         }
       }
 
@@ -147,7 +141,7 @@ const organizationResolver = {
         try {
           organization.logo = updateOrganizationLogo(organization, inputData.logo);
         } catch (logoError) {
-          logger.warn('Could not update the organization logo');
+          context.log('Could not save the organization logo', logoErr, 'error');
         }
         organization.createdAt = organization.createdAt || moment().valueOf();
         organization.updatedAt = moment().valueOf();
@@ -163,4 +157,4 @@ const organizationResolver = {
   },
 };
 
-module.exports = organizationResolver;
+export default organizationResolver;
