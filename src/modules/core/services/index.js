@@ -12,6 +12,7 @@ import WorkflowService from './ReactoryWorkflowService';
 import FetchService from './FetchService';
 import PdfService from './PdfService';
 import ReactorySupportService from "./SupportService";
+import SystemService from './SystemService';
 //custom services to be expressed here
 
 
@@ -28,7 +29,8 @@ const services = [
   WorkflowService.definition,
   FetchService.reactory,
   PdfService.reactory,
-  ReactorySupportService.reactory
+  ReactorySupportService.reactory,
+  SystemService.reactory,
 ]
 
 export default services;

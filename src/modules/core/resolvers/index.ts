@@ -1,3 +1,4 @@
+import ApiStatus from './ApiStatus';
 import OrganizationResolver from './Organization/OrganizationResolver';
 import BusinessUnitResolver from './Organization/BusinessUnitResolver';
 import ProjectResolver from './Organization/ProjectResolver';
@@ -11,13 +12,12 @@ import ReactoryCacheResolver from './Cache/CacheResolver';
 import ReactoryFileResolver from './ReactoryFile/ReactoryFile';
 import SupportResolver from './Support/SupportResolver';
 import Resources from './System/Resources';
-
-
-import { mergeGraphResolver } from '@reactory/server-core/utils';
 import Statistics from './System/Statistics';
 import ReactoryClient from './System/ReactoryClient';
+import { mergeGraphResolver } from '@reactory/server-core/utils';
 
 export default mergeGraphResolver([
+  ApiStatus,
   ReactoryClient,
   OrganizationResolver,
   BusinessUnitResolver,

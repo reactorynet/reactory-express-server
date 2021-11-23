@@ -85,13 +85,14 @@ declare namespace Reactory {
     createdAt?: Date,
     updatedAt?: Date,
     colorScheme: (colorvalue: string) => any
-    getSetting: (key: string) => any;
+    getSetting: (name: string, defaultValue?: any, create?: boolean, componentFqn?: string) => any;
     getDefaultUserRoles: () => string[];
     setPassword: (password: string) => void;
   }
 
   export interface IReactoryClientDocument extends Mongoose.Document, IReactoryClient { }
 
+  export type TReactoryClient = IReactoryClient | IReactoryClientDocument;
   export interface IMongoDocument {
     _id: ObjectId
     id: string
@@ -1410,6 +1411,44 @@ declare namespace Reactory {
     }
 
     export type TReactorySupportService = IReactorySupportService & IReactorySupportServiceStatic
+
+    /***
+     * The Reactory System Service provides wrapper functionality for various core functionality
+     * that is share across concerns.
+     */
+    export interface IReactorySystemService extends Reactory.Service.IReactoryDefaultService {
+
+      /**
+       * Return a ReactoryClient item with a given id
+       * @param id the id to search / use
+       * @param populate (elements to populate)
+       */
+      getReactoryClient(id: string | ObjectId, populate?: string[]): Promise<TReactoryClient>;
+      
+      /**
+       * Returns a list of cients based on a query input
+       * @param query 
+       */
+      getReactoryClients(query: any): Promise<TReactoryClient[]>
+
+      /**
+       * returns a list of menus for a given ReactoryClient 
+       * @param client 
+       */
+      getMenusForClient(client: TReactoryClient): Promise<IReactoryMenu[]>
+      /**
+       * Run a graphql query against the graph.
+       * @param query 
+       * @param variables 
+       */
+      query(query: string, variables: any): Promise<any>
+      /**
+       * Run a graphql mutation against the graph.
+       * @param query
+       * @param variables
+       */
+      mutate(mutation: string, variables: any): Promise<any>
+    }
   }
 
   export interface IReactorySupportTicketFilter {
@@ -1652,5 +1691,19 @@ declare namespace Reactory {
   
   export interface IReactoryResolver {    
     resolver: IResolverStruct
-  }    
+  }
+
+
+  export interface IReactoryMenu {
+    [key: string]: any
+  }
+  
+  /**
+   * Data structure that represents the Reactory Api Status
+   */
+  export interface IReactoryApiStatus {
+    id: string,
+    menus: ObjectId[] | IReactoryMenu[]
+    [key: string]: any
+  }
 }

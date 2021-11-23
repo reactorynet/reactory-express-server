@@ -1516,4 +1516,4 @@ const userResolvers = {
   },
 };
 
-module.exports = userResolvers;
+export default userResolvers;
