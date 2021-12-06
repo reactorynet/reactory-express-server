@@ -182,7 +182,6 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
           yield `Not synchronizing ${demographics.businessUnit}`;
         }
       }
-
       return;
     }
 
