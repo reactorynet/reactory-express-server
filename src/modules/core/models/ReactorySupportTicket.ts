@@ -1,22 +1,14 @@
 import mongoose, { Schema, MongooseDocument, Model } from 'mongoose';
-const { ObjectId } = mongoose.Schema.Types;
 import moment from 'moment';
-
+import { Reactory } from '@reactory/server-core/types/reactory';
 import logger from '../../../logging';
-
-export interface IReactorySupportTicketDocument extends MongooseDocument {
-  id: any,
-  key: string,
-  partner: any,
-  ttl: number,
-  item: any | any[],
-};
+import { ObjectId } from 'mongodb';
 
 export interface IReactorySupportTicketDocumentStatics {
   new(): ReactorySupportTicket
 }
 
-export type ReactorySupportTicket = IReactorySupportTicketDocument & IReactorySupportTicketDocumentStatics;
+export type ReactorySupportTicket = Reactory.IReactorySupportTicketDocument & IReactorySupportTicketDocumentStatics;
 
 const StatisticSchema: Schema<ReactorySupportTicket> = new Schema<ReactorySupportTicket>({
   id: ObjectId,
@@ -34,9 +26,17 @@ const StatisticSchema: Schema<ReactorySupportTicket> = new Schema<ReactorySuppor
   },
   formId: String,
   requestType: String,
-  status: String,
+  status: {
+    type: String,
+    required: true,
+    default: 'open',
+  },
   reference: String,
   createdBy: {
+    type: ObjectId,
+    ref: 'User',
+  },
+  assignedTo: {
     type: ObjectId,
     ref: 'User',
   },

@@ -1082,9 +1082,9 @@ declare namespace Reactory {
 
     export interface IExcelWriterOptions {
       filename: string,
-      query: string,
-      params: any,
-      output: string,
+      query?: string,
+      params?: any,
+      output?: string,
       formatting?: IExcelFormat,
       stream?: Stream
     }
@@ -1112,6 +1112,7 @@ declare namespace Reactory {
 
 
     export interface IExcelWriterService extends IReactoryContextAwareService {
+      setCellRichText(cell: ExcelJS.Cell, cellProps: any): ExcelJS.Cell;
       writeAsFile(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<Boolean>
       writeAsStream(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<Boolean>
       writeToBuffer(options: IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<Buffer>
@@ -1383,6 +1384,50 @@ declare namespace Reactory {
     }
 
 
+    export interface IPDFStyleDefinition {
+      alignment?: string | "left" | "right" | "justify" | "center"
+      font?: string
+      fontSize?: string
+      margin?: [number, number?, number?, number?]
+      lineHeight?: number,
+      bold?: boolean,
+      italics?: boolean,
+      color?: string
+      [key: string]: any,
+    }
+    export interface IPDFContentNode {
+      style?: string[],
+      margin?: [number] | [number, number] | [number, number, number] | [number, number, number, number]
+      [key: string]: any
+    }
+
+    export interface IPDFTableLayout {
+      fillColor: (rowIndex: number, node: any, columnIndex: number) => any
+    }
+
+    export interface IPDFDocumentDefinition {
+      filename: string,
+      info?: {
+        title?: string,
+        author?: string,
+        subject?: string,
+        keywords?: string,
+      },
+      content: IPDFContentNode[],
+      header?: (currentPage: number, pageCount: number) => IPDFContentNode[],
+      footer?: (currentPage: number, pageCount: number, pageSize: number) => IPDFContentNode[],
+      images?: {
+        [key: string]: string | Buffer,        
+      },
+      pageMargins: [number, number, number, number],
+      styles: {
+        [key: string]: IPDFStyleDefinition
+      },
+      tableLayoutOut: {
+        [key: string]: IPDFTableLayout
+      }
+    }
+
     /**
      * Pdf service that generates PDFs using PDF make 
      */
@@ -1480,10 +1525,10 @@ declare namespace Reactory {
     description: string
     status: string
     reference: string
-    createdBy: IUser | IUserDocument
+    createdBy: ObjectId | IUser | IUserDocument
     createdDate: Date
     updatedDate: Date
-    assignedTo: User | IUserDocument
+    assignedTo: ObjectId | User | IUserDocument
     formId: string
     comments: IReactoryComment[] | IReactoryCommentDocument
     documents: IReactoryFile[] | IReactoryFileModel[]

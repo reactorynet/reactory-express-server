@@ -2,6 +2,7 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
+import { ObjectId } from 'mongoose';
 
 @resolver
 class SupportResolver {
@@ -38,11 +39,53 @@ class SupportResolver {
     return this.tickets({ ...params.filter, createdBy: context.user._id.toString() }, params.paging, context);
   }
   
-  @roles(["USER"], 'args.context')
+  @property("ReactorySupportTicket", "id")
+  ticketId(obj: Reactory.IReactorySupportTicketDocument) {
+    return obj._id;
+  }
+
+  @property("ReactorySupportTicket", "createdBy")
+  async createdBy(obj: Reactory.IReactorySupportTicketDocument) {
+    if(obj.populated("createdBy") === undefined) {
+      obj.populate("createdBy");
+      await obj.execPopulate();
+    }
+
+    return obj.createdBy;
+  }
+
+  @property("ReactorySupportTicket", "assignedTo")
+  async assignedTo(obj: Reactory.IReactorySupportTicketDocument) {
+    if (obj.populated("assignedTo") === undefined) {
+      obj.populate("assignedTo");
+      await obj.execPopulate();
+    }
+
+    return obj.assignedTo;
+  }
+
+  @property("ReactorySupportTicket", "comments")
+  async comments(obj: Reactory.IReactorySupportTicketDocument) {
+    if (obj.populated("comments") === undefined) {
+      obj.populate("comments");
+      await obj.execPopulate();
+    }
+
+    return obj.comments;
+  }
+  
+  @roles(["ADMIN", "SUPPORT_ADMIN", "SUPPORT"], 'args.context')
   @query("ReactorySupportTickets")
   async tickets(filter: Reactory.IReactorySupportTicketFilter, paging: Reactory.IPagingRequest, context: Reactory.IReactoryContext){
     const supportService: Reactory.Service.TReactorySupportService = context.getService("core.ReactorySupportService@1.0.0") as Reactory.Service.TReactorySupportService;
     return supportService.pagedRequest(filter, paging);    
+  }
+
+  @roles(["USER"], 'args.context')
+  @query("ReactoryMySupportTickets")
+  async userTickets(filter: Reactory.IReactorySupportTicketFilter, paging: Reactory.IPagingRequest, context: Reactory.IReactoryContext) {
+    const supportService: Reactory.Service.TReactorySupportService = context.getService("core.ReactorySupportService@1.0.0") as Reactory.Service.TReactorySupportService;
+    return supportService.pagedRequest(filter, paging);
   }
         
 }

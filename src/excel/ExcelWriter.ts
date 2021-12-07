@@ -39,32 +39,47 @@ DefaultExcelWriterOptions = {
   query: '',
 };
 
+const DefaultFont = { name: 'Calibri', family: 1, size: 11 };
+
+
 class ReactoryExcelWriterService implements Reactory.Service.IExcelWriterService {
 
   name = 'ExcelService';
   nameSpace = 'core';
   version = '1.0.0';
 
-  executionContext: Reactory.ReactoryExecutionContext = null;
+  context: Reactory.IReactoryContext = null;
 
   constructor(props: any, context: Reactory.IReactoryContext) {
-    this.setExecutionContext({
-      partner: context.partner,
-      user: context.user
-    });
+    this.context = context;
   }
 
-  getExecutionContext(): Reactory.ReactoryExecutionContext {
-    return this.executionContext
+  getExecutionContext(): Reactory.IReactoryContext {
+    return this.context;
   }
-  setExecutionContext(executionContext: Reactory.ReactoryExecutionContext): boolean {
-    this.executionContext = executionContext;
+  setExecutionContext(context: Reactory.IReactoryContext): boolean {
+    this.context = context;
     return true;
   }
 
+  setCellRichText(cell: ExcelJS.Cell, cellProps: any): ExcelJS.Cell {
+
+    const { font = DefaultFont, value } = cellProps
+
+    cell.value = {
+      'richText': [
+        { 'font': font || {}, 'text': value },
+      ]
+    };
+
+    if (cell.font) cell.font = font
+
+    return cell;
+  };
+
   async writeAsStream(options: Reactory.Service.IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<Boolean> {
 
-    const workbook = await getWorkbook(this.getExecutionContext().user, appender);
+    const workbook = await getWorkbook(this.context.user, appender);
     // write to a stream
     await workbook.xlsx.write(options.stream).then();
 
@@ -82,7 +97,7 @@ class ReactoryExcelWriterService implements Reactory.Service.IExcelWriterService
   }
 
   async writeAsFile(options: Reactory.Service.IExcelWriterOptions, appender: (workbook: ExcelJS.Workbook) => Promise<ExcelJS.Workbook>): Promise<boolean> {
-    const workbook = await getWorkbook(this.executionContext.user, appender).then();
+    const workbook = await getWorkbook(this.context.user, appender).then();
 
     await workbook.xlsx.writeFile(options.filename).then();
 

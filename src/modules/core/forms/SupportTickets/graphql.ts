@@ -69,8 +69,8 @@ const graphql: Reactory.IFormGraphDefinition = {
   queries: {
     openTickets: {
       name: 'ReactorySupportTickets',
-      text: `query ReactorySupportTickets($paging: RagingRequest, $filter: ReactorySupportTicketFilter) {
-        ReactorySupportTickets(paging: $paging, filter: $filter) {
+      text: `query ReactorySupportTickets($filter: ReactorySupportTicketFilter, $paging: PagingRequest) {
+        ReactorySupportTickets(filter: $filter, paging: $paging) {
           paging {
             page
             pageSize
@@ -84,7 +84,7 @@ const graphql: Reactory.IFormGraphDefinition = {
             status
             requestType
             createdDate
-            createBy {
+            createdBy {
               id
               firstName
               lastName

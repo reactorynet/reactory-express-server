@@ -1,6 +1,8 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 import Hash from '@reactory/server-core/utils/hash';
+import { roles } from 'authentication/decorators';
 import moment from 'moment';
+import { QueryWithHelpers } from 'mongoose';
 import ReactorySupportTicketModel from '../models/ReactorySupportTicket';
 
 class ReactorySupportService implements Reactory.Service.TReactorySupportService {
@@ -23,8 +25,48 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
   async attachDocument(ticket_id: string, file: File, name: string): Promise<Reactory.IReactorySupportTicket | Reactory.IReactorySupportTicketDocument> {
     throw new Error('Method not implemented.');
   }
+
+  @roles(["USER", "ADMIN", "SUPPORT_ADMIN", "SUPPORT"])
   async pagedRequest(filter: Reactory.IReactorySupportTicketFilter, paging: Reactory.IPagingRequest): Promise<Reactory.IPagedReactorySupportTickets> {
-    throw new Error('Method not implemented.');
+    
+    const result: Reactory.IPagedReactorySupportTickets = {
+      paging: {
+        page: paging && paging.page ? paging.page : 1,
+        pageSize: paging && paging.pageSize ? paging.pageSize : 10,
+        total: 0,
+        hasNext: false,
+      },
+      tickets: []
+    };
+    let params: any = {};
+
+    let isAdmin = this.context.hasRole("ADMIN") === true;
+    if(isAdmin === false) isAdmin = this.context.hasRole("SUPPORT_ADMIN") === true;
+    if(isAdmin === false) isAdmin = this.context.hasRole("SUPPORT") === true;
+
+
+    if(isAdmin === false) {
+      params.createdBy = this.context.user._id;
+    }
+
+    if(filter) {
+      if (filter.status) {
+        params.status = { $in: filter.status }
+      }
+
+      if (filter.reference) {
+        params.reference = { $in: filter.reference }
+      }
+    }
+    
+    let query: QueryWithHelpers<Reactory.IReactorySupportTicketDocument[], Reactory.IReactorySupportTicketDocument> = ReactorySupportTicketModel.find(params);
+
+
+    if(paging) {
+      result.tickets = await query.limit(paging.pageSize).skip(paging.page * paging.pageSize).then()
+    }
+
+    return result;    
   }
 
   async createRequest(request: string, description: string, requestType?: string, meta?: any, formId?: string): Promise<Reactory.IReactorySupportTicket> {
