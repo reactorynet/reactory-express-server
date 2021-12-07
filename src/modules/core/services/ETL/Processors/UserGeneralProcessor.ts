@@ -77,7 +77,7 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
         Employee #, Preferred Name, Last Name, Work Email, Gender, Birth Date, Position/Level, Region, Legal entity, Department, Functional Team
         
         0 EA003 
-        1 Tochukwu,
+        1 Tochukwu,        
         2 Iwuora,
         3 tochukwu@entersekt.com,
         4 Male
