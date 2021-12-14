@@ -14,6 +14,7 @@ import SupportResolver from './Support/SupportResolver';
 import Resources from './System/Resources';
 import Statistics from './System/Statistics';
 import ReactoryClient from './System/ReactoryClient';
+import ReactoryForm from './ReactoryForm';
 import { mergeGraphResolver } from '@reactory/server-core/utils';
 
 export default mergeGraphResolver([
@@ -34,5 +35,6 @@ export default mergeGraphResolver([
   ReactoryCacheResolver,
   ReactoryFileResolver,
   TemplateResolver,
-  SupportResolver
+  SupportResolver,
+  ReactoryForm
 ]);

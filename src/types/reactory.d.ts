@@ -829,20 +829,49 @@ declare namespace Reactory {
   }
 
 
+  /**
+   * A reactory Event Bubble Action
+   */
   export interface IEventBubbleAction {
+    /**
+     * The event name
+     */
     eventName: string,
+    /**
+     * Action to take
+     */
     action: string | "bubble" | "swallow" | "function",
+    /**
+     * The fuction FQN if set to function
+     */
     functionFqn?: string,
   }
 
+  /**
+   * A Reactory Form / Code module.
+   * 
+   * A module that is defined on a form will be parsed 
+   * by the forms collector / forms resolvers.  The 
+   * module definitions will automatically add
+   * resource dependendies to the form resources 
+   * that will allow the ReactoryFormComponent to download
+   * and install components in a JIT compiled manner.
+   */
   export interface IReactoryFormModule {
-    id: string,
-    src: string,
+    id: string,    
+    src?: string,
+    url?: string,
+    compiled?: boolean,
+    signed?:boolean,
+    signature?: string,
     compiler?: string | "npm" | "none" | "webpack" | "grunt" | "rollup"
-    compilerOptions: any
+    compilerOptions: any,
+    /***
+     * When roles are added the API will check the logged in user
+     * credentials and will include or exclude the resource based on role 
+     */
+    roles?: string[]
   }
-
-
 
   export interface IReactoryForm {
     /**
@@ -1263,6 +1292,17 @@ declare namespace Reactory {
        * Provide a list of forms for the current logged in user context / partner context
        */
       list(): Promise<Reactory.IReactoryForm[]>
+
+      /***
+       * Returns a list of globals that are available in the eco system
+       */
+      globals(): Promise<Reactory.IReactoryForm[]>
+
+      /**
+       * Return a form with a given id
+       * @param id 
+       */
+      get(id: string): Promise<Reactory.IReactoryForm>;
 
       /**
        * Persists the form to storage

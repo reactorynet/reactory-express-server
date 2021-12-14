@@ -1,4 +1,3 @@
-import ReactoryFormList from './ReactoryFormList';
 import AboutUsPage from './AboutUs';
 import ReactoryContentCapture from './ReactoryContentCapture';
 import ReactoryContentList from './ReactoryContentList';
@@ -12,8 +11,7 @@ import SupportForm from './SupportRequest';
 import SupportTickets from './SupportTickets';
 export default [
   ReactoryGlobalPlugin,
-  AboutUsPage,
-  ReactoryFormList,
+  AboutUsPage,  
   ReactoryContentCapture,
   ReactoryContentList,
   ReactoryFormEditor,

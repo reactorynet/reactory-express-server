@@ -69,7 +69,7 @@ const graphql: Reactory.IFormGraphDefinition = {
   queries: {
     openTickets: {
       name: 'ReactorySupportTickets',
-      text: `query ReactoryMySupportTickets($filter: ReactorySupportTicketFilter, $paging: PagingRequest) {
+      text: `query ReactorySupportTickets($filter: ReactorySupportTicketFilter, $paging: PagingRequest) {
         ReactorySupportTickets(filter: $filter, paging: $paging) {
           paging {
             page

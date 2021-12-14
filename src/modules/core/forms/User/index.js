@@ -1,5 +1,5 @@
-const userPeersForm = require('./UserPeers/index').default;
+import UserPeersForm from './UserPeers';
 
 export default [
-  userPeersForm,
+  UserPeersForm
 ];

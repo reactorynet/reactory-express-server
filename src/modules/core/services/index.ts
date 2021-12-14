@@ -13,6 +13,7 @@ import FetchService from './FetchService';
 import PdfService from './PdfService';
 import ReactorySupportService from "./SupportService";
 import SystemService from './SystemService';
+import ReactoryFormService from './FormService';
 //custom services to be expressed here
 
 
@@ -31,6 +32,7 @@ const services = [
   PdfService.reactory,
   ReactorySupportService.reactory,
   SystemService.reactory,
+  ReactoryFormService.reactory
 ]
 
 export default services;

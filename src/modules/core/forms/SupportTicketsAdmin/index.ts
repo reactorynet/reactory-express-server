@@ -5,7 +5,7 @@ import uiSchema from './uiSchema';
 import modules from './modules';
 import graphql from './graphql';
 
-const name = "SupportTickets";
+const name = "SupportTicketsAdmin";
 const nameSpace = "core";
 
 const SupportTickets: Reactory.IReactoryForm = {
@@ -22,7 +22,7 @@ const SupportTickets: Reactory.IReactoryForm = {
   uiSupport: ['material'],
   modules,
   graphql,
-  roles: ['USER']
+  roles: ['USER', 'ADMIN']
 }
 
 export default SupportTickets;
