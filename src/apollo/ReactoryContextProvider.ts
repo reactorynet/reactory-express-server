@@ -3,6 +3,7 @@ import { Reactory } from "@reactory/server-core/types/reactory"; // eslint-disab
 import { getService } from '@reactory/server-core/services';  // eslint-disable-line
 import logger from '@reactory/server-core/logging';
 import colors from 'colors/safe';
+import { ReactoryContainer } from '@reactory/server-core/ioc';
 
 /***
  * The Reactory Context Provider creates a context for the execution thread which is passed through with each request
@@ -85,6 +86,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     partner: $partner,
     $request,
     $response,
+    container: ReactoryContainer,
     log: $log,
     hasRole: (role: string, partner?: Reactory.IPartner, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => {
 
@@ -101,9 +103,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
       } else {
         $log(`User is anon`, {}, 'debug', 'ReactoryContextProvider')
         return false;
-      }
-
-      
+      }      
     },    
     colors,
     state: context_state,

@@ -11,6 +11,7 @@ import { User } from "@microsoft/microsoft-graph-types";
 import { AnyMxRecord } from "dns";
 import { Ref } from "react";
 import { Resolver, Resolvers } from "apollo-client";
+import { Container } from "inversify";
 declare namespace Reactory {
 
   export interface IStartupOptions {
@@ -1020,7 +1021,7 @@ declare namespace Reactory {
     forms?: IReactoryForm[],
     pdfs?: IReactoryPdfComponent[]
     services?: IReactoryServiceDefinition[],
-    clientPlugins?: Client.IReactoryPluginDefinition
+    clientPlugins?: Client.IReactoryPluginDefinition,    
   }
 
   export interface IReactoryServiceResult<T> {
@@ -1615,6 +1616,7 @@ declare namespace Reactory {
     $response: Response,
     $request: Request,
     colors: any,
+    container: Container,
     [key: string]: any
   }
 

@@ -100,7 +100,7 @@ const addConfiguration = (props: IConfigurationProperties) => {
 
   const folder = `/config/${name}/`;
 
-
+  
 
 
 
