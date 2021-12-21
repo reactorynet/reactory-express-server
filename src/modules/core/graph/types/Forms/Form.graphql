@@ -212,7 +212,11 @@ type ReactoryUISchemaMenuItem {
     """
     The modes that the item is applicable in
     """
-    modes: String    
+    modes: String        
+    """
+    The uiSchema associated with this item
+    """
+    uiSchema: Any
 }
 
 """
@@ -247,7 +251,11 @@ input ReactoryUISchemaMenuItemInput {
     """
     The modes that the item is applicable in
     """
-    modes: String    
+    modes: String
+    """
+    The uiSchema associated with this item
+    """
+    uiSchema: Any
 }
 
 """

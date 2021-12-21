@@ -2,9 +2,9 @@
 import schema from './schema';
 import DefaultUiSchema, { minimalEdit, minimalExtendedEdit } from './uiSchema';
 import $graphql from './graphql.js';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
-
-const ContentCapture = {
+const ContentCapture: Reactory.IReactoryForm = {
   id: 'ContentCapture',
   uiFramework: 'material',
   uiSupport: ['material'],
