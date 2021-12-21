@@ -1,6 +1,6 @@
 import { Reactory } from '@reactory/server-core/types/reactory';
 import Hash from '@reactory/server-core/utils/hash';
-import { roles } from 'authentication/decorators';
+import { roles } from '@reactory/server-core/authentication/decorators';
 import moment from 'moment';
 import { QueryWithHelpers } from 'mongoose';
 import ReactorySupportTicketModel from '../models/ReactorySupportTicket';
