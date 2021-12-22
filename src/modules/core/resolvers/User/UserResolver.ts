@@ -851,7 +851,7 @@ const userResolvers = {
             patch: false,
           };
         }
-      } else throw new ApiError('No survey found')
+      } 
 
 
 
