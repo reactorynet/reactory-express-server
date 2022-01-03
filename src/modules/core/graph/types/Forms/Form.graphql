@@ -450,6 +450,11 @@ type ReactoryFormModule {
     """
     roles: [String]
 
+    """
+    The file type for the module
+    """
+    fileType: String
+
 }
 
 

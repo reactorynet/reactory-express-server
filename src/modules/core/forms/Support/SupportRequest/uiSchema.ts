@@ -19,7 +19,7 @@ export default {
   'ui:grid-layout': [
     {
       request: { xs: 12, lg: 12 },
-      description: { xs: 12, lg: 12 },
+      description: { xs: 12, lg: 12 },      
     }
   ],
   request: {},
@@ -28,5 +28,5 @@ export default {
     'ui:options': {
       froalaOptions,
     },
-  }
+  },  
 }

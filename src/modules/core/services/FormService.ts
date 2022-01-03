@@ -1,21 +1,30 @@
-import { isArray } from 'lodash';
+import fs from 'fs';
+import path from 'path';
+import Rollup from 'rollup';
+import { forEach, isArray, takeRight } from 'lodash';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import modules from '@reactory/server-core/modules';
+import { resolveInclude } from 'ejs';
+import messages from 'bot/sparky/messages';
+import { cwd } from 'process';
 
-/**
- * Service class that provides access to forms for the logged in user
- */
-class ReactoryFormService implements Reactory.Service.IReactoryFormService {  
-  
+
+
+
+
+class ReactoryFormService implements Reactory.Service.IReactoryFormService {
+
   name: string;
   nameSpace: string;
   version: string;
 
   context: Reactory.IReactoryContext;
   props: Reactory.IReactoryServiceProps;
+  fileService: Reactory.Service.IReactoryFileService;
+  compiler: Reactory.Service.IReactoryModuleCompilerService;
 
   constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
-    this.context = context;
+    this.context = context;    
     this.props = props;
   }
 
@@ -38,16 +47,13 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
             if (allow_form === true && form) {
               _form = form;
             }
-          } else {
-            that.getExecutionContext().log(`NULL FORM ${module.name} - ${fidx}`, form, 'error', 'ReactoryFormResolver')
           }
         });
       }
     });
-
     return Promise.resolve(_form);
   }
-  
+
   list(): Promise<Reactory.IReactoryForm[]> {
     const _forms: Reactory.IReactoryForm[] = [];
     const that = this;
@@ -75,7 +81,7 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
       }
     });
 
-    return Promise.resolve(_forms);    
+    return Promise.resolve(_forms);
   }
 
   globals(): Promise<Reactory.IReactoryForm[]> {
@@ -100,7 +106,6 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
           } else {
             that.getExecutionContext().log(`NULL FORM ${module.name} - ${fidx}`, form, 'error', 'ReactoryFormResolver')
           }
-
         });
       }
     });
@@ -116,25 +121,78 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     throw new Error('Method not implemented.');
   }
 
+  async getCompiledResourceForModule(module: Reactory.IReactoryFormModule): Promise<Reactory.IReactoryFormResource> {    
+    return this.compiler.compileModule(module);
+  }
+
+  async getResources(form: Reactory.IReactoryForm): Promise<Reactory.IReactoryFormResource[]> {
+
+    const resources: Reactory.IReactoryFormResource[] = [];
+    const that = this;
+
+    if(!form.uiResources) form.uiResources = [];
+    form.uiResources.forEach((resource) => {
+      resources.push(resource);
+    });
+
+    if (form.modules && form.modules.length > 0) {
+      //use an async fuction generator to 
+      //compile the item and add it to the 
+      //resources list.
+      async function* compiledResourcesGenerator() {
+        for (let i: number = 0; i < form.modules.length; i++) {
+          const module: Reactory.IReactoryFormModule = form.modules[i];
+          const resource = await that.getCompiledResourceForModule(module).then();
+          yield resource;
+        }
+      }
+
+      for await (const resource of compiledResourcesGenerator()) {
+        resources.push(resource);
+      }
+    }
+
+    return resources;
+
+  }
+
   onStartup(): Promise<any> {
     return Promise.resolve(true);
   }
-  
+
   getExecutionContext(): Reactory.IReactoryContext {
     return this.context;
   }
   setExecutionContext(context: Reactory.IReactoryContext): boolean {
-    this.context = context; 
+    this.context = context;
     return true;
   }
-  
+
+  setFileService(fileService: Reactory.Service.IReactoryFileService) {
+    this.fileService = fileService;
+  }
+
+  setCompiler(compiler: Reactory.Service.IReactoryModuleCompilerService) {
+    this.compiler = compiler;
+  }
+
   static reactory: Reactory.IReactoryServiceDefinition = {
     id: 'core.ReactoryFormService@1.0.0',
     description: 'Reactory Form Service',
     name: 'ReactoryFormService',
     service: (props, context) => {
       return new ReactoryFormService(props, context)
-    }
+    },
+    dependencies: [
+      {
+        id: 'core.ReactoryFileService@1.0.0',
+        alias: 'fileService'
+      },
+      {
+        id: 'core.ReactoryModuleCompilerService@1.0.0',
+        alias: 'compiler'
+      },
+    ],
   }
 }
 

@@ -24,26 +24,36 @@ const uiSchema: any = {
       columns: [        
         { 
           title: 'Status', 
-          field: 'status', 
-          component: 'core.SupportTicketStatus@1.0.0',
+          field: 'status',
+          component: 'core.SupportTicketStatusComponent@1.0.0',
           propsMap: {
-            'rowData': 'ticket'
-          },
+            'rowData.status': 'status'
+          }                     
         },
         { 
           title: 'Logged By',
-          field: 'createdBy',
-          component: 'core.UserLabel@1.0.0',
-          propsMap: {
-            'rowData.createdBy': 'user'
+          field: 'createdBy',          
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData.createdBy ? rowData.createdBy.firstName : "NO"} ${rowData.createdBy ? rowData.createdBy.lastName : "USER"}'
+              }
+            },
           },
         },
         { 
           title: 'Assigned To', 
           field: 'assignedTo',
-          component: 'core.UserLabel@1.0.0',
-          propsMap: {
-            'rowData.assignedTo': 'user'
+          component: 'core.LabelComponent@1.0.0',
+          props: {
+            uiSchema: {
+              'ui:options': {
+                variant: 'body2',
+                format: '${rowData.assignedTo ? rowData.assignedTo.firstName : "NOT"} ${rowData.assignedTo ? rowData.assignedTo.lastName : "ASSIGNED"}'
+              }
+            },
           },
          },
         { 

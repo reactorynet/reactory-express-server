@@ -24,7 +24,11 @@ class ReactoryFormResolver {
     return formSvc.get(args.id);
   }
 
-
+  @property("ReactoryForm", "uiResources")
+  async getResources(form: Reactory.IReactoryForm, args: any, context: Reactory.IReactoryContext): Promise<any[]> {
+    const formSvc: Reactory.Service.IReactoryFormService = context.getService("core.ReactoryFormService@1.0.0") as Reactory.Service.IReactoryFormService;
+    return formSvc.getResources(form);
+  }
 
 }
 

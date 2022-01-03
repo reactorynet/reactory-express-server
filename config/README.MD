@@ -1,6 +1,6 @@
 # Config Files
 
-These configuration files are used to configure specific environments. Production run files are configured using pm2.<environment>.config.js
+These configuration files are used to configure specific environments. Production run files are configured using pm2.\<environment\>.config.js
 ## DEVELOPMENT ENVIRONMENT FILES
 Please note the files contained in these folders are generally used when running the server under bin/start.sh {client-key (defaults to "reactory")}. When running the server using PM2 environment variables needs to be configured in the corresponding ``src/config/run/{clientkey}.config.js``
 

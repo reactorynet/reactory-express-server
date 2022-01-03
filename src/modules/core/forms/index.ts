@@ -7,8 +7,8 @@ import ReactoryGlobalPlugin from './Global/ReactoryGlobalForm';
 import EmailForms from './EmailForms';
 import shared from './shared';
 import { Login } from './Security';
-import SupportForm from './SupportRequest';
-import SupportTickets from './SupportTickets';
+import SupportForm from './Support/SupportRequest';
+import SupportTickets from './Support/SupportTickets';
 export default [
   ReactoryGlobalPlugin,
   AboutUsPage,  

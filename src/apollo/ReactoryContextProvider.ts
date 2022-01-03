@@ -2,6 +2,7 @@ import uuid from 'uuid';
 import { Reactory } from "@reactory/server-core/types/reactory"; // eslint-disable-line
 import { getService } from '@reactory/server-core/services';  // eslint-disable-line
 import logger from '@reactory/server-core/logging';
+import Hash from '@reactory/server-core/utils/hash';
 import colors from 'colors/safe';
 import { ReactoryContainer } from '@reactory/server-core/ioc';
 
@@ -104,6 +105,9 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
         $log(`User is anon`, {}, 'debug', 'ReactoryContextProvider')
         return false;
       }      
+    },
+    utils: {
+      hash: Hash
     },    
     colors,
     state: context_state,

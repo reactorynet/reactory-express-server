@@ -755,9 +755,15 @@ declare namespace Reactory {
   
 
   export interface IWidgetMap {
-    componentFqn?: String,
-    component?: String,
-    widget: String
+    componentFqn?: string,
+    component?: string,
+    widget: string
+  }
+
+  export interface IFieldMap {
+    componentFqn?: string,
+    component?: string,
+    field: string
   }
 
   export interface IObjectMap {
@@ -847,6 +853,21 @@ declare namespace Reactory {
      */
     functionFqn?: string,
   }
+  
+  /**
+   * Defines the interface definition for a component
+   * that is registered in the client kernel.
+   */
+  export interface IReactoryComponentRegistryEntry {
+    nameSpace: string
+    name: string
+    version: string
+    component: any
+    tags: string[]
+    roles: string[]
+    connectors: any[]
+    componentType: string
+  }
 
   /**
    * A Reactory Form / Code module.
@@ -871,7 +892,26 @@ declare namespace Reactory {
      * When roles are added the API will check the logged in user
      * credentials and will include or exclude the resource based on role 
      */
-    roles?: string[]
+    roles?: string[],
+    fileType?: string,
+    components?: IReactoryComponentRegistryEntry
+  }
+
+
+  /**
+   * Reactory Form Resource structure
+   */
+  export interface IReactoryFormResource {
+    id?: string
+    name: string
+    type: string | "css" | "script"
+    required?: boolean
+    expr?: string
+    signed?: boolean
+    signature?: string
+    signatureMethod?: string
+    crossOrigin?: string
+    uri: string
   }
 
   export interface IReactoryForm {
@@ -892,7 +932,7 @@ declare namespace Reactory {
     /**
      * List of scripts or styles sheets that get loaded async for the application to use.
      */
-    uiResources?: any[],
+    uiResources?: IReactoryFormResource[],
     title: String,
     tags?: String[],
     display?: boolean,
@@ -919,6 +959,7 @@ declare namespace Reactory {
     exports?: IExport[],
     refresh?: any,
     widgetMap?: IWidgetMap[],
+    fieldMap?: IFieldMap[],
     backButton?: Boolean,
     workflow?: Object,
     noHtml5Validate?: boolean,
@@ -1261,6 +1302,8 @@ declare namespace Reactory {
         context?: string, 
         partner?: IReactoryClient | IReactoryClientDocument, 
         user?: IUser | IUserDocument): Promise<IReactoryFileModel>;
+
+      generateFileChecksum(filename: string, algo: string): Promise<string>
     }
 
     export type OrganizationImageType = string | "logo" | "avatar";
@@ -1316,6 +1359,21 @@ declare namespace Reactory {
        * @param form 
        */
       delete(form: Reactory.IReactoryForm): boolean
+
+      /**
+       * 
+       * @param form Returns an array of resources for the form
+       */
+      getResources(form: Reactory.IReactoryForm): Promise<Reactory.IReactoryFormResource[]>
+    }
+
+    export interface IReactoryModuleCompilerService extends Reactory.Service.IReactoryDefaultService {
+
+      /**
+       * 
+       * @param module Compiles a ReactoryFormModule
+       */
+      compileModule(module: Reactory.IReactoryFormModule): Promise<Reactory.IReactoryFormResource>      
     }
 
     export interface IReactoryUserService extends Reactory.Service.IReactoryDefaultService {
@@ -1617,6 +1675,9 @@ declare namespace Reactory {
     $request: Request,
     colors: any,
     container: Container,
+    utils: {
+      hash: (obj: any) => number
+    },
     [key: string]: any
   }
 

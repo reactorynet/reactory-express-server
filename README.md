@@ -46,6 +46,8 @@ Bellow is installation instructions for Ubuntu / Linux based systems.
 `> sudo apt-get update`
 `> sudo apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev`
 
+For Mac OS, use brew to install the required libraries
+`> brew install pkg-config cairo pango libpng jpeg giflib librsvg`
 
 
 ### mongodb
@@ -71,12 +73,15 @@ dotenv is used for development / environment configuration when running the serv
 pm2 configuration files are used for running within the pm2 container.
 `> npm install -g env-cmd`
 
-`> cp config/.env.sample config/reactory/.env.local`
+`> cp config/reactory/.env.sample config/reactory/.env.local`
 Changes your variables to match the directories to where you have installed your server and where you want your data folder.
 ### Install MORES module
 `> cd src/modules/`
-`> git clone git@bitbucket.org:reactory/mores-server-module.git`
+`> git clone git@bitbucket.org:reactory/mores-server-module.git ./mores/`
 
+### Install Reactory Azure / MS Graph Module
+`> cd /src/modules/`
+`> git clone git@bitbucket.org:reactory/reactory-azure-module.git ./reactory-azure/`
 ### Create a modules enabled json file
 The reactory server uses a json file to load the modules you want to include in your server build.
 The easiest way to create this file is to copy the available.json file (published with the source) and copy the file to enabled.json.  The server will use the enabled.json as the default module definition file.  

@@ -2,6 +2,7 @@
 import fetch, { RequestInit, Response } from 'node-fetch';
 import fs, { writeFile } from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { promisify } from 'util';
 import { ObjectID, ObjectId } from 'mongodb';
 import sha1 from 'sha1';
@@ -32,6 +33,8 @@ interface IFileDownloadResult {
     error?: string,
     size?: number
 }
+
+
 
 export class ReactoryFileService implements Reactory.Service.IReactoryFileService {
 
@@ -119,6 +122,33 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
             logger.error(`Could not download file ${url}`, downloadError);
             throw downloadError
         }
+    }
+
+    async generateFileChecksum (filename: string, algo: string = 'sha1'): Promise<string> {
+        
+        const checksumPromise = new Promise((resolve, reject) => {
+            try {
+                const $file = fs.createReadStream(filename);
+                const hash = crypto.createHash(algo);
+                hash.setEncoding('hex');
+    
+                $file.on('end', () => {
+                    hash.end();
+                    resolve(hash.read()); // the desired sha1sum
+                });
+    
+                // read all file and pipe it (write it) to the hash object
+                $file.pipe(hash);
+            } catch (failure) {
+                logger.error('🚨 Error generating checksum');
+                reject(new ApiError(`Unable to process checksum for ${filename}\n:${failure.message}`))
+            }
+        });
+
+
+        const checksum: string = await checksumPromise.then();
+
+        return checksum
     }
     
     async downloadAndCatalog (args: { url: string, options: RequestInit, fileOptions: any }): Promise<Reactory.IReactoryFileModel> {
