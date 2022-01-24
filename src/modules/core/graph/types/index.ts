@@ -2,7 +2,7 @@
 import logger from '@reactory/server-core/logging';
 import { fileAsString } from '@reactory/server-core/utils/io';
 
-const typeDefs = [];
+const typeDefs: string[] = [];
 
 [
   'Charts/ReactoryCharts',
@@ -28,6 +28,7 @@ const typeDefs = [];
   'Organization/BusinessUnit',
   'System/Email',
   'System/Template',
+  'System/Translations',
   'System/Statistics',
   'System/ReactoryContent',
   'Communications/Notification',

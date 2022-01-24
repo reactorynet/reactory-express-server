@@ -9,7 +9,7 @@ import moment from "moment";
 import colors from 'colors';
 import { User } from "@microsoft/microsoft-graph-types";
 import { AnyMxRecord } from "dns";
-import { Ref } from "react";
+import React, { CSSProperties, Ref } from "react";
 import { Resolver, Resolvers } from "apollo-client";
 import { Container } from "inversify";
 declare namespace Reactory {
@@ -648,14 +648,85 @@ declare namespace Reactory {
     type: "array",
     items: IObjectSchema | IDateTimeSchema | IDateSchema | INumberSchema | IStringSchema | ISchema
   }
+  
+  export interface IFormUIOptions {
+    submitProps?: {
+      variant?: string | "fab" | "button",
+      iconAlign?: string | "left" | "right";
+      onClick: () => void,
+      href: any,
+      [key: string]: any
+    },
+    showSubmit?: boolean,
+    showHelp?: boolean,
+    showRefresh?: boolean,
+    toolbarStyle?: CSSProperties,
+    toolbarPosition?: string,
+    buttons?: any[],
+    showSchemaSelectorInToolbar?: boolean,
+    schemaSelector?: {
+      variant?: string | "icon-button" | "dropdown",
+      style?: CSSProperties,
+      showTitle?: boolean,
+      selectSchemaId?: string,
+      buttonStyle: CSSProperties,
+      buttonVariant: any,
+      buttonTitle: string,
+      activeColor?: any,
+      components: string[]
+    },
+  }
 
-  /**
-   * The base UISchema definition
-   */
+  export interface IFormUISchema {
+    'ui:form'?: IFormUIOptions,
+    /**
+     * "ui:form" is prefered method to set Form specific settting.
+     * 
+     */
+    'ui:options'?: IFormUIOptions | any,
+    'ui:field'?: string | "GridLayout" | "TabbedLayout" | "AccordionLayout" | "SteppedLayout",
+    'ui:widget'?: string,
+
+    [key: string]: IUISchema | any
+  }
+  
+  type GridSize = number | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
+  export interface IGridLayout {
+    [key: string]: {
+      xs?: GridSize,
+      sm?: GridSize,
+      md?: GridSize,
+      lg?: GridSize,
+      xl?: GridSize,
+      style?: any
+    }
+  }
+
+  export interface IGridOptions {
+    spacing?: number,
+    container?: string | "Paper" | "div",
+    containerStyles?: CSSProperties,
+  }
+
+  export interface ITabLayout {
+    field: string,
+    icon?: string,
+    title?: string,
+    [key: string]: any
+  }
+
+  export interface ITabOptions {
+    textColor?: string | "primary" | "secondary"
+  }
   export interface IUISchema {
     'ui:widget'?: string | "null",
     'ui:options'?: object | "null",
-    [key: string]: any,
+    'ui:field'?: string | "GridLayout" | "TabbedLayout" | "AccordionLayout" | "SteppedLayout",
+    'ui:grid-layout'?: IGridLayout[],
+    'ui:grid-options'?: IGridOptions,
+    'ui:tab-layout'?: IGridLayout[],
+    'ui:tab-options'?: IGridOptions,
+    [key: string]: IUISchema | any,
   }
 
   export interface IObjectSchema extends ISchema {
@@ -700,7 +771,8 @@ declare namespace Reactory {
     interval?: number,
     useWebsocket?: boolean,
     onError?: IReactoryFormQueryErrorHandlerDefinition,
-    onSuccessMethod?: String | "redirect" | "notification" | "function",
+    onSuccessMethod?: string | "redirect" | "notification" | "function",
+    onSuccessUrl?: string,
     onSuccessEvent?: IReactoryEvent | undefined,
     notification?: any,
     refreshEvents?: IReactoryEvent[] | undefined
@@ -821,7 +893,7 @@ declare namespace Reactory {
     key: string,
     description: string,
     icon: string,
-    uiSchema: any,
+    uiSchema: IFormUISchema,
     //used to override the graphql definitions for that view type
     graphql?: IFormGraphDefinition,
     modes?: string
@@ -941,7 +1013,7 @@ declare namespace Reactory {
     helpTopics?: String[]
     schema: ISchema | IObjectSchema | IArraySchema,
     sanitizeSchema?: ISchema | IObjectSchema | IArraySchema,
-    uiSchema?: any,
+    uiSchema?: IFormUISchema,
     uiSchemas?: IUISchemaMenuItem[],
     defaultUiSchemaKey?: string,
     registerAsComponent: boolean,
@@ -1051,6 +1123,10 @@ declare namespace Reactory {
     shop: string
   }
 
+  /**
+   * The module data structure represents a collection of all the services, 
+   * workflows, forms, pdf definition 
+   */
   export interface IReactoryModule {
     nameSpace: string
     name: string
@@ -1062,7 +1138,8 @@ declare namespace Reactory {
     forms?: IReactoryForm[],
     pdfs?: IReactoryPdfComponent[]
     services?: IReactoryServiceDefinition[],
-    clientPlugins?: Client.IReactoryPluginDefinition,    
+    clientPlugins?: Client.IReactoryPluginDefinition,
+    translations?: IReactoryTranslations[]
   }
 
   export interface IReactoryServiceResult<T> {
@@ -1593,6 +1670,48 @@ declare namespace Reactory {
        */
       mutate(mutation: string, variables: any): Promise<any>
     }
+
+    export interface IReactoryTranslationSerivce extends Reactory.Service.IReactoryDefaultService {
+      /**
+       * Returns all the translations for a given locale string, if the 
+       * local is not provide the syste default will be used as defined on the 
+       * process.env.REACTORY_DEFAULT_LOCALE, if no default locale is set the 
+       * operating system user default will be used.
+       * @param locale - the local string to use
+       */
+      getTranslations(locale?: string): Promise<IReactoryTranslations> 
+
+      /**
+       * Sets a translation item. When using the default service the data will 
+       * be validated before being added to the resource collection
+       * @param translation
+       */
+      setTranslation(translation: IReactoryTranslation): Promise<IReactoryTranslation>
+      /**
+       * Removes a particular translation
+       * @param translation
+       */
+      removeTranslation(translation: IReactoryTranslation): Promise<IReactoryTranslation>
+
+      /**
+       * Creates a object from the key structure
+       * @param translation
+       */
+      getResource(translation: IReactoryTranslation): Promise<any>
+
+      /**
+       * Creates an object from all the items in translations set
+       * @param translations 
+       */
+      getResources(translations: IReactoryTranslations): Promise<any>
+    }
+
+    export interface IReactoryTranslationServiceStatic {
+      new(): IReactorySupportServiceStatic,
+      reactory: IReactoryServiceDefinition
+    }
+
+    export type TReactoryTranslationService = IReactoryTranslationSerivce & IReactoryTranslationServiceStatic
   }
 
   export interface IReactorySupportTicketFilter {
@@ -1665,8 +1784,7 @@ declare namespace Reactory {
     id: string,
     user: Reactory.IUserDocument
     partner: Reactory.IReactoryClientDocument
-    getService<T extends Reactory.Service.IReactoryService>(fqn: string, props?: any, context?: Reactory.IReactoryContext, lifeCycle?: SERVICE_LIFECYCLE): T,
-    hasRole(role: string, partner?: Reactory.IReactoryClientDocument): boolean
+    getService<T extends Reactory.Service.IReactoryService>(fqn: string, props?: any, context?: Reactory.IReactoryContext, lifeCycle?: SERVICE_LIFECYCLE): T,    
     log(message: string, meta?: any, type?: LOG_TYPE, clazz?: string): void
     state: {
       [key: string]: any
@@ -1675,9 +1793,11 @@ declare namespace Reactory {
     $request: Request,
     colors: any,
     container: Container,
+    modules: Reactory.IReactoryModule[]
     utils: {
       hash: (obj: any) => number
     },
+    hasRole: (role: string, partner?: Reactory.IPartner, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => boolean,    
     [key: string]: any
   }
 
@@ -1853,5 +1973,39 @@ declare namespace Reactory {
     id: string,
     menus: ObjectId[] | IReactoryMenu[]
     [key: string]: any
+  }
+
+
+  export interface IReactoryTranslationRevision {
+    id: any
+    changed: Date
+    translation: string
+    translator: IUser
+    reason: string
+  }
+
+  export interface IReactoryTranslation {
+    id?: any,
+    partner: Reactory.IReactoryClient | Reactory.IReactoryClientDocument
+    organization: Reactory.IOrganization | Reactory.IOrganizationDocument    
+    key: string,
+    locale: string,
+    created: Date,
+    translator: IUser
+    namespace?: string
+    translation: string
+    resource?: any
+    version: number
+    revisions: IReactoryTranslationRevision[]
+  }
+
+  export interface IReactoryTranslationDocument extends Mongoose.Document,IReactoryTranslation {
+
+  }
+  export interface IReactoryTranslations {
+    id: string
+    locale: string
+    translations: IReactoryTranslation[]
+    resources?: any
   }
 }

@@ -5,6 +5,7 @@ import logger from '@reactory/server-core/logging';
 import Hash from '@reactory/server-core/utils/hash';
 import colors from 'colors/safe';
 import { ReactoryContainer } from '@reactory/server-core/ioc';
+import modules from '@reactory/server-core/modules';
 
 /***
  * The Reactory Context Provider creates a context for the execution thread which is passed through with each request
@@ -87,6 +88,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     partner: $partner,
     $request,
     $response,
+    modules: modules.enabled,
     container: ReactoryContainer,
     log: $log,
     hasRole: (role: string, partner?: Reactory.IPartner, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => {

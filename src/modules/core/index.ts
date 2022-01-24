@@ -3,8 +3,10 @@ import coreTypes from './graph/types';
 import coreWorkflows from './workflow';
 import coreForms from './forms';
 import coreServices from './services';
+import translations from './data/translations';
+import { Reactory } from '@reactory/server-core/types/reactory';
 
-export default {
+const ReactoryCoreModule: Reactory.IReactoryModule = {
   nameSpace: 'core',
   version: '1.0.0',
   name: 'ReactoryServer',
@@ -17,4 +19,7 @@ export default {
   workflows: [...coreWorkflows],
   forms: [ ...coreForms ],
   services: [ ...coreServices ],
+  translations: translations
 };
+
+export default ReactoryCoreModule

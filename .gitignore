@@ -30,3 +30,5 @@ src/data/clientConfigs/**
 
 
 target/
+
+.DS_Store

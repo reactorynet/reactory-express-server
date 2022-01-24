@@ -1,0 +1,147 @@
+"""
+The type that reprents the structure for the translation revision
+"""
+type ReactoryTranslationRevision {
+  """
+  The id for the revision
+  """
+  id: String!
+  """
+  The system assigned date time stamp when the change 
+  was made
+  """
+  changed: Date
+  """
+  The translation at the time of the change
+  """
+  translation: String
+  """
+  The user that performed the translation
+  """
+  translator: User
+  """
+  The reason for the change
+  """
+  reason: String
+}
+
+"""
+Translation Entry type
+"""
+type ReactoryTranslation {
+  """
+  System assigned id
+  """
+  id: String!
+  """
+  User defined key, allow dot notation
+  i.e. 'login.page.title' or 'forgot.password.email.subject'
+  """
+  key: String!
+  """
+  locale string
+  """
+  locale: String!
+  """
+  The date the entry was created
+  """
+  created: Date
+  """
+  The user that performed the last update action
+  """
+  translator: User
+  """
+  The date the entry was updated
+  """
+  updated: Date
+  """
+  the namespace for the translation
+  """
+  namespace: String
+  """
+  The translation value
+  """
+  translation: String!
+  """
+  The resource representing the converted object
+  """
+  resource: Any
+  """
+  Contains all the revisions for the translation
+  """
+  revisions: [ReactoryTranslationRevision]  
+}
+
+type ReactoryTranslations {
+  """
+  The system assigned id
+  """
+  id: String
+  """
+  locale id, i.e. en-za, en-us, af-za
+  """
+  locale: String
+  """
+  An array of translation objects
+  """
+  translations: [ReactoryTranslation]  
+  """
+  A transformed resources object
+  """
+  resources: Any
+}
+
+"""
+Translation input to updatre
+"""
+input ReactoryTranslationInput {
+  """
+  id for the translation
+  """
+  id: String  
+  """
+  The language key for the translation
+  """
+  language: String!
+  """
+  The key for the translation
+  """
+  key: String!
+  """
+  The translation
+  """
+  translation: String!
+  """
+  When set to true, this key 
+  will be linked to the logged in 
+  application only.
+  """
+  clientOnly: Boolean
+  """
+  if am organization id is added the translation will be used for a specific organization
+  """
+  organization_id: String
+}
+
+extend type Query {
+  """
+  Returs a list of all translations for the logged in application
+  """
+  ReactoryTranslation(lang: String): ReactoryTranslations
+
+  """
+  Returns a list of Translations based on a search key input
+  """
+  ReactoryTranslationItems(key: String): [ReactoryTranslation]
+}
+
+extend type Mutation {
+  """
+  Set a translation.  If the key does not exist it will be created
+  """
+  ReactorySetTranslation(translation: ReactoryTranslationInput): ReactoryTranslation
+  """
+  Delete a translation
+  """
+  ReactoryDeleteTranslation(id: String): Boolean
+}

@@ -1,7 +1,7 @@
 
 import { Reactory } from '@reactory/server-core/types/reactory';
 
-export function resolver<T extends { new (...args: any[]): Reactory.ReactoryResolver }>(constructor: T) {
+export function resolver<T extends { new (...args: any[]): Reactory.IReactoryResolver }>(constructor: T) {
   // return class extends constructor {
   //   resolver: {
   //     Query: {
@@ -26,9 +26,7 @@ export function resolver<T extends { new (...args: any[]): Reactory.ReactoryReso
 export function property(objectKey: string, property: string) {
 
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {
-
-    debugger
-
+    
     if(target) {
       if(!target.resolver) {
         target.resolver = {
@@ -69,10 +67,7 @@ export function property(objectKey: string, property: string) {
 
 export function query(name: string) {
 
-  return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {
-
-    debugger
-
+  return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {    
     if (target) {
       if (!target.resolver) {
         target.resolver = {
@@ -87,20 +82,15 @@ export function query(name: string) {
       target.resolver.Query[name] = target[propertyKey];
 
     }
-
     return descriptor;
-
   }
-
 }
 
 
 export function mutation(name: string) {
 
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {
-
-    debugger
-
+    
     if (target) {
       if (!target.resolver) {
         target.resolver = {
