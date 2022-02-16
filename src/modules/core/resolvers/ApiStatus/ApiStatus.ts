@@ -7,6 +7,8 @@ const packageJson = require('../../../../../package.json');
 @resolver
 class ApiStatus {
 
+  resolver: any
+
   @property("ApiStatus", "id")
   id(apiStatus: Reactory.IReactoryApiStatus) {
     return apiStatus.id || 'anon'

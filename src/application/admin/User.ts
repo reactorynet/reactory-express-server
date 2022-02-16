@@ -11,6 +11,7 @@ import emails from '../../emails';
 import logger from '../../logging';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import { isThrowStatement } from 'typescript';
+import { deprecate } from 'util';
 
 dotenv.config();
 
@@ -283,19 +284,19 @@ export const updateUserProfileImage = (user: any, imageData: string = null, isBu
   return `profile_${user._id}_default.jpeg`;
 };
 
-function* updateProfileGenerator(id, profileData) {
-  logger.info('Updating user profile', { id, profileData });
-  const found = yield User.findById(id);
-  if (!found) throw new UserNotFoundException('User not found', { id });
-  if (profileData.avatar !== found.avatar) {
-    found.avatar = updateUserProfileImage(found, profileData.avatar);
-  }
-  found.firstName = profileData.firstName;
-  found.lastName = profileData.lastName;
-  found.email = profileData.email;
-  found.mobileNumber = profileData.mobileNumber;
-  return yield found.save();
-}
+// function* updateProfileGenerator(id, profileData) {
+//   logger.info('Updating user profile', { id, profileData });
+//   const found = yield User.findById(id);
+//   if (!found) throw new UserNotFoundException('User not found', { id });
+//   if (profileData.avatar !== found.avatar) {
+//     found.avatar = updateUserProfileImage(found, profileData.avatar);
+//   }
+//   found.firstName = profileData.firstName;
+//   found.lastName = profileData.lastName;
+//   found.email = profileData.email;
+//   found.mobileNumber = profileData.mobileNumber;
+//   return yield found.save();
+// }
 
 export const updateProfile = async (id: string, profileData: any) => {
   logger.info('Updating user profile', { id, profileData });
@@ -326,27 +327,29 @@ export const updateProfile = async (id: string, profileData: any) => {
  * @param {Array<*>} peers
  * @param {Organization} organization
  */
+
 export const setPeersForUser = (user, peers, organization, allowEdit = true, confirmedAt = null) => { // eslint-disable-line max-len
-  return Organigram.findOne({
-    user: user._id, // eslint-disable-line no-underscore-dangle
-    organization: organization._id, // eslint-disable-line no-underscore-dangle
-  }).then((organigram) => {
-    if (isNil(organigram) === true) {
-      return new Organigram({
-        user: user._id, // eslint-disable-line no-underscore-dangle
-        organization: organization._id, // eslint-disable-line no-underscore-dangle
-        peers,
-        updatedAt: new Date().valueOf(),
-        allowEdit,
-        confirmedAt,
-      }).save().then();
-    }
-    organigram.peers = peers; // eslint-disable-line no-param-reassign
-    organigram.updatedAt = new Date().valueOf(); // eslint-disable-line no-param-reassign
-    organigram.confirmedAt = confirmedAt; // eslint-disable-line no-param-reassign
-    organigram.allowEdit = allowEdit; // eslint-disable-line no-param-reassign
-    return organigram.save().then();
-  });
+  deprecate(setPeersForUser, "This function has been deprecated, use the UserService.setPeersForUser function.");
+  // return Organigram.findOne({
+  //   user: user._id, // eslint-disable-line no-underscore-dangle
+  //   organization: organization._id, // eslint-disable-line no-underscore-dangle
+  // }).then((organigram) => {
+  //   if (isNil(organigram) === true) {
+  //     return new Organigram({
+  //       user: user._id, // eslint-disable-line no-underscore-dangle
+  //       organization: organization._id, // eslint-disable-line no-underscore-dangle
+  //       peers,
+  //       updatedAt: new Date().valueOf(),
+  //       allowEdit,
+  //       confirmedAt,
+  //     }).save().then();
+  //   }
+  //   organigram.peers = peers; // eslint-disable-line no-param-reassign
+  //   organigram.updatedAt = new Date().valueOf(); // eslint-disable-line no-param-reassign
+  //   organigram.confirmedAt = confirmedAt; // eslint-disable-line no-param-reassign
+  //   organigram.allowEdit = allowEdit; // eslint-disable-line no-param-reassign
+  //   return organigram.save().then();
+  // });  
 };
 
 export const assessmentsForUser = (user, complete = false) => {

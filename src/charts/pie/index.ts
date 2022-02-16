@@ -1,5 +1,6 @@
 
 
+
 import path from 'path';
 import fs from 'fs';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
@@ -9,7 +10,12 @@ import logger from '../../logging';
 
 
 
-export const BarChart = async (props: Reactory.IChartProps): Promise<Reactory.IChartResult> => {
+const defaultOptions = {
+  cutoutPercentage: 50,
+};
+
+export const DefaultPieChart = async (props: Reactory.IChartProps): Promise<Reactory.IChartResult> => {
+  
   const {
     folder,
     file,
@@ -19,13 +25,26 @@ export const BarChart = async (props: Reactory.IChartProps): Promise<Reactory.IC
     data,
     options,
     mime = 'image/png',
+    context
   } = props;
 
-  const outputpath: fs.PathLike = path.join(folder, file);
-  logger.debug(`Generating default BarChart ${outputpath}`);
-
-
-  //const chartNode = new ChartjsNode(width || 400, height || 400);
+  const defaultData = () => ({
+    datasets: [{
+      data: [82, 18],
+    }],
+  
+    // These labels appear in the legend and in the tooltips when hovering different arcs
+    labels: [
+      'Avg Score',
+    ],
+  
+    backgroundColor: [
+      `${context.partner.themeOptions.palette.primary.main}`,
+      'rgba(0,0,0,0)',
+    ],
+  });
+  
+  const outputpath: fs.PathLike = path.join(folder, file);    
   const chartNode = new ChartJSNodeCanvas({
     height: height || 400,
     width: width || 400,
@@ -33,8 +52,8 @@ export const BarChart = async (props: Reactory.IChartProps): Promise<Reactory.IC
   });
 
   const stream = chartNode.renderToStream({
-    type: 'bar',
-    data,
+    type: 'pie',
+    data: data || defaultData(),
     plugins: [ChartDataLabels],
     options: {
       scales: {
@@ -49,7 +68,7 @@ export const BarChart = async (props: Reactory.IChartProps): Promise<Reactory.IC
   }, mime);
 
   let $fileStream = fs.createWriteStream(outputpath);
-  
+
   stream.pipe($fileStream);
   $fileStream.close();
 
@@ -64,5 +83,5 @@ export const BarChart = async (props: Reactory.IChartProps): Promise<Reactory.IC
 
 
 export default {
-  DefaultBarChart: BarChart,
+  DefaultPieChart,
 };

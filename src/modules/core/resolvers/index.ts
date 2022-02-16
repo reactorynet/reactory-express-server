@@ -6,20 +6,28 @@ import TeamResolver from './Organization/TeamResolver';
 import ReactoryContent from './ReactoryContent';
 import UserEmail from './Emails/UserEmails';
 import TemplateResolver from './Template/TemplateResolver';
-import { ProfileResolver, UserResolver, UserImportResolver } from './User';
+import { 
+  ProfileResolver, 
+  UserResolver, 
+  UserImportResolver,
+  UserMembershipResolver
+ } from './User';
+import { TaskResolver } from './Task'
 import ReactorySQLResolver from './SQL/ReactorySQLResolver';
 import ReactoryCacheResolver from './Cache/CacheResolver';
 import ReactoryFileResolver from './ReactoryFile/ReactoryFile';
 import SupportResolver from './Support/SupportResolver';
 import Resources from './System/Resources';
 import Statistics from './System/Statistics';
-import ReactoryClient from './System/ReactoryClient';
+import { ReactoryClientResolver, ClientComponentResolver, ClientRouteResolver } from './System/ReactoryClientResolver';
 import ReactoryForm from './ReactoryForm';
 import { mergeGraphResolver } from '@reactory/server-core/utils';
 
 export default mergeGraphResolver([
   ApiStatus,
-  ReactoryClient,
+  ReactoryClientResolver,
+  ClientComponentResolver,
+  ClientRouteResolver,
   OrganizationResolver,
   BusinessUnitResolver,
   ProjectResolver,
@@ -29,12 +37,15 @@ export default mergeGraphResolver([
   UserResolver,
   UserEmail,
   UserImportResolver,
+  UserMembershipResolver,
   ReactoryContent,
   ProfileResolver,
   ReactorySQLResolver,
   ReactoryCacheResolver,
   ReactoryFileResolver,
   TemplateResolver,
+  TaskResolver,
   SupportResolver,
-  ReactoryForm
+  ReactoryForm,
+
 ]);

@@ -17,12 +17,12 @@ class SystemService implements Reactory.Service.IReactorySystemService {
     this.context = context;
   }
 
-  getReactoryClients(query: any): Promise<Reactory.TReactoryClient[]> {
-    return ReactoryClient.find(query);
+  async getReactoryClients(query: any): Promise<Reactory.TReactoryClient[]> {
+    return ReactoryClient.find(query).clone();
   }
 
-  getMenusForClient(client: Reactory.TReactoryClient): Promise<Reactory.IReactoryMenu[]> {
-    return Menu.find({ client });
+  async getMenusForClient(client: Reactory.TReactoryClient): Promise<Reactory.IReactoryMenu[]> {
+    return await Menu.find({ client }).clone();
   }
 
   query(query: string, variables: any): Promise<any> {
@@ -40,7 +40,7 @@ class SystemService implements Reactory.Service.IReactorySystemService {
       populate.forEach((e) => { qry = qry.populate(e) });
     }
 
-    const client = await qry.then();
+    const client = await qry.exec();
     
     return client;
   }

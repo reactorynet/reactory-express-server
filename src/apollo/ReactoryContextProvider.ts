@@ -52,13 +52,34 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
         logger.warn(colors.yellow($message), meta);
         break;
       }
+      case "i":
+      case "info": {
+        logger.warn(colors.gray($message), meta);
+        break;
+      }
       case "d":
       case "debug":
       default: {
-        logger.debug(colors.blue($message), meta);
+        logger.debug(colors.blue($message), meta);        
       }
     }
   };
+
+  const $debug = (message: string, meta: any = null, clazz: string = 'any_clazz') => {
+    $log(message, meta, "debug", clazz);
+  }
+
+  const $warn = (message: string, meta: any = null, clazz: string = 'any_clazz') => {
+    $log(message, meta, "warn", clazz);
+  }
+
+  const $error = (message: string, meta: any = null, clazz: string = 'any_clazz') => {
+    $log(message, meta, "error", clazz);
+  }
+  
+  const $info = (message: string, meta: any = null, clazz: string = 'any_clazz') => {
+    $log(message, meta, "info", clazz);
+  }
 
   let $user = $context.user ? $context.user : null;
   let $partner = $context.partner ? $context.partner : null;
@@ -91,6 +112,10 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     modules: modules.enabled,
     container: ReactoryContainer,
     log: $log,
+    info: $info,
+    warn: $warn,
+    debug: $debug,
+    error: $error,
     hasRole: (role: string, partner?: Reactory.IPartner, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => {
 
       if($session.req.user === null || $session.req.user === undefined) {

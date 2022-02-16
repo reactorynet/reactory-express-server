@@ -140,7 +140,15 @@ type ApiStatus {
 }
 
 extend type Query {
+  """
+  WILL BE DEPRECATED - use ReactoryClientWithKey instead
+  """
   clientWithId(id: String): ReactoryClient
+
+  """
+  Fetches a ReactoryClient item with a given Key
+  """
+  ReactoryClientWithKey(key: String): ReactoryClient
 }
 
 input CreateReactoryClient {

@@ -4,7 +4,7 @@ import Organigram from "@reactory/server-core/models/schema/Organigram";
 import { Demographic } from '@reactory/server-modules/mores/models';
 import { BusinessUnit, Organization, Region, Team, User, UserDemographic } from '@reactory/server-core/models';
 import ApiError, { RecordNotFoundError } from "@reactory/server-core/exceptions";
-import { trim, filter, find } from 'lodash';
+import { trim, filter, find, isNil } from 'lodash';
 interface PeersState {
   [key: string]: Reactory.IOrganigramDocument
 }
@@ -67,13 +67,42 @@ class UserService implements Reactory.Service.IReactoryUserService {
     return this.peerState[key];
   }
 
+/**
+ * Sets the peers for a user after they have been validate.
+ * @param { User } user
+ * @param { Array<*>} peers
+ * @param { Organization } organization
+ */
+async setPeersForUser (user: Reactory.IUserDocument, peers: any, organization: Reactory.IOrganizationDocument,allowEdit: boolean = true, confirmedAt: Date = new Date()): Promise<Reactory.IOrganigramDocument> { // eslint-disable-line max-len
+  return Organigram.findOne({
+    user: user._id,
+    organization: organization._id,
+  }).then((organigram) => {
+    if (isNil(organigram) === true) {
+      return new Organigram({
+        user: user._id,
+        organization: organization._id,
+        peers,
+        updatedAt: new Date(),
+        createdAt: new Date(),
+        allowEdit,
+        confirmedAt,
+      }).save().then();
+    } else {
+      organigram.peers = peers;
+      organigram.updatedAt = new Date();
+      organigram.confirmedAt = confirmedAt;
+      organigram.allowEdit = allowEdit;
+      return organigram.save().then();
+    }
+  });
+};
+
   async setUserDemographics(userId: string, organisationId: string, membershipId?:
     string, dob?: Date, businessUnit?: string, gender?: string, operationalGroup?: string,
     position?: string, race?: string, region?: string, team?: string): Promise<Reactory.IUserDemographicDocument> {
     
-    const context = this.context;
-    
-    debugger 
+    const context = this.context;        
     context.log(`Update Demographics start`, {
       userId,
       organisationId,

@@ -1,7 +1,7 @@
 
 type Task {
   id: ObjID!
-  shortCodeId: Int  
+  shortCode: String  
   project: Project
   title: String
   description: String
@@ -16,7 +16,8 @@ type Task {
   dueDate: Date
   completionDate: Date    
   comments: [Comment]
-  user: User!
+  assignedTo: User
+  createdBy: User!
   createdAt: Date!
   updatedAt: Date!
 }

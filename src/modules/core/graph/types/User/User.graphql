@@ -4,7 +4,7 @@ enum PeerType {
   report
   vendor
   client
-  partner
+  partner  
 }
 
 type UserSession {
@@ -213,23 +213,65 @@ extend type Mutation {
   Default Update User Mutation - Used to update a user's data.
   """
   updateUser(id: String!, profileData: UpdateUserInput!): User
+  """
+  Deletes a user with a given id
+  """
   deleteUser(id: String!): Boolean
+  """
+  Sets an organization for a user with a particular id.
+  """
   setOrganizationForUser(id: String!, organizationId: String) : Boolean
+  """
+  Sets the list of peers for a user.
+  """
   setPeersForUser(id: String!, peers: [PeerInput], sendConfirmations: Boolean): UserPeers
+  """
+  Sets the relationship type for a peer
+  """
   setPeerRelationShip(id: String!, peer: String!, organization: String!, relationship: PeerType): UserPeers
+  """
+  Removes a peer from the relationship
+  """
   removePeer(id: String!, peer: String!, organization: String!): UserPeers
+  """
+  Removes user
+  """
   removeUser(id: String!): Boolean
+  """
+  Used when updating a user's password.
+  """
   setPassword(input: UpdatePasswordInput!): User
+  """
+  Confirms the peers for the user id and organization id
+  """
   confirmPeers(id: String!, organization: String!, surveyId: String): UserPeers
+  """
+  Add a user role for a user
+  """
   addUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]
+  """
+  Remove a user role for a user
+  """
   removeUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]
+  """
+  Add user credentials for a user
+  """
   addUserCredentials(provider: String!, props: Any): Boolean
+  """
+  Remove user credentials
+  """
   removeUserCredentials(provider: String!): Boolean
+  """
+  Send mail message
+  """
   sendMail(message: SendMailInput!): SendMailResult
   """
-  NOTE - These must be moved to the reactory AZURE module
+  NOTE - This mutation definition must be moved to the reactory AZURE module
   """
-  createOutlookTask(task: CreateTaskInput!): SendMailResult  
+  createOutlookTask(task: CreateTaskInput!): SendMailResult
+  """
+  NOTE - This mutation definition must be moved to the reactory AZURE module
+  """
   deleteOutlookTask(task: DeleteTaskInput!): SendMailResult
   """
   Used to update a user permission set

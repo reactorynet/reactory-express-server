@@ -30,144 +30,18 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 import { SURVEY_EVENTS_TO_TRACK } from "@reactory/server-core/models/index";
 import Mongoose from "mongoose";
 import { execml } from "@reactory/server-core/graph/client";
+
+import { roles } from '@reactory/server-core/authentication/decorators';
+import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
+
 import UserDemographics from "@reactory/server-core/models/schema/UserDemographics";
 
 const uuid = require("uuid");
 
-const userAssessments = async (id: any, context: Reactory.IReactoryContext) => {
-  const { user, partner } = context;
-  const findUser = isNil(id) === true ? await User.findById(id).then() : user;
-  if (findUser && findUser._id) {
-    logger.info(
-      `Fetching assessments for user ${user.firstName} [${user.email}] - for partner key: ${partner.key}`
-    );
-    const assessmentTypes = ["custom"];
 
-    if (partner.key === "plc") {
-      assessmentTypes.push("plc");
-    } else {
-      assessmentTypes.push("180");
-      assessmentTypes.push("360");
-    }
-
-    const assessments = await Assessment.find({
-      assessor: findUser._id,
-      deleted: false,
-    })
-      .populate("assessor")
-      .populate("delegate")
-      .populate("survey")
-      .then();
-
-    if (lodash.isArray(assessments) === true) {
-      return lodash.filter(assessments, (assessment) => {
-        return (
-          lodash.intersection(assessmentTypes, [assessment.survey.surveyType])
-            .length > 0
-        );
-      });
-    }
-
-    return [];
-  }
-
-  throw new RecordNotFoundError("No user matching id");
-};
-
-const MoresAssessmentsForUser = async (
-  userId: any,
-  status = ["launched"],
-  context: Reactory.IReactoryContext
-) => {
-  const { user, partner } = context;
-  const findUser =
-    isNil(userId) === true ? await User.findById(userId).then() : user;
-  if (findUser && findUser._id) {
-    logger.info(
-      `Fetching assessments for user ${user.firstName} [${user.email}] - for partner key: ${partner.key}`
-    );
-    const assessmentTypes = [];
-
-    switch (partner.key) {
-      case "plc": {
-        assessmentTypes.push("plc");
-        break;
-      }
-      case "towerstone": {
-        assessmentTypes.push("180");
-        assessmentTypes.push("360");
-        break;
-      }
-      case "mores": {
-        assessmentTypes.push("i360");
-        assessmentTypes.push("l360");
-        assessmentTypes.push("team180");
-        assessmentTypes.push("culture");
-        break;
-      }
-    }
-
-    let $statuses = status;
-    if (
-      user.hasRole(partner._id, "DEVELOPER") === true ||
-      user.hasRole(partner._id, "ADMIN") === true ||
-      user.hasRole(partner._id, "ORGANIZATION_ADMIN") === true
-    ) {
-      $statuses.push("new");
-      $statuses.push("paused");
-    }
-
-    const surveys = await Survey.find({
-      surveyType: {
-        $in: assessmentTypes,
-      },
-      status: { $in: status },
-      endDate: {
-        $gte: moment().subtract(1, "month").startOf("month").toDate(),
-      },
-    }).then();
-
-    logger.debug(`Found (${surveys.length}) surveys for user`);
-
-    const assessments = await Assessment.find({
-      assessor: findUser._id,
-      deleted: false,
-      survey: { $in: surveys.map((survey) => survey._id) },
-    })
-      .populate("assessor")
-      .populate("delegate")
-      .populate("survey")
-      .then();
-
-    return assessments;
-  }
-
-  throw new RecordNotFoundError("No user matching id");
-};
 
 const userResolvers = {
-  Task: {
-    id(task: { _id: any }) {
-      return task._id;
-    },
-    description(task: { description: any }) {
-      return task.description || "not set";
-    },
-    user(task: { user: any }) {
-      return User.findById(task.user);
-    },
-    comments() {
-      return [];
-    },
-    dueDate: (task: { dueDate: any }) => task.dueDate || null,
-    startDate: (task: { startDate: any }) => task.startDate || null,
-    createdAt(task: { createdAt: any }) {
-      return task.createdAt || moment().valueOf();
-    },
-    updatedAt(task: { updatedAt: any }) {
-      return task.updatedAt || moment().valueOf();
-    },
-  },
+  
   Email: {
     id(email: { _id: any; id: any }) {
       if (email._id) return email._id;
@@ -439,48 +313,22 @@ const userResolvers = {
     mobileNumber(user: { mobileNumber: any }) {
       return user.mobileNumber || "Not Set";
     },
-  },
-  UserMembership: {
-    id: ({ _id }) => {
-      return _id.toString();
-    },
-    client({ clientId }) {
-      return ReactoryClient.findById(clientId);
-    },
-    organization({ organizationId }) {
-      return Organization.findById(organizationId);
-    },
-    businessUnit({ businessUnitId }) {
-      return BusinessUnit.findById(businessUnitId);
-    },
-    lastLogin: ({ lastLogin, user }) => {
-      if (lastLogin) return lastLogin;
-
-      if (user && user.lastLogin) return user.lastLogin;
-
-      return null;
-    },
-    created: ({ created, user }) => {
-      if (created) return created;
-
-      if (user && user.createdAt) return user.createdAt;
-
-      return null;
-    },
-  },
+  },  
   Query: {
     allUsers(obj: any, args: any, context: any, info: any) {
       return Admin.User.listAll().then();
     },
     async userWithId(obj: any, { id }: any, context: any, info: any) {
-      const user = await User.findById(id).then();
+      const user = await User.findById(id).clone().then();
 
       return user;
     },
     async userPeers(obj: any, { id, organizationId }: any) {
       if (!organizationId) {
-        return [];
+        return null;
       }
+
+      if(organizationId === "*") return null;
 
       const user = await User.findById(id).then();
       const organization = await Organization.findById(organizationId).then();
@@ -542,130 +390,7 @@ const userResolvers = {
         }
       }
     },
-    userSurveys(obj: any, { id, sort }: any, context: any, info: any) {
-      logger.info(`Finding surveys for user ${id}, ${sort}`);
-      return userAssessments(id, context);
-    },
-    MoresUserSurvey(obj: any, { id }: any, context: any, info: any) {
-      const { partner } = context;
-      switch (partner.key) {
-        case "mores": {
-          return MoresAssessmentsForUser(id, ["launched"], context);
-        }
-        default: {
-          return userAssessments(id, context);
-        }
-      }
-    },
-    userReports(obj: any, { id, sort }: any, context: any, info: any) {
-      return new Promise((resolve, reject) => {
-        const { user } = context;
-        Admin.User.surveysForUser(id).then((userSurveys) => {
-          if (userSurveys && userSurveys.length === 0) resolve([]);
-          const surveyReports = [];
-          const promises = userSurveys.map((userSurvey: any) => {
-            const resolveData = co.wrap(function* resolveDataGenerator(
-              userId,
-              survey
-            ) {
-              const assessments = yield Admin.User.assessmentForUserInSurvey(
-                userId,
-                survey._id
-              ).then();
-              const tasks = yield Admin.User.tasksForUserRelatedToSurvey(
-                userId,
-                survey._id
-              ).then();
-              return {
-                overall: 0,
-                status: "READY",
-                user,
-                survey: userSurvey,
-                assessments,
-                tasks,
-                comments: [],
-              };
-            });
-            return resolveData(id, userSurvey);
-          });
-
-          Promise.all(promises)
-            .then((results) => {
-              resolve(results);
-            })
-            .catch((e) => {
-              reject(e);
-            });
-        });
-      });
-    },
-    async reportDetailForUser(
-      object: any,
-      { userId, surveyId }: any,
-      context: any,
-      info: any
-    ) {
-      const { user } = context;
-      const reportResult = {
-        overall: 0,
-        status: "BUSY",
-        user,
-        survey: null,
-        assessments: [],
-        tasks: [],
-        comments: [],
-        errors: null,
-      };
-
-      let _user = user;
-      if (userId && ObjectId.isValid(userId) === true)
-        _user = await User.findById(userId).then();
-      if (_user === null) {
-        throw new RecordNotFoundError(`The user id ${userId} not found`);
-      }
-
-      try {
-        const survey = await Admin.User.surveyForUser(
-          userId || user._id.toString(),
-          surveyId
-        ).then();
-        reportResult.survey = survey;
-
-        logger.info("Found surveyResult", survey);
-        if (isNil(survey) === true)
-          throw new RecordNotFoundError(
-            "Could not locate the survey and delegate match"
-          );
-
-        logger.info(
-          `Fetching Details For Assessment: ${userId} => Survey: ${survey._id}`
-        );
-
-        reportResult.assessments = await Admin.User.assessmentForUserInSurvey(
-          _user._id,
-          survey._id
-        ).then();
-        reportResult.tasks = await Admin.User.tasksForUserRelatedToSurvey(
-          _user._id,
-          survey._id
-        ).then();
-      } catch (reportGenerateError) {
-        logger.error(
-          `Could not generate a report due to an error ${reportGenerateError.message}`,
-          reportGenerateError
-        );
-      }
-
-      return reportResult;
-    },
-    async assessmentWithId(obj: any, { id }: any, context: any, info: any) {
-      logger.info("Finding Assessment with Id", { id });
-      return Assessment.findById(id)
-        .populate("survey")
-        .populate("delegate")
-        .populate("assessor")
-        .then();
-    },
+    
     userTasks(
       obj: any,
       { id, status }: any,
@@ -1515,5 +1240,13 @@ const userResolvers = {
     },
   },
 };
+
+@resolver
+class UserResolver {
+  
+  
+
+
+}
 
 export default userResolvers;
