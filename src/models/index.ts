@@ -24,7 +24,8 @@ import CommentModel from './schema/Comment';
 
 //Christian
 import UserDemographicsModel from './schema/UserDemographics';
-
+import IvolveHabitModel from '@reactory/server-modules/mores/models/ivolve/Habit';
+import IvolveJournalModel from '@reactory/server-modules/mores/models/ivolve/Journal';
 // DREW
 import ContentModel from './schema/Content';
 import PersonalDemographicModel from './schema/PersonalDemographic';
@@ -61,6 +62,8 @@ export const Board = BoardModel;
 
 //Christian
 export const UserDemographic = UserDemographicsModel
+export const Habit = IvolveHabitModel
+export const Journal = IvolveJournalModel
 // DREW
 export const Content = ContentModel;
 export const PersonalDemographic = PersonalDemographicModel;
