@@ -23,6 +23,7 @@
     "build-serve": "npm-run-all clean build serve",
     "make-install": "npm install & npm run build-serve",
     "test": "mocha **/*.spec.js",
+    "jest:test": "jest",
     "reactory:create-plugin": "NODE_PATH=./src npx babel-node ./src/scripts/create-plugin.js --presets @babel/env --max_old_space_size=200000",
     "reactory:create-form": "NODE_PATH=./src npx babel-node ./src/scripts/create-form.js --presets @babel/env --max_old_space_size=200000",
     "lint": "eslint . --fix"
@@ -141,6 +142,7 @@
     "inversify": "^6.0.1",
     "isomorphic-fetch": "^3.0.0",
     "javascript-state-machine": "^3.0.1",
+    "jest": "^27.5.1",
     "jsonwebtoken": "^8.1.0",
     "jwt-simple": "^0.5.6",
     "lodash": "^4.17.15",
