@@ -4,11 +4,111 @@ import { isNil, isArray, sortBy, filter, intersection, uniq } from 'lodash';
 import moment from 'moment';
 const packageJson = require('../../../../../package.json');
 
+
+/***
+ * Helper function to return roles for a user from the context object
+ */
+const getRoles = async (context: Reactory.IReactoryContext): Promise <{ roles: string[], alt_roles: string[] }> => {
+
+  const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
+
+  const { user, partner } = context;
+
+  let isAnon: boolean = false;
+
+  if (user.anon === true) {   
+    isAnon = true;
+  }
+
+  const roles: any[] = [];
+  const alt_roles: any[] = [];
+  const memberships: any[] = isArray(user.memberships) === true ? user.memberships : [];
+
+  if(isAnon === false) {
+
+  const login_partner_keys_setting = partner.getSetting("login_partner_keys", {
+    partner_keys: [partner.key, 'reactory'],
+    defaultAction: 'add_default_membership',
+    organization_excludes: [],
+    organization_includes: [],
+  }, true, "core.ReactoryPartnerKeysConfig");
+
+  const login_partner_keys = login_partner_keys_setting.data;
+
+  console.log(`Partner has Keys (${login_partner_keys.partner_keys.length})`, {}, 'debug');
+  //get a list of all partner / cross partner logins allowed
+  const partnerLogins: Reactory.IReactoryClientDocument[] = await systemService.getReactoryClients({ key: { $in: [...login_partner_keys.partner_keys] } }).then();
+
+  let root_partner_memberships = filter(memberships, { clientId: partner._id });
+  context.log(`${user.firstName} has (${root_partner_memberships.length})`, null, 'debug');
+
+  root_partner_memberships.forEach((membership) => {
+    if (isArray(membership.roles)) {
+      membership.roles.forEach((r: string) => {
+        roles.push(r);
+      });
+    }
+  });
+
+
+  partnerLogins.forEach((alt_partner) => {
+    const alt_partner_memberships = filter(memberships, { clientId: alt_partner._id });
+
+    alt_partner_memberships.forEach((alt_partner_membership) => {
+      if (isArray(alt_partner_membership.roles)) {
+
+        if (roles.length === 0) {
+          context.log(`${user.fullName} did not have a membership for ${partner.name} - assigning default roles`);
+          //we have no roles in the primary partner, 
+          //but we have one or more roles on the alt_partner
+          //so we create our OWN PARTNER default role for the user and add the membership.
+          let _default_roles = partner.getSetting('new_user_roles', ['USER'], true, 'core.SecurityNewUserRolesForReactoryClient');
+          roles.push(_default_roles || 'USER');
+          _default_roles.data.forEach((r: string) => user.addRole(partner._id, r, null, null));
+        }
+
+        alt_partner_membership.roles.forEach((r: string) => {
+          alt_roles.push(`${r}:${alt_partner._id.toString()}:${alt_partner_membership.clientId}:${alt_partner_membership.organizationId || '*'}:${alt_partner_membership.businessUnitId || '*'}`);
+        });
+      }
+    });
+  });
+
+} else {
+  roles.push('ANON');
+}
+
+return { roles: uniq(roles), alt_roles: uniq(alt_roles) };
+
+}
+
+const DEFAULT_MATERIAL_THEME = {  
+  palette: {
+    mode: 'dark',    
+    primary: {
+      light: '#352c54',
+      main: '#10012b',
+      dark: '#000001',
+      contrastText: '#ffffff',
+    },
+    secondary: {
+      light: '#a5392a',
+      main: '#700000',
+      dark: '#430000',
+      contrastText: '#ffffff',
+    },
+    background: {
+      paper: '#424242',
+      default: '#424242'
+    }
+  },
+}
+
 @resolver
 class ApiStatus {
 
-  resolver: any
-
+  resolver: any  
+    
   @property("ApiStatus", "id")
   id(apiStatus: Reactory.IReactoryApiStatus) {
     return apiStatus.id || 'anon'
@@ -40,9 +140,89 @@ class ApiStatus {
     }
   };
 
+  @property("ApiStatus", "activeTheme")
+  themeOptions(apiStatus: Reactory.IReactoryApiStatus, args: { theme: string }, context: Reactory.IReactoryContext){
+
+    debugger
+    const { themes = [], theme = "reactory" } = context.partner;
+    
+    let themeOptions: Reactory.IReactoryTheme = null;
+    let $themename = args.theme || theme;
+
+    if(themes.length > 0) {
+      themeOptions = themes.find(($theme) => { return $theme.name === $themename });
+    }
+
+    let $themeOptions = themeOptions ? { ...themeOptions } : { type: "material", options: { ...DEFAULT_MATERIAL_THEME },  };
+
+    let primary = '#10012b'; // default primary color
+    let secondary = '#430000'; // default secondary color
+
+    if (themeOptions.type === "material" && themeOptions.options) {
+      let mode = themeOptions?.options?.mode || "dark";
+
+      primary = themeOptions?.options?.palette?.primary[mode] || primary;
+      secondary = themeOptions?.options?.palette?.secondary[mode] || secondary;
+    }
+
+    return $themeOptions
+  }
+
+  @property("ApiStatus", "colorSchemes")
+  colorSchemes(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.IReactoryContext) {
+    
+    const { themeOptions } = context.partner;
+
+    let $themeOptions = themeOptions ? { ...themeOptions } : { type: "material", options: { ...DEFAULT_MATERIAL_THEME }, };
+
+    let primary = '#10012b'; // default primary color
+    let secondary = '#430000'; // default secondary color
+
+    if (themeOptions.type === "material" && themeOptions.options) {
+      let mode = $themeOptions?.options?.mode || "dark";
+
+      primary = $themeOptions?.options?.palette?.primary[mode] || primary;
+      secondary = $themeOptions?.options?.palette?.secondary[mode] || secondary;
+    }
+
+    return {
+         primary: context.partner.colorScheme(primary.replace('#', '')),
+         secondary: context.partner.colorScheme(secondary.replace('#', '')),
+    };
+  }
+
+  @property("ApiStatus", "themes")
+  async themes(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.IReactoryContext){
+    const { themes = [] } = context.partner;
+
+    return themes;
+  }
+
+  @property("ApiStatus", "loggedIn")
+  async loggedInContext(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.IReactoryContext): Promise<Reactory.IReactoryLoggedInContext> {
+        
+    const { roles, alt_roles } = await getRoles(context).then();
+
+    let _context: Reactory.IReactoryLoggedInContext = {
+      user: context?.user,
+      id: context?.user?._id,
+      memberships: context?.user?.memberships || [],
+      roles: roles,
+      businessUnit: null,
+      organization: null,
+      team: null,
+      additional: [],
+      altRoles: alt_roles
+    };
+
+
+    return _context;
+
+  }
+
 
   @query("apiStatus")
-  async getApiStatus(obj: any, args: any, context: Reactory.IReactoryContext) {
+  async getApiStatus(obj: any, args: { theme: string }, context: Reactory.IReactoryContext) {
     const { user, partner } = context;
 
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
@@ -52,14 +232,12 @@ class ApiStatus {
     let isAnon: boolean = false;
     let uxmessages: any[] = [];
 
-    const roles: any[] = [];
-    const alt_roles: any[] = [];
-    const memberships: any[] = isArray(user.memberships) === true ? user.memberships : [];
+    
+    const { roles, alt_roles } = await getRoles(context).then()    
 
     if (user.anon === true) {
       skipResfresh = true;
       isAnon = true;
-      roles.push('ANON');
     }
 
 
@@ -114,58 +292,7 @@ class ApiStatus {
         context.log(`Error refreshing profile data for user ${user.firstName}`, profileRefreshError, 'error');
       }
     }
-
-    if (isAnon === false) {
-
-      const login_partner_keys_setting = partner.getSetting("login_partner_keys", {
-        partner_keys: [partner.key, 'reactory'],
-        defaultAction: 'add_default_membership',
-        organization_excludes: [],
-        organization_includes: [],
-      }, true, "core.ReactoryPartnerKeysConfig");
-
-      const login_partner_keys = login_partner_keys_setting.data;
-
-      console.log(`Partner has Keys (${login_partner_keys.partner_keys.length})`, {}, 'debug');
-      //get a list of all partner / cross partner logins allowed
-      const partnerLogins: Reactory.IReactoryClientDocument[] = await systemService.getReactoryClients({ key: { $in: [...login_partner_keys.partner_keys] } }).then();
-
-      let root_partner_memberships = filter(memberships, { clientId: partner._id });
-      context.log(`${user.firstName} has (${root_partner_memberships.length})`, null, 'debug');
-
-      root_partner_memberships.forEach((membership) => {
-        if (isArray(membership.roles)) {
-          membership.roles.forEach((r: string) => {
-            roles.push(r);
-          });
-        }
-      });
-
-
-      partnerLogins.forEach((alt_partner) => {
-        const alt_partner_memberships = filter(memberships, { clientId: alt_partner._id });
-
-        alt_partner_memberships.forEach((alt_partner_membership) => {
-          if (isArray(alt_partner_membership.roles)) {
-
-            if (roles.length === 0) {
-              context.log(`${user.fullName} did not have a membership for ${partner.name} - assigning default roles`);
-              //we have no roles in the primary partner, 
-              //but we have one or more roles on the alt_partner
-              //so we create our OWN PARTNER default role for the user and add the membership.
-              let _default_roles = partner.getSetting('new_user_roles', ['USER'], true, 'core.SecurityNewUserRolesForReactoryClient');
-              roles.push(_default_roles || 'USER');
-              _default_roles.data.forEach((r: string) => user.addRole(partner._id, r, null, null));
-            }
-
-            alt_partner_membership.roles.forEach((r: string) => {
-              alt_roles.push(`${r}\\${alt_partner._id.toString()}\\${alt_partner_membership.clientId}\\${alt_partner_membership.organizationId || '*'}\\${alt_partner_membership.organizationId || '*'}`);
-            });
-          }
-        });
-      });
-
-    }
+    
 
     let navigationComponents: any[] = [];
     const settingKey = `navigation_components/${process.env.MODE}`;
@@ -175,8 +302,11 @@ class ApiStatus {
       navigationComponents = [...navigationComponentsSetting.data];
     }
 
+ 
+
+
     const api_status_result: any = {
-      when: moment(),      
+      when: moment().toDate(),      
       status: 'API OK',
       firstName: isNil(user) === false ? user.firstName : 'An',
       lastName: isNil(user) === false ? user.lastName : 'Anon',
@@ -196,12 +326,12 @@ class ApiStatus {
       applicationRoles: partner.applicationRoles,
       menus: partner._id,
       theme: partner.theme,
-      themeOptions: partner.themeOptions || {},
-      themes: [],
-      colorSchemes: {
-        primary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
-        secondary: partner.colorScheme(partner.themeOptions.palette.primary.main.replace('#', '')),
-      },
+      // themeOptions: partner.themeOptions || {},
+      // themes: [],
+      // colorSchemes: {
+      //   primary: partner.colorScheme(primary.replace('#', '')),
+      //   secondary: partner.colorScheme(secondary.replace('#', '')),
+      // },
       messages: uxmessages,
       navigationComponents,
     };

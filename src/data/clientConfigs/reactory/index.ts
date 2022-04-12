@@ -1,5 +1,8 @@
 import { profileSmall } from '../helpers/menus';
 
+import themes from './themes';
+import settings from './settings';
+
 import {
   formsroute,
   loginroute,
@@ -67,7 +70,7 @@ const staticContentMappings = [
 ];
 
 
-const REACTORY_CONFIG: any = {
+const REACTORY_CONFIG: Reactory.IReactoryClientConfig = {
   key: 'reactory',
   name: 'Reactory Admin Application',
   username: 'reactory',
@@ -86,32 +89,7 @@ const REACTORY_CONFIG: any = {
     },
   ],
   billingType: 'partner',
-  components: [
-    {
-      nameSpace: 'reactory',
-      name: 'Dashboard',
-      version: '1.0.0',
-      title: 'Dashboard',
-      author: 'machine@reactory.net',
-      labels: [],
-      uri: 'embed',
-      roles: ['USER'],
-      arguments: [],
-      resources: [],
-    },
-    {
-      nameSpace: 'reactory',
-      name: 'Clients',
-      version: '1.0.0',
-      title: 'Clients',
-      author: 'machine@reactory.net',
-      labels: [],
-      uri: 'embed',
-      roles: ['ADMIN'],
-      arguments: [],
-      resources: [],
-    },
-  ],
+  components: [],
   menus: [
     profileSmall,
     {
@@ -276,41 +254,8 @@ const REACTORY_CONFIG: any = {
       componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
     },
   ],
-  theme: 'reactory',
-  themeOptions: {
-    typography: {
-      useNextVariants: true,
-    },
-    type: 'material',
-    palette: {
-      type: 'light',
-      primary1Color: '#10012b',
-      primary: {
-        light: '#352c54',
-        main: '#10012b',
-        dark: '#000001',
-        contrastText: '#ffffff',
-      },
-      secondary: {
-        light: '#a5392a',
-        main: '#700000',
-        dark: '#430000',
-        contrastText: '#ffffff',
-      },
-    },
-    assets: {
-      featureImage: `${CDN_ROOT}themes/reactory/images/phoenix.png`,
-      logo: `${CDN_ROOT}themes/reactory/images/logo.png`,
-      favicon: `${CDN_ROOT}themes/reactory/images/favicon.png`,
-      avatar: `${CDN_ROOT}themes/reactory/images/avatar.png`,
-    },
-    content: {
-      appTitle: 'Reactory - Build Apps. Fast.',
-      login: {
-        message: 'Building Apps. Just. Like. That.',
-      },
-    },
-  },
+  theme: 'reactory',  
+  themes,
   allowCustomTheme: true,
   auth_config: [
     {
@@ -326,18 +271,7 @@ const REACTORY_CONFIG: any = {
       enabled: false,
     },
   ],
-  settings: [
-    {
-      name: 'new_user_roles',
-      componentFqn: 'core.Setting@1.0.0',
-      formSchema: {
-        type: 'string',
-        title: 'Default User Role',
-        description: 'The default user role to assign to a new user',
-      },
-      data: ['USER'],
-    },
-  ],
+  settings,
   whitelist: [
     'localhost',
     'app.reactory.net',

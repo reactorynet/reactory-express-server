@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import { MimeType } from 'chartjs-node-canvas';
-import Mongoose from "mongoose";
+import Mongoose, { AnyArray } from "mongoose";
 import fs from 'fs';
 import ExcelJS from 'exceljs';
 import { TemplateType } from "./constants";
@@ -54,34 +54,361 @@ declare namespace Reactory {
     }
   }
 
-  export interface IReactoryClient {
+  /**
+   * Reactory Menu Item, used to define what menu entries are available
+   * for a given client application.  Each item can have sub menus defined in the 
+   * items array property
+   */
+  export interface IReactoryMenuItem {
+    /**
+     * The ordinal position defines the order in which the menu items
+     * are placed on the navigation surface. Lower numbers have higher 
+     * priority and will appear higher in the stack.
+     */
+    ordinal: number
+    /**
+     * The menu title, can either be a standard string or translation key
+     */
+    title: string
+    /**
+     * link for the menu item, these links need to map to a route defined in the 
+     * application routes otherwise the navigation won't go anywhere.
+     * 
+     * If you want to raise an event instead of a navigation link then
+     * add the link as "event://YourEventNameHere?param1=x&param2=y" 
+     * and the even will be raise through the reatory api with the parameters
+     * specified in the query params.
+     */
+    link: string
+    /**
+     * The icon to use for the menu item.
+     */
+    icon?: string
+    /**
+     * The roles that the user must have in order to access this menu.
+     */
+    roles?: string[]
+    /**
+     * The sub menu items for this menu item
+     */
+    items?: IReactoryMenuItem[]
+  }
+
+  /**
+   * Menu configuration item. 
+   */
+  export interface IReactoryMenuConfig {
+    /**
+     * A user friendly name for the menu group
+     */
+    name: string
+    /**
+     * A unqiue key for the menu group
+     */
+    key: string
+    /**
+     * A target area for the menu group to bind itself to.
+     * Each application can have a custom navigational system and 
+     * these navigational systems need to be aware of the menu configuration.
+     */
+    target: string
+    /**
+     * The roles the user should have in order to access this menu item
+     */
+    roles: string[]
+    /**
+     * The menu entries associated with this group.
+     */
+    entries: IReactoryMenuItem[]
+  }
+
+  /**
+   * The user structure that we permit in the base client config. This is useful for
+   * administrator account / system accounts that need to interact with other services.
+   */
+  export interface IStaticallyLoadedUser {
+    /**
+     * Email address
+     */
+    email: string
+    /**
+     * The roles granted to this user
+     */
+    roles: string[]
+    /**
+     * Firstname for the user
+     */
+    firstName: string
+    /**
+     * Lastname for the user
+     */
+    lastName: string
+  }
+
+  export interface IKeyValuePair { key: string, value: any }
+  export interface IReactoryComponent {
+    id?: string
+    name: string
+    nameSpace: string
+    version: string
+    title?: string
+    description?: string
+    author?: string
+    roles?: string[]
+    args?: IKeyValuePair[]
+  }
+
+  /**
+   * Client route configuration
+   */
+  export interface IReactoryRoute {
+    id?: string
+    /**
+     * The path for the route
+     */
+    path: string
+    /**
+     * Indicates whether the route is 
+     * public or not
+     */
+    public: boolean
+    /**
+     * The roles required for the route
+     */
+    roles: string
+    /**
+     * A component fqn to mount as the root component for the path
+     */
+    componentFqn: string
+    /**
+     * The arguments for the route
+     */
+    args: IKeyValuePair[]
+    /**
+     * indicates if the path should be 
+     * an exact match
+     */
+    exact: boolean
+    /**
+     * If set then this path will redirect to a different path
+     */
+    redirect?: string
+    /**
+     * Component array that needs to be bound to the route.
+     */
+    component: IReactoryComponent[]
+
+  }
+
+
+  /**
+   * Supported Theme Types.  
+   * Other rendering libraries will be added over time and each will 
+   * have their owne configuration schema
+   */
+  export type ReactoryThemeType = "material" | "material_native"
+
+  /**
+   * The application them mode types that the themes can support
+   * or it can indicate how the application can select the 
+   * default theme mode if there is more
+   * than one theme mode available.
+   */
+  export type ApplicationThemeModeType = "light" | "dark" | "os"
+  
+  /**
+   * Theme modes
+   */
+  export interface IReactoryThemeMode {
+    /**
+     * unique id for the theme mode
+     */
+    id?: string
+
+    /**
+     * Application theme mode
+     */  
+    mode: ApplicationThemeModeType
+    
+    /**
+     * A name for the theme mode
+     * */
+    
+    name: String
+    
+    /**
+     * Theme mode description
+     * */
+    
+    description?: String
+    
+    /**
+     * an icon for the application theme mode
+     */    
+    icon?: String
+    
+    /**
+     *The options that is associated with this theme mode
+    */
+    options: any
+  }
+
+  export type ReactoryThemeAssetType = "script" | "image" | "css" | "json"
+
+  export interface IReactoryThemeAsset {
+    id?:string
+    name: string
+    assetType: ReactoryThemeAssetType,
+    url: string
+    loader?: string
+    options?: any
+    data?: any
+  }
+
+  /**
+   * The reactory theme wrapper is used to contain the theme 
+   * configuration for different theme types
+   */
+  export interface IReactoryTheme {
+    id?: string
+    type: ReactoryThemeType
+    name?: string
+    nameSpace?: string    
+    version?: string
+    description?: string
+    defaultThemeMode?: ApplicationThemeModeType
+    modes?: IReactoryThemeMode[]
+    options?: any
+    assets?: IReactoryThemeAsset[]
+    content?: any
+    il8n?: any
+  }
+
+  /**
+   * The reactory client config structure that is used for base configuration options
+   */
+  export interface IReactoryClientConfig {
+    [key: string]: any
+    /**
+     * key for the client. This key is used by other processed
+     * to determine cross application access
+     */
     key: string,
+    /**
+     * The name of the of the application
+     */
     name: string,
+    /**
+     * The username for the application
+     */
     username: string,
+    /**
+     * A system email for the application
+     */
     email: string,
+    /**
+     * set to "generate" in order for the system to 
+     * automatically generate a salt for your password
+     */
     salt: string,
-    siteUrl: string,
-    emailSendVia: string,
-    emailApiKey: string,
-    resetEmailRoute: string,
+    /**
+     * The password for the application.  This password is
+     * used in the header of the client request in order to request
+     * access to the system.
+     */
     password: string,
+    /**
+     * An avatar for the application
+     */
     avatar: string, // application avatar
-    theme: string, // theme title
-    mode: string,
-    themeOptions: any,
+    /**
+     * The site url where the api is expecting
+     * the client application to be served from
+     */
+    siteUrl: string,
+    /**
+     * Email send via is the key of the email provider
+     * that you want to use in order to send emails.
+     */
+    emailSendVia: string,
+    /**
+     * The email api key for the application
+     */
+    emailApiKey: string,
+    /**
+     * DEPRECATED - not to be used
+     */
+    resetEmailRoute: string,
+    /**
+     * The menu configuration for the application
+     */
+    menus: IReactoryMenuConfig[],
+    /**
+     * The application roles the app will expose
+     */
     applicationRoles: string[],
-    billingType: string,
-    modules?: any[],
-    menus: any[],
-    routes: any[],
-    auth_config?: any[],
-    settings?: any[],
-    whitelist?: string[]
+    /**
+     * An array of users that should be automatically loaded / linked to this application
+     */
+    users?: IStaticallyLoadedUser[],
+    
+    /**
+     * Not used at the moment - may be deprecated
+     * in future.
+     */
     components?: any[],
-    //deafult user accounts to create at startup
-    users?: any[],
+
+    /**
+     * The title of the current active theme for the user Api status call
+     */
+    theme?: string,
+    /**
+     * Available themes that the application can provide
+     */
+    themes?: IReactoryTheme[]
+    
+    /**
+     * The billing type structure for this application partner
+     * These will only apply to application where there is a billing model
+     * associated with the application access
+     */
+    billingType?: string,
+    /**
+     * The built in modules for the application. These are modules that 
+     * are configured for the application the application can compile 
+     * these at runtime.
+     */
+    modules?: any[],    
+    /**
+     * The configured routes for the application
+     */
+    routes: any[],
+    
+    /**
+     * enabled authentication configuration
+     */
+    auth_config?: any[],
+    /**
+     * 
+     */
+    settings?: any[],
+    
+    /**
+     * A whitelist of referring sites that are permitted for this application 
+     * configuration.
+     */
+    whitelist?: string[]
+    
+    /**
+     * If set to true to the client should be permitted to enable custom themes
+     */
     allowCustomTheme?: boolean,
+    
+  }
+  
+  export interface IReactoryClient extends IReactoryClientConfig {
     createdAt?: Date,
+    //deafult user accounts to create at startup
     updatedAt?: Date,
     colorScheme: (colorvalue: string) => any
     getSetting: (name: string, defaultValue?: any, create?: boolean, componentFqn?: string) => any;
@@ -2098,13 +2425,66 @@ declare namespace Reactory {
 
   export type TReactoryTask = IReactoryTask | IReactoryTaskDocument
 
+  /**
+   * Type alias for logged in context execution action
+   * if exec the client should must activate the component 
+   * given in the "nameSpace.name@version" and the data should be 
+   * passed as a data property.
+   */
+  export type TLoggedInContextExectionAction = "exec" | "mount" | "none";
   
+  /**
+   * Additional Data for the Reactory Logged in context 
+   */
+  export interface IReactoryLoggedInContextAdditionalData {
+    id: string
+    nameSpace: string
+    name: string
+    version: string
+    data: any
+    action: TLoggedInContextExectionAction
+  }
+ 
+  /**
+   * Represents the logged in context for the user. This includes the 
+   * organization, business unit and team data elements as well as 
+   * the roles and any additional data provided by the modules
+   */
+  export interface IReactoryLoggedInContext {
+    id: string
+    user: Reactory.IUser    
+    memberships: Reactory.IMembership[]
+    organization: Reactory.IOrganization
+    businessUnit: Reactory.IBusinessUnit
+    team: Reactory.ITeam
+    roles: string[]
+    altRoles: string[]
+    additional: IReactoryLoggedInContextAdditionalData[]
+  }
   
   /**
    * Data structure that represents the Reactory Api Status
    */
   export interface IReactoryApiStatus {
     id: string,
+    when: Date,
+    status: string,
+    /**
+     * @deprecated 
+     */
+    firstName: string,
+    /**
+     * @deprecated
+     */
+    lastName: string,
+    /**
+     * All user related context information
+     * is kept in this object
+     */
+    loggedIn: IReactoryLoggedInContext
+    /**
+     * Reactory menu entries for this user 
+     */
     menus: ObjectId[] | IReactoryMenu[]
     [key: string]: any
   }

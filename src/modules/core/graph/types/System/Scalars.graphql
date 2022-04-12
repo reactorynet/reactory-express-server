@@ -36,13 +36,13 @@ type DocumentUrl {
 
 
 type Query {    
-    apiStatus: ApiStatus
+  apiStatus(theme: String): ApiStatus
 }
 
 type Subscription {
-    apiStatus: String
+  apiStatus(theme: String): ApiStatus
 }
 
 type Mutation {
-    apiStatus: String
+  ReactorySetUserDefaultTheme(theme: String): ApplicationTheme
 }

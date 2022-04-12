@@ -1,0 +1,127 @@
+"""
+The ApiStatus type provides a full structure of the application status within the context of the 
+logged in / active user.
+"""
+type ApiStatus {
+    """
+    A unique id for the ApiStatus
+    """
+    id: String
+    """
+    The time stamp for the ApiStatus, provided in UTC.
+    """
+    when: Date!
+    """
+    Should return "API-OK" if everything compiled correctly and the server is running
+    """
+    status: String!
+    """
+    Property for the Reactory Server data 
+    """
+    server: ReactoryServer
+    """
+    The logged in context object
+    """
+    loggedIn: LoggedInContext
+    """
+    Shortcut to the logged in user first name. 
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    firstName: String
+    """
+    Shortcut to the logged in user lastName. 
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    lastName: String
+    """
+    Shortcut to the logged in user avatar. 
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    avatar: String
+    """
+    Shortcut to the logged in user first name. 
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    email: String
+    """
+    Navigation components are a set of components ids that has to be loaded
+    for navigational use. Each client application must implement their own 
+    listeners / renders for these.
+    """
+    navigationComponents: [NavigationComponentDefinition]
+    """
+    Shortcut to the logged in user organization
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    organization: Organization
+    """
+    Shortcut to the logged in user organization
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    businessUnit: BusinessUnit
+    """
+    Shortcut to the logged in user organization
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    roles: [String]
+    """
+    Shortcut to the logged in user organization
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    alt_roles: [String]
+    menus: [Menu]
+    routes: [ClientRoute]
+    """
+    Shortcut to the logged in user organization
+    NOTE!!: These will be deprecated in a future versions and use is discouraged.
+    """
+    memberships: [UserMembership]
+    
+    """
+    The list of roles that the application itself exposes and use.
+    These are required for the client to do a role check where required.
+    """
+    applicationRoles: [String]
+    """
+    The application avatar
+    """
+    applicationAvatar: String
+    """
+    Application name
+    """
+    applicationName: String
+    """
+    The active theme name
+    """
+    theme: String
+    """
+    List of themes available
+    """
+    themes: [ApplicationTheme]
+
+    """
+    The active theme for the application / user
+    """
+    activeTheme: ApplicationTheme   
+
+    """
+    colorSchemes for the 
+    Note!!. These options will be availabe on the 
+    application active theme 
+    """
+    colorSchemes: Any
+    
+    """
+    A list of active messages for the user.
+    These messages will remain in the payload until the user has dismissed them
+    """
+    messages: [ReactoryUXMessage]
+    """
+    Server signature
+    """
+    signature: String
+    """
+    Server public key
+    """
+    publicKey: String
+}

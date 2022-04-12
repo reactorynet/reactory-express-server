@@ -1,12 +1,3 @@
-enum Role {
-    REACTORY_ADMIN,
-    ADMIN,
-    ORGANIZATION_ADMIN,
-    FACILITATOR,        
-    USER,
-    HOD
-}
-
 """
 Reactory Enum Types for Authentication Providers 
 """
@@ -39,5 +30,9 @@ enum AuthProvider {
   The LOCAL authentication provider
   """
   LOCAL,
+  """
+  Twitter Authentication provider
+  """
+  TWITTER
 
 }

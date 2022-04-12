@@ -39,7 +39,7 @@ export const MicrosoftOpenIDAuthenticationUISchema: any = {
     }
   },
   route: {
-    'ui:widget': 'LinkFieldWidget',
+    //'ui:widget': 'LinkFieldWidget',
     'ui:options': {
       showLabel: false,
       fullWidth: false,
@@ -64,7 +64,7 @@ export const MicrosoftOpenIDAuthenticationUISchema: any = {
 export const MicrosoftOpenIDAuthenticationForm: Reactory.IReactoryForm = {
   id: 'MicrosoftLogin',
   uiFramework: 'material',
-  uiSupport: ['material', 'bootstrap'],
+  uiSupport: ['material'],
   uiResources: [],
   title: 'Microsoft O365 Authentication',
   tags: ['Authentication', 'Login', 'OpenId', 'Microsoft'],

@@ -28,9 +28,10 @@ const ReactoryClientSchema = new mongoose.Schema<Reactory.IReactoryClient>({
   resetEmailRoute: String,
   password: String,
   avatar: String, // application avatar
-  theme: String, // theme title
-  mode: String,
-  themeOptions: {},
+  theme: String, // default theme for this client
+  mode: String,  
+  themes: [{
+  }],
   applicationRoles: [String], // roles configured for the app
   billingType: String,
   components: [

@@ -41,6 +41,7 @@ query status {
     id
     theme
     themeOptions
+    themes
     colorSchemes
     routes {
       id
