@@ -7,7 +7,7 @@ type ApplicationThemeAsset {
   """
   id: String
   """
-  A human readable name for the asset
+  A human readable name for the asset.
   """
   name: String
   """

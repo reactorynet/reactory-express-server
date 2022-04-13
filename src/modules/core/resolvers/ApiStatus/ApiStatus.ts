@@ -86,9 +86,9 @@ const DEFAULT_MATERIAL_THEME = {
   palette: {
     mode: 'dark',    
     primary: {
-      light: '#352c54',
-      main: '#10012b',
-      dark: '#000001',
+      light: '#e3f2fd',
+      main: '#90caf9',
+      dark: '#42a5f5',
       contrastText: '#ffffff',
     },
     secondary: {
@@ -98,8 +98,8 @@ const DEFAULT_MATERIAL_THEME = {
       contrastText: '#ffffff',
     },
     background: {
-      paper: '#424242',
-      default: '#424242'
+      paper: '#121212',
+      default: '#121212'
     }
   },
 }
@@ -141,31 +141,45 @@ class ApiStatus {
   };
 
   @property("ApiStatus", "activeTheme")
-  themeOptions(apiStatus: Reactory.IReactoryApiStatus, args: { theme: string }, context: Reactory.IReactoryContext){
+  themeOptions(apiStatus: Reactory.IReactoryApiStatus, args: { theme: string, mode: string }, context: Reactory.IReactoryContext){
 
     debugger
     const { themes = [], theme = "reactory" } = context.partner;
     
-    let themeOptions: Reactory.IReactoryTheme = null;
+    let activeTheme: Reactory.IReactoryTheme = null;
     let $themename = args.theme || theme;
+    
 
     if(themes.length > 0) {
-      themeOptions = themes.find(($theme) => { return $theme.name === $themename });
+      activeTheme = themes.find(($theme) => { return $theme.name === $themename });
     }
 
-    let $themeOptions = themeOptions ? { ...themeOptions } : { type: "material", options: { ...DEFAULT_MATERIAL_THEME },  };
-
-    let primary = '#10012b'; // default primary color
-    let secondary = '#430000'; // default secondary color
-
-    if (themeOptions.type === "material" && themeOptions.options) {
-      let mode = themeOptions?.options?.mode || "dark";
-
-      primary = themeOptions?.options?.palette?.primary[mode] || primary;
-      secondary = themeOptions?.options?.palette?.secondary[mode] || secondary;
+    if(!activeTheme) {
+      activeTheme = {
+        type: "material", 
+        name: "reactory",
+        assets: [],
+        content: {},
+        defaultThemeMode: 'dark',
+        version: '1.0.0',
+        options: { ...DEFAULT_MATERIAL_THEME }
+      };
     }
 
-    return $themeOptions
+    let $thememode = args.mode || activeTheme?.defaultThemeMode || "dark";    
+    
+    if(!activeTheme.options) {
+      activeTheme.options = { ...DEFAULT_MATERIAL_THEME }
+    }
+
+    if(activeTheme.modes) {
+      let modeOptions = activeTheme.modes.find((mode) => { return mode.mode === $thememode });      
+      if(modeOptions) {
+        activeTheme.options = { ...modeOptions.options }
+      }
+    }
+
+    return activeTheme
   }
 
   @property("ApiStatus", "colorSchemes")

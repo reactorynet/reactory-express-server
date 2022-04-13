@@ -213,6 +213,12 @@ type ReactoryClient {
   white list
   """
   whitelist: [String]
+
+  """
+  A list of plugins required by the application
+  """
+  plugins: [ApplicationPlugin]
+
   """
   Date and time the client record was first created
   """
@@ -225,55 +231,6 @@ type ReactoryClient {
 
 
 
-"""
-The Application Plugin stores information about the 
-"""
-type ApplicationPlugin {
-  """
-  internal id for the plugin
-  """
-  id: String
-  """
-  namespace for the plugin
-  """
-  nameSpace: String
-  """
-  name for the plugin
-  """
-  name: String
-  """
-  plugin version to use
-  """
-  version: String
-  """
-  A short description for the plugin
-  """
-  description: String
-  """
-  The platform the plugin is targeted for
-  """
-  platform: ApplicationPluginPlatform
-  """
-  The url for the plugin. This is the location the 
-  compiled / prepared plugin is served from.
-  """
-  url: String
-  """
-  A component fqn that is used to load the 
-  plugin into the framework.  Each platform
-  will have a default loader, except for native
-  which you will have to contruct your own loader
-  """
-  loader: String
-  """
-  An any options object that can be used to configure the plugin loader.
-  """
-  options: Any
-  """
-  Indicates whether or not the plugin is enabled.
-  """
-  enabled: Boolean
-}
 
 """
 Navigation component definitions are used to inject navigation aide to 

@@ -47,7 +47,8 @@ The Application Plugin Platform enum
 enum ApplicationPluginPlatform {
   """
   web indidicates that the plugin is targeted for the web as a javascript module
-  for the reactory client
+  for the reactory client or custom web clients that perform their own module and component
+  management
   """
   web,
   """

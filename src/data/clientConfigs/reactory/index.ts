@@ -13,7 +13,7 @@ import {
 } from '../helpers/defaultRoutes';
 import { Reactory } from 'types/reactory';
 
-const { CDN_ROOT, MODE } = process.env;
+const { CDN_ROOT, MODE, NODE_ENV } = process.env;
 
 const staticContentMappings = [
   {
@@ -256,6 +256,7 @@ const REACTORY_CONFIG: Reactory.IReactoryClientConfig = {
   ],
   theme: 'reactory',  
   themes,
+  plugins: [],
   allowCustomTheme: true,
   auth_config: [
     {

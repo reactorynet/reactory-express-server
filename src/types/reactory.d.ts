@@ -284,6 +284,59 @@ declare namespace Reactory {
     il8n?: any
   }
 
+
+  export type ReactoryApplicationPluginPlatform = "web" | "ios" | "android" | "native"
+
+  /**
+   * The IReactoryClientPlugin defines the data elements required
+   * by the client or a builder tool to download and install a 
+   * given plugin.
+   */
+  export interface IReactoryApplicationPlugin {
+    id?: string
+    /**
+     * The namespace for the plugin
+     */
+    nameSpace: string
+    /**
+     * The name for the plugin
+     */
+    name: string
+    /**
+     * The version of the plugin
+     */
+    version: string
+    /**
+     * A user friendly description for the the 
+     */
+    description: string
+    /**
+     * Reactory Application Plugin Platform
+     */
+    platform: ReactoryApplicationPluginPlatform
+    /**
+     * url for the plugin
+     */
+    url: string
+    /**
+     * A loader fqn that can be used to process
+     * the load request
+     */
+    loader?: string
+    /**
+     * The options associated with the plugin
+     */
+    options?: any
+    /**
+     * indicates whether or not the plugin is enabled.
+     */
+    enabled?: boolean
+    /**
+     * A list of roles that has access to this
+     */
+    roles?: string[]
+  }
+
   /**
    * The reactory client config structure that is used for base configuration options
    */
@@ -367,6 +420,7 @@ declare namespace Reactory {
      */
     themes?: IReactoryTheme[]
     
+    plugins?: IReactoryApplicationPlugin[]
     /**
      * The billing type structure for this application partner
      * These will only apply to application where there is a billing model
