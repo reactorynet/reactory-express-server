@@ -2,6 +2,7 @@ import logger from '@reactory/server-core/logging';
 import { Reactory } from '@reactory/server-core/types/reactory';
 import lodash from 'lodash';
 import ApiError, { UserNotFoundException, InsufficientPermissions } from '@reactory/server-core/exceptions';
+
 export function roles(allowedRoles: string[], contextKey: string = 'this.context') {  
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {    
 

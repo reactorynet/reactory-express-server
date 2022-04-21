@@ -73,7 +73,6 @@ class UserService implements Reactory.Service.IReactoryUserService {
     
     const context = this.context;
     
-    debugger 
     context.log(`Update Demographics start`, {
       userId,
       organisationId,
