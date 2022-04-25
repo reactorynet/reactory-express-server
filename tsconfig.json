@@ -1,12 +1,11 @@
 {
   "compilerOptions": {
       "jsx": "react",
-      "module": "esnext",
+      "module": "CommonJS",
       "noImplicitAny": true,
       "removeComments": true,
       "moduleResolution": "node",
-      "allowSyntheticDefaultImports": true,
-      // Process & infer types from .js files.
+      "allowSyntheticDefaultImports": true,    
       "experimentalDecorators": true,
       "emitDecoratorMetadata": true,
       "allowJs": true,  

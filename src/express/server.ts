@@ -42,6 +42,7 @@ import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContex
 // @ts-ignore
 import { Reactory } from '@reactory/server-core/types/reactory';
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
+
 import colors from 'colors/safe';
 import http from 'http';
 
@@ -373,6 +374,7 @@ Environment Settings:
 
     reactoryExpress.use(flash());
 
+    
 
   }).catch((startupError) => {
     logger.error(colors.red('Server was unable to start successfully.'), startupError);

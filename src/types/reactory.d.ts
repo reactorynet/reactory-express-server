@@ -266,6 +266,23 @@ declare namespace Reactory {
   }
 
   /**
+   * A layout represents a special type of schema that drives
+   * the layout for a given route.
+   */
+  export interface IReactoryLayout {
+    
+    id?: string
+    nameSpace: string
+    name: string
+    version: string
+    description?: string
+    schema: ISchema
+    uiSchema?: IUISchema
+    default?: boolean
+    inherits?: string
+  }
+
+  /**
    * The reactory theme wrapper is used to contain the theme 
    * configuration for different theme types
    */
@@ -280,6 +297,7 @@ declare namespace Reactory {
     modes?: IReactoryThemeMode[]
     options?: any
     assets?: IReactoryThemeAsset[]
+    layouts?: IReactoryLayout
     content?: any
     il8n?: any
   }

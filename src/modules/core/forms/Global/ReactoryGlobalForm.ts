@@ -12,7 +12,7 @@ const MoresPluginForm: Reactory.IReactoryForm = {
             id: 'reactory.core',
             name: 'reactory.core',
             type: 'script',
-            uri: `${ENVIRONMENT.CDN_ROOT}plugins/reactory-core/lib/reactory.core.js`,
+            uri: `${ENVIRONMENT.CDN_ROOT}plugins/reactory-client-core/lib/reactory.client.core.js`,
         },
     ],
     title: 'Reactory Core Global Form',

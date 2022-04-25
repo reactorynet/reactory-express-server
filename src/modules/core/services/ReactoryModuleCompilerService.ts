@@ -241,7 +241,6 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
 
     /**
      * The module compiler MUST return a valid compiled resource
-     * either via 
      */
     const resource: Reactory.IReactoryFormResource = {
       name: 'Compiled Runtime',

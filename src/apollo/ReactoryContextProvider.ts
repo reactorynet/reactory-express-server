@@ -116,7 +116,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     warn: $warn,
     debug: $debug,
     error: $error,
-    hasRole: (role: string, partner?: Reactory.IPartner, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => {
+    hasRole: (role: string, partner?: Reactory.IReactoryClient, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => {
 
       if($session.req.user === null || $session.req.user === undefined) {
         $log(`User is anon`, {}, 'debug', 'ReactoryContextProvider')

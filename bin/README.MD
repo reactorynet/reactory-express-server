@@ -27,10 +27,9 @@ bin/[start.sh](./start.sh)
 ## Production mode
 In a production mode using pm2
 
-`reactory-server>bin/serve.sh <client-key> <target> <environment>`
+    reactory-server>bin/serve.sh <client-key> <target> <environment>
 
-
-bin/[serve.sh](./serve.sh) 
+#### bin/[serve.sh](./serve.sh) 
 ```
 echo Starting Reactory Server key: [${1:-reactory}] target: ${2:-local} environment: ${3:-development}
 pm2 start ./config/${1:-reactory}/pm2.${2:-local}.config.js --env ${3:-development}
