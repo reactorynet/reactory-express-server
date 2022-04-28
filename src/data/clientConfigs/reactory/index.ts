@@ -196,7 +196,7 @@ const REACTORY_CONFIG: Reactory.IReactoryClientConfig = {
       path: '/profile',
       public: false,
       roles: ['USER'],
-      componentFqn: 'core.Profile@1.0.0',
+      componentFqn: 'core.UserProfile@1.0.0',
     },
     {
       key: 'content-capture',
@@ -247,7 +247,7 @@ const REACTORY_CONFIG: Reactory.IReactoryClientConfig = {
     {
       key: 'graphiql',
       title: 'GraphiQL',
-      path: '/graphiql/**',
+      path: '/graphiql/*',
       exact: true,
       public: true,
       roles: ['ADMIN'],

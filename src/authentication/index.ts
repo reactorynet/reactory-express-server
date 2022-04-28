@@ -11,7 +11,7 @@ import passport, {
 import { Reactory } from '@reactory/server-core/types/reactory';
 import jwt from 'jwt-simple';
 import moment from 'moment';
-import uuid from 'uuid';
+import { v4 as uuid } from 'uuid';
 import { isNil } from 'lodash';
 // import LocalStrategy from 'passport-local';
 import { Application, Request } from 'express';

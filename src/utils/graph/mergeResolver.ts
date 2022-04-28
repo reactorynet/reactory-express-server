@@ -1,24 +1,22 @@
 import logger from "@reactory/server-core/logging";
-import { Reactory } from "@reactory/server-core/types/reactory";
-import { response } from "express";
-import ReactoryContent from "modules/core/resolvers/ReactoryContent";
+import Reactory from "@reactory/reactory-core"
 
 
-type ReactoryResolverFunc = () => Reactory.IResolverStruct;
-type ReactoryResolver = ReactoryResolverFunc | Reactory.IResolverStruct
-   | Reactory.IReactoryResolver;
+type ReactoryResolverFunc = () => Reactory.Graph.IGraphShape;
+type ReactoryResolver = ReactoryResolverFunc | Reactory.Graph.IGraphShape
+   | Reactory.Graph.IReactoryResolver;
 
 
 function isResolverFunc(resolver: ReactoryResolver): resolver is ReactoryResolverFunc {
   return typeof (resolver as ReactoryResolverFunc) === "function";
 };
 
-function isResolverObject(resolver: ReactoryResolver): resolver is Reactory.IResolverStruct {
-  let $resolver = resolver as Reactory.IResolverStruct;
+function isResolverObject(resolver: ReactoryResolver): resolver is Reactory.Graph.IGraphShape {
+  let $resolver = resolver as Reactory.Graph.IGraphShape;
   return Object.keys($resolver).length > 0
 };
 
-function isResolverClass(resolver: ReactoryResolver): resolver is Reactory.IReactoryResolver {
+function isResolverClass(resolver: ReactoryResolver): resolver is Reactory.Graph.IGraphShape {
   //@ts-ignore
   if(resolver.prototype && resolver.prototype.constructor && resolver.prototype.resolver ) {
     return true
@@ -28,16 +26,16 @@ function isResolverClass(resolver: ReactoryResolver): resolver is Reactory.IReac
 }
 
 
-const MergeGraphResolvers = (resolvers: ReactoryResolver[] = []): Reactory.IResolverStruct => {
+const MergeGraphResolvers = (resolvers: ReactoryResolver[] = []): Reactory.Graph.IGraphShape => {
 
-  let rootResolver: Reactory.IResolverStruct = {
+  let rootResolver: Reactory.Graph.IGraphShape = {
     Query: {},
     Mutation: {},
     Subscription: {}
   };
 
   resolvers.forEach((resolver: ReactoryResolver) => {
-    let $resolver: Reactory.IResolverStruct = {
+    let $resolver: Reactory.Graph.IGraphShape = {
       Query: {},
       Mutation: {},
       Subscription: {},
@@ -59,7 +57,7 @@ const MergeGraphResolvers = (resolvers: ReactoryResolver[] = []): Reactory.IReso
 
 
     if (isResolverObject(resolver) === true) {
-      $resolver = (resolver as Reactory.IResolverStruct);
+      $resolver = (resolver as Reactory.Graph.IGraphShape);
     }
 
     if(Object.keys($resolver).length > 0 ) {

@@ -1,7 +1,7 @@
 'use strict'
 import lodash, { isArray } from 'lodash';
 import ReactoryApi from '@reactory/server-core/application';
-import uuid from 'uuid';
+import { v4 as uuid } from 'uuid';
 import { Application, User, ReactoryClient, Menu, ClientComponent } from '@reactory/server-core/models';
 import { installDefaultEmailTemplates } from '@reactory/server-core/emails';
 import data from '@reactory/server-core/data';

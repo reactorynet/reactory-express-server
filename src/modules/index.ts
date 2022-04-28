@@ -3,11 +3,9 @@
 // compile / run is done as it is generated at startup based on the configuration.
 //@ts-ignore
 import fs from 'fs';
-import { Reactory } from 'types/reactory';
 
 
-
-let resolved: Reactory.IReactoryModule[] = [];
+let resolved: Reactory.Server.IReactoryModule[] = [];
 
 if (fs.existsSync('./src/modules/__index.ts') === true) {
   resolved = require('./__index').default;

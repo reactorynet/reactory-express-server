@@ -2,6 +2,7 @@
 scalar ObjID
 scalar Date
 scalar Any
+scalar Upload
 
 type Meta {
   id: ObjID

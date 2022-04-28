@@ -78,12 +78,12 @@ type ApiStatus {
     These are the routes that are available within the application 
     and the user context
     """
-    routes: [ClientRoute]
+    routes: [ClientRoute] 
     """
     Shortcut to the logged in user membership
     NOTE!!: These will be deprecated in a future versions and use is discouraged.
     """
-    memberships: [UserMembership]
+    memberships: [UserMembership] @auth(roles: ["USER"])
     
     """
     The list of roles that the application itself exposes and use.

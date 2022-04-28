@@ -11,8 +11,8 @@ import express, { Application, NextFunction } from 'express';
 import session from 'express-session';
 import bodyParser from 'body-parser';
 import passport from 'passport';
-import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
-
+import { ApolloServer, ApolloServerExpressConfig, makeExecutableSchema, SchemaDirectiveVisitor } from 'apollo-server-express';
+import { GraphqlUpload } from 'graphql-upload';
 import flash from 'connect-flash';
 /**
  * Disabling the linting for the import statements
@@ -29,6 +29,8 @@ import froala from '@reactory/server-core/froala';
 import resources from '@reactory/server-core/resources';
 import typeDefs from '@reactory/server-core/models/graphql/types';
 import resolvers from '@reactory/server-core/models/graphql/resolvers';
+import directiveProviders from '@reactory/server-core/models/graphql/directives';
+
 import AuthConfig from '@reactory/server-core/authentication';
 import workflow from '@reactory/server-core/workflow';
 import pdf from '@reactory/server-core/pdf';
@@ -45,6 +47,8 @@ import resolveUrl from '@reactory/server-core/utils/url/resolve';
 
 import colors from 'colors/safe';
 import http from 'http';
+import { GraphQLSchema } from 'graphql';
+
 
 
 
@@ -251,16 +255,36 @@ Environment Settings:
     }),
   );
 
+  let $schemaDirectives: Record<string, typeof SchemaDirectiveVisitor> = {};
+
+  
+
   try {
-    const expressConfig: ApolloServerExpressConfig = {
+
+    let $schema: GraphQLSchema = makeExecutableSchema({
       typeDefs,
-      resolvers,
+      resolvers,      
+    });
+
+    debugger
+    directiveProviders.forEach((provider) => {
+      try {
+        logger.info(`Processing schema directive: "@${provider.name}"`);
+        $schema = provider.transformer($schema);
+      } catch (directiveErr) {
+        logger.error(`Error adding directive ${provider.name}`);
+      }
+    });
+
+    const expressConfig: ApolloServerExpressConfig = {
+      schema: $schema,      
       context: ReactoryContextProvider,
       uploads: {
         maxFileSize: 20000000,
         maxFiles: 10,
       },
     };
+
     apolloServer = new ApolloServer(expressConfig);
     graphcompiled = true;
     logger.info('Graph Schema Compiled, starting express');

@@ -1,8 +1,7 @@
 import { StepBody, ExecutionResult } from 'workflow-es';
-import Cache from '../models/CoreCache';
 import moment from 'moment';
-import logger from '../../../logging';
-import amq from '../../../amq';
+import Cache from '@reactory/server-modules/core/models/CoreCache';
+import logger from '@reactory/server-core/logging';
 
 class BeforeCacheClean extends StepBody {
   run(context) {
@@ -29,6 +28,10 @@ class AfterCacheClean extends StepBody {
 
 
 class CleanCacheWorkflow {
+
+  id: string
+  version: number
+
   constructor() {
     this.id = 'core.CleanCacheWorkflow';
     this.version = 1;
@@ -49,6 +52,8 @@ class CleanCacheWorkflow {
           step.props = data.props;
       });                   
   }
+
+  static meta = {};
 }
 
 CleanCacheWorkflow.meta = {

@@ -1,4 +1,4 @@
-import uuid from 'uuid';
+import { v4 as uuid } from 'uuid';
 import { Reactory } from "@reactory/server-core/types/reactory"; // eslint-disable-line
 import { getService } from '@reactory/server-core/services';  // eslint-disable-line
 import logger from '@reactory/server-core/logging';

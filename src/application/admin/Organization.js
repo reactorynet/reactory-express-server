@@ -7,7 +7,6 @@ import co from 'co';
 import * as dotenv from 'dotenv';
 import _, { isNil, find, isNaN } from 'lodash';
 import pngToJpeg from 'png-to-jpeg';
-import uuid from 'uuid';
 import { existsSync, copyFileSync, mkdirSync, writeFileSync } from 'fs';
 import { ObjectId } from 'mongodb';
 import {
