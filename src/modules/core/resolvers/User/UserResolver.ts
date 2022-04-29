@@ -98,7 +98,8 @@ const MoresAssessmentsForUser = async (
         assessmentTypes.push("360");
         break;
       }
-      case "mores": {
+      case "mores": 
+      case "ivolve":{
         assessmentTypes.push("i360");
         assessmentTypes.push("l360");
         assessmentTypes.push("team180");
@@ -122,11 +123,11 @@ const MoresAssessmentsForUser = async (
         $in: assessmentTypes,
       },
       status: { $in: status },
-      endDate: {
-        $gte: moment().subtract(1, "month").startOf("month").toDate(),
-      },
+      // endDate: {
+      //   $gte: moment().subtract(1, "month").startOf("month").toDate(),
+      // },
     }).then();
-
+    const endDatum = moment().subtract(1, "month").startOf("month").toDate()
     logger.debug(`Found (${surveys.length}) surveys for user`);
 
     const assessments = await Assessment.find({
@@ -138,7 +139,6 @@ const MoresAssessmentsForUser = async (
       .populate("delegate")
       .populate("survey")
       .then();
-
     return assessments;
   }
 
@@ -474,7 +474,6 @@ const userResolvers = {
     },
     async userWithId(obj: any, { id }: any, context: any, info: any) {
       const user = await User.findById(id).then();
-
       return user;
     },
     async userPeers(obj: any, { id, organizationId }: any) {
