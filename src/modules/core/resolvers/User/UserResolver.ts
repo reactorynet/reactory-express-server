@@ -123,9 +123,9 @@ const MoresAssessmentsForUser = async (
         $in: assessmentTypes,
       },
       status: { $in: status },
-      // endDate: {
-      //   $gte: moment().subtract(1, "month").startOf("month").toDate(),
-      // },
+      endDate: {
+        $gte: moment().subtract(1, "month").startOf("month").toDate(),
+      },
     }).then();
     const endDatum = moment().subtract(1, "month").startOf("month").toDate()
     logger.debug(`Found (${surveys.length}) surveys for user`);
