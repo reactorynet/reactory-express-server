@@ -4,7 +4,7 @@ import {
   queryAsync as mysql,
 } from '@reactory/server-core/database/mysql';
 import logger from '@reactory/server-core/logging';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import {
   GeneratorConfig,
   GeneratorTableDefinition,
@@ -523,7 +523,7 @@ const arrayListFormFromTableConnection = (table: GeneratorTableDefinition, conne
   };
 };
 
-const formDefinitionFromTableConnection = (table: GeneratorTableDefinition, connectionId = 'mysql.default'): Reactory.IReactoryForm => {
+const formDefinitionFromTableConnection = (table: GeneratorTableDefinition, connectionId = 'mysql.default'): Reactory.Forms.IReactoryForm => {
   logger.debug(`Generating Form Definition For ${table.schemaName}.${table.tableName}@${connectionId}`);
   let _required: string[] = [];
   let properties: any = {};
@@ -596,7 +596,7 @@ const formDefinitionFromTableConnection = (table: GeneratorTableDefinition, conn
   };
 };
 
-export const generate = async (props: GeneratorConfig): Promise<Reactory.IReactoryForm[]> => {
+export const generate = async (props: GeneratorConfig): Promise<Reactory.Forms.IReactoryForm[]> => {
 
   const schemas: GeneratorDatabaseDefinition[] = await listSchemas(props).then();
   let tables: GeneratorTableDefinition[] = [];
@@ -616,7 +616,7 @@ export const generate = async (props: GeneratorConfig): Promise<Reactory.IReacto
   })).then();
 
 
-  const generatedForms: Reactory.IReactoryForm[] = [];
+  const generatedForms: Reactory.Forms.IReactoryForm[] = [];
 
   tables.forEach(table => {
     const instanceForm = formDefinitionFromTableConnection(table, props.connectionId || 'mysql.default');

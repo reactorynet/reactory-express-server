@@ -9,7 +9,9 @@ import shared from './shared';
 import { Login } from './Security';
 import SupportForm from './Support/SupportRequest';
 import SupportTickets from './Support/SupportTickets';
+import Applications from './Applications';
 export default [
+  Applications,
   ReactoryGlobalPlugin,
   AboutUsPage,  
   ReactoryContentCapture,
@@ -20,5 +22,5 @@ export default [
   ...EmailForms,
   ...shared,
   SupportForm,
-  SupportTickets
+  SupportTickets,
 ];

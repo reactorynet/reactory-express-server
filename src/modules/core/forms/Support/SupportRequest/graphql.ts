@@ -1,4 +1,4 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import version from './version';
 
 const graphql: Reactory.IFormGraphDefinition = {

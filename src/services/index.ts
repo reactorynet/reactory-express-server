@@ -1,6 +1,6 @@
 
 
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
 import modules from '@reactory/server-core/modules';
 import ApiError from 'exceptions';
@@ -20,7 +20,7 @@ const getAlias = (id: string) => {
   return name;
 }
 
-export const getService = (id: string, props: any = {}, context: Reactory.IReactoryContext, lifeCycle: Reactory.SERVICE_LIFECYCLE = "instance"): any => {
+export const getService = (id: string, props: any = {}, context: Reactory.Server.IReactoryContext, lifeCycle: Reactory.SERVICE_LIFECYCLE = "instance"): any => {
 
   if (serviceRegister[id]) {
     const svcDef = serviceRegister[id];
@@ -90,7 +90,7 @@ export const getService = (id: string, props: any = {}, context: Reactory.IReact
   }
 }
 
-modules.enabled.forEach((installedModule: Reactory.IReactoryModule) => {
+modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
   /**
       "id": "0c22819f-bca0-4947-b662-9190063c8277",
       "name": "Lasec",

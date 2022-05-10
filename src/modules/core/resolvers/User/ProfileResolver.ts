@@ -181,7 +181,7 @@ const isTokenValid = async (msauth: any, refresh: boolean = true, userToCheck: R
   };
 };
 
-const SetPersonalDemographics = async (args, context: Reactory.IReactoryContext) => {
+const SetPersonalDemographics = async (args, context: Reactory.Server.IReactoryContext) => {
   logger.debug(`SAVING MY PERSONAL DEMOGRAPHICS :: ${JSON.stringify(args)}`);
 
   try {
@@ -203,7 +203,7 @@ const getPersonalDemographics = async (args) => {
 
 export default {
   Query: {
-    refreshProfileData: async (parent: any, params: { id: string, skipImage: boolean }, context: Reactory.IReactoryContext) => {
+    refreshProfileData: async (parent: any, params: { id: string, skipImage: boolean }, context: Reactory.Server.IReactoryContext) => {
       let userToRefresh = context.user;
       const { id, skipImage } = params;
       const uxmessages = [];
@@ -321,7 +321,7 @@ export default {
     },
   },
   Mutation: {
-    async CoreSetPersonalDemographics(obj: any, args: IPersonalDemographicsInput, context: Reactory.IReactoryContext) {
+    async CoreSetPersonalDemographics(obj: any, args: IPersonalDemographicsInput, context: Reactory.Server.IReactoryContext) {
       return SetPersonalDemographics(args, context);
     }
   }

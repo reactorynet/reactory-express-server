@@ -13,7 +13,7 @@ import defaultEmailTemplates from './defaultEmailTemplates';
 import AuthConfig from '../authentication';
 import logger from '../logging';
 
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { Mores } from '@reactory/server-core/modules/mores/types/mores'
 
 import { SURVEY_EVENTS_TO_TRACK } from '@reactory/server-core/models/index';

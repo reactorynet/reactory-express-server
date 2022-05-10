@@ -5,7 +5,7 @@ import { setContext } from 'apollo-link-context';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 import gql from 'graphql-tag';
 import AuthConfig from '../authentication';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { ApolloQueryResult, FetchResult } from 'apollo-boost';
 
 const httpLink = createHttpLink({

@@ -8,7 +8,7 @@ import path from 'path';
 import { Content } from '../../../../models/index';
 // import ApiError, { RecordNotFoundError } from '../../../exceptions';
 import logger from '../../../../logging';
-import { Reactory } from 'types/reactory';
+import Reactory from '@reactory/reactory-core'
 
 
 const {

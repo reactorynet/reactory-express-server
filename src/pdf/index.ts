@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 import logger from '@reactory/server-core/logging';
 import modules from '@reactory/server-core/modules';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 
 import express from 'express';
 import path from 'path';
@@ -30,7 +30,7 @@ const {
 
 
 const PdfComponents: Reactory.IReactoryPdfComponent[] = [];
-modules.enabled.forEach((installedModule: Reactory.IReactoryModule) => {
+modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
   try {
     if (installedModule.pdfs) {
       logger.debug(`♻ Adding PDF Report Generators for ${installedModule.name}`);

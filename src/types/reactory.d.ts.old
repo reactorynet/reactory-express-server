@@ -1446,8 +1446,8 @@ declare namespace Reactory {
   }
 
 
-  export type ReactoryResolverAsync = (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>;
-  export type ReactoryResolverSync = (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => any;
+  export type ReactoryResolverAsync = (parent: any, params: any, context: Reactory.Server.IReactoryContext, info: any) => Promise<any>;
+  export type ReactoryResolverSync = (parent: any, params: any, context: Reactory.Server.IReactoryContext, info: any) => any;
   export type ReactoryResolverObject = {
     [key: string]: ReactoryResolverAsync | ReactoryResolverAsync
   }
@@ -1455,13 +1455,13 @@ declare namespace Reactory {
   export interface IGraphShape {
     [key: string]: ReactoryResolverAsync | ReactoryResolverAsync | ReactoryResolverObject
     Query?: {
-      [key: string]: (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>
+      [key: string]: (parent: any, params: any, context: Reactory.Server.IReactoryContext, info: any) => Promise<any>
     },
     Mutation?: {
-      [key: string]: (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>
+      [key: string]: (parent: any, params: any, context: Reactory.Server.IReactoryContext, info: any) => Promise<any>
     },
     Subscription?: {
-      [key: string]: (parent: any, params: any, context: Reactory.IReactoryContext, info: any) => Promise<any>
+      [key: string]: (parent: any, params: any, context: Reactory.Server.IReactoryContext, info: any) => Promise<any>
     }
   }
 
@@ -1486,8 +1486,8 @@ declare namespace Reactory {
     key: String
     name: String
     description: String
-    content: (params: any, context: Reactory.IReactoryContext) => Promise<any>
-    resolver: (params: any, context: Reactory.IReactoryContext) => Promise<any>,
+    content: (params: any, context: Reactory.Server.IReactoryContext) => Promise<any>
+    resolver: (params: any, context: Reactory.Server.IReactoryContext) => Promise<any>,
     props: {
       meta: {
         title: String
@@ -2205,7 +2205,7 @@ declare namespace Reactory {
      * @param context - a specific context if you want to execute as different user, otherwise current context is used
      * @param lifeCycle - the lifecycle type for the service, either instance or singleton
      */
-    getService<T extends Reactory.Service.IReactoryService>(fqn: string, props?: any, context?: Reactory.IReactoryContext, lifeCycle?: SERVICE_LIFECYCLE): T,    
+    getService<T extends Reactory.Service.IReactoryService>(fqn: string, props?: any, context?: Reactory.Server.IReactoryContext, lifeCycle?: SERVICE_LIFECYCLE): T,    
     /**
      * Logging method to write logs.
      * @param message - the message to log
@@ -2265,7 +2265,7 @@ declare namespace Reactory {
      * Modules that are currently available for this 
      * instance
      */
-    modules: Reactory.IReactoryModule[]
+    modules: Reactory.Server.IReactoryModule[]
     /**
      * utility tools
      */
@@ -2437,7 +2437,7 @@ declare namespace Reactory {
     data: any,
     options?: any,
     mime?: MimeType,
-    context: Reactory.IReactoryContext
+    context: Reactory.Server.IReactoryContext
   }
 
   export interface IChartResult {

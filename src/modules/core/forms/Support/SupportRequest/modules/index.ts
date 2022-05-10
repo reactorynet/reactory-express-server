@@ -1,7 +1,7 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { fileAsString } from '@reactory/server-core/utils/io';
 
-const modules: Reactory.IReactoryFormModule[] = [
+const modules: Reactory.Forms.IReactoryFormModule[] = [
   {
     compilerOptions: {},
     id: 'core.SupportStatusWidget@1.0.0',

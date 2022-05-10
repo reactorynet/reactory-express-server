@@ -8,7 +8,7 @@ import passport, {
   Passport
 } from 'passport';
 
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import jwt from 'jwt-simple';
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';

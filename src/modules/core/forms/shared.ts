@@ -17,7 +17,7 @@ import MicrosoftOpenIDAuthenticationForm from '@reactory/server-modules/core/for
 const { CDN_ROOT } = process.env;
 
 
-const ForgotPasswordForm: Reactory.IReactoryForm = {
+const ForgotPasswordForm: Reactory.Forms.IReactoryForm = {
   id: 'forgot-password',
   uiFramework: 'material',
   uiSupport: ['material', 'bootstrap'],
@@ -51,7 +51,7 @@ const ForgotPasswordForm: Reactory.IReactoryForm = {
   },
 };
 
-const MessageForm: Reactory.IReactoryForm = {
+const MessageForm: Reactory.Forms.IReactoryForm = {
   id: 'message-form',
   nameSpace: 'forms',
   name: 'MessageForm',
@@ -139,7 +139,7 @@ const msTeamsResources = [
   },
 ];
 
-const MSTeamsConfigurationTab: Reactory.IReactoryForm = {
+const MSTeamsConfigurationTab: Reactory.Forms.IReactoryForm = {
   id: 'ms-teams-config-tab',
   name: 'MicrosoftTeamsConfigurationPage',
   nameSpace: 'microsoft-teams',
@@ -177,7 +177,7 @@ const MSTeamsConfigurationTab: Reactory.IReactoryForm = {
   },
 };
 
-const ResetPasswordForm: Reactory.IReactoryForm = {
+const ResetPasswordForm: Reactory.Forms.IReactoryForm = {
   id: 'ResetPasswordForm',
   uiFramework: 'material',
   uiSupport: ['material', 'bootstrap'],
@@ -258,7 +258,7 @@ const ResetPasswordForm: Reactory.IReactoryForm = {
 };
 
 
-const SearchUserForm: Reactory.IReactoryForm = {
+const SearchUserForm: Reactory.Forms.IReactoryForm = {
   id: 'search-user',
   uiFramework: 'material',
   uiSupport: ['material', 'bootstrap'],
@@ -292,7 +292,7 @@ const SearchUserForm: Reactory.IReactoryForm = {
 };
 
 
-const ContentPages: Reactory.IReactoryForm = {
+const ContentPages: Reactory.Forms.IReactoryForm = {
   id: 'ContentPages',
   uiFramework: 'material',
   uiSupport: ['material', 'bootstrap'],
@@ -383,7 +383,7 @@ const ContentPages: Reactory.IReactoryForm = {
 };
 
 
-const FileLoader: Reactory.IReactoryForm = {
+const FileLoader: Reactory.Forms.IReactoryForm = {
   id: 'FileLoader',
   uiFramework: 'material',
   uiSupport: ['material', 'bootstrap'],
@@ -416,7 +416,7 @@ const FileLoader: Reactory.IReactoryForm = {
   },
 };
 
-const ExternalLinkList: Reactory.IReactoryForm = {
+const ExternalLinkList: Reactory.Forms.IReactoryForm = {
   id: 'ExternalLinkList',
   name: 'ExternalLinkList',
   nameSpace: 'forms',
@@ -457,7 +457,7 @@ const ExternalLinkList: Reactory.IReactoryForm = {
 };
 
 
-const BusinessUnitList: Reactory.IReactoryForm = {
+const BusinessUnitList: Reactory.Forms.IReactoryForm = {
   id: 'business-units',
   name: 'BusinessUnitList',
   nameSpace: 'forms',
@@ -596,7 +596,7 @@ const BusinessUnitList: Reactory.IReactoryForm = {
   },
 };
 
-const BusinessUnitForm: Reactory.IReactoryForm = {
+const BusinessUnitForm: Reactory.Forms.IReactoryForm = {
   id: 'business-unit',
   name: 'BusinessUnitForm',
   nameSpace: 'forms',
@@ -695,7 +695,7 @@ const BusinessUnitForm: Reactory.IReactoryForm = {
   },
 };
 
-const CommentForm: Reactory.IReactoryForm = {
+const CommentForm: Reactory.Forms.IReactoryForm = {
   id: 'CommentForm',
   ...defaultFormProps,
   name: 'CommentForm',

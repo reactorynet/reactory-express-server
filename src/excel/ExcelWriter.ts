@@ -48,16 +48,16 @@ class ReactoryExcelWriterService implements Reactory.Service.IExcelWriterService
   nameSpace = 'core';
   version = '1.0.0';
 
-  context: Reactory.IReactoryContext = null;
+  context: Reactory.Server.IReactoryContext = null;
 
-  constructor(props: any, context: Reactory.IReactoryContext) {
+  constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.context = context;
   }
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
-  setExecutionContext(context: Reactory.IReactoryContext): boolean {
+  setExecutionContext(context: Reactory.Server.IReactoryContext): boolean {
     this.context = context;
     return true;
   }

@@ -4,7 +4,7 @@ import * as lodash from 'lodash';
 //@ts-ignore
 import ColorScheme from 'color-scheme';
 import ReactoryConstants from '@reactory/server-core/constants';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
 
 const { ObjectId } = mongoose.Schema.Types;

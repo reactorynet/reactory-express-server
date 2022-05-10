@@ -13,7 +13,7 @@ import modules from '@reactory/server-core/modules';
  * NOTE: Changes to this file only kicks in after restarting the server from cold, meaning you have to kill 
  * the process with Ctrl+C and then restart the service with bin/start.sh
  */
-export default async ($session: any, currentContext: any = {}): Promise<Reactory.IReactoryContext> => {
+export default async ($session: any, currentContext: any = {}): Promise<Reactory.Server.IReactoryContext> => {
   const $id = uuid();
   let $context = currentContext || {};
   
@@ -102,7 +102,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
    * can be considerd as the component and user container for the
    * duration of the exection.
    */
-  let newContext: Reactory.IReactoryContext = {
+  let newContext: Reactory.Server.IReactoryContext = {
     ...$context,
     id: $id,
     user: $user,
@@ -143,7 +143,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
 
   
   
-  const $getService = (id: string, props: any = undefined, $context?: Reactory.IReactoryContext, lifeCycle?: Reactory.SERVICE_LIFECYCLE ) => {
+  const $getService = (id: string, props: any = undefined, $context?: Reactory.Server.IReactoryContext, lifeCycle?: Reactory.SERVICE_LIFECYCLE ) => {
     $log(`Getting service ${id} [${lifeCycle || "instance"}]`)
     if($context && Object.keys($context).length > 0) {
       newContext = { 

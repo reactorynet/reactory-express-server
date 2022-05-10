@@ -2,7 +2,7 @@ import logger from '../logging';
 import { CorsOptions, CorsOptionsDelegate } from 'cors'
 import express from 'express';
 import getClient from './utils/ReactoryClientFromRequest';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 
 
 const bypassUri = [

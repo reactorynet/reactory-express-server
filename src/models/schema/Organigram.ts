@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { Reactory } from 'types/reactory';
+import Reactory from '@reactory/reactory-core'
 
 const { ObjectId } = mongoose.Schema.Types;
 

@@ -1,7 +1,7 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import AddEmailAddressForm from './AddEmailAddressForm';
 
-const EmailForms: Reactory.IReactoryForm[] = [
+const EmailForms: Reactory.Forms.IReactoryForm[] = [
     AddEmailAddressForm
 ];
 

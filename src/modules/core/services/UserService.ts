@@ -20,13 +20,13 @@ class UserService implements Reactory.Service.IReactoryUserService {
   name: string = "UserService";
   nameSpace: string = "core";
   version: string = "1.0.0";
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
   props: Reactory.IReactoryServiceProps;
 
   peerState: PeersState;
   isFetchingDocument: PeersFetchingState;
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
+  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.context = context;
     this.props = props;
     // contains any previously fetched documents using a key map
@@ -303,10 +303,10 @@ async setPeersForUser (user: Reactory.IUserDocument, peers: any, organization: R
   }
 
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
-  setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+  setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     this.context = executionContext;
     return true;
   }

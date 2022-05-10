@@ -56,7 +56,7 @@ const filterProcessors = (processor_ids: string[], processors: any[]) => {
 
 class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackageManager {
 
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
   name: string = 'ReactoryFileImportPackageManager';
   nameSpace: string = 'core';
@@ -74,7 +74,7 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
     started: false,
   };
 
-  constructor(props: any, context: Reactory.IReactoryContext) {
+  constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.context = context;
     this.props = props;
   }
@@ -309,11 +309,11 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
     };
   }
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
 
-  setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+  setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     this.context = executionContext;
     return true;
   }
@@ -332,7 +332,7 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
     description: 'Import package manager that will manage the process of importing a file or a batch of files',
     dependencies: [{ id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' }],
     serviceType: 'data',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) => {
+    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new ReactoryFileImportPackageManager(props, context);
     }
   };

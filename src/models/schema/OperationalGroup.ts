@@ -8,13 +8,13 @@ const OperationalGroupSchema = new mongoose.Schema({
 });
 
 // Region.statics.GetRegions = async (organization?: string | ObjectId | Reactory.IOrganization ): Promise<Array<Reactory.IRegion>> => {
-OperationalGroupSchema.statics.GetOperationalGroups = async function GetOperationalGroups(context: Reactory.IReactoryContext): Promise<Array<Reactory.IOperationalGroup>> {
+OperationalGroupSchema.statics.GetOperationalGroups = async function GetOperationalGroups(context: Reactory.Server.IReactoryContext): Promise<Array<Reactory.IOperationalGroup>> {
   const { user, partner } = context;
   return await this.find();
 };
 
 
-OperationalGroupSchema.statics.AddOperationalGroup = async function AddOperationalGroup(group: Reactory.IOrganization, context: Reactory.IReactoryContext): Promise<Reactory.IOperationalGroup> {
+OperationalGroupSchema.statics.AddOperationalGroup = async function AddOperationalGroup(group: Reactory.IOrganization, context: Reactory.Server.IReactoryContext): Promise<Reactory.IOperationalGroup> {
   const { user, partner } = context;
   return { title: '' }
 };

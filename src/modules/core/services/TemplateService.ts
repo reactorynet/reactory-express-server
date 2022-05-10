@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import ejs from 'ejs';
 import lodash from 'lodash';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { TemplateType } from '@reactory/server-core/types/constants';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
 import { Template, ReactoryClient, EmailQueue, User, Organization } from '@reactory/server-core/models';
@@ -54,9 +54,9 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
   nameSpace: string = 'core';
   version: string = '1.0.0';
 
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
-  constructor(props: any, context: Reactory.IReactoryContext) {
+  constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.context = context;
   }
 
@@ -478,10 +478,10 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
     return $template;
   }
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
-  setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+  setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     this.context = executionContext;
 
     return true;

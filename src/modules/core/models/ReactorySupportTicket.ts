@@ -1,6 +1,6 @@
 import mongoose, { Schema, MongooseDocument, Model } from 'mongoose';
 import moment from 'moment';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import logger from '../../../logging';
 import { ObjectId } from 'mongodb';
 

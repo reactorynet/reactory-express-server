@@ -1,4 +1,4 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { WriteStream } from 'fs';
 //@ts-ignore
 import PdfPrinter from 'pdfmake/src/printer';
@@ -17,11 +17,11 @@ class PdfService implements Reactory.Service.IReactoryPdfService {
   nameSpace: string;
   version: string;
 
-  context: Reactory.IReactoryContext
+  context: Reactory.Server.IReactoryContext
 
   props: Reactory.IReactoryServiceProps
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
+  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   }
@@ -94,11 +94,11 @@ class PdfService implements Reactory.Service.IReactoryPdfService {
     return Promise.resolve(true);
   }
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
 
-  setExecutionContext(context: Reactory.IReactoryContext): boolean {
+  setExecutionContext(context: Reactory.Server.IReactoryContext): boolean {
     this.context = context;
     return true;
   }
@@ -107,7 +107,7 @@ class PdfService implements Reactory.Service.IReactoryPdfService {
     id: 'core.PdfService@1.0.0',
     name: 'PDF Rendering Service',
     description: 'A basic PDF rendering service that will render PDFs using PDF make',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) => {
+    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new PdfService(props, context);
     },
     dependencies: [

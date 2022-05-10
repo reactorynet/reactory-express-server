@@ -3,7 +3,7 @@ import $graphql from './graphql';
 import $schema from './schema';
 import $uiSchema from './uiSchema';
 
-const TemplateList : Reactory.IReactoryForm = {
+const TemplateList : Reactory.Forms.IReactoryForm = {
   id: 'TemplateList',  
   name: 'TemplateList',
   nameSpace: 'forms',

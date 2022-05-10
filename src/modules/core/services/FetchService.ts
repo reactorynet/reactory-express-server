@@ -22,22 +22,22 @@ export default class FetchService implements Reactory.Service.IFetchService {
   nameSpace: string;
   version: string;
 
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
   authProvider: Reactory.Service.IFetchAuthenticationProvder;
   headerProvider: Reactory.Service.IFetchHeaderProvider;
 
   props: Reactory.IReactoryServiceProps;
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
+  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   }
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
-  setExecutionContext(context: Reactory.IReactoryContext): boolean {
+  setExecutionContext(context: Reactory.Server.IReactoryContext): boolean {
     this.context = context;
     return true;
   }

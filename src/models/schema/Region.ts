@@ -49,7 +49,7 @@ const Region = new mongoose.Schema<Reactory.IRegion>({
 
 //Return all regions with organizaiton filter
 // Region.statics.GetRegions = async (organization?: string | ObjectId | Reactory.IOrganization ): Promise<Array<Reactory.IRegion>> => {
-Region.statics.GetRegions = async function GetRegions(context: Reactory.IReactoryContext): Promise<Array<Reactory.IRegion>> {
+Region.statics.GetRegions = async function GetRegions(context: Reactory.Server.IReactoryContext): Promise<Array<Reactory.IRegion>> {
   const { user, partner } = context;
 
   // return await this.find({ organisation: organization.id });
@@ -57,7 +57,7 @@ Region.statics.GetRegions = async function GetRegions(context: Reactory.IReactor
 };
 
 
-Region.statics.AddRegion = async (organization: string | ObjectId, title: string, description: string, icon: string, locations: any[] = [], context: Reactory.IReactoryContext,): Promise<Reactory.IRegion> => {
+Region.statics.AddRegion = async (organization: string | ObjectId, title: string, description: string, icon: string, locations: any[] = [], context: Reactory.Server.IReactoryContext,): Promise<Reactory.IRegion> => {
 
   let input: any = {
     organization,

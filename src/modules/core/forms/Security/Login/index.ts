@@ -1,11 +1,11 @@
 'use strict'
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 
 /**
  * Basic Login Form.
  * Author: Werner Weber
  */
-const LoginForm: Reactory.IReactoryForm = {
+const LoginForm: Reactory.Forms.IReactoryForm = {
   id: 'LoginForm',
   uiFramework: 'material',
   name: 'LoginForm',

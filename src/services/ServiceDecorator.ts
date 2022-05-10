@@ -1,5 +1,5 @@
 import logger from '@reactory/server-core/logging';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import ApiError, { UserNotFoundException, InsufficientPermissions } from '@reactory/server-core/exceptions';
 
 export function reactoryService<T>(
@@ -17,7 +17,7 @@ export function reactoryService<T>(
       id,
       description,
       name,
-      service: (props: any, context: Reactory.IReactoryContext) => {
+      service: (props: any, context: Reactory.Server.IReactoryContext) => {
         debugger
         return constructor(props, context);
       },

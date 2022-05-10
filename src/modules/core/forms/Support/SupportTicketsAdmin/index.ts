@@ -1,4 +1,4 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import version from './version';
 import schema from './schema';
 import uiSchema from './uiSchema';
@@ -8,7 +8,7 @@ import graphql from './graphql';
 const name = "SupportTicketsAdmin";
 const nameSpace = "core";
 
-const SupportTickets: Reactory.IReactoryForm = {
+const SupportTickets: Reactory.Forms.IReactoryForm = {
   id: `${nameSpace}.${name}@${version}`,
   nameSpace,
   name,

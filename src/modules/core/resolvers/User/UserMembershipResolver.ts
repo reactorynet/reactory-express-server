@@ -1,4 +1,4 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
 import ApiError from 'exceptions';
@@ -22,7 +22,7 @@ class UserMembershipResolver {
   @property(UserMembership, "client")
   async client(obj: Reactory.TMembership, 
     params: any,
-    context: Reactory.IReactoryContext): Promise<Reactory.TReactoryClient> {
+    context: Reactory.Server.IReactoryContext): Promise<Reactory.TReactoryClient> {
     if(obj.clientId === null || obj.clientId === undefined) throw new ApiError('Membership object cannot have null error')
     const systemService: Reactory.Service.IReactorySystemService = context.getService("core.SystemService@1.0.0");
     return systemService.getReactoryClient(obj.clientId);
@@ -31,7 +31,7 @@ class UserMembershipResolver {
   @property(UserMembership, "businessUnit")
   async businessUnit(obj: Reactory.TMembership,
     params: any,
-    context: Reactory.IReactoryContext): Promise<Reactory.TBusinessUnit> {
+    context: Reactory.Server.IReactoryContext): Promise<Reactory.TBusinessUnit> {
     if(obj.organizationId === null || obj.organizationId === undefined) return null;
     if(obj.businessUnitId === null || obj.businessUnitId === undefined) return null;
 

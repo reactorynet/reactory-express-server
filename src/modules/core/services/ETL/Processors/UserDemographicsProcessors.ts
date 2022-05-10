@@ -1,5 +1,5 @@
 'use strict';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { MutationResult, QueryResult, IUserImportStruct } from './types';
 import { execml, execql } from '@reactory/server-core/graph/client';
 import { BusinessUnit, UserDemographic, Region, Team } from '@reactory/server-core/models';
@@ -66,7 +66,7 @@ const SetUserDemographicsMutation = `mutation MoresUpdateUserDemographic($input:
 
 class UserDemographicsProcessor implements Reactory.IProcessor {
 
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
   name: string = "UserDemographicsProcessor";
   nameSpace: string = "core";
@@ -79,7 +79,7 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
   organizationService: Reactory.Service.IReactoryOrganizationService;
   userService: Reactory.Service.IReactoryUserService;
 
-  constructor(props: any, context: Reactory.IReactoryContext) {
+  constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.context = context;
     this.props = props;
     this.fileService = props.$dependencies.fileService;
@@ -88,10 +88,10 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
     this.packageManager = props.packman;
   }
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
-  setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+  setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     this.context = executionContext;
     return true;
   }
@@ -525,7 +525,7 @@ class UserDemographicsProcessor implements Reactory.IProcessor {
       { id: "core.UserService@1.0.0", alias: 'userService' }
     ],
     serviceType: 'data',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) => {
+    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new UserDemographicsProcessor(props, context);
     }
   };

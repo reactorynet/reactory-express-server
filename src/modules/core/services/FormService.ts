@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import Rollup from 'rollup';
 import { forEach, isArray, takeRight } from 'lodash';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import modules from '@reactory/server-core/modules';
 import { resolveInclude } from 'ejs';
 import messages from 'bot/sparky/messages';
@@ -18,22 +18,22 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
   nameSpace: string;
   version: string;
 
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
   props: Reactory.IReactoryServiceProps;
   fileService: Reactory.Service.IReactoryFileService;
   compiler: Reactory.Service.IReactoryModuleCompilerService;
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
+  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.context = context;    
     this.props = props;
   }
 
-  get(id: string): Promise<Reactory.IReactoryForm> {
-    let _form: Reactory.IReactoryForm = null;
+  get(id: string): Promise<Reactory.Forms.IReactoryForm> {
+    let _form: Reactory.Forms.IReactoryForm = null;
     const that = this;
     modules.enabled.forEach((module) => {
       if (isArray(module.forms) === true) {
-        module.forms.forEach((form: Reactory.IReactoryForm, fidx: number) => {
+        module.forms.forEach((form: Reactory.Forms.IReactoryForm, fidx: number) => {
           if (form && form.id === id) {
             let allow_form: boolean = true;
             if (form.roles && form.roles.length > 0) {
@@ -54,12 +54,12 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     return Promise.resolve(_form);
   }
 
-  list(): Promise<Reactory.IReactoryForm[]> {
-    const _forms: Reactory.IReactoryForm[] = [];
+  list(): Promise<Reactory.Forms.IReactoryForm[]> {
+    const _forms: Reactory.Forms.IReactoryForm[] = [];
     const that = this;
     modules.enabled.forEach((module) => {
       if (isArray(module.forms) === true) {
-        module.forms.forEach((form: Reactory.IReactoryForm, fidx: number) => {
+        module.forms.forEach((form: Reactory.Forms.IReactoryForm, fidx: number) => {
           if (form) {
             let allow_form: boolean = true;
             if (form.roles && form.roles.length > 0) {
@@ -84,12 +84,12 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     return Promise.resolve(_forms);
   }
 
-  globals(): Promise<Reactory.IReactoryForm[]> {
-    const _forms: Reactory.IReactoryForm[] = [];
+  globals(): Promise<Reactory.Forms.IReactoryForm[]> {
+    const _forms: Reactory.Forms.IReactoryForm[] = [];
     const that = this;
     modules.enabled.forEach((module) => {
       if (isArray(module.forms) === true) {
-        module.forms.forEach((form: Reactory.IReactoryForm, fidx: number) => {
+        module.forms.forEach((form: Reactory.Forms.IReactoryForm, fidx: number) => {
           if (form && form.name.indexOf("$GLOBAL$") >= 0) {
             let allow_form: boolean = true;
             if (form.roles && form.roles.length > 0) {
@@ -113,21 +113,21 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     return Promise.resolve(_forms);
   }
 
-  save(form: Reactory.IReactoryForm, user_options?: any): Reactory.IReactoryForm {
+  save(form: Reactory.Forms.IReactoryForm, user_options?: any): Reactory.Forms.IReactoryForm {
     throw new Error('Method not implemented.');
   }
 
-  delete(form: Reactory.IReactoryForm): boolean {
+  delete(form: Reactory.Forms.IReactoryForm): boolean {
     throw new Error('Method not implemented.');
   }
 
-  async getCompiledResourceForModule(module: Reactory.IReactoryFormModule): Promise<Reactory.IReactoryFormResource> {    
+  async getCompiledResourceForModule(module: Reactory.Forms.IReactoryFormModule): Promise<Reactory.Forms.IReactoryFormResource> {    
     return this.compiler.compileModule(module);
   }
 
-  async getResources(form: Reactory.IReactoryForm): Promise<Reactory.IReactoryFormResource[]> {
+  async getResources(form: Reactory.Forms.IReactoryForm): Promise<Reactory.Forms.IReactoryFormResource[]> {
 
-    const resources: Reactory.IReactoryFormResource[] = [];
+    const resources: Reactory.Forms.IReactoryFormResource[] = [];
     const that = this;
 
     if(!form.uiResources) form.uiResources = [];
@@ -141,7 +141,7 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
       //resources list.
       async function* compiledResourcesGenerator() {
         for (let i: number = 0; i < form.modules.length; i++) {
-          const module: Reactory.IReactoryFormModule = form.modules[i];
+          const module: Reactory.Forms.IReactoryFormModule = form.modules[i];
           const resource = await that.getCompiledResourceForModule(module).then();
           yield resource;
         }
@@ -160,10 +160,10 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     return Promise.resolve(true);
   }
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
-  setExecutionContext(context: Reactory.IReactoryContext): boolean {
+  setExecutionContext(context: Reactory.Server.IReactoryContext): boolean {
     this.context = context;
     return true;
   }

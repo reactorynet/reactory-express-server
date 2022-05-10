@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import readline from 'readline';
 
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import ApiError from 'exceptions';
 
 const DefaultOptions = {
@@ -13,7 +13,7 @@ const DefaultOptions = {
 
 class UserFileImportCSV2JSON implements Reactory.IProcessor {
 
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
   name: string = "UserFileImportCSV2JSON";
   nameSpace: string = "core";
@@ -24,7 +24,7 @@ class UserFileImportCSV2JSON implements Reactory.IProcessor {
   fileService: Reactory.Service.IReactoryFileService;
   packageManager: Reactory.IReactoryImportPackageManager;
 
-  constructor(props: any, context: Reactory.IReactoryContext) {
+  constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.context = context;
     this.props = props;
     this.fileService = props.$dependencies.fileService;
@@ -111,11 +111,11 @@ class UserFileImportCSV2JSON implements Reactory.IProcessor {
     return output;
   }
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
 
-  setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+  setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     this.context = executionContext;
     return true;
   }
@@ -128,7 +128,7 @@ class UserFileImportCSV2JSON implements Reactory.IProcessor {
     description: 'Reactory Service for converting a csv file with user data to a json structure',
     dependencies: UserFileImportCSV2JSON.dependencies,
     serviceType: 'data',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) => {
+    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new UserFileImportCSV2JSON(props, context);
     }
   };

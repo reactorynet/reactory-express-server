@@ -7,7 +7,7 @@ import { promisify } from 'util';
 import { ObjectID, ObjectId } from 'mongodb';
 import sha1 from 'sha1';
 import Hash from '@reactory/server-core/utils/hash';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import ApiError from '@reactory/server-core/exceptions';
 import ReactoryFileModel from '@reactory/server-modules/core/models/CoreFile';
 import logger from '@reactory/server-core/logging';
@@ -42,9 +42,9 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     nameSpace: string = 'core';
     version: string = '1.0.0';
 
-    context: Reactory.IReactoryContext;
+    context: Reactory.Server.IReactoryContext;
 
-    constructor(props: any, context: Reactory.IReactoryContext) {
+    constructor(props: any, context: Reactory.Server.IReactoryContext) {
         this.context = context
     }
     getFileSize(file: Reactory.IReactoryFileModel): number {
@@ -252,11 +252,11 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         return Promise.resolve(true);
     }
     
-    getExecutionContext(): Reactory.IReactoryContext {
+    getExecutionContext(): Reactory.Server.IReactoryContext {
         return this.context;
     }
 
-    setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+    setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
         this.context = executionContext;
         return true;
     }

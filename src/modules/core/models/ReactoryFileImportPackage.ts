@@ -3,7 +3,7 @@ import mongoose, { MongooseDocument, Schema } from 'mongoose';
 import * as lodash from 'lodash';
 import { readFileSync, existsSync } from 'fs';
 import logger from '@reactory/server-core/logging';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 
 
 const { ObjectId } = mongoose.Schema.Types;

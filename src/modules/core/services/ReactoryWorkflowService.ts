@@ -7,10 +7,10 @@ class ReactoryWorkflowService implements Reactory.Service.IReactoryWorkflowServi
   nameSpace: string;
   version: string;
 
-  context: Reactory.IReactoryContext
+  context: Reactory.Server.IReactoryContext
   props: any;
 
-  constructor(props: any, context: Reactory.IReactoryContext) {
+  constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   }
@@ -36,11 +36,11 @@ class ReactoryWorkflowService implements Reactory.Service.IReactoryWorkflowServi
     return Promise.resolve(true)
   }
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
   
-  setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+  setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     this.context = executionContext;
     return true;
   }

@@ -1,5 +1,5 @@
 import mongoose, { Schema, MongooseDocument, Model } from 'mongoose';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { ObjectId } from 'mongodb';
 import { transform } from 'pdfkit';
 

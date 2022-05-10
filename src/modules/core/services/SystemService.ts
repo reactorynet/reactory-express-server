@@ -1,4 +1,4 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { ReactoryClient, Menu } from '@reactory/server-core/models';
 import { ObjectId } from 'bson';
 import { execql, execml } from '@reactory/server-core/graph/client'
@@ -6,13 +6,13 @@ import { execql, execml } from '@reactory/server-core/graph/client'
 class SystemService implements Reactory.Service.IReactorySystemService {
 
   props: Reactory.IReactoryServiceProps;
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
   name: string;
   nameSpace: string;
   version: string;
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
+  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   }
@@ -50,11 +50,11 @@ class SystemService implements Reactory.Service.IReactorySystemService {
   }
   
   
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context
   }
   
-  setExecutionContext(context: Reactory.IReactoryContext): boolean {
+  setExecutionContext(context: Reactory.Server.IReactoryContext): boolean {
     this.context = context;
     return true;
   }
@@ -65,7 +65,7 @@ class SystemService implements Reactory.Service.IReactorySystemService {
     name: 'Reactory System Service',
     dependencies: [],
     serviceType: 'data',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) => {
+    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new SystemService(props, context);
     }
   }

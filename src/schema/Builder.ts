@@ -1,5 +1,5 @@
 
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
 
 const StringProperty = (

@@ -1,7 +1,7 @@
 
 'use strict';
 
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { ObjectId } from 'mongodb';
 import moment, { isMoment } from 'moment';
 import { execml, execql } from '@reactory/server-core/graph/client';
@@ -10,7 +10,7 @@ import { MutationResult, IUserImportStruct } from './types';
 
 class UserFileImportProcessGeneral implements Reactory.IProcessor {
 
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
   name: string = "UserFileImportProcessGeneral";
   nameSpace: string = "core";
@@ -23,7 +23,7 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
 
   clazz: string = "UserFileImportProcessGeneral";
 
-  constructor(props: any, context: Reactory.IReactoryContext) {
+  constructor(props: any, context: Reactory.Server.IReactoryContext) {
     this.context = context;
     this.props = props;
     this.packageManager = props.packman;
@@ -45,11 +45,11 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
 
   };
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
 
-  setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+  setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     this.context = executionContext;
     return true;
   }
@@ -243,7 +243,7 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
     description: 'Reactory Service for importing the general information.',
     dependencies: ['core.ReactoryFileService@1.0.0'],
     serviceType: 'data',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) => {
+    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new UserFileImportProcessGeneral(props, context);
     }
   }

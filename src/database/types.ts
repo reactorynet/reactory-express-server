@@ -125,10 +125,10 @@ export interface QueryStringGenerator {
 
 export interface IReactoryDatabase {
   Create: {
-    [key: string]: (insertCommand: any | SQLInsert, request_context: Reactory.IReactoryContext) => Promise<any>
+    [key: string]: (insertCommand: any | SQLInsert, request_context: Reactory.Server.IReactoryContext) => Promise<any>
   },
   Read: {
-    [key: string]: (queryCommand: any | SQLQuery, request_context: Reactory.IReactoryContext) => Promise<any>
+    [key: string]: (queryCommand: any | SQLQuery, request_context: Reactory.Server.IReactoryContext) => Promise<any>
   },
   Update: {
     [key: string]: SQLUpdate
@@ -140,7 +140,7 @@ export interface IReactoryDatabase {
     [key: string]: SQLProcedure
   },
   Install?: {
-    [key: string]: (context: Reactory.IReactoryContext) => Promise<any>
+    [key: string]: (context: Reactory.Server.IReactoryContext) => Promise<any>
   },
 }
 

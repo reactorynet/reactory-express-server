@@ -3,10 +3,10 @@
  * imports file for the modules we want to run.
  */
 import fs from 'fs';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
 
-const getImportName = (moduleDefinition: Reactory.IReactoryModuleDefinition) => {
+const getImportName = (moduleDefinition: Reactory.Server.IReactoryModuleDefinition) => {
 
   let $import_name = moduleDefinition.fqn.replace(/\./g, '_',);
   $import_name = $import_name.replace(/-/, '__');
@@ -25,7 +25,7 @@ const generate_index = () => {
   logger.debug(`♻ ModuleImportFactory >> __index.ts generator executing for module spec ${MODULES_ENABLED || 'NA'}`);
 
   const filename = `${MODULES_ENABLED}.json`
-  let enabled: Reactory.IReactoryModuleDefinition[] = []
+  let enabled: Reactory.Server.IReactoryModuleDefinition[] = []
   if (fs.existsSync(`./src/modules/${filename}`) === true) {
     enabled = require(`../${filename}`);
   } else {
@@ -43,7 +43,7 @@ const generate_index = () => {
 "use strict";`;
 
   let module_names = '';
-  enabled.forEach((moduleDefinition: Reactory.IReactoryModuleDefinition, midx: number) => {
+  enabled.forEach((moduleDefinition: Reactory.Server.IReactoryModuleDefinition, midx: number) => {
     logger.debug(`Enabling Reactory Module ⚙ [${moduleDefinition.name}]`);
     // eslint-disable-next-line global-require
 

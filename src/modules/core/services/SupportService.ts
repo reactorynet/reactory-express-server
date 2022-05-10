@@ -1,4 +1,4 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import Hash from '@reactory/server-core/utils/hash';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import moment from 'moment';
@@ -12,9 +12,9 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
   version: string;
 
   props: Reactory.IReactoryServiceProps;
-  context: Reactory.IReactoryContext  
+  context: Reactory.Server.IReactoryContext  
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
+  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   } 
@@ -97,11 +97,11 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     return Promise.resolve(true)
   }
   
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     // throw new Error('Method not implemented.');
     return this.context;
   }
-  setExecutionContext(context: Reactory.IReactoryContext): boolean {
+  setExecutionContext(context: Reactory.Server.IReactoryContext): boolean {
     this.context = context
     return true;
   }
@@ -110,7 +110,7 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     id: "core.ReactorySupportService@1.0.0",
     name: "Support Service",
     description: "Service for logging and managing reactory support tickets",
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) => {
+    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new ReactorySupportService(props, context);
     },
     dependencies: [],

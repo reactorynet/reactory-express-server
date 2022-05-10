@@ -1,12 +1,12 @@
 
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import schema from './schema';
 import uiSchema from './uiSchema';
 import graphql from './graphql';
 import version from './version';
 import modules from './modules';
 
-const SupportForm: Reactory.IReactoryForm = {
+const SupportForm: Reactory.Forms.IReactoryForm = {
   id: `core.SupportForm@${version}`,
   schema,
   uiFramework: 'material',

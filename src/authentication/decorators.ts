@@ -1,5 +1,5 @@
 import logger from '@reactory/server-core/logging';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import lodash from 'lodash';
 import ApiError, { UserNotFoundException, InsufficientPermissions } from '@reactory/server-core/exceptions';
 export function roles(allowedRoles: string[], contextKey: string = 'this.context') {  
@@ -12,7 +12,7 @@ export function roles(allowedRoles: string[], contextKey: string = 'this.context
      
      
       let passed: boolean;      
-      let context: Reactory.IReactoryContext
+      let context: Reactory.Server.IReactoryContext
       switch(contextKey) {
         case "this.context": {
           if (this && this.context) {

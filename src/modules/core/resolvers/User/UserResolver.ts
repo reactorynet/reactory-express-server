@@ -56,184 +56,7 @@ const userResolvers = {
         console.error("Error loading user");
         throw findErr;
       }
-    },
-    survey(obj: { survey: any }) {
-      try {
-        if (obj.survey) return Survey.findById(obj.survey);
-        return null;
-      } catch (surveyError) {
-        console.error("Error loading survey");
-        throw surveyError;
-      }
-    },
-  },
-  SurveyReportForUser: {
-    overall(sr: any) {
-      return 0;
-    },
-    status(sr: any) {
-      return "READY";
-    },
-    survey(sr: { survey: any }) {
-      return sr.survey;
-    },
-    user(sr: { user: any }) {
-      return sr.user;
-    },
-    assessments(sr: { assessments: any }) {
-      return sr.assessments || [];
-    },
-    tasks(sr: { tasks: any }) {
-      return sr.tasks || [];
-    },
-    comments(sr: { comments: any }) {
-      return sr.comments || [];
-    },
-  },
-  Rating: {
-    id(obj: { _id: any }) {
-      return obj._id || null;
-    },
-    async quality(rating: { qualityId: any }) {
-      const lb = await LeadershipBrand.findOne({
-        "qualities._id": ObjectId(rating.qualityId),
-      }).then();
-      if (lb) {
-        return lb.qualities.id(rating.qualityId);
-      }
-
-      return null;
-    },
-    async behaviour(rating: {
-      custom: boolean;
-      behaviourId: any;
-      behaviourText: any;
-      qualityId: any;
-    }) {
-      if (rating.custom === true && lodash.isNil(rating.behaviourId)) {
-        return {
-          id: ObjectId(),
-          title: rating.behaviourText,
-          ordinal: 99,
-        };
-      }
-
-      const lb = await LeadershipBrand.findOne({
-        "qualities._id": ObjectId(rating.qualityId),
-      }).then();
-      if (lb) {
-        return lb.qualities
-          .id(rating.qualityId)
-          .behaviours.id(rating.behaviourId);
-      }
-
-      return null;
-    },
-    rating(rating: { rating: any }) {
-      return rating.rating || 0;
-    },
-    comment(rating: { comment: any }) {
-      return rating.comment || "";
-    },
-  },
-  Assessment: {
-    id(o: { _id: any }) {
-      return o._id || null;
-    },
-    assessor(o: { assessor: { _id: any } }) {
-      if (o.assessor && o.assessor._id) return o.assessor;
-      return User.findById(o.assessor);
-    },
-    delegate(o: { delegate: { _id: any } }) {
-      if (o.delegate && o.delegate._id) return o.delegate;
-      return User.findById(o.delegate);
-    },
-    survey(o: { survey: { _id: any } }) {
-      if (o.survey && o.survey._id) return o.survey;
-      return Survey.findById(o.survey);
-    },
-    assessmentType(o: { assessmentType: any }) {
-      return o.assessmentType || "CUSTOM";
-    },
-    complete(o: { complete: boolean }) {
-      return o.complete === true;
-    },
-    selfAssessment(assessment: { assessor: any; delegate: any }) {
-      const { assessor, delegate } = assessment;
-
-      if (
-        ObjectId.isValid(assessor) === true &&
-        ObjectId.isValid(delegate) === true
-      ) {
-        return new ObjectId(assessor).equals(new ObjectId(delegate));
-      }
-
-      if (
-        typeof assessor === "object" &&
-        assessor._id &&
-        typeof delegate === "object" &&
-        delegate._id
-      ) {
-        return assessor._id.equals(delegate._id);
-      }
-
-      return assessor === delegate;
-    },
-    async overdue(obj: { complete?: any; survey: any }) {
-      if (obj.complete === true) return false;
-      const { survey } = obj;
-      const now = moment();
-      let end = null;
-      let status = "open";
-      if (survey._id && survey.endDate && survey.status) {
-        end = moment(survey.endDate);
-        status = survey.status; //eslint-disable-line
-      } else {
-        const loaded = await Survey.findById(obj.survey)
-          .select("endDate status")
-          .then();
-        end = moment(loaded.endDate);
-        status = loaded.status; //eslint-disable-line
-      }
-      if (status === "closed") return false;
-      return now.isAfter(end) === true;
-    },
-    ratings(assessment: { ratings: any }) {
-      return assessment.ratings;
-    },
-    team: async (assessment: any) => {
-      const { assessor, survey } = assessment;
-
-      let $assessor_id = null;
-
-      if(assessor._id) $assessor_id = assessor._id;
-      else {
-        if(ObjectId.isValid(assessor) === true) {
-          $assessor_id = assessor;
-        }
-      }
-
-      if(!$assessor_id) throw new ApiError('Assessor cannot be null')
-
-      if(survey.surveyType.indexOf('180') >= 0) {
-        const demographic = await UserDemographics.findOne({ user: $assessor_id, organization: survey.organization }).then();
-        if (demographic === null || demographic === undefined) return "assessor"
-
-        if (survey.delegateTeam && survey.delegateTeam._id) {
-          if (survey.delegateTeam._id.equals(demographic.team) === true) return "delegates";
-        }
-
-        if (survey.delegateTeam && !survey.delegateTeam._id) {
-          if (ObjectId.isValid(survey.delegateTeam) === true) {
-            if (new ObjectId(survey.delegateTeam).equals(demographic.team) === true) return "delegates";
-          }
-        }
-
-        return "assessor"
-      } 
-
-      return "na";
-    }
+    },   
   },
   UserPeers: {
     id(obj: Reactory.IOrganigramDocument) {
@@ -297,7 +120,7 @@ const userResolvers = {
     memberships(
       usr: { memberships: Reactory.IMembership[] },
       args: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       if (lodash.isArray(usr.memberships)) {
         return lodash.filter(usr.memberships, {
@@ -394,7 +217,7 @@ const userResolvers = {
     userTasks(
       obj: any,
       { id, status }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       return Task.find({
         user: ObjectId(id || context.user._id),
@@ -413,7 +236,7 @@ const userResolvers = {
     async getUserCredentials(
       parent: any,
       { provider }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       logger.info(
         `Getting user credentials for ${context.user.fullName(true)}`
@@ -428,7 +251,7 @@ const userResolvers = {
     createUser: async (
       obj: any,
       params: { input: any, organizationId: string, password?: string },
-      context: Reactory.IReactoryContext,
+      context: Reactory.Server.IReactoryContext,
       info: any
     ) => {
       
@@ -488,7 +311,7 @@ const userResolvers = {
     setPassword(
       obj: any,
       { input: { password, confirmPassword, authToken } }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       return new Promise((resolve, reject) => {
         const { user } = context;
@@ -506,7 +329,7 @@ const userResolvers = {
     createTask(
       obj: any,
       { id, taskInput }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       const { _id } = context.user;
       return co.wrap(function* createTaskGenerator(userId, task) {
@@ -524,7 +347,7 @@ const userResolvers = {
     async confirmPeers(
       obj: any,
       { id, organization, surveyId }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       logger.debug(
         `CONFIRMING PEERS - ID: ${id}  ORG: ${organization}  SURVEY ID: ${surveyId}`
@@ -648,7 +471,7 @@ const userResolvers = {
     async removePeer(
       obj: any,
       { id, peer, organization }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       const userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
@@ -687,7 +510,7 @@ const userResolvers = {
     async setPeerRelationShip(
       obj: any,
       { id, peer, organization, relationship }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       let userOrganigram = await Organigram.findOne({
         user: ObjectId(id),
@@ -749,7 +572,7 @@ const userResolvers = {
     async removeUserRole(
       obj: any,
       { id, email, organization, role, clientId }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       const { user, partner } = context;
       let clientToUse = partner; // use the default partner
@@ -810,7 +633,7 @@ const userResolvers = {
     async addUserRole(
       obj: any,
       { id, email, organization, role, clientId }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       const { user, partner } = context;
       logger.info(
@@ -872,7 +695,7 @@ const userResolvers = {
     async deleteUser(
       parent: any,
       { id }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       const user = await User.findById(id).then();
       if (isNil(user) === true)
@@ -886,7 +709,7 @@ const userResolvers = {
     async addUserCredentials(
       parent: any,
       { provider, props }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       return context.user.setAuthentication({
         provider,
@@ -897,7 +720,7 @@ const userResolvers = {
     async removeUserCredentials(
       parent: any,
       { provider }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       if (context.user) {
         await context.user.removeAuthentication(provider);
@@ -908,7 +731,7 @@ const userResolvers = {
     async sendMail(
       parent: any,
       { message }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       const {
         id,
@@ -984,7 +807,7 @@ const userResolvers = {
     async createOutlookTask(
       parent: any,
       { task }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       const { id, via, subject, startDate, dueDate, timeZone } = task;
       const { user } = context;
@@ -1051,7 +874,7 @@ const userResolvers = {
     async deleteOutlookTask(
       parent: any,
       { task }: any,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ) {
       const { id, via, taskId } = task;
       const { user } = context;
@@ -1111,7 +934,7 @@ const userResolvers = {
     ReactoryCoreSetRolesForMembership: async (
       parent: any,
       args: Reactory.ReactorySetRolesArgs,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ): Promise<Reactory.CoreSimpleResponse> => {
       const { partner } = context;
       /**
@@ -1156,7 +979,7 @@ const userResolvers = {
     ReactoryCoreCreateUserMembership: async (
       parent: any,
       args: Reactory.ReactoryCreateMembershipArgs,
-      context: Reactory.IReactoryContext
+      context: Reactory.Server.IReactoryContext
     ): Promise<Reactory.IMembership> => {
       const { partner } = context;
       /**

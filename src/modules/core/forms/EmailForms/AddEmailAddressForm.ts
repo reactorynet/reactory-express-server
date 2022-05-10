@@ -1,4 +1,4 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 
 
   
@@ -10,7 +10,7 @@ const $schema: Reactory.ISchema = {
     }
 }
 
-const AddEmailAddressForm: Reactory.IReactoryForm = {
+const AddEmailAddressForm: Reactory.Forms.IReactoryForm = {
     id: 'core.AddEmailAddressForm',
     name: 'AddEmailAddressForm',
     nameSpace: 'core',

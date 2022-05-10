@@ -1,4 +1,4 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { resolver, query, property } from "@reactory/server-core/models/graphql/decorators/resolver";
 import { isNil, isArray, sortBy, filter, intersection, uniq } from 'lodash';
 import moment from 'moment';
@@ -8,7 +8,7 @@ const packageJson = require('../../../../../package.json');
 /***
  * Helper function to return roles for a user from the context object
  */
-const getRoles = async (context: Reactory.IReactoryContext): Promise <{ roles: string[], alt_roles: string[] }> => {
+const getRoles = async (context: Reactory.Server.IReactoryContext): Promise <{ roles: string[], alt_roles: string[] }> => {
 
   const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
 
@@ -115,13 +115,13 @@ class ApiStatus {
   };
 
   @property("ApiStatus", "menus")
-  menus(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.IReactoryContext): Promise<Reactory.IReactoryMenu[]> {
+  menus(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.IReactoryMenu[]> {
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
     return systemService.getMenusForClient(context.partner)    
   };
 
   @property("ApiStatus", "server")
-  async server(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.IReactoryContext) {
+  async server(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.Server.IReactoryContext) {
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
     const clients = systemService.getReactoryClients({ 
       _id: {  $in: context.user.memberships.map((m: any) => m.clientId) } 
@@ -141,7 +141,7 @@ class ApiStatus {
   };
 
   @property("ApiStatus", "activeTheme")
-  themeOptions(apiStatus: Reactory.IReactoryApiStatus, args: { theme: string, mode: string }, context: Reactory.IReactoryContext){
+  themeOptions(apiStatus: Reactory.IReactoryApiStatus, args: { theme: string, mode: string }, context: Reactory.Server.IReactoryContext){
 
     debugger
     const { themes = [], theme = "reactory" } = context.partner;
@@ -183,7 +183,7 @@ class ApiStatus {
   }
 
   @property("ApiStatus", "colorSchemes")
-  colorSchemes(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.IReactoryContext) {
+  colorSchemes(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.Server.IReactoryContext) {
     
     const { themeOptions } = context.partner;
 
@@ -206,14 +206,14 @@ class ApiStatus {
   }
 
   @property("ApiStatus", "themes")
-  async themes(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.IReactoryContext){
+  async themes(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.Server.IReactoryContext){
     const { themes = [] } = context.partner;
 
     return themes;
   }
 
   @property("ApiStatus", "loggedIn")
-  async loggedInContext(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.IReactoryContext): Promise<Reactory.IReactoryLoggedInContext> {
+  async loggedInContext(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.IReactoryLoggedInContext> {
         
     const { roles, alt_roles } = await getRoles(context).then();
 
@@ -236,7 +236,7 @@ class ApiStatus {
 
 
   @query("apiStatus")
-  async getApiStatus(obj: any, args: { theme: string }, context: Reactory.IReactoryContext) {
+  async getApiStatus(obj: any, args: { theme: string }, context: Reactory.Server.IReactoryContext) {
     const { user, partner } = context;
 
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;

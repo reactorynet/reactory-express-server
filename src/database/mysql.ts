@@ -11,7 +11,7 @@ import {
   SQLColumn,
   QueryStringResultWithCount,
 } from './types';
-import { Reactory } from 'types/reactory';
+import Reactory from '@reactory/reactory-core'
 
 let pool: mysql.Pool = null;
 
@@ -66,7 +66,7 @@ export const getPoolWithObject = ({
   return pool;
 };
 
-export const getConnection = (connectionId = 'mysql.default', context: Reactory.IReactoryContext) => {
+export const getConnection = (connectionId = 'mysql.default', context: Reactory.Server.IReactoryContext) => {
   if (!context.partner) throw new ApiError('Cannot get a connection without an active partner');
 
   const setting = context.partner.getSetting(connectionId, {
@@ -114,7 +114,7 @@ const whereClause = (filter: SQLFilter[]) => {
 };
 
 export const MySQLQueryStringGenerator: QueryStringGenerator = {
-  fromQuery: async (queryCommand: SQLQuery, context: Reactory.IReactoryContext): Promise<QueryStringResultWithCount> => {
+  fromQuery: async (queryCommand: SQLQuery, context: Reactory.Server.IReactoryContext): Promise<QueryStringResultWithCount> => {
     logger.debug('Generating SQL Query using queryCommand', queryCommand);
     const queryStringResultWithCount: QueryStringResultWithCount = {
       query: `
@@ -139,7 +139,7 @@ export const MySQLQueryStringGenerator: QueryStringGenerator = {
 
     return queryStringResultWithCount;
   },
-  fromInsert: (insertCommand: SQLInsert, context: Reactory.IReactoryContext): string => {
+  fromInsert: (insertCommand: SQLInsert, context: Reactory.Server.IReactoryContext): string => {
     return `
       INSERT 
       ${insertCommand.columns.map((sqlColumn: SQLColumn, index: number) => {
@@ -154,7 +154,7 @@ export const MySQLQueryStringGenerator: QueryStringGenerator = {
       )
     `;
   },
-  fromUpdate: (updateCommand: SQLUpdate, context: Reactory.IReactoryContext): string => {
+  fromUpdate: (updateCommand: SQLUpdate, context: Reactory.Server.IReactoryContext): string => {
     return `
       UPDATE
 
@@ -164,7 +164,7 @@ export const MySQLQueryStringGenerator: QueryStringGenerator = {
     })}
     `;
   },
-  fromDelete: (deleteCommand: SQLDelete, context: Reactory.IReactoryContext): string => {
+  fromDelete: (deleteCommand: SQLDelete, context: Reactory.Server.IReactoryContext): string => {
     return `
       DELETE        
       FROM
@@ -174,7 +174,7 @@ export const MySQLQueryStringGenerator: QueryStringGenerator = {
   },
 };
 
-export const queryAsync = async (query: string, connectionId: string = 'mysql.default', values: any, context: Reactory.IReactoryContext): Promise<any> => {
+export const queryAsync = async (query: string, connectionId: string = 'mysql.default', values: any, context: Reactory.Server.IReactoryContext): Promise<any> => {
   logger.debug('queryAsync', { query, connectionId });
 
   return new Promise((resolve, reject) => {

@@ -16,7 +16,7 @@ import {
 
 } from '@reactory/server-core/database/types';
 import logger from '@reactory/server-core/logging';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 
 
 interface SQLQueryParams {
@@ -42,7 +42,7 @@ interface SQLDeleteParams {
 
 const ReactorySQLResolver = {
   Query: {
-    ReactorySQLQuery: async (obj: any, params: SQLQueryParams, context: Reactory.IReactoryContext): Promise<SQLQueryResult> => {
+    ReactorySQLQuery: async (obj: any, params: SQLQueryParams, context: Reactory.Server.IReactoryContext): Promise<SQLQueryResult> => {
 
       const { input } = params;
       const { connectionId } = input.context;

@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import moment from 'moment';
 import { ObjectId } from 'mongodb';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import Organization from '@reactory/server-core/models/schema/Organization';
 import BusinessUnit from '@reactory/server-core/models/schema/BusinessUnit';
 import Team from '@reactory/server-core/models/schema/Team';
@@ -15,7 +15,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   nameSpace: string = 'core';
   version: string = '1.0.0';
 
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
   props: any;
 
   constructor(props: any, context: any) {
@@ -245,11 +245,11 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     return Promise.resolve(true);
   }
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
 
-  setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+  setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     this.context = executionContext;
     return true;
   }

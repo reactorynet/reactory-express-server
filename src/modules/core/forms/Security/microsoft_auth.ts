@@ -61,7 +61,7 @@ export const MicrosoftOpenIDAuthenticationUISchema: any = {
 };
 
 
-export const MicrosoftOpenIDAuthenticationForm: Reactory.IReactoryForm = {
+export const MicrosoftOpenIDAuthenticationForm: Reactory.Forms.IReactoryForm = {
   id: 'MicrosoftLogin',
   uiFramework: 'material',
   uiSupport: ['material'],

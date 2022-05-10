@@ -66,7 +66,7 @@ const smartAdminResources = [
 /**
  * Default Form Sample
  */
-const DefaultForm: Reactory.IReactoryForm = {
+const DefaultForm: Reactory.Forms.IReactoryForm = {
   id: 'default',
   name: 'DefaultForm',
   nameSpace: 'forms',
@@ -151,7 +151,7 @@ const DefaultForm: Reactory.IReactoryForm = {
 /***
  * Array Form Sample
  */
-const ArrayForm: Reactory.IReactoryForm = {
+const ArrayForm: Reactory.Forms.IReactoryForm = {
   id: 'array',
   uiFramework: 'material',
   title: 'An array testing form',
@@ -330,7 +330,7 @@ const ArrayForm: Reactory.IReactoryForm = {
 /**
  * Complex Form Sample
  */
-const ComplexFormSample: Reactory.IReactoryForm = {
+const ComplexFormSample: Reactory.Forms.IReactoryForm = {
   id: 'SmartAdminComplexFormSample',
   name: 'SmartAdminComplexFormSample',
   nameSpace: 'smart-admin',
@@ -387,7 +387,7 @@ const ComplexFormSample: Reactory.IReactoryForm = {
 /**
  * Product Ideas Sample Form
  */
-const ProductIdeas: Reactory.IReactoryForm = {
+const ProductIdeas: Reactory.Forms.IReactoryForm = {
   id: 'product-ideas',
   uiFramework: 'bootstrap',
   uiSupport: ['bootstrap'],
@@ -434,7 +434,7 @@ const ProductIdeas: Reactory.IReactoryForm = {
 /**
  * Product Ideas Form Sample
  */
-const ProductIdeasForm: Reactory.IReactoryForm = {
+const ProductIdeasForm: Reactory.Forms.IReactoryForm = {
   id: 'new-product-idea',
   name: 'ProductIdeas',
   nameSpace: 'forms',

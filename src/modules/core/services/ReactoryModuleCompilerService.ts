@@ -98,17 +98,17 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
   version: string = "1.0.0";
 
   props: Reactory.IReactoryServiceProps;
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
   fileService: Reactory.Service.IReactoryFileService;
 
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
+  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   }
   
-  async compileModule(module: Reactory.IReactoryFormModule): Promise<Reactory.IReactoryFormResource> {
+  async compileModule(module: Reactory.Forms.IReactoryFormModule): Promise<Reactory.Forms.IReactoryFormResource> {
     
     const that = this;
     const sourceFile: string = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__', `src/source_${module.id}.${module.fileType}`);
@@ -242,7 +242,7 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
     /**
      * The module compiler MUST return a valid compiled resource
      */
-    const resource: Reactory.IReactoryFormResource = {
+    const resource: Reactory.Forms.IReactoryFormResource = {
       name: 'Compiled Runtime',
       type: 'script',
       uri: `${process.env.CDN_ROOT}plugins/__runtime__/lib/${module.id}.min.js?cs=${checksum}`,
@@ -266,11 +266,11 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
     return Promise.resolve(true);
   }
   
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
   
-  setExecutionContext(context: Reactory.IReactoryContext): boolean {
+  setExecutionContext(context: Reactory.Server.IReactoryContext): boolean {
     this.context = context;
     return true;
   }

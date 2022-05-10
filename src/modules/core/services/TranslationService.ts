@@ -12,9 +12,9 @@ class ReactoryTranslationService implements Reactory.Service.IReactoryTranslatio
   version: string;
 
   props: Reactory.IReactoryServiceProps;
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
+  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   }
@@ -76,7 +76,7 @@ class ReactoryTranslationService implements Reactory.Service.IReactoryTranslatio
       }
     }
 
-    context.modules.forEach((reactoryModule: Reactory.IReactoryModule) => {
+    context.modules.forEach((reactoryModule: Reactory.Server.IReactoryModule) => {
       context.log(`Loading Translations For Module ${reactoryModule.nameSpace}.${reactoryModule.name}@${reactoryModule.version}`);
       if (reactoryModule.translations && reactoryModule.translations.length > 0) {
         reactoryModule.translations.forEach((translations: Reactory.IReactoryTranslation) => {
@@ -96,11 +96,11 @@ class ReactoryTranslationService implements Reactory.Service.IReactoryTranslatio
     return Promise.resolve(true);    
   }
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
   
-  setExecutionContext(context: Reactory.IReactoryContext): boolean {
+  setExecutionContext(context: Reactory.Server.IReactoryContext): boolean {
     this.context = context;
     return true;
   }
@@ -109,7 +109,7 @@ class ReactoryTranslationService implements Reactory.Service.IReactoryTranslatio
     id: "core.ReactoryTranslationService@1.0.0",
     name: "Translation Service",
     description: "Translation Service for translation",
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) => {
+    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new ReactoryTranslationService(props, context);
     }
   }

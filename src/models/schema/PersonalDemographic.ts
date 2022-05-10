@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import moment from 'moment';
 import logger from '@reactory/server-core/logging';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -34,7 +34,7 @@ const PersonalDemographicSchema = new mongoose.Schema({
   },
 });
 
-PersonalDemographicSchema.statics.GetLoggedInUserDemograpics = async function GetLoggedInUserDemograpics(context: Reactory.IReactoryContext): Promise<any> {
+PersonalDemographicSchema.statics.GetLoggedInUserDemograpics = async function GetLoggedInUserDemograpics(context: Reactory.Server.IReactoryContext): Promise<any> {
   const { user, partner } = context;
   return await this.findOne({ userId: user._id });
 };
@@ -67,7 +67,7 @@ export interface ISetPersonalDemographicsParams {
 }; 
 
 
-PersonalDemographicSchema.statics.SetLoggedInUserDemograpics = async function SetLoggedInUserDemograpics(args: any, context: Reactory.IReactoryContext): Promise<any> {
+PersonalDemographicSchema.statics.SetLoggedInUserDemograpics = async function SetLoggedInUserDemograpics(args: any, context: Reactory.Server.IReactoryContext): Promise<any> {
 
   logger.debug(`PERSONAL DEMOGRAPHICS SCHEMA:: ${JSON.stringify(args)}`);
 

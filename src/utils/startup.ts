@@ -8,7 +8,7 @@ import data from '@reactory/server-core/data';
 import logger from '@reactory/server-core/logging';
 import { ReactoryClientValidationError } from '@reactory/server-core/exceptions';
 import { startServices, getService } from '@reactory/server-core/services';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContextProvider';
 
 const { clients, components } = data;
@@ -230,7 +230,7 @@ const installClients = async (configs: any) => {
   }
 };
 
-const initialiseStartupAwareServices = async (context: Reactory.IReactoryContext) => {
+const initialiseStartupAwareServices = async (context: Reactory.Server.IReactoryContext) => {
   return startServices({}, context).then();
 };
 

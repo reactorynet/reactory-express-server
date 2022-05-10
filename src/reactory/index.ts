@@ -15,7 +15,7 @@ import allSchemas from './schema';
 import generators from './schema/generators';
 import logger from '../logging';
 import { isArray } from 'util';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import * as ReactorySchemaTypes from './types';
 import { ICacheStatic } from '@reactory/server-modules/core/models/CoreCache';
 
@@ -34,7 +34,7 @@ const CacheTimeout24Hours = 86400; //24
 
 router.get('/schema', async (req: any, res) => {
 
-  let schemas: Reactory.IReactoryForm[] = [];
+  let schemas: Reactory.Forms.IReactoryForm[] = [];
 
   try {
     const staticSchemas = await allSchemas().then();

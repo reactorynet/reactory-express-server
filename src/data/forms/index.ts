@@ -5,9 +5,9 @@
 import { isArray } from 'lodash';
 import logger from '@reactory/server-core/logging';
 import modules from '@reactory/server-core/modules';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 
-let _forms: Reactory.IReactoryForm[] = [];
+let _forms: Reactory.Forms.IReactoryForm[] = [];
 
 const getModuleForms = () => {
   _forms = [];

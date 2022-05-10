@@ -6,7 +6,7 @@ import fs from 'fs';
 import moment from 'moment';
 import path from 'path';
 import { ObjectID } from 'mongodb';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import Hash from '@reactory/server-core/utils/hash';
 import ApiError from '@reactory/server-core/exceptions';
 import logger from '@reactory/server-core/logging';

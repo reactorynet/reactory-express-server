@@ -1,9 +1,9 @@
 /* eslint-disable import/extensions */
 /* eslint-disable import/no-unresolved */
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
-const MoresPluginForm: Reactory.IReactoryForm = {
+const MoresPluginForm: Reactory.Forms.IReactoryForm = {
     id: 'ReactoryCorePluginForm',
     uiFramework: 'material',
     uiSupport: ['material'],

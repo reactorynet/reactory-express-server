@@ -4,12 +4,12 @@ import workflows from './workflow';
 import forms from './forms';
 import services from './services';
 import pdfs from './pdf';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { nameSpace, moduleName, } from './constants';
 
-export const ServerModule: Reactory.IReactoryModule = {
+export const ServerModule: Reactory.Server.IReactoryModule = {
   nameSpace: nameSpace,
-  version: moduleVersion,
+  version: "1.0.0",
   name: moduleName,
   dependencies: [],
   priority: 0,
@@ -23,4 +23,4 @@ export const ServerModule: Reactory.IReactoryModule = {
   pdfs: [...pdfs] 
 };
 
-export default TowerStoneModule;
+export default ServerModule;

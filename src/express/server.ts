@@ -42,7 +42,7 @@ import { User } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
 import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContextProvider';
 // @ts-ignore
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
 
 import colors from 'colors/safe';

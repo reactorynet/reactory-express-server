@@ -1,11 +1,11 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
 
 @resolver
 class ReactoryFile {  
 
   @property("ReactoryFile", "size")
-  async getFileSize(file: Reactory.IReactoryFileModel, params: any, context: Reactory.IReactoryContext) {
+  async getFileSize(file: Reactory.IReactoryFileModel, params: any, context: Reactory.Server.IReactoryContext) {
     context.log("ReactoryFile.size", {}, "debug",  "ReactoryFile.ts" )
     if(file.size  && file.size > 0) return file.size;
     

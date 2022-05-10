@@ -9,7 +9,7 @@ import { execql } from '@reactory/server-core/graph/client';
 import { MenuItem, Menu, ClientComponent, User, ReactoryClient } from '../../';
 import logger from '../../../logging';
 import modules from '@reactory/server-core/modules';
-import { Reactory } from 'types/reactory';
+import Reactory from '@reactory/reactory-core'
 
 const packageJson = require('../../../../package.json');
 
@@ -132,7 +132,7 @@ const resolvers = {
   }),
 };
 
-const installedModulesResolvers: Reactory.IReactoryModuleDefinition[] = [];
+const installedModulesResolvers: Reactory.Server.IReactoryModuleDefinition[] = [];
 
 modules.enabled.forEach((installedModule) => {
   if (installedModule.graphDefinitions) {

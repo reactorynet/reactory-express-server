@@ -1,4 +1,4 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { ClientComponent } from '@reactory/server-core/models';
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
@@ -27,7 +27,7 @@ export class ReactoryClientResolver {
   }
   
   @query("clientWithId")
-  async clientWithId(obj: any, arg: any, context: Reactory.IReactoryContext) {
+  async clientWithId(obj: any, arg: any, context: Reactory.Server.IReactoryContext) {
       return getReactoryClientWithKey(arg.key);
   }
 }
@@ -36,7 +36,7 @@ export class ReactoryClientResolver {
 export class ClientComponentResolver {
   resolver: any
 
-  async author(component: any, args: any, context: Reactory.IReactoryContext){
+  async author(component: any, args: any, context: Reactory.Server.IReactoryContext){
     const { author = null } = component;
     if(author === null) return null;
     const userService: Reactory.Service.IReactoryUserService = context.getService("core.UserService@1.0.0");

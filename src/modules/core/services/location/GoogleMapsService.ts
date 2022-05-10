@@ -3,19 +3,19 @@ import { Reactory } from "@reactory/server-core/types/reactory";
 
 class GoogleMapsService implements Reactory.Service.IReactoryContextAwareService {
 
-  getExecutionContext(): Reactory.IReactoryContext {
+  getExecutionContext(): Reactory.Server.IReactoryContext {
     throw new Error("Method not implemented.");
   }
-  setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+  setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     throw new Error("Method not implemented.");
   }
   name: string = 'GoogleMapsService';
   nameSpace: string = 'core';
   version: string = '1.0.0';
 
-  context: Reactory.IReactoryContext;
+  context: Reactory.Server.IReactoryContext;
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) {
+  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.context = context;
     this.getPlaces = this.getPlaces.bind(this);
     this.getPlaceDetails = this.getPlaceDetails.bind(this);
@@ -71,7 +71,7 @@ export default {
   description: 'A light weight google mapping service that provides search and place details.',
   dependencies: [],
   serviceType: 'data',
-  service: (props: Reactory.IReactoryServiceProps, context: Reactory.IReactoryContext) => {
+  service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
     return new GoogleMapsService(props, context);
   }
 };

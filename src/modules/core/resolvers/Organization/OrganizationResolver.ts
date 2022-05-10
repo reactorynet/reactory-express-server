@@ -6,7 +6,7 @@ import { updateOrganizationLogo } from '../../../../application/admin/Organizati
 import * as UserService from '../../../../application/admin/User';
 import ApiError, { OrganizationNotFoundError } from '@reactory/server-core/exceptions';;
 
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
 
 
@@ -30,7 +30,7 @@ const organizationResolver = {
 
       return null;
     },
-    avatarURL(organization: any, params: any, context: Reactory.IReactoryContext) { //eslint-disable-line
+    avatarURL(organization: any, params: any, context: Reactory.Server.IReactoryContext) { //eslint-disable-line
       if (organization && organization.avatar) {
         return `${CDN_ROOT}organization/${organization._id}/${organization.avatar}?t=${moment().format('YYYMMDDhh')}`;
       }
@@ -53,7 +53,7 @@ const organizationResolver = {
 
       return null;
     },
-    businessUnits: async (organization: Reactory.IOrganizationDocument, args: any, context: Reactory.IReactoryContext) => {
+    businessUnits: async (organization: Reactory.IOrganizationDocument, args: any, context: Reactory.Server.IReactoryContext) => {
       if (organization.businessUnits && organization.businessUnits.length > 0) return organization.businessUnits;
 
       return BusinessUnit.find({ organization: organization._id }).then();
@@ -73,7 +73,7 @@ const organizationResolver = {
       if (ObjectId.isValid(args.id) === true) return Organization.findById(args.id).then();
       else return null;
     },
-    CoreOrganization(obj: any, params: { id: string }, context: Reactory.IReactoryContext, info: any) {
+    CoreOrganization(obj: any, params: { id: string }, context: Reactory.Server.IReactoryContext, info: any) {
 
       if (ObjectId.isValid(params.id) === true) return Organization.findById(params.id).then();
       else return null;
@@ -96,7 +96,7 @@ const organizationResolver = {
     },
   },
   Mutation: {
-    createOrganization: async (obj, args, context: Reactory.IReactoryContext, info) => {
+    createOrganization: async (obj, args, context: Reactory.Server.IReactoryContext, info) => {
       const { input } = args;
       const inputData = { ...input };
       const exists = await Organization.count({ code: inputData.code }).then() === 0;

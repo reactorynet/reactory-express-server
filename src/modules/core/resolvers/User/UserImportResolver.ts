@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import { filter, findIndex } from 'lodash';
 import logger from '@reactory/server-core/logging';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import ReactoryFile from '@reactory/server-modules/core/models/CoreFile';
 import Organization from '@reactory/server-core/models/schema/Organization';
 import ReactoryFileImportPackage from '@reactory/server-modules/core/models/ReactoryFileImportPackage';
@@ -79,7 +79,7 @@ const graph: any = {
   },
   Query: {
     // eslint-disable-next-line max-lens
-    ReactoryFileImportPackage: async (parent: any, params: UserFileImportStatusParams, context: Reactory.IReactoryContext): Promise<Reactory.IReactoryFileImportPackage> => {
+    ReactoryFileImportPackage: async (parent: any, params: UserFileImportStatusParams, context: Reactory.Server.IReactoryContext): Promise<Reactory.IReactoryFileImportPackage> => {
       const { user, partner } = context;
       let response: any = null;
       const { organization_id, workload_id } = params;
@@ -174,7 +174,7 @@ const graph: any = {
     },
   },
   Mutation: {
-    SetReactoryFileImportPackageStatus: async (parent: any, params: any, context: Reactory.IReactoryContext): Promise<Reactory.IReactoryFileImportPackage> => {
+    SetReactoryFileImportPackageStatus: async (parent: any, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.IReactoryFileImportPackage> => {
       const { workload_id, status } = params;
       const { user, partner } = context;
       if (user.hasRole(partner.id, 'ADMIN') || user.hasRole(partner.id, 'DEVELOPER')) {
@@ -196,7 +196,7 @@ const graph: any = {
      * @param params 
      * @param context 
      */
-    AddFileToImportPackage: async (parent: any, params: { file: any, workload_id: string }, context: Reactory.IReactoryContext) => {
+    AddFileToImportPackage: async (parent: any, params: { file: any, workload_id: string }, context: Reactory.Server.IReactoryContext) => {
       try {
         debugger
         const { workload_id, file } = params;
@@ -228,7 +228,7 @@ const graph: any = {
       }
 
     },
-    RemoveFileFromImportPackage: async (parent: any, args: any, context: Reactory.IReactoryContext, info: any): Promise<Reactory.CoreSimpleResponse> => {
+    RemoveFileFromImportPackage: async (parent: any, args: any, context: Reactory.Server.IReactoryContext, info: any): Promise<Reactory.CoreSimpleResponse> => {
       
       type t_arg = {file_id: string, workload_id: string }
       
@@ -247,16 +247,16 @@ const graph: any = {
         throw new ApiError(`Error with packman service ${packmanError.message}`, { original: packmanError });
       }
     },
-    StartImportPackage: async (obj: any, args: { workload_id: string }, context: Reactory.IReactoryContext): Promise<any> => {
+    StartImportPackage: async (obj: any, args: { workload_id: string }, context: Reactory.Server.IReactoryContext): Promise<any> => {
       throw new ApiError('Not Implemented Yet');
     },
-    StopImportPackage: async (obj: any, args: { workload_id: string }, context: Reactory.IReactoryContext): Promise<any> => {
+    StopImportPackage: async (obj: any, args: { workload_id: string }, context: Reactory.Server.IReactoryContext): Promise<any> => {
       throw new ApiError('Not Implemented Yet');
     },
     StartProcessForPackage: async (
       obj: any,
       args: { workload_id: string, processors: string[], file_ids: string[] },
-      context: Reactory.IReactoryContext): Promise<any> => {
+      context: Reactory.Server.IReactoryContext): Promise<any> => {
 
       try {
         const packman: Reactory.IReactoryImportPackageManager = context.getService('core.ReactoryFileImportPackageManager@1.0.0') as Reactory.IReactoryImportPackageManager
@@ -275,7 +275,7 @@ const graph: any = {
      * @param context 
      * @returns 
      */
-    PreviewImportFile: async (parent: any, params: { workload_id: string, file_id: string, processors: string[] }, context: Reactory.IReactoryContext): Promise<Reactory.CoreSimpleResponse> => {
+    PreviewImportFile: async (parent: any, params: { workload_id: string, file_id: string, processors: string[] }, context: Reactory.Server.IReactoryContext): Promise<Reactory.CoreSimpleResponse> => {
 
       try {
         const packman: Reactory.IReactoryImportPackageManager = context.getService('core.ReactoryFileImportPackageManager@1.0.0') as Reactory.IReactoryImportPackageManager

@@ -1,4 +1,4 @@
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import users from 'data/users';
 import { resolver, property, mutation, query } from "models/graphql/decorators/resolver";
 import { ObjectId } from 'mongodb';
@@ -20,7 +20,7 @@ class TaskResolver {
   }
 
   @property(Task, "assignedTo")
-  user(task: Reactory.TReactoryTask, params: any, context: Reactory.IReactoryContext) {
+  user(task: Reactory.TReactoryTask, params: any, context: Reactory.Server.IReactoryContext) {
     //return User.findById(task.user);
     const userSvc: Reactory.Service.IReactoryUserService = context.getService("core.UserService@1.0.0");
     if(userSvc) {

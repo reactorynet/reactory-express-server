@@ -2,7 +2,7 @@
 
 import lodash, { find, isNil } from 'lodash';
 import { ObjectId } from 'mongodb';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
 import ApiError from '@reactory/server-core/exceptions';
 import { User } from '@reactory/server-core/models';
@@ -19,7 +19,7 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
     nameSpace: string = 'core';
     version: string = '1.0.0';
 
-    context: Reactory.IReactoryContext;
+    context: Reactory.Server.IReactoryContext;
     
     fileService: Reactory.Service.IReactoryFileService;
 
@@ -28,12 +28,12 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
         this.context = context;
     }
 
-    getExecutionContext(): Reactory.IReactoryContext {
+    getExecutionContext(): Reactory.Server.IReactoryContext {
         // throw new Error('Method not implemented.');  
         return this.context;
     }
 
-    setExecutionContext(executionContext: Reactory.IReactoryContext): boolean {
+    setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
         this.context.partner = executionContext.partner;
         this.context.user = executionContext.user;
 

@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import logger from '../../logging';
 
 

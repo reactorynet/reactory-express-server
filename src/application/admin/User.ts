@@ -9,7 +9,7 @@ import { User, Organization, Organigram, Assessment, Survey, Task } from '../../
 import ApiError, { UserExistsError, UserValidationError, UserNotFoundException, RecordNotFoundError } from '../../exceptions';
 import emails from '../../emails';
 import logger from '../../logging';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 import { isThrowStatement } from 'typescript';
 import { deprecate } from 'util';
 

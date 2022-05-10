@@ -7,7 +7,7 @@ import {
     Template,
 } from '@reactory/server-core/models';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
-import { Reactory } from '@reactory/server-core/types/reactory';
+import Reactory from '@reactory/reactory-core';
 
 interface ReactorySetEmailTemplateParams {
     emailTemplate: {
@@ -64,7 +64,7 @@ const TemplateResolvers = {
         }
     },
     Query: {
-        ReactoryTemplates: async (obj, { client = null, organization = null }, context: Reactory.IReactoryContext) => {
+        ReactoryTemplates: async (obj, { client = null, organization = null }, context: Reactory.Server.IReactoryContext) => {
             logger.info(`Listing templates using search criteria client id: ${client || 'null'} orgnization: ${organization || 'null'}`);
             if (isNil(client) === false && ObjectId.isValid(client)) {
                 logger.debug('Filtering templates by client and organization id');
@@ -86,7 +86,7 @@ const TemplateResolvers = {
         },
         ReactoryTemplate: (obj, { id }) => { return Template.findById(id).then(); },
 
-        ReactoryGetEmailTemplate: async (obj: any, params: any, context: Reactory.IReactoryContext): Promise<Reactory.IEmailTemplate> => {
+        ReactoryGetEmailTemplate: async (obj: any, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.IEmailTemplate> => {
 
             logger.debug('🟠 Query.ReactoryGetEmailTemplate(parent, params)', { obj, params });
 
@@ -122,7 +122,7 @@ const TemplateResolvers = {
             return template;
         },
 
-        ReactorySetEmailTemplate: async (parent: any, params: ReactorySetEmailTemplateParams, context: Reactory.IReactoryContext): Promise<Reactory.IEmailTemplate> => {
+        ReactorySetEmailTemplate: async (parent: any, params: ReactorySetEmailTemplateParams, context: Reactory.Server.IReactoryContext): Promise<Reactory.IEmailTemplate> => {
             const templateService: Reactory.Service.IReactoryTemplateService = context.getService('core.TemplateService@1.0.0');
 
             logger.debug('🟠 Mutation.ReactorySetEmailTemplate(parent, params)', { parent, params });

@@ -3,7 +3,7 @@ const { ObjectId } = mongoose.Schema.Types;
 import moment from 'moment';
 
 import logger from '../../../logging';
-import { Reactory } from 'types/reactory';
+import Reactory from '@reactory/reactory-core'
 
 export interface ICache extends MongooseDocument {
   id: any,
@@ -33,7 +33,7 @@ const CacheSchema: Schema<Cache> = new Schema<Cache>({
   item: {},
 });
 
-CacheSchema.statics.getItem = async function getItem(cacheKey: string, includeKey: boolean = false, context: Reactory.IReactoryContext) {
+CacheSchema.statics.getItem = async function getItem(cacheKey: string, includeKey: boolean = false, context: Reactory.Server.IReactoryContext) {
   let cached = await this.findOne({ key: cacheKey, partner: context.partner._id }).then();
 
   if (cached !== null && typeof cached === 'object' && cached.ttl) {
