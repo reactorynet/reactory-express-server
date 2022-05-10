@@ -816,28 +816,20 @@ const userResolvers = {
       if (lodash.isNil(userOrganigram) === true)
         throw new RecordNotFoundError("User Organigram Record Not Found");
 
-      let survey: ISurveyDocument = null;
-      userOrganigram.confirmedAt = new Date().valueOf();
-      userOrganigram.updatedAt = new Date().valueOf();
+      let survey: Mores.ISurveyDocument = null;
+      userOrganigram.confirmedAt = new Date();
+      userOrganigram.updatedAt = new Date();
       await userOrganigram.save().then()
 
       if (surveyId) {
         survey = await Survey.findById(new ObjectId(surveyId))
           .populate("delegates.assessments")
-          .populate("delegates.delegate").then();
-        const params = {
-          query: {
-            _id: new ObjectId(surveyId),
-            "delegates.delegate": new ObjectId(id),
-          },
-          data: { "delegates.$.nomineeConfirmed": true },
-        };
-        let delegate = survey.delegates.filter((delegate: any) => delegate.delegate._doc._id.toString() === id)
-        delegate = delegate.length > 0 ? delegate[0] : null
-        if (survey && survey.delegates.length > 0) {
-          if (delegate.status !== 'new') await Survey.updateOne(params.query, { $set: params.data });
+          .populate("delegates.delegate").then()
+          if (userOrganigram && userOrganigram.peers.length > 0) {
+            const updated = await Survey.updateOne({_id: new ObjectId(surveyId), delegates: 
+              {$elemMatch: {delegate: new ObjectId(id)}}}, 
+              {'delegates.$.nomineeConfirmed': true}, {new: true}).then()
         } else throw new ApiError('No Peers to confirm')
-
         if (survey && survey.options) {
           //@ts-ignore
           const {autoLaunchOnPeerConfirm, minimumPeers} = survey.options
