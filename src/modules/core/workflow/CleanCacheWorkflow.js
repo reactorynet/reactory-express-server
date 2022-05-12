@@ -4,6 +4,7 @@ import moment from 'moment';
 import logger from '../../../logging';
 import amq from '../../../amq';
 
+
 class BeforeCacheClean extends StepBody {
   run(context) {
     logger.debug(`WF: Before Clean ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);
