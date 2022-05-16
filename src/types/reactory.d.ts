@@ -1159,7 +1159,7 @@ declare namespace Reactory {
   export type ReactoryServiceTypes = "file" | "data" | "iot" | 
     "user" | "organization" | "businessunit" | "email" | 
     "notification" | "workflow" | "devops" | "plugin" | 
-    "custom" | "context" | "integration" | "report" | "mores";
+    "custom" | "context" | "integration" | "report";
 
   export interface IReactoryServiceDependency {
     /**
