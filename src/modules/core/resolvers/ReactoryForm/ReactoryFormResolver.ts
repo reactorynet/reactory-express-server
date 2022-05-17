@@ -5,6 +5,7 @@ import { resolver, query, property } from "@reactory/server-core/models/graphql/
 @resolver
 class ReactoryFormResolver {
 
+  resolver: Reactory.IResolverStruct
 
   @query("ReactoryForms")
   async listForms(obj: any, args: any, context: Reactory.IReactoryContext): Promise<Reactory.IReactoryForm[]> {
