@@ -1,19 +1,17 @@
-import { ObjectID, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
+import { MimeType } from 'chartjs-node-canvas';
 import Mongoose from "mongoose";
 import fs from 'fs';
 import ExcelJS from 'exceljs';
-import { TemplateType, UIFrameWork } from "./constants";
+import { TemplateType } from "./constants";
 import { Stream } from "stream";
-import { Application, Request, Response } from "express";
+import { Request, Response } from "express";
 import moment from "moment";
-import colors from 'colors';
 import { User } from "@microsoft/microsoft-graph-types";
-import { AnyMxRecord } from "dns";
-import React, { CSSProperties, Ref } from "react";
-import { Resolver, Resolvers } from "apollo-client";
+import { CSSProperties } from "react";
+import { Resolvers } from "apollo-client";
 import { Container } from "inversify";
 declare namespace Reactory {
-
   export interface IStartupOptions {
     [key: string]: any
   }
@@ -168,18 +166,18 @@ declare namespace Reactory {
 
   export interface IReactoryComment {
     id?: any,
-    user: ObjectID | IUser | IUserDocument,
+    user: ObjectId | IUser | IUserDocument,
     text: string,
     context: string,
     contextId: String,
     createdAt: string
     published: boolean,
     flagged: boolean,
-    upvoted: ObjectID[] | IUser[] | IUserDocument[]
+    upvoted: ObjectId[] | IUser[] | IUserDocument[]
     upvotes: number,
-    downvoted: ObjectID[] | IUser[] | IUserDocument[],
+    downvoted: ObjectId[] | IUser[] | IUserDocument[],
     downvotes: number,
-    favorite: ObjectID[] | IUser[] | IUserDocument[],
+    favorite: ObjectId[] | IUser[] | IUserDocument[],
     favorites: number,
   }
 
@@ -200,15 +198,15 @@ declare namespace Reactory {
     previewInputForm?: string,
     
     createdAt: Date,
-    createdBy: ObjectID | IUser | IUserDocument
+    createdBy: ObjectId | IUser | IUserDocument
 
     updatedAt: Date,
-    updatedBy: ObjectID | IUser | IUserDocument
+    updatedBy: ObjectId | IUser | IUserDocument
 
     version?: string
     published: boolean
 
-    comments?: ObjectID[] | IReactoryComment | IReactoryCommentDocument
+    comments?: ObjectId[] | IReactoryComment | IReactoryCommentDocument
   }
 
   export interface IReactoryContentDocument extends Mongoose.Document, IReactoryContent {
@@ -226,7 +224,7 @@ declare namespace Reactory {
   }
 
   export interface EmailAttachment {
-    id: ObjectID
+    id: ObjectId
     link: string,
     filename: string,
     original: string,
@@ -244,7 +242,7 @@ declare namespace Reactory {
   }
 
   export interface IEmailMessage {
-    id?: string | ObjectID
+    id?: string | ObjectId
     userId: string,
     via: string | 'reactory' | 'microsoft' | 'google';
     subject: string,
@@ -291,6 +289,7 @@ declare namespace Reactory {
 
   export interface IBusinessUnitDocument extends Mongoose.Document, IBusinessUnit { }
 
+  export type TBusinessUnit = IBusinessUnit | IBusinessUnitDocument
   export interface IOrganization {
     [key: string]: any
     name: string
@@ -321,6 +320,7 @@ declare namespace Reactory {
 
   export interface IMembershipDocument extends Mongoose.Types.Subdocument, IMembership { }
 
+  export type TMembership = IMembership | IMembershipDocument
   export interface ISessionInfo {
     id: ObjectId | string
     host: string
@@ -486,14 +486,14 @@ declare namespace Reactory {
   }
 
   export interface IUserDemographics {
-    race: string | ObjectID | IDemographic | IDemographicDocument
-    gender: string | ObjectID | IDemographic | IDemographicDocument
-    ageGroup: string | ObjectID | IDemographic | IDemographicDocument
-    user: string | ObjectID | IUser | IUserDocument
-    team: string | ObjectID | ITeam | ITeamDocument
-    businessUnit: string | ObjectID | IBusinessUnit | IBusinessUnitDocument,
-    region: string | ObjectID | IRegion | IRegionDocument
-    [key as string]: any
+    race: string | ObjectId | IDemographic | IDemographicDocument
+    gender: string | ObjectId | IDemographic | IDemographicDocument
+    ageGroup: string | ObjectId | IDemographic | IDemographicDocument
+    user: string | ObjectId | IUser | IUserDocument
+    team: string | ObjectId | ITeam | ITeamDocument
+    businessUnit: string | ObjectId | IBusinessUnit | IBusinessUnitDocument,
+    region: string | ObjectId | IRegion | IRegionDocument
+    [key: string]: any
   }
 
   export interface IUserDemographicDocument extends Mongoose.Document, IUserDemographics { 
@@ -525,12 +525,12 @@ declare namespace Reactory {
 
   /** ReactoryFile Management Models Interface */
   export interface IReactoryFilePermissions {
-    id?: ObjectID,
+    id?: ObjectId,
     roles: string[]
-    partnersIncluded?: ObjectID[],
-    partnersExcluded?: ObjectID[],
-    usersIndcluded?: ObjectID[],
-    usersExcluded?: ObjectID[]
+    partnersIncluded?: ObjectId[],
+    partnersExcluded?: ObjectId[],
+    usersIndcluded?: ObjectId[],
+    usersExcluded?: ObjectId[]
   }
 
   export interface IReactoryFileRemoteEntry {
@@ -551,9 +551,9 @@ declare namespace Reactory {
   }
 
   export interface IReactoryFile extends Mongoose.Document {
-    id: ObjectID,
+    id: ObjectId,
     hash: number,
-    partner: ObjectID,
+    partner: ObjectId,
     ttl?: number,
     path: string,
     alias: string,
@@ -565,8 +565,8 @@ declare namespace Reactory {
     size: number,
     created?: Date,
     uploadContext?: string,
-    uploadedBy: ObjectID,
-    owner: ObjectID,
+    uploadedBy: ObjectId,
+    owner: ObjectId,
     public?: Boolean,
     published?: Boolean,
     permissions?: IReactoryFilePermissions[],
@@ -1250,12 +1250,13 @@ declare namespace Reactory {
       onShutdown(): Promise<any>
     }
 
+    /**
+     * Base interface for a Context Aware Reactory Service.  These services have 
+     * a 
+     */
     export interface IReactoryContextAwareService extends IReactoryService {
-
       getExecutionContext(): IReactoryContext
       setExecutionContext(executionContext: IReactoryContext): boolean
-
-
     }
 
 
@@ -1296,7 +1297,7 @@ declare namespace Reactory {
        * @param businessUnitId - the business unit id the template will be linked to 
        * @param userId - the user the template will be linked to
        */
-      setTemplate(view: string, template: ITemplate, reactoryClientId?: string | ObjectID, organizationId?: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID): Promise<ITemplate>
+      setTemplate(view: string, template: ITemplate, reactoryClientId?: string | ObjectId, organizationId?: string | ObjectId, businessUnitId?: string | ObjectId, userId?: string | ObjectId): Promise<ITemplate>
     }
 
     export interface IEmailTemplateService extends ITemplateService {
@@ -1361,7 +1362,7 @@ declare namespace Reactory {
        * @param save 
        * @param options 
        */
-      getRemote(url: string, method: string, headers: HeadersInit, save: boolean, options?: { ttl?: number, sync?: boolean, owner?: ObjectID, permissions?: Reactory.IReactoryFilePermissions, public: boolean }): Promise<Reactory.IReactoryFileModel>
+      getRemote(url: string, method: string, headers: HeadersInit, save: boolean, options?: { ttl?: number, sync?: boolean, owner?: ObjectId, permissions?: Reactory.IReactoryFilePermissions, public: boolean }): Promise<Reactory.IReactoryFileModel>
 
       setFileModel(file: IReactoryFileModel): Promise<Reactory.IReactoryFileModel>;
 
@@ -1461,9 +1462,11 @@ declare namespace Reactory {
 
       findUserWithEmail(email: string): Promise<Reactory.IUserDocument>
 
-      findUserById(id: string | number | ObjectID): Promise<Reactory.IUserDocument>
+      findUserById(id: string | number | ObjectId): Promise<Reactory.IUserDocument>
 
-      getUserPeers(id: string | number | ObjectID, organization_id: string | ObjectID): Promise<Reactory.IOrganigramDocument>
+      getUserPeers(id: string | number | ObjectId, organization_id: string | ObjectId): Promise<Reactory.IOrganigramDocument>
+
+      setUserPeers(user: IUserDocument, peers: any, organization: IOrganizationDocument, allowEdit: boolean, confirmedAt?: Date): Promise<IOrganigramDocument>
 
       setUserDemographics(userId: string, organisationId: string, membershipId?:
       string, dob?: Date, businessUnit?: string, gender?: string, operationalGroup?: string,
@@ -1473,7 +1476,7 @@ declare namespace Reactory {
 
     export interface IReactoryUserDemographicsService extends Reactory.Service.IReactoryDefaultService {
 
-      setUserDemographics(demographics: Reactory.IUserDemographics, user: Reactory.IUser): Promise<IUserDemographicsDocument>
+      setUserDemographics(demographics: Reactory.IUserDemographics, user: Reactory.IUser): Promise<IUserDemographicDocument>
       
     }
 
@@ -1779,28 +1782,112 @@ declare namespace Reactory {
 
   export type SERVICE_LIFECYCLE = "instance" | "singleton";
 
-  export type LOG_TYPE = string | "debug" | "warn" | "error"
+  export type LOG_TYPE = string | "debug" | "warn" | "error" | "info"
+
+  /**
+   * The IReactoryContext is the object should be passed through to all levels of the execution.
+   * It contains the logged in user, the memberships and several shortcut utilities that allows
+   * all code to be executed with a specific user / application context details.
+   */
   export interface IReactoryContext { 
     id: string,
+    /**
+     * The user account that is associated with this execution 
+     */
     user: Reactory.IUserDocument
+    /**
+     * The partner / application that is currently executing
+     */
     partner: Reactory.IReactoryClientDocument
+    /**
+     * Service activator function that creates / returns a service with the given fqn (fully qualified name)
+     * @param fqn - the FQN for the service to activate. 
+     * @param props - any properties to pass to the service if required.
+     * @param context - a specific context if you want to execute as different user, otherwise current context is used
+     * @param lifeCycle - the lifecycle type for the service, either instance or singleton
+     */
     getService<T extends Reactory.Service.IReactoryService>(fqn: string, props?: any, context?: Reactory.IReactoryContext, lifeCycle?: SERVICE_LIFECYCLE): T,    
+    /**
+     * Logging method to write logs.
+     * @param message - the message to log
+     * @param meta - any meta data
+     * @param type - "error", "info", "debug" or "warning"
+     * @param clazz - the class or component id
+     */
     log(message: string, meta?: any, type?: LOG_TYPE, clazz?: string): void
+    /**
+     * Logs a debug message to the console / log output
+     * @param message - message to log out
+     * @param meta - any meta data
+     * @param clazz - the class or component id
+     */
+    debug(message: string, meta?: any, clazz?: string): void
+    /**
+     * Logs a warning message to the console / log output
+     * @param message - message to log out     
+     * @param meta - any meta data
+     * @param clazz - the class or component id
+     */
+    warn(message: string, meta?: any, clazz?: string): void
+    /**
+     * Logs an error message to the console / log output
+     * @param message - message to log out
+     * @param meta - any meta data
+     * @param clazz - the class or component id
+     */
+    error(message: string, meta?: any, clazz?: string): void
+    /**
+     * Write an info message to the console / log output
+     * @param message - message to log out
+     * @param meta - any meta data
+     * @param clazz - the class or component id
+     */
+    info(message: string, meta?: any, clazz?: string): void
     state: {
       [key: string]: any
     },
+    /**
+     * The current response object
+     */
     $response: Response,
+    /**
+     * The current request object
+     */
     $request: Request,
+    /**
+     * current color palette
+     */
     colors: any,
+    /**
+     * IoC container
+     */
     container: Container,
+    /**
+     * Modules that are currently available for this 
+     * instance
+     */
     modules: Reactory.IReactoryModule[]
+    /**
+     * utility tools
+     */
     utils: {
+      /**
+       * creates a hash from an object
+       */
       hash: (obj: any) => number
     },
+    /**
+     * Function to help check for specific permission
+     */
     hasRole: (role: string, partner?: Reactory.IPartner, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => boolean,    
     [key: string]: any
   }
 
+  /**
+   * Execution context provider interface. 
+   * A class that is configured as a IExecutionContextProvider can be injected
+   * into the execution context by configuring the Application client configuration.
+   */
   export interface IExecutionContextProvider {
     getContext: (currentContext: IReactoryContext) => Promise<IReactoryContext>
   }
@@ -1929,18 +2016,37 @@ declare namespace Reactory {
   }
 
   export interface ReactorySetRolesArgs {
-    user_id: ObjectID,
-    id: ObjectID,
+    user_id: ObjectId,
+    id: ObjectId,
     roles: string[]
   }
 
   export interface ReactoryCreateMembershipArgs {
-    user_id: ObjectID,
-    organization?: ObjectID,
-    businessUnit?: ObjectID,
+    user_id: ObjectId,
+    organization?: ObjectId,
+    businessUnit?: ObjectId,
     roles: string[]
   }
 
+
+  export interface IChartProps {
+    folder: string,
+    file: string,
+    width?: number,
+    height?: number
+    resolveCDN?: boolean,
+    data: any,
+    options?: any,
+    mime?: MimeType,
+    context: Reactory.IReactoryContext
+  }
+
+  export interface IChartResult {
+    file: string,
+    additional?: {
+      cdn: string
+    }
+  }
 
   export interface ChartJSDataLabelContext {
     active: boolean,
@@ -1958,13 +2064,41 @@ declare namespace Reactory {
   }
   
   export interface IReactoryResolver {    
-    resolver: IResolverStruct
+    resolver?: IResolverStruct
   }
 
 
   export interface IReactoryMenu {
     [key: string]: any
   }
+
+  export interface IReactoryTask {
+    id?: any
+    title: string 
+    description?: string
+    assignedTo?: string | ObjectId | IUser | IUserDocument    
+    comments?: IReactoryComment[] | IReactoryCommentDocument
+    attachments?: IReactoryFile[] | IReactoryFileModel[]
+    shortCode?: string
+    slug?: string
+    label: string[]
+    percentComplete?: number
+    timeline?: ITimeline[]
+    completionDate?: Date
+    startDate?: Date
+    dueDate?: Date,
+    createdBy: string | ObjectId | IUser | IUserDocument
+    createdAt: Date
+    updatedAt?: Date
+  }
+
+  export interface IReactoryTaskDocument extends Mongoose.Document, IReactoryTask {
+
+  }
+
+  export type TReactoryTask = IReactoryTask | IReactoryTaskDocument
+
+  
   
   /**
    * Data structure that represents the Reactory Api Status

@@ -13,13 +13,13 @@ import { Reactory } from 'types/reactory';
 
 const packageJson = require('../../../../package.json');
 
-const getComponentWithFqn = (fqn) => {
+const getComponentWithFqn = async (fqn: string) => {
   const parts = fqn.split('@');
   const v = parts[1];
   const ns = parts[0].split('.')[0];
   const nm = parts[0].split('.')[1];
 
-  return ClientComponent.find({ nameSpace: ns, name: nm, version: v });
+  return ClientComponent.find({ nameSpace: ns, name: nm, version: v }).clone();
 };
 
 const resolvers = {
@@ -34,36 +34,36 @@ const resolvers = {
     roles: menu => menu.roles || [],
     entries: menu => sortBy(menu.entries, 'ordinal'),
   },
-  ComponentArgs: {
-    key: arg => arg.key,
-    value: arg => arg.value,
-  },
-  ClientComponent: {
-    id: component => component._id,
-    name: component => component.name,
-    nameSpace: component => component.nameSpace,
-    version: component => component.version,
-    title: component => component.title,
-    description: component => component.description,
-    args: component => component.args,
-    author: component => User.findById(component.author),
-  },
-  ClientRoute: {
-    id: route => route._id,
-    path: route => route.path,
-    roles: route => route.roles,
-    component: (route) => {
-      if (!route.componentFqn) {
-        return {
-          nameSpace: 'core',
-          name: 'EmptyComponent',
-          version: '1.0.0',
-          title: `Component for Route ${route.path} not defined, check settings`,
-        };
-      }
-      return getComponentWithFqn(route.componentFqn);
-    },
-  },  
+  // ComponentArgs: {
+  //   key: arg => arg.key,
+  //   value: arg => arg.value,
+  // },
+  // ClientComponent: {
+  //   id: component => component._id,
+  //   name: component => component.name,
+  //   nameSpace: component => component.nameSpace,
+  //   version: component => component.version,
+  //   title: component => component.title,
+  //   description: component => component.description,
+  //   args: component => component.args,
+  //   author: component => User.findById(component.author),
+  // },
+  // ClientRoute: {
+  //   id: route => route._id,
+  //   path: route => route.path,
+  //   roles: route => route.roles,
+  //   component: (route) => {
+  //     if (!route.componentFqn) {
+  //       return {
+  //         nameSpace: 'core',
+  //         name: 'EmptyComponent',
+  //         version: '1.0.0',
+  //         title: `Component for Route ${route.path} not defined, check settings`,
+  //       };
+  //     }
+  //     return getComponentWithFqn(route.componentFqn);
+  //   },
+  // },  
   Query: {
     
   },

@@ -25,7 +25,7 @@ import reactoryClientAuthenticationMiddleware from '@reactory/server-core/middle
 import userAccountRouter from '@reactory/server-core/useraccount';
 import reactory from '@reactory/server-core/reactory';
 import froala from '@reactory/server-core/froala';
-import charts from '@reactory/server-core/charts';
+
 import resources from '@reactory/server-core/resources';
 import typeDefs from '@reactory/server-core/models/graphql/types';
 import resolvers from '@reactory/server-core/models/graphql/resolvers';
@@ -339,7 +339,7 @@ Environment Settings:
       ['jwt'], { session: false }),
       bodyParser.urlencoded({ extended: true }), pdf);
     reactoryExpress.use('/excel', ExcelRouter);
-    reactoryExpress.use('/charts', charts);
+    
     reactoryExpress.use('/amq', amq.router);
     reactoryExpress.use(resourcesPath,
       passport.authenticate(['jwt', 'anonymous'], { session: false }),
