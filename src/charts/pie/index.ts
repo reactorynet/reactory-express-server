@@ -15,7 +15,7 @@ const defaultOptions = {
 };
 
 export const DefaultPieChart = async (props: Reactory.IChartProps): Promise<Reactory.IChartResult> => {
-  
+
   const {
     folder,
     file,
@@ -32,36 +32,36 @@ export const DefaultPieChart = async (props: Reactory.IChartProps): Promise<Reac
     datasets: [{
       data: [82, 18],
     }],
-  
+
     // These labels appear in the legend and in the tooltips when hovering different arcs
     labels: [
       'Avg Score',
     ],
-  
+
     backgroundColor: [
       `${context.partner.themeOptions.palette.primary.main}`,
       'rgba(0,0,0,0)',
     ],
   });
-  
-  const outputpath: fs.PathLike = path.join(folder, file);    
+
+  const outputpath: fs.PathLike = path.join(folder, file);
   const chartNode = new ChartJSNodeCanvas({
     height: height || 400,
     width: width || 400,
-    type: 'svg',
+    type: 'pdf',
   });
 
   const stream = chartNode.renderToStream({
     type: 'pie',
     data: data || defaultData(),
-    plugins: [ChartDataLabels],
+    //plugins: [ChartDataLabels],
     options: {
       scales: {
-        yAxes: [{
+        yAxes: {
           ticks: {
             beginAtZero: true,
           },
-        }],
+        },
       },
       ...options,
     }

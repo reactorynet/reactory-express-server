@@ -29,27 +29,27 @@ export const BarChart = async (props: Reactory.IChartProps): Promise<Reactory.IC
   const chartNode = new ChartJSNodeCanvas({
     height: height || 400,
     width: width || 400,
-    type: 'svg',
+    type: 'pdf',
   });
 
   const stream = chartNode.renderToStream({
     type: 'bar',
     data,
-    plugins: [ChartDataLabels],
+    //plugins: [ChartDataLabels],
     options: {
       scales: {
-        yAxes: [{
+        yAxes: {
           ticks: {
             beginAtZero: true,
           },
-        }],
+        },
       },
       ...options,
     }
   }, mime);
 
   let $fileStream = fs.createWriteStream(outputpath);
-  
+
   stream.pipe($fileStream);
   $fileStream.close();
 

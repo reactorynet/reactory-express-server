@@ -476,20 +476,6 @@ const userResolvers = {
         .populate("assessor")
         .then();
     },
-    userTasks(
-      obj: any,
-      { id, status }: any,
-      context: Reactory.IReactoryContext
-    ) {
-      return Task.find({
-        user: ObjectId(id || context.user._id),
-        status,
-      }).then();
-    },
-    taskDetail(parent: any, { id }: any) {
-      logger.info(`Finding Task For Id ${id}`);
-      return Task.findById(id).then();
-    },
     async searchUser(parent: any, { searchString, sort = "email" }: any) {
       return User.find({ email: `/${searchString}/i` })
         .sort(`-${sort}`)
@@ -588,24 +574,7 @@ const userResolvers = {
         }
       });
     },
-    createTask(
-      obj: any,
-      { id, taskInput }: any,
-      context: Reactory.IReactoryContext
-    ) {
-      const { _id } = context.user;
-      return co.wrap(function* createTaskGenerator(userId, task) {
-        const created = yield new Task({
-          ...task,
-          user: ObjectId(userId),
-          createdAt: new Date().valueOf(),
-          updatedAt: new Date().valueOf(),
-        })
-          .save()
-          .then();
-        return created;
-      })(id || _id.toString(), taskInput);
-    },
+    
     async confirmPeers(
       obj: any,
       { id, organization, surveyId }: any,

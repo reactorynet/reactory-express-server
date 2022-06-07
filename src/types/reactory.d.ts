@@ -11,6 +11,7 @@ import { User } from "@microsoft/microsoft-graph-types";
 import { CSSProperties } from "react";
 import { Resolvers } from "apollo-client";
 import { Container } from "inversify";
+import { PagingResult } from "database/types";
 declare namespace Reactory {
   export interface IStartupOptions {
     [key: string]: any
@@ -1385,6 +1386,13 @@ declare namespace Reactory {
     }
 
     export type OrganizationImageType = string | "logo" | "avatar";
+
+    export type PagedOrganizations = {
+      paging: PagingResult,
+      organizations: IOrganization[] | IOrganizationDocument[]
+    }
+
+    export type OrganizationsForUser = IOrganization[] | IOrganizationDocument[]
     export interface IReactoryOrganizationService extends Reactory.Service.IReactoryDefaultService {
 
       setOrganization(id: string, updates: { name?: string, code?: string, color?: string, logo?: string }): Promise<IOrganizationDocument>
@@ -1404,6 +1412,10 @@ declare namespace Reactory {
       findTeam(organization_id: string | number | ObjectId, search: string | number | ObjectId ): Promise<Reactory.ITeamDocument>
 
       createTeam(organization_id: string | number | ObjectId, search: string | number | ObjectId ): Promise<Reactory.ITeamDocument>
+
+      getOrganizationsForLoggedInUser(search: string, sort: string, direction: string): Promise<OrganizationsForUser>
+      
+      getPagedOrganizationsForLoggedInUser(search: string, sort: string, direction: string, paging: Reactory.IPagingRequest): Promise<OrganizationsForUser>
     }
 
     /**
@@ -2038,7 +2050,7 @@ declare namespace Reactory {
     data: any,
     options?: any,
     mime?: MimeType,
-    context: Reactory.IReactoryContext
+    context?: Reactory.IReactoryContext
   }
 
   export interface IChartResult {
@@ -2141,5 +2153,23 @@ declare namespace Reactory {
     locale: string
     translations: IReactoryTranslation[]
     resources?: any
+  }
+
+  export interface IBooleanResponse {
+    success: boolean,
+    message?: string
+  }
+
+  export interface IDataItemResponse<T> {
+    success: boolean
+    message?: string
+    data: T
+  }
+
+  export interface IDataItemsReponse<T> {
+    success: boolean
+    message?: string
+    paging?: IPagingResult
+    data: T[]
   }
 }

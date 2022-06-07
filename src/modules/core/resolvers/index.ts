@@ -1,5 +1,6 @@
 import ApiStatus from './ApiStatus';
 import OrganizationResolver from './Organization/OrganizationResolver';
+import Organization from './Organization/Organization';
 import BusinessUnitResolver from './Organization/BusinessUnitResolver';
 import ProjectResolver from './Organization/ProjectResolver';
 import TeamResolver from './Organization/TeamResolver';
@@ -20,6 +21,7 @@ import Resources from './System/Resources';
 import Statistics from './System/Statistics';
 import { ReactoryClientResolver, ClientComponentResolver, ClientRouteResolver } from './System/ReactoryClientResolver';
 import ReactoryForm from './ReactoryForm';
+
 import { mergeGraphResolver } from '@reactory/server-core/utils';
 
 export default mergeGraphResolver([
@@ -45,5 +47,5 @@ export default mergeGraphResolver([
   TemplateResolver,
   SupportResolver,
   ReactoryForm,
-
+  Organization
 ]);

@@ -51,7 +51,7 @@ export const DefaultRadarChart = async (props: Reactory.IChartProps): Promise<Re
   const chartNode = new ChartJSNodeCanvas({
     height: height || 400,
     width: width || 400,
-    type: 'svg',
+    type: 'pdf',
   });
 
   const stream = chartNode.renderToStream({

@@ -139,6 +139,28 @@ type ApiStatus {
     publicKey: String
 }
 
+type CorsWhiteList {
+  key: String!,
+  host: String!
+}
+
+type Tennant {
+  id: ObjID!
+  key: String!
+  title: String
+  theme: String
+  whitelist: [CorsWhiteList]
+  createdAt: Date!
+  updatedAt: Date!
+}
+
+input CreateTennantInput {
+  key: String!
+  title: String
+  theme: String
+}
+
+
 extend type Query {
   """
   WILL BE DEPRECATED - use ReactoryClientWithKey instead
