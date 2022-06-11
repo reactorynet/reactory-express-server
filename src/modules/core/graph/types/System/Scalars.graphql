@@ -4,19 +4,120 @@ scalar Date
 scalar Any
 scalar Upload
 
+"""
+Meta data is a general purpose type that 
+adds the ability to keep track of 
+synchronizable 
+"""
 type Meta {
   id: ObjID
+  """
+  The date the record was synchronized
+  """
   lastSync: Date
+  """
+  The next date the record needs to be synchronized
+  """
   nextSync: Date
+  """
+  Indicator whether or not the record must be 
+  kept in synch
+  """
   mustSync: Boolean
+  """
+  The remote reference
+  """
   reference: String
+  """
+  The owner source system, this will be used by 
+  specific workflows to synchronize the resource
+  """
   owner: String
+  """
+  The source data from the last call
+  """
   source: Any
 }
 
-type CoreSimpleResponse {
-  success: Boolean
+
+"""
+A boolean response with an optional message 
+"""
+type BooleanResponse {
+  """
+  Indicates if the process was sucessful or not
+  """
+  success: Boolean!
+  """
+  An optional message that will provide additional context
+  """
   message: String
+}
+
+"""
+A generic data response type which an Any type. This should 
+generally be used ONLY for prototyping or when integrating into a
+system where the data structure is unknown and your query 
+is used to inspect / process the data payload.
+"""
+type DataItemResponse {
+  """
+  Indicates if the process was sucessful or not
+  """
+  success: Boolean!
+  """
+  An optional message that will provide additional context
+  """
+  message: String
+  """
+  An any item data payload. Does allow for null value
+  in the event of a response failure.
+  """
+  data: Any
+}
+
+"""
+A generic paged response with an [Any] data property that 
+contains the payload.  This should generally only be 
+used during prototyping or when integrating into systems
+with an unknown / variable data structure.
+"""
+type DataItemsResponse {
+  """
+  Indicates if the process was sucessful or not
+  """
+  success: Boolean!
+  """
+  An optional message that will provide additional context
+  """
+  message: String
+  """
+  The paging information associated with the requet
+  """
+  paging: PagingResult
+  """
+  The data items in the response, can be null in the event of a failed request.
+  """
+  data: [Any]
+}
+
+
+"""
+A basic generic reponse type that can be used 
+for graph api calls that do not require extensive type data.
+"""
+type CoreSimpleResponse {
+  """
+  Indicates whether or not the request was successful
+  """
+  success: Boolean
+  """
+  Optional - A string message with more information
+  """
+  message: String
+  """
+  Optional - An any object payload
+  """
   payload: Any
 }
 
@@ -24,12 +125,26 @@ type CoreSimpleResponse {
 This type can be used as a generic wrapper for data queries
 """
 type CorePagedResponse {
+  """
+  Indicates whether or not the call was successful
+  """
   success: Boolean
+  """
+  The string message for the Paged Response
+  """
   message: String
+  """
+  The paging result
+  """
   paging: PagingResult
+  """
+  The items in the response
+  """
   items: [Any]
 }
 
+"""
+"""
 type DocumentUrl {
     id: String!
     url: String!

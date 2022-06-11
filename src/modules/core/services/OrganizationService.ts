@@ -235,6 +235,73 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     return organization;
   }
 
+  async getOrganizationsForLoggedInUser(search: string, sort: string, direction: string = 'asc'): Promise<Reactory.Service.OrganizationsForUser> {
+
+    const { user, partner } = this.context;
+    const sortBy = sort || 'name';
+    
+    if (user.hasAnyRole(partner._id) === false) return [];
+
+    if (
+      user.hasRole(partner._id, 'ADMIN') === true ||
+      user.hasRole(partner._id, 'DEVELOPER')
+    ) {
+      return Organization.find({}).sort(direction).then();
+    }
+
+    const _membershipOrganizationIds: any[] = [];
+    this.context.user.memberships.forEach((membership) => {
+      if (
+        membership.organizationId &&
+        membership.clientId.equals(partner._id) &&
+        _membershipOrganizationIds.indexOf(membership.organizationId) < 0
+      ) {
+        _membershipOrganizationIds.push(membership.organizationId);
+      }
+    });
+
+    // collect all my membership organizations
+    return Organization.find({ _id: { $in: _membershipOrganizationIds } })
+      .sort(sortBy)
+      .then();
+
+  }
+
+  async getPagedOrganizationsForLoggedInUser(search: string, sort: string, direction: string = 'asc', paging: Reactory.IPagingRequest): Promise<Reactory.Service.OrganizationsForUser> {
+
+    const { user, partner } = this.context;
+    const sortBy = sort || 'name';
+
+    if (user.hasAnyRole(partner._id) === false) return [];
+
+    if (
+      user.hasRole(partner._id, 'ADMIN') === true ||
+      user.hasRole(partner._id, 'DEVELOPER')
+    ) {
+      return Organization.find({}).sort(direction).then();
+    }
+
+    const _membershipOrganizationIds: any[] = [];
+    this.context.user.memberships.forEach((membership) => {
+      if (
+        membership.organizationId &&
+        membership.clientId.equals(partner._id) &&
+        _membershipOrganizationIds.indexOf(membership.organizationId) < 0
+      ) {
+        _membershipOrganizationIds.push(membership.organizationId);
+      }
+    });
+
+    // collect all my membership organizations
+    return Organization.find({ _id: { $in: _membershipOrganizationIds } })
+      .sort(sortBy)
+      .limit(paging.pageSize)
+      .skip(paging.pageSize * paging.page)
+      .then();
+
+  }
+
+
   async get(id: string): Promise<Reactory.IOrganizationDocument> {
     return await Organization.findById(id).then();
   }

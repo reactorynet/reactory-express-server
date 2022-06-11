@@ -107,8 +107,8 @@ const DEFAULT_MATERIAL_THEME = {
 @resolver
 class ApiStatus {
 
-  resolver: any  
-    
+  resolver: Reactory.IResolverStruct
+
   @property("ApiStatus", "id")
   id(apiStatus: Reactory.IReactoryApiStatus) {
     return apiStatus.id || 'anon'

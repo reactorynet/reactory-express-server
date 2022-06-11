@@ -6,6 +6,7 @@ import ApiError from 'exceptions';
 @resolver
 class ReactoryFormResolver {
 
+  resolver: Reactory.IResolverStruct
 
   @query("ReactoryForms")
   async listForms(obj: any, args: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.Forms.IReactoryForm[]> {

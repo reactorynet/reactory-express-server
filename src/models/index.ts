@@ -61,6 +61,7 @@ export const Board = BoardModel;
 
 //Christian
 export const UserDemographic = UserDemographicsModel
+
 // DREW
 export const Content = ContentModel;
 export const PersonalDemographic = PersonalDemographicModel;

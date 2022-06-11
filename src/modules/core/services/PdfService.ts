@@ -75,7 +75,6 @@ class PdfService implements Reactory.Service.IReactoryPdfService {
       stream.on("close", () => {
         resolve(true);
       });
-
       try {
         that.createPdfBinary(definition, stream);
       } catch (e) {

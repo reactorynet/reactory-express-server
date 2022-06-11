@@ -71,6 +71,7 @@ type User {
   fullName: String
   fullNameWithEmail: String
   lastName: String
+  dateOfBirth: Date
   email: String
   mobileNumber: String
   deleted: Boolean

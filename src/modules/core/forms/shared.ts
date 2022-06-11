@@ -4,12 +4,12 @@ import { defaultFormProps } from '@reactory/server-core/data/forms/defs';
 import { FormBuilder } from '@reactory/server-modules/core/forms/ReactoryFormEditor//FormBuilder';
 import { HelpFormEdit, HelpListForm } from '@reactory/server-modules/core/forms/ReactoryContentCapture/HelpEditor';
 import { TemplateEditor } from '@reactory/server-core/modules/core/forms/EmailTemplate/TemplateEditor/TemplateEditor';
-import TaskDetailForm from 'modules/core/forms/Project/task';
+
 import PageEditorForm from '@reactory/server-modules/core/forms/ReactoryFormEditor/pageEditorForm';
 import PageTemplateConfig from '@reactory/server-modules/core/forms/ReactoryFormEditor/pageTemplateConfig';
 import { ReactoryApplicationsForm, ReactoryDashboard, ReactoryClientAdminPage } from './ReactoryAdmin/dashboard';
 import UserForms from '@reactory/server-modules/core/forms/User';
-import ProjectForms from '@reactory/server-modules/core/forms/Project';
+
 import OrganizationForms from '@reactory/server-modules/core/forms/Organization';
 import MicrosoftOpenIDAuthenticationForm from '@reactory/server-modules/core/forms/Security/microsoft_auth';
 
@@ -722,7 +722,6 @@ export default [
   HelpListForm,
   HelpFormEdit,
   TemplateEditor,
-  TaskDetailForm,
   PageEditorForm,
   PageTemplateConfig,
   ReactoryApplicationsForm,
@@ -730,7 +729,7 @@ export default [
   ReactoryClientAdminPage,
   ...UserForms,
   ...OrganizationForms,
-  ...ProjectForms,
+  
   ForgotPasswordForm,
   MessageForm,
   MSTeamsConfigurationTab,

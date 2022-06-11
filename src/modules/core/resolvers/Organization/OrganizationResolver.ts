@@ -16,10 +16,7 @@ const {
 } = process.env;
 
 
-const organizationResolver = {
-  Tennant: {
-
-  },
+const organizationResolver = {  
   Organization: {
     id({ _id }) {
 

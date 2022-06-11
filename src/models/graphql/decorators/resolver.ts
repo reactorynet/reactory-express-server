@@ -90,7 +90,6 @@ export function query(name: string) {
 export function mutation(name: string) {
 
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {
-    
     if (target) {
       if (!target.resolver) {
         target.resolver = {
@@ -114,8 +113,6 @@ export function mutation(name: string) {
 export function subscription(name: string) {
 
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {
-
-    debugger
 
     if (target) {
       if (!target.resolver) {
