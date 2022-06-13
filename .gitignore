@@ -24,7 +24,7 @@ src/workflow/.sample_env
 
 src/data/clientConfigs/**
 !src/data/clientConfigs/helpers**
-!src/data/clientConfigs/reactory**
+!src/data/clientConfigs/reactory/**
 !src/data/clientConfigs/index.ts
 !src/data/clientConfigs/readme.md
 
