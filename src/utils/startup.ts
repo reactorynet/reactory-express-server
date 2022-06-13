@@ -129,9 +129,9 @@ const installComponents = async (componentsArray: any[]) => {
   }
 };
 
-const installClients = async (configs: any) => {
+const installClients = async (configs: Reactory.Server.IReactoryClientConfig[]) => {
 
-  const makeUserArrayFromProps = (userItems: Reactory.IUser[], partner: Reactory.IPartner, organization: Reactory.IOrganization, businessUnit: Reactory.IBusinessUnit) => {
+  const makeUserArrayFromProps = (userItems: Reactory.Models.IUser[], partner: Reactory.Models.IPartner, organization: Reactory.Models.IOrganization, businessUnit: Reactory.Models.IBusinessUnit) => {
     return userItems.map((usr) => {
       return {
         partner,
@@ -149,13 +149,16 @@ const installClients = async (configs: any) => {
     const clientsFailed = [];
     let componentIds = [];
     let clientConfig = null;
-    let reactoryClient: Reactory.IReactoryClientDocument = null;
+    let reactoryClient: Reactory.Models.IReactoryClientDocument = null;
 
     for (let cfgId = 0; cfgId < configs.length; cfgId += 1) {
       clientConfig = configs[cfgId];
       logger.info(`Configuring client ${clientConfig.name}`);
-      componentIds = await installComponents(clientConfig.components).then();
-      logger.info(`Loaded (${componentIds.length}) components for client ${clientConfig.name}`);
+      if(clientConfig.components && clientConfig.components!.length > 1) {
+        componentIds = await installComponents(clientConfig.components).then();
+        logger.info(`Loaded (${componentIds.length}) components for client ${clientConfig.name}`);
+      }
+
       const { key } = clientConfig;
       logger.info(`Finding ReactoryClient with key ${key}`);
       reactoryClient = await ReactoryClient.findOne({ key }).then();
@@ -197,7 +200,7 @@ const installClients = async (configs: any) => {
         await installDefaultEmailTemplates(reactoryClient).then();
         // has been saved now we can add the details
         const menuDefs = clientConfig.menus || [];
-        const menuRefs = [];
+        const menuRefs = [];        
         logger.info(`Loading menus for ${reactoryClient.name}`);
         for (let mid = 0; mid < menuDefs.length; mid += 1) {
           try {

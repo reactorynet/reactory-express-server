@@ -1,12 +1,21 @@
 import { profileSmall } from '../helpers/menus';
 
 import themes from './themes';
-import settings from './settings';
+import settings from './settings/settings';
 import routes from './routes';
+import users from './authentication/users';
+import roles from './authentication/roles';
+import menus from './menus';
 
 import Reactory from '@reactory/reactory-core'
 
-const { CDN_ROOT, MODE, NODE_ENV } = process.env;
+const { 
+  CDN_ROOT,
+  MODE, 
+  NODE_ENV, 
+  REACTORY_APPLICATION_USERNAME = 'reactory', 
+  REACTORY_APPLICATION_EMAIL = 'machine@reactory.net'
+} = process.env;
 
 const staticContentMappings = [
   {
@@ -66,8 +75,8 @@ const staticContentMappings = [
 const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   key: 'reactory',
   name: 'Reactory Admin Application',
-  username: 'reactory',
-  email: 'machine@reactory.net',
+  username: REACTORY_APPLICATION_USERNAME,
+  email: REACTORY_APPLICATION_EMAIL,
   salt: 'generate',
   password: process.env.REACTORY_APPLICATION_PASSWORD,
   siteUrl: MODE === 'DEVELOP' ? 'http://localhost:3000' : 'https://app.reactory.net/',
@@ -75,40 +84,11 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/reset-password',
   avatar: `${CDN_ROOT}themes/reactory/images/avatar.png`,
-  applicationRoles: ['USER', 'ADMIN', 'ANON'],
-  users: [
-    {
-      email: 'werner.weber@gmail.com', roles: ['SYS-ADMIN', 'ADMIN', 'USER', 'DEVELOPER'], firstName: 'Werner', lastName: 'Weber',
-    },
-  ],
+  applicationRoles: roles,
+  users,
   billingType: 'partner',
   components: [],
-  menus: [
-    profileSmall,
-    {
-      name: 'Main',
-      key: 'left-nav',
-      target: 'left-nav',
-      roles: ['USER'],
-      entries: [
-        {
-          ordinal: 1, title: 'My Applications', link: '/', icon: 'dashboard', roles: ['USER', 'ADMIN'],
-        },
-        {
-          ordinal: 2, title: 'Reactory Clients', link: '/reactory-clients/', icon: 'check_circle', roles: ['SYS-ADMIN'],
-        },
-        {
-          ordinal: 3, title: 'About Reactory', link: '/about/', icon: 'supervised_user_circle', roles: ['ANON', 'USER'],
-        },
-        {
-          ordinal: 4, title: 'Add Content', link: '/content-capture/new', icon: 'create', roles: ['ADMIN', 'USER'],
-        },
-        {
-          ordinal: 4, title: 'List Content', link: '/content-list/', icon: 'list', roles: ['ADMIN', 'USER'],
-        },
-      ],
-    },
-  ],
+  menus,
   routes,
   theme: 'reactory',  
   themes,
@@ -128,12 +108,7 @@ const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
       enabled: false,
     },
   ],
-  settings,
-  whitelist: [
-    'localhost',
-    'app.reactory.net',
-    'reactory.net',
-  ],
+  settings  
 };
 
 
