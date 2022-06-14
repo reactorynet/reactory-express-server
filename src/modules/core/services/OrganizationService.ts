@@ -239,6 +239,8 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
 
     const { user, partner } = this.context;
     const sortBy = sort || 'name';
+
+    debugger
     
     if (user.hasAnyRole(partner._id) === false) return [];
 

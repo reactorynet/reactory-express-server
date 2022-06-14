@@ -47,5 +47,6 @@ export default mergeGraphResolver([
   TemplateResolver,  
   SupportResolver,
   ReactoryForm,
+  Organization
 
 ]);
