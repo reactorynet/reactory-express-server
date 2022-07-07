@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 const { ObjectId } = mongoose.Schema.Types;
 import moment from 'moment';
 
-const CoreCategorySchema = mongoose.Schema({
+const CoreCategorySchema = new mongoose.Schema({
   id: ObjectId,
   parentId: {
     type: ObjectId,

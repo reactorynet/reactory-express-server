@@ -1,14 +1,15 @@
-import mongoose, { Schema, MongooseDocument, Model } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import moment from 'moment';
 import Reactory from '@reactory/reactory-core';
 import logger from '../../../logging';
 import { ObjectId } from 'mongodb';
 
+import { MetaSchema } from './shared'
 export interface IReactorySupportTicketDocumentStatics {
   new(): ReactorySupportTicket
 }
 
-export type ReactorySupportTicket = Reactory.IReactorySupportTicketDocument & IReactorySupportTicketDocumentStatics;
+export type ReactorySupportTicket = Reactory.Models.IReactorySupportTicketDocument & IReactorySupportTicketDocumentStatics;
 
 const StatisticSchema: Schema<ReactorySupportTicket> = new Schema<ReactorySupportTicket>({
   id: ObjectId,
@@ -52,7 +53,7 @@ const StatisticSchema: Schema<ReactorySupportTicket> = new Schema<ReactorySuppor
     type: ObjectId, 
     ref: 'User'
   },
-  meta: {},
+  meta: MetaSchema,
   comments: [{
     type: ObjectId,
     ref: 'Comment',

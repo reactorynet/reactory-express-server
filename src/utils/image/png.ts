@@ -1,5 +1,4 @@
 import { PNG, PackerOptions } from 'pngjs';
-import svg_to_png from 'svg-to-png';
 import imageType from 'image-type';
 import { resolve as resolvePath } from 'path';
 import { readFileSync, existsSync } from 'fs';

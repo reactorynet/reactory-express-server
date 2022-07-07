@@ -9,3 +9,154 @@
    componentProps: Any
    priority: Int
  }
+
+"""
+A type for keep track of social references. This 
+is used to keep in sync / authorise any cross site
+activity on behalf of the element that 
+is linked to the social reference.
+"""
+type ReactorySocialReference {
+  """
+  System id
+  """
+  id: String
+  """
+  Provider id for the social reference
+  """
+  provider: String
+  """
+  Url for the social reference i.e. https://twitter.com/reactory
+  """
+  url: String
+  """
+  Boolean to indicate whether or not it is authenticated
+  """
+  authenticated: Boolean
+  """
+  The scope object that has been obtained
+  """
+  scope: Any
+  """
+  The authentication
+  """
+  auth: Any
+  """
+  """
+  valid: Boolean
+  """
+  """
+  created: Date
+  """
+  """
+  updated: Date 
+}
+
+"""
+## Social Meta
+The ReactorySocialMeta type is for use wherever
+there is a need to store social media or social media related 
+meta data.  It can also be used in instances where a domain
+element requires an avatar / background images as part of 
+a "home" page / desired UX usage.
+"""
+type ReactorySocialMeta {
+  """
+  The system id for the social meta
+  """
+  id: String
+  """
+  The avatar image for the item
+  """
+  avatar: String
+  """
+  The avatar provider. It is possible that there is an
+  oauth component that ingests the user we can provide
+  the system with additional meta data to keep any copies
+  in sync.
+  """
+  avatarProvider: String
+  """
+  The header image / background image for the domain element
+  """
+  headerBackground: String
+  """
+  It is possible that 3rd party image providers are used and keeping
+  track of the provider with additional information can be used to 
+  get latest / random background images.
+  """
+  headerBackgroundProvider: String
+  """
+  A list of social site linked to the meta
+  """
+  socials: [ReactorySocialReference]
+}
+
+"""
+Utility type that can be used to provide
+various styling options for graph elements
+"""
+type UXMeta {
+  """
+  A background color that will provided in either HEX or rgba values.
+  """
+  backgroundColor: String
+  """
+  A uri for a background image
+  """
+  backgroundImage: String
+  """
+  A color for the element
+  """
+  color: String
+  """
+  font to use
+  """
+  font: String
+  """
+  font size
+  """
+  fontSize: String
+  """
+  font styling
+  """
+  fontStyle: String
+  """
+  url for an avatar
+  """
+  avatar: String
+  """
+  a material icon id
+  """
+  icon: String
+  """
+  A classname
+  """
+  className: String
+  """
+  custom jss that can be compiled by the client
+  """
+  jss: Any
+  """
+  custom styled element data
+  """
+  styled: Any
+}
+
+type ThemedUXMeta {
+  """
+  theme name to which this applies
+  """
+  theme: String
+
+  """
+  Theme mode:
+  light / dark
+  """
+  mode: String
+
+  """
+  UX Meta entry
+  """
+  uxmeta: UXMeta
+}

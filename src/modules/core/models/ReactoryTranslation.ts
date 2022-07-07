@@ -1,15 +1,16 @@
-import mongoose, { Schema, MongooseDocument, Model } from 'mongoose';
+import mongoose, { Schema, Model } from 'mongoose';
 import Reactory from '@reactory/reactory-core';
 import { ObjectId } from 'mongodb';
-import { transform } from 'pdfkit';
 
 export interface IReactoryTranslationDocumentStatic {
   new(): ReactoryTranslation
 }
 
-export type ReactoryTranslation = Reactory.IReactoryTranslationDocument & IReactoryTranslationDocumentStatic;
+export type ReactoryTranslation = Reactory.Models.IReactoryTranslationDocument & IReactoryTranslationDocumentStatic;
 
-const ReactoryTranslationSchema: Schema<ReactoryTranslation> = new Schema<ReactoryTranslation>({
+export type TReactoryTranslationSchema = Schema<ReactoryTranslation>
+
+const ReactoryTranslationSchema: TReactoryTranslationSchema = new Schema<ReactoryTranslation>({
   id: ObjectId,
   partner: {
     type: ObjectId,

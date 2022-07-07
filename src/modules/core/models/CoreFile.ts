@@ -12,13 +12,13 @@ import ApiError from '@reactory/server-core/exceptions';
 import logger from '@reactory/server-core/logging';
 import { RecordNotFoundError } from '@reactory/server-core/exceptions';
 
-export type ReactoryFileModel = Model<Reactory.IReactoryFileModel>;
+export type ReactoryFileModel = Model<Reactory.Models.IReactoryFileModel>;
 
 const {
   CDN_ROOT,
 } = process.env;
 
-const ReactoryFileSchema: Schema<Reactory.IReactoryFileModel> = new Schema<Reactory.IReactoryFileModel>({
+const ReactoryFileSchema: Schema<Reactory.Models.IReactoryFileModel> = new Schema<Reactory.Models.IReactoryFileModel>({
   id: ObjectId,
   hash: Number,
   checksum: String,
@@ -93,12 +93,12 @@ const ReactoryFileSchema: Schema<Reactory.IReactoryFileModel> = new Schema<React
   }
 });
 
-ReactoryFileSchema.statics.getItem = async (link: string): Promise<Reactory.IReactoryFileModel> => {
+ReactoryFileSchema.statics.getItem = async (link: string): Promise<Reactory.Models.IReactoryFileModel> => {
   return null;
 };
 
 // eslint-disable-next-line max-len
-ReactoryFileSchema.statics.setItem = async (link: string, file: Reactory.IReactoryFileModel, partner: Reactory.IPartner): Promise<Reactory.IReactoryFileModel> => {
+ReactoryFileSchema.statics.setItem = async (link: string, file: Reactory.Models.IReactoryFileModel, partner: Reactory.IPartner): Promise<Reactory.Models.IReactoryFileModel> => {
   return null;
 };
 
@@ -119,7 +119,7 @@ ReactoryFileSchema.statics.clean = function Clean() {
 
 // eslint-disable-next-line max-len
 ReactoryFileSchema.methods.createChecksum = async (): Promise<string> => {
-  const file: Reactory.IReactoryFileModel = this;
+  const file: Reactory.Models.IReactoryFileModel = this;
   return new Promise<string>((resolve, reject) => {
 
 
@@ -143,7 +143,7 @@ ReactoryFileSchema.methods.createChecksum = async (): Promise<string> => {
 };
 
 ReactoryFileSchema.methods.stats = function stats() {
-  const file: Reactory.IReactoryFileModel = this;
+  const file: Reactory.Models.IReactoryFileModel = this;
   const $path = path.join(process.env.APP_DATA_ROOT, file.path, file.alias);
   if (fs.existsSync($path) === false) {
     logger.error(`Cannot read lines for file ${$path}. File does not exist.`);
@@ -157,14 +157,14 @@ ReactoryFileSchema.methods.stats = function stats() {
 
 
 ReactoryFileSchema.methods.exists = function exists() {
-  return fs.existsSync((this as Reactory.IReactoryFileModel).getServerFilename());
+  return fs.existsSync((this as Reactory.Models.IReactoryFileModel).getServerFilename());
 }
 
 // eslint-disable-next-line max-len
 ReactoryFileSchema.methods.lineCount = async function lineCount() {
 
   const LINE_FEED = '\n'.charCodeAt(0);
-  const file: Reactory.IReactoryFileModel = this;
+  const file: Reactory.Models.IReactoryFileModel = this;
   const $path = file.getServerFilename();
 
   if (file.exists() === false) {
@@ -189,15 +189,13 @@ ReactoryFileSchema.methods.lineCount = async function lineCount() {
 };
 
 ReactoryFileSchema.methods.getServerFilename = function getServerFilename() {
-  const file: Reactory.IReactoryFileModel = this;
+  const file: Reactory.Models.IReactoryFileModel = this;
   return path.join(process.env.APP_DATA_ROOT, file.path, file.alias);
 }
 
 ReactoryFileSchema.methods.readLines = async function readLines(start: number = 0, rows: number = -1): Promise<string[]> {
 
-  debugger;
-
-  const file: Reactory.IReactoryFileModel = this;
+  const file: Reactory.Models.IReactoryFileModel = this;
   const $path = file.getServerFilename();
   if (fs.existsSync($path) === false) {
     logger.error(`Cannot read lines for file ${$path}. File does not exist.`);
@@ -280,6 +278,6 @@ ReactoryFileSchema.methods.readLines = async function readLines(start: number = 
 };
 
 
-const ReactoryFile: ReactoryFileModel = mongoose.model<Reactory.IReactoryFileModel>('ReactoryFile', ReactoryFileSchema);
+const ReactoryFile: ReactoryFileModel = mongoose.model<Reactory.Models.IReactoryFileModel>('ReactoryFile', ReactoryFileSchema);
 
 export default ReactoryFile;
