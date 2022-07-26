@@ -1,7 +1,7 @@
-import { Reactory } from '@reactory/server-core/types/reactory'
+import Reactory from '@reactory/reactory-core'
 import ApiError, { BadRequestError, InsufficientPermissions, RecordNotFoundError } from '@reactory/server-core/exceptions';
 import FormData from 'form-data';
-import nodeFetch, { Response } from 'node-fetch';
+import nodeFetch, { RequestInit, Response } from 'node-fetch';
 
 /**
  * The fetch service is designed to work as an intermediary service wrapper
@@ -9,11 +9,11 @@ import nodeFetch, { Response } from 'node-fetch';
  */
 export default class FetchService implements Reactory.Service.IFetchService {
 
-  static reactory: Reactory.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition = {
     id: 'core.FetchService@1.0.0',
     name: 'Reactory Fetch API Service',
     description: 'A service class that wraps FETCH and provides utility functions',
-    service: function (props: Reactory.IReactoryServiceProps, context: any) {
+    service: function (props: Reactory.Service.IReactoryServiceProps, context: any) {
       return new FetchService(props, context);
     }
   }
@@ -27,9 +27,9 @@ export default class FetchService implements Reactory.Service.IFetchService {
   authProvider: Reactory.Service.IFetchAuthenticationProvder;
   headerProvider: Reactory.Service.IFetchHeaderProvider;
 
-  props: Reactory.IReactoryServiceProps;
+  props: Reactory.Service.IReactoryServiceProps;
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
+  constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   }
@@ -84,7 +84,6 @@ export default class FetchService implements Reactory.Service.IFetchService {
     let headers: any = {};
     if (args.headers) headers = { ...args.headers };
     if (!headers.accept) headers.accept = 'application/json';
-    debugger;
     return this.fetch(url, { ...args, method: 'GET', headers }, authenticate, `application/json; charset=${charset}`);
   }
 
@@ -94,29 +93,31 @@ export default class FetchService implements Reactory.Service.IFetchService {
 
     let absoluteUrl = `${url}`;
 
-    const kwargs: any = args || {};
-
+    const kwargs: any = args || {};    
     if (!kwargs.headers) {
       kwargs.headers = {};
     }
 
     kwargs.headers['content-type'] = contentType;
 
-    if (authenticate && this.authProvider) {
-      this.authProvider.authenticateRequestSync(kwargs);
-    }
+    let auth_processed: boolean = false;
 
-    kwargs.headers['user-agent'] = `ReactoryServer`;
-    kwargs.headers['origin'] = process.env.API_URI_ROOT;
-    //kwargs.headers['connection'] = 'keep-alive';
+    if (authenticate === true && this.authProvider && typeof this.authProvider.authenticateRequestSync === "function") {
+      this.authProvider.authenticateRequestSync(kwargs);
+      auth_processed = true;
+    }
+    
+    if(authenticate === true && this.authProvider && typeof this.authProvider.authenticateRequest === "function") {
+      this.authProvider.authenticateRequest(kwargs);
+    }
+    
+    if(!kwargs.headers['user-agent']) kwargs.headers['user-agent'] = `ReactoryServer`;
+    if(!kwargs.headers['origin']) kwargs.headers['origin'] = process.env.API_URI_ROOT;
+    
     if (defaultHeaders === true && this.headerProvider) {
       this.headerProvider.decorateRequestHeaderSync(kwargs);
     }
-
-    // if (!kwargs.credentials) {
-    //   kwargs.credentials = 'same-origin';
-    // }
-
+    
     if (kwargs.params) {
       let params = new URLSearchParams();
       Object.keys(kwargs.params).forEach((key) => {
@@ -125,13 +126,6 @@ export default class FetchService implements Reactory.Service.IFetchService {
 
       absoluteUrl += `?${params.toString()}`;
     }
-
-    // if (contentType.indexOf('application/json') >= 0 && kwargs.body) {
-    //   debugger
-    //   const formData = new FormData();
-    //   formData.append("json", JSON.stringify(kwargs.body));
-    //   kwargs.body = formData;
-    // }
 
     let headersText = ' ';
     Object.keys(kwargs.headers).forEach((key) => { 
@@ -158,8 +152,7 @@ export default class FetchService implements Reactory.Service.IFetchService {
     }
 
     if (response.ok && response.status === 200 || response.status === 201) {
-      try {
-        debugger
+      try {        
         let responseType = "application/text" // response.headers.get("content-type");
         if(response.headers) {
           responseType = response.headers.get("content-type");

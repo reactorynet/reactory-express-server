@@ -3,6 +3,7 @@ import { Reactory } from "@reactory/server-core/types/reactory"; // eslint-disab
 import { getService } from '@reactory/server-core/services';  // eslint-disable-line
 import logger from '@reactory/server-core/logging';
 import Hash from '@reactory/server-core/utils/hash';
+import { objectMapper } from '@reactory/server-core/utils';
 import colors from 'colors/safe';
 import { ReactoryContainer } from '@reactory/server-core/ioc';
 import modules from '@reactory/server-core/modules';
@@ -134,7 +135,8 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
       }      
     },
     utils: {
-      hash: Hash
+      hash: Hash,
+      objectMapper
     },    
     colors,
     state: context_state,

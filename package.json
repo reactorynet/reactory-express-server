@@ -223,6 +223,7 @@
     "@types/mongodb": "^3.3.11",
     "@types/mysql": "^2.15.8",
     "@types/node": "10.17.49",
+    "@types/node-fetch": "^2.6.2",
     "@types/passport-http": "^0.3.6",
     "@types/passport-jwt": "3.0.1",
     "@types/pdfmake": "^0.1.19",
