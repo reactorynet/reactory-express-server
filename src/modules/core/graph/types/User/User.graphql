@@ -64,6 +64,10 @@ type UserMeta {
   source: Any
 }
 
+"""
+# User
+The core reactory user object
+"""
 type User {
   id: ObjID!
   username: String
@@ -82,9 +86,20 @@ type User {
   authProvider: AuthProvider!
   providerId: String!
   lastLogin: Date
+  """
+  Current active membership
+  """
   organization: Organization
+  """
+  Business for the active membership
+  """
   businessUnit: BusinessUnit
+
   roles: [String]
+  """
+  The current active membership for the user.
+  """
+  activeMembership: UserMembership
   memberships: [UserMembership]
   sessionInfo: [UserSession]
   authentications: [ UserAuthentication ]
@@ -255,11 +270,25 @@ extend type Mutation {
   """
   removeUserRole(id: String, email: String, organization: String, role: String!, clientId: String): [UserMembership]
   """
-  Add user credentials for a user
+  # Add User Credentials
+  Use this mutation to add authentication properties for the logged in user.
+
+  Accepts two parameters a unique provider key, and an Any props parameter.
+  This allows for the persisting of any shape of credentials, keys or tokens
+  to be persisted for a given user.  This will be accessible to modules that know
+  how to interpret the authentication.
+
+  example of provider keys could be "local", "api.remote.system".  It is recommended 
+  to stick to a uri format.
+
+  The system does not automatically remove any of these keys and it should be managed
+  by the workflow of the relevant module that uses the authentication. 
   """
   addUserCredentials(provider: String!, props: Any): Boolean
   """
-  Remove user credentials
+  # Remove User Credentials
+  Use this mutation to remove a authentication provider. This will delete the entry
+  on the user document.   
   """
   removeUserCredentials(provider: String!): Boolean
   """
@@ -282,6 +311,13 @@ extend type Mutation {
   Used to create a new user permission
   """
   ReactoryCoreCreateUserMembership(user_id: String!, organization: String, businessUnit: String, roles: [String]): UserMembership
+  """
+  # Set Active Membership
+  Used when it is required to use the system within a specific membership.
+
+  This may be to provide context specific to a membership.
+  """
+  ReactoryCoreSetActiveMembership(membership_id: String!): UserMembership
 }
 
 extend type Subscription {
