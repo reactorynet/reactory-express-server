@@ -285,7 +285,7 @@ const userResolvers = {
         // TODO: Core Services - Need to refactoring base Admin Interfaces into a service class with a reactory wired context
         const createResult = await Admin.User.createUserForOrganization(
           input,
-          password || password,
+          password,
           organization,
           ["USER"],
           "LOCAL",

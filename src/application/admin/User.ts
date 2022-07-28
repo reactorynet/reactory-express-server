@@ -55,7 +55,14 @@ export const userWithId = async (id: string | ObjectId | number) => {
  * @param businessUnit - business unit to assign to the user
  * @returns 
  */
-export const createUserForOrganization = async (user: Reactory.IUser, password: string, organization: Reactory.IOrganizationDocument, roles: string[] = [], provider: string = 'LOCAL', partner: Reactory.IReactoryClientDocument, businessUnit: Reactory.IBusinessUnit) => { // eslint-disable-line max-len
+export const createUserForOrganization = async (user: Reactory.Models.IUser, 
+    password: string, 
+    organization: Reactory.Models.IOrganizationDocument, 
+    roles: string[] = [], 
+    provider: string = 'LOCAL', 
+    partner: Reactory.Models.IReactoryClientDocument, 
+    businessUnit: Reactory.Models.IBusinessUnit) => { // eslint-disable-line max-len
+
   const result = new CreateUserResult();
   try {
     const partnerToUse = partner;
@@ -163,7 +170,7 @@ export const listAllForOrganization = async (organizationId: string | ObjectID,
 
   const organization = await Organization.findOne({ _id: new ObjectID(organizationId) }).then();
 
-  let response: Reactory.IPagedResponse<Reactory.IUserDocument> = {
+  let response: Reactory.Models.IPagedResponse<Reactory.Models.IUserDocument> = {
     items: [],
     paging: {
       hasNext: false,

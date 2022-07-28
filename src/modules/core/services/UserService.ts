@@ -1,12 +1,14 @@
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from "@reactory/reactory-core";
 import { ObjectId } from "bson";
 import Organigram from "@reactory/server-core/models/schema/Organigram";
 import { Demographic } from '@reactory/server-modules/mores/models';
 import { BusinessUnit, Organization, Region, Team, User, UserDemographic } from '@reactory/server-core/models';
 import ApiError, { RecordNotFoundError } from "@reactory/server-core/exceptions";
 import { trim, filter, find, isNil } from 'lodash';
+import { createUserForOrganization } from "@reactory/server-core/application/admin/User";
+import crypto from 'crypto';
 interface PeersState {
-  [key: string]: Reactory.IOrganigramDocument
+  [key: string]: Reactory.Models.IOrganigramDocument
 }
 
 
@@ -21,12 +23,12 @@ class UserService implements Reactory.Service.IReactoryUserService {
   nameSpace: string = "core";
   version: string = "1.0.0";
   context: Reactory.Server.IReactoryContext;
-  props: Reactory.IReactoryServiceProps;
+  props: Reactory.Service.IReactoryServiceProps;
 
   peerState: PeersState;
   isFetchingDocument: PeersFetchingState;
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
+  constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.context = context;
     this.props = props;
     // contains any previously fetched documents using a key map
@@ -35,7 +37,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
     this.isFetchingDocument = {};
   }
 
-  async getUserPeers(id: string | ObjectId, organization_id: string | ObjectId): Promise<Reactory.IOrganigramDocument> {
+  async getUserPeers(id: string | ObjectId, organization_id: string | ObjectId): Promise<Reactory.Models.IOrganigramDocument> {
 
 
     if (id === null) return null;
@@ -187,12 +189,12 @@ async setPeersForUser (user: Reactory.IUserDocument, peers: any, organization: R
     let $membership_id = $membership._id;
 
 
-    let $gender: Reactory.IDemographicDocument = null;
-    let $race: Reactory.IDemographicDocument = null;
-    let $position: Reactory.IDemographicDocument = null;
-    let $operationalGroup: Reactory.IDemographicDocument = null;
-    let $region: Reactory.IRegionDocument = null;
-    let $team: Reactory.ITeamDocument = null;
+    let $gender: Reactory.Models.IDemographicDocument = null;
+    let $race: Reactory.Models.IDemographicDocument = null;
+    let $position: Reactory.Models.IDemographicDocument = null;
+    let $operationalGroup: Reactory.Models.IDemographicDocument = null;
+    let $region: Reactory.Models.IRegionDocument = null;
+    let $team: Reactory.Models.ITeamDocument = null;
 
     //set them if have 'em bois 🚬
     if (trim(gender).length > 0) {
@@ -281,8 +283,14 @@ async setPeersForUser (user: Reactory.IUserDocument, peers: any, organization: R
 
   }
 
-  createUser(userInput: Reactory.IUser, organization: Reactory.IOrganization): Promise<Reactory.IUserDocument> {
-    throw new Error("Method not implemented.");
+  /**
+   * Creates 
+   * @param userInput 
+   * @param organization 
+   */
+  createUser(userInput: Reactory.Models.IUser, organization?: Reactory.Models.IOrganization): Promise<Reactory.Models.IUserDocument> {
+
+    let result = createUserForOrganization(userInput, crypto.randomBytes(16).toString('hex'), organization, ["USER"], "LOCAL", this.context.partner);
   }
 
   updateUser(userInput: Reactory.IUser): Promise<Reactory.IUserDocument> {
