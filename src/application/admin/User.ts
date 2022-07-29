@@ -55,7 +55,7 @@ export const userWithId = async (id: string | ObjectId | number) => {
  * @param businessUnit - business unit to assign to the user
  * @returns 
  */
-export const createUserForOrganization = async (user: Reactory.Models.IUser, 
+export const createUserForOrganization = async (user: Reactory.Models.IUserCreateParams, 
     password: string, 
     organization: Reactory.Models.IOrganizationDocument, 
     roles: string[] = [], 

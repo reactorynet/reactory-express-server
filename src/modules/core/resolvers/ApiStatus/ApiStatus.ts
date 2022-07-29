@@ -141,12 +141,11 @@ class ApiStatus {
   };
 
   @property("ApiStatus", "activeTheme")
-  themeOptions(apiStatus: Reactory.IReactoryApiStatus, args: { theme: string, mode: string }, context: Reactory.Server.IReactoryContext){
-
-    debugger
+  themeOptions(apiStatus: Reactory.Models.IApiStatus, args: { theme: string, mode: string }, context: Reactory.Server.IReactoryContext){
+    
     const { themes = [], theme = "reactory" } = context.partner;
     
-    let activeTheme: Reactory.IReactoryTheme = null;
+    let activeTheme: Reactory.Models.IReactoryTheme = null;
     let $themename = args.theme || theme;
     
 

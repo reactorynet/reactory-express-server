@@ -265,8 +265,7 @@ Environment Settings:
       typeDefs,
       resolvers,      
     });
-
-    debugger
+    
     directiveProviders.forEach((provider) => {
       try {
         logger.info(`Processing schema directive: "@${provider.name}"`);

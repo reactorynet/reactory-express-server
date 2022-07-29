@@ -290,7 +290,12 @@ async setPeersForUser (user: Reactory.IUserDocument, peers: any, organization: R
    */
   createUser(userInput: Reactory.Models.IUser, organization?: Reactory.Models.IOrganization): Promise<Reactory.Models.IUserDocument> {
 
-    let result = createUserForOrganization(userInput, crypto.randomBytes(16).toString('hex'), organization, ["USER"], "LOCAL", this.context.partner);
+    return createUserForOrganization(userInput, 
+      crypto.randomBytes(16).toString('hex'), 
+      organization, 
+      ["USER"], 
+      "LOCAL", 
+      this.context.partner);
   }
 
   updateUser(userInput: Reactory.IUser): Promise<Reactory.IUserDocument> {

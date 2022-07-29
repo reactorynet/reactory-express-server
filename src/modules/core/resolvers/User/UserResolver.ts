@@ -25,7 +25,7 @@ import ApiError, {
 } from "@reactory/server-core/exceptions";
 import crypto from 'crypto';
 import logger from "@reactory/server-core/logging";
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from "@reactory/reactory-core";
 
 import { SURVEY_EVENTS_TO_TRACK } from "@reactory/server-core/models/index";
 import Mongoose from "mongoose";
