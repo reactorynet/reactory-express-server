@@ -1,13 +1,13 @@
 import { v4 as uuid } from 'uuid';
-import { Reactory } from "@reactory/server-core/types/reactory"; // eslint-disable-line
 import { getService } from '@reactory/server-core/services';  // eslint-disable-line
 import logger from '@reactory/server-core/logging';
 import Hash from '@reactory/server-core/utils/hash';
 import { objectMapper } from '@reactory/server-core/utils';
+import lodash from 'lodash';
 import colors from 'colors/safe';
 import { ReactoryContainer } from '@reactory/server-core/ioc';
 import modules from '@reactory/server-core/modules';
-
+import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 /***
  * The Reactory Context Provider creates a context for the execution thread which is passed through with each request
  * 
@@ -35,7 +35,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     error: 'red'
   });
 
-  const $log = (message: string, meta: any = null, type: Reactory.LOG_TYPE = "debug", clazz: string = 'any_clazz') => {
+  const $log = (message: string, meta: any = null, type: Reactory.Server.LOG_TYPE = "debug", clazz: string = 'any_clazz') => {
     //281e99d1-bc61-4a2e-b007-33a3befaff12    
 
     const $message = `${clazz}(${$id.substr(30, 6)}) ${email}: ${message}`;
@@ -93,9 +93,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     $partner = $session.req.partner;
     $request = $session.req;
     $response = $session.res;
-
     email = $user.email;
-
   }
  
   /**
@@ -117,7 +115,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     warn: $warn,
     debug: $debug,
     error: $error,
-    hasRole: (role: string, partner?: Reactory.IReactoryClient, organization?: Reactory.IOrganizationDocument, businessUnit?: Reactory.IBusinessUnitDocument) => {
+    hasRole: (role: string, partner?: Reactory.Models.IReactoryClient, organization?: Reactory.Models.IOrganizationDocument, businessUnit?: Reactory.Models.IBusinessUnitDocument) => {
 
       if($session.req.user === null || $session.req.user === undefined) {
         $log(`User is anon`, {}, 'debug', 'ReactoryContextProvider')
@@ -136,7 +134,8 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     },
     utils: {
       hash: Hash,
-      objectMapper
+      objectMapper,
+      lodash
     },    
     colors,
     state: context_state,
@@ -163,8 +162,8 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
   };
 
   newContext.getService = $getService;
-
-
+  newContext.i18n = newContext.getService("core.ReactoryTranslationService@1.0.0") as Reactory.Service.IReactoryTranslationService;
+  await newContext.i18n.init()
   /**
    * We check in the configuration settings if there is a "execution_context_service" key.
    * if the key is found and if it is a string with an @ in the indicator then we can assume
@@ -173,7 +172,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
    */
   const executionContextServiceName = newContext.partner.getSetting('execution_context_service');
   if (executionContextServiceName && executionContextServiceName.data && `${executionContextServiceName.data}`.indexOf('@') > 0) {
-    const partnerContextService: Reactory.IExecutionContextProvider = $getService(executionContextServiceName.data);
+    const partnerContextService: Reactory.Server.IExecutionContextProvider = $getService(executionContextServiceName.data);
     if (partnerContextService && partnerContextService.getContext) {
       newContext = await partnerContextService.getContext(newContext).then();
     }

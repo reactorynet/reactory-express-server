@@ -5,8 +5,7 @@ import logger from '@reactory/server-core/logging';
 
 
 class BeforeCacheClean extends StepBody {
-  run(context) {
-    logger.debug(`WF: Before Clean ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);
+  run(context) {    
     return ExecutionResult.next();
   }
 }
@@ -21,8 +20,7 @@ class CleanCache extends StepBody {
 }
 
 class AfterCacheClean extends StepBody {
-  run(context) {
-    logger.debug(`WF: After Cache Clean ${moment(this.when).format('YYYY-MM-DD HH:mm:ss')}`);    
+  run(context) {    
     return ExecutionResult.next();
   }
 }

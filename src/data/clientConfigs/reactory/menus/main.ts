@@ -16,10 +16,10 @@ export default {
       ordinal: 3, title: 'About Reactory', link: '/about/', icon: 'supervised_user_circle', roles: ['ANON', 'USER'],
     },
     {
-      ordinal: 4, title: 'Add Content', link: '/content-capture/new', icon: 'create', roles: ['ADMIN', 'USER'],
+      ordinal: 95, title: 'Support', link: '/support/request', icon: 'support_agent', roles: ['USER'],
     },
     {
-      ordinal: 4, title: 'List Content', link: '/content-list/', icon: 'list', roles: ['ADMIN', 'USER'],
+      ordinal: 96, title: 'Open Support Requests', link: '/support/open', icon: 'task', roles: ['USER'],
     },
   ],
 }

@@ -122,7 +122,7 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
     if (fs.existsSync(sourceFile) === false || fs.existsSync(compiledFile) === false) {
       doCompile = true;
     } else {
-      debugger
+      //debugger
       checksum = await this.fileService.generateFileChecksum(sourceFile, 'sha1').then();
       let newChecksum = await this.fileService.generateFileChecksum(newSource, 'sha1').then();
       if (newChecksum !== checksum) {

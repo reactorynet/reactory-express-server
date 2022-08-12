@@ -28,6 +28,11 @@ export interface ReactoryEnvironment {
   CDN_ROOT: string
   MODE: string
   LOG_LEVEL: string
+  DEFAULT_LOCALE: string
+  /**
+   * TODO: OAUTH requires refactoring to be specific per tenant and should not be part of the main server 
+   * config
+   */
   OAUTH_APP_ID: string
   OAUTH_APP_PASSWORD: string
   OAUTH_REDIRECT_URI: string
@@ -49,6 +54,7 @@ export const ENVIRONMENT : ReactoryEnvironment = {
     API_URI_ROOT: process.env.API_URI_ROOT,
     API_GRAPHQL_URI: `${process.env.API_URI_ROOT}/api`, 
     CDN_ROOT: process.env.CDN_ROOT,
+    DEFAULT_LOCALE: process.env.DEFAULT_LOCALE || "en",
     MODE: process.env.MODE,
     LOG_LEVEL: process.env.LOG_LEVEL,
     OAUTH_APP_ID: process.env.OAUTH_APP_ID,

@@ -42,7 +42,7 @@ const routes = [
     public: false,
     exact: true,
     roles: ['SYS-ADMIN'],
-    componentFqn: 'reactory.ReactoryNewForm@1.0.0',
+    componentFqn: 'reactory.MyApplications@1.0.0',
   },
   {
     key: 'inbox',
@@ -141,6 +141,41 @@ const routes = [
     public: true,
     roles: ['ADMIN'],
     componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
+  },
+  {
+    key: 'general-support',
+    title: 'Support Request',
+    path: '/support/request',
+    exact: true,
+    public: false,
+    roles: ['USER'],
+    componentFqn: 'core.SupportForm@1.0.0',
+    args: {
+      key: "mode",
+      value: {
+        type: "string",
+        mode: "new"
+      }
+    }
+  },
+
+  {
+    key: 'my-support-tickets',
+    title: 'My Open Tickets',
+    path: '/support/open',
+    exact: true,
+    public: false,
+    roles: ['USER'],
+    componentFqn: 'core.SupportTickets@1.0.0',
+    args: [
+      {
+        key: 'variant',
+        value: {
+          type: 'string',
+          variant: 'logged_in_user'
+        }
+      }
+    ]
   },
 ]
 

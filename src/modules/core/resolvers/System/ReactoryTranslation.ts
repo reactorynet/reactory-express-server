@@ -15,7 +15,7 @@ class ReactoryTranslationResolver {
   async ReactoryTranslation(obj: any,
     params: IReactoryTranslantionParams, 
     context: Reactory.Server.IReactoryContext,
-    ): Promise<Reactory.IReactoryTranslations> {
+    ): Promise<Reactory.Models.IReactoryTranslations> {
       const { locale } = params;
       const translateSvc: Reactory.Service.TReactoryTranslationService = context.getService("core.ReactoryTranslationService@1.0.0") as Reactory.Service.TReactoryTranslationService;
       return translateSvc.getTranslations(locale)
