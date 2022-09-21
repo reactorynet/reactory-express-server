@@ -1,18 +1,65 @@
+import Reactory from '@reactory/reactory-core';
 
 
-const StatusWidget = (props: any) => {
 
-  const { reactory, form, status = 'new', useCase = 'grid' } = props;
+interface StatusWidgetDependencies {
+  React: Reactory.React,
+  Material: Reactory.Client.Web.IMaterialModule,
+  DropDownMenu: Reactory.Client.Components.DropDownMenu,
+  FullScreenModal: Reactory.Client.Components.FullScreenModal,
+  SupportTicket: Reactory.Client.Components.SupportTicket,
+}
 
-  const { React, Material, DropDownMenu, FullScreenModal } = reactory.getComponents(["react.React", "material-ui.Material", "core.DropDownMenu", "core.FullScreenModal"])
+interface StatusWidgetProps {
+  reactory: Reactory.Client.IReactoryApi,
+  form?: any,
+  status: string,
+  ticket: Reactory.Models.IReactorySupportTicket,
+  useCase: string,
+  style: any
+}
+
+const StatusWidget = (props: StatusWidgetProps) => {
+
+  const { reactory, form, status = 'new', useCase = 'grid', ticket, style = {} } = props;
+
+  const { React, Material, DropDownMenu, FullScreenModal, SupportTicket } = reactory.getComponents<StatusWidgetDependencies>([
+    "react.React", 
+    "material-ui.Material", 
+    "core.DropDownMenu", 
+    "core.FullScreenModal",
+    "core.SupportTicket"
+  ]);
+
   const { MaterialCore, MaterialStyles } = Material;
   const { Typography } = MaterialCore;
-  return (
-  <Typography variant="body2">
-    {status.toUpperCase()}
-  </Typography>
-  );
+  const [ modal, setModal ] = React.useState<boolean>(false)
 
+  const onMenuSelect = (evt: React.SyntheticEvent, menu: Reactory.Client.Components.IDropDownMenuItem) => {
+    if(menu.id === 'open') {
+      setModal(true);
+    }
+  };
+
+  let menus: Reactory.Client.Components.IDropDownMenuItem[] = [
+    { id: 'open', icon: 'search', title: 'View', key: 'open' },
+    { id: 'comment', icon: 'comment', title: 'Comment', key: 'comment'},
+    { id: 'close', icon: 'close', title: 'Close', key: 'title'}
+  ];
+
+  return (
+    <>
+      <span style={{ display: 'flex', ...style }}>
+        {useCase === 'grid' && <Typography variant="body2">
+          {status.toUpperCase()}
+        </Typography>}
+        <DropDownMenu menus={menus} onSelect={onMenuSelect} />      
+      </span>
+      <FullScreenModal title={`Support ticket ${ticket.reference}`} open={modal === true} onClose={() => setModal(false)}>
+        <SupportTicket reference={ticket.reference} mode={'view'} />
+      </FullScreenModal>
+    </>
+  );
 };
 
 

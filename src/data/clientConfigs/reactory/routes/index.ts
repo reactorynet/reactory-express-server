@@ -1,3 +1,4 @@
+import Reactory from '@reactory/reactory-core';
 import {  
   loginroute,
   logoutroute,
@@ -5,7 +6,7 @@ import {
   forgotpasswordroute,  
 } from '@reactory/server-core/data/clientConfigs/helpers/defaultRoutes';
 
-const routes = [
+const routes: Reactory.Routing.IReactoryRoute[] = [
   {
     ...loginroute,
     background: {
@@ -87,6 +88,67 @@ const routes = [
     roles: ['USER'],
     componentFqn: 'core.UserProfile@1.0.0',
   },
+
+  {
+    key: 'forms_with_mode_and_id',
+    title: 'Form with mode and id',
+    path: '/forms/:formId/:mode/:id/*',
+    public: false,
+    roles: ['USER'],
+    componentFqn: 'core.ReactoryRouter@1.0.0',
+    args: [{
+      key: "routePrefix",
+      value: {
+        routePrefix: "forms"
+      }
+    }],
+    exact: false,    
+  },
+
+  {
+    key: 'forms_with_mode',
+    title: 'Form with mode',
+    path: '/forms/:formId/:mode',
+    public: false,
+    roles: ['USER'],
+    componentFqn: 'core.ReactoryRouter@1.0.0',
+    args: [{
+      key: "routePrefix",
+      value: {
+        routePrefix: "forms"
+      }
+    }],
+  },
+
+  {
+    key: 'forms_with_id',
+    title: 'Form',
+    path: '/forms/:formId',
+    public: false,
+    roles: ['USER'],
+    componentFqn: 'core.ReactoryRouter@1.0.0',
+    args: [{
+      key: "routePrefix",
+      value: {
+        routePrefix: "forms"
+      }
+    }],
+  },
+
+  {
+    key: 'forms',
+    title: 'Reactory Forms',
+    path: '/forms/*',
+    public: false,
+    roles: ['USER'],
+    componentFqn: 'core.ReactoryRouter@1.0.0',
+    args: [{
+      key: "routePrefix",
+      value: {
+        routePrefix: "forms"
+      }
+    }],
+  },
   {
     key: 'content-capture',
     title: 'Content Capture',
@@ -150,13 +212,13 @@ const routes = [
     public: false,
     roles: ['USER'],
     componentFqn: 'core.SupportForm@1.0.0',
-    args: {
+    args: [{
       key: "mode",
       value: {
         type: "string",
         mode: "new"
       }
-    }
+    }]
   },
 
   {

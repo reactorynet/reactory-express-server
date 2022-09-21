@@ -10,6 +10,7 @@ import { Login } from './Security';
 import SupportForm from './Support/SupportRequest';
 import SupportTickets from './Support/SupportTickets';
 import Applications from './Applications';
+import SupportTicket from './Support/SupportTicket';
 export default [
   Applications,
   ReactoryGlobalPlugin,
@@ -23,4 +24,5 @@ export default [
   ...shared,
   SupportForm,
   SupportTickets,
+  SupportTicket,
 ];

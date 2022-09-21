@@ -8,6 +8,13 @@ const modules: Reactory.Forms.IReactoryFormModule[] = [
     src: fileAsString(require.resolve('../../Widgets/core.SupportTicketStatusWidget.tsx')),
     compiler: 'rollup',
     fileType: 'tsx'
+  },
+  {
+    compilerOptions: {},
+    id: 'core.SupportTicketWorkflow@1.0.0',
+    src: fileAsString(require.resolve('../../Widgets/core.SupportTicketWorkflow.ts')),
+    compiler: 'rollup',
+    fileType: 'ts'
   }
 ];
 

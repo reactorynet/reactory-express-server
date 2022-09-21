@@ -1,5 +1,3 @@
-import { Reactory } from "@reactory/server-core/types/reactory";
-
 import system from "./system";
 
 const translations: Reactory.Models.IReactoryTranslation[]  = [

@@ -8,6 +8,7 @@ import colors from 'colors/safe';
 import { ReactoryContainer } from '@reactory/server-core/ioc';
 import modules from '@reactory/server-core/modules';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
+import i18next from 'i18next';
 /***
  * The Reactory Context Provider creates a context for the execution thread which is passed through with each request
  * 
@@ -86,7 +87,9 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
   let $partner = $context.partner ? $context.partner : null;
   let $request = null;
   let $response = null;
-
+  let $i18n: typeof i18next = null;
+  let $lng: string = process.env.DEFAULT_LOCALE || "en";
+  let $langs: string[] = [$lng];
   //if the context is being used in the context of a session
   if($session !== null && $session !== undefined) {
     $user = $session.req.user;
@@ -94,6 +97,9 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     $request = $session.req;
     $response = $session.res;
     email = $user.email;
+    $i18n = $session.req.i18n;      
+    $lng = $session.req.langauage;
+    $langs = $session.req.langauages;
   }
  
   /**
@@ -108,8 +114,11 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     partner: $partner,
     $request,
     $response,
+    i18n: $i18n,
+    lng: $lng,
+    langs: $langs,
     modules: modules.enabled,
-    container: ReactoryContainer,
+    container: ReactoryContainer,   
     log: $log,
     info: $info,
     warn: $warn,
@@ -140,10 +149,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     colors,
     state: context_state,
   };
-
-
-  
-  
+    
   const $getService = (id: string, props: any = undefined, $context?: Reactory.Server.IReactoryContext, lifeCycle?: Reactory.SERVICE_LIFECYCLE ) => {
     $log(`Getting service ${id} [${lifeCycle || "instance"}]`)
     if($context && Object.keys($context).length > 0) {
@@ -161,9 +167,9 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
         
   };
 
-  newContext.getService = $getService;
-  newContext.i18n = newContext.getService("core.ReactoryTranslationService@1.0.0") as Reactory.Service.IReactoryTranslationService;
-  await newContext.i18n.init()
+  newContext.getService = $getService;  
+  
+
   /**
    * We check in the configuration settings if there is a "execution_context_service" key.
    * if the key is found and if it is a string with an @ in the indicator then we can assume

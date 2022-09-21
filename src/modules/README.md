@@ -3,7 +3,7 @@
 This section covers the modules configuration and folder structure.
 
 ## Module loading
-The reactory server uses a list of enabled modules and aggregates the services, forms, models, workflows at startup.  The configuration is set using the 
+The reactory server uses a list of enabled modules and aggregates the services, forms, models, workflows at startup.  The configuration is set using a enabled-{setting_id}.json file.
 
 ## Important Notice
 All folders and files in the modules folder is ignored by the parent git repo, with the exception of the /core module.

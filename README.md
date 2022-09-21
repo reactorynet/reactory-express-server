@@ -17,37 +17,52 @@ This project is a graphql, express, mongodb implementation that runs using pm2 c
 Below you will find some information on how to perform common tasks.<br>
 
 ## Installing and running server
-This section will cover the basic installation and configuration of the server.
+This section will cover the basic installation and configuration of the Reactory Server.
 
 # Installing Reactory Server
-The reactory core server is a node js based server, that can be started by using the commands provided in the /bin folder.
+The reactory core server is an express nodejs server. The server can be started by using the commands provided in the /bin folder.
 
 It is highly advised to install nvm as your node version manager.
 
-The server is currently being maintained on Node 10.16.3 and can be run on Windows using the Ubuntu on Windows feature.
+The server is currently being maintained on Node 16.13.2 and can be run on Windows using the Ubuntu on Windows feature.
 
 If you have not worked with the Ubuntu on Windows feature, you can go to the link below.
 https://ubuntu.com/tutorials/ubuntu-on-windows#1-overview
 
-Checkout the source code
-`> mkdir reactory`
-`> cd reactory`
-`> git clone git@bitbucket.org:reactory/reactory-server.git ./reactory-server/`
+## Prepare your environment
+The Reactory server has lots of configuration options and generators that allows the server to dynamically change the server functionality based on configuration. In order for all of these to work correctly you need to ensure your system is correctly configured.
 
-## Dependencies
-The PDF rendering require some specific configuration and has a requirement on build-essential and libss1-dev and is installed using 
+You will need to be comfortable with the command line.
+#### 1. Set your environment variables
+The reactory server requires a couple of environment variables in order for it to manage distribution and dependency updates.
+
+Depending on what shell you are running, you will need to update either your `.zprofile` or `.bash_profile` files with the following.
 
 
-Node Canvas is one of the dependencies and installation instructions for specific environments can be found here https://github.com/Automattic/node-canvas#installation
+```
+export REACTORY_HOME="$HOME/Projects/reactory"
+export REACTORY_DATA="$REACTORY_HOME/reactory-data"
+export REACTORY_SERVER="$REACTORY_HOME/reactory-server"
+export REACTORY_CLIENT="$REACTORY_HOME/reactory-client"
+export REACTORY_NATIVE="$REACTORY_HOME/reactory-native"
+export REACTORY_PLUGINS="$REACTORY_DATA/plugins"
+```
 
+Save your changes and then you will need to open a new terminal, or you need to re-ingest your terminal profile exports by executing `> source ~/.bash_profile` or `> source ~/.zprofile` if you are using the Mac terminal.
+
+
+#### 2. Install Dependencies
+The PDF rendering require some specific configuration and has a requirement on build-essential and libss1-dev. Install these using the commands
 
 Bellow is installation instructions for Ubuntu / Linux based systems.
-
 `> sudo apt-get update`
 `> sudo apt-get install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev`
 
 For Mac OS, use brew to install the required libraries
 `> brew install pkg-config cairo pango libpng jpeg giflib librsvg`
+
+
+Node Canvas is one of the dependencies and installation instructions for specific environments can be found here https://github.com/Automattic/node-canvas#installation
 
 
 ### mongodb
@@ -63,25 +78,51 @@ https://github.com/nvm-sh/nvm/releases)
 
 ## Install Node and NPM
 If you installed nvm you can install node using 
-`> nvm install 10.16.3`
+`> nvm install 16.13.2`
+## Getting the code
+Reactory Server core and the client is distributed as Open Source, but it is very possible your organization has their own private repo. The reactory server can otherwise be cloned from the bitbucket repos.
 
-run `> npm install` this will install all the dependencies for the server. The install can take a few minutes but if all your pdf libraries are installed correctly it will complete in about 2 - 3 minutes depending on your internet connection and machine.
+It is advised that you create a root reactory folder, and then create sub folders inside this for the client, the core types, the data storage folder and other reactory related projects you may build.
+### Checkout the server source code
+```
+> mkdir reactory
+> cd reactory
+> git clone git@bitbucket.org:reactory/reactory-data.git ./reactory-data/
+> git clone git@bitbucket.org:reactory/reactory-server.git ./reactory-server/
+> git clone git@bitbucket.org:reactory/reactory-core.git ./reactory-core/
+> git clone git@bitbucket.org:reactory/reactory-client.git ./reactory-client/
+```
 
+This will clone the server into `reactory/reactory-server/` and the core types into `reactory/reactory-core` and the PWA client into `reactory/reactory-client/` as well as the data / or the CDN folder structure to `reactory/reactory-data/` folder.
+
+The Reactory core library is a core types definition library and is shared across all applications. It has a two npm scripts that is used for compiling and deploying the library.  The `make-install` script, will compile and package the library. The `deploy::local` will use the environment variables we set prior and deploy the library to `reactory/reactory-server/lib`,  `reactory/reactory-client/lib` and the `reactory/reactory-data/plugins/artifacts` folders. 
 
 ## Install env-cmd and create a configuration file
+Before you continue with the install, make sure you have dotenv installed globally.
+
 dotenv is used for development / environment configuration when running the server from the terminal.
 pm2 configuration files are used for running within the pm2 container.
 `> npm install -g env-cmd`
+Make a copy of the sample environment file and set the settings that is applicable for your instance.
 
-`> cp config/reactory/.env.sample config/reactory/.env.local`
+`> cp reactory-server/config/reactory/.env.sample reactory-server/config/reactory/.env.local`
 Changes your variables to match the directories to where you have installed your server and where you want your data folder.
-### Install MORES module
-`> cd src/modules/`
-`> git clone git@bitbucket.org:reactory/mores-server-module.git ./mores/`
 
-### Install Reactory Azure / MS Graph Module
+`> cd reactory-core`
+`> npm i`
+`> npm run make-install`
+`> npm run deploy::local`
+
+If all dependencies are installed and it is the first time you run the deploy::local, it will take some time, as it is also running `npm i` on the reactory-server and reactory-client projects.
+
+
+
+### Optional - Install Additional Modules
+If you want to have the Reactory Azure Graph features available to your graph then you need to include the reactory-azure module.
+
 `> cd /src/modules/`
 `> git clone git@bitbucket.org:reactory/reactory-azure-module.git ./reactory-azure/`
+
 ### Create a modules enabled json file
 The reactory server uses a json file to load the modules you want to include in your server build.
 The easiest way to create this file is to copy the available.json file (published with the source) and copy the file to enabled.json.  The server will use the enabled.json as the default module definition file.  

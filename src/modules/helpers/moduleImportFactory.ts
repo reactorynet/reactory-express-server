@@ -15,6 +15,18 @@ const getImportName = (moduleDefinition: Reactory.Server.IReactoryModuleDefiniti
   return $import_name;
 };
 
+export const getModuleDefinitions = (): Reactory.Server.IReactoryModuleDefinition[] => {
+  const { MODULES_ENABLED } = process.env;  
+  const filename = `${MODULES_ENABLED}.json`
+  let enabled: Reactory.Server.IReactoryModuleDefinition[] = []
+  if (fs.existsSync(`./src/modules/${filename}`) === true) {
+    enabled = require(`../${filename}`);
+  } else {
+    throw new Error(`The module specification file (./src/modules/${filename}) does not exist, please create it and restart the server`);    
+  }
+  return enabled;
+}
+
 /**
  * Generates __index.ts that is responsible for module includes.
  */
@@ -22,7 +34,7 @@ const generate_index = () => {
 
   const { MODULES_ENABLED } = process.env;
 
-  logger.debug(`♻ ModuleImportFactory >> __index.ts generator executing for module spec ${MODULES_ENABLED || 'NA'}`);
+  logger.debug(`#### REACTORY CODE - ModleImportFactory ####\n🟠  ModuleImportFactory >> __index.ts generator executing for module spec ${MODULES_ENABLED || 'NA'}`);
 
   const filename = `${MODULES_ENABLED}.json`
   let enabled: Reactory.Server.IReactoryModuleDefinition[] = []
@@ -84,6 +96,8 @@ ${module_names}
     }
     fs.writeFileSync(__index, file_contents, { encoding: 'utf8' });
   }
+
+  logger.debug(`#### REACTORY CODE - ModleImportFactory ####\n🟢 ModuleImportFactory >> __index.ts complete`);
 };
 
 export default generate_index;

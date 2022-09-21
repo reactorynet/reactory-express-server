@@ -120,9 +120,7 @@ const organizationResolver = {
 
       return organization;
     },
-    migrateOrganization(obj, { id, options }) {
-      throw new ApiError("Deprecated")
-    },
+    
     updateOrganization: async (parent, args) => {
       const { input, id } = args;
       const _id = ObjectId(id);
@@ -147,10 +145,7 @@ const organizationResolver = {
       }
 
       throw new OrganizationNotFoundError(`Organization with the id ${id} could not be found `);
-    },
-    migrateCore(obj, arg, context, info) {
-      throw new ApiError("Deprecated")
-    },
+    },   
   },
 };
 

@@ -4,6 +4,7 @@ dist/
 package-lock.json
 build/*
 lib/*
+!lib/readme.md
 yarn.lock
 
 config/*

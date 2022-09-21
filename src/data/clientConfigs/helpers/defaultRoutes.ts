@@ -11,7 +11,7 @@ export const loginroute = {
       key: 'magicLink',
       value: {
         type: 'bool',
-        magicLink: false,
+        magicLink: true,
       },
     },
   ],

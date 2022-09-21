@@ -32,6 +32,21 @@ class ReactoryFormResolver {
     return formSvc.getResources(form);
   }
 
+  @property("ReactoryForm", "title")
+  async getTitle(form: Reactory.Forms.IReactoryForm, args: any, context: Reactory.Server.IReactoryContext): Promise<string> {    
+    if(form?.title && form?.title.indexOf("${") >= 0) {
+      try {                
+        const title = context.utils.lodash.template(form.title, { variable: 'props' })({ form, args, context });         
+        return title;
+      } catch(e) {        
+        context.error(`Could not process template ${form.title}`, { error: e }, "ReactoryFormResolver");
+        return `Template Error: ${form.title}`
+      }
+    }
+
+    return form.title
+  }
+
   @property("ReactoryForm", "schema")
   async getFormSchema(form: Reactory.Forms.IReactoryForm, args: any, context: Reactory.Server.IReactoryContext, info: any): Promise<Reactory.Schema.ISchema> {
     if(!form) throw new ApiError("form object is null and should have a value", { where: "ReactoryForm.schema resolver" })

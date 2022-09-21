@@ -20,7 +20,9 @@ import SupportResolver from './Support/SupportResolver';
 import Resources from './System/Resources';
 import Statistics from './System/Statistics';
 import { ReactoryClientResolver, ClientComponentResolver, ClientRouteResolver } from './System/ReactoryClientResolver';
+import ReactoryTranslationResolver from './System/ReactoryTranslation';
 import ReactoryForm from './ReactoryForm';
+import ReactoryMenuResolver from './Menu/MenuResolver';
 
 import { mergeGraphResolver } from '@reactory/server-core/utils';
 
@@ -44,9 +46,10 @@ export default mergeGraphResolver([
   ReactorySQLResolver,
   ReactoryCacheResolver,
   ReactoryFileResolver,
-  TemplateResolver,  
+  TemplateResolver,
   SupportResolver,
   ReactoryForm,
-  Organization
-
+  Organization,
+  ReactoryTranslationResolver,
+  ReactoryMenuResolver
 ]);

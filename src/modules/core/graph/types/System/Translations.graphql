@@ -72,6 +72,29 @@ type ReactoryTranslation {
   revisions: [ReactoryTranslationRevision]  
 }
 
+
+
+"""
+i18n resource type
+"""
+type ReactoryI18nResource {
+  """
+  Resource unique id
+  """
+  id: String
+
+  """
+  Name space for the resource
+  """
+  ns: String
+
+  """
+  Translation resources
+  """
+  translations: Any
+}
+
+
 type ReactoryTranslations {
   """
   The system assigned id
@@ -84,7 +107,12 @@ type ReactoryTranslations {
   """
   An array of translation objects
   """
-  translations: [ReactoryTranslation]  
+  translations: [ReactoryTranslation]
+
+  """
+  i18n resources 
+  """
+  i18n: [ReactoryI18nResource]  
   """
   A transformed resources object
   """

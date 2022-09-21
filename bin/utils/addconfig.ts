@@ -154,13 +154,13 @@ const main = (kwargs: string[]) => {
 `));
 
 
-const persistConfiguration = ($configuration: IConfigurationProperties) => {
-  rl.write(`
-  Configuration written to file\r
-  ${JSON.stringify($configuration, null, 2)}\r
-  `);
-  rl.close();
-};
+  const persistConfiguration = ($configuration: IConfigurationProperties) => {
+    rl.write(`
+    Configuration written to file\r
+    ${JSON.stringify($configuration, null, 2)}\r
+    `);
+    rl.close();
+  };
 
 
   const ask = (question: IQuestion, $configuration: IConfigurationProperties) => {
@@ -259,7 +259,6 @@ const persistConfiguration = ($configuration: IConfigurationProperties) => {
           return questions.required.system_user_id;
         }
       },
-
       system_user_id: {
         question: 'Provide an email address that will be used for the system account. i.e. reactory_admin@acme.com',
         handler: (response: string) => {
@@ -278,7 +277,6 @@ const persistConfiguration = ($configuration: IConfigurationProperties) => {
           return questions.required.app_data_root;
         }
       },
-
       server_id: {
         question: 'Provide a server id that can be used to identify the server a client is a connected to. i.e. acme_reactor_uk',
         handler: (response: string) => {
@@ -291,8 +289,6 @@ const persistConfiguration = ($configuration: IConfigurationProperties) => {
         }
 
       },
-
-
       app_data_root: {
         question: 'Provide the location of your data root folder? default (/var/reactory/data)',
         handler: (response: string) => {
@@ -315,7 +311,6 @@ const persistConfiguration = ($configuration: IConfigurationProperties) => {
           return questions.required.modules_enabled;
         }
       },
-
       modules_enabled: {
         question: `What is the name of the modules enabled file you want to load? (default: enabled-${conf.name})`,
         handler: (response: string) => {

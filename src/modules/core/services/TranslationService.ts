@@ -63,6 +63,7 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
       });
     }
 
+    debugger
     i18n.init({
       resources,
       lng: user?.il8n?.locale || ENVIRONMENT.DEFAULT_LOCALE,
@@ -75,11 +76,35 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
       id: locale,
       locale,
       resources: {},
-      translations: []
+      translations: [],
+      i18n: [],
     };
 
-    translations.translations = await ReactoryTranslation.find({ locale: locale, partner: this.context.partner as Reactory.IReactoryClientDocument }).then()
+    // translations.translations = await ReactoryTranslation.find({ locale: locale, partner: this.context.partner as Reactory.IReactoryClientDocument }).then()
     
+    // return translations;
+
+    const {
+      i18n
+    } = this.context;
+
+    if(i18n.language !== locale) {
+      await i18n.changeLanguage(locale);
+    }
+    
+    const ns: string | readonly string[] | null = i18n.options.ns;
+
+    let bundles: Reactory.Models.IReactoryI18nResource[] = []
+
+    if(this.context.utils.lodash.isArray(ns) === true) {
+      (ns as string[]).forEach($ns => {
+        const resourceBundle = i18n.getResourceBundle(i18n.language, $ns);    
+        bundles.push({ id: `${locale}.${$ns}`, ns: $ns, translations: resourceBundle });
+      });
+
+      translations.i18n = bundles;
+    }
+      
     return translations;
   }
   
@@ -116,7 +141,12 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
 
 
   translate(key: string, params?: any): string {
-    return i18n.t(key, params);
+    debugger;
+    this.context.log(`Translating ${key} with params:`, params, 'debug', ReactoryTranslationService.reactory.id);
+    if(i18n.isInitialized === true) {
+      debugger;
+      return i18n.t(key, params);
+    }
   }
 
   async loadTranslations():Promise<Reactory.Models.IReactoryTranslations[]>{

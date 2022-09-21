@@ -11,8 +11,11 @@ import express, { Application, NextFunction } from 'express';
 import session from 'express-session';
 import bodyParser from 'body-parser';
 import passport from 'passport';
+import i18next from 'i18next';
+import i18nextHttp from 'i18next-http-middleware';
+import i18nextFSBackend from 'i18next-fs-backend';
 import { ApolloServer, ApolloServerExpressConfig, makeExecutableSchema, SchemaDirectiveVisitor } from 'apollo-server-express';
-import { GraphqlUpload } from 'graphql-upload';
+
 import flash from 'connect-flash';
 /**
  * Disabling the linting for the import statements
@@ -44,10 +47,12 @@ import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContex
 // @ts-ignore
 import Reactory from '@reactory/reactory-core';
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
-
+import Modules from '@reactory/server-modules/index';
 import colors from 'colors/safe';
 import http from 'http';
 import { GraphQLSchema } from 'graphql';
+import { getModuleDefinitions } from '@reactory/server-modules/helpers/moduleImportFactory';
+
 
 
 
@@ -112,10 +117,9 @@ const hideText = (text: string = '') => {
 
 
 /**
- * The main function to start reactory server api.
- * @param props 
+ * The main function to start reactory server api. 
  */
-export const ReactoryServer = async (props: Reactory.IStartupOptions) => {
+export const ReactoryServer = async () => {
 
   let reactoryExpress: Application;
 
@@ -242,11 +246,35 @@ Environment Settings:
     res.status(500)
     res.render('error', { error: err })
   });
-
-
+      
   // For all routes we rune the cors middleware with options
+
+  let langNS = ['common', 'forms', 'models', 'services', 'workflow', 'schemas']
+  getModuleDefinitions().forEach(def => {
+    langNS.push(def.key);
+  })
+
   reactoryExpress.use('*', cors(corsOptions));
   reactoryExpress.use(reactoryClientAuthenticationMiddleware);
+  const backendOptions = {
+    // load all translations found in the modules.
+    loadPath: `${APP_DATA_ROOT}/i18n/{{lng}}/{{ns}}.json`,
+    addPath: `${APP_DATA_ROOT}/i18n/{{lng}}/{{ns}}.missing.json`
+  };
+
+  i18next
+    .use(i18nextHttp.LanguageDetector)
+    .use(i18nextFSBackend)
+    .init({
+      preload: ['en-US', 'af'],
+      lng: "en-US",
+      fallbackLng: 'en-US',
+      ns: langNS,
+      backend: backendOptions
+    });
+
+  reactoryExpress.use(i18nextHttp.handle(i18next));
+
   reactoryExpress.use(
     queryRoot,
     passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
@@ -257,15 +285,15 @@ Environment Settings:
 
   let $schemaDirectives: Record<string, typeof SchemaDirectiveVisitor> = {};
 
-  
+
 
   try {
 
     let $schema: GraphQLSchema = makeExecutableSchema({
       typeDefs,
-      resolvers,      
+      resolvers,
     });
-    
+
     directiveProviders.forEach((provider) => {
       try {
         logger.info(`Processing schema directive: "@${provider.name}"`);
@@ -276,7 +304,7 @@ Environment Settings:
     });
 
     const expressConfig: ApolloServerExpressConfig = {
-      schema: $schema,      
+      schema: $schema,
       context: ReactoryContextProvider,
       uploads: {
         maxFileSize: 20000000,
@@ -362,15 +390,15 @@ Environment Settings:
     reactoryExpress.use('/pdf', passport.authenticate(
       ['jwt'], { session: false }),
       bodyParser.urlencoded({ extended: true }), pdf);
-    reactoryExpress.use('/excel', ExcelRouter);
-    
+    //reactoryExpress.use('/excel', ExcelRouter);
+
     reactoryExpress.use('/amq', amq.router);
     reactoryExpress.use(resourcesPath,
       passport.authenticate(['jwt', 'anonymous'], { session: false }),
       bodyParser.urlencoded({ extended: true }),
       express.static(APP_DATA_ROOT || publicFolder));
 
-    expressServer = reactoryExpress.listen(API_PORT, SERVER_IP, () => {
+    expressServer = reactoryExpress.listen(typeof API_PORT === "string" ? parseInt(API_PORT) : API_PORT, SERVER_IP, () => {
       logger.info(asciilogo);
       if (graphcompiled === true) {
         const graphql_api_root = resolveUrl(API_URI_ROOT, queryRoot);
@@ -397,7 +425,7 @@ Environment Settings:
 
     reactoryExpress.use(flash());
 
-    
+
 
   }).catch((startupError) => {
     logger.error(colors.red('Server was unable to start successfully.'), startupError);

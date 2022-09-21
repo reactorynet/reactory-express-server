@@ -74,7 +74,7 @@ const staticContentMappings = [
 
 const REACTORY_CONFIG: Reactory.Server.IReactoryClientConfig = {
   key: 'reactory',
-  name: 'Reactory Admin Application',
+  name: 'reactory:reactory.application.title',
   username: REACTORY_APPLICATION_USERNAME,
   email: REACTORY_APPLICATION_EMAIL,
   salt: 'generate',

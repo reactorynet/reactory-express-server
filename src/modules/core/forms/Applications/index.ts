@@ -1,10 +1,11 @@
 import schema from './schema';
 import uiSchema from './uiSchema';
 import graphql from './graphql';
+import { ReactoryClient } from '@reactory/server-core/models';
+import e from 'connect-flash';
 
-interface IApplicationsFormData {
-  message: string,
-  applications: Reactory.Models.IReactoryClient[]
+interface IApplicationsFormData {  
+  applications: { id: string, title: string, avatar: string, url: string }[]
 }
 
 /**
@@ -16,27 +17,42 @@ interface IApplicationsFormData {
  * @returns 
  */
 const getData = async (form: Reactory.Forms.IReactoryForm, args: any, context: Reactory.Server.IReactoryContext, info: any): Promise<IApplicationsFormData> => {
-  return {
-    message: `Welcome to your application dashboard ${context.user.firstName}.`,
-    applications: []
+
+  let $ids = context.user.memberships.map((m: Reactory.Models.IMembershipDocument) => {  
+    return m.clientId
+  });
+  
+  const $apps: Reactory.Models.IReactoryClientDocument[] = await ReactoryClient.find({ _id: { $in: $ids }}).exec();
+  const { i18n } = context;
+  const data =  {    
+    applications: $apps.map((a) => {
+      return { 
+        id: a._id.toString(),
+        avatar: a.avatar,
+        title: a.name,
+        url: a.siteUrl
+      }
+    })
   };
+
+  return data;
 };
 
 const Applications: Reactory.Forms.IReactoryForm = {
-  id: `reactory/my-applications`,
+  id: `reactory-my-applications`,
   nameSpace: 'reactory',
   name: 'MyApplications',
   uiFramework: "material",
   uiSupport: ["material"],
-  title: "${context.i18n('reactory.applications.title')}",
+  title: "${props.context.i18n.t('forms:applicationTitle')}",
   registerAsComponent: true,
   version: "1.0.0",
   helpTopics: [
-    "reactory/my-applications", 
-    "application/management"],
+    "reactory-my-applications", 
+    "application-management"],
   defaultFormValue: getData,  
   schema,
-  uiSchema: {},
+  uiSchema,
 }
 
 export default Applications;

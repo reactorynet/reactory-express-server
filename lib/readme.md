@@ -1,0 +1,1 @@
+The /lib folder is where local libraries are deployed for inclusion in the npm package.json

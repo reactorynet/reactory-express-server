@@ -23,17 +23,6 @@ const getComponentWithFqn = async (fqn: string) => {
 };
 
 const resolvers = {
-  MenuItem: {
-    id: menuItem => menuItem._id,
-  },
-  Menu: {
-    id: menu => (menu._id.toString() || null),
-    key: menu => (menu.key || 'na'),
-    name: menu => (menu.name || 'na'),
-    target: menu => (menu.target || 'na'),
-    roles: menu => menu.roles || [],
-    entries: menu => sortBy(menu.entries, 'ordinal'),
-  },
   // ComponentArgs: {
   //   key: arg => arg.key,
   //   value: arg => arg.value,

@@ -43,7 +43,7 @@ export const MicrosoftOpenIDAuthenticationUISchema: any = {
     'ui:options': {
       showLabel: false,
       fullWidth: false,
-      format: '${formData}/${formContext.api.CLIENT_KEY}?x-client-key=${formContext.api.CLIENT_KEY}&x-client-pwd=${formContext.api.CLIENT_PWD}', //eslint-disable-line
+      format: '${formData}/${formContext.reactory.CLIENT_KEY}?x-client-key=${formContext.reactory.CLIENT_KEY}&x-client-pwd=${formContext.reactory.CLIENT_PWD}', //eslint-disable-line
       title: 'Login With Microsoft O365',
       name: 'office-365-login-button',
       id: 'reactory-security::office-365-login-button',
