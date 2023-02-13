@@ -3,7 +3,7 @@ import Reactory from '@reactory/reactory-core';
 import { MutationResult, QueryResult, IUserImportStruct } from './types';
 import { execml, execql } from '@reactory/server-core/graph/client';
 import { BusinessUnit, UserDemographic, Region, Team } from '@reactory/server-core/models';
-import { Demographic } from '@reactory/server-modules/mores/models';
+import Demographic from '@reactory/server-modules/core/models/demographics/Demographic';
 import { find } from 'lodash';
 import e from 'connect-flash';
 

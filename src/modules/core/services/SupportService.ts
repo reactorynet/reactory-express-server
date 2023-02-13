@@ -11,33 +11,35 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
   nameSpace: string;
   version: string;
 
-  props: Reactory.IReactoryServiceProps;
+  props: Reactory.Service.IReactoryServiceProps;
   context: Reactory.Server.IReactoryContext  
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
+  constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   } 
 
-  async updateTicket(ticket_id: string, updates: Reactory.IReactorySupportTicketUpdate): Promise<Reactory.IReactorySupportTicket | Reactory.IReactorySupportTicketDocument> {
+  async updateTicket(ticket_id: string, updates: Reactory.Models.IReactorySupportTicketUpdate): Promise<Reactory.IReactorySupportTicket | Reactory.IReactorySupportTicketDocument> {
     throw new Error('Method not implemented.');
   }
-  async attachDocument(ticket_id: string, file: File, name: string): Promise<Reactory.IReactorySupportTicket | Reactory.IReactorySupportTicketDocument> {
+  async attachDocument(ticket_id: string, file: File, name: string): Promise<Reactory.Models.IReactorySupportTicket | Reactory.IReactorySupportTicketDocument> {
     throw new Error('Method not implemented.');
   }
 
   @roles(["USER", "ADMIN", "SUPPORT_ADMIN", "SUPPORT"])
-  async pagedRequest(filter: Reactory.IReactorySupportTicketFilter, paging: Reactory.IPagingRequest): Promise<Reactory.IPagedReactorySupportTickets> {
+  async pagedRequest(filter: Reactory.Models.IReactorySupportTicketFilter, 
+    pagingRequest: Reactory.Models.IPagingRequest): Promise<Reactory.Models.IPagedReactorySupportTickets> {
     
-    const result: Reactory.IPagedReactorySupportTickets = {
+    const result: Reactory.Models.IPagedReactorySupportTickets = {
       paging: {
-        page: paging && paging.page ? paging.page : 1,
-        pageSize: paging && paging.pageSize ? paging.pageSize : 10,
+        page: pagingRequest && pagingRequest.page ? pagingRequest.page : 1,
+        pageSize: pagingRequest && pagingRequest.pageSize ? pagingRequest.pageSize : 10,
         total: 0,
         hasNext: false,
       },
       tickets: []
     };
+
     let params: any = {};
 
     let isAdmin = this.context.hasRole("ADMIN") === true;
@@ -59,17 +61,27 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
       }
     }
     
-    let query: QueryWithHelpers<Reactory.IReactorySupportTicketDocument[], Reactory.IReactorySupportTicketDocument> = ReactorySupportTicketModel.find(params);
-
-
-    if(paging) {
-      result.tickets = await query.limit(paging.pageSize).skip(paging.page * paging.pageSize).then()
+    let query: QueryWithHelpers<Reactory.Models.IReactorySupportTicketDocument[], 
+      Reactory.Models.IReactorySupportTicketDocument> = ReactorySupportTicketModel.find(params);
+    
+    if(pagingRequest) {
+      try {     
+        result.paging.total = await query.count();                
+        result.tickets = await ReactorySupportTicketModel.find(params)
+          .populate('createdBy')
+          .populate('assignedTo')
+          .skip((pagingRequest.page - 1) * pagingRequest.pageSize)
+          .limit(pagingRequest.pageSize)
+          .exec();
+      } catch(e) {
+        this.context.log(`Error: ${e.message}`, {e}, 'error');
+      }
     }
 
     return result;    
   }
 
-  async createRequest(request: string, description: string, requestType?: string, meta?: any, formId?: string): Promise<Reactory.IReactorySupportTicket> {
+  async createRequest(request: string, description: string, requestType?: string, meta?: any, formId?: string): Promise<Reactory.Models.IReactorySupportTicket> {
     this.context.log('Creatig new Support Request', { request, description }, 'debug', ReactorySupportService.reactory.id);
     
     let ticket = new ReactorySupportTicketModel({
@@ -106,12 +118,14 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
     return true;
   }
   
-  static reactory: Reactory.IReactoryServiceDefinition = {  
+  static reactory: Reactory.Service.IReactoryServiceDefinition = {  
     id: "core.ReactorySupportService@1.0.0",
     name: "Support Service",
     description: "Service for logging and managing reactory support tickets",
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
-      return new ReactorySupportService(props, context);
+    service: (
+      props: Reactory.Service.IReactoryServiceProps, 
+      context: Reactory.Server.IReactoryContext) => {
+        return new ReactorySupportService(props, context);
     },
     dependencies: [],
     serviceType: 'workflow',

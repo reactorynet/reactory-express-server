@@ -1,7 +1,7 @@
 import Reactory from "@reactory/reactory-core";
 import { ObjectId } from "bson";
 import Organigram from "@reactory/server-core/models/schema/Organigram";
-import { Demographic } from '@reactory/server-modules/mores/models';
+import Demographic from '@reactory/server-modules/core/models/demographics/Demographic';
 import { BusinessUnit, Organization, Region, Team, User, UserDemographic } from '@reactory/server-core/models';
 import ApiError, { RecordNotFoundError } from "@reactory/server-core/exceptions";
 import { trim, filter, find, isNil } from 'lodash';

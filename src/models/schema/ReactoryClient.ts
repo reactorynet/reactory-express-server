@@ -10,7 +10,7 @@ import logger from '@reactory/server-core/logging';
 const { ObjectId } = mongoose.Schema.Types;
 const { find, isArray } = lodash;
 
-const ReactoryClientSchema = new mongoose.Schema<Reactory.IReactoryClient>({
+const ReactoryClientSchema = new mongoose.Schema<Reactory.Models.IReactoryClient>({
   id: ObjectId,
   key: {
     type: String,

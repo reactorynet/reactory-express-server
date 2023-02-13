@@ -47,17 +47,13 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     constructor(props: any, context: Reactory.Server.IReactoryContext) {
         this.context = context
     }
-    getFileSize(file: Reactory.IReactoryFileModel): number {
-        
-        debugger
+    getFileSize(file: Reactory.Models.IReactoryFileModel): number {
         let filepath = path.join(APP_DATA_ROOT, file.path, file.filename);
         if (fs.existsSync(filepath) === true) {
             const stats = fs.statSync(filepath);
             return stats.size;
         }
-        
         return file.size || -1;
-
     }
     getContentBytes(path: string): number {
         throw new Error('Method not implemented.');
@@ -179,8 +175,8 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     };
 
 
-    async removeFilesForContext(context: string): Promise<Reactory.IReactoryFileModel[]> {
-        let fordeletion: Reactory.IReactoryFileModel[] = await this.getFileModelsForContext(context).then();
+    async removeFilesForContext(context: string): Promise<Reactory.Models.IReactoryFileModel[]> {
+        let fordeletion: Reactory.Models.IReactoryFileModel[] = await this.getFileModelsForContext(context).then();
 
         if (fordeletion.length > 0) {
             const removedResult = await ReactoryFileModel.deleteMany({ uploadContext: context }).then()
@@ -194,7 +190,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
 
 
     }
-    async getFileModelsForContext(context: string): Promise<Reactory.IReactoryFileModel[]> {
+    async getFileModelsForContext(context: string): Promise<Reactory.Models.IReactoryFileModel[]> {
         return ReactoryFileModel.find({ uploadContext: context })
     }
 
@@ -202,13 +198,11 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         method: string = 'GET',
         headers: HeadersInit | any = {},
         save: boolean,
-        options?: { ttl?: number; sync?: boolean; owner?: ObjectId; permissions?: Reactory.IReactoryFilePermissions; public: boolean; }): Promise<Reactory.IReactoryFileModel> {
-
+        options?: { ttl?: number; sync?: boolean; owner?: ObjectId; permissions?: Reactory.Models.IReactoryFilePermissions; public: boolean; }): Promise<Reactory.Models.IReactoryFileModel> {
         try {
 
             logger.debug(`🚨 Fetching Remote File. ${url}`)
-
-            const reactoryFile: Reactory.IReactoryFileModel = await this.downloadAndCatalog({
+            const reactoryFile: Reactory.Models.IReactoryFileModel = await this.downloadAndCatalog({
                 url,
                 options: {
                     method,
@@ -235,16 +229,16 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         }
 
     }
-    setFileModel(file: Reactory.IReactoryFileModel): Promise<Reactory.IReactoryFileModel> {
+    setFileModel(file: Reactory.Models.IReactoryFileModel): Promise<Reactory.Models.IReactoryFileModel> {
         throw new Error('Method not implemented.');
     }
-    getFileModel(id: string): Promise<Reactory.IReactoryFileModel> {
+    getFileModel(id: string): Promise<Reactory.Models.IReactoryFileModel> {
         return ReactoryFileModel.findById(id).then()
     }
-    sync(): Promise<Reactory.IReactoryFileModel[]> {
+    sync(): Promise<Reactory.Models.IReactoryFileModel[]> {
         throw new Error('Method not implemented.');
     }
-    clean(): Promise<Reactory.IReactoryFileModel[]> {
+    clean(): Promise<Reactory.Models.IReactoryFileModel[]> {
         throw new Error('Method not implemented.');
     }
     onStartup(): Promise<any> {
@@ -262,7 +256,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     }
 
 
-    uploadFile = async (args: Reactory.Service.FileUploadArgs): Promise<Reactory.IReactoryFileModel> => {
+    uploadFile = async (args: Reactory.Service.FileUploadArgs): Promise<Reactory.Models.IReactoryFileModel> => {
         return new Promise(async (resolve, reject) => {
 
 
@@ -416,7 +410,6 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
         const _id: ObjectId = new ObjectId();
         const $filename = path.basename(filename);
         const $path = filename.replace(APP_DATA_ROOT, '').replace(path.basename(alias), '');
-        debugger
 
         const reactoryFileModel = new ReactoryFileModel({
             _id,
@@ -446,7 +439,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
      * 
      */    
     @roles(["ADMIN", "DEVELOPER", "${arguments[0].owner._id === context.user._id}"])
-    deleteFile( fileModel: Reactory.IReactoryFileModel ): boolean {
+    deleteFile( fileModel: Reactory.Models.IReactoryFileModel ): boolean {
         let filepath = path.join(APP_DATA_ROOT, fileModel.path, fileModel.filename);
         if(fs.existsSync(filepath) === true)
             fs.unlinkSync(filepath);
@@ -455,13 +448,13 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     }
 }
 
-export const ReactoryFileServiceDefinition: Reactory.IReactoryServiceDefinition = {
+export const ReactoryFileServiceDefinition: Reactory.Service.IReactoryServiceDefinition = {
     id: 'core.ReactoryFileService@1.0.0',
     name: 'Reactory File Service',
     description: 'Default File Service for downloading and managing ReactoryFile cache and temporary files.',
     dependencies: [],
     serviceType: 'file',
-    service: (props: Reactory.IReactoryServiceProps, context: any) => {
+    service: (props: Reactory.Service.IReactoryServiceProps, context: any) => {
         return new ReactoryFileService(props, context);
     }
 }

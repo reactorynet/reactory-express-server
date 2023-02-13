@@ -1,7 +1,7 @@
 
 import schema from './schema';
-import DefaultUiSchema, { minimalEdit, minimalExtendedEdit } from './uiSchema';
-import $graphql from './graphql.js';
+import DefaultUiSchema, { minimalEdit, minimalExtendedEdit, fullEditor } from './uiSchema';
+import $graphql from './graphql';
 import Reactory from '@reactory/reactory-core';
 
 const ContentCapture: Reactory.Forms.IReactoryForm = {
@@ -23,13 +23,21 @@ const ContentCapture: Reactory.Forms.IReactoryForm = {
   uiSchema: DefaultUiSchema,
   uiSchemas: [
     {
-      id: 'default',
-      title: 'Default',
-      key: 'default',
-      description: 'Default Content Edit View',
+      id: 'inline',
+      title: 'Inline',
+      key: 'inline',
+      description: 'Inline Editor View',
       icon: 'edit',
       uiSchema: DefaultUiSchema,
     },
+    {
+      id: 'default',
+      title: 'Full',
+      key: 'default',
+      description: 'Full Editor',
+      icon: 'edit',
+      uiSchema: fullEditor,
+    },    
     {
       id: 'minimal',
       title: 'Minmal',
@@ -46,11 +54,7 @@ const ContentCapture: Reactory.Forms.IReactoryForm = {
       icon: 'edit',
       uiSchema: minimalExtendedEdit,
     },
-  ],
-  defaultFormValue: {
-    slug: 'your-new-slug',
-    title: 'Your title'
-  },
+  ],  
   graphql: $graphql
 };
 

@@ -10,7 +10,7 @@ const MenuItemSchema = new mongoose.Schema({
   external: Boolean,
   icon: String,
   roles: [String],
-  items: [ 
+  items: [
     {
       type: ObjectId,
       ref: 'MenuItem'

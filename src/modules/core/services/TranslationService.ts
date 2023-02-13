@@ -62,8 +62,7 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
         }
       });
     }
-
-    debugger
+    
     i18n.init({
       resources,
       lng: user?.il8n?.locale || ENVIRONMENT.DEFAULT_LOCALE,

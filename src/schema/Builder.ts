@@ -7,9 +7,9 @@ const StringProperty = (
   description: string,
   minLength: number = null,
   maxLength: number = null,
-  target: Reactory.ISchema = null,
+  target: Reactory.Schema.ISchema = null,
   propertyName: string = null,
-): Reactory.IStringSchema => {
+): Reactory.Schema.IStringSchema => {
 
   if (target) {
     if (!target.properties) target.properties = {};
@@ -41,8 +41,8 @@ const DefaultObjectProperties = {
 export const ObjectProperty = (
   title: string = 'ObjectPropertyName',
   description: string = undefined,
-  properties: Reactory.ISchemaObjectProperties = DefaultObjectProperties,
-  target: Reactory.ISchema,
+  properties: Reactory.Schema.ISchemaObjectProperties = DefaultObjectProperties,
+  target: Reactory.Schema.ISchema,
   propertyName: string = null,
 ) => {
   if (target) {
@@ -70,7 +70,7 @@ export const DateProperty = (
   description: string = null,
   min: number | string | Date = undefined,
   max: number | string | Date = undefined,
-  target: Reactory.ISchema = null,
+  target: Reactory.Schema.ISchema = null,
   propertyName: string = null,
 ) => {
 
@@ -103,7 +103,7 @@ export const DateTimeProperty = (
   description: string = undefined,
   min: number | string | Date = undefined,
   max: number | string | Date = undefined,
-  target: Reactory.ISchema,
+  target: Reactory.Schema.ISchema,
   propertyName: string = null,
 ) => {
 
@@ -137,7 +137,7 @@ export const NumberProperty = (
   description: string = null,
   min: number | "null" = undefined,
   max: number | "null" = undefined,
-  target: Reactory.ISchema = undefined,
+  target: Reactory.Schema.ISchema = undefined,
   propertyName: string = null,
 ) => {
 
@@ -182,7 +182,7 @@ export interface ISchemaBuilder {
     description: string,
     minLength: number,
     maxLength: number,
-    uiSchema: Reactory.IUISchema): ISchemaBuilder;
+    uiSchema: Reactory.Schema.IUISchema): ISchemaBuilder;
 
   /**
    * Creates a date formated string property on the current builder instance
@@ -192,7 +192,7 @@ export interface ISchemaBuilder {
    * @param defaultValue - the default value we want to assign this date property i.e. now +-(ticks)
    * @param uiSchema - the uiSchema to be added for the default use of the this property
    */
-  $date(name: string, title: string, description: string, defaultValue: string | number | Date | Function, uiSchema: Reactory.IUISchema): ISchemaBuilder;
+  $date(name: string, title: string, description: string, defaultValue: string | number | Date | Function, uiSchema: Reactory.Schema.IUISchema): ISchemaBuilder;
 
   /**
    * Creates a number property on the current builder instance
@@ -201,7 +201,7 @@ export interface ISchemaBuilder {
    * @param description - The description for the property
    * @param uiSchema - The uiSchema to be added for the default use of this property
    */
-  $number(name: string, title: string, description: string, minValue: number | "null", maxValue: number | "null", uiSchema: Reactory.IUISchema): ISchemaBuilder;
+  $number(name: string, title: string, description: string, minValue: number | "null", maxValue: number | "null", uiSchema: Reactory.Schema.IUISchema): ISchemaBuilder;
   /**
    * Creates a object schema property that is added to the current 
    * builder instance. If the readOnly parameter is set to true 
@@ -215,7 +215,7 @@ export interface ISchemaBuilder {
    * @param readOnly - Boolean toggles which element is returned
    * @param props - Additional properties to add to the schema i.e. helperText, title:afZA etc.
    */
-  $object(name: string, title: string, description: string, schema: Reactory.IObjectSchema, uiSchema: Reactory.IUISchema, readOnly: Boolean, props: any): ISchemaBuilder;
+  $object(name: string, title: string, description: string, schema: Reactory.Schema.IObjectSchema, uiSchema: Reactory.Schema.IUISchema, readOnly: Boolean, props: any): ISchemaBuilder;
 
   /**
    * 
@@ -225,18 +225,18 @@ export interface ISchemaBuilder {
    * @param item 
    * @param uiSchema 
    */
-  $array(name: string, title: string, description: string, item: Reactory.ISchema | Reactory.IObjectSchema, uiSchema: Reactory.IUISchema): ISchemaBuilder;
+  $array(name: string, title: string, description: string, item: Reactory.Schema.ISchema | Reactory.Schema.IObjectSchema, uiSchema: Reactory.Schema.IUISchema): ISchemaBuilder;
 
   $parent(): ISchemaBuilder | null
   /**
    * Returns the schema for the builder instance
    */
-  $schema(): Reactory.ISchema
+  $schema(): Reactory.Schema.ISchema
 
   /**
    * Returns the uiSchema for the builder instance
    */
-  $uiSchema(): Reactory.IUISchema
+  $uiSchema(): Reactory.Schema.IUISchema
 }
 
 
@@ -244,13 +244,40 @@ export interface ISchemaBuilder {
 
 export default class Builder implements ISchemaBuilder {
 
-  _schema: Reactory.ISchema;
-  _uiSchema: Reactory.IUISchema;
+  _schema: Reactory.Schema.ISchema;
+  _uiSchema: Reactory.Schema.IUISchema;
   _parent: ISchemaBuilder;
 
-  constructor(name: string = 'ObjectProperty', title: string, description: string, type: string = 'object', parent: ISchemaBuilder = null, schema: Reactory.ISchema = undefined) {
+  constructor(
+    name: string = 'ObjectProperty', 
+    title: string = 'Property1', 
+    description: string = 'Property Description', 
+    type: string = 'object', 
+    parent: ISchemaBuilder = null, 
+    schema: Reactory.Schema.ISchema = undefined) {
 
+    this.$string = this.$string.bind(this);
+    this.$number = this.$number.bind(this);
+    this.$date = this.$date.bind(this);
+    this.$object = this.$object.bind(this);
+    this.$array = this.$array.bind(this);
+    this.$parent = this.$parent.bind(this);
+    this.$uiSchema = this.$uiSchema.bind(this);
+    this.$schema = this.$schema.bind(this);
+    this.initialSchema = this.initialSchema.bind(this);
 
+    this.initialSchema(name, title, description, type, parent, schema);
+
+  }
+
+  initialSchema(
+    name: string = 'ObjectProperty',
+    title: string = 'Property1',
+    description: string = 'Property Description',
+    type: string = 'object',
+    parent: ISchemaBuilder = null,
+    schema: Reactory.Schema.ISchema = undefined
+  ){
     if (schema) {
       this._schema = schema;
     } else {
@@ -269,15 +296,6 @@ export default class Builder implements ISchemaBuilder {
     if (parent !== null) {
       this._parent = parent;
     }
-
-    this.$string = this.$string.bind(this);
-    this.$number = this.$number.bind(this);
-    this.$date = this.$date.bind(this);
-    this.$object = this.$object.bind(this);
-    this.$array = this.$array.bind(this);
-    this.$parent = this.$parent.bind(this);
-    this.$uiSchema = this.$uiSchema.bind(this);
-    this.$schema = this.$schema.bind(this);
   }
 
   $string(name: string, title: string, description: string, minLength: number = null, maxLength: number = null): ISchemaBuilder {
@@ -285,17 +303,17 @@ export default class Builder implements ISchemaBuilder {
     return this;
   }
 
-  $date(name: string, title: string, description: string, defaultValue: string | number | Date | Function, uiSchema: Reactory.IUISchema = null): ISchemaBuilder {
+  $date(name: string, title: string, description: string, defaultValue: string | number | Date | Function, uiSchema: Reactory.Schema.IUISchema = null): ISchemaBuilder {
     DateProperty(title, description, undefined, undefined, this._schema, name);
     return this;
   }
 
-  $number(name: string, title: string, description: string, minValue: number | "null" = null, maxValue: number | "null" = null, uiSchema: Reactory.IUISchema = null): ISchemaBuilder {
+  $number(name: string, title: string, description: string, minValue: number | "null" = null, maxValue: number | "null" = null, uiSchema: Reactory.Schema.IUISchema = null): ISchemaBuilder {
     NumberProperty(title, description, minValue, maxValue, this._schema, name);
     return this;
   };
 
-  $object(name: string, title: string, description: string, schema: Reactory.IObjectSchema, uiSchema: Reactory.IUISchema = null, readOnly: Boolean = false, props: any = {}): ISchemaBuilder {
+  $object(name: string, title: string, description: string, schema: Reactory.Schema.IObjectSchema, uiSchema: Reactory.Schema.IUISchema = null, readOnly: Boolean = false, props: any = {}): ISchemaBuilder {
     const objectProperty = ObjectProperty(title, description, schema && schema.properties ? schema.properties : {}, null, null);
 
     this._schema.properties[name] = objectProperty;
@@ -308,7 +326,7 @@ export default class Builder implements ISchemaBuilder {
     }
   }
 
-  $array(name: string, title: string, description: string, item: Reactory.ISchema | Reactory.IObjectSchema, uiSchema: Reactory.IUISchema): ISchemaBuilder {
+  $array(name: string, title: string, description: string, item: Reactory.Schema.ISchema | Reactory.Schema.IObjectSchema, uiSchema: Reactory.Schema.IUISchema): ISchemaBuilder {
     return this;
   }
 
@@ -336,9 +354,9 @@ export default class Builder implements ISchemaBuilder {
   }
 }
 
-const ReactoryObjectSchema = new Builder('Reactory', 'Reactory Builder', 'Some Descrition', 'object')
-  .$string('root_string', 'Root String', '')
-  .$number('root_number', 'A number field', '', 0, 12)
-  .$schema();
+// const ReactoryObjectSchema = new Builder('Reactory', 'Reactory Builder', 'Some Descrition', 'object')
+//   .$string('root_string', 'Root String', '')
+//   .$number('root_number', 'A number field', '', 0, 12)
+//   .$schema();
 
-logger.debug('Reactory Root Object Schema', ReactoryObjectSchema)
+// logger.debug('Reactory Root Object Schema', ReactoryObjectSchema)

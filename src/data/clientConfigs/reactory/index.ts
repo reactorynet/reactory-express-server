@@ -30,7 +30,7 @@ const staticContentMappings = [
         key: 'slug',
         value: {
           type: 'string',
-          slug: 'about',
+          slug: 'about-reactory-platform',
         }
       }
     ]
@@ -47,15 +47,41 @@ const staticContentMappings = [
         key: 'slug',
         value: {
           type: 'string',
-          slug: 'whats-new',
+          slug: 'whats-new-reactory-platform',
         }
       }
     ]
   },
   {
-    key: 'how-to',
-    title: 'How to',
-    path: '/news/*',
+    key: 'blog',
+    title: 'Blog Path',
+    public: true,
+    exact: false,
+    path: '/blog/:blog_slug',
+    roles: ['ANON', 'USER'],
+    args: [
+      {
+        key: 'slugSource',
+        value: {
+          type: 'string',
+          slugSource: 'route',
+        }       
+      },
+      {
+        key: 'slugSourceProps',
+        value: {
+          type: 'object',
+          slugSourceProps: {
+            paramId: 'blog_slug'
+          }
+        }
+      }
+    ]
+  },
+  {
+    key: 'support-home',
+    title: 'Support Home',
+    path: '/support/',
     public: true,
     exact: true,
     roles: ['USER'],
@@ -64,11 +90,11 @@ const staticContentMappings = [
         key: 'slug',
         value: {
           type: 'string',
-          slug: 'news',
+          slug: 'whats-new-reactory-platform',
         }
       }
     ]
-  },
+  }
 ];
 
 

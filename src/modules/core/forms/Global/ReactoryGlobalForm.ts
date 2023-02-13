@@ -3,7 +3,7 @@
 import Reactory from '@reactory/reactory-core';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
-const MoresPluginForm: Reactory.Forms.IReactoryForm = {
+const CorePluginForm: Reactory.Forms.IReactoryForm = {
     id: 'ReactoryCorePluginForm',
     uiFramework: 'material',
     uiSupport: ['material'],
@@ -47,8 +47,8 @@ const MoresPluginForm: Reactory.Forms.IReactoryForm = {
         },
     },
     defaultFormValue: {
-        plugin: 'plugins/mores/lib/reactory.plugin.mores.js',
+        plugin: 'plugins/reactory-client-core/lib/reactory.client.core.js',
     },
 };
 
-export default MoresPluginForm;
+export default CorePluginForm;

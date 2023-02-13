@@ -3,7 +3,7 @@ import Reactory from '@reactory/reactory-core';
 
 const { ObjectId } = mongoose.Schema.Types;
 
-const CommentSchema = new mongoose.Schema<Reactory.IReactoryComment>({
+const CommentSchema = new mongoose.Schema<Reactory.Models.IReactoryComment>({
   id: ObjectId,
   user: {
     type: ObjectId,
@@ -56,5 +56,5 @@ const CommentSchema = new mongoose.Schema<Reactory.IReactoryComment>({
   replies: [{ type: ObjectId, ref: 'Comment' }],
 });
 
-const CommentModel = mongoose.model<Reactory.IReactoryCommentDocument>('Comment', CommentSchema);
+const CommentModel = mongoose.model<Reactory.Models.IReactoryCommentDocument>('Comment', CommentSchema);
 export default CommentModel;

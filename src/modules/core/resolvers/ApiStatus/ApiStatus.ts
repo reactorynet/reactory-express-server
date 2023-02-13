@@ -37,7 +37,7 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise <{ r
 
   console.log(`Partner has Keys (${login_partner_keys.partner_keys.length})`, {}, 'debug');
   //get a list of all partner / cross partner logins allowed
-  const partnerLogins: Reactory.IReactoryClientDocument[] = await systemService.getReactoryClients({ key: { $in: [...login_partner_keys.partner_keys] } }).then();
+  const partnerLogins: Reactory.Models.IReactoryClientDocument[] = await systemService.getReactoryClients({ key: { $in: [...login_partner_keys.partner_keys] } }).then();
 
   let root_partner_memberships = filter(memberships, { clientId: partner._id });
   context.log(`${user.firstName} has (${root_partner_memberships.length})`, null, 'debug');
@@ -107,21 +107,21 @@ const DEFAULT_MATERIAL_THEME = {
 @resolver
 class ApiStatus {
 
-  resolver: Reactory.IResolverStruct
+  resolver: Reactory.Graph.IResolverStruct
 
   @property("ApiStatus", "id")
-  id(apiStatus: Reactory.IReactoryApiStatus) {
+  id(apiStatus: Reactory.Models.IApiStatus) {
     return apiStatus.id || 'anon'
   };
 
   @property("ApiStatus", "menus")
-  menus(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.IReactoryMenu[]> {
+  menus(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.UX.IReactoryMenuConfig[]> {
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
     return systemService.getMenusForClient(context.partner)    
   };
 
   @property("ApiStatus", "server")
-  async server(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.Server.IReactoryContext) {
+  async server(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext) {
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
     const clients = systemService.getReactoryClients({ 
       _id: {  $in: context.user.memberships.map((m: any) => m.clientId) } 
@@ -141,11 +141,10 @@ class ApiStatus {
   };
 
   @property("ApiStatus", "activeTheme")
-  themeOptions(apiStatus: Reactory.Models.IApiStatus, args: { theme: string, mode: string }, context: Reactory.Server.IReactoryContext){
-    
+  themeOptions(apiStatus: Reactory.Models.IApiStatus, args: { theme: string, mode: string }, context: Reactory.Server.IReactoryContext){    
     const { themes = [], theme = "reactory" } = context.partner;
     
-    let activeTheme: Reactory.Models.IReactoryTheme = null;
+    let activeTheme: Reactory.UX.IReactoryTheme = null;
     let $themename = args.theme || theme;
     
 
@@ -182,7 +181,7 @@ class ApiStatus {
   }
 
   @property("ApiStatus", "colorSchemes")
-  colorSchemes(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.Server.IReactoryContext) {
+  colorSchemes(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext) {
     
     const { themeOptions } = context.partner;
 
@@ -205,18 +204,18 @@ class ApiStatus {
   }
 
   @property("ApiStatus", "themes")
-  async themes(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.Server.IReactoryContext){
+  async themes(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext){
     const { themes = [] } = context.partner;
 
     return themes;
   }
 
   @property("ApiStatus", "loggedIn")
-  async loggedInContext(apiStatus: Reactory.IReactoryApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.IReactoryLoggedInContext> {
+  async loggedInContext(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.IReactoryLoggedInContext> {
         
     const { roles, alt_roles } = await getRoles(context).then();
 
-    let _context: Reactory.IReactoryLoggedInContext = {
+    let _context: Reactory.Models.IReactoryLoggedInContext = {
       user: context?.user,
       id: context?.user?._id,
       memberships: context?.user?.memberships || [],
@@ -227,10 +226,7 @@ class ApiStatus {
       additional: [],
       altRoles: alt_roles
     };
-
-
     return _context;
-
   }
 
 
@@ -315,9 +311,6 @@ class ApiStatus {
       navigationComponents = [...navigationComponentsSetting.data];
     }
 
- 
-
-
     const api_status_result: any = {
       when: moment().toDate(),      
       status: 'API OK',
@@ -338,13 +331,7 @@ class ApiStatus {
       applicationName: partner.name,
       applicationRoles: partner.applicationRoles,
       menus: partner._id,
-      theme: partner.theme,
-      // themeOptions: partner.themeOptions || {},
-      // themes: [],
-      // colorSchemes: {
-      //   primary: partner.colorScheme(primary.replace('#', '')),
-      //   secondary: partner.colorScheme(secondary.replace('#', '')),
-      // },
+      theme: partner.theme,      
       messages: uxmessages,
       navigationComponents,
     };

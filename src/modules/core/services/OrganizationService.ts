@@ -30,7 +30,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
 
     if (ObjectId.isValid(organization_id) === false) throw new ApiError(`param organization_id is not a valid ${organization_id}`);
 
-    let $business_unit: Reactory.IBusinessUnitDocument = null;
+    let $business_unit: Reactory.Models.IBusinessUnitDocument = null;
     if (typeof search === "string") {
       if (trim(search).length > 0) { 
         
@@ -81,7 +81,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
 
     if (ObjectId.isValid(organization_id) === false) throw new ApiError(`param organization_id is not a valid ${organization_id}`);
 
-    let $team: Reactory.ITeamDocument = null;
+    let $team: Reactory.Models.ITeamDocument = null;
     if (typeof search === "string") {
       if (trim(search).length > 0) {
         const qry = { organization: new ObjectId(organization_id), name: search.trim() }
@@ -102,7 +102,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     return $team;
   }
 
-  async createTeam(organization_id: string | number | ObjectId, name: string): Promise<Reactory.ITeamDocument> {
+  async createTeam(organization_id: string | number | ObjectId, name: string): Promise<Reactory.Models.ITeamDocument> {
 
     // add a new business unit if we do not find any matches
     let $now = Date.now();
@@ -123,19 +123,19 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     return $business_unit;
   }  
 
-  async findWithName(name: string): Promise<Reactory.IOrganizationDocument> {
+  async findWithName(name: string): Promise<Reactory.Models.IOrganizationDocument> {
     this.context.log(`Seaching for organization by name: ${name}`, {}, 'debug', 'OrganizationService')
     return await Organization.findOne({ name }).then();
   }
 
-  async create(name: string): Promise<Reactory.IOrganizationDocument> {
+  async create(name: string): Promise<Reactory.Models.IOrganizationDocument> {
     const organization = new Organization({ name });
     await organization.save();
 
     return organization;
   }
 
-  async updateOrganizationLogo(organization: Reactory.IOrganizationDocument, imageData: string): Promise<Reactory.IOrganizationDocument> {
+  async updateOrganizationLogo(organization: Reactory.Models.IOrganizationDocument, imageData: string): Promise<Reactory.IOrganizationDocument> {
     try {
 
       const {
@@ -169,7 +169,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
 
     if (exists === false) throw new OrganizationNotFoundError(`Organization with the id ${id} could not be found`);
 
-    let organization: Reactory.IOrganizationDocument = await Organization.findById(_id).then();
+    let organization: Reactory.Models.IOrganizationDocument = await Organization.findById(_id).then();
     const inputData = {
       name: updates.name || organization.name,
       code: updates.code || organization.code,
@@ -215,7 +215,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
 
     const fileSvc: Reactory.Service.IReactoryFileService = this.context.getService('core.ReactoryFileService@1.0.0');
 
-    const reactoryFile: Reactory.IReactoryFile = await fileSvc.uploadFile({
+    const reactoryFile: Reactory.Models.IReactoryFile = await fileSvc.uploadFile({
       catalog: false,
       file: file,
       rename: false,
@@ -269,7 +269,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
 
   }
 
-  async getPagedOrganizationsForLoggedInUser(search: string, sort: string, direction: string = 'asc', paging: Reactory.IPagingRequest): Promise<Reactory.Service.OrganizationsForUser> {
+  async getPagedOrganizationsForLoggedInUser(search: string, sort: string, direction: string = 'asc', paging: Reactory.Models.IPagingRequest): Promise<any> {
 
     const { user, partner } = this.context;
     const sortBy = sort || 'name';
@@ -304,7 +304,7 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 
 
-  async get(id: string): Promise<Reactory.IOrganizationDocument> {
+  async get(id: string): Promise<Reactory.Models.IOrganizationDocument> {
     return await Organization.findById(id).then();
   }
 
@@ -324,13 +324,13 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 }
 
-export const ReactoryOrganizationServiceDefinition: Reactory.IReactoryServiceDefinition = {
+export const ReactoryOrganizationServiceDefinition: Reactory.Service.IReactoryServiceDefinition = {
   id: 'core.OrganizationService@1.0.0',
   name: 'Reactory Organization',
   description: 'Default Organization Service.',
   dependencies: [],
   serviceType: "organization",
-  service: (props: Reactory.IReactoryServiceProps, context: any) => {
+  service: (props: Reactory.Service.IReactoryServiceProps, context: any) => {
     return new OrganizationService(props, context);
   }
 }

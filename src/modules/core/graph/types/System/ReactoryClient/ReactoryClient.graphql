@@ -237,11 +237,30 @@ Navigation component definitions are used to inject navigation aide to
 the front end.
 """
 type NavigationComponentDefinition {
+  """
+  Component fully qualified name i.e. my.CustomHeader@1.0.0
+  """
   componentFqn: String!
+  """
+  Any properties that should be passed to the header.
+  """
   componentProps: Any
+  """
+  A property map that can be used to map data from the context
+  to the component.
+  """
   componentPropertyMap: Any
+  """
+  A unique component key
+  """
   componentKey: String
+  """
+  ? Context ?
+  """
   componentContext: Any
+  """
+  A string type that defines where the component is mounted on the nav
+  """
   contextType: String
 }
 
@@ -344,7 +363,8 @@ type LoggedInContext {
   """
   An any object that can be used by other modules to attach
   additional properties to the user logged in context
-  which may be required for specific component
+  which may be required for specific component.
+  ** Future use, in development ** 
   """
   additional: [LoggedInContextAdditionalData]
 }

@@ -8,10 +8,7 @@ import {
 
 const routes: Reactory.Routing.IReactoryRoute[] = [
   {
-    ...loginroute,
-    background: {
-      image: 'default',
-    },
+    ...loginroute,    
     args: [
       {
         key: 'forgotEnabled',
@@ -21,12 +18,23 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
         },
       },
       {
+        key: 'magicLink',
+        value: {
+          type: 'bool',
+          magicLink: true
+        }
+      },
+      {
         key: 'authlist',
         value: {
           type: 'bool',
           authlist: [
             'local',
             'microsoft',
+            'google',
+            'facebook',
+            'twitter',
+            'linkedin'
           ],
         },
       },
@@ -42,43 +50,26 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     path: '/',
     public: false,
     exact: true,
-    roles: ['SYS-ADMIN'],
-    componentFqn: 'reactory.MyApplications@1.0.0',
-  },
-  {
-    key: 'inbox',
-    title: 'Inbox',
-    path: '/inbox',
-    public: false,
-    exact: true,
     roles: ['USER'],
-    componentFqn: 'core.InboxComponent@1.0.0',
-  },
+    componentFqn: 'reactory.MyApplications@1.0.0',
+  },  
   {
-    key: 'clients',
-    title: 'Reactory Clients',
-    path: '/reactory-clients/*',
+    key: 'modules',
+    title: 'Server Modules',
+    path: '/reactory-server/*',
     public: false,
     exact: true,
-    roles: ['SYS-ADMIN'],
-    componentFqn: 'reactory.Clients@1.0.0',
+    roles: ['SYS-ADMIN', 'ADMIN'],
+    componentFqn: 'reactory.ServerModules@1.0.0',
   },
   {
-    key: 'clients',
-    title: 'My Applications',
+    key: 'myapplications',
+    title: 'Applications',
     path: '/applications/*',
     public: false,
     exact: true,
-    roles: ['ADMIN'],
-    componentFqn: 'reactory.Applications@1.0.0',
-  },
-  {
-    key: 'tasks',
-    title: 'Tasks',
-    path: '/tasks',
-    public: false,
     roles: ['USER'],
-    componentFqn: 'core.Task@1.0.0',
+    componentFqn: 'reactory.Applications@1.0.0',
   },
   {
     key: 'profile',
@@ -87,6 +78,10 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     public: false,
     roles: ['USER'],
     componentFqn: 'core.UserProfile@1.0.0',
+    props: {
+      withPeers: true,
+      withMemberships: true, 
+    },
   },
 
   {
@@ -148,7 +143,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
         routePrefix: "forms"
       }
     }],
-  },
+  },  
   {
     key: 'content-capture',
     title: 'Content Capture',
@@ -204,6 +199,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     roles: ['ADMIN'],
     componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
   },
+  
   {
     key: 'general-support',
     title: 'Support Request',

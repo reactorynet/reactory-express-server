@@ -45,7 +45,7 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
      * @param {UserModel} user
      * @param {ReactorClient} partner
      */
-    resolveUserEmailAddress = (user: Reactory.IUserDocument) => {
+    resolveUserEmailAddress = (user: Reactory.Models.IUserDocument) => {
             const { MODE } = process.env;
 
             const partnerToUse = this.context.partner;
@@ -81,7 +81,7 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
         this.fileService = fileService;
     }
 
-    async sendEmail(message: Reactory.IEmailMessage): Promise<any> {
+    async sendEmail(message: Reactory.Models.IEmailMessage): Promise<any> {
 
         const { userId, via, subject, contentType = "html", body, to, cc, bcc, saveToSentItems, attachments } = message;
         const { user, partner } = this.context;
@@ -118,6 +118,7 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
 
                     attachments.forEach((attachment) => {
                         $attachments.push({
+                            //@ts-ignore
                             "@odata.type": "#microsoft.graph.fileAttachment",
                             name: attachment.filename,
                             contentType: attachment.mimetype,
@@ -172,9 +173,15 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
             case 'sendgrid': {
                 
                 if (isNil(message.subject) === false && isNil(message.body) === false) {
-                    try {
+                    let emailAddress = { to: 'UNREOLVED', from: 'UNRESOLVED' };
+                    
+                    try { 
+                        emailAddress = this.resolveUserEmailAddress(emailUser); 
+                    } catch (e) { 
+                        emailAddress = { to: 'ERROR_RESOLVING_EMAIL', from: 'UNRESOLVED' };
+                    }
 
-                        const emailAddress = this.resolveUserEmailAddress(emailUser)
+                    try {
                         SendGrid.setApiKey(partner.emailApiKey);
                         let {
                             subject = '',                            

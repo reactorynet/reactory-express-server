@@ -19,11 +19,11 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
   version: string;
 
   context: Reactory.Server.IReactoryContext;
-  props: Reactory.IReactoryServiceProps;
+  props: Reactory.Service.IReactoryServiceProps;
   fileService: Reactory.Service.IReactoryFileService;
   compiler: Reactory.Service.IReactoryModuleCompilerService;
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
+  constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.context = context;    
     this.props = props;
   }
@@ -113,8 +113,15 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     return Promise.resolve(_forms);
   }
 
-  save(form: Reactory.Forms.IReactoryForm, user_options?: any): Reactory.Forms.IReactoryForm {
-    throw new Error('Method not implemented.');
+  async save(form: Reactory.Forms.IReactoryForm, options?: { publish: boolean, git: Reactory.Git.GitOptions, module: string}): Promise<Reactory.Forms.IReactoryForm> {
+    
+    let $form: Reactory.Forms.IReactoryForm;
+
+    if(form && form.id) {
+      $form = await this.get(form.id);
+    }
+
+    return form;
   }
 
   delete(form: Reactory.Forms.IReactoryForm): boolean {
@@ -176,7 +183,7 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     this.compiler = compiler;
   }
 
-  static reactory: Reactory.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition = {
     id: 'core.ReactoryFormService@1.0.0',
     description: 'Reactory Form Service',
     name: 'ReactoryFormService',

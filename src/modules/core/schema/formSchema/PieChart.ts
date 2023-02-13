@@ -1,9 +1,7 @@
-import { IObjectSchema } from "@reactory/server-modules/core/schema/index";
-
 /**
  *  FormSchema that represent the data for a piechart in recharts
  */
-export default (title: string): IObjectSchema => ({
+export default (title: string): Reactory.Schema.IObjectSchema => ({
   type: 'object',
   title: title,
   properties: {

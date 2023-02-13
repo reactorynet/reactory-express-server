@@ -7,8 +7,8 @@ export function reactoryService<T>(
   id: string, 
   name: string, 
   description: string,
-  dependencies: Reactory.ReactoryServiceDependencies,
-  serviceType: Reactory.ReactoryServiceTypes
+  dependencies: Reactory.Service.ReactoryServiceDependencies,
+  serviceType: Reactory.Service.ReactoryServiceTypes
   ) {
 
 
@@ -17,8 +17,7 @@ export function reactoryService<T>(
       id,
       description,
       name,
-      service: (props: any, context: Reactory.Server.IReactoryContext) => {
-        debugger
+      service: (props: any, context: Reactory.Server.IReactoryContext) => {      
         return constructor(props, context);
       },
       dependencies,

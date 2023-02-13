@@ -3,12 +3,14 @@ import { getService } from '@reactory/server-core/services';  // eslint-disable-
 import logger from '@reactory/server-core/logging';
 import Hash from '@reactory/server-core/utils/hash';
 import { objectMapper } from '@reactory/server-core/utils';
-import lodash from 'lodash';
+import lodash, { isArray } from 'lodash';
 import colors from 'colors/safe';
 import { ReactoryContainer } from '@reactory/server-core/ioc';
 import modules from '@reactory/server-core/modules';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
-import i18next from 'i18next';
+import i18next, { t } from 'i18next';
+import Reactory from '@reactory/reactory-core';
+
 /***
  * The Reactory Context Provider creates a context for the execution thread which is passed through with each request
  * 
@@ -36,7 +38,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     error: 'red'
   });
 
-  const $log = (message: string, meta: any = null, type: Reactory.Server.LOG_TYPE = "debug", clazz: string = 'any_clazz') => {
+  const $log = (message: string, meta: any = null, type: Reactory.Service.LOG_TYPE = "debug", clazz: string = 'any_clazz') => {
     //281e99d1-bc61-4a2e-b007-33a3befaff12    
 
     const $message = `${clazz}(${$id.substr(30, 6)}) ${email}: ${message}`;
@@ -101,7 +103,28 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     $lng = $session.req.langauage;
     $langs = $session.req.langauages;
   }
- 
+
+  let theme: Reactory.UX.IReactoryTheme = null;
+  
+  if($partner?.themes && isArray($partner?.themes) === true) {
+    $partner.themes.forEach((t: Reactory.UX.IReactoryTheme) => {
+      if(t.name == $partner.theme) {
+        theme = t;
+      }
+    });    
+  }
+
+  let palette: Reactory.UX.IThemePalette = null;
+
+  if(theme && theme.modes) {
+    theme.modes.forEach(( themeMode ) => {
+      if(themeMode.mode === theme.defaultThemeMode) {
+        palette = themeMode.options.palette
+      }
+    });
+  }
+
+
   /**
    * The Reactory Context Provider is the base provider and
    * can be considerd as the component and user container for the
@@ -148,9 +171,19 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     },    
     colors,
     state: context_state,
+    theme,
+    palette
   };
-    
-  const $getService = (id: string, props: any = undefined, $context?: Reactory.Server.IReactoryContext, lifeCycle?: Reactory.SERVICE_LIFECYCLE ) => {
+  
+  /**
+   * Internal function wrapper for getting a service from the service registry
+   * @param id 
+   * @param props 
+   * @param $context 
+   * @param lifeCycle 
+   * @returns 
+   */
+  const $getService = (id: string, props: any = undefined, $context?: Reactory.Server.IReactoryContext, lifeCycle?: Reactory.Service.SERVICE_LIFECYCLE ) => {
     $log(`Getting service ${id} [${lifeCycle || "instance"}]`)
     if($context && Object.keys($context).length > 0) {
       newContext = { 
@@ -179,11 +212,13 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
   const executionContextServiceName = newContext.partner.getSetting('execution_context_service');
   if (executionContextServiceName && executionContextServiceName.data && `${executionContextServiceName.data}`.indexOf('@') > 0) {
     const partnerContextService: Reactory.Server.IExecutionContextProvider = $getService(executionContextServiceName.data);
-    if (partnerContextService && partnerContextService.getContext) {
-      newContext = await partnerContextService.getContext(newContext).then();
+    if (partnerContextService && typeof partnerContextService.getContext === "function") {
+      return await partnerContextService.getContext(newContext).then();
     }
+  } else {
+    // no configuration for this partner that overloads /
+    // extends the default context so we just return the current context.
+    return newContext;
   }
 
-  
-  return newContext;
 };

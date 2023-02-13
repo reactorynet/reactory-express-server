@@ -19,9 +19,9 @@ class PdfService implements Reactory.Service.IReactoryPdfService {
 
   context: Reactory.Server.IReactoryContext
 
-  props: Reactory.IReactoryServiceProps
+  props: Reactory.Service.IReactoryServiceProps
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
+  constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   }
@@ -102,11 +102,11 @@ class PdfService implements Reactory.Service.IReactoryPdfService {
     return true;
   }
 
-  static reactory: Reactory.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition = {
     id: 'core.PdfService@1.0.0',
     name: 'PDF Rendering Service',
     description: 'A basic PDF rendering service that will render PDFs using PDF make',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
+    service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new PdfService(props, context);
     },
     dependencies: [

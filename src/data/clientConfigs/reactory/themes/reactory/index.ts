@@ -1,21 +1,25 @@
 import Reactory from '@reactory/reactory-core'
+import { ReactoryLayouts } from '@reactory/server-core/data/layouts/index';
 
 const { CDN_ROOT } = process.env;
 
-const DARK_PALETTE = {
+const DARK_PALETTE: Reactory.UX.ITheme = {
+  type: 'material',
   palette: {
     mode: 'dark',    
     primary: {
       light: '#352c54',
-      main: '#10012b',
+      main: '#f95e20',
       dark: '#000001',
       contrastText: '#ffffff',
+      colors: [],
     },
     secondary: {
       light: '#a5392a',
       main: '#700000',
       dark: '#430000',
       contrastText: '#ffffff',
+      colors: [],
     },
     background: {
       paper: '#424242',
@@ -25,52 +29,30 @@ const DARK_PALETTE = {
 }
 
 
-const LIGHT_PALETTE = {
+const LIGHT_PALETTE: Reactory.UX.ITheme = {
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
-      light: '#352c54',
-      main: '#10012b',
-      dark: '#000001',
-      contrastText: '#ffffff',
+      light: '#c55e00',
+      main: '#f95e20',
+      dark: '#be2900',
+      contrastText: '#000000',
+      colors: [],
     },
     secondary: {
-      light: '#a5392a',
-      main: '#700000',
-      dark: '#430000',
-      contrastText: '#ffffff',
+      light: '#c55e00',
+      main: '#ff8d00',
+      dark: '#c55e00',
+      contrastText: '#000000',
+      colors: [],
     },
     background: {
-      paper: '#fff',
-      default: '#fff'
+      paper: '#f9ebc0',
+      default: '#d3c7a2'
     }
   },
+  type: 'material'
 }
-
-
-const ReactoryDefaultLayout: Reactory.UX.IReactoryLayout = {
-  name: "Default",
-  nameSpace: "reactory",
-  version: "1.0.0",
-  schema: {
-    type: "object",
-    properties: {
-      header: {
-        type: 'string',
-      },
-      main: {
-        type: 'string'
-      }      
-    }
-  },
-  uiSchema: {
-
-  }
-}
-
-const Layouts: Reactory.UX.IReactoryLayout[] = [
-  ReactoryDefaultLayout
-]
 
 const ReactoryTheme: Reactory.UX.IReactoryTheme = {
   type: 'material',
@@ -84,7 +66,7 @@ const ReactoryTheme: Reactory.UX.IReactoryTheme = {
       name: 'Reactory Dark',
       description: 'Reactory default dark mode',
       icon: 'night'
-    },
+    },    
     {
       mode: 'light',
       options: LIGHT_PALETTE,
@@ -99,8 +81,7 @@ const ReactoryTheme: Reactory.UX.IReactoryTheme = {
     { id: 'favicon', name: 'favicon', url: `${CDN_ROOT}themes/reactory/images/favicon.png`, assetType: 'image' },
     { id: 'avatar', name: 'avatar', url: `${CDN_ROOT}themes/reactory/images/avatar.png`, assetType: 'image' },
   ],
-  layouts: Layouts,
-  
+  layouts: ReactoryLayouts,  
   content: {
     appTitle: 'Reactory - Build Apps. Fast.',
     login: {

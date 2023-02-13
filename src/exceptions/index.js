@@ -107,7 +107,6 @@ export class BusinessUnitExistsError extends ApiError {
     this.code = 'BUSINESS-UNIT-409';
   }
 }
-
 export class ValidationError extends ApiError {
   constructor(message, meta = {}) {
     super(message, meta);

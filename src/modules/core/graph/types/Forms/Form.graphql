@@ -37,6 +37,9 @@ type ReactoryFormUIResource {
     """
     A string template that can be used to evaluate if the component is 
     already installed / available on the target container / window / form.
+    
+    An example could be checking if a module is already loaded in the component registery
+    ${reactory.componentRegister["core.MyModule@1.0.0"] !== undefined && reactory.componentRegister["core.MyModule@1.0.0"] !== null}
     """
     expr: String
 
@@ -397,10 +400,25 @@ input ReactoryComponentDependencyInput {
 The available compiler options
 """
 enum ReactoryCompilers {
+    """
+    Provides built in npm compiler
+    """
     npm
+    """
+    No compiler required
+    """
     none
+    """
+    Web pack
+    """
     webpack
+    """
+    Grunt
+    """
     grunt
+    """
+    Rollup
+    """
     rollup
 }
 
@@ -695,6 +713,60 @@ type ReactoryForm {
     form is depending on
     """
     dependencies: [ReactoryComponentDependency]
+
+    """
+    Indicates whether or not the form is published. 
+    If the form is a static form loaded from disk, it will
+    be available for viewing / interacting irrespective
+    of the development state. 
+
+    If the form is virtual and stored in the database
+    and the form will only be visible in development mode
+    by developer users
+    """
+    published: Boolean
+
+    """
+    The publisher is the name of the module that contains
+    the published form. If the form is virtual the publisher
+    will indicate __runtime__
+    """
+    publisher: String
+
+    """
+    Indicates the src folder for the form
+    """
+    src: String
+}
+
+"""
+Represent the input options for git when publishing content to disk that is under source control 
+"""
+input ReactoryGitOptions {
+    """
+    The name if the source branch to add
+    """
+    branch: String
+    """
+    The username to use for authentication
+    """
+    username: String
+    """
+    The password to use for authentication
+    """
+    password: String
+    """
+    The token to use if the provider allows for token based auth
+    """
+    token: String
+    """
+    When true, then a credentials item needs to be selected for the user
+    """
+    ssh: Boolean
+    """
+    The id of the credentials object 
+    """
+    credentialsId: String
 }
 
 """
@@ -905,9 +977,35 @@ extend type Query {
 
 extend type Mutation {
     """
-    Saves a Form to the database
+    Persists a reactory form
     """
-    ReactoryFormSave(form: ReactoryFormInput): ReactoryForm
+    ReactoryFormSave(
+        """
+        The form input data that will be stored
+        """
+        form: ReactoryFormInput!,
+        """
+        If set to true then reactory will attempt to publish the 
+        form to the relevant module if the module is available. 
+        This should generally only be done on development environments
+        as writing to the disk will restart the server if file watching is 
+        enabled.
+
+        If set to false / or null then reactory will write the form to the
+        mongo db collection, thus making the form virtual.
+        """
+        publish: Boolean,
+        """
+        The target module. This should be a valid module that 
+        is enabled for this 
+        """
+        module: String,
+        """
+        Git options. If present reactory will 
+        attempt to execute the relevant git actions
+        """
+        git: ReactoryGitOptions): ReactoryForm
+    
     """
     Clones a Form
     """

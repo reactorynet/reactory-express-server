@@ -12,7 +12,7 @@ export default {
   email: 'developer@reactory.net',
   salt: 'generate',
   password: 'XXXXXXXXXXXXX',
-  siteUrl: MODE === 'DEVELOP' ? 'http://localhost:3000' : `https://${key}.reactory.net/`,
+  siteUrl: MODE === 'DEVELOP' ? 'http://localhost:3004' : `https://${key}.reactory.net/`,
   emailSendVia: 'sendgrid',
   emailApiKey: process.env.SENDGRID_API_KEY,
   resetEmailRoute: '/reset-password',

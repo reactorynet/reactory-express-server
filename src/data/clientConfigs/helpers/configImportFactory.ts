@@ -2,7 +2,7 @@
  * Responsible for generating the src/data/clientConfigs/__index.ts file 
  */
 import fs from 'fs';
-import { Reactory } from 'types/reactory';
+import Reactory from '@reactory/reactory-core';
 import logger from '@reactory/server-core/logging';
 
 const getImportName = (clientName: string) => {

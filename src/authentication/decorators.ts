@@ -1,17 +1,20 @@
-import logger from '@reactory/server-core/logging';
 import Reactory from '@reactory/reactory-core';
 import lodash from 'lodash';
 import ApiError, { UserNotFoundException, InsufficientPermissions } from '@reactory/server-core/exceptions';
 
-export function roles(allowedRoles: string[], contextKey: string = 'this.context') {  
+/**
+ * Roles decorator is used to inspect a particular execution block to see whether
+ * or not the logged in user has the role(s) required to access the function block.
+ * @param allowedRoles - string array of roles that are permitted to access a code bloc
+ * @param contextKey - a context provider, the default is this.context, which tells the decorator 
+ * to look at the this object for the context element, other 
+ * @returns 
+ */
+export function roles(allowedRoles: string[], 
+  contextKey: string | 'this.context' | 'args.context' = 'this.context') {  
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {    
-
-
     let original = descriptor.value;
-
     descriptor.value = function( ){
-     
-     
       let passed: boolean;      
       let context: Reactory.Server.IReactoryContext
       switch(contextKey) {
@@ -35,7 +38,6 @@ export function roles(allowedRoles: string[], contextKey: string = 'this.context
       
       context.log(`${propertyKey.toString()} is executing`, { target, propertyKey, descriptor }, 'debug', '@roles()')
       if (context.user === null) throw new UserNotFoundException('no user available on context', {});
-
       allowedRoles.forEach((role) => {
         if(role.indexOf("${") >= 0) {
           try {

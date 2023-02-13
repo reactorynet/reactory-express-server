@@ -51,7 +51,6 @@ export default class FetchService implements Reactory.Service.IFetchService {
   }
 
   postJSON<T>(url: string, args?: any, authenticate?: boolean, charset: string = 'UTF-8'): Promise<T> {
-    debugger
     let headers: any = { };
     if(args.headers) headers = { ...args.headers };
     if(!headers.accept) headers.accept = 'application/json';

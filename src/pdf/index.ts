@@ -13,7 +13,6 @@ import imageType from 'image-type';
 import { isArray } from 'util';
 import _, { find } from 'lodash';
 import ApiError, { RecordNotFoundError } from '../exceptions';
-import { forInStatement } from 'babel-types';
 import ReactoryContext from '@reactory/server-core/apollo/ReactoryContextProvider';
 
 const pdfmake = require('pdfmake/build/pdfmake');

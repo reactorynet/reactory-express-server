@@ -2,11 +2,6 @@ import mongoose from 'mongoose';
 
 const { ObjectId } = mongoose.Schema.Types;
 
-/**
- * Project / Board
- *
- */
-
 const ClientComponentSchema = new mongoose.Schema({
   id: ObjectId,
   title: String,

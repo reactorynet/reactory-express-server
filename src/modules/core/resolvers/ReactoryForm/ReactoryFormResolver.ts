@@ -1,7 +1,15 @@
 
 import Reactory from '@reactory/reactory-core';
-import { resolver, query, property } from "@reactory/server-core/models/graphql/decorators/resolver";
-import ApiError from 'exceptions';
+import { resolver, query, property, mutation } from "@reactory/server-core/models/graphql/decorators/resolver";
+import ApiError, { RecordNotFoundError } from 'exceptions';
+
+
+export interface IReactoryFormSaveArgs {  
+  form: Reactory.Forms.IReactoryForm
+  publish?: boolean,
+  module?: string,
+  git?: Reactory.Git.GitOptions
+}
 
 @resolver
 class ReactoryFormResolver {
@@ -96,6 +104,21 @@ class ReactoryFormResolver {
       return (form.uiSchema as Reactory.Schema.TServerUISchemaResolver)(form, args, context, info);
     }
   }
+
+  @mutation("ReactoryFormSave")
+  async reactoryFormSave(obj: any, args: IReactoryFormSaveArgs, context: Reactory.Server.IReactoryContext): Promise<Reactory.Forms.IReactoryForm> {
+
+    const formSvc: Reactory.Service.IReactoryFormService = context.getService("core.ReactoryFormService@1.0.0") as Reactory.Service.IReactoryFormService;
+    const { 
+      form,
+      git = null,
+      module = '__runtime__',
+      publish = false
+    } = args;
+
+    return formSvc.save(form, { git, module, publish });    
+  }
+
 }
 
 export default ReactoryFormResolver;

@@ -1,8 +1,10 @@
 
-import { Reactory } from 'types/reactory';
+import Reactory from '@reactory/reactory-core';
 import {
   profileSmall,
 } from './menus';
+
+// TODO: Werner - upgrade config builder for V1.
 
 
 const { CDN_ROOT, MODE } = process.env;

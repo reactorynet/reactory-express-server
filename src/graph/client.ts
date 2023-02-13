@@ -13,7 +13,7 @@ const httpLink = createHttpLink({
   fetch: fetch
 });
 
-export const clientFor = (user: Reactory.IUser, partner: Reactory.IReactoryClient) => {
+export const clientFor = (user: Reactory.Models.IUser, partner: Reactory.Models.IReactoryClient) => {
 
   return new ApolloClient({
     link: setContext((_, { headers }) => {
@@ -42,7 +42,7 @@ export const clientFor = (user: Reactory.IUser, partner: Reactory.IReactoryClien
 
 export const ql = gql;
 
-export const execql = async (query: string, variables = {}, options = {}, user: Reactory.IUserDocument, partner: Reactory.IReactoryClientDocument): Promise<ApolloQueryResult<any>> => {
+export const execql = async (query: string, variables = {}, options = {}, user: Reactory.Models.IUserDocument, partner: Reactory.Models.IReactoryClientDocument): Promise<ApolloQueryResult<any>> => {
   return await clientFor(user, partner).query({
     query: gql(query),
     variables
@@ -52,6 +52,6 @@ export const execql = async (query: string, variables = {}, options = {}, user: 
 
 };
 
-export const execml = async (mutation: string, variables = {}, options = {}, user: Reactory.IUserDocument, partner: Reactory.IReactoryClientDocument): Promise<FetchResult<any, Record<string, any>, Record<string, any>>> => {
+export const execml = async (mutation: string, variables = {}, options = {}, user: Reactory.Models.IUserDocument, partner: Reactory.Models.IReactoryClientDocument): Promise<FetchResult<any, Record<string, any>, Record<string, any>>> => {
   return await clientFor(user, partner).mutate({ mutation: gql(mutation), variables, ...options }).then();
 };

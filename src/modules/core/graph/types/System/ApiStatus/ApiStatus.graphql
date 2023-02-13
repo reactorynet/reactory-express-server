@@ -120,7 +120,7 @@ type ApiStatus {
     """
     The active theme for the application / user
     """
-    activeTheme: ApplicationTheme   
+    activeTheme(mode: String): ApplicationTheme   
 
     """
     A list of plugins for the application

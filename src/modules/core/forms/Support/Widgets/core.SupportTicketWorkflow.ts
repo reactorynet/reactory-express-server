@@ -28,8 +28,6 @@ const SupportTicketWorkflow = (props: ISupportTicketWorkflowProps): ISupportTick
 
   const openTicket = async ({ ticket }: { ticket: Reactory.Models.IReactorySupportTicket }) => {
 
-
-
     let result = await reactory.graphqlMutation<ISupportTicketOpenMutationResult, {id: string, status: string, comment?: string}>(`
     mutation ReactorySupportTicketOpen($id: String!, $status: String!, $comment: String) {
       ReactorySupportTicketStatusUpdate(id: $id, status: $status, comment: $comment) {
@@ -38,7 +36,7 @@ const SupportTicketWorkflow = (props: ISupportTicketWorkflowProps): ISupportTick
       }
     }`, { id: ticket.id, status: 'open', comment: `User ${reactory.getUserFullName()} opened the ticket` }).then()
 
-    const { data, extensions, context, errors } = result;
+    const { data, extensions, context } = result;
       
     return data.ReactorySupportTicketOpen
 
@@ -51,7 +49,7 @@ const SupportTicketWorkflow = (props: ISupportTicketWorkflowProps): ISupportTick
   }
 
   const commentTicket = async ({ ticket, comment }: ISupportTickeArgs) => {
-
+    
     return ticket;
   }
 

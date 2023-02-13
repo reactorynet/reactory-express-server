@@ -152,14 +152,18 @@ type DocumentUrl {
 }
 
 
-type Query {    
-  apiStatus(theme: String): ApiStatus
+type Query {
+  """
+  The api status query provides the core data the application requires to render.
+  theme and mode is optional.
+  """
+  apiStatus(theme: String, mode: String): ApiStatus
 }
 
 type Subscription {
-  apiStatus(theme: String): ApiStatus
+  apiStatus(theme: String, mode: String): ApiStatus
 }
 
 type Mutation {
-  ReactorySetUserDefaultTheme(theme: String): ApplicationTheme
+  ReactorySetUserDefaultTheme(theme: String, mode: String): ApplicationTheme
 }

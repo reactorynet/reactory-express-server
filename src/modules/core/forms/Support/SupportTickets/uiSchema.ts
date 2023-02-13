@@ -216,9 +216,15 @@ const MaterialTableUIOptions: Reactory.Client.Components.IMaterialTableWidgetOpt
   componentMap: {
     DetailsPanel: "core.SupportTicketInfoPanel@1.0.0"
   },
+  detailPanelProps: {
+    useCase: 'grid'
+  },
+  detailPanelPropsMap: {
+    'props.rowData': 'ticket',    
+  },
   resultMap: {
     'paging.page': 'paging.page',
-    'paging.total': 'paging.totalCount',
+    'paging.total': 'paging.total',
     'paging.pageSize': 'paing.pageSize',
     'tickets': 'data'
   },

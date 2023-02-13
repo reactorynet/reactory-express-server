@@ -52,7 +52,7 @@ import colors from 'colors/safe';
 import http from 'http';
 import { GraphQLSchema } from 'graphql';
 import { getModuleDefinitions } from '@reactory/server-modules/helpers/moduleImportFactory';
-
+import { getNamesSpaces as getLanguageNameSpaces } from '@reactory/server-core/express/i18n';
 
 
 
@@ -248,12 +248,6 @@ Environment Settings:
   });
       
   // For all routes we rune the cors middleware with options
-
-  let langNS = ['common', 'forms', 'models', 'services', 'workflow', 'schemas']
-  getModuleDefinitions().forEach(def => {
-    langNS.push(def.key);
-  })
-
   reactoryExpress.use('*', cors(corsOptions));
   reactoryExpress.use(reactoryClientAuthenticationMiddleware);
   const backendOptions = {
@@ -269,7 +263,7 @@ Environment Settings:
       preload: ['en-US', 'af'],
       lng: "en-US",
       fallbackLng: 'en-US',
-      ns: langNS,
+      ns: getLanguageNameSpaces(),
       backend: backendOptions
     });
 

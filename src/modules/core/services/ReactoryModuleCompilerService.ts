@@ -6,7 +6,7 @@ import modules from '@reactory/server-core/modules';
 import { resolveInclude } from 'ejs';
 import messages from 'bot/sparky/messages';
 import { cwd } from 'process';
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from "@reactory/reactory-core";
 
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
@@ -21,7 +21,8 @@ const loadingConfigFile = require('rollup/dist/loadConfigFile');
 interface IRollupOptions {
   outputFile: string,
   inputFile: string,
-  enviroment: string
+  enviroment: string,
+  moduleName: string,
 }
 
 const DefaultRollupOptions = (options: IRollupOptions) => `
@@ -42,6 +43,7 @@ export default {
   input: "${options.inputFile}",
   output: {
     file: "${options.outputFile}",
+    name: "${options.moduleName}",
     format: "umd",
     globals: ['React', 'window'],    
   },
@@ -97,13 +99,13 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
   nameSpace: string = "core";
   version: string = "1.0.0";
 
-  props: Reactory.IReactoryServiceProps;
+  props: Reactory.Service.IReactoryServiceProps;
   context: Reactory.Server.IReactoryContext;
 
   fileService: Reactory.Service.IReactoryFileService;
 
 
-  constructor(props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
+  constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   }
@@ -113,7 +115,7 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
     const that = this;
     const sourceFile: string = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__', `src/source_${module.id}.${module.fileType}`);
     const compiledFile: string = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__', `lib/${module.id}.min.js`);
-    const newSource: string = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__', `src/tmp_${module.id}.${module.fileType}`);
+    const newSource: string = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__', `src/tmp_${module.id}.${module.fileType}`);    
     let doCompile: boolean = false;
     let checksum: string = '';
 
@@ -143,6 +145,7 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
         enviroment: process.env.NODE_ENV || "development",
         inputFile: sourceFile,
         outputFile: compiledFile,
+        moduleName: `reactory-plugin-${module.id.replace(".", "-").replace("@", "-")}`,
       });
 
       const rollupConfigFile: string = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__', `rollup.${module.id}.dev.js`);
@@ -224,14 +227,18 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
       if (result.success === false) {
         let notifications = [];
         notifications.push(`$reactory.createNotification("Compilation error on module ${module.id}, see console log for details", { type: 'warning' });`)
+        let compilerErrors: string[] = [];
         result.messages.forEach((message) => {
-          `$reactory.log("${message}", { compilationError: true }, "error");`
+          // `$reactory.log("${message}", { compilationError: true }, "error");`
+          that.context.log('Error compiling module', {message}, 'error');
+          compilerErrors.push(message);
         });
 
         let failureScript = ` 
           if(window && window.reactory) {
             var $reactory = window.reactory.api;
-            ${notifications.map((n) => `${n};\n`)} 
+            ${notifications.map((n) => `${n};\n`)}
+            ${compilerErrors.map((compilerResult) => `$reactory.log("Compilation Failure for ${module.id} --> [${compilerResult}]", { module: ${JSON.stringify(module)} }, 'error');\n`)}            
           }
         `;
         fs.writeFileSync(compiledFile, failureScript);
@@ -278,7 +285,7 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
     this.fileService = fileService;
   }
   
-  static reactory: Reactory.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition = {
     id: 'core.ReactoryModuleCompilerService@1.0.0',
     description: 'Reactory Module Compiler Service',
     name: 'ReactoryModuleCompilerService',
