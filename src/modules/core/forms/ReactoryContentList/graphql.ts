@@ -7,10 +7,11 @@ export default {
     variables: {},
     resultType: 'array',
     resultMap: {
-      '[].id': 'contentList[].id',
-      '[].slug': 'contentList[].primaryText',
-      '[].updatedAt': 'contentList[].secondaryText',
-      '[].title': 'contentList[].title',
+      '[].id': '[].id',
+      '[].slug': '[].primaryText',
+      '[].updatedAt': '[].secondaryText',
+      '[].title': '[].title',
+      '[].*': '[].data'
     },
     edit: false,
     new: false,

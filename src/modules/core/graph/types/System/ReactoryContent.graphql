@@ -1,6 +1,6 @@
-
-
-
+"""
+A Reactory Content component
+"""
 type ReactoryContent {
   id: ObjID
   slug: String!
@@ -20,7 +20,6 @@ type ReactoryContent {
   releaseDate: Date
   version: String
   publishedVersion: String
-
   comments: [ Comment ]
 }
 
@@ -42,12 +41,14 @@ input CreateContentInput {
   topics: [ String ]
   title: String!
   content: String!
+  locale: String
   description: String
   template: Boolean
   engine: String
   previewInputForm: String
   createdAt: Date
   updatedAt: Date
+  publisDate: Date
   createdBy: ObjID
   updatedBy: ObjID
   published: Boolean
@@ -60,12 +61,14 @@ input ReactoryContentInput {
   title: String!
   description: String
   content: String!
+  lcoale: String
   template: Boolean
   engine: String
   previewInputForm: String
   version: String
   createdAt: Date
   updatedAt: Date
+  publisheDate: Date
   createdBy: ObjID
   updatedBy: ObjID
   published: Boolean

@@ -1,8 +1,4 @@
 export default {
-  type: 'object',
-  title: 'Content List',
-  properties: {
-    contentList: {
       type: 'array',
       title: 'Content List',
       items: {
@@ -23,6 +19,4 @@ export default {
           }
         }
       }
-    }
-  }
-};
+    };

@@ -1,8 +1,14 @@
 
 import schema from './schema';
-import DefaultUiSchema, { minimalEdit, minimalExtendedEdit, fullEditor } from './uiSchema';
+import * as uiSchemas from './uiSchemas';
 import $graphql from './graphql';
 import Reactory from '@reactory/reactory-core';
+
+const {
+  fullEditor,
+  inlineEditor,
+  minimalEditor
+} = uiSchemas;
 
 const ContentCapture: Reactory.Forms.IReactoryForm = {
   id: 'ContentCapture',
@@ -10,17 +16,18 @@ const ContentCapture: Reactory.Forms.IReactoryForm = {
   uiSupport: ['material'],
   uiResources: [],
   title: 'Reactory Content Capture Page',
-  tags: ['Content Capture', 'forms'],
+  tags: ['static content', 'blog', 'dynamic content'],
   name: 'ContentCapture',
   nameSpace: 'static',
   version: '1.0.0',
-  description: 'A form that represent a Content Capture page',  
+  description: 'Allows the user to create static content / dynamic content using the Reactory Content editor',  
   helpTopics: [
     'ContentCapture',
+    'MountReactoryWidgetInContent'
   ],
   registerAsComponent: true,
   schema,
-  uiSchema: DefaultUiSchema,
+  uiSchema: fullEditor,  
   uiSchemas: [
     {
       id: 'inline',
@@ -28,12 +35,12 @@ const ContentCapture: Reactory.Forms.IReactoryForm = {
       key: 'inline',
       description: 'Inline Editor View',
       icon: 'edit',
-      uiSchema: DefaultUiSchema,
+      uiSchema: inlineEditor,
     },
     {
-      id: 'default',
+      id: 'full',
       title: 'Full',
-      key: 'default',
+      key: 'full',
       description: 'Full Editor',
       icon: 'edit',
       uiSchema: fullEditor,
@@ -44,16 +51,8 @@ const ContentCapture: Reactory.Forms.IReactoryForm = {
       key: 'minimal',
       description: 'Minimal Content Edit View',
       icon: 'edit',
-      uiSchema: minimalEdit,
-    },
-    {
-      id: 'minimalExtended',
-      title: 'Minmal Extended',
-      key: 'minimalExtended',
-      description: 'Minimal Content Edit View',
-      icon: 'edit',
-      uiSchema: minimalExtendedEdit,
-    },
+      uiSchema: minimalEditor,
+    },    
   ],  
   graphql: $graphql
 };

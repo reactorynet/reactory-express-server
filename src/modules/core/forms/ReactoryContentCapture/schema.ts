@@ -65,11 +65,13 @@ export default async (
     properties: {
       slug: {
         type: 'string',
-        title: 'Slug'
+        title: 'Slug',
+        descriprion: 'Slug must be a unique well formed url style label. i.e. \'this-is-a-well-formed-slug\''
       },
       title: {
         type: 'string',
-        title: 'Title'
+        title: 'Title',
+        description: 'A title for the content',
       },
       langKey: {
         type: 'string',
@@ -77,15 +79,19 @@ export default async (
       },
       createdAt: {
         type: 'string',
+        title: 'Created Date',
         format: 'datetime'
       },
       updatedAt: {
         type: 'string',
+        title: 'Updated Date',
         format: 'datetime'
       },
       publishDate: {
         type: 'string',
-        format: 'datetime'
+        title: 'Publish Date',
+        format: 'datetime',
+        description: 'The publish date you want to apply this content item.'
       },
       content: {
         type: 'string',

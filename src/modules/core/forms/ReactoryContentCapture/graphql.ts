@@ -1,4 +1,5 @@
- import { fileAsString } from '@reactory/server-core/utils/io';
+ import Reactory from '@reactory/reactory-core';
+import { fileAsString } from '@reactory/server-core/utils/io';
 
  const mutationVariables = {
   'formData.slug': 'createInput.slug',
@@ -8,7 +9,7 @@
   'formData.topics': 'createInput.topics'
 }
 
- export default {
+ const graphql: Reactory.Forms.IFormGraphDefinition = {
    query: {
      name: 'ReactoryGetContentBySlug',
      text: fileAsString(require.resolve('./ReactoryGetContentBySlug.graphql')),
@@ -43,7 +44,10 @@
        objectMap: true,
        updateMessage: 'Updating Content ...',
        variables: mutationVariables,
-       onSuccessMethod: 'refresh'
+       onSuccessMethod:  'refresh',
+       mergeStrategy: 'function'
      },
    },
  };
+
+ export default graphql;
