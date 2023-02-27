@@ -21,7 +21,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
         key: 'magicLink',
         value: {
           type: 'bool',
-          magicLink: true
+          magicLink: false
         }
       },
       {

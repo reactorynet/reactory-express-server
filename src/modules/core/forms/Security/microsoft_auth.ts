@@ -1,4 +1,4 @@
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from "@reactory/reactory-core";
 
 const { API_URI_ROOT } = process.env;
 
@@ -39,7 +39,7 @@ export const MicrosoftOpenIDAuthenticationUISchema: any = {
     }
   },
   route: {
-    //'ui:widget': 'LinkFieldWidget',
+    'ui:widget': 'LinkFieldWidget',
     'ui:options': {
       showLabel: false,
       fullWidth: false,
@@ -76,7 +76,7 @@ export const MicrosoftOpenIDAuthenticationForm: Reactory.Forms.IReactoryForm = {
   helpTopics: ['microsoft-0365-login'],
   uiSchema: MicrosoftOpenIDAuthenticationUISchema,
   defaultFormValue: {
-    route: `${API_URI_ROOT}auth/microsoft/openid/start`,
+    route: `${API_URI_ROOT}/auth/microsoft/openid/start`,
   },
 };
 

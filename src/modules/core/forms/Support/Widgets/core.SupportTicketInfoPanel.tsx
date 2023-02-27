@@ -61,8 +61,8 @@ const TicketInfoPanel = (props: StatusWidgetProps) => {
         </Typography>                
       </Grid>
       <Grid alignItems={'center'} item xs={12} sm={12} md={6} lg={4} xl={3}>
-        <Typography variant='h5'>
-          Assigned To
+        <Typography variant='body2'>
+          Assigned To: {(ticket.assignedTo as Reactory.Models.IUser).firstName }
         </Typography>        
       </Grid>      
     </Grid>

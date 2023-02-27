@@ -1,12 +1,12 @@
 import Reactory from '@reactory/reactory-core';
 
 
-  
-const $schema: Reactory.ISchema = {
-    type: 'object',    
+
+const $schema: Reactory.Schema.ISchema = {
+    type: 'object',
     properties: {
         email: { type: 'string', format: 'email', title: "Email" },
-        display: { type: 'string',  title: "Name"}
+        display: { type: 'string', title: "Name" }
     }
 }
 

@@ -28,9 +28,9 @@ const ListUIOptions: Reactory.Client.Components.IMaterialListWidgetOptions<React
       'tickets': 'data'
     },
     variables: {
-      'query.search': 'filter.searchString',
-      'query.page': 'paging.page',
-      'query.pageSize': 'paging.pageSize',
+      'search': 'filter.searchString',
+      'paging.page': 'paging.page',
+      'paging.pageSize': 'paging.pageSize',
     },
     title: 'Support Tickets',
     titleClass: 'title',

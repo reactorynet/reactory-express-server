@@ -1,6 +1,6 @@
 import Reactory from '@reactory/reactory-core';
 
-const schema: Reactory.ISchema = {
+const schema: Reactory.Schema.ISchema = {
   type: 'object',
   title: 'Support Tickets',
   properties: {

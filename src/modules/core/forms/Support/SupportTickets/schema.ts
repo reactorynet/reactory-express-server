@@ -35,10 +35,10 @@ const schema: Reactory.Schema.ISchema = {
             title: 'Logged By',
             properties: {
               id: { type: 'string', title: 'ID' },
-              firstName: { type: 'string', title: 'Firstname'},
-              lastName: { type: 'string', title: 'Lastname'},
-              email: { type: 'string', title: 'Email'},
-              avatar: { type: 'string', title: 'Avatar'}
+              firstName: { type: 'string', title: 'Firstname' },
+              lastName: { type: 'string', title: 'Lastname' },
+              email: { type: 'string', title: 'Email' },
+              avatar: { type: 'string', title: 'Avatar' }
             }
           },
           createdDate: {
@@ -62,4 +62,13 @@ const schema: Reactory.Schema.ISchema = {
   }
 }
 
-export default schema;
+const SupportSchemaResolver = async (form: Reactory.Forms.IReactoryForm, args: any, context: Reactory.Server.IReactoryContext, info: any): Promise<Reactory.Schema.AnySchema> => {
+
+  const { i18n, user } = context;
+  
+  return schema;
+}
+
+
+
+export default SupportSchemaResolver;
