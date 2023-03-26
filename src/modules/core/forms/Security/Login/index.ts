@@ -2,7 +2,7 @@
 import Reactory from '@reactory/reactory-core';
 
 /**
- * Basic Login Form.
+ * Basic Login Form. Used for 3rd party authentication
  * Author: Werner Weber
  */
 const LoginForm: Reactory.Forms.IReactoryForm = {

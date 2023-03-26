@@ -140,10 +140,8 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
 
 
   translate(key: string, params?: any): string {
-    debugger;
     this.context.log(`Translating ${key} with params:`, params, 'debug', ReactoryTranslationService.reactory.id);
     if(i18n.isInitialized === true) {
-      debugger;
       return i18n.t(key, params);
     }
   }

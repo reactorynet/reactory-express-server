@@ -12,12 +12,13 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
   version: string;
 
   props: Reactory.Service.IReactoryServiceProps;
-  context: Reactory.Server.IReactoryContext  
+  context: Reactory.Server.IReactoryContext
 
   constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
     this.context = context;
   } 
+  
 
   async updateTicket(ticket_id: string, updates: Reactory.Models.IReactorySupportTicketUpdate): Promise<Reactory.IReactorySupportTicket | Reactory.IReactorySupportTicketDocument> {
     throw new Error('Method not implemented.');
@@ -58,6 +59,11 @@ class ReactorySupportService implements Reactory.Service.TReactorySupportService
 
       if (filter.reference) {
         params.reference = { $in: filter.reference }
+      }
+
+      if(`${filter.searchString}`.length > 0) {
+        // params.reference = { $regex: filter.searchString, $options: "i" }
+        params.description = { $regex: filter.searchString, $options: "i" }
       }
     }
     
