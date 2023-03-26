@@ -1,6 +1,6 @@
 
 import Reactory from '@reactory/reactory-core';
-import schema, { argsSchema } from './schema';
+import { SupportTicketSchemaResolver } from './schema';
 import uiSchema, { argsUiSchema } from './uiSchema';
 import graphql from './graphql';
 import version from './version';
@@ -22,12 +22,11 @@ const SupportTicket: Reactory.Forms.IReactoryForm = {
   icon: 'dynamic_form',
   avatar: `${ENVIRONMENT.CDN_ROOT}themes/reactory/images/forms/${nameSpace}_${name}_${version}.png`.toLowerCase(),
   registerAsComponent: true,  
-  schema,
+  schema: SupportTicketSchemaResolver,
   uiFramework: 'material',
   uiSupport: ['material'],
   uiSchema,
   uiSchemas: [],
-  argsSchema,
   argsUiSchema,
   argsComponentFqn: null,
   

@@ -23,21 +23,21 @@ module.exports = function (api) {
     /**
      * used to resolve modules
      */
-    ["module-resolver", {
-      "root": "./src",
-      "alias": {
-        "@reactory/server-core": "./src",
-        "@reactory/server-modules": "./src/modules"
+    ['module-resolver', {
+      root: './src',
+      alias: {
+        '@reactory/server-core': './src',
+        '@reactory/server-modules': './src/modules'
       }
     }],
 
-    ["@babel/plugin-transform-typescript", {
+    ['@babel/plugin-transform-typescript', {
       isTSX: true,
       allowNamespaces: true,
       allExtensions: true,
     }],
-    ["@babel/plugin-proposal-decorators", { "legacy": true }],
-    ['@babel/plugin-proposal-class-properties', { loose: false }],
+    ['@babel/plugin-proposal-decorators', { legacy: true }],
+    ['@babel/plugin-proposal-class-properties', { loose: true }],
 
     // stage 0
     '@babel/plugin-proposal-function-bind',
@@ -62,5 +62,7 @@ module.exports = function (api) {
   return {
     presets,
     plugins,
+    ignore: ['node_modules/**/*'],
+    include: ['src/**/*', 'node_modules/reactory/@reactory/reactory-core/**/*']
   };
 };

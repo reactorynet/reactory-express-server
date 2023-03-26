@@ -1,3 +1,4 @@
+![Build Anything Fast](/branding/reactory-logo.png)
 # What is Reactory?
 Reactory is a RAD (Rapid Application Development) toolkit that gives you enterprise features and abilities on a NodeJS platform.
 It is lightweight when running in production and is highly extensible and is multi tenant / white labeled out of the box. 
@@ -30,13 +31,13 @@ If you have not worked with the Ubuntu on Windows feature, you can go to the lin
 https://ubuntu.com/tutorials/ubuntu-on-windows#1-overview
 
 ## Prepare your environment
-The Reactory server has lots of configuration options and generators that allows the server to dynamically change the server functionality based on configuration. In order for all of these to work correctly you need to ensure your system is correctly configured.
+The Reactory server has many configuration options and generators that allows the server to dynamically change the server functionality based on configuration. In order for all of these to work correctly you need to ensure your system is correctly configured.
 
 You will need to be comfortable with the command line.
 #### 1. Set your environment variables
-The reactory server requires a couple of environment variables in order for it to manage distribution and dependency updates.
+The reactory server require a couple of environment variables in order for it to manage distribution and dependency updates.
 
-Depending on what shell you are running, you will need to update either your `.zprofile` or `.bash_profile` files with the following.
+Depending on what shell you are running, you will need to update either your `.zprofile`, `.bash_profile` or `.zshrc` files with the following.
 
 
 ```
@@ -77,25 +78,25 @@ Latest releases of nvm can be found on [github](
 https://github.com/nvm-sh/nvm/releases)
 
 ## Install Node and NPM
-If you installed nvm you can install node using 
+If you installed nvm you can install node using (the .nvmrc file specifies the correct version as well)
 `> nvm install 16.13.2`
 ## Getting the code
-Reactory Server core and the client is distributed as Open Source, but it is very possible your organization has their own private repo. The reactory server can otherwise be cloned from the bitbucket repos.
+Reactory Server core and the client is distributed as Open Source, but it is very possible your organization has their own private repo. The reactory server can otherwise be cloned from the bitbucket / github repos (different modules can have different sources).
 
 It is advised that you create a root reactory folder, and then create sub folders inside this for the client, the core types, the data storage folder and other reactory related projects you may build.
 ### Checkout the server source code
 ```
 > mkdir reactory
 > cd reactory
-> git clone git@bitbucket.org:reactory/reactory-data.git ./reactory-data/
-> git clone git@bitbucket.org:reactory/reactory-server.git ./reactory-server/
-> git clone git@bitbucket.org:reactory/reactory-core.git ./reactory-core/
-> git clone git@bitbucket.org:reactory/reactory-client.git ./reactory-client/
+> git clone git@github.com:reactorynet/reactory-data.git ./reactory-data/
+> git clone git@github.com:reactorynet/reactory-server.git ./reactory-server/
+> git clone git@github.com:reactorynet/reactory-core.git ./reactory-core/
+> git clone git@github.com:reactorynet/reactory-client.git ./reactory-client/
 ```
 
 This will clone the server into `reactory/reactory-server/` and the core types into `reactory/reactory-core` and the PWA client into `reactory/reactory-client/` as well as the data / or the CDN folder structure to `reactory/reactory-data/` folder.
 
-The Reactory core library is a core types definition library and is shared across all applications. It has a two npm scripts that is used for compiling and deploying the library.  The `make-install` script, will compile and package the library. The `deploy::local` will use the environment variables we set prior and deploy the library to `reactory/reactory-server/lib`,  `reactory/reactory-client/lib` and the `reactory/reactory-data/plugins/artifacts` folders. 
+The Reactory core library is a core types definition library and is shared across all applications. It has a two npm scripts that is used for compiling and deploying the library.  The `make-install` script, will compile and package the library. The `deploy-local` will use the environment variables we set prior and deploy the library to `reactory/reactory-server/lib`,  `reactory/reactory-client/lib` and the `reactory/reactory-data/plugins/artifacts` folders. 
 
 ## Install env-cmd and create a configuration file
 Before you continue with the install, make sure you have dotenv installed globally.
@@ -111,9 +112,9 @@ Changes your variables to match the directories to where you have installed your
 `> cd reactory-core`
 `> npm i`
 `> npm run make-install`
-`> npm run deploy::local`
+`> npm run deploy-local`
 
-If all dependencies are installed and it is the first time you run the deploy::local, it will take some time, as it is also running `npm i` on the reactory-server and reactory-client projects.
+If all dependencies are installed and it is the first time you run the deploy-local, it will take some time, as it is also running `npm i` on the reactory-server and reactory-client projects.
 
 
 
@@ -121,7 +122,7 @@ If all dependencies are installed and it is the first time you run the deploy::l
 If you want to have the Reactory Azure Graph features available to your graph then you need to include the reactory-azure module.
 
 `> cd /src/modules/`
-`> git clone git@bitbucket.org:reactory/reactory-azure-module.git ./reactory-azure/`
+`> git clone git@github.com:reactorynet/reactory-azure-module.git ./reactory-azure/`
 
 ### Create a modules enabled json file
 The reactory server uses a json file to load the modules you want to include in your server build.
@@ -134,7 +135,7 @@ They are ignored by git as these may changed from system to system.
 
 The available.json file will contain the list of publically published modules that you will be able to include.
 
-!! VERSION 2.0 will have a downloader and installer utitlity
+!! VERSION 2.0 will have a downloader and installer utitlity.
 
 #### Multiple Module Definitions
 If you use a single source tree for your core server and want to run multiple configurations you can specify the name of your enabled.json file with by specifying your own MODULES_ENABLED environment variable in your .env / pm2 configurations.
@@ -207,6 +208,6 @@ Create a user account under which to run the server.
 
 * `sudo adduser -d /var/reactory -m reactory`
 * `sudo usermod -aG sudo reactory`
-* ensure the reactory user is the 
-* check out the code into the reactory-api folder
+* ensure the reactory user is the owner of the folder
+* check out the code into the reactory-server folder
 * install pm2 or alternatively use the service definition file to register your service

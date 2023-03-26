@@ -3,10 +3,19 @@
 import Reactory from '@reactory/reactory-core';
 import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 
+/**
+ * This form is used to register the core plugin.
+ */
 const CorePluginForm: Reactory.Forms.IReactoryForm = {
     id: 'ReactoryCorePluginForm',
     uiFramework: 'material',
     uiSupport: ['material'],
+    /**
+     * This is the list of resources that are required to render the form. 
+     * The resources are loaded in the order they are listed. The ReactoryAPI 
+     * loader will load the resources only if they haven't been loaded before. 
+     * It uses the id to determine if the resource has been loaded before.
+     */
     uiResources: [
         {
             id: 'reactory.core',
@@ -27,7 +36,6 @@ const CorePluginForm: Reactory.Forms.IReactoryForm = {
         },
     },
     registerAsComponent: true,
-    components: ['reactory-core.ReactoryCoreClientPlugin.@1.0.0'],
     name: '$GLOBAL$ReactoryCorePluginForm',
     nameSpace: 'reactory',
     version: '1.0.0',

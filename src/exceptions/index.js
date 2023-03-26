@@ -43,7 +43,8 @@ export class UserExistsError extends ApiError {
 }
 
 export class BadRequestError extends ApiError {
-  constructor(message, meeta ={}) {
+  constructor(message, meta ={}) {
+    super(message, meta);
     this.message = message;
     this.meta = meta;
     this.code = '400';

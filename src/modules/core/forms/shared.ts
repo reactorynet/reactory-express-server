@@ -1,5 +1,5 @@
 "use strcit"
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from "@reactory/reactory-core";
 import { defaultFormProps } from '@reactory/server-core/data/forms/defs';
 import { FormBuilder } from '@reactory/server-modules/core/forms/ReactoryFormEditor//FormBuilder';
 import { HelpFormEdit, HelpListForm } from '@reactory/server-modules/core/forms/ReactoryContentCapture/HelpEditor';
@@ -15,6 +15,10 @@ import MicrosoftOpenIDAuthenticationForm from '@reactory/server-modules/core/for
 
 
 const { CDN_ROOT } = process.env;
+
+/**
+ * Some core forms that are part of the system
+ */
 
 
 const ForgotPasswordForm: Reactory.Forms.IReactoryForm = {
@@ -729,7 +733,6 @@ export default [
   ReactoryClientAdminPage,
   ...UserForms,
   ...OrganizationForms,
-  
   ForgotPasswordForm,
   MessageForm,
   MSTeamsConfigurationTab,

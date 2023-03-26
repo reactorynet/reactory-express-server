@@ -48,6 +48,15 @@ const TicketInfoPanel = (props: StatusWidgetProps) => {
     { id: 'close', icon: 'close', title: 'Close', key: 'title' }
   ];
 
+  let assignedTo: Reactory.Models.IUserBio = {
+    firstName: 'NOT',
+    lastName: 'ASSIGNED', 
+  }
+
+  if(ticket.assignedTo) {
+    assignedTo = (ticket.assignedTo as Reactory.Models.IUserBio);
+  }
+
   return (
     <Grid container>
       <Grid alignItems={'center'} item xs={12} sm={12} md={6} lg={4} xl={3}>        
@@ -56,13 +65,13 @@ const TicketInfoPanel = (props: StatusWidgetProps) => {
         </Typography>
       </Grid>
       <Grid alignItems={'center'} item xs={12} sm={12} md={6} lg={4} xl={3}>        
-        <Typography>
+        <Typography variant='body2'>
           {new Date(ticket.createdDate).toISOString()}
         </Typography>                
       </Grid>
       <Grid alignItems={'center'} item xs={12} sm={12} md={6} lg={4} xl={3}>
         <Typography variant='body2'>
-          Assigned To: {(ticket.assignedTo as Reactory.Models.IUser).firstName }
+          Assigned To: {assignedTo.firstName} {assignedTo.lastName}
         </Typography>        
       </Grid>      
     </Grid>

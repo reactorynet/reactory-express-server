@@ -18,7 +18,6 @@ import { Application, Request } from 'express';
 import { BasicStrategy } from 'passport-http';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { OIDCStrategy } from 'passport-azure-ad';
-import refresh from 'passport-oauth2-refresh';
 import OAuth2 from 'simple-oauth2';
 import { User, ReactoryClient } from '../models/index';
 import { UserValidationError } from '../exceptions';

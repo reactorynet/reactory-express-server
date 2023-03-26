@@ -41,9 +41,9 @@ util.inherits(Strategy, passport.Strategy);
  * @param {Object} req
  * @api protected
  */
-Strategy.prototype.authenticate = function (req) {
-  logger.debug(`Executing anon strategy`)
-  const _anonUser = {
+Strategy.prototype.authenticate = function () {
+  logger.debug("Authenticating user as anonymous.");
+  const anonUser: Reactory.Models.IAnonUser = {
     id: -1,
     firstName: 'Guest',
     lastName: 'User',
@@ -51,13 +51,9 @@ Strategy.prototype.authenticate = function (req) {
     memberships: [],
     avatar: null,
     anon: true,
-  };
 
-  this.success(_anonUser);
+  };
+  this.success(anonUser);
 };
 
-
-/**
- * Expose `Strategy`.
- */
-module.exports = Strategy;
+export default Strategy;

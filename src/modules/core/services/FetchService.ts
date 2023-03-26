@@ -1,12 +1,30 @@
 import Reactory from '@reactory/reactory-core'
 import ApiError, { BadRequestError, InsufficientPermissions, RecordNotFoundError } from '@reactory/server-core/exceptions';
-import FormData from 'form-data';
-import nodeFetch, { RequestInit, Response } from 'node-fetch';
+import nodeFetch, { Response } from 'node-fetch';
 
 /**
- * The fetch service is designed to work as an intermediary service wrapper
- * for http / https requests.
- */
+
+The fetch service is an intermediary service wrapper for HTTP/HTTPS requests.
+@class
+@implements {Reactory.Service.IFetchService}
+@property {string} name - The name of the service
+@property {string} nameSpace - The namespace of the service
+@property {string} version - The version of the service
+@property {Reactory.Server.IReactoryContext} context - The Reactory context object
+@property {Reactory.Service.IFetchAuthenticationProvder} authProvider - The authentication provider object
+@property {Reactory.Service.IFetchHeaderProvider} headerProvider - The header provider object
+@property {Reactory.Service.IReactoryServiceProps} props - The service properties
+@function getExecutionContext - A function to get the execution context
+@function setExecutionContext - A function to set the execution context
+@function onStartup - A function that returns a promise resolved to true when the service starts up
+@function setHeaderProvider - A function that sets the header provider object
+@function postJSON - A function that sends a POST request with JSON data
+@function putJSON - A function that sends a PUT request with JSON data
+@function deleteJSON - A function that sends a DELETE request with JSON data
+@function setAuthenticationProvider - A function that sets the authentication provider object
+@function getJSON - A function that sends a GET request with JSON data
+@function fetch - A function that sends an HTTP/HTTPS request
+*/
 export default class FetchService implements Reactory.Service.IFetchService {
 
   static reactory: Reactory.Service.IReactoryServiceDefinition = {
