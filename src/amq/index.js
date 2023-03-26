@@ -39,46 +39,46 @@ export const $sub = {
   def: (eventId, func, channel = undefined) => {
     return $chan(channel).subscribe(eventId, func);
   },
-  transactions: (eventId, func, partner = global.partner) => {
+  transactions: (eventId, func, partner) => {
     return $chan(DEFAULT_CHANNELS.TRANSACTIONS, partner).subscribe(eventId, func);
   },
-  file: (eventId, func, partner = global.partner) => {
+  file: (eventId, func, partner) => {
     return $chan(DEFAULT_CHANNELS.FILE, partner).subscribe(eventId, func);
   },
-  data: (eventId, func, partner = global.partner) => {
+  data: (eventId, func, partner) => {
     return $chan(DEFAULT_CHANNELS.DATA, partner).subscribe(eventId, func);
   },
-  metrics: (eventId, func, partner = global.partner) => {
+  metrics: (eventId, func, partner) => {
     return $chan(DEFAULT_CHANNELS.METRICS, partner).subscribe(eventId, func);
   },
-  formCommand: (eventId, func, partner = global.partner) => {
+  formCommand: (eventId, func, partner) => {
     return $chan(DEFAULT_CHANNELS.FORM_COMMAND, partner).subscribe(eventId, func);
   },
-  workFlow: (eventId, func, partner = global.partner) => {
+  workFlow: (eventId, func, partner) => {
     return $chan(DEFAULT_CHANNELS.WORKFLOW, partner).subscribe(eventId, func);
   },
-  messageHandlerLoaded: (eventId, func, partner = global.partner) => {
+  messageHandlerLoaded: (eventId, func, partner) => {
     return $chan(DEFAULT_CHANNELS.CROSS_ORIGIN, partner).subscribe(eventId, func);
   },
-  pluginLoaded: (eventId, func, partner = global.partner) => {
+  pluginLoaded: (eventId, func, partner) => {
     return $chan(DEFAULT_CHANNELS.PLUGINS, partner).subscribe(eventId, func);
   },
-  system: (eventId, func, partner = global.partner) => {
+  system: (eventId, func, partner) => {
     return $chan(DEFAULT_CHANNELS.SYSTEM, partner).subscribe(eventId, func);
   },
 };
 
 export const $pub = {
   def: (eventId, data, channel = undefined) => $chan(channel).publish(eventId, data),
-  transactions: (eventId, data = {}, partner = global.partner) => $chan(DEFAULT_CHANNELS.TRANSACTIONS, partner).publish(eventId, data),
-  file: (eventId, data = {}, partner = global.partner) => $chan(DEFAULT_CHANNELS.FILE, partner).publish(eventId, data),
-  data: (eventId, data = {}, partner = global.partner) => $chan(DEFAULT_CHANNELS.DATA, partner).publish(eventId, data),
-  metrics: (eventId, data = {}, partner = global.partner) => $chan(DEFAULT_CHANNELS.METRICS, partner).publish(eventId, data),
-  formCommand: (eventId, formData, partner = global.partner) => $chan(DEFAULT_CHANNELS.FORM_COMMAND, partner).publish(eventId, formData),
-  workFlow: (eventId, data, partner = global.partner) => $chan(DEFAULT_CHANNELS.WORKFLOW, partner).publish(eventId, data),
-  messageHandlerLoaded: (eventId, data, partner = global.partner) => $chan(DEFAULT_CHANNELS.CROSS_ORIGIN, partner).publish(eventId, data),
-  pluginLoaded: (eventId, data, partner = global.partner) => $chan(DEFAULT_CHANNELS.PLUGINS, partner).publish(eventId, data),
-  system: (eventId, data, partner = global.partner) => $chan(DEFAULT_CHANNELS.SYSTEM, partner).publish(eventId, data),
+  transactions: (eventId, data = {}, partner) => $chan(DEFAULT_CHANNELS.TRANSACTIONS, partner).publish(eventId, data),
+  file: (eventId, data = {}, partner) => $chan(DEFAULT_CHANNELS.FILE, partner).publish(eventId, data),
+  data: (eventId, data = {}, partner) => $chan(DEFAULT_CHANNELS.DATA, partner).publish(eventId, data),
+  metrics: (eventId, data = {}, partner) => $chan(DEFAULT_CHANNELS.METRICS, partner).publish(eventId, data),
+  formCommand: (eventId, formData, partner) => $chan(DEFAULT_CHANNELS.FORM_COMMAND, partner).publish(eventId, formData),
+  workFlow: (eventId, data, partner) => $chan(DEFAULT_CHANNELS.WORKFLOW, partner).publish(eventId, data),
+  messageHandlerLoaded: (eventId, data, partner) => $chan(DEFAULT_CHANNELS.CROSS_ORIGIN, partner).publish(eventId, data),
+  pluginLoaded: (eventId, data, partner) => $chan(DEFAULT_CHANNELS.PLUGINS, partner).publish(eventId, data),
+  system: (eventId, data, partner) => $chan(DEFAULT_CHANNELS.SYSTEM, partner).publish(eventId, data),
 };
 
 

@@ -1,6 +1,6 @@
 const Hash = (e: any) : number => {
-  let hashFunc;
-  function stringHash(string, noType) {
+  let hashFunc: Function;
+  function stringHash(string: string, noType?: any) {
     let hashString = string;
     if (!noType) {
       hashString = `string${string}`;
@@ -14,7 +14,7 @@ const Hash = (e: any) : number => {
     return hash;
   }
 
-  function objectHash(obj, exclude) {
+  function objectHash(obj: any, exclude?: any) {
     if (exclude.indexOf(obj) > -1) {
       return undefined;
     }
@@ -30,7 +30,7 @@ const Hash = (e: any) : number => {
     return stringHash(hash, true);
   }
 
-  function Hash(unkType, exclude) {
+  function Hash(unkType: any, exclude: any[]): number {
     let ex = exclude;
     if (ex === undefined) {
       ex = [];
@@ -40,7 +40,7 @@ const Hash = (e: any) : number => {
     }
     switch (typeof unkType) {
       case 'object':
-        return objectHash(unkType, ex);
+        return objectHash(unkType as object, ex);
       default:
         return stringHash(String(unkType));
     }

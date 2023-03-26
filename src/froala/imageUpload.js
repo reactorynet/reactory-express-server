@@ -1,4 +1,4 @@
-import AzureBlobStorage, { defaultAzureProps } from '../azure/storage';
+import AzureBlobStorage, { defaultAzureProps } from '@reactory/server-modules/reactory-azure/storage';
 
 const Busboy = require('busboy');
 const path = require('path');
@@ -25,7 +25,7 @@ function isImageValid(filename, mimetype) {
   const extension = getExtension(filename);
 
   return allowedExts.indexOf(extension.toLowerCase()) != -1 &&
-     allowedMimeTypes.indexOf(mimetype) != -1;
+    allowedMimeTypes.indexOf(mimetype) != -1;
 }
 
 function azureUpload(req, callback) {
@@ -34,8 +34,8 @@ function azureUpload(req, callback) {
     accountKey: req.query.accountKey || defaultAzureProps.accountKey,
   };
 
-  if (global.partner.azure) {
-    azureProps = { ...azureProps, ...global.partner.azure };
+  if (context.partner.azure) {
+    azureProps = { ...azureProps, ...context.partner.azure };
   }
 
   const fileRoute = 'content/images/';

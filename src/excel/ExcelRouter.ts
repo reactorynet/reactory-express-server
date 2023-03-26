@@ -2,7 +2,6 @@ import * as dotenv from 'dotenv';
 import express from 'express';
 import path from 'path';
 import { readFileSync, existsSync } from 'fs';
-import { PNG } from 'pngjs';
 import imageType from 'image-type';
 import { isArray } from 'util';
 import _ from 'lodash';

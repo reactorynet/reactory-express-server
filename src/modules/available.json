@@ -6,24 +6,43 @@
     "fqn": "core.ReactoryServer@1.0.0",
     "moduleEntry": "core/index.js",
     "license": "Apache-2.0",
-    "shop": "https://reactory.net/shop/modules/f86ed2ac-f06a-4076-a7ce-2cda58482989/"    
+    "shop": "https://reactory.net/shop/modules/f86ed2ac-f06a-4076-a7ce-2cda58482989/"
   },
-  { 
-    "id": "0c22819f-bca0-4947-b662-9190063c8277", 
-    "name": "Lasec",  
+  {
+    "id": "0c22819f-bca0-4947-b662-9190063c8277",
+    "name": "Lasec",
     "key": "lasec",
     "fqn": "lasec.LasecCRM@1.0.0",
-    "moduleEntry": "./lasec/index.js",
+    "moduleEntry": "./lasec-crm/index.js",
     "license": "commercial",
     "shop": "https://reactory.net/shop/modules/0c22819f-bca0-4947-b662-9190063c8277/"
   },
-  { 
-    "id": "10c75836-37bf-4000-95d2-18d69afc5321", 
-    "name": "TowerStone",  
-    "key": "towerstone",
-    "fqn": "towerstone.Assessor@1.0.0",
-    "moduleEntry": "towerstone/index.ts",
+  {
+    "id": "10c75836-37bf-4000-95d2-18d69afc5321",
+    "name": "Mores",
+    "key": "mores",
+    "fqn": "mores.Assessments@1.0.0",
+    "moduleEntry": "mores/index.ts",
     "license": "commercial",
     "shop": "https://reactory.net/shop/modules/10c75836-37bf-4000-95d2-18d69afc5321/"
-  }  
+  },
+  {
+    "id": "reactory-azure",
+    "name": "Reactory Azure",
+    "key": "reactory-azure",
+    "fqn": "core.ReactoryAzure@1.0.0",
+    "moduleEntry": "reactory-azure/index.ts",
+    "license": "commercial",
+    "shop": "https://reactory.net/shop/modules/reactory-azure/"
+  },  
+  {
+    "id": "onespot-swarming-live",
+    "name": "OneSpot Swarming Live",
+    "key": "onespot-swarming-live",
+    "fqn": "onespot.SwarmingLive@1.0.0",
+    "moduleEntry": "onespot/index.ts",
+    "license": "commercial",
+    "shop": "https://reactory.net/shop/modules/onespot-swarming-live/"
+  }
+
 ]

@@ -1,1 +1,0 @@
-export { AccountTypeDropdownUISchema } from './AccountType';

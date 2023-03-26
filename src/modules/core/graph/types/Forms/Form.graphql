@@ -1,3 +1,4 @@
+
 type Property {
     title: String!
     type: String!
@@ -6,9 +7,1011 @@ type Property {
     properties: [ Property ]
 }
 
-type Form {
-    id: ObjID!
+"""
+A reactory form Resource that is used by the 
+consuming client either as a stylesheet javascript 
+or image element.
+"""
+type ReactoryFormUIResource {
+    """
+    A unique id that represent the UI resource
+    """
+    id: String
+    """
+    The human readable name for the UI resource
+    """
+    name: String
+
+    """
+    The resource type.  Generally this would be script, stylesheet, image
+    but not restricted to it. Other types may include video, audio wasm modules
+    etc.
+    """
+    type: String
+    
+    """
+    Indicates whether or not the resource is required
+    """
+    required: Boolean
+
+    """
+    A string template that can be used to evaluate if the component is 
+    already installed / available on the target container / window / form.
+    
+    An example could be checking if a module is already loaded in the component registery
+    ${reactory.componentRegister["core.MyModule@1.0.0"] !== undefined && reactory.componentRegister["core.MyModule@1.0.0"] !== null}
+    """
+    expr: String
+
+    """
+    Indicates whetther or not the resource is signed.
+    """
+    signed: Boolean
+
+    """
+    Signature for the file
+    """
+    signature: String
+
+    """
+    Indicator of how this resource is signed
+    """
+    signatureMethod: String
+
+    """
+    Indicate whether or not this resource is being taken from a 3rd party
+    """
+    crossOrigin: Boolean
+
+    """
+    The uniform resource identifier for this UI Resource item.  For a web client this would be
+    a https://your.resource.com/package/script.js or for css https://your.resource.com/package/css.js
+    For a native client this would be a resource identifier for a library include that can be a react-native 
+    package, an android external module or an ios external module. 
+    """
+    uri: String
+}
+
+
+
+"""
+A reactory form Resource that is used by the 
+consuming client either as a stylesheet javascript 
+or image element.
+"""
+input ReactoryFormUIResourceInput {
+    """
+    A unique id that represent the UI resource
+    """
+    id: String
+    """
+    The human readable name for the UI resource
+    """
+    name: String
+
+    """
+    The resource type.  Generally this would be script, stylesheet, image
+    but not restricted to it. Other types may include video, audio wasm modules
+    etc.
+    """
+    type: String
+    
+    """
+    Indicates whether or not the resource is required
+    """
+    required: Boolean
+
+    """
+    A string template that can be used to evaluate if the component is 
+    already installed / available on the target container / window / form.
+    """
+    expr: String
+
+    """
+    Indicates whetther or not the resource is signed.
+    """
+    signed: Boolean
+
+    """
+    Signature for the file
+    """
+    signature: String
+
+    """
+    Indicator of how this resource is signed
+    """
+    signatureMethod: String
+
+    """
+    Indicate whether or not this resource is being taken from a 3rd party
+    """
+    crossOrigin: Boolean
+
+    """
+    The uniform resource identifier for this UI Resource item.  For a web client this would be
+    a https://your.resource.com/package/script.js or for css https://your.resource.com/package/css.js
+    For a native client this would be a resource identifier for a library include that can be a react-native 
+    package, an android external module or an ios external module. 
+    """
+    uri: String
+}
+
+"""
+The Reactory Form Graph Definition
+"""
+type ReactoryFormGraphDefinition {
+    """
+    The primary query definition for the form
+    """
+    query: Any
+    """
+    The mutation definitions for the form
+    """
+    mutation: Any
+    """
+    Additional queries we want to ship with the form that can 
+    be used by widets
+    """
+    queries: Any
+    """
+    Client resolver data structure definition    
+    """
+    clientResolvers: Any
+}
+
+"""
+The Reactory Form Graph Definition
+"""
+input ReactoryFormGraphDefinitionInput {
+    """
+    The primary query definition for the form
+    """
+    query: Any
+    """
+    The mutation definitions for the form
+    """
+    mutation: Any
+    """
+    Additional queries we want to ship with the form that can 
+    be used by widets
+    """
+    queries: Any
+    """
+    Client resolver data structure definition    
+    """
+    clientResolvers: Any
+}
+
+
+"""
+The UI Menus / options for the form
+"""
+type ReactoryUISchemaMenuItem {
+    """
+    The undique id for the uiSchemaMenuItem
+    """
+    id: String
+    """
+    The title that will be display on the menu item
+    """
     title: String
-    required: [String!]
-    properties: [Property]
+    """
+    The key for the itme
+    """
+    key: String
+    """
+    A description for the menu item entry
+    """
+    description: String
+    """
+    The icon that will be used on the menu item
+    """
+    icon: String
+    """
+    The graphql definition that will be used with with this 
+    menu item
+    """
+    graphql: ReactoryFormGraphDefinition
+    """
+    The modes that the item is applicable in
+    """
+    modes: String        
+    """
+    The uiSchema associated with this item
+    """
+    uiSchema: Any
+}
+
+"""
+The UI Menus / options for the form
+"""
+input ReactoryUISchemaMenuItemInput {
+    """
+    The undique id for the uiSchemaMenuItem
+    """
+    id: String
+    """
+    The title that will be display on the menu item
+    """
+    title: String
+    """
+    The key for the itme
+    """
+    key: String
+    """
+    A description for the menu item entry
+    """
+    description: String
+    """
+    The icon that will be used on the menu item
+    """
+    icon: String
+    """
+    The graphql definition that will be used with with this 
+    menu item
+    """
+    graphql: ReactoryFormGraphDefinitionInput
+    """
+    The modes that the item is applicable in
+    """
+    modes: String
+    """
+    The uiSchema associated with this item
+    """
+    uiSchema: Any
+}
+
+"""
+The type that represents the Reactory Form Widget Map
+"""
+type ReactoryFormWidgetMap {
+    """
+    Reactory component reference
+    """
+    componentFqn: String
+    """
+    ??? not actually sure, need to look at older 
+    implmentations where this was used ???
+    """
+    component: String
+    """
+    The name of the widget as registered in the Form
+    """
+    widget: String
+}
+
+"""
+The type that represents the Reactory Form Widget Map
+"""
+input ReactoryFormWidgetMapInput {
+    """
+    Reactory component reference
+    """
+    componentFqn: String
+    """
+    ??? not actually sure, need to look at older 
+    implmentations where this was used ???
+    """
+    component: String
+    """
+    The name of the widget as registered in the Form
+    """
+    widget: String
+}
+
+"""
+The Form Event bubble type is used in the reactory form
+to manage how some events are handled
+"""
+type ReactoryFormEventBubbles {
+    """
+    The name of the event to hand;e
+    """
+    eventName: String
+    """
+    What strategy to use, supports "bubble", "swallow" or "function"
+    """
+    action: String
+    """
+    The function reference we want to use when handling the 
+    the event bubble with a custom function
+    """
+    functionFqn: String
+}
+
+"""
+The Form Event bubble type is used in the reactory form
+to manage how some events are handled
+"""
+input ReactoryFormEventBubblesInput {
+    """
+    The name of the event to hand;e
+    """
+    eventName: String
+    """
+    What strategy to use, supports "bubble", "swallow" or "function"
+    """
+    action: String
+    """
+    The function reference we want to use when handling the 
+    the event bubble with a custom function
+    """
+    functionFqn: String
+}
+
+
+"""
+A Reactory Component Definition
+"""
+type ReactoryComponentDependency {
+   """
+   The fully qualified name for the component. i.e. namespace.Component@version
+   """
+   fqn: String
+   """
+   Dependencies for this component
+   """
+   dependecies: [ReactoryComponentDependency]
+   """
+   static props to pass to the component
+   """
+   props: Any
+   """
+   Any property mappings that apply for the context
+   """
+   propsMap: Any
+   """
+   A string component type that defines what the component is
+   valid values are "component", "object", "function", "module", "plugin"
+   """
+   componentType: String
+}
+
+
+
+"""
+A Reactory Component Definition input
+"""
+input ReactoryComponentDependencyInput {
+   """
+   The fully qualified name for the component. i.e. namespace.Component@version
+   """
+   fqn: String
+   """
+   Dependencies for this component
+   """
+   dependecies: [ReactoryComponentDependencyInput]
+   """
+   static props to pass to the component
+   """
+   props: Any
+   """
+   Any property mappings that apply for the context
+   """
+   propsMap: Any
+   """
+   A string component type that defines what the component is
+   valid values are "component", "object", "function", "module", "plugin"
+   """
+   componentType: String
+}
+
+"""
+The available compiler options
+"""
+enum ReactoryCompilers {
+    """
+    Provides built in npm compiler
+    """
+    npm
+    """
+    No compiler required
+    """
+    none
+    """
+    Web pack
+    """
+    webpack
+    """
+    Grunt
+    """
+    grunt
+    """
+    Rollup
+    """
+    rollup
+}
+
+"""
+A Reactory Form Module Definition. Form Module definitions
+are used to compile client side component code and inject
+component ui resources for the form.
+"""
+type ReactoryFormModule {
+    """
+    The unique id for the form module. 
+    """
+    id: String
+
+    """
+    The src is the src location for the module
+    """
+    src: String
+
+    """
+    The url for the compiled module
+    """
+    url: String
+
+    """
+    Indicate whether or not the modile is signed
+    """
+    signed: Boolean
+
+    """
+    A hash signature that can be verified by the api
+    """
+    signature: String
+
+    """
+    The compiler to use
+    """
+    compiler: String    
+
+    """
+    The compiler options for the form
+    """
+    compilerOptions: Any
+
+    """
+    The string roles that are allowed to access this module
+    """
+    roles: [String]
+
+    """
+    The file type for the module
+    """
+    fileType: String
+
+}
+
+
+"""
+Input: A Reactory Form Module Definition. Form Module definitions
+are used to compile client side component code and inject
+component ui resources for the form.
+"""
+input ReactoryFormModuleInput {
+    """
+    The unique id for the form module. 
+    """
+    id: String
+
+    """
+    The src is the src location for the module
+    """
+    src: String
+
+    """
+    The url for the compiled module
+    """
+    url: String
+
+    """
+    Indicate whether or not the modile is signed
+    """
+    signed: Boolean
+
+    """
+    A hash signature that can be verified by the api
+    """
+    signature: String
+
+    """
+    The compiler to use
+    """
+    compiler: String    
+
+    """
+    The compiler options for the form
+    """
+    compilerOptions: Any
+
+    """
+    The string roles that are allowed to access this module
+    """
+    roles: [String]
+
+}
+
+
+
+"""
+The base reactory form graph type.  This type must be used by the client consuming client to generate a form
+or component.
+"""
+type ReactoryForm {
+    """
+    The internal form id. This must be unique
+    """
+    id: String!    
+    """
+    Indicates what UI framework the form is built / designed to use.
+    options will be "material" and later "bootstrap" / others.
+
+    """
+    uiFramework: String
+    
+    """    
+    This indicates the ui framekworks that the form is intended to support.
+    """
+    uiSupport: [String],
+    """    
+    List of scripts or styles sheets that get loaded async for the application to use to style the component    
+    """
+    uiResources: [ReactoryFormUIResource]
+
+    """
+    The human readable title for the form
+    """
+    title: String
+    """
+    The tags that are associated with this form
+    """
+    tags: [String]
+    """
+    If set to false the form will be hidden, this is 
+    useful in forms where it serves as a service loader
+    component for other components.
+    """
+    display: Boolean
+    """
+    The root class name to apply to the form
+    default is set to to "reactory"
+    """
+    className: String
+    """
+    The JSS style type stylesheet that is used 
+    inside the form
+    """
+    style: Any
+    """
+    A string array of help topics key names that is associated 
+    with the form
+    """
+    helpTopics: [String]
+    """
+    The json schema that represents the form
+    """
+    schema: Any,
+    """
+    The santization schema that is applied to the 
+    form data so that it is normalized
+    """
+    sanitizeSchema: Any,
+    """
+    A uiSchema that is used to manage the layout of the component
+    """
+    uiSchema: Any,
+    """
+    A list of menu items that can be used to switch the UI 
+    schema using a schema switcher
+    """
+    uiSchemas: [ReactoryUISchemaMenuItem]
+    """
+    The default uischema key to use when there are multupiple
+    """
+    defaultUiSchemaKey: String
+    """
+    Indicates whether the form should registere itself as a component
+    in the reactory component register.  What this will do is 
+    create a component that wraps the reactory form compoent
+    """
+    registerAsComponent: Boolean
+    """
+    The namespace for the form
+    """
+    nameSpace: String
+    """
+    The name for the form
+    """
+    name: String
+    """
+    The versio for the form 
+    """
+    version: String
+    """
+    An indexable searchable description
+    """
+    description: String,
+    """
+    Indicates what roles are allowed to use this form
+    """
+    roles: [String],
+    """
+    ??? The components that this form will require as part of it's dependecies tree ???
+    """
+    components: [String],
+    """
+    The forms graph definition that is used to manage data operations for the form
+    """
+    graphql: ReactoryFormGraphDefinition
+    """
+    Provide a default form value for the form
+    """
+    defaultFormValue: Any
+    """
+    The default pdf report definition to use / associate with the form
+    """
+    defaultPdfReport: Any
+    """
+    The default export definition that is used by the form form 
+    for data exports
+    """
+    defaultExport: Any
+    """
+    A list of reports that is available for the form
+    """
+    reports: [Any]
+    """
+    A list of export defiitions that is available to the form
+    """
+    exports: [Any]
+    """
+    ??? Not sure if refresh is used, legacy - likely to be deprecated
+    """
+    refresh: Any
+    """
+    The widget map that will be applied to the form
+    """
+    widgetMap: [ReactoryFormWidgetMap]
+    
+    """
+    Indicate whether a back button is added to the toolbar
+    """
+    backButton: Boolean
+    
+    """
+    The workflow definition for the form that can be triggered 
+    or used in conjunction with a query or mutation.
+    """
+    workflow: Any,
+    
+    """
+    A flag that is set on the form component that does the rendering
+    """
+    noHtml5Validate: Boolean,
+    
+    """
+    Form context properties that will be added to the form
+    """
+    formContext: Any,
+    
+    """
+    Any event bubbling handlers
+    """
+    eventBubbles: [ReactoryFormEventBubbles]
+    
+    """
+    The reactory form modules that is associated with this form
+    """
+    modules: [ReactoryFormModule]
+    
+    """
+    The component definitions that will be loaded into the form as default
+    """
+    componentDefs: [String]
+    
+    """
+    A mappping for the query string data, don't think this 
+    is used anywhere within the applikcation
+    """
+    queryStringMap: Any,
+    
+    """
+    The list of reactory component definitions that this
+    form is depending on
+    """
+    dependencies: [ReactoryComponentDependency]
+
+    """
+    Indicates whether or not the form is published. 
+    If the form is a static form loaded from disk, it will
+    be available for viewing / interacting irrespective
+    of the development state. 
+
+    If the form is virtual and stored in the database
+    and the form will only be visible in development mode
+    by developer users
+    """
+    published: Boolean
+
+    """
+    The publisher is the name of the module that contains
+    the published form. If the form is virtual the publisher
+    will indicate __runtime__
+    """
+    publisher: String
+
+    """
+    Indicates the src folder for the form
+    """
+    src: String
+}
+
+"""
+Represent the input options for git when publishing content to disk that is under source control 
+"""
+input ReactoryGitOptions {
+    """
+    The name if the source branch to add
+    """
+    branch: String
+    """
+    The username to use for authentication
+    """
+    username: String
+    """
+    The password to use for authentication
+    """
+    password: String
+    """
+    The token to use if the provider allows for token based auth
+    """
+    token: String
+    """
+    When true, then a credentials item needs to be selected for the user
+    """
+    ssh: Boolean
+    """
+    The id of the credentials object 
+    """
+    credentialsId: String
+}
+
+"""
+The Reactory Form Input type that is used for mutations
+"""
+input ReactoryFormInput {
+    """
+    The internal form id. This must be unique
+    """
+    id: String!    
+    """
+    Indicates what UI framework the form is built / designed to use.
+    options will be "material" and later "bootstrap" / others.
+
+    """
+    uiFramework: String
+    
+    """    
+    This indicates the ui framekworks that the form is intended to support.
+    """
+    uiSupport: [String],
+    """    
+    List of scripts or styles sheets that get loaded async for the application to use to style the component    
+    """
+    uiResources: [ReactoryFormUIResourceInput]
+
+    """
+    The human readable title for the form
+    """
+    title: String
+    """
+    The tags that are associated with this form
+    """
+    tags: [String]
+    """
+    If set to false the form will be hidden, this is 
+    useful in forms where it serves as a service loader
+    component for other components.
+    """
+    display: Boolean
+    """
+    The root class name to apply to the form
+    default is set to to "reactory"
+    """
+    className: String
+    """
+    The JSS style type stylesheet that is used 
+    inside the form
+    """
+    style: Any
+    """
+    A string array of help topics key names that is associated 
+    with the form
+    """
+    helpTopics: [String]
+    """
+    The json schema that represents the form
+    """
+    schema: Any,
+    """
+    The santization schema that is applied to the 
+    form data so that it is normalized
+    """
+    sanitizeSchema: Any,
+    """
+    A uiSchema that is used to manage the layout of the component
+    """
+    uiSchema: Any,
+    """
+    A list of menu items that can be used to switch the UI 
+    schema using a schema switcher
+    """
+    uiSchemas: [ReactoryUISchemaMenuItemInput]
+    """
+    The default uischema key to use when there are multupiple
+    """
+    defaultUiSchemaKey: String
+    """
+    Indicates whether the form should registere itself as a component
+    in the reactory component register.  What this will do is 
+    create a component that wraps the reactory form compoent
+    """
+    registerAsComponent: Boolean
+    """
+    The namespace for the form
+    """
+    nameSpace: String
+    """
+    The name for the form
+    """
+    name: String
+    """
+    The versio for the form 
+    """
+    version: String
+    """
+    An indexable searchable description
+    """
+    description: String,
+    """
+    Indicates what roles are allowed to use this form
+    """
+    roles: [String],
+    """
+    ??? The components that this form will require as part of it's dependecies tree ???
+    """
+    components: [String],
+    """
+    The forms graph definition that is used to manage data operations for the form
+    """
+    graphql: ReactoryFormGraphDefinitionInput
+    """
+    Provide a default form value for the form
+    """
+    defaultFormValue: Any
+    """
+    The default pdf report definition to use / associate with the form
+    """
+    defaultPdfReport: Any
+    """
+    The default export definition that is used by the form form 
+    for data exports
+    """
+    defaultExport: Any
+    """
+    A list of reports that is available for the form
+    """
+    reports: [Any]
+    """
+    A list of export defiitions that is available to the form
+    """
+    exports: [Any]
+    """
+    ??? Not sure if refresh is used, legacy - likely to be deprecated
+    """
+    refresh: Any
+    """
+    The widget map that will be applied to the form
+    """
+    widgetMap: [ReactoryFormWidgetMapInput]
+    
+    """
+    Indicate whether a back button is added to the toolbar
+    """
+    backButton: Boolean
+    
+    """
+    The workflow definition for the form that can be triggered 
+    or used in conjunction with a query or mutation.
+    """
+    workflow: Any,
+    
+    """
+    A flag that is set on the form component that does the rendering
+    """
+    noHtml5Validate: Boolean,
+    
+    """
+    Form context properties that will be added to the form
+    """
+    formContext: Any,
+    
+    """
+    Any event bubbling handlers
+    """
+    eventBubbles: [ReactoryFormEventBubblesInput]
+    
+    """
+    The reactory form modules that is associated with this form
+    """
+    modules: [ReactoryFormModuleInput]
+    
+    """
+    The component definitions that will be loaded into the form as default
+    """
+    componentDefs: [String]
+    
+    """
+    A mappping for the query string data, don't think this 
+    is used anywhere within the applikcation
+    """
+    queryStringMap: Any,
+    
+    """
+    The list of reactory component definitions that this
+    form is depending on
+    """
+    dependencies: [ReactoryComponentDependencyInput]
+}
+
+extend type Query {
+    """
+    Returns a list of all the forms that the logged in user has access to.
+    """
+    ReactoryForms: [ReactoryForm],
+
+    """
+    Returns a list of all the forms that $globals$ forms the user is allowed to 
+    access
+    """
+    ReactoryFormGlobals: [ReactoryForm],
+
+    """
+    Returns a Reactory Form Definition with a given id
+    """
+    ReactoryFormGetById(id: String!): ReactoryForm
+}
+
+extend type Mutation {
+    """
+    Persists a reactory form
+    """
+    ReactoryFormSave(
+        """
+        The form input data that will be stored
+        """
+        form: ReactoryFormInput!,
+        """
+        If set to true then reactory will attempt to publish the 
+        form to the relevant module if the module is available. 
+        This should generally only be done on development environments
+        as writing to the disk will restart the server if file watching is 
+        enabled.
+
+        If set to false / or null then reactory will write the form to the
+        mongo db collection, thus making the form virtual.
+        """
+        publish: Boolean,
+        """
+        The target module. This should be a valid module that 
+        is enabled for this 
+        """
+        module: String,
+        """
+        Git options. If present reactory will 
+        attempt to execute the relevant git actions
+        """
+        git: ReactoryGitOptions): ReactoryForm
+    
+    """
+    Clones a Form
+    """
+    ReactoryFormClone(id: String!): ReactoryForm
+    """
+    Deletes a Form
+    """
+    ReactoryFormDelete(id: String!): CoreSimpleResponse
 }

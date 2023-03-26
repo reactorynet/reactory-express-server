@@ -1,3 +1,14 @@
+
+
+type FromEmailAddress {
+  email: String
+  display: String
+}
+type ToEmailAddress {
+  email: String
+  display: String
+}
+
 type Email {
   id: String,
   sendAfter: Date,
@@ -6,18 +17,63 @@ type Email {
   sent: Boolean,
   error: String,
   failures: Int,
-  from: String,
+  from: Email,
   message: String,
   subject: String,
-  to: String,
+  to: [ToEmailAddress],
+  cc: [ToEmailAddress],
+  bcc: [ToEmailAddress],
   archived: Boolean,
   createdAt: Date,
   format: String,
   user: User,
   client: ReactoryClient,
-  survey: Survey,
   isRead: Boolean
   source: String
+  meta: Any
+}
+
+type EmailAttachment {
+  id: String  
+  link: String
+  filename: String
+  original: String
+  size: String
+  mimetype: String
+  path: String
+}
+
+input ToEmail  {
+   email: String
+   display: String
+}
+
+input InputEmailAddress {
+  email: String
+  display: String
+}
+
+input AddAttachment {
+  id: String  
+  link: String
+  filename: String
+  original: String
+  size: String
+  mimetype: String
+  path: String
+}
+
+input CreateEmailMessage {
+  id: String
+  via: String,
+  from: InputEmailAddress
+  subject: String
+  message: String
+  to: [InputEmailAddress]
+  cc: [InputEmailAddress]
+  bcc: [InputEmailAddress]
+  attachments: [AddAttachment]
+  meta: Any,  
 }
 
 input MailFilter {
@@ -28,6 +84,7 @@ input MailFilter {
   via: [String]
   user: ObjID
 }
+
 
 extend type Query {
   userEmails(mailFilter: MailFilter) : [Email]

@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
+      "jsx": "react",
+      "module": "CommonJS",
       "noImplicitAny": true,
       "removeComments": true,
       "moduleResolution": "node",
-      "allowSyntheticDefaultImports": true,
-      // Process & infer types from .js files.
+      "allowSyntheticDefaultImports": true,    
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
       "allowJs": true,  
-      "target":"es6",
+      "target":"ES2017",
       "baseUrl": "./",
       "paths": {
         "*": ["src/*"],

@@ -1,0 +1,39 @@
+
+type PersonalDemographics {
+  id: String
+  race: String
+  age: String
+  gender: String
+  position: String
+  region: String
+  operationalGroup: Organization
+  businessUnit: BusinessUnit
+  team: Team
+}
+
+"""
+The input type to create personal demographics
+"""
+input PersonalDemographicsInput {  
+  userId: String
+  membership: String
+  race: String
+  dob: Date
+  gender: String
+  position: String
+  region: String
+  operationalGroup: String
+  businessUnit: String
+  team: String
+}
+
+extend type Query {
+  GetPersonalDemographics(id: String): PersonalDemographics
+}
+
+extend type Mutation {
+  """
+  Sets or update the Personal Demographics
+  """
+  CoreSetPersonalDemographics(personalDemographics: PersonalDemographicsInput!): CoreSimpleResponse
+}

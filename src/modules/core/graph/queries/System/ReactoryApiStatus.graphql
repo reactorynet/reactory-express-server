@@ -1,5 +1,6 @@
 	query ReactoryApiStatus {
 		apiStatus {
+			id			
 			applicationName
 			applicationAvatar
 			when
@@ -17,6 +18,7 @@
 				public
 				roles
 				componentFqn
+				redirect
 				component {
 					nameSpace
 					name
@@ -52,6 +54,7 @@
 				componentPropsMap
 				componentKey
 				componentContext
+				contextType
 			}
 		}
 	}

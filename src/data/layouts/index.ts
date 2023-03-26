@@ -1,0 +1,1 @@
+export { default as ReactoryLayouts } from './reactory/DefaultLayout';

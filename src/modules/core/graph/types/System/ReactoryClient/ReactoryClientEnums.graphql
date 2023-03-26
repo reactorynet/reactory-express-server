@@ -1,0 +1,118 @@
+
+"""
+Current available and supported theme engine types
+"""
+enum ApplicationThemeType {
+  """
+  Represents the material @mui ux engine.
+  This is available for web projects only.
+  """
+  material,
+  """
+  Represent the react material native ux
+  engine.  This engine can be used in both 
+  web and native
+  """
+  material_native
+}
+
+"""
+The application theme mode type
+gives indicates what the theme mode type is for a 
+given theme, or it can be an indicator as to what is the 
+default theme mode type for a theme.
+"""
+enum ApplicationThemeModeType {
+  """
+  Light mode
+  """
+  light
+  """
+  A dark mode
+  """
+  dark
+  """
+  OS indicates that the mode is defined by the 
+  user preferences on the operating system. On web it 
+  will attempt to determine by browser configuration
+  and on native application it will have to be determined
+  per platform.
+  """
+  os
+}
+
+"""
+The Application Plugin Platform enum 
+"""
+enum ApplicationPluginPlatform {
+  """
+  web indidicates that the plugin is targeted for the web as a javascript module
+  for the reactory client or custom web clients that perform their own module and component
+  management
+  """
+  web,
+  """
+  ios indicates that the plugin is targeted for the iOS stack. It is inferred that
+  this plugin will be loaded as a Pod at compile time.
+  """
+  ios,
+  """
+  android indicates that the plugin is targeted for the Android platform. It is 
+  inferred that the plugin will loaded either a loadable jar or modifies the gradle
+  build files for dependencies.
+  """
+  android,
+  """
+  native indicates that the plugin is targeted for a native implementation. This 
+  could be for desktop based clients that has a custom code base.
+  """
+  native
+}
+
+"""
+Enum that indicates the expected execution
+outcome for the additional data
+"""
+enum LoggedInContextExecutionAction {
+  """
+  the action should be executed
+  """
+  exec
+  """
+  mount indicates the action should result in a component
+  being mounted
+  """
+  mount
+  """
+  No action should be taken, the data / information is 
+  for debugging / development purposes only.
+  """
+  none
+}
+
+"""
+Asset types that the themeing engine
+supports
+"""
+enum ApplicationThemeAssetType {
+  """
+  indicates the theme should be loaded
+  as a script.
+  """
+  script
+  """
+  indicates the theme should be loaded
+  with image loader
+  """
+  image
+  """
+  indicates the theme should be loaded
+  with a css loader
+  """
+  css
+  """
+  indciates the theme is provided as
+  json data
+  """
+  json
+}

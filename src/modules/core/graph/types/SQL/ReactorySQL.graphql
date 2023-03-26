@@ -14,7 +14,6 @@ enum OperationModifier {
   OR
 }
 
-
 type SQLColumn {
   field: String
   title: String
@@ -46,7 +45,6 @@ input SQLContextInput {
   connectionId: String
 }
 
-
 type SQLFilter {
   field: String
   value: Any
@@ -64,7 +62,9 @@ input SQLFilterInput {
 
 input PagingRequest {
   page: Int
-  pageSize: Int 
+  pageSize: Int
+  total: Int
+  hasNext: Boolean
 }
 
 type PagingResult {
@@ -85,7 +85,7 @@ type SQLQueryResult {
 type SQLInsertResult {
   columns: [ SQLColumn ]
   success: Boolean
-  recordsAffected: Int  
+  recordsAffected: Int
 }
 
 type SQLUpdateResult {
@@ -95,7 +95,7 @@ type SQLUpdateResult {
 
 type SQLDeleteResult {
   success: Boolean
-  recordsAffected: Int  
+  recordsAffected: Int
 }
 
 input SQLQuery {
@@ -128,7 +128,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  ReactorySQLInsert(input: SQLInsert): SQLInsertResult 
+  ReactorySQLInsert(input: SQLInsert): SQLInsertResult
   ReactorySQLUpdate(input: SQLUpdate): SQLUpdateResult
-  ReactorySQLDelete(input: SQLDelete): SQLDeleteResult  
+  ReactorySQLDelete(input: SQLDelete): SQLDeleteResult
 }

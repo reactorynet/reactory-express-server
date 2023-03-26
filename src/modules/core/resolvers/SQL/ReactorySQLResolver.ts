@@ -3,7 +3,7 @@ import {
 
   SQLDelete,
   SQLDeleteResult,
-  
+
   SQLInsert,
   SQLInsertResult,
 
@@ -15,7 +15,8 @@ import {
   QueryStringResultWithCount,
 
 } from '@reactory/server-core/database/types';
-import logger from 'logging';
+import logger from '@reactory/server-core/logging';
+import Reactory from '@reactory/reactory-core';
 
 
 interface SQLQueryParams {
@@ -40,38 +41,38 @@ interface SQLDeleteParams {
 
 
 const ReactorySQLResolver = {
-  Query : {
-    ReactorySQLQuery: async (obj: any, params: SQLQueryParams): Promise<SQLQueryResult>  => {
-      
+  Query: {
+    ReactorySQLQuery: async (obj: any, params: SQLQueryParams, context: Reactory.Server.IReactoryContext): Promise<SQLQueryResult> => {
+
       const { input } = params;
-      const { connectionId } = input.context;      
-      
-      let result: SQLQueryResult = {
+      const { connectionId } = input.context;
+
+      const result: SQLQueryResult = {
         columns: input.columns,
         context: input.context,
         data: [],
         filters: input.filters || [],
         paging: {
-          hasNext: true, 
+          hasNext: true,
           page: input.paging.page,
           pageSize: input.paging.pageSize,
-          total: 0
-        }
+          total: 0,
+        },
       };
-      
-      let query: QueryStringResultWithCount = await MySQLQueryStringGenerator.fromQuery(input).then();
+
+      const query: QueryStringResultWithCount = await MySQLQueryStringGenerator.fromQuery(input).then();
       logger.debug(`Query String Generated: ${query}`, query);
-      result.data = await mysql(query.query, connectionId).then();
+      result.data = await mysql(query.query, connectionId, undefined, context).then();
       result.columns = input.columns;
       result.paging = {
-        hasNext: (input.paging.page * input.paging.pageSize) < query.count ?  true : false,
+        hasNext: (input.paging.page * input.paging.pageSize) < query.count ? true : false,
         page: input.paging.page,
         pageSize: input.paging.pageSize,
-        total: query.count
+        total: query.count,
       };
-      result.context = input.context;      
+      result.context = input.context;
       return result;
-    }    
+    }
   },
   Mutation: {
     ReactorySQLInsert: async (obj: any, params: any): Promise<SQLInsertResult> => {
@@ -91,8 +92,8 @@ const ReactorySQLResolver = {
 
 
       return result;
-    }
-  }
-}
+    },
+  },
+};
 
-export default ReactorySQLResolver
+export default ReactorySQLResolver;

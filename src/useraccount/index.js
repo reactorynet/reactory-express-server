@@ -19,7 +19,7 @@ router.post('/register', (req, res) => {
     Admin.User.registerUser(user),
   ]).then((results) => {
     // console.log('All promises resolved', results);
-    const { partner } = global;
+    const { partner } = req;
     const addedRoles = [];
     const organizationResult = results[0];
     const userResult = results[1];
@@ -55,7 +55,7 @@ router.post('/forgot', (req, res) => {
   const { email } = req.body;
   User.findOne({ email }).then((user) => {
     if (user === null) res.status(404).send(new UserNotFoundException(`Could not find a user with email ${email}`, { email, error: 'No user' }));
-    Admin.User.sendResetPasswordEmail(user, global.partner, { delivery: moment(), format: 'html' }).then(() => {
+    Admin.User.sendResetPasswordEmail(user, req.partner, { delivery: moment(), format: 'html' }).then(() => {
       res.status(200).send({ message: `A reset email has been sent to ${email}` });
     }).catch((sendError) => {
       res.status(500).send(sendError);

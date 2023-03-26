@@ -1,0 +1,145 @@
+"""
+The application theme asset
+"""
+type ApplicationThemeAsset {
+  """
+  A unique id for the theme asset
+  """
+  id: String
+  """
+  A human readable name for the asset.
+  """
+  name: String
+  """
+  Enum for the application theme asset type
+  """
+  assetType: ApplicationThemeAssetType
+  """
+  The url for the asset
+  """
+  url: String
+  """
+  The string loader identity for the asset.
+  if not set defaults will be used to load each asset type.
+  """
+  loader: String
+  """
+  Options for the loader is stored as an any object
+  """
+  options: Any
+  """
+  if the asset type is set to JSON, add your theme
+  data / payload here
+  """
+  data: Any
+}
+
+"""
+Type that represents an application theme mode.
+A theme can support multiple modes, light, dark,
+high-contrast etc
+"""
+type ApplicationThemeMode {
+  """
+  Unique id for the theme mode
+  """
+  id: String
+
+  """
+  Application theme mode
+  """
+  mode: ApplicationThemeModeType
+
+  """
+  A name for the theme mode
+  """
+  name: String
+  """
+  Theme mode description
+  """
+  description: String
+  """
+  an icon for the application theme mode
+  """
+  icon: String
+  """
+  The options that is associated with this theme mode
+  """
+  options: Any
+}
+
+"""
+ColorSchemes that are generated from the primary and
+secondary colors from the theme configuration.
+"""
+type ApplicationColorSchemes {
+  """
+  Color scheme generated from the primary color
+  """
+  primary: [String]
+  """
+  Color scheme generated from the secondary color
+  """
+  secondary: [String]
+}
+
+"""
+Application theme 
+"""
+type ApplicationTheme {
+  """
+  the id for the them
+  """
+  id: String
+  """
+  The namespace for the theme
+  """
+  nameSpace: String
+  """
+  The name for the theme
+  """
+  name: String
+  """
+  The version for the theme
+  """
+  version: String
+
+  """
+  The theme type for this theme.
+  """
+  type: ApplicationThemeType
+
+  """
+  indicates what is the default theme mode type
+  for this theme
+  """
+  defaultThemeMode: ApplicationThemeModeType
+
+  """
+  The options available for this theme
+  """
+  options: Any
+
+  """
+  A simple description field that can be used to 
+  provide additional information about the theme.  
+  """
+  description: String
+  """
+  The modes available for the theme
+  """
+  modes: [ApplicationThemeMode]
+  """
+  The application theme assets
+  """
+  assets: [ApplicationThemeAsset]
+  """
+  colorSchemes for this theme
+  """
+  colorSchemes: ApplicationColorSchemes
+  """
+  Any specific language translations this theme 
+  may require.
+  """
+  il8n: Any
+}

@@ -1,4 +1,4 @@
-import uuid from 'uuid';
+import { v4 as uuid } from 'uuid';
 import messages from './messages';
 import email from '../../emails';
 import models from '../../models';
