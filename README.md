@@ -85,7 +85,7 @@ Reactory Server core and the client is distributed as Open Source, but it is ver
 
 It is advised that you create a root reactory folder, and then create sub folders inside this for the client, the core types, the data storage folder and other reactory related projects you may build.
 ### Checkout the server source code
-```
+```bash
 > mkdir reactory
 > cd reactory
 > git clone git@github.com:reactorynet/reactory-data.git ./reactory-data/
@@ -109,15 +109,16 @@ Make a copy of the sample environment file and set the settings that is applicab
 `> cp reactory-server/config/reactory/.env.sample reactory-server/config/reactory/.env.local`
 Changes your variables to match the directories to where you have installed your server and where you want your data folder.
 
-`> cd reactory-core`
-`> npm i`
-`> npm run make-install`
-`> npm run deploy-local`
+## Install Reactory Core Library
+The [Reactory Core library](https://github.com/reactorynet/reactory-core) is currently not published to npm, so you need to install it locally.  The easiest way to do this is to run the following commands.
 
-If all dependencies are installed and it is the first time you run the deploy-local, it will take some time, as it is also running `npm i` on the reactory-server and reactory-client projects.
-
-
-
+```bash
+> cd reactory-core
+> npm i
+> npm run make-install
+> npm run deploy-local
+```
+If all dependencies are installed and it is the first time you run the deploy-local, it will take some time, as it is also running `npm i` on the reactory-server and reactory-client projects. If you encounter any errors, please check your environment variables and make sure they are set correctly.
 ### Optional - Install Additional Modules
 If you want to have the Reactory Azure Graph features available to your graph then you need to include the reactory-azure module.
 
