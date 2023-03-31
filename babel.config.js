@@ -16,6 +16,9 @@ module.exports = function (api) {
         allExtensions: true,
       }
     ],
+    [
+      '@babel/preset-flow',
+    ]
   ];
 
   const plugins = [
@@ -56,6 +59,7 @@ module.exports = function (api) {
     '@babel/plugin-syntax-import-meta',
     '@babel/plugin-transform-object-set-prototype-of-to-assign',
     '@babel/plugin-transform-arrow-functions',
+    '@babel/plugin-transform-flow-strip-types'
 
   ];
 

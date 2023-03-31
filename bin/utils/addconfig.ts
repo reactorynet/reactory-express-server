@@ -47,22 +47,28 @@ export interface IConfigurationProperties {
   oauth_id_metadata: string,
   oauth_authorize_endpoint: string,
   oauth_token_endpoint: string
+  [key: string | symbol]: unknown
 };
+
+export interface QuestionHandlerResponse {
+  next: IQuestion | null,
+  configuration: IConfigurationProperties
+}
 
 export interface IQuestion {
   id?: number,
   question: string,
   response?: string,
   valid?: boolean,
-  handler: (response: string, configuration: IConfigurationProperties) => { next: IQuestion | null, configuration: IConfigurationProperties }
+  handler: (response: string, configuration: IConfigurationProperties) => QuestionHandlerResponse
 }
 
 export interface IQuestionGroup {
-  [key: string]: IQuestion,
+  [key: string | symbol]: IQuestion,
 }
 
 export interface IQuestionCollection {
-  [key: string]: IQuestionGroup
+  [key: string | symbol]: IQuestionGroup
 }
 
 
@@ -119,8 +125,8 @@ const main = (kwargs: string[]) => {
     cdn_root: '',
     server_id: 'local',
     log_level: 'debug',
-    mongo_password: process.env.MONGO_USER,
-    mongo_user: process.env.MONGO_USER,
+    mongo_password: 'password',
+    mongo_user: 'mongouser',
     mongoose_connection: '',
     oauth_app_id: '',
     oauth_app_password: '',
@@ -153,6 +159,7 @@ const main = (kwargs: string[]) => {
 +---------------------------------------------------------------------------+
 `));
 
+  const isHelpRequest = (response: string) => isHelpRequest(response)
 
   const persistConfiguration = ($configuration: IConfigurationProperties) => {
     rl.write(`
@@ -169,7 +176,7 @@ const main = (kwargs: string[]) => {
       let { next, configuration } = question.handler($response, $configuration);
       if (next) {
         ask(next, configuration);
-      } else {  
+      } else {
         persistConfiguration(configuration);
       }
     });
@@ -181,6 +188,7 @@ const main = (kwargs: string[]) => {
   const configure_another: IQuestion = {
     question: 'Would you like to create another configuration? (y/n)',
     handler: (response: string, configuration) => {
+      persistConfiguration(configuration);
       if (response === 'n') {
         return null;
       }
@@ -199,10 +207,10 @@ const main = (kwargs: string[]) => {
         handler: (response: string, configuration: IConfigurationProperties) => {
           if (response.charCodeAt(0) === 27) {
             rl.write(colors.red('\nConfiguration name is a required field\n'));
-            return questions.required.name;
+            return { next: questions.required.name, configuration };
           }
 
-          if (response === '?') {
+          if (isHelpRequest(response)) {
             rl.write(colors.gray(`
   The configuration name, would be a short concise name that describes
   the name of the application api, i.e. if you are building a shop front 
@@ -210,26 +218,29 @@ const main = (kwargs: string[]) => {
   A brand name can be thought of the abbreviation for your business or 
   corporation.\nThis can be useful if you intend to run multiple configurations from a 
   single source base.\ni.e.\nacme-shop, acme-sales, acme-warehouse, acme-hr etc.
+
+  To enable the reactory default application, use the name "reactory".
+
   `));
 
-            return questions.required.name;
+            return { next: questions.required.name, configuration };
           }
 
-          conf.name = response;
-          return questions.required.environments;
+          configuration.name = response;
+          return { next: questions.required.environments, configuration };
         },
       },
       environments: {
         question: 'Which environments would you like to provision for? (comma seperated list default "local,dev,prod")',
         response: null,
         valid: false,
-        handler: (response: string = 'local,dev,prod') => {
+        handler: (response: string = 'local,dev,prod', configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.environments = ['local', 'dev', 'prod'];
+            configuration.environments = ['local', 'dev', 'prod'];
           }
 
-          if (response === '?') {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   The environment names will be used to create .env.<environment> files.
   These files are used to start your reactory server and load environment
@@ -247,57 +258,55 @@ const main = (kwargs: string[]) => {
   If you want to know more about dotenv you can view the package
   on npm here: https://www.npmjs.com/package/dotenv
 `));
-            return questions.required.environments;
+            return {
+              next: questions.required.environments,
+              configuration: configuration
+            };
           }
 
           if (response.indexOf(',') > 0) {
-            conf.environments = response.split(',');
+            configuration.environments = response.split(',');
           } else {
-            conf.environments = [response];
+            configuration.environments = [response];
           }
 
-          return questions.required.system_user_id;
+          return { next: questions.required.system_user_id, configuration };
         }
       },
       system_user_id: {
         question: 'Provide an email address that will be used for the system account. i.e. reactory_admin@acme.com',
-        handler: (response: string) => {
-
-
-
-          if (response === "?") {
+        handler: (response: string, configuration: IConfigurationProperties) => {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   The system user id, should be an email address that you can 
   access.  The system will use this address to send alert
   or configured notifications to that email address.  
 `));
-            return questions.required.system_user_id
+            return { next: questions.required.system_user_id, configuration };
           }
 
-          return questions.required.app_data_root;
+          return { next: questions.required.app_data_root, configuration };
         }
       },
       server_id: {
         question: 'Provide a server id that can be used to identify the server a client is a connected to. i.e. acme_reactor_uk',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.server_id = `${conf.name}-local`;
+            configuration.server_id = `${configuration.name}-local`;
           }
 
-          return questions.required.app_data_root;
+          return { next: questions.required.app_data_root, configuration };
         }
 
       },
       app_data_root: {
         question: 'Provide the location of your data root folder? default (/var/reactory/data)',
-        handler: (response: string) => {
-
+        handler: (response: string, configuration: IConfigurationProperties) => {
           if (response.charCodeAt(0) === 27) {
-            conf.app_data_root = `/var/reactory/data`;
+            configuration.app_data_root = `/var/reactory/data`;
           }
-
-          if (response === '?') {
+          if (isHelpRequest(response)) {
 
             rl.write(colors.grey(`  
   This is the base folder where the reactory server stores,
@@ -305,23 +314,25 @@ const main = (kwargs: string[]) => {
   mapped drives.  
 `));
 
-            return questions.required.app_data_root;
+            return { next: questions.required.app_data_root, configuration };
           }
 
-          return questions.required.modules_enabled;
+          configuration.app_data_root = response;
+
+          return { next: questions.required.modules_enabled, configuration };
         }
       },
       modules_enabled: {
         question: `What is the name of the modules enabled file you want to load? (default: enabled-${conf.name})`,
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.modules_enabled = `enabled-${conf.name}`;
+            conf.modules_enabled = `enabled-${configuration.name}`;
 
-            return questions.required.port;
+            return { next: questions.required.port, configuration };
           }
 
-          if (response === "?") {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   This is the name of the json file that will contain the list of modules that will 
   be used to create the src/modules/__index.ts file.
@@ -334,27 +345,27 @@ const main = (kwargs: string[]) => {
   If the file does not exist, one will be clone from the available.json file.
 `));
 
-            return questions.required.modules_enabled;
+            return { next: questions.required.modules_enabled, configuration };
           }
 
-          conf.modules_enabled = response;
+          configuration.modules_enabled = response;
 
-          return questions.required.app_data_root;
+          return { next: questions.required.app_data_root, configuration };
         }
       },
 
 
       port: {
         question: 'What port number would you like to run the server on. (default 4000)',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.port = 4000;
+            configuration.port = 4000;
 
-            return questions.required.sendgrid_api_key;
+            return { next: questions.required.sendgrid_api_key, configuration };
           }
 
-          if (response === "?") {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   The TCP port number the server must use.  The default is 4000.
   If you want configure the reactory server in a cluster you
@@ -363,26 +374,26 @@ const main = (kwargs: string[]) => {
   file to load.
 `));
 
-            return questions.required.port;
+            return { next: questions.required.port, configuration };
           }
 
-          conf.port = parseInt(response);
+          configuration.port = parseInt(response, 10);
 
-          return questions.required.sendgrid_api_key;
+          return { next: questions.required.sendgrid_api_key, configuration };
         }
       },
 
       sendgrid_api_key: {
         question: 'Provide a send grid api key to enable send grid mail integration.',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.sendgrid_api_key = 'SG.disabled';
+            configuration.sendgrid_api_key = 'SG.disabled';
 
-            return questions.required.api_uri_root;
+            return { next: questions.required.api_uri_root, configuration };
           }
 
-          if (response === "?") {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   If you want to use the default sendgrid email service, then you will need to provide
   your own sendgrid API key.
@@ -394,10 +405,10 @@ const main = (kwargs: string[]) => {
 `));
           }
 
-          conf.sendgrid_api_key = response;
+          configuration.sendgrid_api_key = response;
 
 
-          return questions.required.api_uri_root;
+          return { next: questions.required.api_uri_root, configuration };
         }
 
       },
@@ -406,15 +417,15 @@ const main = (kwargs: string[]) => {
         question: 'Provide an API uri root. Ensure it has protocol and correct port default: http://localhost:4000/ >> ',
         response: null,
         valid: false,
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.api_uri_root = `http://localhost:${conf.port}/`
+            configuration.api_uri_root = `http://localhost:${conf.port}/`
 
-            return questions.required.cdn_root;
+            return { next: questions.required.cdn_root, configuration };
           }
 
-          if (response === "?") {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   The API_URI_ROOT value is the root of your server. If you are running it on your 
   local machine for development the value should be http://localhost:${conf.port}/
@@ -430,25 +441,25 @@ const main = (kwargs: string[]) => {
   endpoint.
 `));
 
-            return questions.required.api_uri_root;
+            return { next: questions.required.api_uri_root, configuration };
           }
 
-          conf.api_uri_root = response;
-          return questions.required.cdn_root
+          configuration.api_uri_root = response;
+          return { next: questions.required.cdn_root, configuration };
         },
       },
 
       cdn_root: {
         question: 'Provide the url which will match your Content Delivery Network url for the server.',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.cdn_root = `http://localhost:${conf.port}/cdn/`
+            conf.cdn_root = `http://localhost:${configuration.port}/cdn/`
 
-            return questions.required.secret_key;
+            return { next: questions.required.secret_key, configuration };
           }
 
-          if (response === "?") {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   The CDN_ROOT value is the root of your server CDN. If you are running it on your 
   local machine for development the value should be http://localhost:${conf.port}/cdn/
@@ -462,266 +473,266 @@ const main = (kwargs: string[]) => {
   
 `));
 
-            return questions.required.cdn_root;
+            return { next: questions.required.cdn_root, configuration };
           }
 
-          conf.api_uri_root = response;
-          return questions.required.secret_key;
+          configuration.api_uri_root = response;
+          return { next: questions.required.secret_key, configuration };
         }
 
       },
 
       secret_key: {
         question: 'Provide a secret key for your JWT tokens / login session key generation',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.secret_key = `xxxxxxxxxxx`
+            configuration.secret_key = `xxxxxxxxxxx`
 
-            return questions.required.log_level;
+            return { next: questions.required.log_level, configuration };
           }
 
-          if (response === "?") {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   The secret key is a used during the authorization process for a user.
   This should be a unique difficult to guess pass key.  This pass key should
   be updated and changed every few weeks / months.
 `));
 
-            return questions.required.secret_key;
+            return { next: questions.required.secret_key, configuration };
 
           }
 
-          conf.secret_key = response;
+          configuration.secret_key = response;
 
-          return questions.required.log_level;
+          return { next: questions.required.log_level, configuration };
         }
 
       },
 
       log_level: {
         question: 'What level would you like to set the logging at?',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
             conf.log_level = `debug`
 
-            return questions.required.mongo_user;
+            return { next: questions.required.mongo_user, configuration };
           }
 
-          if (response === "?") {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   The secret key is a used during the authorization process for a user.
   This should be a unique difficult to guess pass key.  This pass key should
   be updated and changed every few weeks / months.
 `));
 
-            return questions.required.log_level;
+            return { next: questions.required.log_level, configuration };
 
           }
 
           conf.log_level = response;
-          return questions.required.mongo_user;
+          return { next: questions.required.mongo_user, configuration };
         }
 
       },
 
       mongo_user: {
         question: 'Mongo database username',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.mongo_user = `reactorycore`
+            configuration.mongo_user = `reactorycore`
 
-            return questions.required.mongo_password;
+            return { next: questions.required.mongo_password, configuration };
           }
 
-          if (response === "?") {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   Your mongo database should be protected with a username and password.  
   
   If you leave it blank, the default will be set to reactorycore.
             `));
 
-            return questions.required.mongo_user;
+            return { next: questions.required.mongo_user, configuration };
 
           }
 
-          conf.mongo_user = response;
+          configuration.mongo_user = response;
 
-          return questions.required.mongo_password;
+          return { next: questions.required.mongo_password, configuration };
         }
 
       },
       mongo_password: {
         question: 'Mongo database password',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.mongo_password = `reactorycore`
+            configuration.mongo_password = `reactorycore`
 
-            return questions.required.mongoose_connection;
+            return { next: questions.required.mongoose_connection, configuration };
           }
 
 
-          if (response === "?") {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   Your mongo database should be protected with a username and password.  
   
   If you leave it blank, the default will be set to reactorycore.
             `));
 
-            return questions.required.mongo_password;
+            return { next: questions.required.mongo_password, configuration };
 
           }
 
-          conf.mongo_password = response;
+          configuration.mongo_password = response;
 
 
-          return questions.required.mongoose_connection;
+          return { next: questions.required.mongoose_connection, configuration };
         }
 
       },
       mongoose_connection: {
         question: 'Mongo db connection string',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.mongoose_connection = `mongodb://localhost:27017/${conf.name}-local-reactory`;
+            configuration.mongoose_connection = `mongodb://localhost:27017/${configuration.name}-local-reactory`;
 
-            return questions.required.oauth_app_id;
+            return { next: questions.required.oauth_app_id, configuration };
           }
 
-          if (response === "?") {
+          if (isHelpRequest(response)) {
             rl.write(colors.grey(`  
   Provide the full mongo url (without username and password) that
   represents the connection to your database.
 
   If you leave it blank the default will be set to
 
-  mongodb://localhost:27017/${conf.name}-local-reactory
+  mongodb://localhost:27017/${configuration.name}-local-reactory
             `));
 
-            return questions.required.mongoose_connection;
+            return { next: questions.required.mongoose_connection, configuration };
 
           }
 
-          return questions.required.oauth_app_id;
+          return { next: questions.required.oauth_app_id, configuration };
         }
 
       },
 
       oauth_app_id: {
         question: 'Provide your MS OAUTH APP ID if you want to enable MS authentication',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.mongo_password = `reactorycore`
+            configuration.mongo_password = `reactorycore`
 
-            return questions.required.mongoose_connection;
+            return { next: questions.required.mongoose_connection, configuration };
           }
 
-          return questions.required.oauth_app_password;
+          return { next: questions.required.oauth_app_password, configuration };
         }
 
       },
       oauth_app_password: {
         question: 'Provide your MS OAUTH APP password',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.mongo_password = `reactorycore`
+            configuration.oauth_app_password = `<insert oauth password>`
 
-            return questions.required.mongoose_connection;
+            return { next: questions.required.mongoose_connection, configuration };
           }
 
-          return questions.required.oauth_redirect_uri;
+          return { next: questions.required.oauth_redirect_uri, configuration };
         }
 
       },
       oauth_redirect_uri: {
         question: 'Provide your oauth redirect uri',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
 
           if (response.charCodeAt(0) === 27) {
-            conf.mongo_password = `reactorycore`
+            configuration.oauth_redirect_uri = `http;//localhost:${configuration.port}/auth/microsoft/openid/complete/${configuration.name}`
 
-            return questions.required.mongoose_connection;
+            return { next: questions.required.mongoose_connection, configuration };
           }
 
-          return questions.required.oauth_scopes;
+          return { next: questions.required.oauth_scopes, configuration };
         }
 
       },
       oauth_scopes: {
         question: 'Provide your oauth scopes',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.mongo_password = `reactorycore`
+            configuration.oauth_scopes = `profile offline_access user.read calendars.read mail.read email`
 
-            return questions.required.mongoose_connection;
+            return { next: questions.required.mongoose_connection, configuration };
           }
 
-          return questions.required.oauth_authority;
+          return { next: questions.required.oauth_authority, configuration };
         }
 
       },
 
       oauth_authority: {
         question: 'Provide the oath authority',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.mongo_password = `reactorycore`
+            configuration.mongo_password = `reactorycore`
 
-            return questions.required.mongoose_connection;
+            return { next: questions.required.mongoose_connection, configuration };
           }
 
-          return questions.required.oauth_id_metadata;
+          return { next: questions.required.oauth_id_metadata, configuration };
         }
 
       },
       oauth_id_metadata: {
         question: 'Provide the oauth id meta data',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.mongo_password = `reactorycore`
+            configuration.oauth_id_metadata = `/v2.0/.well-known/openid-configuration`
 
-            return questions.required.mongoose_connection;
+            return { next: questions.required.mongoose_connection, configuration };
           }
 
-          return questions.required.oauth_authorize_endpoint;
+          return { next: questions.required.oauth_authorize_endpoint, configuration };
         }
 
       },
       oauth_authorize_endpoint: {
         question: 'Provide the oauth endpoint',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
             conf.mongo_password = `reactorycore`
 
-            return questions.required.mongoose_connection;
+            return { next: questions.required.mongoose_connection, configuration };
           }
 
-          return questions.required.oauth_token_endpoint;
+          return { next: questions.required.oauth_token_endpoint, configuration };
         }
 
       },
       oauth_token_endpoint: {
         question: 'Provide the oauth token endpoint',
-        handler: (response: string) => {
+        handler: (response: string, configuration: IConfigurationProperties) => {
 
           if (response.charCodeAt(0) === 27) {
-            conf.mongo_password = `reactorycore`
+            configuration.oauth_token_endpoint = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 
-            return questions.required.mongoose_connection;
+            return { next: questions.required.mongoose_connection, configuration };
           }
 
-          return configure_another
+          return { next: configure_another, configuration };
         }
 
       }
@@ -761,16 +772,11 @@ const main = (kwargs: string[]) => {
    * 
    */
 
-  ask(questions.required.name);
-
-
+  ask(questions.required.name, conf);
 
   rl.on('close', () => {
     console.log('Goodbye.')
-  })
-
-
+  });
 }
 
 main(process.argv);
-
