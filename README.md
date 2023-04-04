@@ -23,7 +23,16 @@ This section will cover the basic installation and configuration of the Reactory
 # Installing Reactory Server
 The reactory core server is an express nodejs server. The server can be started by using the commands provided in the /bin folder.
 
-It is highly advised to install nvm as your node version manager.
+It is highly advised to install [nvm](https://github.com/nvm-sh/nvm) as your node version manager.
+
+Install nvm:
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+```
+or
+```bash
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+```
 
 The server is currently being maintained on Node 16.13.2 and can be run on Windows using the Ubuntu on Windows feature.
 
@@ -40,7 +49,7 @@ The reactory server require a couple of environment variables in order for it to
 Depending on what shell you are running, you will need to update either your `.zprofile`, `.bash_profile` or `.zshrc` files with the following.
 
 
-```
+```bash
 export REACTORY_HOME="$HOME/Projects/reactory"
 export REACTORY_DATA="$REACTORY_HOME/reactory-data"
 export REACTORY_SERVER="$REACTORY_HOME/reactory-server"
@@ -69,6 +78,20 @@ Node Canvas is one of the dependencies and installation instructions for specifi
 ### mongodb
 You need to have a mongodb instance the server can connect to.  MongoDB is currently use via mongoose as the core data storage.  It is however not limited to it and mysql, sqlserver and postgress drivers can be used for storage for custom resolvers and plugins.
 
+#### Installing mongodb
+The easiest way to install mongodb is to use the docker image.  You can find the instructions here https://hub.docker.com/_/mongo
+
+For development purposes you can use the docker image to run a local mongodb instance.  For production you can use a hosted mongodb instance or install mongodb on a server.
+
+Installing on Linux:
+`> sudo apt-get install mongodb`
+
+
+You can also install mongodb on MacOS using brew
+`> brew install mongodb` 
+
+Your specific environment may have other ways of installing mongodb.  The mongodb documentation can be found here https://docs.mongodb.com/manual/installation/
+
 ## Install nvm (optional)
 You can install nvm using the curl command below:
 
@@ -81,7 +104,7 @@ https://github.com/nvm-sh/nvm/releases)
 If you installed nvm you can install node using (the .nvmrc file specifies the correct version as well)
 `> nvm install 16.13.2`
 ## Getting the code
-Reactory Server core and the client is distributed as Open Source, but it is very possible your organization has their own private repo. The reactory server can otherwise be cloned from the bitbucket / github repos (different modules can have different sources).
+Reactory Server core and the client is distributed as Open Source, but it is very possible your organization has their own private repo. The reactory server can otherwise be cloned from the github repos.
 
 It is advised that you create a root reactory folder, and then create sub folders inside this for the client, the core types, the data storage folder and other reactory related projects you may build.
 ### Checkout the server source code
@@ -109,6 +132,12 @@ Make a copy of the sample environment file and set the settings that is applicab
 `> cp reactory-server/config/reactory/.env.sample reactory-server/config/reactory/.env.local`
 Changes your variables to match the directories to where you have installed your server and where you want your data folder.
 
+You can also run the [addconfig.sh](/bin/addconfig.sh) command to create an environment file in the reactory-server/config folder.
+
+`>bin/addconfig.sh <config-name> <environment>`
+
+The config-name is the name of the configuration file you want to create.  The environment is the environment you want to create the configuration for. You can use the same utility to generate client configuration files as well.
+
 ## Install Reactory Core Library
 The [Reactory Core library](https://github.com/reactorynet/reactory-core) is currently not published to npm, so you need to install it locally.  The easiest way to do this is to run the following commands.
 
@@ -121,9 +150,11 @@ The [Reactory Core library](https://github.com/reactorynet/reactory-core) is cur
 If all dependencies are installed and it is the first time you run the deploy-local, it will take some time, as it is also running `npm i` on the reactory-server and reactory-client projects. If you encounter any errors, please check your environment variables and make sure they are set correctly.
 ### Optional - Install Additional Modules
 If you want to have the Reactory Azure Graph features available to your graph then you need to include the reactory-azure module.
-
+eg.
 `> cd /src/modules/`
 `> git clone git@github.com:reactorynet/reactory-azure-module.git ./reactory-azure/`
+
+!!Note the above is not a published module at the moment and purely provided as reference. However the azure public module will be made available soon.
 
 ### Create a modules enabled json file
 The reactory server uses a json file to load the modules you want to include in your server build.
@@ -165,50 +196,66 @@ To start the default server first copy a .env.local to the /config/reactory/ fol
 `> cp config/.env.sample config/reactory/.env.local`
 
 #### sample .env file content
-> #The root data folder for the server  
-> APP_DATA_ROOT=/var/reactory/data   
-> #The system fonts folder - this is required by the PDF engine    
-> APP_SYSTEM_FONTS= </usr/share/fonts> ('nix based) || </mnt/c/Windows/Fonts> (ubuntu on windows)  
-> MONGOOSE=mongodb://localhost:27017/reactory  
-> WORKFLOW_MONGO=mongodb://localhost:27017/reactory  
-> MODULES_ENABLED=the name portion of the json used to generate the module __index.ts file  
-> CLIENTS_ENABLED=<CLIENTS_FILENAME> used to generate the clietns __index.ts file  
-> API_PORT=4000  
-> SENDGRID_API_KEY=YOUR KEY GOES HERE  
-> API_URI_ROOT=http://localhost:4000  
-> CDN_ROOT=http://localhost:4000/cdn/  
-> SECRET_SAUCE=YOUR SECRET KEY (used for session during authentication flows)  
-> MODE=DEVELOP  
-> MONGO_USER=mongouser  
-> MONGO_PASSWORD=mongopwd  
-> OAUTH_APP_ID=
-> OAUTH_APP_PASSWORD=  
-> OAUTH_REDIRECT_URI=http://localhost:4000/auth/microsoft/openid/complete/reactory  
-> OAUTH_SCOPES='profile offline_access user.read calendars.read mail.read email'  
-> OAUTH_AUTHORITY=https://login.microsoftonline.com/common  
-> OAUTH_ID_METADATA=/v2.0/.well-known/openid-configuration  
-> OAUTH_AUTHORIZE_ENDPOINT=/oauth2/v2.0/authorize  
-> OAUTH_TOKEN_ENDPOINT=/oauth2/v2.0/token  
-> MAIL_REDIRECT_ENABLED=development,production  
-> MAIL_REDIRECT_ADDRESS=your-email+redirect@gmail.com  
-
+```bash
+ #The root data folder for the server  
+ APP_DATA_ROOT=/var/reactory/data   
+ #The system fonts folder - this is required by the PDF engine    
+ #('nix based) || </mnt/c/Windows/Fonts> (ubuntu on windows)
+ APP_SYSTEM_FONTS=/usr/share/fonts
+ MONGOOSE=mongodb://localhost:27017/reactory
+ #the name portion of the json used to generate the module __index.ts file
+ MODULES_ENABLED=
+ #<CLIENTS_FILENAME> used to generate the clietns __index.ts file    
+ CLIENTS_ENABLED=
+ #The port the server will run on
+ API_PORT=4000 
+ #The sendgrid api key used for sending emails 
+ SENDGRID_API_KEY=SG.YourKeyDataHere  
+ #The root url of the server for production it would be https://yourdomain.com
+ API_URI_ROOT=http://localhost:4000
+ # The CDN root url for the server for production it would be https://yourdomain.com/cdn/
+ CDN_ROOT=http://localhost:4000/cdn/
+ # A Secret key used for session and jwt tokens  
+ SECRET_SAUCE=YOUR_SECRET_KEY
+ # The development mode flag, this will enable the development mode features
+ MODE=DEVELOP  
+ # The mongo user
+ MONGO_USER=mongouser  
+ # The mongo password
+ MONGO_PASSWORD=mongopwd  
+ OAUTH_APP_ID=
+ OAUTH_APP_PASSWORD=  
+ OAUTH_REDIRECT_URI=http://localhost:4000/auth/microsoft/openid/complete/reactory  
+ OAUTH_SCOPES='profile offline_access user.read calendars.read mail.read email'  
+ OAUTH_AUTHORITY=https://login.microsoftonline.com/common  
+ OAUTH_ID_METADATA=/v2.0/.well-known/openid-configuration  
+ OAUTH_AUTHORIZE_ENDPOINT=/oauth2/v2.0/authorize  
+ OAUTH_TOKEN_ENDPOINT=/oauth2/v2.0/token  
+ MAIL_REDIRECT_ENABLED=development,production  
+ MAIL_REDIRECT_ADDRESS=your-email+redirect@gmail.com  
+```
 
 To run the application in development mode in your terminal run:
 `> bin/start.sh <key> <environment>` where"key" is the specific environment configuration folder within `<root>/config/<key>/.env.<environment>`
 
-Files matching `<root>/config/*/.env*.local` will be ignored by git by default. 
+Files matching `<root>/config/**` will be ignored by git by default. 
 
-<b>Note:</b> Do not commit and env files that are used for local use.
+<b>Note:</b> Do not commit and env files to the repository.  The .env files are used to store sensitive information and should not be shared with anyone.  The .env files are ignored by git by default.
 
 _** Running the start command without any parameters will start with 'reactory' and 'local' as the parameters for key and environment._
 
 
 ## Production / Other
+The full configuration of a production server is beyond the scope of this document.  However the following is a list of the steps required to setup a production server.
 
-Create a user account under which to run the server. 
+Create a user account under which to run the server. Ensure that user permissions are resitrcted to the minimum required to run the server.  The following is a sample of the steps required to setup a production server.
 
 * `sudo adduser -d /var/reactory -m reactory`
 * `sudo usermod -aG sudo reactory`
 * ensure the reactory user is the owner of the folder
 * check out the code into the reactory-server folder
-* install pm2 or alternatively use the service definition file to register your service
+* follow all the normal installation steps to setup the server
+* ensure you have a valid .env file in the /config/reactory folder
+* start your server using the bin/server.sh script.  This will start the server in production mode. If you want to run the server in development mode use the bin/start.sh script.
+* install pm2 or alternatively use the service definition file to register your service in order to run the server as a service.
+* Setup PM2 monitoring and register your account with PM2.
