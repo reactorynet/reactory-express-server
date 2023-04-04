@@ -11,4 +11,4 @@
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
 echo "Generating Application Configuration ./config/"
-NODE_PATH=./src npx babel-node ./bin/utils/addconfig.ts --presets=@babel/env,@babel/preset-typescript,@babel/preset-flow --extensions=".js,.ts" --max_old_space_size=2000000
+NODE_PATH=./src npx babel-node ./bin/utils/config/addconfig.ts --presets=@babel/env,@babel/preset-typescript,@babel/preset-flow --extensions=".js,.ts" --max_old_space_size=2000000 --config_name=${1:-reactory} --config_env=${2:-local}
