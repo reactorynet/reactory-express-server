@@ -148,14 +148,20 @@ The [Reactory Core library](https://github.com/reactorynet/reactory-core) is cur
 > npm run deploy-local
 ```
 If all dependencies are installed and it is the first time you run the deploy-local, it will take some time, as it is also running `npm i` on the reactory-server and reactory-client projects. If you encounter any errors, please check your environment variables and make sure they are set correctly.
-### Optional - Install Additional Modules
-If you want to have the Reactory Azure Graph features available to your graph then you need to include the reactory-azure module.
-eg.
-`> cd /src/modules/`
-`> git clone git@github.com:reactorynet/reactory-azure-module.git ./reactory-azure/`
+### Install Azure Module
+Currently the Reactory server is using the Azure Graph API for authentication and authorization and has direct dependency on the Azure module. We will be refactoring the code and remove this direct dependency in the future and make the azure graph and optional module.
 
-!!Note the above is not a published module at the moment and purely provided as reference. However the azure public module will be made available soon.
+To clone the module follow the below command line instructions.
 
+```bash
+> cd /src/modules/
+> git clone git@github.com:reactorynet/reactory-azure.git ./reactory-azure/
+```
+
+### Install additional modules (optional)
+If you want to install additional modules, you can clone them into the `reactory-server/src/modules` folder.  Your modules can be any custom module as long as it provides an index file that exports the module definition.
+
+We are in the process of creating some utility scripts that will scaffold a new module and make it easier to create your own modules, so keep an eye out on the github repo.
 ### Create a modules enabled json file
 The reactory server uses a json file to load the modules you want to include in your server build.
 The easiest way to create this file is to copy the available.json file (published with the source) and copy the file to enabled.json.  The server will use the enabled.json as the default module definition file.  
@@ -244,6 +250,10 @@ Files matching `<root>/config/**` will be ignored by git by default.
 
 _** Running the start command without any parameters will start with 'reactory' and 'local' as the parameters for key and environment._
 
+If you have configured everything correctly along with your CDN folder and default data, you should be presented by the following output in your terminal.
+
+![Build Anything Fast](/branding/reactory-text.png)
+
 
 ## Production / Other
 The full configuration of a production server is beyond the scope of this document.  However the following is a list of the steps required to setup a production server.
@@ -259,3 +269,13 @@ Create a user account under which to run the server. Ensure that user permission
 * start your server using the bin/server.sh script.  This will start the server in production mode. If you want to run the server in development mode use the bin/start.sh script.
 * install pm2 or alternatively use the service definition file to register your service in order to run the server as a service.
 * Setup PM2 monitoring and register your account with PM2.
+
+
+## Common Issues and Solutions
+### The server is not starting
+* Ensure you have a valid .env file in the /config/<config-name> folder
+* Ensure your mongodb server is running
+* Ensure you have a valid username and password for mongo
+* Ensure you have a valid enabled-modules.json file in the /src/modules folder and the correct value corresponds to the MODULES_ENABLED environment variable
+* Ensure you have a valid enabled-clients.json file in the /src/data/clientConfigs folder and the correct value corresponds to the CLIENTS_ENABLED environment variable
+* Ensure the mongo db connectionstring doesn't have the username in the connection string.  The username and password should be specified in the MONGO_USER and MONGO_PASSWORD environment variables.
