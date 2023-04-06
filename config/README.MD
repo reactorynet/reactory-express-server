@@ -9,4 +9,4 @@ These files are used by the dotenv package and the env-cmd package that allows y
 For more information on PM2 go [here](https://pm2.io)
 
 ## Adding New Configuration
-You can use the [addconfig.sh](/bin/addconfig.sh) script to guide you through creating a new configuration file.  The utility will walk you through each configuration setting as well as provide help for each element. It will also allow you to create a new configuration file for a new client.
+You can use the [addconfig.sh](/bin/addconfig.sh) script to guide you through creating a new configuration file.  The utility will walk you through each configuration setting as well as provide help for each element.
