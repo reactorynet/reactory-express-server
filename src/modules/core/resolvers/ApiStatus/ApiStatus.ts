@@ -39,7 +39,13 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise <{ r
   //get a list of all partner / cross partner logins allowed
   const partnerLogins: Reactory.Models.IReactoryClientDocument[] = await systemService.getReactoryClients({ key: { $in: [...login_partner_keys.partner_keys] } }).then();
 
-  let root_partner_memberships = filter(memberships, { clientId: partner._id });
+  let root_partner_memberships: any[] = [];
+  memberships.forEach((membership) => {
+    if(membership.clientId.toString() === partner._id.toString()) {
+      root_partner_memberships.push(membership);
+    }
+  });
+
   context.log(`${user.firstName} has (${root_partner_memberships.length})`, null, 'debug');
 
   root_partner_memberships.forEach((membership) => {
@@ -104,10 +110,50 @@ const DEFAULT_MATERIAL_THEME = {
   },
 }
 
+
+const getActiveTheme = (apiStatus: Reactory.Models.IApiStatus, args: { theme: string, mode: string }, context: Reactory.Server.IReactoryContext) => {
+  const { themes = [], theme = "reactory" } = context.partner;
+
+  let activeTheme: Reactory.UX.IReactoryTheme = null;
+  let $themename = args.theme || theme;
+
+
+  if (themes.length > 0) {
+    activeTheme = themes.find(($theme) => { return $theme.name === $themename });
+  }
+
+  if (!activeTheme) {
+    activeTheme = {
+      type: "material",
+      name: "reactory",
+      assets: [],
+      content: {},
+      defaultThemeMode: 'dark',
+      version: '1.0.0',
+      options: { ...DEFAULT_MATERIAL_THEME }
+    };
+  }
+
+  let $thememode = args.mode || activeTheme?.defaultThemeMode || "dark";
+
+  if (!activeTheme.options) {
+    activeTheme.options = { ...DEFAULT_MATERIAL_THEME }
+  }
+
+  if (activeTheme.modes) {
+    let modeOptions = activeTheme.modes.find((mode) => { return mode.mode === $thememode });
+    if (modeOptions) {
+      activeTheme.options = { ...modeOptions.options }
+    }
+  }
+
+  return activeTheme
+}
+
 @resolver
 class ApiStatus {
 
-  resolver: Reactory.Graph.IResolverStruct
+  resolver: any
 
   @property("ApiStatus", "id")
   id(apiStatus: Reactory.Models.IApiStatus) {
@@ -119,6 +165,49 @@ class ApiStatus {
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
     return systemService.getMenusForClient(context.partner)    
   };
+
+  @property("ApiStatus", "routes")
+  async routes(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.Routing.IReactoryRoute[]> {
+    const { partner, user, hasRole } = context;
+    const { anon = false } = user;
+    const { routes } = apiStatus;
+
+    let $routes: Reactory.Routing.IReactoryRoute[] = [];
+
+    if (isArray(routes) === true) {
+      routes.forEach((route: Reactory.Routing.IReactoryRoute) => {
+        let permitted: boolean = false;
+        if (route.public === true) permitted = true;
+        if (route.public === true && anon === false) {
+          if(route.roles && route.roles.length === 1) {
+            //we don't want to show public routes that 
+            //are only accessible to anon users i.e. login / register
+            //pages.
+            if(route.roles[0] === 'ANON') permitted = false;
+          }
+        }
+        if (route.public === false) {
+          permitted = false; //default to false
+          //if no roles are specified, we assume we don't care about the role, only need them to be authentication
+          if (!route.roles || route.roles.length === 0) permitted = true; 
+          //if anon is true, we deny access as the route is not public
+          if (anon) permitted = false;
+          
+          if (anon == false && route.roles && route.roles.length > 0) {
+            route.roles.forEach((role: string) => {
+              if (hasRole(role, partner._id) === true) {
+                permitted = true;
+                return false;
+              }
+            });
+          }
+        }       
+        if(permitted === true) $routes.push(route);
+      });
+    }
+
+    return $routes;
+  }
 
   @property("ApiStatus", "server")
   async server(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext) {
@@ -142,60 +231,16 @@ class ApiStatus {
 
   @property("ApiStatus", "activeTheme")
   themeOptions(apiStatus: Reactory.Models.IApiStatus, args: { theme: string, mode: string }, context: Reactory.Server.IReactoryContext){    
-    const { themes = [], theme = "reactory" } = context.partner;
-    
-    let activeTheme: Reactory.UX.IReactoryTheme = null;
-    let $themename = args.theme || theme;
-    
-
-    if(themes.length > 0) {
-      activeTheme = themes.find(($theme) => { return $theme.name === $themename });
-    }
-
-    if(!activeTheme) {
-      activeTheme = {
-        type: "material", 
-        name: "reactory",
-        assets: [],
-        content: {},
-        defaultThemeMode: 'dark',
-        version: '1.0.0',
-        options: { ...DEFAULT_MATERIAL_THEME }
-      };
-    }
-
-    let $thememode = args.mode || activeTheme?.defaultThemeMode || "dark";    
-    
-    if(!activeTheme.options) {
-      activeTheme.options = { ...DEFAULT_MATERIAL_THEME }
-    }
-
-    if(activeTheme.modes) {
-      let modeOptions = activeTheme.modes.find((mode) => { return mode.mode === $thememode });      
-      if(modeOptions) {
-        activeTheme.options = { ...modeOptions.options }
-      }
-    }
-
-    return activeTheme
+    return getActiveTheme(apiStatus, args, context);
   }
 
   @property("ApiStatus", "colorSchemes")
   colorSchemes(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext) {
     
-    const { themeOptions } = context.partner;
+    const themeOptions = getActiveTheme(apiStatus, params, context).options;
 
-    let $themeOptions = themeOptions ? { ...themeOptions } : { type: "material", options: { ...DEFAULT_MATERIAL_THEME }, };
-
-    let primary = '#10012b'; // default primary color
-    let secondary = '#430000'; // default secondary color
-
-    if (themeOptions.type === "material" && themeOptions.options) {
-      let mode = $themeOptions?.options?.mode || "dark";
-
-      primary = $themeOptions?.options?.palette?.primary[mode] || primary;
-      secondary = $themeOptions?.options?.palette?.secondary[mode] || secondary;
-    }
+    let primary = themeOptions?.palette?.primary?.main; // default primary color
+    let secondary = themeOptions?.palette?.secondary?.main
 
     return {
          primary: context.partner.colorScheme(primary.replace('#', '')),
@@ -211,7 +256,7 @@ class ApiStatus {
   }
 
   @property("ApiStatus", "loggedIn")
-  async loggedInContext(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.IReactoryLoggedInContext> {
+  async loggedInContext(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.Models.IReactoryLoggedInContext> {
         
     const { roles, alt_roles } = await getRoles(context).then();
 

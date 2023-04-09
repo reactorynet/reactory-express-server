@@ -27,12 +27,13 @@ interface IApplicationCardProps {
   formData: IApplication,
   schema: Reactory.Schema.ISchema,
   uiSchema: Reactory.Schema.IUISchema,
+  idSchema: Reactory.Schema.IDSchema,
   onChange: (formData: IApplication) => void  
 }
 
 const ApplicationCard = (props: IApplicationCardProps) => {
 
-  const { reactory, formData = null, onChange, schema, uiSchema } = props;
+  const { reactory, formData = null, uiSchema, idSchema } = props;
 
   const {
     StaticContent,
@@ -117,7 +118,7 @@ const ApplicationCard = (props: IApplicationCardProps) => {
   };
 
   return (
-    <Card>
+    <Card id={`application_card_${idSchema.$id}_${formData.id}`} key={formData.id}>
       <CardHeader {...headerProps} />
       <CardMedia 
         component="img" 
@@ -126,7 +127,7 @@ const ApplicationCard = (props: IApplicationCardProps) => {
         alt={title}
       />
       <CardContent>        
-        <StaticContent slug={`reactory-application-intro-${title}`} defaultValue={<p>{default_intro}</p>} />
+        <StaticContent slug={`reactory-application-intro-${reactory.utils.slugify(title)}`} defaultValue={<p>{default_intro}</p>} />
       </CardContent>      
       <CardActions>
         <Button size="small" onClick={onLaunchApp}>{launchText}</Button>

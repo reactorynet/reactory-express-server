@@ -65,6 +65,7 @@ const ReactoryClientSchema = new mongoose.Schema<Reactory.Models.IReactoryClient
       args: [
         {},
       ],
+      componentProps: {}
     },
   ],
   auth_config: [
