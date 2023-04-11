@@ -6,6 +6,14 @@ import {
   forgotpasswordroute,  
 } from '@reactory/server-core/data/clientConfigs/helpers/defaultRoutes';
 
+/**
+ * Static Content Mappings
+ */
+const staticContentMappings: Partial<Reactory.Routing.IReactoryRoute>[] = [
+ 
+];
+
+
 const routes: Reactory.Routing.IReactoryRoute[] = [
   {
     ...loginroute,    
@@ -29,16 +37,131 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
         value: {
           type: 'bool',
           authlist: [
-            'local',
-            'microsoft',
-            'google',
-            'facebook',
-            'twitter',
-            'linkedin'
+            'local'            
           ],
         },
       },
     ],
+  },
+  {
+    key: 'about',
+    title: 'About Reactory',
+    path: '/about/*',
+    public: true,
+    exact: true,
+    roles: ['USER', 'ANON'],
+    componentFqn: 'core.StaticContent@1.0.0',
+    args: [
+      {
+        key: 'slug',
+        value: {
+          type: 'string',
+          slug: 'about-reactory-platform',
+        }
+      }
+    ]
+  },
+  {
+    key: 'whats-new',
+    title: 'What\'s new',
+    path: '/whats-new/*',
+    public: true,
+    exact: true,
+    componentFqn: 'core.StaticContent@1.0.0',
+    roles: ['USER'],
+    args: [
+      {
+        key: 'slug',
+        value: {
+          type: 'string',
+          slug: 'whats-new-reactory-platform',
+        }
+      }
+    ]
+  },
+  {
+    key: 'blog',
+    title: 'Blog Path',
+    public: true,
+    exact: false,
+    componentFqn: 'core.StaticContent@1.0.0',
+    path: '/blog/:blog_slug',
+    roles: ['ANON', 'USER'],
+    componentProps: {
+      slugSource: 'route',
+      slugSourceProps: {
+        paramId: 'blog_slug'
+      }
+    },
+    // args: [
+    //   {
+    //     key: 'slugSource',
+    //     value: {
+    //       type: 'string',
+    //       slugSource: 'route',
+    //     }
+    //   },
+    //   {
+    //     key: 'slugSourceProps',
+    //     value: {
+    //       type: 'object',
+    //       slugSourceProps: {
+    //         paramId: 'blog_slug'
+    //       }
+    //     }
+    //   }
+    // ]
+  },
+  {
+    key: 'support-home',
+    title: 'Support Home',
+    path: '/support/',
+    public: true,
+    exact: true,
+    roles: ['USER'],
+    componentFqn: 'core.StaticContent@1.0.0',
+    componentProps: {
+      slug: 'support-home'
+    },
+    // args: [
+    //   {
+    //     key: 'slug',
+    //     value: {
+    //       type: 'string',
+    //       slug: 'support-home',
+    //     }
+    //   }
+    // ]
+  },
+
+  {
+    key: 'reactory-docs-root',
+    title: 'Docs List',
+    path: '/docs/',
+    public: false,
+    exact: true,
+    roles: ['USER'],
+    componentFqn: 'core.StaticContent@1.0.0',
+    componentProps: {
+      slug: 'reactory-docs-root'
+    }
+  },
+
+  {
+    key: 'reactory-docs-slug',
+    title: 'Docs List',
+    path: '/docs/:slug',
+    public: false,
+    exact: false,
+    roles: ['USER'],
+    componentFqn: 'core.StaticContent@1.0.0',
+    componentProps: {
+      slugSource: 'route',
+      slugSourceProps: {
+        paramId: 'slug',
+        slugPrefix: 'reactory-docs-'
+      }
+    }
   },
   logoutroute,
   forgotpasswordroute,
@@ -78,7 +201,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     public: false,
     roles: ['USER'],
     componentFqn: 'core.UserProfile@1.0.0',
-    props: {
+    componentProps: {
       withPeers: true,
       withMemberships: true, 
     },
@@ -190,6 +313,7 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     componentFqn: 'static.ContentList@1.0.0',
 
   },
+
   {
     key: 'graphiql',
     title: 'GraphiQL',
@@ -236,5 +360,13 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     ]
   },
 ]
+
+
+// staticContentMappings.forEach((mapping) => {
+//   routes.push({
+//     ...mapping,
+//     componentFqn: 'core.StaticContent@1.0.0'
+//   });
+// });
 
 export default routes;

@@ -7,6 +7,7 @@ type ReactoryContent {
   topics: [ String ]
   title: String!
   content: String!
+  locale: String
   description: String
   helpTopic: String
   template: Boolean

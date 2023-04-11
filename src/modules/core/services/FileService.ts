@@ -47,6 +47,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     constructor(props: any, context: Reactory.Server.IReactoryContext) {
         this.context = context
     }
+
     getFileSize(file: Reactory.Models.IReactoryFileModel): number {
         let filepath = path.join(APP_DATA_ROOT, file.path, file.filename);
         if (fs.existsSync(filepath) === true) {
@@ -58,6 +59,7 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     getContentBytes(path: string): number {
         throw new Error('Method not implemented.');
     }
+    
     getContentBytesAsString(path: string, encoding: BufferEncoding): string {
         let contentString: string = null;
 

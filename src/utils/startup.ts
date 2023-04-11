@@ -129,9 +129,16 @@ const installComponents = async (componentsArray: any[]) => {
   }
 };
 
+/**
+ * This function is responsible for installing the default clients 
+ * that is configured in src/data/clients.ts which imports the 
+ * src/data/clientConfigs/index.ts file.
+ * @param configs 
+ * @returns 
+ */
 const installClients = async (configs: Reactory.Server.IReactoryClientConfig[]) => {
 
-  const makeUserArrayFromProps = (userItems: Reactory.Models.IUser[], partner: Reactory.Models.IPartner, organization: Reactory.Models.IOrganization, businessUnit: Reactory.Models.IBusinessUnit) => {
+  const makeUserArrayFromProps = (userItems: Reactory.Server.IStaticallyLoadedUser[], partner: Reactory.Models.IPartner, organization?: Reactory.Models.IOrganization, businessUnit?: Reactory.Models.IBusinessUnit) => {
     return userItems.map((usr) => {
       return {
         partner,
@@ -139,7 +146,7 @@ const installClients = async (configs: Reactory.Server.IReactoryClientConfig[]) 
         businessUnit,
         user: { firstName: usr.firstName, lastName: usr.lastName, email: usr.email },
         password: usr.password || 'Password123!',
-        roles: usr.roles,
+        roles: usr.roles || ['USER'],
       };
     });
   };
@@ -280,4 +287,5 @@ const startup = async () => {
     throw startupError;
   }
 };
+
 export default startup;

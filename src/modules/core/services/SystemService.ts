@@ -33,7 +33,7 @@ class SystemService implements Reactory.Service.IReactorySystemService {
     return execml(mutation, variables, {}, this.context.user, this.context.partner);
   }
 
-  async getReactoryClient(id: string | ObjectId, populate?: string[]): Promise<Reactory.Models.IReactoryClientDocument | Reactory.IReactoryClient> {
+  async getReactoryClient(id: string | ObjectId, populate?: string[]): Promise<Reactory.Models.IReactoryClientDocument | Reactory.Models.IReactoryClient> {
     
     let qry = ReactoryClient.findById(id);
     if(populate && populate.length > 0) {

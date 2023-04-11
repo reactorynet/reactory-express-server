@@ -137,14 +137,20 @@ type ClientRoute {
   """
   redirect: String
   """
-  An array of components that should be mounted.  
+  An array of components that should be mounted at this route.  
   
   """
-  component: [ClientComponent]
+  components: [ClientComponent]
   """
   Arguments that can need to be bound to this client component
+  Prefered method is to use the "props" to pass arguments
+  to the component
   """
   args: [ComponentArgs]
+  """
+  Any object props to pass to the component
+  """
+  componentProps: Any
 }
 
 """

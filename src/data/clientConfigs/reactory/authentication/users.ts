@@ -1,7 +1,18 @@
-const users = [
+import Reactory from "@reactory/reactory-core";
+
+const { 
+  REACTORY_APPLICATION_EMAIL = 'reactory@reactory.local', 
+  REACTORY_APPLICATION_PASSWORD = 'reactory-password'
+} = process.env;
+
+const users: Reactory.Server.IStaticallyLoadedUser[] = [
   {
-    email: 'reactory@first.login', roles: ['SYS-ADMIN', 'ADMIN', 'USER', 'DEVELOPER'], firstName: 'First', lastName: 'Login',
-  },
+    email: REACTORY_APPLICATION_EMAIL,
+    roles: ['ADMIN'],
+    firstName: 'Reactory',
+    lastName: 'Admin',
+    password: REACTORY_APPLICATION_PASSWORD,
+  }
 ]
 
 export default users;
