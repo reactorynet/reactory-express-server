@@ -38,7 +38,10 @@ REACT_APP_WEBROOT=${configuration.webroot || '/var/www/reactory'}
 # and then set it here. (You can get a free key for development)
 REACT_APP_FROALA_KEY=${configuration.froala_key || ''}
 # The environment for the client
-NODE_ENV=${configuration.environment || 'development'}
+# NB. this environment must match one of the
+# environments defined in the browserslist key
+# in the package.json file.
+NODE_ENV=${configuration.node_env || 'development'}
 # The babel environment for the client
 BABEL_ENV=${configuration.babel_env || 'development'}
 # The CI environment variable is used to determine if the

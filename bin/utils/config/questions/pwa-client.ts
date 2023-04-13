@@ -343,6 +343,9 @@ export const clientConfigQuestions = (rl: ReadLine, next?: QuestionHandlerRespon
           rl.write(colors.grey(`
             Provide the node environment for your client configuration. This is required. 
             If you don't know what to put here, just hit enter and the default will be used.
+
+            NB. This must match one of the browserslist environments in your package.json, 
+            generally this is development or production.
             `));
 
           return { next: clientConfigQuestions(rl).required.node_env, configuration };
