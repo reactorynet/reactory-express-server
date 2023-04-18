@@ -1,0 +1,9 @@
+export { default as AnonStrategy } from './AnonStrategy';
+export { default as LocalStrategy } from './LocalStrategy';
+export { default as JwtStrategy } from './JWTStrategy';
+export { default as GoogleStrategy } from './GoogleStrategy';
+export { default as FacebookStrategy } from './FacebookStrategy';
+export { default as GithubStrategy } from './GithubStrategy';
+export { default as TwitterStrategy } from './TwitterStrategy';
+export { default as LinkedInStrategy } from './LinkedInStrategy';
+export { default as MicrosoftStrategy } from './MicrosoftStrategy';

@@ -27,7 +27,7 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
     throw new Error('Method not implemented.');
   }
 
-  @roles(['USER'])
+  @roles(['USER', 'ANON'])
   async getContentBySlug(slug: string): Promise<Reactory.Models.IReactoryContent> {
     const result: Reactory.Models.IReactoryContentDocument = await Content.findOne({ slug }).then();
     if (!result) {
@@ -41,6 +41,14 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
 
         if(existsSync(file)){
           const content = Buffer.from(readFileSync(file)).toString();
+          let props: Partial<Reactory.Models.IReactoryContent> = {};
+          if(existsSync(path.join(APP_DATA_ROOT, "content/static-content",`${slug}.${lang.toLowerCase()}.props.json`))){
+            props = JSON.parse(readFileSync(path.join(APP_DATA_ROOT, "content/static-content", `${slug}.${lang.toLowerCase()}.props.json`)).toString());
+          }
+          else if(existsSync(path.join(APP_DATA_ROOT, "content/static-content", `${slug}.props.json`))){
+            props = JSON.parse(readFileSync(path.join(APP_DATA_ROOT, "content/static-content", `${slug}.props.json`)).toString());
+          }
+
           return {
             slug,
             content,            
@@ -49,7 +57,8 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
             createdBy: this.context.user,
             updatedAt: new Date(),
             updatedBy: this.context.user,
-            published: true
+            published: true,            
+            ...props
           }
         }
       }
