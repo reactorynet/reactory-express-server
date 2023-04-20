@@ -1,9 +1,58 @@
-export { default as AnonStrategy } from './AnonStrategy';
-export { default as LocalStrategy } from './LocalStrategy';
-export { default as JwtStrategy } from './JWTStrategy';
-export { default as GoogleStrategy } from './GoogleStrategy';
-export { default as FacebookStrategy } from './FacebookStrategy';
-export { default as GithubStrategy } from './GithubStrategy';
-export { default as TwitterStrategy } from './TwitterStrategy';
-export { default as LinkedInStrategy } from './LinkedInStrategy';
-export { default as MicrosoftStrategy } from './MicrosoftStrategy';
+import { default as AnonymousStrategy } from './AnonStrategy';
+import { 
+  default as LocalStrategy, 
+  useReactoryLocalRoutes,
+} from './LocalStrategy';
+import { default as JwtStrategy } from './JWTStrategy';
+import { default as GoogleStrategy } from './GoogleStrategy';
+import { default as FacebookStrategy } from './FacebookStrategy';
+import { default as GithubStrategy } from './GithubStrategy';
+import { default as TwitterStrategy } from './TwitterStrategy';
+import { default as LinkedInStrategy } from './LinkedInStrategy';
+import { 
+  default as MicrosoftStrategy,
+  useMicrosoftRoutes,
+} from './MicrosoftStrategy';
+
+const PassportProviders: Reactory.Server.ReactoryPassportProviders = [
+  {
+    name: 'anon',
+    strategy: AnonymousStrategy,
+  },
+  {
+    name: 'local',
+    strategy: LocalStrategy,
+    configure: useReactoryLocalRoutes,
+  },
+  {
+    name: 'jwt',
+    strategy: JwtStrategy,
+  },
+  {
+    name: 'google',
+    strategy: GoogleStrategy,
+  },
+  {
+    name: 'facebook',
+    strategy: FacebookStrategy,
+  },
+  {
+    name: 'github',
+    strategy: GithubStrategy,
+  },
+  {
+    name: 'twitter',
+    strategy: TwitterStrategy,
+  },
+  {
+    name: 'linkedin',
+    strategy: LinkedInStrategy,
+  },
+  {
+    name: 'microsoft',
+    strategy: MicrosoftStrategy,
+    configure: useMicrosoftRoutes,
+  }
+];
+
+export default PassportProviders;

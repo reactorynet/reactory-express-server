@@ -1,8 +1,8 @@
 import { Strategy as TwitterStrategy } from 'passport-twitter';
 
 const {
-  TWITTER_CONSUMER_KEY,
-  TWITTER_CONSUMER_SECRET,
+  TWITTER_CONSUMER_KEY = 'TWITTER_CONSUMER_KEY',
+  TWITTER_CONSUMER_SECRET = 'TWITTER_CONSUMER_SECRET',
   TWITTER_CALLBACK_URL = 'http://localhost:3000/auth/twitter/callback',
 } = process.env
 

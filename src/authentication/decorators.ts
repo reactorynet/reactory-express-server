@@ -15,7 +15,6 @@ export function roles(allowedRoles: string[],
   contextKey: string | 'this.context' | 'args.context' = 'this.context') {  
   return (target: any, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>): any => {    
     let original = descriptor.value;
-    if(propertyKey.toString() === "getContentBySlug") debugger;
     logger.debug(`@roles() decorator is being applied to ${propertyKey.toString()}`, { target, propertyKey, descriptor }, 'debug', '@roles()', 'Reactory.Authentication')
     descriptor.value = function( ){
       let passed: boolean;      

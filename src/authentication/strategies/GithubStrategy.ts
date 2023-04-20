@@ -2,8 +2,8 @@ import { Strategy as GitHubStrategy } from 'passport-github';
 import { OAuthProfile, OnDoneCallback } from './helpers';
 
 const {
-  GITHUB_CLIENT_ID,
-  GITHUB_CLIENT_SECRET,
+  GITHUB_CLIENT_ID = 'GITHUB_CLIENT_ID',
+  GITHUB_CLIENT_SECRET = 'GITHUB_CLIENT_SECRET',
   GITHUB_CLIENT_CALLBACK_URL = 'http://localhost:3000/auth/github/callback',
 } = process.env;
 

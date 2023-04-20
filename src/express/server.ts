@@ -268,7 +268,6 @@ Environment Settings:
     });
 
   reactoryExpress.use(i18nextHttp.handle(i18next));
-
   reactoryExpress.use(
     queryRoot,
     passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
@@ -373,7 +372,6 @@ Environment Settings:
   // more useful information about the server environment, configuration
   // output.
   startup().then((startResult: any) => {
-
     AuthConfig.Configure(reactoryExpress);
     reactoryExpress.use(userAccountRouter);
     reactoryExpress.use('/reactory', reactory);

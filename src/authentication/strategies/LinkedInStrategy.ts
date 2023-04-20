@@ -4,8 +4,8 @@ import { Strategy as LinkedInStrategy } from 'passport-linkedin-oauth2';
 import { OnDoneCallback } from './helpers';
 
 const {
-  LINKEDIN_CLIENT_ID,
-  LINKEDIN_CLIENT_SECRET,
+  LINKEDIN_CLIENT_ID = 'LINKEDIN_CLIENT_ID',
+  LINKEDIN_CLIENT_SECRET = 'LINKEDIN_CLIENT_SECRET',
   LINKEDIN_CALLBACK_URL = 'http://localhost:3000/auth/linkedin/callback',
 } = process.env;
 

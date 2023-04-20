@@ -2,8 +2,8 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import Helpers, { OnDoneCallback } from './helpers';
 
 const { 
-  GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET,
+  GOOGLE_CLIENT_ID = 'GOOGLE_CLIENT_ID',
+  GOOGLE_CLIENT_SECRET = 'GOOGLE_CLIENT_SECRET',
   GOOLGE_CALLBACK_URL = 'http://localhost:3000/auth/google/callback',
 } = process.env
 

@@ -1,59 +1,39 @@
 /**
  * Module dependencies.
  */
-import passport from "passport-strategy";
-import util from 'util';
 import logger from '@reactory/server-core/logging';
+import passport, { Strategy, StrategyCreatedStatic } from 'passport';
 
 
-/**
- * Creates an instance of `Strategy`.
- *
- * The anonymous authentication strategy passes authentication without verifying
- * credentials.
- *
- * Applications typically use this as a fallback on endpoints that can respond
- * to both authenticated and unauthenticated requests.  If credentials are not
- * supplied, this stategy passes authentication while leaving `req.user` set to
- * `undefined`, allowing the route to handle unauthenticated requests as
- * desired.
- *
- * Examples:
- *
- *     passport.use(new AnonymousStrategy());
- *
- * @constructor
- * @api public
- */
-function Strategy() {
-  passport.Strategy.call(this);
-  this.name = 'anonymous';
+export interface IAnonUser {
+  id: number;
+  firstName: string;
+  lastName: string;
+  roles: string[];
+  memberships: string[];
+  avatar: string | null;
+  anon: boolean;
+  hasRole: (clientId: string, role: string) => boolean;
 }
 
-/**
- * Inherit from `passport.Strategy`.
- */
-util.inherits(Strategy, passport.Strategy);
+class AnonymousStrategy extends Strategy implements StrategyCreatedStatic {
+  name = 'anonymous';
 
-/**
- * Pass authentication without verifying credentials.
- *
- * @param {Object} req
- * @api protected
- */
-Strategy.prototype.authenticate = function () {
-  logger.debug("Authenticating user as anonymous.");
-  const anonUser: Reactory.Models.IAnonUser = {
-    id: -1,
-    firstName: 'Guest',
-    lastName: 'User',
-    roles: ['ANON'],
-    memberships: [],
-    avatar: null,
-    anon: true,
+  authenticate(): void {
+    logger.debug("Authenticating user as anonymous.");
+    const anonUser: IAnonUser = {
+      id: -1,
+      firstName: 'Guest',
+      lastName: 'User',
+      roles: ['ANON'],
+      memberships: [],
+      avatar: null,
+      anon: true,
+      hasRole: (_: string, role: string ) => { return role === 'ANON'; },
+    };
+    this.success(anonUser);
+  }
+}
 
-  };
-  this.success(anonUser);
-};
-
-export default Strategy;
+const ReactoryAnonStrategy = new AnonymousStrategy();
+export default ReactoryAnonStrategy;

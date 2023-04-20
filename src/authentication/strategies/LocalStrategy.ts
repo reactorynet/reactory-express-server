@@ -2,6 +2,8 @@ import { User } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
 import { BasicVerifyFunctionWithRequest, BasicStrategy } from 'passport-http';
 import Helpers, { OnDoneCallback } from './helpers';
+import { Application } from 'express';
+import passport from 'passport';
 
 
 const authenticate: BasicVerifyFunctionWithRequest = async (req: Express.Request, username: string, password: string, done: OnDoneCallback) => {
@@ -31,5 +33,17 @@ const ReactoryLocalStrategy = new BasicStrategy({
   passReqToCallback: true, 
   realm: process.env.AUTH_REALM || 'Reactory'
 }, authenticate);
+
+export const useReactoryLocalRoutes = (app: Application) => {
+
+  app.post(
+    '/login',
+    passport.authenticate('basic', { session: false }),
+    (req, res) => {
+      res.json({ user: req.user });
+    },
+  );
+
+}
 
 export default ReactoryLocalStrategy;

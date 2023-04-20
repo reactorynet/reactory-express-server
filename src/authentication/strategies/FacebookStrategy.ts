@@ -1,8 +1,8 @@
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 
 const {
-  FACEBOOK_APP_ID,
-  FACEBOOK_APP_SECRET,
+  FACEBOOK_APP_ID = 'FACEBOOK_APP_ID',
+  FACEBOOK_APP_SECRET = 'FACEBOOK_APP_SECRET',
   FACEBOOK_APP_CALLBACK_URL = 'http://localhost:3000/auth/facebook/callback',
 } = process.env;
 

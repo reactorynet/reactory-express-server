@@ -1,9 +1,15 @@
 import { OIDCStrategy } from 'passport-azure-ad';
+import passport from 'passport';
+import { Application, Request, Response } from 'express';
+import Helpers from './helpers';
+import Reactory from '@reactory/reactory-core';
+import { ReactoryClient } from '@reactory/server-core/models';
+import logger from '@reactory/server-core/logging';
 
 const {
-  MICROSOFT_CLIENT_ID,
-  MICROSOFT_CLIENT_SECRET,
-  MICROSOFT_TENANT_ID
+  MICROSOFT_CLIENT_ID = '123456789',
+  MICROSOFT_CLIENT_SECRET = '12312312',
+  MICROSOFT_TENANT_ID = 'asfadsf'
 } = process.env;
 
 const MicrosoftStrategy = new OIDCStrategy({
@@ -37,6 +43,74 @@ const MicrosoftStrategy = new OIDCStrategy({
 
   return done(null, user);
 });
+
+export const useMicrosoftRoutes = (app: Application) => {
+
+  const {
+    OAUTH_REDIRECT_URI = 'http://localhost:3000/auth/microsoft/openid/complete/',
+  } = process.env;
+
+  app.get('/auth/microsoft/openid/start/:clientKey', (req: Reactory.Server.ReactoryExpressRequest, res: Response, next) => {
+    const {
+      clientKey = 'reactory'
+    } = req.params;
+
+    passport.authenticate('azuread-openidconnect', {
+      prompt: 'login',
+      failureRedirect: `/auth/microsoft/openid/failure/${clientKey}`,
+      failureFlash: true,
+      successRedirect: `${process.env.OAUTH_REDIRECT_URI}/${clientKey}`
+    })(req, res, next);
+  }, (req: Reactory.Server.ReactoryExpressRequest, res) => {
+    if (req?.partner?.siteUrl) {
+      res.redirect(`${req.partner.siteUrl}/nologin/?auth_token=${Helpers.jwtTokenForUser(req.user as Reactory.Models.IUser)}`);
+    } else {
+      res.redirect(`/error?message=No siteUrl found for partner ${req.partner?.name || 'No partner'}  `)
+    }
+  });
+
+  /**
+   * Handles the callback from the Microsoft login
+   */
+  app.post(`${OAUTH_REDIRECT_URI}:clientKey`,
+    async (req: Reactory.Server.ReactoryExpressRequest, res, next) => {
+      const {
+        log,
+      } = req.context
+      
+      log(`Response from login.live received for ${req.params.clientKey}`)
+      
+      const reactory_client = await ReactoryClient.findOne({ key: req.params.clientKey }).then();
+      req.partner = reactory_client;
+      passport.authenticate(
+        'azuread-openidconnect',
+        {
+          failureRedirect: `/auth/microsoft/openid/failed?x-client-key=${req.params.clientKey}`,
+          failureFlash: false,
+        },
+      )(req, res, next);
+    },
+    async (req: Reactory.Server.ReactoryExpressRequest, res) => {
+      const {
+        log,
+      } = req.context
+
+      log(`Completing Signing For User`, { user: req.user })
+      const reactory_client: any = await ReactoryClient.findOne({ key: req.params.clientKey }).then();
+      req.partner = reactory_client;
+      const token = Helpers.jwtMake(Helpers.jwtTokenForUser(req.user));
+      res.clearCookie("connect.sid");
+      res.redirect(`${reactory_client.siteUrl}/?auth_token=${token}`);
+    }
+  );
+
+  app.get('/auth/microsoft/openid/failed', async (req, res, next) => {
+    const reactory_client: any = await ReactoryClient.findOne({ key: req.query['x-client-key'] }).then();
+    logger.debug(`Received Failed Microsoft Login for ${req.query['x-client-key']}`);
+    res.clearCookie("connect.sid");
+    res.redirect(`${reactory_client.siteUrl}/error?auth_token=&message=Could not login via MS`);
+  })
+}
 
 export default MicrosoftStrategy;
 
