@@ -93,24 +93,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
         paramId: 'blog_slug'
       }
     },
-    // args: [
-    //   {
-    //     key: 'slugSource',
-    //     value: {
-    //       type: 'string',
-    //       slugSource: 'route',
-    //     }
-    //   },
-    //   {
-    //     key: 'slugSourceProps',
-    //     value: {
-    //       type: 'object',
-    //       slugSourceProps: {
-    //         paramId: 'blog_slug'
-    //       }
-    //     }
-    //   }
-    // ]
   },
   {
     key: 'support-home',
@@ -123,15 +105,6 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     componentProps: {
       slug: 'support-home'
     },
-    // args: [
-    //   {
-    //     key: 'slug',
-    //     value: {
-    //       type: 'string',
-    //       slug: 'support-home',
-    //     }
-    //   }
-    // ]
   },
 
   {
@@ -168,13 +141,25 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
   resetpasswordroute,
   logoutroute,
   {
-    key: 'home',
-    title: 'Home',
+    key: 'home_authenticated',
+    title: 'Home (Authenticated)',
     path: '/',
     public: false,
     exact: true,
     roles: ['USER'],
     componentFqn: 'reactory.MyApplications@1.0.0',
+  },
+  {
+    key: 'home_guest',
+    title: 'Home (Guest)',
+    path: '/',
+    public: true,
+    exact: true,
+    roles: ['ANON'],
+    componentFqn: 'core.StaticContent@1.0.0',
+    componentProps: {
+      slug: 'reactory-home-guest'
+    }
   },  
   {
     key: 'modules',

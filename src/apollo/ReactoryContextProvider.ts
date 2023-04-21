@@ -202,7 +202,10 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
 
   newContext.getService = $getService;  
   
-
+  if($session !== null && $session !== undefined 
+    && $session.req !== null && $session.req !== undefined) {
+    $session.req.context = newContext;
+  }  
   /**
    * We check in the configuration settings if there is a "execution_context_service" key.
    * if the key is found and if it is a string with an @ in the indicator then we can assume

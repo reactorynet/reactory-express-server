@@ -3,21 +3,38 @@ import Reactory from '@reactory/reactory-core';
 const { ObjectId } = mongoose.Schema.Types;
 
 
-const ContentSchema = new mongoose.Schema<Reactory.IReactoryContent>({
+const ContentSchema = new mongoose.Schema<Reactory.Models.IReactoryContent>({
   id: ObjectId,
   slug: String,
-  client: {
+  partner: {
     type: ObjectId,
     ref: 'ReactoryClient'
   },
+  organization: {
+    type: ObjectId,
+    ref: 'Organization'
+  },
+  businessUnit: {
+    type: ObjectId,
+    ref: 'BusinessUnit'
+  },
+  flags: [{ 
+    id: ObjectId,
+    user: {
+      type: ObjectId,
+      ref: 'User'
+    },
+    flagTypes: [ String ],
+    reason: String,
+  }],
   topics: [ String ],
   title: String,
+  roles: [ String ],
   content: String,
   template: Boolean,
   engine: String,
   previewInputForm: String,
   description: String,
-  helpTopic: String,
   version: String,
   createdAt: Date,
   updatedAt: Date,
@@ -30,8 +47,10 @@ const ContentSchema = new mongoose.Schema<Reactory.IReactoryContent>({
     type: ObjectId,
   },
   published: Boolean,
+  commentsAllowed: Boolean,
+  commentRoles: [ String ],
   comments: [ ObjectId ]
 });
 
-const ContentModel = mongoose.model<Reactory.IReactoryContentDocument>('Content', ContentSchema);
+const ContentModel = mongoose.model<Reactory.Models.IReactoryContentDocument>('Content', ContentSchema);
 export default ContentModel;

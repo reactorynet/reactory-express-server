@@ -70,13 +70,11 @@ export const OperationalGroup = OperationalGroupModel;
 
 const models = {
   Cache: CoreModels.Cache,
-  //Assessment,
   Application,
   Board,
   Comment,
   ClientComponent,
   EmailQueue,
-  //LeadershipBrand,
   Menu,
   MenuItem,
   Notification,
@@ -84,8 +82,6 @@ const models = {
   Organigram,
   Project,
   ReactoryClient,
-  //Survey,
-  //Scale,
   Team,
   Theme,
   Template,

@@ -1,19 +1,23 @@
 import logger from '../logging';
 import { CorsOptions, CorsOptionsDelegate } from 'cors'
-import express from 'express';
 import getClient from './utils/ReactoryClientFromRequest';
 import Reactory from '@reactory/reactory-core';
+import EnabledClients from '@reactory/server-core/data/clientConfigs';
 
+
+const {
+  CDN_ROOT
+} = process.env as Reactory.Server.ReactoryEnvironment;
 
 const bypassUri = [
-  '/cdn/content/',
-  '/cdn/plugins/',
-  '/cdn/profiles/',
-  '/cdn/organization/',
-  '/cdn/themes/',
-  '/cdn/ui/',
-  '/favicon.ico',
-  '/auth/microsoft/openid',
+  `${CDN_ROOT}content/`,
+  `${CDN_ROOT}plugins/`,
+  `${CDN_ROOT}profiles/`,
+  `${CDN_ROOT}organization/`,
+  `${CDN_ROOT}themes/`,
+  `${CDN_ROOT}ui/`,
+  `${CDN_ROOT}/favicon.ico`,
+  `${CDN_ROOT}/auth/microsoft/openid`,
 ];
 
 
@@ -22,9 +26,7 @@ type CORSCallback = (error: Error, pass: boolean) => void
 const allowedHeadersString = 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Client-Key,X-Client-Pwd,x-client-key,x-client-pwd,origin,authorization,x-client-name,x-client-version';
 const proxyHeaderString = 'X-Real-IP,X-Forwarded-For,X-Forwarded-Host,X-Forwarded-Proto';
 
-const CorsDelegate: CorsOptionsDelegate = (request: express.Request, callback: (err: Error | null, options: CorsOptions) => void) => {
-
-  // getClient(request).then((partner: Reactory.IReactoryClientDocument) => {
+const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpressRequest, callback: (err: Error | null, options: CorsOptions) => void) => {
 
   const corsOptions: CorsOptions = {
     /**
@@ -36,21 +38,31 @@ const CorsDelegate: CorsOptionsDelegate = (request: express.Request, callback: (
      * for all configured Reactory Clients
      */
     origin: (origin: string, callback: CORSCallback) => {
+      let whitelist: string[] = [];
 
-      // logger.debug(`
-      // Validatinging CORS:
-      //   ORIGIN => ${origin}
-      //   PARTNER => ${partner ? partner.key : 'NO PARTNER'}`);
-
-      callback(null, true);
-
-      /*
-      if (whitelist.indexOf(origin) !== -1) {
-        callback(null, true)
-      } else {
-        callback(new Error('Not allowed by CORS'))
+      if (bypassUri.some((uri) => request.url.startsWith(uri))) {
+        callback(null, true);
+        return;
       }
-      */
+
+      if (request?.partner) {
+        whitelist = request.partner.whitelist;
+      }
+
+      if(EnabledClients && EnabledClients.length > 0) {
+        EnabledClients.forEach((client) => {
+          whitelist = [...whitelist, ...client.whitelist];
+        });
+      }
+      
+      if(whitelist.length > 0) {
+        callback(null, true);
+        return;
+      } else {
+        callback(new Error('Not allowed by CORS'), false);
+        return;
+      }
+      
     },
     /**
        *

@@ -325,7 +325,7 @@ async setPeersForUser (user: Reactory.IUserDocument, peers: any, organization: R
   }
 
 
-  static reactory: Reactory.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition = {
     id: 'core.UserService@1.0.0',
     description: 'The core default user service',
     service: (props, context) => {

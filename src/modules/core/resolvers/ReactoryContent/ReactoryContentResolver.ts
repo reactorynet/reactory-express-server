@@ -7,7 +7,7 @@ class ReactoryContentResolver {
 
   resolver: any
 
-  @roles(["USER"], 'args.context')
+  @roles(["USER", "ANON"], 'args.context')
   @query("ReactoryGetContentBySlug")
   async getContentBySlug(parent: unknown, args: { slug: string }, context: Reactory.Server.IReactoryContext) {
     const { slug } = args;

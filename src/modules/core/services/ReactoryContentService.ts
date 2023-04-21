@@ -16,6 +16,7 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
   props: Reactory.Service.IReactoryServiceProps;
   context: Reactory.Server.IReactoryContext
   fileService: Reactory.Service.IReactoryFileService;
+  userService: Reactory.Service.IReactoryUserService;
 
   constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.props = props;
@@ -27,7 +28,7 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
     throw new Error('Method not implemented.');
   }
 
-  @roles(['USER'])
+  @roles(['USER', 'ANON'])
   async getContentBySlug(slug: string): Promise<Reactory.Models.IReactoryContent> {
     const result: Reactory.Models.IReactoryContentDocument = await Content.findOne({ slug }).then();
     if (!result) {
@@ -41,15 +42,31 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
 
         if(existsSync(file)){
           const content = Buffer.from(readFileSync(file)).toString();
+          let props: Partial<Reactory.Models.IReactoryContent> = {};
+          if(existsSync(path.join(APP_DATA_ROOT, "content/static-content",`${slug}.${lang.toLowerCase()}.props.json`))){
+            props = JSON.parse(readFileSync(path.join(APP_DATA_ROOT, "content/static-content", `${slug}.${lang.toLowerCase()}.props.json`)).toString());
+          }
+          else if(existsSync(path.join(APP_DATA_ROOT, "content/static-content", `${slug}.props.json`))){
+            props = JSON.parse(readFileSync(path.join(APP_DATA_ROOT, "content/static-content", `${slug}.props.json`)).toString());
+          }
+
+          let systemUser = await this.userService.findUserWithEmail(this.context.partner.email)
+          if(props.createdBy && (props.createdBy as Reactory.Models.IUser).email) {
+            const user = await this.userService.findUserWithEmail((props.createdBy as Reactory.Models.IUser).email);
+            if(user) {
+              systemUser = user;
+            }
+          }
           return {
             slug,
             content,            
             title: slug,          
             createdAt: new Date(),
-            createdBy: this.context.user,
+            createdBy: systemUser,
             updatedAt: new Date(),
-            updatedBy: this.context.user,
-            published: true
+            updatedBy: systemUser,
+            published: true,            
+            ...props
           }
         }
       }
@@ -175,6 +192,10 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
     this.fileService = fileService;
   }
 
+  setUserService(userService: Reactory.Service.IReactoryUserService) {
+    this.userService = userService;
+  }
+
   static reactory: Reactory.Service.IReactoryServiceDefinition = {
     id: "core.ReactoryContentService@1.0.0",
     name: "Support Service",
@@ -184,7 +205,10 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
       context: Reactory.Server.IReactoryContext) => {
       return new ReactoryContentService(props, context);
     },
-    dependencies: [{ id: 'core.ReactoryFileService@1.0.0', alias: 'fileService'}],
+    dependencies: [
+      { id: 'core.ReactoryFileService@1.0.0', alias: 'fileService'},
+      { id: 'core.UserService@1.0.0', alias: 'userService'},
+    ],
     serviceType: 'data'
   };
 
