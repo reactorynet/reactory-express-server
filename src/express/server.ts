@@ -37,21 +37,17 @@ import directiveProviders from '@reactory/server-core/models/graphql/directives'
 import AuthConfig from '@reactory/server-core/authentication';
 import workflow from '@reactory/server-core/workflow';
 import pdf from '@reactory/server-core/pdf';
-import { ExcelRouter } from '@reactory/server-core/excel';
 import amq from '@reactory/server-core/amq';
-// import bots from './bot/server';
 import startup from '@reactory/server-core/utils/startup';
 import { User } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
 import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContextProvider';
+import AuthHelper from '@reactory/server-core/authentication/strategies/helpers';
 // @ts-ignore
-import Reactory from '@reactory/reactory-core';
 import resolveUrl from '@reactory/server-core/utils/url/resolve';
-import Modules from '@reactory/server-modules/index';
 import colors from 'colors/safe';
 import http from 'http';
 import { GraphQLSchema } from 'graphql';
-import { getModuleDefinitions } from '@reactory/server-modules/helpers/moduleImportFactory';
 import { getNamesSpaces as getLanguageNameSpaces } from '@reactory/server-core/express/i18n';
 
 
@@ -398,7 +394,7 @@ Environment Settings:
         logger.info(colors.green(`✅ Running a GraphQL API server at ${graphql_api_root}`));
         if (NODE_ENV === 'development' && DEVELOPER_ID) {
           User.find({ email: DEVELOPER_ID }).then((user_result) => {
-            const auth_token = AuthConfig.jwtTokenForUser(user_result, { exp: moment().add(1, 'hour').unix() })
+            const auth_token = AuthHelper.jwtTokenForUser(user_result[0], { exp: moment().add(1, 'hour').unix() })
             logger.debug(`Developer id ${DEVELOPER_ID} access graphiql docs ${resolveUrl(API_URI_ROOT, `cdn/graphiql/index.html?auth_token=${auth_token}`)}`)
           });
 
