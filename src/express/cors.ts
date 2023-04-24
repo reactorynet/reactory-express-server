@@ -6,7 +6,8 @@ import EnabledClients from '@reactory/server-core/data/clientConfigs';
 
 
 const {
-  CDN_ROOT
+  CDN_ROOT,
+  API_ROOT
 } = process.env as Reactory.Server.ReactoryEnvironment;
 
 const bypassUri = [
@@ -18,6 +19,7 @@ const bypassUri = [
   `${CDN_ROOT}ui/`,
   `${CDN_ROOT}/favicon.ico`,
   `${CDN_ROOT}/auth/microsoft/openid`,
+  API_ROOT
 ];
 
 
@@ -40,7 +42,7 @@ const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpr
     origin: (origin: string, callback: CORSCallback) => {
       let whitelist: string[] = [];
 
-      if (bypassUri.some((uri) => request.url.startsWith(uri))) {
+      if (bypassUri.some((uri) => request.url.indexOf(uri) > -1 )) {
         callback(null, true);
         return;
       }

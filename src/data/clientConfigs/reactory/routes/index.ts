@@ -185,11 +185,22 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     path: '/profile',
     public: false,
     roles: ['USER'],
-    componentFqn: 'core.UserProfile@1.0.0',
+    // componentFqn: 'core.UserProfile@1.0.0',
+    // componentProps: {
+    //   withPeers: true,
+    //   withMemberships: true, 
+    // },
+    componentFqn: 'core.ReactoryUserProfile@1.0.0',
     componentProps: {
-      withPeers: true,
-      withMemberships: true, 
-    },
+      components: [
+        {
+          componentFqn: 'core.ReactoryUserProfileGeneral@1.0.0',
+          componentProps: {
+            
+          }
+        }
+      ]
+    }
   },
 
   {
