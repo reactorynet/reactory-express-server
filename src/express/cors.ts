@@ -40,6 +40,11 @@ const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpr
      * for all configured Reactory Clients
      */
     origin: (origin: string, callback: CORSCallback) => {
+      if(!origin) {
+        callback(null, true);
+        return;
+      }
+
       let whitelist: string[] = [];
 
       if (bypassUri.some((uri) => request.url.indexOf(uri) > -1 )) {
@@ -56,9 +61,14 @@ const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpr
           whitelist = [...whitelist, ...client.whitelist];
         });
       }
-      
+
       if(whitelist.length > 0) {
-        callback(null, true);
+        if (whitelist.indexOf(origin) !== -1) {
+          callback(null, true);
+        } else {          
+          logger.warn(`Origin ${origin} not allowed by CORS`);
+          callback(new Error('Not allowed by CORS'), false);
+        }
         return;
       } else {
         callback(new Error('Not allowed by CORS'), false);
@@ -89,8 +99,6 @@ const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpr
   };
 
   callback(null, corsOptions);
-  // })
-
 }
 
 
