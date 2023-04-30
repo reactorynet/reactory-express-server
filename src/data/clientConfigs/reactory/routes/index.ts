@@ -190,15 +190,12 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     //   withPeers: true,
     //   withMemberships: true, 
     // },
-    componentFqn: 'core.ReactoryUserProfile@1.0.0',
+    componentFqn: 'core.UserProfile@1.0.0',
     componentProps: {
-      components: [
-        {
-          componentFqn: 'core.ReactoryUserProfileGeneral@1.0.0',
-          componentProps: {
-            
-          }
-        }
+      withPeers: true,
+      withMemberships: true,
+      withOrganigram: true,
+      components: [ 
       ]
     }
   },

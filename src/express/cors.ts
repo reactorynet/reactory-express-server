@@ -56,6 +56,10 @@ const CorsDelegate: CorsOptionsDelegate = (request: Reactory.Server.ReactoryExpr
         whitelist = request.partner.whitelist;
       }
 
+      /**
+       * Check the client configurations for any whitelisted origins
+       * and add them to the whitelist
+       */
       if(EnabledClients && EnabledClients.length > 0) {
         EnabledClients.forEach((client) => {
           whitelist = [...whitelist, ...client.whitelist];
