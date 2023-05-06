@@ -318,6 +318,12 @@ extend type Mutation {
   This may be to provide context specific to a membership.
   """
   ReactoryCoreSetActiveMembership(membership_id: String!): UserMembership
+  """
+  # Remove User Membership
+  Used this mutation to remove a user membership.
+  Returns a CoreSimpleResponse type.
+  """
+  ReactoryCoreRemoveUserMembership(user_id: String!, id: String!): CoreSimpleResponse
 }
 
 extend type Subscription {

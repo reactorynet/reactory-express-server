@@ -316,6 +316,16 @@ const routes: Reactory.Routing.IReactoryRoute[] = [
     roles: ['ADMIN'],
     componentFqn: 'core.ReactoryGraphiQLExplorer@1.0.0'
   },
+
+  {
+    key: 'organizations',
+    title: 'Organizations List',
+    path: '/organizations/',
+    exact: true,
+    public: true,
+    roles: ['ADMIN'],
+    componentFqn: 'core.ReactoryOrganizationSelector@1.0.0'
+  },
   
   {
     key: 'general-support',

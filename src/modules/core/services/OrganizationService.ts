@@ -33,15 +33,13 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     let $business_unit: Reactory.Models.IBusinessUnitDocument = null;
     if (typeof search === "string") {
       if (trim(search).length > 0) { 
-        
         if(ObjectId.isValid(search) === false) {
           let count = await BusinessUnit.count({ organization: new ObjectId(organization_id), name: search.trim() }).then()
           if(count === 0) return null;
           else {
             let units = await BusinessUnit.find({ organization: new ObjectId(organization_id), name: search.trim() }).then()
             $business_unit = units[0];
-          }
-          
+          }  
         }
       }
     } else {
@@ -236,11 +234,8 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 
   async getOrganizationsForLoggedInUser(search: string, sort: string, direction: string = 'asc'): Promise<Reactory.Service.OrganizationsForUser> {
-
     const { user, partner } = this.context;
     const sortBy = sort || 'name';
-
-    debugger
     
     if (user.hasAnyRole(partner._id) === false) return [];
 

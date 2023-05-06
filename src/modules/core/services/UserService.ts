@@ -1,5 +1,5 @@
 import Reactory from "@reactory/reactory-core";
-import { ObjectId } from "bson";
+import { ObjectId } from "mongodb";
 import Organigram from "@reactory/server-core/models/schema/Organigram";
 import Demographic from '@reactory/server-modules/core/models/demographics/Demographic';
 import { BusinessUnit, Organization, Region, Team, User, UserDemographic } from '@reactory/server-core/models';
@@ -7,6 +7,7 @@ import ApiError, { RecordNotFoundError } from "@reactory/server-core/exceptions"
 import { trim, filter, find, isNil } from 'lodash';
 import { createUserForOrganization } from "@reactory/server-core/application/admin/User";
 import crypto from 'crypto';
+import { roles } from "@reactory/server-core/authentication/decorators";
 interface PeersState {
   [key: string]: Reactory.Models.IOrganigramDocument
 }
@@ -58,7 +59,7 @@ class UserService implements Reactory.Service.IReactoryUserService {
       organization: new ObjectId(organization_id),
     };
 
-    const organigram: Reactory.IOrganigramDocument = await Organigram.findOne(query).then();
+    const organigram: Reactory.Models.IOrganigramDocument = await Organigram.findOne(query).then();
 
 
     if (!this.peerState[key]) {
@@ -75,7 +76,12 @@ class UserService implements Reactory.Service.IReactoryUserService {
  * @param { Array<*>} peers
  * @param { Organization } organization
  */
-async setPeersForUser (user: Reactory.IUserDocument, peers: any, organization: Reactory.IOrganizationDocument,allowEdit: boolean = true, confirmedAt: Date = new Date()): Promise<Reactory.IOrganigramDocument> { // eslint-disable-line max-len
+async setPeersForUser (
+  user: Reactory.Models.IUserDocument, 
+  peers: any, 
+  organization: Reactory.Models.IOrganizationDocument,
+  allowEdit: boolean = true, 
+  confirmedAt: Date = new Date()): Promise<Reactory.Models.IOrganigramDocument> { // eslint-disable-line max-len
   return Organigram.findOne({
     user: user._id,
     organization: organization._id,
@@ -102,7 +108,7 @@ async setPeersForUser (user: Reactory.IUserDocument, peers: any, organization: R
 
   async setUserDemographics(userId: string, organisationId: string, membershipId?:
     string, dob?: Date, businessUnit?: string, gender?: string, operationalGroup?: string,
-    position?: string, race?: string, region?: string, team?: string): Promise<Reactory.IUserDemographicDocument> {
+    position?: string, race?: string, region?: string, team?: string): Promise<Reactory.Models.IUserDemographicDocument> {
     
     const context = this.context;        
     context.log(`Update Demographics start`, {
@@ -142,7 +148,7 @@ async setPeersForUser (user: Reactory.IUserDocument, peers: any, organization: R
     if (user.memberships === null || user.memberships === undefined) user.memberships = [];
 
 
-    let $business_unit: Reactory.IBusinessUnitDocument = null;
+    let $business_unit: Reactory.Models.IBusinessUnitDocument = null;
 
     //make sure it is a string and has a length - process the business unit
     if (trim(businessUnit).length > 0) {
@@ -151,7 +157,7 @@ async setPeersForUser (user: Reactory.IUserDocument, peers: any, organization: R
         $business_unit = await BusinessUnit.findById(businessUnit).then();
       } 
     }
-    let $membership: Reactory.IMembership;
+    let $membership: Reactory.Models.IMembershipDocument;
 
     //check if we have a role within the org
     if ($business_unit) {          
@@ -288,33 +294,67 @@ async setPeersForUser (user: Reactory.IUserDocument, peers: any, organization: R
    * @param userInput 
    * @param organization 
    */
-  createUser(userInput: Reactory.Models.IUser, organization?: Reactory.Models.IOrganization): Promise<Reactory.Models.IUserDocument> {
+  async createUser(userInput: Reactory.Models.IUserCreateParams, organization?: Reactory.Models.IOrganizationDocument): Promise<Reactory.Models.IUserDocument> {
 
-    return createUserForOrganization(userInput, 
+    const result = await createUserForOrganization(userInput, 
       crypto.randomBytes(16).toString('hex'), 
       organization, 
       ["USER"], 
       "LOCAL", 
-      this.context.partner);
+      this.context.partner,
+      null);
+
+    if(result && result.user) {
+      return result.user;
+    }
   }
 
-  updateUser(userInput: Reactory.IUser): Promise<Reactory.IUserDocument> {
+  updateUser(userInput: Reactory.Models.IUser): Promise<Reactory.Models.IUserDocument> {
     throw new Error("Method not implemented.");
   }
 
-  async findUserWithEmail(email: string): Promise<Reactory.IUserDocument> {
+  async findUserWithEmail(email: string): Promise<Reactory.Models.IUserDocument> {
     return User.findOne({ email });
   }
 
-  async findUserById(id: string | ObjectId): Promise<Reactory.IUserDocument> {
-    return User.findById(id);
+  async findUserById(id: string | ObjectId): Promise<Reactory.Models.IUserDocument> {
+    return User.findById(new ObjectId(id));
   }
 
-  onStartup(): Promise<any> {
+  async onStartup(): Promise<any> {
     this.context.log(`Reactory Core User Service: ${this.context.colors.green('STARTUP OKAY')} ✅`)
-    return Promise.resolve();
+    return Promise.resolve(true);
   }
 
+  @roles(["ADMIN"])
+  async removeUserMembership(
+    userId: string | ObjectId, 
+    membershipId: string | ObjectId): Promise<Reactory.Models.CoreSimpleResponse> {
+      try {
+        if (!userId || !membershipId) {
+          throw new ApiError("Invalid user or membership id");
+        }
+
+        const user: Reactory.Models.IUserDocument = await User.findById(userId);
+        if (!user) {
+          throw new ApiError("User not found");
+        }
+
+        user.memberships.remove(membershipId);
+        await user.save();
+
+        return {
+          success: true,
+          message: "Membership removed"
+        }
+      } catch (err) {
+        return {
+          success: false,
+          message: err.message
+        }
+      } 
+      
+    }
 
   getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;

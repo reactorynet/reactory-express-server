@@ -1,8 +1,8 @@
 
-directive @deprecated(
-  reason: String = "No longer supported",
-  additional: String = "This item has been deprecated. No additional information is available."
-) on FIELD_DEFINITION | ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | ENUM_VALUE
+# directive @deprecated(
+#   reason: String = "No longer supported",
+#   additional: String = "This item has been deprecated. No additional information is available."
+# ) on FIELD_DEFINITION | ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | ENUM_VALUE
 
 directive @auth(roles: [String] = ["ANON"]) on OBJECT | FIELD_DEFINITION
 

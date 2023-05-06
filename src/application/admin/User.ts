@@ -61,7 +61,7 @@ export const createUserForOrganization = async (user: Reactory.Models.IUserCreat
     roles: string[] = [], 
     provider: string = 'LOCAL', 
     partner: Reactory.Models.IReactoryClientDocument, 
-    businessUnit: Reactory.Models.IBusinessUnit) => { // eslint-disable-line max-len
+    businessUnit: Reactory.Models.IBusinessUnit): Promise<CreateUserResult> => { // eslint-disable-line max-len
 
   const result = new CreateUserResult();
   try {

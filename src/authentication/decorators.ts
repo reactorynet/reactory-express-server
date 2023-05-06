@@ -36,8 +36,7 @@ export function roles(allowedRoles: string[],
       }
 
       passed = false;
-      if(context === null || context === undefined) throw new ApiError(`Could not extract the context for the execution to determine roles`, { allowedRoles, contextKey })
-      if (propertyKey.toString() === "getContentBySlug") debugger;
+      if(context === null || context === undefined) throw new ApiError(`Could not extract the context for the execution to determine roles`, { allowedRoles, contextKey })      
       context.log(`${propertyKey.toString()} is executing`, { target, propertyKey, descriptor }, 'debug', '@roles()')
       if (context.user === null) throw new UserNotFoundException('no user available on context', {});
       allowedRoles.forEach((role) => {

@@ -91,14 +91,6 @@ input UpdateOrganizationInput {
   legacyId: Int
 }
 
-input MigrationOrganizationOptions {
-  migrateBrands: Boolean
-  migrateEmployees: Boolean
-  migrateSurveys: Boolean
-  migrateCommunications: Boolean
-  dataPath: String
-}
-
 type UpdateResponse {
   id: ObjID
   errors: [String]
@@ -136,9 +128,22 @@ type PagedOrganizations {
 }
 
 extend type Query {  
-  allOrganizations(legacy: Boolean): [Organization]
-  organizationsForUser(id: String!): [Organization]
-  organizationWithId(id: String!): Organization
+  """
+  Deprecated query will be removed in the future, use the CoreOrganizations instead
+  """
+  allOrganizations(legacy: Boolean): [Organization]@deprecated(reason: "Use CoreOrganizations instead")
+
+  """
+  Deprecated query will be removed in the future, use the CoreOrganizations instead
+  """
+  organizationsForUser(id: String!): [Organization]@deprecated(reason: "Use CoreOrganizations instead")
+  """
+  Deprecated query will be removed in the future, use the CoreOrganization instead
+  """
+  organizationWithId(id: String!): Organization @deprecated(reason: "Use CoreOrganization instead")
+  """
+  Returns an organization with the given id
+  """
   CoreOrganization(id: String!): Organization
   """
   List of organizations that the logged in user has access to in an alphabetical order
@@ -148,6 +153,9 @@ extend type Query {
   Paged list of organizations that the logged in user has access to in an alphabetical order
   """
   CorePagedOrganizations(search: String, paging: PagingRequest): PagedOrganizations
+  """
+  List of organizations that the logged in user has access to in an alphabetical order
+  """
   CoreUsersForOrganization(id: String!, searchString: String, paging: PagingRequest): PagedUserResults
   GetOrganisationLookupData(orgId: String!): OrganizationLookupData
 }
@@ -155,7 +163,5 @@ extend type Query {
 extend type Mutation {
   createOrganization(input: CreateOrganizationInput!): Organization
   updateOrganization(id: String!, input: UpdateOrganizationInput!): Organization
-  
-
   SetOrganisationLookupData(lookupData: OrganizationLookupDataInput!): OrganizationLookupData
 }

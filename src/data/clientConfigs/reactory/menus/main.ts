@@ -72,6 +72,13 @@ const MainMenu: Reactory.UX.IReactoryMenuConfig = {
     },
     {
       ordinal: 6,
+      title: 'reactory:reactory.menu.organizations',
+      link: '/organizations/',
+      icon: 'business',
+      roles: ['USER'],
+    },
+    {
+      ordinal: 7,
       title: 'reactory:reactory.menu.forms', 
       link: '/forms/', 
       icon: 'code', 

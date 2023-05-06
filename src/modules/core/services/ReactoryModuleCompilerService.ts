@@ -113,6 +113,15 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
   async compileModule(module: Reactory.Forms.IReactoryFormModule): Promise<Reactory.Forms.IReactoryFormResource> {
     
     const that = this;
+
+    const runtimePath = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__');
+    const libPath = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__', 'lib');
+    const srcPath = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__', 'src');
+
+    if (!fs.existsSync(runtimePath)) fs.mkdirSync(runtimePath, {  recursive: true });
+    if (!fs.existsSync(libPath)) fs.mkdirSync(libPath, { recursive: true } );
+    if (!fs.existsSync(srcPath)) fs.mkdirSync(srcPath, { recursive: true });
+    
     const sourceFile: string = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__', `src/source_${module.id}.${module.fileType}`);
     const compiledFile: string = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__', `lib/${module.id}.min.js`);
     const newSource: string = path.join(process.env.APP_DATA_ROOT, 'plugins', '__runtime__', `src/tmp_${module.id}.${module.fileType}`);    

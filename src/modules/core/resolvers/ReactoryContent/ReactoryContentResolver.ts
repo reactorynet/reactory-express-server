@@ -41,8 +41,8 @@ class ReactoryContentResolver {
 
   @roles(["USER"], 'args.context')
   @mutation("ReactoryCreateContent")
-  async createContent(parent: unknown, args: { content: Reactory.Service.ReactoryContentInput }, context: Reactory.Server.IReactoryContext) {
-    const { content } = args;
+  async createContent(parent: unknown, args: { createInput: { content: Reactory.Service.ReactoryContentInput }}, context: Reactory.Server.IReactoryContext) {
+    const { content } = args.createInput;
     const contentService: Reactory.Service.IReactoryContentService = context.getService("core.ReactoryContentService@1.0.0") as Reactory.Service.IReactoryContentService;
     return contentService.createContent(content);
   }

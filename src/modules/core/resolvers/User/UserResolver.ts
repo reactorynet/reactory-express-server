@@ -115,7 +115,7 @@ const userResolvers = {
       return Organigram.findOne({
         user: usr._id,
         organization: usr.memberships[0].organizationId,
-      });
+      }).exec();
     },
     memberships(
       usr: { memberships: Reactory.IMembership[] },
@@ -925,9 +925,9 @@ const userResolvers = {
     },
     ReactoryCoreSetRolesForMembership: async (
       parent: any,
-      args: Reactory.ReactorySetRolesArgs,
+      args: Reactory.Models.ReactorySetRolesArgs,
       context: Reactory.Server.IReactoryContext
-    ): Promise<Reactory.CoreSimpleResponse> => {
+    ): Promise<Reactory.Models.CoreSimpleResponse> => {
       const { partner } = context;
       /**
        * Check if the the user executing this has the ADMIN role for the application
@@ -954,7 +954,7 @@ const userResolvers = {
       }
 
       const membership = (
-        user.memberships as Mongoose.Types.DocumentArray<Reactory.IMembershipDocument>
+        user.memberships as Mongoose.Types.DocumentArray<Reactory.Models.IMembershipDocument>
       ).id(id);
       if (membership) {
         membership.roles = roles;
@@ -970,9 +970,9 @@ const userResolvers = {
     },
     ReactoryCoreCreateUserMembership: async (
       parent: any,
-      args: Reactory.ReactoryCreateMembershipArgs,
+      args: Reactory.Models.ReactoryCreateMembershipArgs,
       context: Reactory.Server.IReactoryContext
-    ): Promise<Reactory.IMembership> => {
+    ): Promise<Reactory.Models.IMembership> => {
       const { partner } = context;
       /**
        * Check if the the user executing this has the ADMIN role for the application
@@ -989,7 +989,7 @@ const userResolvers = {
       if (userToUpdate) {
         let existing = lodash.filter(
           userToUpdate.memberships,
-          (membership: Reactory.IMembershipDocument) => {
+          (membership: Reactory.Models.IMembershipDocument) => {
             let org_match = false;
             let bu_match = false;
 
@@ -1029,11 +1029,7 @@ const userResolvers = {
               ? new ObjectId(args.businessUnit)
               : null,
             roles: args.roles,
-            enabled: true,
-            authProvider: "",
-            providerId: "",
-            lastLogin: null,
-            user: userToUpdate,
+            enabled: true
           });
 
           await userToUpdate.save().then();

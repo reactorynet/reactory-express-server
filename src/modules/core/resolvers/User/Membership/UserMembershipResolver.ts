@@ -39,6 +39,16 @@ class UserMembershipResolver {
     return organizationService.findBusinessUnit(obj.organizationId, obj.businessUnitId);
   }
 
+  @property(UserMembership, "organization")
+  async organization(obj: Reactory.Models.TMembership,
+    params: any,
+    context: Reactory.Server.IReactoryContext): Promise<Reactory.Models.IOrganizationDocument> {
+    if (obj.organizationId === null || obj.organizationId === undefined) return null;
+  
+    const organizationService: Reactory.Service.IReactoryOrganizationService = context.getService('core.OrganizationService@1.0.0') as Reactory.Service.IReactoryOrganizationService;
+    return organizationService.get(obj.organizationId);
+  }
+
   @property(UserMembership, "lastLogin")
   lastLogin(obj: Reactory.Models.TMembership): Date {
     const { lastLogin, user } = obj;
@@ -54,6 +64,14 @@ class UserMembershipResolver {
     const { user } = obj;
     if (user && user.createdAt) return user.createdAt;
     return null;
+  }
+
+  @roles(["ADMIN"])
+  @mutation("ReactoryCoreRemoveUserMembership")
+  removeUserMembership(obj: any, params: { user_id: string, id: string }, context: Reactory.Server.IReactoryContext): Promise<Reactory.Models.CoreSimpleResponse> {
+    const { id, user_id } = params;
+    const userService: Reactory.Service.IReactoryUserService = context.getService("core.UserService@1.0.0") as Reactory.Service.IReactoryUserService;
+    return userService.removeUserMembership(user_id, id);
   }
   
 }
