@@ -20,6 +20,7 @@ const typeDefs: string[] = [];
   'System/File',
   'System/UX',
   'System/Region',
+  'System/Natural',
   'Forms/Form',
   'User/User',
   'User/Team',

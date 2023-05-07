@@ -1,0 +1,33 @@
+
+"""
+NaturalTokenizedInput is a type that represents a natural language input that has been tokenized.
+"""
+type NaturalTokenizedInput {
+  lang: String
+  input: String
+  tokens: [String]
+  tokenizer: String
+}
+
+type NaturalSentiment {
+  lang: String
+  input: String
+  score: Float
+  comparative: Float
+  vote: String
+}
+
+extend type Query {
+  """
+  Returns a list of all available tokenizers.
+  """
+  NaturalTokenizers: [String]
+  """
+  NaturalTokenize returns a NaturalTokenizedInput object that contains the tokens of the input string.
+  """
+  NaturalTokenize(input: String!, lang: String, tokenizer: String): NaturalTokenizedInput
+  """
+  NaturalSentiment returns a NaturalSentiment object that contains the sentiment score of the input string.
+  """
+  NaturalSentiment(input: String!, lang: String): NaturalSentiment
+}

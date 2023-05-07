@@ -30,10 +30,15 @@ modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
   try {
     if (installedModule && installedModule.services) {
       if (installedModule.services) {
-        installedModule.services.forEach((serviceDefinition: Reactory.Service.IReactoryServiceDefinition) => {
-          logger.debug(`🔀 Loading Service ${serviceDefinition.name}: ${installedModule.name}`);
-          services.push(serviceDefinition);
-          serviceRegister[serviceDefinition.id] = serviceDefinition
+        logger.debug(`🟢 Module ${installedModule.name} has ${installedModule.services.length} services available`)
+        installedModule.services.forEach((serviceDefinition: Reactory.Service.IReactoryServiceDefinition | any) => {
+          let $service = serviceDefinition;
+          if (typeof $service === 'function' && $service?.prototype?.reactory) {
+            $service = ($service as any).prototype.reactory;
+          }
+          logger.debug(`  🔀 ${$service.id} [${$service.serviceType}]`);
+          services.push($service);
+          serviceRegister[$service.id] = $service
         });
 
       }
