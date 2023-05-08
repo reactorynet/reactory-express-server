@@ -6,8 +6,10 @@ import logger from 'logging';
 
 interface INaturalResolverParams {
   input: string
+  compare?: string,
   lang?: string
   tokenizer?: string,
+  options?: Partial<Reactory.Service.PackageOptions>
 }
 
 const tokenizers: string[] = [
@@ -49,17 +51,16 @@ class NaturalResolver {
       alias: "naturalService",
     }
   ])
-  async NaturalTokenize(obj: any,
+  NaturalTokenize(obj: any,
     params: INaturalResolverParams, 
     context: Reactory.Server.IReactoryContext,
     info: any,    
-    ): Promise<Reactory.Models.INaturalTokenizedInput> {
+    ): Reactory.Models.INaturalTokenizedInput {
       const { lang } = params;
       const { i18n, getService } = context;
-      const naturalService = getService<Reactory.Service.IReactoryNLPService>("core.ReactoryNLPService@1.0.0");
+      const naturalService = getService<Reactory.Service.INaturalService>("core.ReactoryNLPService@1.0.0");
       logger.debug('NaturalTokenize', params, lang || i18n.language);    
       return naturalService.tokenize(params.input, lang || i18n.language)
-  
     }
 
   @roles(["USER"], 'args.context')
@@ -77,9 +78,23 @@ class NaturalResolver {
     ): Promise<Reactory.Models.INaturalSentiment> {
     const { lang } = params;
     const { i18n, getService } = context;
-    const naturalService = getService<Reactory.Service.IReactoryNLPService>("core.ReactoryNLPService@1.0.0");
+    const naturalService = getService<Reactory.Service.INaturalService>("core.ReactoryNLPService@1.0.0");
     logger.debug('NaturalTokenize', params, lang || i18n.language);
     return naturalService.sentiment(params.input, lang || i18n.language)
+  }
+
+  @roles(["USER"], 'args.context')
+  @query("NaturalPackagedOuput")
+  async NaturalPackagedOuput(obj: any,
+    params: INaturalResolverParams,
+    context: Reactory.Server.IReactoryContext,
+    info: any,    
+    ): Promise<Reactory.Service.INaturalPackageForInput> {
+    const { lang, input, compare, options } = params;
+    const { i18n, getService } = context;
+    const naturalService = getService<Reactory.Service.INaturalService>("core.ReactoryNLPService@1.0.0");
+
+    return naturalService.packageForInput(input, compare, lang || i18n.language, options)
   }
 }
 

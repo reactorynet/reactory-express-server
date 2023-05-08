@@ -9,12 +9,57 @@ type NaturalTokenizedInput {
   tokenizer: String
 }
 
+
+enum NaturalSentimentVote {
+  positive
+  negative
+  neutral
+  very_postivity
+  very_negative
+}
+
 type NaturalSentiment {
   lang: String
   input: String
   score: Float
-  comparative: Float
   vote: String
+}
+
+type NaturalSpellCheckCorrection {
+  word: String
+  suggestions: [String]
+}
+
+type NaturalSpellCheckResult {
+  lang: String
+  input: String
+  correct: Boolean
+  corrections: [NaturalSpellCheckCorrection]
+}
+
+type NaturalPackageOutput {
+  tokens: NaturalTokenizedInput
+  stem: String
+  ngrams: [String]
+  jaroWinklerDistance: Float
+  diceCoefficient: Float
+  overlapCoefficient: Float
+  levenshteinDistance: Int
+  posTags: [String]
+  sentiment: NaturalSentiment
+  spellcheck: NaturalSpellCheckResult
+  synonyms: [String]
+  antonyms: [String]
+  hypernyms: [String]
+  hyponyms: [String]
+  meronyms: [String]
+  holonyms: [String]
+  truncatedText: String
+  normalizedText: String
+  equals: Boolean
+  randomString: String
+  hash: String
+  frequencyDistribution: Any
 }
 
 extend type Query {
@@ -30,4 +75,8 @@ extend type Query {
   NaturalSentiment returns a NaturalSentiment object that contains the sentiment score of the input string.
   """
   NaturalSentiment(input: String!, lang: String): NaturalSentiment
+  """
+  Completes a full package output for an input string and a comparator string.
+  """
+  NaturalPackagedOuput(input: String!, compare: String, lang: String): NaturalPackageOutput
 }
