@@ -23,6 +23,7 @@ import { ReactoryClientResolver, ClientComponentResolver, ClientRouteResolver } 
 import ReactoryTranslationResolver from './System/ReactoryTranslation';
 import ReactoryForm from './ReactoryForm';
 import ReactoryMenuResolver from './Menu/MenuResolver';
+import NaturalResolver from './System/NaturalResolver';
 
 import { mergeGraphResolver } from '@reactory/server-core/utils';
 
@@ -51,5 +52,6 @@ export default mergeGraphResolver([
   ReactoryForm,
   Organization,
   ReactoryTranslationResolver,
-  ReactoryMenuResolver
+  ReactoryMenuResolver,
+  NaturalResolver
 ]);

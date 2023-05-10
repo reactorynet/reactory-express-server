@@ -18,22 +18,18 @@ const serviceRegister: Reactory.Service.IReactoryServiceRegister = {}
  * We load the enabled module service details into a map and array.
  */
 modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
-  /**
-      "id": "0c22819f-bca0-4947-b662-9190063c8277",
-      "name": "Lasec",
-      "key": "lasec",
-      "fqn": "lasec.LasecCRM@1.0.0",
-      "moduleEntry": "./lasec-crm/index.js",
-      "license": "commercial",
-      "shop": "https://reactory.net/shop/modules/0c22819f-bca0-4947-b662-9190063c8277/"
-   */
   try {
     if (installedModule && installedModule.services) {
       if (installedModule.services) {
-        installedModule.services.forEach((serviceDefinition: Reactory.Service.IReactoryServiceDefinition) => {
-          logger.debug(`🔀 Loading Service ${serviceDefinition.name}: ${installedModule.name}`);
-          services.push(serviceDefinition);
-          serviceRegister[serviceDefinition.id] = serviceDefinition
+        logger.debug(`🟢 Module ${installedModule.name} has ${installedModule.services.length} services available`)
+        installedModule.services.forEach((serviceDefinition: Reactory.Service.IReactoryServiceDefinition | any) => {
+          let $service = serviceDefinition;
+          if (typeof $service === 'function' && $service?.prototype?.reactory) {
+            $service = ($service as any).prototype.reactory;
+          }
+          logger.debug(`  🔀 ${$service.id} [${$service.serviceType}]`);
+          services.push($service);
+          serviceRegister[$service.id] = $service
         });
 
       }

@@ -17,6 +17,7 @@ import ReactoryFormService from './FormService';
 import ReactoryModuleCompilerService from './ReactoryModuleCompilerService';
 import ReactoryTranslationService from "./TranslationService";
 import ReactoryContentService from './ReactoryContentService';
+import ReactoryNLPService from './ReactoryNLPService';
 //custom services to be expressed here
 
 
@@ -38,7 +39,8 @@ const services = [
   ReactoryFormService.reactory,
   ReactoryModuleCompilerService.reactory,
   ReactoryTranslationService.reactory,
-  ReactoryContentService.reactory
+  ReactoryContentService.reactory,
+  ReactoryNLPService
 ]
 
 export default services;

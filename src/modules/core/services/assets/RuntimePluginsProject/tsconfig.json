@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+      "module": "ESNext",
+      "noImplicitAny": false,
+      "removeComments": true,
+      "moduleResolution": "node",
+      "strictNullChecks": true,
+      "allowSyntheticDefaultImports": true,
+      "allowJs": true,  
+      "target":"ES2017",
+      "jsx": "preserve",
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
+      "sourceMap": true,
+      "skipDefaultLibCheck": true,      
+      "skipLibCheck": true,
+      "strict": false,
+      "lib": ["es6", "dom"],
+      "types": ["webpack-env"],
+      "baseUrl": ".",
+      "noUnusedLocals": false,
+      "noUnusedParameters": false,      
+      "watch": true,
+      "paths": {
+        "*": ["*"],        
+        "test/*": ["test/*"]
+      },
+      "pretty": true,
+      "typeRoots": ["./node_modules/@types"]      
+  }, 
+  "compileOnSave": true,  
+  "exclude": [ "node_modules", "dist", "build", "config", "scripts" ],
+  "include": [
+    "*",
+    "*.d.ts"
+  ]
+}
