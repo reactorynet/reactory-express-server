@@ -1,6 +1,6 @@
 import Reactory from '@reactory/reactory-core'
 import ApiError, { BadRequestError, InsufficientPermissions, RecordNotFoundError } from '@reactory/server-core/exceptions';
-import nodeFetch, { Response } from 'node-fetch';
+import nodeFetch, { Response, RequestInit } from 'node-fetch';
 
 /**
 
@@ -73,7 +73,7 @@ export default class FetchService implements Reactory.Service.IFetchService {
     if(args.headers) headers = { ...args.headers };
     if(!headers.accept) headers.accept = 'application/json';
 
-    return this.fetch(url, { ...args, method: 'POST', headers }, authenticate, `application/json; charset=${charset}`);
+    return this.fetch<T>(url, { ...args, method: 'POST', headers }, authenticate, `application/json; charset=${charset}`) as T;
   }
 
   putJSON<T>(url: string, args?: any, authenticate?: boolean, charset?: string): Promise<T> {
@@ -81,7 +81,7 @@ export default class FetchService implements Reactory.Service.IFetchService {
     if (args.headers) headers = { ...args.headers };
     if (!headers.accept) headers.accept = 'application/json';
 
-    return this.fetch(url, { ...args, method: 'PUT', headers }, authenticate, `application/json; charset=${charset}`);
+    return this.fetch<T>(url, { ...args, method: 'PUT', headers }, authenticate, `application/json; charset=${charset}`) as T;
   }
 
   deleteJSON<T>(url: string, args?: any, authenticate?: boolean, charset?: string): Promise<T> {
@@ -89,7 +89,7 @@ export default class FetchService implements Reactory.Service.IFetchService {
     if (args.headers) headers = { ...args.headers };
     if (!headers.accept) headers.accept = 'application/json';
 
-    return this.fetch(url, { ...args, method: 'DELETE', headers }, authenticate, `application/json; charset=${charset}`);
+    return this.fetch<T>(url, { ...args, method: 'DELETE', headers }, authenticate, `application/json; charset=${charset}`) as T;
   }
 
   setAuthenticationProvider(provider: Reactory.Service.IFetchAuthenticationProvder): void {
@@ -101,10 +101,10 @@ export default class FetchService implements Reactory.Service.IFetchService {
     let headers: any = {};
     if (args.headers) headers = { ...args.headers };
     if (!headers.accept) headers.accept = 'application/json';
-    return this.fetch(url, { ...args, method: 'GET', headers }, authenticate, `application/json; charset=${charset}`);
+    return this.fetch<T>(url, { ...args, method: 'GET', headers }, authenticate, `application/json; charset=${charset}`) as T;
   }
 
-  async fetch(url = '', args = {}, authenticate = true, contentType: string = 'application/json; charset=UTF-8', defaultHeaders: boolean = true): Promise<any> {
+  async fetch(url = '', args: Partial<RequestInit> = {}, authenticate = true, contentType: string = 'application/json; charset=UTF-8', defaultHeaders: boolean = true): Promise<Response> {
 
     if (!this.context) throw new ApiError('context property cannot be null FATAL ERROR');
 
@@ -212,7 +212,7 @@ FETCH ARGS:
 
         //different header type
 
-        return response;
+        return response as Response;
 
       } catch (jsonError) {
         const msg = `

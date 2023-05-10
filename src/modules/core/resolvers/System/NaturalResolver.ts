@@ -96,6 +96,8 @@ class NaturalResolver {
 
     return naturalService.packageForInput(input, compare, lang || i18n.language, options)
   }
+
+  
 }
 
 export default NaturalResolver;

@@ -1,6 +1,13 @@
 import Reactory from "@reactory/reactory-core";
+import path from 'path';
+import fs from 'fs';
+import fetch from 'node-fetch';
+import tar from 'tar';
 import { service } from "@reactory/server-core/application/decorators/service";
-import Natural from 'natural';
+import Natural, { WordNet } from 'natural';
+import logger from "@reactory/server-core/logging";
+import { Writable } from "stream";
+import database from "database";
 
 class FrequencyDistribution implements Reactory.Service.FrequencyDistribution {
   private frequencyMap: { [token: string]: number } = {};
@@ -67,6 +74,9 @@ class FrequencyDistribution implements Reactory.Service.FrequencyDistribution {
   name: "Natural Language Processing Service",
   description: "Natural Language Processing Service for reactory, uses the Natural library for nodejs",
   serviceType: "data",
+  dependencies: [
+    { id: "core.FetchService@1.0.0", alias: "fetchService" },
+  ]
 })
 class ReactoryNLPService implements Reactory.Service.INaturalService {
 
@@ -77,6 +87,8 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
   context: Reactory.Server.IReactoryContext;
   props: Reactory.Service.IReactoryServiceProps;
   packageOptions: Reactory.Service.PackageOptions = {};
+
+  fetchService: Reactory.Service.IFetchService;
 
   constructor(props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) {
     this.context = context;
@@ -95,15 +107,41 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
   }
 
   stem(word: string, lang?: string): string {
-    throw new Error("Method not implemented.");
-  }
-  ngrams(text: string, n: number): string[] {
-    throw new Error("Method not implemented.");
+    //throw new Error("Method not implemented.");
+    const { tokens } = this.tokenize(word, lang);
+    if(tokens.length > 1) {
+      throw new Error(`Cannot stem more than one word at a time. Received: ${word}`);
+    }
+
+    if(tokens.length === 0) {
+      return '';
+    }
+
+    return Natural.PorterStemmer.stem(tokens[0]);
+
   }
 
-  tag(text: string, lang?: string): string[] {
-    throw new Error("Method not implemented.");
+  ngrams(text: string, n: number): string[][] {
+    const { NGrams } = Natural;
+    if(n < 1) {
+      throw new Error(`Cannot generate ngrams for n < 1. Received: ${n}`);
+    }
+
+    const { tokens } = this.tokenize(text);
+    
+    return NGrams.multrigrams(tokens, n)
+    
   }
+  
+  tag(text: string, lang?: string): Natural.Sentence {
+    const { tokens } = this.tokenize(text);
+    const { BrillPOSTagger } = Natural; 
+    const lexicon = new Natural.Lexicon(lang || 'en', 'noun', 'Noun');
+    const defaultCategory = 'N';
+    const ruleSet = new Natural.RuleSet('en');
+    return new BrillPOSTagger(lexicon, ruleSet).tag(tokens);
+  }
+  
   spellcheck(text: string, lang?: string, customDictionary?: string[]): Reactory.Models.INaturalSpellCheckResult {
     const spellChecker = new Natural.Spellcheck(customDictionary);
     
@@ -126,36 +164,66 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
       correct: corrections.length === 0
     }
   }
+
   getSynonyms(word: string, pos?: string, lang?: string): Promise<string[]> {
-    throw new Error("Method not implemented.");
+    return new Promise((resolve, reject) => {
+      const wordNet = new WordNet();
+      wordNet.lookupSynonyms(word, (synset: any) => {
+        if (synset) {
+          const synonyms = synset.words;
+          resolve(synonyms);
+        } else {
+          reject(`No synonyms found for ${word}`);
+        }
+      });
+    });
   }
+
   getAntonyms(word: string, pos?: string, lang?: string): Promise<string[]> {
-    throw new Error("Method not implemented.");
+    return new Promise<string[]>((resolve, reject) => {
+      const wordNet = new WordNet();
+      wordNet.getAntonyms(word, pos, (err, antonyms) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(antonyms);
+        }
+      }, lang);
+    });
   }
+
   getHypernyms(word: string, pos?: string, lang?: string): Promise<string[]> {
     throw new Error("Method not implemented.");
   }
+
   getHyponyms(word: string, pos?: string, lang?: string): Promise<string[]> {
     throw new Error("Method not implemented.");
   }
+
   getMeronyms(word: string, pos?: string, lang?: string): Promise<string[]> {
     throw new Error("Method not implemented.");
   }
+
   getHolonyms(word: string, pos?: string, lang?: string): Promise<string[]> {
     throw new Error("Method not implemented.");
   }
+
   truncate(text: string, length?: number, ellipsis?: string): string {
     return text.substring(0, length) + (ellipsis || '...');
   }
+
   normalize(text: string): string {
     return Natural.PorterStemmer.stem(text);
   }
+
   equals(s1: string, s2: string): boolean {
     return s1 === s2;
   }
+
   randomString(length?: number, charset?: string): string {
     throw new Error("Method not implemented.");
   }
+
   hash(text: string, algorithm?: string, encoding?: string): string {
     throw new Error("Method not implemented.");
   }
@@ -249,12 +317,11 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
     return Promise.resolve(0);
   }
 
-  tokenize(input: string, lang: string, tokenizer: string = 'WordTokenizer'): Reactory.Models.INaturalTokenizedInput {
+  tokenize(input: string, tokenizer: string = 'WordTokenizer'): Reactory.Models.INaturalTokenizedInput {
     const Tokenizer = Natural[tokenizer] as () => Natural.Tokenizer;
     const $tokenizer = new Tokenizer();
     return {
       input,
-      lang,
       tokenizer: 'WordTokenizer',
       tokens: $tokenizer.tokenize(input),
     }
@@ -266,7 +333,7 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
     var analyzer = new Analyzer("English", stemmer, "afinn");
     const tokens = this.tokenize(input, lang);
     const score = analyzer.getSentiment(tokens.tokens);
-    let vote: Reactory.Models.NaturalSentimentVote = "neutral"
+    let vote: string = "neutral"
     if (score >= 0.2) { vote = "positive" }
     if (score >= 0.7) { vote = "very_positive" }
     if (score <= -0.1) { vote = "negative" }
@@ -344,6 +411,39 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
    * @returns 
    */
   onStartup(): Promise<any> {
+    //check if directory for Wordnet exists
+    const wordnetDir = path.join(process.env.APP_DATA_ROOT, 'wordnet');
+    if(!fs.existsSync(wordnetDir)) {
+      fs.mkdirSync(wordnetDir);
+    }
+
+    if(!fs.existsSync(path.join(wordnetDir, 'dict/index.sense'))) {
+
+      async function downloadAndExtractWordNet(databaseUrl: string, filePath: string): Promise<void> {
+        
+        const response = await fetch(databaseUrl, { method: 'GET' });
+        if (!response.ok) {
+          logger.warn(`Could not download the word net database from ${databaseUrl}`);
+        }
+
+        // Pipe the response into a tar extractor and save it to the specified file path
+        const extractStream: Writable = tar.extract({ cwd: path.dirname(filePath) });
+        await new Promise((resolve, reject) => {
+          response.body.pipe(extractStream)
+            .on('error', reject)
+            .on('finish', resolve);
+        });
+
+        logger.info('WordNet database downloaded and extracted to:', filePath);
+      }
+
+      try {
+        downloadAndExtractWordNet('https://wordnetcode.princeton.edu/wn3.1.dict.tar.gz', path.join(wordnetDir, 'dict'));
+      } catch (error) {
+        logger.error('Could not download and extract wordnet database - Wordnet Features will not work unless dictionary is installed', error);        
+      }      
+    }
+
     return Promise.resolve(true);
   }
 
@@ -353,6 +453,10 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
   setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
     this.context = executionContext;
     return true;
+  }
+
+  setFetchService(fetchService: Reactory.Service.IFetchService)  {
+    this.fetchService = fetchService;   
   }
 
   

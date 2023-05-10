@@ -18,15 +18,6 @@ const serviceRegister: Reactory.Service.IReactoryServiceRegister = {}
  * We load the enabled module service details into a map and array.
  */
 modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
-  /**
-      "id": "0c22819f-bca0-4947-b662-9190063c8277",
-      "name": "Lasec",
-      "key": "lasec",
-      "fqn": "lasec.LasecCRM@1.0.0",
-      "moduleEntry": "./lasec-crm/index.js",
-      "license": "commercial",
-      "shop": "https://reactory.net/shop/modules/0c22819f-bca0-4947-b662-9190063c8277/"
-   */
   try {
     if (installedModule && installedModule.services) {
       if (installedModule.services) {

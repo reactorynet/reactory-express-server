@@ -19,9 +19,22 @@ enum NaturalSentimentVote {
 }
 
 type NaturalSentiment {
+  """
+  The language detected in the content.
+  - currently returns language of user context.
+  """
   lang: String
+  """
+  The input string that was provided
+  """
   input: String
+  """
+  The sentiment score 
+  """
   score: Float
+  """
+  sentiment vote
+  """
   vote: String
 }
 
@@ -75,6 +88,14 @@ extend type Query {
   NaturalSentiment returns a NaturalSentiment object that contains the sentiment score of the input string.
   """
   NaturalSentiment(input: String!, lang: String): NaturalSentiment
+  """
+  NaturalStem returns a string that contains the stem of the input string.
+  """
+  NaturalStem(input: String!, lang: String): String
+  """
+  NaturalNGrams returns a list of ngrams of the input string.
+  """
+  NaturalNGrams(input: String!, lang: String, n: Int): [String]
   """
   Completes a full package output for an input string and a comparator string.
   """
