@@ -3,19 +3,28 @@ import Reactory from '@reactory/reactory-core';
 
 const { ObjectId } = mongoose.Schema.Types;
 
-const meta = new mongoose.Schema<Reactory.IRecordMeta>({
+/**
+ * Meta data entry for a organization record.
+ */
+const meta = new mongoose.Schema<Reactory.Models.IRecordMeta<unknown>>({
   source: {},
   owner: String, // indicates what system owns this record
   reference: String, // a lookup string to use for the remote system
-  sync: String,
   lastSync: Date,
+  nextSync: Date,
+  expires: Date,
   mustSync: {
     type: Boolean,
     default: true,
   },
+  provider: String,
+  options: {},
 });
 
-const OrganizationSchema = new mongoose.Schema<Reactory.IOrganization>({
+/**
+ * Organization schema
+ */
+const OrganizationSchema = new mongoose.Schema<Reactory.Models.IOrganization>({
   id: ObjectId,
   code: String,
   name: String,
@@ -65,11 +74,11 @@ OrganizationSchema.methods.clientActive = function clientActive(clientKey: strin
   let keyFound = null;
   if (this.clients) {
     // first check denied list
-    keyFound = Array.find(this.clients.denied, (key) => { return key === clientKey; });
+    keyFound = Array.find(this.clients.denied, (key: string) => { return key === clientKey; });
     if (keyFound) return false;
 
     // then check allowed list
-    keyFound = Array.find(this.clients.active, (key) => { return key === clientKey; });
+    keyFound = Array.find(this.clients.active, (key: string) => { return key === clientKey; });
     if (keyFound) return true;
 
     return false;
@@ -82,13 +91,13 @@ OrganizationSchema.statics.findByForeignId = async function findByForeignId(id, 
   return await this.findOne({ 'meta.code': id, 'meta.owner': owner }).then();
 };
 
-OrganizationSchema.methods.getSetting = function getSettings(name) {
-  let _setting = null;
+OrganizationSchema.methods.getSetting = function getSettings(name: string): Reactory.Models.IOrganizationSetting {
+  let _setting: Reactory.Models.IOrganizationSetting = null;
 
   if (!this.settings) return null;
   if (this.settings.length === 0) return null;
   if (this.settings && this.settings.length > 0) {
-    this.settings.forEach((setting) => {
+    this.settings.forEach((setting: Reactory.Models.IOrganizationSetting) => {
       if (setting.name === name && _setting === null) {
         _setting = setting;
       }
@@ -98,13 +107,13 @@ OrganizationSchema.methods.getSetting = function getSettings(name) {
   return _setting;
 };
 
-OrganizationSchema.methods.setSetting = function getSettings(name, data, componentFqn) {
-  let _idx = null;
+OrganizationSchema.methods.setSetting = function getSettings(name: string, data: any, componentFqn: string) {
+  let _idx: number = null;
 
   if (!this.settings) this.settings = [];
   if (this.settings.length === 0) return null;
   if (this.settings && this.settings.length > 0) {
-    this.settings.forEach((setting, idx) => {
+    this.settings.forEach((setting: { name: string; }, idx: any) => {
       if (setting.name === name) {
         _idx = idx;
       }
@@ -123,5 +132,5 @@ OrganizationSchema.methods.setSetting = function getSettings(name, data, compone
 };
 
 
-const OrganizationModel = mongoose.model<Reactory.IOrganizationDocument>('Organization', OrganizationSchema);
+const OrganizationModel = mongoose.model<Reactory.Models.IOrganizationDocument>('Organization', OrganizationSchema);
 export default OrganizationModel;

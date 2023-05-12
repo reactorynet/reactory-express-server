@@ -32,6 +32,7 @@ import RegionModel from './schema/Region';
 import OperationalGroupModel from './schema/OperationalGroup';
 
 import CoreModels from '../modules/core/models';
+import Reactory from '@reactory/reactory-core';
 
 //export const Assessment = AssessmentModel;
 export const Application = ApplicationModel;
@@ -89,5 +90,25 @@ const models = {
   Task,
   UserDemographic,
 };
+
+
+const modelRegistry: Reactory.IReactoryComponentDefinition<unknown>[] = []
+const replacedModels: Reactory.IReactoryComponentDefinition<unknown>[] = []
+
+const registerModel = (model: Reactory.IReactoryComponentDefinition<unknown>, overwrite: boolean = false) => {
+  if(modelRegistry.find(m => m.name === model.name)) {
+    if(overwrite) {
+      modelRegistry.splice(modelRegistry.findIndex(m => m.name === model.name), 1);
+      modelRegistry.push(model);
+    } else {
+      throw new Error(`Model ${model.name} already exists. Use overwrite flag to overwrite.`)
+    }
+  }
+  modelRegistry.push(model)
+}
+
+function getModel<T>(specs: Partial<Reactory.IReactoryComponentDefinition<T>>) {
+  
+}
 
 export default models;
