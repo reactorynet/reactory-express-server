@@ -1,14 +1,13 @@
 import mongoose from 'mongoose';
-import { ObjectId, ObjectID } from 'mongodb';
-// import { Organization } from '@reactory/server-core/models';
-import { Reactory } from '@reactory/server-core/types/reactory'
+import { ObjectId } from 'mongodb';
+import Reactory from '@reactory/reactory-core';
 
-const Region = new mongoose.Schema<Reactory.IRegion>({
+const Region = new mongoose.Schema<Reactory.Models.IRegion>({
   title: String,
   key: {
     type: String,
     default: ()=>{
-      let that: Reactory.IRegionDocument = this;
+      let that: Reactory.Models.IRegionDocument = this;
       if(that !==null && that !== undefined) {              
         let default_key = `${that.key || `${that.title.toLowerCase()}::${that.populated('organization') || that.organization}`}`;
         return default_key;            
@@ -79,6 +78,6 @@ Region.statics.AddRegion = async (organization: string | ObjectId, title: string
 };
 
 
-const RegionModel = mongoose.model<Reactory.IRegionDocument>('Region', Region);
+const RegionModel = mongoose.model<Reactory.Models.IRegionDocument>('Region', Region);
 
 export default RegionModel;

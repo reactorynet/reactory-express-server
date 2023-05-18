@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import mongoose, { Mongoose } from 'mongoose';
+import mongoose from 'mongoose';
 import * as mongodb from 'mongodb';
 import crypto from 'crypto';
 import * as lodash from 'lodash';
@@ -7,7 +7,8 @@ import * as lodash from 'lodash';
 import logger from '@reactory/server-core/logging';
 import Reactory from '@reactory/reactory-core';
 
-const ObjectIdFunc = mongodb.ObjectID;
+const ObjectIdFunc = mongodb.ObjectId;
+type OID = typeof ObjectIdFunc;
 const { ObjectId } = mongoose.Schema.Types;
 const { isArray, find, filter } = lodash;
 
@@ -131,12 +132,12 @@ const UserSchema = new mongoose.Schema({
   meta,
 });
 
-UserSchema.methods.setPassword = function setPassword(password) {
+UserSchema.methods.setPassword = function setPassword(password: string) {
   this.salt = crypto.randomBytes(16).toString('hex');
   this.password = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
 };
 
-UserSchema.methods.validatePassword = function validatePassword(password) {
+UserSchema.methods.validatePassword = function validatePassword(password: string) {
   return this.password === crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
 };
 
@@ -147,7 +148,7 @@ UserSchema.methods.fullName = function fullName(email = false) {
 /**
  * Extension Method on Model to check for a particular role / claim
  */
-UserSchema.methods.hasRole = function hasRole(clientId: string | mongodb.ObjectID, role = 'USER', organizationId: string | mongodb.ObjectID = null, businessUnitId: string | mongodb.ObjectID = null) {
+UserSchema.methods.hasRole = function hasRole(clientId: string | OID, role = 'USER', organizationId: string | OID = null, businessUnitId: string | OID = null) {
   if (this.memberships.length === 0) return false;
 
   let matches = [];
@@ -188,15 +189,13 @@ UserSchema.methods.hasRole = function hasRole(clientId: string | mongodb.ObjectI
   }
 
   if (isArray(matches) === true && matches.length > 0) {
-    logger.debug(`Matched ${matches.length} memberships for user ${this.email}`);
-
     const matched = lodash.filter(
       matches,
       membership => isArray(membership.roles) === true
         && lodash.intersection(membership.roles, [role]).length > 0,
     );
     if (isArray(matched) === true && matched.length >= 1) return true;
-    if (lodash.isObject(matched) === true && isArray(matched.roles) === true) {
+    if (lodash.isObject(matched) === true && isArray((matched as any).roles) === true) {
       return true;
     }
   }
@@ -204,7 +203,10 @@ UserSchema.methods.hasRole = function hasRole(clientId: string | mongodb.ObjectI
   return false;
 };
 
-UserSchema.methods.hasAnyRole = function hasAnyRole(clientId: string | mongodb.ObjectID, organizationId: string | mongodb.ObjectID, businessUnitId: string | mongodb.ObjectID) {
+UserSchema.methods.hasAnyRole = function hasAnyRole(
+  clientId: string | mongodb.ObjectId, 
+  organizationId: string | mongodb.ObjectId, 
+  businessUnitId: string | mongodb.ObjectId) {
   
   if (this.memberships.length === 0) return false;
 
@@ -251,16 +253,16 @@ UserSchema.methods.hasAnyRole = function hasAnyRole(clientId: string | mongodb.O
 
 
 // eslint-disable-next-line max-len
-UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId): Promise<Reactory.IMembership[]> {
+UserSchema.methods.addRole = async function addRole(clientId, role, organizationId, businessUnitId): Promise<Reactory.Models.IMembership[]> {
   logger.info(`Adding user membership ${clientId} ${role} ${organizationId} ${businessUnitId}`);
   // const matches = [];
-  const $model: Reactory.IUserDocument = this as Reactory.IUserDocument;
+  const $model: Reactory.Models.IUserDocument = this as Reactory.Models.IUserDocument;
   let dirty = false;
 
   if (ObjectIdFunc.isValid(clientId) === false) return [];
 
   if ($model.memberships === null || $model.memberships === undefined) {
-    $model.memberships = [];
+    $model.memberships = new mongoose.Types.Array<Reactory.Models.IMembershipDocument>();
   }
 
   if ($model.memberships.length === 0) {

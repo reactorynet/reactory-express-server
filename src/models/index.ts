@@ -1,42 +1,31 @@
 
 import './plugins';
-import ApplicationModel from './schema/Application';
-import EmailQueueModel from './schema/EmailQueue';
-//import LeadershipBrandModel from '@reactory/server-modules/mores/models/LeadershipBrand';
-//import AssessmentModel from '@reactory/server-modules/mores/models/Assessment';
-//import SurveyModel, { EVENTS_TO_TRACK } from '@reactory/server-modules/mores/models/Survey';
-import NotificationModel from './schema/Notification';
-import OrganizationModel from './schema/Organization';
-import BusinessUnitModel from './schema/BusinessUnit';
-import OrganigramModel from './schema/Organigram';
-import MenuModel, { MenuItemModel } from './schema/Menu';
-import ClientComponentModel from './schema/ClientComponent';
-import ReactoryClientModel from './schema/ReactoryClient';
-//import ScaleModel from '../modules/mores/models/Scale';
-import TemplateModel from './schema/Template';
-import TeamModel from './schema/Team';
-import ReactoryUserModel from './schema/User';
-import TaskModel from './schema/Task';
-import ThemeModel from './schema/Theme';
-import ProjectModel from './schema/Project';
-import BoardModel from './schema/ProjectBoard';
-import CommentModel from './schema/Comment';
-
-//Christian
-import UserDemographicsModel from './schema/UserDemographics';
-
-// DREW
-import ContentModel from './schema/Content';
-import PersonalDemographicModel from './schema/PersonalDemographic';
-import RegionModel from './schema/Region';
-import OperationalGroupModel from './schema/OperationalGroup';
-
+import ApplicationModel from '@reactory/server-modules/core/models/Application';
+import EmailQueueModel from '@reactory/server-modules/core/models/EmailQueue';
+import NotificationModel from '@reactory/server-modules/core/models/Notification';
+import OrganizationModel from '@reactory/server-modules/core/models/Organization';
+import BusinessUnitModel from '@reactory/server-modules/core/models/BusinessUnit';
+import OrganigramModel from '@reactory/server-modules/core/models/Organigram';
+import MenuModel, { MenuItemModel } from '@reactory/server-modules/core/models/Menu';
+import ClientComponentModel from '@reactory/server-modules/core/models/ClientComponent';
+import ReactoryClientModel from '@reactory/server-modules/core/models/ReactoryClient';
+import TemplateModel from '@reactory/server-modules/core/models/Template';
+import TeamModel from '@reactory/server-modules/core/models/Team';
+import ReactoryUserModel from '@reactory/server-modules/core/models/User';
+import TaskModel from '@reactory/server-modules/core/models/Task';
+import ThemeModel from '@reactory/server-modules/core/models/Theme';
+import ProjectModel from '@reactory/server-modules/core/models/Project';
+import BoardModel from '@reactory/server-modules/core/models/ProjectBoard';
+import CommentModel from '@reactory/server-modules/core/models/Comment';
+import UserDemographicsModel from '@reactory/server-modules/core/models/UserDemographics';
+import ContentModel from '@reactory/server-modules/core/models/Content';
+import PersonalDemographicModel from '@reactory/server-modules/core/models/PersonalDemographic';
+import RegionModel from '@reactory/server-modules/core/models/Region';
+import OperationalGroupModel from '@reactory/server-modules/core/models/OperationalGroup';
 import CoreModels from '../modules/core/models';
-import Reactory from '@reactory/reactory-core';
 
-//export const Assessment = AssessmentModel;
+
 export const Application = ApplicationModel;
-//export const Assessment = AssessmentModel;
 export const Comment = CommentModel;
 export const Cache = CoreModels.Cache;
 export const Organization = OrganizationModel;
@@ -45,12 +34,8 @@ export const Notification = NotificationModel;
 export const User = ReactoryUserModel;
 export const ReactoryClient = ReactoryClientModel;
 export const Template = TemplateModel;
-// export const LeadershipBrand = LeadershipBrandModel;
 export const EmailQueue = EmailQueueModel;
 export const Team = TeamModel;
-// export const Survey = SurveyModel;
-// export const SURVEY_EVENTS_TO_TRACK = EVENTS_TO_TRACK;
-// export const Scale = ScaleModel;
 export const Task = TaskModel;
 export const Project = ProjectModel;
 export const ClientComponent = ClientComponentModel;
@@ -90,25 +75,5 @@ const models = {
   Task,
   UserDemographic,
 };
-
-
-const modelRegistry: Reactory.IReactoryComponentDefinition<unknown>[] = []
-const replacedModels: Reactory.IReactoryComponentDefinition<unknown>[] = []
-
-const registerModel = (model: Reactory.IReactoryComponentDefinition<unknown>, overwrite: boolean = false) => {
-  if(modelRegistry.find(m => m.name === model.name)) {
-    if(overwrite) {
-      modelRegistry.splice(modelRegistry.findIndex(m => m.name === model.name), 1);
-      modelRegistry.push(model);
-    } else {
-      throw new Error(`Model ${model.name} already exists. Use overwrite flag to overwrite.`)
-    }
-  }
-  modelRegistry.push(model)
-}
-
-function getModel<T>(specs: Partial<Reactory.IReactoryComponentDefinition<T>>) {
-  
-}
 
 export default models;

@@ -2,7 +2,7 @@
 import mongoose from 'mongoose';
 import * as mongodb from 'mongodb';
 
-const ObjectIdFunc = mongodb.ObjectID;
+const ObjectIdFunc = mongodb.ObjectId;
 const { ObjectId } = mongoose.Schema.Types;
 
 const UserDemographicSchema = new mongoose.Schema({
@@ -48,7 +48,7 @@ const UserDemographicSchema = new mongoose.Schema({
     }
 })
 
-UserDemographicSchema.statics.updateDemographic = async function updateDemographic(userID: string | mongodb.ObjectID, demographic: String, value: String | '') {
+UserDemographicSchema.statics.updateDemographic = async function updateDemographic(userID: string | mongodb.ObjectId, demographic: String, value: String | '') {
     if (ObjectIdFunc.isValid(userID)) {
         const data = { [`${demographic}`]: value }
         const _d = await this.findOneAndUpdate({ user: userID }, data, { new: true })
@@ -61,13 +61,3 @@ UserDemographicSchema.statics.updateDemographic = async function updateDemograph
 
 const UserDemographicsModel = mongoose.model('UserDemographic', UserDemographicSchema);
 export default UserDemographicsModel;
-
-/**
- * mutation updateDemo($input: UserDemographicInput!) {
-  MoresUpdateUserDemographic(input: $input) {
-    type
-    userID
-    organisationId
-  }
-}
- */

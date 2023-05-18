@@ -1,6 +1,6 @@
 import Reactory from "@reactory/reactory-core";
 import { ObjectId } from "mongodb";
-import Organigram from "@reactory/server-core/models/schema/Organigram";
+import Organigram from "@reactory/server-modules/core/models/Organigram";
 import Demographic from '@reactory/server-modules/core/models/demographics/Demographic';
 import { BusinessUnit, Organization, Region, Team, User, UserDemographic } from '@reactory/server-core/models';
 import ApiError, { RecordNotFoundError } from "@reactory/server-core/exceptions";
@@ -36,6 +36,9 @@ class UserService implements Reactory.Service.IReactoryUserService {
     this.peerState = {};
     // used to indicated whether or not we are fetching a document
     this.isFetchingDocument = {};
+  }
+  setUserPeers(user: Reactory.Models.IUserDocument, peers: any, organization: Reactory.Models.IOrganizationDocument, allowEdit: boolean, confirmedAt?: Date): Promise<Reactory.Models.IOrganigramDocument> {
+    throw new Error("Method not implemented.");
   }
 
   async getUserPeers(id: string | ObjectId, organization_id: string | ObjectId): Promise<Reactory.Models.IOrganigramDocument> {

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import mongo from 'mongodb';
-import logger from '../../logging';
+import logger from '@reactory/server-core/logging';
 const { ObjectId } = mongoose.Schema.Types;
 
 export interface IEmailQueue {

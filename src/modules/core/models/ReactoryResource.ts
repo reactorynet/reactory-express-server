@@ -1,8 +1,9 @@
+import timeStamp from '@reactory/server-core/models/plugins/time';
 import mongoose from 'mongoose';
 
 const { ObjectId } = mongoose.Schema.Types;
 
-const ReactoryResourceSchema = mongoose.Schema({
+const ReactoryResourceSchema = new mongoose.Schema({
   id: ObjectId,
   resourceType: String,
   version: String,
@@ -10,8 +11,10 @@ const ReactoryResourceSchema = mongoose.Schema({
   name: String,
   link: String,
   when: Date,
-  meta: { },
-}, { timestamp: true });
+  meta: {},
+});
+
+ReactoryResourceSchema.plugin(timeStamp)
 
 const ReactoryResource = mongoose.model('ReactoryResource', ReactoryResourceSchema);
 

@@ -1,4 +1,4 @@
-import mongoose, { Mongoose, ConnectionOptions } from 'mongoose';
+import mongoose, { ConnectOptions } from 'mongoose';
 
 
 const {
@@ -12,10 +12,11 @@ const {
     SERVER_ID
   } = process.env;
 
-const options: ConnectionOptions = {
+const options: ConnectOptions = {
     user: MONGO_USER,
     pass: MONGO_PASSWORD,
-    useNewUrlParser: true
+    appName: `reactory[${SERVER_ID}@${DOMAIN_NAME}]]`,
+    //useNewUrlParser: true
 };
 
 const connection = mongoose.connect(MONGOOSE, options);

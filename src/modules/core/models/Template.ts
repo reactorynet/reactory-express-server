@@ -1,12 +1,10 @@
 /* eslint-disable max-len */
-import mongoose, { MongooseDocument } from 'mongoose';
+import mongoose from 'mongoose';
+import * as mongodb from 'mongodb';
 import * as lodash from 'lodash';
 import { readFileSync, existsSync } from 'fs';
-import logger from '../../logging';
+import logger from '@reactory/server-core/logging';
 import Reactory from '@reactory/reactory-core';
-import { RecordNotFoundError } from 'exceptions';
-import { Template } from 'models';
-
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -146,30 +144,31 @@ TemplateSchema.methods.contentFromFile = function (templateType: string) {
 }
 
 // eslint-disable-next-line max-len
-TemplateSchema.statics.findClientTemplate = function findClientTemplate(template: Reactory.ITemplate, organization: Reactory.IOrganizationDocument, client: Reactory.IPartner) {
-  const qry = { view: template.view, client: client._id, organization: null as Reactory.IOrganization }; // eslint-disable-line no-underscore-dangle
+TemplateSchema.statics.findClientTemplate = function findClientTemplate(template: Reactory.Models.ITemplate, organization: Reactory.Models.IOrganizationDocument, client: Reactory.IPartner) {
+  const qry: any = { view: template.view, client: client._id, organization: null }; // eslint-disable-line no-underscore-dangle
   if (organization && organization._id) qry.organization = organization._id; // eslint-disable-line no-underscore-dangle
   return this.findOne(qry).then();
 };
 
 TemplateSchema.statics.templates = async (client: any, organization: any = null) => {
   const { isNil } = lodash;
+  const model = (this as typeof TemplateModel);
   logger.info('Listing templates using search criteria', client, organization);
-  if (isNil(client) === false && ObjectId.isValid(client)) {
-    if (isNil(organization) === false && ObjectId.isValid(organization) === true) {
-      return this.find({
-        client: ObjectId(client),
-        organization: ObjectId(organization),
+  if (isNil(client) === false && mongodb.ObjectId.isValid(client)) {
+    if (isNil(organization) === false && mongodb.ObjectId.isValid(organization) === true) {
+      return model.find({
+        client: new mongodb.ObjectId(client),
+        organization: new mongodb.ObjectId(organization),
       }).then();
     }
 
-    return this.find({
-      client: ObjectId(client),
+    return model.find({
+      client: new mongodb.ObjectId(client),
     }).then();
   }
   // use default partner tempaltes
   return [];
 };
 
-const TemplateModel = mongoose.model('Template', TemplateSchema);
+const TemplateModel = mongoose.model<Reactory.Models.ITemplate>('Template', TemplateSchema);
 export default TemplateModel

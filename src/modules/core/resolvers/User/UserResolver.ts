@@ -34,7 +34,7 @@ import { execml } from "@reactory/server-core/graph/client";
 import { roles } from '@reactory/server-core/authentication/decorators';
 import { resolver, property, query, mutation } from '@reactory/server-core/models/graphql/decorators/resolver'
 
-import UserDemographics from "@reactory/server-core/models/schema/UserDemographics";
+import UserDemographics from "@reactory/server-modules/core/models/UserDemographics";
 
 const uuid = require("uuid");
 

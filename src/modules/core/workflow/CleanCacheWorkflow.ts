@@ -36,8 +36,7 @@ class CleanCacheWorkflow {
     this.version = 1;
   }
 
-  build(builder) {
-    // console.log('building', builder);
+  build(builder: any) {
     builder
       .startWith(BeforeCacheClean).input((step, data) => {
         step.when = data.when;

@@ -2,11 +2,10 @@ import * as dotenv from 'dotenv';
 import express from 'express';
 import fs from 'fs';
 import _ from 'lodash';
+import ReactoryResource from '@reactory/server-modules/core/models/ReactoryResource';
 import logger from '../logging';
 
 
-import ApiError, { RecordNotFoundError } from '../exceptions';
-import ReactoryResource from '../models/schema/ReactoryResource';
 
 const decompress = require('decompress');
 const decompressUnzip = require('decompress-unzip');
@@ -67,8 +66,8 @@ router.get('/install/:id', async (req, res) => {
         }).then(() => {
           console.log('Files decompressed');
           res.status(200).send({ success: true, message: 'Ensure caches are cleared after updating content' });
-        }).catch((decompressionError) => {
-          if (decompressionError.code === 'EISDIR' && decompressionError.errno === -21 && decompressionError.syscall === 'open') {
+        }).catch((decompressionError: any) => {
+          if (decompressionError?.code === 'EISDIR' && decompressionError?.errno === -21 && decompressionError?.syscall === 'open') {
             /*
             code: "EISDIR"
             errno: -21

@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import Reactory from '@reactory/reactory-core';
 
 const { ObjectId } = mongoose.Schema.Types;
-const TeamSchema = new mongoose.Schema<Reactory.ITeam>({
+const TeamSchema = new mongoose.Schema<Reactory.Models.ITeam>({
   title: String,
   name: {
     type: String,
@@ -31,5 +31,5 @@ TeamSchema.statics.GetAllTeams = async function GetAllTeams() {
   return await this.find();
 };
 
-const TeamModel = mongoose.model<Reactory.ITeamDocument>('Team', TeamSchema);
+const TeamModel = mongoose.model<Reactory.Models.ITeamDocument>('Team', TeamSchema);
 export default TeamModel;

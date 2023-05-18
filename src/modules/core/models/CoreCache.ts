@@ -71,12 +71,7 @@ CacheSchema.statics.clean = function Clean() {
 
   const now = moment().valueOf();
   try {
-    this.deleteMany({ ttl: { $lt: now } }, (err: Error) => {
-      if (err) {
-        logger.error(`Could not clean cache - deleteMany({}) fail: ${err ? err.message : 'No Error Message'}`, err);
-      }
-      logger.debug(`Cache Cleared `, now)
-    });
+    this.deleteMany({ ttl: { $lt: now } });
   } catch (err) {
     logger.error(`Could not clean cache: ${err ? err.message : 'No Error Message'}`, err);
     //not critical, don't retrhow

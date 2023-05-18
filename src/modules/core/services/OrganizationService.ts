@@ -2,12 +2,13 @@ import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import moment from 'moment';
 import { ObjectId } from 'mongodb';
 import Reactory from '@reactory/reactory-core';
-import Organization from '@reactory/server-core/models/schema/Organization';
-import BusinessUnit from '@reactory/server-core/models/schema/BusinessUnit';
-import Team from '@reactory/server-core/models/schema/Team';
+// import Organization from '@reactory/server-modules/core/models/Organization';
+// import BusinessUnit from '@reactory/server-modules/core/models/BusinessUnit';
+// import Team from '@reactory/server-modules/core/models/Team';
 import ApiError, { OrganizationNotFoundError } from '@reactory/server-core/exceptions';
 import logger from '@reactory/server-core/logging';
 import { trim } from 'lodash';
+import { roles } from '@reactory/server-core/authentication/decorators';
 
 class OrganizationService implements Reactory.Service.IReactoryOrganizationService {
 
@@ -18,6 +19,8 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   context: Reactory.Server.IReactoryContext;
   props: any;
 
+  modelService: Reactory.Service.TReactoryModelRegistryService;
+
   constructor(props: any, context: any) {
     this.context = context;
 
@@ -26,9 +29,12 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   /***
    * Finds a business unit 
    */
-  async findBusinessUnit(organization_id: string | number | ObjectId, search: string | number | ObjectId): Promise<Reactory.IBusinessUnitDocument> {
+  @roles(['USER'])
+  async findBusinessUnit(organization_id: string | number | ObjectId, search: string | number | ObjectId): Promise<Reactory.Models.IBusinessUnitDocument> {
 
     if (ObjectId.isValid(organization_id) === false) throw new ApiError(`param organization_id is not a valid ${organization_id}`);
+
+    const BusinessUnit = this.modelService.getModel<Reactory.Models.IBusinessUnitDocument>({ nameSpace: 'core', name: 'BusinessUnit', version: '1.0.0' });
 
     let $business_unit: Reactory.Models.IBusinessUnitDocument = null;
     if (typeof search === "string") {
@@ -51,8 +57,11 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     return $business_unit;    
   }
 
-  async createBusinessUnit(organization_id: string | number | ObjectId, name: string): Promise<Reactory.IBusinessUnitDocument> {
+  @roles(['BUSINESS_UNIT_ADMIN', 'ORGANIZATION_ADMIN', 'ADMIN'])
+  async createBusinessUnit(organization_id: string | number | ObjectId, name: string): Promise<Reactory.Models.IBusinessUnitDocument> {
     
+    const BusinessUnit = this.modelService.getModel<Reactory.Models.IBusinessUnitDocument>({ nameSpace: 'core', name: 'BusinessUnit', version: '1.0.0' });
+
     // add a new business unit if we do not find any matches
       let $now = Date.now();
       let $business_unit = new BusinessUnit({
@@ -75,9 +84,12 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   /***
   * Finds a business unit 
   */
-  async findTeam(organization_id: string | number | ObjectId, search: string | number | ObjectId): Promise<Reactory.ITeamDocument> {
+ @roles(['USER'])
+  async findTeam(organization_id: string | number | ObjectId, search: string | number | ObjectId): Promise<Reactory.Models.ITeamDocument> {
 
     if (ObjectId.isValid(organization_id) === false) throw new ApiError(`param organization_id is not a valid ${organization_id}`);
+
+   const Team = this.modelService.getModel<Reactory.Models.ITeamDocument>({ nameSpace: 'core', name: 'Team', version: '1.0.0' });
 
     let $team: Reactory.Models.ITeamDocument = null;
     if (typeof search === "string") {
@@ -100,8 +112,10 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     return $team;
   }
 
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN', 'TEAM_ADMIN'])
   async createTeam(organization_id: string | number | ObjectId, name: string): Promise<Reactory.Models.ITeamDocument> {
 
+    const Team = this.modelService.getModel<Reactory.Models.ITeamDocument>({ nameSpace: 'core', name: 'Team', version: '1.0.0' });
     // add a new business unit if we do not find any matches
     let $now = Date.now();
     let $business_unit = new Team({
@@ -121,21 +135,25 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     return $business_unit;
   }  
 
+  @roles(['USER', 'ANON'])
   async findWithName(name: string): Promise<Reactory.Models.IOrganizationDocument> {
     this.context.log(`Seaching for organization by name: ${name}`, {}, 'debug', 'OrganizationService')
+    const Organization = this.modelService.getModel<Reactory.Models.IOrganizationDocument>({ nameSpace: 'core', name: 'Organization', version: '1.0.0' });
     return await Organization.findOne({ name }).then();
   }
 
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN'])
   async create(name: string): Promise<Reactory.Models.IOrganizationDocument> {
+    const Organization = this.modelService.getModel<Reactory.Models.IOrganizationDocument>({ nameSpace: 'core', name: 'Organization', version: '1.0.0' });
     const organization = new Organization({ name });
     await organization.save();
 
     return organization;
   }
 
-  async updateOrganizationLogo(organization: Reactory.Models.IOrganizationDocument, imageData: string): Promise<Reactory.IOrganizationDocument> {
-    try {
-
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN'])
+  async updateOrganizationLogo(organization: Reactory.Models.IOrganizationDocument, imageData: string): Promise<Reactory.Models.IOrganizationDocument> {
+    try {      
       const {
         APP_DATA_ROOT,
       } = process.env;
@@ -161,8 +179,11 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     }
   }
 
-  async setOrganization(id: string, updates: { name?: string; code?: string; color?: string; logo?: string; }): Promise<Reactory.IOrganizationDocument> {
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN'])
+  async setOrganization(id: string, updates: { name?: string; code?: string; color?: string; logo?: string; }): Promise<Reactory.Models.IOrganizationDocument> {
     const _id = new ObjectId(id);
+    const Organization = this.modelService.getModel<Reactory.Models.IOrganizationDocument>({ nameSpace: 'core', name: 'Organization', version: '1.0.0' });
+
     const exists = await Organization.count({ _id }).then() === 1;
 
     if (exists === false) throw new OrganizationNotFoundError(`Organization with the id ${id} could not be found`);
@@ -196,12 +217,15 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     }
   }
 
-  async uploadOrganizationImage(id: string, file: Reactory.Service.IFile, imageType: string): Promise<Reactory.IOrganizationDocument> {
+  @roles(['ORGANIZATION_ADMIN', 'ADMIN'])
+  async uploadOrganizationImage(id: string, file: Reactory.Service.IFile, imageType: string): Promise<Reactory.Models.IOrganizationDocument> {
 
 
     if (!id) {
       throw new ApiError('Cannot upload image for null id')
     }
+
+    const Organization = this.modelService.getModel<Reactory.Models.IOrganizationDocument>({ nameSpace: 'core', name: 'Organization', version: '1.0.0' });
 
     const organization = await Organization.findById(id).then();
 
@@ -233,9 +257,12 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
     return organization;
   }
 
-  async getOrganizationsForLoggedInUser(search: string, sort: string, direction: string = 'asc'): Promise<Reactory.Service.OrganizationsForUser> {
+  @roles(['USER'])
+  async getOrganizationsForLoggedInUser(search: string, sort: string, direction: string = 'asc'): Promise<Reactory.Models.IOrganizationDocument[]> {
     const { user, partner } = this.context;
     const sortBy = sort || 'name';
+
+    const Organization = this.modelService.getModel<Reactory.Models.IOrganizationDocument>({ nameSpace: 'core', name: 'Organization', version: '1.0.0' });
     
     if (user.hasAnyRole(partner._id) === false) return [];
 
@@ -264,7 +291,10 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
 
   }
 
-  async getPagedOrganizationsForLoggedInUser(search: string, sort: string, direction: string = 'asc', paging: Reactory.Models.IPagingRequest): Promise<any> {
+  @roles(['USER'])
+  async getPagedOrganizationsForLoggedInUser(search: string, sort: string, direction: string = 'asc', paging: Reactory.Models.IPagingRequest): Promise<Reactory.Models.IOrganizationDocument[]> {
+
+    const Organization = this.modelService.getModel<Reactory.Models.IOrganizationDocument>({ nameSpace: 'core', name: 'Organization', version: '1.0.0' });
 
     const { user, partner } = this.context;
     const sortBy = sort || 'name';
@@ -300,22 +330,29 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
 
 
   async get(id: string): Promise<Reactory.Models.IOrganizationDocument> {
+    const Organization = this.modelService.getModel<Reactory.Models.IOrganizationDocument>({ nameSpace: 'core', name: 'Organization', version: '1.0.0' });
     return await Organization.findById(id).then();
   }
 
-  onStartup(): Promise<boolean> {
+  onStartup(): Promise<void> {
     // nothing to do
     this.context.log(`Core OrganizationService started 🟢`)
-    return Promise.resolve(true);
+    //check that the organization folder on the file system exists
+    const { APP_DATA_ROOT } = process.env;
+    if (!existsSync(`${APP_DATA_ROOT}/organization`)) mkdirSync(`${APP_DATA_ROOT}/organization`);
+    return Promise.resolve();
   }
 
   getExecutionContext(): Reactory.Server.IReactoryContext {
     return this.context;
   }
 
-  setExecutionContext(executionContext: Reactory.Server.IReactoryContext): boolean {
+  setExecutionContext(executionContext: Reactory.Server.IReactoryContext): void {
     this.context = executionContext;
-    return true;
+  }
+
+  setModelService(modelService: Reactory.Service.TReactoryModelRegistryService): void {
+    this.modelService = modelService;
   }
 }
 
@@ -323,7 +360,12 @@ export const ReactoryOrganizationServiceDefinition: Reactory.Service.IReactorySe
   id: 'core.OrganizationService@1.0.0',
   name: 'Reactory Organization',
   description: 'Default Organization Service.',
-  dependencies: [],
+  dependencies: [
+    {
+      id: 'core.ReactoryModelService@1.0.0',
+      alias: 'modelService'
+    }
+  ],
   serviceType: "organization",
   service: (props: Reactory.Service.IReactoryServiceProps, context: any) => {
     return new OrganizationService(props, context);

@@ -3,7 +3,7 @@ import Reactory from '@reactory/reactory-core';
 
 const { ObjectId } = mongoose.Schema.Types;
 
-const BusinessUnitSchema = new mongoose.Schema<Reactory.IBusinessUnit>({
+const BusinessUnitSchema = new mongoose.Schema<Reactory.Models.IBusinessUnit>({
   organization: {
     type: ObjectId,
     ref: 'Organization',

@@ -70,19 +70,20 @@ OrganizationSchema.methods.isPublic = function isPublic() {
 };
 
 OrganizationSchema.methods.clientActive = function clientActive(clientKey: string) {
-  if (this.isPublic() === true) return true; // is public organization
+  const that: Reactory.Models.IOrganizationDocument = (this as Reactory.Models.IOrganizationDocument);
+  if (that.isPublic() === true) return true; // is public organization
   let keyFound = null;
-  if (this.clients) {
-    // first check denied list
-    keyFound = Array.find(this.clients.denied, (key: string) => { return key === clientKey; });
-    if (keyFound) return false;
-
-    // then check allowed list
-    keyFound = Array.find(this.clients.active, (key: string) => { return key === clientKey; });
-    if (keyFound) return true;
-
-    return false;
+  
+  if(that.clients && that.clients.denied) {
+    keyFound = that.clients.denied.find((key: string) => key === clientKey);
+    if(keyFound) return false;
   }
+
+  if(that.clients && that.clients.active) {
+    keyFound = that.clients.active.find((key: string) => key === clientKey);
+    if(keyFound) return true;
+  }
+
 
   return false;
 };
