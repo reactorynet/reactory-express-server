@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "lib": [
+      "ES2020"
+    ],
+    "jsx": "react",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "declaration": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "*": [
+        "src/*"
+      ],
+      "@reactory/server-core/*": [
+        "src/*"
+      ],
+      "@reactory/server-modules/*": [
+        "src/modules/*"
+      ],
+      "test/*": [
+        "test/*"
+      ]
+    },
+    "strict": true,
+    "noImplicitAny": true,
+    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

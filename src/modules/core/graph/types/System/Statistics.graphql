@@ -30,7 +30,7 @@ type StatisticsPackage {
   id: ObjID!
   partner: ReactoryClient
   user: User
-  reference: String
+  reference: String!
   title: String
   description: String
   processed: Boolean
@@ -182,5 +182,9 @@ extend type Mutation {
   """
   CoreUpdateStatistic(input: StatisticUpdateInpt!): Statistic
 
+  """
+    CoreUpdateStatisticsPackage - update statistics package
+    @param input - input for updating statistics package
+  """
   CoreUpdateStatisticsPackage(input: StatisticsPackageUpdateInput!): StatisticsPackage
 }

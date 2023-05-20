@@ -9,7 +9,7 @@
       "experimentalDecorators": true,
       "emitDecoratorMetadata": true,
       "allowJs": true,  
-      "target":"ES2017",
+      "target":"es2020",
       "baseUrl": "./",
       "paths": {
         "*": ["src/*"],

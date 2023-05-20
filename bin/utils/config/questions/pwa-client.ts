@@ -1,6 +1,6 @@
 import { ReadLine } from 'readline';
 import { IQuestionCollection, IClientConfiguration, QuestionHandlerResponse } from '../config.types';
-import { isHelpRequest, colors, persistClientConfiguration } from '../helpers';
+import { isHelpRequest, colors, persistClientConfiguration } from '../../helpers';
 
 export const DEFAULT_CLIENT_CONFIG: IClientConfiguration = {
   name: 'reactory',

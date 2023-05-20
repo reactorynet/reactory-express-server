@@ -28,9 +28,9 @@ import {
   IQuestionCollection,
   IQuestionGroup,
   QuestionHandlerResponse,
-} from './config.types';
+} from './config/config.types';
 
-import { clientConfigTemplate, serverConfigTemplate } from './templates';
+import { clientConfigTemplate, serverConfigTemplate } from './config/templates';
 
 export const colors = $colors;
 
