@@ -35,7 +35,7 @@ const main = async (kwargs: string[]) => {
 
   let apiKey = process.env.OPENAI_API_KEY;
   let apiOrg = process.env.OPENAI_ORG;
-  let modelId = process.env.OPENAI_MODEL_ID || DEFAULT_MODEL_ID;
+  let modelId = process.env.OPENAI_DEFAULT_MODEL_ID || DEFAULT_MODEL_ID;
 
   const modelState: ChatState = {
     modelId: modelId || DEFAULT_MODEL_ID,

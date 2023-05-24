@@ -20,11 +20,12 @@ const CODE_BLOCK_REGEX = /```(.+?)\n([\s\S]+?)\n```/g;
 export const outFile = async (args: string[]) => {
   const [ path, content ] = args;
   try {
-    // Extract code blocks from content using regex    
+    // Extract code blocks from content using regex
+    const codeBlockRegex = /```([\s\S]*?)```/g;
     let match;
     let codeBlocks = '';
 
-    while ((match = CODE_BLOCK_REGEX.exec(content)) !== null) {
+    while ((match = codeBlockRegex.exec(content)) !== null) {
       codeBlocks += match[1] + '\n';
     }
     await fs.writeFile(path.trim(), codeBlocks.trim(), 'utf-8');

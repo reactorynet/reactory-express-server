@@ -104,7 +104,12 @@ ReactoryClientSchema.methods.getDefaultUserRoles = function getDefaultUserRoles(
 };
 
 // eslint-disable-next-line max-len
-ReactoryClientSchema.methods.getSetting = function getSetting(name: string, defaultValue: any = null, create = false, componentFqn: string = null) {
+ReactoryClientSchema.methods.getSetting = function getSetting<T>(
+  name: string,
+  defaultValue: T = null,
+  create = false,
+  componentFqn: string = null): { data: T } {
+
   if (isArray(this.settings)) {
     const found = find(this.settings, { name });
     if (found) return found;

@@ -25,13 +25,13 @@ fi
 
 
 # Run the script
-SCRIPT_PATH=./src/modules/reactor/cli/reactor-cli/main.ts
+SCRIPT_PATH=./src/reactory/cli/index.ts
 if [ ! -f ${SCRIPT_PATH} ]; then
   echo "Error: ${SCRIPT_PATH} does not exist."
   exit 1
 fi
 
-NODE_PATH=./src env-cmd -f ${ENV_FILE} npx babel-node ./src/modules/reactor/cli/reactor-cli/main.ts \
+NODE_PATH=./src env-cmd -f ${ENV_FILE} npx babel-node ${SCRIPT_PATH} \
   --presets=@babel/env,@babel/preset-typescript,@babel/preset-flow \
   --extensions=".js,.ts" \
   --max_old_space_size=2000000 \

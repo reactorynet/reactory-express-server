@@ -41,7 +41,7 @@ import amq from '@reactory/server-core/amq';
 import startup from '@reactory/server-core/utils/startup';
 import { User } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
-import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContextProvider';
+import ReactoryContextProvider from 'context/ReactoryContextProvider';
 import AuthHelper from '@reactory/server-core/authentication/strategies/helpers';
 // @ts-ignore
 import resolveUrl from '@reactory/server-core/utils/url/resolve';

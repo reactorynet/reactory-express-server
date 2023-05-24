@@ -7,7 +7,6 @@ import lodash, { isArray } from 'lodash';
 import colors from 'colors/safe';
 import { ReactoryContainer } from '@reactory/server-core/ioc';
 import modules from '@reactory/server-core/modules';
-import { ENVIRONMENT } from '@reactory/server-core/types/constants';
 import i18next, { t } from 'i18next';
 import Reactory from '@reactory/reactory-core';
 
@@ -39,8 +38,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
   });
 
   const $log = (message: string, meta: any = null, type: Reactory.Service.LOG_TYPE = "debug", clazz: string = 'any_clazz') => {
-    //281e99d1-bc61-4a2e-b007-33a3befaff12    
-
+  
     const $message = `${clazz}(${$id.substr(30, 6)}) ${email}: ${message}`;
     switch (type) {
       case "e":
@@ -102,6 +100,13 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     $i18n = $session.req.i18n;      
     $lng = $session.req.langauage;
     $langs = $session.req.langauages;
+  } else {
+    if(!$context) throw new Error(`No context provided to the context provider while using outside of a session`);
+    $i18n = i18next;
+    $partner = $context.partner;
+    $lng = $context.lng;
+    $langs = $context.langs;
+    $user = $context.user;
   }
 
   let theme: Reactory.UX.IReactoryTheme = null;
@@ -212,7 +217,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
    * this is specific provider for the partner which will extend / overwrite elements of the
    * context provider.
    */
-  const executionContextServiceName = newContext.partner.getSetting('execution_context_service');
+  const executionContextServiceName = newContext.partner.getSetting<string>('execution_context_service');
   if (executionContextServiceName && executionContextServiceName.data && `${executionContextServiceName.data}`.indexOf('@') > 0) {
     const partnerContextService: Reactory.Server.IExecutionContextProvider = $getService(executionContextServiceName.data);
     if (partnerContextService && typeof partnerContextService.getContext === "function") {
