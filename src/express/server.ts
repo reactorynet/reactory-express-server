@@ -48,10 +48,7 @@ import resolveUrl from '@reactory/server-core/utils/url/resolve';
 import colors from 'colors/safe';
 import http from 'http';
 import { GraphQLSchema } from 'graphql';
-import { getNamesSpaces as getLanguageNameSpaces } from '@reactory/server-core/express/i18n';
-
-
-
+import i18n from '@reactory/server-core/express/i18n';
 
 // set theme
 colors.setTheme({
@@ -246,24 +243,7 @@ Environment Settings:
   // For all routes we rune the cors middleware with options
   reactoryExpress.use('*', cors(corsOptions));
   reactoryExpress.use(reactoryClientAuthenticationMiddleware);
-  const backendOptions = {
-    // load all translations found in the modules.
-    loadPath: `${APP_DATA_ROOT}/i18n/{{lng}}/{{ns}}.json`,
-    addPath: `${APP_DATA_ROOT}/i18n/{{lng}}/{{ns}}.missing.json`
-  };
-
-  i18next
-    .use(i18nextHttp.LanguageDetector)
-    .use(i18nextFSBackend)
-    .init({
-      preload: ['en-US', 'af'],
-      lng: "en-US",
-      fallbackLng: 'en-US',
-      ns: getLanguageNameSpaces(),
-      backend: backendOptions
-    });
-
-  reactoryExpress.use(i18nextHttp.handle(i18next));
+  reactoryExpress.use(i18nextHttp.handle(i18n));
   reactoryExpress.use(
     queryRoot,
     passport.authenticate(['jwt', 'anonymous'], { session: false }), bodyParser.urlencoded({ extended: true }),
@@ -272,9 +252,7 @@ Environment Settings:
     }),
   );
 
-  let $schemaDirectives: Record<string, typeof SchemaDirectiveVisitor> = {};
-
-
+  // let $schemaDirectives: Record<string, typeof SchemaDirectiveVisitor> = {};
 
   try {
 

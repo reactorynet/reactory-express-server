@@ -1,9 +1,20 @@
 #!/bin/bash
 
-# Set variables for better organization
-CONFIG_NAME=${1:-reactory}
-CONFIG_ENV=${2:-local}
-ENV_FILE=./config/${CONFIG_NAME}/.env.${CONFIG_ENV}
+# Default values
+CONFIG_NAME="reactory"
+CONFIG_ENV="local"
+
+# Loop through the arguments
+for arg in "$@"; do
+  case $arg in
+    --cname=*) CONFIG_NAME="${arg#*=}" ;;
+    --cenv=*) CONFIG_ENV="${arg#*=}" ;;
+    *) ;;
+  esac
+done
+
+# Set the environment file based on the selected parameters
+ENV_FILE="./config/$CONFIG_NAME/.env.$CONFIG_ENV"
 
 # Check if environment file exists
 if [ ! -f ${ENV_FILE} ]; then
@@ -31,12 +42,14 @@ if [ ! -f ${SCRIPT_PATH} ]; then
   exit 1
 fi
 
+# append the arguments to the script
 NODE_PATH=./src env-cmd -f ${ENV_FILE} npx babel-node ${SCRIPT_PATH} \
   --presets=@babel/env,@babel/preset-typescript,@babel/preset-flow \
   --extensions=".js,.ts" \
   --max_old_space_size=2000000 \
   --config_name=${CONFIG_NAME} \
-  --config_env=${CONFIG_ENV}
+  --config_env=${CONFIG_ENV} \
+  "$@"
 
 # Check the exit status of the script
 if [ $? -eq 0 ]; then

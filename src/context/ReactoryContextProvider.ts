@@ -210,23 +210,24 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
   if($session !== null && $session !== undefined 
     && $session.req !== null && $session.req !== undefined) {
     $session.req.context = newContext;
-  }  
-  /**
-   * We check in the configuration settings if there is a "execution_context_service" key.
-   * if the key is found and if it is a string with an @ in the indicator then we can assume
-   * this is specific provider for the partner which will extend / overwrite elements of the
-   * context provider.
-   */
-  const executionContextServiceName = newContext.partner.getSetting<string>('execution_context_service');
-  if (executionContextServiceName && executionContextServiceName.data && `${executionContextServiceName.data}`.indexOf('@') > 0) {
-    const partnerContextService: Reactory.Server.IExecutionContextProvider = $getService(executionContextServiceName.data);
-    if (partnerContextService && typeof partnerContextService.getContext === "function") {
-      return await partnerContextService.getContext(newContext).then();
-    }
-  } else {
-    // no configuration for this partner that overloads /
-    // extends the default context so we just return the current context.
-    return newContext;
   }
-
+  
+  if ($partner && $partner.getSetting) {
+    /**
+    * We check in the configuration settings if there is a "execution_context_service" key.
+    * if the key is found and if it is a string with an @ in the indicator then we can assume
+    * this is specific provider for the partner which will extend / overwrite elements of the
+    * context provider.
+    */
+    const executionContextServiceName = newContext.partner.getSetting<string>('execution_context_service');
+    if (executionContextServiceName && executionContextServiceName.data && `${executionContextServiceName.data}`.indexOf('@') > 0) {
+      const partnerContextService: Reactory.Server.IExecutionContextProvider = $getService(executionContextServiceName.data);
+      if (partnerContextService && typeof partnerContextService.getContext === "function") {
+        newContext = await partnerContextService.getContext(newContext).then();
+      }
+    }
+  } 
+  // no configuration for this partner that overloads /
+  // extends the default context so we just return the current context.
+  return newContext;
 };
