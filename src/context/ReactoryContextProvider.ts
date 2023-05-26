@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { getService } from '@reactory/server-core/services';  // eslint-disable-line
+import { getService, services } from '@reactory/server-core/services';  // eslint-disable-line
 import logger from '@reactory/server-core/logging';
 import Hash from '@reactory/server-core/utils/hash';
 import { objectMapper } from '@reactory/server-core/utils';
@@ -177,7 +177,8 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     colors,
     state: context_state,
     theme,
-    palette
+    palette,
+    services
   };
   
   /**

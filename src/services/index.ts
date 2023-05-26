@@ -8,11 +8,11 @@ import ApiError from '@reactory/server-core/exceptions';
 /**
  * services array
  */
-const services: Reactory.Service.IReactoryServiceDefinition[] = [];
+export const services: Reactory.Service.IReactoryServiceDefinition[] = [];
 /**
  * services id map
  */
-const serviceRegister: Reactory.Service.IReactoryServiceRegister = {}
+export const serviceRegister: Reactory.Service.IReactoryServiceRegister = {}
 
 /**
  * We load the enabled module service details into a map and array.

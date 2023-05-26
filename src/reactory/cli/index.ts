@@ -1,11 +1,12 @@
 import fs from 'fs';
-import { template } from 'lodash';
+import { get, template } from 'lodash';
 import readline from 'readline';
 import Reactory from '@reactory/reactory-core';
 import ReactoryContextProvider from 'context/ReactoryContextProvider';
 import colors from './colors';
 import i18next from '@reactory/server-core/express/i18n';
 import Mongoose, { mongo } from 'mongoose';
+import MongooseConnection from '@reactory/server-core/models/mongoose';
 import { ReactoryClient } from 'models';
 import ReactoryModules from '@reactory/server-core/modules'
 
@@ -53,6 +54,43 @@ const getReadline = ({
   });
 }
 
+const getCLI = (name: string): Reactory.IReactoryComponentDefinition<TCLI> => { 
+  let found: Reactory.IReactoryComponentDefinition<TCLI> = null;
+
+  if(name.indexOf('@') > 0 || name.indexOf('.') > 0) { 
+    //uses regex to find the cli. name, could be in the following formats:
+    // reactory.ReactorCLI@1.0.0
+    // reactory.ReactorCLI
+    // ReactorCLI
+    const regex = /([a-zA-Z0-9]+)\.([a-zA-Z0-9]+)@?([0-9\.]*)/;
+    const matches: Reactory.IReactoryComponentDefinition<TCLI>[] = []
+    ALL_COMMANDS.forEach((cli) => {
+      const fqn = `${cli.nameSpace}.${cli.name}@${cli.version}`;
+      const match = fqn.match(regex);
+      if(match) {
+        matches.push(cli);
+      }
+    });
+    
+    if(matches.length > 1) {
+      throw new Error(`Multiple matches found for ${name}. Please specify the full name of the cli.`);
+    }
+
+    if(matches.length === 1) {
+      found = matches[0];
+    }
+  } else {
+    //find the cli by name
+    ALL_COMMANDS.forEach((cli) => {
+      if(cli.name.toLowerCase() === name.toLowerCase()) {
+        found = cli;
+      }
+    });
+  }
+
+  return found;
+}
+
 /**
  * Processes the command line arguments for the cli. We allow the 
  * user to specify the environment, user, password, partner, etc.
@@ -98,8 +136,7 @@ const processCliArgs = async (vargs: string[]): Promise<string[]> => {
           let commandsText = '';
 
           if(value === undefined || value === null || value === '') {
-            ReactoryModules.enabled.forEach((module) => {
-              const fqn = `${module.nameSpace}.${module.name}@${module.version}`;              
+            ReactoryModules.enabled.forEach((module) => {              
               if (module.cli?.length > 0) {
                 module.cli.forEach((cli) => {
                   commandsText += `${cli.nameSpace}.${cli.name}@${cli.version}\n`;
@@ -109,7 +146,7 @@ const processCliArgs = async (vargs: string[]): Promise<string[]> => {
           } else {
             ReactoryModules.enabled.forEach((module) => {
               const fqn = `${module.nameSpace}.${module.name}@${module.version}`;
-              if (module.name === value || fqn === value) {
+              if (module.name.toLowerCase() === value.toLowerCase() || fqn === value) {
                 if (module.cli?.length > 0) {
                   module.cli.forEach((cli) => {
                     commandsText += `${cli.nameSpace}.${cli.name}@${cli.version}\n`;
@@ -196,10 +233,10 @@ const main = async (vargs: string[]): Promise<void> => {
       // cargs = [...cargs, ...nextArgs.filter((arg) => !cargs.includes(arg))];
     }
 
-    let command: string = cargs.length >= 2 && cargs[0].indexOf('-') === -1 ? cargs[1] : null;
+    let command: string = cargs.length >= 1 && cargs[0].indexOf('-') === -1 ? cargs[0] : null;
     let commandArgs: string[] = [];
 
-    if (cargs.length > 2) {
+    if (cargs.length >= 2) {
       for(let i = 2; i < vargs.length; i++) { 
         const [key, value] = vargs[i].split('=');
         switch(key) {
@@ -228,6 +265,8 @@ const main = async (vargs: string[]): Promise<void> => {
           }
       }
     }
+
+    await MongooseConnection.then();
     
     const currentContext: Partial<Reactory.Server.IReactoryContext> = {
       user,
@@ -241,12 +280,14 @@ const main = async (vargs: string[]): Promise<void> => {
     if(partnerKey) {
       //we will use the context, to get the 
       //partner service and get the partner.
-      partner = await ReactoryClient.findOne({ partnerKey });
+      partner = await ReactoryClient.findOne({ key: partnerKey });
 
       if(!partner) {
-        console.error(colors.red(t('cli:common.invalidPartner', 'Authentication Failure')));
+        console.error(colors.red(t('cli:common.invalidPartner', 'Partner not found Authentication Failure')));
         process.exit(1);
       }
+
+      context.partner = partner;
     }
 
     if(userName && password) { 
@@ -255,15 +296,17 @@ const main = async (vargs: string[]): Promise<void> => {
       const userService = context.getService<Reactory.Service.IReactoryUserService>('core.UserService@1.0.0');
       user = await userService.findUserWithEmail(userName);
       if(!user) {
-        console.error(colors.red(t('cli:common.invalidUser', 'Authentication Failure')));
+        console.error(colors.red(t('cli:common.invalidUser', 'User Not Found')));
         process.exit(1);
       }
 
       const valid = await user.validatePassword(password);
       if(!valid) {
-        console.error(colors.red(t('cli:common.invalidPassword', 'Authentication Failure')));
+        console.error(colors.red(t('cli:common.invalidPassword', 'User Authentication Failure')));
         process.exit(1);
-      }
+      } 
+
+      context.user = user;
     }
 
     const rl = getReadline({
@@ -287,11 +330,20 @@ const main = async (vargs: string[]): Promise<void> => {
     })));
 
     if(command) {
-      
+      const cli: Reactory.IReactoryComponentDefinition<TCLI> = getCLI(command);
+      if(cli && cli.component) {
+        try {
+          await cli.component(commandArgs, context);
+        } catch(error) { 
+          console.error(colors.red(t('cli:common.commandError', 'Error executing command.')));
+          console.error(error);
+        }
+      } else {
+        console.error(colors.red(t('cli:common.invalidCommand', 'Invalid command.')));
+        process.exit(1);
+      }
     }
-
     rl.close();
-
   } catch (error) {
     console.error('Error occurred in main:', error);
     process.exit(1);
