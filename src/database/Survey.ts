@@ -1,7 +1,7 @@
 // import moment from 'moment';
 import { ObjectId } from 'mongodb';
 import co from 'co';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import moment from 'moment';
 import { getPool, querySync } from './legacy';
 import logger from '../logging';

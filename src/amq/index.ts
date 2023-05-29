@@ -5,12 +5,8 @@
  * This is the basic setup and configuration of channels for UI events
  */
 import postal from 'postal';
-import express from 'express';
+import * as express from 'express';
 import logger from '../logging';
-
-postal.addWireTap((data, envelope) => {
-  // logger.debug(`Postal Wiretap: ${Date.now()}`, { data, envelope });
-});
 
 const router = express.Router();
 

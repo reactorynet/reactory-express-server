@@ -19,6 +19,7 @@ const ReactoryCoreModule: Reactory.Server.IReactoryModule = {
     Types: [...coreTypes],
     Directives: directives    
   },
+  //@ts-ignore
   workflows: [...coreWorkflows],
   forms: [ ...coreForms ],
   services: [ ...coreServices ],

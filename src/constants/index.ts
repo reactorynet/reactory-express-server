@@ -1,4 +1,3 @@
-
 const {
   NODE_ENV,
   APP_DATA_ROOT,
@@ -10,7 +9,6 @@ const {
   MODE,
   LOG_LEVEL,
 } = process.env;
-
 
 export default {
   SETTING_KEYS: {
