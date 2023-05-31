@@ -12,9 +12,9 @@ import { service } from "@reactory/server-core/application/decorators/service";
   ]
 })
 export class ReactoryModelRegistry implements Reactory.Service.TReactoryModelRegistryService {
-  name: string;
-  nameSpace: string;
-  version: string;
+  name: string = "core";
+  nameSpace: string = "ReactoryModelRegistry";
+  version: string = "1.0.0";
   context: Server.IReactoryContext;
 
   private modelRegistry: IReactoryComponentDefinition<unknown>[] = [];
@@ -25,11 +25,12 @@ export class ReactoryModelRegistry implements Reactory.Service.TReactoryModelReg
   
   
   constructor(props: Service.IReactoryServiceProps, context: Server.IReactoryContext) {
-    this.name = props.name;
-    this.nameSpace = props.nameSpace;
-    this.version = props.version;
     this.context = context;
   }
+  
+  description?: string;
+  tags?: string[];
+  toString: ((includeVersion?: boolean) => string) & (() => string);
 
   onStartup(): Promise<void> {
     // Implement startup logic

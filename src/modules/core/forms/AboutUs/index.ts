@@ -1,8 +1,6 @@
-
 import schema from './schema';
 import DefaultUiSchema from './uiSchema';
-import $graphql from './graphql.js';
-
+import $graphql from './graphql';
 
 const AboutUs = {
   // id - this should be a unique id for all components / forms

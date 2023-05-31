@@ -4,10 +4,13 @@ module.exports = function (api) {
 
   const presets = [
     ['@babel/react', { modules: false }],
-    ['@babel/env', {
+    ['@babel/preset-env', {
       modules: false,
-      useBuiltIns: 'false',
+      useBuiltIns: 'usage',
       corejs: '3',
+      targets: {
+        node: 'current',
+      },
     }],
     ['@babel/preset-typescript',
       {

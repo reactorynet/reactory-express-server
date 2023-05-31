@@ -6,7 +6,7 @@ import Reactory from '@reactory/reactory-core';
  * Server to use this class object as a resolver, instead of 
  * @param constructor 
  */
-export function resolver<T extends { new (...args: any[]): Reactory.Graph.IReactoryResolver }>(constructor: T) {
+export function resolver(): void {
   //does nothing, we simply use it to flag Resovler classes.
 }
 

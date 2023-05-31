@@ -116,13 +116,14 @@ export const getService = (id: string,
       let isSet = false;
       if (!isSet) {
         const setterName = `set${dependcyAlias.substring(0, 1).toUpperCase()}${dependcyAlias.substring(1)}`;
-        const setterFn = (svc as any)?.[setterName] as DependencySetter;
-        if (setterFn && typeof setterFn === 'function') {
-          // Call the setter function
-          try {
-            setterFn($deps[dependcyAlias]);
-          } catch (setterError) { 
-            context.log(`🚨 Setter error ${setterName} 🚨`, { service_id: id, props, setterError }, 'warning');
+        if (((svc as any)?.[setterName] as DependencySetter) &&
+         typeof ((svc as any)?.[setterName] as DependencySetter) === "function") {
+           try {
+            // Call the setter function
+            //@ts-ignore
+            svc[setterName]($deps[dependcyAlias]);
+          } catch (setterError) {            
+            context.log(`🚨 Setter error ${setterName}; ${setterError?.message ? setterError.message : 'Unknown'} 🚨`, { service_id: id, props, setterError }, 'warning');
           }
         }
       }
