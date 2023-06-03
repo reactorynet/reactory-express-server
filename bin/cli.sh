@@ -3,13 +3,16 @@
 # Default values
 CONFIG_NAME="reactory"
 CONFIG_ENV="local"
+WATCH_MODE=false
 
 # Loop through the arguments
 for arg in "$@"; do
   case $arg in
-    --cname=*) CONFIG_NAME="${arg#*=}" ;;
-    --cenv=*) CONFIG_ENV="${arg#*=}" ;;
-    *) ;;
+      --watch) WATCH_MODE=true ;;
+      --cname=*) CONFIG_NAME="${arg#*=}" ;;
+      --cenv=*) CONFIG_ENV="${arg#*=}" ;;
+      --debug) DEBUG=true ;;
+      *) ;;
   esac
 done
 
@@ -42,14 +45,31 @@ if [ ! -f ${SCRIPT_PATH} ]; then
   exit 1
 fi
 
-# append the arguments to the script
-NODE_PATH=./src env-cmd -f ${ENV_FILE} npx babel-node ${SCRIPT_PATH} \
-  --presets=@babel/env,@babel/preset-typescript,@babel/preset-flow \
-  --extensions=".js,.ts" \
-  --max_old_space_size=2000000 \
-  --config_name=${CONFIG_NAME} \
-  --config_env=${CONFIG_ENV} \
-  "$@"
+# Check if debug flag is set
+if [ "$DEBUG" = true ]; then
+  NODE_DEBUG_OPTIONS="--inspect"
+fi
+
+# Check if watch mode is enabled
+if [ "$WATCH_MODE" = true ]; then
+  NODE_PATH=./src env-cmd -f ${ENV_FILE} npx nodemon -e js,ts,tsx,graphql --exec npx babel-node ${SCRIPT_PATH} \
+    ${NODE_DEBUG_OPTIONS} \
+    --presets=@babel/env,@babel/preset-typescript,@babel/preset-flow \
+    --extensions=".js,.ts" \
+    --max_old_space_size=2000000 \
+    --config_name=${CONFIG_NAME} \
+    --config_env=${CONFIG_ENV} \
+    "$@"
+else
+  NODE_PATH=./src env-cmd -f ${ENV_FILE} npx babel-node ${SCRIPT_PATH} \
+    ${NODE_DEBUG_OPTIONS} \
+    --presets=@babel/env,@babel/preset-typescript,@babel/preset-flow \
+    --extensions=".js,.ts" \
+    --max_old_space_size=2000000 \
+    --config_name=${CONFIG_NAME} \
+    --config_env=${CONFIG_ENV} \
+    "$@"
+fi
 
 # Check the exit status of the script
 if [ $? -eq 0 ]; then

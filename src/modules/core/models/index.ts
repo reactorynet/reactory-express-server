@@ -1,4 +1,4 @@
-import Application  from './Application';
+import Application from './Application';
 import BusinessUnit from './BusinessUnit';
 import ClientComponent from './ClientComponent';
 import Comment from './Comment';
@@ -37,15 +37,15 @@ export {
   ReactoryModelMeta
 };
 
-type CoreModelTypes = 
+type CoreModelTypes =
   typeof Application |
-  typeof BusinessUnit | 
-  typeof ClientComponent | 
-  typeof Comment | 
-  typeof Content | 
-  typeof Cache | 
-  typeof CoreCategory | 
-  typeof ReactoryFileImportPackage | 
+  typeof BusinessUnit |
+  typeof ClientComponent |
+  typeof Comment |
+  typeof Content |
+  typeof Cache |
+  typeof CoreCategory |
+  typeof ReactoryFileImportPackage |
   typeof ReactoryModelMeta |
   typeof CoreFile |
   typeof ReactorySupportTicket |
@@ -79,7 +79,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'Application',
     version: '1.0.0',
     description: 'Provides an application model for the server',
-    type: 'model',
+
     stem: 'application',
     tags: ['application', 'core', 'system'],
     component: Application,
@@ -93,7 +93,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'BusinessUnit',
     version: '1.0.0',
     description: 'Provides a business unit model for the server',
-    type: 'model',
+
     stem: 'business-unit',
     tags: ['business-unit', 'core', 'system'],
     component: BusinessUnit,
@@ -107,7 +107,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'ClientComponent',
     version: '1.0.0',
     description: 'Provides a client component model for the server',
-    type: 'model',
+
     stem: 'client-component',
     tags: ['client-component', 'core', 'system'],
     component: ClientComponent,
@@ -121,7 +121,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'Comment',
     version: '1.0.0',
     description: 'Provides a comment model for the server',
-    type: 'model',
+
     stem: 'comment',
     tags: ['comment', 'core', 'system'],
     component: Comment,
@@ -135,7 +135,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'Content',
     version: '1.0.0',
     description: 'Provides a content model for the server',
-    type: 'model',
+
     stem: 'content',
     tags: ['content', 'core', 'system'],
     component: Content,
@@ -149,7 +149,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'CoreCache',
     version: '1.0.0',
     description: 'Provides a cache model for the server',
-    type: 'model',
+
     stem: 'core-cache',
     tags: ['core-cache', 'core', 'system'],
     component: Cache,
@@ -163,7 +163,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'CoreCategory',
     version: '1.0.0',
     description: 'Provides a category model for the server',
-    type: 'model',
+
     stem: 'core-category',
     tags: ['core-category', 'core', 'system'],
     component: CoreCategory,
@@ -177,7 +177,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'CoreFile',
     version: '1.0.0',
     description: 'Provides a file model for the server',
-    type: 'model',
+
     stem: 'core-file',
     tags: ['core-file', 'core', 'system'],
     component: CoreFile,
@@ -191,7 +191,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'ReactorySupportTicket',
     version: '1.0.0',
     description: 'Provides a support ticket model for the server',
-    type: 'model',
+
     stem: 'reactory-support-ticket',
     tags: ['reactory-support-ticket', 'reactory', 'system'],
     component: ReactorySupportTicket,
@@ -205,7 +205,6 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'ReactoryTranslation',
     version: '1.0.0',
     description: 'Provides a translation model for the server',
-    type: 'model',
     stem: 'reactory-translation',
     tags: ['reactory-translation', 'reactory', 'system'],
     component: ReactoryTranslation,
@@ -219,7 +218,6 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'EmailQueue',
     version: '1.0.0',
     description: 'Provides an email queue model for the server',
-    type: 'model',
     stem: 'email-queue',
     tags: ['email-queue', 'core', 'system'],
     component: EmailQueue,
@@ -233,7 +231,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'Menu',
     version: '1.0.0',
     description: 'Provides a menu model for the server',
-    type: 'model',
+
     stem: 'menu',
     tags: ['menu', 'core', 'system'],
     component: Menu,
@@ -247,7 +245,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'Notification',
     version: '1.0.0',
     description: 'Provides a notification model for the server',
-    type: 'model',
+
     stem: 'notification',
     tags: ['notification', 'core', 'system'],
     component: Notification,
@@ -261,7 +259,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'OperationalGroup',
     version: '1.0.0',
     description: 'Provides an operational group model for the server',
-    type: 'model',
+
     stem: 'operational-group',
     tags: ['operational-group', 'core', 'system'],
     component: OperationalGroup,
@@ -275,7 +273,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'Organigram',
     version: '1.0.0',
     description: 'Provides an organigram model for the server',
-    type: 'model',
+
     stem: 'organigram',
     tags: ['organigram', 'core', 'system'],
     component: Organigram,
@@ -289,7 +287,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'Organization',
     description: 'Provides an organization model for the server',
-    type: 'model',
+
     stem: 'organization',
     tags: ['organization', 'core', 'system'],
     component: Organization,
@@ -303,7 +301,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'PersonalDemographic',
     description: 'Provides a personal demographic model for the server',
-    type: 'model',
+
     stem: 'personal-demographic',
     tags: ['personal-demographic', 'core', 'system'],
     component: PersonalDemographic,
@@ -317,7 +315,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'Project',
     description: 'Provides a project model for the server',
-    type: 'model',
+
     stem: 'project',
     tags: ['project', 'core', 'system'],
     component: Project,
@@ -331,7 +329,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'ProjectBoard',
     description: 'Provides a project board model for the server',
-    type: 'model',
+
     stem: 'project-board',
     tags: ['project-board', 'core', 'system'],
     component: ProjectBoard,
@@ -345,7 +343,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'ReactoryClient',
     description: 'Provides a reactory client model for the server',
-    type: 'model',
+
     stem: 'reactory-client',
     tags: ['reactory-client', 'reactory', 'system'],
     component: ReactoryClient,
@@ -359,7 +357,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'ReactoryResource',
     description: 'Provides a reactory resource model for the server',
-    type: 'model',
+
     stem: 'reactory-resource',
     tags: ['reactory-resource', 'reactory', 'system'],
     component: ReactoryResource,
@@ -373,7 +371,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'ReactorySupportTicket',
     description: 'Provides a reactory support ticket model for the server',
-    type: 'model',
+
     stem: 'reactory-support-ticket',
     tags: ['reactory-support-ticket', 'reactory', 'system'],
     component: ReactorySupportTicket,
@@ -387,7 +385,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'ReactoryTranslation',
     description: 'Provides a reactory translation model for the server',
-    type: 'model',
+
     stem: 'reactory-translation',
     tags: ['reactory-translation', 'reactory', 'system'],
     component: ReactoryTranslation,
@@ -401,7 +399,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'Region',
     description: 'Provides a region model for the server',
-    type: 'model',
+
     stem: 'region',
     tags: ['region', 'core', 'system'],
     component: Region,
@@ -415,7 +413,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'Statistic',
     description: 'Provides a statistic model for the server',
-    type: 'model',
+
     stem: 'statistic',
     tags: ['statistic', 'core', 'system'],
     component: Statistic,
@@ -429,7 +427,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'StatisticPackage',
     description: 'Provides a statistic package model for the server',
-    type: 'model',
+
     stem: 'statistic-package',
     tags: ['statistic-package', 'statistic', 'system'],
     component: StatisticPackage,
@@ -443,7 +441,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'Task',
     description: 'Provides a task model for the server',
-    type: 'model',
+
     stem: 'task',
     tags: ['task', 'core', 'system'],
     component: Task,
@@ -457,7 +455,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     version: '1.0.0',
     name: 'Team',
     description: 'Provides a team model for the server',
-    type: 'model',
+
     stem: 'team',
     tags: ['team', 'core', 'system'],
     component: Team,
@@ -471,7 +469,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'Template',
     version: '1.0.0',
     description: 'Provides a template model for the server',
-    type: 'model',
+
     stem: 'template',
     tags: ['template', 'core', 'system'],
     component: Template,
@@ -485,7 +483,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'Theme',
     version: '1.0.0',
     description: 'Provides a theme model for the server',
-    type: 'model',
+
     stem: 'theme',
     tags: ['theme', 'core', 'system'],
     component: Theme,
@@ -499,7 +497,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'User',
     version: '1.0.0',
     description: 'Provides a user model for the server',
-    type: 'model',
+
     stem: 'user',
     tags: ['user', 'core', 'system'],
     component: User,
@@ -513,7 +511,7 @@ export const modelDefinitions: Reactory.IReactoryComponentDefinition<CoreModelTy
     name: 'UserDemographics',
     version: '1.0.0',
     description: 'Provides a user demographics model for the server',
-    type: 'model',
+
     stem: 'user-demographics',
     tags: ['user-demographics', 'core', 'system'],
     component: UserDemographic,
