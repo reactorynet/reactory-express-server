@@ -10,32 +10,32 @@
 #$SECONDS - The number of seconds since the script was started.
 #$RANDOM - Returns a different random number each time is it referred to.
 #$LINENO - Returns the current line number in the Bash script.
-checkEnvVars(){
-  echo "Checking environment variables"
-  env_vars=("REACTORY_HOME" "REACTORY_DATA" "REACTORY_SERVER" "REACTORY_CLIENT" "REACTORY_PLUGINS")
-  do_exit=0
-  # Loop over each environment variable and check if it is set and points to a valid directory
-  for var in ${env_vars[@]}; do
-    if [[ -z "${!var}" ]]; then
-      echo -e "$var is not set"
-      do_exit=1
-    elif [[ ! -d "${!var}" ]]; then
-      echo -e "$var is not a valid directory"
-      do_exit=1
-    else
-      echo -e "$var is set and points to a valid directory"
-    fi
-  done
-  
-  if [[ $do_exit -eq 1 ]]; then
-    echo -e "Please set the environment variables listed above"
-    exit 1
+source ./bin/shared/shell-utils.sh
+
+
+# Check if env-cmd is installed
+if package_exists "env-cmd"; then
+  echo "🛠️  env-cmd is installed"
+else
+  if has_command "env-cmd"; then
+    echo "🛠️  env-cmd is installed - globally"
+  else
+    echo "🛠️  env-cmd is not installed"
+    echo "🛠️  Installing env-cmd"
+    npm i -g env-cmd
   fi
-  
-  echo "Checked Environment Variables"
-}
+fi
 
-checkEnvVars
 
-echo "Environment: ./config/${1:-reactory}/${2:-local} "
-NODE_PATH=./ env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx jest ${3:-**/**/*.spec.*s}
+if package_exists "jest"; then
+  echo "🛠️  jest is installed locally"
+else
+  echo "🛠️  jest is not installed"
+  echo "🛠️  Installing depedencies"
+  npm i
+fi
+
+# check environment variables
+check_env_vars
+echo "🛠️ Loading Environment ./config/${1:-reactory}/${2:-local} "
+NODE_PATH=./ env-cmd -f ./config/${1:-reactory}/.env.${2:-local} npx jest ${3:-**/**/*.spec.*s} --detectOpenHandles

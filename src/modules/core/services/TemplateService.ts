@@ -293,15 +293,12 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
   renderTemplate(template: any | String | Reactory.Models.ITemplate, properties: any): string {
 
     if (typeof template === 'string') {
-
-      logger.debug(`Template Before render:\n-------\n${template}\n------\n`)
-
-      let templateString = (template as String).replaceAll("&lt;%=", "<%=").replaceAll("%&gt;", "%>");
+      let templateString = `${template}`.replaceAll("&lt;%=", "<%=").replaceAll("%&gt;", "%>");
       templateString = templateString.replaceAll("%3C%=", "<%=").replaceAll("%%3E", "%>");
-
-      const compiled = ejs.render(templateString, properties);
-
-      logger.debug(`Template After render:\n-------\n${compiled}\n------\n`)
+      const compiled: string = ejs.render(templateString, properties, {
+        async: false,
+        debug: true
+      });
 
       return compiled;
 
@@ -367,7 +364,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
       .populate('client')
       .populate('organization')
       .populate('elements')
-      .then();
+      .then() as Reactory.Models.ITemplateDocument;
     let templates: Reactory.Models.ITemplateDocument[] = [];
     // if we do not find a template we check if we have a user filter.  If there is a user even a null value
     // we drop the user filter 

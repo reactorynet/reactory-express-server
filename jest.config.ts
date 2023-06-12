@@ -91,6 +91,7 @@ export default async (): Promise<JestConfigWithTsJest> => {
       '^@reactory/server-modules/(.*)$': '<rootDir>/src/modules/$1',
       '^test/(.*)$': '<rootDir>/test/$1',
     },
+    setupFilesAfterEnv: ['<rootDir>/test/setup/init.ts'],
   };
 
   return config;
