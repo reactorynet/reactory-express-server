@@ -297,7 +297,6 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
       templateString = templateString.replaceAll("%3C%=", "<%=").replaceAll("%%3E", "%>");
       const compiled: string = ejs.render(templateString, properties, {
         async: false,
-        debug: true
       });
 
       return compiled;
