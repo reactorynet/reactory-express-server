@@ -4,11 +4,11 @@ import lodash from 'lodash';
 import Reactory from '@reactory/reactory-core';
 import { TemplateType } from '@reactory/server-core/types/constants';
 import ApiError, { RecordNotFoundError } from '@reactory/server-core/exceptions';
-import { Template, ReactoryClient, EmailQueue, User, Organization } from '@reactory/server-core/models';
+import { Template } from '@reactory/server-core/models';
 import logger from '@reactory/server-core/logging';
-import { ObjectId, ObjectID } from 'mongodb';
+import { ObjectId} from 'mongodb';
 
-const {
+const { 
   APP_DATA_ROOT
 } = process.env;
 
@@ -18,8 +18,8 @@ function replaceAll(target: string, search: string, replacement: string): string
 
 
 
-const extractEmailSections = (template: Reactory.ITemplateDocument): Reactory.IEmailTemplate => {
-  const extracted: Reactory.IEmailTemplate = {
+const extractEmailSections = (template: Reactory.Models.ITemplateDocument): Reactory.Models.IEmailTemplate => {
+  const extracted: Reactory.Models.IEmailTemplate = {
     id: template.id || template._id,
     client: template.client,
     businessUnit: template.businessUnit,
@@ -60,36 +60,32 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
     this.context = context;
   }
 
-  async dehydrateEmail(template: Reactory.IEmailTemplate): Promise<Reactory.ITemplate> {
+  async dehydrateEmail(template: Reactory.Models.IEmailTemplate): Promise<Reactory.Models.ITemplate> {
 
     const { view, client, organization, businessUnit, userId, id } = template
-
-    debugger
     logger.debug(`TemplateService.dehydrateEmail id: ${id} view:  ${view}, client ${client}, organization: ${organization}, business unit: ${businessUnit}, user id: ${userId}`);
-
-
     try {
 
-      let existingTemplate: Reactory.ITemplateDocument = null;
+      let existingTemplate: Reactory.Models.ITemplateDocument = null;
 
       if (ObjectID.isValid(id)) {
         existingTemplate = await Template.findById(id)
           .populate('client')
           .populate('organization')
-          .populate('elements').then() as Reactory.ITemplateDocument;
+          .populate('elements').then() as Reactory.Models.ITemplateDocument;
         logger.debug('TemplateService fetched template using id', { found: existingTemplate !== null });
       }
       else {
-        existingTemplate = await this.getTemplate(view, client, organization, businessUnit, userId).then() as Reactory.ITemplateDocument;
+        existingTemplate = await this.getTemplate(view, client, organization, businessUnit, userId).then() as Reactory.Models.ITemplateDocument;
         logger.debug('TemplateService search result', { found: existingTemplate !== null });
       }
 
       const newTemplateAction =  async () => {
-        logger.debug(`core.TemplateService creating new template ${template.view}`);
+        logger.debug(`core.ITemplateService creating new template ${template.view}`);
 
-        const _template = new Template() as Reactory.ITemplateDocument
-        const _subjectTemplate = new Template() as Reactory.ITemplateDocument;
-        const _bodyTemplate = new Template() as Reactory.ITemplateDocument;
+        const _template = new Template() as Reactory.Models.ITemplateDocument
+        const _subjectTemplate = new Template() as Reactory.Models.ITemplateDocument;
+        const _bodyTemplate = new Template() as Reactory.Models.ITemplateDocument;
 
         _subjectTemplate._id = new ObjectID();
 
@@ -156,7 +152,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
       }
 
       const updateExisting = async () => {
-        logger.debug(`core.TemplateService updating template ${template.view}`);
+        logger.debug(`core.ITemplateService updating template ${template.view}`);
 
         let subjectSet: boolean = false;
         let bodySet: boolean = false;
@@ -168,7 +164,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
          * patch content for template
          * @param templateEl 
          */
-        const patchContent = async (templateEl: Reactory.ITemplateDocument): Promise<Boolean> => {
+        const patchContent = async (templateEl: Reactory.Models.ITemplateDocument): Promise<Boolean> => {
           logger.debug(`Patching content for template element`, { templateEl, template });
           try {
             if (templateEl.view.endsWith('/subject')) {
@@ -199,7 +195,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
 
         // IF FAIL CREATE A NEW BODY TEMPLATE AND ADD TO TEMPLATE
         if (bodySet === false) {
-          const _bodyTemplate = new Template() as Reactory.ITemplateDocument;;
+          const _bodyTemplate = new Template() as Reactory.Models.ITemplateDocument;;
           _bodyTemplate._id = new ObjectID();
 
           _bodyTemplate.client = client;
@@ -224,7 +220,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
         // IF FAIL CREATE A NEW SUBJECT TEMPLATE AND ADD TO TEMPLATE
         if (subjectSet === false) {
 
-          const _subjectTemplate = new Template() as Reactory.ITemplateDocument;
+          const _subjectTemplate = new Template() as Reactory.Models.ITemplateDocument;
           _subjectTemplate._id = new ObjectID();
 
           _subjectTemplate.client = client;
@@ -288,24 +284,20 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
     }
   }
 
-  hydrateEmail(template: Reactory.ITemplate | Reactory.ITemplateDocument): Promise<Reactory.IEmailTemplate> {
+  hydrateEmail(template: Reactory.Models.ITemplate | Reactory.Models.ITemplateDocument): Promise<Reactory.Models.IEmailTemplate> {
     if (template === null) Promise.reject(`template may not be null`);
 
-    return Promise.resolve(extractEmailSections(template as Reactory.ITemplateDocument));
+    return Promise.resolve(extractEmailSections(template as Reactory.Models.ITemplateDocument));
   }
 
-  renderTemplate(template: any | String | Reactory.ITemplate, properties: any): string {
+  renderTemplate(template: any | String | Reactory.Models.ITemplate, properties: any): string {
 
     if (typeof template === 'string') {
-
-      logger.debug(`Template Before render:\n-------\n${template}\n------\n`)
-
-      let templateString = (template as String).replaceAll("&lt;%=", "<%=").replaceAll("%&gt;", "%>");
+      let templateString = `${template}`.replaceAll("&lt;%=", "<%=").replaceAll("%&gt;", "%>");
       templateString = templateString.replaceAll("%3C%=", "<%=").replaceAll("%%3E", "%>");
-
-      const compiled = ejs.render(templateString, properties);
-
-      logger.debug(`Template After render:\n-------\n${compiled}\n------\n`)
+      const compiled: string = ejs.render(templateString, properties, {
+        async: false,
+      });
 
       return compiled;
 
@@ -340,12 +332,12 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
   };
 
 
-  async getTemplate(view: string, reactoryClientId: string | ObjectID, organizationId: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID): Promise<Reactory.ITemplate> {
+  async getTemplate(view: string, reactoryClientId: string | ObjectId, organizationId: string | ObjectId, businessUnitId?: string | ObjectId, userId?: string | ObjectID): Promise<Reactory.Models.ITemplate> {
 
     logger.debug(`TemplateService.ts.getTemplate()`, { view, reactoryClientId, organizationId, businessUnitId, userId });
 
-    if (view === null || view === undefined) throw new ApiError('parameter: "view" may not be null or undefined', { source: 'core.services.TemplateService.ts' });
-    if (view && view.length < 5) throw new ApiError('parameter: "view" should at least be 5 characters long', { source: 'core.services.TemplateService.ts' });
+    if (view === null || view === undefined) throw new ApiError('parameter: "view" may not be null or undefined', { source: 'core.services.ITemplateService.ts' });
+    if (view && view.length < 5) throw new ApiError('parameter: "view" should at least be 5 characters long', { source: 'core.services.ITemplateService.ts' });
 
     //set base filter
     let conditions: { [key: string]: any } = {
@@ -354,29 +346,29 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
 
     let search_type = 'default';
 
-    if (ObjectID.isValid(reactoryClientId) === true) conditions.client = new ObjectID(reactoryClientId)
+    if (ObjectId.isValid(reactoryClientId) === true) conditions.client = new ObjectId(reactoryClientId)
     else conditions.client = this.context.partner._id;
 
-    if (ObjectID.isValid(organizationId) === true) conditions.organization = new ObjectID(organizationId);
+    if (ObjectId.isValid(organizationId) === true) conditions.organization = new ObjectId(organizationId);
     else conditions.organization = null;
 
-    if (ObjectID.isValid(businessUnitId) === true) conditions.businessUnit = new ObjectID(businessUnitId);
+    if (ObjectId.isValid(businessUnitId) === true) conditions.businessUnit = new ObjectId(businessUnitId);
     else conditions.businessUnit = null;
 
-    if (ObjectID.isValid(userId) === true) conditions.user = new ObjectID(userId);
+    if (ObjectId.isValid(userId) === true) conditions.user = new ObjectId(userId);
     else conditions.user = null;
 
     // the base query should return one result 
-    let template: Reactory.ITemplateDocument = await Template.findOne({ filter: conditions })
+    let template: Reactory.Models.ITemplateDocument = await Template.findOne({ filter: conditions })
       .populate('client')
       .populate('organization')
       .populate('elements')
-      .then();
-    let templates: Reactory.ITemplateDocument[] = [];
+      .then() as Reactory.Models.ITemplateDocument;
+    let templates: Reactory.Models.ITemplateDocument[] = [];
     // if we do not find a template we check if we have a user filter.  If there is a user even a null value
     // we drop the user filter 
     if (template === null && conditions.user) {
-      logger.debug(`🟠 [core.TemplateService] Could not locate the template link to the user, trying without organisation`)
+      logger.debug(`🟠 [core.ITemplateService] Could not locate the template link to the user, trying without organisation`)
       delete conditions.user;
       search_type = 'organisation / public';
       conditions.visibility = { $in: ['organization', 'public', null] };
@@ -391,7 +383,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
     }
 
     if (template === null && conditions.organization) {
-      logger.debug(`🟠 [core.TemplateService] Could not locate the template link to the organiisation, trying without organisation`)
+      logger.debug(`🟠 [core.ITemplateService] Could not locate the template link to the organiisation, trying without organisation`)
       delete conditions.organization;
       conditions.visibility = { $in: ['client', 'public', null] };
       search_type = 'application / public';
@@ -406,7 +398,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
     }
 
     if (template === null && conditions.client) {
-      logger.debug(`🟠 [core.TemplateService] Could not locate the template trying with view name only`)
+      logger.debug(`🟠 [core.ITemplateService] Could not locate the template trying with view name only`)
       delete conditions.client;
       conditions.visibility = { $in: ['public', null] };
       search_type = 'public';
@@ -426,7 +418,7 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
 
   }
 
-  async setTemplate(view: string, template: Reactory.ITemplateDocument, reactoryClientId?: string | ObjectID, organizationId?: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID): Promise<Reactory.ITemplate> {
+  async setTemplate(view: string, template: Reactory.Models.ITemplateDocument, reactoryClientId?: string | ObjectID, organizationId?: string | ObjectID, businessUnitId?: string | ObjectID, userId?: string | ObjectID): Promise<Reactory.Models.ITemplate> {
 
     let filter: { [key: string]: any } = {
       view
@@ -455,11 +447,11 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
     $template_props.businessUnit = $businessUnitId;
     $template_props.user = $userId;
 
-    let $template: Reactory.ITemplateDocument = await Template.findOne({ filter }).then();
+    let $template: Reactory.Models.ITemplateDocument = await Template.findOne({ filter }).then();
     //match exact with the filter on set.  Don't do any smart fall backs and global updates.
 
     if ($template === null) {
-      $template = new Template({ ...template, $template_props }) as Reactory.ITemplateDocument;
+      $template = new Template({ ...template, $template_props }) as Reactory.Models.ITemplateDocument;
     } else {
       $template.content = template.content;
       $template.enabled = template.enabled || $template.enabled;
@@ -495,15 +487,23 @@ export class ReactoryTemplateService implements Reactory.Service.IReactoryTempla
 }
 
 
-export const TemplateServiceDefinition: Reactory.IReactoryServiceDefinition = {
+export const TemplateServiceDefinition: Reactory.Service.IReactoryServiceDefinition<ReactoryTemplateService> = {
   id: 'core.TemplateService@1.0.0',
-  name: 'Reactory TemplateService',
+  nameSpace: 'core',
+  name: 'TemplateService',
+  version: '1.0.0',
   description: 'Reactory Default Template Service for rendering ejs templates.',
   dependencies: [],
-  serviceType: 'template',
-  service: (props: Reactory.IReactoryServiceProps, context: any) => {
+  serviceType: "template",
+  secondaryTypes: [
+    "file",
+    "workflow",
+    "development",
+  ],
+  service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
     return new ReactoryTemplateService(props, context);
-  }
+  },
+
 }
 
 export default TemplateServiceDefinition
