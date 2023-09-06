@@ -8,7 +8,7 @@ import { service } from "@reactory/server-core/application/decorators/service";
   serviceType: "data",
   dependencies: [
     { id: "core.FetchService@1.0.0", alias: "fetchService" },
-    { id: "core.FileService@1.0.0", alias: "fileService" },
+    { id: "core.ReactoryFileService@1.0.0", alias: "fileService" },
   ]
 })
 export class ReactoryModelRegistry implements Reactory.Service.TReactoryModelRegistryService {

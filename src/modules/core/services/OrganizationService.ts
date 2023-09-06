@@ -362,7 +362,7 @@ export const ReactoryOrganizationServiceDefinition: Reactory.Service.IReactorySe
   description: 'Default Organization Service.',
   dependencies: [
     {
-      id: 'core.ReactoryModelService@1.0.0',
+      id: 'core.ReactoryModelRegistry@1.0.0',
       alias: 'modelService'
     }
   ],
