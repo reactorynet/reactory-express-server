@@ -329,6 +329,8 @@ const main = async (vargs: string[]): Promise<void> => {
       options: commandArgs.join(' ').trim(),
     })));
 
+    context.readline = rl;
+
     if(command) {
       const cli: Reactory.IReactoryComponentDefinition<TCLI> = getCLI(command);
       if(cli && cli.component) {
