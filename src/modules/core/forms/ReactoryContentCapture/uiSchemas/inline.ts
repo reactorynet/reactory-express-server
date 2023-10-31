@@ -1,5 +1,7 @@
 import { inlineFroalaOptions } from '../froala'
 
+
+
 export const inlineEditor: Reactory.Schema.IFormUISchema = {
 
   'ui:options': {
@@ -66,6 +68,43 @@ export const inlineEditor: Reactory.Schema.IFormUISchema = {
   },
   author: {
     'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      showLabel: false,
+      style: {
+        display: 'none',
+        maxHeight: '0px',
+      }
+    }
+  },
+  langKey: {
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      showLabel: false,
+      style: {
+        display: 'none',
+        maxHeight: '0px',
+      }
+    }
+  },
+  publishDate: {
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      showLabel: false,
+      style: {
+        display: 'none',
+        maxHeight: '0px',
+      }
+    }
+  },
+  updatedAt: {
+    'ui:widget': 'HiddenWidget',
+    'ui:options': {
+      showLabel: false,
+      style: {
+        display: 'none',
+        maxHeight: '0px',
+      }
+    }
   },
   topics: {
     'ui:widget': 'HiddenWidget',

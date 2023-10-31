@@ -8,7 +8,7 @@
   @param stat - statistic value
 """
 type Statistic {
-  id: ObjID!
+  id: String!
   key: String!
   title: String
   description: String
@@ -27,7 +27,7 @@ type Statistic {
   @param entries - array of statistic entries
 """
 type StatisticsPackage {
-  id: ObjID!
+  id: String!
   partner: ReactoryClient
   user: User
   reference: String!
@@ -62,7 +62,7 @@ type StatisticsReceipt {
 """
 input StatisticsFilter {
   keys: [String],
-  users: [ObjID],
+  users: [String],
   references: [String],
   from: Date,
   till: Date
@@ -126,7 +126,7 @@ input StatisticUpdateInpt {
 Input for StatisticsPackageUpdate
 """
 input StatisticsPackageUpdateInput {
-  id: ObjID!
+  id: String!
   title: String
   description: String
   references: [String]

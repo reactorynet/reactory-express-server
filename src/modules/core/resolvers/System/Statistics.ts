@@ -1,4 +1,4 @@
-import { ObjectID } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import ReactoryUserModel from '@reactory/server-modules/core/models/User';
 
 export default {
@@ -22,7 +22,11 @@ export default {
   },
   Mutation: {
     CorePublishStatistics: (parent, { entries }) => {
-      return true;
+      return {
+        id:  new ObjectId().toString(),
+        reference: 'test',
+        createdAt: new Date(),
+      };
     },
   },
 };

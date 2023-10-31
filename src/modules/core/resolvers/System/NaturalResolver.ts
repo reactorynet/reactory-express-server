@@ -56,11 +56,10 @@ class NaturalResolver {
     context: Reactory.Server.IReactoryContext,
     info: any,    
     ): Reactory.Models.INaturalTokenizedInput {
-      const { lang } = params;
+      const { lang, tokenizer } = params;
       const { i18n, getService } = context;
-      const naturalService = getService<Reactory.Service.INaturalService>("core.ReactoryNLPService@1.0.0");
-      logger.debug('NaturalTokenize', params, lang || i18n.language);    
-      return naturalService.tokenize(params.input, lang || i18n.language)
+      const naturalService = getService<Reactory.Service.INaturalService>("core.ReactoryNLPService@1.0.0");      
+      return naturalService.tokenize(params.input, tokenizer)
     }
 
   @roles(["USER"], 'args.context')
