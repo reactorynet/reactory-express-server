@@ -1,6 +1,6 @@
-import { CSTProgramNode } from "types/compiler/cst";
+import { CSTProgramNode } from "@reactory/server-core/types/compiler/cst";
 
-export const mockMultiLineWithConditionalWithElse: CSTProgramNode = {
+export const MultiLineWithConditionalProgramNode: CSTProgramNode = {
   type: "Program",
   children: [
     {
@@ -89,8 +89,7 @@ export const mockMultiLineWithConditionalWithElse: CSTProgramNode = {
       },
       elifBranches: [
       ],
-      elseBranch: {
-      },
+      elseBranch: null,
       value: null,
       children: [
       ],

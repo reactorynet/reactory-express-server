@@ -9,12 +9,43 @@ import { ReactoryContainer } from '@reactory/server-core/ioc';
 import modules from '@reactory/server-core/modules';
 import i18next, { t } from 'i18next';
 import Reactory from '@reactory/reactory-core';
+import { scrubEmail } from '@reactory/server-core/utils/string';
+import { ReactoryAnonUser } from './AnonUser';
+
+const DEFAULT_CONTEXT: Partial<Reactory.Server.IReactoryContext> = {
+  id: null,
+  user: ReactoryAnonUser,
+  partner: null,
+  $request: null,
+  $response: null,
+  i18n: null,
+  lng: null,
+  langs: null,
+  modules: null,
+  container: null,
+  log: null,
+  info: null,
+  warn: null,
+  debug: null,
+  error: null,
+  hasRole: null,
+  utils: null,
+  colors: null,
+  state: null,
+  theme: null,
+  palette: null,
+  services: [],
+  getService: function <T extends Reactory.Service.IReactoryService>(fqn: string, props?: unknown, context?: Reactory.Server.IReactoryContext, lifeCycle?: Reactory.Service.SERVICE_LIFECYCLE): T {
+    throw new Error('Function not implemented.');
+  },
+  lang: '',
+  languages: []
+};
+
+const DEFAULT_CLASS_NAME = "unknown_class";
 
 /***
  * The Reactory Context Provider creates a context for the execution thread which is passed through with each request
- * 
- * NOTE: Changes to this file only kicks in after restarting the server from cold, meaning you have to kill 
- * the process with Ctrl+C and then restart the service with bin/start.sh
  */
 export default async ($session: any, currentContext: any = {}): Promise<Reactory.Server.IReactoryContext> => {
   const $id = uuid();
@@ -37,15 +68,14 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     error: 'red'
   });
 
-  const $log = (message: string, meta: any = null, type: Reactory.Service.LOG_TYPE = "debug", clazz: string = 'any_clazz') => {
+  const $log = (message: string, meta: any = null, type: Reactory.Service.LOG_TYPE = "debug", clazz: string = DEFAULT_CLASS_NAME) => {
   
-    const $message = `${clazz}(${$id.substr(30, 6)}) ${email}: ${message}`;
+    const $message = `${clazz}(${$id.substring(30, 6)}) ${email}: ${message}`;
     switch (type) {
       case "e":
       case "err":
       case "error": {
         logger.error(colors.red($message), meta);
-
         break;
       }
       case "w":
@@ -60,6 +90,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
         break;
       }
       case "d":
+      case "deb":
       case "debug":
       default: {
         logger.debug(colors.blue($message), meta);        
@@ -67,24 +98,24 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     }
   };
 
-  const $debug = (message: string, meta: any = null, clazz: string = 'any_clazz') => {
+  const $debug = (message: string, meta: any = null, clazz: string = DEFAULT_CLASS_NAME) => {
     $log(message, meta, "debug", clazz);
   }
 
-  const $warn = (message: string, meta: any = null, clazz: string = 'any_clazz') => {
+  const $warn = (message: string, meta: any = null, clazz: string = DEFAULT_CLASS_NAME) => {
     $log(message, meta, "warn", clazz);
   }
 
-  const $error = (message: string, meta: any = null, clazz: string = 'any_clazz') => {
+  const $error = (message: string, meta: any = null, clazz: string = DEFAULT_CLASS_NAME) => {
     $log(message, meta, "error", clazz);
   }
   
-  const $info = (message: string, meta: any = null, clazz: string = 'any_clazz') => {
+  const $info = (message: string, meta: any = null, clazz: string = DEFAULT_CLASS_NAME) => {
     $log(message, meta, "info", clazz);
   }
 
-  let $user = $context.user ? $context.user : null;
-  let $partner = $context.partner ? $context.partner : null;
+  let $user: Reactory.Models.IUserDocument = $context.user ? $context.user : null;
+  let $partner: Reactory.Models.TReactoryClient = $context.partner ? $context.partner : null;
   let $request = null;
   let $response = null;
   let $i18n: typeof i18next = null;
@@ -96,7 +127,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     $partner = $session.req.partner;
     $request = $session.req;
     $response = $session.res;
-    email = $user.email;
+    email = scrubEmail($user.email);
     $i18n = $session.req.i18n;      
     $lng = $session.req.langauage;
     $langs = $session.req.langauages;
@@ -154,8 +185,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
     error: $error,
     hasRole: (role: string, partner?: Reactory.Models.IReactoryClient, organization?: Reactory.Models.IOrganizationDocument, businessUnit?: Reactory.Models.IBusinessUnitDocument) => {
 
-      if($session.req.user === null || $session.req.user === undefined) {
-        $log(`User is anon`, {}, 'debug', 'ReactoryContextProvider')
+      if($session.req.user === null || $session.req.user === undefined) {        
         return false;
       }
 
@@ -164,8 +194,7 @@ export default async ($session: any, currentContext: any = {}): Promise<Reactory
           role,
           organization && organization._id ? organization._id : undefined,
           businessUnit && businessUnit._id ? businessUnit._id : undefined)
-      } else {
-        $log(`User is anon`, {}, 'debug', 'ReactoryContextProvider')
+      } else {        
         return false;
       }      
     },

@@ -1,3 +1,4 @@
+import ReactoryContextProvider from "context/ReactoryContextProvider";
 
 
 export type ValidHost = 'cli' | 'server' | 'mock';
@@ -19,7 +20,8 @@ class ExecutionContext  {
 
   setupFunctions() {
     this.functions.set('print', (args: any[]) => {
-      console.log(...args);
+      const argsWithoutContext = args.slice(0, args.length - 1);
+      console.log(...argsWithoutContext);
     });
   }
 
@@ -40,13 +42,14 @@ class ExecutionContext  {
     if (!fn) {
       throw new Error(`Function ${name} not found`);
     }
-    args.push(context);
+    args.push(this.context);
     return fn(args);
   }
 }
 
-export const createContext = (context: Reactory.Server.IReactoryContext, host: 'cli' | 'server' | 'mock') => {
-  return new ExecutionContext(context, host);
+export const createContext = async (context: Partial<Reactory.Server.IReactoryContext> = {}, host: 'cli' | 'server' | 'mock'): Promise<ExecutionContext> => {
+  const reactoryContext = await ReactoryContextProvider(null, { ...context, host });
+  return new ExecutionContext(reactoryContext, host);
 }
 
 export default ExecutionContext;

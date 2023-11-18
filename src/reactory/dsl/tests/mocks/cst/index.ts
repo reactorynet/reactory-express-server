@@ -1,2 +1,4 @@
-export { mockHelloWorldProgramNode } from './hello_world_cst';
-export { mockMultiLineWithConditional } from './multiline_conditional';
+export { SingleLineHelloWorldProgramNode } from './SingleLineHelloWorld';
+export { MultiLineWithConditionalProgramNode } from './MultiLineWithConditionalIf';
+export { MultiLineWithConditionalWithElseProgramNode } from './MultiLineConditionalWithIfAndElse';
+export { MultilineWithWhileLoopCSTProgramNode } from './MultilineWithWhileLoop';

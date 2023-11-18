@@ -3,9 +3,10 @@ import { createCST } from "../compiler/parser";
 import { Token } from "@reactory/server-core/types/compiler/lexer";
 import { TokenisationMap } from "./mocks/tokens";
 import { 
-  mockHelloWorldProgramNode, 
-  mockMultiLineWithConditional,
-  mockMultiLineWithConditionalWithElse 
+  SingleLineHelloWorldProgramNode, 
+  MultiLineWithConditionalProgramNode,
+  MultiLineWithConditionalWithElseProgramNode,
+  MultilineWithWhileLoopCSTProgramNode 
 } from "./mocks/cst";
 import Tokenize from '../compiler/parser/lexer';
 
@@ -20,7 +21,7 @@ describe('CST', () => {
 
     //then we expect the CST to have type Program
     expect(cst.type).toBe('Program');
-    expect(cst).toEqual(mockHelloWorldProgramNode);    
+    expect(cst).toEqual(SingleLineHelloWorldProgramNode);    
   });
 
   it('should create a CST node with if statement', () => { 
@@ -32,7 +33,7 @@ describe('CST', () => {
 
     const cst = createCST(tokens);
 
-    expect(cst).toEqual(mockMultiLineWithConditional);
+    expect(cst).toEqual(MultiLineWithConditionalProgramNode);
   });
 
   it('should create a CST node with an else statement', () => { 
@@ -46,6 +47,64 @@ describe('CST', () => {
 
     const cst = createCST(tokens);
 
-    expect(cst).toEqual(mockMultiLineWithConditionalWithElse);
+    expect(cst).toEqual(MultiLineWithConditionalWithElseProgramNode);
   });
+
+  it('should create a CST node with a variable assignment', () => { 
+    const tokens = Tokenize(`
+    $name = "John";
+    `, { ignoreWhitespace: false, ignoreNewLines: false });
+
+    const cst = createCST(tokens);
+
+    expect(cst).toEqual({
+      type: "Program",
+      children: [
+        {
+          type: "VariableAssignment",
+          children: [
+            {
+              type: "VariableIdentifier",
+              children: [],
+              value: "$name"
+            },
+            {
+              type: "Whitespace",
+              children: [],
+              value: " "
+            },
+            {
+              type: "Operator",
+              children: [],
+              operator: "Assignment",
+              value: "="
+            },
+            {
+              type: "Whitespace",
+              children: [],
+              value: " "
+            },
+            {
+              type: "Literal",
+              children: [],
+              value: "\"John\""
+            }
+          ]
+        }
+      ]
+    });
+  });
+
+  // it('should create a CST with a while loop', () => {   
+  //   const tokens = Tokenize(`
+  //   while ($i < 10) {
+  //     @print($i)
+  //     $i = $i + 1
+  //   }
+  //   `, { ignoreWhitespace: false, ignoreNewLines: false });
+
+  //   const cst = createCST(tokens);
+
+  //   expect(cst).toEqual(MultilineWithWhileLoopCSTProgramNode);
+  // });
 });

@@ -1,6 +1,6 @@
-import { CSTNode, CSTProgramNode } from "types/compiler/cst";
+import { CSTProgramNode } from "@reactory/server-core/types/compiler/cst";
 
-export const mockHelloWorldProgramNode: CSTProgramNode = {
+export const SingleLineHelloWorldProgramNode: CSTProgramNode = {
   type: 'Program',
   children: [
     {

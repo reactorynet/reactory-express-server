@@ -1,4 +1,4 @@
-import { CSTElifBranchNode, CSTElseBranchNode, CSTIfControlNode, CSTNode, CSTSourceInfo } from "@reactory/server-core/types/compiler/cst";
+import { CSTElifBranchNode, CSTElseBranchNode, CSTIfControlNode, CSTNode, CSTOperatorNode, CSTSourceInfo } from "@reactory/server-core/types/compiler/cst";
 import { TokenType, Token } from "@reactory/server-core/types/compiler/lexer";
 
 /**
@@ -420,13 +420,58 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     return node;
   }
 
-  const parseOperator = (): CSTNode => { 
-    const node: CSTNode = {
+  const parseOperator = (): CSTOperatorNode => { 
+    const node: CSTOperatorNode = {
       type: 'Operator',
+      operatorType: null,
       children: [],
     };
-    const token = nextToken();
+    const token = currentToken();
     node.value = token.value;
+    switch(token.value) {
+      case "!": 
+      case "--":
+      case "++": {
+        node.operatorType = "Unary";
+        break
+      }
+      case "+":
+      case "-":
+      case "*":
+      case "/":
+      case "%":
+      case "^":
+      case "&":
+      case "|":
+      case "~":
+      case "<<":
+      case ">>":
+      case ">>>":
+      case "&&":
+      case "||":
+      case "==":
+      case "!=":
+      case "===":
+      case "!==":
+      case "<":
+      case ">":
+      case "<=":
+      case ">=":
+      case "=>":
+      case "=":
+      case "+=":
+      case "-=":
+      case "*=":
+      case "/=":
+      case "%=":
+      case "^=":
+      case "&=":
+      case "|=":
+      case "~=": {
+        node.operatorType = "Binary";
+        break;
+      }
+    }
     return node;
   }
 
@@ -518,9 +563,11 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       case "HEXADECIMAL_LITERAL":
       case "LITERAL":
         return parseLiteral(token);
+      case "ASSIGNMENT":
       case "OPERATOR":
         return parseOperator();
       case "PUNCTUATION":
+      case "SEMICOLON":
         return parsePunctuation();
       case "VARIABLE":
         return parseVariableIdentifier();

@@ -1,4 +1,0 @@
-const message = "Hello";
-@ask("What is your name?")-->@var("name", $out)-->@print(`$message $out`);
-const hobbies = @ask("What are your hobbies?");
-@llm(`Suggest some places $name could visit based on their $hobbies`)

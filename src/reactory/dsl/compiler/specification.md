@@ -2,7 +2,7 @@
 
 ### Purpose
 
-The purpose of this macro language is to provide a high-level scripting utility that simplifies the creation and management of automated tasks within the Reactor AI enabled environment. It aims to offer a more accessible approach to automation by abstracting away the complexity of direct scripting, making it more approachable for non-programmers or those with limited coding experience. This macro language is designed to enhance productivity, allowing users to compose powerful operations from simple, predefined commands (macros) and to control the flow of execution with intuitive constructs.
+The purpose of this macro language is to provide a high-level scripting utility that simplifies the creation and management of automated tasks within the Reactory environment. It aims to offer a more accessible approach to automation by abstracting away the complexity of direct scripting, making it more approachable for non-programmers or those with limited coding experience. This macro language is designed to enhance productivity, allowing users to compose powerful operations from simple, predefined commands (macros) and to control the flow of execution with intuitive constructs.
 
 ### Overview
 
@@ -288,6 +288,34 @@ By defining the runtime behavior, script writers and users can have a predictabl
 @fetchDataFromAPI("https://api.example.com/data") --> @processData($out) --> @saveToDatabase($out)
 ```
 
+#### Multiline chaining
+```reactoryscript
+data("https://api.example.com/data) {
+  processData($out)
+    listen['eventName'](evt) {
+      deleteRaw(evt.data)
+      sendSuccess(out)
+    }
+  saveRaw($out)
+    fire('eventName', $out)
+} catch {
+  sendFail
+}
+  
+```
+
+```mermaid
+
+stateDiagram-v2
+    [*] --> CheckName: Start
+    CheckName --> John: $name == "John"
+    CheckName --> NotJohn: $name != "John"
+    John --> [*]: Print "Hello, John!"
+    NotJohn --> [*]: Print "Hello, Stranger!"
+
+
+```
+
 ### Example 3: Macro Branching Based on Success or Failure
 ```typescript
 // This example shows macro branching where `@updateUserRecord` is called on success,
@@ -366,3 +394,13 @@ switch($orderStatus) {
 ```
 
 These examples show how the macro language can be used to script complex workflows and processes in a readable and maintainable way. Each example illustrates how different aspects of the language, such as sequential execution, chaining, branching, nesting, conditional logic, looping, error handling, and switch-case control flow, can be utilized to create scripts that interact with APIs, perform data processing, handle user interaction, and more.
+
+```mermaid
+stateDiagram-v2
+    [*] --> CheckName: Start
+    CheckName --> John: $name == "John"
+    CheckName --> NotJohn: $name != "John"
+    John --> [*]: Print "Hello, John!"
+    NotJohn --> [*]: Print "Hello, Stranger!"
+
+```

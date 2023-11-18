@@ -1,10 +1,12 @@
 // Define a type for all the possible node types in the CST
 export type CSTNodeType =
+  | 'AccessControlList'
   | 'Program'
   | 'MacroInvocation'
   | 'MacroName'
   | 'MacroArguments'
   | 'MacroArgument'
+  | 'Assignment'
   | 'StringInterpolation'
   | 'StringLiteral'
   | 'HexadecimalLiteral'
@@ -34,6 +36,7 @@ export type CSTNodeType =
   | 'Newline'
   | 'EOF';
 
+export type OperatorType = 'Assignment' | 'Addition' | 'Subtraction' | 'Multiplication' | 'Division' | 'Modulus' | 'Exponentiation' | 'LogicalAnd' | 'LogicalOr' | 'LogicalNot' | 'BitwiseAnd' | 'BitwiseOr' | 'BitwiseNot' | 'BitwiseXor' | 'BitwiseLeftShift' | 'BitwiseRightShift' | 'BitwiseUnsignedRightShift' | 'Equals' | 'NotEquals' | 'GreaterThan' | 'GreaterThanOrEqual' | 'LessThan' | 'LessThanOrEqual' | 'Ternary' | 'Nary';
 
 // Defines meta data information about the input source code
 export type CSTSourceInfo = {
@@ -47,6 +50,7 @@ export interface CSTNode {
   type: CSTNodeType;
   value?: string; // For literals, identifiers, operators, etc.
   children?: CSTNode[];
+  [key: symbol]: CSTNode | CSTNode[] | string | undefined;
 }
 
 // Specific CST Node interfaces can then be extended for each type of node
@@ -144,7 +148,8 @@ export interface CSTIdentifierNode extends CSTNode {
 
 export interface CSTOperatorNode extends CSTNode {
   type: 'Operator';
-  // Value is the operator symbol (e.g., '+', '&&', '==')
+  operator: OperatorType;
+  // Value is the operator symbol (e.g., '+', '-', '/', '*', '&&', '=', '||', '!')
 }
 
 export interface CSTComparisonOperationNode extends CSTNode {
@@ -163,7 +168,46 @@ export interface CSTWhitespaceNode extends CSTNode {
   // Value could be ' ', '\t', '\n', etc.
 }
 
+export interface CSTAssignmentNode extends CSTNode {
+  type: 'Assignment';
+  left: CSTNode;
+  right: CSTNode;
+}
+
+
+export interface CSTAccessControlListNode extends CSTNode {
+  type: 'AccessControlList';
+  allowed?: CSTNode[]; // An array of allowed identifiers
+  denied?: CSTNode[]; // An array of denied identifiers
+  // Value is the acl operator (e.g., 'acl.required', 'acl.denied')
+
+}
+
 // The root type for the CST
+export type CSTChildNodeTypes =
+  CSTAssignmentNode |
+  CSTGroupingNode | 
+  CSTChainingNode | 
+  CSTBranchingNode | 
+  CSTNestingNode | 
+  CSTIfControlNode | 
+  CSTSwitchControlNode | 
+  CSTTryCatchNode | 
+  CSTWhileLoopNode | 
+  CSTLiteralNode | 
+  CSTStringLiteralNode | 
+  CSTNumberLiteralNode | 
+  CSTBooleanLiteralNode | 
+  CSTHexadecimalLiteralNode | 
+  CSTIdentifierNode | 
+  CSTOperatorNode | 
+  CSTComparisonOperationNode | 
+  CSTPunctuationNode | 
+  CSTWhitespaceNode | 
+  CSTAccessControlListNode;
+
 export interface CSTProgramNode extends CSTNode {
-  type: 'Program';  
+  type: 'Program';
+  children: CSTChildNodeTypes[];
+  acl?: CSTNode;  
 }
