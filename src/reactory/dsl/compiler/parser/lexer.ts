@@ -13,10 +13,37 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
   let position = { line: 1, column: 1 };
 
   const { ignoreWhitespace, ignoreComments, ignoreNewLines } = options;
+  
+  /**
+    ### Regex Breakdown:
+
+    1. **`^`**: 
+      - This asserts the start of a line or string.
+
+    2. **`(?: ... )`**: 
+      - This is a non-capturing group. It groups the included patterns together without creating a capturing group.
+
+    3. **`(?!\n|\/\/|\/\*|\`)`**: 
+      - This is a negative lookahead assertion. It ensures that the following characters do not match any of the patterns specified within the lookahead.
+      - `\n`: Matches a newline character.
+      - `\/\/`: Matches a double forward slash (`//`), typically used to start a single-line comment in many programming languages.
+      - `\/\*`: Matches the start of a block comment (`/*`) in many programming languages.
+      - `` ` ``: Matches a backtick character.
+
+    4. **`[^\S\n]`**:
+      - `[...]`: This is a character class.
+      - `^\S`: This matches any character that is not a non-whitespace character (`\S`). In other words, it matches any whitespace character.
+      - `\n`: This represents a newline character.
+      - The combination `[^\S\n]` matches any whitespace character except for the newline character.
+
+    ### Overall Explanation:
+    This regular expression matches a line starting with a whitespace character (but not a newline), provided that the whitespace is not part of a single-line comment (`//`), a block comment opening (`/*`), or within backticks (`` ` ``). 
+  */
+  const NEW_LINE_PATTERN: [RegExp, TokenType] = [/^(?:(?!\n|\/\/|\/\*|`)[^\S\n])/, 'NEWLINE']
 
   // Regular expressions for the different tokens, ensure to include all necessary patterns
   const tokenPatterns: [RegExp, TokenType][] = [
-    [/^\s+/, 'WHITESPACE'], // Ignore whitespace
+    [/^[ \t\r\f\v]+/, 'WHITESPACE'], // Ignore whitespace
     [/^@/, 'MACRO_START'],
     [/^\(/, 'PAREN_OPEN'],
     [/^\)/, 'PAREN_CLOSE'],
@@ -25,7 +52,7 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
     [/^\{/, 'CURLY_OPEN'],
     [/^\}/, 'CURLY_CLOSE'],
     [/^,/, 'COMMA'],
-    [/^;/, 'SEMICOLON'],
+    [/^;/, 'SEMICOLON'],    
     [/^-->/, 'ARROW_CHAIN'],
     [/^-=>/, 'ARROW_BRANCH'],
     [/^\$[a-zA-Z_]\w*/, 'VARIABLE'],
@@ -70,8 +97,7 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
     [/^\/\*/, 'COMMENT'],
     [/^\*\//, 'COMMENT'],
     // EOF
-    [/^$/, 'EOF'],
-    
+    [/^$/, 'EOF'],    
   ];
 
   // Function to update position

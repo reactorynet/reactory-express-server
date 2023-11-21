@@ -8,11 +8,19 @@ if ($name == "John") {
 
 const multiLineMacroTokens: Token[] = [
   {
-    type: "WHITESPACE",
-    value: "\n    ",
+    type: "NEWLINE",
+    value: "\n",
     position: {
       line: 1,
       column: 1,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: "    ",
+    position: {
+      line: 2,
+      column: 0,
     },
   },
   {
@@ -104,11 +112,19 @@ const multiLineMacroTokens: Token[] = [
     },
   },
   {
-    type: "WHITESPACE",
-    value: "\n      ",
+    type: "NEWLINE",
+    value: "\n",
     position: {
       line: 2,
       column: 26,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: "      ",
+    position: {
+      line: 3,
+      column: 0,
     },
   },
   {
@@ -152,11 +168,19 @@ const multiLineMacroTokens: Token[] = [
     },
   },
   {
-    type: "WHITESPACE",
-    value: "\n    ",
+    type: "NEWLINE",
+    value: "\n",
     position: {
       line: 3,
       column: 28,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: "    ",
+    position: {
+      line: 4,
+      column: 0,
     },
   },
   {
@@ -168,11 +192,19 @@ const multiLineMacroTokens: Token[] = [
     },
   },
   {
-    type: "WHITESPACE",
-    value: "\n    ",
+    type: "NEWLINE",
+    value: "\n",
     position: {
       line: 4,
       column: 5,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: "    ",
+    position: {
+      line: 5,
+      column: 0,
     },
   },
   {
@@ -183,7 +215,7 @@ const multiLineMacroTokens: Token[] = [
       column: 4,
     },
   },
-];
+]
 
 export const TokenisationMap: { [key: string]: Token[] } = {
   'var name = "John";': [

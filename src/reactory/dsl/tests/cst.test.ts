@@ -61,16 +61,16 @@ describe('CST', () => {
     expect(cst).toEqual(MultiLineWithVariableAssignmentProgramNode);
   });
 
-  // it('should create a CST with a while loop', () => {   
-  //   const tokens = Tokenize(`
-  //   while ($i < 10) {
-  //     @print($i)
-  //     $i = $i + 1
-  //   }
-  //   `, { ignoreWhitespace: false, ignoreNewLines: false });
+  it('should create a CST with a while loop', () => {   
+    const tokens = Tokenize(`
+    while ($i < 10) {
+      @print($i)
+      $i = $i + 1;
+    }
+    `, { ignoreWhitespace: false, ignoreNewLines: false });
 
-  //   const cst = createCST(tokens);
+    const cst = createCST(tokens);
 
-  //   expect(cst).toEqual(MultilineWithWhileLoopCSTProgramNode);
-  // });
+    expect(cst).toEqual(MultilineWithWhileLoopCSTProgramNode);
+  });
 });
