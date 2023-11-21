@@ -1,4 +1,4 @@
-import { CSTElifBranchNode, CSTElseBranchNode, CSTIfControlNode, CSTNode, CSTOperatorNode, CSTSourceInfo } from "@reactory/server-core/types/compiler/cst";
+import { CSTElifBranchNode, CSTElseBranchNode, CSTIfControlNode, CSTNode, CSTOperatorNode, CSTParsingContext, CSTSourceInfo, Operator } from "@reactory/server-core/types/compiler/cst";
 import { TokenType, Token } from "@reactory/server-core/types/compiler/lexer";
 
 /**
@@ -7,44 +7,56 @@ import { TokenType, Token } from "@reactory/server-core/types/compiler/lexer";
  * @returns 
  */
 export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode => {
-  
-  // defines the current token index
-  let currentTokenIndex = 0;
-
-  // defines the global scope of the program
-  let globalScope = {};
-
-  // defines the current scope of the program
-  let currentScope = {};
-
+      
+  // defines the current expression context
+  // that tells us about the surrounding expressions
+  // or tokens. This will help us to determine
+  // how to parse the current token and return the 
+  // appropriate CST node
+  const currentExpressionContext: CSTParsingContext = { 
+    currentToken: null,
+    currentTokenIndex: 0,
+    nextToken: null,
+    nextTokenIndex: null,
+    previousToken: null,
+    previousTokenIndex: null,
+    currentNode: null,
+    currentNodeIndex: null,
+    parentNode: null,
+    parentNodeIndex: null,
+    rootNode: null,
+    rootNodeIndex: null,
+    sourceInfo: sourceInfo,
+    state: {},
+  };
 
 
   /**
    * Returns the next token in the array and increments the current index
    * @returns 
    */
-  const nextToken = (): Token => tokens[currentTokenIndex++];
+  const nextToken = (): Token => tokens[currentExpressionContext.currentTokenIndex++];
   /**
    * Returns the current token in the array
    * @returns 
    */
-  const currentToken = (): Token => tokens[currentTokenIndex - 1];
+  const currentToken = (): Token => tokens[currentExpressionContext.currentTokenIndex - 1];
   /**
    * Returns the next token in the array without incrementing the current index
    * @returns 
    */
-  const peekToken = (): Token => tokens[currentTokenIndex];
+  const peekToken = (): Token => tokens[currentExpressionContext.currentTokenIndex];
 
 
   /**
    * Parses a string interpolation token into a CST node
-   * @param currentArgumentToken 
+   * @param token 
    * @returns 
    */
-  const parseStringInterpolation = (currentArgumentToken: Token): CSTNode => {
+  const parseStringInterpolation = (token: Token): CSTNode => {
     const stringInterpolationNode: CSTNode = {
       type: 'StringInterpolation',
-      value: currentArgumentToken.value,
+      value: token.value,
       children: [],
     };
     
@@ -53,13 +65,13 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
 
   /**
    * Parses a macro invocation token into a CST node
-   * @param currentToken 
+   * @param token 
    * @returns 
    */
-  const parseMacroInvocation = (currentToken: Token): CSTNode => { 
+  const parseMacroInvocation = (token: Token): CSTNode => { 
     const macroTagNode: CSTNode = {
       type: 'MacroInvocation',
-      value: currentToken.value,
+      value: token.value,
       children: [],
     };
     const identifierToken = nextToken();
@@ -182,12 +194,11 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     return node;
   }
 
-  const parseBranching = (): CSTNode => { 
+  const parseBranching = (token: Token): CSTNode => { 
     const node: CSTNode = {
       type: 'Branching',
       children: [],
     };
-    const token = nextToken();
     node.value = token.value;
     return node;
   }
@@ -245,7 +256,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
   }
 
 
-  const parseIfControl = (): CSTIfControlNode => { 
+  const parseIfControl = (token: Token): CSTIfControlNode => { 
     const node: CSTIfControlNode = {
       type: 'IfControl',
       condition: null,
@@ -253,9 +264,8 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       elifBranches: [],
       elseBranch: null,
       value: null,
-      children: [],      
-    };
-    let token = nextToken();
+      children: [],
+    };    
     // if control has to have a condition, which could make use of a comparison operator
     // i.e. if (a == b) { ... } or if (a) { ... } or if (a == b && c == d) { ... }
     // so our next token should be either a whitespace or a PAREN_OPEN
@@ -313,7 +323,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
             break;
           }
           case "WHITESPACE": {
-            node.children.push(parseWhitespace());
+            node.children.push(parseWhitespace(token));
             break;
           }
           default: { 
@@ -329,32 +339,29 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     return node;
   }
 
-  const parseSwitchControl = (): CSTNode => { 
+  const parseSwitchControl = (token: Token): CSTNode => { 
     const node: CSTNode = {
       type: 'SwitchControl',
       children: [],
-    };
-    const token = nextToken();
+    };    
     node.value = token.value;
     return node;
   }
 
-  const parseTryCatch = (): CSTNode => { 
+  const parseTryCatch = (token: Token): CSTNode => { 
     const node: CSTNode = {
       type: 'TryCatch',
       children: [],
-    };
-    const token = nextToken();
+    };    
     node.value = token.value;
     return node;
   }
 
-  const parseWhileLoop = (): CSTNode => { 
+  const parseWhileLoop = (token: Token): CSTNode => { 
     const node: CSTNode = {
       type: 'WhileLoop',
       children: [],
-    };
-    const token = nextToken();
+    };    
     node.value = token.value;
     return node;
   }
@@ -369,13 +376,12 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     return node;
   }
 
-  const parseIdentifier = (): CSTNode => { 
+  const parseIdentifier = (token: Token): CSTNode => { 
     const node: CSTNode = {
       type: 'Identifier',
       children: [],
     };
-
-    const token = nextToken();
+    
     switch(token.type) {
       case "STRING_LITERAL": {
         node.type = "StringLiteral";
@@ -420,119 +426,172 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     return node;
   }
 
-  const parseOperator = (): CSTOperatorNode => { 
+  const parseOperator = (token: Token): CSTOperatorNode => { 
     const node: CSTOperatorNode = {
       type: 'Operator',
-      operatorType: null,
+      operator: null,
       children: [],
-    };
-    const token = currentToken();
+    };    
     node.value = token.value;
     switch(token.value) {
-      case "!": 
+      case "!":
+        node.operator = Operator.Unary | Operator.LogicalNot;
+        break;       
       case "--":
-      case "++": {
-        node.operatorType = "Unary";
-        break
-      }
-      case "+":
-      case "-":
-      case "*":
-      case "/":
-      case "%":
-      case "^":
-      case "&":
-      case "|":
-      case "~":
-      case "<<":
-      case ">>":
-      case ">>>":
-      case "&&":
-      case "||":
-      case "==":
-      case "!=":
-      case "===":
-      case "!==":
-      case "<":
-      case ">":
-      case "<=":
-      case ">=":
-      case "=>":
-      case "=":
-      case "+=":
-      case "-=":
-      case "*=":
-      case "/=":
-      case "%=":
-      case "^=":
-      case "&=":
-      case "|=":
-      case "~=": {
-        node.operatorType = "Binary";
+        node.operator = Operator.Assignment | Operator.Unary | Operator.Subtraction;
         break;
-      }
+      case "++":
+        node.operator = Operator.Assignment | Operator.Unary | Operator.Addition;
+        break;
+      case "+":
+        node.operator = Operator.Binary | Operator.Addition;
+        break;
+      case "-":
+        node.operator = Operator.Binary | Operator.Subtraction;
+        break;
+      case "*":
+        node.operator = Operator.Binary | Operator.Multiplication;
+        break;
+      case "/":
+        node.operator = Operator.Binary | Operator.Division;
+        break;
+      case "%":
+        node.operator = Operator.Binary | Operator.Modulus;
+        break;
+      case "^":
+        node.operator = Operator.Binary | Operator.Exponentiation;
+        break;
+      case "&":
+        node.operator = Operator.Binary | Operator.BitwiseAnd;
+        break;
+      case "|":
+        node.operator = Operator.Binary | Operator.BitwiseOr;
+        break;
+      case "~":
+        node.operator = Operator.Unary | Operator.BitwiseNot;
+        break;
+      case "<<":
+        node.operator = Operator.Binary | Operator.BitwiseLeftShift;
+        break;
+      case ">>":
+        node.operator = Operator.Binary | Operator.BitwiseRightShift;
+        break;
+      case ">>>":
+        node.operator = Operator.Binary | Operator.BitwiseUnsignedRightShift;
+        break;
+      case "&&":
+        node.operator = Operator.Binary | Operator.LogicalAnd;
+        break;
+      case "||":
+        node.operator = Operator.Binary | Operator.LogicalOr;
+        break;
+      case "==":
+        node.operator = Operator.Binary | Operator.Equals;
+        break;
+      case "!=":
+        node.operator = Operator.Binary | Operator.NotEquals;
+        break;
+      case "<":
+        node.operator = Operator.Binary | Operator.LessThan;
+        break;
+      case ">":
+        node.operator = Operator.Binary | Operator.GreaterThan;
+        break;
+      case "<=":
+        node.operator = Operator.Binary | Operator.LessThanOrEqual;
+        break;
+      case ">=":
+        node.operator = Operator.Binary | Operator.GreaterThanOrEqual;
+        break;
+      case "=":
+        node.operator = Operator.Assignment;
+        break;
+      case "+=":
+        node.operator = Operator.Assignment | Operator.Addition;
+        break;
+      case "-=":
+        node.operator = Operator.Assignment | Operator.Subtraction;
+        break;
+      case "*=":
+        node.operator = Operator.Assignment | Operator.Multiplication;
+        break;
+      case "/=":
+        node.operator = Operator.Assignment | Operator.Division;
+        break;
+      case "%=":
+        node.operator = Operator.Assignment | Operator.Modulus;
+        break;
+      case "^=":
+        node.operator = Operator.Assignment | Operator.Exponentiation;
+        break;
+      case "&=":
+        node.operator = Operator.Assignment | Operator.BitwiseAnd;
+        break;
+      case "|=":
+        node.operator = Operator.Assignment | Operator.BitwiseOr;
+        break;
+      case "~=":
+        node.operator = Operator.Assignment | Operator.BitwiseNot;
+        break;
     }
+    
     return node;
   }
+    
 
-  const parsePunctuation = (): CSTNode => { 
+  const parsePunctuation = (token: Token): CSTNode => { 
     const node: CSTNode = {
       type: 'Punctuation',
       children: [],
-    };
-    const token = nextToken();
+    };    
     node.value = token.value;
     return node;
   }
 
-  const parseWhitespace = (): CSTNode => { 
+  const parseWhitespace = (token: Token): CSTNode => { 
     const node: CSTNode = {
       type: 'Whitespace',
       children: [],
-    };
-    const token = currentToken();
+    };    
     node.value = token.value;
     return node;
   }
 
-  const parseComment = (): CSTNode => { 
+  const parseComment = (token: Token): CSTNode => { 
     const node: CSTNode = {
       type: 'Comment',
       children: [],
-    };
-    const token = nextToken();
+    };    
     node.value = token.value;
     return node;
   }
 
-  const parseVariableIdentifier = (): CSTNode => {
+  const parseVariableIdentifier = (token: Token): CSTNode => {
     const node: CSTNode = {
       type: 'VariableIdentifier',
       children: [],
-    };
-    const token = currentToken();
+    };    
     node.value = token.value;
     return node;
   }
 
-  const parseComparisonOperator = (): CSTNode => {
+  const parseComparisonOperator = (token: Token): CSTNode => {
     const node: CSTNode = {
       type: 'ComparisonOperator',
       children: [],
-    };
-    const token = currentToken();
+    };    
     node.value = token.value;
     return node;
   }
 
-  const parseEOF = (): CSTNode => {     
+  const parseEOF = (_: Token): CSTNode => {     
     return null;
   }
 
   const parseToken = (token: Token): CSTNode => { 
     switch (token.type.toString()) {
       case "IDENTIFIER":
-        return parseIdentifier();
+        return parseIdentifier(token);
       case "MACRO_START":
         return parseMacroInvocation(token);
         //case "PAREN_CLOSE":
@@ -545,19 +604,19 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       case "ARROW_CHAIN":
         return parseChaining();      
       case "COMPARISON_OPERATOR":
-        return parseComparisonOperator();
+        return parseComparisonOperator(token);
       case "ARROW_BRANCH":
-        return parseBranching();
+        return parseBranching(token);
       case "IF":
-        return parseIfControl();
+        return parseIfControl(token);
       case "SWITCH":
-        return parseSwitchControl();
+        return parseSwitchControl(token);
       case "TRY":
       case "CATCH":
       case "FINALLY":
-        return parseTryCatch();
+        return parseTryCatch(token);
       case "WHILE_LOOP":
-        return parseWhileLoop();
+        return parseWhileLoop(token);
       case "STRING_LITERAL":
       case "BOOLEAN_LITERAL":
       case "HEXADECIMAL_LITERAL":
@@ -565,20 +624,20 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
         return parseLiteral(token);
       case "ASSIGNMENT":
       case "OPERATOR":
-        return parseOperator();
+        return parseOperator(token);
       case "PUNCTUATION":
       case "SEMICOLON":
-        return parsePunctuation();
+        return parsePunctuation(token);
       case "VARIABLE":
-        return parseVariableIdentifier();
+        return parseVariableIdentifier(token);
       case "WHITESPACE":
-        return parseWhitespace();
+        return parseWhitespace(token);
       case "COMMENT":
-        return parseComment();
+        return parseComment(token);
       case "NEWLINE":
-        return parseWhitespace();
+        return parseWhitespace(token);
       case "EOF":
-        return parseEOF();
+        return parseEOF(token);
       default:
         throw new Error(`Unexpected token type: ${token.type}`);
     }
@@ -592,7 +651,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
   };
 
   // parse the main program
-  while (currentTokenIndex < tokens.length - 1) {
+  while (currentExpressionContext.currentTokenIndex < tokens.length - 1) {
     const token = nextToken(); 
     //parse the token 
     const node = parseToken(token);

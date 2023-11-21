@@ -5,17 +5,53 @@ export const MultiLineWithVariableAssignmentProgramNode: CSTProgramNode = {
   type: "Program",
   children: [
     {
-      type: "Assignment",
-      left: {
-        type: "VariableIdentifier",
-        children: [],
-        value: "$name"
-      },
-      right: {
-        type: "Literal",
-        children: [],
-        value: "\"John\""
-      }
+      type: "Whitespace",
+      children: [
+      ],
+      value: "\n    ",
+    },
+    {
+      type: "VariableIdentifier",
+      children: [
+      ],
+      value: "$name",
+    },
+    {
+      type: "Whitespace",
+      children: [
+      ],
+      value: " ",
+    },
+    {
+      type: "Operator",
+      operator: 1,
+      children: [
+      ],
+      value: "=",
+    },
+    {
+      type: "Whitespace",
+      children: [
+      ],
+      value: " ",
+    },
+    {
+      type: "Literal",
+      children: [
+      ],
+      value: "\"John\"",
+    },
+    {
+      type: "Punctuation",
+      children: [
+      ],
+      value: ";",
+    },
+    {
+      type: "Whitespace",
+      children: [
+      ],
+      value: "\n    ",
     }
-  ]
+  ],
 };

@@ -6,7 +6,8 @@ import {
   SingleLineHelloWorldProgramNode, 
   MultiLineWithConditionalProgramNode,
   MultiLineWithConditionalWithElseProgramNode,
-  MultilineWithWhileLoopCSTProgramNode 
+  MultilineWithWhileLoopCSTProgramNode,
+  MultiLineWithVariableAssignmentProgramNode
 } from "./mocks/cst";
 import Tokenize from '../compiler/parser/lexer';
 
@@ -57,42 +58,7 @@ describe('CST', () => {
 
     const cst = createCST(tokens);
 
-    expect(cst).toEqual({
-      type: "Program",
-      children: [
-        {
-          type: "VariableAssignment",
-          children: [
-            {
-              type: "VariableIdentifier",
-              children: [],
-              value: "$name"
-            },
-            {
-              type: "Whitespace",
-              children: [],
-              value: " "
-            },
-            {
-              type: "Operator",
-              children: [],
-              operator: "Assignment",
-              value: "="
-            },
-            {
-              type: "Whitespace",
-              children: [],
-              value: " "
-            },
-            {
-              type: "Literal",
-              children: [],
-              value: "\"John\""
-            }
-          ]
-        }
-      ]
-    });
+    expect(cst).toEqual(MultiLineWithVariableAssignmentProgramNode);
   });
 
   // it('should create a CST with a while loop', () => {   

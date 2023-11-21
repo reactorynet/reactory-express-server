@@ -7,7 +7,7 @@ import { CSTProgramNode } from "@reactory/server-core/types/compiler/cst";
  * 
  * ```
  *  while ($i < 10) {
- *    @print($i)
+ *    print(`row $i`)
  *    $i = $i + 1
  *  }
  * ```
@@ -21,7 +21,7 @@ export const MultilineWithWhileLoopCSTProgramNode: CSTProgramNode = {
       value: '\n    ',
     },
     {
-      type: 'WhileControl',
+      type: 'WhileLoop',
       condition: {
         type: 'Grouping',
         children: [
@@ -88,7 +88,7 @@ export const MultilineWithWhileLoopCSTProgramNode: CSTProgramNode = {
             value: '\n      ',
           },
           {
-            type: 'AssignmentOperator',
+            type: 'Operator',
             children: [],
             value: '=',
           },
@@ -98,7 +98,7 @@ export const MultilineWithWhileLoopCSTProgramNode: CSTProgramNode = {
             value: ' ',
           },
           {
-            type: 'BinaryOperator',
+            type: 'Operator',
             children: [],
             value: '+',
           },
@@ -126,5 +126,4 @@ export const MultilineWithWhileLoopCSTProgramNode: CSTProgramNode = {
       value: '\n  ',
     },
   ],
-};
 };
