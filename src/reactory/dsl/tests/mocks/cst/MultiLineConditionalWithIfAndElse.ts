@@ -15,10 +15,16 @@ export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
   type: "Program",
   children: [
     {
+      type: "Newline",
+      children: [
+      ],
+      value: "\n",
+    },
+    {
       type: "Whitespace",
       children: [
       ],
-      value: "\n    ",
+      value: "    ",
     },
     {
       type: "IfControl",
@@ -50,7 +56,7 @@ export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
             value: " ",
           },
           {
-            type: "Literal",
+            type: "StringLiteral",
             children: [
             ],
             value: "\"John\"",
@@ -61,10 +67,16 @@ export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
         type: "Grouping",
         children: [
           {
+            type: "Newline",
+            children: [
+            ],
+            value: "\n",
+          },
+          {
             type: "Whitespace",
             children: [
             ],
-            value: "\n      ",
+            value: "      ",
           },
           {
             type: "MacroInvocation",
@@ -91,10 +103,16 @@ export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
             ],
           },
           {
+            type: "Newline",
+            children: [
+            ],
+            value: "\n",
+          },
+          {
             type: "Whitespace",
             children: [
             ],
-            value: "\n    ",
+            value: "    ",
           },
         ],
       },
@@ -106,10 +124,16 @@ export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
           type: "Grouping",
           children: [
             {
+              type: "Newline",
+              children: [
+              ],
+              value: "\n",
+            },
+            {
               type: "Whitespace",
               children: [
               ],
-              value: "\n      ",
+              value: "      ",
             },
             {
               type: "MacroInvocation",
@@ -136,10 +160,16 @@ export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
               ],
             },
             {
+              type: "Newline",
+              children: [
+              ],
+              value: "\n",
+            },
+            {
               type: "Whitespace",
               children: [
               ],
-              value: "\n    ",
+              value: "    ",
             },
           ],
         },

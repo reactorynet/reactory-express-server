@@ -7,7 +7,10 @@ import {
   MultiLineWithConditionalProgramNode,
   MultiLineWithConditionalWithElseProgramNode,
   MultilineWithWhileLoopCSTProgramNode,
-  MultiLineWithVariableAssignmentProgramNode
+  MultiLineWithVariableAssignmentProgramNode,
+  SingleLineExpressionWithArithmaticProgramNode,
+  NestedMacroInvocationProgramNode,
+  NestedMacroInvocationScript
 } from "./mocks/cst";
 import Tokenize from '../compiler/parser/lexer';
 
@@ -61,16 +64,28 @@ describe('CST', () => {
     expect(cst).toEqual(MultiLineWithVariableAssignmentProgramNode);
   });
 
+  it('should create a CST node with an expression: $i = $i + 1;', () => {
+    const tokens = Tokenize(`$i = $i + 1;`, { ignoreWhitespace: false, ignoreNewLines: false });
+    const cst = createCST(tokens);
+    expect(cst).toEqual(SingleLineExpressionWithArithmaticProgramNode);
+  })
+
   it('should create a CST with a while loop', () => {   
     const tokens = Tokenize(`
     while ($i < 10) {
       @print($i)
       $i = $i + 1;
     }
-    `, { ignoreWhitespace: false, ignoreNewLines: false });
+  `, { ignoreWhitespace: false, ignoreNewLines: false });
 
     const cst = createCST(tokens);
 
     expect(cst).toEqual(MultilineWithWhileLoopCSTProgramNode);
+  });
+
+  it('should create a CST with nested macros', () => { 
+    const tokens = Tokenize(NestedMacroInvocationScript, { ignoreWhitespace: false, ignoreNewLines: false });
+    const cst = createCST(tokens);
+    expect(cst).toEqual(NestedMacroInvocationProgramNode);
   });
 });

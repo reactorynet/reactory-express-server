@@ -1,6 +1,6 @@
 import tokenize from "../compiler/parser/lexer";
 import { Token, TokenType } from "@reactory/server-core/types/compiler/lexer";
-import { TokenisationMap } from "./mocks/tokens";
+import { MultiLineWithMultiLineComment, MultineLineWithSingleLineComment, TokenisationMap } from "./mocks/tokens";
 describe('Lexer', () => { 
   beforeEach(() => { 
     jest.clearAllMocks();
@@ -53,5 +53,30 @@ describe('Lexer', () => {
     `;
     const tokens = tokenize(input, { ignoreWhitespace: false, ignoreNewLines: false });
     expect(tokens).toEqual(TokenisationMap[input]);
+  });
+
+  it('should tokenize a multine macro with a single line comment', () => {  
+    const input = `
+    // This is a comment.
+    if ($name == "John") {
+      @print("Hello, John!")
+    }
+    `
+    const tokens = tokenize(input, { ignoreWhitespace: false, ignoreNewLines: false, ignoreComments: false });
+    expect(tokens).toEqual(MultineLineWithSingleLineComment);
+  });
+
+  it('should tokenize a macro with a multi line comment', () => { 
+    const input = `
+    /* This is a comment. 
+     * that spans multiple lines. 
+     */
+
+    if ($name == "John") {
+      @print("Hello, John!")
+    }
+    `
+    const tokens = tokenize(input, { ignoreWhitespace: false, ignoreNewLines: false, ignoreComments: false });
+    expect(tokens).toEqual(MultiLineWithMultiLineComment);
   });
 });

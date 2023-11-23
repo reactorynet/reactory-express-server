@@ -20,6 +20,7 @@ export type TokenType =
   | 'NUMBER_LITERAL'      // Matches numeric literals, e.g., 123, 45.67
   | 'LOGICAL_OPERATOR'    // Matches logical operators like '&&', '||'
   | 'COMPARISON_OPERATOR' // Matches comparison operators like '==', '!=', '<', '>'
+  | 'ARITHMETIC_OPERATOR' // Matches arithmetic operators like '+', '-', '*', '/'
   | 'ASSIGNMENT'          // Matches '='
   | 'EQUALS'              // Matches '==' or '==='
   | 'NOT_EQUALS'          // Matches '!=' or '!=='

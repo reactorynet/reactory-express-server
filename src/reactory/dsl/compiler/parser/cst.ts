@@ -28,6 +28,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     rootNodeIndex: null,
     sourceInfo: sourceInfo,
     state: {},
+    validate: () => true,
   };
 
 
@@ -372,6 +373,24 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       children: [],
     };
 
+    switch(token.type) {
+      case "STRING_LITERAL": {
+        node.type = "StringLiteral";
+        node.value = token.value;
+        break;
+      }
+      case "NUMBER_LITERAL": {
+        node.type = "NumberLiteral";
+        node.value = token.value;
+        break;
+      }
+      case "BOOLEAN_LITERAL": { 
+        node.type = "BooleanLiteral";
+        node.value = token.value;
+        break;
+      }
+    }
+
     node.value = token.value;
     return node;
   }
@@ -552,6 +571,15 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     const node: CSTNode = {
       type: 'Whitespace',
       children: [],
+    };
+    node.value = token.value;
+    return node;
+  }
+
+  const parseNewLine = (token: Token): CSTNode => { 
+    const node: CSTNode = {
+      type: 'Newline',
+      children: [],
     };    
     node.value = token.value;
     return node;
@@ -602,7 +630,9 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       case "CURLY_OPEN":
         return parseGrouping(token.type);
       case "ARROW_CHAIN":
-        return parseChaining();      
+        return parseChaining();
+      case "ARITHMETIC_OPERATOR":
+          return parseOperator(token);
       case "COMPARISON_OPERATOR":
         return parseComparisonOperator(token);
       case "ARROW_BRANCH":
@@ -615,8 +645,9 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       case "CATCH":
       case "FINALLY":
         return parseTryCatch(token);
-      case "WHILE_LOOP":
+      case "WHILE":
         return parseWhileLoop(token);
+      case "NUMBER_LITERAL":
       case "STRING_LITERAL":
       case "BOOLEAN_LITERAL":
       case "HEXADECIMAL_LITERAL":
@@ -635,7 +666,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       case "COMMENT":
         return parseComment(token);
       case "NEWLINE":
-        return parseWhitespace(token);
+        return parseNewLine(token);
       case "EOF":
         return parseEOF(token);
       default:

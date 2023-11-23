@@ -33,7 +33,7 @@ export type CSTNodeType =
   | 'Operator'
   | 'ComparisonOperator'
   | 'Punctuation'
-  | 'VariableIdentifier'
+  | 'VariableIdentifier'  
   | 'Whitespace'
   | 'Comment'
   | 'Newline'
@@ -110,8 +110,9 @@ export interface CSTNode {
 // Specific CST Node interfaces can then be extended for each type of node
 export interface CSTGroupingNode extends CSTNode {
   type: 'Grouping';
-  open: CSTNode; // '(' or '['
-  close: CSTNode; // ')' or ']'
+  children: CSTChildNodeTypes[];
+  open?: CSTNode; // '(' or '['
+  close?: CSTNode; // ')' or ']'
 }
 
 export interface CSTChainingNode extends CSTNode {
@@ -219,7 +220,17 @@ export interface CSTPunctuationNode extends CSTNode {
 
 export interface CSTWhitespaceNode extends CSTNode {
   type: 'Whitespace';
-  // Value could be ' ', '\t', '\n', etc.
+  // Value could be ' ', '\t', '\v', etc.
+}
+
+export interface CSTCommentNode extends CSTNode {
+  type: 'Comment';
+  // Value is the comment text
+}
+
+export interface CSTNewlineNode extends CSTNode {
+  type: 'Newline';
+  // Value is the newline character
 }
 
 export interface CSTAssignmentNode extends CSTNode {
@@ -244,6 +255,7 @@ export interface CSTDirectiveNode extends CSTNode {
 // The root type for the CST
 export type CSTChildNodeTypes =
   CSTNode |
+  CSTOperatorNode |
   CSTAssignmentNode |
   CSTGroupingNode | 
   CSTChainingNode | 
@@ -261,7 +273,9 @@ export type CSTChildNodeTypes =
   CSTIdentifierNode | 
   CSTOperatorNode | 
   CSTComparisonOperationNode | 
-  CSTPunctuationNode | 
+  CSTPunctuationNode |
+  CSTCommentNode |
+  CSTNewlineNode | 
   CSTWhitespaceNode | 
   CSTAccessControlListNode;
 
@@ -311,5 +325,7 @@ export interface CSTParsingContext {
   // The source information for the input source code
   sourceInfo: CSTSourceInfo;
   // The current state of the parser
-  state: CSTParserState;  
+  state: CSTParserState;
+  // Validates the CST Root Node
+  validate: () => boolean;
 }

@@ -43,7 +43,20 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
 
   // Regular expressions for the different tokens, ensure to include all necessary patterns
   const tokenPatterns: [RegExp, TokenType][] = [
+    [/^\n/, 'NEWLINE'],
     [/^[ \t\r\f\v]+/, 'WHITESPACE'], // Ignore whitespace
+    // place comments before operators to ensure that comments are matched first
+    [/^\/\/.*/, 'COMMENT'], // Single line comments
+    // multi line comment support
+    [/^\/\*/, 'COMMENT'],
+    [/^\*\//, 'COMMENT'],
+
+    [/^\+/, 'ARITHMETIC_OPERATOR'],
+    [/^-/, 'ARITHMETIC_OPERATOR'],
+    [/^\*/, 'ARITHMETIC_OPERATOR'],
+    [/^\//, 'ARITHMETIC_OPERATOR'],
+    [/^%/, 'ARITHMETIC_OPERATOR'],
+    [/^\*\*/, 'ARITHMETIC_OPERATOR'],
     [/^@/, 'MACRO_START'],
     [/^\(/, 'PAREN_OPEN'],
     [/^\)/, 'PAREN_CLOSE'],
@@ -91,13 +104,8 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
     [/^[a-zA-Z_]\w*/, 'IDENTIFIER'],
     // executable string literals
     [/^`[^`\\]*(\\.[^`\\]*)*`/, 'EXECUTABLE_STRING_LITERAL'],
-    [/^\/\/.*/, 'COMMENT'], // Single line comments
-    [/^\n/, 'NEWLINE'],
-    // multi line comment support
-    [/^\/\*/, 'COMMENT'],
-    [/^\*\//, 'COMMENT'],
     // EOF
-    [/^$/, 'EOF'],    
+    [/^$/, 'EOF'],        
   ];
 
   // Function to update position
@@ -112,11 +120,13 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
     }
   };
 
-  while (input.length > 0) {
+  let workingInput = input; // don't mutate the input string
+
+  while (workingInput.length > 0) {
     let matched = false;
 
     for (const [pattern, type] of tokenPatterns) {
-      const match = pattern.exec(input);
+      const match = pattern.exec(workingInput);
       if (match) {
         const [text] = match;
 
@@ -134,8 +144,30 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
             break;
           }
           case 'COMMENT': {
+            // we need to determine the type of comment
+            // whether it is a single line comment or a multi line comment
+            // we can do this by looking at the first two characters
+            // if the first two characters are '/*' then it is a multi line comment
+            // otherwise it is a single line comment
+            const isMultiLineComment = text.startsWith('/*');
+            let commentBlock = '';
+
+            if (isMultiLineComment === true) {
+              // we need to find the end of the block comment
+              // we can do this by looking for the first occurence of '*/'
+              // we can then slice the text from the start of the comment to the end of the comment
+              const endOfCommentIndex = workingInput.indexOf('*/');
+              commentBlock = workingInput.slice(0, endOfCommentIndex + 2);
+            } else {
+              // we need to find the end of the line
+              // we can do this by looking for the first occurence of '\n'
+              // we can then slice the text from the start of the comment to the end of the comment
+              const endOfCommentIndex = workingInput.indexOf('\n');
+              commentBlock = workingInput.slice(0, endOfCommentIndex);
+            }
+            
             if (ignoreComments === false) {
-              tokens.push({ type, value: text, position: { ...position } });
+              tokens.push({ type, value: commentBlock, position: { ...position } });
             }
             break;
           }
@@ -144,14 +176,15 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
           }
         }
         updatePosition(text);
-        input = input.slice(text.length);
+        const offset = workingInput.startsWith('\n') ? 1 : 0;
+        workingInput = workingInput.slice(text.length + offset);
         matched = true;
         break;
       }
     }
 
     if (!matched) {
-      throw new Error(`Unexpected token at line ${position.line}, column ${position.column}`);
+      throw new Error(`Unexpected token at line ${position.line}, column ${position.column}: "${workingInput.split('\n')[0]}"`);
     }
   }
 

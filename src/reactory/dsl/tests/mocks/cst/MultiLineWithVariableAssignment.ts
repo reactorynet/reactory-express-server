@@ -5,10 +5,16 @@ export const MultiLineWithVariableAssignmentProgramNode: CSTProgramNode = {
   type: "Program",
   children: [
     {
+      type: "Newline",
+      children: [
+      ],
+      value: "\n",
+    },
+    {
       type: "Whitespace",
       children: [
       ],
-      value: "\n    ",
+      value: "    ",
     },
     {
       type: "VariableIdentifier",
@@ -36,7 +42,7 @@ export const MultiLineWithVariableAssignmentProgramNode: CSTProgramNode = {
       value: " ",
     },
     {
-      type: "Literal",
+      type: "StringLiteral",
       children: [
       ],
       value: "\"John\"",
@@ -48,10 +54,16 @@ export const MultiLineWithVariableAssignmentProgramNode: CSTProgramNode = {
       value: ";",
     },
     {
+      type: "Newline",
+      children: [
+      ],
+      value: "\n",
+    },
+    {
       type: "Whitespace",
       children: [
       ],
-      value: "\n    ",
-    }
+      value: "    ",
+    },
   ],
 };

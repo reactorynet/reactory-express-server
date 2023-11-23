@@ -17,7 +17,7 @@ const multiLineMacroTokens: Token[] = [
   },
   {
     type: "WHITESPACE",
-    value: "    ",
+    value: "   ",
     position: {
       line: 2,
       column: 0,
@@ -28,7 +28,7 @@ const multiLineMacroTokens: Token[] = [
     value: "if",
     position: {
       line: 2,
-      column: 4,
+      column: 3,
     },
   },
   {
@@ -36,7 +36,7 @@ const multiLineMacroTokens: Token[] = [
     value: " ",
     position: {
       line: 2,
-      column: 6,
+      column: 5,
     },
   },
   {
@@ -44,7 +44,7 @@ const multiLineMacroTokens: Token[] = [
     value: "(",
     position: {
       line: 2,
-      column: 7,
+      column: 6,
     },
   },
   {
@@ -52,7 +52,7 @@ const multiLineMacroTokens: Token[] = [
     value: "$name",
     position: {
       line: 2,
-      column: 8,
+      column: 7,
     },
   },
   {
@@ -60,7 +60,7 @@ const multiLineMacroTokens: Token[] = [
     value: " ",
     position: {
       line: 2,
-      column: 13,
+      column: 12,
     },
   },
   {
@@ -68,7 +68,7 @@ const multiLineMacroTokens: Token[] = [
     value: "==",
     position: {
       line: 2,
-      column: 14,
+      column: 13,
     },
   },
   {
@@ -76,7 +76,7 @@ const multiLineMacroTokens: Token[] = [
     value: " ",
     position: {
       line: 2,
-      column: 16,
+      column: 15,
     },
   },
   {
@@ -84,7 +84,7 @@ const multiLineMacroTokens: Token[] = [
     value: "\"John\"",
     position: {
       line: 2,
-      column: 17,
+      column: 16,
     },
   },
   {
@@ -92,7 +92,7 @@ const multiLineMacroTokens: Token[] = [
     value: ")",
     position: {
       line: 2,
-      column: 23,
+      column: 22,
     },
   },
   {
@@ -100,7 +100,7 @@ const multiLineMacroTokens: Token[] = [
     value: " ",
     position: {
       line: 2,
-      column: 24,
+      column: 23,
     },
   },
   {
@@ -108,7 +108,7 @@ const multiLineMacroTokens: Token[] = [
     value: "{",
     position: {
       line: 2,
-      column: 25,
+      column: 24,
     },
   },
   {
@@ -116,12 +116,12 @@ const multiLineMacroTokens: Token[] = [
     value: "\n",
     position: {
       line: 2,
-      column: 26,
+      column: 25,
     },
   },
   {
     type: "WHITESPACE",
-    value: "      ",
+    value: "     ",
     position: {
       line: 3,
       column: 0,
@@ -132,7 +132,7 @@ const multiLineMacroTokens: Token[] = [
     value: "@",
     position: {
       line: 3,
-      column: 6,
+      column: 5,
     },
   },
   {
@@ -140,7 +140,7 @@ const multiLineMacroTokens: Token[] = [
     value: "print",
     position: {
       line: 3,
-      column: 7,
+      column: 6,
     },
   },
   {
@@ -148,7 +148,7 @@ const multiLineMacroTokens: Token[] = [
     value: "(",
     position: {
       line: 3,
-      column: 12,
+      column: 11,
     },
   },
   {
@@ -156,7 +156,7 @@ const multiLineMacroTokens: Token[] = [
     value: "\"Hello, John!\"",
     position: {
       line: 3,
-      column: 13,
+      column: 12,
     },
   },
   {
@@ -164,7 +164,7 @@ const multiLineMacroTokens: Token[] = [
     value: ")",
     position: {
       line: 3,
-      column: 27,
+      column: 26,
     },
   },
   {
@@ -172,12 +172,12 @@ const multiLineMacroTokens: Token[] = [
     value: "\n",
     position: {
       line: 3,
-      column: 28,
+      column: 27,
     },
   },
   {
     type: "WHITESPACE",
-    value: "    ",
+    value: "   ",
     position: {
       line: 4,
       column: 0,
@@ -188,7 +188,7 @@ const multiLineMacroTokens: Token[] = [
     value: "}",
     position: {
       line: 4,
-      column: 4,
+      column: 3,
     },
   },
   {
@@ -196,12 +196,12 @@ const multiLineMacroTokens: Token[] = [
     value: "\n",
     position: {
       line: 4,
-      column: 5,
+      column: 4,
     },
   },
   {
     type: "WHITESPACE",
-    value: "    ",
+    value: "   ",
     position: {
       line: 5,
       column: 0,
@@ -212,10 +212,247 @@ const multiLineMacroTokens: Token[] = [
     value: "",
     position: {
       line: 5,
-      column: 4,
+      column: 3,
     },
   },
 ]
+
+export const MultineLineWithSingleLineComment: Token[] = [
+  {
+    type: "NEWLINE",
+    value: "\n",
+    position: {
+      line: 1,
+      column: 1,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: "   ",
+    position: {
+      line: 2,
+      column: 0,
+    },
+  },
+  {
+    type: "COMMENT",
+    value: "// This is a comment.",
+    position: {
+      line: 2,
+      column: 3,
+    },
+  },
+  {
+    type: "NEWLINE",
+    value: "\n",
+    position: {
+      line: 2,
+      column: 24,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: "   ",
+    position: {
+      line: 3,
+      column: 0,
+    },
+  },
+  {
+    type: "IF",
+    value: "if",
+    position: {
+      line: 3,
+      column: 3,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: " ",
+    position: {
+      line: 3,
+      column: 5,
+    },
+  },
+  {
+    type: "PAREN_OPEN",
+    value: "(",
+    position: {
+      line: 3,
+      column: 6,
+    },
+  },
+  {
+    type: "VARIABLE",
+    value: "$name",
+    position: {
+      line: 3,
+      column: 7,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: " ",
+    position: {
+      line: 3,
+      column: 12,
+    },
+  },
+  {
+    type: "COMPARISON_OPERATOR",
+    value: "==",
+    position: {
+      line: 3,
+      column: 13,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: " ",
+    position: {
+      line: 3,
+      column: 15,
+    },
+  },
+  {
+    type: "STRING_LITERAL",
+    value: "\"John\"",
+    position: {
+      line: 3,
+      column: 16,
+    },
+  },
+  {
+    type: "PAREN_CLOSE",
+    value: ")",
+    position: {
+      line: 3,
+      column: 22,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: " ",
+    position: {
+      line: 3,
+      column: 23,
+    },
+  },
+  {
+    type: "CURLY_OPEN",
+    value: "{",
+    position: {
+      line: 3,
+      column: 24,
+    },
+  },
+  {
+    type: "NEWLINE",
+    value: "\n",
+    position: {
+      line: 3,
+      column: 25,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: "     ",
+    position: {
+      line: 4,
+      column: 0,
+    },
+  },
+  {
+    type: "MACRO_START",
+    value: "@",
+    position: {
+      line: 4,
+      column: 5,
+    },
+  },
+  {
+    type: "IDENTIFIER",
+    value: "print",
+    position: {
+      line: 4,
+      column: 6,
+    },
+  },
+  {
+    type: "PAREN_OPEN",
+    value: "(",
+    position: {
+      line: 4,
+      column: 11,
+    },
+  },
+  {
+    type: "STRING_LITERAL",
+    value: "\"Hello, John!\"",
+    position: {
+      line: 4,
+      column: 12,
+    },
+  },
+  {
+    type: "PAREN_CLOSE",
+    value: ")",
+    position: {
+      line: 4,
+      column: 26,
+    },
+  },
+  {
+    type: "NEWLINE",
+    value: "\n",
+    position: {
+      line: 4,
+      column: 27,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: "   ",
+    position: {
+      line: 5,
+      column: 0,
+    },
+  },
+  {
+    type: "CURLY_CLOSE",
+    value: "}",
+    position: {
+      line: 5,
+      column: 3,
+    },
+  },
+  {
+    type: "NEWLINE",
+    value: "\n",
+    position: {
+      line: 5,
+      column: 4,
+    },
+  },
+  {
+    type: "WHITESPACE",
+    value: "   ",
+    position: {
+      line: 6,
+      column: 0,
+    },
+  },
+  {
+    type: "EOF",
+    value: "",
+    position: {
+      line: 6,
+      column: 3,
+    },
+  },
+];
+
+export const MultiLineWithMultiLineComment: Token[] = [];
 
 export const TokenisationMap: { [key: string]: Token[] } = {
   'var name = "John";': [
