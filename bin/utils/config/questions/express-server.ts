@@ -1,7 +1,7 @@
 
 import { ReadLine } from 'readline';
 import { IQuestionCollection, IServerConfiguration, QuestionHandlerResponse } from '../config.types';
-import { strongRandom, isHelpRequest, colors, persistServerConfiguration } from '../helpers';
+import { strongRandom, isHelpRequest, colors, persistServerConfiguration } from '../../helpers';
 
 const {
   REACTORY_DATA

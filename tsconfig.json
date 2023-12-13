@@ -8,8 +8,9 @@
       "allowSyntheticDefaultImports": true,    
       "experimentalDecorators": true,
       "emitDecoratorMetadata": true,
+      "esModuleInterop": true,
       "allowJs": true,  
-      "target":"ES2017",
+      "target":"es2020",
       "baseUrl": "./",
       "paths": {
         "*": ["src/*"],

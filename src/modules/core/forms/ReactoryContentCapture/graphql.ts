@@ -18,7 +18,7 @@ import { fileAsString } from '@reactory/server-core/utils/io';
        '$route.params.slug': 'slug',
      },
      resultMap: {
-       id: 'id',
+       'id': 'id',
        'createdAt': 'createdAt',
        'title': 'title',
        'content': 'content',

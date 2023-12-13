@@ -5,14 +5,18 @@ import logger from '@reactory/server-core/logging';
 import modules from '@reactory/server-core/modules';
 import ApiError from '@reactory/server-core/exceptions';
 
+
+type DependencySetter = <T>(deps: T) => void;
+
 /**
  * services array
  */
-const services: Reactory.Service.IReactoryServiceDefinition[] = [];
+export const services: Reactory.Service.IReactoryServiceDefinition[] = [];
 /**
  * services id map
  */
-const serviceRegister: Reactory.Service.IReactoryServiceRegister = {}
+export const serviceRegister: Reactory.Service.IReactoryServiceRegister = {}
+
 
 /**
  * We load the enabled module service details into a map and array.
@@ -106,15 +110,21 @@ export const getService = (id: string,
       return context.state[singleton_key];
     }
 
-    const svc = serviceRegister[id].service({ ...props, $services: serviceRegister, $dependencies: $deps }, context);
+    const svc: Reactory.Service.IReactoryService = serviceRegister[id].service({ ...props, $services: serviceRegister, $dependencies: $deps }, context) as Reactory.Service.IReactoryService;
     //try to auto bind services with property setter binders.
     Object.keys($deps).map((dependcyAlias: string) => {
       let isSet = false;
       if (!isSet) {
-        let fn = `set${dependcyAlias.substring(0, 1).toUpperCase()}${dependcyAlias.substring(1, dependcyAlias.length)}`;
-        if (svc[fn] && typeof svc[fn] === 'function') {
-          //call the setter function
-          svc[fn]($deps[dependcyAlias]);
+        const setterName = `set${dependcyAlias.substring(0, 1).toUpperCase()}${dependcyAlias.substring(1)}`;
+        if (((svc as any)?.[setterName] as DependencySetter) &&
+         typeof ((svc as any)?.[setterName] as DependencySetter) === "function") {
+           try {
+            // Call the setter function
+            //@ts-ignore
+            svc[setterName]($deps[dependcyAlias]);
+          } catch (setterError) {            
+            context.log(`🚨 Setter error ${setterName}; ${setterError?.message ? setterError.message : 'Unknown'} 🚨`, { service_id: id, props, setterError }, 'warning');
+          }
         }
       }
     });
@@ -141,7 +151,7 @@ export const getService = (id: string,
 export const startServices = async (props: any, context: any): Promise<boolean> => {
 
   try {
-    let startup_promises: Promise<boolean>[] = []
+    let startup_promises: Promise<void>[] = []
 
     services.forEach((service: Reactory.Service.IReactoryServiceDefinition) => {
       const instance = getService(service.id, props, context);
@@ -171,7 +181,7 @@ export const startServices = async (props: any, context: any): Promise<boolean> 
 export const stopServices = async (props: any, context: any): Promise<boolean> => {
 
   try {
-    let startup_promises: Promise<boolean>[] = []
+    let startup_promises: Promise<void>[] = []
 
     services.forEach((service: Reactory.Service.IReactoryServiceDefinition) => {
       const instance = getService(service.id, props, context);

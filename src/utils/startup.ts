@@ -9,7 +9,7 @@ import logger from '@reactory/server-core/logging';
 import { ReactoryClientValidationError } from '@reactory/server-core/exceptions';
 import { startServices, getService } from '@reactory/server-core/services';
 import Reactory from '@reactory/reactory-core';
-import ReactoryContextProvider from '@reactory/server-core/apollo/ReactoryContextProvider';
+import ReactoryContextProvider from 'context/ReactoryContextProvider';
 
 const { clients, components } = data;
 

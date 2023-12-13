@@ -450,9 +450,11 @@ export class ReactoryFileService implements Reactory.Service.IReactoryFileServic
     }
 }
 
-export const ReactoryFileServiceDefinition: Reactory.Service.IReactoryServiceDefinition = {
+export const ReactoryFileServiceDefinition: Reactory.Service.IReactoryServiceDefinition<ReactoryFileService> = {
     id: 'core.ReactoryFileService@1.0.0',
     name: 'Reactory File Service',
+    nameSpace: 'core',
+    version: '1.0.0',
     description: 'Default File Service for downloading and managing ReactoryFile cache and temporary files.',
     dependencies: [],
     serviceType: 'file',

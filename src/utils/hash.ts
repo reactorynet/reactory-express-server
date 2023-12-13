@@ -30,7 +30,7 @@ const Hash = (e: any) : number => {
     return stringHash(hash, true);
   }
 
-  function Hash(unkType: any, exclude: any[]): number {
+  function Hash(unkType: any, exclude?: any[]): number {
     let ex = exclude;
     if (ex === undefined) {
       ex = [];

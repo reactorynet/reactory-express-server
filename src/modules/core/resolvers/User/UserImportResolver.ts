@@ -3,7 +3,7 @@ import { filter, findIndex } from 'lodash';
 import logger from '@reactory/server-core/logging';
 import Reactory from '@reactory/reactory-core';
 import ReactoryFile from '@reactory/server-modules/core/models/CoreFile';
-import Organization from '@reactory/server-core/models/schema/Organization';
+import Organization from '@reactory/server-modules/core/models/Organization';
 import ReactoryFileImportPackage from '@reactory/server-modules/core/models/ReactoryFileImportPackage';
 import ApiError, { InsufficientPermissions, OrganizationNotFoundError } from '@reactory/server-core/exceptions';
 import { ObjectId } from 'bson';

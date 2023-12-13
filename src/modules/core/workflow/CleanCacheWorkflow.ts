@@ -26,18 +26,26 @@ class AfterCacheClean extends StepBody {
 }
 
 
-class CleanCacheWorkflow {
+class CleanCacheWorkflow implements Reactory.Workflow.IWorkflow {
 
-  id: string
-  version: number
+  id: string = 'core.CleanCacheWorkflow@1.0.0';
+  nameSpace: string = "core";
+  name: string = "CleanCacheWorkflow";
+  component: CleanCacheWorkflow = this;
+  category: string = 'cache';
+  autoStart?: boolean = true;
+  props?: unknown = {
+    interval: 1000 * 30,
+    enabled: true,
+  };
+  version: string = '1.0.0';
 
   constructor() {
-    this.id = 'core.CleanCacheWorkflow';
-    this.version = 1;
+    
   }
+  
 
-  build(builder) {
-    // console.log('building', builder);
+  build(builder: any) {
     builder
       .startWith(BeforeCacheClean).input((step, data) => {
         step.when = data.when;
@@ -67,7 +75,7 @@ CleanCacheWorkflow.meta = {
     enabled: true,
   },
   id: 'core.CleanCacheWorkflow',
-};
+} as Reactory.Workflow.IWorkflow;
 
 export default CleanCacheWorkflow;
 

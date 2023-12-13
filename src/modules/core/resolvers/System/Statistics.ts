@@ -1,5 +1,5 @@
-import { ObjectID } from 'mongodb';
-import ReactoryUserModel from '@reactory/server-core/models/schema/User';
+import { ObjectId } from 'mongodb';
+import ReactoryUserModel from '@reactory/server-modules/core/models/User';
 
 export default {
   Statistic: {
@@ -7,7 +7,7 @@ export default {
       return statistic._id || null;
     },
   },
-  StatisticEntry: {
+  StatisticsPackage: {
     user: (statisticEntry) => {
       if (ObjectID.isValid(statisticEntry.user)) return ReactoryUserModel.findById(statisticEntry.user);
       if (statisticEntry.user && statisticEntry.user._id) return statisticEntry.user;
@@ -22,7 +22,11 @@ export default {
   },
   Mutation: {
     CorePublishStatistics: (parent, { entries }) => {
-      return true;
+      return {
+        id:  new ObjectId().toString(),
+        reference: 'test',
+        createdAt: new Date(),
+      };
     },
   },
 };

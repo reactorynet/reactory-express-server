@@ -14,7 +14,7 @@ export interface IReactoryFormSaveArgs {
 @resolver
 class ReactoryFormResolver {
 
-  resolver: Reactory.Graph.IResolverStruct
+  static resolver: Reactory.Graph.IResolverStruct
 
   @query("ReactoryForms")
   async listForms(obj: any, args: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.Forms.IReactoryForm[]> {

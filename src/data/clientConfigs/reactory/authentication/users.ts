@@ -8,7 +8,7 @@ const {
 const users: Reactory.Server.IStaticallyLoadedUser[] = [
   {
     email: REACTORY_APPLICATION_EMAIL,
-    roles: ['ADMIN'],
+    roles: ['ADMIN', 'DEVELOPER'],
     firstName: 'Reactory',
     lastName: 'Admin',
     password: REACTORY_APPLICATION_PASSWORD,

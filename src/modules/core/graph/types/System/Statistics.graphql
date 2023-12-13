@@ -1,33 +1,190 @@
-
+"""
+  Statistic - statistic
+  @param id - id of the statistic
+  @param key - key of the statistic
+  @param when - when was the statistic generated
+  @param createdAt - creation date of the statistic within the system
+  @param updatedAt - update date of the statistic within the system
+  @param stat - statistic value
+"""
 type Statistic {
-  id: ObjID
-  key: String
-  when: Date  
-  stat: Any
+  id: String!
+  key: String!
+  title: String
+  description: String
+  when: Date!
+  createdAt: Date!
+  updatedAt: Date
+  stat: Any!
 }
 
-type StatisticEntry {
-  id: ObjID
+"""
+  Statistics - statistics package entry
+  @param id - id of the statistic entry
+  @param partner - partner / ReactoryClient of the statistic entry
+  @param user - user of the statistic entry
+  @param reference - reference of the statistic entry
+  @param entries - array of statistic entries
+"""
+type StatisticsPackage {
+  id: String!
   partner: ReactoryClient
   user: User
-  entries: [Statistic]
+  reference: String!
+  title: String
+  description: String
+  processed: Boolean
+  processor: String
+  statistics: [Statistic]
+  createdAt: Date!
+  updatedAt: Date
 }
 
+"""
+  StatisticsReceipt - receipt of statistics
+  @param reference - reference of the statistics
+  @param success - success of the statistics
+  @param message - message of the statistics
+"""
+type StatisticsReceipt {
+  reference: String
+  success: Boolean
+  message: String
+}
+
+"""
+  StatisticsFilter - filter for retrieving statistics
+  @param keys - keys of the statistics
+  @param users - users of the statistics
+  @param references - references of the statistics
+  @param from - from date of the statistics
+  @param till - till date of the statistics
+"""
 input StatisticsFilter {
   keys: [String],
+  users: [String],
+  references: [String],
   from: Date,
   till: Date
 }
 
+"""
+  StatisticsInput - input for statistic entry
+  @param key - key of the statistic, this is a required field
+  @param stat - statistic value, this is a required field
+  @param processor - processor of the statistic entry. This is an optional field
+  @param ttl - time to live of the statistic. This is an optional field and is in seconds.   
+  If this field is not set, the statistic will be stored forever.
+  @param title - title of the statistic. This is an optional field.
+  @param description - description of the statistic. This is an optional field.
+  @param roles - roles of the statistic. This is an optional field. If this field is set, the statistic
+  will only be accessible for users with the specified roles. This cannot be set once the 
+  statistic record is created.
+  
+  A stat can be any data structure, simpler data structures are recommended
+  however more complex data structures can be used as well.
+  
+  e.g.:
+  {
+    "key": "form.someid.graphtime",
+    "stat": {
+      "execution_time": 100,
+    }
+  }
+
+  or 
+
+  {
+    "key": "form.someid.graphdata",
+    "stat": {
+      "data": {
+        "x": [1,2,3,4,5],
+        "y": [1,2,3,4,5]
+      }
+    }
+  }
+"""
 input StatisticsInput {
-  key: String    
-  stat: Any
+  key: String!    
+  stat: Any!
+  processor: String
+  ttl: Int
+  title: String
+  description: String
+  roles: [String]
+}
+
+input StatisticUpdateInpt {
+  id: ObjID!
+  processor: String
+  ttl: Int
+  title: String
+  description: String
+}
+
+"""
+Input for StatisticsPackageUpdate
+"""
+input StatisticsPackageUpdateInput {
+  id: String!
+  title: String
+  description: String
+  references: [String]
+  processed: Boolean
+  processor: String
 }
 
 extend type Query {
-  CoreGetStatistics(filter: StatisticsFilter): [StatisticEntry]
+  """
+    CoreGetStatistics - get statistics
+    @param filter - filter for statistics
+  """
+  CoreGetStatistics(filter: StatisticsFilter): [Statistic]
+
+  """
+    CoreGetStatisticsPackage - get statistics package
+    @param reference - reference of the statistics package
+  """
+  CoreGetStatisticsPackage(reference: String!): StatisticsPackage
+  
+    """
+      CoreGetStatisticsPackages - get statistics packages
+      @param filter - filter for statistics packages
+    """
+  CoreGetStatisticsPackages(filter: StatisticsFilter): [StatisticsPackage]
 }
 
 extend type Mutation {
-  CorePublishStatistics(entries: [StatisticsInput]!): Boolean
+  """
+    CorePublishStatistics - publish statistics
+    @param entries - array of statistics entries
+
+    Returns a StatisticsReceipt.
+  """
+  CorePublishStatistics(entries: [StatisticsInput]!): StatisticsPackage
+
+  """
+    CoreProcessStatistics - process statistics
+    @param reference - reference of the statistics
+    @param processor - processor of the statistics - The processor is a string that is used to identify the processor.
+    Usually this is a FQN and would follow the following naming convention: <nameSpace>.<name>@<version>
+    e.g. core.ReactoryDefaultFormTelemetryProcessor@1.0.0
+    @param params - parameters for the processor
+
+    Returns a StatisticsPackage. This package contains the processed statistics.
+  """
+  CoreProcessStatistics(reference: String!, processor: String!, params: Any): StatisticsPackage
+
+
+  """
+    CoreUpdateStatistic - update statistic
+    @param input - input for updating statistic
+  """
+  CoreUpdateStatistic(input: StatisticUpdateInpt!): Statistic
+
+  """
+    CoreUpdateStatisticsPackage - update statistics package
+    @param input - input for updating statistics package
+  """
+  CoreUpdateStatisticsPackage(input: StatisticsPackageUpdateInput!): StatisticsPackage
 }

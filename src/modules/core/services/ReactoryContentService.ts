@@ -116,8 +116,7 @@ class ReactoryContentService implements Reactory.Service.IReactoryContentService
   }
 
   @roles(['USER'])
-  async createContent(content: Reactory.Service.ReactoryContentInput): Promise<Reactory.Models.IReactoryContent> {
-    debugger
+  async createContent(content: Reactory.Service.ReactoryContentInput): Promise<Reactory.Models.IReactoryContent> {    
     try {
       logger.debug('Reactory Create Content Starting: ', content);
       return await Content.findOneAndUpdate({ slug: content.slug }, {

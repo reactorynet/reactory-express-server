@@ -4,10 +4,13 @@ module.exports = function (api) {
 
   const presets = [
     ['@babel/react', { modules: false }],
-    ['@babel/env', {
+    ['@babel/preset-env', {
       modules: false,
-      useBuiltIns: 'false',
+      useBuiltIns: 'usage',
       corejs: '3',
+      targets: {
+        node: 'current',
+      },
     }],
     ['@babel/preset-typescript',
       {
@@ -41,6 +44,8 @@ module.exports = function (api) {
     }],
     ['@babel/plugin-proposal-decorators', { legacy: true }],
     ['@babel/plugin-proposal-class-properties', { loose: true }],
+    ['@babel/plugin-transform-private-property-in-object', { loose: true }],
+    ['@babel/plugin-transform-private-methods', { loose: true }],
 
     // stage 0
     '@babel/plugin-proposal-function-bind',

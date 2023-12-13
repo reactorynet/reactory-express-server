@@ -1,1 +1,1 @@
-export default ['USER', 'ADMIN', 'ANON']
+export default ['USER', 'ADMIN', 'ANON', 'DEVELOPER']

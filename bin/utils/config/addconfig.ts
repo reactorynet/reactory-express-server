@@ -1,6 +1,6 @@
 'use strict';
 import readline from 'readline';
-import { ask, colors } from './helpers';
+import { ask, colors } from '../helpers';
 import {
   ReactoryConfiguration,
   IQuestion,

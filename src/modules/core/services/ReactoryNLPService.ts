@@ -8,6 +8,7 @@ import Natural, { WordNet } from 'natural';
 import logger from "@reactory/server-core/logging";
 import { Writable } from "stream";
 import database from "database";
+import ApiError from "@reactory/server-core/exceptions";
 
 class FrequencyDistribution implements Reactory.Service.FrequencyDistribution {
   private frequencyMap: { [token: string]: number } = {};
@@ -317,12 +318,15 @@ class ReactoryNLPService implements Reactory.Service.INaturalService {
     return Promise.resolve(0);
   }
 
-  tokenize(input: string, tokenizer: string = 'WordTokenizer'): Reactory.Models.INaturalTokenizedInput {
+  tokenize(input: string, tokenizer: string = 'WordTokenizer'): Reactory.Models.INaturalTokenizedInput {    
     const Tokenizer = Natural[tokenizer] as () => Natural.Tokenizer;
+    if(!Tokenizer) { 
+      throw new ApiError(`Could not find tokenizer ${tokenizer}`);
+    }
     const $tokenizer = new Tokenizer();
     return {
       input,
-      tokenizer: 'WordTokenizer',
+      tokenizer,
       tokens: $tokenizer.tokenize(input),
     }
   }

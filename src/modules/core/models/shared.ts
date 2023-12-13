@@ -1,6 +1,5 @@
 import { Schema } from 'mongoose';
 
-
 export const MetaSchema = new Schema<Reactory.Models.IRecordMeta<any>>({
   owner: String,
   mustSync: Boolean,
@@ -31,4 +30,4 @@ export const ThemedUXMetaSchema = new Schema<Reactory.UX.IThemedUXMeta>({
   mode: String,
   theme: String,
   uxmeta: UXMetaSchema
-})
+});

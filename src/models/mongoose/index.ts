@@ -1,21 +1,18 @@
-import mongoose, { Mongoose, ConnectionOptions } from 'mongoose';
+import mongoose, { ConnectOptions } from 'mongoose';
 
 
 const {
     MONGOOSE,
     MONGO_USER,
     MONGO_PASSWORD,
-
-    MODE,
-    NODE_ENV,
     DOMAIN_NAME,
     SERVER_ID
   } = process.env;
 
-const options: ConnectionOptions = {
+export const options: ConnectOptions = {
     user: MONGO_USER,
     pass: MONGO_PASSWORD,
-    useNewUrlParser: true
+    appName: `reactory[${SERVER_ID}@${DOMAIN_NAME}]]`,
 };
 
 const connection = mongoose.connect(MONGOOSE, options);

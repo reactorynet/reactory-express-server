@@ -1,0 +1,5 @@
+
+Reactory CLI: ${version}
+========================
+Executing reactory cli command: ${command}
+Options: ${options}

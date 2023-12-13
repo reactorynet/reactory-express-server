@@ -1,7 +1,9 @@
 import Reactory from '@reactory/reactory-core';
 import { resolver, query, property } from "@reactory/server-core/models/graphql/decorators/resolver";
+import { ReactoryAnonUser } from 'context/AnonUser';
 import { isNil, isArray, sortBy, filter, intersection, uniq } from 'lodash';
 import moment from 'moment';
+import { ObjectId } from 'mongodb';
 const packageJson = require('../../../../../package.json');
 
 
@@ -35,7 +37,6 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise <{ r
 
   const login_partner_keys = login_partner_keys_setting.data;
 
-  console.log(`Partner has Keys (${login_partner_keys.partner_keys.length})`, {}, 'debug');
   //get a list of all partner / cross partner logins allowed
   const partnerLogins: Reactory.Models.IReactoryClientDocument[] = await systemService.getReactoryClients({ key: { $in: [...login_partner_keys.partner_keys] } }).then();
 
@@ -45,8 +46,6 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise <{ r
       root_partner_memberships.push(membership);
     }
   });
-
-  context.log(`${user.firstName} has (${root_partner_memberships.length})`, null, 'debug');
 
   root_partner_memberships.forEach((membership) => {
     if (isArray(membership.roles)) {
@@ -111,7 +110,7 @@ const DEFAULT_MATERIAL_THEME = {
 }
 
 
-const getActiveTheme = (apiStatus: Reactory.Models.IApiStatus, args: { theme: string, mode: string }, context: Reactory.Server.IReactoryContext) => {
+const getActiveTheme = (_: Reactory.Models.IApiStatus, args: { theme: string, mode: string }, context: Reactory.Server.IReactoryContext): Reactory.UX.IReactoryTheme => {
   const { themes = [], theme = "reactory" } = context.partner;
 
   let activeTheme: Reactory.UX.IReactoryTheme = null;
@@ -161,17 +160,17 @@ class ApiStatus {
   };
 
   @property("ApiStatus", "menus")
-  menus(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.UX.IReactoryMenuConfig[]> {
+  menus(_: Reactory.Models.IApiStatus, __: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.UX.IReactoryMenuConfig[]> {
     const systemService = context.getService("core.SystemService@1.0.0") as Reactory.Service.IReactorySystemService;
     return systemService.getMenusForClient(context.partner)    
   };
 
   @property("ApiStatus", "routes")
-  async routes(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.Routing.IReactoryRoute[]> {
+  async routes(apiStatus: Reactory.Models.IApiStatus, _: any, context: Reactory.Server.IReactoryContext): Promise<Reactory.Routing.IReactoryRoute[]> {
+    
     const { partner, user, hasRole } = context;
     const { anon = false } = user;
     const { routes } = apiStatus;
-
     let $routes: Reactory.Routing.IReactoryRoute[] = [];
 
     if (isArray(routes) === true) {
@@ -237,7 +236,7 @@ class ApiStatus {
   @property("ApiStatus", "colorSchemes")
   colorSchemes(apiStatus: Reactory.Models.IApiStatus, params: any, context: Reactory.Server.IReactoryContext) {
     
-    const themeOptions = getActiveTheme(apiStatus, params, context).options;
+    const themeOptions: Reactory.UX.IReactoryTheme = getActiveTheme(apiStatus, params, context).options;
 
     let primary = themeOptions?.palette?.primary?.main; // default primary color
     let secondary = themeOptions?.palette?.secondary?.main
@@ -260,10 +259,38 @@ class ApiStatus {
         
     const { roles, alt_roles } = await getRoles(context).then();
 
+    let loggedInUser: Reactory.Models.IUserDocument = context.user;
+    
+    if(!loggedInUser){
+      loggedInUser = ReactoryAnonUser
+    }
+
+    const memberships = loggedInUser.memberships.map((m: any) => {
+      return {
+        id: m._id.toString(),
+        clientId: m.clientId?.toString(),
+        organizationId: m.organizationId?.toString(),
+        businessUnitId: m.businessUnitId?.toString(),
+        roles: m.roles || [],
+      };
+    });
+
     let _context: Reactory.Models.IReactoryLoggedInContext = {
-      user: context?.user,
-      id: context?.user?._id,
-      memberships: context?.user?.memberships || [],
+      user: {
+        id: loggedInUser._id?.toString(),
+        firstName: loggedInUser.firstName,
+        lastName: loggedInUser.lastName,
+        fullNameWithEmail: loggedInUser.fullNameWithEmail,
+        email: loggedInUser.email,
+        avatar: loggedInUser.avatar,
+        authentications: loggedInUser.authentications,
+        memberships,
+        roles: roles,
+        alt_roles: alt_roles,
+        additional: {},
+      },
+      id: loggedInUser._id.toString(),
+      memberships,
       roles: roles,
       businessUnit: null,
       organization: null,
@@ -356,26 +383,26 @@ class ApiStatus {
       navigationComponents = [...navigationComponentsSetting.data];
     }
 
-    const api_status_result: any = {
+    const api_status_result: Partial<Reactory.Models.IApiStatus> = {
       when: moment().toDate(),      
       status: 'API OK',
       firstName: isNil(user) === false ? user.firstName : 'An',
       lastName: isNil(user) === false ? user.lastName : 'Anon',
       avatar: isNil(user) === false ? user.avatar : null,
       email: isNil(user) === false ? user.email : null,
-      id: isNil(user) === false ? user._id : null,
+      id: isNil(user) === false ? user?._id?.toString() : null,
       roles: uniq(roles),
       alt_roles,
       memberships: isNil(user) === false && isArray(user.memberships) ? user.memberships : [],
       organization: user.organization,
-      routes: (partner.routes || []).map((route) => {
+      routes: (partner.routes || []).map((route: Reactory.Routing.IReactoryRoute) => {
         if (!route.roles) return route;
         if (intersection(route.roles, route.roles).length > 0) return route;
       }),
       applicationAvatar: partner.avatar,
       applicationName: partner.name,
       applicationRoles: partner.applicationRoles,
-      menus: partner._id,
+      menus: [],
       theme: partner.theme,      
       messages: uxmessages,
       navigationComponents,
