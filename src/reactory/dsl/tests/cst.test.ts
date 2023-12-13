@@ -65,7 +65,11 @@ describe('CST', () => {
   });
 
   it('should create a CST node with an expression: $i = $i + 1;', () => {
-    const tokens = Tokenize(`$i = $i + 1;`, { ignoreWhitespace: false, ignoreNewLines: false });
+    const tokens = Tokenize(`$i = $i + 1;`, { 
+      ignoreWhitespace: false, 
+      ignoreNewLines: false 
+    });
+    
     const cst = createCST(tokens);
     expect(cst).toEqual(SingleLineExpressionWithArithmaticProgramNode);
   })
@@ -84,8 +88,16 @@ describe('CST', () => {
   });
 
   it('should create a CST with nested macros', () => { 
-    const tokens = Tokenize(NestedMacroInvocationScript, { ignoreWhitespace: false, ignoreNewLines: false });
+    const tokens = Tokenize(NestedMacroInvocationScript, { ignoreWhitespace: false, ignoreNewLines: false, ignoreComments: false });
     const cst = createCST(tokens);
     expect(cst).toEqual(NestedMacroInvocationProgramNode);
+  });
+
+  it('should create a CST from macro with multi line comment', () => { 
+
+  });
+
+  it('should create a CST from macro with single line comment', () => { 
+    
   });
 });

@@ -3,6 +3,7 @@ import { CSTProgramNode, Operator } from "@reactory/server-core/types/compiler/c
 
 export const SingleLineExpressionWithArithmaticProgramNode: CSTProgramNode = {
   type: "Program",
+  token: null,
   children: [
     {
       type: "VariableIdentifier",
@@ -43,7 +44,7 @@ export const SingleLineExpressionWithArithmaticProgramNode: CSTProgramNode = {
     },
     {
       type: "Operator",
-      operator: 16777218 as Operator,
+      operator: 16777218 as any,
       children: [
       ],
       value: "+",
@@ -67,4 +68,4 @@ export const SingleLineExpressionWithArithmaticProgramNode: CSTProgramNode = {
       value: ";",
     },
   ],
-};
+}

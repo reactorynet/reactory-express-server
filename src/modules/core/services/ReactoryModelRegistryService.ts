@@ -1,4 +1,9 @@
-import { Service, Server, IReactoryComponentDefinition, IReactoryComponentFeature } from '@reactory/reactory-core'; // import necessary types
+import {
+  Service,
+  Server,
+  IReactoryComponentDefinition,
+  IReactoryComponentFeature,
+} from "@reactory/reactory-core"; // import necessary types
 import { service } from "@reactory/server-core/application/decorators/service";
 
 @service({
@@ -9,9 +14,11 @@ import { service } from "@reactory/server-core/application/decorators/service";
   dependencies: [
     { id: "core.FetchService@1.0.0", alias: "fetchService" },
     { id: "core.ReactoryFileService@1.0.0", alias: "fileService" },
-  ]
+  ],
 })
-export class ReactoryModelRegistry implements Reactory.Service.TReactoryModelRegistryService {
+export class ReactoryModelRegistry
+  implements Reactory.Service.TReactoryModelRegistryService
+{
   name: string = "core";
   nameSpace: string = "ReactoryModelRegistry";
   version: string = "1.0.0";
@@ -22,18 +29,20 @@ export class ReactoryModelRegistry implements Reactory.Service.TReactoryModelReg
 
   private fetchService: Reactory.Service.IFetchService;
   private fileService: Reactory.Service.IReactoryFileService;
-  
-  
-  constructor(props: Service.IReactoryServiceProps, context: Server.IReactoryContext) {
+
+  constructor(
+    props: Service.IReactoryServiceProps,
+    context: Server.IReactoryContext
+  ) {
     this.context = context;
   }
-  
+
   description?: string;
   tags?: string[];
   toString: ((includeVersion?: boolean) => string) & (() => string);
 
   onStartup(): Promise<void> {
-    // Implement startup logic
+    // load all models that are registered with the module in     
     return Promise.resolve();
   }
 
@@ -58,13 +67,28 @@ export class ReactoryModelRegistry implements Reactory.Service.TReactoryModelReg
     this.fetchService = fetchService;
   }
 
-  register<T>(model: IReactoryComponentDefinition<T>, overwrite: boolean = false): void {
-    if (this.modelRegistry.find(m => m.name === model.name)) {
+  register<T>(
+    model: IReactoryComponentDefinition<T>,
+    overwrite: boolean = false
+  ): void {
+    if (
+      this.modelRegistry.find(
+        (m) =>
+          m.name === model.name &&
+          m.nameSpace === model.nameSpace &&
+          m.version === model.version
+      )
+    ) {
       if (overwrite) {
-        this.modelRegistry.splice(this.modelRegistry.findIndex(m => m.name === model.name), 1);
+        this.modelRegistry.splice(
+          this.modelRegistry.findIndex((m) => m.name === model.name),
+          1
+        );
         this.replacedModels.push(model);
       } else {
-        throw new Error(`Model ${model.name} already exists. Use overwrite flag to overwrite.`);
+        throw new Error(
+          `Model ${model.name} already exists. Use overwrite flag to overwrite.`
+        );
       }
     }
     this.modelRegistry.push(model);
@@ -72,13 +96,46 @@ export class ReactoryModelRegistry implements Reactory.Service.TReactoryModelReg
 
   getModel<T>(specs: Partial<IReactoryComponentDefinition<T>>): T | null {
     const result = this.findMatchingComponent(specs);
-    if(result === null) return null;
+    if (result === null) return null;
     return (result as IReactoryComponentDefinition<T>).component as T;
   }
 
   getModels<T>(spec: Partial<IReactoryComponentDefinition<T>>): T[] {
-    // Implement logic to return multiple models
-    return [];
+    //find all models where we have a partial match to the spec
+    let allModels: IReactoryComponentDefinition<T>[] = [];
+    this.context.modules.forEach((reactoryModule) => {
+      const { models = [] } = reactoryModule;
+      //@ts-ignore
+      allModels.push(...models);
+    });
+
+    if (spec.name) {
+      if(spec.name.indexOf('*') === -1 && spec?.name.length > 0) {
+        for(let i = allModels.length - 1; i >= 0; i--) {
+          if(allModels[i].name !== spec.name) {
+            allModels.pop();
+          }
+        }
+      } else {
+        // partial match
+        allModels = allModels.filter((model) => { 
+          if(spec.name.endsWith('*')) { 
+            return model.name.toLowerCase().startsWith(spec.name.slice(0, spec.name.length - 1));
+          }
+
+          if(spec.name.startsWith('*')) { 
+            return model.name.toLowerCase().endsWith(spec.name.slice(1));
+          }
+
+          if(spec.name.toLowerCase().indexOf('*') > -1) { 
+            const [start, end] = spec.name.split('*');
+            return model.name.startsWith(start) && model.name.endsWith(end);
+          }
+        });
+      }
+    }
+
+    return allModels.map((model) => model.component as T) ;
   }
 
   generate<T>(spec: Partial<IReactoryComponentDefinition<T>>): T {
@@ -86,29 +143,51 @@ export class ReactoryModelRegistry implements Reactory.Service.TReactoryModelReg
     return ({} as IReactoryComponentDefinition<T>).component as T;
   }
 
-  private compareStem(stemA: string, stemB: string, threshold: number = 0.8): boolean {
-    // Your comparison logic
+  private compareStem(
+    stemA: string,
+    stemB: string,
+    threshold: number = 0.8
+  ): boolean {
     return stemA === stemB;
   }
 
-  private compareFeatures(specs: IReactoryComponentFeature[], componentFeature: IReactoryComponentFeature[], threshold: number = 0.8): boolean {
-    // Your comparison logic
+  private compareFeatures(
+    specs: IReactoryComponentFeature[],
+    componentFeature: IReactoryComponentFeature[],
+    threshold: number = 0.8
+  ): boolean {
     if (componentFeature.length === 0) return true;
     if (specs.length === 0) return true; // If no features are specified, then all components match
     if (specs.length > componentFeature.length) return false; // If the specs have more features than the component, then it can't match
     if (specs.length < componentFeature.length) {
       for (const spec of specs) {
-        if (!componentFeature.find((feature: IReactoryComponentFeature) => feature.feature === spec.feature && feature.featureType === spec.featureType)) return false;
+        if (
+          !componentFeature.find(
+            (feature: IReactoryComponentFeature) =>
+              feature.feature === spec.feature &&
+              feature.featureType === spec.featureType
+          )
+        )
+          return false;
       }
       return true;
     }
     for (const spec of specs) {
-      if (!componentFeature.find((feature: IReactoryComponentFeature) => feature.feature === spec.feature && feature.featureType === spec.featureType)) return false;
+      if (
+        !componentFeature.find(
+          (feature: IReactoryComponentFeature) =>
+            feature.feature === spec.feature &&
+            feature.featureType === spec.featureType
+        )
+      )
+        return false;
     }
     return true;
   }
 
-  private findMatchingComponent<T>(input: Partial<IReactoryComponentDefinition<T>>): IReactoryComponentDefinition<T> | null {
+  private findMatchingComponent<T>(
+    input: Partial<IReactoryComponentDefinition<T>>
+  ): IReactoryComponentDefinition<T> | null {
     for (const component of this.modelRegistry) {
       // Match primary fields
       if (input.nameSpace && input.nameSpace !== component.nameSpace) continue;
@@ -116,10 +195,20 @@ export class ReactoryModelRegistry implements Reactory.Service.TReactoryModelReg
       if (input.version && input.version !== component.version) continue;
 
       // Match stem using helper function
-      if (input.stem && component.stem && !this.compareStem(input.stem, component.stem)) continue;
+      if (
+        input.stem &&
+        component.stem &&
+        !this.compareStem(input.stem, component.stem)
+      )
+        continue;
 
       // Match features using helper function
-      if (input.features && component.features && !this.compareFeatures(input.features, component.features)) continue;
+      if (
+        input.features &&
+        component.features &&
+        !this.compareFeatures(input.features, component.features)
+      )
+        continue;
 
       // If all conditions pass, return the matching component
       return component as IReactoryComponentDefinition<T>;

@@ -102,8 +102,14 @@ export type CSTSourceInfo = {
 // The base type for all CST nodes
 export interface CSTNode {
   type: CSTNodeType;
+  /**
+   * The token that was used to create this node.
+   * It is stored on the node for debugging purposes.
+   */
+  token?: Token;
   value?: string; // For literals, identifiers, operators, etc.
   children?: CSTNode[];
+  next?: CSTNode;
   [key: symbol]: CSTNode | CSTNode[] | string | undefined;
 }
 

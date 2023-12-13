@@ -1,24 +1,13 @@
-import {
-  mockProgramNode,
-  mockSimpleMacro,
-  mockMacroGroup,
-  mockMacroChain,
-  mockMacroBranch,
-  mockControlFlow,  
+import { 
+  SingleLineHelloWorldASTProgramNode
 } from './mocks/ast';
 
-import { createCST, createAST } from "../compiler/parser";
-import { Token } from "@reactory/server-core/types/compiler/lexer";
-import { TokenisationMap } from "./mocks/tokens";
-
-
-// Mock functions (these would be replaced with actual implementations)
-const parse = jest.fn((input: string) => {
-  return mockProgramNode;
-});
-const executeMacro = jest.fn();
-const evaluateCondition = jest.fn();
-const executeControlFlow = jest.fn();
+import { 
+  SingleLineHelloWorldProgramNode,
+  MultiLineWithConditionalProgramNode,
+  SingleLineExpressionWithArithmaticProgramNode,
+} from './mocks/cst';
+import { createAST } from "../compiler/parser";
 
 describe('AST', () => {
   
@@ -26,12 +15,20 @@ describe('AST', () => {
     jest.clearAllMocks();
   });
 
-  it('should return a valid AST', () => {        
-    // when we parse the input
-    const cst = createCST(TokenisationMap['@print("Hello, World!")']);
-    const ast = createAST(cst);    
+  it('should return a valid AST for @print("Hallo World!")', () => {            
+    const ast = createAST(SingleLineHelloWorldProgramNode);
+    ast.options.host = 'cli';
     // and we expect the parse function to return the AST root
     expect(ast.type).toEqual('Program');
-    expect(ast.body).toEqual([mockSimpleMacro]);
+    expect(ast).toEqual(SingleLineHelloWorldASTProgramNode);
+  });
+
+  it('should return a valid AST for an expression $i = $i + 1;', () => { 
+    //given the CST 
+    const cst = SingleLineExpressionWithArithmaticProgramNode;
+    // when we create an AST
+    const ast = createAST(cst);
+    // then we expect the AST to be valid
+    expect(ast).toEqual(SingleLineHelloWorldASTProgramNode);
   });
 });

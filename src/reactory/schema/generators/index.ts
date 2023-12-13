@@ -1,5 +1,3 @@
-
-import { Cache } from '../../../models';
 import databaseGenerators from './database';
 let _generatorMap = {};
 databaseGenerators.forEach( generator => _generatorMap[generator.id] = generator.generate);

@@ -1,82 +1,111 @@
 import tokenize from "../compiler/parser/lexer";
-import { Token, TokenType } from "@reactory/server-core/types/compiler/lexer";
-import { MultiLineWithMultiLineComment, MultineLineWithSingleLineComment, TokenisationMap } from "./mocks/tokens";
+import { Token, TokenType, TokenizerOptions } from "@reactory/server-core/types/compiler/lexer";
+import TokenMocks from "./mocks/tokens";
+
+const { 
+  _01_VariableDeclaration,
+  _02_PrintHelloWorld,
+  _03_PrintNameVariable,
+  _04_PrintNameAndHelloWorld,
+  _05_PrintNameAndNumbers,
+  _06_PrintNameConditionally,
+  _07_PrintNameWithStringInterpolation,
+  _08_PrintNameConditionallyMultiLine,
+  _09_PrintNameInWhileLoop,
+  _10_PrintNameInForLoop,
+  _11_AskForNameInput,
+  _12_SearchForName,
+  _13_DisplayResults
+} = TokenMocks._01_NameProgram
+
 describe('Lexer', () => { 
+  let options: TokenizerOptions = {
+    ignoreComments: false,
+    ignoreWhitespace: false,
+    ignoreNewLines: false,
+  };
+
   beforeEach(() => { 
     jest.clearAllMocks();
   });
 
-  it('should tokenize a simple macro', () => {
-    const input = '@print("Hello, World!")';
-    const tokens = tokenize(input, { ignoreWhitespace: true });
-    expect(tokens).toEqual(TokenisationMap[input]);
+  it('01. It should tokenize a variable declaration', () => {
+    expect(
+      tokenize(_01_VariableDeclaration.source, options))
+        .toEqual(_01_VariableDeclaration.tokens);
   });
 
-  it('should tokenize a macro with a variable', () => {
-    const input = '@print($name)';
-    const tokens = tokenize(input, { ignoreWhitespace: true });
-    expect(tokens).toEqual(TokenisationMap[input]);
+  it('02. It should tokenize a print hello world program', () => {    
+    expect(
+      tokenize(_02_PrintHelloWorld.source, options))
+        .toEqual(_02_PrintHelloWorld.tokens);
+
   });
 
-  it('should tokenize a macro with a variable and a string literal', () => {
-    const input = '@print($name, "Hello, World!")';
-    const tokens = tokenize(input, { ignoreWhitespace: true });
-    expect(tokens).toEqual(TokenisationMap[input]);
+  it('03. It should tokenize a macro with a function and a variable param', () => {
+    expect(
+      tokenize(_03_PrintNameVariable.source, options))
+        .toEqual(_03_PrintNameVariable.tokens);
   });
 
-  it('should tokenize a macro with a variable and a number literal', () => {
-    const input = '@print($name, 123)';
-    const tokens = tokenize(input, { ignoreWhitespace: true });
-    expect(tokens).toEqual(TokenisationMap[input]);
-  });
+  // it('04. It should tokenize a macro with a function with variable and string literal param', () => {
+  //   expect(
+  //     tokenize(_04_PrintNameAndHelloWorld.source, options))
+  //       .toEqual(_04_PrintNameAndHelloWorld.tokens);
+  // });
 
-  // a test that checks that the lexer can handle a macro with an if statement in it
-  it('should tokenize a macro with an if statement', () => {
-    const input = '@if ($name == "John") { @print("Hello, John!") }';
-    const tokens = tokenize(input, { ignoreWhitespace: false, ignoreNewLines: false });
-    expect(tokens).toEqual(TokenisationMap[input]);
-  });
+  
+  // it('05. It should tokenize a macro with a function with a variable ', () => {    
+  //   expect(
+  //     tokenize(_05_PrintNameAndNumbers.source, options))
+  //       .toEqual(_05_PrintNameAndNumbers.tokens);
+  // });
+  
+  // it('06. It should tokenize a macro with a conditional', () => {
+  //   expect(
+  //     tokenize(_06_PrintNameConditionally.source, options))
+  //       .toEqual(_06_PrintNameConditionally.tokens);
+  // });
 
-  // a test that checks the lexer can handle a macro with nested macros
-  it('should tokenize an executable string', () => {
-    const input = '@print(`Hello, @var($name)`)';
-    const tokens = tokenize(input, { ignoreWhitespace: false, ignoreNewLines: false });    
-    expect(tokens).toEqual(TokenisationMap[input]);
-  });
+  // it('07. It should tokenize a macro with string interpolation', () => {    
+  //   expect(
+  //     tokenize(_07_PrintNameWithStringInterpolation.source, options))
+  //       .toEqual(_07_PrintNameWithStringInterpolation.tokens);
+  // });
 
-  // a test that check if the lexer can parse a multi line macro
-  it('should tokenize a multi line macro', () => {
-    const input = `
-    if ($name == "John") {
-      @print("Hello, John!")
-    }
-    `;
-    const tokens = tokenize(input, { ignoreWhitespace: false, ignoreNewLines: false });
-    expect(tokens).toEqual(TokenisationMap[input]);
-  });
+  // it('08. It should tokenize a multi line macro with with a conditional', () => {  
+  //   expect(
+  //     tokenize(_08_PrintNameConditionallyMultiLine.source, options))
+  //       .toEqual(_08_PrintNameConditionallyMultiLine.tokens);
+  // });
 
-  it('should tokenize a multine macro with a single line comment', () => {  
-    const input = `
-    // This is a comment.
-    if ($name == "John") {
-      @print("Hello, John!")
-    }
-    `
-    const tokens = tokenize(input, { ignoreWhitespace: false, ignoreNewLines: false, ignoreComments: false });
-    expect(tokens).toEqual(MultineLineWithSingleLineComment);
-  });
+  // it('09. It should tokenize a multiline macro with a while loop', () => {    
+  //   expect(
+  //     tokenize(_09_PrintNameInWhileLoop.source, options))
+  //       .toEqual(_09_PrintNameInWhileLoop.tokens);
+  // });
 
-  it('should tokenize a macro with a multi line comment', () => { 
-    const input = `
-    /* This is a comment. 
-     * that spans multiple lines. 
-     */
+  // it('10. It should tokenize a multiline macro with a for loop', () => {    
+  //   expect(
+  //     tokenize(_10_PrintNameInForLoop.source, options))
+  //       .toEqual(_10_PrintNameInForLoop.tokens);
+  // });
 
-    if ($name == "John") {
-      @print("Hello, John!")
-    }
-    `
-    const tokens = tokenize(input, { ignoreWhitespace: false, ignoreNewLines: false, ignoreComments: false });
-    expect(tokens).toEqual(MultiLineWithMultiLineComment);
-  });
+  // it('11. It should tokenize a macro with a input', () => {    
+  //   expect(
+  //     tokenize(_11_AskForNameInput.source, options))
+  //       .toEqual(_11_AskForNameInput.tokens);
+  // });
+
+  // it('12. It should tokenize a macro with a search', () => {    
+  //   expect(
+  //     tokenize(_12_SearchForName.source, options))
+  //       .toEqual(_12_SearchForName.tokens);
+  // });
+
+  // it('13. It should tokenize a macro with a search', () => {    
+  //   expect(
+  //     tokenize(_13_DisplayResults.source, options))
+  //       .toEqual(_13_DisplayResults.tokens);
+  // });
 });

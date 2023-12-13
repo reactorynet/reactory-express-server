@@ -13,6 +13,7 @@ import { CSTProgramNode } from "@reactory/server-core/types/compiler/cst";
  */
 export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
   type: "Program",
+  token: null,
   children: [
     {
       type: "Newline",
@@ -30,6 +31,15 @@ export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
       type: "IfControl",
       condition: {
         type: "Grouping",
+        token: {
+          type: "PAREN_OPEN",
+          value: "(",
+          position: {
+            line: 2,
+            column: 7,
+            src: undefined,
+          },
+        },
         children: [
           {
             type: "VariableIdentifier",
@@ -65,6 +75,15 @@ export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
       },
       thenBranch: {
         type: "Grouping",
+        token: {
+          type: "CURLY_OPEN",
+          value: "{",
+          position: {
+            line: 2,
+            column: 25,
+            src: undefined,
+          },
+        },
         children: [
           {
             type: "Newline",
@@ -80,20 +99,56 @@ export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
           },
           {
             type: "MacroInvocation",
-            value: "@",
+            token: {
+              type: "MACRO_START",
+              value: "@",
+              position: {
+                line: 3,
+                column: 6,
+                src: undefined,
+              },
+            },
+            value: "@print",
             children: [
               {
                 type: "MacroName",
                 value: "print",
+                token: {
+                  type: "IDENTIFIER",
+                  value: "print",
+                  position: {
+                    line: 3,
+                    column: 7,
+                    src: undefined,
+                  },
+                },
                 children: [
                 ],
               },
               {
                 type: "MacroArguments",
                 value: "(\"Hello, John!\")",
+                token: {
+                  type: "PAREN_OPEN",
+                  value: "(",
+                  position: {
+                    line: 3,
+                    column: 12,
+                    src: undefined,
+                  },
+                },
                 children: [
                   {
                     type: "StringLiteral",
+                    token: {
+                      type: "STRING_LITERAL",
+                      value: "\"Hello, John!\"",
+                      position: {
+                        line: 3,
+                        column: 13,
+                        src: undefined,
+                      },
+                    },
                     children: [
                     ],
                     value: "\"Hello, John!\"",
@@ -122,6 +177,15 @@ export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
         type: "ElseBranch",
         thenBranch: {
           type: "Grouping",
+          token: {
+            type: "CURLY_OPEN",
+            value: "{",
+            position: {
+              line: 4,
+              column: 11,
+              src: undefined,
+            },
+          },
           children: [
             {
               type: "Newline",
@@ -137,20 +201,56 @@ export const MultiLineWithConditionalWithElseProgramNode: CSTProgramNode = {
             },
             {
               type: "MacroInvocation",
-              value: "@",
+              token: {
+                type: "MACRO_START",
+                value: "@",
+                position: {
+                  line: 5,
+                  column: 6,
+                  src: undefined,
+                },
+              },
+              value: "@print",
               children: [
                 {
                   type: "MacroName",
                   value: "print",
+                  token: {
+                    type: "IDENTIFIER",
+                    value: "print",
+                    position: {
+                      line: 5,
+                      column: 7,
+                      src: undefined,
+                    },
+                  },
                   children: [
                   ],
                 },
                 {
                   type: "MacroArguments",
                   value: "(\"Hello, Stranger!\")",
+                  token: {
+                    type: "PAREN_OPEN",
+                    value: "(",
+                    position: {
+                      line: 5,
+                      column: 12,
+                      src: undefined,
+                    },
+                  },
                   children: [
                     {
                       type: "StringLiteral",
+                      token: {
+                        type: "STRING_LITERAL",
+                        value: "\"Hello, Stranger!\"",
+                        position: {
+                          line: 5,
+                          column: 13,
+                          src: undefined,
+                        },
+                      },
                       children: [
                       ],
                       value: "\"Hello, Stranger!\"",

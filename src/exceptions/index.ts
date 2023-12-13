@@ -1,7 +1,7 @@
 
 // Fix for ES6 not being able to extend from Builtin JavasScript classes
 // like Error and Array
-function ExtendableBuiltin(cls) {
+function ExtendableBuiltin(cls: any) {
   function ExtendableBuiltin() { // eslint-disable-line no-shadow
     cls.apply(this, arguments); // eslint-disable-line prefer-rest-params
   }
@@ -10,14 +10,18 @@ function ExtendableBuiltin(cls) {
 
   return ExtendableBuiltin;
 }
-
 /**
  * Base Error class for custom types.
  * meta info should contain the following items:
  *  * correlationId
  * */
+// @ts-ignore
 export default class ApiError extends ExtendableBuiltin(Error) {
-  constructor(message, meta = undefined) {
+  public message: string;
+  public meta: any;
+  public extensions: any;
+
+  constructor(message: string, meta: any = undefined) {
     super(message);
     this.message = message;
     this.meta = meta;
@@ -26,7 +30,10 @@ export default class ApiError extends ExtendableBuiltin(Error) {
 }
 
 export class RecordNotFoundError extends ApiError {
-  constructor(message, recordType = 'General', meta = {}) {
+  public RecordType: string;
+  public code: string;
+
+  constructor(message: string, recordType = 'General', meta = {}) {
     super(message, meta);
     this.RecordType = recordType;
     this.code = `${recordType.toUpperCase()}-404`;
@@ -34,16 +41,18 @@ export class RecordNotFoundError extends ApiError {
 }
 
 export class UserExistsError extends ApiError {
-  constructor(message, meta = {}) {
-    super(message);
-    this.message = message;
-    this.meta = meta;
+  public code: string;
+
+  constructor(message: string, meta = {}) {
+    super(message, meta);    
     this.code = 'USER-409';
   }
 }
 
 export class BadRequestError extends ApiError {
-  constructor(message, meta ={}) {
+  public code: string;
+
+  constructor(message: string, meta ={}) {
     super(message, meta);
     this.message = message;
     this.meta = meta;
@@ -52,8 +61,10 @@ export class BadRequestError extends ApiError {
 }
 
 export class InsufficientPermissions extends ApiError {
-  constructor(message, meta = {}) {
-    super(message);
+  public code: string;
+
+  constructor(message: string, meta = {}) {
+    super(message, meta);
     this.message = message;
     this.meta = meta;
     this.code = 'USER-401';
@@ -61,62 +72,75 @@ export class InsufficientPermissions extends ApiError {
 }
 
 export class UserNotFoundException extends ApiError {
-  constructor(message, meta = {}) {
+  public code: string;
+
+  constructor(message: string, meta = {}) {    
     super(message, meta);
     this.code = 'USER-404';
   }
 }
 
 export class ReactoryClientValidationError extends ApiError {
-  constructor(message, validationErrors, meta = {}) {
+  public validationErrors: any;
+
+  constructor(message: string, validationErrors: any, meta = {}) {
     super(message, meta);
     this.validationErrors = validationErrors;
   }
 }
 
 export class UserValidationError extends ApiError {
-  constructor(message, validationErrors, meta = {}) {
+  public validationErrors: any;
+  constructor(message: string, validationErrors: any, meta = {}) {
     super(message, meta);
     this.validationErrors = validationErrors;
   }
 }
 
 export class OrganizationValidationError extends ApiError {
-  constructor(message, validationErrors, meta = {}) {
+  public validationErrors: any;
+  constructor(message: string, validationErrors: any, meta = {}) {
     super(message, meta);
     this.validationErrors = validationErrors;
   }
 }
 
 export class OrganizationNotFoundError extends ApiError {
-  constructor(message, orgId, meta = {}) {
+  public orgId: string;
+
+  constructor(message: string, orgId: string, meta = {}) {
     super(message, meta);
     this.orgId = orgId;
   }
 }
 
 export class OrganizationExistsError extends ApiError {
-  constructor(message, meta = {}) {
+  public code: string;
+
+  constructor(message: string, meta = {}) {
     super(message, meta);
     this.code = 'ORGANIZATION-409';
   }
 }
 
 export class BusinessUnitExistsError extends ApiError {
-  constructor(message, meta = {}) {
+  public code: string;
+  constructor(message: string, meta = {}) {
     super(message, meta);
     this.code = 'BUSINESS-UNIT-409';
   }
 }
 export class ValidationError extends ApiError {
-  constructor(message, meta = {}) {
+  public code: string;
+  constructor(message: string, meta = {}) {
     super(message, meta);
     this.code = 'VALIDTION-403';
   }
 }
 
 export class SystemError extends ApiError {
-  constructor(message, meta = {}) {
+  public code: string;
+  constructor(message: string, meta = {}) {
     super(message, meta);
     this.code = 'SYSTEM-500';
   }

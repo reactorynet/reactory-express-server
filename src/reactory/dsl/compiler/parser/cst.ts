@@ -58,6 +58,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     const stringInterpolationNode: CSTNode = {
       type: 'StringInterpolation',
       value: token.value,
+      token: token,
       children: [],
     };
     
@@ -72,6 +73,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
   const parseMacroInvocation = (token: Token): CSTNode => { 
     const macroTagNode: CSTNode = {
       type: 'MacroInvocation',
+      token: token,
       value: token.value,
       children: [],
     };
@@ -82,8 +84,13 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     macroTagNode.children.push({
       type: 'MacroName',
       value: identifierToken.value,
+      token: identifierToken,
       children: [],
     });
+
+    // add the identifier token value to the macro tag node value
+    // so that we can reconstruct the macro invocation string
+    macroTagNode.value += identifierToken.value; 
 
     const openParenToken = nextToken();
     if(openParenToken.type !== "PAREN_OPEN") throw new Error(`Unexpected token type: ${openParenToken.type}, PAREN_OPEN expected`);
@@ -91,6 +98,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     macroTagNode.children.push({
       type: 'MacroArguments',
       value: openParenToken.value,
+      token: openParenToken,
       children: [],
     });
 
@@ -98,6 +106,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     while(currentArgumentToken.type !== "PAREN_CLOSE") {
       const argumentNode: CSTNode = {
         type: 'MacroArgument',
+        token: currentArgumentToken,
         children: [],
       };
 
@@ -106,6 +115,21 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       switch(currentArgumentToken.type) {
         case "STRING_LITERAL": {
           argumentNode.type = "StringLiteral";
+          argumentNode.value = currentArgumentToken.value;
+          break;
+        }
+        case "NUMBER_LITERAL": {
+          argumentNode.type = "NumberLiteral";
+          argumentNode.value = currentArgumentToken.value;
+          break;
+        }
+        case "BOOLEAN_LITERAL": {
+          argumentNode.type = "BooleanLiteral";
+          argumentNode.value = currentArgumentToken.value;
+          break;
+        }
+        case "HEXADECIMAL_LITERAL": {
+          argumentNode.type = "HexadecimalLiteral";
           argumentNode.value = currentArgumentToken.value;
           break;
         }
@@ -126,8 +150,24 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
           argumentNode.children.push(parseMacroInvocation(currentArgumentToken));
           break;
         }
+        case "COMMA": {
+          argumentNode.type = "Punctuation";
+          argumentNode.value = currentArgumentToken.value;
+          break;
+        }
+        case "WHITESPACE": {
+          argumentNode.type = "Whitespace";
+          argumentNode.value = currentArgumentToken.value;
+          break;
+        }
+        case "IDENTIFIER": {
+          argumentNode.type = "Identifier";
+          argumentNode.value = currentArgumentToken.value;
+          argumentNode.children.push(parseIdentifier(currentArgumentToken));
+          break;
+        }
         default: {
-          throw new Error(`Unexpected token type: ${currentArgumentToken.type}, STRING_LITERAL or VARIABLE expected`);
+          throw new Error(`Unexpected token type: ${currentArgumentToken.type}:COMMA, WHITESPACE, STRING_LITERAL or VARIABLE expected`);
         }
       }
       macroTagNode.children[1].children.push(argumentNode);
@@ -138,11 +178,15 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     return macroTagNode;
   }
 
-  const parseGrouping = (openingType: TokenType): CSTNode => { 
+  const parseGrouping = (groupingToken: Token): CSTNode => { 
+    const { type: openingType } = groupingToken;
+
     const node: CSTNode = {
         type: 'Grouping',
+        token: groupingToken,        
         children: [],
     };
+
     let closingType: TokenType;
 
     // Determine the corresponding closing type
@@ -165,7 +209,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
     while (next && next.type !== closingType) { 
         // Check for another opening token and handle it recursively
         if (next.type === "PAREN_OPEN" || next.type === "BRACKET_OPEN" || next.type === "CURLY_OPEN") {
-            const innerGroup = parseGrouping(next.type);
+            const innerGroup = parseGrouping(next);
             node.children.push(innerGroup);
         } else if (next.type !== closingType) {
             // Call parseToken only for non-closing tokens
@@ -198,18 +242,20 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
   const parseBranching = (token: Token): CSTNode => { 
     const node: CSTNode = {
       type: 'Branching',
+      token,
       children: [],
     };
     node.value = token.value;
     return node;
   }
 
-  const parseNesting = (): CSTNode => { 
+  const parseNesting = (token: Token): CSTNode => { 
     const node: CSTNode = {
       type: 'Nesting',
       children: [],
+      token,
     };
-    const token = nextToken();
+    
     node.value = token.value;
     return node;
   }
@@ -249,7 +295,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
 
     // our token is now CURLY_OPEN
     // so we can parse the grouping to get the then branch node
-    const thenBranchNode = parseGrouping("CURLY_OPEN");
+    const thenBranchNode = parseGrouping(token);
     //once we have the then branch node, we can add it to the if control node
     node.thenBranch = thenBranchNode;
   
@@ -283,7 +329,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
 
     // our token is now PAREN_OPEN
     // so we can parse the grouping to get the condition node
-    const conditionNode = parseGrouping("PAREN_OPEN");
+    const conditionNode = parseGrouping(token);
     //once we have the condition node, we can add it to the if control node
     node.condition = conditionNode;
     
@@ -301,7 +347,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
 
     // our token is now CURLY_OPEN
     // so we can parse the grouping to get the then branch node
-    const thenBranchNode = parseGrouping("CURLY_OPEN");
+    const thenBranchNode = parseGrouping(token);
     //once we have the then branch node, we can add it to the if control node
     node.thenBranch = thenBranchNode;
 
@@ -433,7 +479,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       case "BRACKET_OPEN":  {
         node.type = "Grouping";
         node.value = token.value;
-        node.children.push(parseGrouping(token.type));
+        node.children.push(parseGrouping(token));
         break;
       }
       default: {
@@ -628,7 +674,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
       case "BRACKET_OPEN":
       case "PAREN_OPEN":
       case "CURLY_OPEN":
-        return parseGrouping(token.type);
+        return parseGrouping(token);
       case "ARROW_CHAIN":
         return parseChaining();
       case "ARITHMETIC_OPERATOR":
@@ -678,6 +724,7 @@ export const createCST = (tokens: Token[], sourceInfo?: CSTSourceInfo): CSTNode 
   // Create the root node
   const cst: CSTNode = {
     type: 'Program',
+    token: null, // the root node has no token
     children: [],
   };
 

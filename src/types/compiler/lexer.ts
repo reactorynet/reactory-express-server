@@ -184,6 +184,7 @@ export interface Token {
   type: TokenType;
   value: string;
   position: {
+    src?: string;
     line: number;
     column: number;
   };
@@ -193,6 +194,8 @@ export interface TokenizerOptions {
   ignoreWhitespace?: boolean;
   ignoreComments?: boolean;
   ignoreNewLines?: boolean;
+  // the input id is used to identify the input source
+  inputId?: string;
 }
 
 export type Tokenizer = (input: string, options: TokenizerOptions) => Token[];

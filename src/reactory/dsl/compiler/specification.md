@@ -402,5 +402,48 @@ stateDiagram-v2
     CheckName --> NotJohn: $name != "John"
     John --> [*]: Print "Hello, John!"
     NotJohn --> [*]: Print "Hello, Stranger!"
+```
 
+```sql
+## connection customer_db
+select id, name, surname from customer
+## out $varname
+```
+
+```sql
+## connection transaction_db
+select id, trans_date from transactions 
+where transactions.customer_id in 
+```
+
+```grpc
+
+```
+
+```rest
+GET http://api.myapp.com/entity/$customer.id
+```
+
+```rest
+registerMe($customer) {
+  POST http://api.myapp.com/entity
+  {
+    id: $customer.id
+  }
+}
+```
+
+```graphql
+query MyQuery {
+  Me {
+    id
+    firstName
+    lastName
+  }
+}
+```
+--> me_variable
+
+```typescript
+registerMe($me_variable)
 ```

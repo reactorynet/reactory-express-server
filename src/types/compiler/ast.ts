@@ -1,3 +1,5 @@
+import { CSTNode, CSTProgramNode } from "./cst";
+
 export type ASTNodeType =
   | 'Program'               // Represents the root of the program
   | 'MacroInvocation'       // Represents a macro invocation, including its name and arguments
@@ -9,6 +11,7 @@ export type ASTNodeType =
   | 'StringInterpolation'   // Represents an interpolated part of a string literal  
   | 'NumberLiteral'         // Represents a numeric literal
   | 'BooleanLiteral'        // Represents a boolean literal
+  | 'HexLiteral'
   | 'Variable'              // Represents a variable identifier
   | 'BinaryExpression'      // Represents a binary operation (e.g., addition, comparison)
   | 'UnaryExpression'       // Represents a unary operation (e.g., negation, logical NOT)
@@ -31,6 +34,7 @@ export type ASTNodeType =
   | 'StringInterpolation'
   | 'NumberLiteral'
   | 'BooleanLiteral'
+  | 'HexLiteral'
   | 'Variable'
   | 'BinaryExpression'
   | 'UnaryExpression'
@@ -38,16 +42,20 @@ export type ASTNodeType =
   | 'MacroInvocation'
   | 'MacroChain'
   | 'MacroBranch'
-
-// AST Node interfaces
 export interface ASTNode {
   type: ASTNodeType;
-  // ... Common properties
+  next?: ASTNode;
 }
 
 export interface ProgramNode extends ASTNode {
   type: 'Program';
   body: ASTNode[];
+  options?: {
+    strict?: boolean;
+    version?: string;
+    mode?: 'workflow' | 'script';
+    host?: 'server' | 'web' | 'mobile' | 'cli' | 'desktop';
+  }
 }
 
 export interface MacroInvocationNode extends ASTNode {
@@ -94,10 +102,17 @@ export interface NumberLiteralNode extends ExpressionNode {
   value: number;
 }
 
+export interface HexLiteralNode extends ExpressionNode {
+  typoe: 'HexLiteral';
+  value: string;
+}
+
 export interface BooleanLiteralNode extends ExpressionNode {
   type: 'BooleanLiteral';
   value: boolean;
 }
+
+export type LiteralNode = StringLiteralNode | NumberLiteralNode | BooleanLiteralNode;
 
 export interface VariableNode extends ASTNode {
   type: 'Variable';
@@ -161,11 +176,23 @@ export interface BlockNode extends ASTNode {
   body: ASTNode[];
 }
 
-// ... Additional AST node interfaces for FunctionDeclaration, ParameterList, etc.
-
 export interface CommentNode extends ASTNode {
   type: 'Comment';
   value: string;
 }
 
-// Helper types for case statements, catches, etc., would be defined similarly.
+/**
+ * Converst a CSTProgramNode into an AST.
+ * 
+ * It may throw an error if the CST is invalid.
+ */
+export type CST2AST = (node: CSTProgramNode) => ProgramNode;
+
+/**
+ * Context used during the conversion from CST to AST.
+ */
+export type CST2ASTContext = { 
+  activeAST: ASTNode;
+  activeCST: CSTNode;
+  parent: ASTNode;
+};

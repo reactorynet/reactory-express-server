@@ -20,7 +20,8 @@ import {
 } from "mongoose";
 
 export const ReactoryAnonUser: Reactory.Models.IUserDocument = {
-  id: null,
+  id: "anon",
+  _id: null,
   email: "anon@anons.any",
   firstName: "Anon",
   lastName: "Anonymous",

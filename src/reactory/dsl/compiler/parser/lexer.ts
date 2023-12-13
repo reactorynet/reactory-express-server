@@ -9,10 +9,10 @@ const DEFAULT_OPTIONS: TokenizerOptions = {
 
 // The tokenizer function takes a string of macro code and returns an array of tokens
 const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_OPTIONS): Token[] => {
+  const { ignoreWhitespace, ignoreComments, ignoreNewLines, inputId } = options;
   const tokens: Token[] = [];
-  let position = { line: 1, column: 1 };
+  let position = { line: 1, column: 1, src: inputId };
 
-  const { ignoreWhitespace, ignoreComments, ignoreNewLines } = options;
   
   /**
     ### Regex Breakdown:
@@ -127,8 +127,9 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
 
     for (const [pattern, type] of tokenPatterns) {
       const match = pattern.exec(workingInput);
+      let offset = 0;
       if (match) {
-        const [text] = match;
+        let [text] = match;
 
         switch(type)  {
           case 'NEWLINE': {
@@ -165,7 +166,8 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
               const endOfCommentIndex = workingInput.indexOf('\n');
               commentBlock = workingInput.slice(0, endOfCommentIndex);
             }
-            
+            text = commentBlock;
+            offset = workingInput.startsWith('\n') ? 1 : 0;
             if (ignoreComments === false) {
               tokens.push({ type, value: commentBlock, position: { ...position } });
             }
@@ -176,7 +178,6 @@ const tokenize: Tokenizer = (input: string, options: TokenizerOptions = DEFAULT_
           }
         }
         updatePosition(text);
-        const offset = workingInput.startsWith('\n') ? 1 : 0;
         workingInput = workingInput.slice(text.length + offset);
         matched = true;
         break;

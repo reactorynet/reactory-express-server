@@ -14,6 +14,7 @@ import { CSTProgramNode, Operator } from "@reactory/server-core/types/compiler/c
  */
 export const MultilineWithWhileLoopCSTProgramNode: CSTProgramNode = {
   type: "Program",
+  token: null,
   children: [
     {
       type: "Newline",
@@ -41,6 +42,15 @@ export const MultilineWithWhileLoopCSTProgramNode: CSTProgramNode = {
     },
     {
       type: "Grouping",
+      token: {
+        type: "PAREN_OPEN",
+        value: "(",
+        position: {
+          line: 2,
+          column: 10,
+          src: undefined,
+        },
+      },
       children: [
         {
           type: "VariableIdentifier",
@@ -82,6 +92,15 @@ export const MultilineWithWhileLoopCSTProgramNode: CSTProgramNode = {
     },
     {
       type: "Grouping",
+      token: {
+        type: "CURLY_OPEN",
+        value: "{",
+        position: {
+          line: 2,
+          column: 20,
+          src: undefined,
+        },
+      },
       children: [
         {
           type: "Newline",
@@ -97,20 +116,56 @@ export const MultilineWithWhileLoopCSTProgramNode: CSTProgramNode = {
         },
         {
           type: "MacroInvocation",
-          value: "@",
+          token: {
+            type: "MACRO_START",
+            value: "@",
+            position: {
+              line: 3,
+              column: 6,
+              src: undefined,
+            },
+          },
+          value: "@print",
           children: [
             {
               type: "MacroName",
               value: "print",
+              token: {
+                type: "IDENTIFIER",
+                value: "print",
+                position: {
+                  line: 3,
+                  column: 7,
+                  src: undefined,
+                },
+              },
               children: [
               ],
             },
             {
               type: "MacroArguments",
               value: "($i)",
+              token: {
+                type: "PAREN_OPEN",
+                value: "(",
+                position: {
+                  line: 3,
+                  column: 12,
+                  src: undefined,
+                },
+              },
               children: [
                 {
                   type: "VariableIdentifier",
+                  token: {
+                    type: "VARIABLE",
+                    value: "$i",
+                    position: {
+                      line: 3,
+                      column: 13,
+                      src: undefined,
+                    },
+                  },
                   children: [
                   ],
                   value: "$i",
@@ -170,7 +225,7 @@ export const MultilineWithWhileLoopCSTProgramNode: CSTProgramNode = {
         },
         {
           type: "Operator",
-          operator: 16777218 as Operator,
+          operator: 16777218 as any,
           children: [
           ],
           value: "+",

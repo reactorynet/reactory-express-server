@@ -3,6 +3,7 @@ import { CSTProgramNode } from "@reactory/server-core/types/compiler/cst";
 
 export const MultiLineWithVariableAssignmentProgramNode: CSTProgramNode = {
   type: "Program",
+  token: null,
   children: [
     {
       type: "Newline",

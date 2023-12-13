@@ -8,7 +8,7 @@ import {
   MacroChainNode,
   MacroBranchNode,
   ProgramNode,
-} from '../../../../types/compiler/ast';
+} from '@reactory/server-core/types/compiler/ast';
 // Mocks for Literal values
 export const mockNumberLiteral: NumberLiteralNode = {
   type: 'NumberLiteral',
@@ -71,7 +71,13 @@ export const mockControlFlow: ConditionalExpressionNode = {
 };
 
 // Mock for the AST Root
-export const mockProgramNode: ProgramNode = {
+export const mockSingleLineHelloWorldProgramNode: ProgramNode = {
   type: 'Program',
   body: [mockSimpleMacro],
+  options: {
+    strict: false,
+    version: '0.0.1',
+    mode: 'script',
+    host: 'cli',
+  },
 };

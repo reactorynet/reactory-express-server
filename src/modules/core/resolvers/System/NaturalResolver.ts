@@ -44,17 +44,20 @@ class NaturalResolver {
 
   @roles(["USER"], 'args.context')
   @query("NaturalTokenize")
-  @inject([
-    "core.ReactoryNLPService@1.0.0",
-    {
-      id: "core.ReactoryNLPService@1.0.0",
-      alias: "naturalService",
-    }
-  ])
+  // TODO: Fix this - injection not working as expected
+  // @inject([
+  //   "core.ReactoryNLPService@1.0.0",
+  //   {
+  //     id: "core.ReactoryNLPService@1.0.0",
+  //     alias: "naturalService",
+  //   }
+  // ])
   NaturalTokenize(obj: any,
     params: INaturalResolverParams, 
     context: Reactory.Server.IReactoryContext,
-    info: any,    
+    info: any,
+    // TODO: Fix this 
+    //{ naturalService }: { naturalService: Reactory.Service.INaturalService }    
     ): Reactory.Models.INaturalTokenizedInput {
       const { lang, tokenizer } = params;
       const { i18n, getService } = context;

@@ -1,7 +1,9 @@
 import Reactory from '@reactory/reactory-core';
 import { resolver, query, property } from "@reactory/server-core/models/graphql/decorators/resolver";
+import { ReactoryAnonUser } from 'context/AnonUser';
 import { isNil, isArray, sortBy, filter, intersection, uniq } from 'lodash';
 import moment from 'moment';
+import { ObjectId } from 'mongodb';
 const packageJson = require('../../../../../package.json');
 
 
@@ -35,7 +37,6 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise <{ r
 
   const login_partner_keys = login_partner_keys_setting.data;
 
-  console.log(`Partner has Keys (${login_partner_keys.partner_keys.length})`, {}, 'debug');
   //get a list of all partner / cross partner logins allowed
   const partnerLogins: Reactory.Models.IReactoryClientDocument[] = await systemService.getReactoryClients({ key: { $in: [...login_partner_keys.partner_keys] } }).then();
 
@@ -45,8 +46,6 @@ const getRoles = async (context: Reactory.Server.IReactoryContext): Promise <{ r
       root_partner_memberships.push(membership);
     }
   });
-
-  context.log(`${user.firstName} has (${root_partner_memberships.length})`, null, 'debug');
 
   root_partner_memberships.forEach((membership) => {
     if (isArray(membership.roles)) {
@@ -260,10 +259,38 @@ class ApiStatus {
         
     const { roles, alt_roles } = await getRoles(context).then();
 
+    let loggedInUser: Reactory.Models.IUserDocument = context.user;
+    
+    if(!loggedInUser){
+      loggedInUser = ReactoryAnonUser
+    }
+
+    const memberships = loggedInUser.memberships.map((m: any) => {
+      return {
+        id: m._id.toString(),
+        clientId: m.clientId?.toString(),
+        organizationId: m.organizationId?.toString(),
+        businessUnitId: m.businessUnitId?.toString(),
+        roles: m.roles || [],
+      };
+    });
+
     let _context: Reactory.Models.IReactoryLoggedInContext = {
-      user: context?.user as unknown as Reactory.Models.IUser,
-      id: context?.user?._id.toJSON(),
-      memberships: context?.user?.memberships as unknown as Reactory.Models.IMembership[] || [],
+      user: {
+        id: loggedInUser._id?.toString(),
+        firstName: loggedInUser.firstName,
+        lastName: loggedInUser.lastName,
+        fullNameWithEmail: loggedInUser.fullNameWithEmail,
+        email: loggedInUser.email,
+        avatar: loggedInUser.avatar,
+        authentications: loggedInUser.authentications,
+        memberships,
+        roles: roles,
+        alt_roles: alt_roles,
+        additional: {},
+      },
+      id: loggedInUser._id.toString(),
+      memberships,
       roles: roles,
       businessUnit: null,
       organization: null,
