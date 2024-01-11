@@ -1,4 +1,4 @@
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from '@reactory/reactory-core';
 import { createWriteStream, readFile, readFileSync } from "fs";
 import ExcelJS from 'exceljs';
 import moment from "moment";
@@ -106,10 +106,12 @@ class ReactoryExcelWriterService implements Reactory.Service.IExcelWriterService
 
 };
 
-export const ReactoryExcelWriterServiceDefinition: Reactory.IReactoryServiceDefinition = {
+export const ReactoryExcelWriterServiceDefinition: Reactory.Service.IReactoryServiceDefinition<ReactoryExcelWriterService> = {
   id: 'core.ReactoryExcelWriterService@1.0.0',
-  name: 'Reactory Excel Writer Service',
-  description: 'Default service for processing.',
+  nameSpace: 'core',
+  name: 'ReactoryExcelWriterService',
+  version: '1.0.0',
+  description: 'Reactory Service for writing excel files',
   dependencies: [],
   serviceType: 'file',
   service: (props: any, context: any) => {

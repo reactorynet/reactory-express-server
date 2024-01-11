@@ -1,4 +1,4 @@
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from '@reactory/reactory-core';
 
 
 class ReactoryWorkflowService implements Reactory.Service.IReactoryWorkflowService {
@@ -45,9 +45,11 @@ class ReactoryWorkflowService implements Reactory.Service.IReactoryWorkflowServi
     return true;
   }
 
-  static definition: Reactory.IReactoryServiceDefinition = {
+  static definition: Reactory.Service.IReactoryServiceDefinition = {
     id: 'core.ReactoryWorkflowService@1.0.0',
-    name: 'Reactory Worklflow Service',
+    nameSpace: 'core',
+    name: 'ReactoryWorkflowService',
+    version: '1.0.0',
     description: 'Provides service functionality for workflows',
     service: (props, context) => {
       return new ReactoryWorkflowService(props, context);

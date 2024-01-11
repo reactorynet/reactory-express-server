@@ -106,6 +106,7 @@
     "jwt-simple": "^0.5.6",
     "lodash": "^4.17.15",
     "mathjs": "10.6.1",
+    "meilisearch": "^0.36.0",
     "mic": "^2.1.2",
     "mocha": "10.2.0",
     "moment": "^2.24.0",

@@ -356,9 +356,11 @@ class OrganizationService implements Reactory.Service.IReactoryOrganizationServi
   }
 }
 
-export const ReactoryOrganizationServiceDefinition: Reactory.Service.IReactoryServiceDefinition = {
+export const ReactoryOrganizationServiceDefinition: Reactory.Service.IReactoryServiceDefinition<OrganizationService> = {
   id: 'core.OrganizationService@1.0.0',
-  name: 'Reactory Organization',
+  name: 'ReactoryOrganization',
+  nameSpace: 'core',
+  version: '1.0.0',
   description: 'Default Organization Service.',
   dependencies: [
     {

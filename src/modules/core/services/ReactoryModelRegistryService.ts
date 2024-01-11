@@ -8,7 +8,9 @@ import { service } from "@reactory/server-core/application/decorators/service";
 
 @service({
   id: "core.ReactoryModelRegistry@1.0.0",
-  name: "Reactory Model Registry Service",
+  nameSpace: "core",
+  name: "ReactoryModelRegistry",
+  version: "1.0.0",
   description: "Provides registry features for any reactory model",
   serviceType: "data",
   dependencies: [

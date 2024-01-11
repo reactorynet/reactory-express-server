@@ -203,7 +203,17 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
 
                 return;
             }
+            case 'google':  {
+                // TODO: Add support to use a google service account to send email
+                throw new ApiError('Not Implemented Yet');
+            }
+            case 'smtp': {
+                // TODO: Add support to use a smtp service to send email
+                throw new ApiError('Not Implemented Yet');
+            }            
             default: {
+                //TODO: Add support for use of a FQN to resolve the email sending 
+                // via a custom service
                 throw new ApiError('Not Implemented Yet');
             }
         }
@@ -215,7 +225,9 @@ class CoreEmailService implements Reactory.Service.ICoreEmailService {
 
 export default {
     id: 'core.EmailService@1.0.0',
-    name: "Reactory Email Service - 💌",
+    name: "EmailService",
+    nameSpace: "core",
+    version: "1.0.0",
     dependencies: [{ id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' }],
     description: "Provides a simple email service that allows you to send an email via any of the registered email providers as the logged in user.",
     service: (props: any, context: any) => {

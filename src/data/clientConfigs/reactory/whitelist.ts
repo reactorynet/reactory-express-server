@@ -15,7 +15,10 @@ if(REACTORY_APP_WHITELIST) {
   if(MODE.toLowerCase() === 'development') {
     whitelist = [
       API_URI_ROOT,
-      REACTORY_SITE_URL || 'http://localhost:3000',
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'http://localhost:3003',
       REACTORY_NATIVEAPP_URI || 'reactorynative://',
     ]
   }

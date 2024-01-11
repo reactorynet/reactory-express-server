@@ -8,7 +8,7 @@ import { execml, execql } from '@reactory/server-core/graph/client';
 import iz from '@reactory/server-core/utils/validators';
 import { MutationResult, IUserImportStruct } from './types';
 
-class UserFileImportProcessGeneral implements Reactory.IProcessor {
+class UserFileImportProcessGeneral implements Reactory.Service.IProcessor {
 
   context: Reactory.Server.IReactoryContext;
 
@@ -19,7 +19,7 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
   props: any;
 
   fileService: Reactory.Service.IReactoryFileService = null;
-  packageManager: Reactory.IReactoryImportPackageManager;
+  packageManager: Reactory.Service.IReactoryImportPackageManager;
 
   clazz: string = "UserFileImportProcessGeneral";
 
@@ -64,7 +64,7 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
    * The main execution function is process
    * @param params - paramters can include row offset
    */
-  async process(params: Reactory.IProcessorParams, nextProcessor?: Reactory.IProcessor): Promise<any> {
+  async process(params: Reactory.Models.IProcessorParams, nextProcessor?: Reactory.Service.IProcessor): Promise<any> {
     const { processors = [], offset = 0, file, import_package, process_index, next, input = [], preview = false } = params;
     const that = this;
 
@@ -219,7 +219,7 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
     //3. update processor state and hand off to next processor
 
 
-    let $next: Reactory.IProcessor = this.packageManager.getNextProcessor();
+    let $next: Reactory.Service.IProcessor = this.packageManager.getNextProcessor();
     
     if ($next !== null && $next.process) {
       that.context.log(`Executing next processor in execution chain`, {}, 'debug', 'UserGeneralProcessor');
@@ -239,11 +239,13 @@ class UserFileImportProcessGeneral implements Reactory.IProcessor {
 
   static reactory = {
     id: 'core.UserFileImportProcessGeneral@1.0.0',
-    name: 'Reactory User File Import General Information',
+    nameSpace: 'core',
+    version: '1.0.0',
+    name: 'UserFileImportProcessGeneral',
     description: 'Reactory Service for importing the general information.',
     dependencies: ['core.ReactoryFileService@1.0.0'],
     serviceType: 'data',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
+    service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new UserFileImportProcessGeneral(props, context);
     }
   }

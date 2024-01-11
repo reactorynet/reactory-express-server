@@ -1,4 +1,4 @@
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from '@reactory/reactory-core';
 
 const modules: Reactory.Forms.IReactoryFormModule[] = [];
 

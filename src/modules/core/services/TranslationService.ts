@@ -190,9 +190,11 @@ export default class ReactoryTranslationService implements Reactory.Service.IRea
     return true;
   }
   
-  static reactory: Reactory.Service.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition<ReactoryTranslationService> = {
     id: "core.ReactoryTranslationService@1.0.0",
-    name: "Translation Service",
+    nameSpace: "core",
+    version: "1.0.0",
+    name: "ReactoryTranslationService",
     description: "Translation Service for translation",
     service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new ReactoryTranslationService(props, context);

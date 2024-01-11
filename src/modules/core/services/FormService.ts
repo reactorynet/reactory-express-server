@@ -54,6 +54,13 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     return Promise.resolve(_form);
   }
 
+  async search(form: Partial<Reactory.Forms.IReactoryForm>, targetModule?: string, where?: Reactory.Service.FormStore[]): Promise<Reactory.Forms.IReactoryForm[]> {
+    let _forms: Reactory.Forms.IReactoryForm[] = [];
+    
+
+    return _forms
+  }
+
   list(): Promise<Reactory.Forms.IReactoryForm[]> {
     const _forms: Reactory.Forms.IReactoryForm[] = [];
     const that = this;
@@ -183,11 +190,12 @@ class ReactoryFormService implements Reactory.Service.IReactoryFormService {
     this.compiler = compiler;
   }
 
-  static reactory: Reactory.Service.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition<ReactoryFormService> = {
     id: 'core.ReactoryFormService@1.0.0',
     description: 'Reactory Form Service',
+    nameSpace: 'core',
     name: 'ReactoryFormService',
-    service: (props, context) => {
+    service: (props, context): ReactoryFormService => {
       return new ReactoryFormService(props, context)
     },
     dependencies: [

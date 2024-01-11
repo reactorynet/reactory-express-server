@@ -11,7 +11,7 @@ type DependencySetter = <T>(deps: T) => void;
 /**
  * services array
  */
-export const services: Reactory.Service.IReactoryServiceDefinition[] = [];
+export const services: Reactory.Service.IReactoryServiceDefinition<any>[] = [];
 /**
  * services id map
  */
@@ -26,7 +26,7 @@ modules.enabled.forEach((installedModule: Reactory.Server.IReactoryModule) => {
     if (installedModule && installedModule.services) {
       if (installedModule.services) {
         logger.debug(`🟢 Module ${installedModule.name} has ${installedModule.services.length} services available`)
-        installedModule.services.forEach((serviceDefinition: Reactory.Service.IReactoryServiceDefinition | any) => {
+        installedModule.services.forEach((serviceDefinition: Reactory.Service.IReactoryServiceDefinition<any> | any) => {
           let $service = serviceDefinition;
           if (typeof $service === 'function' && $service?.prototype?.reactory) {
             $service = ($service as any).prototype.reactory;

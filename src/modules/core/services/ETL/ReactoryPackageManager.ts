@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Reactory } from "@reactory/server-core/types/reactory";
+import Reactory from '@reactory/reactory-core';
 import { findIndex } from 'lodash';
 import ReactoryFileImportPackage from '@reactory/server-modules/core/models/ReactoryFileImportPackage';
 import ApiError from "@reactory/server-core/exceptions";
@@ -99,10 +99,10 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
     return pkg;
   }
   
-  getNextProcessor(): Reactory.IProcessor {
+  getNextProcessor(): Reactory.Service.IProcessor {
     if(this.state.processor_index + 1 < this.state.file.processors.length) {      
       //instantiate the processing via the service and pass this reference as packman property.      
-      const processor: Reactory.IProcessor = this.context.getService(this.state.file.processors[this.state.processor_index + 1].serviceFqn, { packman: this });
+      const processor: Reactory.Service.IProcessor = this.context.getService(this.state.file.processors[this.state.processor_index + 1].serviceFqn, { packman: this });
       if(!processor) {
         this.context.log(`Next Processor Not Available`, { state: this.state }, 'error', 'ReactoryPackageManager');
       }
@@ -151,9 +151,9 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
 
       // only invoke the first processors
       // the first one must call the next and so forth
-      const procsvc: Reactory.IProcessor = this.getNextProcessor();
+      const procsvc: Reactory.Service.IProcessor = this.getNextProcessor();
 
-      // let nextSvc: Reactory.IProcessor = null;
+      // let nextSvc: Reactory.Service.IProcessor = null;
       // let nextProcessorEntry: Reactory.IFileImportProcessorEntry = null;
 
       // if ($processors.length >= 2) {
@@ -326,13 +326,15 @@ class ReactoryFileImportPackageManager implements Reactory.IReactoryImportPackag
     this.fileService = fileService;
   }
 
-  static reactory = {
+  static reactory: Reactory.IReactoryComponentDefinition<ReactoryFileImportPackageManager> = {
     id: 'core.ReactoryFileImportPackageManager@1.0.0',
-    name: 'Reactory File Import Package Manager',
+    nameSpace: 'core',
+    name: 'ReactoryFileImportPackageManager',
+    version: '1.0.0',
     description: 'Import package manager that will manage the process of importing a file or a batch of files',
     dependencies: [{ id: 'core.ReactoryFileService@1.0.0', alias: 'fileService' }],
     serviceType: 'data',
-    service: (props: Reactory.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
+    service: (props: Reactory.Service.IReactoryServiceProps, context: Reactory.Server.IReactoryContext) => {
       return new ReactoryFileImportPackageManager(props, context);
     }
   };

@@ -27,11 +27,14 @@ The fetch service is an intermediary service wrapper for HTTP/HTTPS requests.
 */
 export default class FetchService implements Reactory.Service.IFetchService {
 
-  static reactory: Reactory.Service.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition<FetchService>= {
     id: 'core.FetchService@1.0.0',
-    name: 'Reactory Fetch API Service',
+    nameSpace: 'core',
+    name: 'FetchService',
+    version: '1.0.0',
+    serviceType: 'data',
     description: 'A service class that wraps FETCH and provides utility functions',
-    service: function (props: Reactory.Service.IReactoryServiceProps, context: any) {
+    service: function (props: Reactory.Service.IReactoryServiceProps, context: any): FetchService {
       return new FetchService(props, context);
     }
   }

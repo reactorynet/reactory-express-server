@@ -109,6 +109,7 @@ async setPeersForUser (
   });
 };
 
+  @roles(["ADMIN"])
   async setUserDemographics(userId: string, organisationId: string, membershipId?:
     string, dob?: Date, businessUnit?: string, gender?: string, operationalGroup?: string,
     position?: string, race?: string, region?: string, team?: string): Promise<Reactory.Models.IUserDemographicDocument> {
@@ -368,13 +369,15 @@ async setPeersForUser (
   }
 
 
-  static reactory: Reactory.Service.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition<UserService> = {
     id: 'core.UserService@1.0.0',
+    nameSpace: 'core',
+    name: 'UserService',
+    version: '1.0.0',
     description: 'The core default user service',
     service: (props, context) => {
       return new UserService(props, context)
-    },
-    name: 'User management service',
+    },    
     dependencies: [],
     serviceType: "user"
   }

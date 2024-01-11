@@ -319,8 +319,9 @@ class ReactoryModuleCompilerService implements Reactory.Service.IReactoryModuleC
     this.fileService = fileService;
   }
   
-  static reactory: Reactory.Service.IReactoryServiceDefinition = {
+  static reactory: Reactory.Service.IReactoryServiceDefinition<ReactoryModuleCompilerService> = {
     id: 'core.ReactoryModuleCompilerService@1.0.0',
+    nameSpace: 'core',
     description: 'Reactory Module Compiler Service',
     name: 'ReactoryModuleCompilerService',
     service: (props, context) => {
